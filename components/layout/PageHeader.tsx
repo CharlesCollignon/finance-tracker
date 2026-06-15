@@ -11,13 +11,22 @@ export function PageHeader({ title, children, className }: PageHeaderProps) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 border-b-2 border-border bg-background pt-safe",
+        "sticky top-0 z-30 border-b-2 border-border bg-background/95 pt-safe",
+        "backdrop-blur-sm md:static md:bg-background",
         className,
       )}
     >
-      <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-3">
-        <h1 className="font-head text-lg">{title}</h1>
-        {children}
+      <div
+        className={cn(
+          "mx-auto flex w-full max-w-lg flex-col gap-3 px-4 py-3",
+          "sm:flex-row sm:items-center sm:justify-between",
+          "md:max-w-3xl md:px-6 lg:max-w-5xl",
+        )}
+      >
+        <h1 className="font-head text-lg md:text-xl">{title}</h1>
+        {children && (
+          <div className="flex shrink-0 items-center gap-2">{children}</div>
+        )}
       </div>
     </header>
   );

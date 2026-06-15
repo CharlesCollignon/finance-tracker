@@ -2,11 +2,21 @@
 
 import { Button } from "@/components/retroui/Button";
 import { signOut } from "@/lib/actions/finance";
+import { cn } from "@/lib/utils";
 
-export function SignOutButton() {
+interface SignOutButtonProps {
+  className?: string;
+}
+
+export function SignOutButton({ className }: SignOutButtonProps) {
   return (
     <form action={signOut}>
-      <Button type="submit" variant="ghost" size="sm" className="text-sm">
+      <Button
+        type="submit"
+        variant="ghost"
+        size="sm"
+        className={cn("text-sm", className)}
+      >
         Sign out
       </Button>
     </form>

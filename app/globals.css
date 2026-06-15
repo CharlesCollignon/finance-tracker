@@ -58,6 +58,18 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
+@media (min-width: 768px) {
+  body {
+    background-color: #f5f5f0;
+    background-image: radial-gradient(
+      circle,
+      var(--border) 1px,
+      transparent 1px
+    );
+    background-size: 20px 20px;
+  }
+}
+
 .font-head {
   font-family: var(--font-head), system-ui, sans-serif;
 }

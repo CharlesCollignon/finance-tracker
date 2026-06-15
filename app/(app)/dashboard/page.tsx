@@ -5,6 +5,7 @@ import { seedDefaultCategories } from "@/lib/queries/categories";
 import { getMonthlySummary } from "@/lib/queries/finance";
 import { parseMonthParams, formatEuro } from "@/lib/constants";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import {
@@ -40,59 +41,76 @@ export default async function DashboardPage({
   return (
     <>
       <PageHeader title="Dashboard">
-        <div className="flex items-center gap-2">
-          <Suspense fallback={<span className="text-sm">…</span>}>
-            <MonthPicker basePath="/dashboard" />
-          </Suspense>
+        <Suspense fallback={<span className="text-sm">…</span>}>
+          <MonthPicker basePath="/dashboard" />
+        </Suspense>
+        <div className="md:hidden">
           <SignOutButton />
         </div>
       </PageHeader>
 
-      <div className="flex flex-col gap-3 p-4">
-        <SummaryCard label="Income" amount={summary.income} />
+      <PageContainer>
+        <div className="grid gap-3 md:grid-cols-2 md:gap-4">
+          <SummaryCard label="Income" amount={summary.income} />
 
-        <Card className="w-full">
-          <div className="flex items-center justify-between p-4">
-            <span className="font-head text-base">Expenses</span>
-            <span className="tabular-nums text-lg font-semibold">
-              {formatEuro(summary.expenses)}
-            </span>
-          </div>
-          <BreakdownList
-            items={summary.expenseBreakdown}
-            incomeTotal={summary.income}
+          <SummaryCard
+            label="Remaining"
+            amount={summary.remaining}
+            highlight
+            warning={overBudget}
           />
-        </Card>
 
-        <SummaryCard label="Savings" amount={summary.savings} />
+          <Card className="w-full md:col-span-1">
+            <div className="flex items-center justify-between p-4 md:p-5">
+              <span className="font-head text-base">Expenses</span>
+              <span className="tabular-nums text-lg font-semibold md:text-xl">
+                {formatEuro(summary.expenses)}
+              </span>
+            </div>
+            <BreakdownList
+              items={summary.expenseBreakdown}
+              incomeTotal={summary.income}
+            />
+          </Card>
 
-        <Card className="w-full">
-          <div className="flex items-center justify-between p-4">
-            <span className="font-head text-base">Investments</span>
-            <span className="tabular-nums text-lg font-semibold">
-              {formatEuro(summary.investments)}
-            </span>
-          </div>
-          <BreakdownList
-            items={summary.investmentBreakdown}
-            incomeTotal={summary.income}
-          />
-        </Card>
+          <Card className="w-full md:col-span-1">
+            <div className="flex items-center justify-between p-4 md:p-5">
+              <span className="font-head text-base">Investments</span>
+              <span className="tabular-nums text-lg font-semibold md:text-xl">
+                {formatEuro(summary.investments)}
+              </span>
+            </div>
+            <BreakdownList
+              items={summary.investmentBreakdown}
+              incomeTotal={summary.income}
+            />
+          </Card>
 
-        <SummaryCard
-          label="Remaining"
-          amount={summary.remaining}
-          highlight
-          warning={overBudget}
-        />
+          <Card className="w-full md:col-span-2">
+            <div className="flex items-center justify-between p-4 md:p-5">
+              <span className="font-head text-base">Savings</span>
+              <span className="tabular-nums text-lg font-semibold md:text-xl">
+                {formatEuro(summary.savings)}
+              </span>
+            </div>
+            <BreakdownList
+              items={summary.savingsBreakdown}
+              incomeTotal={summary.income}
+            />
+          </Card>
+        </div>
+
         {overBudget && (
-          <div className="text-center">
-            <Badge variant="solid" className="bg-destructive text-destructive-foreground">
+          <div className="mt-4 text-center">
+            <Badge
+              variant="solid"
+              className="bg-destructive text-destructive-foreground"
+            >
               Over budget this month
             </Badge>
           </div>
         )}
-      </div>
+      </PageContainer>
     </>
   );
 }

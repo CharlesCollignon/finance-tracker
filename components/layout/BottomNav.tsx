@@ -33,7 +33,7 @@ export function BottomNav() {
   return (
     <nav
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-40 border-t-2 border-border",
+        "fixed bottom-0 left-0 right-0 z-40 border-t-2 border-border md:hidden",
         "bg-background pb-safe",
       )}
     >

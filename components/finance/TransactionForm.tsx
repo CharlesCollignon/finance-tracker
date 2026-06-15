@@ -5,6 +5,7 @@ import { Button } from "@/components/retroui/Button";
 import { Input } from "@/components/retroui/Input";
 import { FormLabel } from "@/components/layout/FormLabel";
 import { Text } from "@/components/retroui/Text";
+import { useToast } from "@/components/layout/ToastProvider";
 import { MobileSheet } from "@/components/layout/MobileSheet";
 import { createTransaction } from "@/lib/actions/finance";
 import type { Category } from "@/lib/types/database";
@@ -22,13 +23,17 @@ export function TransactionForm({
   open,
   onOpenChange,
 }: TransactionFormProps) {
+  const { toast } = useToast();
   const [state, action, pending] = useActionState(createTransaction, {});
 
   useEffect(() => {
     if (state.success) {
+      toast("Transaction saved", "success");
       onOpenChange(false);
+    } else if (state.error) {
+      toast(state.error, "error");
     }
-  }, [state.success, onOpenChange]);
+  }, [state.success, state.error, onOpenChange, toast]);
 
   return (
     <MobileSheet open={open} onOpenChange={onOpenChange} title="Add transaction">
@@ -39,7 +44,7 @@ export function TransactionForm({
             id="categoryId"
             name="categoryId"
             required
-            className="h-11 w-full rounded border-2 border-border px-3 text-base shadow-md"
+            className="h-11 w-full rounded border-2 border-border bg-background px-3 text-base text-foreground shadow-md"
             defaultValue=""
           >
             <option value="" disabled>

@@ -1,4 +1,5 @@
-import { BottomNav } from "@/components/layout/BottomNav";
+import { AppShell } from "@/components/layout/AppShell";
+import { ToastProvider } from "@/components/layout/ToastProvider";
 
 export default function AppLayout({
   children,
@@ -6,11 +7,8 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <div className="mx-auto flex min-h-full w-full max-w-lg flex-1 flex-col pb-24">
-        {children}
-      </div>
-      <BottomNav />
-    </>
+    <ToastProvider>
+      <AppShell>{children}</AppShell>
+    </ToastProvider>
   );
 }

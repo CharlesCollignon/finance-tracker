@@ -1,10 +1,21 @@
 function required(name: string): string {
-  const value = process.env[name];
+  const value = process.env[name]?.trim();
   if (!value) {
     throw new Error(
-      `Missing ${name}. Copy .env.local.example to .env.local and add your Supabase credentials.`,
+      `Missing ${name}. Add it to .env.local and restart the dev server.`,
     );
   }
+
+  if (
+    name === "NEXT_PUBLIC_SUPABASE_URL" &&
+    !value.includes("supabase.co")
+  ) {
+    throw new Error(
+      `${name} must be your Supabase project URL ` +
+        "(e.g. https://xxxx.supabase.co), not your app URL.",
+    );
+  }
+
   return value;
 }
 

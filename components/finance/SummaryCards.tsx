@@ -19,13 +19,13 @@ export function SummaryCard({
   return (
     <Card
       className={cn(
-        "flex w-full items-center justify-between p-4",
+        "flex w-full items-center justify-between p-4 md:p-5",
         highlight && "border-destructive bg-accent",
         warning && "border-destructive",
       )}
     >
-      <span className="font-head text-base">{label}</span>
-      <span className="tabular-nums text-lg font-semibold">
+      <span className="font-head text-base md:text-lg">{label}</span>
+      <span className="tabular-nums text-lg font-semibold md:text-xl">
         {formatEuro(amount)}
       </span>
     </Card>

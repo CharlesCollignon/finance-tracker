@@ -5,10 +5,14 @@ import { Trash } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { EmptyState } from "@/components/layout/EmptyState";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { SignOutButton } from "@/components/layout/SignOutButton";
+import { useToast } from "@/components/layout/ToastProvider";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { formatEuro } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import {
   applyRecurringForMonth,
   deleteTransaction,
@@ -30,20 +34,21 @@ export function TransactionsView({
   month,
   defaultDate,
 }: TransactionsViewProps) {
+  const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [applyMessage, setApplyMessage] = useState<string | null>(null);
 
   function handleApplyRecurring() {
     startTransition(async () => {
       const result = await applyRecurringForMonth(year, month);
       if (result.error) {
-        setApplyMessage(result.error);
+        toast(result.error, "error");
       } else {
-        setApplyMessage(
+        toast(
           result.created
             ? `Added ${result.created} recurring entries`
             : "All recurring entries already applied",
+          "success",
         );
       }
     });
@@ -51,29 +56,40 @@ export function TransactionsView({
 
   function handleDelete(id: string) {
     startTransition(async () => {
-      await deleteTransaction(id);
+      const result = await deleteTransaction(id);
+      if (result.error) {
+        toast(result.error, "error");
+      } else {
+        toast("Transaction deleted", "success");
+      }
     });
   }
 
   return (
     <>
       <PageHeader title="Transactions">
-        <div className="flex items-center gap-2">
-          <MonthPicker basePath="/transactions" />
+        <MonthPicker basePath="/transactions" />
+        <div className="md:hidden">
           <SignOutButton />
         </div>
       </PageHeader>
 
-      <div className="flex flex-col gap-4 p-4">
+      <PageContainer className="flex flex-col gap-4">
         {transactions.length === 0 ? (
-          <Card className="p-6 text-center text-sm text-muted-foreground">
-            No transactions this month. Add one or apply recurring entries.
-          </Card>
+          <EmptyState
+            title="No transactions yet"
+            description="Add a manual entry or apply your recurring items for this month."
+          />
         ) : (
-          <ul className="flex flex-col gap-3">
+          <ul
+            className={cn(
+              "flex flex-col gap-3",
+              "lg:grid lg:grid-cols-2 lg:gap-4",
+            )}
+          >
             {transactions.map((tx) => (
               <li key={tx.id}>
-                <Card className="flex items-center gap-3 p-4">
+                <Card className="flex w-full items-center gap-3 p-4 transition-colors hover:bg-accent/30 md:p-5">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{tx.categories.name}</p>
                     <p className="text-sm text-muted-foreground">
@@ -81,13 +97,17 @@ export function TransactionsView({
                       {tx.note ? ` · ${tx.note}` : ""}
                     </p>
                   </div>
-                  <span className="shrink-0 tabular-nums font-semibold">
+                  <span className="shrink-0 tabular-nums text-base font-semibold md:text-lg">
                     {formatEuro(Number(tx.amount))}
                   </span>
                   <button
                     type="button"
                     onClick={() => handleDelete(tx.id)}
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded border-2 border-border hover:bg-destructive hover:text-destructive-foreground"
+                    className={cn(
+                      "flex h-11 w-11 shrink-0 items-center justify-center",
+                      "rounded border-2 border-border",
+                      "hover:bg-destructive hover:text-destructive-foreground",
+                    )}
                     aria-label="Delete transaction"
                   >
                     <Trash size={18} />
@@ -98,30 +118,31 @@ export function TransactionsView({
           </ul>
         )}
 
-        {applyMessage && (
-          <p className="text-center text-sm text-muted-foreground">
-            {applyMessage}
-          </p>
-        )}
-
-        <Button
-          variant="outline"
-          size="lg"
-          className="w-full"
-          onClick={handleApplyRecurring}
-          disabled={pending}
+        <div
+          className={cn(
+            "flex flex-col gap-3 pt-2",
+            "md:flex-row md:justify-end",
+          )}
         >
-          {pending ? "Applying…" : "Apply recurring for this month"}
-        </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full md:w-auto md:min-w-[14rem]"
+            onClick={handleApplyRecurring}
+            disabled={pending}
+          >
+            {pending ? "Applying…" : "Apply recurring"}
+          </Button>
 
-        <Button
-          size="lg"
-          className="w-full"
-          onClick={() => setFormOpen(true)}
-        >
-          Add transaction
-        </Button>
-      </div>
+          <Button
+            size="lg"
+            className="w-full md:w-auto md:min-w-[14rem]"
+            onClick={() => setFormOpen(true)}
+          >
+            Add transaction
+          </Button>
+        </div>
+      </PageContainer>
 
       <TransactionForm
         categories={categories}

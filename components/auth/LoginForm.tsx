@@ -10,6 +10,8 @@ import { Input } from "@/components/retroui/Input";
 import { FormLabel } from "@/components/layout/FormLabel";
 import { Text } from "@/components/retroui/Text";
 import { signIn } from "@/lib/actions/finance";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { AuthDivider } from "@/components/auth/AuthDivider";
 
 export function LoginForm() {
   const router = useRouter();
@@ -25,12 +27,14 @@ export function LoginForm() {
   }, [state.success, router]);
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="block w-full max-w-md md:max-w-lg">
       <Card.Header>
         <Card.Title>Welcome back</Card.Title>
         <Card.Description>Sign in to track your finances</Card.Description>
       </Card.Header>
       <Card.Content>
+        <GoogleSignInButton label="Sign in with Google" />
+        <AuthDivider />
         <form action={action} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <FormLabel htmlFor="email">Email</FormLabel>

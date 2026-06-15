@@ -5,6 +5,7 @@ import { Button } from "@/components/retroui/Button";
 import { Input } from "@/components/retroui/Input";
 import { FormLabel } from "@/components/layout/FormLabel";
 import { Text } from "@/components/retroui/Text";
+import { useToast } from "@/components/layout/ToastProvider";
 import { MobileSheet } from "@/components/layout/MobileSheet";
 import { upsertRecurringTemplate } from "@/lib/actions/finance";
 import type { Category, RecurringTemplateWithCategory } from "@/lib/types/database";
@@ -22,13 +23,17 @@ export function RecurringForm({
   open,
   onOpenChange,
 }: RecurringFormProps) {
+  const { toast } = useToast();
   const [state, action, pending] = useActionState(upsertRecurringTemplate, {});
 
   useEffect(() => {
     if (state.success) {
+      toast(template ? "Recurring item updated" : "Recurring item added", "success");
       onOpenChange(false);
+    } else if (state.error) {
+      toast(state.error, "error");
     }
-  }, [state.success, onOpenChange]);
+  }, [state.success, state.error, template, onOpenChange, toast]);
 
   const allocCategories = categories.filter((c) => c.type !== "income");
 
@@ -47,7 +52,7 @@ export function RecurringForm({
             id="recurring-category"
             name="categoryId"
             required
-            className="h-11 w-full rounded border-2 border-border px-3 text-base shadow-md"
+            className="h-11 w-full rounded border-2 border-border bg-background px-3 text-base text-foreground shadow-md"
             defaultValue={template?.category_id ?? ""}
           >
             <option value="" disabled>

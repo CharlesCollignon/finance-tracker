@@ -38,8 +38,13 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
       >
         <CaretLeft size={20} weight="bold" />
       </Link>
-      <span className="min-w-[9rem] text-center text-sm font-medium">
+      <span className="hidden min-w-[9rem] text-center text-sm font-medium sm:inline">
         {formatMonthLabel(year, month)}
+      </span>
+      <span className="min-w-[4.5rem] text-center text-sm font-medium sm:hidden">
+        {new Intl.DateTimeFormat("en-GB", { month: "short", year: "2-digit" }).format(
+          new Date(year, month - 1, 1),
+        )}
       </span>
       <Link
         href={`${basePath}${monthSearchParams(next.year, next.month)}`}
