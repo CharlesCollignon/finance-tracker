@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { PencilSimple } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { Badge } from "@/components/retroui/Badge";
@@ -10,6 +11,11 @@ import { EmptyState } from "@/components/layout/EmptyState";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import { RecurringForm } from "@/components/finance/RecurringForm";
 import { formatEuro } from "@/lib/constants";
+import {
+  estimateMonthlyAmount,
+  formatRecurrenceSchedule,
+} from "@/lib/recurrence";
+import { cn } from "@/lib/utils";
 import { toggleRecurringActive } from "@/lib/actions/finance";
 import type {
   Category,
@@ -42,9 +48,13 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
     items: templates.filter((t) => t.categories.type === type),
   }));
 
-  const monthlyTotal = templates
-    .filter((t) => t.active)
-    .reduce((sum, t) => sum + Number(t.amount), 0);
+  const budgetMonthly = templates
+    .filter((t) => t.active && t.categories.counts_toward_summary !== false)
+    .reduce((sum, t) => sum + estimateMonthlyAmount(t), 0);
+
+  const deploymentMonthly = templates
+    .filter((t) => t.active && t.categories.counts_toward_summary === false)
+    .reduce((sum, t) => sum + estimateMonthlyAmount(t), 0);
 
   const hasTemplates = templates.length > 0;
 
@@ -100,21 +110,36 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                   <ul className="flex flex-col gap-2">
                     {items.map((template) => (
                       <li key={template.id}>
-                        <Card
-                          className="flex w-full cursor-pointer items-center gap-3 p-3 transition-colors hover:bg-accent/30"
-                          onClick={() => openEdit(template)}
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">
-                              {template.categories.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Day {template.day_of_month}
-                            </p>
-                          </div>
-                          <span className="shrink-0 tabular-nums text-sm font-semibold">
-                            {formatEuro(Number(template.amount))}
-                          </span>
+                        <Card className="flex w-full items-center gap-3 p-3 transition-colors hover:bg-accent/30">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(template)}
+                            className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">
+                                {template.categories.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatRecurrenceSchedule(template)}
+                              </p>
+                            </div>
+                            <span className="shrink-0 tabular-nums text-sm font-semibold">
+                              {formatEuro(Number(template.amount))}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openEdit(template)}
+                            className={cn(
+                              "flex h-10 w-10 shrink-0 items-center justify-center",
+                              "rounded border-2 border-border",
+                              "hover:bg-accent",
+                            )}
+                            aria-label={`Edit ${template.categories.name}`}
+                          >
+                            <PencilSimple size={18} />
+                          </button>
                           <button
                             type="button"
                             onClick={(e) => {
@@ -142,11 +167,23 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
 
         {hasTemplates && (
           <>
-            <Card className="flex w-full items-center justify-between p-4 md:p-5">
-              <span className="font-head md:text-lg">Expected monthly total</span>
-              <span className="tabular-nums text-lg font-semibold md:text-xl">
-                {formatEuro(monthlyTotal)}
-              </span>
+            <Card className="flex w-full flex-col gap-3 p-4 md:p-5">
+              <div className="flex items-center justify-between">
+                <span className="font-head md:text-lg">Expected budget impact</span>
+                <span className="tabular-nums text-lg font-semibold md:text-xl">
+                  {formatEuro(budgetMonthly)}
+                </span>
+              </div>
+              {deploymentMonthly > 0 && (
+                <div className="flex items-center justify-between border-t-2 border-border pt-3 text-sm">
+                  <span className="text-muted-foreground">
+                    Broker deployment (tracking)
+                  </span>
+                  <span className="tabular-nums font-semibold">
+                    {formatEuro(deploymentMonthly)}
+                  </span>
+                </div>
+              )}
             </Card>
 
             <div className="md:flex md:justify-end">

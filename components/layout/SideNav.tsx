@@ -2,20 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  ArrowsLeftRight,
-  ChartPieSlice,
-  Repeat,
-  Wallet,
-} from "@phosphor-icons/react";
+import { Wallet } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { APP_NAV_ITEMS } from "@/lib/navigation";
 import { SignOutButton } from "@/components/layout/SignOutButton";
-
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: ChartPieSlice },
-  { href: "/transactions", label: "Transactions", icon: ArrowsLeftRight },
-  { href: "/recurring", label: "Recurring", icon: Repeat },
-];
 
 export function SideNav() {
   const pathname = usePathname();
@@ -34,7 +24,7 @@ export function SideNav() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 p-3">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {APP_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);
 
           return (

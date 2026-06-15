@@ -8,7 +8,15 @@ import type {
 } from "@/lib/types/database";
 
 function buildBreakdown(
-  rows: { category_id: string; amount: number; categories: { name: string; type: string; icon: string | null } }[],
+  rows: {
+    category_id: string;
+    amount: number;
+    categories: {
+      name: string;
+      type: string;
+      icon: string | null;
+    };
+  }[],
 ): CategoryBreakdown[] {
   const map = new Map<string, CategoryBreakdown>();
 
@@ -30,6 +38,12 @@ function buildBreakdown(
   return Array.from(map.values()).sort((a, b) => b.total - a.total);
 }
 
+function countsTowardSummary(
+  tx: TransactionWithCategory,
+): boolean {
+  return tx.categories.counts_toward_summary !== false;
+}
+
 export async function getTransactions(
   userId: string,
   year: number,
@@ -40,7 +54,9 @@ export async function getTransactions(
 
   const { data, error } = await supabase
     .from("transactions")
-    .select("*, categories(name, type, icon)")
+    .select(
+      "*, categories(name, type, icon, counts_toward_summary)",
+    )
     .eq("user_id", userId)
     .gte("occurred_on", start)
     .lte("occurred_on", end)
@@ -65,9 +81,15 @@ export async function getMonthlySummary(
     expense: [] as typeof transactions,
     savings: [] as typeof transactions,
     investment: [] as typeof transactions,
+    investmentDeployment: [] as typeof transactions,
   };
 
   for (const tx of transactions) {
+    if (tx.categories.type === "investment" && !countsTowardSummary(tx)) {
+      byType.investmentDeployment.push(tx);
+      continue;
+    }
+
     byType[tx.categories.type].push(tx);
   }
 
@@ -78,16 +100,21 @@ export async function getMonthlySummary(
   const expenses = sum(byType.expense);
   const savings = sum(byType.savings);
   const investments = sum(byType.investment);
+  const investmentDeployments = sum(byType.investmentDeployment);
 
   return {
     income,
     expenses,
     savings,
     investments,
+    investmentDeployments,
     remaining: income - expenses - savings - investments,
     expenseBreakdown: buildBreakdown(byType.expense),
     savingsBreakdown: buildBreakdown(byType.savings),
     investmentBreakdown: buildBreakdown(byType.investment),
+    investmentDeploymentBreakdown: buildBreakdown(
+      byType.investmentDeployment,
+    ),
   };
 }
 
@@ -98,7 +125,9 @@ export async function getRecurringTemplates(
 
   const { data, error } = await supabase
     .from("recurring_templates")
-    .select("*, categories(name, type, icon)")
+    .select(
+      "*, categories(name, type, icon, counts_toward_summary)",
+    )
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
 

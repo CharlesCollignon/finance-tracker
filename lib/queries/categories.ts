@@ -19,6 +19,8 @@ export async function seedDefaultCategories(userId: string) {
       name: cat.name,
       type: cat.type,
       icon: cat.icon,
+      counts_toward_summary:
+        "countsTowardSummary" in cat ? cat.countsTowardSummary : true,
     })),
   );
 }

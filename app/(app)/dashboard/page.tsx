@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { SignOutButton } from "@/components/layout/SignOutButton";
+import { DashboardCharts } from "@/components/finance/DashboardCharts";
 import {
   BreakdownList,
   SummaryCard,
@@ -50,16 +51,21 @@ export default async function DashboardPage({
       </PageHeader>
 
       <PageContainer>
-        <div className="grid gap-3 md:grid-cols-2 md:gap-4">
-          <SummaryCard label="Income" amount={summary.income} />
+        <div className="flex flex-col gap-4">
+          <div className="grid gap-3 md:grid-cols-2 md:gap-4">
+            <SummaryCard label="Income" amount={summary.income} />
 
-          <SummaryCard
-            label="Remaining"
-            amount={summary.remaining}
-            highlight
-            warning={overBudget}
-          />
+            <SummaryCard
+              label="Remaining"
+              amount={summary.remaining}
+              highlight
+              warning={overBudget}
+            />
+          </div>
 
+          <DashboardCharts summary={summary} />
+
+          <div className="grid gap-3 md:grid-cols-2 md:gap-4">
           <Card className="w-full md:col-span-1">
             <div className="flex items-center justify-between p-4 md:p-5">
               <span className="font-head text-base">Expenses</span>
@@ -75,7 +81,12 @@ export default async function DashboardPage({
 
           <Card className="w-full md:col-span-1">
             <div className="flex items-center justify-between p-4 md:p-5">
-              <span className="font-head text-base">Investments</span>
+              <div>
+                <span className="font-head text-base">Investments</span>
+                <p className="text-xs text-muted-foreground">
+                  Transfers from main bank
+                </p>
+              </div>
               <span className="tabular-nums text-lg font-semibold md:text-xl">
                 {formatEuro(summary.investments)}
               </span>
@@ -84,6 +95,25 @@ export default async function DashboardPage({
               items={summary.investmentBreakdown}
               incomeTotal={summary.income}
             />
+            {summary.investmentDeploymentBreakdown.length > 0 && (
+              <div className="border-t-2 border-border">
+                <div className="flex items-center justify-between px-4 pt-4">
+                  <div>
+                    <p className="text-sm font-medium">Deployed at broker</p>
+                    <p className="text-xs text-muted-foreground">
+                      Tracking only · not counted in budget
+                    </p>
+                  </div>
+                  <span className="tabular-nums text-sm font-semibold">
+                    {formatEuro(summary.investmentDeployments)}
+                  </span>
+                </div>
+                <BreakdownList
+                  items={summary.investmentDeploymentBreakdown}
+                  incomeTotal={summary.income}
+                />
+              </div>
+            )}
           </Card>
 
           <Card className="w-full md:col-span-2">
@@ -98,6 +128,7 @@ export default async function DashboardPage({
               incomeTotal={summary.income}
             />
           </Card>
+          </div>
         </div>
 
         {overBudget && (

@@ -7,8 +7,24 @@ export const DEFAULT_CATEGORIES = [
   { name: "Insurance", type: "expense" as const, icon: "shield" },
   { name: "Other", type: "expense" as const, icon: "dots-three" },
   { name: "Savings account", type: "savings" as const, icon: "piggy-bank" },
-  { name: "Brokerage DCA", type: "investment" as const, icon: "chart-line" },
-  { name: "PEA", type: "investment" as const, icon: "trend-up" },
+  {
+    name: "Broker transfer",
+    type: "investment" as const,
+    icon: "bank",
+    countsTowardSummary: true,
+  },
+  {
+    name: "CTO weekly DCA",
+    type: "investment" as const,
+    icon: "chart-line",
+    countsTowardSummary: false,
+  },
+  {
+    name: "PEA monthly DCA",
+    type: "investment" as const,
+    icon: "trend-up",
+    countsTowardSummary: false,
+  },
 ];
 
 export function formatEuro(amount: number): string {

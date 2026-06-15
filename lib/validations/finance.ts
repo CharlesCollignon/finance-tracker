@@ -7,13 +7,23 @@ export const transactionSchema = z.object({
   note: z.string().max(500).optional(),
 });
 
-export const recurringTemplateSchema = z.object({
+const recurringBaseSchema = z.object({
   id: z.string().uuid().optional(),
   categoryId: z.string().uuid(),
   amount: z.coerce.number().positive("Amount must be positive"),
-  dayOfMonth: z.coerce.number().int().min(1).max(31),
   active: z.boolean().optional(),
 });
+
+export const recurringTemplateSchema = z.discriminatedUnion("recurrence", [
+  recurringBaseSchema.extend({
+    recurrence: z.literal("monthly"),
+    dayOfMonth: z.coerce.number().int().min(1).max(31),
+  }),
+  recurringBaseSchema.extend({
+    recurrence: z.literal("weekly"),
+    dayOfWeek: z.coerce.number().int().min(1).max(7),
+  }),
+]);
 
 export const applyRecurringSchema = z.object({
   year: z.coerce.number().int().min(2000).max(2100),

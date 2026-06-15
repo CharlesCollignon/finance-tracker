@@ -23,6 +23,34 @@ export function TransactionForm({
   open,
   onOpenChange,
 }: TransactionFormProps) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <TransactionFormFields
+      key={defaultDate}
+      categories={categories}
+      defaultDate={defaultDate}
+      open={open}
+      onOpenChange={onOpenChange}
+    />
+  );
+}
+
+interface TransactionFormFieldsProps {
+  categories: Category[];
+  defaultDate: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+function TransactionFormFields({
+  categories,
+  defaultDate,
+  open,
+  onOpenChange,
+}: TransactionFormFieldsProps) {
   const { toast } = useToast();
   const [state, action, pending] = useActionState(createTransaction, {});
 

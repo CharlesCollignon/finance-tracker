@@ -1,5 +1,7 @@
 export type CategoryType = "income" | "expense" | "savings" | "investment";
 
+export type Recurrence = "monthly" | "weekly";
+
 export type Json =
   | string
   | number
@@ -18,6 +20,7 @@ export interface Database {
           name: string;
           type: CategoryType;
           icon: string | null;
+          counts_toward_summary: boolean;
           created_at: string;
         };
         Insert: {
@@ -26,6 +29,7 @@ export interface Database {
           name: string;
           type: CategoryType;
           icon?: string | null;
+          counts_toward_summary?: boolean;
           created_at?: string;
         };
         Update: {
@@ -34,6 +38,7 @@ export interface Database {
           name?: string;
           type?: CategoryType;
           icon?: string | null;
+          counts_toward_summary?: boolean;
           created_at?: string;
         };
         Relationships: [];
@@ -44,7 +49,9 @@ export interface Database {
           user_id: string;
           category_id: string;
           amount: number;
-          day_of_month: number;
+          day_of_month: number | null;
+          day_of_week: number | null;
+          recurrence: Recurrence;
           active: boolean;
           created_at: string;
         };
@@ -53,7 +60,9 @@ export interface Database {
           user_id: string;
           category_id: string;
           amount: number;
-          day_of_month: number;
+          day_of_month?: number | null;
+          day_of_week?: number | null;
+          recurrence?: Recurrence;
           active?: boolean;
           created_at?: string;
         };
@@ -62,7 +71,9 @@ export interface Database {
           user_id?: string;
           category_id?: string;
           amount?: number;
-          day_of_month?: number;
+          day_of_month?: number | null;
+          day_of_week?: number | null;
+          recurrence?: Recurrence;
           active?: boolean;
           created_at?: string;
         };
@@ -122,6 +133,7 @@ export interface Database {
     Functions: Record<string, never>;
     Enums: {
       category_type: CategoryType;
+      recurrence_type: Recurrence;
     };
     CompositeTypes: Record<string, never>;
   };
@@ -133,11 +145,14 @@ export type RecurringTemplate =
 export type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
 
 export type RecurringTemplateWithCategory = RecurringTemplate & {
-  categories: Pick<Category, "name" | "type" | "icon">;
+  categories: Pick<Category, "name" | "type" | "icon" | "counts_toward_summary">;
 };
 
 export type TransactionWithCategory = Transaction & {
-  categories: Pick<Category, "name" | "type" | "icon">;
+  categories: Pick<
+    Category,
+    "name" | "type" | "icon" | "counts_toward_summary"
+  >;
 };
 
 export interface CategoryBreakdown {
@@ -153,8 +168,10 @@ export interface MonthlySummary {
   expenses: number;
   savings: number;
   investments: number;
+  investmentDeployments: number;
   remaining: number;
   expenseBreakdown: CategoryBreakdown[];
   savingsBreakdown: CategoryBreakdown[];
   investmentBreakdown: CategoryBreakdown[];
+  investmentDeploymentBreakdown: CategoryBreakdown[];
 }

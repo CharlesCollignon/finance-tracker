@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
+import { getRecurringOccurrenceDates } from "@/lib/recurrence";
+import type { Database } from "@/lib/types/database";
 import {
   applyRecurringSchema,
   authSchema,
@@ -27,6 +29,11 @@ async function getUser() {
 
   return user;
 }
+
+type RecurringTemplateInsert =
+  Database["public"]["Tables"]["recurring_templates"]["Insert"];
+type RecurringTemplateUpdate =
+  Database["public"]["Tables"]["recurring_templates"]["Update"];
 
 export async function signUp(
   _prev: ActionResult,
@@ -170,7 +177,9 @@ export async function upsertRecurringTemplate(
     id: formData.get("id") || undefined,
     categoryId: formData.get("categoryId"),
     amount: formData.get("amount"),
-    dayOfMonth: formData.get("dayOfMonth"),
+    recurrence: formData.get("recurrence"),
+    dayOfMonth: formData.get("dayOfMonth") || undefined,
+    dayOfWeek: formData.get("dayOfWeek") || undefined,
     active: formData.get("active") === "true",
   });
 
@@ -179,18 +188,31 @@ export async function upsertRecurringTemplate(
   }
 
   const supabase = await createClient();
-  const payload = {
-    user_id: user.id,
+  const base = {
     category_id: parsed.data.categoryId,
     amount: parsed.data.amount,
-    day_of_month: parsed.data.dayOfMonth,
     active: parsed.data.active ?? true,
   };
 
   if (parsed.data.id) {
+    const updatePayload: RecurringTemplateUpdate =
+      parsed.data.recurrence === "monthly"
+        ? {
+            ...base,
+            recurrence: "monthly",
+            day_of_month: parsed.data.dayOfMonth,
+            day_of_week: null,
+          }
+        : {
+            ...base,
+            recurrence: "weekly",
+            day_of_month: null,
+            day_of_week: parsed.data.dayOfWeek,
+          };
+
     const { error } = await supabase
       .from("recurring_templates")
-      .update(payload)
+      .update(updatePayload)
       .eq("id", parsed.data.id)
       .eq("user_id", user.id);
 
@@ -198,13 +220,54 @@ export async function upsertRecurringTemplate(
       return { error: error.message };
     }
   } else {
+    const insertPayload: RecurringTemplateInsert =
+      parsed.data.recurrence === "monthly"
+        ? {
+            user_id: user.id,
+            ...base,
+            recurrence: "monthly",
+            day_of_month: parsed.data.dayOfMonth,
+            day_of_week: null,
+          }
+        : {
+            user_id: user.id,
+            ...base,
+            recurrence: "weekly",
+            day_of_month: null,
+            day_of_week: parsed.data.dayOfWeek,
+          };
+
     const { error } = await supabase
       .from("recurring_templates")
-      .insert(payload);
+      .insert(insertPayload);
 
     if (error) {
       return { error: error.message };
     }
+  }
+
+  revalidatePath("/recurring");
+  revalidatePath("/transactions");
+  return { success: true };
+}
+
+export async function deleteRecurringTemplate(
+  id: string,
+): Promise<ActionResult> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("recurring_templates")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { error: error.message };
   }
 
   revalidatePath("/recurring");
@@ -262,37 +325,44 @@ export async function applyRecurringForMonth(
     return { error: tplError.message };
   }
 
-  const lastDay = new Date(year, month, 0).getDate();
   let created = 0;
 
   for (const template of templates ?? []) {
-    const day = Math.min(template.day_of_month, lastDay);
-    const occurredOn = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const occurrenceDates = getRecurringOccurrenceDates(
+      {
+        recurrence: template.recurrence ?? "monthly",
+        day_of_month: template.day_of_month,
+        day_of_week: template.day_of_week,
+      },
+      year,
+      month,
+    );
 
-    const { data: existing } = await supabase
-      .from("transactions")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("recurring_template_id", template.id)
-      .gte("occurred_on", `${year}-${String(month).padStart(2, "0")}-01`)
-      .lte("occurred_on", `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`)
-      .maybeSingle();
+    for (const occurredOn of occurrenceDates) {
+      const { data: existing } = await supabase
+        .from("transactions")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("recurring_template_id", template.id)
+        .eq("occurred_on", occurredOn)
+        .maybeSingle();
 
-    if (existing) {
-      continue;
-    }
+      if (existing) {
+        continue;
+      }
 
-    const { error } = await supabase.from("transactions").insert({
-      user_id: user.id,
-      category_id: template.category_id,
-      recurring_template_id: template.id,
-      occurred_on: occurredOn,
-      amount: template.amount,
-      note: "Recurring",
-    });
+      const { error } = await supabase.from("transactions").insert({
+        user_id: user.id,
+        category_id: template.category_id,
+        recurring_template_id: template.id,
+        occurred_on: occurredOn,
+        amount: template.amount,
+        note: "Recurring",
+      });
 
-    if (!error) {
-      created += 1;
+      if (!error) {
+        created += 1;
+      }
     }
   }
 

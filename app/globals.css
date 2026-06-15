@@ -50,6 +50,11 @@
   --destructive: #e63946;
   --destructive-foreground: #fff;
   --border: #000;
+  --chart-1: #ffdb33;
+  --chart-2: #e63946;
+  --chart-3: #457b9d;
+  --chart-4: #2a9d8f;
+  --chart-5: #f4a261;
 }
 
 body {
