@@ -1,0 +1,98 @@
+"use client";
+
+import { useActionState, useEffect } from "react";
+import { Button } from "@/components/retroui/Button";
+import { Input } from "@/components/retroui/Input";
+import { FormLabel } from "@/components/layout/FormLabel";
+import { Text } from "@/components/retroui/Text";
+import { MobileSheet } from "@/components/layout/MobileSheet";
+import { createTransaction } from "@/lib/actions/finance";
+import type { Category } from "@/lib/types/database";
+
+interface TransactionFormProps {
+  categories: Category[];
+  defaultDate: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function TransactionForm({
+  categories,
+  defaultDate,
+  open,
+  onOpenChange,
+}: TransactionFormProps) {
+  const [state, action, pending] = useActionState(createTransaction, {});
+
+  useEffect(() => {
+    if (state.success) {
+      onOpenChange(false);
+    }
+  }, [state.success, onOpenChange]);
+
+  return (
+    <MobileSheet open={open} onOpenChange={onOpenChange} title="Add transaction">
+      <form action={action} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <FormLabel htmlFor="categoryId">Category</FormLabel>
+          <select
+            id="categoryId"
+            name="categoryId"
+            required
+            className="h-11 w-full rounded border-2 border-border px-3 text-base shadow-md"
+            defaultValue=""
+          >
+            <option value="" disabled>
+              Select category
+            </option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name} ({cat.type})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-2">
+          <FormLabel htmlFor="amount">Amount (EUR)</FormLabel>
+          <Input
+            id="amount"
+            name="amount"
+            type="number"
+            step="0.01"
+            min="0.01"
+            required
+            className="text-base"
+            placeholder="0.00"
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <FormLabel htmlFor="occurredOn">Date</FormLabel>
+          <Input
+            id="occurredOn"
+            name="occurredOn"
+            type="date"
+            required
+            defaultValue={defaultDate}
+            className="text-base"
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <FormLabel htmlFor="note">Note (optional)</FormLabel>
+          <Input
+            id="note"
+            name="note"
+            type="text"
+            className="text-base"
+            placeholder="Description"
+          />
+        </div>
+        {state.error && (
+          <Text className="text-sm text-destructive">{state.error}</Text>
+        )}
+        <Button type="submit" size="lg" className="w-full" disabled={pending}>
+          {pending ? "Saving…" : "Save transaction"}
+        </Button>
+      </form>
+    </MobileSheet>
+  );
+}
