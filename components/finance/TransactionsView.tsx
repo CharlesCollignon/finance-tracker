@@ -11,6 +11,7 @@ import { MonthPicker } from "@/components/layout/MonthPicker";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import { useToast } from "@/components/layout/ToastProvider";
 import { CategoryTypeBadge } from "@/components/finance/CategoryTypeBadge";
+import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { Badge } from "@/components/retroui/Badge";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { formatEuro } from "@/lib/constants";
@@ -292,6 +293,7 @@ export function TransactionsView({
                   {group.items.map((tx) => (
                     <li key={tx.id}>
                       <Card className="flex w-full items-center gap-3 p-3 transition-colors hover:bg-accent/30 sm:p-4">
+                        <CategoryIcon icon={tx.categories.icon} />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="truncate font-medium">

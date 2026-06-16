@@ -10,6 +10,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import { RecurringForm } from "@/components/finance/RecurringForm";
+import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { formatEuro } from "@/lib/constants";
 import {
   estimateMonthlyAmount,
@@ -116,6 +117,7 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                             onClick={() => openEdit(template)}
                             className="flex min-w-0 flex-1 items-center gap-3 text-left"
                           >
+                            <CategoryIcon icon={template.categories.icon} />
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-medium">
                                 {template.categories.name}

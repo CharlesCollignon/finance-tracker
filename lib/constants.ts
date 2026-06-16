@@ -5,6 +5,7 @@ export const DEFAULT_CATEGORIES = [
   { name: "Condo fees", type: "expense" as const, icon: "buildings" },
   { name: "Loan repayment", type: "expense" as const, icon: "bank" },
   { name: "Insurance", type: "expense" as const, icon: "shield" },
+  { name: "Groceries", type: "expense" as const, icon: "shopping-cart" },
   { name: "Other", type: "expense" as const, icon: "dots-three" },
   { name: "Savings account", type: "savings" as const, icon: "piggy-bank" },
   {
@@ -23,6 +24,12 @@ export const DEFAULT_CATEGORIES = [
     name: "PEA monthly DCA",
     type: "investment" as const,
     icon: "trend-up",
+    countsTowardSummary: false,
+  },
+  {
+    name: "Bitstack weekly DCA",
+    type: "investment" as const,
+    icon: "currency-btc",
     countsTowardSummary: false,
   },
 ];
