@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { getMonthBounds } from "@/lib/constants";
+import {
+  buildBudgetExpenseBreakdown,
+  computeMonthlyBudget,
+} from "@/lib/budget";
 import type {
   CategoryBreakdown,
   MonthlySummary,
@@ -74,7 +78,10 @@ export async function getMonthlySummary(
   year: number,
   month: number,
 ): Promise<MonthlySummary> {
-  const transactions = await getTransactions(userId, year, month);
+  const [transactions, recurringTemplates] = await Promise.all([
+    getTransactions(userId, year, month),
+    getRecurringTemplates(userId),
+  ]);
 
   const byType = {
     income: [] as typeof transactions,
@@ -96,20 +103,23 @@ export async function getMonthlySummary(
   const sum = (rows: typeof transactions) =>
     rows.reduce((acc, row) => acc + Number(row.amount), 0);
 
+  const budget = computeMonthlyBudget(transactions, recurringTemplates);
   const income = sum(byType.income);
-  const expenses = sum(byType.expense);
   const savings = sum(byType.savings);
   const investments = sum(byType.investment);
   const investmentDeployments = sum(byType.investmentDeployment);
 
   return {
     income,
-    expenses,
+    expenses: budget.expense,
     savings,
     investments,
     investmentDeployments,
-    remaining: income - expenses - savings - investments,
-    expenseBreakdown: buildBreakdown(byType.expense),
+    remaining: budget.net,
+    expenseBreakdown: buildBudgetExpenseBreakdown(
+      transactions,
+      recurringTemplates,
+    ),
     savingsBreakdown: buildBreakdown(byType.savings),
     investmentBreakdown: buildBreakdown(byType.investment),
     investmentDeploymentBreakdown: buildBreakdown(

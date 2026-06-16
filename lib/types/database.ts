@@ -1,6 +1,6 @@
 export type CategoryType = "income" | "expense" | "savings" | "investment";
 
-export type Recurrence = "monthly" | "weekly";
+export type Recurrence = "monthly" | "weekly" | "yearly";
 
 export type Json =
   | string
@@ -51,6 +51,7 @@ export interface Database {
           amount: number;
           day_of_month: number | null;
           day_of_week: number | null;
+          month_of_year: number | null;
           recurrence: Recurrence;
           active: boolean;
           created_at: string;
@@ -62,6 +63,7 @@ export interface Database {
           amount: number;
           day_of_month?: number | null;
           day_of_week?: number | null;
+          month_of_year?: number | null;
           recurrence?: Recurrence;
           active?: boolean;
           created_at?: string;
@@ -73,6 +75,7 @@ export interface Database {
           amount?: number;
           day_of_month?: number | null;
           day_of_week?: number | null;
+          month_of_year?: number | null;
           recurrence?: Recurrence;
           active?: boolean;
           created_at?: string;

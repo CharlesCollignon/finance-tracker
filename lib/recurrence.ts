@@ -1,4 +1,4 @@
-export type Recurrence = "monthly" | "weekly";
+export type Recurrence = "monthly" | "weekly" | "yearly";
 
 export const DAY_OF_WEEK_LABELS: Record<number, string> = {
   1: "Monday",
@@ -8,6 +8,21 @@ export const DAY_OF_WEEK_LABELS: Record<number, string> = {
   5: "Friday",
   6: "Saturday",
   7: "Sunday",
+};
+
+export const MONTH_LABELS: Record<number, string> = {
+  1: "January",
+  2: "February",
+  3: "March",
+  4: "April",
+  5: "May",
+  6: "June",
+  7: "July",
+  8: "August",
+  9: "September",
+  10: "October",
+  11: "November",
+  12: "December",
 };
 
 /** ISO weekday: Monday = 1 … Sunday = 7 */
@@ -41,9 +56,15 @@ export function formatRecurrenceSchedule(template: {
   recurrence: Recurrence;
   day_of_month: number | null;
   day_of_week: number | null;
+  month_of_year: number | null;
 }): string {
   if (template.recurrence === "weekly" && template.day_of_week) {
     return `Weekly · ${DAY_OF_WEEK_LABELS[template.day_of_week]}`;
+  }
+
+  if (template.recurrence === "yearly" && template.month_of_year) {
+    const month = MONTH_LABELS[template.month_of_year];
+    return `Yearly · ${month} ${template.day_of_month ?? 1}`;
   }
 
   return `Monthly · day ${template.day_of_month ?? 1}`;
@@ -55,6 +76,7 @@ export function estimateMonthlyAmount(
     amount: number;
     day_of_month?: number | null;
     day_of_week?: number | null;
+    month_of_year?: number | null;
   },
   year?: number,
   month?: number,
@@ -63,6 +85,10 @@ export function estimateMonthlyAmount(
   const y = year ?? now.getFullYear();
   const m = month ?? now.getMonth() + 1;
   const amount = Number(template.amount);
+
+  if (template.recurrence === "yearly") {
+    return amount / 12;
+  }
 
   if (template.recurrence === "weekly" && template.day_of_week) {
     return amount * getWeeklyDatesInMonth(y, m, template.day_of_week).length;
@@ -76,12 +102,26 @@ export function getRecurringOccurrenceDates(
     recurrence: Recurrence;
     day_of_month: number | null;
     day_of_week: number | null;
+    month_of_year: number | null;
   },
   year: number,
   month: number,
 ): string[] {
   if (template.recurrence === "weekly" && template.day_of_week) {
     return getWeeklyDatesInMonth(year, month, template.day_of_week);
+  }
+
+  if (template.recurrence === "yearly") {
+    if (template.month_of_year !== month) {
+      return [];
+    }
+
+    const lastDay = new Date(year, month, 0).getDate();
+    const day = Math.min(template.day_of_month ?? 1, lastDay);
+
+    return [
+      `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+    ];
   }
 
   const lastDay = new Date(year, month, 0).getDate();

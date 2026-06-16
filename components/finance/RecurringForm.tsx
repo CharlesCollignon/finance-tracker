@@ -11,7 +11,7 @@ import {
   deleteRecurringTemplate,
   upsertRecurringTemplate,
 } from "@/lib/actions/finance";
-import { DAY_OF_WEEK_LABELS } from "@/lib/recurrence";
+import { DAY_OF_WEEK_LABELS, MONTH_LABELS } from "@/lib/recurrence";
 import { cn } from "@/lib/utils";
 import type {
   Category,
@@ -99,6 +99,8 @@ function RecurringFormFields({
   const isDeploymentCategory =
     selectedCategory?.type === "investment" &&
     selectedCategory.counts_toward_summary === false;
+  const isYearlyExpense =
+    recurrence === "yearly" && selectedCategory?.type === "expense";
 
   return (
     <MobileSheet
@@ -144,7 +146,9 @@ function RecurringFormFields({
           )}
         </div>
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="recurring-amount">Amount (EUR)</FormLabel>
+          <FormLabel htmlFor="recurring-amount">
+            {recurrence === "yearly" ? "Annual amount (EUR)" : "Amount (EUR)"}
+          </FormLabel>
           <Input
             id="recurring-amount"
             name="amount"
@@ -158,8 +162,8 @@ function RecurringFormFields({
         </div>
         <div className="flex flex-col gap-2">
           <span className="text-sm font-medium">Schedule</span>
-          <div className="grid grid-cols-2 gap-2">
-            {(["monthly", "weekly"] as const).map((value) => (
+          <div className="grid grid-cols-3 gap-2">
+            {(["monthly", "weekly", "yearly"] as const).map((value) => (
               <button
                 key={value}
                 type="button"
@@ -175,6 +179,12 @@ function RecurringFormFields({
               </button>
             ))}
           </div>
+          {isYearlyExpense && (
+            <Text className="text-xs text-muted-foreground">
+              Counts as a monthly share in your budget (annual ÷ 12). The full
+              payment is recorded once in the due month.
+            </Text>
+          )}
         </div>
         {recurrence === "monthly" ? (
           <div className="flex flex-col gap-2">
@@ -190,7 +200,7 @@ function RecurringFormFields({
               defaultValue={template?.day_of_month ?? 1}
             />
           </div>
-        ) : (
+        ) : recurrence === "weekly" ? (
           <div className="flex flex-col gap-2">
             <FormLabel htmlFor="dayOfWeek">Day of week</FormLabel>
             <select
@@ -207,6 +217,38 @@ function RecurringFormFields({
               ))}
             </select>
           </div>
+        ) : (
+          <>
+            <div className="flex flex-col gap-2">
+              <FormLabel htmlFor="monthOfYear">Month</FormLabel>
+              <select
+                id="monthOfYear"
+                name="monthOfYear"
+                required
+                className="h-11 w-full rounded border-2 border-border bg-background px-3 text-base text-foreground shadow-md"
+                defaultValue={template?.month_of_year ?? 10}
+              >
+                {Object.entries(MONTH_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <FormLabel htmlFor="dayOfMonth">Day of month</FormLabel>
+              <Input
+                id="dayOfMonth"
+                name="dayOfMonth"
+                type="number"
+                min="1"
+                max="31"
+                required
+                className="text-base"
+                defaultValue={template?.day_of_month ?? 15}
+              />
+            </div>
+          </>
         )}
         {state.error && (
           <Text className="text-sm text-destructive">{state.error}</Text>

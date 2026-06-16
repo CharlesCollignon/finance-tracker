@@ -23,6 +23,11 @@ export const recurringTemplateSchema = z.discriminatedUnion("recurrence", [
     recurrence: z.literal("weekly"),
     dayOfWeek: z.coerce.number().int().min(1).max(7),
   }),
+  recurringBaseSchema.extend({
+    recurrence: z.literal("yearly"),
+    monthOfYear: z.coerce.number().int().min(1).max(12),
+    dayOfMonth: z.coerce.number().int().min(1).max(31),
+  }),
 ]);
 
 export const applyRecurringSchema = z.object({

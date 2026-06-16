@@ -180,6 +180,7 @@ export async function upsertRecurringTemplate(
     recurrence: formData.get("recurrence"),
     dayOfMonth: formData.get("dayOfMonth") || undefined,
     dayOfWeek: formData.get("dayOfWeek") || undefined,
+    monthOfYear: formData.get("monthOfYear") || undefined,
     active: formData.get("active") === "true",
   });
 
@@ -187,55 +188,70 @@ export async function upsertRecurringTemplate(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
+  const data = parsed.data;
   const supabase = await createClient();
   const base = {
-    category_id: parsed.data.categoryId,
-    amount: parsed.data.amount,
-    active: parsed.data.active ?? true,
+    category_id: data.categoryId,
+    amount: data.amount,
+    active: data.active ?? true,
   };
 
-  if (parsed.data.id) {
-    const updatePayload: RecurringTemplateUpdate =
-      parsed.data.recurrence === "monthly"
-        ? {
-            ...base,
-            recurrence: "monthly",
-            day_of_month: parsed.data.dayOfMonth,
-            day_of_week: null,
-          }
-        : {
-            ...base,
-            recurrence: "weekly",
-            day_of_month: null,
-            day_of_week: parsed.data.dayOfWeek,
-          };
+  function buildSchedulePayload():
+    | Pick<
+        RecurringTemplateInsert,
+        "recurrence" | "day_of_month" | "day_of_week" | "month_of_year"
+      >
+    | Pick<
+        RecurringTemplateUpdate,
+        "recurrence" | "day_of_month" | "day_of_week" | "month_of_year"
+      > {
+    if (data.recurrence === "monthly") {
+      return {
+        recurrence: "monthly",
+        day_of_month: data.dayOfMonth,
+        day_of_week: null,
+        month_of_year: null,
+      };
+    }
+
+    if (data.recurrence === "weekly") {
+      return {
+        recurrence: "weekly",
+        day_of_month: null,
+        day_of_week: data.dayOfWeek,
+        month_of_year: null,
+      };
+    }
+
+    return {
+      recurrence: "yearly",
+      month_of_year: data.monthOfYear,
+      day_of_month: data.dayOfMonth,
+      day_of_week: null,
+    };
+  }
+
+  if (data.id) {
+    const updatePayload: RecurringTemplateUpdate = {
+      ...base,
+      ...buildSchedulePayload(),
+    };
 
     const { error } = await supabase
       .from("recurring_templates")
       .update(updatePayload)
-      .eq("id", parsed.data.id)
+      .eq("id", data.id)
       .eq("user_id", user.id);
 
     if (error) {
       return { error: error.message };
     }
   } else {
-    const insertPayload: RecurringTemplateInsert =
-      parsed.data.recurrence === "monthly"
-        ? {
-            user_id: user.id,
-            ...base,
-            recurrence: "monthly",
-            day_of_month: parsed.data.dayOfMonth,
-            day_of_week: null,
-          }
-        : {
-            user_id: user.id,
-            ...base,
-            recurrence: "weekly",
-            day_of_month: null,
-            day_of_week: parsed.data.dayOfWeek,
-          };
+    const insertPayload: RecurringTemplateInsert = {
+      user_id: user.id,
+      ...base,
+      ...buildSchedulePayload(),
+    };
 
     const { error } = await supabase
       .from("recurring_templates")
@@ -248,6 +264,7 @@ export async function upsertRecurringTemplate(
 
   revalidatePath("/recurring");
   revalidatePath("/transactions");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -333,6 +350,7 @@ export async function applyRecurringForMonth(
         recurrence: template.recurrence ?? "monthly",
         day_of_month: template.day_of_month,
         day_of_week: template.day_of_week,
+        month_of_year: template.month_of_year,
       },
       year,
       month,

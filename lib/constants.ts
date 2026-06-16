@@ -6,6 +6,7 @@ export const DEFAULT_CATEGORIES = [
   { name: "Loan repayment", type: "expense" as const, icon: "bank" },
   { name: "Insurance", type: "expense" as const, icon: "shield" },
   { name: "Groceries", type: "expense" as const, icon: "shopping-cart" },
+  { name: "Taxe Foncière", type: "expense" as const, icon: "house" },
   { name: "Other", type: "expense" as const, icon: "dots-three" },
   { name: "Savings account", type: "savings" as const, icon: "piggy-bank" },
   {

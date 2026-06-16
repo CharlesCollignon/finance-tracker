@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCategories, seedDefaultCategories } from "@/lib/queries/categories";
-import { getTransactions } from "@/lib/queries/finance";
+import { getRecurringTemplates, getTransactions } from "@/lib/queries/finance";
 import { parseMonthParams } from "@/lib/constants";
 import { TransactionsView } from "@/components/finance/TransactionsView";
 
@@ -26,9 +26,10 @@ export default async function TransactionsPage({
 
   const params = await searchParams;
   const { year, month } = parseMonthParams(params.y, params.m);
-  const [transactions, categories] = await Promise.all([
+  const [transactions, categories, recurringTemplates] = await Promise.all([
     getTransactions(user.id, year, month),
     getCategories(user.id),
+    getRecurringTemplates(user.id),
   ]);
 
   const defaultDate = `${year}-${String(month).padStart(2, "0")}-01`;
@@ -38,6 +39,7 @@ export default async function TransactionsPage({
       <TransactionsView
         transactions={transactions}
         categories={categories}
+        recurringTemplates={recurringTemplates}
         year={year}
         month={month}
         defaultDate={defaultDate}

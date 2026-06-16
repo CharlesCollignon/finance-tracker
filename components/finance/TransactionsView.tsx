@@ -15,6 +15,7 @@ import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { Badge } from "@/components/retroui/Badge";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { formatEuro } from "@/lib/constants";
+import { computeMonthlyBudget, yearlyExpenseTemplateIds } from "@/lib/budget";
 import { CATEGORY_TYPE_LABELS } from "@/lib/category-styles";
 import { cn } from "@/lib/utils";
 import {
@@ -24,6 +25,7 @@ import {
 import type {
   Category,
   CategoryType,
+  RecurringTemplateWithCategory,
   TransactionWithCategory,
 } from "@/lib/types/database";
 
@@ -40,6 +42,7 @@ const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
 interface TransactionsViewProps {
   transactions: TransactionWithCategory[];
   categories: Category[];
+  recurringTemplates: RecurringTemplateWithCategory[];
   year: number;
   month: number;
   defaultDate: string;
@@ -93,48 +96,27 @@ function countsTowardSummary(tx: TransactionWithCategory): boolean {
   return tx.categories.counts_toward_summary !== false;
 }
 
-function computeTotals(transactions: TransactionWithCategory[]) {
-  const totals = {
-    income: 0,
-    expense: 0,
-    savings: 0,
-    investment: 0,
-    deployed: 0,
-  };
-
-  for (const tx of transactions) {
-    const amount = Number(tx.amount);
-
-    if (tx.categories.type === "income") {
-      totals.income += amount;
-      continue;
-    }
-
-    if (
-      tx.categories.type === "investment" &&
-      !countsTowardSummary(tx)
-    ) {
-      totals.deployed += amount;
-      continue;
-    }
-
-    if (countsTowardSummary(tx)) {
-      totals[tx.categories.type] += amount;
-    }
-  }
-
-  const outflow = totals.expense + totals.savings + totals.investment;
+function computeTotals(
+  transactions: TransactionWithCategory[],
+  recurringTemplates: RecurringTemplateWithCategory[],
+) {
+  const budget = computeMonthlyBudget(transactions, recurringTemplates);
 
   return {
-    ...totals,
-    outflow,
-    net: totals.income - outflow,
+    income: budget.income,
+    expense: budget.expense,
+    savings: budget.savings,
+    investment: budget.investment,
+    deployed: budget.deployed,
+    outflow: budget.outflow,
+    net: budget.net,
   };
 }
 
 export function TransactionsView({
   transactions,
   categories,
+  recurringTemplates,
   year,
   month,
   defaultDate,
@@ -145,7 +127,15 @@ export function TransactionsView({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const totals = useMemo(() => computeTotals(transactions), [transactions]);
+  const yearlyIds = useMemo(
+    () => yearlyExpenseTemplateIds(recurringTemplates),
+    [recurringTemplates],
+  );
+
+  const totals = useMemo(
+    () => computeTotals(transactions, recurringTemplates),
+    [transactions, recurringTemplates],
+  );
 
   const filtered = useMemo(() => {
     if (filter === "all") {
@@ -305,6 +295,12 @@ export function TransactionsView({
                                 Tracking
                               </Badge>
                             )}
+                            {tx.recurring_template_id &&
+                              yearlyIds.has(tx.recurring_template_id) && (
+                                <Badge size="sm" variant="outline">
+                                  Annual payment
+                                </Badge>
+                              )}
                           </div>
                           {tx.note && (
                             <p className="mt-0.5 truncate text-sm text-muted-foreground">
