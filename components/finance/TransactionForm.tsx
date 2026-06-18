@@ -7,6 +7,7 @@ import { FormLabel } from "@/components/layout/FormLabel";
 import { Text } from "@/components/retroui/Text";
 import { useToast } from "@/components/layout/ToastProvider";
 import { MobileSheet } from "@/components/layout/MobileSheet";
+import { CategorySelect } from "@/components/finance/CategorySelect";
 import { createTransaction } from "@/lib/actions/finance";
 import type { Category } from "@/lib/types/database";
 
@@ -68,22 +69,12 @@ function TransactionFormFields({
       <form action={action} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="categoryId">Category</FormLabel>
-          <select
+          <CategorySelect
             id="categoryId"
-            name="categoryId"
+            categories={categories}
             required
-            className="h-11 w-full rounded border-2 border-border bg-background px-3 text-base text-foreground shadow-md"
             defaultValue=""
-          >
-            <option value="" disabled>
-              Select category
-            </option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name} ({cat.type})
-              </option>
-            ))}
-          </select>
+          />
         </div>
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="amount">Amount (EUR)</FormLabel>

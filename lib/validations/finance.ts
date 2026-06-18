@@ -11,6 +11,10 @@ const recurringBaseSchema = z.object({
   id: z.string().uuid().optional(),
   categoryId: z.string().uuid(),
   amount: z.coerce.number().positive("Amount must be positive"),
+  description: z
+    .string()
+    .max(500, "Description must be 500 characters or less")
+    .optional(),
   active: z.boolean().optional(),
 });
 

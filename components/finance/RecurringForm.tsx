@@ -11,6 +11,7 @@ import {
   deleteRecurringTemplate,
   upsertRecurringTemplate,
 } from "@/lib/actions/finance";
+import { CategorySelect } from "@/components/finance/CategorySelect";
 import { DAY_OF_WEEK_LABELS, MONTH_LABELS } from "@/lib/recurrence";
 import { cn } from "@/lib/utils";
 import type {
@@ -118,32 +119,34 @@ function RecurringFormFields({
         />
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="recurring-category">Category</FormLabel>
-          <select
+          <CategorySelect
             id="recurring-category"
-            name="categoryId"
-            required
-            className="h-11 w-full rounded border-2 border-border bg-background px-3 text-base text-foreground shadow-md"
+            categories={categories}
+            excludeTypes={["income"]}
             value={categoryId}
             onChange={(event) => setCategoryId(event.target.value)}
-          >
-            <option value="" disabled>
-              Select category
-            </option>
-            {allocCategories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name} ({cat.type})
-                {cat.type === "investment" && !cat.counts_toward_summary
-                  ? " · tracking"
-                  : ""}
-              </option>
-            ))}
-          </select>
+            required
+          />
           {isDeploymentCategory && (
             <Text className="text-xs text-muted-foreground">
               Broker DCA entries are tracked for visibility but do not reduce
               your remaining budget.
             </Text>
           )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <FormLabel htmlFor="recurring-description">
+            Description (optional)
+          </FormLabel>
+          <Input
+            id="recurring-description"
+            name="description"
+            type="text"
+            maxLength={500}
+            className="text-base"
+            defaultValue={template?.description ?? ""}
+            placeholder="e.g. Netflix, gym membership, CTO DCA"
+          />
         </div>
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="recurring-amount">

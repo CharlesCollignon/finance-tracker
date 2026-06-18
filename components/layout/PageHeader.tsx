@@ -24,9 +24,9 @@ export function PageHeader({ title, children, className }: PageHeaderProps) {
         )}
       >
         <h1 className="font-head text-lg md:text-xl">{title}</h1>
-        {children && (
-          <div className="flex shrink-0 items-center gap-2">{children}</div>
-        )}
+        <div className="flex min-h-11 shrink-0 items-center justify-end gap-2">
+          {children}
+        </div>
       </div>
     </header>
   );

@@ -54,6 +54,7 @@ export interface Database {
           month_of_year: number | null;
           recurrence: Recurrence;
           active: boolean;
+          description: string | null;
           created_at: string;
         };
         Insert: {
@@ -66,6 +67,7 @@ export interface Database {
           month_of_year?: number | null;
           recurrence?: Recurrence;
           active?: boolean;
+          description?: string | null;
           created_at?: string;
         };
         Update: {
@@ -78,6 +80,7 @@ export interface Database {
           month_of_year?: number | null;
           recurrence?: Recurrence;
           active?: boolean;
+          description?: string | null;
           created_at?: string;
         };
         Relationships: [

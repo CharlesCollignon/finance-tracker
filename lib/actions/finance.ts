@@ -177,6 +177,7 @@ export async function upsertRecurringTemplate(
     id: formData.get("id") || undefined,
     categoryId: formData.get("categoryId"),
     amount: formData.get("amount"),
+    description: formData.get("description") || undefined,
     recurrence: formData.get("recurrence"),
     dayOfMonth: formData.get("dayOfMonth") || undefined,
     dayOfWeek: formData.get("dayOfWeek") || undefined,
@@ -194,6 +195,7 @@ export async function upsertRecurringTemplate(
     category_id: data.categoryId,
     amount: data.amount,
     active: data.active ?? true,
+    description: data.description?.trim() || null,
   };
 
   function buildSchedulePayload():
@@ -375,7 +377,7 @@ export async function applyRecurringForMonth(
         recurring_template_id: template.id,
         occurred_on: occurredOn,
         amount: template.amount,
-        note: "Recurring",
+        note: template.description?.trim() || null,
       });
 
       if (!error) {

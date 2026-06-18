@@ -122,6 +122,11 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                               <p className="truncate text-sm font-medium">
                                 {template.categories.name}
                               </p>
+                              {template.description && (
+                                <p className="truncate text-xs text-muted-foreground/70">
+                                  {template.description}
+                                </p>
+                              )}
                               <p className="text-xs text-muted-foreground">
                                 {formatRecurrenceSchedule(template)}
                               </p>
