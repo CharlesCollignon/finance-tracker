@@ -3,6 +3,7 @@
 @theme {
   --font-head: var(--font-head);
   --font-sans: var(--font-sans);
+  --font-logo: var(--font-logo);
   --radius: var(--radius);
 
   --shadow-xs: 1px 1px 0 0 var(--border);
@@ -77,6 +78,11 @@ body {
 
 .font-head {
   font-family: var(--font-head), system-ui, sans-serif;
+}
+
+.font-logo {
+  font-family: var(--font-logo), system-ui, sans-serif;
+  font-variation-settings: "EDPT" 100, "EHLT" 12;
 }
 
 .pb-safe {

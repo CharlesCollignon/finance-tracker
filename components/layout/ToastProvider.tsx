@@ -39,9 +39,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         className={cn(
-          "pointer-events-none fixed inset-x-0 top-0 z-[100]",
-          "flex flex-col items-center gap-2 p-4 pt-safe",
-          "md:items-end md:pr-6",
+          "pointer-events-none fixed z-[100]",
+          "inset-x-0 top-0 flex flex-col items-center gap-2",
+          "p-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)]",
+          "md:inset-x-auto md:inset-y-auto md:bottom-6 md:right-6 md:top-auto",
+          "md:items-end md:p-0",
         )}
         aria-live="polite"
       >

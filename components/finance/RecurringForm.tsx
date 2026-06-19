@@ -12,13 +12,18 @@ import {
   upsertRecurringTemplate,
 } from "@/lib/actions/finance";
 import { CategorySelect } from "@/components/finance/CategorySelect";
+import { InstrumentSearch } from "@/components/finance/InstrumentSearch";
+import { estimateSharesAmountAction } from "@/lib/actions/market";
+import { formatEuro } from "@/lib/constants";
 import { DAY_OF_WEEK_LABELS, MONTH_LABELS } from "@/lib/recurrence";
 import { cn } from "@/lib/utils";
 import type {
   Category,
+  PricingType,
   Recurrence,
   RecurringTemplateWithCategory,
 } from "@/lib/types/database";
+import type { InstrumentSearchResult } from "@/lib/market/yahoo";
 
 interface RecurringFormProps {
   categories: Category[];
@@ -69,6 +74,24 @@ function RecurringFormFields({
     template?.recurrence ?? "monthly",
   );
   const [categoryId, setCategoryId] = useState(template?.category_id ?? "");
+  const [pricingType, setPricingType] = useState<PricingType>(
+    template?.pricing_type ?? "fixed",
+  );
+  const [instrumentSymbol, setInstrumentSymbol] = useState(
+    template?.instrument_symbol ?? "",
+  );
+  const [instrumentName, setInstrumentName] = useState(
+    template?.instrument_name ?? "",
+  );
+  const [shareCount, setShareCount] = useState(
+    template?.share_count ? String(template.share_count) : "1",
+  );
+  const [estimate, setEstimate] = useState<{
+    amount: number;
+    price: number;
+  } | null>(null);
+  const [estimateError, setEstimateError] = useState<string | null>(null);
+  const [estimateLoading, setEstimateLoading] = useState(false);
 
   useEffect(() => {
     if (state.success) {
@@ -102,6 +125,48 @@ function RecurringFormFields({
     selectedCategory.counts_toward_summary === false;
   const isYearlyExpense =
     recurrence === "yearly" && selectedCategory?.type === "expense";
+  const supportsShares = selectedCategory?.type === "investment";
+
+  useEffect(() => {
+    if (!supportsShares && pricingType === "shares") {
+      setPricingType("fixed");
+    }
+  }, [supportsShares, pricingType]);
+
+  useEffect(() => {
+    if (pricingType !== "shares" || !instrumentSymbol) {
+      setEstimate(null);
+      setEstimateError(null);
+      return;
+    }
+
+    const parsedShares = Number(shareCount);
+    if (!Number.isInteger(parsedShares) || parsedShares <= 0) {
+      setEstimate(null);
+      setEstimateError("Enter a whole number of shares");
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setEstimateLoading(true);
+      const response = await estimateSharesAmountAction(
+        instrumentSymbol,
+        parsedShares,
+      );
+
+      if ("error" in response) {
+        setEstimate(null);
+        setEstimateError(response.error);
+      } else {
+        setEstimate(response.data);
+        setEstimateError(null);
+      }
+
+      setEstimateLoading(false);
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [pricingType, instrumentSymbol, shareCount]);
 
   return (
     <MobileSheet
@@ -112,6 +177,7 @@ function RecurringFormFields({
       <form action={action} className="flex flex-col gap-4">
         {template && <input type="hidden" name="id" value={template.id} />}
         <input type="hidden" name="recurrence" value={recurrence} />
+        <input type="hidden" name="pricingType" value={pricingType} />
         <input
           type="hidden"
           name="active"
@@ -134,6 +200,112 @@ function RecurringFormFields({
             </Text>
           )}
         </div>
+        {supportsShares && (
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium">Amount type</span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setPricingType("fixed")}
+                className={cn(
+                  "rounded border-2 px-3 py-2 text-sm font-medium",
+                  pricingType === "fixed"
+                    ? "border-foreground bg-primary text-primary-foreground"
+                    : "border-border hover:bg-accent",
+                )}
+              >
+                Fixed EUR
+              </button>
+              <button
+                type="button"
+                onClick={() => setPricingType("shares")}
+                className={cn(
+                  "rounded border-2 px-3 py-2 text-sm font-medium",
+                  pricingType === "shares"
+                    ? "border-foreground bg-primary text-primary-foreground"
+                    : "border-border hover:bg-accent",
+                )}
+              >
+                Shares × price
+              </button>
+            </div>
+            {pricingType === "shares" && (
+              <Text className="text-xs text-muted-foreground">
+                Pick your ETF and share count. Search by name or ISIN
+                (e.g. LU1681043599). The app fetches the live price and
+                computes the EUR amount when saving or applying recurring.
+              </Text>
+            )}
+          </div>
+        )}
+        {pricingType === "shares" && supportsShares ? (
+          <>
+            <InstrumentSearch
+              symbol={instrumentSymbol}
+              name={instrumentName}
+              onSelect={(instrument: InstrumentSearchResult) => {
+                setInstrumentSymbol(instrument.symbol);
+                setInstrumentName(instrument.name);
+              }}
+              onClear={() => {
+                setInstrumentSymbol("");
+                setInstrumentName("");
+              }}
+              required
+            />
+            <div className="flex flex-col gap-2">
+              <FormLabel htmlFor="shareCount">Number of shares</FormLabel>
+              <Input
+                id="shareCount"
+                name="shareCount"
+                type="number"
+                step="1"
+                min="1"
+                required
+                className="text-base"
+                value={shareCount}
+                onChange={(event) => setShareCount(event.target.value)}
+              />
+            </div>
+            <div
+              className={cn(
+                "rounded border-2 border-border bg-muted/20 p-3 text-sm",
+              )}
+            >
+              <p className="font-medium">Estimated amount</p>
+              {estimateLoading && (
+                <p className="mt-1 text-muted-foreground">Fetching price…</p>
+              )}
+              {!estimateLoading && estimate && (
+                <p className="mt-1 tabular-nums text-base font-semibold">
+                  ≈ {formatEuro(estimate.amount)}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    @ {formatEuro(estimate.price)} / share
+                  </span>
+                </p>
+              )}
+              {!estimateLoading && estimateError && (
+                <p className="mt-1 text-destructive">{estimateError}</p>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <FormLabel htmlFor="recurring-amount">
+              {recurrence === "yearly" ? "Annual amount (EUR)" : "Amount (EUR)"}
+            </FormLabel>
+            <Input
+              id="recurring-amount"
+              name="amount"
+              type="number"
+              step="0.01"
+              min="0.01"
+              required
+              className="text-base"
+              defaultValue={template?.amount ?? ""}
+            />
+          </div>
+        )}
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="recurring-description">
             Description (optional)
@@ -146,21 +318,6 @@ function RecurringFormFields({
             className="text-base"
             defaultValue={template?.description ?? ""}
             placeholder="e.g. Netflix, gym membership, CTO DCA"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="recurring-amount">
-            {recurrence === "yearly" ? "Annual amount (EUR)" : "Amount (EUR)"}
-          </FormLabel>
-          <Input
-            id="recurring-amount"
-            name="amount"
-            type="number"
-            step="0.01"
-            min="0.01"
-            required
-            className="text-base"
-            defaultValue={template?.amount ?? ""}
           />
         </div>
         <div className="flex flex-col gap-2">

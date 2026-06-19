@@ -15,8 +15,8 @@ import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { Badge } from "@/components/retroui/Badge";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { formatEuro } from "@/lib/constants";
-import { computeMonthlyBudget, yearlyExpenseTemplateIds } from "@/lib/budget";
-import { CATEGORY_TYPE_LABELS } from "@/lib/category-styles";
+import { yearlyExpenseTemplateIds } from "@/lib/budget";
+import { CATEGORY_TYPE_LABELS, TYPE_AMOUNT_CLASS } from "@/lib/category-styles";
 import { cn } from "@/lib/utils";
 import {
   applyRecurringForMonth,
@@ -28,6 +28,18 @@ import type {
   RecurringTemplateWithCategory,
   TransactionWithCategory,
 } from "@/lib/types/database";
+
+const TYPE_TOTAL_ITEMS: { type: CategoryType }[] = [
+  { type: "income" },
+  { type: "expense" },
+  { type: "savings" },
+  { type: "investment" },
+];
+
+function formatSignedTypeTotal(type: CategoryType, amount: number): string {
+  const formatted = formatEuro(amount);
+  return type === "income" ? `+${formatted}` : `−${formatted}`;
+}
 
 type FilterType = "all" | CategoryType;
 
@@ -96,21 +108,19 @@ function countsTowardSummary(tx: TransactionWithCategory): boolean {
   return tx.categories.counts_toward_summary !== false;
 }
 
-function computeTotals(
-  transactions: TransactionWithCategory[],
-  recurringTemplates: RecurringTemplateWithCategory[],
-) {
-  const budget = computeMonthlyBudget(transactions, recurringTemplates);
-
-  return {
-    income: budget.income,
-    expense: budget.expense,
-    savings: budget.savings,
-    investment: budget.investment,
-    deployed: budget.deployed,
-    outflow: budget.outflow,
-    net: budget.net,
+function computeTypeTotals(transactions: TransactionWithCategory[]) {
+  const totals = {
+    income: 0,
+    expense: 0,
+    savings: 0,
+    investment: 0,
   };
+
+  for (const tx of transactions) {
+    totals[tx.categories.type] += Number(tx.amount);
+  }
+
+  return totals;
 }
 
 export function TransactionsView({
@@ -132,9 +142,18 @@ export function TransactionsView({
     [recurringTemplates],
   );
 
-  const totals = useMemo(
-    () => computeTotals(transactions, recurringTemplates),
-    [transactions, recurringTemplates],
+  const typeTotals = useMemo(
+    () => computeTypeTotals(transactions),
+    [transactions],
+  );
+
+  const netTotal = useMemo(
+    () =>
+      typeTotals.income -
+      typeTotals.expense -
+      typeTotals.savings -
+      typeTotals.investment,
+    [typeTotals],
   );
 
   const filtered = useMemo(() => {
@@ -183,39 +202,69 @@ export function TransactionsView({
         </div>
       </PageHeader>
 
-      <PageContainer className="flex flex-col gap-4 pb-36 md:pb-6">
-        {transactions.length > 0 && (
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            <Card className="p-3 text-center sm:p-4">
-              <p className="text-xs text-muted-foreground sm:text-sm">In</p>
-              <p className="mt-1 tabular-nums text-sm font-semibold sm:text-base">
-                {formatEuro(totals.income)}
-              </p>
-            </Card>
-            <Card className="p-3 text-center sm:p-4">
-              <p className="text-xs text-muted-foreground sm:text-sm">Out</p>
-              <p className="mt-1 tabular-nums text-sm font-semibold sm:text-base">
-                {formatEuro(totals.outflow)}
-              </p>
-            </Card>
-            <Card
+      <PageContainer className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+            {TYPE_TOTAL_ITEMS.map(({ type }) => (
+              <Card key={type} className="p-3 text-center sm:p-4">
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  {CATEGORY_TYPE_LABELS[type]}
+                </p>
+                <p
+                  className={cn(
+                    "mt-1 tabular-nums text-sm font-semibold sm:text-base",
+                    TYPE_AMOUNT_CLASS[type],
+                  )}
+                >
+                  {formatSignedTypeTotal(type, typeTotals[type])}
+                </p>
+              </Card>
+            ))}
+          </div>
+          <Card
+            className={cn(
+              "border-2 p-4 text-center sm:p-5",
+              netTotal >= 0
+                ? "border-[var(--chart-4)] bg-[var(--chart-4)]/10"
+                : "border-destructive bg-destructive/10",
+            )}
+          >
+            <p className="font-head text-sm uppercase tracking-wide text-muted-foreground">
+              What&apos;s left
+            </p>
+            <p
               className={cn(
-                "p-3 text-center sm:p-4",
-                totals.net < 0 && "border-destructive",
+                "mt-1 font-head text-2xl tabular-nums font-semibold sm:text-3xl",
+                netTotal >= 0
+                  ? "text-[var(--chart-4)]"
+                  : "text-destructive",
               )}
             >
-              <p className="text-xs text-muted-foreground sm:text-sm">Net</p>
-              <p
-                className={cn(
-                  "mt-1 tabular-nums text-sm font-semibold sm:text-base",
-                  totals.net < 0 && "text-destructive",
-                )}
-              >
-                {formatEuro(totals.net)}
-              </p>
-            </Card>
-          </div>
-        )}
+              {netTotal >= 0 ? "+" : "−"}
+              {formatEuro(Math.abs(netTotal))}
+            </p>
+          </Card>
+        </div>
+
+        <div className="flex flex-col gap-2 md:flex-row md:justify-end">
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full md:w-auto md:min-w-[14rem]"
+            onClick={handleApplyRecurring}
+            disabled={pending}
+          >
+            {pending ? "Applying…" : "Apply recurring"}
+          </Button>
+          <Button
+            size="lg"
+            className="w-full md:w-auto md:min-w-[14rem]"
+            onClick={() => setFormOpen(true)}
+          >
+            <Plus size={18} className="mr-1" />
+            Add transaction
+          </Button>
+        </div>
 
         {transactions.length > 0 && (
           <div
@@ -248,21 +297,7 @@ export function TransactionsView({
           <EmptyState
             title="No transactions yet"
             description="Add a manual entry or apply your recurring items for this month."
-          >
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleApplyRecurring}
-                disabled={pending}
-              >
-                {pending ? "Applying…" : "Apply recurring"}
-              </Button>
-              <Button size="lg" onClick={() => setFormOpen(true)}>
-                Add transaction
-              </Button>
-            </div>
-          </EmptyState>
+          />
         ) : filtered.length === 0 ? (
           <EmptyState
             title={`No ${CATEGORY_TYPE_LABELS[filter as CategoryType].toLowerCase()} entries`}
@@ -351,37 +386,6 @@ export function TransactionsView({
                 </ul>
               </section>
             ))}
-          </div>
-        )}
-
-        {transactions.length > 0 && (
-          <div
-            className={cn(
-              "flex flex-col gap-2 pt-2",
-              "max-md:fixed max-md:inset-x-0 max-md:bottom-14 max-md:z-30",
-              "max-md:border-t-2 max-md:border-border max-md:bg-background",
-              "max-md:p-4",
-              "md:flex-row md:justify-end",
-            )}
-          >
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-full md:w-auto md:min-w-[14rem]"
-              onClick={handleApplyRecurring}
-              disabled={pending}
-            >
-              {pending ? "Applying…" : "Apply recurring"}
-            </Button>
-
-            <Button
-              size="lg"
-              className="w-full md:w-auto md:min-w-[14rem]"
-              onClick={() => setFormOpen(true)}
-            >
-              <Plus size={18} className="mr-1" />
-              Add transaction
-            </Button>
           </div>
         )}
       </PageContainer>

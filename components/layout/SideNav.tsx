@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Wallet } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { APP_NAV_ITEMS } from "@/lib/navigation";
+import { Logo } from "@/components/layout/Logo";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 
 export function SideNav() {
@@ -18,9 +18,10 @@ export function SideNav() {
         "sticky top-0 h-screen pt-safe",
       )}
     >
-      <div className="flex items-center gap-2 border-b-2 border-border px-5 py-5">
-        <Wallet size={28} weight="fill" className="text-primary" />
-        <span className="font-head text-lg">Finance</span>
+      <div className="border-b-2 border-border px-5 py-3">
+        <div className="flex min-h-11 items-end justify-center">
+          <Logo />
+        </div>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 p-3">

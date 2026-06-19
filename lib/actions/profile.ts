@@ -85,6 +85,8 @@ export async function deleteAllData(
   revalidatePath("/dashboard");
   revalidatePath("/transactions");
   revalidatePath("/recurring");
+  revalidatePath("/calendar");
+  revalidatePath("/investments");
   revalidatePath("/profile");
   return {
     success: true,

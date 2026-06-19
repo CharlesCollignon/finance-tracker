@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { HeroPage } from "@/components/marketing/HeroPage";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -7,5 +7,5 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  redirect(user ? "/dashboard" : "/login");
+  return <HeroPage isLoggedIn={Boolean(user)} />;
 }

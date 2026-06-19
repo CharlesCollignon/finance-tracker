@@ -1,11 +1,16 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateRecurringDependents } from "@/lib/revalidate-paths";
 import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
 import { getRecurringOccurrenceDates } from "@/lib/recurrence";
+import { resolveRecurringAmount } from "@/lib/recurring-shares";
+import {
+  removeInvestmentPositionForRecurring,
+  syncInvestmentPositionFromRecurring,
+} from "@/lib/investment-recurring-sync";
 import type { Database } from "@/lib/types/database";
 import {
   applyRecurringSchema,
@@ -137,8 +142,7 @@ export async function createTransaction(
     return { error: error.message };
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/transactions");
+  revalidateRecurringDependents();
   return { success: true };
 }
 
@@ -159,8 +163,7 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
     return { error: error.message };
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/transactions");
+  revalidateRecurringDependents();
   return { success: true };
 }
 
@@ -176,7 +179,12 @@ export async function upsertRecurringTemplate(
   const parsed = recurringTemplateSchema.safeParse({
     id: formData.get("id") || undefined,
     categoryId: formData.get("categoryId"),
-    amount: formData.get("amount"),
+    amount: formData.get("amount") || undefined,
+    pricingType:
+      formData.get("pricingType") === "shares" ? "shares" : "fixed",
+    shareCount: formData.get("shareCount") || undefined,
+    instrumentSymbol: formData.get("instrumentSymbol") || undefined,
+    instrumentName: formData.get("instrumentName") || undefined,
     description: formData.get("description") || undefined,
     recurrence: formData.get("recurrence"),
     dayOfMonth: formData.get("dayOfMonth") || undefined,
@@ -190,12 +198,63 @@ export async function upsertRecurringTemplate(
   }
 
   const data = parsed.data;
+  let amount = data.amount ?? 0;
+  let pricingPayload: Pick<
+    RecurringTemplateInsert,
+    | "pricing_type"
+    | "share_count"
+    | "instrument_symbol"
+    | "instrument_name"
+    | "last_quote_price"
+    | "last_quote_at"
+  >;
+
+  if (data.pricingType === "shares") {
+    try {
+      const resolved = await resolveRecurringAmount({
+        pricing_type: "shares",
+        amount: 0,
+        share_count: data.shareCount ?? null,
+        instrument_symbol: data.instrumentSymbol ?? null,
+        instrument_name: data.instrumentName ?? null,
+        description: data.description ?? null,
+        last_quote_price: null,
+      });
+      amount = resolved.amount;
+      pricingPayload = {
+        pricing_type: "shares",
+        share_count: data.shareCount ?? null,
+        instrument_symbol: data.instrumentSymbol ?? null,
+        instrument_name: data.instrumentName ?? null,
+        last_quote_price: resolved.quoteUpdate?.last_quote_price ?? null,
+        last_quote_at: resolved.quoteUpdate?.last_quote_at ?? null,
+      };
+    } catch (error) {
+      return {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Could not price this instrument.",
+      };
+    }
+  } else {
+    pricingPayload = {
+      pricing_type: "fixed",
+      share_count: null,
+      instrument_symbol: null,
+      instrument_name: null,
+      last_quote_price: null,
+      last_quote_at: null,
+    };
+  }
+
   const supabase = await createClient();
   const base = {
     category_id: data.categoryId,
-    amount: data.amount,
+    amount,
     active: data.active ?? true,
     description: data.description?.trim() || null,
+    ...pricingPayload,
   };
 
   function buildSchedulePayload():
@@ -233,6 +292,8 @@ export async function upsertRecurringTemplate(
     };
   }
 
+  let templateId = data.id;
+
   if (data.id) {
     const updatePayload: RecurringTemplateUpdate = {
       ...base,
@@ -255,18 +316,28 @@ export async function upsertRecurringTemplate(
       ...buildSchedulePayload(),
     };
 
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from("recurring_templates")
-      .insert(insertPayload);
+      .insert(insertPayload)
+      .select("id")
+      .single();
 
-    if (error) {
-      return { error: error.message };
+    if (error || !inserted) {
+      return { error: error?.message ?? "Could not save recurring item" };
     }
+
+    templateId = inserted.id;
   }
 
-  revalidatePath("/recurring");
-  revalidatePath("/transactions");
-  revalidatePath("/dashboard");
+  if (templateId) {
+    await syncInvestmentPositionFromRecurring(
+      supabase,
+      user.id,
+      templateId,
+    );
+  }
+
+  revalidateRecurringDependents();
   return { success: true };
 }
 
@@ -279,6 +350,8 @@ export async function deleteRecurringTemplate(
   }
 
   const supabase = await createClient();
+  await removeInvestmentPositionForRecurring(supabase, user.id, id);
+
   const { error } = await supabase
     .from("recurring_templates")
     .delete()
@@ -289,8 +362,7 @@ export async function deleteRecurringTemplate(
     return { error: error.message };
   }
 
-  revalidatePath("/recurring");
-  revalidatePath("/transactions");
+  revalidateRecurringDependents();
   return { success: true };
 }
 
@@ -314,7 +386,7 @@ export async function toggleRecurringActive(
     return { error: error.message };
   }
 
-  revalidatePath("/recurring");
+  revalidateRecurringDependents();
   return { success: true };
 }
 
@@ -371,22 +443,54 @@ export async function applyRecurringForMonth(
         continue;
       }
 
+      let amount = Number(template.amount);
+      let note = template.description?.trim() || null;
+      let quoteUpdate: {
+        amount: number;
+        last_quote_price: number;
+        last_quote_at: string;
+      } | null = null;
+
+      try {
+        const resolved = await resolveRecurringAmount({
+          pricing_type: template.pricing_type ?? "fixed",
+          amount: Number(template.amount),
+          share_count: template.share_count,
+          instrument_symbol: template.instrument_symbol,
+          instrument_name: template.instrument_name,
+          description: template.description,
+          last_quote_price: template.last_quote_price,
+        });
+        amount = resolved.amount;
+        note = resolved.note;
+        quoteUpdate = resolved.quoteUpdate;
+      } catch {
+        continue;
+      }
+
       const { error } = await supabase.from("transactions").insert({
         user_id: user.id,
         category_id: template.category_id,
         recurring_template_id: template.id,
         occurred_on: occurredOn,
-        amount: template.amount,
-        note: template.description?.trim() || null,
+        amount,
+        note,
       });
 
       if (!error) {
         created += 1;
+
+        if (quoteUpdate) {
+          await supabase
+            .from("recurring_templates")
+            .update(quoteUpdate)
+            .eq("id", template.id)
+            .eq("user_id", user.id);
+        }
       }
     }
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/transactions");
+  revalidateRecurringDependents();
   return { success: true, created };
 }

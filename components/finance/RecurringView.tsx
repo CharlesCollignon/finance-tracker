@@ -16,6 +16,7 @@ import {
   estimateMonthlyAmount,
   formatRecurrenceSchedule,
 } from "@/lib/recurrence";
+import { formatSharesLabel } from "@/lib/recurring-shares";
 import { cn } from "@/lib/utils";
 import { toggleRecurringActive } from "@/lib/actions/finance";
 import type {
@@ -84,6 +85,41 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
       </PageHeader>
 
       <PageContainer className="flex flex-col gap-4">
+        {hasTemplates && (
+          <>
+            <Card className="flex w-full flex-col gap-3 p-4 md:p-5">
+              <div className="flex items-center justify-between">
+                <span className="font-head md:text-lg">
+                  Expected budget impact
+                </span>
+                <span className="tabular-nums text-lg font-semibold md:text-xl">
+                  {formatEuro(budgetMonthly)}
+                </span>
+              </div>
+              {deploymentMonthly > 0 && (
+                <div className="flex items-center justify-between border-t-2 border-border pt-3 text-sm">
+                  <span className="text-muted-foreground">
+                    Broker deployment (tracking)
+                  </span>
+                  <span className="tabular-nums font-semibold">
+                    {formatEuro(deploymentMonthly)}
+                  </span>
+                </div>
+              )}
+            </Card>
+
+            <div className="md:flex md:justify-end">
+              <Button
+                size="lg"
+                className="w-full md:w-auto md:min-w-[14rem]"
+                onClick={openCreate}
+              >
+                Add recurring item
+              </Button>
+            </div>
+          </>
+        )}
+
         {!hasTemplates ? (
           <EmptyState
             title="No recurring items"
@@ -111,57 +147,88 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                   <ul className="flex flex-col gap-2">
                     {items.map((template) => (
                       <li key={template.id}>
-                        <Card className="flex w-full items-center gap-3 p-3 transition-colors hover:bg-accent/30">
+                        <Card
+                          className={cn(
+                            "flex w-full flex-col gap-2 p-3",
+                            "transition-colors hover:bg-accent/30",
+                            "sm:gap-2.5 sm:p-4",
+                            !template.active && "opacity-70",
+                          )}
+                        >
                           <button
                             type="button"
                             onClick={() => openEdit(template)}
-                            className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                            className="flex w-full gap-3 text-left"
                           >
                             <CategoryIcon icon={template.categories.icon} />
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">
+                              <p className="text-sm font-medium leading-snug break-words">
                                 {template.categories.name}
                               </p>
+                              {template.pricing_type === "shares" &&
+                                formatSharesLabel(template) && (
+                                  <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
+                                    {formatSharesLabel(template)}
+                                    {template.instrument_symbol
+                                      ? ` · ${template.instrument_symbol}`
+                                      : ""}
+                                  </p>
+                                )}
                               {template.description && (
-                                <p className="truncate text-xs text-muted-foreground/70">
+                                <p className="mt-0.5 text-xs leading-snug text-muted-foreground/70 break-words">
                                   {template.description}
                                 </p>
                               )}
-                              <p className="text-xs text-muted-foreground">
+                              <p className="mt-1 text-xs text-muted-foreground">
                                 {formatRecurrenceSchedule(template)}
                               </p>
                             </div>
-                            <span className="shrink-0 tabular-nums text-sm font-semibold">
+                          </button>
+                          <div
+                            className={cn(
+                              "flex items-center justify-between gap-2",
+                              "border-t-2 border-border pt-2 sm:pt-2.5",
+                            )}
+                          >
+                            <span className="tabular-nums text-base font-semibold">
+                              {template.pricing_type === "shares" ? "≈ " : ""}
                               {formatEuro(Number(template.amount))}
                             </span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openEdit(template)}
-                            className={cn(
-                              "flex h-10 w-10 shrink-0 items-center justify-center",
-                              "rounded border-2 border-border",
-                              "hover:bg-accent",
-                            )}
-                            aria-label={`Edit ${template.categories.name}`}
-                          >
-                            <PencilSimple size={18} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggle(template.id, template.active);
-                            }}
-                            className="shrink-0"
-                          >
-                            <Badge
-                              variant={template.active ? "surface" : "outline"}
-                              size="sm"
-                            >
-                              {template.active ? "On" : "Off"}
-                            </Badge>
-                          </button>
+                            <div className="flex shrink-0 items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openEdit(template)}
+                                className={cn(
+                                  "flex h-9 w-9 items-center justify-center",
+                                  "rounded border-2 border-border",
+                                  "hover:bg-accent sm:h-10 sm:w-10",
+                                )}
+                                aria-label={`Edit ${template.categories.name}`}
+                              >
+                                <PencilSimple size={18} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggle(
+                                    template.id,
+                                    template.active,
+                                  );
+                                }}
+                                className="shrink-0"
+                              >
+                                <Badge
+                                  variant={
+                                    template.active ? "surface" : "outline"
+                                  }
+                                  size="sm"
+                                >
+                                  {template.active ? "On" : "Off"}
+                                </Badge>
+                              </button>
+                            </div>
+                          </div>
                         </Card>
                       </li>
                     ))}
@@ -170,39 +237,6 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
               </section>
             ))}
           </div>
-        )}
-
-        {hasTemplates && (
-          <>
-            <Card className="flex w-full flex-col gap-3 p-4 md:p-5">
-              <div className="flex items-center justify-between">
-                <span className="font-head md:text-lg">Expected budget impact</span>
-                <span className="tabular-nums text-lg font-semibold md:text-xl">
-                  {formatEuro(budgetMonthly)}
-                </span>
-              </div>
-              {deploymentMonthly > 0 && (
-                <div className="flex items-center justify-between border-t-2 border-border pt-3 text-sm">
-                  <span className="text-muted-foreground">
-                    Broker deployment (tracking)
-                  </span>
-                  <span className="tabular-nums font-semibold">
-                    {formatEuro(deploymentMonthly)}
-                  </span>
-                </div>
-              )}
-            </Card>
-
-            <div className="md:flex md:justify-end">
-              <Button
-                size="lg"
-                className="w-full md:w-auto md:min-w-[14rem]"
-                onClick={openCreate}
-              >
-                Add recurring item
-              </Button>
-            </div>
-          </>
         )}
       </PageContainer>
 

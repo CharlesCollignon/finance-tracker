@@ -28,3 +28,10 @@ export const ALLOCATION_COLORS = {
   investments: "var(--chart-4)",
   remaining: "var(--chart-1)",
 } as const;
+
+export const TYPE_AMOUNT_CLASS: Record<CategoryType, string> = {
+  income: "text-[var(--chart-4)]",
+  expense: "text-destructive",
+  savings: "text-[var(--chart-5)]",
+  investment: "text-[var(--chart-5)]",
+};

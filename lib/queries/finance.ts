@@ -73,6 +73,27 @@ export async function getTransactions(
   return (data ?? []) as TransactionWithCategory[];
 }
 
+export async function getInvestmentTransactions(
+  userId: string,
+): Promise<TransactionWithCategory[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .select(
+      "*, categories!inner(name, type, icon, counts_toward_summary)",
+    )
+    .eq("user_id", userId)
+    .eq("categories.type", "investment")
+    .order("occurred_on", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as TransactionWithCategory[];
+}
+
 export async function getMonthlySummary(
   userId: string,
   year: number,
