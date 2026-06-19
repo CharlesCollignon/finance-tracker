@@ -21,7 +21,10 @@ import { cn } from "@/lib/utils";
 import {
   applyRecurringForMonth,
   deleteTransaction,
+  previewApplyRecurringForMonth,
 } from "@/lib/actions/finance";
+import { ApplyRecurringSheet } from "@/components/finance/ApplyRecurringSheet";
+import type { ApplyRecurringPlan } from "@/lib/apply-recurring";
 import type {
   Category,
   CategoryType,
@@ -135,6 +138,8 @@ export function TransactionsView({
   const [formOpen, setFormOpen] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [applySheetOpen, setApplySheetOpen] = useState(false);
+  const [applyPlan, setApplyPlan] = useState<ApplyRecurringPlan | null>(null);
   const [pending, startTransition] = useTransition();
 
   const yearlyIds = useMemo(
@@ -167,17 +172,49 @@ export function TransactionsView({
 
   function handleApplyRecurring() {
     startTransition(async () => {
-      const result = await applyRecurringForMonth(year, month);
+      const result = await previewApplyRecurringForMonth(year, month);
       if (result.error) {
         toast(result.error, "error");
-      } else {
-        toast(
-          result.created
-            ? `Added ${result.created} recurring entries`
-            : "All recurring entries already applied",
-          "success",
-        );
+        return;
       }
+
+      const plan = result.plan ?? { toCreate: [], toUpdate: [] };
+
+      if (plan.toCreate.length === 0 && plan.toUpdate.length === 0) {
+        toast("All recurring entries already applied", "success");
+        return;
+      }
+
+      setApplyPlan(plan);
+      setApplySheetOpen(true);
+    });
+  }
+
+  function handleConfirmApply(includeUpdates: boolean) {
+    startTransition(async () => {
+      const result = await applyRecurringForMonth(year, month, includeUpdates);
+      if (result.error) {
+        toast(result.error, "error");
+        return;
+      }
+
+      setApplySheetOpen(false);
+      setApplyPlan(null);
+
+      const parts: string[] = [];
+      if (result.created) {
+        parts.push(`${result.created} added`);
+      }
+      if (result.updated) {
+        parts.push(`${result.updated} updated`);
+      }
+
+      toast(
+        parts.length > 0
+          ? `Recurring applied: ${parts.join(", ")}`
+          : "Nothing to apply",
+        "success",
+      );
     });
   }
 
@@ -395,6 +432,19 @@ export function TransactionsView({
         defaultDate={defaultDate}
         open={formOpen}
         onOpenChange={setFormOpen}
+      />
+
+      <ApplyRecurringSheet
+        open={applySheetOpen}
+        onOpenChange={(open) => {
+          setApplySheetOpen(open);
+          if (!open) {
+            setApplyPlan(null);
+          }
+        }}
+        plan={applyPlan}
+        pending={pending}
+        onConfirm={handleConfirmApply}
       />
     </>
   );

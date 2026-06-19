@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { parseShareCountInput } from "@/lib/share-count";
+import { isCryptoWallet } from "@/lib/crypto-holdings";
 
 const optionalNumber = z
   .union([z.coerce.number().min(0, "Must be 0 or more"), z.literal("")])
@@ -6,12 +8,25 @@ const optionalNumber = z
   .transform((value) => (value === "" || value === undefined ? null : value));
 
 const optionalShareCount = z
-  .union([
-    z.coerce.number().int().positive("Must be a positive whole number"),
-    z.literal(""),
-  ])
+  .union([z.string(), z.coerce.number(), z.literal("")])
   .optional()
-  .transform((value) => (value === "" || value === undefined ? null : value));
+  .transform((value, ctx) => {
+    if (value === "" || value === undefined) {
+      return null;
+    }
+
+    const parsed = parseShareCountInput(value);
+    if (parsed === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter a positive number (comma or dot for decimals)",
+        path: [],
+      });
+      return z.NEVER;
+    }
+
+    return parsed;
+  });
 
 const optionalText = z
   .string()
@@ -62,6 +77,20 @@ export const investmentPositionSchema = z
         code: z.ZodIssueCode.custom,
         message: "Name is required for custom holdings",
         path: ["name"],
+      });
+    }
+  })
+  .superRefine((data, ctx) => {
+    const hasInstrument = Boolean(data.instrumentSymbol?.trim());
+    const hasShares = data.shareCount !== null && data.shareCount > 0;
+    const hasOverride = data.currentValue !== null;
+
+    if (hasInstrument && !hasShares && !hasOverride) {
+      const label = isCryptoWallet(data.wallet) ? "BTC" : "shares";
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Enter total ${label} held for live market value`,
+        path: ["shareCount"],
       });
     }
   })

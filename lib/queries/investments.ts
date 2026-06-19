@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { fetchInstrumentQuoteInEur } from "@/lib/market/fx";
 import { fetchInstrumentQuote } from "@/lib/market/yahoo";
 import type { InvestmentPosition } from "@/lib/types/database";
 import type { InvestmentPositionRow } from "@/lib/investment-positions";
@@ -116,8 +117,8 @@ export async function fetchLiveQuotes(
   await Promise.all(
     unique.map(async (symbol) => {
       try {
-        const quote = await fetchInstrumentQuote(symbol);
-        quotes[symbol] = quote.price;
+        const quote = await fetchInstrumentQuoteInEur(symbol);
+        quotes[symbol] = quote.priceEur;
       } catch {
         // Ignore failed quotes — fall back to invested value.
       }

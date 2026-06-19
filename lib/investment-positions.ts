@@ -8,6 +8,11 @@ import {
   resolveWalletId,
   type InvestmentWalletId,
 } from "@/lib/investments";
+import { todayIsoLocal } from "@/lib/constants";
+import {
+  BITCOIN_INSTRUMENT,
+  isCryptoWallet,
+} from "@/lib/crypto-holdings";
 
 export type { InvestmentWalletId };
 
@@ -42,12 +47,12 @@ export interface InvestmentPositionItem {
   shareCount: number | null;
   instrumentSymbol: string | null;
   instrumentName: string | null;
-  contributions: number;
   totalInvested: number;
   marketValue: number;
   gainLoss: number;
   hasManualValue: boolean;
   hasMarketQuote: boolean;
+  needsShareCount: boolean;
   chartPoints: PositionChartPoint[];
 }
 
@@ -69,122 +74,60 @@ export interface InvestmentPortfolioSummary {
   hasMarketSnapshot: boolean;
 }
 
-function recurringInstrument(
+function resolveSharesHeld(
+  row: InvestmentPositionRow,
   template: RecurringTemplateWithCategory | undefined,
-): {
-  symbol: string | null;
-  name: string | null;
-  shareCount: number | null;
-} {
-  if (!template || template.pricing_type !== "shares") {
-    return { symbol: null, name: null, shareCount: null };
-  }
-
-  return {
-    symbol: template.instrument_symbol,
-    name: template.instrument_name,
-    shareCount: template.share_count,
-  };
-}
-
-function transactionBelongsToPosition(
-  tx: TransactionWithCategory,
-  position: InvestmentPositionRow,
-  trackedRecurringIds: Set<string>,
-): boolean {
-  if (
-    position.recurring_template_id &&
-    tx.recurring_template_id === position.recurring_template_id
-  ) {
-    return true;
-  }
-
-  if (
-    !position.recurring_template_id &&
-    position.category_id &&
-    tx.category_id === position.category_id &&
-    (tx.recurring_template_id === null ||
-      !trackedRecurringIds.has(tx.recurring_template_id))
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
-function contributionsForPosition(
-  position: InvestmentPositionRow,
   transactions: TransactionWithCategory[],
-  trackedRecurringIds: Set<string>,
-): number {
-  return transactions
-    .filter((tx) =>
-      transactionBelongsToPosition(tx, position, trackedRecurringIds),
-    )
-    .reduce((sum, tx) => sum + Number(tx.amount), 0);
+  asOfDate: string,
+): number | null {
+  if (row.share_count !== null && row.share_count > 0) {
+    return row.share_count;
+  }
+
+  if (isCryptoWallet(row.wallet)) {
+    return null;
+  }
+
+  if (
+    !template ||
+    template.pricing_type !== "shares" ||
+    !template.share_count ||
+    !row.recurring_template_id
+  ) {
+    return null;
+  }
+
+  const buyCount = transactions.filter(
+    (tx) =>
+      tx.recurring_template_id === row.recurring_template_id &&
+      tx.occurred_on <= asOfDate,
+  ).length;
+
+  if (buyCount <= 0) {
+    return null;
+  }
+
+  return buyCount * template.share_count;
 }
 
 function buildPositionChartPoints(
   position: InvestmentPositionRow,
-  transactions: TransactionWithCategory[],
-  trackedRecurringIds: Set<string>,
   marketValue: number,
 ): PositionChartPoint[] {
-  const positionTxs = transactions
-    .filter((tx) =>
-      transactionBelongsToPosition(tx, position, trackedRecurringIds),
-    )
-    .sort((left, right) => left.occurred_on.localeCompare(right.occurred_on));
+  const invested = position.initial_balance;
 
-  const monthly = new Map<string, number>();
-
-  for (const tx of positionTxs) {
-    const monthKey = tx.occurred_on.slice(0, 7);
-    monthly.set(monthKey, (monthly.get(monthKey) ?? 0) + Number(tx.amount));
-  }
-
-  const points: PositionChartPoint[] = [];
-  let running = position.initial_balance;
-
-  if (position.initial_balance > 0 || monthly.size === 0) {
-    points.push({
+  return [
+    {
       label: "Start",
-      invested: position.initial_balance,
+      invested,
       market: null,
-    });
-  }
-
-  for (const [monthKey, amount] of Array.from(monthly.entries()).sort()) {
-    running += amount;
-    const [year, month] = monthKey.split("-").map(Number);
-    points.push({
-      label: new Intl.DateTimeFormat("en-GB", {
-        month: "short",
-        year: "2-digit",
-      }).format(new Date(year, month - 1, 1)),
-      invested: running,
-      market: null,
-    });
-  }
-
-  const lastInvested =
-    points.length > 0 ? points[points.length - 1].invested : position.initial_balance;
-
-  points.push({
-    label: "Now",
-    invested: lastInvested,
-    market: marketValue,
-  });
-
-  if (points.length === 1) {
-    points.unshift({
-      label: "Start",
-      invested: position.initial_balance,
-      market: null,
-    });
-  }
-
-  return points;
+    },
+    {
+      label: "Now",
+      invested,
+      market: marketValue,
+    },
+  ];
 }
 
 function buildColumnChartPoints(items: InvestmentPositionItem[]): PositionChartPoint[] {
@@ -233,10 +176,10 @@ function buildColumnChartPoints(items: InvestmentPositionItem[]): PositionChartP
 function buildPositionItem(
   row: InvestmentPositionRow,
   transactions: TransactionWithCategory[],
-  trackedRecurringIds: Set<string>,
   recurringById: Map<string, RecurringTemplateWithCategory>,
   categoriesById: Map<string, Category>,
   liveQuotes: Record<string, number>,
+  asOfDate: string,
 ): InvestmentPositionItem {
   const template = row.recurring_template_id
     ? recurringById.get(row.recurring_template_id)
@@ -246,17 +189,19 @@ function buildPositionItem(
     : template
       ? categoriesById.get(template.category_id)
       : undefined;
-  const recurringMeta = recurringInstrument(template);
-  const contributions = contributionsForPosition(
-    row,
-    transactions,
-    trackedRecurringIds,
-  );
-  const totalInvested = row.initial_balance + contributions;
-  const instrumentSymbol =
-    row.instrument_symbol ?? recurringMeta.symbol ?? null;
-  const instrumentName = row.instrument_name ?? recurringMeta.name ?? null;
-  const shareCount = row.share_count ?? recurringMeta.shareCount ?? null;
+  const isCrypto = isCryptoWallet(row.wallet);
+  const instrumentSymbol = isCrypto
+    ? row.instrument_symbol ??
+      template?.instrument_symbol ??
+      BITCOIN_INSTRUMENT.symbol
+    : row.instrument_symbol ?? template?.instrument_symbol ?? null;
+  const instrumentName = isCrypto
+    ? row.instrument_name ??
+      template?.instrument_name ??
+      BITCOIN_INSTRUMENT.name
+    : row.instrument_name ?? template?.instrument_name ?? null;
+  const shareCount = resolveSharesHeld(row, template, transactions, asOfDate);
+  const totalInvested = row.initial_balance;
   const hasManualValue =
     row.current_value !== null && row.current_value !== undefined;
   const quotedPrice = instrumentSymbol
@@ -271,6 +216,10 @@ function buildPositionItem(
     ? Number(row.current_value)
     : autoMarketValue ?? totalInvested;
   const gainLoss = marketValue - totalInvested;
+  const needsShareCount =
+    instrumentSymbol !== null &&
+    !hasManualValue &&
+    !hasMarketQuote;
 
   return {
     id: row.id,
@@ -284,18 +233,13 @@ function buildPositionItem(
     shareCount,
     instrumentSymbol,
     instrumentName,
-    contributions,
     totalInvested,
     marketValue,
     gainLoss,
     hasManualValue,
     hasMarketQuote,
-    chartPoints: buildPositionChartPoints(
-      row,
-      transactions,
-      trackedRecurringIds,
-      marketValue,
-    ),
+    needsShareCount,
+    chartPoints: buildPositionChartPoints(row, marketValue),
   };
 }
 
@@ -305,25 +249,20 @@ export function buildInvestmentPortfolio(
   positionRows: InvestmentPositionRow[],
   recurringTemplates: RecurringTemplateWithCategory[],
   liveQuotes: Record<string, number>,
+  asOfDate: string = todayIsoLocal(),
 ): InvestmentPortfolioSummary {
   const categoriesById = new Map(categories.map((category) => [category.id, category]));
   const recurringById = new Map(
     recurringTemplates.map((template) => [template.id, template]),
   );
-  const trackedRecurringIds = new Set(
-    positionRows
-      .map((row) => row.recurring_template_id)
-      .filter((id): id is string => id !== null),
-  );
-
   const items = positionRows.map((row) =>
     buildPositionItem(
       row,
       transactions,
-      trackedRecurringIds,
       recurringById,
       categoriesById,
       liveQuotes,
+      asOfDate,
     ),
   );
 

@@ -8,6 +8,10 @@ import {
 } from "@/lib/queries/investments";
 import { displayNameForRecurringTemplate } from "@/lib/investment-positions";
 import { investmentPositionSchema } from "@/lib/validations/investments";
+import {
+  BITCOIN_INSTRUMENT,
+  isCryptoWallet,
+} from "@/lib/crypto-holdings";
 
 type ActionResult = { error?: string; success?: boolean };
 
@@ -77,6 +81,13 @@ export async function saveInvestmentPosition(
   }
 
   try {
+    const instrumentSymbol = isCryptoWallet(parsed.data.wallet)
+      ? parsed.data.instrumentSymbol ?? BITCOIN_INSTRUMENT.symbol
+      : parsed.data.instrumentSymbol;
+    const instrumentName = isCryptoWallet(parsed.data.wallet)
+      ? parsed.data.instrumentName ?? BITCOIN_INSTRUMENT.name
+      : parsed.data.instrumentName;
+
     await upsertInvestmentPosition(user.id, {
       positionId: parsed.data.positionId,
       wallet: parsed.data.wallet,
@@ -86,8 +97,8 @@ export async function saveInvestmentPosition(
       initialBalance: parsed.data.initialBalance,
       currentValue: parsed.data.currentValue,
       shareCount: parsed.data.shareCount,
-      instrumentSymbol: parsed.data.instrumentSymbol,
-      instrumentName: parsed.data.instrumentName,
+      instrumentSymbol,
+      instrumentName,
     });
   } catch (error) {
     return {

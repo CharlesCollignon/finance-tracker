@@ -12,6 +12,7 @@ import { SignOutButton } from "@/components/layout/SignOutButton";
 import { RecurringForm } from "@/components/finance/RecurringForm";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { formatEuro } from "@/lib/constants";
+import { isCryptoCategoryName } from "@/lib/crypto-holdings";
 import {
   estimateMonthlyAmount,
   formatRecurrenceSchedule,
@@ -174,6 +175,11 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                                       : ""}
                                   </p>
                                 )}
+                              {isCryptoCategoryName(template.categories.name) && (
+                                <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
+                                  Fixed EUR → Bitcoin
+                                </p>
+                              )}
                               {template.description && (
                                 <p className="mt-0.5 text-xs leading-snug text-muted-foreground/70 break-words">
                                   {template.description}

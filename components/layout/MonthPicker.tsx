@@ -6,6 +6,7 @@ import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import {
   formatMonthLabel,
   monthSearchParams,
+  parseBudgetViewMode,
   parseMonthParams,
   shiftMonth,
 } from "@/lib/constants";
@@ -22,6 +23,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
     searchParams.get("y") ?? undefined,
     searchParams.get("m") ?? undefined,
   );
+  const view = parseBudgetViewMode(searchParams.get("view"));
 
   const prev = shiftMonth(year, month, -1);
   const next = shiftMonth(year, month, 1);
@@ -29,7 +31,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
   return (
     <div className={cn("flex items-center gap-1", className)}>
       <Link
-        href={`${basePath}${monthSearchParams(prev.year, prev.month)}`}
+        href={`${basePath}${monthSearchParams(prev.year, prev.month, view)}`}
         className={cn(
           "flex h-11 w-11 items-center justify-center rounded",
           "border-2 border-border shadow-sm hover:bg-accent",
@@ -47,7 +49,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
         )}
       </span>
       <Link
-        href={`${basePath}${monthSearchParams(next.year, next.month)}`}
+        href={`${basePath}${monthSearchParams(next.year, next.month, view)}`}
         className={cn(
           "flex h-11 w-11 items-center justify-center rounded",
           "border-2 border-border shadow-sm hover:bg-accent",

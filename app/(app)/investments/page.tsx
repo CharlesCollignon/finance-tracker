@@ -1,16 +1,13 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { syncAllRecurringInvestmentPositions } from "@/lib/investment-recurring-sync";
-import { getCategories, seedDefaultCategories } from "@/lib/queries/categories";
+import { seedDefaultCategories } from "@/lib/queries/categories";
 import {
   getInvestmentTransactions,
   getRecurringTemplates,
 } from "@/lib/queries/finance";
-import {
-  fetchLiveQuotes,
-  getInvestmentPositions,
-} from "@/lib/queries/investments";
-import { buildInvestmentPortfolio } from "@/lib/investment-positions";
+import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
+import { buildUpcomingInvestments, nextUpcomingByWallet } from "@/lib/investment-upcoming";
+import { todayIsoLocal } from "@/lib/constants";
 import { InvestmentsView } from "@/components/finance/InvestmentsView";
 
 export default async function InvestmentsPage() {
@@ -24,37 +21,17 @@ export default async function InvestmentsPage() {
   }
 
   await seedDefaultCategories(user.id);
-  await syncAllRecurringInvestmentPositions(supabase, user.id);
 
-  const [categories, transactions, positionRows, recurringTemplates] =
-    await Promise.all([
-      getCategories(user.id),
-      getInvestmentTransactions(user.id),
-      getInvestmentPositions(user.id),
-      getRecurringTemplates(user.id),
-    ]);
+  const [portfolio, recurringTemplates, transactions] = await Promise.all([
+    getWalletPortfolio(user.id),
+    getRecurringTemplates(user.id),
+    getInvestmentTransactions(user.id),
+  ]);
 
-  const quoteSymbols = new Set<string>();
-
-  for (const row of positionRows) {
-    if (row.instrument_symbol) {
-      quoteSymbols.add(row.instrument_symbol);
-    }
-  }
-
-  for (const template of recurringTemplates) {
-    if (template.instrument_symbol) {
-      quoteSymbols.add(template.instrument_symbol);
-    }
-  }
-
-  const liveQuotes = await fetchLiveQuotes(Array.from(quoteSymbols));
-  const portfolio = buildInvestmentPortfolio(
-    categories,
-    transactions,
-    positionRows,
+  const upcomingInvestments = buildUpcomingInvestments(
     recurringTemplates,
-    liveQuotes,
+    transactions,
+    todayIsoLocal(),
   );
 
   return (
@@ -63,6 +40,7 @@ export default async function InvestmentsPage() {
       recurringTemplates={recurringTemplates.filter(
         (template) => template.categories.type === "investment",
       )}
+      nextUpcomingByWallet={nextUpcomingByWallet(upcomingInvestments)}
     />
   );
 }

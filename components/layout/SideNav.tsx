@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { APP_NAV_ITEMS } from "@/lib/navigation";
+import { SHELL_HEADER_BAND_CLASS } from "@/lib/layout-shell";
 import { Logo } from "@/components/layout/Logo";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 
@@ -14,17 +15,20 @@ export function SideNav() {
     <aside
       className={cn(
         "hidden md:flex md:w-56 lg:w-64",
-        "flex-col border-r-2 border-border bg-background",
-        "sticky top-0 h-screen pt-safe",
+        "sticky top-0 h-screen flex-col",
+        "border-r-2 border-border bg-background",
       )}
     >
-      <div className="border-b-2 border-border px-5 py-3">
-        <div className="flex min-h-11 items-end justify-center">
-          <Logo />
-        </div>
+      <div
+        className={cn(
+          SHELL_HEADER_BAND_CLASS,
+          "flex items-center justify-center px-5",
+        )}
+      >
+        <Logo />
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 p-3">
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
         {APP_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);
 
@@ -47,7 +51,7 @@ export function SideNav() {
         })}
       </nav>
 
-      <div className="border-t-2 border-border p-3">
+      <div className="shrink-0 border-t-2 border-border p-3">
         <SignOutButton className="w-full justify-start px-3" />
       </div>
     </aside>

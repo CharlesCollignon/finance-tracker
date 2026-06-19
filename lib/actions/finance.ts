@@ -5,13 +5,21 @@ import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
-import { getRecurringOccurrenceDates } from "@/lib/recurrence";
+import { getMonthBounds } from "@/lib/constants";
 import { resolveRecurringAmount } from "@/lib/recurring-shares";
+import {
+  buildApplyRecurringPlan,
+  type ApplyRecurringPlan,
+} from "@/lib/apply-recurring";
 import {
   removeInvestmentPositionForRecurring,
   syncInvestmentPositionFromRecurring,
 } from "@/lib/investment-recurring-sync";
-import type { Database } from "@/lib/types/database";
+import {
+  BITCOIN_INSTRUMENT,
+  isCryptoCategoryName,
+} from "@/lib/crypto-holdings";
+import type { Database, RecurringTemplateWithCategory } from "@/lib/types/database";
 import {
   applyRecurringSchema,
   authSchema,
@@ -20,6 +28,70 @@ import {
 } from "@/lib/validations/finance";
 
 type ActionResult = { error?: string; success?: boolean; message?: string };
+
+async function loadApplyRecurringData(
+  userId: string,
+  year: number,
+  month: number,
+) {
+  const supabase = await createClient();
+  const { start, end } = getMonthBounds(year, month);
+
+  const [{ data: templates, error: tplError }, { data: transactions, error: txError }] =
+    await Promise.all([
+      supabase
+        .from("recurring_templates")
+        .select(
+          "*, categories(name, type, icon, counts_toward_summary)",
+        )
+        .eq("user_id", userId)
+        .eq("active", true),
+      supabase
+        .from("transactions")
+        .select("id, amount, note, category_id, recurring_template_id, occurred_on")
+        .eq("user_id", userId)
+        .not("recurring_template_id", "is", null)
+        .gte("occurred_on", start)
+        .lte("occurred_on", end),
+    ]);
+
+  if (tplError) {
+    throw new Error(tplError.message);
+  }
+
+  if (txError) {
+    throw new Error(txError.message);
+  }
+
+  const existingByKey = new Map<
+    string,
+    {
+      id: string;
+      amount: number;
+      note: string | null;
+      category_id: string;
+    }
+  >();
+
+  for (const tx of transactions ?? []) {
+    if (!tx.recurring_template_id) {
+      continue;
+    }
+
+    existingByKey.set(`${tx.recurring_template_id}:${tx.occurred_on}`, {
+      id: tx.id,
+      amount: Number(tx.amount),
+      note: tx.note,
+      category_id: tx.category_id,
+    });
+  }
+
+  return {
+    supabase,
+    templates: (templates ?? []) as RecurringTemplateWithCategory[],
+    existingByKey,
+  };
+}
 
 async function getUser() {
   const supabase = await createClient();
@@ -241,14 +313,29 @@ export async function upsertRecurringTemplate(
     pricingPayload = {
       pricing_type: "fixed",
       share_count: null,
-      instrument_symbol: null,
-      instrument_name: null,
+      instrument_symbol: data.instrumentSymbol?.trim() || null,
+      instrument_name: data.instrumentName?.trim() || null,
       last_quote_price: null,
       last_quote_at: null,
     };
   }
 
   const supabase = await createClient();
+  const { data: categoryRow } = await supabase
+    .from("categories")
+    .select("name")
+    .eq("id", data.categoryId)
+    .single();
+
+  if (
+    categoryRow &&
+    isCryptoCategoryName(categoryRow.name) &&
+    data.pricingType === "fixed"
+  ) {
+    pricingPayload.instrument_symbol = BITCOIN_INSTRUMENT.symbol;
+    pricingPayload.instrument_name = BITCOIN_INSTRUMENT.name;
+  }
+
   const base = {
     category_id: data.categoryId,
     amount,
@@ -390,10 +477,10 @@ export async function toggleRecurringActive(
   return { success: true };
 }
 
-export async function applyRecurringForMonth(
+export async function previewApplyRecurringForMonth(
   year: number,
   month: number,
-): Promise<ActionResult & { created?: number }> {
+): Promise<ActionResult & { plan?: ApplyRecurringPlan }> {
   const user = await getUser();
   if (!user) {
     return { error: "Not authenticated" };
@@ -404,77 +491,91 @@ export async function applyRecurringForMonth(
     return { error: "Invalid month" };
   }
 
-  const supabase = await createClient();
-
-  const { data: templates, error: tplError } = await supabase
-    .from("recurring_templates")
-    .select("*, categories(type)")
-    .eq("user_id", user.id)
-    .eq("active", true);
-
-  if (tplError) {
-    return { error: tplError.message };
-  }
-
-  let created = 0;
-
-  for (const template of templates ?? []) {
-    const occurrenceDates = getRecurringOccurrenceDates(
-      {
-        recurrence: template.recurrence ?? "monthly",
-        day_of_month: template.day_of_month,
-        day_of_week: template.day_of_week,
-        month_of_year: template.month_of_year,
-      },
+  try {
+    const { templates, existingByKey } = await loadApplyRecurringData(
+      user.id,
+      year,
+      month,
+    );
+    const plan = await buildApplyRecurringPlan(
+      templates,
+      existingByKey,
       year,
       month,
     );
 
-    for (const occurredOn of occurrenceDates) {
-      const { data: existing } = await supabase
-        .from("transactions")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("recurring_template_id", template.id)
-        .eq("occurred_on", occurredOn)
-        .maybeSingle();
+    return { success: true, plan };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Could not preview recurring changes.",
+    };
+  }
+}
 
-      if (existing) {
-        continue;
-      }
+export async function applyRecurringForMonth(
+  year: number,
+  month: number,
+  includeUpdates = false,
+): Promise<ActionResult & { created?: number; updated?: number }> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
 
-      let amount = Number(template.amount);
-      let note = template.description?.trim() || null;
+  const parsed = applyRecurringSchema.safeParse({ year, month });
+  if (!parsed.success) {
+    return { error: "Invalid month" };
+  }
+
+  try {
+    const { supabase, templates, existingByKey } =
+      await loadApplyRecurringData(user.id, year, month);
+    const plan = await buildApplyRecurringPlan(
+      templates,
+      existingByKey,
+      year,
+      month,
+    );
+    const templatesById = new Map(templates.map((template) => [template.id, template]));
+
+    let created = 0;
+    let updated = 0;
+
+    for (const item of plan.toCreate) {
+      const template = templatesById.get(item.templateId);
       let quoteUpdate: {
         amount: number;
         last_quote_price: number;
         last_quote_at: string;
       } | null = null;
 
-      try {
-        const resolved = await resolveRecurringAmount({
-          pricing_type: template.pricing_type ?? "fixed",
-          amount: Number(template.amount),
-          share_count: template.share_count,
-          instrument_symbol: template.instrument_symbol,
-          instrument_name: template.instrument_name,
-          description: template.description,
-          last_quote_price: template.last_quote_price,
-        });
-        amount = resolved.amount;
-        note = resolved.note;
-        quoteUpdate = resolved.quoteUpdate;
-      } catch {
-        continue;
+      if (template) {
+        try {
+          const resolved = await resolveRecurringAmount({
+            pricing_type: template.pricing_type ?? "fixed",
+            amount: Number(template.amount),
+            share_count: template.share_count,
+            instrument_symbol: template.instrument_symbol,
+            instrument_name: template.instrument_name,
+            description: template.description,
+            last_quote_price: template.last_quote_price,
+          });
+          quoteUpdate = resolved.quoteUpdate;
+        } catch {
+          quoteUpdate = null;
+        }
       }
 
       const { error } = await supabase.from("transactions").insert({
         user_id: user.id,
-        category_id: template.category_id,
-        recurring_template_id: template.id,
-        occurred_on: occurredOn,
-        amount,
-        note,
+        category_id: item.categoryId,
+        recurring_template_id: item.templateId,
+        occurred_on: item.occurredOn,
+        amount: item.amount,
+        note: item.note,
       });
 
       if (!error) {
@@ -484,13 +585,38 @@ export async function applyRecurringForMonth(
           await supabase
             .from("recurring_templates")
             .update(quoteUpdate)
-            .eq("id", template.id)
+            .eq("id", item.templateId)
             .eq("user_id", user.id);
         }
       }
     }
-  }
 
-  revalidateRecurringDependents();
-  return { success: true, created };
+    if (includeUpdates) {
+      for (const item of plan.toUpdate) {
+        const { error } = await supabase
+          .from("transactions")
+          .update({
+            amount: item.amount,
+            note: item.note,
+            category_id: item.categoryId,
+          })
+          .eq("id", item.transactionId)
+          .eq("user_id", user.id);
+
+        if (!error) {
+          updated += 1;
+        }
+      }
+    }
+
+    revalidateRecurringDependents();
+    return { success: true, created, updated };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Could not apply recurring entries.",
+    };
+  }
 }

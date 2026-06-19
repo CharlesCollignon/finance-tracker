@@ -1,4 +1,5 @@
 import { formatEuro } from "@/lib/constants";
+import { fetchInstrumentQuoteInEur, formatMoney } from "@/lib/market/fx";
 import {
   computeSharesAmount,
   fetchInstrumentQuote,
@@ -39,16 +40,20 @@ export async function resolveRecurringAmount(
     };
   }
 
-  const live = await fetchInstrumentQuote(template.instrument_symbol).then(
+  const live = await fetchInstrumentQuoteInEur(
+    template.instrument_symbol,
+  ).then(
     (quote) => ({
-      price: quote.price,
-      amount: computeSharesAmount(template.share_count!, quote.price),
+      priceEur: quote.priceEur,
+      priceOriginal: quote.priceOriginal,
+      currency: quote.currency,
+      amount: computeSharesAmount(template.share_count!, quote.priceEur),
       quotedAt: new Date().toISOString(),
     }),
     () => null,
   );
 
-  let price = live?.price ?? null;
+  let price = live?.priceEur ?? null;
   let amount = live?.amount ?? null;
   let quotedAt = live?.quotedAt ?? null;
 
@@ -61,7 +66,10 @@ export async function resolveRecurringAmount(
     throw new Error("Could not resolve a price for this instrument.");
   }
 
-  const priceLabel = formatEuro(price);
+  const priceLabel =
+    live && live.currency !== "EUR"
+      ? `${formatEuro(price)} (${formatMoney(live.priceOriginal, live.currency)} / share)`
+      : formatEuro(price);
   const shareNote =
     `${template.share_count} × ` +
     `${template.instrument_name ?? template.instrument_symbol} @ ${priceLabel}`;

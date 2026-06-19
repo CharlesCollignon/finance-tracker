@@ -56,6 +56,8 @@
   --chart-3: #457b9d;
   --chart-4: #2a9d8f;
   --chart-5: #f4a261;
+  --shell-header-height: 4.5rem;
+  --shell-bottom-nav-height: 3.5rem;
 }
 
 body {

@@ -10,7 +10,9 @@ import { SignOutButton } from "@/components/layout/SignOutButton";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { InvestmentItemChart } from "@/components/finance/InvestmentItemChart";
 import { InvestmentPositionSheet } from "@/components/finance/InvestmentPositionSheet";
+import { formatBtcAmount, isCryptoWallet } from "@/lib/crypto-holdings";
 import { formatEuro } from "@/lib/constants";
+import type { UpcomingInvestment } from "@/lib/investment-upcoming";
 import {
   INVESTMENT_WALLET_COLORS,
   INVESTMENT_WALLET_LABELS,
@@ -30,6 +32,7 @@ import type { RecurringTemplateWithCategory } from "@/lib/types/database";
 interface InvestmentsViewProps {
   portfolio: InvestmentPortfolioSummary;
   recurringTemplates: RecurringTemplateWithCategory[];
+  nextUpcomingByWallet: Partial<Record<InvestmentWalletId, UpcomingInvestment>>;
 }
 
 function formatSignedEuro(amount: number): string {
@@ -46,6 +49,7 @@ function formatSignedEuro(amount: number): string {
 export function InvestmentsView({
   portfolio,
   recurringTemplates,
+  nextUpcomingByWallet,
 }: InvestmentsViewProps) {
   const [editingItem, setEditingItem] =
     useState<InvestmentPositionItem | null>(null);
@@ -76,7 +80,7 @@ export function InvestmentsView({
 
   return (
     <>
-      <PageHeader title="Investments">
+      <PageHeader title="Wallets">
         <div className="md:hidden">
           <SignOutButton />
         </div>
@@ -97,7 +101,7 @@ export function InvestmentsView({
           </p>
           <div className="mt-3 flex flex-col gap-1 text-sm text-muted-foreground">
             <p>
-              Total invested{" "}
+              Invested to date{" "}
               <span className="font-medium text-foreground">
                 {formatEuro(portfolio.totalInvested)}
               </span>
@@ -134,8 +138,24 @@ export function InvestmentsView({
               emptyColumn(walletId);
 
             return (
-              <InvestmentWalletColumn
-                key={walletId}
+              <ColumnSummaryCard
+                key={`summary-${walletId}`}
+                column={column}
+                nextUpcoming={nextUpcomingByWallet[walletId] ?? null}
+              />
+            );
+          })}
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
+          {INVESTMENT_WALLET_IDS.map((walletId) => {
+            const column =
+              portfolio.columns.find((entry) => entry.walletId === walletId) ??
+              emptyColumn(walletId);
+
+            return (
+              <ColumnItemsCard
+                key={`items-${walletId}`}
                 column={column}
                 onEdit={setEditingItem}
                 onAdd={() => setAddingWallet(walletId)}
@@ -173,58 +193,89 @@ function emptyColumn(walletId: InvestmentWalletId): InvestmentColumnSummary {
   };
 }
 
-interface InvestmentWalletColumnProps {
+interface ColumnSummaryCardProps {
+  column: InvestmentColumnSummary;
+  nextUpcoming: UpcomingInvestment | null;
+}
+
+function ColumnSummaryCard({ column, nextUpcoming }: ColumnSummaryCardProps) {
+  const accent = INVESTMENT_WALLET_COLORS[column.walletId];
+  const showPl = column.hasMarketSnapshot && column.totalGainLoss !== 0;
+
+  return (
+    <Card
+      className="flex flex-col p-4 md:p-5"
+      style={{ borderTopColor: accent, borderTopWidth: 4 }}
+    >
+      <div className="min-h-14">
+        <h2 className="font-head text-lg">
+          {INVESTMENT_WALLET_LABELS[column.walletId]}
+        </h2>
+        <p className="mt-1 min-h-4 text-xs text-muted-foreground">
+          {nextUpcoming ? (
+            <>
+              Next: {nextUpcoming.name} · {nextUpcoming.dateLabel} ·{" "}
+              {formatEuro(nextUpcoming.amount)}
+            </>
+          ) : (
+            "\u00A0"
+          )}
+        </p>
+      </div>
+
+      <div className="mt-2 grid grid-cols-3 gap-1.5 text-xs sm:gap-2 sm:text-sm">
+        <Metric label="Value" value={formatEuro(column.totalMarketValue)} />
+        <Metric label="Invested" value={formatEuro(column.totalInvested)} />
+        <Metric
+          label="P/L"
+          value={
+            showPl ? formatSignedEuro(column.totalGainLoss) : "—"
+          }
+          tone={
+            showPl
+              ? column.totalGainLoss > 0
+                ? "positive"
+                : column.totalGainLoss < 0
+                  ? "negative"
+                  : "neutral"
+              : "neutral"
+          }
+        />
+      </div>
+
+      <div className="mt-3 h-28">
+        {column.chartPoints.length > 0 ? (
+          <>
+            <p className="mb-1 text-xs text-muted-foreground">Column total</p>
+            <InvestmentItemChart
+              points={column.chartPoints}
+              gainLoss={column.totalGainLoss}
+              className="h-24"
+            />
+          </>
+        ) : (
+          <div className="flex h-full items-end">
+            <p className="text-xs text-muted-foreground">No chart yet</p>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+interface ColumnItemsCardProps {
   column: InvestmentColumnSummary;
   onEdit: (item: InvestmentPositionItem) => void;
   onAdd: () => void;
 }
 
-function InvestmentWalletColumn({
+function ColumnItemsCard({
   column,
   onEdit,
   onAdd,
-}: InvestmentWalletColumnProps) {
-  const accent = INVESTMENT_WALLET_COLORS[column.walletId];
-
+}: ColumnItemsCardProps) {
   return (
-    <Card
-      className="flex flex-col gap-3 p-4 md:p-5"
-      style={{ borderTopColor: accent, borderTopWidth: 4 }}
-    >
-      <div>
-        <h2 className="font-head text-lg">
-          {INVESTMENT_WALLET_LABELS[column.walletId]}
-        </h2>
-        <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-          <Metric label="Value" value={formatEuro(column.totalMarketValue)} />
-          <Metric label="Invested" value={formatEuro(column.totalInvested)} />
-          {column.hasMarketSnapshot && column.totalGainLoss !== 0 && (
-            <Metric
-              label="P/L"
-              value={formatSignedEuro(column.totalGainLoss)}
-              tone={
-                column.totalGainLoss > 0
-                  ? "positive"
-                  : column.totalGainLoss < 0
-                    ? "negative"
-                    : "neutral"
-              }
-              className="col-span-2"
-            />
-          )}
-        </div>
-      </div>
-
-      {column.chartPoints.length > 0 && (
-        <div>
-          <p className="mb-1 text-xs text-muted-foreground">Column total</p>
-          <InvestmentItemChart
-            points={column.chartPoints}
-            gainLoss={column.totalGainLoss}
-          />
-        </div>
-      )}
-
+    <Card className="flex flex-col gap-3 p-4 md:p-5">
       <ul className="flex flex-col gap-2">
         {column.items.map((item) => (
           <li key={item.id}>
@@ -256,10 +307,9 @@ function InvestmentPositionCard({
   item,
   onEdit,
 }: InvestmentPositionCardProps) {
+  const isCrypto = isCryptoWallet(item.walletId);
   const valueLabel =
-    item.hasManualValue || item.hasMarketQuote
-      ? "Market"
-      : "Invested";
+    item.hasManualValue || item.hasMarketQuote ? "Market" : "Invested";
 
   return (
     <div className="rounded border-2 border-border p-3">
@@ -270,7 +320,21 @@ function InvestmentPositionCard({
             <p className="font-medium leading-snug">{item.name}</p>
             {item.instrumentSymbol && (
               <p className="truncate text-xs text-muted-foreground">
-                {item.instrumentName ?? item.instrumentSymbol}
+                {isCrypto
+                  ? "Bitcoin"
+                  : item.instrumentName ?? item.instrumentSymbol}
+              </p>
+            )}
+            {item.needsShareCount && (
+              <p className="mt-1 text-xs font-medium text-[var(--chart-3)]">
+                {isCrypto
+                  ? "Add total BTC for live market value"
+                  : "Add total shares for live market value"}
+              </p>
+            )}
+            {isCrypto && item.shareCount !== null && item.shareCount > 0 && (
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {formatBtcAmount(item.shareCount)}
               </p>
             )}
           </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Trash } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
@@ -15,7 +16,13 @@ import {
   saveInvestmentPosition,
 } from "@/lib/actions/investments";
 import { estimateSharesAmountAction } from "@/lib/actions/market";
+import { formatMoney } from "@/lib/market/fx";
 import { formatEuro } from "@/lib/constants";
+import {
+  BITCOIN_INSTRUMENT,
+  isCryptoWallet,
+} from "@/lib/crypto-holdings";
+import { parseShareCountInput } from "@/lib/share-count";
 import {
   displayNameForRecurringTemplate,
   type InvestmentPositionItem,
@@ -89,7 +96,12 @@ function InvestmentPositionForm({
   const [shareCount, setShareCount] = useState(
     item?.shareCount ? String(item.shareCount) : "",
   );
-  const [estimate, setEstimate] = useState<number | null>(null);
+  const [estimate, setEstimate] = useState<{
+    amount: number;
+    priceEur: number;
+    priceOriginal: number;
+    currency: string;
+  } | null>(null);
 
   useEffect(() => {
     if (state.success) {
@@ -106,8 +118,8 @@ function InvestmentPositionForm({
       return;
     }
 
-    const parsedShares = Number(shareCount);
-    if (!Number.isInteger(parsedShares) || parsedShares <= 0) {
+    const parsedShares = parseShareCountInput(shareCount);
+    if (parsedShares === null) {
       setEstimate(null);
       return;
     }
@@ -118,7 +130,7 @@ function InvestmentPositionForm({
         parsedShares,
       );
       if ("data" in response) {
-        setEstimate(response.data.amount);
+        setEstimate(response.data);
       } else {
         setEstimate(null);
       }
@@ -144,7 +156,11 @@ function InvestmentPositionForm({
     });
   }
 
-  const title = isEdit ? item.name : "Add investment item";
+  const isCrypto = isCryptoWallet(walletId);
+  const title = isEdit ? item.name : isCrypto ? "Add crypto item" : "Add item";
+  const isRecurringLinked = isEdit && Boolean(item.recurringTemplateId);
+  const instrumentFromRecurring =
+    isRecurringLinked && Boolean(item.instrumentSymbol || isCrypto);
 
   return (
     <MobileSheet open={open} onOpenChange={onOpenChange} title={title}>
@@ -161,18 +177,6 @@ function InvestmentPositionForm({
             value={item.recurringTemplateId}
           />
         )}
-
-        {isEdit && item.recurringTemplateId ? (
-          <div className="flex items-center gap-3 rounded border-2 border-border p-3">
-            <CategoryIcon icon={item.icon} />
-            <div>
-              <p className="font-medium">{item.name}</p>
-              <p className="text-xs text-muted-foreground">
-                Linked to a recurring item
-              </p>
-            </div>
-          </div>
-        ) : null}
 
         {!isEdit && (
           <div className="flex flex-col gap-2">
@@ -198,9 +202,7 @@ function InvestmentPositionForm({
 
         {!isEdit && sourceType === "recurring" && (
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="recurringTemplateId">
-              Recurring item
-            </FormLabel>
+            <FormLabel htmlFor="recurringTemplateId">Recurring item</FormLabel>
             {recurringOptions.length > 0 ? (
               <select
                 id="recurringTemplateId"
@@ -228,7 +230,22 @@ function InvestmentPositionForm({
           </div>
         )}
 
-        {(!isEdit && sourceType === "custom") || (isEdit && !item.recurringTemplateId) ? (
+        {isRecurringLinked ? (
+          <div className="flex items-center gap-3 rounded border-2 border-border p-3">
+            <CategoryIcon icon={item.icon} />
+            <div>
+              <p className="font-medium">{item.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {isCrypto
+                  ? "Fixed EUR DCA · Bitcoin on Bitstack"
+                  : "Fixed EUR DCA · ETF set on Recurring"}
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        {(!isEdit && sourceType === "custom") ||
+        (isEdit && !item.recurringTemplateId) ? (
           <div className="flex flex-col gap-2">
             <FormLabel htmlFor="name">Name</FormLabel>
             <Input
@@ -247,8 +264,12 @@ function InvestmentPositionForm({
 
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="initialBalance">
-            Already invested (before tracking)
+            Total invested (cost basis)
           </FormLabel>
+          <Text className="text-xs text-muted-foreground">
+            Your broker&apos;s total invested amount for this position. Used
+            for P/L — not updated from recurring transactions.
+          </Text>
           <Input
             id="initialBalance"
             name="initialBalance"
@@ -261,39 +282,120 @@ function InvestmentPositionForm({
           />
         </div>
 
-        <InstrumentSearch
-          symbol={instrumentSymbol}
-          name={instrumentName}
-          onSelect={(instrument) => {
-            setInstrumentSymbol(instrument.symbol);
-            setInstrumentName(instrument.name);
-          }}
-          onClear={() => {
-            setInstrumentSymbol("");
-            setInstrumentName("");
-          }}
-        />
-        <input
-          type="hidden"
-          name="instrumentSymbol"
-          value={instrumentSymbol}
-        />
-        <input type="hidden" name="instrumentName" value={instrumentName} />
+        {isRecurringLinked && instrumentFromRecurring ? (
+          <div className="rounded border-2 border-border bg-muted/20 p-3 text-sm">
+            <p className="font-medium">
+              {isCrypto ? "Tracked asset" : "Tracked ETF"}
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              {isCrypto
+                ? BITCOIN_INSTRUMENT.name
+                : item.instrumentName ?? item.instrumentSymbol}
+            </p>
+            {!isCrypto && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Change the fund on the{" "}
+                <Link href="/recurring" className="font-medium underline">
+                  Recurring
+                </Link>{" "}
+                page.
+              </p>
+            )}
+            <input
+              type="hidden"
+              name="instrumentSymbol"
+              value={
+                isCrypto
+                  ? BITCOIN_INSTRUMENT.symbol
+                  : instrumentSymbol
+              }
+            />
+            <input
+              type="hidden"
+              name="instrumentName"
+              value={
+                isCrypto ? BITCOIN_INSTRUMENT.name : instrumentName
+              }
+            />
+          </div>
+        ) : isRecurringLinked && !isCrypto ? (
+          <Text className="text-sm text-muted-foreground">
+            Link your ETF under{" "}
+            <Link href="/recurring" className="font-medium underline">
+              Recurring → {item.name}
+            </Link>{" "}
+            first, then enter total shares below.
+          </Text>
+        ) : isCrypto ? (
+          <>
+            <div className="rounded border-2 border-border bg-muted/20 p-3 text-sm">
+              <p className="font-medium">Bitcoin</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Market value uses BTC-EUR live price × your total BTC.
+              </p>
+            </div>
+            <input
+              type="hidden"
+              name="instrumentSymbol"
+              value={BITCOIN_INSTRUMENT.symbol}
+            />
+            <input
+              type="hidden"
+              name="instrumentName"
+              value={BITCOIN_INSTRUMENT.name}
+            />
+          </>
+        ) : (
+          <>
+            <InstrumentSearch
+              symbol={instrumentSymbol}
+              name={instrumentName}
+              onSelect={(instrument) => {
+                setInstrumentSymbol(instrument.symbol);
+                setInstrumentName(instrument.name);
+              }}
+              onClear={() => {
+                setInstrumentSymbol("");
+                setInstrumentName("");
+              }}
+            />
+            <input
+              type="hidden"
+              name="instrumentSymbol"
+              value={instrumentSymbol}
+            />
+            <input
+              type="hidden"
+              name="instrumentName"
+              value={instrumentName}
+            />
+          </>
+        )}
 
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="shareCount">
-            Shares held (optional, for live market value)
+            {isCrypto
+              ? "Total BTC held"
+              : instrumentSymbol
+                ? "Total shares held"
+                : "Shares held (optional)"}
           </FormLabel>
+          {(instrumentSymbol || isCrypto) && (
+            <Text className="text-xs text-muted-foreground">
+              {isCrypto
+                ? "From Bitstack — fractional BTC OK (use comma or dot)."
+                : "From your broker — fractional shares OK (use comma or dot, e.g. 1,1465)."}
+            </Text>
+          )}
           <Input
             id="shareCount"
             name="shareCount"
-            type="number"
-            step="1"
-            min="1"
+            type="text"
+            inputMode="decimal"
             className="text-base"
             value={shareCount}
             onChange={(event) => setShareCount(event.target.value)}
-            placeholder="Total shares you currently hold"
+            placeholder={isCrypto ? "e.g. 0,01234" : "e.g. 42 or 1,1465"}
           />
         </div>
 
@@ -301,15 +403,32 @@ function InvestmentPositionForm({
           <Text className="text-sm text-muted-foreground">
             Live market estimate:{" "}
             <span className="font-semibold text-foreground">
-              ≈ {formatEuro(estimate)}
+              ≈ {formatEuro(estimate.amount)}
             </span>
+            {isCrypto ? (
+              <span className="block text-xs">
+                @ {formatEuro(estimate.priceEur)} / BTC
+              </span>
+            ) : (
+              estimate.currency !== "EUR" && (
+                <span className="block text-xs">
+                  {formatMoney(estimate.priceOriginal, estimate.currency)} / share
+                  → {formatEuro(estimate.priceEur)} / share
+                </span>
+              )
+            )}
           </Text>
         )}
 
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="currentValue">
-            Current value override (optional)
+            Broker value override (optional)
           </FormLabel>
+          <Text className="text-xs text-muted-foreground">
+            Usually leave empty — market value is computed from shares × live
+            price. Use this only if your broker shows a different total than
+            the live quote (e.g. delayed price, fees, or cash drag).
+          </Text>
           <Input
             id="currentValue"
             name="currentValue"
@@ -318,7 +437,7 @@ function InvestmentPositionForm({
             min="0"
             className="text-base"
             defaultValue={item?.currentValue ?? ""}
-            placeholder="From your broker if different from live quote"
+            placeholder="Total portfolio value from your broker"
           />
         </div>
 

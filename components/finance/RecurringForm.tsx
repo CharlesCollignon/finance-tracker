@@ -14,7 +14,12 @@ import {
 import { CategorySelect } from "@/components/finance/CategorySelect";
 import { InstrumentSearch } from "@/components/finance/InstrumentSearch";
 import { estimateSharesAmountAction } from "@/lib/actions/market";
+import { formatMoney } from "@/lib/market/fx";
 import { formatEuro } from "@/lib/constants";
+import {
+  BITCOIN_INSTRUMENT,
+  isCryptoCategoryName,
+} from "@/lib/crypto-holdings";
 import { DAY_OF_WEEK_LABELS, MONTH_LABELS } from "@/lib/recurrence";
 import { cn } from "@/lib/utils";
 import type {
@@ -88,7 +93,9 @@ function RecurringFormFields({
   );
   const [estimate, setEstimate] = useState<{
     amount: number;
-    price: number;
+    priceEur: number;
+    priceOriginal: number;
+    currency: string;
   } | null>(null);
   const [estimateError, setEstimateError] = useState<string | null>(null);
   const [estimateLoading, setEstimateLoading] = useState(false);
@@ -123,9 +130,19 @@ function RecurringFormFields({
   const isDeploymentCategory =
     selectedCategory?.type === "investment" &&
     selectedCategory.counts_toward_summary === false;
+  const isCryptoCategory = isCryptoCategoryName(
+    selectedCategory?.name ?? "",
+  );
   const isYearlyExpense =
     recurrence === "yearly" && selectedCategory?.type === "expense";
-  const supportsShares = selectedCategory?.type === "investment";
+  const supportsShares =
+    selectedCategory?.type === "investment" && !isCryptoCategory;
+
+  useEffect(() => {
+    if (isCryptoCategory && pricingType === "shares") {
+      setPricingType("fixed");
+    }
+  }, [isCryptoCategory, pricingType]);
 
   useEffect(() => {
     if (!supportsShares && pricingType === "shares") {
@@ -193,10 +210,16 @@ function RecurringFormFields({
             onChange={(event) => setCategoryId(event.target.value)}
             required
           />
-          {isDeploymentCategory && (
+          {isDeploymentCategory && !isCryptoCategory && (
             <Text className="text-xs text-muted-foreground">
               Broker DCA entries are tracked for visibility but do not reduce
               your remaining budget.
+            </Text>
+          )}
+          {isCryptoCategory && (
+            <Text className="text-xs text-muted-foreground">
+              Fixed EUR weekly buy on Bitstack. Market value on Wallets uses
+              your total BTC × live BTC/EUR price.
             </Text>
           )}
         </div>
@@ -279,8 +302,10 @@ function RecurringFormFields({
               {!estimateLoading && estimate && (
                 <p className="mt-1 tabular-nums text-base font-semibold">
                   ≈ {formatEuro(estimate.amount)}
-                  <span className="ml-2 text-xs font-normal text-muted-foreground">
-                    @ {formatEuro(estimate.price)} / share
+                  <span className="ml-2 block text-xs font-normal text-muted-foreground">
+                    @ {formatEuro(estimate.priceEur)} / share
+                    {estimate.currency !== "EUR" &&
+                      ` (${formatMoney(estimate.priceOriginal, estimate.currency)} converted)`}
                   </span>
                 </p>
               )}
@@ -290,21 +315,68 @@ function RecurringFormFields({
             </div>
           </>
         ) : (
-          <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="recurring-amount">
-              {recurrence === "yearly" ? "Annual amount (EUR)" : "Amount (EUR)"}
-            </FormLabel>
-            <Input
-              id="recurring-amount"
-              name="amount"
-              type="number"
-              step="0.01"
-              min="0.01"
-              required
-              className="text-base"
-              defaultValue={template?.amount ?? ""}
-            />
-          </div>
+          <>
+            <div className="flex flex-col gap-2">
+              <FormLabel htmlFor="recurring-amount">
+                {recurrence === "yearly"
+                  ? "Annual amount (EUR)"
+                  : "Amount (EUR)"}
+              </FormLabel>
+              <Input
+                id="recurring-amount"
+                name="amount"
+                type="number"
+                step="0.01"
+                min="0.01"
+                required
+                className="text-base"
+                defaultValue={template?.amount ?? ""}
+              />
+            </div>
+            {supportsShares && !isCryptoCategory && (
+              <div className="flex flex-col gap-2 rounded border-2 border-border bg-muted/20 p-3">
+                <FormLabel>Tracked ETF / fund</FormLabel>
+                <Text className="text-xs text-muted-foreground">
+                  Fixed EUR DCA: pick the ETF you buy here. On Wallets,
+                  enter how many shares you hold in total for live market
+                  value.
+                </Text>
+                <InstrumentSearch
+                  symbol={instrumentSymbol}
+                  name={instrumentName}
+                  onSelect={(instrument: InstrumentSearchResult) => {
+                    setInstrumentSymbol(instrument.symbol);
+                    setInstrumentName(instrument.name);
+                  }}
+                  onClear={() => {
+                    setInstrumentSymbol("");
+                    setInstrumentName("");
+                  }}
+                />
+              </div>
+            )}
+            {isCryptoCategory && (
+              <>
+                <input
+                  type="hidden"
+                  name="instrumentSymbol"
+                  value={BITCOIN_INSTRUMENT.symbol}
+                />
+                <input
+                  type="hidden"
+                  name="instrumentName"
+                  value={BITCOIN_INSTRUMENT.name}
+                />
+                <div className="rounded border-2 border-border bg-muted/20 p-3 text-sm">
+                  <p className="font-medium">Bitcoin DCA</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Each buy converts your EUR amount to BTC. Enter your
+                    total BTC balance on Wallets for live value.
+                  </p>
+                </div>
+              </>
+            )}
+          </>
         )}
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="recurring-description">

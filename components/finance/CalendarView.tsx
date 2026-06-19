@@ -76,12 +76,7 @@ export function CalendarView({
         </div>
       </PageHeader>
 
-      <PageContainer
-        className={cn(
-          "flex flex-col gap-3 pb-4",
-          "min-h-[calc(100dvh-7rem)] md:min-h-[calc(100dvh-4rem)]",
-        )}
-      >
+      <PageContainer className="flex flex-1 flex-col gap-3 min-h-0">
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <SummaryTile label="In" amount={monthTotals.income} tone="income" />
           <SummaryTile label="Out" amount={monthTotals.outflow} tone="outflow" />

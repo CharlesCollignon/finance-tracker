@@ -9,7 +9,7 @@ import {
 
 export const APP_NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: ChartPieSlice },
-  { href: "/investments", label: "Invest", icon: ChartLine },
+  { href: "/investments", label: "Wallets", icon: ChartLine },
   { href: "/transactions", label: "Transactions", icon: ArrowsLeftRight },
   { href: "/calendar", label: "Calendar", icon: CalendarBlank },
   { href: "/recurring", label: "Recurring", icon: Repeat },

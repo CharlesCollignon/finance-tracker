@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 const FEATURES = [
   { icon: ChartPieSlice, title: "Dashboard" },
   { icon: Repeat, title: "Recurring" },
-  { icon: ChartLine, title: "Invest" },
+  { icon: ChartLine, title: "Wallets" },
   { icon: ArrowsLeftRight, title: "Transactions" },
   { icon: CalendarBlank, title: "Calendar" },
 ] as const;

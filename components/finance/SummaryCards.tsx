@@ -8,6 +8,7 @@ interface SummaryCardProps {
   amount: number;
   highlight?: boolean;
   warning?: boolean;
+  hint?: string;
 }
 
 export function SummaryCard({
@@ -15,19 +16,25 @@ export function SummaryCard({
   amount,
   highlight,
   warning,
+  hint,
 }: SummaryCardProps) {
   return (
     <Card
       className={cn(
-        "flex w-full items-center justify-between p-4 md:p-5",
+        "flex w-full flex-col gap-1 p-4 md:p-5",
         highlight && "border-destructive bg-accent",
         warning && "border-destructive",
       )}
     >
-      <span className="font-head text-base md:text-lg">{label}</span>
-      <span className="tabular-nums text-lg font-semibold md:text-xl">
-        {formatEuro(amount)}
-      </span>
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-head text-base md:text-lg">{label}</span>
+        <span className="tabular-nums text-lg font-semibold md:text-xl">
+          {formatEuro(amount)}
+        </span>
+      </div>
+      {hint && (
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      )}
     </Card>
   );
 }

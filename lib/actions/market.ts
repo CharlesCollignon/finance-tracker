@@ -7,6 +7,7 @@ import {
   type InstrumentQuote,
   type InstrumentSearchResult,
 } from "@/lib/market/yahoo";
+import { fetchInstrumentQuoteInEur } from "@/lib/market/fx";
 import { createClient } from "@/lib/supabase/server";
 
 type MarketActionResult<T> =
@@ -62,22 +63,31 @@ export async function fetchInstrumentQuoteAction(
 export async function estimateSharesAmountAction(
   symbol: string,
   shareCount: number,
-): Promise<MarketActionResult<{ amount: number; price: number }>> {
+): Promise<
+  MarketActionResult<{
+    amount: number;
+    priceEur: number;
+    priceOriginal: number;
+    currency: string;
+  }>
+> {
   const user = await requireUser();
   if (!user) {
     return { error: "Not authenticated" };
   }
 
-  if (!Number.isInteger(shareCount) || shareCount <= 0) {
-    return { error: "Share count must be a positive whole number" };
+  if (!Number.isFinite(shareCount) || shareCount <= 0) {
+    return { error: "Share count must be a positive number" };
   }
 
   try {
-    const quote = await fetchInstrumentQuote(symbol);
+    const quote = await fetchInstrumentQuoteInEur(symbol);
     return {
       data: {
-        price: quote.price,
-        amount: computeSharesAmount(shareCount, quote.price),
+        priceEur: quote.priceEur,
+        priceOriginal: quote.priceOriginal,
+        currency: quote.currency,
+        amount: computeSharesAmount(shareCount, quote.priceEur),
       },
     };
   } catch {
@@ -97,10 +107,10 @@ export async function resolveSharesPricing(
     }
 > {
   try {
-    const quote = await fetchInstrumentQuote(symbol);
+    const quote = await fetchInstrumentQuoteInEur(symbol);
     return {
-      amount: computeSharesAmount(shareCount, quote.price),
-      price: quote.price,
+      amount: computeSharesAmount(shareCount, quote.priceEur),
+      price: quote.priceEur,
       quotedAt: new Date().toISOString(),
     };
   } catch {

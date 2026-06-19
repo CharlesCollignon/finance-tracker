@@ -1,5 +1,14 @@
-import { PageSkeleton } from "@/components/layout/PageSkeleton";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { ListSkeleton } from "@/components/layout/PageSkeleton";
 
 export default function DashboardLoading() {
-  return <PageSkeleton />;
+  return (
+    <>
+      <PageHeader title="Dashboard" />
+      <PageContainer>
+        <ListSkeleton rows={4} />
+      </PageContainer>
+    </>
+  );
 }

@@ -11,11 +11,11 @@ export function BottomNav() {
   return (
     <nav
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-40 border-t-2 border-border md:hidden",
-        "bg-background pb-safe",
+        "fixed bottom-0 left-0 right-0 z-40 md:hidden",
+        "border-t-2 border-border bg-background pb-safe",
       )}
     >
-      <div className="mx-auto flex max-w-lg items-stretch justify-around">
+      <div className="mx-auto flex h-[var(--shell-bottom-nav-height)] max-w-lg items-stretch justify-around">
         {APP_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);
 
@@ -24,8 +24,8 @@ export function BottomNav() {
               key={href}
               href={href}
               className={cn(
-                "flex min-h-14 min-w-[44px] flex-1 flex-col items-center",
-                "justify-center gap-1 px-1 py-2 text-[10px] font-medium sm:text-xs",
+                "flex min-w-[44px] flex-1 flex-col items-center",
+                "justify-center gap-0.5 px-1 py-1 text-[10px] font-medium sm:text-xs",
                 "transition-colors",
                 active
                   ? "bg-primary text-primary-foreground"

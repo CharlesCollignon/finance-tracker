@@ -3,12 +3,15 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
 import { getMonthlySummary } from "@/lib/queries/finance";
-import { parseMonthParams, formatEuro } from "@/lib/constants";
+import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
+import { parseMonthParams, parseBudgetViewMode, budgetViewHint, formatEuro } from "@/lib/constants";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { SignOutButton } from "@/components/layout/SignOutButton";
+import { BudgetViewToggle } from "@/components/finance/BudgetViewToggle";
 import { DashboardCharts } from "@/components/finance/DashboardCharts";
+import { DashboardWalletsCard } from "@/components/finance/DashboardWalletsCard";
 import {
   BreakdownList,
   SummaryCard,
@@ -17,7 +20,7 @@ import { Badge } from "@/components/retroui/Badge";
 import { Card } from "@/components/retroui/Card";
 
 interface DashboardPageProps {
-  searchParams: Promise<{ y?: string; m?: string }>;
+  searchParams: Promise<{ y?: string; m?: string; view?: string }>;
 }
 
 export default async function DashboardPage({
@@ -36,15 +39,24 @@ export default async function DashboardPage({
 
   const params = await searchParams;
   const { year, month } = parseMonthParams(params.y, params.m);
-  const summary = await getMonthlySummary(user.id, year, month);
+  const budgetView = parseBudgetViewMode(params.view);
+  const [summary, walletPortfolio] = await Promise.all([
+    getMonthlySummary(user.id, year, month, budgetView),
+    getWalletPortfolio(user.id),
+  ]);
   const overBudget = summary.remaining < 0;
 
   return (
     <>
       <PageHeader title="Dashboard">
-        <Suspense fallback={<span className="text-sm">…</span>}>
-          <MonthPicker basePath="/dashboard" />
-        </Suspense>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Suspense fallback={<span className="text-sm">…</span>}>
+            <BudgetViewToggle basePath="/dashboard" />
+          </Suspense>
+          <Suspense fallback={<span className="text-sm">…</span>}>
+            <MonthPicker basePath="/dashboard" />
+          </Suspense>
+        </div>
         <div className="md:hidden">
           <SignOutButton />
         </div>
@@ -60,10 +72,13 @@ export default async function DashboardPage({
               amount={summary.remaining}
               highlight
               warning={overBudget}
+              hint={budgetViewHint(summary.budgetView)}
             />
           </div>
 
           <DashboardCharts summary={summary} />
+
+          <DashboardWalletsCard portfolio={walletPortfolio} />
 
           <div className="grid gap-3 md:grid-cols-2 md:gap-4">
           <Card className="w-full md:col-span-1">
@@ -82,9 +97,9 @@ export default async function DashboardPage({
           <Card className="w-full md:col-span-1">
             <div className="flex items-center justify-between p-4 md:p-5">
               <div>
-                <span className="font-head text-base">Investments</span>
+                <span className="font-head text-base">Broker transfers</span>
                 <p className="text-xs text-muted-foreground">
-                  Transfers from main bank
+                  From main bank · counts in budget
                 </p>
               </div>
               <span className="tabular-nums text-lg font-semibold md:text-xl">
@@ -99,9 +114,9 @@ export default async function DashboardPage({
               <div className="border-t-2 border-border">
                 <div className="flex items-center justify-between px-4 pt-4">
                   <div>
-                    <p className="text-sm font-medium">Deployed at broker</p>
+                    <p className="text-sm font-medium">Wallet DCA this month</p>
                     <p className="text-xs text-muted-foreground">
-                      Tracking only · not counted in budget
+                      PEA, CTO, Bitstack · included in remaining
                     </p>
                   </div>
                   <span className="tabular-nums text-sm font-semibold">

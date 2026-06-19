@@ -12,8 +12,8 @@ const sizeStyles: Record<
   { mark: string; tagline: string; gap: string }
 > = {
   nav: {
-    mark: "text-[2.25rem]",
-    tagline: "mt-0.5 text-[10px] tracking-[0.14em]",
+    mark: "text-[2rem] md:text-[2.25rem]",
+    tagline: "mt-0.5 text-[9px] tracking-[0.12em] md:text-[10px] md:tracking-[0.14em]",
     gap: "gap-0",
   },
   hero: {

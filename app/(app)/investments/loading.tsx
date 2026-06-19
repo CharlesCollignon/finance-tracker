@@ -5,7 +5,7 @@ import { ListSkeleton } from "@/components/layout/PageSkeleton";
 export default function InvestmentsLoading() {
   return (
     <>
-      <PageHeader title="Investments" />
+      <PageHeader title="Wallets" />
       <PageContainer>
         <ListSkeleton rows={4} />
       </PageContainer>

@@ -1,3 +1,5 @@
+import type { BudgetViewMode } from "@/lib/constants";
+
 export type CategoryType = "income" | "expense" | "savings" | "investment";
 
 export type Recurrence = "monthly" | "weekly" | "yearly";
@@ -280,6 +282,7 @@ export interface MonthlySummary {
   investments: number;
   investmentDeployments: number;
   remaining: number;
+  budgetView: BudgetViewMode;
   expenseBreakdown: CategoryBreakdown[];
   savingsBreakdown: CategoryBreakdown[];
   investmentBreakdown: CategoryBreakdown[];

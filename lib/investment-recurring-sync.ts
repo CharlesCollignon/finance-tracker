@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { displayNameForRecurringTemplate } from "@/lib/investment-positions";
+import { BITCOIN_INSTRUMENT, isCryptoWallet } from "@/lib/crypto-holdings";
 import { resolveWalletId } from "@/lib/investments";
 import type { Database, RecurringTemplateWithCategory } from "@/lib/types/database";
 
@@ -42,34 +43,45 @@ export async function syncInvestmentPositionFromRecurring(
 
   const { data: existing } = await supabase
     .from("investment_positions")
-    .select("id, initial_balance, current_value")
+    .select("id, initial_balance, current_value, share_count")
     .eq("user_id", userId)
     .eq("recurring_template_id", templateId)
     .maybeSingle();
 
-  const instrumentFields =
-    row.pricing_type === "shares"
-      ? {
-          share_count: row.share_count,
-          instrument_symbol: row.instrument_symbol,
-          instrument_name: row.instrument_name,
-        }
-      : {
-          share_count: null,
-          instrument_symbol: null,
-          instrument_name: null,
-        };
+  const isCrypto = isCryptoWallet(wallet);
+  const hasInstrument =
+    isCrypto ||
+    (row.instrument_symbol !== null && row.instrument_name !== null);
+  const instrumentSymbol = isCrypto
+    ? BITCOIN_INSTRUMENT.symbol
+    : row.instrument_symbol;
+  const instrumentName = isCrypto
+    ? BITCOIN_INSTRUMENT.name
+    : row.instrument_name;
 
   if (existing) {
+    const updatePayload: {
+      wallet: typeof wallet;
+      name: string;
+      category_id: string;
+      updated_at: string;
+      instrument_symbol?: string;
+      instrument_name?: string;
+    } = {
+      wallet,
+      name,
+      category_id: row.category_id,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (hasInstrument) {
+      updatePayload.instrument_symbol = instrumentSymbol!;
+      updatePayload.instrument_name = instrumentName!;
+    }
+
     await supabase
       .from("investment_positions")
-      .update({
-        wallet,
-        name,
-        category_id: row.category_id,
-        ...instrumentFields,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", existing.id)
       .eq("user_id", userId);
 
@@ -84,7 +96,9 @@ export async function syncInvestmentPositionFromRecurring(
     category_id: row.category_id,
     initial_balance: 0,
     current_value: null,
-    ...instrumentFields,
+    share_count: null,
+    instrument_symbol: hasInstrument ? instrumentSymbol : null,
+    instrument_name: hasInstrument ? instrumentName : null,
   });
 }
 
