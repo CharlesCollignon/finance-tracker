@@ -2,6 +2,11 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# React Native / Metro and Expo autolinking expect a flat, hoisted
+# node_modules layout. pnpm's default isolated layout breaks Metro module
+# resolution (e.g. NativeWind's react-native-css-interop/jsx-runtime).
+nodeLinker: hoisted
+
 # Allow install scripts required by Next.js / ESLint tooling (pnpm v11)
 onlyBuiltDependencies:
   - sharp
