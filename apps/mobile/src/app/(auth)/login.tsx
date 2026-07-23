@@ -1,21 +1,17 @@
-import { View } from "react-native";
-
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Screen } from "@/components/ui/Screen";
-import { Text } from "@/components/ui/Text";
+import { AuthForm } from "@/components/auth/AuthForm";
+import { useAuth } from "@/providers/AuthProvider";
 
 export default function LoginScreen() {
+  const { signIn } = useAuth();
+
   return (
-    <Screen title="Sign in">
-      <View className="gap-4">
-        <Input placeholder="Email" autoCapitalize="none" keyboardType="email-address" />
-        <Input placeholder="Password" secureTextEntry />
-        <Button label="Sign in" />
-        <Text variant="muted">
-          Auth is wired to Supabase in Phase 3. This screen is a placeholder.
-        </Text>
-      </View>
-    </Screen>
+    <AuthForm
+      title="Sign in"
+      submitLabel="Sign in"
+      onSubmit={signIn}
+      footerPrompt="No account yet?"
+      footerLinkLabel="Create one"
+      footerHref="/signup"
+    />
   );
 }
