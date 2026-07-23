@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "c1ede768-a318-4f8c-ac72-ad1567883c31"
+      }
+    },
+    "android": {
+      "package": "com.salut_charles.financetracker"
+    }
+  }
+}
