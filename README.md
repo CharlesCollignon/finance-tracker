@@ -1,36 +1,191 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Finance Tracker
 
-## Getting Started
+Personal finance app (EUR-centric) with a Next.js web client and an
+Expo (React Native) mobile app. Both share the same Supabase backend and
+domain logic in `packages/core`.
 
-First, run the development server:
+## Monorepo layout
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+finance-tracker/
+├── apps/
+│   ├── web/          Next.js 16 (desktop + mobile web)
+│   └── mobile/       Expo SDK 57 (Android / iOS via Expo Go)
+├── packages/
+│   └── core/         Shared TypeScript (budget, recurrence, validations…)
+└── supabase/         Postgres migrations and RLS policies
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Prerequisites
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Node.js** 20+ (22 recommended for Supabase)
+- **pnpm** 11 (`npm install -g pnpm`)
+- A **Supabase** project ([supabase.com](https://supabase.com))
+- **Mobile only:** [Expo Go](https://expo.dev/go) on your phone (SDK 57)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Apply the database schema once on your Supabase project (SQL editor or
+CLI) using the files in `supabase/migrations/`, in order (`001` → `009`).
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 1. Install dependencies
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+From the repository root:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+pnpm install
+```
 
-## Deploy on Vercel
+This repo uses a **hoisted** pnpm layout (`nodeLinker: hoisted` in
+`pnpm-workspace.yaml`) so Metro and Expo autolinking work correctly.
+Do not change that unless you know what you are doing.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 2. Environment variables
+
+### Web (`apps/web`)
+
+Copy the example file and fill in your Supabase values (Dashboard →
+Project Settings → API):
+
+```bash
+cp apps/web/.env.local.example apps/web/.env.local
+```
+
+| Variable | Required | Notes |
+|----------|----------|--------|
+| `NEXT_PUBLIC_SUPABASE_URL` | yes | `https://xxxx.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Public anon key |
+| `NEXT_PUBLIC_SITE_URL` | yes | `http://localhost:3000` in dev |
+| `SUPABASE_SERVICE_ROLE_KEY` | optional | Only for “Delete account” on web |
+
+Google OAuth is configured in the **Supabase dashboard**, not in env files.
+
+### Mobile (`apps/mobile`)
+
+Same Supabase project; **public keys only** (never put the service role
+key in the mobile app):
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env
+```
+
+| Variable | Required |
+|----------|----------|
+| `EXPO_PUBLIC_SUPABASE_URL` | yes |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | yes |
+
+After changing `.env`, restart Expo with a cleared cache (`-c`).
+
+---
+
+## 3. Desktop / web
+
+Start the Next.js dev server:
+
+```bash
+pnpm dev:web
+# or: pnpm --filter web dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+Other web commands (from root):
+
+```bash
+pnpm --filter web build    # production build
+pnpm --filter web start    # serve production build
+pnpm --filter web lint
+pnpm --filter web check:supabase   # smoke-check env + categories table
+```
+
+### Deploy on Vercel
+
+The Next.js app lives in **`apps/web`**, not the repo root.
+
+In Vercel → Project Settings → Build and Deployment:
+
+- **Root Directory:** `apps/web`
+- Enable **Include files outside of the root directory** (for the
+  workspace lockfile and `packages/core`).
+
+Set the same env vars as in `apps/web/.env.local` in the Vercel project.
+
+---
+
+## 4. Mobile (Expo Go)
+
+Start the Metro bundler:
+
+```bash
+pnpm dev:mobile
+# or: pnpm --filter mobile start
+```
+
+Scan the QR code with **Expo Go** on your phone (same Wi‑Fi as your
+machine).
+
+### WSL2 / phone cannot reach your PC
+
+If Expo Go shows `Failed to download remote update`, use tunnel mode:
+
+```bash
+pnpm --filter mobile exec expo start -c --tunnel
+```
+
+`-c` clears the Metro cache (needed after config or `.env` changes).
+
+### Other mobile commands
+
+```bash
+pnpm --filter mobile exec expo start --android   # Android emulator
+pnpm --filter mobile exec expo start --ios       # iOS simulator (macOS)
+pnpm --filter mobile exec expo start --web       # Expo web preview (not the main web app)
+```
+
+### EAS (optional)
+
+The mobile app is linked to an EAS project. Login and builds:
+
+```bash
+npx eas-cli login
+cd apps/mobile
+npx eas-cli build --platform android --profile preview   # installable APK for testing
+```
+
+Use **`preview`** for local testing; **`production`** when you are ready
+for the Play Store. Google OAuth deep links work more reliably in a
+development build than in Expo Go.
+
+---
+
+## 5. Shared package (`@finance/core`)
+
+Domain logic (budget math, recurrence, Zod schemas, types) lives in
+`packages/core` and is imported as `@finance/core/...` from both apps.
+
+After editing core, restart the web or mobile dev server. No separate
+build step is required (TypeScript source is consumed directly).
+
+---
+
+## Troubleshooting
+
+| Issue | What to try |
+|-------|-------------|
+| Vercel `frozen-lockfile` / lockfile mismatch | Run `pnpm install` at repo root and commit `pnpm-lock.yaml` |
+| Vercel build finds no Next.js app | Set Root Directory to `apps/web` |
+| Expo Go cannot load the bundle | `expo start -c --tunnel` |
+| Styles missing after NativeWind changes | Restart with `-c` |
+| Supabase auth errors on web | Check `.env.local` URLs and restart `pnpm dev:web` |
+| Supabase auth errors on mobile | Check `apps/mobile/.env` and restart Expo with `-c` |
+
+---
+
+## Scripts (root)
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev:web` | Next.js dev server |
+| `pnpm dev:mobile` | Expo / Metro dev server |
