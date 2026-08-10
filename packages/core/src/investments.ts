@@ -52,7 +52,9 @@ const EMPTY_WALLET_TOTALS: WalletTotals = {
   total: 0,
 };
 
-export function resolveWalletId(categoryName: string): WalletId {
+/** Match a category name to a wallet, or null when nothing matches
+ * (e.g. "Broker transfer", which is a cash move, not a wallet buy). */
+export function matchWalletId(categoryName: string): WalletId | null {
   const upper = categoryName.toUpperCase();
 
   if (upper.includes("PEA")) {
@@ -71,7 +73,14 @@ export function resolveWalletId(categoryName: string): WalletId {
     return "crypto";
   }
 
-  return "crypto";
+  return null;
+}
+
+export function resolveWalletId(
+  categoryName: string,
+  fallback: WalletId = "crypto",
+): WalletId {
+  return matchWalletId(categoryName) ?? fallback;
 }
 
 function addToWallet(
@@ -88,15 +97,13 @@ function addToWallet(
 export function sumWalletTotals(
   transactions: TransactionWithCategory[],
 ): WalletTotals {
-  return transactions.reduce(
-    (totals, tx) =>
-      addToWallet(
-        totals,
-        resolveWalletId(tx.categories.name),
-        Number(tx.amount),
-      ),
-    { ...EMPTY_WALLET_TOTALS },
-  );
+  return transactions.reduce((totals, tx) => {
+    const walletId = matchWalletId(tx.categories.name);
+    if (walletId === null) {
+      return totals;
+    }
+    return addToWallet(totals, walletId, Number(tx.amount));
+  }, { ...EMPTY_WALLET_TOTALS });
 }
 
 export function sumWalletTotalsForMonth(
@@ -131,16 +138,14 @@ export function buildCumulativeMonthlySeries(
   const monthly = new Map<string, WalletTotals>();
 
   for (const tx of transactions) {
+    const walletId = matchWalletId(tx.categories.name);
+    if (walletId === null) {
+      continue;
+    }
+
     const monthKey = tx.occurred_on.slice(0, 7);
     const current = monthly.get(monthKey) ?? { ...EMPTY_WALLET_TOTALS };
-    monthly.set(
-      monthKey,
-      addToWallet(
-        current,
-        resolveWalletId(tx.categories.name),
-        Number(tx.amount),
-      ),
-    );
+    monthly.set(monthKey, addToWallet(current, walletId, Number(tx.amount)));
   }
 
   const sortedKeys = Array.from(monthly.keys()).sort();
@@ -175,16 +180,14 @@ export function buildMonthlyContributionSeries(
   const monthly = new Map<string, WalletTotals>();
 
   for (const tx of transactions) {
+    const walletId = matchWalletId(tx.categories.name);
+    if (walletId === null) {
+      continue;
+    }
+
     const monthKey = tx.occurred_on.slice(0, 7);
     const current = monthly.get(monthKey) ?? { ...EMPTY_WALLET_TOTALS };
-    monthly.set(
-      monthKey,
-      addToWallet(
-        current,
-        resolveWalletId(tx.categories.name),
-        Number(tx.amount),
-      ),
-    );
+    monthly.set(monthKey, addToWallet(current, walletId, Number(tx.amount)));
   }
 
   return Array.from(monthly.entries())

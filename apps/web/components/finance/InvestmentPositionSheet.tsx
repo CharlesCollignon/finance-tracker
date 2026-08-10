@@ -112,15 +112,11 @@ function InvestmentPositionForm({
     }
   }, [state.success, state.error, isEdit, item?.name, onOpenChange, toast]);
 
-  useEffect(() => {
-    if (!instrumentSymbol || !shareCount) {
-      setEstimate(null);
-      return;
-    }
+  const parsedShares = shareCount ? parseShareCountInput(shareCount) : null;
+  const estimateActive = Boolean(instrumentSymbol) && parsedShares !== null;
 
-    const parsedShares = parseShareCountInput(shareCount);
-    if (parsedShares === null) {
-      setEstimate(null);
+  useEffect(() => {
+    if (!estimateActive || parsedShares === null) {
       return;
     }
 
@@ -137,7 +133,9 @@ function InvestmentPositionForm({
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [instrumentSymbol, shareCount]);
+  }, [estimateActive, instrumentSymbol, parsedShares]);
+
+  const estimateShown = estimateActive ? estimate : null;
 
   function handleDelete() {
     if (!item) {
@@ -399,21 +397,21 @@ function InvestmentPositionForm({
           />
         </div>
 
-        {estimate !== null && (
+        {estimateShown !== null && (
           <Text className="text-sm text-muted-foreground">
             Live market estimate:{" "}
             <span className="font-semibold text-foreground">
-              ≈ {formatEuro(estimate.amount)}
+              ≈ {formatEuro(estimateShown.amount)}
             </span>
             {isCrypto ? (
               <span className="block text-xs">
-                @ {formatEuro(estimate.priceEur)} / BTC
+                @ {formatEuro(estimateShown.priceEur)} / BTC
               </span>
             ) : (
-              estimate.currency !== "EUR" && (
+              estimateShown.currency !== "EUR" && (
                 <span className="block text-xs">
-                  {formatMoney(estimate.priceOriginal, estimate.currency)} / share
-                  → {formatEuro(estimate.priceEur)} / share
+                  {formatMoney(estimateShown.priceOriginal, estimateShown.currency)} / share
+                  → {formatEuro(estimateShown.priceEur)} / share
                 </span>
               )
             )}

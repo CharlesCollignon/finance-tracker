@@ -1,4 +1,4 @@
-import { resolveWalletId, type InvestmentWalletId } from "./investments";
+import { matchWalletId, type InvestmentWalletId } from "./investments";
 
 export const BITCOIN_INSTRUMENT = {
   symbol: "BTC-EUR",
@@ -10,7 +10,7 @@ export function isCryptoWallet(walletId: InvestmentWalletId): boolean {
 }
 
 export function isCryptoCategoryName(categoryName: string): boolean {
-  return resolveWalletId(categoryName) === "crypto";
+  return matchWalletId(categoryName) === "crypto";
 }
 
 export function formatBtcAmount(amount: number): string {

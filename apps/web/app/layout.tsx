@@ -1,25 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo_Black, Nabla, Space_Grotesk } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const archivoBlack = Archivo_Black({
+const inter = Inter({
   subsets: ["latin"],
-  weight: "400",
-  variable: "--font-head",
-  display: "swap",
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
   variable: "--font-sans",
-  display: "swap",
-});
-
-const nabla = Nabla({
-  subsets: ["latin"],
-  axes: ["EDPT", "EHLT"],
-  variable: "--font-logo",
   display: "swap",
 });
 
@@ -34,6 +19,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const themeInitScript = `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -42,9 +29,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${archivoBlack.variable} ${spaceGrotesk.variable} ${nabla.variable} h-full`}
+      className={`${inter.variable} h-full`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground antialiased">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="flex min-h-full flex-col bg-background text-foreground antialiased">
         {children}
       </body>
     </html>

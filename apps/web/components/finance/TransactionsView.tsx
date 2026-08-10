@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Plus, Trash } from "@phosphor-icons/react";
+import {
+  DownloadSimple,
+  MagnifyingGlass,
+  Plus,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -20,7 +24,6 @@ import { CATEGORY_TYPE_LABELS, TYPE_AMOUNT_CLASS } from "@finance/core/category-
 import { cn } from "@/lib/utils";
 import {
   applyRecurringForMonth,
-  deleteTransaction,
   previewApplyRecurringForMonth,
 } from "@/lib/actions/finance";
 import { ApplyRecurringSheet } from "@/components/finance/ApplyRecurringSheet";
@@ -29,6 +32,7 @@ import type {
   Category,
   CategoryType,
   RecurringTemplateWithCategory,
+  Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
@@ -58,6 +62,8 @@ interface TransactionsViewProps {
   transactions: TransactionWithCategory[];
   categories: Category[];
   recurringTemplates: RecurringTemplateWithCategory[];
+  tags: Tag[];
+  transactionTags: Record<string, Tag[]>;
   year: number;
   month: number;
   defaultDate: string;
@@ -111,6 +117,40 @@ function countsTowardSummary(tx: TransactionWithCategory): boolean {
   return tx.categories.counts_toward_summary !== false;
 }
 
+function toCsvValue(value: string): string {
+  if (/[",\n]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function buildTransactionsCsv(
+  transactions: TransactionWithCategory[],
+): string {
+  const header = ["date", "category", "type", "amount_eur", "note"];
+  const rows = transactions.map((tx) =>
+    [
+      tx.occurred_on,
+      toCsvValue(tx.categories.name),
+      tx.categories.type,
+      String(Number(tx.amount)),
+      toCsvValue(tx.note ?? ""),
+    ].join(","),
+  );
+
+  return [header.join(","), ...rows].join("\n");
+}
+
+function downloadCsv(filename: string, csv: string): void {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function computeTypeTotals(transactions: TransactionWithCategory[]) {
   const totals = {
     income: 0,
@@ -130,14 +170,20 @@ export function TransactionsView({
   transactions,
   categories,
   recurringTemplates,
+  tags,
+  transactionTags,
   year,
   month,
   defaultDate,
 }: TransactionsViewProps) {
   const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
+  const [editTransaction, setEditTransaction] =
+    useState<TransactionWithCategory | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [tagFilter, setTagFilter] = useState<string>("all");
   const [applySheetOpen, setApplySheetOpen] = useState(false);
   const [applyPlan, setApplyPlan] = useState<ApplyRecurringPlan | null>(null);
   const [pending, startTransition] = useTransition();
@@ -162,11 +208,44 @@ export function TransactionsView({
   );
 
   const filtered = useMemo(() => {
-    if (filter === "all") {
-      return transactions;
-    }
-    return transactions.filter((tx) => tx.categories.type === filter);
-  }, [transactions, filter]);
+    const query = search.trim().toLowerCase();
+
+    return transactions.filter((tx) => {
+      if (filter !== "all" && tx.categories.type !== filter) {
+        return false;
+      }
+
+      if (categoryFilter !== "all" && tx.category_id !== categoryFilter) {
+        return false;
+      }
+
+      if (tagFilter !== "all") {
+        const txTags = transactionTags[tx.id] ?? [];
+        if (!txTags.some((tag) => tag.id === tagFilter)) {
+          return false;
+        }
+      }
+
+      if (query.length > 0) {
+        const tagNames = (transactionTags[tx.id] ?? [])
+          .map((tag) => tag.name)
+          .join(" ");
+        const haystack =
+          `${tx.categories.name} ${tx.note ?? ""} ${tagNames}`.toLowerCase();
+        if (!haystack.includes(query)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [transactions, filter, categoryFilter, tagFilter, search, transactionTags]);
+
+  const hasActiveFilters =
+    filter !== "all" ||
+    categoryFilter !== "all" ||
+    tagFilter !== "all" ||
+    search.trim().length > 0;
 
   const grouped = useMemo(() => groupByDate(filtered), [filtered]);
 
@@ -218,16 +297,18 @@ export function TransactionsView({
     });
   }
 
-  function handleDelete(id: string) {
-    startTransition(async () => {
-      const result = await deleteTransaction(id);
-      setConfirmDeleteId(null);
-      if (result.error) {
-        toast(result.error, "error");
-      } else {
-        toast("Transaction deleted", "success");
-      }
-    });
+  function handleExport() {
+    if (filtered.length === 0) {
+      toast("Nothing to export for this view", "error");
+      return;
+    }
+
+    const monthKey = `${year}-${String(month).padStart(2, "0")}`;
+    downloadCsv(
+      `transactions-${monthKey}.csv`,
+      buildTransactionsCsv(filtered),
+    );
+    toast(`Exported ${filtered.length} transactions`, "success");
   }
 
   return (
@@ -304,29 +385,95 @@ export function TransactionsView({
         </div>
 
         {transactions.length > 0 && (
-          <div
-            className="flex gap-2 overflow-x-auto pb-1"
-            role="tablist"
-            aria-label="Filter transactions"
-          >
-            {FILTER_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="tab"
-                aria-selected={filter === option.value}
-                onClick={() => setFilter(option.value)}
+          <div className="flex flex-col gap-2">
+            <div
+              className="flex gap-2 overflow-x-auto pb-1"
+              role="tablist"
+              aria-label="Filter transactions"
+            >
+              {FILTER_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === option.value}
+                  onClick={() => setFilter(option.value)}
+                  className={cn(
+                    "shrink-0 rounded border-2 px-3 py-1.5 text-sm font-medium",
+                    "transition-colors",
+                    filter === option.value
+                      ? "border-foreground bg-primary text-primary-foreground"
+                      : "border-border bg-background hover:bg-accent",
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="relative flex-1">
+                <MagnifyingGlass
+                  size={16}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search category or note…"
+                  aria-label="Search transactions"
+                  className={cn(
+                    "h-10 w-full rounded border-2 border-border bg-background",
+                    "pl-9 pr-3 text-sm text-foreground",
+                  )}
+                />
+              </div>
+              <select
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+                aria-label="Filter by category"
                 className={cn(
-                  "shrink-0 rounded border-2 px-3 py-1.5 text-sm font-medium",
-                  "transition-colors",
-                  filter === option.value
-                    ? "border-foreground bg-primary text-primary-foreground"
-                    : "border-border bg-background hover:bg-accent",
+                  "h-10 rounded border-2 border-border bg-background px-3",
+                  "text-sm text-foreground sm:w-52",
                 )}
               >
-                {option.label}
-              </button>
-            ))}
+                <option value="all">All categories</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              {tags.length > 0 && (
+                <select
+                  value={tagFilter}
+                  onChange={(event) => setTagFilter(event.target.value)}
+                  aria-label="Filter by tag"
+                  className={cn(
+                    "h-10 rounded border-2 border-border bg-background px-3",
+                    "text-sm text-foreground sm:w-40",
+                  )}
+                >
+                  <option value="all">All tags</option>
+                  {tags.map((tag) => (
+                    <option key={tag.id} value={tag.id}>
+                      {tag.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 px-3"
+                onClick={handleExport}
+              >
+                <DownloadSimple size={16} className="mr-1.5" />
+                Export CSV
+              </Button>
+            </div>
           </div>
         )}
 
@@ -337,12 +484,22 @@ export function TransactionsView({
           />
         ) : filtered.length === 0 ? (
           <EmptyState
-            title={`No ${CATEGORY_TYPE_LABELS[filter as CategoryType].toLowerCase()} entries`}
-            description="Try another filter or add a new transaction."
+            title="No matching entries"
+            description="Try another search or filter, or add a new transaction."
           >
-            <Button size="lg" onClick={() => setFilter("all")}>
-              Show all
-            </Button>
+            {hasActiveFilters && (
+              <Button
+                size="lg"
+                onClick={() => {
+                  setFilter("all");
+                  setCategoryFilter("all");
+                  setTagFilter("all");
+                  setSearch("");
+                }}
+              >
+                Clear filters
+              </Button>
+            )}
           </EmptyState>
         ) : (
           <div className="flex flex-col gap-5">
@@ -354,70 +511,57 @@ export function TransactionsView({
                 <ul className="flex flex-col gap-2">
                   {group.items.map((tx) => (
                     <li key={tx.id}>
-                      <Card className="flex w-full items-center gap-3 p-3 transition-colors hover:bg-accent/30 sm:p-4">
-                        <CategoryIcon icon={tx.categories.icon} />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="truncate font-medium">
-                              {tx.categories.name}
-                            </p>
-                            <CategoryTypeBadge type={tx.categories.type} />
-                            {!countsTowardSummary(tx) && (
-                              <Badge size="sm" variant="outline">
-                                Tracking
-                              </Badge>
-                            )}
-                            {tx.recurring_template_id &&
-                              yearlyIds.has(tx.recurring_template_id) && (
+                      <button
+                        type="button"
+                        onClick={() => setEditTransaction(tx)}
+                        className="w-full text-left"
+                        aria-label={`Edit ${tx.categories.name}`}
+                      >
+                        <Card className="flex w-full items-center gap-3 p-3 transition-colors hover:bg-muted sm:p-4">
+                          <CategoryIcon icon={tx.categories.icon} />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="truncate font-medium">
+                                {tx.categories.name}
+                              </p>
+                              <CategoryTypeBadge type={tx.categories.type} />
+                              {!countsTowardSummary(tx) && (
                                 <Badge size="sm" variant="outline">
-                                  Annual payment
+                                  Tracking
                                 </Badge>
                               )}
-                          </div>
-                          {tx.note && (
-                            <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                              {tx.note}
-                            </p>
-                          )}
-                        </div>
-                        <span className="shrink-0 tabular-nums text-base font-semibold">
-                          {formatEuro(Number(tx.amount))}
-                        </span>
-                        {confirmDeleteId === tx.id ? (
-                          <div className="flex shrink-0 flex-col gap-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-9 min-w-[4.5rem] border-destructive text-destructive"
-                              onClick={() => handleDelete(tx.id)}
-                              disabled={pending}
-                            >
-                              Delete
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-9 min-w-[4.5rem]"
-                              onClick={() => setConfirmDeleteId(null)}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDeleteId(tx.id)}
-                            className={cn(
-                              "flex h-10 w-10 shrink-0 items-center justify-center",
-                              "rounded border-2 border-border",
-                              "hover:bg-destructive hover:text-destructive-foreground",
+                              {tx.recurring_template_id &&
+                                yearlyIds.has(tx.recurring_template_id) && (
+                                  <Badge size="sm" variant="outline">
+                                    Annual payment
+                                  </Badge>
+                                )}
+                              {(transactionTags[tx.id] ?? []).map((tag) => (
+                                <Badge
+                                  key={tag.id}
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  {tag.name}
+                                </Badge>
+                              ))}
+                            </div>
+                            {tx.note && (
+                              <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                                {tx.note}
+                              </p>
                             )}
-                            aria-label={`Delete ${tx.categories.name}`}
+                          </div>
+                          <span
+                            className={cn(
+                              "shrink-0 tabular-nums text-base font-semibold",
+                              TYPE_AMOUNT_CLASS[tx.categories.type],
+                            )}
                           >
-                            <Trash size={18} />
-                          </button>
-                        )}
-                      </Card>
+                            {formatEuro(Number(tx.amount))}
+                          </span>
+                        </Card>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -429,9 +573,28 @@ export function TransactionsView({
 
       <TransactionForm
         categories={categories}
+        tags={tags}
         defaultDate={defaultDate}
         open={formOpen}
         onOpenChange={setFormOpen}
+      />
+
+      <TransactionForm
+        categories={categories}
+        tags={tags}
+        selectedTagIds={
+          editTransaction
+            ? (transactionTags[editTransaction.id] ?? []).map((t) => t.id)
+            : []
+        }
+        defaultDate={defaultDate}
+        open={editTransaction !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditTransaction(null);
+          }
+        }}
+        transaction={editTransaction}
       />
 
       <ApplyRecurringSheet

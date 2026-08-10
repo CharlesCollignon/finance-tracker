@@ -1,47 +1,49 @@
 import { createClient } from "@/lib/supabase/server";
-import { DEFAULT_CATEGORIES } from "@finance/core/constants";
+import { buildMissingCategorySeeds } from "@finance/core/seed-categories";
 
 export async function seedDefaultCategories(userId: string) {
   const supabase = await createClient();
 
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from("categories")
     .select("name, type")
     .eq("user_id", userId);
 
-  const existingKeys = new Set(
-    (existing ?? []).map((cat) => `${cat.type}:${cat.name}`),
-  );
+  if (existingError) {
+    throw existingError;
+  }
 
-  const missing = DEFAULT_CATEGORIES.filter(
-    (cat) => !existingKeys.has(`${cat.type}:${cat.name}`),
-  );
+  const missing = buildMissingCategorySeeds(userId, existing ?? []);
 
   if (missing.length === 0) {
     return;
   }
 
-  await supabase.from("categories").insert(
-    missing.map((cat) => ({
-      user_id: userId,
-      name: cat.name,
-      type: cat.type,
-      icon: cat.icon,
-      counts_toward_summary:
-        "countsTowardSummary" in cat ? cat.countsTowardSummary : true,
-    })),
-  );
+  const { error } = await supabase.from("categories").insert(missing);
+
+  if (error) {
+    throw error;
+  }
 }
 
-export async function getCategories(userId: string) {
+export async function getCategories(
+  userId: string,
+  options: { includeArchived?: boolean } = {},
+) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("categories")
     .select("*")
     .eq("user_id", userId)
     .order("type")
     .order("name");
+
+  if (!options.includeArchived) {
+    query = query.eq("archived", false);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw error;

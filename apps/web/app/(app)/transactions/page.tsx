@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getCategories, seedDefaultCategories } from "@/lib/queries/categories";
+import { getCategories } from "@/lib/queries/categories";
 import { getRecurringTemplates, getTransactions } from "@/lib/queries/finance";
+import { getTags, getTransactionTagMap } from "@/lib/queries/phase4";
 import { parseMonthParams } from "@finance/core/constants";
 import { TransactionsView } from "@/components/finance/TransactionsView";
 
@@ -22,15 +23,20 @@ export default async function TransactionsPage({
     redirect("/login");
   }
 
-  await seedDefaultCategories(user.id);
-
   const params = await searchParams;
   const { year, month } = parseMonthParams(params.y, params.m);
-  const [transactions, categories, recurringTemplates] = await Promise.all([
-    getTransactions(user.id, year, month),
-    getCategories(user.id),
-    getRecurringTemplates(user.id),
-  ]);
+  const [transactions, categories, recurringTemplates, tags] =
+    await Promise.all([
+      getTransactions(user.id, year, month),
+      getCategories(user.id),
+      getRecurringTemplates(user.id),
+      getTags(user.id),
+    ]);
+
+  const transactionTags = await getTransactionTagMap(
+    user.id,
+    transactions.map((tx) => tx.id),
+  );
 
   const defaultDate = `${year}-${String(month).padStart(2, "0")}-01`;
 
@@ -40,6 +46,8 @@ export default async function TransactionsPage({
         transactions={transactions}
         categories={categories}
         recurringTemplates={recurringTemplates}
+        tags={tags}
+        transactionTags={transactionTags}
         year={year}
         month={month}
         defaultDate={defaultDate}

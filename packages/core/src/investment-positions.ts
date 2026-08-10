@@ -30,9 +30,48 @@ export interface InvestmentPositionRow {
 }
 
 export interface PositionChartPoint {
+  /** YYYY-MM when known; used for range filtering. */
+  monthKey: string | null;
   label: string;
   invested: number;
   market: number | null;
+}
+
+export type PositionChartRange = "1M" | "3M" | "6M" | "1Y" | "All";
+
+const RANGE_MONTHS: Record<Exclude<PositionChartRange, "All">, number> = {
+  "1M": 1,
+  "3M": 3,
+  "6M": 6,
+  "1Y": 12,
+};
+
+/** Keep the trailing window of monthly chart points for a range preset. */
+export function sliceChartPointsByRange(
+  points: PositionChartPoint[],
+  range: PositionChartRange,
+): PositionChartPoint[] {
+  if (range === "All" || points.length === 0) {
+    return points;
+  }
+
+  const months = RANGE_MONTHS[range];
+  const keyed = points.filter((point) => point.monthKey !== null);
+
+  if (keyed.length === 0) {
+    return points.slice(-months);
+  }
+
+  const endKey = keyed[keyed.length - 1]!.monthKey!;
+  const [endYear, endMonth] = endKey.split("-").map(Number);
+  const startDate = new Date(endYear!, endMonth! - months, 1);
+  const startKey = `${startDate.getFullYear()}-${String(
+    startDate.getMonth() + 1,
+  ).padStart(2, "0")}`;
+
+  return points.filter(
+    (point) => point.monthKey === null || point.monthKey >= startKey,
+  );
 }
 
 export interface InvestmentPositionItem {
@@ -110,67 +149,216 @@ function resolveSharesHeld(
   return buyCount * template.share_count;
 }
 
-function buildPositionChartPoints(
-  position: InvestmentPositionRow,
-  marketValue: number,
-): PositionChartPoint[] {
-  const invested = position.initial_balance;
-
-  return [
-    {
-      label: "Start",
-      invested,
-      market: null,
-    },
-    {
-      label: "Now",
-      invested,
-      market: marketValue,
-    },
-  ];
+function monthKeyFromIso(isoDate: string): string {
+  return isoDate.slice(0, 7);
 }
 
-function buildColumnChartPoints(items: InvestmentPositionItem[]): PositionChartPoint[] {
+function formatMonthLabelShort(monthKey: string): string {
+  const [yearText, monthText] = monthKey.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  return new Intl.DateTimeFormat("en-GB", {
+    month: "short",
+    year: "2-digit",
+  }).format(new Date(year, month - 1, 1));
+}
+
+function listMonthKeys(startMonth: string, endMonth: string): string[] {
+  const [startYear, startMonthNum] = startMonth.split("-").map(Number);
+  const [endYear, endMonthNum] = endMonth.split("-").map(Number);
+  const keys: string[] = [];
+  let year = startYear;
+  let month = startMonthNum;
+
+  while (year < endYear || (year === endYear && month <= endMonthNum)) {
+    keys.push(`${year}-${String(month).padStart(2, "0")}`);
+    month += 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+  }
+
+  return keys;
+}
+
+function monthsAgoKey(asOfDate: string, monthsBack: number): string {
+  const [year, month] = asOfDate.slice(0, 7).split("-").map(Number);
+  const date = new Date(year, month - 1 - monthsBack, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function lastCloseOnOrBefore(
+  history: Record<string, number> | undefined,
+  monthKey: string,
+): number | null {
+  if (!history) {
+    return null;
+  }
+
+  if (history[monthKey] !== undefined) {
+    return history[monthKey]!;
+  }
+
+  const keys = Object.keys(history).sort();
+  let selected: number | null = null;
+  for (const key of keys) {
+    if (key > monthKey) {
+      break;
+    }
+    selected = history[key] ?? null;
+  }
+  return selected;
+}
+
+function buildPositionChartPoints(
+  position: InvestmentPositionRow,
+  transactions: TransactionWithCategory[],
+  template: RecurringTemplateWithCategory | undefined,
+  marketValue: number,
+  instrumentSymbol: string | null,
+  historicalQuotes: Record<string, Record<string, number>>,
+  asOfDate: string,
+): PositionChartPoint[] {
+  const linked = position.recurring_template_id
+    ? transactions.filter(
+        (tx) => tx.recurring_template_id === position.recurring_template_id,
+      )
+    : [];
+
+  const endMonth = monthKeyFromIso(asOfDate);
+  const earliestTx = linked[0]?.occurred_on;
+  const startMonth = earliestTx
+    ? monthKeyFromIso(earliestTx)
+    : monthsAgoKey(asOfDate, 11);
+  const monthKeys = listMonthKeys(startMonth, endMonth);
+
+  if (monthKeys.length === 0) {
+    return [
+      {
+        monthKey: endMonth,
+        label: "Now",
+        invested: position.initial_balance,
+        market: marketValue,
+      },
+    ];
+  }
+
+  const history = instrumentSymbol
+    ? historicalQuotes[instrumentSymbol]
+    : undefined;
+  const shareSize =
+    template?.pricing_type === "shares" && template.share_count
+      ? template.share_count
+      : null;
+
+  let cumulativeInvested = 0;
+  let txIndex = 0;
+  let buyCount = 0;
+  const points: PositionChartPoint[] = [];
+
+  for (const monthKey of monthKeys) {
+    while (
+      txIndex < linked.length &&
+      monthKeyFromIso(linked[txIndex]!.occurred_on) <= monthKey
+    ) {
+      cumulativeInvested += Number(linked[txIndex]!.amount);
+      buyCount += 1;
+      txIndex += 1;
+    }
+
+    const invested =
+      linked.length > 0
+        ? Math.round(cumulativeInvested * 100) / 100
+        : position.initial_balance;
+
+    const isLast = monthKey === endMonth;
+    let market: number | null = null;
+
+    if (isLast) {
+      market = marketValue;
+    } else if (position.share_count !== null && position.share_count > 0) {
+      const close = lastCloseOnOrBefore(history, monthKey);
+      if (close !== null) {
+        market =
+          Math.round(position.share_count * close * 100) / 100;
+      }
+    } else if (shareSize !== null && buyCount > 0) {
+      const close = lastCloseOnOrBefore(history, monthKey);
+      if (close !== null) {
+        market = Math.round(buyCount * shareSize * close * 100) / 100;
+      }
+    }
+
+    points.push({
+      monthKey,
+      label: formatMonthLabelShort(monthKey),
+      invested,
+      market,
+    });
+  }
+
+  // If contributions never reached the stored balance, pin the last
+  // invested point to the position's canonical total.
+  if (points.length > 0 && linked.length > 0) {
+    const last = points[points.length - 1]!;
+    if (last.invested < position.initial_balance) {
+      last.invested = position.initial_balance;
+    }
+  }
+
+  return points;
+}
+
+function buildColumnChartPoints(
+  items: InvestmentPositionItem[],
+): PositionChartPoint[] {
   if (items.length === 0) {
     return [];
   }
 
-  const labelOrder: string[] = [];
-  const investedByLabel = new Map<string, number>();
+  const keyOrder: string[] = [];
+  const labelByKey = new Map<string, string>();
+  const investedByKey = new Map<string, number>();
+  const marketByKey = new Map<string, number>();
+  const marketCountByKey = new Map<string, number>();
 
   for (const item of items) {
     for (const point of item.chartPoints) {
-      if (point.label === "Now") {
-        continue;
+      const key = point.monthKey ?? point.label;
+
+      if (!investedByKey.has(key)) {
+        keyOrder.push(key);
+        labelByKey.set(key, point.label);
       }
 
-      if (!investedByLabel.has(point.label)) {
-        labelOrder.push(point.label);
-      }
-
-      investedByLabel.set(
-        point.label,
-        (investedByLabel.get(point.label) ?? 0) + point.invested,
+      investedByKey.set(
+        key,
+        (investedByKey.get(key) ?? 0) + point.invested,
       );
+
+      if (point.market !== null) {
+        marketByKey.set(
+          key,
+          (marketByKey.get(key) ?? 0) + point.market,
+        );
+        marketCountByKey.set(
+          key,
+          (marketCountByKey.get(key) ?? 0) + 1,
+        );
+      }
     }
   }
 
-  const points: PositionChartPoint[] = labelOrder.map((label) => ({
-    label,
-    invested: investedByLabel.get(label) ?? 0,
-    market: null,
+  return keyOrder.map((key) => ({
+    monthKey: key.includes("-") && key.length === 7 ? key : null,
+    label: labelByKey.get(key) ?? key,
+    invested: investedByKey.get(key) ?? 0,
+    market:
+      (marketCountByKey.get(key) ?? 0) > 0
+        ? (marketByKey.get(key) ?? 0)
+        : null,
   }));
-
-  const totalInvested = items.reduce((sum, item) => sum + item.totalInvested, 0);
-  const totalMarket = items.reduce((sum, item) => sum + item.marketValue, 0);
-
-  points.push({
-    label: "Now",
-    invested: totalInvested,
-    market: totalMarket,
-  });
-
-  return points;
 }
 
 function buildPositionItem(
@@ -179,6 +367,7 @@ function buildPositionItem(
   recurringById: Map<string, RecurringTemplateWithCategory>,
   categoriesById: Map<string, Category>,
   liveQuotes: Record<string, number>,
+  historicalQuotes: Record<string, Record<string, number>>,
   asOfDate: string,
 ): InvestmentPositionItem {
   const template = row.recurring_template_id
@@ -239,7 +428,15 @@ function buildPositionItem(
     hasManualValue,
     hasMarketQuote,
     needsShareCount,
-    chartPoints: buildPositionChartPoints(row, marketValue),
+    chartPoints: buildPositionChartPoints(
+      row,
+      transactions,
+      template,
+      marketValue,
+      instrumentSymbol,
+      historicalQuotes,
+      asOfDate,
+    ),
   };
 }
 
@@ -250,6 +447,7 @@ export function buildInvestmentPortfolio(
   recurringTemplates: RecurringTemplateWithCategory[],
   liveQuotes: Record<string, number>,
   asOfDate: string = todayIsoLocal(),
+  historicalQuotes: Record<string, Record<string, number>> = {},
 ): InvestmentPortfolioSummary {
   const categoriesById = new Map(categories.map((category) => [category.id, category]));
   const recurringById = new Map(
@@ -262,6 +460,7 @@ export function buildInvestmentPortfolio(
       recurringById,
       categoriesById,
       liveQuotes,
+      historicalQuotes,
       asOfDate,
     ),
   );

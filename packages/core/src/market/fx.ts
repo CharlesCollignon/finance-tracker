@@ -1,7 +1,16 @@
-import { fetchInstrumentQuote } from "./yahoo";
+import {
+  fetchInstrumentQuote,
+  fetchMonthlyCloses,
+  type MonthlyClosePoint,
+} from "./yahoo";
 
 const rateCache = new Map<string, { rate: number; fetchedAt: number }>();
+const historyCache = new Map<
+  string,
+  { points: MonthlyClosePoint[]; fetchedAt: number }
+>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
+const HISTORY_CACHE_TTL_MS = 60 * 60 * 1000;
 
 /** Multiplier: amount in `currency` × rate = amount in EUR. */
 async function eurMultiplier(currency: string): Promise<number> {
@@ -50,18 +59,29 @@ export interface QuoteInEur {
   currency: string;
 }
 
+const quoteCache = new Map<string, { quote: QuoteInEur; fetchedAt: number }>();
+
 export async function fetchInstrumentQuoteInEur(
   symbol: string,
 ): Promise<QuoteInEur> {
+  const key = symbol.trim().toUpperCase();
+  const cached = quoteCache.get(key);
+  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+    return cached.quote;
+  }
+
   const quote = await fetchInstrumentQuote(symbol);
   const priceEur = await convertToEur(quote.price, quote.currency);
 
-  return {
+  const result: QuoteInEur = {
     symbol: quote.symbol,
     priceEur,
     priceOriginal: quote.price,
     currency: quote.currency,
   };
+
+  quoteCache.set(key, { quote: result, fetchedAt: Date.now() });
+  return result;
 }
 
 export function formatMoney(amount: number, currency: string): string {
@@ -71,4 +91,30 @@ export function formatMoney(amount: number, currency: string): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
+}
+
+/** Monthly closes converted to EUR, keyed by YYYY-MM. */
+export async function fetchMonthlyClosesInEur(
+  symbol: string,
+): Promise<Record<string, number>> {
+  const key = symbol.trim().toUpperCase();
+  const cached = historyCache.get(key);
+  if (cached && Date.now() - cached.fetchedAt < HISTORY_CACHE_TTL_MS) {
+    return Object.fromEntries(
+      cached.points.map((point) => [point.month, point.close]),
+    );
+  }
+
+  const { currency, points } = await fetchMonthlyCloses(symbol);
+  const converted: MonthlyClosePoint[] = [];
+
+  for (const point of points) {
+    const closeEur = await convertToEur(point.close, currency);
+    converted.push({ month: point.month, close: closeEur });
+  }
+
+  historyCache.set(key, { points: converted, fetchedAt: Date.now() });
+  return Object.fromEntries(
+    converted.map((point) => [point.month, point.close]),
+  );
 }

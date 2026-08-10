@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
+import { useAuth } from "@/providers/AuthProvider";
 
 export interface AuthFormProps {
   title: string;
@@ -24,6 +25,7 @@ export function AuthForm({
   footerLinkLabel,
   footerHref,
 }: AuthFormProps) {
+  const { signInWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -33,6 +35,16 @@ export function AuthForm({
     setMessage(null);
     setSubmitting(true);
     const { error } = await onSubmit(email.trim(), password);
+    setSubmitting(false);
+    if (error) {
+      setMessage(error);
+    }
+  }
+
+  async function handleGoogle() {
+    setMessage(null);
+    setSubmitting(true);
+    const { error } = await signInWithGoogle();
     setSubmitting(false);
     if (error) {
       setMessage(error);
@@ -68,6 +80,13 @@ export function AuthForm({
             label={submitting ? "Please wait..." : submitLabel}
             disabled={submitting || !email || !password}
             onPress={handleSubmit}
+          />
+
+          <Button
+            label="Continue with Google"
+            variant="outline"
+            disabled={submitting}
+            onPress={handleGoogle}
           />
 
           <View className="flex-row gap-1">

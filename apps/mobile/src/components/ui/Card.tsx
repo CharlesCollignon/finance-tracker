@@ -11,7 +11,11 @@ export function Card({ className, style, ...props }: CardProps) {
   return (
     <View
       style={[BRUTAL_SHADOW, style]}
-      className={cn("border-2 border-border bg-card p-4", className)}
+      className={cn(
+        "border-2 border-border bg-card p-4",
+        "dark:border-border-dark dark:bg-card-dark",
+        className,
+      )}
       {...props}
     />
   );

@@ -24,7 +24,9 @@ finance-tracker/
 - **Mobile only:** [Expo Go](https://expo.dev/go) on your phone (SDK 57)
 
 Apply the database schema once on your Supabase project (SQL editor or
-CLI) using the files in `supabase/migrations/`, in order (`001` → `009`).
+CLI) using the files in `supabase/migrations/`, in order (`001` → `013`).
+Optional account deletion from mobile also needs the
+`delete-account` Edge Function in `supabase/functions/`.
 
 ---
 

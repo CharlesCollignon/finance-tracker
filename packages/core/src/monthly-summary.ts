@@ -17,6 +17,7 @@ export function buildMonthlySummary(
   year: number,
   month: number,
   view: BudgetViewMode,
+  skippedKeys: Set<string> = new Set(),
 ): MonthlySummary {
   const budget = computeMonthlyBudgetWithProjection(
     transactions,
@@ -24,6 +25,7 @@ export function buildMonthlySummary(
     year,
     month,
     view,
+    skippedKeys,
   );
 
   return {
@@ -40,6 +42,7 @@ export function buildMonthlySummary(
       year,
       month,
       view,
+      skippedKeys,
     ),
     savingsBreakdown: buildBudgetSavingsBreakdownWithProjection(
       transactions,
@@ -47,6 +50,7 @@ export function buildMonthlySummary(
       year,
       month,
       view,
+      skippedKeys,
     ),
     investmentBreakdown: buildBudgetInvestmentBreakdownWithProjection(
       transactions,
@@ -55,6 +59,7 @@ export function buildMonthlySummary(
       month,
       view,
       false,
+      skippedKeys,
     ),
     investmentDeploymentBreakdown:
       buildBudgetInvestmentBreakdownWithProjection(
@@ -64,6 +69,7 @@ export function buildMonthlySummary(
         month,
         view,
         true,
+        skippedKeys,
       ),
   };
 }

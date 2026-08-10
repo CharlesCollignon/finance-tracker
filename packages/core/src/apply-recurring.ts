@@ -54,11 +54,20 @@ function transactionDiffers(
   );
 }
 
+/** Key used for applied txs and month skips: templateId:YYYY-MM-DD */
+export function recurringOccurrenceKey(
+  templateId: string,
+  occurredOn: string,
+): string {
+  return `${templateId}:${occurredOn}`;
+}
+
 export async function buildApplyRecurringPlan(
   templates: RecurringTemplateWithCategory[],
   existingByKey: Map<string, ExistingRecurringTx>,
   year: number,
   month: number,
+  skippedKeys: Set<string> = new Set(),
 ): Promise<ApplyRecurringPlan> {
   const toCreate: RecurringOccurrencePlan[] = [];
   const toUpdate: RecurringOccurrenceUpdate[] = [];
@@ -80,6 +89,11 @@ export async function buildApplyRecurringPlan(
     );
 
     for (const occurredOn of occurrenceDates) {
+      const key = recurringOccurrenceKey(template.id, occurredOn);
+      if (skippedKeys.has(key)) {
+        continue;
+      }
+
       let amount = Number(template.amount);
       let note = template.description?.trim() || null;
 
@@ -109,7 +123,7 @@ export async function buildApplyRecurringPlan(
         categoryId: template.category_id,
       };
 
-      const existing = existingByKey.get(`${template.id}:${occurredOn}`);
+      const existing = existingByKey.get(key);
 
       if (!existing) {
         toCreate.push(plan);

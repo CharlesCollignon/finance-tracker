@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { Input } from "@/components/retroui/Input";
@@ -8,6 +9,7 @@ import { FormLabel } from "@/components/layout/FormLabel";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { SignOutButton } from "@/components/layout/SignOutButton";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
   deleteAccount,
@@ -112,6 +114,42 @@ export function ProfileView({
               {profilePending ? "Saving…" : "Save profile"}
             </Button>
           </form>
+        </Card>
+
+        <Card className="block w-full p-4 md:p-5">
+          <h2 className="font-head text-base">Appearance</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Choose a light or dark theme, or follow your device setting.
+          </p>
+          <ThemeToggle className="mt-4" />
+        </Card>
+
+        <Card className="block w-full p-4 md:p-5">
+          <h2 className="font-head text-base">Categories</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Create, rename, archive, and organise your income, expense,
+            savings, and investment categories.
+          </p>
+          <Button
+            variant="outline"
+            size="lg"
+            className="mt-4 w-full md:w-auto"
+            render={<Link href="/categories">Manage categories</Link>}
+          />
+        </Card>
+
+        <Card className="block w-full p-4 md:p-5">
+          <h2 className="font-head text-base">Budgets, goals & tags</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Set monthly spending caps, savings goals, and tags for
+            organising transactions.
+          </p>
+          <Button
+            variant="outline"
+            size="lg"
+            className="mt-4 w-full md:w-auto"
+            render={<Link href="/budgets">Open planning</Link>}
+          />
         </Card>
 
         <Card className="block w-full border-destructive p-4 md:p-5">

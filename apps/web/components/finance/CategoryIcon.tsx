@@ -20,7 +20,7 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
-const CATEGORY_ICONS: Record<string, Icon> = {
+export const CATEGORY_ICONS: Record<string, Icon> = {
   wallet: Wallet,
   lightning: Lightning,
   wifi: WifiHigh,

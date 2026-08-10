@@ -2,6 +2,7 @@
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
+  darkMode: "media",
   theme: {
     extend: {
       colors: {
@@ -33,9 +34,14 @@ module.exports = {
           foreground: "#ffffff",
         },
         border: "#000000",
+        // Dark-mode surface aliases used with dark: classes.
+        "background-dark": "#141414",
+        "foreground-dark": "#f2f2ec",
+        "card-dark": "#1d1d1d",
+        "border-dark": "#f2f2ec",
+        "muted-foreground-dark": "#a8a8a0",
       },
       borderRadius: {
-        // Neo-brutalist: square corners everywhere.
         none: "0px",
         DEFAULT: "0px",
       },

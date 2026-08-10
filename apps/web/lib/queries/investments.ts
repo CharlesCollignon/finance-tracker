@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import { fetchInstrumentQuoteInEur } from "@finance/core/market/fx";
-import { fetchInstrumentQuote } from "@finance/core/market/yahoo";
+import {
+  fetchInstrumentQuoteInEur,
+  fetchMonthlyClosesInEur,
+} from "@finance/core/market/fx";
 import type { InvestmentPosition } from "@finance/core/types/database";
 import type { InvestmentPositionRow } from "@finance/core/investment-positions";
 import type { InvestmentWalletId } from "@finance/core/investments";
@@ -126,4 +128,23 @@ export async function fetchLiveQuotes(
   );
 
   return quotes;
+}
+
+export async function fetchHistoricalQuotes(
+  symbols: string[],
+): Promise<Record<string, Record<string, number>>> {
+  const unique = Array.from(new Set(symbols.filter(Boolean)));
+  const history: Record<string, Record<string, number>> = {};
+
+  await Promise.all(
+    unique.map(async (symbol) => {
+      try {
+        history[symbol] = await fetchMonthlyClosesInEur(symbol);
+      } catch {
+        // History is optional — charts fall back to invested-only.
+      }
+    }),
+  );
+
+  return history;
 }

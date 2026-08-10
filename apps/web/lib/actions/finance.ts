@@ -25,6 +25,7 @@ import {
   authSchema,
   recurringTemplateSchema,
   transactionSchema,
+  updateTransactionSchema,
 } from "@finance/core/validations/finance";
 
 type ActionResult = { error?: string; success?: boolean; message?: string };
@@ -37,23 +38,32 @@ async function loadApplyRecurringData(
   const supabase = await createClient();
   const { start, end } = getMonthBounds(year, month);
 
-  const [{ data: templates, error: tplError }, { data: transactions, error: txError }] =
-    await Promise.all([
-      supabase
-        .from("recurring_templates")
-        .select(
-          "*, categories(name, type, icon, counts_toward_summary)",
-        )
-        .eq("user_id", userId)
-        .eq("active", true),
-      supabase
-        .from("transactions")
-        .select("id, amount, note, category_id, recurring_template_id, occurred_on")
-        .eq("user_id", userId)
-        .not("recurring_template_id", "is", null)
-        .gte("occurred_on", start)
-        .lte("occurred_on", end),
-    ]);
+  const [
+    { data: templates, error: tplError },
+    { data: transactions, error: txError },
+    { data: skips, error: skipError },
+  ] = await Promise.all([
+    supabase
+      .from("recurring_templates")
+      .select(
+        "*, categories(name, type, icon, counts_toward_summary)",
+      )
+      .eq("user_id", userId)
+      .eq("active", true),
+    supabase
+      .from("transactions")
+      .select("id, amount, note, category_id, recurring_template_id, occurred_on")
+      .eq("user_id", userId)
+      .not("recurring_template_id", "is", null)
+      .gte("occurred_on", start)
+      .lte("occurred_on", end),
+    supabase
+      .from("recurring_skips")
+      .select("template_id, occurred_on")
+      .eq("user_id", userId)
+      .gte("occurred_on", start)
+      .lte("occurred_on", end),
+  ]);
 
   if (tplError) {
     throw new Error(tplError.message);
@@ -61,6 +71,10 @@ async function loadApplyRecurringData(
 
   if (txError) {
     throw new Error(txError.message);
+  }
+
+  if (skipError) {
+    throw new Error(skipError.message);
   }
 
   const existingByKey = new Map<
@@ -86,10 +100,15 @@ async function loadApplyRecurringData(
     });
   }
 
+  const skippedKeys = new Set(
+    (skips ?? []).map((row) => `${row.template_id}:${row.occurred_on}`),
+  );
+
   return {
     supabase,
     templates: (templates ?? []) as RecurringTemplateWithCategory[],
     existingByKey,
+    skippedKeys,
   };
 }
 
@@ -146,10 +165,20 @@ export async function signUp(
   }
 
   if (data.user) {
-    await seedDefaultCategories(data.user.id);
+    await seedCategoriesSafely(data.user.id);
   }
 
   return { success: true };
+}
+
+async function seedCategoriesSafely(userId: string): Promise<void> {
+  try {
+    await seedDefaultCategories(userId);
+  } catch (error) {
+    // Seeding must never block auth; missing defaults can be re-seeded
+    // on the next sign-in.
+    console.error("Failed to seed default categories", error);
+  }
 }
 
 export async function signIn(
@@ -166,10 +195,14 @@ export async function signIn(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
     return { error: error.message };
+  }
+
+  if (data.user) {
+    await seedCategoriesSafely(data.user.id);
   }
 
   return { success: true };
@@ -201,17 +234,99 @@ export async function createTransaction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
+  const tagIds = formData
+    .getAll("tagIds")
+    .filter((value): value is string => typeof value === "string");
+
   const supabase = await createClient();
-  const { error } = await supabase.from("transactions").insert({
-    user_id: user.id,
-    category_id: parsed.data.categoryId,
-    amount: parsed.data.amount,
-    occurred_on: parsed.data.occurredOn,
-    note: parsed.data.note ?? null,
-  });
+  const { data: created, error } = await supabase
+    .from("transactions")
+    .insert({
+      user_id: user.id,
+      category_id: parsed.data.categoryId,
+      amount: parsed.data.amount,
+      occurred_on: parsed.data.occurredOn,
+      note: parsed.data.note ?? null,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return { error: error.message };
+  }
+
+  if (created && tagIds.length > 0) {
+    const { error: tagError } = await supabase.from("transaction_tags").insert(
+      tagIds.map((tagId) => ({
+        transaction_id: created.id,
+        tag_id: tagId,
+      })),
+    );
+    if (tagError) {
+      return { error: tagError.message };
+    }
+  }
+
+  revalidateRecurringDependents();
+  return { success: true };
+}
+
+export async function updateTransaction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = updateTransactionSchema.safeParse({
+    id: formData.get("id"),
+    categoryId: formData.get("categoryId"),
+    amount: formData.get("amount"),
+    occurredOn: formData.get("occurredOn"),
+    note: formData.get("note") || undefined,
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const tagIds = formData
+    .getAll("tagIds")
+    .filter((value): value is string => typeof value === "string");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("transactions")
+    .update({
+      category_id: parsed.data.categoryId,
+      amount: parsed.data.amount,
+      occurred_on: parsed.data.occurredOn,
+      note: parsed.data.note ?? null,
+    })
+    .eq("id", parsed.data.id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  await supabase
+    .from("transaction_tags")
+    .delete()
+    .eq("transaction_id", parsed.data.id);
+
+  if (tagIds.length > 0) {
+    const { error: tagError } = await supabase.from("transaction_tags").insert(
+      tagIds.map((tagId) => ({
+        transaction_id: parsed.data.id,
+        tag_id: tagId,
+      })),
+    );
+    if (tagError) {
+      return { error: tagError.message };
+    }
   }
 
   revalidateRecurringDependents();
@@ -492,16 +607,14 @@ export async function previewApplyRecurringForMonth(
   }
 
   try {
-    const { templates, existingByKey } = await loadApplyRecurringData(
-      user.id,
-      year,
-      month,
-    );
+    const { templates, existingByKey, skippedKeys } =
+      await loadApplyRecurringData(user.id, year, month);
     const plan = await buildApplyRecurringPlan(
       templates,
       existingByKey,
       year,
       month,
+      skippedKeys,
     );
 
     return { success: true, plan };
@@ -531,18 +644,20 @@ export async function applyRecurringForMonth(
   }
 
   try {
-    const { supabase, templates, existingByKey } =
+    const { supabase, templates, existingByKey, skippedKeys } =
       await loadApplyRecurringData(user.id, year, month);
     const plan = await buildApplyRecurringPlan(
       templates,
       existingByKey,
       year,
       month,
+      skippedKeys,
     );
     const templatesById = new Map(templates.map((template) => [template.id, template]));
 
     let created = 0;
     let updated = 0;
+    const failures: string[] = [];
 
     for (const item of plan.toCreate) {
       const template = templatesById.get(item.templateId);
@@ -578,16 +693,19 @@ export async function applyRecurringForMonth(
         note: item.note,
       });
 
-      if (!error) {
-        created += 1;
+      if (error) {
+        failures.push(error.message);
+        continue;
+      }
 
-        if (quoteUpdate) {
-          await supabase
-            .from("recurring_templates")
-            .update(quoteUpdate)
-            .eq("id", item.templateId)
-            .eq("user_id", user.id);
-        }
+      created += 1;
+
+      if (quoteUpdate) {
+        await supabase
+          .from("recurring_templates")
+          .update(quoteUpdate)
+          .eq("id", item.templateId)
+          .eq("user_id", user.id);
       }
     }
 
@@ -603,13 +721,25 @@ export async function applyRecurringForMonth(
           .eq("id", item.transactionId)
           .eq("user_id", user.id);
 
-        if (!error) {
-          updated += 1;
+        if (error) {
+          failures.push(error.message);
+          continue;
         }
+
+        updated += 1;
       }
     }
 
     revalidateRecurringDependents();
+
+    if (failures.length > 0) {
+      return {
+        error: `Applied ${created} and updated ${updated} entries, but ${failures.length} failed: ${failures[0]}`,
+        created,
+        updated,
+      };
+    }
+
     return { success: true, created, updated };
   } catch (error) {
     return {
@@ -619,4 +749,97 @@ export async function applyRecurringForMonth(
           : "Could not apply recurring entries.",
     };
   }
+}
+
+/** Skip one occurrence: delete applied tx (if any) and block re-apply. */
+export async function skipRecurringOccurrence(
+  templateId: string,
+  occurredOn: string,
+  transactionId?: string | null,
+): Promise<ActionResult> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  if (
+    !/^[0-9a-f-]{36}$/i.test(templateId) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)
+  ) {
+    return { error: "Invalid occurrence" };
+  }
+
+  const supabase = await createClient();
+
+  const { data: template } = await supabase
+    .from("recurring_templates")
+    .select("id")
+    .eq("id", templateId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!template) {
+    return { error: "Recurring template not found" };
+  }
+
+  if (transactionId) {
+    const { error: deleteError } = await supabase
+      .from("transactions")
+      .delete()
+      .eq("id", transactionId)
+      .eq("user_id", user.id)
+      .eq("recurring_template_id", templateId);
+
+    if (deleteError) {
+      return { error: deleteError.message };
+    }
+  } else {
+    await supabase
+      .from("transactions")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("recurring_template_id", templateId)
+      .eq("occurred_on", occurredOn);
+  }
+
+  const { error: skipError } = await supabase.from("recurring_skips").upsert(
+    {
+      user_id: user.id,
+      template_id: templateId,
+      occurred_on: occurredOn,
+    },
+    { onConflict: "user_id,template_id,occurred_on" },
+  );
+
+  if (skipError) {
+    return { error: skipError.message };
+  }
+
+  revalidateRecurringDependents();
+  return { success: true, message: "Skipped for this date" };
+}
+
+export async function unskipRecurringOccurrence(
+  templateId: string,
+  occurredOn: string,
+): Promise<ActionResult> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("recurring_skips")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("template_id", templateId)
+    .eq("occurred_on", occurredOn);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateRecurringDependents();
+  return { success: true, message: "Skip removed" };
 }

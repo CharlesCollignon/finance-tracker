@@ -7,6 +7,22 @@ export const transactionSchema = z.object({
   note: z.string().max(500).optional(),
 });
 
+export const updateTransactionSchema = transactionSchema.extend({
+  id: z.string().uuid(),
+});
+
+export const categorySchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Name is required")
+    .max(100, "Name must be 100 characters or less"),
+  type: z.enum(["income", "expense", "savings", "investment"]),
+  icon: z.string().max(50).optional(),
+  countsTowardSummary: z.boolean().optional(),
+});
+
 const recurringCommonSchema = z.object({
   id: z.string().uuid().optional(),
   categoryId: z.string().uuid(),

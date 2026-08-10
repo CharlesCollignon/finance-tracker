@@ -8,10 +8,10 @@ export const CATEGORY_TYPE_LABELS: Record<CategoryType, string> = {
 };
 
 export const CATEGORY_TYPE_BADGE_CLASS: Record<CategoryType, string> = {
-  income: "bg-[var(--chart-1)] text-foreground",
+  income: "bg-[var(--chart-4)] text-primary-foreground",
   expense: "bg-[var(--chart-2)] text-destructive-foreground",
-  savings: "bg-[var(--chart-3)] text-background",
-  investment: "bg-[var(--chart-4)] text-background",
+  savings: "bg-[var(--chart-3)] text-accent-foreground",
+  investment: "bg-[var(--chart-5)] text-primary-foreground",
 };
 
 export const CHART_COLORS = [
@@ -25,13 +25,13 @@ export const CHART_COLORS = [
 export const ALLOCATION_COLORS = {
   expenses: "var(--chart-2)",
   savings: "var(--chart-3)",
-  investments: "var(--chart-4)",
-  remaining: "var(--chart-1)",
+  investments: "var(--chart-5)",
+  remaining: "var(--chart-4)",
 } as const;
 
 export const TYPE_AMOUNT_CLASS: Record<CategoryType, string> = {
   income: "text-[var(--chart-4)]",
   expense: "text-destructive",
-  savings: "text-[var(--chart-5)]",
+  savings: "text-[var(--chart-3)]",
   investment: "text-[var(--chart-5)]",
 };

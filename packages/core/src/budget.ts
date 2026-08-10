@@ -178,6 +178,7 @@ function addProjectedOccurrences(
   month: number,
   asOfDate: string,
   applied: Set<string>,
+  skippedKeys: Set<string> = new Set(),
 ): void {
   const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
 
@@ -200,7 +201,8 @@ function addProjectedOccurrences(
     );
 
     for (const date of dates) {
-      if (applied.has(`${template.id}:${date}`)) {
+      const key = `${template.id}:${date}`;
+      if (applied.has(key) || skippedKeys.has(key)) {
         continue;
       }
 
@@ -230,6 +232,7 @@ export function computeMonthlyBudgetWithProjection(
   year: number,
   month: number,
   mode: BudgetViewMode,
+  skippedKeys: Set<string> = new Set(),
 ): MonthlyBudgetTotals {
   const asOfDate = resolveBudgetAsOfDate(year, month, mode);
   const monthTxs = filterTransactionsForBudget(
@@ -248,6 +251,7 @@ export function computeMonthlyBudgetWithProjection(
     month,
     asOfDate,
     applied,
+    skippedKeys,
   );
 
   const outflow =
@@ -315,6 +319,7 @@ function buildProjectedBreakdown(
   mode: BudgetViewMode,
   matches: (tx: TransactionWithCategory) => boolean,
   matchesTemplate: (template: RecurringTemplateWithCategory) => boolean,
+  skippedKeys: Set<string> = new Set(),
 ): CategoryBreakdown[] {
   const asOfDate = resolveBudgetAsOfDate(year, month, mode);
   const monthTxs = filterTransactionsForBudget(
@@ -366,7 +371,8 @@ function buildProjectedBreakdown(
     );
 
     for (const date of dates) {
-      if (applied.has(`${template.id}:${date}`)) {
+      const key = `${template.id}:${date}`;
+      if (applied.has(key) || skippedKeys.has(key)) {
         continue;
       }
 
@@ -383,6 +389,7 @@ export function buildBudgetExpenseBreakdownWithProjection(
   year: number,
   month: number,
   mode: BudgetViewMode,
+  skippedKeys: Set<string> = new Set(),
 ): CategoryBreakdown[] {
   return buildProjectedBreakdown(
     transactions,
@@ -392,6 +399,7 @@ export function buildBudgetExpenseBreakdownWithProjection(
     mode,
     (tx) => tx.categories.type === "expense",
     (template) => template.categories.type === "expense",
+    skippedKeys,
   );
 }
 
@@ -401,6 +409,7 @@ export function buildBudgetSavingsBreakdownWithProjection(
   year: number,
   month: number,
   mode: BudgetViewMode,
+  skippedKeys: Set<string> = new Set(),
 ): CategoryBreakdown[] {
   return buildProjectedBreakdown(
     transactions,
@@ -410,6 +419,7 @@ export function buildBudgetSavingsBreakdownWithProjection(
     mode,
     (tx) => tx.categories.type === "savings",
     (template) => template.categories.type === "savings",
+    skippedKeys,
   );
 }
 
@@ -420,6 +430,7 @@ export function buildBudgetInvestmentBreakdownWithProjection(
   month: number,
   mode: BudgetViewMode,
   deployment: boolean,
+  skippedKeys: Set<string> = new Set(),
 ): CategoryBreakdown[] {
   return buildProjectedBreakdown(
     transactions,
@@ -433,6 +444,7 @@ export function buildBudgetInvestmentBreakdownWithProjection(
     (template) =>
       template.categories.type === "investment" &&
       templateCountsTowardSummary(template) === !deployment,
+    skippedKeys,
   );
 }
 

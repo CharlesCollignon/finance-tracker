@@ -1,14 +1,22 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { seedDefaultCategories } from "@/lib/queries/categories";
 import {
   getInvestmentTransactions,
+  getRecurringSkipKeys,
   getRecurringTemplates,
 } from "@/lib/queries/finance";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
-import { buildUpcomingInvestments, nextUpcomingByWallet } from "@finance/core/investment-upcoming";
-import { todayIsoLocal } from "@finance/core/constants";
 import { InvestmentsView } from "@/components/finance/InvestmentsView";
+import {
+  buildUpcomingInvestments,
+  buildWalletFundingNeeds,
+  nextUpcomingByWallet,
+} from "@finance/core/investment-upcoming";
+import {
+  getCurrentMonth,
+  shiftMonth,
+  todayIsoLocal,
+} from "@finance/core/constants";
 
 export default async function InvestmentsPage() {
   const supabase = await createClient();
@@ -20,27 +28,39 @@ export default async function InvestmentsPage() {
     redirect("/login");
   }
 
-  await seedDefaultCategories(user.id);
+  const current = getCurrentMonth();
+  const next = shiftMonth(current.year, current.month, 1);
+  const [portfolio, recurringTemplates, transactions, skipThis, skipNext] =
+    await Promise.all([
+      getWalletPortfolio(user.id),
+      getRecurringTemplates(user.id),
+      getInvestmentTransactions(user.id),
+      getRecurringSkipKeys(user.id, current.year, current.month),
+      getRecurringSkipKeys(user.id, next.year, next.month),
+    ]);
 
-  const [portfolio, recurringTemplates, transactions] = await Promise.all([
-    getWalletPortfolio(user.id),
-    getRecurringTemplates(user.id),
-    getInvestmentTransactions(user.id),
-  ]);
-
+  const skippedKeys = new Set([...skipThis, ...skipNext]);
+  const investmentTemplates = recurringTemplates.filter(
+    (template) => template.categories.type === "investment",
+  );
   const upcomingInvestments = buildUpcomingInvestments(
-    recurringTemplates,
+    investmentTemplates,
     transactions,
     todayIsoLocal(),
+    skippedKeys,
+  );
+  const fundingNeeds = buildWalletFundingNeeds(
+    investmentTemplates,
+    current.year,
+    current.month,
   );
 
   return (
     <InvestmentsView
       portfolio={portfolio}
-      recurringTemplates={recurringTemplates.filter(
-        (template) => template.categories.type === "investment",
-      )}
+      recurringTemplates={investmentTemplates}
       nextUpcomingByWallet={nextUpcomingByWallet(upcomingInvestments)}
+      fundingNeeds={fundingNeeds}
     />
   );
 }

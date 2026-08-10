@@ -94,26 +94,3 @@ export async function estimateSharesAmountAction(
     return { error: "Could not estimate amount from current price." };
   }
 }
-
-export async function resolveSharesPricing(
-  symbol: string,
-  shareCount: number,
-): Promise<
-  | { error: string }
-  | {
-      amount: number;
-      price: number;
-      quotedAt: string;
-    }
-> {
-  try {
-    const quote = await fetchInstrumentQuoteInEur(symbol);
-    return {
-      amount: computeSharesAmount(shareCount, quote.priceEur),
-      price: quote.priceEur,
-      quotedAt: new Date().toISOString(),
-    };
-  } catch {
-    return { error: "Could not fetch a live price for this instrument." };
-  }
-}

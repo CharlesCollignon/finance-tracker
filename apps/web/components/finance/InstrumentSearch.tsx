@@ -32,9 +32,13 @@ export function InstrumentSearch({
   const [error, setError] = useState<string | null>(null);
   const [selectedIsin, setSelectedIsin] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Sync the input with the externally-controlled name during render
+  // (React's recommended alternative to a state-syncing effect).
+  const [prevName, setPrevName] = useState(name);
+  if (prevName !== name) {
+    setPrevName(name);
     setQuery(name || "");
-  }, [name]);
+  }
 
   useEffect(() => {
     if (!open || symbol || !canSearchInstruments(query)) {
@@ -188,6 +192,7 @@ export function InstrumentSearch({
                     <button
                       type="button"
                       role="option"
+                      aria-selected={false}
                       onClick={() => handleSelect(instrument)}
                       className={cn(
                         "flex w-full flex-col items-start gap-0.5",

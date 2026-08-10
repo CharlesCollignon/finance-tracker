@@ -27,8 +27,20 @@ interface YahooChartResponse {
         currency?: string;
         symbol?: string;
       };
+      timestamp?: number[];
+      indicators?: {
+        quote?: Array<{
+          close?: Array<number | null>;
+        }>;
+      };
     }>;
   };
+}
+
+export interface MonthlyClosePoint {
+  /** YYYY-MM */
+  month: string;
+  close: number;
 }
 
 const SEARCH_URL =
@@ -209,4 +221,47 @@ export function computeSharesAmount(
   price: number,
 ): number {
   return Math.round(shareCount * price * 100) / 100;
+}
+
+function monthKeyFromUnix(seconds: number): string {
+  const date = new Date(seconds * 1000);
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+/** Monthly closes for an instrument (last ~2 years). */
+export async function fetchMonthlyCloses(
+  symbol: string,
+): Promise<{ currency: string; points: MonthlyClosePoint[] }> {
+  const encoded = encodeURIComponent(symbol.trim());
+  const params = new URLSearchParams({
+    interval: "1mo",
+    range: "2y",
+  });
+
+  const data = await fetchJson<YahooChartResponse>(
+    `${CHART_URL}/${encoded}?${params.toString()}`,
+  );
+
+  const result = data.chart?.result?.[0];
+  const timestamps = result?.timestamp ?? [];
+  const closes = result?.indicators?.quote?.[0]?.close ?? [];
+  const currency = result?.meta?.currency ?? "EUR";
+
+  const byMonth = new Map<string, number>();
+  for (let index = 0; index < timestamps.length; index += 1) {
+    const close = closes[index];
+    const ts = timestamps[index];
+    if (ts === undefined || close === null || close === undefined || close <= 0) {
+      continue;
+    }
+    byMonth.set(monthKeyFromUnix(ts), close);
+  }
+
+  const points = Array.from(byMonth.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, close]) => ({ month, close }));
+
+  return { currency, points };
 }

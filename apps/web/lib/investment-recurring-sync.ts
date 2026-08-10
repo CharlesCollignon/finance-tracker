@@ -114,34 +114,3 @@ export async function removeInvestmentPositionForRecurring(
     .eq("recurring_template_id", templateId);
 }
 
-export async function syncAllRecurringInvestmentPositions(
-  supabase: Client,
-  userId: string,
-): Promise<void> {
-  const { data: templates, error } = await supabase
-    .from("recurring_templates")
-    .select(
-      "id, categories(name, type, counts_toward_summary)",
-    )
-    .eq("user_id", userId);
-
-  if (error || !templates) {
-    return;
-  }
-
-  for (const template of templates) {
-    const category = template.categories as RecurringTemplateWithCategory["categories"];
-    if (
-      category.type !== "investment" ||
-      category.counts_toward_summary !== false
-    ) {
-      continue;
-    }
-
-    await syncInvestmentPositionFromRecurring(
-      supabase,
-      userId,
-      template.id,
-    );
-  }
-}

@@ -1,5 +1,6 @@
 import { Pressable, Text, type PressableProps } from "react-native";
 
+import { hapticLight } from "@/lib/haptics";
 import { cn } from "@/lib/cn";
 import { BRUTAL_SHADOW } from "@/theme/tokens";
 
@@ -45,6 +46,7 @@ export function Button({
   size = "md",
   className,
   disabled,
+  onPress,
   ...props
 }: ButtonProps) {
   const hasShadow = variant !== "ghost";
@@ -60,6 +62,10 @@ export function Button({
         disabled && "opacity-60",
         className,
       )}
+      onPress={(event) => {
+        void hapticLight();
+        onPress?.(event);
+      }}
       {...props}
     >
       <Text

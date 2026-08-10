@@ -2,7 +2,11 @@
 
 import * as React from "react";
 import { Select as SelectPrimitive } from "@base-ui/react/select";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  CaretDown as ChevronDown,
+  CaretUp as ChevronUp,
+  Check,
+} from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
 

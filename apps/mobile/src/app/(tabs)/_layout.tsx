@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
+import { useColorScheme } from "react-native";
 
-import { COLORS } from "@/theme/tokens";
+import { colorsForScheme } from "@/theme/tokens";
 
 type IoniconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -16,21 +17,21 @@ type TabConfig = {
 const TABS: TabConfig[] = [
   {
     name: "index",
-    title: "Dashboard",
+    title: "Home",
     icon: "pie-chart",
     iconInactive: "pie-chart-outline",
   },
   {
-    name: "investments",
-    title: "Wallets",
-    icon: "analytics",
-    iconInactive: "analytics-outline",
-  },
-  {
     name: "transactions",
-    title: "Transactions",
+    title: "Money",
     icon: "swap-horizontal",
     iconInactive: "swap-horizontal-outline",
+  },
+  {
+    name: "recurring",
+    title: "Recurring",
+    icon: "repeat",
+    iconInactive: "repeat-outline",
   },
   {
     name: "calendar",
@@ -39,10 +40,10 @@ const TABS: TabConfig[] = [
     iconInactive: "calendar-outline",
   },
   {
-    name: "recurring",
-    title: "Recurring",
-    icon: "repeat",
-    iconInactive: "repeat-outline",
+    name: "investments",
+    title: "Wallets",
+    icon: "analytics",
+    iconInactive: "analytics-outline",
   },
   {
     name: "profile",
@@ -53,19 +54,22 @@ const TABS: TabConfig[] = [
 ];
 
 export default function TabsLayout() {
+  const scheme = useColorScheme();
+  const colors = colorsForScheme(scheme);
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.foreground,
-        tabBarInactiveTintColor: COLORS.mutedForeground,
-        tabBarActiveBackgroundColor: COLORS.primary,
-        tabBarInactiveBackgroundColor: COLORS.background,
+        tabBarActiveTintColor: colors.foreground,
+        tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarActiveBackgroundColor: colors.primary,
+        tabBarInactiveBackgroundColor: colors.background,
         tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
         tabBarStyle: {
-          backgroundColor: COLORS.background,
+          backgroundColor: colors.background,
           borderTopWidth: 2,
-          borderTopColor: COLORS.border,
+          borderTopColor: colors.border,
         },
       }}
     >
@@ -85,6 +89,13 @@ export default function TabsLayout() {
           }}
         />
       ))}
+      <Tabs.Screen
+        name="planning"
+        options={{
+          href: null,
+          title: "Planning",
+        }}
+      />
     </Tabs>
   );
 }

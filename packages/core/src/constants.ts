@@ -52,13 +52,26 @@ export function formatEuro(amount: number): string {
   }).format(amount);
 }
 
-/** Local calendar date as YYYY-MM-DD. */
+/** The app is EUR/France-centric; anchor "today" to this timezone so
+ * server (often UTC) and client agree on the calendar date. */
+export const APP_TIME_ZONE = "Europe/Paris";
+
+function nowInAppTimeZone(): { year: number; month: number; day: number } {
+  // en-CA formats as YYYY-MM-DD.
+  const iso = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const [year, month, day] = iso.split("-").map(Number);
+  return { year, month, day };
+}
+
+/** Calendar date in the app timezone as YYYY-MM-DD. */
 export function todayIsoLocal(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  const { year, month, day } = nowInAppTimeZone();
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 export function formatShortDate(isoDate: string): string {
@@ -77,13 +90,19 @@ export function getMonthBounds(year: number, month: number) {
   return { start, end };
 }
 
+/** Current calendar month in the app timezone. */
+export function getCurrentMonth(): { year: number; month: number } {
+  const { year, month } = nowInAppTimeZone();
+  return { year, month };
+}
+
 export function parseMonthParams(
   yearParam?: string,
   monthParam?: string,
 ): { year: number; month: number } {
-  const now = new Date();
-  const year = yearParam ? Number(yearParam) : now.getFullYear();
-  const month = monthParam ? Number(monthParam) : now.getMonth() + 1;
+  const now = nowInAppTimeZone();
+  const year = yearParam ? Number(yearParam) : now.year;
+  const month = monthParam ? Number(monthParam) : now.month;
 
   if (
     !Number.isInteger(year) ||
@@ -91,7 +110,7 @@ export function parseMonthParams(
     month < 1 ||
     month > 12
   ) {
-    return { year: now.getFullYear(), month: now.getMonth() + 1 };
+    return { year: now.year, month: now.month };
   }
 
   return { year, month };

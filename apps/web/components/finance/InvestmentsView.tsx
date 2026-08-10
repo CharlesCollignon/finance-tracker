@@ -6,13 +6,17 @@ import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { EmptyState } from "@/components/layout/EmptyState";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { InvestmentItemChart } from "@/components/finance/InvestmentItemChart";
 import { InvestmentPositionSheet } from "@/components/finance/InvestmentPositionSheet";
 import { formatBtcAmount, isCryptoWallet } from "@finance/core/crypto-holdings";
 import { formatEuro } from "@finance/core/constants";
-import type { UpcomingInvestment } from "@finance/core/investment-upcoming";
+import type {
+  UpcomingInvestment,
+  WalletFundingNeed,
+} from "@finance/core/investment-upcoming";
 import {
   INVESTMENT_WALLET_COLORS,
   INVESTMENT_WALLET_LABELS,
@@ -33,6 +37,7 @@ interface InvestmentsViewProps {
   portfolio: InvestmentPortfolioSummary;
   recurringTemplates: RecurringTemplateWithCategory[];
   nextUpcomingByWallet: Partial<Record<InvestmentWalletId, UpcomingInvestment>>;
+  fundingNeeds: WalletFundingNeed[];
 }
 
 function formatSignedEuro(amount: number): string {
@@ -46,11 +51,27 @@ function formatSignedEuro(amount: number): string {
   return formatted;
 }
 
+function defaultWalletTab(
+  portfolio: InvestmentPortfolioSummary,
+): InvestmentWalletId {
+  const withItems = INVESTMENT_WALLET_IDS.find((walletId) => {
+    const column = portfolio.columns.find(
+      (entry) => entry.walletId === walletId,
+    );
+    return (column?.items.length ?? 0) > 0;
+  });
+  return withItems ?? "pea";
+}
+
 export function InvestmentsView({
   portfolio,
   recurringTemplates,
   nextUpcomingByWallet,
+  fundingNeeds,
 }: InvestmentsViewProps) {
+  const [activeWallet, setActiveWallet] = useState<InvestmentWalletId>(() =>
+    defaultWalletTab(portfolio),
+  );
   const [editingItem, setEditingItem] =
     useState<InvestmentPositionItem | null>(null);
   const [addingWallet, setAddingWallet] =
@@ -69,7 +90,7 @@ export function InvestmentsView({
   );
 
   const sheetOpen = editingItem !== null || addingWallet !== null;
-  const sheetWallet = editingItem?.walletId ?? addingWallet ?? "pea";
+  const sheetWallet = editingItem?.walletId ?? addingWallet ?? activeWallet;
   const recurringOptions = recurringTemplatesForWallet(
     sheetWallet,
     recurringTemplates,
@@ -77,6 +98,13 @@ export function InvestmentsView({
   );
 
   const hasData = portfolioHasActivity(portfolio);
+  const visibleFunding = fundingNeeds.filter(
+    (need) => need.monthlyTotal > 0,
+  );
+
+  const activeColumn =
+    portfolio.columns.find((entry) => entry.walletId === activeWallet) ??
+    emptyColumn(activeWallet);
 
   return (
     <>
@@ -124,45 +152,74 @@ export function InvestmentsView({
           </div>
         </Card>
 
-        {!hasData && (
-          <p className="text-sm text-muted-foreground">
-            Add items in each column to track what you already invested
-            and your current market value.
-          </p>
+        {visibleFunding.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {visibleFunding.map((need) => (
+              <Card
+                key={need.walletId}
+                className="border-2 border-border p-4 md:p-5"
+              >
+                <p className="text-sm text-muted-foreground">
+                  Send to {INVESTMENT_WALLET_LABELS[need.walletId]}
+                </p>
+                <p className="mt-1 font-head text-2xl tabular-nums font-semibold">
+                  {formatEuro(need.monthlyTotal)}
+                  <span className="ml-1 text-sm font-normal text-muted-foreground">
+                    / month
+                  </span>
+                </p>
+              </Card>
+            ))}
+          </div>
         )}
 
-        <div className="grid gap-4 lg:grid-cols-3">
+        {!hasData && (
+          <EmptyState
+            title="No investments tracked yet"
+            description="Add items in each wallet to track what you already invested and your current market value."
+          />
+        )}
+
+        <div
+          className="flex rounded border-2 border-border p-0.5"
+          role="tablist"
+          aria-label="Investment wallet"
+        >
           {INVESTMENT_WALLET_IDS.map((walletId) => {
-            const column =
-              portfolio.columns.find((entry) => entry.walletId === walletId) ??
-              emptyColumn(walletId);
+            const active = activeWallet === walletId;
+            const accent = INVESTMENT_WALLET_COLORS[walletId];
 
             return (
-              <ColumnSummaryCard
-                key={`summary-${walletId}`}
-                column={column}
-                nextUpcoming={nextUpcomingByWallet[walletId] ?? null}
-              />
+              <button
+                key={walletId}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setActiveWallet(walletId)}
+                className={cn(
+                  "flex-1 rounded px-3 py-2 font-head text-sm font-medium transition-colors",
+                  active
+                    ? "text-background"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                style={
+                  active
+                    ? { backgroundColor: accent }
+                    : undefined
+                }
+              >
+                {INVESTMENT_WALLET_LABELS[walletId]}
+              </button>
             );
           })}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
-          {INVESTMENT_WALLET_IDS.map((walletId) => {
-            const column =
-              portfolio.columns.find((entry) => entry.walletId === walletId) ??
-              emptyColumn(walletId);
-
-            return (
-              <ColumnItemsCard
-                key={`items-${walletId}`}
-                column={column}
-                onEdit={setEditingItem}
-                onAdd={() => setAddingWallet(walletId)}
-              />
-            );
-          })}
-        </div>
+        <WalletPanel
+          column={activeColumn}
+          nextUpcoming={nextUpcomingByWallet[activeWallet] ?? null}
+          onEdit={setEditingItem}
+          onAdd={() => setAddingWallet(activeWallet)}
+        />
       </PageContainer>
 
       <InvestmentPositionSheet
@@ -193,107 +250,105 @@ function emptyColumn(walletId: InvestmentWalletId): InvestmentColumnSummary {
   };
 }
 
-interface ColumnSummaryCardProps {
+interface WalletPanelProps {
   column: InvestmentColumnSummary;
   nextUpcoming: UpcomingInvestment | null;
+  onEdit: (item: InvestmentPositionItem) => void;
+  onAdd: () => void;
 }
 
-function ColumnSummaryCard({ column, nextUpcoming }: ColumnSummaryCardProps) {
+function WalletPanel({
+  column,
+  nextUpcoming,
+  onEdit,
+  onAdd,
+}: WalletPanelProps) {
   const accent = INVESTMENT_WALLET_COLORS[column.walletId];
   const showPl = column.hasMarketSnapshot && column.totalGainLoss !== 0;
 
   return (
     <Card
-      className="flex flex-col p-4 md:p-5"
+      className="flex flex-col gap-5 p-4 md:p-6"
       style={{ borderTopColor: accent, borderTopWidth: 4 }}
     >
-      <div className="min-h-14">
-        <h2 className="font-head text-lg">
-          {INVESTMENT_WALLET_LABELS[column.walletId]}
-        </h2>
-        <p className="mt-1 min-h-4 text-xs text-muted-foreground">
-          {nextUpcoming ? (
-            <>
-              Next: {nextUpcoming.name} · {nextUpcoming.dateLabel} ·{" "}
-              {formatEuro(nextUpcoming.amount)}
-            </>
-          ) : (
-            "\u00A0"
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="font-head text-xl">
+            {INVESTMENT_WALLET_LABELS[column.walletId]}
+          </h2>
+          {nextUpcoming && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Next: {formatEuro(nextUpcoming.amount)} before{" "}
+              {nextUpcoming.dateLabel}
+            </p>
           )}
-        </p>
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-3 sm:mt-0 sm:min-w-[18rem]">
+          <Metric
+            label="Value"
+            value={formatEuro(column.totalMarketValue)}
+          />
+          <Metric
+            label="Invested"
+            value={formatEuro(column.totalInvested)}
+          />
+          <Metric
+            label="P/L"
+            value={
+              showPl ? formatSignedEuro(column.totalGainLoss) : "—"
+            }
+            tone={
+              showPl
+                ? column.totalGainLoss > 0
+                  ? "positive"
+                  : column.totalGainLoss < 0
+                    ? "negative"
+                    : "neutral"
+                : "neutral"
+            }
+          />
+        </div>
       </div>
 
-      <div className="mt-2 grid grid-cols-3 gap-1.5 text-xs sm:gap-2 sm:text-sm">
-        <Metric label="Value" value={formatEuro(column.totalMarketValue)} />
-        <Metric label="Invested" value={formatEuro(column.totalInvested)} />
-        <Metric
-          label="P/L"
-          value={
-            showPl ? formatSignedEuro(column.totalGainLoss) : "—"
-          }
-          tone={
-            showPl
-              ? column.totalGainLoss > 0
-                ? "positive"
-                : column.totalGainLoss < 0
-                  ? "negative"
-                  : "neutral"
-              : "neutral"
-          }
+      {column.chartPoints.length > 0 ? (
+        <InvestmentItemChart
+          points={column.chartPoints}
+          gainLoss={column.totalGainLoss}
+          interactive
+          size="lg"
         />
-      </div>
-
-      <div className="mt-3 h-28">
-        {column.chartPoints.length > 0 ? (
-          <>
-            <p className="mb-1 text-xs text-muted-foreground">Column total</p>
-            <InvestmentItemChart
-              points={column.chartPoints}
-              gainLoss={column.totalGainLoss}
-              className="h-24"
-            />
-          </>
-        ) : (
-          <div className="flex h-full items-end">
-            <p className="text-xs text-muted-foreground">No chart yet</p>
-          </div>
-        )}
-      </div>
-    </Card>
-  );
-}
-
-interface ColumnItemsCardProps {
-  column: InvestmentColumnSummary;
-  onEdit: (item: InvestmentPositionItem) => void;
-  onAdd: () => void;
-}
-
-function ColumnItemsCard({
-  column,
-  onEdit,
-  onAdd,
-}: ColumnItemsCardProps) {
-  return (
-    <Card className="flex flex-col gap-3 p-4 md:p-5">
-      <ul className="flex flex-col gap-2">
-        {column.items.map((item) => (
-          <li key={item.id}>
-            <InvestmentPositionCard item={item} onEdit={() => onEdit(item)} />
-          </li>
-        ))}
-      </ul>
-
-      {column.items.length === 0 && (
+      ) : (
         <p className="text-sm text-muted-foreground">
-          No items yet in this column.
+          No chart yet — add a position or link market data.
         </p>
       )}
 
-      <Button variant="outline" className="w-full" onClick={onAdd}>
-        <Plus size={16} />
-        Add item
-      </Button>
+      <div className="border-t-2 border-border pt-4">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h3 className="font-head text-base">Positions</h3>
+          <Button size="sm" variant="outline" onClick={onAdd}>
+            <Plus size={16} />
+            Add item
+          </Button>
+        </div>
+
+        {column.items.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No items yet in this wallet.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {column.items.map((item) => (
+              <li key={item.id}>
+                <InvestmentPositionCard
+                  item={item}
+                  onEdit={() => onEdit(item)}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </Card>
   );
 }
@@ -312,7 +367,7 @@ function InvestmentPositionCard({
     item.hasManualValue || item.hasMarketQuote ? "Market" : "Invested";
 
   return (
-    <div className="rounded border-2 border-border p-3">
+    <div className="rounded border-2 border-border p-3 md:p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-2">
           <CategoryIcon icon={item.icon} className="size-8 shrink-0" />
@@ -344,7 +399,7 @@ function InvestmentPositionCard({
         </Button>
       </div>
 
-      <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+      <div className="mt-2 grid grid-cols-3 gap-2 text-xs sm:text-sm">
         <Metric label={valueLabel} value={formatEuro(item.marketValue)} />
         <Metric label="Invested" value={formatEuro(item.totalInvested)} />
         <Metric
@@ -363,7 +418,8 @@ function InvestmentPositionCard({
       <InvestmentItemChart
         points={item.chartPoints}
         gainLoss={item.gainLoss}
-        className="mt-2 h-28"
+        interactive
+        className="mt-3"
       />
     </div>
   );
@@ -384,7 +440,7 @@ function Metric({
 }: MetricProps) {
   return (
     <div className={className}>
-      <p className="text-muted-foreground">{label}</p>
+      <p className="text-muted-foreground text-xs sm:text-sm">{label}</p>
       <p
         className={cn(
           "mt-0.5 tabular-nums font-semibold",

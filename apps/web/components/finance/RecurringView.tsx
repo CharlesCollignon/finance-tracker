@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { SignOutButton } from "@/components/layout/SignOutButton";
+import { useToast } from "@/components/layout/ToastProvider";
 import { RecurringForm } from "@/components/finance/RecurringForm";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { formatEuro } from "@finance/core/constants";
@@ -38,6 +39,7 @@ interface RecurringViewProps {
 }
 
 export function RecurringView({ templates, categories }: RecurringViewProps) {
+  const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] =
     useState<RecurringTemplateWithCategory | null>(null);
@@ -73,7 +75,10 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
 
   function handleToggle(id: string, active: boolean) {
     startTransition(async () => {
-      await toggleRecurringActive(id, !active);
+      const result = await toggleRecurringActive(id, !active);
+      if (result.error) {
+        toast(result.error, "error");
+      }
     });
   }
 
@@ -223,6 +228,10 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                                   );
                                 }}
                                 className="shrink-0"
+                                aria-pressed={template.active}
+                                aria-label={`${
+                                  template.active ? "Deactivate" : "Activate"
+                                } ${template.categories.name}`}
                               >
                                 <Badge
                                   variant={

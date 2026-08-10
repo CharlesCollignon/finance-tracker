@@ -34,6 +34,10 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/transactions") ||
     pathname.startsWith("/recurring") ||
+    pathname.startsWith("/calendar") ||
+    pathname.startsWith("/investments") ||
+    pathname.startsWith("/categories") ||
+    pathname.startsWith("/budgets") ||
     pathname.startsWith("/profile");
 
   if (!user && isProtected) {

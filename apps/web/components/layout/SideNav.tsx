@@ -7,6 +7,7 @@ import { APP_NAV_ITEMS } from "@/lib/navigation";
 import { SHELL_HEADER_BAND_CLASS } from "@/lib/layout-shell";
 import { Logo } from "@/components/layout/Logo";
 import { SignOutButton } from "@/components/layout/SignOutButton";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 export function SideNav() {
   const pathname = usePathname();
@@ -51,7 +52,8 @@ export function SideNav() {
         })}
       </nav>
 
-      <div className="shrink-0 border-t-2 border-border p-3">
+      <div className="flex shrink-0 flex-col gap-2 border-t-2 border-border p-3">
+        <ThemeToggle />
         <SignOutButton className="w-full justify-start px-3" />
       </div>
     </aside>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
@@ -45,6 +45,8 @@ export function CalendarView({
   year,
   month,
 }: CalendarViewProps) {
+  const [editTransaction, setEditTransaction] =
+    useState<TransactionWithCategory | null>(null);
   const byDate = useMemo(
     () => groupTransactionsByDate(transactions),
     [transactions],
@@ -55,14 +57,23 @@ export function CalendarView({
     [transactions, recurringTemplates],
   );
 
-  const [selectedDate, setSelectedDate] = useState(() =>
-    defaultSelectedDate(year, month, byDate),
-  );
+  // Selection is keyed by month so navigating months resets to the
+  // default day without needing a state-syncing effect.
+  const monthKey = `${year}-${month}`;
+  const [selection, setSelection] = useState<{
+    monthKey: string;
+    date: string;
+  } | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
-  useEffect(() => {
-    setSelectedDate(defaultSelectedDate(year, month, byDate));
-  }, [year, month, byDate]);
+  const selectedDate =
+    selection && selection.monthKey === monthKey
+      ? selection.date
+      : defaultSelectedDate(year, month, byDate);
+
+  function setSelectedDate(date: string) {
+    setSelection({ monthKey, date });
+  }
 
   const selectedTransactions = byDate.get(selectedDate) ?? [];
   const selectedTotals = computeDayTotals(selectedTransactions);
@@ -157,7 +168,7 @@ export function CalendarView({
                         <span
                           className={cn(
                             "mt-auto truncate text-[9px] font-medium",
-                            "leading-tight text-[var(--chart-1)]",
+                            "leading-tight text-[var(--chart-4)]",
                             "sm:text-[10px] md:text-xs",
                           )}
                         >
@@ -246,36 +257,49 @@ export function CalendarView({
             <ul className="flex flex-col gap-2">
               {selectedTransactions.map((tx) => (
                 <li key={tx.id}>
-                  <Card
-                    className={cn(
-                      "flex w-full items-center gap-3 p-3 sm:p-4",
-                    )}
+                  <button
+                    type="button"
+                    className="w-full text-left"
+                    onClick={() => setEditTransaction(tx)}
+                    aria-label={`Edit ${tx.categories.name}`}
                   >
-                    <CategoryIcon icon={tx.categories.icon} />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium leading-snug break-words">
-                          {tx.categories.name}
-                        </p>
-                        <CategoryTypeBadge type={tx.categories.type} />
-                      </div>
-                      {tx.note && (
-                        <p className="mt-0.5 text-sm text-muted-foreground break-words">
-                          {tx.note}
-                        </p>
-                      )}
-                    </div>
-                    <span
+                    <Card
                       className={cn(
-                        "shrink-0 tabular-nums text-base font-semibold",
-                        tx.categories.type === "income" &&
-                          "text-[var(--chart-1)]",
+                        "flex w-full items-center gap-3 p-3 sm:p-4",
+                        "transition-colors hover:bg-muted",
                       )}
                     >
-                      {tx.categories.type === "income" ? "+" : "−"}
-                      {formatEuro(Number(tx.amount))}
-                    </span>
-                  </Card>
+                      <CategoryIcon icon={tx.categories.icon} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium leading-snug break-words">
+                            {tx.categories.name}
+                          </p>
+                          <CategoryTypeBadge type={tx.categories.type} />
+                          {tx.recurring_template_id && (
+                            <span className="text-xs text-muted-foreground">
+                              Recurring
+                            </span>
+                          )}
+                        </div>
+                        {tx.note && (
+                          <p className="mt-0.5 text-sm text-muted-foreground break-words">
+                            {tx.note}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className={cn(
+                          "shrink-0 tabular-nums text-base font-semibold",
+                          tx.categories.type === "income" &&
+                            "text-[var(--chart-4)]",
+                        )}
+                      >
+                        {tx.categories.type === "income" ? "+" : "−"}
+                        {formatEuro(Number(tx.amount))}
+                      </span>
+                    </Card>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -288,6 +312,18 @@ export function CalendarView({
         defaultDate={selectedDate}
         open={formOpen}
         onOpenChange={setFormOpen}
+      />
+
+      <TransactionForm
+        categories={categories}
+        defaultDate={selectedDate}
+        open={editTransaction !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditTransaction(null);
+          }
+        }}
+        transaction={editTransaction}
       />
     </>
   );
@@ -313,7 +349,7 @@ function SummaryTile({ label, amount, tone, compact }: SummaryTileProps) {
         className={cn(
           "mt-0.5 tabular-nums font-semibold",
           compact ? "text-sm sm:text-base" : "text-sm sm:text-lg",
-          tone === "income" && "text-[var(--chart-1)]",
+          tone === "income" && "text-[var(--chart-4)]",
           tone === "outflow" && "text-destructive",
           tone === "negative" && "text-destructive",
         )}

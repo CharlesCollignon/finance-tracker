@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getCategories, seedDefaultCategories } from "@/lib/queries/categories";
+import { getCategories } from "@/lib/queries/categories";
 import { getRecurringTemplates, getTransactions } from "@/lib/queries/finance";
 import { parseMonthParams } from "@finance/core/constants";
 import { CalendarView } from "@/components/finance/CalendarView";
@@ -20,8 +20,6 @@ export default async function CalendarPage({
   if (!user) {
     redirect("/login");
   }
-
-  await seedDefaultCategories(user.id);
 
   const params = await searchParams;
   const { year, month } = parseMonthParams(params.y, params.m);

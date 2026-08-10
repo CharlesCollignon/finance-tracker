@@ -1,7 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
 import { todayIsoLocal } from "@finance/core/constants";
 import { buildInvestmentPortfolio } from "@finance/core/investment-positions";
-import { syncAllRecurringInvestmentPositions } from "@/lib/investment-recurring-sync";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
 import { getCategories } from "@/lib/queries/categories";
 import {
@@ -9,6 +7,7 @@ import {
   getRecurringTemplates,
 } from "@/lib/queries/finance";
 import {
+  fetchHistoricalQuotes,
   fetchLiveQuotes,
   getInvestmentPositions,
 } from "@/lib/queries/investments";
@@ -37,20 +36,23 @@ function collectQuoteSymbols(
 export async function getWalletPortfolio(
   userId: string,
 ): Promise<InvestmentPortfolioSummary> {
-  const supabase = await createClient();
-  await syncAllRecurringInvestmentPositions(supabase, userId);
-
+  // Positions are kept in sync when recurring templates are mutated
+  // (see lib/actions/finance.ts), so reads don't need to re-sync.
   const [categories, transactions, positionRows, recurringTemplates] =
     await Promise.all([
-      getCategories(userId),
+      // Archived categories stay included: existing positions still
+      // reference them for icon/name lookups.
+      getCategories(userId, { includeArchived: true }),
       getInvestmentTransactions(userId),
       getInvestmentPositions(userId),
       getRecurringTemplates(userId),
     ]);
 
-  const liveQuotes = await fetchLiveQuotes(
-    collectQuoteSymbols(positionRows, recurringTemplates),
-  );
+  const symbols = collectQuoteSymbols(positionRows, recurringTemplates);
+  const [liveQuotes, historicalQuotes] = await Promise.all([
+    fetchLiveQuotes(symbols),
+    fetchHistoricalQuotes(symbols),
+  ]);
 
   return buildInvestmentPortfolio(
     categories,
@@ -59,5 +61,6 @@ export async function getWalletPortfolio(
     recurringTemplates,
     liveQuotes,
     todayIsoLocal(),
+    historicalQuotes,
   );
 }

@@ -17,10 +17,16 @@ export interface ScreenProps {
  */
 export function Screen({ title, children, className }: ScreenProps) {
   return (
-    <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-background">
+    <SafeAreaView
+      edges={["top", "left", "right"]}
+      className="flex-1 bg-background dark:bg-background-dark"
+    >
       <View className={cn("flex-1 px-4 pt-2", className)}>
         {title ? (
-          <Text variant="title" className="mb-4">
+          <Text
+            variant="title"
+            className="mb-4 dark:text-foreground-dark"
+          >
             {title}
           </Text>
         ) : null}

@@ -138,29 +138,19 @@ function RecurringFormFields({
   const supportsShares =
     selectedCategory?.type === "investment" && !isCryptoCategory;
 
-  useEffect(() => {
-    if (isCryptoCategory && pricingType === "shares") {
-      setPricingType("fixed");
-    }
-  }, [isCryptoCategory, pricingType]);
+  // Categories that don't support share pricing always behave as "fixed",
+  // regardless of what the toggle state was before switching category.
+  const effectivePricingType: PricingType = supportsShares
+    ? pricingType
+    : "fixed";
+
+  const parsedShares = Number(shareCount);
+  const sharesValid = Number.isInteger(parsedShares) && parsedShares > 0;
+  const estimateActive =
+    effectivePricingType === "shares" && Boolean(instrumentSymbol);
 
   useEffect(() => {
-    if (!supportsShares && pricingType === "shares") {
-      setPricingType("fixed");
-    }
-  }, [supportsShares, pricingType]);
-
-  useEffect(() => {
-    if (pricingType !== "shares" || !instrumentSymbol) {
-      setEstimate(null);
-      setEstimateError(null);
-      return;
-    }
-
-    const parsedShares = Number(shareCount);
-    if (!Number.isInteger(parsedShares) || parsedShares <= 0) {
-      setEstimate(null);
-      setEstimateError("Enter a whole number of shares");
+    if (!estimateActive || !sharesValid) {
       return;
     }
 
@@ -183,7 +173,14 @@ function RecurringFormFields({
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [pricingType, instrumentSymbol, shareCount]);
+  }, [estimateActive, sharesValid, instrumentSymbol, parsedShares]);
+
+  const estimateShown = estimateActive && sharesValid ? estimate : null;
+  const estimateErrorShown = !estimateActive
+    ? null
+    : !sharesValid
+      ? "Enter a whole number of shares"
+      : estimateError;
 
   return (
     <MobileSheet
@@ -194,7 +191,11 @@ function RecurringFormFields({
       <form action={action} className="flex flex-col gap-4">
         {template && <input type="hidden" name="id" value={template.id} />}
         <input type="hidden" name="recurrence" value={recurrence} />
-        <input type="hidden" name="pricingType" value={pricingType} />
+        <input
+          type="hidden"
+          name="pricingType"
+          value={effectivePricingType}
+        />
         <input
           type="hidden"
           name="active"
@@ -232,7 +233,7 @@ function RecurringFormFields({
                 onClick={() => setPricingType("fixed")}
                 className={cn(
                   "rounded border-2 px-3 py-2 text-sm font-medium",
-                  pricingType === "fixed"
+                  effectivePricingType === "fixed"
                     ? "border-foreground bg-primary text-primary-foreground"
                     : "border-border hover:bg-accent",
                 )}
@@ -244,7 +245,7 @@ function RecurringFormFields({
                 onClick={() => setPricingType("shares")}
                 className={cn(
                   "rounded border-2 px-3 py-2 text-sm font-medium",
-                  pricingType === "shares"
+                  effectivePricingType === "shares"
                     ? "border-foreground bg-primary text-primary-foreground"
                     : "border-border hover:bg-accent",
                 )}
@@ -252,7 +253,7 @@ function RecurringFormFields({
                 Shares × price
               </button>
             </div>
-            {pricingType === "shares" && (
+            {effectivePricingType === "shares" && (
               <Text className="text-xs text-muted-foreground">
                 Pick your ETF and share count. Search by name or ISIN
                 (e.g. LU1681043599). The app fetches the live price and
@@ -261,7 +262,7 @@ function RecurringFormFields({
             )}
           </div>
         )}
-        {pricingType === "shares" && supportsShares ? (
+        {effectivePricingType === "shares" ? (
           <>
             <InstrumentSearch
               symbol={instrumentSymbol}
@@ -299,18 +300,18 @@ function RecurringFormFields({
               {estimateLoading && (
                 <p className="mt-1 text-muted-foreground">Fetching price…</p>
               )}
-              {!estimateLoading && estimate && (
+              {!estimateLoading && estimateShown && (
                 <p className="mt-1 tabular-nums text-base font-semibold">
-                  ≈ {formatEuro(estimate.amount)}
+                  ≈ {formatEuro(estimateShown.amount)}
                   <span className="ml-2 block text-xs font-normal text-muted-foreground">
-                    @ {formatEuro(estimate.priceEur)} / share
-                    {estimate.currency !== "EUR" &&
-                      ` (${formatMoney(estimate.priceOriginal, estimate.currency)} converted)`}
+                    @ {formatEuro(estimateShown.priceEur)} / share
+                    {estimateShown.currency !== "EUR" &&
+                      ` (${formatMoney(estimateShown.priceOriginal, estimateShown.currency)} converted)`}
                   </span>
                 </p>
               )}
-              {!estimateLoading && estimateError && (
-                <p className="mt-1 text-destructive">{estimateError}</p>
+              {!estimateLoading && estimateErrorShown && (
+                <p className="mt-1 text-destructive">{estimateErrorShown}</p>
               )}
             </div>
           </>

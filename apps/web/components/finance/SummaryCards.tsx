@@ -22,8 +22,8 @@ export function SummaryCard({
     <Card
       className={cn(
         "flex w-full flex-col gap-1 p-4 md:p-5",
-        highlight && "border-destructive bg-accent",
-        warning && "border-destructive",
+        highlight && !warning && "border-border bg-muted",
+        warning && "border-destructive bg-destructive/10",
       )}
     >
       <div className="flex items-center justify-between gap-3">
