@@ -2,6 +2,7 @@ import { Link, type Href } from "expo-router";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, View } from "react-native";
 
+import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Screen } from "@/components/ui/Screen";
@@ -56,6 +57,9 @@ export function AuthForm({
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
+        <View className="mb-6 items-center">
+          <Logo size="hero" />
+        </View>
         <View className="gap-4">
           <Input
             placeholder="Email"
@@ -72,9 +76,7 @@ export function AuthForm({
             onChangeText={setPassword}
           />
 
-          {message ? (
-            <Text className="text-destructive">{message}</Text>
-          ) : null}
+          {message ? <Text className="text-destructive">{message}</Text> : null}
 
           <Button
             label={submitting ? "Please wait..." : submitLabel}

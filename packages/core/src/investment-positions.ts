@@ -9,10 +9,7 @@ import {
   type InvestmentWalletId,
 } from "./investments";
 import { todayIsoLocal } from "./constants";
-import {
-  BITCOIN_INSTRUMENT,
-  isCryptoWallet,
-} from "./crypto-holdings";
+import { BITCOIN_INSTRUMENT, isCryptoWallet } from "./crypto-holdings";
 
 export type { InvestmentWalletId };
 
@@ -280,8 +277,7 @@ function buildPositionChartPoints(
     } else if (position.share_count !== null && position.share_count > 0) {
       const close = lastCloseOnOrBefore(history, monthKey);
       if (close !== null) {
-        market =
-          Math.round(position.share_count * close * 100) / 100;
+        market = Math.round(position.share_count * close * 100) / 100;
       }
     } else if (shareSize !== null && buyCount > 0) {
       const close = lastCloseOnOrBefore(history, monthKey);
@@ -332,20 +328,11 @@ function buildColumnChartPoints(
         labelByKey.set(key, point.label);
       }
 
-      investedByKey.set(
-        key,
-        (investedByKey.get(key) ?? 0) + point.invested,
-      );
+      investedByKey.set(key, (investedByKey.get(key) ?? 0) + point.invested);
 
       if (point.market !== null) {
-        marketByKey.set(
-          key,
-          (marketByKey.get(key) ?? 0) + point.market,
-        );
-        marketCountByKey.set(
-          key,
-          (marketCountByKey.get(key) ?? 0) + 1,
-        );
+        marketByKey.set(key, (marketByKey.get(key) ?? 0) + point.market);
+        marketCountByKey.set(key, (marketCountByKey.get(key) ?? 0) + 1);
       }
     }
   }
@@ -355,9 +342,7 @@ function buildColumnChartPoints(
     label: labelByKey.get(key) ?? key,
     invested: investedByKey.get(key) ?? 0,
     market:
-      (marketCountByKey.get(key) ?? 0) > 0
-        ? (marketByKey.get(key) ?? 0)
-        : null,
+      (marketCountByKey.get(key) ?? 0) > 0 ? (marketByKey.get(key) ?? 0) : null,
   }));
 }
 
@@ -380,15 +365,15 @@ function buildPositionItem(
       : undefined;
   const isCrypto = isCryptoWallet(row.wallet);
   const instrumentSymbol = isCrypto
-    ? row.instrument_symbol ??
+    ? (row.instrument_symbol ??
       template?.instrument_symbol ??
-      BITCOIN_INSTRUMENT.symbol
-    : row.instrument_symbol ?? template?.instrument_symbol ?? null;
+      BITCOIN_INSTRUMENT.symbol)
+    : (row.instrument_symbol ?? template?.instrument_symbol ?? null);
   const instrumentName = isCrypto
-    ? row.instrument_name ??
+    ? (row.instrument_name ??
       template?.instrument_name ??
-      BITCOIN_INSTRUMENT.name
-    : row.instrument_name ?? template?.instrument_name ?? null;
+      BITCOIN_INSTRUMENT.name)
+    : (row.instrument_name ?? template?.instrument_name ?? null);
   const shareCount = resolveSharesHeld(row, template, transactions, asOfDate);
   const totalInvested = row.initial_balance;
   const hasManualValue =
@@ -403,12 +388,10 @@ function buildPositionItem(
     : null;
   const marketValue = hasManualValue
     ? Number(row.current_value)
-    : autoMarketValue ?? totalInvested;
+    : (autoMarketValue ?? totalInvested);
   const gainLoss = marketValue - totalInvested;
   const needsShareCount =
-    instrumentSymbol !== null &&
-    !hasManualValue &&
-    !hasMarketQuote;
+    instrumentSymbol !== null && !hasManualValue && !hasMarketQuote;
 
   return {
     id: row.id,
@@ -449,7 +432,9 @@ export function buildInvestmentPortfolio(
   asOfDate: string = todayIsoLocal(),
   historicalQuotes: Record<string, Record<string, number>> = {},
 ): InvestmentPortfolioSummary {
-  const categoriesById = new Map(categories.map((category) => [category.id, category]));
+  const categoriesById = new Map(
+    categories.map((category) => [category.id, category]),
+  );
   const recurringById = new Map(
     recurringTemplates.map((template) => [template.id, template]),
   );
@@ -509,7 +494,9 @@ export function buildInvestmentPortfolio(
   };
 }
 
-export function portfolioHasActivity(portfolio: InvestmentPortfolioSummary): boolean {
+export function portfolioHasActivity(
+  portfolio: InvestmentPortfolioSummary,
+): boolean {
   return portfolio.columns.some(
     (column) => column.items.length > 0 || column.totalInvested > 0,
   );

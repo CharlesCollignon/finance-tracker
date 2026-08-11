@@ -4,7 +4,7 @@ function Bone({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded border-2 border-border bg-muted",
+        "animate-pulse rounded border border-border bg-muted",
         className,
       )}
     />

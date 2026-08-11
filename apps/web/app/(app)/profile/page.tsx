@@ -2,9 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileView } from "@/components/profile/ProfileView";
 
-function getProviderLabel(
-  provider: string | undefined,
-): string {
+function getProviderLabel(provider: string | undefined): string {
   if (!provider) {
     return "email";
   }

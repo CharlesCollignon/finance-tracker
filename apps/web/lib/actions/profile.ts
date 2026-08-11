@@ -90,7 +90,8 @@ export async function deleteAllData(
   revalidatePath("/profile");
   return {
     success: true,
-    message: "All finance data deleted. Default categories will be restored on next visit.",
+    message:
+      "All finance data deleted. Default categories will be restored on next visit.",
   };
 }
 

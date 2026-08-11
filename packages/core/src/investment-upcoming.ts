@@ -56,10 +56,7 @@ export function buildUpcomingInvestments(
 
   // Look through this month and the next so monthly DCAs still surface
   // after the current month's date has passed.
-  const months = [
-    { year, month },
-    shiftMonth(year, month, 1),
-  ];
+  const months = [{ year, month }, shiftMonth(year, month, 1)];
 
   const upcoming: UpcomingInvestment[] = [];
 
@@ -142,8 +139,7 @@ export function buildWalletFundingNeeds(
           resolveWalletId(template.categories.name) === walletId,
       )
       .reduce(
-        (sum, template) =>
-          sum + estimateMonthlyAmount(template, year, month),
+        (sum, template) => sum + estimateMonthlyAmount(template, year, month),
         0,
       );
 

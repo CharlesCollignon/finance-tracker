@@ -90,7 +90,11 @@ export function CalendarView({
       <PageContainer className="flex flex-1 flex-col gap-3 min-h-0">
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <SummaryTile label="In" amount={monthTotals.income} tone="income" />
-          <SummaryTile label="Out" amount={monthTotals.outflow} tone="outflow" />
+          <SummaryTile
+            label="Out"
+            amount={monthTotals.outflow}
+            tone="outflow"
+          />
           <SummaryTile
             label="Net"
             amount={monthTotals.net}
@@ -100,12 +104,12 @@ export function CalendarView({
 
         <section
           className={cn(
-            "flex flex-1 flex-col overflow-hidden rounded border-2",
+            "flex flex-1 flex-col overflow-hidden rounded border",
             "border-border bg-card",
           )}
           aria-label="Monthly calendar"
         >
-          <div className="grid grid-cols-7 border-b-2 border-border">
+          <div className="grid grid-cols-7 border-b border-border">
             {WEEKDAY_LABELS.map((label) => (
               <div
                 key={label}
@@ -124,7 +128,7 @@ export function CalendarView({
             {weeks.map((week, weekIndex) => (
               <div
                 key={weekIndex}
-                className="grid grid-cols-7 border-b-2 border-border last:border-b-0"
+                className="grid grid-cols-7 border-b border-border last:border-b-0"
               >
                 {week.map((day) => {
                   const dayTxs = byDate.get(day.date) ?? [];
@@ -138,7 +142,7 @@ export function CalendarView({
                       onClick={() => setSelectedDate(day.date)}
                       className={cn(
                         "flex min-h-[3.25rem] flex-col items-stretch",
-                        "border-r-2 border-border p-1 text-left",
+                        "border-r border-border p-1 text-left",
                         "transition-colors last:border-r-0",
                         "sm:min-h-[4.5rem] sm:p-1.5 md:min-h-[5.5rem]",
                         day.isCurrentMonth

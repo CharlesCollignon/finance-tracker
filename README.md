@@ -1,13 +1,16 @@
-# Finance Tracker
+# Pluclair
 
-Personal finance app (EUR-centric) with a Next.js web client and an
-Expo (React Native) mobile app. Both share the same Supabase backend and
-domain logic in `packages/core`.
+Personal finance app (EUR-centric) — [pluclair.com](https://pluclair.com).
+Next.js web client + Expo (React Native) mobile app, sharing one Supabase
+backend and domain logic in `packages/core`.
+
+The git monorepo folder may still be named `finance-tracker`; the product
+brand is **Pluclair**.
 
 ## Monorepo layout
 
 ```
-finance-tracker/
+finance-tracker/          (repo root)
 ├── apps/
 │   ├── web/          Next.js 16 (desktop + mobile web)
 │   └── mobile/       Expo SDK 57 (Android / iOS via Expo Go)
@@ -59,7 +62,7 @@ cp apps/web/.env.local.example apps/web/.env.local
 |----------|----------|--------|
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | `https://xxxx.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Public anon key |
-| `NEXT_PUBLIC_SITE_URL` | yes | `http://localhost:3000` in dev |
+| `NEXT_PUBLIC_SITE_URL` | yes | `http://localhost:3000` in dev; `https://pluclair.com` in production |
 | `SUPABASE_SERVICE_ROLE_KEY` | optional | Only for “Delete account” on web |
 
 Google OAuth is configured in the **Supabase dashboard**, not in env files.
@@ -79,6 +82,8 @@ cp apps/mobile/.env.example apps/mobile/.env
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | yes |
 
 After changing `.env`, restart Expo with a cleared cache (`-c`).
+
+Deep link scheme: `pluclair://` (see `apps/mobile/app.json`).
 
 ---
 
@@ -112,7 +117,22 @@ In Vercel → Project Settings → Build and Deployment:
 - Enable **Include files outside of the root directory** (for the
   workspace lockfile and `packages/core`).
 
-Set the same env vars as in `apps/web/.env.local` in the Vercel project.
+Set the same env vars as in `apps/web/.env.local`, and for **Production**:
+
+- `NEXT_PUBLIC_SITE_URL=https://pluclair.com`
+
+Domain: attach `pluclair.com` (and optionally `www`) under Project → Domains,
+then point Namecheap DNS at the records Vercel shows (usually A `@` →
+`10.0.1.2` and CNAME `www` → `cname.vercel-dns.com`).
+
+### Supabase auth URLs (production)
+
+In Supabase → Authentication → URL configuration:
+
+- **Site URL:** `https://pluclair.com`
+- **Redirect URLs:** include  
+  `https://pluclair.com/**` and  
+  `https://pluclair.com/auth/callback`
 
 ---
 
@@ -148,7 +168,8 @@ pnpm --filter mobile exec expo start --web       # Expo web preview (not the mai
 
 ### EAS (optional)
 
-The mobile app is linked to an EAS project. Login and builds:
+Display name is **Pluclair**; Expo slug is `pluclair`. If the EAS project
+slug on expo.dev still differs, rename it there to match.
 
 ```bash
 npx eas-cli login
@@ -157,8 +178,10 @@ npx eas-cli build --platform android --profile preview   # installable APK for t
 ```
 
 Use **`preview`** for local testing; **`production`** when you are ready
-for the Play Store. Google OAuth deep links work more reliably in a
-development build than in Expo Go.
+for the Play Store. Google OAuth deep links should use `pluclair://`
+(and work more reliably in a development build than in Expo Go).
+
+Android package id: `com.salut_charles.pluclair`.
 
 ---
 
@@ -172,6 +195,14 @@ build step is required (TypeScript source is consumed directly).
 
 ---
 
+## Branding
+
+- Wordmark: **Pluclair** in Orbit (Maxence Duterne Regular)
+  - Web: `apps/web/public/fonts/OrbitMaxenceDuterne-Regular.otf`
+  - Mobile: `apps/mobile/assets/fonts/OrbitMaxenceDuterne-Regular.otf`
+
+---
+
 ## Troubleshooting
 
 | Issue | What to try |
@@ -180,7 +211,7 @@ build step is required (TypeScript source is consumed directly).
 | Vercel build finds no Next.js app | Set Root Directory to `apps/web` |
 | Expo Go cannot load the bundle | `expo start -c --tunnel` |
 | Styles missing after NativeWind changes | Restart with `-c` |
-| Supabase auth errors on web | Check `.env.local` URLs and restart `pnpm dev:web` |
+| Supabase auth errors on web | Check `.env.local` / `NEXT_PUBLIC_SITE_URL` and restart |
 | Supabase auth errors on mobile | Check `apps/mobile/.env` and restart Expo with `-c` |
 
 ---

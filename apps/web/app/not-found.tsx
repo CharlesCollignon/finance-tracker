@@ -4,7 +4,7 @@ import { Button } from "@/components/retroui/Button";
 export default function NotFound() {
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-md flex-col items-center justify-center px-4 text-center">
-      <div className="w-full rounded border-2 border-border bg-card p-8 shadow-md">
+      <div className="w-full rounded border border-border bg-card p-8 ">
         <p className="font-head text-3xl">404</p>
         <p className="mt-2 font-head text-lg">Page not found</p>
         <p className="mt-2 text-sm text-muted-foreground">

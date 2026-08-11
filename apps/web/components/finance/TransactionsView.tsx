@@ -1,11 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import {
-  DownloadSimple,
-  MagnifyingGlass,
-  Plus,
-} from "@phosphor-icons/react";
+import { DownloadSimple, MagnifyingGlass, Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -20,7 +16,10 @@ import { Badge } from "@/components/retroui/Badge";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { formatEuro } from "@finance/core/constants";
 import { yearlyExpenseTemplateIds } from "@finance/core/budget";
-import { CATEGORY_TYPE_LABELS, TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
+import {
+  CATEGORY_TYPE_LABELS,
+  TYPE_AMOUNT_CLASS,
+} from "@finance/core/category-styles";
 import { cn } from "@/lib/utils";
 import {
   applyRecurringForMonth,
@@ -124,9 +123,7 @@ function toCsvValue(value: string): string {
   return value;
 }
 
-function buildTransactionsCsv(
-  transactions: TransactionWithCategory[],
-): string {
+function buildTransactionsCsv(transactions: TransactionWithCategory[]): string {
   const header = ["date", "category", "type", "amount_eur", "note"];
   const rows = transactions.map((tx) =>
     [
@@ -239,7 +236,14 @@ export function TransactionsView({
 
       return true;
     });
-  }, [transactions, filter, categoryFilter, tagFilter, search, transactionTags]);
+  }, [
+    transactions,
+    filter,
+    categoryFilter,
+    tagFilter,
+    search,
+    transactionTags,
+  ]);
 
   const hasActiveFilters =
     filter !== "all" ||
@@ -304,10 +308,7 @@ export function TransactionsView({
     }
 
     const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-    downloadCsv(
-      `transactions-${monthKey}.csv`,
-      buildTransactionsCsv(filtered),
-    );
+    downloadCsv(`transactions-${monthKey}.csv`, buildTransactionsCsv(filtered));
     toast(`Exported ${filtered.length} transactions`, "success");
   }
 
@@ -341,9 +342,9 @@ export function TransactionsView({
           </div>
           <Card
             className={cn(
-              "border-2 p-4 text-center sm:p-5",
+              "border p-4 text-center sm:p-5",
               netTotal >= 0
-                ? "border-[var(--chart-4)] bg-[var(--chart-4)]/10"
+                ? "border-success bg-success/10"
                 : "border-destructive bg-destructive/10",
             )}
           >
@@ -352,10 +353,8 @@ export function TransactionsView({
             </p>
             <p
               className={cn(
-                "mt-1 font-head text-2xl tabular-nums font-semibold sm:text-3xl",
-                netTotal >= 0
-                  ? "text-[var(--chart-4)]"
-                  : "text-destructive",
+                "privacy-amount mt-1 font-head text-2xl font-semibold sm:text-3xl",
+                netTotal >= 0 ? "text-success" : "text-destructive",
               )}
             >
               {netTotal >= 0 ? "+" : "−"}
@@ -399,7 +398,7 @@ export function TransactionsView({
                   aria-selected={filter === option.value}
                   onClick={() => setFilter(option.value)}
                   className={cn(
-                    "shrink-0 rounded border-2 px-3 py-1.5 text-sm font-medium",
+                    "shrink-0 rounded border px-3 py-1.5 text-sm font-medium",
                     "transition-colors",
                     filter === option.value
                       ? "border-foreground bg-primary text-primary-foreground"
@@ -425,7 +424,7 @@ export function TransactionsView({
                   placeholder="Search category or note…"
                   aria-label="Search transactions"
                   className={cn(
-                    "h-10 w-full rounded border-2 border-border bg-background",
+                    "h-10 w-full rounded border border-border bg-background",
                     "pl-9 pr-3 text-sm text-foreground",
                   )}
                 />
@@ -435,7 +434,7 @@ export function TransactionsView({
                 onChange={(event) => setCategoryFilter(event.target.value)}
                 aria-label="Filter by category"
                 className={cn(
-                  "h-10 rounded border-2 border-border bg-background px-3",
+                  "h-10 rounded border border-border bg-background px-3",
                   "text-sm text-foreground sm:w-52",
                 )}
               >
@@ -452,7 +451,7 @@ export function TransactionsView({
                   onChange={(event) => setTagFilter(event.target.value)}
                   aria-label="Filter by tag"
                   className={cn(
-                    "h-10 rounded border-2 border-border bg-background px-3",
+                    "h-10 rounded border border-border bg-background px-3",
                     "text-sm text-foreground sm:w-40",
                   )}
                 >
@@ -537,11 +536,7 @@ export function TransactionsView({
                                   </Badge>
                                 )}
                               {(transactionTags[tx.id] ?? []).map((tag) => (
-                                <Badge
-                                  key={tag.id}
-                                  size="sm"
-                                  variant="outline"
-                                >
+                                <Badge key={tag.id} size="sm" variant="outline">
                                   {tag.name}
                                 </Badge>
                               ))}
@@ -554,7 +549,7 @@ export function TransactionsView({
                           </div>
                           <span
                             className={cn(
-                              "shrink-0 tabular-nums text-base font-semibold",
+                              "privacy-amount shrink-0 text-base font-semibold",
                               TYPE_AMOUNT_CLASS[tx.categories.type],
                             )}
                           >

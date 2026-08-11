@@ -13,7 +13,7 @@ interface MonthPickerProps {
 
 export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
   return (
-    <View className="flex-row items-center justify-between border-2 border-border bg-card px-2 py-1">
+    <View className="flex-row items-center justify-between border border-border bg-card px-2 py-1">
       <Pressable
         accessibilityLabel="Previous month"
         onPress={() => {

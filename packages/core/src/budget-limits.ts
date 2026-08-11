@@ -22,9 +22,9 @@ export function buildBudgetProgress(
     const spent =
       budget.category_id === null
         ? totalExpenses
-        : expenseBreakdown.find(
+        : (expenseBreakdown.find(
             (item) => item.categoryId === budget.category_id,
-          )?.total ?? 0;
+          )?.total ?? 0);
     const limit = Number(budget.amount);
     const remaining = limit - spent;
     const ratio = limit > 0 ? spent / limit : 0;

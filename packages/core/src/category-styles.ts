@@ -8,10 +8,10 @@ export const CATEGORY_TYPE_LABELS: Record<CategoryType, string> = {
 };
 
 export const CATEGORY_TYPE_BADGE_CLASS: Record<CategoryType, string> = {
-  income: "bg-[var(--chart-4)] text-primary-foreground",
-  expense: "bg-[var(--chart-2)] text-destructive-foreground",
-  savings: "bg-[var(--chart-3)] text-accent-foreground",
-  investment: "bg-[var(--chart-5)] text-primary-foreground",
+  income: "bg-success/15 text-success",
+  expense: "bg-destructive/15 text-destructive",
+  savings: "bg-primary/15 text-primary",
+  investment: "bg-info/15 text-info",
 };
 
 export const CHART_COLORS = [
@@ -22,16 +22,18 @@ export const CHART_COLORS = [
   "var(--chart-5)",
 ] as const;
 
+/** Semantic allocation colors for Sankey / pies. */
 export const ALLOCATION_COLORS = {
-  expenses: "var(--chart-2)",
-  savings: "var(--chart-3)",
-  investments: "var(--chart-5)",
-  remaining: "var(--chart-4)",
+  income: "var(--success)",
+  expenses: "var(--destructive)",
+  savings: "var(--primary)",
+  investments: "var(--info)",
+  remaining: "var(--chart-5)",
 } as const;
 
 export const TYPE_AMOUNT_CLASS: Record<CategoryType, string> = {
-  income: "text-[var(--chart-4)]",
+  income: "text-success",
   expense: "text-destructive",
-  savings: "text-[var(--chart-3)]",
-  investment: "text-[var(--chart-5)]",
+  savings: "text-primary",
+  investment: "text-info",
 };

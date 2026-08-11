@@ -45,9 +45,7 @@ export default function CalendarScreen() {
   const now = parseMonthParams();
   const [year, setYear] = useState(now.year);
   const [month, setMonth] = useState(now.month);
-  const [selectedDate, setSelectedDate] = useState(
-    () => todayIsoLocal(),
-  );
+  const [selectedDate, setSelectedDate] = useState(() => todayIsoLocal());
   const [formOpen, setFormOpen] = useState(false);
 
   const { data, loading, refreshing, onRefresh, reload, error } =
@@ -160,7 +158,7 @@ export default function CalendarScreen() {
                       setSelectedDate(day.date);
                       setSelectionKey(monthKey);
                     }}
-                    className={`min-h-12 flex-1 items-center justify-center border-2 ${
+                    className={`min-h-12 flex-1 items-center justify-center border ${
                       selected
                         ? "border-foreground bg-primary"
                         : "border-border bg-card"
@@ -178,11 +176,7 @@ export default function CalendarScreen() {
 
           <View className="mt-4 flex-row items-center justify-between">
             <Text className="font-bold">{effectiveSelected}</Text>
-            <Button
-              label="Add"
-              size="sm"
-              onPress={() => setFormOpen(true)}
-            />
+            <Button label="Add" size="sm" onPress={() => setFormOpen(true)} />
           </View>
           <Text variant="muted" className="mb-2">
             In {formatEuro(dayTotals.income)} · Out{" "}

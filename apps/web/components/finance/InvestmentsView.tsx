@@ -72,10 +72,12 @@ export function InvestmentsView({
   const [activeWallet, setActiveWallet] = useState<InvestmentWalletId>(() =>
     defaultWalletTab(portfolio),
   );
-  const [editingItem, setEditingItem] =
-    useState<InvestmentPositionItem | null>(null);
-  const [addingWallet, setAddingWallet] =
-    useState<InvestmentWalletId | null>(null);
+  const [editingItem, setEditingItem] = useState<InvestmentPositionItem | null>(
+    null,
+  );
+  const [addingWallet, setAddingWallet] = useState<InvestmentWalletId | null>(
+    null,
+  );
 
   const trackedRecurringIds = useMemo(
     () =>
@@ -98,9 +100,7 @@ export function InvestmentsView({
   );
 
   const hasData = portfolioHasActivity(portfolio);
-  const visibleFunding = fundingNeeds.filter(
-    (need) => need.monthlyTotal > 0,
-  );
+  const visibleFunding = fundingNeeds.filter((need) => need.monthlyTotal > 0);
 
   const activeColumn =
     portfolio.columns.find((entry) => entry.walletId === activeWallet) ??
@@ -117,7 +117,7 @@ export function InvestmentsView({
       <PageContainer className="flex flex-col gap-4">
         <Card
           className={cn(
-            "border-2 p-5 text-center md:p-6",
+            "border p-5 text-center md:p-6",
             "border-[var(--chart-3)] bg-[var(--chart-3)]/10",
           )}
         >
@@ -157,7 +157,7 @@ export function InvestmentsView({
             {visibleFunding.map((need) => (
               <Card
                 key={need.walletId}
-                className="border-2 border-border p-4 md:p-5"
+                className="border border-border p-4 md:p-5"
               >
                 <p className="text-sm text-muted-foreground">
                   Send to {INVESTMENT_WALLET_LABELS[need.walletId]}
@@ -181,7 +181,7 @@ export function InvestmentsView({
         )}
 
         <div
-          className="flex rounded border-2 border-border p-0.5"
+          className="flex rounded border border-border p-0.5"
           role="tablist"
           aria-label="Investment wallet"
         >
@@ -202,11 +202,7 @@ export function InvestmentsView({
                     ? "text-background"
                     : "text-muted-foreground hover:text-foreground",
                 )}
-                style={
-                  active
-                    ? { backgroundColor: accent }
-                    : undefined
-                }
+                style={active ? { backgroundColor: accent } : undefined}
               >
                 {INVESTMENT_WALLET_LABELS[walletId]}
               </button>
@@ -284,19 +280,11 @@ function WalletPanel({
           )}
         </div>
         <div className="mt-3 grid grid-cols-3 gap-3 sm:mt-0 sm:min-w-[18rem]">
-          <Metric
-            label="Value"
-            value={formatEuro(column.totalMarketValue)}
-          />
-          <Metric
-            label="Invested"
-            value={formatEuro(column.totalInvested)}
-          />
+          <Metric label="Value" value={formatEuro(column.totalMarketValue)} />
+          <Metric label="Invested" value={formatEuro(column.totalInvested)} />
           <Metric
             label="P/L"
-            value={
-              showPl ? formatSignedEuro(column.totalGainLoss) : "—"
-            }
+            value={showPl ? formatSignedEuro(column.totalGainLoss) : "—"}
             tone={
               showPl
                 ? column.totalGainLoss > 0
@@ -323,7 +311,7 @@ function WalletPanel({
         </p>
       )}
 
-      <div className="border-t-2 border-border pt-4">
+      <div className="border-t border-border pt-4">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h3 className="font-head text-base">Positions</h3>
           <Button size="sm" variant="outline" onClick={onAdd}>
@@ -358,16 +346,13 @@ interface InvestmentPositionCardProps {
   onEdit: () => void;
 }
 
-function InvestmentPositionCard({
-  item,
-  onEdit,
-}: InvestmentPositionCardProps) {
+function InvestmentPositionCard({ item, onEdit }: InvestmentPositionCardProps) {
   const isCrypto = isCryptoWallet(item.walletId);
   const valueLabel =
     item.hasManualValue || item.hasMarketQuote ? "Market" : "Invested";
 
   return (
-    <div className="rounded border-2 border-border p-3 md:p-4">
+    <div className="rounded border border-border p-3 md:p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-2">
           <CategoryIcon icon={item.icon} className="size-8 shrink-0" />
@@ -377,7 +362,7 @@ function InvestmentPositionCard({
               <p className="truncate text-xs text-muted-foreground">
                 {isCrypto
                   ? "Bitcoin"
-                  : item.instrumentName ?? item.instrumentSymbol}
+                  : (item.instrumentName ?? item.instrumentSymbol)}
               </p>
             )}
             {item.needsShareCount && (
@@ -432,19 +417,15 @@ interface MetricProps {
   className?: string;
 }
 
-function Metric({
-  label,
-  value,
-  tone = "neutral",
-  className,
-}: MetricProps) {
+function Metric({ label, value, tone = "neutral", className }: MetricProps) {
   return (
     <div className={className}>
       <p className="text-muted-foreground text-xs sm:text-sm">{label}</p>
       <p
         className={cn(
           "mt-0.5 tabular-nums font-semibold",
-          tone === "positive" && "text-[var(--chart-4)]",
+          "privacy-amount",
+          tone === "positive" && "text-success",
           tone === "negative" && "text-destructive",
         )}
       >

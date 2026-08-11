@@ -1,7 +1,4 @@
-import {
-  getMonthBounds,
-  type BudgetViewMode,
-} from "@finance/core/constants";
+import { getMonthBounds, type BudgetViewMode } from "@finance/core/constants";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { buildMonthlySummary } from "@finance/core/monthly-summary";
 import { buildInvestmentPortfolio } from "@finance/core/investment-positions";
@@ -129,9 +126,7 @@ export async function getInvestmentTransactions(
 ): Promise<TransactionWithCategory[]> {
   const { data, error } = await supabase
     .from("transactions")
-    .select(
-      "*, categories!inner(name, type, icon, counts_toward_summary)",
-    )
+    .select("*, categories!inner(name, type, icon, counts_toward_summary)")
     .eq("user_id", userId)
     .eq("categories.type", "investment")
     .order("occurred_on", { ascending: true });

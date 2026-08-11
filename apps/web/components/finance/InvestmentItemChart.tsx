@@ -1,23 +1,16 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import ReactECharts from "echarts-for-react";
+import type { EChartsOption } from "echarts";
 import { cn } from "@/lib/utils";
-import {
-  Area,
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { formatEuro } from "@finance/core/constants";
 import {
   sliceChartPointsByRange,
   type PositionChartPoint,
   type PositionChartRange,
 } from "@finance/core/investment-positions";
+import { baseGrid, chartTextStyle } from "@/lib/echarts-theme";
 
 type ChartMode = "value" | "pl";
 
@@ -50,11 +43,10 @@ export function InvestmentItemChart({
   const [range, setRange] = useState<PositionChartRange>("1Y");
 
   const isPositive = gainLoss >= 0;
-  const accent = isPositive ? "var(--chart-4)" : "var(--destructive)";
+  const accent = isPositive ? "var(--chart-1)" : "var(--destructive)";
 
   const visiblePoints = useMemo(
-    () =>
-      interactive ? sliceChartPointsByRange(points, range) : points,
+    () => (interactive ? sliceChartPointsByRange(points, range) : points),
     [interactive, points, range],
   );
 
@@ -83,6 +75,162 @@ export function InvestmentItemChart({
     [visiblePoints],
   );
 
+  const option = useMemo<EChartsOption>(() => {
+    const labels = chartData.map((row) => row.label);
+    const axisLabel = {
+      ...chartTextStyle(),
+      formatter: (value: number) => formatAxisEuro(value),
+    };
+
+    if (mode === "pl") {
+      return {
+        animationDuration: 300,
+        grid: baseGrid(),
+        tooltip: {
+          trigger: "axis",
+          backgroundColor: "var(--card)",
+          borderColor: "var(--border)",
+          textStyle: {
+            ...chartTextStyle(),
+            color: "var(--foreground)",
+          },
+          formatter: (params: unknown) => {
+            const list = params as Array<{
+              dataIndex: number;
+              axisValue: string;
+            }>;
+            const idx = list[0]?.dataIndex ?? 0;
+            const row = chartData[idx];
+            if (!row) {
+              return "";
+            }
+            const plText = row.pl == null ? "—" : formatSignedEuro(row.pl);
+            return `${row.label}<br/>P/L: ${plText}`;
+          },
+        },
+        xAxis: {
+          type: "category",
+          data: labels,
+          boundaryGap: false,
+          axisLine: { show: false },
+          axisTick: { show: false },
+          axisLabel: chartTextStyle(),
+        },
+        yAxis: {
+          type: "value",
+          splitLine: {
+            lineStyle: { color: "var(--border)", type: "dashed" },
+          },
+          axisLabel,
+        },
+        series: [
+          {
+            type: "line",
+            data: chartData.map((row) => row.pl),
+            showSymbol: false,
+            connectNulls: false,
+            lineStyle: { color: accent, width: 2 },
+            areaStyle: { color: accent, opacity: 0.22 },
+            itemStyle: { color: accent },
+          },
+        ],
+      };
+    }
+
+    return {
+      animationDuration: 300,
+      grid: baseGrid(),
+      tooltip: {
+        trigger: "axis",
+        backgroundColor: "var(--card)",
+        borderColor: "var(--border)",
+        textStyle: {
+          ...chartTextStyle(),
+          color: "var(--foreground)",
+        },
+        formatter: (params: unknown) => {
+          const list = params as Array<{ dataIndex: number }>;
+          const idx = list[0]?.dataIndex ?? 0;
+          const row = chartData[idx];
+          if (!row) {
+            return "";
+          }
+          const lines = [row.label, `Invested: ${formatEuro(row.invested)}`];
+          if (row.market != null) {
+            lines.push(`Market: ${formatEuro(row.market)}`);
+          }
+          if (row.pl != null) {
+            lines.push(`P/L: ${formatSignedEuro(row.pl)}`);
+          }
+          return lines.join("<br/>");
+        },
+      },
+      xAxis: {
+        type: "category",
+        data: labels,
+        boundaryGap: false,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: chartTextStyle(),
+      },
+      yAxis: {
+        type: "value",
+        splitLine: {
+          lineStyle: { color: "var(--border)", type: "dashed" },
+        },
+        axisLabel,
+      },
+      series: [
+        ...(interactive
+          ? [
+              {
+                type: "line" as const,
+                data: chartData.map((row) => row.plBase),
+                stack: "pl",
+                showSymbol: false,
+                lineStyle: { opacity: 0, width: 0 },
+                areaStyle: { opacity: 0 },
+                tooltip: { show: false },
+                silent: true,
+              },
+              {
+                type: "line" as const,
+                data: chartData.map((row) => row.plBand),
+                stack: "pl",
+                showSymbol: false,
+                lineStyle: { opacity: 0, width: 0 },
+                areaStyle: { color: accent, opacity: 0.18 },
+                tooltip: { show: false },
+                silent: true,
+              },
+            ]
+          : []),
+        {
+          type: "line",
+          name: "invested",
+          data: chartData.map((row) => row.invested),
+          showSymbol: false,
+          lineStyle: { color: "var(--foreground)", width: 2 },
+          itemStyle: { color: "var(--foreground)" },
+        },
+        {
+          type: "line",
+          name: "market",
+          data: chartData.map((row) => row.market),
+          showSymbol: !interactive,
+          symbolSize: 6,
+          connectNulls: false,
+          lineStyle: {
+            color: accent,
+            width: 2,
+            type: interactive ? "solid" : "dashed",
+          },
+          itemStyle: { color: accent },
+        },
+      ],
+    };
+  }, [accent, chartData, interactive, mode]);
+
   if (points.length === 0) {
     return (
       <div
@@ -101,7 +249,7 @@ export function InvestmentItemChart({
       {interactive && (
         <div className="mb-2 flex flex-col gap-2">
           <div
-            className="flex rounded border-2 border-border p-0.5"
+            className="flex rounded-lg border border-border p-0.5"
             role="tablist"
             aria-label="Chart mode"
           >
@@ -111,10 +259,7 @@ export function InvestmentItemChart({
             >
               Value
             </ModeButton>
-            <ModeButton
-              active={mode === "pl"}
-              onClick={() => setMode("pl")}
-            >
+            <ModeButton active={mode === "pl"} onClick={() => setMode("pl")}>
               P/L
             </ModeButton>
           </div>
@@ -130,9 +275,9 @@ export function InvestmentItemChart({
                 type="button"
                 onClick={() => setRange(option)}
                 className={cn(
-                  "rounded border-2 px-2 py-0.5 text-[11px] font-medium transition-colors",
+                  "rounded-md border px-2 py-0.5 text-[11px] font-medium transition-colors",
                   range === option
-                    ? "border-foreground bg-foreground text-background"
+                    ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -152,155 +297,12 @@ export function InvestmentItemChart({
           interactive && size === "lg" && "h-56 md:h-64",
         )}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart
-            data={chartData}
-            margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--muted)" />
-            <XAxis
-              dataKey="label"
-              axisLine={false}
-              tickLine={false}
-              className="text-[10px] fill-muted-foreground"
-              interval="preserveStartEnd"
-              minTickGap={24}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              width={48}
-              className="text-[10px] fill-muted-foreground"
-              tickFormatter={formatAxisEuro}
-              domain={mode === "pl" ? ["auto", "auto"] : undefined}
-            />
-            <Tooltip
-              content={({ active, payload, label }) => {
-                if (!active || !payload?.length) {
-                  return null;
-                }
-
-                const row = payload[0]?.payload as ChartRow | undefined;
-                if (!row) {
-                  return null;
-                }
-
-                return (
-                  <div className="border-2 border-border bg-background p-2 text-xs">
-                    <p className="mb-1 font-medium">{label}</p>
-                    {mode === "value" ? (
-                      <>
-                        <p>
-                          Invested: {formatEuro(row.invested)}
-                        </p>
-                        {row.market != null && (
-                          <p>
-                            Market: {formatEuro(row.market)}
-                          </p>
-                        )}
-                        {row.pl != null && (
-                          <p
-                            className={cn(
-                              row.pl > 0 && "text-[var(--chart-4)]",
-                              row.pl < 0 && "text-destructive",
-                            )}
-                          >
-                            P/L: {formatSignedEuro(row.pl)}
-                          </p>
-                        )}
-                      </>
-                    ) : (
-                      <p
-                        className={cn(
-                          row.pl != null &&
-                            row.pl > 0 &&
-                            "text-[var(--chart-4)]",
-                          row.pl != null &&
-                            row.pl < 0 &&
-                            "text-destructive",
-                        )}
-                      >
-                        P/L:{" "}
-                        {row.pl == null
-                          ? "—"
-                          : formatSignedEuro(row.pl)}
-                      </p>
-                    )}
-                  </div>
-                );
-              }}
-            />
-
-            {mode === "value" ? (
-              <>
-                {interactive && (
-                  <>
-                    <Area
-                      type="monotone"
-                      dataKey="plBase"
-                      stackId="pl"
-                      stroke="none"
-                      fill="transparent"
-                      isAnimationActive={false}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="plBand"
-                      stackId="pl"
-                      stroke="none"
-                      fill={accent}
-                      fillOpacity={0.18}
-                      isAnimationActive={false}
-                    />
-                  </>
-                )}
-                <Line
-                  type="monotone"
-                  dataKey="invested"
-                  stroke="var(--foreground)"
-                  strokeWidth={2}
-                  dot={false}
-                  name="invested"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="market"
-                  stroke={accent}
-                  strokeWidth={2}
-                  strokeDasharray={interactive ? undefined : "5 4"}
-                  dot={
-                    interactive
-                      ? false
-                      : { r: 3, fill: accent }
-                  }
-                  connectNulls={false}
-                  name="market"
-                />
-              </>
-            ) : (
-              <>
-                <Area
-                  type="monotone"
-                  dataKey="pl"
-                  stroke={accent}
-                  fill={accent}
-                  fillOpacity={0.22}
-                  strokeWidth={2}
-                  connectNulls={false}
-                  isAnimationActive={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="pl"
-                  stroke={accent}
-                  strokeWidth={2}
-                  dot={false}
-                  connectNulls={false}
-                />
-              </>
-            )}
-          </ComposedChart>
-        </ResponsiveContainer>
+        <ReactECharts
+          option={option}
+          style={{ height: "100%", width: "100%" }}
+          opts={{ renderer: "svg" }}
+          notMerge
+        />
       </div>
     </div>
   );
@@ -322,9 +324,9 @@ function ModeButton({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "flex-1 rounded px-2 py-1 text-xs font-medium transition-colors",
+        "flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
         active
-          ? "bg-foreground text-background"
+          ? "bg-primary text-primary-foreground"
           : "text-muted-foreground hover:text-foreground",
       )}
     >
@@ -333,13 +335,7 @@ function ModeButton({
   );
 }
 
-function ChartLegend({
-  mode,
-  accent,
-}: {
-  mode: ChartMode;
-  accent: string;
-}) {
+function ChartLegend({ mode, accent }: { mode: ChartMode; accent: string }) {
   if (mode === "pl") {
     return (
       <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
@@ -356,13 +352,7 @@ function ChartLegend({
   );
 }
 
-function LegendSwatch({
-  color,
-  label,
-}: {
-  color: string;
-  label: string;
-}) {
+function LegendSwatch({ color, label }: { color: string; label: string }) {
   return (
     <span className="inline-flex items-center gap-1.5">
       <span

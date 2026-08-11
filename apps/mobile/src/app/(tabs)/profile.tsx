@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  View,
-} from "react-native";
+import { Alert, Pressable, ScrollView, View } from "react-native";
 import { type Href, useRouter } from "expo-router";
 
 import { Button } from "@/components/ui/Button";
@@ -13,10 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useAuth } from "@/providers/AuthProvider";
-import {
-  deleteAllUserData,
-  updateProfile,
-} from "@/lib/mutations";
+import { deleteAllUserData, updateProfile } from "@/lib/mutations";
 import { supabase } from "@/lib/supabase";
 import {
   applyThemePreference,
@@ -109,15 +101,15 @@ export default function ProfileScreen() {
           <Text variant="label" className="mb-2 mt-4">
             Email
           </Text>
-          <Input value={user?.email ?? ""} editable={false} className="mb-3 opacity-70" />
+          <Input
+            value={user?.email ?? ""}
+            editable={false}
+            className="mb-3 opacity-70"
+          />
           <Text variant="label" className="mb-2">
             Display name
           </Text>
-          <Input
-            value={fullName}
-            onChangeText={setFullName}
-            className="mb-3"
-          />
+          <Input value={fullName} onChangeText={setFullName} className="mb-3" />
           <Button
             label={pending ? "Saving…" : "Save profile"}
             disabled={pending}
@@ -147,7 +139,7 @@ export default function ProfileScreen() {
           <Text variant="muted" className="mt-1 mb-3">
             Light, dark, or follow the device.
           </Text>
-          <View className="flex-row border-2 border-border">
+          <View className="flex-row border border-border">
             {(["light", "dark", "system"] as const).map((value) => {
               const selected = theme === value;
               return (

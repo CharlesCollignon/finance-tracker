@@ -119,8 +119,7 @@ function isYearlyExpenseTemplate(
   template: RecurringTemplateWithCategory,
 ): boolean {
   return (
-    template.recurrence === "yearly" &&
-    template.categories.type === "expense"
+    template.recurrence === "yearly" && template.categories.type === "expense"
   );
 }
 
@@ -196,9 +195,7 @@ function addProjectedOccurrences(
       },
       year,
       month,
-    ).filter(
-      (date) => date.startsWith(monthPrefix) && date <= asOfDate,
-    );
+    ).filter((date) => date.startsWith(monthPrefix) && date <= asOfDate);
 
     for (const date of dates) {
       const key = `${template.id}:${date}`;
@@ -254,8 +251,7 @@ export function computeMonthlyBudgetWithProjection(
     skippedKeys,
   );
 
-  const outflow =
-    base.expense + base.savings + base.investment + base.deployed;
+  const outflow = base.expense + base.savings + base.investment + base.deployed;
 
   return {
     ...base,
@@ -366,9 +362,7 @@ function buildProjectedBreakdown(
       },
       year,
       month,
-    ).filter(
-      (date) => date.startsWith(monthPrefix) && date <= asOfDate,
-    );
+    ).filter((date) => date.startsWith(monthPrefix) && date <= asOfDate);
 
     for (const date of dates) {
       const key = `${template.id}:${date}`;
@@ -380,7 +374,9 @@ function buildProjectedBreakdown(
     }
   }
 
-  return Array.from(map.values()).sort((left, right) => right.total - left.total);
+  return Array.from(map.values()).sort(
+    (left, right) => right.total - left.total,
+  );
 }
 
 export function buildBudgetExpenseBreakdownWithProjection(
@@ -457,7 +453,10 @@ export function buildBudgetExpenseBreakdown(
   const map = new Map<string, CategoryBreakdown>();
 
   for (const tx of transactions) {
-    if (tx.categories.type !== "expense" || isYearlyCashExpense(tx, yearlyIds)) {
+    if (
+      tx.categories.type !== "expense" ||
+      isYearlyCashExpense(tx, yearlyIds)
+    ) {
       continue;
     }
 

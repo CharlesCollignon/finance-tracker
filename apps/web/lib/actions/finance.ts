@@ -19,7 +19,10 @@ import {
   BITCOIN_INSTRUMENT,
   isCryptoCategoryName,
 } from "@finance/core/crypto-holdings";
-import type { Database, RecurringTemplateWithCategory } from "@finance/core/types/database";
+import type {
+  Database,
+  RecurringTemplateWithCategory,
+} from "@finance/core/types/database";
 import {
   applyRecurringSchema,
   authSchema,
@@ -45,14 +48,14 @@ async function loadApplyRecurringData(
   ] = await Promise.all([
     supabase
       .from("recurring_templates")
-      .select(
-        "*, categories(name, type, icon, counts_toward_summary)",
-      )
+      .select("*, categories(name, type, icon, counts_toward_summary)")
       .eq("user_id", userId)
       .eq("active", true),
     supabase
       .from("transactions")
-      .select("id, amount, note, category_id, recurring_template_id, occurred_on")
+      .select(
+        "id, amount, note, category_id, recurring_template_id, occurred_on",
+      )
       .eq("user_id", userId)
       .not("recurring_template_id", "is", null)
       .gte("occurred_on", start)
@@ -367,8 +370,7 @@ export async function upsertRecurringTemplate(
     id: formData.get("id") || undefined,
     categoryId: formData.get("categoryId"),
     amount: formData.get("amount") || undefined,
-    pricingType:
-      formData.get("pricingType") === "shares" ? "shares" : "fixed",
+    pricingType: formData.get("pricingType") === "shares" ? "shares" : "fixed",
     shareCount: formData.get("shareCount") || undefined,
     instrumentSymbol: formData.get("instrumentSymbol") || undefined,
     instrumentName: formData.get("instrumentName") || undefined,
@@ -532,11 +534,7 @@ export async function upsertRecurringTemplate(
   }
 
   if (templateId) {
-    await syncInvestmentPositionFromRecurring(
-      supabase,
-      user.id,
-      templateId,
-    );
+    await syncInvestmentPositionFromRecurring(supabase, user.id, templateId);
   }
 
   revalidateRecurringDependents();
@@ -653,7 +651,9 @@ export async function applyRecurringForMonth(
       month,
       skippedKeys,
     );
-    const templatesById = new Map(templates.map((template) => [template.id, template]));
+    const templatesById = new Map(
+      templates.map((template) => [template.id, template]),
+    );
 
     let created = 0;
     let updated = 0;

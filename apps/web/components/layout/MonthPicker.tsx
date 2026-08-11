@@ -34,7 +34,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
         href={`${basePath}${monthSearchParams(prev.year, prev.month, view)}`}
         className={cn(
           "flex h-11 w-11 items-center justify-center rounded",
-          "border-2 border-border shadow-sm hover:bg-accent",
+          "border border-border hover:bg-accent",
         )}
         aria-label="Previous month"
       >
@@ -44,15 +44,16 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
         {formatMonthLabel(year, month)}
       </span>
       <span className="min-w-[4.5rem] text-center text-sm font-medium sm:hidden">
-        {new Intl.DateTimeFormat("en-GB", { month: "short", year: "2-digit" }).format(
-          new Date(year, month - 1, 1),
-        )}
+        {new Intl.DateTimeFormat("en-GB", {
+          month: "short",
+          year: "2-digit",
+        }).format(new Date(year, month - 1, 1))}
       </span>
       <Link
         href={`${basePath}${monthSearchParams(next.year, next.month, view)}`}
         className={cn(
           "flex h-11 w-11 items-center justify-center rounded",
-          "border-2 border-border shadow-sm hover:bg-accent",
+          "border border-border hover:bg-accent",
         )}
         aria-label="Next month"
       >

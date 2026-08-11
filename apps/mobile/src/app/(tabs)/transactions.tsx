@@ -53,9 +53,7 @@ export default function TransactionsScreen() {
   const [month, setMonth] = useState(now.month);
   const [filter, setFilter] = useState<FilterType>("all");
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<TransactionWithCategory | null>(
-    null,
-  );
+  const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
   const [pending, setPending] = useState(false);
 
   const { data, loading, refreshing, onRefresh, reload, error } =
@@ -108,10 +106,7 @@ export default function TransactionsScreen() {
             if (result.error) {
               Alert.alert("Error", result.error);
             } else {
-              Alert.alert(
-                "Applied",
-                `${result.created ?? 0} added`,
-              );
+              Alert.alert("Applied", `${result.created ?? 0} added`);
               await reload();
             }
           },
@@ -191,7 +186,7 @@ export default function TransactionsScreen() {
             <Pressable
               key={value}
               onPress={() => setFilter(value)}
-              className={`border-2 px-3 py-1.5 ${
+              className={`border px-3 py-1.5 ${
                 selected
                   ? "border-foreground bg-primary"
                   : "border-border bg-background"
@@ -240,13 +235,13 @@ export default function TransactionsScreen() {
                   setEditing(item);
                   setFormOpen(true);
                 }}
-                className="border-2 border-border px-2 py-1"
+                className="border border-border px-2 py-1"
               >
                 <Text className="text-xs">Edit</Text>
               </Pressable>
               <Pressable
                 onPress={() => handleDelete(item)}
-                className="border-2 border-destructive px-2 py-1"
+                className="border border-destructive px-2 py-1"
               >
                 <Text className="text-xs text-destructive">Del</Text>
               </Pressable>

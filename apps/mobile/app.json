@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Finance Tracker",
-    "slug": "finance-tracker",
+    "name": "Pluclair",
+    "slug": "pluclair",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "financetracker",
+    "scheme": "pluclair",
     "userInterfaceStyle": "automatic",
     "android": {
       "adaptiveIcon": {

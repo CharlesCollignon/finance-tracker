@@ -1,32 +1,28 @@
+"use client";
+
 import Link from "next/link";
-import {
-  ArrowsLeftRight,
-  CalendarBlank,
-  ChartLine,
-  ChartPieSlice,
-  Repeat,
-} from "@phosphor-icons/react/dist/ssr";
+import { motion } from "framer-motion";
 import { buttonVariants } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
 import { Logo } from "@/components/layout/Logo";
 import { cn } from "@/lib/utils";
-
-const FEATURES = [
-  { icon: ChartPieSlice, title: "Dashboard" },
-  { icon: Repeat, title: "Recurring" },
-  { icon: ChartLine, title: "Wallets" },
-  { icon: ArrowsLeftRight, title: "Transactions" },
-  { icon: CalendarBlank, title: "Calendar" },
-] as const;
 
 interface HeroPageProps {
   isLoggedIn: boolean;
 }
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 12 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
 export function HeroPage({ isLoggedIn }: HeroPageProps) {
   return (
-    <div className="flex h-dvh flex-col overflow-hidden">
-      <header className="flex shrink-0 items-center justify-end border-b-2 border-border bg-background px-4 py-3 md:px-8">
+    <div className="flex h-dvh flex-col overflow-hidden bg-background">
+      <header className="flex shrink-0 items-center justify-end px-4 py-4 md:px-8">
         <div className="flex items-center gap-2">
           {isLoggedIn ? (
             <Link
@@ -39,9 +35,7 @@ export function HeroPage({ isLoggedIn }: HeroPageProps) {
             <>
               <Link
                 href="/login"
-                className={cn(
-                  buttonVariants({ size: "sm", variant: "outline" }),
-                )}
+                className={cn(buttonVariants({ size: "sm", variant: "ghost" }))}
               >
                 Sign in
               </Link>
@@ -56,21 +50,30 @@ export function HeroPage({ isLoggedIn }: HeroPageProps) {
         </div>
       </header>
 
-      <main className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 py-4 md:px-8">
-        <div className="flex w-full max-w-3xl flex-col items-center text-center">
-          <Logo size="hero" />
+      <main className="flex min-h-0 flex-1 flex-col items-center justify-center px-6">
+        <motion.div
+          className="flex w-full max-w-md flex-col items-center text-center"
+          initial="hidden"
+          animate="show"
+          variants={{
+            show: { transition: { staggerChildren: 0.08 } },
+          }}
+        >
+          <motion.div variants={fadeUp}>
+            <Logo size="hero" />
+          </motion.div>
 
-          <h1 className="font-head mt-4 max-w-md text-xl font-semibold leading-tight sm:mt-5 sm:text-2xl md:text-3xl">
-            {isLoggedIn
-              ? "Your finances, one place."
-              : "Personal finance, straight to the point."}
-          </h1>
-          <p className="mt-2 max-w-sm text-sm text-muted-foreground sm:text-base">
-            Track income, recurring flows, investments, and spending — no
-            spreadsheet.
-          </p>
+          <motion.p
+            variants={fadeUp}
+            className="mt-6 max-w-sm text-base text-muted-foreground sm:text-lg"
+          >
+            Income, recurring, investments — clear and quiet.
+          </motion.p>
 
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:mt-5">
+          <motion.div
+            variants={fadeUp}
+            className="mt-8 flex flex-wrap items-center justify-center gap-3"
+          >
             {isLoggedIn ? (
               <Link
                 href="/dashboard"
@@ -84,7 +87,7 @@ export function HeroPage({ isLoggedIn }: HeroPageProps) {
                   href="/signup"
                   className={cn(buttonVariants({ size: "md" }), "min-w-36")}
                 >
-                  Get started free
+                  Get started
                 </Link>
                 <Link
                   href="/login"
@@ -97,33 +100,9 @@ export function HeroPage({ isLoggedIn }: HeroPageProps) {
                 </Link>
               </>
             )}
-          </div>
-        </div>
-
-        <ul className="mt-5 grid w-full max-w-3xl grid-cols-5 gap-2 sm:mt-6 sm:max-w-4xl sm:gap-3">
-          {FEATURES.map(({ icon: Icon, title }) => (
-            <li key={title}>
-              <Card className="flex h-full flex-col items-center gap-1.5 p-2 text-center sm:gap-2 sm:p-3">
-                <span className="flex size-8 shrink-0 items-center justify-center border-2 border-border bg-primary sm:size-9">
-                  <Icon size={16} weight="bold" className="sm:hidden" />
-                  <Icon
-                    size={18}
-                    weight="bold"
-                    className="hidden sm:block"
-                  />
-                </span>
-                <span className="font-head text-[10px] leading-tight sm:text-xs">
-                  {title}
-                </span>
-              </Card>
-            </li>
-          ))}
-        </ul>
+          </motion.div>
+        </motion.div>
       </main>
-
-      <footer className="shrink-0 border-t-2 border-border px-4 py-2.5 text-center text-[10px] text-muted-foreground sm:text-xs md:px-8">
-        Built for personal budgeting and long-term investing.
-      </footer>
     </div>
   );
 }

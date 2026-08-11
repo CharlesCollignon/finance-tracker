@@ -9,7 +9,7 @@ import type { Category, CategoryType } from "@finance/core/types/database";
 import { cn } from "@/lib/utils";
 
 export const CATEGORY_SELECT_CLASS =
-  "h-11 w-full rounded border-2 border-border bg-background px-3 text-base text-foreground shadow-md";
+  "h-11 w-full rounded border border-border bg-background px-3 text-base text-foreground";
 
 interface CategorySelectProps {
   id: string;

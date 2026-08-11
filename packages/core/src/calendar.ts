@@ -179,10 +179,7 @@ export function defaultSelectedDate(
     today.getDate(),
   );
 
-  if (
-    today.getFullYear() === year &&
-    today.getMonth() + 1 === month
-  ) {
+  if (today.getFullYear() === year && today.getMonth() + 1 === month) {
     return todayIso;
   }
 

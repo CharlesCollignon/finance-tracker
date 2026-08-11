@@ -106,7 +106,7 @@ export function InstrumentSearch({
         <div
           className={cn(
             "flex items-start justify-between gap-3 rounded",
-            "border-2 border-border bg-muted/20 p-3",
+            "border border-border bg-muted/20 p-3",
           )}
         >
           <div className="min-w-0">
@@ -121,7 +121,7 @@ export function InstrumentSearch({
             onClick={handleClear}
             className={cn(
               "flex h-9 w-9 shrink-0 items-center justify-center",
-              "rounded border-2 border-border hover:bg-accent",
+              "rounded border border-border hover:bg-accent",
             )}
             aria-label="Clear selected instrument"
           >
@@ -150,8 +150,8 @@ export function InstrumentSearch({
             aria-controls={listId}
             required={required}
             className={cn(
-              "h-11 w-full rounded border-2 border-border bg-background",
-              "pl-10 pr-3 text-base shadow-md",
+              "h-11 w-full rounded border border-border bg-background",
+              "pl-10 pr-3 text-base",
             )}
           />
 
@@ -161,7 +161,7 @@ export function InstrumentSearch({
               role="listbox"
               className={cn(
                 "absolute z-50 mt-1 max-h-56 w-full overflow-y-auto",
-                "rounded border-2 border-border bg-background shadow-md",
+                "rounded border border-border bg-background",
               )}
             >
               {loading && (
@@ -206,7 +206,9 @@ export function InstrumentSearch({
                         {instrument.symbol}
                         {instrument.isin ? ` · ${instrument.isin}` : ""}
                         {instrument.exchange ? ` · ${instrument.exchange}` : ""}
-                        {instrument.quoteType ? ` · ${instrument.quoteType}` : ""}
+                        {instrument.quoteType
+                          ? ` · ${instrument.quoteType}`
+                          : ""}
                       </span>
                     </button>
                   </li>

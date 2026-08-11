@@ -1,6 +1,7 @@
 import { formatEuro } from "@finance/core/constants";
 import type { CategoryBreakdown } from "@finance/core/types/database";
 import { Card } from "@/components/retroui/Card";
+import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { cn } from "@/lib/utils";
 
 interface SummaryCardProps {
@@ -28,13 +29,11 @@ export function SummaryCard({
     >
       <div className="flex items-center justify-between gap-3">
         <span className="font-head text-base md:text-lg">{label}</span>
-        <span className="tabular-nums text-lg font-semibold md:text-xl">
+        <PrivateAmount className="text-lg font-semibold md:text-xl">
           {formatEuro(amount)}
-        </span>
+        </PrivateAmount>
       </div>
-      {hint && (
-        <p className="text-xs text-muted-foreground">{hint}</p>
-      )}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </Card>
   );
 }
@@ -60,13 +59,13 @@ export function BreakdownList({ items, incomeTotal }: BreakdownListProps) {
           <li key={item.categoryId} className="flex flex-col gap-1">
             <div className="flex items-center justify-between gap-2 text-sm">
               <span className="truncate">{item.name}</span>
-              <span className="shrink-0 tabular-nums font-medium">
+              <PrivateAmount className="shrink-0 font-medium">
                 {formatEuro(item.total)}
-              </span>
+              </PrivateAmount>
             </div>
-            <div className="h-2 w-full border border-border bg-muted">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full bg-primary"
+                className="h-full rounded-full bg-primary"
                 style={{ width: `${Math.min(pct, 100)}%` }}
               />
             </div>

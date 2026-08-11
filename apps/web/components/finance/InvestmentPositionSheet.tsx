@@ -163,9 +163,7 @@ function InvestmentPositionForm({
   return (
     <MobileSheet open={open} onOpenChange={onOpenChange} title={title}>
       <form action={action} className="flex flex-col gap-4">
-        {isEdit && (
-          <input type="hidden" name="positionId" value={item.id} />
-        )}
+        {isEdit && <input type="hidden" name="positionId" value={item.id} />}
         <input type="hidden" name="wallet" value={walletId} />
         <input type="hidden" name="sourceType" value={sourceType} />
         {isEdit && item.recurringTemplateId && (
@@ -206,11 +204,9 @@ function InvestmentPositionForm({
                 id="recurringTemplateId"
                 name="recurringTemplateId"
                 required
-                className="h-10 w-full border-2 border-border bg-input px-3 text-base"
+                className="h-10 w-full border border-border bg-input px-3 text-base"
                 value={recurringTemplateId}
-                onChange={(event) =>
-                  setRecurringTemplateId(event.target.value)
-                }
+                onChange={(event) => setRecurringTemplateId(event.target.value)}
               >
                 <option value="">Pick one…</option>
                 {recurringOptions.map((template) => (
@@ -229,7 +225,7 @@ function InvestmentPositionForm({
         )}
 
         {isRecurringLinked ? (
-          <div className="flex items-center gap-3 rounded border-2 border-border p-3">
+          <div className="flex items-center gap-3 rounded border border-border p-3">
             <CategoryIcon icon={item.icon} />
             <div>
               <p className="font-medium">{item.name}</p>
@@ -265,8 +261,8 @@ function InvestmentPositionForm({
             Total invested (cost basis)
           </FormLabel>
           <Text className="text-xs text-muted-foreground">
-            Your broker&apos;s total invested amount for this position. Used
-            for P/L — not updated from recurring transactions.
+            Your broker&apos;s total invested amount for this position. Used for
+            P/L — not updated from recurring transactions.
           </Text>
           <Input
             id="initialBalance"
@@ -281,14 +277,14 @@ function InvestmentPositionForm({
         </div>
 
         {isRecurringLinked && instrumentFromRecurring ? (
-          <div className="rounded border-2 border-border bg-muted/20 p-3 text-sm">
+          <div className="rounded border border-border bg-muted/20 p-3 text-sm">
             <p className="font-medium">
               {isCrypto ? "Tracked asset" : "Tracked ETF"}
             </p>
             <p className="mt-1 text-muted-foreground">
               {isCrypto
                 ? BITCOIN_INSTRUMENT.name
-                : item.instrumentName ?? item.instrumentSymbol}
+                : (item.instrumentName ?? item.instrumentSymbol)}
             </p>
             {!isCrypto && (
               <p className="mt-2 text-xs text-muted-foreground">
@@ -302,18 +298,12 @@ function InvestmentPositionForm({
             <input
               type="hidden"
               name="instrumentSymbol"
-              value={
-                isCrypto
-                  ? BITCOIN_INSTRUMENT.symbol
-                  : instrumentSymbol
-              }
+              value={isCrypto ? BITCOIN_INSTRUMENT.symbol : instrumentSymbol}
             />
             <input
               type="hidden"
               name="instrumentName"
-              value={
-                isCrypto ? BITCOIN_INSTRUMENT.name : instrumentName
-              }
+              value={isCrypto ? BITCOIN_INSTRUMENT.name : instrumentName}
             />
           </div>
         ) : isRecurringLinked && !isCrypto ? (
@@ -326,7 +316,7 @@ function InvestmentPositionForm({
           </Text>
         ) : isCrypto ? (
           <>
-            <div className="rounded border-2 border-border bg-muted/20 p-3 text-sm">
+            <div className="rounded border border-border bg-muted/20 p-3 text-sm">
               <p className="font-medium">Bitcoin</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Market value uses BTC-EUR live price × your total BTC.
@@ -362,11 +352,7 @@ function InvestmentPositionForm({
               name="instrumentSymbol"
               value={instrumentSymbol}
             />
-            <input
-              type="hidden"
-              name="instrumentName"
-              value={instrumentName}
-            />
+            <input type="hidden" name="instrumentName" value={instrumentName} />
           </>
         )}
 
@@ -410,8 +396,11 @@ function InvestmentPositionForm({
             ) : (
               estimateShown.currency !== "EUR" && (
                 <span className="block text-xs">
-                  {formatMoney(estimateShown.priceOriginal, estimateShown.currency)} / share
-                  → {formatEuro(estimateShown.priceEur)} / share
+                  {formatMoney(
+                    estimateShown.priceOriginal,
+                    estimateShown.currency,
+                  )}{" "}
+                  / share → {formatEuro(estimateShown.priceEur)} / share
                 </span>
               )
             )}
@@ -424,8 +413,8 @@ function InvestmentPositionForm({
           </FormLabel>
           <Text className="text-xs text-muted-foreground">
             Usually leave empty — market value is computed from shares × live
-            price. Use this only if your broker shows a different total than
-            the live quote (e.g. delayed price, fees, or cash drag).
+            price. Use this only if your broker shows a different total than the
+            live quote (e.g. delayed price, fees, or cash drag).
           </Text>
           <Input
             id="currentValue"

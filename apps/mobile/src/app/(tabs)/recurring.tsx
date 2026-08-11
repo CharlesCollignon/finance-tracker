@@ -8,7 +8,10 @@ import {
 } from "react-native";
 
 import { formatEuro } from "@finance/core/constants";
-import { estimateMonthlyAmount, formatRecurrenceSchedule } from "@finance/core/recurrence";
+import {
+  estimateMonthlyAmount,
+  formatRecurrenceSchedule,
+} from "@finance/core/recurrence";
 import type {
   Category,
   RecurringTemplateWithCategory,
@@ -28,8 +31,9 @@ import { getCategories, getRecurringTemplates } from "@/lib/queries";
 export default function RecurringScreen() {
   const { user } = useAuth();
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] =
-    useState<RecurringTemplateWithCategory | null>(null);
+  const [editing, setEditing] = useState<RecurringTemplateWithCategory | null>(
+    null,
+  );
 
   const { data, loading, refreshing, onRefresh, reload, error } =
     useRefreshable(async () => {
@@ -52,9 +56,7 @@ export default function RecurringScreen() {
   const budgetMonthly = useMemo(
     () =>
       templates
-        .filter(
-          (t) => t.active && t.categories.counts_toward_summary !== false,
-        )
+        .filter((t) => t.active && t.categories.counts_toward_summary !== false)
         .reduce((sum, t) => sum + estimateMonthlyAmount(t), 0),
     [templates],
   );
@@ -109,11 +111,9 @@ export default function RecurringScreen() {
                 {item.description ? (
                   <Text variant="muted">{item.description}</Text>
                 ) : null}
-                <Text variant="muted">
-                  {formatRecurrenceSchedule(item)}
-                </Text>
+                <Text variant="muted">{formatRecurrenceSchedule(item)}</Text>
               </Pressable>
-              <View className="mt-2 flex-row items-center justify-between border-t-2 border-border pt-2">
+              <View className="mt-2 flex-row items-center justify-between border-t border-border pt-2">
                 <Text className="font-bold tabular-nums">
                   {formatEuro(Number(item.amount))}
                 </Text>
@@ -124,7 +124,7 @@ export default function RecurringScreen() {
                     await toggleRecurringActive(item.id, !item.active);
                     await reload();
                   }}
-                  className={`border-2 px-3 py-1 ${
+                  className={`border px-3 py-1 ${
                     item.active
                       ? "border-foreground bg-primary"
                       : "border-border"

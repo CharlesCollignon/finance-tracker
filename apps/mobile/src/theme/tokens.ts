@@ -1,71 +1,68 @@
 /**
- * Neo-brutalist design tokens ported from the web app's globals.css.
- * Kept as plain JS so they can be used in places NativeWind classes can't
- * reach (React Navigation options, inline style props, etc.).
+ * Minimal Pluclair design tokens (muted gold accent + semantic colors).
+ * Kept as plain JS for React Navigation / inline styles.
  */
 
 export const LIGHT_COLORS = {
   background: "#ffffff",
-  foreground: "#000000",
-  card: "#ffffff",
-  cardForeground: "#000000",
-  primary: "#ffdb33",
-  primaryHover: "#ffcc00",
-  primaryForeground: "#000000",
-  secondary: "#000000",
-  secondaryForeground: "#ffffff",
-  muted: "#aeaeae",
-  mutedForeground: "#5a5a5a",
-  accent: "#fae583",
-  accentForeground: "#000000",
-  destructive: "#e63946",
+  foreground: "#0a0a0a",
+  card: "#fafafa",
+  cardForeground: "#0a0a0a",
+  primary: "#c9a05a",
+  primaryHover: "#b8904a",
+  primaryForeground: "#ffffff",
+  secondary: "#f4f4f5",
+  secondaryForeground: "#0a0a0a",
+  muted: "#f4f4f5",
+  mutedForeground: "#71717a",
+  accent: "#f5f0e8",
+  accentForeground: "#0a0a0a",
+  success: "#16a34a",
+  successForeground: "#ffffff",
+  info: "#2563eb",
+  infoForeground: "#ffffff",
+  destructive: "#dc2626",
   destructiveForeground: "#ffffff",
-  border: "#000000",
+  border: "#e4e4e7",
 } as const;
 
 export const DARK_COLORS = {
-  background: "#141414",
-  foreground: "#f2f2ec",
-  card: "#1d1d1d",
-  cardForeground: "#f2f2ec",
-  primary: "#ffdb33",
-  primaryHover: "#ffcc00",
-  primaryForeground: "#000000",
-  secondary: "#f2f2ec",
-  secondaryForeground: "#000000",
-  muted: "#3a3a3a",
-  mutedForeground: "#a8a8a0",
-  accent: "#3a3418",
-  accentForeground: "#f2f2ec",
-  destructive: "#ff6b77",
-  destructiveForeground: "#000000",
-  border: "#f2f2ec",
+  background: "#0a0a0a",
+  foreground: "#fafafa",
+  card: "#141414",
+  cardForeground: "#fafafa",
+  primary: "#dbb87a",
+  primaryHover: "#e4c48e",
+  primaryForeground: "#0a0a0a",
+  secondary: "#1c1c1c",
+  secondaryForeground: "#fafafa",
+  muted: "#1c1c1c",
+  mutedForeground: "#a1a1aa",
+  accent: "#1f1c17",
+  accentForeground: "#fafafa",
+  success: "#34d399",
+  successForeground: "#0a0a0a",
+  info: "#60a5fa",
+  infoForeground: "#0a0a0a",
+  destructive: "#f87171",
+  destructiveForeground: "#0a0a0a",
+  border: "#27272a",
 } as const;
 
-/** Default export keeps existing imports working (light palette). */
-export const COLORS = LIGHT_COLORS;
+/** Charts: gold + semantic + gray. */
+export const CHART_COLORS = {
+  light: ["#c9a05a", "#dc2626", "#16a34a", "#2563eb", "#a1a1aa"],
+  dark: ["#dbb87a", "#f87171", "#34d399", "#60a5fa", "#a1a1aa"],
+} as const;
 
-export function colorsForScheme(
-  scheme: "light" | "dark" | null | undefined,
-) {
-  return scheme === "dark" ? DARK_COLORS : LIGHT_COLORS;
+/** Default export keeps existing imports working. */
+export const COLORS = DARK_COLORS;
+
+export function colorsForScheme(scheme: "light" | "dark" | null | undefined) {
+  return scheme === "light" ? LIGHT_COLORS : DARK_COLORS;
 }
 
-/**
- * Hard offset shadow (the brutalist "sticker" look). RN 0.76+ supports the
- * CSS `boxShadow` style prop, so we reuse the exact web offsets.
- */
-export const BRUTAL_SHADOW = {
-  boxShadow: "4px 4px 0px 0px #000000",
+/** Soft elevation — no brutalist offset shadows. */
+export const SOFT_SHADOW = {
+  boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.06)",
 } as const;
-
-export const BRUTAL_SHADOW_SM = {
-  boxShadow: "2px 2px 0px 0px #000000",
-} as const;
-
-export function brutalShadowForScheme(
-  scheme: "light" | "dark" | null | undefined,
-) {
-  const color = scheme === "dark" ? "#f2f2ec" : "#000000";
-  return { boxShadow: `4px 4px 0px 0px ${color}` } as const;
-}

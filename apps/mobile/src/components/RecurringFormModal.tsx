@@ -1,10 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  View,
-} from "react-native";
+import { Modal, Pressable, ScrollView, View } from "react-native";
 
 import {
   formatCategoryOptionLabel,
@@ -114,8 +109,8 @@ export function RecurringFormModal({
   return (
     <Modal visible={open} animationType="slide" transparent>
       <View className="flex-1 justify-end bg-black/70">
-        <View className="max-h-[90%] border-2 border-border bg-background">
-          <View className="flex-row items-center justify-between border-b-2 border-border bg-primary px-4 py-3">
+        <View className="max-h-[90%] border border-border bg-background">
+          <View className="flex-row items-center justify-between border-b border-border bg-card px-4 py-3">
             <Text className="font-bold">
               {isEditing ? "Edit recurring" : "Add recurring"}
             </Text>
@@ -137,7 +132,7 @@ export function RecurringFormModal({
                       <Pressable
                         key={cat.id}
                         onPress={() => setCategoryId(cat.id)}
-                        className={`border-2 px-3 py-2 ${
+                        className={`border px-3 py-2 ${
                           selected
                             ? "border-foreground bg-primary"
                             : "border-border"
@@ -178,7 +173,7 @@ export function RecurringFormModal({
                 <Pressable
                   key={value}
                   onPress={() => setRecurrence(value)}
-                  className={`flex-1 border-2 py-2 ${
+                  className={`flex-1 border py-2 ${
                     recurrence === value
                       ? "border-foreground bg-primary"
                       : "border-border"

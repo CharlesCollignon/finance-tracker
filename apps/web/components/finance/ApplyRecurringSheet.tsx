@@ -18,13 +18,12 @@ interface ApplyRecurringSheetProps {
 }
 
 function UpdateRow({ item }: { item: RecurringOccurrenceUpdate }) {
-  const amountChanged =
-    Math.abs(item.previousAmount - item.amount) > 0.009;
+  const amountChanged = Math.abs(item.previousAmount - item.amount) > 0.009;
   const noteChanged =
     (item.previousNote?.trim() ?? "") !== (item.note?.trim() ?? "");
 
   return (
-    <li className="rounded border-2 border-border p-3 text-sm">
+    <li className="rounded border border-border p-3 text-sm">
       <p className="font-medium">{item.name}</p>
       <p className="mt-0.5 text-xs text-muted-foreground">{item.dateLabel}</p>
       {amountChanged && (
@@ -99,7 +98,7 @@ export function ApplyRecurringSheet({
               {plan.toCreate.map((item) => (
                 <li
                   key={`${item.templateId}:${item.occurredOn}`}
-                  className="flex items-center justify-between gap-3 rounded border-2 border-border px-3 py-2 text-sm"
+                  className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2 text-sm"
                 >
                   <div className="min-w-0">
                     <p className="truncate font-medium">{item.name}</p>

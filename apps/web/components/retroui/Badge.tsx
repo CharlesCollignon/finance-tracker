@@ -1,19 +1,19 @@
 import { cn } from "@/lib/utils";
-import { cva, VariantProps } from "class-variance-authority";
-import { HTMLAttributes } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { type HTMLAttributes } from "react";
 
-const badgeVariants = cva("font-semibold rounded inline-flex items-center", {
+const badgeVariants = cva("font-medium rounded-md inline-flex items-center", {
   variants: {
     variant: {
       default: "bg-muted text-muted-foreground",
-      outline: "outline-2 outline-foreground text-foreground",
+      outline: "border border-border text-foreground",
       solid: "bg-foreground text-background",
-      surface: "outline-2 bg-primary text-primary-foreground",
+      surface: "bg-primary/15 text-primary",
     },
     size: {
-      sm: "px-2 py-1 text-xs",
-      md: "px-2.5 py-1.5 text-sm",
-      lg: "px-3 py-2 text-base",
+      sm: "px-2 py-0.5 text-xs",
+      md: "px-2.5 py-1 text-xs",
+      lg: "px-3 py-1.5 text-sm",
     },
   },
   defaultVariants: {
@@ -22,9 +22,8 @@ const badgeVariants = cva("font-semibold rounded inline-flex items-center", {
   },
 });
 
-interface ButtonProps
-  extends HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof badgeVariants> {}
+interface BadgeProps
+  extends HTMLAttributes<HTMLSpanElement>, VariantProps<typeof badgeVariants> {}
 
 export function Badge({
   children,
@@ -32,7 +31,7 @@ export function Badge({
   variant = "default",
   className = "",
   ...props
-}: ButtonProps) {
+}: BadgeProps) {
   return (
     <span
       className={cn(badgeVariants({ variant, size }), className)}

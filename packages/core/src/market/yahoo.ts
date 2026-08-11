@@ -43,15 +43,10 @@ export interface MonthlyClosePoint {
   close: number;
 }
 
-const SEARCH_URL =
-  "https://query1.finance.yahoo.com/v1/finance/search";
+const SEARCH_URL = "https://query1.finance.yahoo.com/v1/finance/search";
 const CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart";
 
-const ALLOWED_QUOTE_TYPES = new Set([
-  "ETF",
-  "EQUITY",
-  "MUTUALFUND",
-]);
+const ALLOWED_QUOTE_TYPES = new Set(["ETF", "EQUITY", "MUTUALFUND"]);
 
 const REQUEST_TIMEOUT_MS = 8000;
 
@@ -138,7 +133,7 @@ async function fetchJson<T>(url: string): Promise<T> {
       signal: controller.signal,
       headers: {
         Accept: "application/json",
-        "User-Agent": "FinanceTracker/1.0",
+        "User-Agent": "Pluclair/1.0",
       },
       next: { revalidate: 300 },
     });
@@ -216,10 +211,7 @@ export async function fetchInstrumentQuote(
   };
 }
 
-export function computeSharesAmount(
-  shareCount: number,
-  price: number,
-): number {
+export function computeSharesAmount(shareCount: number, price: number): number {
   return Math.round(shareCount * price * 100) / 100;
 }
 
@@ -253,7 +245,12 @@ export async function fetchMonthlyCloses(
   for (let index = 0; index < timestamps.length; index += 1) {
     const close = closes[index];
     const ts = timestamps[index];
-    if (ts === undefined || close === null || close === undefined || close <= 0) {
+    if (
+      ts === undefined ||
+      close === null ||
+      close === undefined ||
+      close <= 0
+    ) {
       continue;
     }
     byMonth.set(monthKeyFromUnix(ts), close);

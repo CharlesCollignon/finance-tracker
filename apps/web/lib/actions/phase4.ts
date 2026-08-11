@@ -40,8 +40,7 @@ export async function upsertBudget(
   const rawCategory = formData.get("categoryId");
   const parsed = budgetSchema.safeParse({
     id: formData.get("id") || undefined,
-    categoryId:
-      rawCategory === "" || rawCategory === null ? null : rawCategory,
+    categoryId: rawCategory === "" || rawCategory === null ? null : rawCategory,
     amount: formData.get("amount"),
   });
 
@@ -269,8 +268,7 @@ export async function upsertSavingsGoal(
     name: formData.get("name"),
     targetAmount: formData.get("targetAmount"),
     targetDate: formData.get("targetDate") || undefined,
-    categoryId:
-      rawCategory === "" || rawCategory === null ? null : rawCategory,
+    categoryId: rawCategory === "" || rawCategory === null ? null : rawCategory,
   });
 
   if (!parsed.success) {

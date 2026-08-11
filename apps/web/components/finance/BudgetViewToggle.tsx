@@ -34,7 +34,7 @@ export function BudgetViewToggle({
   return (
     <div
       className={cn(
-        "inline-flex rounded border-2 border-border p-0.5",
+        "inline-flex rounded border border-border p-0.5",
         className,
       )}
       role="group"

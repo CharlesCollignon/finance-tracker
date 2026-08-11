@@ -1,7 +1,7 @@
 /** Shared app shell dimensions — keep SideNav + PageHeader borders aligned. */
 
 export const SHELL_HEADER_BAND_CLASS =
-  "box-border h-[var(--shell-header-height)] shrink-0 border-b-2 border-border";
+  "box-border h-[var(--shell-header-height)] shrink-0 border-b border-border";
 
 export const SHELL_HEADER_INNER_CLASS =
   "mx-auto flex w-full min-w-0 max-w-lg flex-col gap-3 px-4 py-3 " +

@@ -1,8 +1,14 @@
 import { Pressable, Text, type PressableProps } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { hapticLight } from "@/lib/haptics";
 import { cn } from "@/lib/cn";
-import { BRUTAL_SHADOW } from "@/theme/tokens";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 type Variant = "default" | "secondary" | "outline" | "ghost";
 type Size = "sm" | "md" | "lg";
@@ -15,10 +21,10 @@ export interface ButtonProps extends PressableProps {
 }
 
 const CONTAINER: Record<Variant, string> = {
-  default: "bg-primary border-2 border-border",
-  secondary: "bg-secondary border-2 border-border",
-  outline: "bg-transparent border-2 border-border",
-  ghost: "bg-transparent",
+  default: "bg-primary rounded-md",
+  secondary: "bg-secondary rounded-md",
+  outline: "bg-transparent border border-border rounded-md",
+  ghost: "bg-transparent rounded-md",
 };
 
 const LABEL: Record<Variant, string> = {
@@ -49,30 +55,38 @@ export function Button({
   onPress,
   ...props
 }: ButtonProps) {
-  const hasShadow = variant !== "ghost";
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityRole="button"
       disabled={disabled}
-      style={hasShadow ? BRUTAL_SHADOW : undefined}
+      style={animatedStyle}
       className={cn(
-        "items-center justify-center active:translate-x-[2px] active:translate-y-[2px]",
+        "items-center justify-center",
         CONTAINER[variant],
         PADDING[size],
-        disabled && "opacity-60",
+        disabled && "opacity-50",
         className,
       )}
+      onPressIn={() => {
+        scale.value = withTiming(0.98, { duration: 120 });
+      }}
+      onPressOut={() => {
+        scale.value = withTiming(1, { duration: 150 });
+      }}
       onPress={(event) => {
         void hapticLight();
         onPress?.(event);
       }}
       {...props}
     >
-      <Text
-        className={cn("font-bold", LABEL[variant], LABEL_SIZE[size])}
-      >
+      <Text className={cn("font-semibold", LABEL[variant], LABEL_SIZE[size])}>
         {label}
       </Text>
-    </Pressable>
+    </AnimatedPressable>
   );
 }

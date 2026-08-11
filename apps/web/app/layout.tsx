@@ -9,8 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Finance Tracker",
-  description: "Track income, expenses, savings, and investments",
+  title: "Pluclair",
+  description:
+    "Personal finance — income, recurring flows, investments, and spending",
 };
 
 export const viewport: Viewport = {
@@ -19,7 +20,9 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const themeInitScript = `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
+const themeInitScript = `(function(){try{var t=localStorage.getItem("theme");var d=t==="light"?false:t==="system"?window.matchMedia("(prefers-color-scheme: dark)").matches:true;document.documentElement.classList.toggle("dark",d);}catch(e){document.documentElement.classList.add("dark");}})();`;
+
+const privacyInitScript = `(function(){try{document.documentElement.dataset.privacy=localStorage.getItem("privacy-blur")==="1"?"on":"off";}catch(e){document.documentElement.dataset.privacy="off";}})();`;
 
 export default function RootLayout({
   children,
@@ -34,6 +37,7 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: privacyInitScript }} />
       </head>
       <body className="flex min-h-full flex-col bg-background text-foreground antialiased">
         {children}

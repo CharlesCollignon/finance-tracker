@@ -60,7 +60,9 @@ export function SignupForm() {
             <Text className="text-sm text-destructive">{state.error}</Text>
           )}
           {state.message && (
-            <Text className="text-sm text-muted-foreground">{state.message}</Text>
+            <Text className="text-sm text-muted-foreground">
+              {state.message}
+            </Text>
           )}
           <Button type="submit" size="lg" className="w-full" disabled={pending}>
             {pending ? "Creating…" : "Sign up"}

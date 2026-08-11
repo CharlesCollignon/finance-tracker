@@ -90,8 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // If email confirmation is on, there is no session yet.
         if (data.user && !data.session) {
           return {
-            error:
-              "Check your email to confirm your account, then sign in.",
+            error: "Check your email to confirm your account, then sign in.",
           };
         }
         if (data.user) {

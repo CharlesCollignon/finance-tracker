@@ -18,9 +18,7 @@ export async function getTransactions(
 
   const { data, error } = await supabase
     .from("transactions")
-    .select(
-      "*, categories(name, type, icon, counts_toward_summary)",
-    )
+    .select("*, categories(name, type, icon, counts_toward_summary)")
     .eq("user_id", userId)
     .gte("occurred_on", start)
     .lte("occurred_on", end)
@@ -40,9 +38,7 @@ export async function getInvestmentTransactions(
 
   const { data, error } = await supabase
     .from("transactions")
-    .select(
-      "*, categories!inner(name, type, icon, counts_toward_summary)",
-    )
+    .select("*, categories!inner(name, type, icon, counts_toward_summary)")
     .eq("user_id", userId)
     .eq("categories.type", "investment")
     .order("occurred_on", { ascending: true });
@@ -108,9 +104,7 @@ export async function getRecurringTemplates(
 
   const { data, error } = await supabase
     .from("recurring_templates")
-    .select(
-      "*, categories(name, type, icon, counts_toward_summary)",
-    )
+    .select("*, categories(name, type, icon, counts_toward_summary)")
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
 

@@ -11,11 +11,11 @@ const DialogTrigger = BaseDialog.Trigger;
 
 const overlayVariants = cva(
   ` fixed bg-black/80 font-head
-    data-[open]:fade-in-0
-    data-[open]:animate-in
-    data-[closed]:animate-out
-    data-[closed]:fade-out-0
-  `,
+ data-[open]:fade-in-0
+ data-[open]:animate-in
+ data-[closed]:animate-out
+ data-[closed]:fade-out-0
+ `,
   {
     variants: {
       variant: {
@@ -30,10 +30,13 @@ const overlayVariants = cva(
 );
 
 interface IDialogBackgroupProps
-  extends HTMLAttributes<HTMLDivElement>,
+  extends
+    HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof overlayVariants> {}
 
-const DialogBackdrop = (inputProps: IDialogBackgroupProps & { ref?: React.Ref<HTMLDivElement> }) => {
+const DialogBackdrop = (
+  inputProps: IDialogBackgroupProps & { ref?: React.Ref<HTMLDivElement> },
+) => {
   const { variant = "default", className, ref, ...props } = inputProps;
 
   return (
@@ -46,13 +49,13 @@ const DialogBackdrop = (inputProps: IDialogBackgroupProps & { ref?: React.Ref<HT
 };
 
 const dialogVariants = cva(
-  `fixed left-[50%] top-[50%] z-50 grid rounded overflow-hidden w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border-2 bg-background shadow-lg duration-200
-  data-[open]:animate-in
-  data-[open]:fade-in-0
-  data-[open]:zoom-in-95
-  data-[closed]:animate-out
-  data-[closed]:fade-out-0
-  data-[closed]:zoom-out-95`,
+  `fixed left-[50%] top-[50%] z-50 grid rounded-lg overflow-hidden w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-card duration-200
+ data-[open]:animate-in
+ data-[open]:fade-in-0
+ data-[open]:zoom-in-95
+ data-[closed]:animate-out
+ data-[closed]:fade-out-0
+ data-[closed]:zoom-out-95`,
   {
     variants: {
       size: {
@@ -74,12 +77,13 @@ const dialogVariants = cva(
 );
 
 interface IDialogContentProps
-  extends HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof dialogVariants> {
+  extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof dialogVariants> {
   overlay?: IDialogBackgroupProps;
 }
 
-const DialogContent = (inputProps: IDialogContentProps & { ref?: React.Ref<HTMLDivElement> }) => {
+const DialogContent = (
+  inputProps: IDialogContentProps & { ref?: React.Ref<HTMLDivElement> },
+) => {
   const {
     children,
     size = "auto",
@@ -118,7 +122,7 @@ const DialogDescription = ({
 };
 
 const dialogFooterVariants = cva(
-  "flex items-center justify-end border-t-2 min-h-12 gap-4 px-4 py-2",
+  "flex items-center justify-end border-t min-h-12 gap-4 px-4 py-2",
   {
     variants: {
       variant: {
@@ -136,7 +140,8 @@ const dialogFooterVariants = cva(
 );
 
 export interface IDialogFooterProps
-  extends HTMLAttributes<HTMLDivElement>,
+  extends
+    HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof dialogFooterVariants> {}
 
 const DialogFooter = ({
@@ -157,11 +162,11 @@ const DialogFooter = ({
 };
 
 const dialogHeaderVariants = cva(
-  "flex items-center justify-between border-b-2 px-4 min-h-12",
+  "flex items-center justify-between border-b px-4 min-h-12",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground",
+        default: "bg-card text-foreground border-border",
       },
       position: {
         fixed: "sticky top-0",
@@ -187,7 +192,8 @@ const DialogHeaderDefaultLayout = ({ children }: { children: ReactNode }) => {
 };
 
 interface IDialogHeaderProps
-  extends HTMLAttributes<HTMLDivElement>,
+  extends
+    HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof dialogHeaderVariants> {
   asChild?: boolean;
 }

@@ -54,10 +54,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
 
   function handleArchiveToggle(category: Category) {
     startTransition(async () => {
-      const result = await setCategoryArchived(
-        category.id,
-        !category.archived,
-      );
+      const result = await setCategoryArchived(category.id, !category.archived);
       if (result.error) {
         toast(result.error, "error");
       } else {
@@ -91,9 +88,9 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
 
       <PageContainer className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">
-          Categories organise your transactions and recurring items.
-          Archived categories keep their history but no longer appear when
-          adding entries.
+          Categories organise your transactions and recurring items. Archived
+          categories keep their history but no longer appear when adding
+          entries.
         </p>
 
         <div className="flex md:justify-end">
@@ -168,7 +165,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                             onClick={() => setEditCategory(category)}
                             className={cn(
                               "flex h-10 w-10 items-center justify-center",
-                              "rounded border-2 border-border hover:bg-accent",
+                              "rounded border border-border hover:bg-accent",
                             )}
                             aria-label={`Edit ${category.name}`}
                           >
@@ -180,7 +177,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                             disabled={pending}
                             className={cn(
                               "flex h-10 w-10 items-center justify-center",
-                              "rounded border-2 border-border hover:bg-accent",
+                              "rounded border border-border hover:bg-accent",
                             )}
                             aria-label={
                               category.archived
@@ -199,7 +196,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                             onClick={() => setConfirmDeleteId(category.id)}
                             className={cn(
                               "flex h-10 w-10 items-center justify-center",
-                              "rounded border-2 border-border",
+                              "rounded border border-border",
                               "hover:bg-destructive hover:text-destructive-foreground",
                             )}
                             aria-label={`Delete ${category.name}`}
@@ -308,12 +305,10 @@ function CategoryFormSheet({
             name="type"
             required
             value={type}
-            onChange={(event) =>
-              setType(event.target.value as CategoryType)
-            }
+            onChange={(event) => setType(event.target.value as CategoryType)}
             className={cn(
-              "h-11 w-full rounded border-2 border-border bg-background",
-              "px-3 text-base text-foreground shadow-md",
+              "h-11 w-full rounded border border-border bg-background",
+              "px-3 text-base text-foreground",
             )}
           >
             {CATEGORY_TYPE_ORDER.map((option) => (
@@ -329,9 +324,7 @@ function CategoryFormSheet({
             <input
               type="checkbox"
               checked={countsTowardSummary}
-              onChange={(event) =>
-                setCountsTowardSummary(event.target.checked)
-              }
+              onChange={(event) => setCountsTowardSummary(event.target.checked)}
               className="mt-0.5 h-4 w-4 accent-primary"
             />
             <span>
@@ -361,7 +354,7 @@ function CategoryFormSheet({
                 aria-label={key}
                 onClick={() => setIcon(key)}
                 className={cn(
-                  "flex h-11 items-center justify-center rounded border-2",
+                  "flex h-11 items-center justify-center rounded border",
                   icon === key
                     ? "border-foreground bg-primary text-primary-foreground"
                     : "border-border bg-background hover:bg-accent",

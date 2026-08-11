@@ -1,85 +1,65 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import React from "react";
-import {
-  CartesianGrid,
-  Line,
-  LineChart as RechartsLineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import React, { useMemo } from "react";
+import ReactECharts from "echarts-for-react";
+import type { EChartsOption } from "echarts";
+import { baseGrid, chartTextStyle, CHART_PALETTE } from "@/lib/echarts-theme";
 
 interface LineChartProps extends React.HTMLAttributes<HTMLDivElement> {
-  data: object[];
-  index: string;
-  categories: string[];
-  colors?: string[];
-  valueFormatter?: (value: number) => string;
-  showGrid?: boolean;
+  data: Record<string, unknown>[];
+  xKey: string;
+  yKey: string;
+  stroke?: string;
   className?: string;
 }
 
 export const LineChart = React.forwardRef<HTMLDivElement, LineChartProps>(
   (
-    {
-      data = [],
-      index,
-      categories = [],
-      colors = ["var(--chart-3)", "var(--chart-4)", "var(--chart-5)"],
-      valueFormatter = (value: number) => value.toString(),
-      showGrid = true,
-      className,
-      ...props
-    },
+    { data = [], xKey, yKey, stroke = CHART_PALETTE[0], className, ...props },
     ref,
   ) => {
+    const option = useMemo<EChartsOption>(() => {
+      const categories = data.map((row) => String(row[xKey] ?? ""));
+      const values = data.map((row) => Number(row[yKey] ?? 0));
+
+      return {
+        animationDuration: 350,
+        grid: baseGrid(),
+        xAxis: {
+          type: "category",
+          data: categories,
+          axisLine: { show: false },
+          axisTick: { show: false },
+          axisLabel: chartTextStyle(),
+        },
+        yAxis: {
+          type: "value",
+          splitLine: {
+            lineStyle: { color: "var(--border)", type: "dashed" },
+          },
+          axisLabel: chartTextStyle(),
+        },
+        series: [
+          {
+            type: "line",
+            data: values,
+            showSymbol: false,
+            smooth: 0.2,
+            lineStyle: { color: stroke, width: 2 },
+            itemStyle: { color: stroke },
+          },
+        ],
+      };
+    }, [data, stroke, xKey, yKey]);
+
     return (
       <div ref={ref} className={cn("h-80 w-full", className)} {...props}>
-        <ResponsiveContainer width="100%" height="100%">
-          <RechartsLineChart
-            data={data}
-            margin={{ top: 10, right: 16, left: 0, bottom: 0 }}
-          >
-            {showGrid && (
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--muted)" />
-            )}
-            <XAxis
-              dataKey={index}
-              axisLine={false}
-              tickLine={false}
-              className="text-xs fill-muted-foreground"
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              className="text-xs fill-muted-foreground"
-              tickFormatter={valueFormatter}
-            />
-            <Tooltip
-              formatter={(value) =>
-                valueFormatter(Number(value ?? 0))
-              }
-              contentStyle={{
-                backgroundColor: "var(--background)",
-                border: "2px solid var(--border)",
-                borderRadius: 0,
-              }}
-            />
-            {categories.map((category, indexValue) => (
-              <Line
-                key={category}
-                type="monotone"
-                dataKey={category}
-                stroke={colors[indexValue % colors.length]}
-                strokeWidth={2}
-                dot={false}
-              />
-            ))}
-          </RechartsLineChart>
-        </ResponsiveContainer>
+        <ReactECharts
+          option={option}
+          style={{ height: "100%", width: "100%" }}
+          opts={{ renderer: "svg" }}
+        />
       </div>
     );
   },

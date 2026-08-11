@@ -49,8 +49,8 @@ export default function PlanningScreen() {
   const [tagName, setTagName] = useState("");
   const [pending, setPending] = useState(false);
 
-  const { data, loading, refreshing, onRefresh, error } = useRefreshable(
-    async () => {
+  const { data, loading, refreshing, onRefresh, error } =
+    useRefreshable(async () => {
       if (!user) {
         return {
           budgets: [] as Budget[],
@@ -91,9 +91,7 @@ export default function PlanningScreen() {
           summary.savings,
         ),
       };
-    },
-    [user?.id, current.year, current.month],
-  );
+    }, [user?.id, current.year, current.month]);
 
   async function handleAddBudget() {
     setPending(true);
@@ -159,9 +157,7 @@ export default function PlanningScreen() {
                 <View className="flex-row justify-between">
                   <Text>{row.label}</Text>
                   <Text
-                    className={
-                      row.over ? "font-semibold text-destructive" : ""
-                    }
+                    className={row.over ? "font-semibold text-destructive" : ""}
                   >
                     {formatEuro(row.spent)} / {formatEuro(row.limit)}
                   </Text>
@@ -298,7 +294,7 @@ export default function PlanningScreen() {
               {(data?.tags ?? []).map((t) => (
                 <View
                   key={t.id}
-                  className="border-2 border-border bg-muted px-3 py-1"
+                  className="border border-border bg-muted px-3 py-1"
                 >
                   <Text className="text-xs font-semibold">{t.name}</Text>
                 </View>
@@ -307,11 +303,7 @@ export default function PlanningScreen() {
             <Text variant="label" className="mb-2 mt-4">
               New tag
             </Text>
-            <Input
-              value={tagName}
-              onChangeText={setTagName}
-              className="mb-3"
-            />
+            <Input value={tagName} onChangeText={setTagName} className="mb-3" />
             <Button label="Add tag" disabled={pending} onPress={handleAddTag} />
           </Card>
         </ScrollView>

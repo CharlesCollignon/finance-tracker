@@ -1,27 +1,21 @@
-"use client"
+"use client";
 
-import { cn } from "@/lib/utils"
-import React from "react"
-import {
-  Cell,
-  Pie,
-  PieChart as RechartsPieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts"
+import { cn } from "@/lib/utils";
+import React, { useMemo } from "react";
+import ReactECharts from "echarts-for-react";
+import type { EChartsOption } from "echarts";
+import { CHART_PALETTE, chartTextStyle } from "@/lib/echarts-theme";
 
 interface PieChartProps extends React.HTMLAttributes<HTMLDivElement> {
-  data: Record<string, any>[]
-  dataKey: string
-  nameKey: string
-  colors?: string[]
-  tooltipBgColor?: string
-  tooltipBorderColor?: string
-  valueFormatter?: (value: number) => string
-  showTooltip?: boolean
-  innerRadius?: number
-  outerRadius?: number
-  className?: string
+  data: Record<string, unknown>[];
+  dataKey: string;
+  nameKey: string;
+  colors?: string[];
+  valueFormatter?: (value: number) => string;
+  showTooltip?: boolean;
+  innerRadius?: number;
+  outerRadius?: number;
+  className?: string;
 }
 
 const PieChart = React.forwardRef<HTMLDivElement, PieChartProps>(
@@ -30,9 +24,7 @@ const PieChart = React.forwardRef<HTMLDivElement, PieChartProps>(
       data = [],
       dataKey,
       nameKey,
-      colors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"],
-      tooltipBgColor = "var(--background)",
-      tooltipBorderColor = "var(--border)",
+      colors = [...CHART_PALETTE],
       valueFormatter = (value: number) => value.toString(),
       showTooltip = true,
       innerRadius = 0,
@@ -40,66 +32,79 @@ const PieChart = React.forwardRef<HTMLDivElement, PieChartProps>(
       className,
       ...props
     },
-    ref
+    ref,
   ) => {
+    const option = useMemo<EChartsOption>(() => {
+      const seriesData = data.map((row, index) => ({
+        name: String(row[nameKey] ?? ""),
+        value: Number(row[dataKey] ?? 0),
+        itemStyle: {
+          color: colors[index % colors.length],
+        },
+      }));
+
+      const maxRadius = Math.max(outerRadius, 1);
+      const outerPct = "70%";
+      const innerPct =
+        innerRadius > 0
+          ? `${Math.round((innerRadius / maxRadius) * 70)}%`
+          : "0%";
+
+      return {
+        animationDuration: 400,
+        tooltip: showTooltip
+          ? {
+              trigger: "item",
+              backgroundColor: "var(--card)",
+              borderColor: "var(--border)",
+              textStyle: {
+                ...chartTextStyle(),
+                color: "var(--foreground)",
+              },
+              formatter: (params: unknown) => {
+                const p = params as {
+                  name: string;
+                  value: number;
+                };
+                return `${p.name}<br/><strong>${valueFormatter(p.value)}</strong>`;
+              },
+            }
+          : undefined,
+        series: [
+          {
+            type: "pie",
+            radius: [innerPct, outerPct],
+            center: ["50%", "50%"],
+            avoidLabelOverlap: true,
+            label: { show: false },
+            labelLine: { show: false },
+            data: seriesData,
+          },
+        ],
+      };
+    }, [
+      colors,
+      data,
+      dataKey,
+      innerRadius,
+      nameKey,
+      outerRadius,
+      showTooltip,
+      valueFormatter,
+    ]);
+
     return (
       <div ref={ref} className={cn("h-80 w-full", className)} {...props}>
-        <ResponsiveContainer width="100%" height="100%">
-          <RechartsPieChart>
-            <Pie
-              data={data}
-              dataKey={dataKey}
-              nameKey={nameKey}
-              cx="50%"
-              cy="50%"
-              innerRadius={innerRadius}
-              outerRadius={outerRadius}
-              isAnimationActive={false}
-              className="w-full h-full"
-            >
-              {data.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={colors[index % colors.length]} 
-                />
-              ))}
-            </Pie>
-            
-            {showTooltip && (
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (!active || !payload?.length) return null
-                  
-                  const data = payload[0]
-                  
-                  return (
-                    <div 
-                      className="border p-2 shadow"
-                      style={{ 
-                        backgroundColor: tooltipBgColor,
-                        borderColor: tooltipBorderColor 
-                      }}
-                    >
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[0.70rem] uppercase text-muted-foreground">
-                          {data.name}
-                        </span>
-                        <span className="font-bold text-foreground">
-                          {valueFormatter(data.value as number)}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                }}
-              />
-            )}
-          </RechartsPieChart>
-        </ResponsiveContainer>
+        <ReactECharts
+          option={option}
+          style={{ height: "100%", width: "100%" }}
+          opts={{ renderer: "svg" }}
+        />
       </div>
-    )
-  }
-)
+    );
+  },
+);
 
-PieChart.displayName = "PieChart"
+PieChart.displayName = "PieChart";
 
-export { PieChart, type PieChartProps }
+export { PieChart, type PieChartProps };

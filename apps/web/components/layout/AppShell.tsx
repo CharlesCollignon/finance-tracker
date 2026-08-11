@@ -1,5 +1,6 @@
 import { SideNav } from "@/components/layout/SideNav";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { PageEnter } from "@/components/motion/PageEnter";
 import { SHELL_MAIN_PADDING_BOTTOM } from "@/lib/layout-shell";
 import { cn } from "@/lib/utils";
 
@@ -13,8 +14,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           SHELL_MAIN_PADDING_BOTTOM,
         )}
       >
-        <main className="flex min-h-0 flex-1 flex-col md:bg-background md:shadow-[-4px_0_0_0_var(--border)]">
-          {children}
+        <main className="flex min-h-0 flex-1 flex-col border-border md:border-l md:bg-background">
+          <PageEnter>{children}</PageEnter>
         </main>
       </div>
       <BottomNav />

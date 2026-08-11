@@ -5,7 +5,10 @@ import {
   transactionSchema,
   updateTransactionSchema,
 } from "@finance/core/validations/finance";
-import { profileSchema, deleteConfirmSchema } from "@finance/core/validations/profile";
+import {
+  profileSchema,
+  deleteConfirmSchema,
+} from "@finance/core/validations/profile";
 import {
   budgetSchema,
   savingsGoalSchema,
@@ -623,9 +626,7 @@ export async function applyRecurringForMonth(
   }
 }
 
-export async function updateProfile(
-  fullName: string,
-): Promise<ActionResult> {
+export async function updateProfile(fullName: string): Promise<ActionResult> {
   const parsed = profileSchema.safeParse({ fullName });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };

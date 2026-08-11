@@ -6,12 +6,11 @@ import { cn } from "@/lib/utils";
 
 type ThemePreference = "light" | "dark" | "system";
 
-const OPTIONS: { value: ThemePreference; label: string; icon: typeof Sun }[] =
-  [
-    { value: "light", label: "Light", icon: Sun },
-    { value: "dark", label: "Dark", icon: Moon },
-    { value: "system", label: "System", icon: Desktop },
-  ];
+const OPTIONS: { value: ThemePreference; label: string; icon: typeof Sun }[] = [
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+  { value: "system", label: "System", icon: Desktop },
+];
 
 const THEME_CHANGE_EVENT = "app-theme-change";
 
@@ -26,11 +25,14 @@ function subscribe(callback: () => void): () => void {
 
 function getSnapshot(): ThemePreference {
   const stored = window.localStorage.getItem("theme");
-  return stored === "light" || stored === "dark" ? stored : "system";
+  if (stored === "light" || stored === "dark" || stored === "system") {
+    return stored;
+  }
+  return "dark";
 }
 
 function getServerSnapshot(): ThemePreference {
-  return "system";
+  return "dark";
 }
 
 function applyPreference(preference: ThemePreference): void {
@@ -60,11 +62,7 @@ export function ThemeToggle({ className }: { className?: string }) {
   }, [preference]);
 
   function handleSelect(next: ThemePreference) {
-    if (next === "system") {
-      window.localStorage.removeItem("theme");
-    } else {
-      window.localStorage.setItem("theme", next);
-    }
+    window.localStorage.setItem("theme", next);
     applyPreference(next);
     window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }
@@ -74,7 +72,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       role="radiogroup"
       aria-label="Theme"
       className={cn(
-        "flex w-fit rounded border-2 border-border bg-background",
+        "flex w-fit overflow-hidden rounded-md border border-border bg-card",
         className,
       )}
     >
@@ -91,10 +89,10 @@ export function ThemeToggle({ className }: { className?: string }) {
             title={`${label} theme`}
             onClick={() => handleSelect(value)}
             className={cn(
-              "flex h-9 w-10 items-center justify-center transition-colors",
+              "flex h-9 w-10 items-center justify-center transition-colors duration-200",
               selected
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             <Icon size={16} weight={selected ? "fill" : "regular"} />

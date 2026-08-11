@@ -7,7 +7,12 @@ import { seedDefaultCategories } from "@/lib/queries/categories";
 function sanitizeNextPath(raw: string | null): string {
   // Only allow same-origin relative paths ("/foo"), never "//host" or
   // absolute URLs, to prevent open redirects.
-  if (raw && raw.startsWith("/") && !raw.startsWith("//") && !raw.includes("\\")) {
+  if (
+    raw &&
+    raw.startsWith("/") &&
+    !raw.startsWith("//") &&
+    !raw.includes("\\")
+  ) {
     return raw;
   }
   return "/dashboard";

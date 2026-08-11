@@ -1,8 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { displayNameForRecurringTemplate } from "@finance/core/investment-positions";
-import { BITCOIN_INSTRUMENT, isCryptoWallet } from "@finance/core/crypto-holdings";
+import {
+  BITCOIN_INSTRUMENT,
+  isCryptoWallet,
+} from "@finance/core/crypto-holdings";
 import { resolveWalletId } from "@finance/core/investments";
-import type { Database, RecurringTemplateWithCategory } from "@finance/core/types/database";
+import type {
+  Database,
+  RecurringTemplateWithCategory,
+} from "@finance/core/types/database";
 
 type Client = SupabaseClient<Database>;
 
@@ -22,9 +28,7 @@ export async function syncInvestmentPositionFromRecurring(
 ): Promise<void> {
   const { data: template, error } = await supabase
     .from("recurring_templates")
-    .select(
-      "*, categories(name, type, icon, counts_toward_summary)",
-    )
+    .select("*, categories(name, type, icon, counts_toward_summary)")
     .eq("id", templateId)
     .eq("user_id", userId)
     .single();
@@ -113,4 +117,3 @@ export async function removeInvestmentPositionForRecurring(
     .eq("user_id", userId)
     .eq("recurring_template_id", templateId);
 }
-

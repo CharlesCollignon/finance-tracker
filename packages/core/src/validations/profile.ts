@@ -10,6 +10,6 @@ export const profileSchema = z.object({
 
 export const deleteConfirmSchema = z.object({
   confirmation: z.literal("DELETE", {
-    error: 'Type DELETE to confirm',
+    error: "Type DELETE to confirm",
   }),
 });

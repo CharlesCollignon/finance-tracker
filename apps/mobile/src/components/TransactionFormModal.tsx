@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  View,
-} from "react-native";
+import { Modal, Pressable, ScrollView, View } from "react-native";
 
 import { todayIsoLocal } from "@finance/core/constants";
 import {
@@ -16,10 +11,7 @@ import type { Category, Transaction } from "@finance/core/types/database";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
-import {
-  createTransaction,
-  updateTransaction,
-} from "@/lib/mutations";
+import { createTransaction, updateTransaction } from "@/lib/mutations";
 
 interface TransactionFormModalProps {
   open: boolean;
@@ -39,9 +31,7 @@ export function TransactionFormModal({
   defaultDate = todayIsoLocal(),
 }: TransactionFormModalProps) {
   const isEditing = transaction !== null;
-  const [categoryId, setCategoryId] = useState(
-    transaction?.category_id ?? "",
-  );
+  const [categoryId, setCategoryId] = useState(transaction?.category_id ?? "");
   const [amount, setAmount] = useState(
     transaction ? String(Number(transaction.amount)) : "",
   );
@@ -79,8 +69,8 @@ export function TransactionFormModal({
   return (
     <Modal visible={open} animationType="slide" transparent>
       <View className="flex-1 justify-end bg-black/70">
-        <View className="max-h-[90%] border-2 border-border bg-background">
-          <View className="flex-row items-center justify-between border-b-2 border-border bg-primary px-4 py-3">
+        <View className="max-h-[90%] border border-border bg-background">
+          <View className="flex-row items-center justify-between border-b border-border bg-card px-4 py-3">
             <Text className="font-bold">
               {isEditing ? "Edit transaction" : "Add transaction"}
             </Text>
@@ -102,7 +92,7 @@ export function TransactionFormModal({
                       <Pressable
                         key={cat.id}
                         onPress={() => setCategoryId(cat.id)}
-                        className={`border-2 px-3 py-2 ${
+                        className={`border px-3 py-2 ${
                           selected
                             ? "border-foreground bg-primary"
                             : "border-border bg-background"

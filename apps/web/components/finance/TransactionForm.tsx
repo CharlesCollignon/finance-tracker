@@ -147,9 +147,7 @@ function TransactionFormFields({
       title={isEditing ? "Edit transaction" : "Add transaction"}
     >
       <form action={action} className="flex flex-col gap-4">
-        {isEditing && (
-          <input type="hidden" name="id" value={transaction.id} />
-        )}
+        {isEditing && <input type="hidden" name="id" value={transaction.id} />}
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="categoryId">Category</FormLabel>
           <CategorySelect
@@ -204,7 +202,7 @@ function TransactionFormFields({
               {tags.map((tag) => (
                 <label
                   key={tag.id}
-                  className="inline-flex items-center gap-2 border-2 border-border px-3 py-2 text-sm"
+                  className="inline-flex items-center gap-2 border border-border px-3 py-2 text-sm"
                 >
                   <input
                     type="checkbox"
@@ -232,7 +230,7 @@ function TransactionFormFields({
       </form>
 
       {isEditing && (
-        <div className="mt-6 space-y-3 border-t-2 border-border pt-4">
+        <div className="mt-6 space-y-3 border-t border-border pt-4">
           {canSkip && (
             <div>
               {confirmSkip ? (

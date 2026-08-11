@@ -15,11 +15,7 @@ export const INVESTMENT_WALLET_COLORS: Record<WalletId, string> = {
   crypto: "var(--chart-5)",
 };
 
-export const INVESTMENT_WALLET_IDS: WalletId[] = [
-  "pea",
-  "cto",
-  "crypto",
-];
+export const INVESTMENT_WALLET_IDS: WalletId[] = ["pea", "cto", "crypto"];
 
 export const WALLET_LABELS = INVESTMENT_WALLET_LABELS;
 export const WALLET_COLORS = INVESTMENT_WALLET_COLORS;
@@ -97,13 +93,16 @@ function addToWallet(
 export function sumWalletTotals(
   transactions: TransactionWithCategory[],
 ): WalletTotals {
-  return transactions.reduce((totals, tx) => {
-    const walletId = matchWalletId(tx.categories.name);
-    if (walletId === null) {
-      return totals;
-    }
-    return addToWallet(totals, walletId, Number(tx.amount));
-  }, { ...EMPTY_WALLET_TOTALS });
+  return transactions.reduce(
+    (totals, tx) => {
+      const walletId = matchWalletId(tx.categories.name);
+      if (walletId === null) {
+        return totals;
+      }
+      return addToWallet(totals, walletId, Number(tx.amount));
+    },
+    { ...EMPTY_WALLET_TOTALS },
+  );
 }
 
 export function sumWalletTotalsForMonth(
@@ -262,7 +261,10 @@ function walletTotalsFromSettings(
 }
 
 function initialTotals(settings: InvestmentWalletSettings): WalletTotals {
-  return walletTotalsFromSettings(settings, (setting) => setting.initialBalance);
+  return walletTotalsFromSettings(
+    settings,
+    (setting) => setting.initialBalance,
+  );
 }
 
 function marketValueTotals(

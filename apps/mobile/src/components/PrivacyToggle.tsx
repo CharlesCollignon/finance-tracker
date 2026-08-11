@@ -1,0 +1,35 @@
+import { Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from "react-native";
+
+import { usePrivacy } from "@/providers/PrivacyProvider";
+import { colorsForScheme } from "@/theme/tokens";
+import { hapticLight } from "@/lib/haptics";
+
+export function PrivacyToggle() {
+  const { hidden, toggle } = usePrivacy();
+  const scheme = useColorScheme();
+  const colors = colorsForScheme(scheme === "light" ? "light" : "dark");
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={hidden ? "Show amounts" : "Hide amounts"}
+      onPress={() => {
+        void hapticLight();
+        toggle();
+      }}
+      className="h-9 w-9 items-center justify-center rounded-md border border-border"
+      style={{
+        backgroundColor: hidden ? `${colors.primary}22` : colors.card,
+        borderColor: colors.border,
+      }}
+    >
+      <Ionicons
+        name={hidden ? "eye-off-outline" : "eye-outline"}
+        size={18}
+        color={hidden ? colors.primary : colors.mutedForeground}
+      />
+    </Pressable>
+  );
+}

@@ -40,10 +40,7 @@ import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
-import {
-  deleteWalletTransfer,
-  upsertWalletTransfer,
-} from "@/lib/mutations";
+import { deleteWalletTransfer, upsertWalletTransfer } from "@/lib/mutations";
 import {
   getInvestmentTransactions,
   getRecurringTemplates,
@@ -58,8 +55,8 @@ export default function InvestmentsScreen() {
   const [amount, setAmount] = useState("");
   const [pending, setPending] = useState(false);
 
-  const { data, loading, refreshing, onRefresh, error } = useRefreshable(
-    async () => {
+  const { data, loading, refreshing, onRefresh, error } =
+    useRefreshable(async () => {
       if (!user) {
         return {
           portfolio: null as InvestmentPortfolioSummary | null,
@@ -68,13 +65,14 @@ export default function InvestmentsScreen() {
           transfers: [] as WalletTransfer[],
         };
       }
-      const [portfolio, templates, transactions, transfers] =
-        await Promise.all([
+      const [portfolio, templates, transactions, transfers] = await Promise.all(
+        [
           getWalletPortfolio(user.id),
           getRecurringTemplates(user.id),
           getInvestmentTransactions(user.id),
           getWalletTransfers(user.id, current.year, current.month),
-        ]);
+        ],
+      );
       const investmentTemplates = (
         templates as RecurringTemplateWithCategory[]
       ).filter((template) => template.categories.type === "investment");
@@ -89,9 +87,7 @@ export default function InvestmentsScreen() {
         current.month,
       );
       return { portfolio, upcoming, fundingNeeds, transfers };
-    },
-    [user?.id, current.year, current.month],
-  );
+    }, [user?.id, current.year, current.month]);
 
   const portfolio = data?.portfolio;
   const upcoming = data?.upcoming ?? [];
@@ -207,7 +203,7 @@ export default function InvestmentsScreen() {
                   {(column?.items ?? []).map((item) => (
                     <View
                       key={item.id}
-                      className="border-2 border-border bg-background p-3"
+                      className="border border-border bg-background p-3"
                     >
                       <Text className="font-semibold">{item.name}</Text>
                       <Text variant="muted">
@@ -228,7 +224,7 @@ export default function InvestmentsScreen() {
             <Text variant="muted" className="mt-1 mb-3">
               This month
             </Text>
-            <View className="mb-3 flex-row border-2 border-border">
+            <View className="mb-3 flex-row border border-border">
               {INVESTMENT_WALLET_IDS.map((id) => {
                 const selected = toWallet === id;
                 return (

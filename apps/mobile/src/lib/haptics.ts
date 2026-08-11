@@ -18,9 +18,7 @@ export async function hapticSuccess(): Promise<void> {
     return;
   }
   try {
-    await Haptics.notificationAsync(
-      Haptics.NotificationFeedbackType.Success,
-    );
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   } catch {
     // ignore
   }
@@ -31,9 +29,7 @@ export async function hapticWarning(): Promise<void> {
     return;
   }
   try {
-    await Haptics.notificationAsync(
-      Haptics.NotificationFeedbackType.Warning,
-    );
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
   } catch {
     // ignore
   }

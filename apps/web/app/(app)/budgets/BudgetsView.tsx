@@ -155,8 +155,8 @@ export function BudgetsView({
                   name="categoryId"
                   defaultValue={editingBudget?.category_id ?? ""}
                   className={cn(
-                    "h-11 w-full rounded border-2 border-border",
-                    "bg-background px-3 text-base shadow-md",
+                    "h-11 w-full rounded border border-border",
+                    "bg-background px-3 text-base",
                   )}
                 >
                   <option value="">All expenses</option>
@@ -215,7 +215,7 @@ export function BudgetsView({
                         type="button"
                         className={cn(
                           "flex h-10 w-10 items-center justify-center",
-                          "rounded border-2 border-border hover:bg-accent",
+                          "rounded border border-border hover:bg-accent",
                         )}
                         aria-label="Edit budget"
                         onClick={() => setEditingBudget(b)}
@@ -226,7 +226,7 @@ export function BudgetsView({
                         type="button"
                         className={cn(
                           "flex h-10 w-10 items-center justify-center",
-                          "rounded border-2 border-border",
+                          "rounded border border-border",
                           "hover:bg-destructive hover:text-destructive-foreground",
                         )}
                         aria-label="Delete budget"
@@ -326,8 +326,8 @@ export function BudgetsView({
                   name="categoryId"
                   defaultValue={editingGoal?.category_id ?? ""}
                   className={cn(
-                    "h-11 w-full rounded border-2 border-border",
-                    "bg-background px-3 text-base shadow-md",
+                    "h-11 w-full rounded border border-border",
+                    "bg-background px-3 text-base",
                   )}
                 >
                   <option value="">All savings</option>
@@ -367,7 +367,7 @@ export function BudgetsView({
                       type="button"
                       className={cn(
                         "flex h-10 w-10 items-center justify-center",
-                        "rounded border-2 border-border hover:bg-accent",
+                        "rounded border border-border hover:bg-accent",
                       )}
                       aria-label="Edit goal"
                       onClick={() => setEditingGoal(g)}
@@ -378,7 +378,7 @@ export function BudgetsView({
                       type="button"
                       className={cn(
                         "flex h-10 w-10 items-center justify-center",
-                        "rounded border-2 border-border",
+                        "rounded border border-border",
                         "hover:bg-destructive hover:text-destructive-foreground",
                       )}
                       aria-label="Delete goal"
@@ -421,7 +421,7 @@ export function BudgetsView({
               <span
                 key={t.id}
                 className={cn(
-                  "rounded border-2 border-border bg-muted",
+                  "rounded border border-border bg-muted",
                   "px-3 py-1 text-xs font-semibold",
                 )}
               >

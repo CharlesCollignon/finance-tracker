@@ -31,8 +31,6 @@ export function buildMissingCategorySeeds(
     type: cat.type,
     icon: cat.icon,
     counts_toward_summary:
-      "countsTowardSummary" in cat
-        ? (cat.countsTowardSummary ?? true)
-        : true,
+      "countsTowardSummary" in cat ? (cat.countsTowardSummary ?? true) : true,
   }));
 }

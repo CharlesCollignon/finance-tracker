@@ -11,17 +11,17 @@ export interface BadgeProps extends ViewProps {
 }
 
 const CONTAINER: Record<Variant, string> = {
-  default: "bg-muted",
-  outline: "border-2 border-border bg-transparent",
-  solid: "bg-foreground",
-  surface: "border-2 border-border bg-primary",
+  default: "bg-muted rounded-md",
+  outline: "border border-border bg-transparent rounded-md",
+  solid: "bg-foreground rounded-md",
+  surface: "bg-primary/20 rounded-md",
 };
 
 const LABEL: Record<Variant, string> = {
   default: "text-muted-foreground",
   outline: "text-foreground",
   solid: "text-background",
-  surface: "text-primary-foreground",
+  surface: "text-primary",
 };
 
 export function Badge({
@@ -35,9 +35,7 @@ export function Badge({
       className={cn("self-start px-2.5 py-1", CONTAINER[variant], className)}
       {...props}
     >
-      <Text className={cn("text-xs font-semibold", LABEL[variant])}>
-        {label}
-      </Text>
+      <Text className={cn("text-xs font-medium", LABEL[variant])}>{label}</Text>
     </View>
   );
 }

@@ -65,7 +65,9 @@ export async function saveInvestmentPosition(
     const supabase = await createClient();
     const { data: template, error } = await supabase
       .from("recurring_templates")
-      .select("id, category_id, description, instrument_name, categories(name, type, icon, counts_toward_summary)")
+      .select(
+        "id, category_id, description, instrument_name, categories(name, type, icon, counts_toward_summary)",
+      )
       .eq("id", recurringTemplateId)
       .eq("user_id", user.id)
       .single();
@@ -82,10 +84,10 @@ export async function saveInvestmentPosition(
 
   try {
     const instrumentSymbol = isCryptoWallet(parsed.data.wallet)
-      ? parsed.data.instrumentSymbol ?? BITCOIN_INSTRUMENT.symbol
+      ? (parsed.data.instrumentSymbol ?? BITCOIN_INSTRUMENT.symbol)
       : parsed.data.instrumentSymbol;
     const instrumentName = isCryptoWallet(parsed.data.wallet)
-      ? parsed.data.instrumentName ?? BITCOIN_INSTRUMENT.name
+      ? (parsed.data.instrumentName ?? BITCOIN_INSTRUMENT.name)
       : parsed.data.instrumentName;
 
     await upsertInvestmentPosition(user.id, {

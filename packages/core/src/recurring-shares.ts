@@ -1,9 +1,6 @@
 import { formatEuro } from "./constants";
 import { fetchInstrumentQuoteInEur, formatMoney } from "./market/fx";
-import {
-  computeSharesAmount,
-  fetchInstrumentQuote,
-} from "./market/yahoo";
+import { computeSharesAmount, fetchInstrumentQuote } from "./market/yahoo";
 
 interface SharesTemplateFields {
   pricing_type: string | null;
@@ -40,9 +37,7 @@ export async function resolveRecurringAmount(
     };
   }
 
-  const live = await fetchInstrumentQuoteInEur(
-    template.instrument_symbol,
-  ).then(
+  const live = await fetchInstrumentQuoteInEur(template.instrument_symbol).then(
     (quote) => ({
       priceEur: quote.priceEur,
       priceOriginal: quote.priceOriginal,

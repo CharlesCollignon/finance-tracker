@@ -43,6 +43,20 @@ export const DEFAULT_CATEGORIES = [
   },
 ];
 
+/**
+ * Personal savings rate: savings / income × 100.
+ * Returns null when income is not positive.
+ */
+export function savingsRatePercent(
+  savings: number,
+  income: number,
+): number | null {
+  if (income <= 0) {
+    return null;
+  }
+  return Math.round((savings / income) * 1000) / 10;
+}
+
 export function formatEuro(amount: number): string {
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",

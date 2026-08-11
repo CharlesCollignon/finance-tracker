@@ -90,9 +90,7 @@ export default async function DashboardPage({
     ]);
 
   const overBudget = summary.remaining < 0;
-  const categoryNames = new Map(
-    categories.map((c) => [c.id, c.name] as const),
-  );
+  const categoryNames = new Map(categories.map((c) => [c.id, c.name] as const));
   const budgetProgress = buildBudgetProgress(
     budgets,
     summary.expenseBreakdown,
@@ -152,18 +150,18 @@ export default async function DashboardPage({
           <Card className="w-full space-y-2 p-4 md:p-5">
             <p className="text-base leading-relaxed md:text-lg">
               In <span className="font-semibold">{monthLabel}</span> you earned{" "}
-              <span className="font-semibold tabular-nums">
+              <span className="privacy-amount font-semibold text-success tabular-nums">
                 {formatEuro(summary.income)}
               </span>
               , spent{" "}
-              <span className="font-semibold tabular-nums">
+              <span className="privacy-amount font-semibold text-destructive tabular-nums">
                 {formatEuro(summary.expenses)}
               </span>
               , and have{" "}
               <span
                 className={cn(
-                  "font-semibold tabular-nums",
-                  overBudget ? "text-destructive" : "text-[var(--chart-4)]",
+                  "privacy-amount font-semibold tabular-nums",
+                  overBudget ? "text-destructive" : "text-primary",
                 )}
               >
                 {formatEuro(summary.remaining)}
@@ -178,7 +176,7 @@ export default async function DashboardPage({
               className={cn(
                 statusTone === "danger"
                   ? "bg-destructive text-destructive-foreground"
-                  : "bg-[var(--chart-4)] text-primary-foreground",
+                  : "bg-success/15 text-success",
               )}
             >
               {statusLabel}
@@ -210,7 +208,13 @@ export default async function DashboardPage({
                 <div key={row.budgetId}>
                   <div className="flex justify-between text-sm">
                     <span>{row.label}</span>
-                    <span className={row.over ? "text-destructive" : ""}>
+                    <span
+                      className={
+                        row.over
+                          ? "privacy-amount text-destructive"
+                          : "privacy-amount"
+                      }
+                    >
                       {formatEuro(row.spent)} / {formatEuro(row.limit)}
                     </span>
                   </div>
@@ -231,7 +235,7 @@ export default async function DashboardPage({
                 <div key={row.goal.id}>
                   <div className="flex justify-between text-sm">
                     <span>{row.goal.name}</span>
-                    <span>
+                    <span className="privacy-amount">
                       {formatEuro(row.saved)} /{" "}
                       {formatEuro(Number(row.goal.target_amount))}
                     </span>
@@ -313,11 +317,11 @@ export default async function DashboardPage({
                 key={href}
                 href={href}
                 className={cn(
-                  "flex items-start gap-3 border-2 border-border bg-card p-4",
-                  "shadow-sm transition hover:bg-muted",
+                  "flex items-start gap-3 rounded-lg border border-border bg-card p-4",
+                  "transition hover:bg-muted",
                 )}
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-border bg-primary text-primary-foreground">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border bg-primary text-primary-foreground">
                   <Icon size={20} weight="bold" />
                 </span>
                 <span className="min-w-0">

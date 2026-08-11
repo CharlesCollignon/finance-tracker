@@ -18,7 +18,9 @@ import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
 import type { MonthlySummary } from "@finance/core/types/database";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
 
+import { IncomeSankeyCard } from "@/components/IncomeSankeyCard";
 import { MonthPicker } from "@/components/MonthPicker";
+import { PrivateAmount } from "@/components/PrivateAmount";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
@@ -57,9 +59,9 @@ function SummaryTile({
       }`}
     >
       <Text variant="muted">{label}</Text>
-      <Text className="mt-1 text-2xl font-bold tabular-nums">
+      <PrivateAmount className="mt-1 text-2xl font-bold">
         {formatEuro(amount)}
-      </Text>
+      </PrivateAmount>
       {hint ? (
         <Text variant="muted" className="mt-1 text-xs">
           {hint}
@@ -80,9 +82,9 @@ function Breakdown({
 }) {
   return (
     <Card className="p-0">
-      <View className="flex-row items-center justify-between border-b-2 border-border p-4">
+      <View className="flex-row items-center justify-between border-b border-border p-4">
         <Text className="font-bold">{title}</Text>
-        <Text className="font-bold tabular-nums">{formatEuro(total)}</Text>
+        <PrivateAmount className="font-bold">{formatEuro(total)}</PrivateAmount>
       </View>
       {items.length === 0 ? (
         <Text variant="muted" className="p-4">
@@ -95,9 +97,9 @@ function Breakdown({
             className="flex-row items-center justify-between border-b border-border px-4 py-3"
           >
             <Text className="flex-1">{item.name}</Text>
-            <Text className="tabular-nums font-semibold">
+            <PrivateAmount className="font-semibold">
               {formatEuro(item.total)}
-            </Text>
+            </PrivateAmount>
           </View>
         ))
       )}
@@ -112,8 +114,8 @@ export default function DashboardScreen() {
   const [month, setMonth] = useState(now.month);
   const [view, setView] = useState<BudgetViewMode>("current");
 
-  const { data, loading, refreshing, onRefresh, error } = useRefreshable(
-    async () => {
+  const { data, loading, refreshing, onRefresh, error } =
+    useRefreshable(async () => {
       if (!user) {
         return {
           summary: null as MonthlySummary | null,
@@ -148,9 +150,7 @@ export default function DashboardScreen() {
           summary.savings,
         ),
       };
-    },
-    [user?.id, year, month, view],
-  );
+    }, [user?.id, year, month, view]);
 
   const summary = data?.summary;
   const portfolio = data?.portfolio;
@@ -177,7 +177,7 @@ export default function DashboardScreen() {
             <Pressable
               key={mode}
               onPress={() => setView(mode)}
-              className={`flex-1 border-2 px-3 py-2 ${
+              className={`flex-1 border px-3 py-2 ${
                 selected
                   ? "border-foreground bg-primary"
                   : "border-border bg-background"
@@ -218,17 +218,27 @@ export default function DashboardScreen() {
             />
           </View>
 
+          <IncomeSankeyCard summary={summary} />
+
           {portfolio ? (
             <Card className="p-4">
               <Text className="font-bold">Wallets</Text>
-              <Text className="mt-1 text-2xl font-bold tabular-nums">
+              <PrivateAmount className="mt-1 text-2xl font-bold">
                 {formatEuro(portfolio.totalMarketValue)}
-              </Text>
+              </PrivateAmount>
               <Text variant="muted" className="mt-1">
-                Invested {formatEuro(portfolio.totalInvested)}
-                {portfolio.hasMarketSnapshot
-                  ? ` · P/L ${formatEuro(portfolio.totalGainLoss)}`
-                  : ""}
+                Invested{" "}
+                <PrivateAmount>
+                  {formatEuro(portfolio.totalInvested)}
+                </PrivateAmount>
+                {portfolio.hasMarketSnapshot ? (
+                  <>
+                    {" · P/L "}
+                    <PrivateAmount>
+                      {formatEuro(portfolio.totalGainLoss)}
+                    </PrivateAmount>
+                  </>
+                ) : null}
               </Text>
             </Card>
           ) : null}
@@ -299,7 +309,7 @@ export default function DashboardScreen() {
           />
 
           {overBudget || anyCapOver ? (
-            <View className="border-2 border-destructive bg-destructive px-3 py-2">
+            <View className="border border-destructive bg-destructive px-3 py-2">
               <Text className="text-center font-bold text-destructive-foreground">
                 {anyCapOver
                   ? "A budget cap was exceeded this month"

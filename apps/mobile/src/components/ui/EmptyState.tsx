@@ -20,7 +20,7 @@ export function EmptyState({
   return (
     <View
       className={cn(
-        "border-2 border-dashed border-border bg-card p-8",
+        "rounded-lg border border-dashed border-border bg-card p-8",
         className,
       )}
     >

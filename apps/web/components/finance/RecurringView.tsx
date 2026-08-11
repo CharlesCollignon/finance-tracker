@@ -41,17 +41,18 @@ interface RecurringViewProps {
 export function RecurringView({ templates, categories }: RecurringViewProps) {
   const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] =
-    useState<RecurringTemplateWithCategory | null>(null);
+  const [editing, setEditing] = useState<RecurringTemplateWithCategory | null>(
+    null,
+  );
   const [, startTransition] = useTransition();
 
-  const groups = (
-    ["expense", "savings", "investment"] as const
-  ).map((type) => ({
-    type,
-    label: GROUP_LABELS[type],
-    items: templates.filter((t) => t.categories.type === type),
-  }));
+  const groups = (["expense", "savings", "investment"] as const).map(
+    (type) => ({
+      type,
+      label: GROUP_LABELS[type],
+      items: templates.filter((t) => t.categories.type === type),
+    }),
+  );
 
   const budgetMonthly = templates
     .filter((t) => t.active && t.categories.counts_toward_summary !== false)
@@ -103,7 +104,7 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                 </span>
               </div>
               {deploymentMonthly > 0 && (
-                <div className="flex items-center justify-between border-t-2 border-border pt-3 text-sm">
+                <div className="flex items-center justify-between border-t border-border pt-3 text-sm">
                   <span className="text-muted-foreground">
                     Broker deployment (tracking)
                   </span>
@@ -140,7 +141,7 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
             {groups.map(({ type, label, items }) => (
               <section
                 key={type}
-                className="flex flex-col gap-2 rounded border-2 border-border bg-card p-4"
+                className="flex flex-col gap-2 rounded border border-border bg-card p-4"
               >
                 <h2 className="font-head text-sm uppercase tracking-wide">
                   {label}
@@ -180,7 +181,9 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                                       : ""}
                                   </p>
                                 )}
-                              {isCryptoCategoryName(template.categories.name) && (
+                              {isCryptoCategoryName(
+                                template.categories.name,
+                              ) && (
                                 <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
                                   Fixed EUR → Bitcoin
                                 </p>
@@ -198,11 +201,11 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                           <div
                             className={cn(
                               "flex items-center justify-between gap-2",
-                              "border-t-2 border-border pt-2 sm:pt-2.5",
+                              "border-t border-border pt-2 sm:pt-2.5",
                             )}
                           >
                             <span className="tabular-nums text-base font-semibold">
-                              {template.pricing_type === "shares" ? "≈ " : ""}
+                              {template.pricing_type === "shares" ? "≈" : ""}
                               {formatEuro(Number(template.amount))}
                             </span>
                             <div className="flex shrink-0 items-center gap-2">
@@ -211,7 +214,7 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                                 onClick={() => openEdit(template)}
                                 className={cn(
                                   "flex h-9 w-9 items-center justify-center",
-                                  "rounded border-2 border-border",
+                                  "rounded border border-border",
                                   "hover:bg-accent sm:h-10 sm:w-10",
                                 )}
                                 aria-label={`Edit ${template.categories.name}`}
@@ -222,10 +225,7 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleToggle(
-                                    template.id,
-                                    template.active,
-                                  );
+                                  handleToggle(template.id, template.active);
                                 }}
                                 className="shrink-0"
                                 aria-pressed={template.active}

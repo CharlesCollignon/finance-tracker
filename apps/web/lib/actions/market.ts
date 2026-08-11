@@ -10,9 +10,7 @@ import {
 import { fetchInstrumentQuoteInEur } from "@finance/core/market/fx";
 import { createClient } from "@/lib/supabase/server";
 
-type MarketActionResult<T> =
-  | { error: string }
-  | { data: T };
+type MarketActionResult<T> = { error: string } | { data: T };
 
 async function requireUser() {
   const supabase = await createClient();

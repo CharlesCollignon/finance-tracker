@@ -30,9 +30,7 @@ function formatSignedEuro(amount: number): string {
   return formatted;
 }
 
-export function DashboardWalletsCard({
-  portfolio,
-}: DashboardWalletsCardProps) {
+export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
   const hasData = portfolioHasActivity(portfolio);
 
   return (
@@ -58,17 +56,17 @@ export function DashboardWalletsCard({
 
       {hasData ? (
         <>
-          <div className="border-t-2 border-border px-4 pb-4 md:px-5">
+          <div className="border-t border-border px-4 pb-4 md:px-5">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
               Total portfolio
             </p>
-            <p className="mt-1 font-head text-2xl tabular-nums font-semibold md:text-3xl">
+            <p className="privacy-amount mt-1 font-head text-2xl font-semibold md:text-3xl">
               {formatEuro(portfolio.totalMarketValue)}
             </p>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
               <span>
                 Invested{" "}
-                <span className="font-medium text-foreground">
+                <span className="privacy-amount font-medium text-foreground">
                   {formatEuro(portfolio.totalInvested)}
                 </span>
               </span>
@@ -77,9 +75,9 @@ export function DashboardWalletsCard({
                   P/L{" "}
                   <span
                     className={cn(
-                      "font-semibold",
+                      "privacy-amount font-semibold",
                       portfolio.totalGainLoss > 0
-                        ? "text-[var(--chart-4)]"
+                        ? "text-success"
                         : "text-destructive",
                     )}
                   >
@@ -90,7 +88,7 @@ export function DashboardWalletsCard({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 border-t-2 border-border px-4 py-4 md:px-5">
+          <div className="grid grid-cols-3 gap-2 border-t border-border px-4 py-4 md:px-5">
             {INVESTMENT_WALLET_IDS.map((walletId) => {
               const column = portfolio.columns.find(
                 (entry) => entry.walletId === walletId,
@@ -101,13 +99,13 @@ export function DashboardWalletsCard({
               return (
                 <div
                   key={walletId}
-                  className="border-2 border-border px-2 py-2 text-center"
+                  className="border border-border px-2 py-2 text-center"
                   style={{ borderTopColor: accent, borderTopWidth: 3 }}
                 >
                   <p className="text-xs text-muted-foreground">
                     {INVESTMENT_WALLET_LABELS[walletId]}
                   </p>
-                  <p className="mt-0.5 text-sm tabular-nums font-semibold">
+                  <p className="privacy-amount mt-0.5 text-sm font-semibold">
                     {formatEuro(value)}
                   </p>
                 </div>
@@ -116,7 +114,7 @@ export function DashboardWalletsCard({
           </div>
         </>
       ) : (
-        <p className="border-t-2 border-border px-4 py-4 text-sm text-muted-foreground md:px-5">
+        <p className="border-t border-border px-4 py-4 text-sm text-muted-foreground md:px-5">
           No wallet positions yet. Add your PEA, CTO, or Bitstack holdings on
           the Wallets page.
         </p>

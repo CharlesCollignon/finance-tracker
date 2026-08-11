@@ -26,13 +26,16 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const toast = useCallback((message: string, variant: ToastVariant = "default") => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, variant }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3500);
-  }, []);
+  const toast = useCallback(
+    (message: string, variant: ToastVariant = "default") => {
+      const id = Date.now();
+      setToasts((prev) => [...prev, { id, message, variant }]);
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 3500);
+    },
+    [],
+  );
 
   return (
     <ToastContext.Provider value={{ toast }}>
@@ -51,10 +54,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             className={cn(
-              "pointer-events-auto w-full max-w-sm border-2 border-border",
-              "px-4 py-3 text-sm font-medium shadow-md",
+              "pointer-events-auto w-full max-w-sm border border-border",
+              "px-4 py-3 text-sm font-medium",
               t.variant === "success" && "bg-primary text-primary-foreground",
-              t.variant === "error" && "bg-destructive text-destructive-foreground",
+              t.variant === "error" &&
+                "bg-destructive text-destructive-foreground",
               t.variant === "default" && "bg-background text-foreground",
             )}
           >

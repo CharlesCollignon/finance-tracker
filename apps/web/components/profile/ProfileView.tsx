@@ -127,8 +127,8 @@ export function ProfileView({
         <Card className="block w-full p-4 md:p-5">
           <h2 className="font-head text-base">Categories</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Create, rename, archive, and organise your income, expense,
-            savings, and investment categories.
+            Create, rename, archive, and organise your income, expense, savings,
+            and investment categories.
           </p>
           <Button
             variant="outline"
@@ -141,8 +141,8 @@ export function ProfileView({
         <Card className="block w-full p-4 md:p-5">
           <h2 className="font-head text-base">Budgets, goals & tags</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Set monthly spending caps, savings goals, and tags for
-            organising transactions.
+            Set monthly spending caps, savings goals, and tags for organising
+            transactions.
           </p>
           <Button
             variant="outline"
@@ -155,8 +155,8 @@ export function ProfileView({
         <Card className="block w-full border-destructive p-4 md:p-5">
           <h2 className="font-head text-base text-destructive">Danger zone</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Delete all transactions, recurring templates, and categories.
-            Your account stays active.
+            Delete all transactions, recurring templates, and categories. Your
+            account stays active.
           </p>
           <form action={dataAction} className="mt-4 flex flex-col gap-3">
             <div className="flex flex-col gap-2">
@@ -189,13 +189,13 @@ export function ProfileView({
             Delete account
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Permanently removes your account and all finance data. This
-            cannot be undone.
+            Permanently removes your account and all finance data. This cannot
+            be undone.
           </p>
           {!canDeleteAccount && (
             <p className="mt-2 text-sm text-destructive">
-              Account deletion requires SUPABASE_SERVICE_ROLE_KEY on the
-              server (local: .env.local, production: Vercel env vars).
+              Account deletion requires SUPABASE_SERVICE_ROLE_KEY on the server
+              (local: .env.local, production: Vercel env vars).
             </p>
           )}
           <form action={accountAction} className="mt-4 flex flex-col gap-3">

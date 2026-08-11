@@ -61,15 +61,14 @@ export function buildMonthlySummary(
       false,
       skippedKeys,
     ),
-    investmentDeploymentBreakdown:
-      buildBudgetInvestmentBreakdownWithProjection(
-        transactions,
-        recurringTemplates,
-        year,
-        month,
-        view,
-        true,
-        skippedKeys,
-      ),
+    investmentDeploymentBreakdown: buildBudgetInvestmentBreakdownWithProjection(
+      transactions,
+      recurringTemplates,
+      year,
+      month,
+      view,
+      true,
+      skippedKeys,
+    ),
   };
 }

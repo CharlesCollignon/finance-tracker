@@ -2,11 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCategories } from "@/lib/queries/categories";
 import { getMonthlySummary } from "@/lib/queries/finance";
-import {
-  getBudgets,
-  getSavingsGoals,
-  getTags,
-} from "@/lib/queries/phase4";
+import { getBudgets, getSavingsGoals, getTags } from "@/lib/queries/phase4";
 import { getCurrentMonth } from "@finance/core/constants";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
 import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
@@ -32,9 +28,7 @@ export default async function BudgetsPage() {
     getMonthlySummary(user.id, current.year, current.month),
   ]);
 
-  const categoryNames = new Map(
-    categories.map((c) => [c.id, c.name] as const),
-  );
+  const categoryNames = new Map(categories.map((c) => [c.id, c.name] as const));
 
   const budgetProgress = buildBudgetProgress(
     budgets,

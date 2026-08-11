@@ -37,9 +37,8 @@ export function MobileSheet({
     const dialog = dialogRef.current;
 
     // Move focus into the sheet.
-    const firstFocusable = dialog?.querySelector<HTMLElement>(
-      FOCUSABLE_SELECTOR,
-    );
+    const firstFocusable =
+      dialog?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
     firstFocusable?.focus();
 
     // Lock body scroll while open.
@@ -111,17 +110,17 @@ export function MobileSheet({
         aria-modal="true"
         aria-labelledby="mobile-sheet-title"
         className={cn(
-          "relative z-10 w-full overflow-y-auto border-2 border-border",
-          "bg-background shadow-lg",
+          "relative z-10 w-full overflow-y-auto border border-border",
+          "bg-background",
           "max-h-[90dvh] max-w-lg",
           "rounded-t-lg border-b-0",
-          "md:max-w-md md:rounded-lg md:border-b-2",
+          "md:max-w-md md:rounded-lg md:border-b",
         )}
       >
         <header
           className={cn(
             "flex min-h-12 items-center justify-between",
-            "border-b-2 border-border bg-primary px-4 text-primary-foreground",
+            "border-b border-border bg-card px-4 text-foreground",
           )}
         >
           <h2 id="mobile-sheet-title" className="font-head text-base">

@@ -436,11 +436,13 @@ export type Budget = Database["public"]["Tables"]["budgets"]["Row"];
 export type WalletTransfer =
   Database["public"]["Tables"]["wallet_transfers"]["Row"];
 export type Tag = Database["public"]["Tables"]["tags"]["Row"];
-export type SavingsGoal =
-  Database["public"]["Tables"]["savings_goals"]["Row"];
+export type SavingsGoal = Database["public"]["Tables"]["savings_goals"]["Row"];
 
 export type RecurringTemplateWithCategory = RecurringTemplate & {
-  categories: Pick<Category, "name" | "type" | "icon" | "counts_toward_summary">;
+  categories: Pick<
+    Category,
+    "name" | "type" | "icon" | "counts_toward_summary"
+  >;
 };
 
 export type TransactionWithCategory = Transaction & {

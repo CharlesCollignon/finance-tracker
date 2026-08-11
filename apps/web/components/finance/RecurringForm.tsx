@@ -102,7 +102,10 @@ function RecurringFormFields({
 
   useEffect(() => {
     if (state.success) {
-      toast(template ? "Recurring item updated" : "Recurring item added", "success");
+      toast(
+        template ? "Recurring item updated" : "Recurring item added",
+        "success",
+      );
       onOpenChange(false);
     } else if (state.error) {
       toast(state.error, "error");
@@ -130,9 +133,7 @@ function RecurringFormFields({
   const isDeploymentCategory =
     selectedCategory?.type === "investment" &&
     selectedCategory.counts_toward_summary === false;
-  const isCryptoCategory = isCryptoCategoryName(
-    selectedCategory?.name ?? "",
-  );
+  const isCryptoCategory = isCryptoCategoryName(selectedCategory?.name ?? "");
   const isYearlyExpense =
     recurrence === "yearly" && selectedCategory?.type === "expense";
   const supportsShares =
@@ -191,11 +192,7 @@ function RecurringFormFields({
       <form action={action} className="flex flex-col gap-4">
         {template && <input type="hidden" name="id" value={template.id} />}
         <input type="hidden" name="recurrence" value={recurrence} />
-        <input
-          type="hidden"
-          name="pricingType"
-          value={effectivePricingType}
-        />
+        <input type="hidden" name="pricingType" value={effectivePricingType} />
         <input
           type="hidden"
           name="active"
@@ -232,7 +229,7 @@ function RecurringFormFields({
                 type="button"
                 onClick={() => setPricingType("fixed")}
                 className={cn(
-                  "rounded border-2 px-3 py-2 text-sm font-medium",
+                  "rounded border px-3 py-2 text-sm font-medium",
                   effectivePricingType === "fixed"
                     ? "border-foreground bg-primary text-primary-foreground"
                     : "border-border hover:bg-accent",
@@ -244,7 +241,7 @@ function RecurringFormFields({
                 type="button"
                 onClick={() => setPricingType("shares")}
                 className={cn(
-                  "rounded border-2 px-3 py-2 text-sm font-medium",
+                  "rounded border px-3 py-2 text-sm font-medium",
                   effectivePricingType === "shares"
                     ? "border-foreground bg-primary text-primary-foreground"
                     : "border-border hover:bg-accent",
@@ -255,9 +252,9 @@ function RecurringFormFields({
             </div>
             {effectivePricingType === "shares" && (
               <Text className="text-xs text-muted-foreground">
-                Pick your ETF and share count. Search by name or ISIN
-                (e.g. LU1681043599). The app fetches the live price and
-                computes the EUR amount when saving or applying recurring.
+                Pick your ETF and share count. Search by name or ISIN (e.g.
+                LU1681043599). The app fetches the live price and computes the
+                EUR amount when saving or applying recurring.
               </Text>
             )}
           </div>
@@ -293,7 +290,7 @@ function RecurringFormFields({
             </div>
             <div
               className={cn(
-                "rounded border-2 border-border bg-muted/20 p-3 text-sm",
+                "rounded border border-border bg-muted/20 p-3 text-sm",
               )}
             >
               <p className="font-medium">Estimated amount</p>
@@ -335,12 +332,11 @@ function RecurringFormFields({
               />
             </div>
             {supportsShares && !isCryptoCategory && (
-              <div className="flex flex-col gap-2 rounded border-2 border-border bg-muted/20 p-3">
+              <div className="flex flex-col gap-2 rounded border border-border bg-muted/20 p-3">
                 <FormLabel>Tracked ETF / fund</FormLabel>
                 <Text className="text-xs text-muted-foreground">
-                  Fixed EUR DCA: pick the ETF you buy here. On Wallets,
-                  enter how many shares you hold in total for live market
-                  value.
+                  Fixed EUR DCA: pick the ETF you buy here. On Wallets, enter
+                  how many shares you hold in total for live market value.
                 </Text>
                 <InstrumentSearch
                   symbol={instrumentSymbol}
@@ -368,11 +364,11 @@ function RecurringFormFields({
                   name="instrumentName"
                   value={BITCOIN_INSTRUMENT.name}
                 />
-                <div className="rounded border-2 border-border bg-muted/20 p-3 text-sm">
+                <div className="rounded border border-border bg-muted/20 p-3 text-sm">
                   <p className="font-medium">Bitcoin DCA</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Each buy converts your EUR amount to BTC. Enter your
-                    total BTC balance on Wallets for live value.
+                    Each buy converts your EUR amount to BTC. Enter your total
+                    BTC balance on Wallets for live value.
                   </p>
                 </div>
               </>
@@ -402,7 +398,7 @@ function RecurringFormFields({
                 type="button"
                 onClick={() => setRecurrence(value)}
                 className={cn(
-                  "rounded border-2 px-3 py-2 text-sm font-medium capitalize",
+                  "rounded border px-3 py-2 text-sm font-medium capitalize",
                   recurrence === value
                     ? "border-foreground bg-primary text-primary-foreground"
                     : "border-border hover:bg-accent",
@@ -440,7 +436,7 @@ function RecurringFormFields({
               id="dayOfWeek"
               name="dayOfWeek"
               required
-              className="h-11 w-full rounded border-2 border-border bg-background px-3 text-base text-foreground shadow-md"
+              className="h-11 w-full rounded border border-border bg-background px-3 text-base text-foreground "
               defaultValue={template?.day_of_week ?? 1}
             >
               {Object.entries(DAY_OF_WEEK_LABELS).map(([value, label]) => (
@@ -458,7 +454,7 @@ function RecurringFormFields({
                 id="monthOfYear"
                 name="monthOfYear"
                 required
-                className="h-11 w-full rounded border-2 border-border bg-background px-3 text-base text-foreground shadow-md"
+                className="h-11 w-full rounded border border-border bg-background px-3 text-base text-foreground "
                 defaultValue={template?.month_of_year ?? 10}
               >
                 {Object.entries(MONTH_LABELS).map(([value, label]) => (
@@ -491,7 +487,7 @@ function RecurringFormFields({
         </Button>
 
         {template && (
-          <div className="border-t-2 border-border pt-4">
+          <div className="border-t border-border pt-4">
             {confirmDelete ? (
               <div className="flex flex-col gap-2">
                 <Text className="text-sm text-muted-foreground">

@@ -1,5 +1,6 @@
 import "@/global.css";
 
+import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
@@ -9,11 +10,12 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
+import { PrivacyProvider } from "@/providers/PrivacyProvider";
 import { initTheme } from "@/lib/theme";
 
 SplashScreen.preventAutoHideAsync();
 
-function RootNavigator() {
+function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   const { session, initializing } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -24,7 +26,7 @@ function RootNavigator() {
   }, []);
 
   useEffect(() => {
-    if (initializing) {
+    if (initializing || !fontsReady) {
       return;
     }
 
@@ -36,7 +38,7 @@ function RootNavigator() {
     } else if (session && inAuthGroup) {
       router.replace("/");
     }
-  }, [session, initializing, segments, router]);
+  }, [session, initializing, fontsReady, segments, router]);
 
   return (
     <>
@@ -50,11 +52,19 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Orbit: require("../../assets/fonts/OrbitMaxenceDuterne-Regular.otf"),
+  });
+
+  const fontsReady = fontsLoaded || fontError != null;
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
-          <RootNavigator />
+          <PrivacyProvider>
+            <RootNavigator fontsReady={fontsReady} />
+          </PrivacyProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

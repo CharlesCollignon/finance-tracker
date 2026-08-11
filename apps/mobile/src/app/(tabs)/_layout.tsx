@@ -55,20 +55,18 @@ const TABS: TabConfig[] = [
 
 export default function TabsLayout() {
   const scheme = useColorScheme();
-  const colors = colorsForScheme(scheme);
+  const colors = colorsForScheme(scheme === "light" ? "light" : "dark");
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.foreground,
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
-        tabBarActiveBackgroundColor: colors.primary,
-        tabBarInactiveBackgroundColor: colors.background,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "600" },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "500" },
         tabBarStyle: {
           backgroundColor: colors.background,
-          borderTopWidth: 2,
+          borderTopWidth: 1,
           borderTopColor: colors.border,
         },
       }}
