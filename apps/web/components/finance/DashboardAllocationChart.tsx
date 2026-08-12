@@ -7,7 +7,7 @@ import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { formatEuro, savingsRatePercent } from "@finance/core/constants";
 import { buildIncomeSankey } from "@finance/core/income-sankey";
 import type { MonthlySummary } from "@finance/core/types/database";
-import { chartTextStyle } from "@/lib/echarts-theme";
+import { chartMotion, chartTextStyle } from "@/lib/echarts-theme";
 import { readCssVar } from "@/lib/css-var";
 
 interface DashboardAllocationChartProps {
@@ -38,6 +38,12 @@ function readPalette(): Palette {
   };
 }
 
+function paletteEqual(a: Palette, b: Palette): boolean {
+  return (Object.keys(a) as Array<keyof Palette>).every(
+    (key) => a[key] === b[key],
+  );
+}
+
 export function DashboardAllocationChart({
   summary,
 }: DashboardAllocationChartProps) {
@@ -51,9 +57,11 @@ export function DashboardAllocationChart({
   const [palette, setPalette] = useState<Palette>(readPalette);
 
   useEffect(() => {
-    setPalette(readPalette());
     const root = document.documentElement;
-    const observer = new MutationObserver(() => setPalette(readPalette()));
+    const observer = new MutationObserver(() => {
+      const next = readPalette();
+      setPalette((prev) => (paletteEqual(prev, next) ? prev : next));
+    });
     observer.observe(root, {
       attributes: true,
       attributeFilter: ["class", "data-privacy"],
@@ -86,7 +94,7 @@ export function DashboardAllocationChart({
     };
 
     return {
-      animationDuration: 350,
+      ...chartMotion(350),
       tooltip: {
         trigger: "item",
         triggerOn: "mousemove",

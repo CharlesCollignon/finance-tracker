@@ -252,6 +252,13 @@
   animation: page-enter 0.2s ease-out both;
 }
 
+/* Lock after first enter so React re-renders don't replay the fade. */
+.stagger-item[data-entered] {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
 /* Privacy: blur monetary values when enabled */
 html[data-privacy="on"] .privacy-amount,
 html[data-privacy="on"] .privacy-sensitive {

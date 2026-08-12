@@ -6,9 +6,12 @@ import type { EChartsOption } from "echarts";
 import { formatEuro } from "@finance/core/constants";
 import { CATEGORY_TYPE_LABELS } from "@finance/core/category-styles";
 import type { CategoryType } from "@finance/core/types/database";
-import { chartTextStyle } from "@/lib/echarts-theme";
+import { chartMotion, chartTextStyle } from "@/lib/echarts-theme";
 import { readCssVar } from "@/lib/css-var";
-import { useEchartsSize } from "@/lib/use-echarts-size";
+import {
+  useCompactViewport,
+  useEchartsSize,
+} from "@/lib/use-echarts-size";
 
 export interface TypeTotals {
   income: number;
@@ -46,6 +49,12 @@ function readPalette(): Palette {
   };
 }
 
+function paletteEqual(a: Palette, b: Palette): boolean {
+  return (Object.keys(a) as Array<keyof Palette>).every(
+    (key) => a[key] === b[key],
+  );
+}
+
 const OUTFLOW_TYPES: CategoryType[] = ["expense", "savings", "investment"];
 
 /** Type-level Income → Expense/Savings/Investment/Remaining sankey (or donut fallback). */
@@ -56,13 +65,15 @@ export function TransactionTypeSankey({
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReactECharts>(null);
   const [palette, setPalette] = useState<Palette>(readPalette);
-  const width = useEchartsSize(containerRef, chartRef);
-  const compact = width != null && width < 420;
+  useEchartsSize(containerRef, chartRef);
+  const compact = useCompactViewport(419);
 
   useEffect(() => {
-    setPalette(readPalette());
     const root = document.documentElement;
-    const observer = new MutationObserver(() => setPalette(readPalette()));
+    const observer = new MutationObserver(() => {
+      const next = readPalette();
+      setPalette((prev) => (paletteEqual(prev, next) ? prev : next));
+    });
     observer.observe(root, {
       attributes: true,
       attributeFilter: ["class", "data-privacy"],
@@ -103,7 +114,7 @@ export function TransactionTypeSankey({
         return null;
       }
       return {
-        animationDuration: 400,
+        ...chartMotion(400),
         tooltip: {
           trigger: "item",
           backgroundColor: palette.card,
@@ -158,7 +169,7 @@ export function TransactionTypeSankey({
     }
 
     return {
-      animationDuration: 400,
+      ...chartMotion(400),
       tooltip: {
         trigger: "item",
         triggerOn: "mousemove",
@@ -238,10 +249,7 @@ export function TransactionTypeSankey({
       <ReactECharts
         ref={chartRef}
         option={option}
-        style={{
-          height,
-          width: width != null && width > 0 ? width : "100%",
-        }}
+        style={{ height, width: "100%" }}
         opts={{ renderer: "svg" }}
         notMerge
       />

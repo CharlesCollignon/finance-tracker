@@ -16,6 +16,21 @@ export function chartTextStyle() {
   };
 }
 
+/** Intro once; skip re-animation when options/size update after mount. */
+export function chartMotion(durationMs = 400): {
+  animation: boolean;
+  animationDuration: number;
+  animationDurationUpdate: number;
+  animationEasing: "cubicOut";
+} {
+  return {
+    animation: true,
+    animationDuration: durationMs,
+    animationDurationUpdate: 0,
+    animationEasing: "cubicOut",
+  };
+}
+
 export function baseGrid(): NonNullable<EChartsOption["grid"]> {
   return {
     left: 8,

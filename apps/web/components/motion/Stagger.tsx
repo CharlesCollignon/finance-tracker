@@ -5,6 +5,7 @@ import {
   Fragment,
   cloneElement,
   isValidElement,
+  useState,
   type CSSProperties,
   type ReactElement,
   type ReactNode,
@@ -43,7 +44,7 @@ function flattenElements(children: ReactNode): ReactElement<StyledProps>[] {
   return result;
 }
 
-/** CSS stagger enter — no framer-motion. */
+/** CSS stagger enter — plays once, then locks so re-renders don't replay. */
 export function Stagger({ children, className, stagger = 0.04 }: StaggerProps) {
   const items = flattenElements(children);
 
@@ -61,18 +62,10 @@ export function Stagger({ children, className, stagger = 0.04 }: StaggerProps) {
           return cloneElement(child, { key, style });
         }
 
-        if (typeof child.type === "string") {
-          return cloneElement(child, {
-            key,
-            className: cn("stagger-item", child.props.className),
-            style,
-          });
-        }
-
         return (
-          <div key={key} className="stagger-item" style={style}>
+          <StaggerItem key={key} style={style}>
             {child}
-          </div>
+          </StaggerItem>
         );
       })}
     </div>
@@ -88,8 +81,19 @@ export function StaggerItem({
   className?: string;
   style?: CSSProperties;
 }) {
+  const [entered, setEntered] = useState(false);
+
   return (
-    <div className={cn("stagger-item", className)} style={style}>
+    <div
+      className={cn("stagger-item", className)}
+      style={style}
+      data-entered={entered ? "" : undefined}
+      onAnimationEnd={(event) => {
+        if (event.target === event.currentTarget) {
+          setEntered(true);
+        }
+      }}
+    >
       {children}
     </div>
   );

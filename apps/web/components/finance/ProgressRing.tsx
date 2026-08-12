@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
 import { cn } from "@/lib/utils";
+import { chartMotion } from "@/lib/echarts-theme";
 import { readCssVar } from "@/lib/css-var";
 
 interface ProgressRingProps {
@@ -26,18 +27,23 @@ export function ProgressRing({
   over = false,
   className,
 }: ProgressRingProps) {
-  const [fill, setFill] = useState(colorFallback);
-  const [track, setTrack] = useState("#27272a");
+  const [fill, setFill] = useState(() =>
+    readCssVar(
+      over ? "--destructive" : colorVar,
+      over ? "#dc2626" : colorFallback,
+    ),
+  );
+  const [track, setTrack] = useState(() => readCssVar("--muted", "#27272a"));
 
   useEffect(() => {
     const sync = () => {
-      setFill(
-        readCssVar(
-          over ? "--destructive" : colorVar,
-          over ? "#dc2626" : colorFallback,
-        ),
+      const nextFill = readCssVar(
+        over ? "--destructive" : colorVar,
+        over ? "#dc2626" : colorFallback,
       );
-      setTrack(readCssVar("--muted", "#27272a"));
+      const nextTrack = readCssVar("--muted", "#27272a");
+      setFill((prev) => (prev === nextFill ? prev : nextFill));
+      setTrack((prev) => (prev === nextTrack ? prev : nextTrack));
     };
     sync();
     const root = document.documentElement;
@@ -54,8 +60,7 @@ export function ProgressRing({
 
   const option = useMemo<EChartsOption>(
     () => ({
-      animationDuration: 500,
-      animationEasing: "cubicOut",
+      ...chartMotion(500),
       series: [
         {
           type: "pie",

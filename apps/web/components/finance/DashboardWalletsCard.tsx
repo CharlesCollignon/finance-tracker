@@ -16,7 +16,11 @@ import {
 } from "@finance/core/investment-positions";
 import { StatHero } from "@/components/finance/StatHero";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
-import { chartTextStyle, CHART_PALETTE } from "@/lib/echarts-theme";
+import {
+  chartMotion,
+  chartTextStyle,
+  CHART_PALETTE,
+} from "@/lib/echarts-theme";
 import { readCssVar } from "@/lib/css-var";
 import { cn } from "@/lib/utils";
 
@@ -62,23 +66,34 @@ export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
     [portfolio.columns],
   );
 
-  const [colors, setColors] = useState<string[]>([...CHART_PALETTE]);
-  const [card, setCard] = useState("#141414");
-  const [border, setBorder] = useState("#27272a");
-  const [foreground, setForeground] = useState("#fafafa");
+  const [colors, setColors] = useState(() =>
+    WALLET_COLOR_VARS.map((name, i) =>
+      readCssVar(name, CHART_PALETTE[i] ?? "#a1a1aa"),
+    ),
+  );
+  const [card, setCard] = useState(() => readCssVar("--card", "#141414"));
+  const [border, setBorder] = useState(() => readCssVar("--border", "#27272a"));
+  const [foreground, setForeground] = useState(() =>
+    readCssVar("--foreground", "#fafafa"),
+  );
 
   useEffect(() => {
     const sync = () => {
-      setColors(
-        WALLET_COLOR_VARS.map((name, i) =>
-          readCssVar(name, CHART_PALETTE[i] ?? "#a1a1aa"),
-        ),
+      const nextColors = WALLET_COLOR_VARS.map((name, i) =>
+        readCssVar(name, CHART_PALETTE[i] ?? "#a1a1aa"),
       );
-      setCard(readCssVar("--card", "#141414"));
-      setBorder(readCssVar("--border", "#27272a"));
-      setForeground(readCssVar("--foreground", "#fafafa"));
+      const nextCard = readCssVar("--card", "#141414");
+      const nextBorder = readCssVar("--border", "#27272a");
+      const nextForeground = readCssVar("--foreground", "#fafafa");
+      setColors((prev) =>
+        prev.every((value, i) => value === nextColors[i]) ? prev : nextColors,
+      );
+      setCard((prev) => (prev === nextCard ? prev : nextCard));
+      setBorder((prev) => (prev === nextBorder ? prev : nextBorder));
+      setForeground((prev) =>
+        prev === nextForeground ? prev : nextForeground,
+      );
     };
-    sync();
     const root = document.documentElement;
     const observer = new MutationObserver(sync);
     observer.observe(root, {
@@ -93,7 +108,7 @@ export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
       return null;
     }
     return {
-      animationDuration: 450,
+      ...chartMotion(450),
       tooltip: {
         trigger: "item",
         backgroundColor: card,

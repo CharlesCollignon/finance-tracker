@@ -12,6 +12,7 @@ import {
 } from "@finance/core/investment-positions";
 import {
   baseGrid,
+  chartMotion,
   chartTextStyle,
   paddedValueAxisRange,
 } from "@/lib/echarts-theme";
@@ -46,7 +47,7 @@ export function InvestmentItemChart({
 }: InvestmentItemChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReactECharts>(null);
-  const width = useEchartsSize(containerRef, chartRef);
+  useEchartsSize(containerRef, chartRef);
   const [mode, setMode] = useState<ChartMode>("value");
   const [range, setRange] = useState<PositionChartRange>("1Y");
 
@@ -93,7 +94,7 @@ export function InvestmentItemChart({
     if (mode === "pl") {
       const plRange = paddedValueAxisRange(chartData.map((row) => row.pl));
       return {
-        animationDuration: 300,
+        ...chartMotion(300),
         grid: baseGrid(),
         tooltip: {
           trigger: "axis",
@@ -157,7 +158,7 @@ export function InvestmentItemChart({
     );
 
     return {
-      animationDuration: 300,
+      ...chartMotion(300),
       grid: baseGrid(),
       tooltip: {
         trigger: "axis",
@@ -327,10 +328,7 @@ export function InvestmentItemChart({
         <ReactECharts
           ref={chartRef}
           option={option}
-          style={{
-            height: "100%",
-            width: width != null && width > 0 ? width : "100%",
-          }}
+          style={{ height: "100%", width: "100%" }}
           opts={{ renderer: "svg" }}
           notMerge
         />
