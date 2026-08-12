@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth/get-user";
 import { getCategories } from "@/lib/queries/categories";
 import { getRecurringTemplates, getTransactions } from "@/lib/queries/finance";
 import { getTags, getTransactionTagMap } from "@/lib/queries/phase4";
@@ -14,10 +14,7 @@ interface TransactionsPageProps {
 export default async function TransactionsPage({
   searchParams,
 }: TransactionsPageProps) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) {
     redirect("/login");

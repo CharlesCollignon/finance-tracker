@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { deleteAllUserData } from "@/lib/queries/account";
@@ -13,17 +14,7 @@ import {
 type ActionResult = { error?: string; success?: boolean; message?: string };
 
 async function getUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    return null;
-  }
-
-  return user;
+  return getAuthUser();
 }
 
 export async function updateProfile(

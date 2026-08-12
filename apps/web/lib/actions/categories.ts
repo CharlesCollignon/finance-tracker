@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { revalidateRecurringDependents } from "@/lib/revalidate-paths";
 import { categorySchema } from "@finance/core/validations/finance";
@@ -8,17 +9,7 @@ import { categorySchema } from "@finance/core/validations/finance";
 type ActionResult = { error?: string; success?: boolean };
 
 async function getUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    return null;
-  }
-
-  return user;
+  return getAuthUser();
 }
 
 function revalidateCategoryDependents(): void {

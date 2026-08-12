@@ -17,14 +17,14 @@
   --card-foreground: #0a0a0a;
   --popover: #ffffff;
   --popover-foreground: #0a0a0a;
-  --primary: #c9a05a;
-  --primary-hover: #b8904a;
-  --primary-foreground: #ffffff;
+  --primary: #ffc300;
+  --primary-hover: #e6b000;
+  --primary-foreground: #0a0a0a;
   --secondary: #f4f4f5;
   --secondary-foreground: #0a0a0a;
   --muted: #f4f4f5;
   --muted-foreground: #71717a;
-  --accent: #f5f0e8;
+  --accent: #fff8e1;
   --accent-foreground: #0a0a0a;
   --success: #16a34a;
   --success-foreground: #ffffff;
@@ -34,20 +34,20 @@
   --destructive-foreground: #ffffff;
   --border: #e4e4e7;
   --input: #ffffff;
-  --ring: #c9a05a;
-  --chart-1: #c9a05a;
+  --ring: #ffc300;
+  --chart-1: #ffc300;
   --chart-2: #dc2626;
   --chart-3: #16a34a;
   --chart-4: #2563eb;
   --chart-5: #a1a1aa;
   --sidebar: #fafafa;
   --sidebar-foreground: #0a0a0a;
-  --sidebar-primary: #c9a05a;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary: #ffc300;
+  --sidebar-primary-foreground: #0a0a0a;
   --sidebar-accent: #f4f4f5;
   --sidebar-accent-foreground: #0a0a0a;
   --sidebar-border: #e4e4e7;
-  --sidebar-ring: #c9a05a;
+  --sidebar-ring: #ffc300;
   --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-serif: "Georgia", serif;
   --font-mono: "SF Mono", "Courier New", monospace;
@@ -64,7 +64,7 @@
   --shadow-2xl: none;
   --tracking-normal: -0.01em;
   --spacing: 0.25rem;
-  --shell-header-height: 4rem;
+  --shell-header-height: 3.25rem;
   --shell-bottom-nav-height: 3.5rem;
   color-scheme: light;
 }
@@ -76,14 +76,14 @@
   --card-foreground: #fafafa;
   --popover: #141414;
   --popover-foreground: #fafafa;
-  --primary: #dbb87a;
-  --primary-hover: #e4c48e;
+  --primary: #ffc300;
+  --primary-hover: #ffcf33;
   --primary-foreground: #0a0a0a;
   --secondary: #1c1c1c;
   --secondary-foreground: #fafafa;
   --muted: #1c1c1c;
   --muted-foreground: #a1a1aa;
-  --accent: #1f1c17;
+  --accent: #2a2410;
   --accent-foreground: #fafafa;
   --success: #34d399;
   --success-foreground: #0a0a0a;
@@ -93,20 +93,20 @@
   --destructive-foreground: #0a0a0a;
   --border: #27272a;
   --input: #141414;
-  --ring: #dbb87a;
-  --chart-1: #dbb87a;
+  --ring: #ffc300;
+  --chart-1: #ffc300;
   --chart-2: #f87171;
   --chart-3: #34d399;
   --chart-4: #60a5fa;
   --chart-5: #a1a1aa;
   --sidebar: #0f0f0f;
   --sidebar-foreground: #fafafa;
-  --sidebar-primary: #dbb87a;
+  --sidebar-primary: #ffc300;
   --sidebar-primary-foreground: #0a0a0a;
   --sidebar-accent: #1c1c1c;
   --sidebar-accent-foreground: #fafafa;
   --sidebar-border: #27272a;
-  --sidebar-ring: #dbb87a;
+  --sidebar-ring: #ffc300;
   --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-serif: "Georgia", serif;
   --font-mono: "SF Mono", "Courier New", monospace;
@@ -231,6 +231,25 @@
 
 .pt-safe {
   padding-top: env(safe-area-inset-top, 0px);
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.2s ease-out both;
+}
+
+.stagger-item {
+  animation: page-enter 0.2s ease-out both;
 }
 
 /* Privacy: blur monetary values when enabled */

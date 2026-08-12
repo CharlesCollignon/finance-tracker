@@ -9,7 +9,6 @@ import { Text } from "@/components/retroui/Text";
 import { FormLabel } from "@/components/layout/FormLabel";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { SignOutButton } from "@/components/layout/SignOutButton";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
   deleteBudget,
@@ -108,11 +107,7 @@ export function BudgetsView({
 
   return (
     <>
-      <PageHeader title="Budgets & goals">
-        <div className="md:hidden">
-          <SignOutButton />
-        </div>
-      </PageHeader>
+      <PageHeader title="Budgets & goals" />
 
       <PageContainer className="flex flex-col gap-6">
         <section className="space-y-3">

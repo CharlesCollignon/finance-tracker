@@ -9,6 +9,7 @@ import {
 
 import {
   budgetViewHint,
+  budgetViewOptionLabel,
   formatEuro,
   parseMonthParams,
   type BudgetViewMode,
@@ -184,7 +185,7 @@ export default function DashboardScreen() {
               }`}
             >
               <Text className="text-center text-xs font-semibold">
-                {mode === "current" ? "Through today" : "End of month"}
+                {budgetViewOptionLabel(mode, year, month)}
               </Text>
             </Pressable>
           );

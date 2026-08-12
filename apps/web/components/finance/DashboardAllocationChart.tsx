@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
-import { Card } from "@/components/retroui/Card";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { formatEuro, savingsRatePercent } from "@finance/core/constants";
 import { buildIncomeSankey } from "@finance/core/income-sankey";
@@ -30,7 +29,7 @@ function readPalette(): Palette {
   return {
     income: readCssVar("--success", "#16a34a"),
     expenses: readCssVar("--destructive", "#dc2626"),
-    savings: readCssVar("--primary", "#c9a05a"),
+    savings: readCssVar("--primary", "#ffc300"),
     investments: readCssVar("--info", "#2563eb"),
     remaining: readCssVar("--chart-5", "#a1a1aa"),
     foreground: readCssVar("--foreground", "#fafafa"),
@@ -43,7 +42,12 @@ export function DashboardAllocationChart({
   summary,
 }: DashboardAllocationChartProps) {
   const graph = useMemo(() => buildIncomeSankey(summary), [summary]);
-  const rate = savingsRatePercent(summary.savings, summary.income);
+  const rate = savingsRatePercent(
+    summary.savings,
+    summary.investments,
+    summary.investmentDeployments,
+    summary.income,
+  );
   const [palette, setPalette] = useState<Palette>(readPalette);
 
   useEffect(() => {
@@ -112,18 +116,20 @@ export function DashboardAllocationChart({
         {
           type: "sankey",
           emphasis: { focus: "adjacency" },
-          nodeAlign: "left",
-          nodeGap: 14,
+          nodeAlign: "justify",
+          nodeGap: 10,
           nodeWidth: 16,
-          layoutIterations: 32,
+          // Preserve our depth/group order — iterations scramble leaves.
+          layoutIterations: 0,
           lineStyle: {
             color: "gradient",
             curveness: 0.5,
-            opacity: 0.45,
+            opacity: 0.4,
           },
           label: {
             color: palette.foreground,
             fontSize: 11,
+            position: "right",
             formatter: (params: unknown) => {
               const p = params as { name: string; value?: unknown };
               const label = labelByName.get(p.name) ?? p.name;
@@ -135,6 +141,7 @@ export function DashboardAllocationChart({
             const midKey = node.name.split(":")[0];
             return {
               name: node.name,
+              depth: node.depth,
               itemStyle: {
                 color:
                   colorByKey[midKey] ??
@@ -155,7 +162,7 @@ export function DashboardAllocationChart({
     { label: "Savings", value: summary.savings, color: palette.savings },
     {
       label: "Investments",
-      value: summary.investments,
+      value: graph?.invested ?? 0,
       color: palette.investments,
     },
     ...(summary.remaining > 0
@@ -170,27 +177,32 @@ export function DashboardAllocationChart({
   ].filter((row) => row.value > 0);
 
   return (
-    <Card className="flex w-full flex-col">
-      <div className="flex flex-wrap items-start justify-between gap-3 p-4 md:p-5">
-        <div>
-          <h2 className="font-head text-base">Where your income goes</h2>
+    <section className="flex w-full flex-col items-center">
+      <div className="flex w-full max-w-lg items-center gap-4 text-left">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-medium text-muted-foreground">
+            Where your income goes
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Flow from income into spending, savings, and investments
           </p>
         </div>
         {rate != null ? (
-          <div className="rounded-md border border-border bg-primary/10 px-3 py-2 text-right">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Savings rate
-            </p>
-            <p className="privacy-amount font-head text-xl text-primary tabular-nums">
+          <div
+            className="flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-full border-2 border-primary text-center"
+            aria-label={`Savings rate ${rate}%`}
+          >
+            <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+              Savings
+            </span>
+            <span className="privacy-amount font-head text-xl leading-none text-primary tabular-nums">
               {rate}%
-            </p>
+            </span>
           </div>
         ) : null}
       </div>
       {option ? (
-        <div className="privacy-sensitive px-2 pb-4 md:px-3">
+        <div className="privacy-sensitive mt-4 w-full">
           <ReactECharts
             option={option}
             style={{ height: 320, width: "100%" }}
@@ -199,12 +211,12 @@ export function DashboardAllocationChart({
           />
         </div>
       ) : (
-        <p className="px-4 pb-4 text-sm text-muted-foreground">
+        <p className="mt-4 text-center text-sm text-muted-foreground">
           Add income to see how your money is allocated.
         </p>
       )}
       {graph ? (
-        <ul className="flex flex-col gap-2 border-t border-border px-4 py-4">
+        <ul className="mt-4 flex w-full max-w-xs flex-col gap-2 text-left">
           {legend.map((row) => (
             <li
               key={row.label}
@@ -225,6 +237,6 @@ export function DashboardAllocationChart({
           ))}
         </ul>
       ) : null}
-    </Card>
+    </section>
   );
 }

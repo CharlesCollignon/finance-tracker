@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,6 +13,7 @@ import {
   parseMonthParams,
   todayIsoLocal,
 } from "@finance/core/constants";
+import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
 import { CATEGORY_TYPE_LABELS } from "@finance/core/category-styles";
 import type {
   Category,
@@ -55,6 +56,7 @@ export default function TransactionsScreen() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
   const [pending, setPending] = useState(false);
+  const [applyPending, setApplyPending] = useState(false);
 
   const { data, loading, refreshing, onRefresh, reload, error } =
     useRefreshable(async () => {
@@ -74,6 +76,19 @@ export default function TransactionsScreen() {
   const transactions = data?.transactions ?? [];
   const categories = data?.categories ?? [];
 
+  const refreshApplyPending = useCallback(async () => {
+    const result = await previewApplyRecurringForMonth(year, month);
+    if (result.error || !result.plan) {
+      return;
+    }
+    const counts = applyRecurringPlanCounts(result.plan);
+    setApplyPending(counts.creates + counts.updates > 0);
+  }, [month, year]);
+
+  useEffect(() => {
+    void refreshApplyPending();
+  }, [refreshApplyPending, transactions]);
+
   const filtered = useMemo(() => {
     if (filter === "all") {
       return transactions;
@@ -91,6 +106,7 @@ export default function TransactionsScreen() {
     }
     const plan = preview.plan ?? { toCreate: [], toUpdate: [] };
     if (plan.toCreate.length === 0 && plan.toUpdate.length === 0) {
+      setApplyPending(false);
       Alert.alert("Done", "All recurring entries already applied");
       return;
     }
@@ -107,7 +123,9 @@ export default function TransactionsScreen() {
               Alert.alert("Error", result.error);
             } else {
               Alert.alert("Applied", `${result.created ?? 0} added`);
+              setApplyPending(false);
               await reload();
+              await refreshApplyPending();
             }
           },
         },
@@ -122,7 +140,9 @@ export default function TransactionsScreen() {
                 "Applied",
                 `${result.created ?? 0} added, ${result.updated ?? 0} updated`,
               );
+              setApplyPending(false);
               await reload();
+              await refreshApplyPending();
             }
           },
         },
@@ -149,7 +169,7 @@ export default function TransactionsScreen() {
   }
 
   return (
-    <Screen title="Money">
+    <Screen title="Transaction">
       <MonthPicker
         year={year}
         month={month}
@@ -159,10 +179,16 @@ export default function TransactionsScreen() {
         }}
       />
 
+      {applyPending ? (
+        <Text variant="muted" className="mb-2 text-center text-sm">
+          Recurring changed — apply to update this month.
+        </Text>
+      ) : null}
+
       <View className="my-3 flex-row gap-2">
         <Button
           label={pending ? "…" : "Apply recurring"}
-          variant="outline"
+          variant={applyPending ? "default" : "outline"}
           size="sm"
           className="flex-1"
           disabled={pending}

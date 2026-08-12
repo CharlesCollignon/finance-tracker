@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth/get-user";
 import { getCategories } from "@/lib/queries/categories";
 import { getRecurringTemplates, getTransactions } from "@/lib/queries/finance";
 import { parseMonthParams } from "@finance/core/constants";
@@ -12,10 +12,7 @@ interface CalendarPageProps {
 export default async function CalendarPage({
   searchParams,
 }: CalendarPageProps) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) {
     redirect("/login");

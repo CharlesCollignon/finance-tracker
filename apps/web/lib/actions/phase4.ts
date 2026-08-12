@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { revalidateRecurringDependents } from "@/lib/revalidate-paths";
 import {
@@ -13,10 +14,7 @@ import {
 type ActionResult = { error?: string; success?: boolean };
 
 async function requireUserId(): Promise<string | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   return user?.id ?? null;
 }
 

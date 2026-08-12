@@ -13,9 +13,9 @@ module.exports = {
           foreground: "#0a0a0a",
         },
         primary: {
-          DEFAULT: "#c9a05a",
-          hover: "#b8904a",
-          foreground: "#ffffff",
+          DEFAULT: "#ffc300",
+          hover: "#e6b000",
+          foreground: "#0a0a0a",
         },
         secondary: {
           DEFAULT: "#f4f4f5",
@@ -26,7 +26,7 @@ module.exports = {
           foreground: "#71717a",
         },
         accent: {
-          DEFAULT: "#f5f0e8",
+          DEFAULT: "#fff8e1",
           foreground: "#0a0a0a",
         },
         success: {
@@ -47,7 +47,7 @@ module.exports = {
         "card-dark": "#141414",
         "border-dark": "#27272a",
         "muted-foreground-dark": "#a1a1aa",
-        "primary-dark": "#dbb87a",
+        "primary-dark": "#ffc300",
         "success-dark": "#34d399",
         "info-dark": "#60a5fa",
       },

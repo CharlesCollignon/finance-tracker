@@ -1,21 +1,18 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { DownloadSimple, MagnifyingGlass, Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { MonthPicker } from "@/components/layout/MonthPicker";
-import { SignOutButton } from "@/components/layout/SignOutButton";
 import { useToast } from "@/components/layout/ToastProvider";
-import { CategoryTypeBadge } from "@/components/finance/CategoryTypeBadge";
-import { CategoryIcon } from "@/components/finance/CategoryIcon";
-import { Badge } from "@/components/retroui/Badge";
 import { TransactionForm } from "@/components/finance/TransactionForm";
+import { StatHero } from "@/components/finance/StatHero";
+import { TransactionTypeSankey } from "@/components/finance/lazy-charts";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { formatEuro } from "@finance/core/constants";
-import { yearlyExpenseTemplateIds } from "@finance/core/budget";
 import {
   CATEGORY_TYPE_LABELS,
   TYPE_AMOUNT_CLASS,
@@ -26,7 +23,10 @@ import {
   previewApplyRecurringForMonth,
 } from "@/lib/actions/finance";
 import { ApplyRecurringSheet } from "@/components/finance/ApplyRecurringSheet";
-import type { ApplyRecurringPlan } from "@finance/core/apply-recurring";
+import {
+  applyRecurringPlanCounts,
+  type ApplyRecurringPlan,
+} from "@finance/core/apply-recurring";
 import type {
   Category,
   CategoryType,
@@ -34,18 +34,6 @@ import type {
   Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
-
-const TYPE_TOTAL_ITEMS: { type: CategoryType }[] = [
-  { type: "income" },
-  { type: "expense" },
-  { type: "savings" },
-  { type: "investment" },
-];
-
-function formatSignedTypeTotal(type: CategoryType, amount: number): string {
-  const formatted = formatEuro(amount);
-  return type === "income" ? `+${formatted}` : `−${formatted}`;
-}
 
 type FilterType = "all" | CategoryType;
 
@@ -92,28 +80,6 @@ function formatDisplayDate(isoDate: string): string {
     day: "numeric",
     month: "short",
   }).format(date);
-}
-
-function groupByDate(
-  items: TransactionWithCategory[],
-): { date: string; label: string; items: TransactionWithCategory[] }[] {
-  const groups = new Map<string, TransactionWithCategory[]>();
-
-  for (const tx of items) {
-    const list = groups.get(tx.occurred_on) ?? [];
-    list.push(tx);
-    groups.set(tx.occurred_on, list);
-  }
-
-  return Array.from(groups.entries()).map(([date, groupItems]) => ({
-    date,
-    label: formatDisplayDate(date),
-    items: groupItems,
-  }));
-}
-
-function countsTowardSummary(tx: TransactionWithCategory): boolean {
-  return tx.categories.counts_toward_summary !== false;
 }
 
 function toCsvValue(value: string): string {
@@ -166,7 +132,7 @@ function computeTypeTotals(transactions: TransactionWithCategory[]) {
 export function TransactionsView({
   transactions,
   categories,
-  recurringTemplates,
+  recurringTemplates: _recurringTemplates,
   tags,
   transactionTags,
   year,
@@ -183,12 +149,21 @@ export function TransactionsView({
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [applySheetOpen, setApplySheetOpen] = useState(false);
   const [applyPlan, setApplyPlan] = useState<ApplyRecurringPlan | null>(null);
+  const [applyPending, setApplyPending] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const yearlyIds = useMemo(
-    () => yearlyExpenseTemplateIds(recurringTemplates),
-    [recurringTemplates],
-  );
+  const refreshApplyPending = useCallback(async () => {
+    const result = await previewApplyRecurringForMonth(year, month);
+    if (result.error || !result.plan) {
+      return;
+    }
+    const counts = applyRecurringPlanCounts(result.plan);
+    setApplyPending(counts.creates + counts.updates > 0);
+  }, [month, year]);
+
+  useEffect(() => {
+    void refreshApplyPending();
+  }, [refreshApplyPending, transactions]);
 
   const typeTotals = useMemo(
     () => computeTypeTotals(transactions),
@@ -245,13 +220,19 @@ export function TransactionsView({
     transactionTags,
   ]);
 
+  const sortedRows = useMemo(
+    () =>
+      [...filtered].sort((a, b) =>
+        b.occurred_on.localeCompare(a.occurred_on),
+      ),
+    [filtered],
+  );
+
   const hasActiveFilters =
     filter !== "all" ||
     categoryFilter !== "all" ||
     tagFilter !== "all" ||
     search.trim().length > 0;
-
-  const grouped = useMemo(() => groupByDate(filtered), [filtered]);
 
   function handleApplyRecurring() {
     startTransition(async () => {
@@ -264,6 +245,7 @@ export function TransactionsView({
       const plan = result.plan ?? { toCreate: [], toUpdate: [] };
 
       if (plan.toCreate.length === 0 && plan.toUpdate.length === 0) {
+        setApplyPending(false);
         toast("All recurring entries already applied", "success");
         return;
       }
@@ -283,6 +265,7 @@ export function TransactionsView({
 
       setApplySheetOpen(false);
       setApplyPlan(null);
+      setApplyPending(false);
 
       const parts: string[] = [];
       if (result.created) {
@@ -298,6 +281,7 @@ export function TransactionsView({
           : "Nothing to apply",
         "success",
       );
+      void refreshApplyPending();
     });
   }
 
@@ -316,254 +300,237 @@ export function TransactionsView({
     <>
       <PageHeader title="Transactions">
         <MonthPicker basePath="/transactions" />
-        <div className="md:hidden">
-          <SignOutButton />
-        </div>
       </PageHeader>
 
-      <PageContainer className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-            {TYPE_TOTAL_ITEMS.map(({ type }) => (
-              <Card key={type} className="p-3 text-center sm:p-4">
-                <p className="text-xs text-muted-foreground sm:text-sm">
-                  {CATEGORY_TYPE_LABELS[type]}
+      <PageContainer>
+        <Stagger
+          className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
+          stagger={0.05}
+        >
+          <StaggerItem className="w-full min-w-0">
+            <StatHero
+              label="What's left"
+              amount={`${netTotal >= 0 ? "+" : "−"}${formatEuro(Math.abs(netTotal))}`}
+              amountClassName={
+                netTotal >= 0 ? "text-success" : "text-destructive"
+              }
+              subtitle={
+                <p>
+                  <span className="privacy-amount text-success tabular-nums">
+                    {formatEuro(typeTotals.income)}
+                  </span>
+                  {" earned · "}
+                  <span className="privacy-amount text-destructive tabular-nums">
+                    {formatEuro(typeTotals.expense)}
+                  </span>
+                  {" spent"}
                 </p>
-                <p
-                  className={cn(
-                    "mt-1 tabular-nums text-sm font-semibold sm:text-base",
-                    TYPE_AMOUNT_CLASS[type],
-                  )}
-                >
-                  {formatSignedTypeTotal(type, typeTotals[type])}
-                </p>
-              </Card>
-            ))}
-          </div>
-          <Card
-            className={cn(
-              "border p-4 text-center sm:p-5",
-              netTotal >= 0
-                ? "border-success bg-success/10"
-                : "border-destructive bg-destructive/10",
-            )}
-          >
-            <p className="font-head text-sm uppercase tracking-wide text-muted-foreground">
-              What&apos;s left
-            </p>
-            <p
-              className={cn(
-                "privacy-amount mt-1 font-head text-2xl font-semibold sm:text-3xl",
-                netTotal >= 0 ? "text-success" : "text-destructive",
-              )}
-            >
-              {netTotal >= 0 ? "+" : "−"}
-              {formatEuro(Math.abs(netTotal))}
-            </p>
-          </Card>
-        </div>
+              }
+            />
+          </StaggerItem>
 
-        <div className="flex flex-col gap-2 md:flex-row md:justify-end">
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full md:w-auto md:min-w-[14rem]"
-            onClick={handleApplyRecurring}
-            disabled={pending}
-          >
-            {pending ? "Applying…" : "Apply recurring"}
-          </Button>
-          <Button
-            size="lg"
-            className="w-full md:w-auto md:min-w-[14rem]"
-            onClick={() => setFormOpen(true)}
-          >
-            <Plus size={18} className="mr-1" />
-            Add transaction
-          </Button>
-        </div>
+          <StaggerItem className="w-full min-w-0 max-w-2xl">
+            <TransactionTypeSankey
+              typeTotals={typeTotals}
+              remaining={netTotal}
+            />
+          </StaggerItem>
 
-        {transactions.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <div
-              className="flex gap-2 overflow-x-auto pb-1"
-              role="tablist"
-              aria-label="Filter transactions"
-            >
-              {FILTER_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="tab"
-                  aria-selected={filter === option.value}
-                  onClick={() => setFilter(option.value)}
-                  className={cn(
-                    "shrink-0 rounded border px-3 py-1.5 text-sm font-medium",
-                    "transition-colors",
-                    filter === option.value
-                      ? "border-foreground bg-primary text-primary-foreground"
-                      : "border-border bg-background hover:bg-accent",
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <div className="relative flex-1">
-                <MagnifyingGlass
-                  size={16}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden
-                />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search category or note…"
-                  aria-label="Search transactions"
-                  className={cn(
-                    "h-10 w-full rounded border border-border bg-background",
-                    "pl-9 pr-3 text-sm text-foreground",
-                  )}
-                />
-              </div>
-              <select
-                value={categoryFilter}
-                onChange={(event) => setCategoryFilter(event.target.value)}
-                aria-label="Filter by category"
-                className={cn(
-                  "h-10 rounded border border-border bg-background px-3",
-                  "text-sm text-foreground sm:w-52",
-                )}
+          <StaggerItem className="flex w-full flex-col items-center gap-3">
+            {applyPending ? (
+              <p className="text-center text-sm text-muted-foreground">
+                Recurring changed — apply to update this month.
+              </p>
+            ) : null}
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                variant={applyPending ? "default" : "ghost"}
+                size="md"
+                onClick={handleApplyRecurring}
+                disabled={pending}
               >
-                <option value="all">All categories</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
+                {pending ? "Applying…" : "Apply recurring"}
+              </Button>
+              <Button size="md" onClick={() => setFormOpen(true)}>
+                <Plus size={18} className="mr-1" />
+                Add transaction
+              </Button>
+            </div>
+          </StaggerItem>
+
+          {transactions.length > 0 ? (
+            <StaggerItem className="w-full space-y-3">
+              <div
+                className="flex justify-center gap-2 overflow-x-auto pb-1"
+                role="tablist"
+                aria-label="Filter transactions"
+              >
+                {FILTER_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={filter === option.value}
+                    onClick={() => setFilter(option.value)}
+                    className={cn(
+                      "shrink-0 px-3 py-1.5 text-sm font-medium",
+                      "transition-colors",
+                      filter === option.value
+                        ? "text-foreground underline underline-offset-4"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {option.label}
+                  </button>
                 ))}
-              </select>
-              {tags.length > 0 && (
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+                <div className="relative flex-1 sm:max-w-xs">
+                  <MagnifyingGlass
+                    size={16}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden
+                  />
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search category or note…"
+                    aria-label="Search transactions"
+                    className={cn(
+                      "h-10 w-full border-b border-border bg-transparent",
+                      "pl-9 pr-3 text-sm text-foreground outline-none",
+                      "focus:border-foreground",
+                    )}
+                  />
+                </div>
                 <select
-                  value={tagFilter}
-                  onChange={(event) => setTagFilter(event.target.value)}
-                  aria-label="Filter by tag"
+                  value={categoryFilter}
+                  onChange={(event) => setCategoryFilter(event.target.value)}
+                  aria-label="Filter by category"
                   className={cn(
-                    "h-10 rounded border border-border bg-background px-3",
-                    "text-sm text-foreground sm:w-40",
+                    "h-10 border-b border-border bg-transparent px-1",
+                    "text-sm text-foreground outline-none sm:w-44",
+                    "focus:border-foreground",
                   )}
                 >
-                  <option value="all">All tags</option>
-                  {tags.map((tag) => (
-                    <option key={tag.id} value={tag.id}>
-                      {tag.name}
+                  <option value="all">All categories</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
                     </option>
                   ))}
                 </select>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-10 px-3"
-                onClick={handleExport}
-              >
-                <DownloadSimple size={16} className="mr-1.5" />
-                Export CSV
-              </Button>
-            </div>
-          </div>
-        )}
+                {tags.length > 0 ? (
+                  <select
+                    value={tagFilter}
+                    onChange={(event) => setTagFilter(event.target.value)}
+                    aria-label="Filter by tag"
+                    className={cn(
+                      "h-10 border-b border-border bg-transparent px-1",
+                      "text-sm text-foreground outline-none sm:w-36",
+                      "focus:border-foreground",
+                    )}
+                  >
+                    <option value="all">All tags</option>
+                    {tags.map((tag) => (
+                      <option key={tag.id} value={tag.id}>
+                        {tag.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-10 px-2"
+                  onClick={handleExport}
+                >
+                  <DownloadSimple size={16} className="mr-1.5" />
+                  Export CSV
+                </Button>
+              </div>
+            </StaggerItem>
+          ) : null}
 
-        {transactions.length === 0 ? (
-          <EmptyState
-            title="No transactions yet"
-            description="Add a manual entry or apply your recurring items for this month."
-          />
-        ) : filtered.length === 0 ? (
-          <EmptyState
-            title="No matching entries"
-            description="Try another search or filter, or add a new transaction."
-          >
-            {hasActiveFilters && (
-              <Button
-                size="lg"
-                onClick={() => {
-                  setFilter("all");
-                  setCategoryFilter("all");
-                  setTagFilter("all");
-                  setSearch("");
-                }}
+          <StaggerItem className="w-full">
+            {transactions.length === 0 ? (
+              <EmptyState
+                title="No transactions yet"
+                description="Add a manual entry or apply your recurring items for this month."
+              />
+            ) : filtered.length === 0 ? (
+              <EmptyState
+                title="No matching entries"
+                description="Try another search or filter, or add a new transaction."
               >
-                Clear filters
-              </Button>
-            )}
-          </EmptyState>
-        ) : (
-          <div className="flex flex-col gap-5">
-            {grouped.map((group) => (
-              <section key={group.date}>
-                <h2 className="mb-2 font-head text-sm uppercase tracking-wide text-muted-foreground">
-                  {group.label}
-                </h2>
-                <ul className="flex flex-col gap-2">
-                  {group.items.map((tx) => (
-                    <li key={tx.id}>
-                      <button
-                        type="button"
+                {hasActiveFilters ? (
+                  <Button
+                    size="md"
+                    onClick={() => {
+                      setFilter("all");
+                      setCategoryFilter("all");
+                      setTagFilter("all");
+                      setSearch("");
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                ) : null}
+              </EmptyState>
+            ) : (
+              <div className="w-full overflow-x-auto">
+                <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <th className="pb-2 pr-3 font-medium">Date</th>
+                      <th className="pb-2 pr-3 font-medium">Category</th>
+                      <th className="pb-2 pr-3 font-medium">Note</th>
+                      <th className="pb-2 text-right font-medium">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedRows.map((tx) => (
+                      <tr
+                        key={tx.id}
+                        className="cursor-pointer border-b border-border/40 transition-colors hover:bg-muted/30"
                         onClick={() => setEditTransaction(tx)}
-                        className="w-full text-left"
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setEditTransaction(tx);
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
                         aria-label={`Edit ${tx.categories.name}`}
                       >
-                        <Card className="flex w-full items-center gap-3 p-3 transition-colors hover:bg-muted sm:p-4">
-                          <CategoryIcon icon={tx.categories.icon} />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="truncate font-medium">
-                                {tx.categories.name}
-                              </p>
-                              <CategoryTypeBadge type={tx.categories.type} />
-                              {!countsTowardSummary(tx) && (
-                                <Badge size="sm" variant="outline">
-                                  Tracking
-                                </Badge>
-                              )}
-                              {tx.recurring_template_id &&
-                                yearlyIds.has(tx.recurring_template_id) && (
-                                  <Badge size="sm" variant="outline">
-                                    Annual payment
-                                  </Badge>
-                                )}
-                              {(transactionTags[tx.id] ?? []).map((tag) => (
-                                <Badge key={tag.id} size="sm" variant="outline">
-                                  {tag.name}
-                                </Badge>
-                              ))}
-                            </div>
-                            {tx.note && (
-                              <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                                {tx.note}
-                              </p>
-                            )}
-                          </div>
-                          <span
-                            className={cn(
-                              "privacy-amount shrink-0 text-base font-semibold",
-                              TYPE_AMOUNT_CLASS[tx.categories.type],
-                            )}
-                          >
-                            {formatEuro(Number(tx.amount))}
-                          </span>
-                        </Card>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
-        )}
+                        <td className="whitespace-nowrap py-3 pr-3 text-muted-foreground">
+                          {formatDisplayDate(tx.occurred_on)}
+                        </td>
+                        <td className="max-w-[10rem] truncate py-3 pr-3 font-medium">
+                          {tx.categories.name}
+                        </td>
+                        <td className="max-w-[12rem] truncate py-3 pr-3 text-muted-foreground">
+                          {tx.note || "—"}
+                        </td>
+                        <td
+                          className={cn(
+                            "privacy-amount whitespace-nowrap py-3 text-right font-semibold tabular-nums",
+                            TYPE_AMOUNT_CLASS[tx.categories.type],
+                          )}
+                        >
+                          {formatEuro(Number(tx.amount))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </StaggerItem>
+        </Stagger>
       </PageContainer>
 
       <TransactionForm

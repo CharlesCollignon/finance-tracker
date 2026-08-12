@@ -70,6 +70,8 @@ export interface Database {
           instrument_name: string | null;
           last_quote_price: number | null;
           last_quote_at: string | null;
+          starts_on: string | null;
+          ends_on: string | null;
           created_at: string;
         };
         Insert: {
@@ -89,6 +91,8 @@ export interface Database {
           instrument_name?: string | null;
           last_quote_price?: number | null;
           last_quote_at?: string | null;
+          starts_on?: string | null;
+          ends_on?: string | null;
           created_at?: string;
         };
         Update: {
@@ -108,6 +112,8 @@ export interface Database {
           instrument_name?: string | null;
           last_quote_price?: number | null;
           last_quote_at?: string | null;
+          starts_on?: string | null;
+          ends_on?: string | null;
           created_at?: string;
         };
         Relationships: [

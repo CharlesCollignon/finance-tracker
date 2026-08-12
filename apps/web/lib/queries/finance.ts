@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { getMonthBounds, type BudgetViewMode } from "@finance/core/constants";
@@ -31,24 +32,24 @@ export async function getTransactions(
   return (data ?? []) as TransactionWithCategory[];
 }
 
-export async function getInvestmentTransactions(
-  userId: string,
-): Promise<TransactionWithCategory[]> {
-  const supabase = await createClient();
+export const getInvestmentTransactions = cache(
+  async (userId: string): Promise<TransactionWithCategory[]> => {
+    const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*, categories!inner(name, type, icon, counts_toward_summary)")
-    .eq("user_id", userId)
-    .eq("categories.type", "investment")
-    .order("occurred_on", { ascending: true });
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*, categories!inner(name, type, icon, counts_toward_summary)")
+      .eq("user_id", userId)
+      .eq("categories.type", "investment")
+      .order("occurred_on", { ascending: true });
 
-  if (error) {
-    throw error;
-  }
+    if (error) {
+      throw error;
+    }
 
-  return (data ?? []) as TransactionWithCategory[];
-}
+    return (data ?? []) as TransactionWithCategory[];
+  },
+);
 
 export async function getRecurringSkipKeys(
   userId: string,
@@ -97,20 +98,20 @@ export async function getMonthlySummary(
   );
 }
 
-export async function getRecurringTemplates(
-  userId: string,
-): Promise<RecurringTemplateWithCategory[]> {
-  const supabase = await createClient();
+export const getRecurringTemplates = cache(
+  async (userId: string): Promise<RecurringTemplateWithCategory[]> => {
+    const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("recurring_templates")
-    .select("*, categories(name, type, icon, counts_toward_summary)")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true });
+    const { data, error } = await supabase
+      .from("recurring_templates")
+      .select("*, categories(name, type, icon, counts_toward_summary)")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true });
 
-  if (error) {
-    throw error;
-  }
+    if (error) {
+      throw error;
+    }
 
-  return (data ?? []) as RecurringTemplateWithCategory[];
-}
+    return (data ?? []) as RecurringTemplateWithCategory[];
+  },
+);

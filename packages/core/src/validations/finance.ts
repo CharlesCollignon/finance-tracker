@@ -23,6 +23,14 @@ export const categorySchema = z.object({
   countsTowardSummary: z.boolean().optional(),
 });
 
+const optionalIsoDate = z
+  .union([
+    z.literal(""),
+    z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date"),
+  ])
+  .optional()
+  .transform((value) => (value && value.length > 0 ? value : undefined));
+
 const recurringCommonSchema = z.object({
   id: z.string().uuid().optional(),
   categoryId: z.string().uuid(),
@@ -36,6 +44,10 @@ const recurringCommonSchema = z.object({
   shareCount: z.coerce.number().int().positive().optional(),
   instrumentSymbol: z.string().min(1).max(32).optional(),
   instrumentName: z.string().min(1).max(200).optional(),
+  /** Optional échéancier start (inclusive). Empty = open-ended. */
+  startsOn: optionalIsoDate,
+  /** Optional échéancier end (inclusive). Empty = open-ended. */
+  endsOn: optionalIsoDate,
 });
 
 function applyPricingRules(
@@ -78,26 +90,47 @@ function applyPricingRules(
   }
 }
 
+function applyScheduleRules(
+  data: z.infer<typeof recurringCommonSchema>,
+  ctx: z.RefinementCtx,
+) {
+  if (data.startsOn && data.endsOn && data.startsOn > data.endsOn) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "End date must be on or after start date",
+      path: ["endsOn"],
+    });
+  }
+}
+
+function applyRecurringRules(
+  data: z.infer<typeof recurringCommonSchema>,
+  ctx: z.RefinementCtx,
+) {
+  applyPricingRules(data, ctx);
+  applyScheduleRules(data, ctx);
+}
+
 export const recurringTemplateSchema = z.discriminatedUnion("recurrence", [
   recurringCommonSchema
     .extend({
       recurrence: z.literal("monthly"),
       dayOfMonth: z.coerce.number().int().min(1).max(31),
     })
-    .superRefine(applyPricingRules),
+    .superRefine(applyRecurringRules),
   recurringCommonSchema
     .extend({
       recurrence: z.literal("weekly"),
       dayOfWeek: z.coerce.number().int().min(1).max(7),
     })
-    .superRefine(applyPricingRules),
+    .superRefine(applyRecurringRules),
   recurringCommonSchema
     .extend({
       recurrence: z.literal("yearly"),
       monthOfYear: z.coerce.number().int().min(1).max(12),
       dayOfMonth: z.coerce.number().int().min(1).max(31),
     })
-    .superRefine(applyPricingRules),
+    .superRefine(applyRecurringRules),
 ]);
 
 export const applyRecurringSchema = z.object({

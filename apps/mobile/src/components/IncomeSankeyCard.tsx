@@ -22,7 +22,12 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
   const colors = colorsForScheme(scheme === "light" ? "light" : "dark");
   const { hidden } = usePrivacy();
   const graph = useMemo(() => buildIncomeSankey(summary), [summary]);
-  const rate = savingsRatePercent(summary.savings, summary.income);
+  const rate = savingsRatePercent(
+    summary.savings,
+    summary.investments,
+    summary.investmentDeployments,
+    summary.income,
+  );
 
   const labelByName = useMemo(() => {
     const map = new Map<string, string>();
@@ -54,17 +59,19 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
         {
           type: "sankey",
           emphasis: { focus: "adjacency" },
-          nodeAlign: "left",
-          nodeGap: 12,
+          nodeAlign: "justify",
+          nodeGap: 8,
           nodeWidth: 14,
+          layoutIterations: 0,
           lineStyle: {
             color: "gradient",
             curveness: 0.5,
-            opacity: 0.45,
+            opacity: 0.4,
           },
           label: {
             color: colors.foreground,
             fontSize: 10,
+            position: "right",
             formatter: (params: { name: string; value?: number }) => {
               const label = labelByName.get(params.name) ?? params.name;
               if (hidden) {
@@ -77,6 +84,7 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
             const midKey = node.name.split(":")[0];
             return {
               name: node.name,
+              depth: node.depth,
               itemStyle: {
                 color:
                   colorByKey[midKey] ??

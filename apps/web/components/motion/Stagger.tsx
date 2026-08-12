@@ -1,7 +1,14 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import type { ReactNode } from "react";
+import {
+  Children,
+  Fragment,
+  cloneElement,
+  isValidElement,
+  type CSSProperties,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { cn } from "@/lib/utils";
 
 interface StaggerProps {
@@ -10,51 +17,80 @@ interface StaggerProps {
   stagger?: number;
 }
 
-/** Light list stagger for page sections. */
+type StyledProps = {
+  className?: string;
+  style?: CSSProperties;
+  children?: ReactNode;
+};
+
+/** Flatten Fragments so we never put className on React.Fragment. */
+function flattenElements(children: ReactNode): ReactElement<StyledProps>[] {
+  const result: ReactElement<StyledProps>[] = [];
+
+  Children.forEach(children, (child) => {
+    if (!isValidElement<StyledProps>(child)) {
+      return;
+    }
+
+    if (child.type === Fragment) {
+      result.push(...flattenElements(child.props.children));
+      return;
+    }
+
+    result.push(child);
+  });
+
+  return result;
+}
+
+/** CSS stagger enter — no framer-motion. */
 export function Stagger({ children, className, stagger = 0.04 }: StaggerProps) {
-  const reduce = useReducedMotion();
+  const items = flattenElements(children);
 
   return (
-    <motion.div
-      className={cn(className)}
-      initial="hidden"
-      animate="show"
-      variants={{
-        hidden: {},
-        show: {
-          transition: {
-            staggerChildren: reduce ? 0 : stagger,
-          },
-        },
-      }}
-    >
-      {children}
-    </motion.div>
+    <div className={cn(className)}>
+      {items.map((child, index) => {
+        const delay = `${index * stagger}s`;
+        const style: CSSProperties = {
+          ...child.props.style,
+          animationDelay: delay,
+        };
+        const key = child.key ?? index;
+
+        if (child.type === StaggerItem) {
+          return cloneElement(child, { key, style });
+        }
+
+        if (typeof child.type === "string") {
+          return cloneElement(child, {
+            key,
+            className: cn("stagger-item", child.props.className),
+            style,
+          });
+        }
+
+        return (
+          <div key={key} className="stagger-item" style={style}>
+            {child}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
 export function StaggerItem({
   children,
   className,
+  style,
 }: {
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
 }) {
-  const reduce = useReducedMotion();
-
   return (
-    <motion.div
-      className={cn(className)}
-      variants={{
-        hidden: reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 },
-        show: {
-          opacity: 1,
-          y: 0,
-          transition: { duration: 0.2, ease: "easeOut" },
-        },
-      }}
-    >
+    <div className={cn("stagger-item", className)} style={style}>
       {children}
-    </motion.div>
+    </div>
   );
 }

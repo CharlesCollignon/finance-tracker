@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { APP_NAV_ITEMS, PROFILE_NAV_ITEM } from "@/lib/navigation";
 import { SHELL_HEADER_BAND_CLASS } from "@/lib/layout-shell";
 import { Logo } from "@/components/layout/Logo";
-import { SignOutButton } from "@/components/layout/SignOutButton";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 export function SideNav() {
@@ -69,7 +68,6 @@ export function SideNav() {
           <ProfileIcon size={18} weight={profileActive ? "fill" : "regular"} />
           {PROFILE_NAV_ITEM.label}
         </Link>
-        <SignOutButton className="w-full justify-start px-3" />
       </div>
     </aside>
   );

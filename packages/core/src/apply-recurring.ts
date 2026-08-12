@@ -1,6 +1,9 @@
 import { formatShortDate } from "./constants";
 import { displayNameForRecurringTemplate } from "./investment-positions";
-import { getRecurringOccurrenceDates } from "./recurrence";
+import {
+  filterDatesBySchedule,
+  getRecurringOccurrenceDates,
+} from "./recurrence";
 import { resolveRecurringAmount } from "./recurring-shares";
 import type { RecurringTemplateWithCategory } from "./types/database";
 
@@ -77,15 +80,19 @@ export async function buildApplyRecurringPlan(
       continue;
     }
 
-    const occurrenceDates = getRecurringOccurrenceDates(
-      {
-        recurrence: template.recurrence ?? "monthly",
-        day_of_month: template.day_of_month,
-        day_of_week: template.day_of_week,
-        month_of_year: template.month_of_year,
-      },
-      year,
-      month,
+    const occurrenceDates = filterDatesBySchedule(
+      getRecurringOccurrenceDates(
+        {
+          recurrence: template.recurrence ?? "monthly",
+          day_of_month: template.day_of_month,
+          day_of_week: template.day_of_week,
+          month_of_year: template.month_of_year,
+        },
+        year,
+        month,
+      ),
+      template.starts_on,
+      template.ends_on,
     );
 
     for (const occurredOn of occurrenceDates) {

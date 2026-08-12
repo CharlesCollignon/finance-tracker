@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Alert, Modal, Pressable, ScrollView, View } from "react-native";
 
 import {
   formatCategoryOptionLabel,
@@ -52,6 +52,8 @@ export function RecurringFormModal({
   const [monthOfYear, setMonthOfYear] = useState(
     String(template?.month_of_year ?? 10),
   );
+  const [startsOn, setStartsOn] = useState(template?.starts_on ?? "");
+  const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -80,6 +82,12 @@ export function RecurringFormModal({
       payload.monthOfYear = monthOfYear;
       payload.dayOfMonth = dayOfMonth;
     }
+    if (startsOn.trim()) {
+      payload.startsOn = startsOn.trim();
+    }
+    if (endsOn.trim()) {
+      payload.endsOn = endsOn.trim();
+    }
 
     const result = await upsertRecurringTemplate(payload);
     setPending(false);
@@ -87,6 +95,10 @@ export function RecurringFormModal({
       setError(result.error);
       return;
     }
+    Alert.alert(
+      isEditing ? "Updated" : "Saved",
+      "Apply recurring on Transactions to see changes.",
+    );
     onSaved();
     onClose();
   }
@@ -102,6 +114,10 @@ export function RecurringFormModal({
       setError(result.error);
       return;
     }
+    Alert.alert(
+      "Deleted",
+      "Apply recurring on Transactions to see changes.",
+    );
     onSaved();
     onClose();
   }
@@ -224,6 +240,33 @@ export function RecurringFormModal({
                 />
               </>
             )}
+
+            <Text variant="label" className="mb-1">
+              Active period (optional)
+            </Text>
+            <Text variant="muted" className="mb-2 text-xs">
+              YYYY-MM-DD. Leave empty for open-ended.
+            </Text>
+            <Text variant="label" className="mb-2">
+              Starts on
+            </Text>
+            <Input
+              value={startsOn}
+              onChangeText={setStartsOn}
+              placeholder="2026-01-01"
+              autoCapitalize="none"
+              className="mb-4"
+            />
+            <Text variant="label" className="mb-2">
+              Ends on
+            </Text>
+            <Input
+              value={endsOn}
+              onChangeText={setEndsOn}
+              placeholder="2026-10-31"
+              autoCapitalize="none"
+              className="mb-4"
+            />
 
             {error ? (
               <Text className="mb-3 text-destructive">{error}</Text>

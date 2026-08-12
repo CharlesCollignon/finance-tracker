@@ -7,6 +7,7 @@ import {
 } from "./investments";
 import {
   estimateMonthlyAmount,
+  filterDatesBySchedule,
   getRecurringOccurrenceDates,
 } from "./recurrence";
 import type {
@@ -66,15 +67,19 @@ export function buildUpcomingInvestments(
     }
 
     for (const window of months) {
-      const dates = getRecurringOccurrenceDates(
-        {
-          recurrence: template.recurrence ?? "monthly",
-          day_of_month: template.day_of_month,
-          day_of_week: template.day_of_week,
-          month_of_year: template.month_of_year,
-        },
-        window.year,
-        window.month,
+      const dates = filterDatesBySchedule(
+        getRecurringOccurrenceDates(
+          {
+            recurrence: template.recurrence ?? "monthly",
+            day_of_month: template.day_of_month,
+            day_of_week: template.day_of_week,
+            month_of_year: template.month_of_year,
+          },
+          window.year,
+          window.month,
+        ),
+        template.starts_on,
+        template.ends_on,
       ).filter((date) => date > asOfDate);
 
       for (const date of dates) {

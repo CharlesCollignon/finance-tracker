@@ -70,11 +70,7 @@ export function ProfileView({
 
   return (
     <>
-      <PageHeader title="Profile">
-        <div className="md:hidden">
-          <SignOutButton />
-        </div>
-      </PageHeader>
+      <PageHeader title="Profile" />
 
       <PageContainer className="flex flex-col gap-4">
         <Card className="block w-full p-4 md:p-5">
@@ -224,9 +220,7 @@ export function ProfileView({
           </form>
         </Card>
 
-        <div className="hidden md:block">
-          <SignOutButton className="px-0" />
-        </div>
+        <SignOutButton className="px-0" />
       </PageContainer>
     </>
   );

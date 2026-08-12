@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
 import { cn } from "@/lib/utils";
@@ -10,7 +10,12 @@ import {
   type PositionChartPoint,
   type PositionChartRange,
 } from "@finance/core/investment-positions";
-import { baseGrid, chartTextStyle } from "@/lib/echarts-theme";
+import {
+  baseGrid,
+  chartTextStyle,
+  paddedValueAxisRange,
+} from "@/lib/echarts-theme";
+import { useEchartsSize } from "@/lib/use-echarts-size";
 
 type ChartMode = "value" | "pl";
 
@@ -39,6 +44,9 @@ export function InvestmentItemChart({
   interactive = false,
   size = "md",
 }: InvestmentItemChartProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<ReactECharts>(null);
+  const width = useEchartsSize(containerRef, chartRef);
   const [mode, setMode] = useState<ChartMode>("value");
   const [range, setRange] = useState<PositionChartRange>("1Y");
 
@@ -83,6 +91,7 @@ export function InvestmentItemChart({
     };
 
     if (mode === "pl") {
+      const plRange = paddedValueAxisRange(chartData.map((row) => row.pl));
       return {
         animationDuration: 300,
         grid: baseGrid(),
@@ -114,10 +123,16 @@ export function InvestmentItemChart({
           boundaryGap: false,
           axisLine: { show: false },
           axisTick: { show: false },
-          axisLabel: chartTextStyle(),
+          axisLabel: {
+            ...chartTextStyle(),
+            hideOverlap: true,
+          },
         },
         yAxis: {
           type: "value",
+          min: plRange.min,
+          max: plRange.max,
+          scale: true,
           splitLine: {
             lineStyle: { color: "var(--border)", type: "dashed" },
           },
@@ -136,6 +151,10 @@ export function InvestmentItemChart({
         ],
       };
     }
+
+    const valueRange = paddedValueAxisRange(
+      chartData.flatMap((row) => [row.invested, row.market]),
+    );
 
     return {
       animationDuration: 300,
@@ -171,10 +190,16 @@ export function InvestmentItemChart({
         boundaryGap: false,
         axisLine: { show: false },
         axisTick: { show: false },
-        axisLabel: chartTextStyle(),
+        axisLabel: {
+          ...chartTextStyle(),
+          hideOverlap: true,
+        },
       },
       yAxis: {
         type: "value",
+        min: valueRange.min,
+        max: valueRange.max,
+        scale: true,
         splitLine: {
           lineStyle: { color: "var(--border)", type: "dashed" },
         },
@@ -245,9 +270,9 @@ export function InvestmentItemChart({
   }
 
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full min-w-0 max-w-full", className)}>
       {interactive && (
-        <div className="mb-2 flex flex-col gap-2">
+        <div className="mb-2 flex min-w-0 flex-col gap-2">
           <div
             className="flex rounded-lg border border-border p-0.5"
             role="tablist"
@@ -265,7 +290,7 @@ export function InvestmentItemChart({
           </div>
 
           <div
-            className="flex flex-wrap gap-1"
+            className="flex min-w-0 flex-wrap gap-1"
             role="group"
             aria-label="Chart range"
           >
@@ -291,15 +316,21 @@ export function InvestmentItemChart({
       )}
 
       <div
+        ref={containerRef}
         className={cn(
+          "min-w-0 max-w-full overflow-hidden",
           !interactive && "h-full min-h-24",
           interactive && size === "md" && "h-40",
           interactive && size === "lg" && "h-56 md:h-64",
         )}
       >
         <ReactECharts
+          ref={chartRef}
           option={option}
-          style={{ height: "100%", width: "100%" }}
+          style={{
+            height: "100%",
+            width: width != null && width > 0 ? width : "100%",
+          }}
           opts={{ renderer: "svg" }}
           notMerge
         />

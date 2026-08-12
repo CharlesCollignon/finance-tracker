@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight } from "@phosphor-icons/react";
-import { Card } from "@/components/retroui/Card";
+import ReactECharts from "echarts-for-react";
+import type { EChartsOption } from "echarts";
 import { formatEuro } from "@finance/core/constants";
 import {
-  INVESTMENT_WALLET_COLORS,
   INVESTMENT_WALLET_LABELS,
   INVESTMENT_WALLET_IDS,
 } from "@finance/core/investments";
@@ -13,6 +14,10 @@ import {
   portfolioHasActivity,
   type InvestmentPortfolioSummary,
 } from "@finance/core/investment-positions";
+import { StatHero } from "@/components/finance/StatHero";
+import { PrivateAmount } from "@/components/layout/PrivateAmount";
+import { chartTextStyle, CHART_PALETTE } from "@/lib/echarts-theme";
+import { readCssVar } from "@/lib/css-var";
 import { cn } from "@/lib/utils";
 
 interface DashboardWalletsCardProps {
@@ -30,95 +35,186 @@ function formatSignedEuro(amount: number): string {
   return formatted;
 }
 
+const WALLET_COLOR_VARS = [
+  "--chart-1",
+  "--chart-2",
+  "--chart-3",
+] as const;
+
 export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
   const hasData = portfolioHasActivity(portfolio);
+  const pl = portfolio.totalGainLoss;
+  const showPl = portfolio.hasMarketSnapshot && pl !== 0;
+
+  const slices = useMemo(
+    () =>
+      INVESTMENT_WALLET_IDS.map((walletId, index) => {
+        const column = portfolio.columns.find(
+          (entry) => entry.walletId === walletId,
+        );
+        return {
+          id: walletId,
+          label: INVESTMENT_WALLET_LABELS[walletId],
+          value: column?.totalMarketValue ?? 0,
+          colorVar: WALLET_COLOR_VARS[index] ?? "--chart-1",
+        };
+      }).filter((slice) => slice.value > 0),
+    [portfolio.columns],
+  );
+
+  const [colors, setColors] = useState<string[]>([...CHART_PALETTE]);
+  const [card, setCard] = useState("#141414");
+  const [border, setBorder] = useState("#27272a");
+  const [foreground, setForeground] = useState("#fafafa");
+
+  useEffect(() => {
+    const sync = () => {
+      setColors(
+        WALLET_COLOR_VARS.map((name, i) =>
+          readCssVar(name, CHART_PALETTE[i] ?? "#a1a1aa"),
+        ),
+      );
+      setCard(readCssVar("--card", "#141414"));
+      setBorder(readCssVar("--border", "#27272a"));
+      setForeground(readCssVar("--foreground", "#fafafa"));
+    };
+    sync();
+    const root = document.documentElement;
+    const observer = new MutationObserver(sync);
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ["class", "data-privacy"],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  const option = useMemo<EChartsOption | null>(() => {
+    if (slices.length === 0) {
+      return null;
+    }
+    return {
+      animationDuration: 450,
+      tooltip: {
+        trigger: "item",
+        backgroundColor: card,
+        borderColor: border,
+        textStyle: {
+          ...chartTextStyle(),
+          color: foreground,
+        },
+        formatter: (params: unknown) => {
+          const p = params as { name: string; value: number };
+          return `${p.name}<br/><strong>${formatEuro(p.value)}</strong>`;
+        },
+      },
+      series: [
+        {
+          type: "pie",
+          radius: ["58%", "78%"],
+          center: ["50%", "50%"],
+          avoidLabelOverlap: true,
+          label: { show: false },
+          labelLine: { show: false },
+          data: slices.map((slice, index) => ({
+            name: slice.label,
+            value: slice.value,
+            itemStyle: {
+              color: colors[index % colors.length],
+            },
+          })),
+        },
+      ],
+    };
+  }, [border, card, colors, foreground, slices]);
 
   return (
-    <Card className="w-full md:col-span-2">
-      <div className="flex items-start justify-between gap-3 p-4 md:p-5">
-        <div>
-          <h2 className="font-head text-base">Wallets</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            PEA, CTO &amp; Crypto holdings · live market value
-          </p>
-        </div>
-        <Link
-          href="/investments"
-          className={cn(
-            "inline-flex shrink-0 items-center gap-1 text-sm font-medium",
-            "underline-offset-4 hover:underline",
-          )}
-        >
-          Open
-          <ArrowRight size={14} />
-        </Link>
-      </div>
-
+    <section className="flex w-full flex-col items-center text-center">
       {hasData ? (
         <>
-          <div className="border-t border-border px-4 pb-4 md:px-5">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Total portfolio
-            </p>
-            <p className="privacy-amount mt-1 font-head text-2xl font-semibold md:text-3xl">
-              {formatEuro(portfolio.totalMarketValue)}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              <span>
-                Invested{" "}
-                <span className="privacy-amount font-medium text-foreground">
-                  {formatEuro(portfolio.totalInvested)}
+          <div className="flex items-center justify-center gap-2">
+            <p className="text-sm font-medium text-muted-foreground">Wallets</p>
+            <Link
+              href="/investments"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Open wallets"
+            >
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+          <StatHero
+            className="mt-1"
+            label="Market value"
+            size="md"
+            amount={formatEuro(portfolio.totalMarketValue)}
+            subtitle={
+              <p>
+                <span className="privacy-amount">
+                  {formatEuro(portfolio.totalInvested)} invested
                 </span>
-              </span>
-              {portfolio.hasMarketSnapshot && portfolio.totalGainLoss !== 0 && (
-                <span>
-                  P/L{" "}
-                  <span
-                    className={cn(
-                      "privacy-amount font-semibold",
-                      portfolio.totalGainLoss > 0
-                        ? "text-success"
-                        : "text-destructive",
-                    )}
-                  >
-                    {formatSignedEuro(portfolio.totalGainLoss)}
-                  </span>
-                </span>
-              )}
+                {showPl ? (
+                  <>
+                    {" · "}
+                    <span
+                      className={cn(
+                        "privacy-amount font-medium",
+                        pl > 0 ? "text-success" : "text-destructive",
+                      )}
+                    >
+                      {formatSignedEuro(pl)}
+                    </span>
+                  </>
+                ) : null}
+              </p>
+            }
+          />
+          {option ? (
+            <div className="privacy-sensitive mt-4 h-52 w-full max-w-xs">
+              <ReactECharts
+                option={option}
+                style={{ height: "100%", width: "100%" }}
+                opts={{ renderer: "svg" }}
+                notMerge
+              />
             </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 border-t border-border px-4 py-4 md:px-5">
-            {INVESTMENT_WALLET_IDS.map((walletId) => {
-              const column = portfolio.columns.find(
-                (entry) => entry.walletId === walletId,
-              );
-              const value = column?.totalMarketValue ?? 0;
-              const accent = INVESTMENT_WALLET_COLORS[walletId];
-
-              return (
-                <div
-                  key={walletId}
-                  className="border border-border px-2 py-2 text-center"
-                  style={{ borderTopColor: accent, borderTopWidth: 3 }}
-                >
-                  <p className="text-xs text-muted-foreground">
-                    {INVESTMENT_WALLET_LABELS[walletId]}
-                  </p>
-                  <p className="privacy-amount mt-0.5 text-sm font-semibold">
-                    {formatEuro(value)}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
+          ) : null}
+          <ul className="mt-2 flex w-full max-w-xs flex-col gap-2">
+            {slices.map((slice, index) => (
+              <li
+                key={slice.id}
+                className="flex items-center justify-between gap-2 text-sm"
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                    style={{
+                      backgroundColor: colors[index % colors.length],
+                    }}
+                    aria-hidden
+                  />
+                  <span className="truncate">{slice.label}</span>
+                </span>
+                <PrivateAmount className="shrink-0 font-medium">
+                  {formatEuro(slice.value)}
+                </PrivateAmount>
+              </li>
+            ))}
+          </ul>
         </>
       ) : (
-        <p className="border-t border-border px-4 py-4 text-sm text-muted-foreground md:px-5">
-          No wallet positions yet. Add your PEA, CTO, or Bitstack holdings on
-          the Wallets page.
-        </p>
+        <>
+          <div className="flex items-center justify-center gap-2">
+            <p className="text-sm font-medium text-muted-foreground">Wallets</p>
+            <Link
+              href="/investments"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Open wallets"
+            >
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">No positions yet</p>
+        </>
       )}
-    </Card>
+    </section>
   );
 }

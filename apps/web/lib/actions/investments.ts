@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidateRecurringDependents } from "@/lib/revalidate-paths";
+import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import {
   deleteInvestmentPosition,
@@ -16,17 +17,7 @@ import {
 type ActionResult = { error?: string; success?: boolean };
 
 async function getUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    return null;
-  }
-
-  return user;
+  return getAuthUser();
 }
 
 export async function saveInvestmentPosition(

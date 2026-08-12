@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import {
   fetchInstrumentQuoteInEur,
@@ -23,24 +24,24 @@ function mapRow(row: InvestmentPosition): InvestmentPositionRow {
   };
 }
 
-export async function getInvestmentPositions(
-  userId: string,
-): Promise<InvestmentPositionRow[]> {
-  const supabase = await createClient();
+export const getInvestmentPositions = cache(
+  async (userId: string): Promise<InvestmentPositionRow[]> => {
+    const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("investment_positions")
-    .select("*")
-    .eq("user_id", userId)
-    .order("wallet")
-    .order("name");
+    const { data, error } = await supabase
+      .from("investment_positions")
+      .select("*")
+      .eq("user_id", userId)
+      .order("wallet")
+      .order("name");
 
-  if (error) {
-    throw error;
-  }
+    if (error) {
+      throw error;
+    }
 
-  return ((data ?? []) as InvestmentPosition[]).map(mapRow);
-}
+    return ((data ?? []) as InvestmentPosition[]).map(mapRow);
+  },
+);
 
 export async function upsertInvestmentPosition(
   userId: string,

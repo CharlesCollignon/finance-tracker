@@ -17,7 +17,6 @@ import { FormLabel } from "@/components/layout/FormLabel";
 import { MobileSheet } from "@/components/layout/MobileSheet";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { SignOutButton } from "@/components/layout/SignOutButton";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
   CategoryIcon,
@@ -80,11 +79,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
 
   return (
     <>
-      <PageHeader title="Categories">
-        <div className="md:hidden">
-          <SignOutButton />
-        </div>
-      </PageHeader>
+      <PageHeader title="Categories" />
 
       <PageContainer className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">

@@ -3,6 +3,7 @@
 import { revalidateRecurringDependents } from "@/lib/revalidate-paths";
 import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
+import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
 import { getMonthBounds } from "@finance/core/constants";
@@ -116,13 +117,9 @@ async function loadApplyRecurringData(
 }
 
 async function getUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
-  if (error || !user) {
+  if (!user) {
     return null;
   }
 
@@ -379,6 +376,8 @@ export async function upsertRecurringTemplate(
     dayOfMonth: formData.get("dayOfMonth") || undefined,
     dayOfWeek: formData.get("dayOfWeek") || undefined,
     monthOfYear: formData.get("monthOfYear") || undefined,
+    startsOn: formData.get("startsOn") || undefined,
+    endsOn: formData.get("endsOn") || undefined,
     active: formData.get("active") === "true",
   });
 
@@ -458,6 +457,8 @@ export async function upsertRecurringTemplate(
     amount,
     active: data.active ?? true,
     description: data.description?.trim() || null,
+    starts_on: data.startsOn ?? null,
+    ends_on: data.endsOn ?? null,
     ...pricingPayload,
   };
 

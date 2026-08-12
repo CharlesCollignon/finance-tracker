@@ -6,11 +6,11 @@ import {
   getInvestmentTransactions,
   getRecurringTemplates,
 } from "@/lib/queries/finance";
+import { getInvestmentPositions } from "@/lib/queries/investments";
 import {
-  fetchHistoricalQuotes,
-  fetchLiveQuotes,
-  getInvestmentPositions,
-} from "@/lib/queries/investments";
+  getCachedHistoricalQuotes,
+  getCachedLiveQuotes,
+} from "@/lib/queries/market-quotes";
 
 function collectQuoteSymbols(
   positionRows: Awaited<ReturnType<typeof getInvestmentPositions>>,
@@ -33,9 +33,17 @@ function collectQuoteSymbols(
   return Array.from(symbols);
 }
 
+export interface GetWalletPortfolioOptions {
+  /** When false, skip historical quotes (faster dashboards). Default true. */
+  includeHistory?: boolean;
+}
+
 export async function getWalletPortfolio(
   userId: string,
+  options: GetWalletPortfolioOptions = {},
 ): Promise<InvestmentPortfolioSummary> {
+  const includeHistory = options.includeHistory !== false;
+
   // Positions are kept in sync when recurring templates are mutated
   // (see lib/actions/finance.ts), so reads don't need to re-sync.
   const [categories, transactions, positionRows, recurringTemplates] =
@@ -50,8 +58,10 @@ export async function getWalletPortfolio(
 
   const symbols = collectQuoteSymbols(positionRows, recurringTemplates);
   const [liveQuotes, historicalQuotes] = await Promise.all([
-    fetchLiveQuotes(symbols),
-    fetchHistoricalQuotes(symbols),
+    getCachedLiveQuotes(symbols),
+    includeHistory
+      ? getCachedHistoricalQuotes(symbols)
+      : Promise.resolve({}),
   ]);
 
   return buildInvestmentPortfolio(

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
+  budgetViewOptionLabel,
   monthSearchParams,
   parseBudgetViewMode,
   parseMonthParams,
@@ -15,10 +16,7 @@ interface BudgetViewToggleProps {
   className?: string;
 }
 
-const OPTIONS: { value: BudgetViewMode; label: string }[] = [
-  { value: "current", label: "Current" },
-  { value: "month_end", label: "End of month" },
-];
+const OPTIONS: BudgetViewMode[] = ["current", "month_end"];
 
 export function BudgetViewToggle({
   basePath,
@@ -34,28 +32,31 @@ export function BudgetViewToggle({
   return (
     <div
       className={cn(
-        "inline-flex rounded border border-border p-0.5",
+        "inline-flex max-w-full rounded-md border border-border p-0.5",
         className,
       )}
       role="group"
       aria-label="Budget view"
     >
-      {OPTIONS.map((option) => {
-        const active = view === option.value;
+      {OPTIONS.map((value) => {
+        const active = view === value;
+        const label = budgetViewOptionLabel(value, year, month);
 
         return (
           <Link
-            key={option.value}
-            href={`${basePath}${monthSearchParams(year, month, option.value)}`}
+            key={value}
+            href={`${basePath}${monthSearchParams(year, month, value)}`}
+            title={label}
             className={cn(
-              "rounded px-2.5 py-1.5 text-xs font-medium sm:px-3 sm:text-sm",
+              "rounded-md px-2 py-1.5 text-xs font-medium sm:px-3 sm:text-sm",
+              "whitespace-nowrap",
               active
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
             aria-pressed={active}
           >
-            {option.label}
+            {label}
           </Link>
         );
       })}

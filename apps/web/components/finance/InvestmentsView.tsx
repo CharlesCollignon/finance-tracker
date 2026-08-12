@@ -3,14 +3,14 @@
 import { useMemo, useState } from "react";
 import { PencilSimple, Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
-import { SignOutButton } from "@/components/layout/SignOutButton";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
-import { InvestmentItemChart } from "@/components/finance/InvestmentItemChart";
+import { InvestmentItemChart } from "@/components/finance/lazy-charts";
 import { InvestmentPositionSheet } from "@/components/finance/InvestmentPositionSheet";
+import { StatHero } from "@/components/finance/StatHero";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { formatBtcAmount, isCryptoWallet } from "@finance/core/crypto-holdings";
 import { formatEuro } from "@finance/core/constants";
 import type {
@@ -101,6 +101,8 @@ export function InvestmentsView({
 
   const hasData = portfolioHasActivity(portfolio);
   const visibleFunding = fundingNeeds.filter((need) => need.monthlyTotal > 0);
+  const showPl =
+    portfolio.hasMarketSnapshot && portfolio.totalGainLoss !== 0;
 
   const activeColumn =
     portfolio.columns.find((entry) => entry.walletId === activeWallet) ??
@@ -108,114 +110,106 @@ export function InvestmentsView({
 
   return (
     <>
-      <PageHeader title="Wallets">
-        <div className="md:hidden">
-          <SignOutButton />
-        </div>
-      </PageHeader>
+      <PageHeader title="Wallets" />
 
-      <PageContainer className="flex flex-col gap-4">
-        <Card
-          className={cn(
-            "border p-5 text-center md:p-6",
-            "border-[var(--chart-3)] bg-[var(--chart-3)]/10",
-          )}
+      <PageContainer>
+        <Stagger
+          className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
+          stagger={0.05}
         >
-          <p className="font-head text-sm uppercase tracking-wide text-muted-foreground">
-            Total portfolio
-          </p>
-          <p className="mt-2 font-head text-3xl tabular-nums font-semibold md:text-4xl">
-            {formatEuro(portfolio.totalMarketValue)}
-          </p>
-          <div className="mt-3 flex flex-col gap-1 text-sm text-muted-foreground">
-            <p>
-              Invested to date{" "}
-              <span className="font-medium text-foreground">
-                {formatEuro(portfolio.totalInvested)}
-              </span>
-            </p>
-            {portfolio.hasMarketSnapshot && portfolio.totalGainLoss !== 0 && (
-              <p>
-                Unrealised P/L{" "}
-                <span
-                  className={cn(
-                    "font-semibold",
-                    portfolio.totalGainLoss > 0
-                      ? "text-[var(--chart-4)]"
-                      : "text-destructive",
-                  )}
-                >
-                  {formatSignedEuro(portfolio.totalGainLoss)}
-                </span>
-              </p>
-            )}
-          </div>
-        </Card>
-
-        {visibleFunding.length > 0 && (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleFunding.map((need) => (
-              <Card
-                key={need.walletId}
-                className="border border-border p-4 md:p-5"
-              >
-                <p className="text-sm text-muted-foreground">
-                  Send to {INVESTMENT_WALLET_LABELS[need.walletId]}
-                </p>
-                <p className="mt-1 font-head text-2xl tabular-nums font-semibold">
-                  {formatEuro(need.monthlyTotal)}
-                  <span className="ml-1 text-sm font-normal text-muted-foreground">
-                    / month
+          <StaggerItem className="w-full min-w-0">
+            <StatHero
+              label="Market value"
+              amount={formatEuro(portfolio.totalMarketValue)}
+              subtitle={
+                <p>
+                  <span className="privacy-amount">
+                    {formatEuro(portfolio.totalInvested)} invested
                   </span>
+                  {showPl ? (
+                    <>
+                      {" · "}
+                      <span
+                        className={cn(
+                          "privacy-amount font-medium",
+                          portfolio.totalGainLoss > 0
+                            ? "text-success"
+                            : "text-destructive",
+                        )}
+                      >
+                        {formatSignedEuro(portfolio.totalGainLoss)}
+                      </span>
+                    </>
+                  ) : null}
                 </p>
-              </Card>
-            ))}
-          </div>
-        )}
+              }
+            />
+          </StaggerItem>
 
-        {!hasData && (
-          <EmptyState
-            title="No investments tracked yet"
-            description="Add items in each wallet to track what you already invested and your current market value."
-          />
-        )}
+          {visibleFunding.length > 0 ? (
+            <StaggerItem className="w-full space-y-1 text-center text-sm text-muted-foreground">
+              {visibleFunding.map((need) => (
+                <p key={need.walletId}>
+                  Send to {INVESTMENT_WALLET_LABELS[need.walletId]}{" "}
+                  <span className="privacy-amount font-medium text-foreground tabular-nums">
+                    {formatEuro(need.monthlyTotal)}
+                  </span>
+                  <span> / month</span>
+                </p>
+              ))}
+            </StaggerItem>
+          ) : null}
 
-        <div
-          className="flex rounded border border-border p-0.5"
-          role="tablist"
-          aria-label="Investment wallet"
-        >
-          {INVESTMENT_WALLET_IDS.map((walletId) => {
-            const active = activeWallet === walletId;
-            const accent = INVESTMENT_WALLET_COLORS[walletId];
+          {!hasData ? (
+            <StaggerItem className="w-full">
+              <EmptyState
+                title="No investments tracked yet"
+                description="Add items in each wallet to track what you already invested and your current market value."
+              />
+            </StaggerItem>
+          ) : null}
 
-            return (
-              <button
-                key={walletId}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => setActiveWallet(walletId)}
-                className={cn(
-                  "flex-1 rounded px-3 py-2 font-head text-sm font-medium transition-colors",
-                  active
-                    ? "text-background"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                style={active ? { backgroundColor: accent } : undefined}
-              >
-                {INVESTMENT_WALLET_LABELS[walletId]}
-              </button>
-            );
-          })}
-        </div>
+          <StaggerItem className="w-full min-w-0">
+            <div
+              className="flex w-full min-w-0 justify-start gap-2 overflow-x-auto pb-1 sm:justify-center"
+              role="tablist"
+              aria-label="Investment wallet"
+            >
+              {INVESTMENT_WALLET_IDS.map((walletId) => {
+                const active = activeWallet === walletId;
+                const accent = INVESTMENT_WALLET_COLORS[walletId];
 
-        <WalletPanel
-          column={activeColumn}
-          nextUpcoming={nextUpcomingByWallet[activeWallet] ?? null}
-          onEdit={setEditingItem}
-          onAdd={() => setAddingWallet(activeWallet)}
-        />
+                return (
+                  <button
+                    key={walletId}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setActiveWallet(walletId)}
+                    className={cn(
+                      "shrink-0 px-3 py-1.5 text-sm font-medium transition-colors",
+                      active
+                        ? "underline underline-offset-4"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    style={active ? { color: accent } : undefined}
+                  >
+                    {INVESTMENT_WALLET_LABELS[walletId]}
+                  </button>
+                );
+              })}
+            </div>
+          </StaggerItem>
+
+          <StaggerItem className="w-full min-w-0">
+            <WalletPanel
+              column={activeColumn}
+              nextUpcoming={nextUpcomingByWallet[activeWallet] ?? null}
+              onEdit={setEditingItem}
+              onAdd={() => setAddingWallet(activeWallet)}
+            />
+          </StaggerItem>
+        </Stagger>
       </PageContainer>
 
       <InvestmentPositionSheet
@@ -259,27 +253,23 @@ function WalletPanel({
   onEdit,
   onAdd,
 }: WalletPanelProps) {
-  const accent = INVESTMENT_WALLET_COLORS[column.walletId];
   const showPl = column.hasMarketSnapshot && column.totalGainLoss !== 0;
 
   return (
-    <Card
-      className="flex flex-col gap-5 p-4 md:p-6"
-      style={{ borderTopColor: accent, borderTopWidth: 4 }}
-    >
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="font-head text-xl">
+    <section className="flex w-full min-w-0 max-w-full flex-col gap-6">
+      <div className="flex min-w-0 flex-col items-center gap-3 text-center">
+        <div className="min-w-0 max-w-full">
+          <h2 className="text-sm font-medium text-muted-foreground">
             {INVESTMENT_WALLET_LABELS[column.walletId]}
           </h2>
-          {nextUpcoming && (
+          {nextUpcoming ? (
             <p className="mt-1 text-sm text-muted-foreground">
               Next: {formatEuro(nextUpcoming.amount)} before{" "}
               {nextUpcoming.dateLabel}
             </p>
-          )}
+          ) : null}
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-3 sm:mt-0 sm:min-w-[18rem]">
+        <div className="grid w-full min-w-0 max-w-md grid-cols-3 gap-2 sm:gap-4">
           <Metric label="Value" value={formatEuro(column.totalMarketValue)} />
           <Metric label="Invested" value={formatEuro(column.totalInvested)} />
           <Metric
@@ -306,16 +296,18 @@ function WalletPanel({
           size="lg"
         />
       ) : (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-center text-sm text-muted-foreground">
           No chart yet — add a position or link market data.
         </p>
       )}
 
-      <div className="border-t border-border pt-4">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <h3 className="font-head text-base">Positions</h3>
-          <Button size="sm" variant="outline" onClick={onAdd}>
-            <Plus size={16} />
+      <div className="min-w-0">
+        <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
+          <h3 className="text-sm font-medium text-muted-foreground">
+            Positions
+          </h3>
+          <Button size="sm" variant="link" onClick={onAdd}>
+            <Plus size={16} className="mr-1" />
             Add item
           </Button>
         </div>
@@ -325,10 +317,10 @@ function WalletPanel({
             No items yet in this wallet.
           </p>
         ) : (
-          <ul className="flex flex-col gap-3">
+          <ul className="flex min-w-0 flex-col">
             {column.items.map((item) => (
-              <li key={item.id}>
-                <InvestmentPositionCard
+              <li key={item.id} className="min-w-0">
+                <InvestmentPositionRow
                   item={item}
                   onEdit={() => onEdit(item)}
                 />
@@ -337,54 +329,61 @@ function WalletPanel({
           </ul>
         )}
       </div>
-    </Card>
+    </section>
   );
 }
 
-interface InvestmentPositionCardProps {
+interface InvestmentPositionRowProps {
   item: InvestmentPositionItem;
   onEdit: () => void;
 }
 
-function InvestmentPositionCard({ item, onEdit }: InvestmentPositionCardProps) {
+function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
   const isCrypto = isCryptoWallet(item.walletId);
   const valueLabel =
     item.hasManualValue || item.hasMarketQuote ? "Market" : "Invested";
 
   return (
-    <div className="rounded border border-border p-3 md:p-4">
-      <div className="flex items-start justify-between gap-2">
+    <div className="min-w-0 max-w-full border-b border-border/40 py-4">
+      <div className="flex min-w-0 items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-2">
           <CategoryIcon icon={item.icon} className="size-8 shrink-0" />
           <div className="min-w-0">
-            <p className="font-medium leading-snug">{item.name}</p>
-            {item.instrumentSymbol && (
+            <p className="truncate text-sm font-medium leading-snug">
+              {item.name}
+            </p>
+            {item.instrumentSymbol ? (
               <p className="truncate text-xs text-muted-foreground">
                 {isCrypto
                   ? "Bitcoin"
                   : (item.instrumentName ?? item.instrumentSymbol)}
               </p>
-            )}
-            {item.needsShareCount && (
-              <p className="mt-1 text-xs font-medium text-[var(--chart-3)]">
+            ) : null}
+            {item.needsShareCount ? (
+              <p className="mt-1 text-xs font-medium text-primary">
                 {isCrypto
                   ? "Add total BTC for live market value"
                   : "Add total shares for live market value"}
               </p>
-            )}
-            {isCrypto && item.shareCount !== null && item.shareCount > 0 && (
+            ) : null}
+            {isCrypto && item.shareCount !== null && item.shareCount > 0 ? (
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {formatBtcAmount(item.shareCount)}
               </p>
-            )}
+            ) : null}
           </div>
         </div>
-        <Button size="sm" variant="outline" onClick={onEdit}>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+          aria-label={`Edit ${item.name}`}
+        >
           <PencilSimple size={16} />
-        </Button>
+        </button>
       </div>
 
-      <div className="mt-2 grid grid-cols-3 gap-2 text-xs sm:text-sm">
+      <div className="mt-3 grid min-w-0 grid-cols-3 gap-2 text-xs sm:text-sm">
         <Metric label={valueLabel} value={formatEuro(item.marketValue)} />
         <Metric label="Invested" value={formatEuro(item.totalInvested)} />
         <Metric
@@ -419,12 +418,11 @@ interface MetricProps {
 
 function Metric({ label, value, tone = "neutral", className }: MetricProps) {
   return (
-    <div className={className}>
-      <p className="text-muted-foreground text-xs sm:text-sm">{label}</p>
+    <div className={cn("min-w-0 text-center", className)}>
+      <p className="text-xs text-muted-foreground sm:text-sm">{label}</p>
       <p
         className={cn(
-          "mt-0.5 tabular-nums font-semibold",
-          "privacy-amount",
+          "privacy-amount mt-0.5 truncate text-sm font-semibold tabular-nums sm:text-base",
           tone === "positive" && "text-success",
           tone === "negative" && "text-destructive",
         )}

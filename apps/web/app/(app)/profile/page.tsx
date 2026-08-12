@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth/get-user";
 import { ProfileView } from "@/components/profile/ProfileView";
 
 function getProviderLabel(provider: string | undefined): string {
@@ -13,10 +13,7 @@ function getProviderLabel(provider: string | undefined): string {
 }
 
 export default async function ProfilePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) {
     redirect("/login");

@@ -8,22 +8,12 @@ import {
   type InstrumentSearchResult,
 } from "@finance/core/market/yahoo";
 import { fetchInstrumentQuoteInEur } from "@finance/core/market/fx";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth/get-user";
 
 type MarketActionResult<T> = { error: string } | { data: T };
 
 async function requireUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    return null;
-  }
-
-  return user;
+  return getAuthUser();
 }
 
 export async function searchInstrumentsAction(

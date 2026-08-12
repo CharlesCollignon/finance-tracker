@@ -44,17 +44,32 @@ export const DEFAULT_CATEGORIES = [
 ];
 
 /**
- * Personal savings rate: savings / income × 100.
+ * Cash counted as invested for savings rate / Sankey:
+ * max(broker transfers, wallet deployments) — one path, no double count.
+ */
+export function investedForSavingsRate(
+  brokerTransfers: number,
+  deployments: number,
+): number {
+  return Math.max(brokerTransfers, deployments);
+}
+
+/**
+ * Personal savings rate:
+ * (savings + max(broker transfers, deployments)) / income × 100.
  * Returns null when income is not positive.
  */
 export function savingsRatePercent(
   savings: number,
+  brokerTransfers: number,
+  deployments: number,
   income: number,
 ): number | null {
   if (income <= 0) {
     return null;
   }
-  return Math.round((savings / income) * 1000) / 10;
+  const invested = investedForSavingsRate(brokerTransfers, deployments);
+  return Math.round(((savings + invested) / income) * 1000) / 10;
 }
 
 export function formatEuro(amount: number): string {
@@ -92,6 +107,15 @@ export function formatShortDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-").map(Number);
   return new Intl.DateTimeFormat("en-GB", {
     weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(new Date(year, month - 1, day));
+}
+
+/** Compact day + month for toggles (e.g. "12 Aug"). */
+export function formatDayMonth(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "short",
   }).format(new Date(year, month - 1, day));
@@ -150,6 +174,19 @@ export type BudgetViewMode = "current" | "month_end";
 
 export function parseBudgetViewMode(value?: string | null): BudgetViewMode {
   return value === "month_end" ? "month_end" : "current";
+}
+
+/** Label for Current / End of month toggles, including the cutoff date. */
+export function budgetViewOptionLabel(
+  mode: BudgetViewMode,
+  year: number,
+  month: number,
+): string {
+  if (mode === "month_end") {
+    const { end } = getMonthBounds(year, month);
+    return `End of month · ${formatDayMonth(end)}`;
+  }
+  return `Current · ${formatDayMonth(todayIsoLocal())}`;
 }
 
 export function budgetViewHint(view: BudgetViewMode): string {

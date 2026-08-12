@@ -6,7 +6,10 @@ import type {
   TransactionWithCategory,
 } from "./types/database";
 import { lastDayIsoOfMonth, todayIsoLocal } from "./constants";
-import { getRecurringOccurrenceDates } from "./recurrence";
+import {
+  filterDatesBySchedule,
+  getRecurringOccurrenceDates,
+} from "./recurrence";
 
 export const MONTHS_IN_YEAR = 12;
 
@@ -186,15 +189,19 @@ function addProjectedOccurrences(
       continue;
     }
 
-    const dates = getRecurringOccurrenceDates(
-      {
-        recurrence: template.recurrence ?? "monthly",
-        day_of_month: template.day_of_month,
-        day_of_week: template.day_of_week,
-        month_of_year: template.month_of_year,
-      },
-      year,
-      month,
+    const dates = filterDatesBySchedule(
+      getRecurringOccurrenceDates(
+        {
+          recurrence: template.recurrence ?? "monthly",
+          day_of_month: template.day_of_month,
+          day_of_week: template.day_of_week,
+          month_of_year: template.month_of_year,
+        },
+        year,
+        month,
+      ),
+      template.starts_on,
+      template.ends_on,
     ).filter((date) => date.startsWith(monthPrefix) && date <= asOfDate);
 
     for (const date of dates) {
@@ -353,15 +360,19 @@ function buildProjectedBreakdown(
     }
 
     const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
-    const dates = getRecurringOccurrenceDates(
-      {
-        recurrence: template.recurrence ?? "monthly",
-        day_of_month: template.day_of_month,
-        day_of_week: template.day_of_week,
-        month_of_year: template.month_of_year,
-      },
-      year,
-      month,
+    const dates = filterDatesBySchedule(
+      getRecurringOccurrenceDates(
+        {
+          recurrence: template.recurrence ?? "monthly",
+          day_of_month: template.day_of_month,
+          day_of_week: template.day_of_week,
+          month_of_year: template.month_of_year,
+        },
+        year,
+        month,
+      ),
+      template.starts_on,
+      template.ends_on,
     ).filter((date) => date.startsWith(monthPrefix) && date <= asOfDate);
 
     for (const date of dates) {

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { buildMissingCategorySeeds } from "@finance/core/seed-categories";
 
@@ -26,28 +27,34 @@ export async function seedDefaultCategories(userId: string) {
   }
 }
 
+const getCategoriesCached = cache(
+  async (userId: string, includeArchived: boolean) => {
+    const supabase = await createClient();
+
+    let query = supabase
+      .from("categories")
+      .select("*")
+      .eq("user_id", userId)
+      .order("type")
+      .order("name");
+
+    if (!includeArchived) {
+      query = query.eq("archived", false);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    return data ?? [];
+  },
+);
+
 export async function getCategories(
   userId: string,
   options: { includeArchived?: boolean } = {},
 ) {
-  const supabase = await createClient();
-
-  let query = supabase
-    .from("categories")
-    .select("*")
-    .eq("user_id", userId)
-    .order("type")
-    .order("name");
-
-  if (!options.includeArchived) {
-    query = query.eq("archived", false);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    throw error;
-  }
-
-  return data ?? [];
+  return getCategoriesCached(userId, options.includeArchived ?? false);
 }

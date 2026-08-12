@@ -1,18 +1,23 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { PencilSimple } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
 import { Badge } from "@/components/retroui/Badge";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
-import { SignOutButton } from "@/components/layout/SignOutButton";
 import { useToast } from "@/components/layout/ToastProvider";
 import { RecurringForm } from "@/components/finance/RecurringForm";
-import { CategoryIcon } from "@/components/finance/CategoryIcon";
-import { formatEuro } from "@finance/core/constants";
+import { StatHero } from "@/components/finance/StatHero";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+import {
+  formatEuro,
+  monthSearchParams,
+  parseMonthParams,
+} from "@finance/core/constants";
+import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
 import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
 import {
   estimateMonthlyAmount,
@@ -20,14 +25,21 @@ import {
 } from "@finance/core/recurrence";
 import { formatSharesLabel } from "@finance/core/recurring-shares";
 import { cn } from "@/lib/utils";
-import { toggleRecurringActive } from "@/lib/actions/finance";
+import {
+  previewApplyRecurringForMonth,
+  toggleRecurringActive,
+} from "@/lib/actions/finance";
 import type {
   Category,
   CategoryType,
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
 
-const GROUP_LABELS: Record<Exclude<CategoryType, "income">, string> = {
+type AllocType = Exclude<CategoryType, "income">;
+
+const GROUP_ORDER: AllocType[] = ["expense", "savings", "investment"];
+
+const GROUP_LABELS: Record<AllocType, string> = {
   expense: "Expenses",
   savings: "Savings",
   investment: "Investments",
@@ -38,21 +50,172 @@ interface RecurringViewProps {
   categories: Category[];
 }
 
+interface RecurringItemRowProps {
+  template: RecurringTemplateWithCategory;
+  onEdit: (template: RecurringTemplateWithCategory) => void;
+  onToggle: (id: string, active: boolean) => void;
+}
+
+function RecurringItemRow({
+  template,
+  onEdit,
+  onToggle,
+}: RecurringItemRowProps) {
+  const sharesLabel = formatSharesLabel(template);
+
+  return (
+    <li
+      className={cn(
+        "flex items-start gap-3 border-b border-border/40 py-3",
+        "transition-colors hover:bg-muted/30",
+        !template.active && "opacity-60",
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onEdit(template)}
+        className="min-w-0 flex-1 text-left"
+        aria-label={`Edit ${template.categories.name}`}
+      >
+        <p className="text-sm font-medium leading-snug break-words">
+          {template.categories.name}
+        </p>
+        {template.pricing_type === "shares" && sharesLabel ? (
+          <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
+            {sharesLabel}
+            {template.instrument_symbol
+              ? ` · ${template.instrument_symbol}`
+              : ""}
+          </p>
+        ) : null}
+        {isCryptoCategoryName(template.categories.name) ? (
+          <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
+            Fixed EUR → Bitcoin
+          </p>
+        ) : null}
+        {template.description ? (
+          <p className="mt-0.5 text-xs leading-snug text-muted-foreground/70 break-words">
+            {template.description}
+          </p>
+        ) : null}
+        <p className="mt-1 text-xs text-muted-foreground">
+          {formatRecurrenceSchedule(template)}
+        </p>
+      </button>
+
+      <div className="flex shrink-0 flex-col items-end gap-2">
+        <span className="privacy-amount tabular-nums text-sm font-semibold">
+          {template.pricing_type === "shares" ? "≈" : ""}
+          {formatEuro(Number(template.amount))}
+        </span>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => onEdit(template)}
+            className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+            aria-label={`Edit ${template.categories.name}`}
+          >
+            <PencilSimple size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onToggle(template.id, template.active)}
+            className="shrink-0"
+            aria-pressed={template.active}
+            aria-label={`${
+              template.active ? "Deactivate" : "Activate"
+            } ${template.categories.name}`}
+          >
+            <Badge
+              variant={template.active ? "surface" : "outline"}
+              size="sm"
+            >
+              {template.active ? "On" : "Off"}
+            </Badge>
+          </button>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function GroupList({
+  label,
+  items,
+  onEdit,
+  onToggle,
+}: {
+  label: string;
+  items: RecurringTemplateWithCategory[];
+  onEdit: (template: RecurringTemplateWithCategory) => void;
+  onToggle: (id: string, active: boolean) => void;
+}) {
+  if (items.length === 0) {
+    return (
+      <p className="py-3 text-sm text-muted-foreground">
+        No {label.toLowerCase()} yet.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="flex flex-col">
+      {items.map((template) => (
+        <RecurringItemRow
+          key={template.id}
+          template={template}
+          onEdit={onEdit}
+          onToggle={onToggle}
+        />
+      ))}
+    </ul>
+  );
+}
+
 export function RecurringView({ templates, categories }: RecurringViewProps) {
   const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<RecurringTemplateWithCategory | null>(
     null,
   );
+  const [applyPending, setApplyPending] = useState(false);
   const [, startTransition] = useTransition();
+  const { year, month } = parseMonthParams();
+  const transactionsHref = `/transactions${monthSearchParams(year, month)}`;
 
-  const groups = (["expense", "savings", "investment"] as const).map(
-    (type) => ({
-      type,
-      label: GROUP_LABELS[type],
-      items: templates.filter((t) => t.categories.type === type),
-    }),
+  const groups = useMemo(
+    () =>
+      GROUP_ORDER.map((type) => ({
+        type,
+        label: GROUP_LABELS[type],
+        items: templates.filter((t) => t.categories.type === type),
+      })),
+    [templates],
   );
+
+  const defaultTab = useMemo<AllocType>(() => {
+    const firstNonEmpty = groups.find((group) => group.items.length > 0);
+    return firstNonEmpty?.type ?? "expense";
+  }, [groups]);
+
+  const [activeTab, setActiveTab] = useState<AllocType>(defaultTab);
+
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
+
+  const refreshApplyPending = useCallback(async () => {
+    const result = await previewApplyRecurringForMonth(year, month);
+    if (result.error || !result.plan) {
+      return;
+    }
+    const counts = applyRecurringPlanCounts(result.plan);
+    setApplyPending(counts.creates + counts.updates > 0);
+  }, [month, year]);
+
+  useEffect(() => {
+    void refreshApplyPending();
+  }, [refreshApplyPending, templates]);
 
   const budgetMonthly = templates
     .filter((t) => t.active && t.categories.counts_toward_summary !== false)
@@ -63,6 +226,7 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
     .reduce((sum, t) => sum + estimateMonthlyAmount(t), 0);
 
   const hasTemplates = templates.length > 0;
+  const activeGroup = groups.find((group) => group.type === activeTab);
 
   function openCreate() {
     setEditing(null);
@@ -79,180 +243,131 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
       const result = await toggleRecurringActive(id, !active);
       if (result.error) {
         toast(result.error, "error");
+        return;
       }
+      toast(
+        "Updated. Apply recurring on Transactions to see changes.",
+        "success",
+      );
+      void refreshApplyPending();
     });
   }
 
   return (
     <>
-      <PageHeader title="Recurring">
-        <div className="md:hidden">
-          <SignOutButton />
-        </div>
-      </PageHeader>
+      <PageHeader title="Recurring" />
 
-      <PageContainer className="flex flex-col gap-4">
-        {hasTemplates && (
-          <>
-            <Card className="flex w-full flex-col gap-3 p-4 md:p-5">
-              <div className="flex items-center justify-between">
-                <span className="font-head md:text-lg">
-                  Expected budget impact
-                </span>
-                <span className="tabular-nums text-lg font-semibold md:text-xl">
-                  {formatEuro(budgetMonthly)}
-                </span>
-              </div>
-              {deploymentMonthly > 0 && (
-                <div className="flex items-center justify-between border-t border-border pt-3 text-sm">
-                  <span className="text-muted-foreground">
-                    Broker deployment (tracking)
-                  </span>
-                  <span className="tabular-nums font-semibold">
-                    {formatEuro(deploymentMonthly)}
-                  </span>
+      <PageContainer>
+        <Stagger
+          className="flex flex-col items-center gap-8 md:gap-10"
+          stagger={0.05}
+        >
+          {applyPending ? (
+            <StaggerItem className="w-full">
+              <p className="text-center text-sm text-muted-foreground">
+                Recurring changes need apply.{" "}
+                <Link
+                  href={transactionsHref}
+                  className="font-medium text-foreground underline underline-offset-4"
+                >
+                  Open Transactions
+                </Link>{" "}
+                and tap Apply recurring.
+              </p>
+            </StaggerItem>
+          ) : null}
+
+          {hasTemplates ? (
+            <>
+              <StaggerItem className="w-full">
+                <StatHero
+                  label="Expected budget impact"
+                  amount={formatEuro(budgetMonthly)}
+                  subtitle={
+                    deploymentMonthly > 0 ? (
+                      <p>
+                        Broker deployment (tracking){" "}
+                        <span className="privacy-amount font-medium tabular-nums text-foreground">
+                          {formatEuro(deploymentMonthly)}
+                        </span>
+                      </p>
+                    ) : null
+                  }
+                />
+              </StaggerItem>
+
+              <StaggerItem>
+                <Button size="md" onClick={openCreate}>
+                  Add recurring item
+                </Button>
+              </StaggerItem>
+
+              <StaggerItem className="w-full md:hidden">
+                <div
+                  className="flex justify-center gap-2 overflow-x-auto pb-1"
+                  role="tablist"
+                  aria-label="Recurring type"
+                >
+                  {groups.map(({ type, label, items }) => (
+                    <button
+                      key={type}
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === type}
+                      onClick={() => setActiveTab(type)}
+                      className={cn(
+                        "shrink-0 px-3 py-1.5 text-sm font-medium",
+                        "transition-colors",
+                        activeTab === type
+                          ? "text-foreground underline underline-offset-4"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {label}
+                      {items.length > 0 ? ` · ${items.length}` : ""}
+                    </button>
+                  ))}
                 </div>
-              )}
-            </Card>
+                {activeGroup ? (
+                  <GroupList
+                    label={activeGroup.label}
+                    items={activeGroup.items}
+                    onEdit={openEdit}
+                    onToggle={handleToggle}
+                  />
+                ) : null}
+              </StaggerItem>
 
-            <div className="md:flex md:justify-end">
-              <Button
-                size="lg"
-                className="w-full md:w-auto md:min-w-[14rem]"
-                onClick={openCreate}
+              <StaggerItem className="hidden w-full md:grid md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+                {groups.map(({ type, label, items }) => (
+                  <section key={type} className="min-w-0">
+                    <h2 className="text-sm font-medium text-muted-foreground">
+                      {label}
+                      {items.length > 0 ? ` · ${items.length}` : ""}
+                    </h2>
+                    <GroupList
+                      label={label}
+                      items={items}
+                      onEdit={openEdit}
+                      onToggle={handleToggle}
+                    />
+                  </section>
+                ))}
+              </StaggerItem>
+            </>
+          ) : (
+            <StaggerItem className="w-full">
+              <EmptyState
+                title="No recurring items"
+                description="Set up rent, DCA contributions, and other repeating flows."
               >
-                Add recurring item
-              </Button>
-            </div>
-          </>
-        )}
-
-        {!hasTemplates ? (
-          <EmptyState
-            title="No recurring items"
-            description="Set up your salary, rent, DCA contributions, and other monthly flows."
-          >
-            <Button size="lg" onClick={openCreate}>
-              Add recurring item
-            </Button>
-          </EmptyState>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {groups.map(({ type, label, items }) => (
-              <section
-                key={type}
-                className="flex flex-col gap-2 rounded border border-border bg-card p-4"
-              >
-                <h2 className="font-head text-sm uppercase tracking-wide">
-                  {label}
-                </h2>
-                {items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No {label.toLowerCase()} yet.
-                  </p>
-                ) : (
-                  <ul className="flex flex-col gap-2">
-                    {items.map((template) => (
-                      <li key={template.id}>
-                        <Card
-                          className={cn(
-                            "flex w-full flex-col gap-2 p-3",
-                            "transition-colors hover:bg-accent/30",
-                            "sm:gap-2.5 sm:p-4",
-                            !template.active && "opacity-70",
-                          )}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => openEdit(template)}
-                            className="flex w-full gap-3 text-left"
-                          >
-                            <CategoryIcon icon={template.categories.icon} />
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium leading-snug break-words">
-                                {template.categories.name}
-                              </p>
-                              {template.pricing_type === "shares" &&
-                                formatSharesLabel(template) && (
-                                  <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
-                                    {formatSharesLabel(template)}
-                                    {template.instrument_symbol
-                                      ? ` · ${template.instrument_symbol}`
-                                      : ""}
-                                  </p>
-                                )}
-                              {isCryptoCategoryName(
-                                template.categories.name,
-                              ) && (
-                                <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
-                                  Fixed EUR → Bitcoin
-                                </p>
-                              )}
-                              {template.description && (
-                                <p className="mt-0.5 text-xs leading-snug text-muted-foreground/70 break-words">
-                                  {template.description}
-                                </p>
-                              )}
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                {formatRecurrenceSchedule(template)}
-                              </p>
-                            </div>
-                          </button>
-                          <div
-                            className={cn(
-                              "flex items-center justify-between gap-2",
-                              "border-t border-border pt-2 sm:pt-2.5",
-                            )}
-                          >
-                            <span className="tabular-nums text-base font-semibold">
-                              {template.pricing_type === "shares" ? "≈" : ""}
-                              {formatEuro(Number(template.amount))}
-                            </span>
-                            <div className="flex shrink-0 items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => openEdit(template)}
-                                className={cn(
-                                  "flex h-9 w-9 items-center justify-center",
-                                  "rounded border border-border",
-                                  "hover:bg-accent sm:h-10 sm:w-10",
-                                )}
-                                aria-label={`Edit ${template.categories.name}`}
-                              >
-                                <PencilSimple size={18} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleToggle(template.id, template.active);
-                                }}
-                                className="shrink-0"
-                                aria-pressed={template.active}
-                                aria-label={`${
-                                  template.active ? "Deactivate" : "Activate"
-                                } ${template.categories.name}`}
-                              >
-                                <Badge
-                                  variant={
-                                    template.active ? "surface" : "outline"
-                                  }
-                                  size="sm"
-                                >
-                                  {template.active ? "On" : "Off"}
-                                </Badge>
-                              </button>
-                            </div>
-                          </div>
-                        </Card>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            ))}
-          </div>
-        )}
+                <Button size="md" onClick={openCreate}>
+                  Add recurring item
+                </Button>
+              </EmptyState>
+            </StaggerItem>
+          )}
+        </Stagger>
       </PageContainer>
 
       <RecurringForm

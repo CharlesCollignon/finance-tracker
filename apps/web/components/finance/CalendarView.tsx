@@ -3,16 +3,15 @@
 import { useMemo, useState } from "react";
 import { Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { MonthPicker } from "@/components/layout/MonthPicker";
-import { SignOutButton } from "@/components/layout/SignOutButton";
-import { CategoryTypeBadge } from "@/components/finance/CategoryTypeBadge";
-import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { TransactionForm } from "@/components/finance/TransactionForm";
-import { formatEuro } from "@finance/core/constants";
+import { StatHero } from "@/components/finance/StatHero";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+import { formatEuro, formatMonthLabel } from "@finance/core/constants";
+import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { computeMonthlyBudget } from "@finance/core/budget";
 import {
   buildCalendarWeeks,
@@ -77,238 +76,221 @@ export function CalendarView({
 
   const selectedTransactions = byDate.get(selectedDate) ?? [];
   const selectedTotals = computeDayTotals(selectedTransactions);
+  const monthLabel = formatMonthLabel(year, month);
 
   return (
     <>
       <PageHeader title="Calendar">
         <MonthPicker basePath="/calendar" />
-        <div className="md:hidden">
-          <SignOutButton />
-        </div>
       </PageHeader>
 
-      <PageContainer className="flex flex-1 flex-col gap-3 min-h-0">
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <SummaryTile label="In" amount={monthTotals.income} tone="income" />
-          <SummaryTile
-            label="Out"
-            amount={monthTotals.outflow}
-            tone="outflow"
-          />
-          <SummaryTile
-            label="Net"
-            amount={monthTotals.net}
-            tone={monthTotals.net < 0 ? "negative" : "neutral"}
-          />
-        </div>
-
-        <section
-          className={cn(
-            "flex flex-1 flex-col overflow-hidden rounded border",
-            "border-border bg-card",
-          )}
-          aria-label="Monthly calendar"
+      <PageContainer>
+        <Stagger
+          className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
+          stagger={0.05}
         >
-          <div className="grid grid-cols-7 border-b border-border">
-            {WEEKDAY_LABELS.map((label) => (
-              <div
-                key={label}
-                className={cn(
-                  "py-2 text-center text-[10px] font-medium uppercase",
-                  "tracking-wide text-muted-foreground sm:text-xs",
-                )}
-              >
-                <span className="sm:hidden">{label.charAt(0)}</span>
-                <span className="hidden sm:inline">{label}</span>
+          <StaggerItem className="w-full min-w-0">
+            <StatHero
+              label={monthLabel}
+              amount={`${monthTotals.net >= 0 ? "+" : "−"}${formatEuro(Math.abs(monthTotals.net))}`}
+              amountClassName={
+                monthTotals.net < 0 ? "text-destructive" : "text-success"
+              }
+              subtitle={
+                <p>
+                  <span className="privacy-amount text-success tabular-nums">
+                    {formatEuro(monthTotals.income)}
+                  </span>
+                  {" in · "}
+                  <span className="privacy-amount text-destructive tabular-nums">
+                    {formatEuro(monthTotals.outflow)}
+                  </span>
+                  {" out"}
+                </p>
+              }
+            />
+          </StaggerItem>
+
+          <StaggerItem className="w-full min-w-0">
+            {/* Full-bleed on mobile so the 7-day grid uses the screen width. */}
+            <section
+              className="-mx-4 w-[calc(100%+2rem)] min-w-0 sm:mx-0 sm:w-full"
+              aria-label="Monthly calendar"
+            >
+              <div className="grid w-full grid-cols-7 border-b border-border/40">
+                {WEEKDAY_LABELS.map((label) => (
+                  <div
+                    key={label}
+                    className={cn(
+                      "py-2.5 text-center text-[11px] font-medium uppercase",
+                      "tracking-wide text-muted-foreground sm:text-xs",
+                    )}
+                  >
+                    <span className="sm:hidden">{label.charAt(0)}</span>
+                    <span className="hidden sm:inline">{label}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div className="grid min-h-[14rem] flex-1 auto-rows-fr sm:min-h-[18rem]">
-            {weeks.map((week, weekIndex) => (
-              <div
-                key={weekIndex}
-                className="grid grid-cols-7 border-b border-border last:border-b-0"
-              >
-                {week.map((day) => {
-                  const dayTxs = byDate.get(day.date) ?? [];
-                  const totals = computeDayTotals(dayTxs);
-                  const isSelected = day.date === selectedDate;
+              <div className="flex w-full flex-col">
+                {weeks.map((week, weekIndex) => (
+                  <div
+                    key={weekIndex}
+                    className="grid w-full grid-cols-7 border-b border-border/40 last:border-b-0"
+                  >
+                    {week.map((day) => {
+                      const dayTxs = byDate.get(day.date) ?? [];
+                      const totals = computeDayTotals(dayTxs);
+                      const isSelected = day.date === selectedDate;
 
-                  return (
-                    <button
-                      key={day.date}
-                      type="button"
-                      onClick={() => setSelectedDate(day.date)}
-                      className={cn(
-                        "flex min-h-[3.25rem] flex-col items-stretch",
-                        "border-r border-border p-1 text-left",
-                        "transition-colors last:border-r-0",
-                        "sm:min-h-[4.5rem] sm:p-1.5 md:min-h-[5.5rem]",
-                        day.isCurrentMonth
-                          ? "bg-card hover:bg-accent/40"
-                          : "bg-muted/20 text-muted-foreground/60",
-                        day.isToday && "bg-accent/30",
-                        isSelected &&
-                          "ring-2 ring-inset ring-primary bg-primary/10",
-                      )}
-                      aria-label={`${day.day}${
-                        totals.count > 0
-                          ? `, ${totals.count} transactions`
-                          : ", no transactions"
-                      }`}
-                      aria-pressed={isSelected}
-                    >
-                      <span
+                      return (
+                        <button
+                          key={day.date}
+                          type="button"
+                          onClick={() => setSelectedDate(day.date)}
+                          className={cn(
+                            "flex min-h-[4.25rem] min-w-0 flex-col items-stretch",
+                            "border-r border-border/40 p-1.5 text-left",
+                            "transition-colors last:border-r-0",
+                            "sm:min-h-[4.75rem] sm:p-2 md:min-h-[5.5rem]",
+                            !day.isCurrentMonth &&
+                              "text-muted-foreground/50",
+                            day.isToday && "bg-primary/5",
+                            isSelected && "bg-primary/10",
+                            day.isCurrentMonth &&
+                              !isSelected &&
+                              "hover:bg-muted/30",
+                          )}
+                          aria-label={`${day.day}${
+                            totals.count > 0
+                              ? `, ${totals.count} transactions`
+                              : ", no transactions"
+                          }`}
+                          aria-pressed={isSelected}
+                        >
+                          <span
+                            className={cn(
+                              "text-sm font-semibold leading-none",
+                              day.isToday && "text-primary",
+                            )}
+                          >
+                            {day.day}
+                          </span>
+
+                          {totals.income > 0 ? (
+                            <span
+                              className={cn(
+                                "mt-auto truncate text-[10px] font-medium",
+                                "leading-tight text-success",
+                                "md:text-xs",
+                              )}
+                            >
+                              +{formatShortAmount(totals.income)}€
+                            </span>
+                          ) : null}
+                          {totals.outflow > 0 ? (
+                            <span
+                              className={cn(
+                                "truncate text-[10px] font-medium leading-tight",
+                                "text-destructive md:text-xs",
+                                totals.income > 0 && "-mt-0.5",
+                              )}
+                            >
+                              −{formatShortAmount(totals.outflow)}€
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </section>
+          </StaggerItem>
+
+          <StaggerItem className="w-full min-w-0">
+            <section
+              className="flex min-w-0 flex-col gap-3"
+              aria-label="Selected day details"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-medium text-muted-foreground">
+                    {formatCalendarDate(selectedDate)}
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {selectedTotals.count === 0
+                      ? "No transactions"
+                      : `${selectedTotals.count} transaction${
+                          selectedTotals.count === 1 ? "" : "s"
+                        }`}
+                    {selectedTotals.count > 0
+                      ? ` · ${formatEuro(selectedTotals.income)} in · ${formatEuro(selectedTotals.outflow)} out`
+                      : ""}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => setFormOpen(true)}
+                >
+                  <Plus size={16} weight="bold" />
+                  <span className="hidden sm:inline">Add</span>
+                </Button>
+              </div>
+
+              {selectedTransactions.length === 0 ? (
+                <EmptyState
+                  title="Nothing on this day"
+                  description="Add a transaction or pick another date."
+                >
+                  <Button size="md" onClick={() => setFormOpen(true)}>
+                    Add transaction
+                  </Button>
+                </EmptyState>
+              ) : (
+                <ul className="flex flex-col">
+                  {selectedTransactions.map((tx) => (
+                    <li key={tx.id}>
+                      <button
+                        type="button"
+                        onClick={() => setEditTransaction(tx)}
+                        aria-label={`Edit ${tx.categories.name}`}
                         className={cn(
-                          "text-xs font-semibold sm:text-sm",
-                          day.isToday && "text-primary",
+                          "flex w-full items-start gap-3 border-b border-border/40",
+                          "py-3 text-left transition-colors hover:bg-muted/30",
                         )}
                       >
-                        {day.day}
-                      </span>
-
-                      {totals.income > 0 && (
-                        <span
-                          className={cn(
-                            "mt-auto truncate text-[9px] font-medium",
-                            "leading-tight text-[var(--chart-4)]",
-                            "sm:text-[10px] md:text-xs",
-                          )}
-                        >
-                          +{formatShortAmount(totals.income)}€
-                        </span>
-                      )}
-                      {totals.outflow > 0 && (
-                        <span
-                          className={cn(
-                            "truncate text-[9px] font-medium leading-tight",
-                            "text-destructive sm:text-[10px] md:text-xs",
-                            totals.income > 0 && "-mt-0.5",
-                          )}
-                        >
-                          −{formatShortAmount(totals.outflow)}€
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section
-          className="flex flex-col gap-3"
-          aria-label="Selected day details"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="font-head text-base sm:text-lg">
-                {formatCalendarDate(selectedDate)}
-              </h2>
-              <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
-                {selectedTotals.count === 0
-                  ? "No transactions"
-                  : `${selectedTotals.count} transaction${
-                      selectedTotals.count === 1 ? "" : "s"
-                    }`}
-              </p>
-            </div>
-            <Button
-              size="sm"
-              className="shrink-0"
-              onClick={() => setFormOpen(true)}
-            >
-              <Plus size={16} weight="bold" />
-              <span className="hidden sm:inline">Add</span>
-            </Button>
-          </div>
-
-          {selectedTotals.count > 0 && (
-            <div className="grid grid-cols-3 gap-2">
-              <SummaryTile
-                label="In"
-                amount={selectedTotals.income}
-                tone="income"
-                compact
-              />
-              <SummaryTile
-                label="Out"
-                amount={selectedTotals.outflow}
-                tone="outflow"
-                compact
-              />
-              <SummaryTile
-                label="Net"
-                amount={selectedTotals.net}
-                tone={selectedTotals.net < 0 ? "negative" : "neutral"}
-                compact
-              />
-            </div>
-          )}
-
-          {selectedTransactions.length === 0 ? (
-            <EmptyState
-              title="Nothing on this day"
-              description="Add a transaction or pick another date."
-            >
-              <Button size="lg" onClick={() => setFormOpen(true)}>
-                Add transaction
-              </Button>
-            </EmptyState>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {selectedTransactions.map((tx) => (
-                <li key={tx.id}>
-                  <button
-                    type="button"
-                    className="w-full text-left"
-                    onClick={() => setEditTransaction(tx)}
-                    aria-label={`Edit ${tx.categories.name}`}
-                  >
-                    <Card
-                      className={cn(
-                        "flex w-full items-center gap-3 p-3 sm:p-4",
-                        "transition-colors hover:bg-muted",
-                      )}
-                    >
-                      <CategoryIcon icon={tx.categories.icon} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-medium leading-snug break-words">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium leading-snug">
                             {tx.categories.name}
                           </p>
-                          <CategoryTypeBadge type={tx.categories.type} />
-                          {tx.recurring_template_id && (
-                            <span className="text-xs text-muted-foreground">
-                              Recurring
-                            </span>
-                          )}
-                        </div>
-                        {tx.note && (
-                          <p className="mt-0.5 text-sm text-muted-foreground break-words">
-                            {tx.note}
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {[
+                              tx.recurring_template_id ? "Recurring" : null,
+                              tx.note,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ") || "—"}
                           </p>
-                        )}
-                      </div>
-                      <span
-                        className={cn(
-                          "shrink-0 tabular-nums text-base font-semibold",
-                          tx.categories.type === "income" &&
-                            "text-[var(--chart-4)]",
-                        )}
-                      >
-                        {tx.categories.type === "income" ? "+" : "−"}
-                        {formatEuro(Number(tx.amount))}
-                      </span>
-                    </Card>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+                        </div>
+                        <span
+                          className={cn(
+                            "privacy-amount shrink-0 text-sm font-semibold tabular-nums",
+                            TYPE_AMOUNT_CLASS[tx.categories.type],
+                          )}
+                        >
+                          {tx.categories.type === "income" ? "+" : "−"}
+                          {formatEuro(Number(tx.amount))}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </StaggerItem>
+        </Stagger>
       </PageContainer>
 
       <TransactionForm
@@ -330,36 +312,5 @@ export function CalendarView({
         transaction={editTransaction}
       />
     </>
-  );
-}
-
-interface SummaryTileProps {
-  label: string;
-  amount: number;
-  tone: "income" | "outflow" | "negative" | "neutral";
-  compact?: boolean;
-}
-
-function SummaryTile({ label, amount, tone, compact }: SummaryTileProps) {
-  return (
-    <Card
-      className={cn(
-        "p-2 text-center sm:p-3",
-        tone === "negative" && "border-destructive",
-      )}
-    >
-      <p className="text-[10px] text-muted-foreground sm:text-xs">{label}</p>
-      <p
-        className={cn(
-          "mt-0.5 tabular-nums font-semibold",
-          compact ? "text-sm sm:text-base" : "text-sm sm:text-lg",
-          tone === "income" && "text-[var(--chart-4)]",
-          tone === "outflow" && "text-destructive",
-          tone === "negative" && "text-destructive",
-        )}
-      >
-        {formatEuro(amount)}
-      </p>
-    </Card>
   );
 }

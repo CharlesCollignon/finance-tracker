@@ -1,0 +1,36 @@
+---
+description: Transparent, centered, chart-first UI method for web and mobile apps
+alwaysApply: true
+---
+
+# Transparent gamified UI (web + mobile)
+
+Applies to **apps/web** and **apps/mobile** UI. Visual gamification only — no XP, streaks, or badges unless explicitly requested.
+
+## Principles
+
+- **Transparent panels**: no card borders/fills for content sections; separate with spacing (`gap-8`–`gap-12`)
+- **Center primary KPIs**: `items-center text-center`; hero amounts large (`font-head`, `tabular-nums`, privacy classes)
+- **Charts over row stacks**: prefer rings/donuts/sankey/line for ratios and splits instead of bordered lists
+- **Motion**: web uses `FadeIn` / `Stagger` / `StaggerItem`; respect `prefers-reduced-motion`
+- **Money color**: success / destructive / primary; keep `privacy-amount`
+- **Chrome**: do not restyle nav/header/shell unless the task says so
+
+## Web primitives
+
+- `StatHero` — centered label + amount (`size="lg"` page hero, `size="md"` section)
+- `ProgressRing` — ECharts donut % for budgets/goals
+- Theme charts via CSS vars + `readCssVar` / `echarts-theme`
+
+## Migration checklist (per page)
+
+1. Keep data fetch on the server; pass props into a client view for charts/motion
+2. Replace content `Card` wrappers with plain `<section>`
+3. Lift the main number into `StatHero` (or mobile equivalent)
+4. Turn progress/split lists into rings or donuts
+5. Wrap sections in stagger enter animation
+6. Soften loading skeletons (no borders; circular bones for rings)
+
+## Mobile
+
+Mirror the same layout language (centered KPIs, chart-first, transparent). Port primitives when migrating a screen; do not invent a second visual system.

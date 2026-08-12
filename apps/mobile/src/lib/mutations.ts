@@ -307,6 +307,8 @@ export async function upsertRecurringTemplate(
     amount,
     active: data.active ?? true,
     description: data.description?.trim() || null,
+    starts_on: data.startsOn ?? null,
+    ends_on: data.endsOn ?? null,
     ...pricingPayload,
     ...schedule,
   };

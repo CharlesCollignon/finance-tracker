@@ -1,11 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth/get-user";
 import { HeroPage } from "@/components/marketing/HeroPage";
 
 export default async function HomePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await getAuthUser();
   return <HeroPage isLoggedIn={Boolean(user)} />;
 }

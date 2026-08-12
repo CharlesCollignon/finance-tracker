@@ -103,7 +103,9 @@ function RecurringFormFields({
   useEffect(() => {
     if (state.success) {
       toast(
-        template ? "Recurring item updated" : "Recurring item added",
+        template
+          ? "Updated. Apply recurring on Transactions to see changes."
+          : "Saved. Apply recurring on Transactions to see changes.",
         "success",
       );
       onOpenChange(false);
@@ -122,7 +124,10 @@ function RecurringFormFields({
       if (result.error) {
         toast(result.error, "error");
       } else {
-        toast("Recurring item deleted", "success");
+        toast(
+          "Deleted. Apply recurring on Transactions to see changes.",
+          "success",
+        );
         onOpenChange(false);
       }
     });
@@ -479,6 +484,35 @@ function RecurringFormFields({
             </div>
           </>
         )}
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-medium">Active period (optional)</span>
+          <Text className="text-xs text-muted-foreground">
+            Leave empty for open-ended. Use both dates for a fixed échéancier
+            (e.g. taxe foncière over several months).
+          </Text>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <FormLabel htmlFor="startsOn">Starts on</FormLabel>
+              <Input
+                id="startsOn"
+                name="startsOn"
+                type="date"
+                className="text-base"
+                defaultValue={template?.starts_on ?? ""}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <FormLabel htmlFor="endsOn">Ends on</FormLabel>
+              <Input
+                id="endsOn"
+                name="endsOn"
+                type="date"
+                className="text-base"
+                defaultValue={template?.ends_on ?? ""}
+              />
+            </div>
+          </div>
+        </div>
         {state.error && (
           <Text className="text-sm text-destructive">{state.error}</Text>
         )}

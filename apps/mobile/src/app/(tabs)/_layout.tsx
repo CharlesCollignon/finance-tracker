@@ -23,7 +23,7 @@ const TABS: TabConfig[] = [
   },
   {
     name: "transactions",
-    title: "Money",
+    title: "Transaction",
     icon: "swap-horizontal",
     iconInactive: "swap-horizontal-outline",
   },

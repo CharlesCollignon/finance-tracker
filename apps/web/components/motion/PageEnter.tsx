@@ -1,15 +1,17 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { FadeIn } from "@/components/motion/FadeIn";
 
-/** Fade/slide page content on route change. */
+/** Lightweight CSS enter on route change (no framer-motion). */
 export function PageEnter({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <FadeIn key={pathname} className="flex min-h-0 flex-1 flex-col">
+    <div
+      key={pathname}
+      className="page-enter flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden"
+    >
       {children}
-    </FadeIn>
+    </div>
   );
 }

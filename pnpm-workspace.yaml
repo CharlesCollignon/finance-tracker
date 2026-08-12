@@ -42,6 +42,6 @@ minimumReleaseAgeExclude:
   - expo@57.0.8
 
 allowBuilds:
-  '@shopify/react-native-skia': set this to true or false
+  '@shopify/react-native-skia': false
   sharp: false
   unrs-resolver: false

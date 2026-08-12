@@ -16,10 +16,9 @@ export function PageHeader({ title, children, className }: PageHeaderProps) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 shrink-0 border-b border-border",
-        "bg-background/95 pt-safe backdrop-blur-sm",
-        "md:static md:box-border md:h-[var(--shell-header-height)] md:bg-background",
-        "md:pt-0",
+        "sticky top-0 z-30 box-border h-[calc(var(--shell-header-height)+env(safe-area-inset-top,0px))] shrink-0",
+        "border-b border-border bg-background/95 pt-safe backdrop-blur-sm",
+        "md:static md:h-[var(--shell-header-height)] md:bg-background md:pt-0",
         className,
       )}
     >

@@ -52,22 +52,47 @@ export function getWeeklyDatesInMonth(
   return dates;
 }
 
+function formatIsoMonthYear(isoDate: string): string {
+  const [year, month] = isoDate.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-GB", {
+    month: "short",
+    year: "numeric",
+  }).format(new Date(year, month - 1, 1));
+}
+
+/** Compact échéancier label, or null when open-ended. */
+export function formatScheduleWindow(
+  startsOn: string | null | undefined,
+  endsOn: string | null | undefined,
+): string | null {
+  if (!startsOn && !endsOn) {
+    return null;
+  }
+  const start = startsOn ? formatIsoMonthYear(startsOn) : "…";
+  const end = endsOn ? formatIsoMonthYear(endsOn) : "…";
+  return `${start} → ${end}`;
+}
+
 export function formatRecurrenceSchedule(template: {
   recurrence: Recurrence;
   day_of_month: number | null;
   day_of_week: number | null;
   month_of_year: number | null;
+  starts_on?: string | null;
+  ends_on?: string | null;
 }): string {
+  let base: string;
   if (template.recurrence === "weekly" && template.day_of_week) {
-    return `Weekly · ${DAY_OF_WEEK_LABELS[template.day_of_week]}`;
-  }
-
-  if (template.recurrence === "yearly" && template.month_of_year) {
+    base = `Weekly · ${DAY_OF_WEEK_LABELS[template.day_of_week]}`;
+  } else if (template.recurrence === "yearly" && template.month_of_year) {
     const month = MONTH_LABELS[template.month_of_year];
-    return `Yearly · ${month} ${template.day_of_month ?? 1}`;
+    base = `Yearly · ${month} ${template.day_of_month ?? 1}`;
+  } else {
+    base = `Monthly · day ${template.day_of_month ?? 1}`;
   }
 
-  return `Monthly · day ${template.day_of_month ?? 1}`;
+  const window = formatScheduleWindow(template.starts_on, template.ends_on);
+  return window ? `${base} · ${window}` : base;
 }
 
 export function estimateMonthlyAmount(
@@ -130,4 +155,29 @@ export function getRecurringOccurrenceDates(
   return [
     `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
   ];
+}
+
+/** Inclusive schedule window; null bound = unbounded on that side. */
+export function occurrenceWithinSchedule(
+  occurredOn: string,
+  startsOn: string | null | undefined,
+  endsOn: string | null | undefined,
+): boolean {
+  if (startsOn && occurredOn < startsOn) {
+    return false;
+  }
+  if (endsOn && occurredOn > endsOn) {
+    return false;
+  }
+  return true;
+}
+
+export function filterDatesBySchedule(
+  dates: string[],
+  startsOn: string | null | undefined,
+  endsOn: string | null | undefined,
+): string[] {
+  return dates.filter((date) =>
+    occurrenceWithinSchedule(date, startsOn, endsOn),
+  );
 }

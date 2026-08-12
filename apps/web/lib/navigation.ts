@@ -11,7 +11,7 @@ import {
  * under the theme toggle in the SideNav footer. */
 export const APP_NAV_ITEMS = [
   { href: "/dashboard", label: "Home", icon: ChartPieSlice },
-  { href: "/transactions", label: "Money", icon: ArrowsLeftRight },
+  { href: "/transactions", label: "Transaction", icon: ArrowsLeftRight },
   { href: "/recurring", label: "Recurring", icon: Repeat },
   { href: "/calendar", label: "Calendar", icon: CalendarBlank },
   { href: "/investments", label: "Wallets", icon: ChartLine },

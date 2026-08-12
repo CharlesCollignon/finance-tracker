@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth/get-user";
 import { getCategories } from "@/lib/queries/categories";
 import { getMonthlySummary } from "@/lib/queries/finance";
 import { getBudgets, getSavingsGoals, getTags } from "@/lib/queries/phase4";
@@ -9,10 +9,7 @@ import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
 import { BudgetsView } from "./BudgetsView";
 
 export default async function BudgetsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) {
     redirect("/login");
