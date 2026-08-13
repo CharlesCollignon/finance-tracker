@@ -211,8 +211,8 @@ pnpm --filter mobile exec expo start --web       # Expo web preview (not the mai
 
 ### EAS (optional)
 
-Display name is **Pluclair**; Expo slug is `pluclair`. If the EAS project
-slug on expo.dev still differs, rename it there to match.
+Run all EAS commands from **`apps/mobile`** (not the repo root).
+Display name is **Pluclair**; Expo slug is `pluclair`.
 
 ```bash
 npx eas-cli login
