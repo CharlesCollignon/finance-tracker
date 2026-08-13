@@ -7,7 +7,6 @@
     "@expo/vector-icons": "^15.1.1",
     "@finance/core": "workspace:*",
     "@react-native-async-storage/async-storage": "^2.2.0",
-    "@shopify/react-native-skia": "2.6.2",
     "@supabase/supabase-js": "2.108.2",
     "@wuba/react-native-echarts": "^3.1.1",
     "echarts": "^6.1.0",

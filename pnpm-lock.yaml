@@ -26,9 +26,6 @@ importers:
       '@react-native-async-storage/async-storage':
         specifier: ^2.2.0
         version: 2.2.0(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))
-      '@shopify/react-native-skia':
-        specifier: 2.6.2
-        version: 2.6.2(react-native-reanimated@4.5.1(react-native-worklets@0.10.1(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)
       '@supabase/supabase-js':
         specifier: 2.108.2
         version: 2.108.2
@@ -5140,6 +5137,9 @@ packages:
   zrender@6.1.0:
     resolution: {integrity: sha512-oEGMDB6pOP2S6OwRR4PdVv610zrjnA3Bh+JnSG12fYJlBKjtNAoEb5fSUoCOOINlH96I2fU38/A2UpRKs67xYQ==}
 
+ignoredOptionalDependencies:
+  - '@shopify/react-native-skia'
+
 snapshots:
 
   '@adobe/css-tools@4.5.0': {}
@@ -6704,6 +6704,7 @@ snapshots:
     optionalDependencies:
       react-native: 0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3)
       react-native-reanimated: 4.5.1(react-native-worklets@0.10.1(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)
+    optional: true
 
   '@sinclair/typebox@0.27.12': {}
 
@@ -7175,7 +7176,8 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
     optional: true
 
-  '@webgpu/types@0.1.21': {}
+  '@webgpu/types@0.1.21':
+    optional: true
 
   '@wuba/react-native-echarts@3.1.1(866ffd816b0b7ecc5ba00ab397a4e3e6)':
     dependencies:
@@ -7527,6 +7529,7 @@ snapshots:
   canvaskit-wasm@0.41.0:
     dependencies:
       '@webgpu/types': 0.1.21
+    optional: true
 
   chalk@2.4.2:
     dependencies:
@@ -9956,13 +9959,17 @@ snapshots:
       react-native: 0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3)
       warn-once: 0.1.1
 
-  react-native-skia-android@147.1.0: {}
+  react-native-skia-android@147.1.0:
+    optional: true
 
-  react-native-skia-apple-ios@147.1.0: {}
+  react-native-skia-apple-ios@147.1.0:
+    optional: true
 
-  react-native-skia-apple-macos@147.1.0: {}
+  react-native-skia-apple-macos@147.1.0:
+    optional: true
 
-  react-native-skia-apple-tvos@147.1.0: {}
+  react-native-skia-apple-tvos@147.1.0:
+    optional: true
 
   react-native-svg@15.15.4(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3):
     dependencies:
@@ -10061,6 +10068,7 @@ snapshots:
     dependencies:
       react: 19.2.3
       scheduler: 0.25.0
+    optional: true
 
   react-refresh@0.14.2: {}
 
@@ -10213,7 +10221,8 @@ snapshots:
 
   sax@1.6.0: {}
 
-  scheduler@0.25.0: {}
+  scheduler@0.25.0:
+    optional: true
 
   scheduler@0.27.0: {}
 

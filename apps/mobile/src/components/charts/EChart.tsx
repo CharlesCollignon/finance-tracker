@@ -7,7 +7,9 @@ import {
   TooltipComponent,
   LegendComponent,
 } from "echarts/components";
-import { SVGRenderer, SvgChart } from "@wuba/react-native-echarts";
+import SvgChart, {
+  SVGRenderer,
+} from "@wuba/react-native-echarts/svgChart";
 import type { EChartsCoreOption } from "echarts/core";
 
 import { cn } from "@/lib/cn";
