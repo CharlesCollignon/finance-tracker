@@ -50,5 +50,10 @@
     "web": "expo start --web",
     "lint": "expo lint"
   },
+  "expo": {
+    "autolinking": {
+      "exclude": ["@shopify/react-native-skia"]
+    }
+  },
   "private": true
 }

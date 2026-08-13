@@ -7,20 +7,17 @@ packages:
 # resolution (e.g. NativeWind's react-native-css-interop/jsx-runtime).
 nodeLinker: hoisted
 
-# Charts use SVG, not Skia. @wuba/react-native-echarts lists Skia as an
-# optional peer; skip it so EAS does not install or autolink it.
+# Charts use SVG, not Skia. @wuba/react-native-echarts still lists Skia
+# as an optional peer, so pnpm may install it anyway.
 ignoredOptionalDependencies:
   - "@shopify/react-native-skia"
 
-# pnpm 11 fails the install (ERR_PNPM_IGNORED_BUILDS) if a package with
-# lifecycle scripts is present but not allowlisted.
-ignoredBuiltDependencies:
-  - "@shopify/react-native-skia"
-
-# Allow install scripts required by Next.js / ESLint tooling (pnpm v11)
-onlyBuiltDependencies:
-  - sharp
-  - unrs-resolver
+# pnpm 11 replaced ignoredBuiltDependencies with allowBuilds.
+# false = do not run scripts AND do not fail the install.
+allowBuilds:
+  "@shopify/react-native-skia": false
+  sharp: false
+  unrs-resolver: false
 
 minimumReleaseAgeExclude:
   - "@supabase/auth-js@2.108.2"
@@ -50,7 +47,3 @@ minimumReleaseAgeExclude:
   - expo-splash-screen@57.0.5
   - expo-web-browser@57.0.2
   - expo@57.0.8
-
-allowBuilds:
-  sharp: false
-  unrs-resolver: false
