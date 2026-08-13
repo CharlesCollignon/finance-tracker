@@ -6,7 +6,7 @@ function required(name: string, value: string | undefined): string {
   const trimmed = value?.trim();
   if (!trimmed) {
     throw new Error(
-      `Missing ${name}. Add it to apps/mobile/.env and restart Expo with -c.`,
+      `Missing ${name}. Local: add it to apps/mobile/.env and restart with -c. EAS: set it on the Expo environment for this build profile, then rebuild.`,
     );
   }
   return trimmed;
