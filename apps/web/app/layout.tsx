@@ -11,7 +11,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Pluclair",
   description:
-    "Personal finance — income, recurring flows, investments, and spending",
+    "Personal finance without a bank connection. Enter income, recurring, and investments in a private database.",
 };
 
 export const viewport: Viewport = {

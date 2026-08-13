@@ -11,7 +11,7 @@ export default function NotFound() {
           The page you&apos;re looking for doesn&apos;t exist or has moved.
         </p>
         <div className="mt-6 flex justify-center">
-          <Button render={<Link href="/dashboard">Go to dashboard</Link>} />
+          <Button render={<Link href="/">Go home</Link>} />
         </div>
       </div>
     </div>
