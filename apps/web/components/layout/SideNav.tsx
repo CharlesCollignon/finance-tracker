@@ -3,15 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { APP_NAV_ITEMS, PROFILE_NAV_ITEM } from "@/lib/navigation";
+import { APP_NAV_ITEMS } from "@/lib/navigation";
 import { SHELL_HEADER_BAND_CLASS } from "@/lib/layout-shell";
+import { AccountMenu } from "@/components/layout/AccountMenu";
 import { Logo } from "@/components/layout/Logo";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
-export function SideNav() {
+export function SideNav({
+  displayName,
+  initial,
+}: {
+  displayName: string;
+  initial: string;
+}) {
   const pathname = usePathname();
-  const ProfileIcon = PROFILE_NAV_ITEM.icon;
-  const profileActive = pathname.startsWith(PROFILE_NAV_ITEM.href);
 
   return (
     <aside
@@ -53,21 +57,12 @@ export function SideNav() {
         })}
       </nav>
 
-      <div className="flex shrink-0 flex-col items-center gap-2 border-t border-border p-3">
-        <ThemeToggle />
-        <Link
-          href={PROFILE_NAV_ITEM.href}
-          className={cn(
-            "flex w-full min-h-10 items-center gap-3 rounded-md px-3 py-2",
-            "text-sm font-medium transition-colors duration-200",
-            profileActive
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground",
-          )}
-        >
-          <ProfileIcon size={18} weight={profileActive ? "fill" : "regular"} />
-          {PROFILE_NAV_ITEM.label}
-        </Link>
+      <div className="flex shrink-0 flex-col border-t border-border p-3">
+        <AccountMenu
+          variant="side"
+          displayName={displayName}
+          initial={initial}
+        />
       </div>
     </aside>
   );

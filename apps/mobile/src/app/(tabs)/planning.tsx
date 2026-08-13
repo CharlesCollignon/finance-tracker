@@ -21,6 +21,7 @@ import type {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { PrivateAmount } from "@/components/PrivateAmount";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
@@ -156,11 +157,13 @@ export default function PlanningScreen() {
               <View key={row.budgetId} className="mt-3">
                 <View className="flex-row justify-between">
                   <Text>{row.label}</Text>
-                  <Text
-                    className={row.over ? "font-semibold text-destructive" : ""}
+                  <PrivateAmount
+                    className={
+                      row.over ? "font-semibold text-destructive" : ""
+                    }
                   >
-                    {formatEuro(row.spent)} / {formatEuro(row.limit)}
-                  </Text>
+                    {`${formatEuro(row.spent)} / ${formatEuro(row.limit)}`}
+                  </PrivateAmount>
                 </View>
                 <View className="mt-1.5 h-2 overflow-hidden rounded bg-muted">
                   <View
@@ -212,9 +215,9 @@ export default function PlanningScreen() {
                         ?.name ?? "Category")
                     : "All expenses"}
                 </Text>
-                <Text className="font-semibold">
+                <PrivateAmount className="font-semibold">
                   {formatEuro(Number(b.amount))}
-                </Text>
+                </PrivateAmount>
               </Pressable>
             ))}
           </Card>
@@ -225,10 +228,9 @@ export default function PlanningScreen() {
               <View key={row.goal.id} className="mt-3">
                 <View className="flex-row justify-between">
                   <Text>{row.goal.name}</Text>
-                  <Text>
-                    {formatEuro(row.saved)} /{" "}
-                    {formatEuro(Number(row.goal.target_amount))}
-                  </Text>
+                  <PrivateAmount>
+                    {`${formatEuro(row.saved)} / ${formatEuro(Number(row.goal.target_amount))}`}
+                  </PrivateAmount>
                 </View>
                 <View className="mt-1.5 h-2 overflow-hidden rounded bg-muted">
                   <View
@@ -281,9 +283,9 @@ export default function PlanningScreen() {
                 }
               >
                 <Text>{g.name}</Text>
-                <Text className="font-semibold">
+                <PrivateAmount className="font-semibold">
                   {formatEuro(Number(g.target_amount))}
-                </Text>
+                </PrivateAmount>
               </Pressable>
             ))}
           </Card>

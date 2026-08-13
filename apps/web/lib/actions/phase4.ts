@@ -10,6 +10,7 @@ import {
   tagSchema,
   walletTransferSchema,
 } from "@finance/core/validations/phase4";
+import { parseUuid } from "@finance/core/validations/finance";
 
 type ActionResult = { error?: string; success?: boolean };
 
@@ -79,6 +80,10 @@ export async function deleteBudget(id: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
     return { error: "Not authenticated" };
+  }
+
+  if (!parseUuid(id)) {
+    return { error: "Invalid budget" };
   }
 
   const supabase = await createClient();
@@ -151,6 +156,10 @@ export async function deleteWalletTransfer(id: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
     return { error: "Not authenticated" };
+  }
+
+  if (!parseUuid(id)) {
+    return { error: "Invalid transfer" };
   }
 
   const supabase = await createClient();
@@ -308,6 +317,10 @@ export async function deleteSavingsGoal(id: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
     return { error: "Not authenticated" };
+  }
+
+  if (!parseUuid(id)) {
+    return { error: "Invalid goal" };
   }
 
   const supabase = await createClient();

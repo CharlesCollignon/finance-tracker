@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import { searchInstrumentsAction } from "@/lib/actions/market";
 import { FormLabel } from "@/components/layout/FormLabel";
+import { InstrumentLogo } from "@/components/finance/InstrumentLogo";
 import { canSearchInstruments } from "@finance/core/market/yahoo";
 import { cn } from "@/lib/utils";
 import type { InstrumentSearchResult } from "@finance/core/market/yahoo";
@@ -195,20 +196,29 @@ export function InstrumentSearch({
                       aria-selected={false}
                       onClick={() => handleSelect(instrument)}
                       className={cn(
-                        "flex w-full flex-col items-start gap-0.5",
+                        "flex w-full items-center gap-2",
                         "px-3 py-2 text-left hover:bg-accent",
                       )}
                     >
-                      <span className="text-sm font-medium leading-snug">
-                        {instrument.name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {instrument.symbol}
-                        {instrument.isin ? ` · ${instrument.isin}` : ""}
-                        {instrument.exchange ? ` · ${instrument.exchange}` : ""}
-                        {instrument.quoteType
-                          ? ` · ${instrument.quoteType}`
-                          : ""}
+                      <InstrumentLogo
+                        symbol={instrument.symbol}
+                        name={instrument.name}
+                        className="size-7"
+                      />
+                      <span className="flex min-w-0 flex-col items-start gap-0.5">
+                        <span className="text-sm font-medium leading-snug">
+                          {instrument.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {instrument.symbol}
+                          {instrument.isin ? ` · ${instrument.isin}` : ""}
+                          {instrument.exchange
+                            ? ` · ${instrument.exchange}`
+                            : ""}
+                          {instrument.quoteType
+                            ? ` · ${instrument.quoteType}`
+                            : ""}
+                        </span>
                       </span>
                     </button>
                   </li>

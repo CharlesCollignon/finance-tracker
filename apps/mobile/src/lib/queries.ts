@@ -207,7 +207,10 @@ async function fetchHistoricalQuotes(
 
 export async function getWalletPortfolio(
   userId: string,
+  options: { includeHistory?: boolean } = {},
 ): Promise<InvestmentPortfolioSummary> {
+  // History is off by default: mobile screens show totals, not charts.
+  const includeHistory = options.includeHistory === true;
   const [categories, transactions, positionRows, recurringTemplates] =
     await Promise.all([
       getCategories(userId, { includeArchived: true }),
@@ -231,7 +234,9 @@ export async function getWalletPortfolio(
   const symbolList = Array.from(symbols);
   const [liveQuotes, historicalQuotes] = await Promise.all([
     fetchLiveQuotes(symbolList),
-    fetchHistoricalQuotes(symbolList),
+    includeHistory
+      ? fetchHistoricalQuotes(symbolList)
+      : Promise.resolve({} as Record<string, Record<string, number>>),
   ]);
 
   return buildInvestmentPortfolio(

@@ -9,6 +9,7 @@ import { buildIncomeSankey } from "@finance/core/income-sankey";
 import type { MonthlySummary } from "@finance/core/types/database";
 import { chartMotion, chartTextStyle } from "@/lib/echarts-theme";
 import { readCssVar } from "@/lib/css-var";
+import { privateEuro, usePrivacyOn } from "@/lib/use-privacy";
 
 interface DashboardAllocationChartProps {
   summary: MonthlySummary;
@@ -48,6 +49,7 @@ export function DashboardAllocationChart({
   summary,
 }: DashboardAllocationChartProps) {
   const graph = useMemo(() => buildIncomeSankey(summary), [summary]);
+  const hidden = usePrivacyOn();
   const rate = savingsRatePercent(
     summary.savings,
     summary.investments,
@@ -114,10 +116,10 @@ export function DashboardAllocationChart({
           if (p.dataType === "edge" && p.data) {
             const from = labelByName.get(p.data.source ?? "") ?? p.data.source;
             const to = labelByName.get(p.data.target ?? "") ?? p.data.target;
-            return `${from} → ${to}<br/><strong>${formatEuro(p.data.value ?? 0)}</strong>`;
+            return `${from} → ${to}<br/><strong>${privateEuro(p.data.value ?? 0, hidden)}</strong>`;
           }
           const label = labelByName.get(p.name ?? "") ?? p.name;
-          return `${label}<br/><strong>${formatEuro(Number(p.value ?? 0))}</strong>`;
+          return `${label}<br/><strong>${privateEuro(Number(p.value ?? 0), hidden)}</strong>`;
         },
       },
       series: [
@@ -142,7 +144,7 @@ export function DashboardAllocationChart({
               const p = params as { name: string; value?: unknown };
               const label = labelByName.get(p.name) ?? p.name;
               const value = Number(p.value ?? 0);
-              return `${label}: ${formatEuro(value)}`;
+              return hidden ? label : `${label}: ${formatEuro(value)}`;
             },
           },
           data: graph.nodes.map((node) => {
@@ -162,7 +164,7 @@ export function DashboardAllocationChart({
         },
       ],
     };
-  }, [graph, labelByName, palette]);
+  }, [graph, hidden, labelByName, palette]);
 
   const legend = [
     { label: "Income", value: summary.income, color: palette.income },

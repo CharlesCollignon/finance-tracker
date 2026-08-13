@@ -12,6 +12,10 @@ import { SignOutButton } from "@/components/layout/SignOutButton";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
+  PasskeysCard,
+  type PasskeyItem,
+} from "@/components/profile/PasskeysCard";
+import {
   deleteAccount,
   deleteAllData,
   updateProfile,
@@ -22,6 +26,7 @@ interface ProfileViewProps {
   fullName: string;
   provider: string;
   canDeleteAccount: boolean;
+  initialPasskeys: PasskeyItem[];
 }
 
 export function ProfileView({
@@ -29,6 +34,7 @@ export function ProfileView({
   fullName,
   provider,
   canDeleteAccount,
+  initialPasskeys,
 }: ProfileViewProps) {
   const { toast } = useToast();
   const [profileState, profileAction, profilePending] = useActionState(
@@ -112,10 +118,12 @@ export function ProfileView({
           </form>
         </Card>
 
+        <PasskeysCard initialPasskeys={initialPasskeys} />
+
         <Card className="block w-full p-4 md:p-5">
           <h2 className="font-head text-base">Appearance</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Choose a light or dark theme, or follow your device setting.
+            Switch between light and dark.
           </p>
           <ThemeToggle className="mt-4" />
         </Card>

@@ -144,3 +144,11 @@ export const authSchema = z.object({
 });
 
 export type RecurringTemplateInput = z.infer<typeof recurringTemplateSchema>;
+
+const uuidSchema = z.string().uuid();
+
+/** Returns the UUID or null when the value is not a valid UUID. */
+export function parseUuid(id: string): string | null {
+  const parsed = uuidSchema.safeParse(id);
+  return parsed.success ? parsed.data : null;
+}

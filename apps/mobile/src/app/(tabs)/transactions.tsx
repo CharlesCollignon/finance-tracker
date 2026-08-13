@@ -14,7 +14,7 @@ import {
   todayIsoLocal,
 } from "@finance/core/constants";
 import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
-import { CATEGORY_TYPE_LABELS } from "@finance/core/category-styles";
+import { CATEGORY_TYPE_LABELS, TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import type {
   Category,
   CategoryType,
@@ -22,6 +22,7 @@ import type {
 } from "@finance/core/types/database";
 
 import { MonthPicker } from "@/components/MonthPicker";
+import { PrivateAmount } from "@/components/PrivateAmount";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -36,6 +37,7 @@ import {
   previewApplyRecurringForMonth,
 } from "@/lib/mutations";
 import { getCategories, getTransactions } from "@/lib/queries";
+import { cn } from "@/lib/cn";
 
 type FilterType = "all" | CategoryType;
 
@@ -253,9 +255,14 @@ export default function TransactionsScreen() {
                   {item.note ? ` · ${item.note}` : ""}
                 </Text>
               </View>
-              <Text className="font-bold tabular-nums">
+              <PrivateAmount
+                className={cn(
+                  "font-bold",
+                  TYPE_AMOUNT_CLASS[item.categories.type],
+                )}
+              >
                 {formatEuro(Number(item.amount))}
-              </Text>
+              </PrivateAmount>
               <Pressable
                 onPress={() => {
                   setEditing(item);

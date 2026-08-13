@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
+import { PrivateAmount } from "@/components/PrivateAmount";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
@@ -67,7 +68,7 @@ export default function InvestmentsScreen() {
       }
       const [portfolio, templates, transactions, transfers] = await Promise.all(
         [
-          getWalletPortfolio(user.id),
+          getWalletPortfolio(user.id, { includeHistory: false }),
           getRecurringTemplates(user.id),
           getInvestmentTransactions(user.id),
           getWalletTransfers(user.id, current.year, current.month),
@@ -138,18 +139,29 @@ export default function InvestmentsScreen() {
         >
           <Card className="p-4">
             <Text variant="muted">Portfolio value</Text>
-            <Text className="mt-1 text-3xl font-bold tabular-nums">
+            <PrivateAmount className="mt-1 text-3xl font-bold">
               {formatEuro(portfolio.totalMarketValue)}
-            </Text>
+            </PrivateAmount>
             <Text variant="muted" className="mt-2">
-              Invested {formatEuro(portfolio.totalInvested)}
-              {portfolio.hasMarketSnapshot
-                ? ` · P/L ${formatEuro(portfolio.totalGainLoss)}`
-                : ""}
+              Invested{" "}
+              <PrivateAmount>
+                {formatEuro(portfolio.totalInvested)}
+              </PrivateAmount>
+              {portfolio.hasMarketSnapshot ? (
+                <>
+                  {" · P/L "}
+                  <PrivateAmount>
+                    {formatEuro(portfolio.totalGainLoss)}
+                  </PrivateAmount>
+                </>
+              ) : null}
             </Text>
             {upcoming.length > 0 ? (
               <Text variant="muted" className="mt-1">
-                Upcoming DCA {formatEuro(sumUpcomingAmount(upcoming))}
+                Upcoming DCA{" "}
+                <PrivateAmount>
+                  {formatEuro(sumUpcomingAmount(upcoming))}
+                </PrivateAmount>
               </Text>
             ) : null}
           </Card>
@@ -160,9 +172,9 @@ export default function InvestmentsScreen() {
                 Send to {INVESTMENT_WALLET_LABELS[need.walletId]}
               </Text>
               <View className="mt-1 flex-row items-baseline gap-1">
-                <Text className="text-2xl font-bold tabular-nums">
+                <PrivateAmount className="text-2xl font-bold">
                   {formatEuro(need.monthlyTotal)}
-                </Text>
+                </PrivateAmount>
                 <Text variant="muted" className="text-sm">
                   / month
                 </Text>
@@ -187,16 +199,19 @@ export default function InvestmentsScreen() {
                 <Text className="font-bold">
                   {INVESTMENT_WALLET_LABELS[walletId]}
                 </Text>
-                <Text className="mt-1 text-xl font-bold tabular-nums">
+                <PrivateAmount className="mt-1 text-xl font-bold">
                   {formatEuro(column?.totalMarketValue ?? 0)}
-                </Text>
+                </PrivateAmount>
                 <Text variant="muted">
-                  Invested {formatEuro(column?.totalInvested ?? 0)}
+                  Invested{" "}
+                  <PrivateAmount>
+                    {formatEuro(column?.totalInvested ?? 0)}
+                  </PrivateAmount>
                 </Text>
                 {next ? (
                   <Text variant="muted" className="mt-1">
                     Next: {next.name} · {next.dateLabel} ·{" "}
-                    {formatEuro(next.amount)}
+                    <PrivateAmount>{formatEuro(next.amount)}</PrivateAmount>
                   </Text>
                 ) : null}
                 <View className="mt-3 gap-2">
@@ -207,10 +222,17 @@ export default function InvestmentsScreen() {
                     >
                       <Text className="font-semibold">{item.name}</Text>
                       <Text variant="muted">
-                        {formatEuro(item.marketValue)}
-                        {item.gainLoss !== 0
-                          ? ` · ${formatEuro(item.gainLoss)}`
-                          : ""}
+                        <PrivateAmount>
+                          {formatEuro(item.marketValue)}
+                        </PrivateAmount>
+                        {item.gainLoss !== 0 ? (
+                          <>
+                            {" · "}
+                            <PrivateAmount>
+                              {formatEuro(item.gainLoss)}
+                            </PrivateAmount>
+                          </>
+                        ) : null}
                       </Text>
                     </View>
                   ))}
@@ -275,9 +297,9 @@ export default function InvestmentsScreen() {
                 <Text>
                   {INVESTMENT_WALLET_LABELS[t.to_wallet]} · {t.occurred_on}
                 </Text>
-                <Text className="font-semibold">
+                <PrivateAmount className="font-semibold">
                   {formatEuro(Number(t.amount))}
-                </Text>
+                </PrivateAmount>
               </Pressable>
             ))}
           </Card>

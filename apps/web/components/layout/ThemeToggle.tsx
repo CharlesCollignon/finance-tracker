@@ -1,104 +1,58 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
-import { Desktop, Moon, Sun } from "@phosphor-icons/react";
+import { useSyncExternalStore } from "react";
+import { Moon, Sun } from "@phosphor-icons/react";
+import { buttonVariants } from "@/components/retroui/Button";
 import { cn } from "@/lib/utils";
-
-type ThemePreference = "light" | "dark" | "system";
-
-const OPTIONS: { value: ThemePreference; label: string; icon: typeof Sun }[] = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Desktop },
-];
 
 const THEME_CHANGE_EVENT = "app-theme-change";
 
-function subscribe(callback: () => void): () => void {
-  window.addEventListener(THEME_CHANGE_EVENT, callback);
-  window.addEventListener("storage", callback);
+function subscribe(onChange: () => void): () => void {
+  window.addEventListener(THEME_CHANGE_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  media.addEventListener("change", onChange);
   return () => {
-    window.removeEventListener(THEME_CHANGE_EVENT, callback);
-    window.removeEventListener("storage", callback);
+    window.removeEventListener(THEME_CHANGE_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+    media.removeEventListener("change", onChange);
   };
 }
 
-function getSnapshot(): ThemePreference {
-  const stored = window.localStorage.getItem("theme");
-  if (stored === "light" || stored === "dark" || stored === "system") {
-    return stored;
-  }
-  return "dark";
+function getIsDark(): boolean {
+  return document.documentElement.classList.contains("dark");
 }
 
-function getServerSnapshot(): ThemePreference {
-  return "dark";
-}
-
-function applyPreference(preference: ThemePreference): void {
-  const dark =
-    preference === "dark" ||
-    (preference === "system" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches);
-  document.documentElement.classList.toggle("dark", dark);
+function getServerSnapshot(): boolean {
+  return true;
 }
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const preference = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-  );
+  const isDark = useSyncExternalStore(subscribe, getIsDark, getServerSnapshot);
 
-  useEffect(() => {
-    if (preference !== "system") {
-      return;
-    }
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const listener = () => applyPreference("system");
-    media.addEventListener("change", listener);
-    return () => media.removeEventListener("change", listener);
-  }, [preference]);
-
-  function handleSelect(next: ThemePreference) {
+  function handleToggle() {
+    const next = isDark ? "light" : "dark";
     window.localStorage.setItem("theme", next);
-    applyPreference(next);
+    document.documentElement.classList.toggle("dark", next === "dark");
     window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }
 
   return (
-    <div
-      role="radiogroup"
-      aria-label="Theme"
+    <button
+      type="button"
       className={cn(
-        "flex w-fit overflow-hidden rounded-md border border-border bg-card",
+        buttonVariants({ size: "icon", variant: "ghost" }),
         className,
       )}
+      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+      title={isDark ? "Light theme" : "Dark theme"}
+      onClick={handleToggle}
     >
-      {OPTIONS.map(({ value, label, icon: Icon }) => {
-        const selected = preference === value;
-
-        return (
-          <button
-            key={value}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            aria-label={`${label} theme`}
-            title={`${label} theme`}
-            onClick={() => handleSelect(value)}
-            className={cn(
-              "flex h-9 w-10 items-center justify-center transition-colors duration-200",
-              selected
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-          >
-            <Icon size={16} weight={selected ? "fill" : "regular"} />
-          </button>
-        );
-      })}
-    </div>
+      {isDark ? (
+        <Sun size={18} weight="regular" />
+      ) : (
+        <Moon size={18} weight="regular" />
+      )}
+    </button>
   );
 }

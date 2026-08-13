@@ -128,7 +128,7 @@ export default function DashboardScreen() {
       const [summary, portfolio, budgets, goals, categories] =
         await Promise.all([
           getMonthlySummary(user.id, year, month, view),
-          getWalletPortfolio(user.id),
+          getWalletPortfolio(user.id, { includeHistory: false }),
           getBudgets(user.id),
           getSavingsGoals(user.id),
           getCategories(user.id),
@@ -251,13 +251,13 @@ export default function DashboardScreen() {
                 <View key={row.budgetId} className="mt-3">
                   <View className="flex-row justify-between">
                     <Text>{row.label}</Text>
-                    <Text
+                    <PrivateAmount
                       className={
                         row.over ? "font-semibold text-destructive" : ""
                       }
                     >
-                      {formatEuro(row.spent)} / {formatEuro(row.limit)}
-                    </Text>
+                      {`${formatEuro(row.spent)} / ${formatEuro(row.limit)}`}
+                    </PrivateAmount>
                   </View>
                   <View className="mt-1.5 h-2 overflow-hidden rounded bg-muted">
                     <View
@@ -275,10 +275,9 @@ export default function DashboardScreen() {
                 <View key={row.goal.id} className="mt-3">
                   <View className="flex-row justify-between">
                     <Text>{row.goal.name}</Text>
-                    <Text>
-                      {formatEuro(row.saved)} /{" "}
-                      {formatEuro(Number(row.goal.target_amount))}
-                    </Text>
+                    <PrivateAmount>
+                      {`${formatEuro(row.saved)} / ${formatEuro(Number(row.goal.target_amount))}`}
+                    </PrivateAmount>
                   </View>
                   <View className="mt-1.5 h-2 overflow-hidden rounded bg-muted">
                     <View

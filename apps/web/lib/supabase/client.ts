@@ -5,5 +5,9 @@ import { getSupabaseEnv } from "@/lib/supabase/env";
 export function createClient() {
   const { url, anonKey } = getSupabaseEnv();
 
-  return createBrowserClient<Database>(url, anonKey);
+  return createBrowserClient<Database>(url, anonKey, {
+    auth: {
+      experimental: { passkey: true },
+    },
+  });
 }

@@ -23,6 +23,7 @@ import {
 } from "@/lib/echarts-theme";
 import { readCssVar } from "@/lib/css-var";
 import { cn } from "@/lib/utils";
+import { privateEuro, usePrivacyOn } from "@/lib/use-privacy";
 
 interface DashboardWalletsCardProps {
   portfolio: InvestmentPortfolioSummary;
@@ -47,6 +48,7 @@ const WALLET_COLOR_VARS = [
 
 export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
   const hasData = portfolioHasActivity(portfolio);
+  const hidden = usePrivacyOn();
   const pl = portfolio.totalGainLoss;
   const showPl = portfolio.hasMarketSnapshot && pl !== 0;
 
@@ -119,7 +121,7 @@ export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
         },
         formatter: (params: unknown) => {
           const p = params as { name: string; value: number };
-          return `${p.name}<br/><strong>${formatEuro(p.value)}</strong>`;
+          return `${p.name}<br/><strong>${privateEuro(p.value, hidden)}</strong>`;
         },
       },
       series: [
@@ -140,7 +142,7 @@ export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
         },
       ],
     };
-  }, [border, card, colors, foreground, slices]);
+  }, [border, card, colors, foreground, hidden, slices]);
 
   return (
     <section className="flex w-full flex-col items-center text-center">

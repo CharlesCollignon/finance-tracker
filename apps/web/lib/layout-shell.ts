@@ -12,5 +12,5 @@ export const SHELL_HEADER_ACTIONS_CLASS =
   "flex min-w-0 shrink items-center justify-end gap-2";
 
 export const SHELL_MAIN_PADDING_BOTTOM =
-  "pb-[calc(var(--shell-bottom-nav-height)+env(safe-area-inset-bottom,0px))] " +
+  "pb-[calc(var(--shell-bottom-nav-height)+var(--shell-bottom-nav-inset)+env(safe-area-inset-bottom,0px))] " +
   "md:pb-0";

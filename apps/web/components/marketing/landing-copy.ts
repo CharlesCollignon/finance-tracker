@@ -130,9 +130,9 @@ export const landingCopy = {
     {
       id: "planning",
       title: "Planning",
-      body: "Spending caps and savings goals, from Profile.",
+      body: "Spending caps and savings goals.",
       utility:
-        "Caps and goals live in Profile. Home turns them into rings. They do not move money on their own.",
+        "Caps and goals live under Budgets on web, and Planning from Profile on mobile. Home turns them into rings. They do not move money on their own.",
       steps: [
         {
           title: "Set a cap",
@@ -144,7 +144,7 @@ export const landingCopy = {
         },
         {
           title: "Home rings follow",
-          body: "Dashboard reads these numbers. Change a cap or a goal in Profile and the rings update.",
+          body: "Dashboard reads these numbers. Change a cap or a goal and the rings update.",
         },
       ],
     },

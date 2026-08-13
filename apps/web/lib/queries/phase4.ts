@@ -58,17 +58,17 @@ export async function getTags(userId: string): Promise<Tag[]> {
 
 export async function getTransactionTagMap(
   userId: string,
-  transactionIds: string[],
+  year: number,
+  month: number,
 ): Promise<Record<string, Tag[]>> {
-  if (transactionIds.length === 0) {
-    return {};
-  }
-
+  const { start, end } = getMonthBounds(year, month);
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("transaction_tags")
-    .select("transaction_id, tags(*)")
-    .in("transaction_id", transactionIds);
+    .select("transaction_id, tags(*), transactions!inner(user_id, occurred_on)")
+    .eq("transactions.user_id", userId)
+    .gte("transactions.occurred_on", start)
+    .lte("transactions.occurred_on", end);
 
   if (error) {
     throw error;

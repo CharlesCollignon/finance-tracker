@@ -3,10 +3,7 @@ import { cn } from "@/lib/utils";
 function Bone({ className }: { className?: string }) {
   return (
     <div
-      className={cn(
-        "animate-pulse rounded border border-border bg-muted",
-        className,
-      )}
+      className={cn("animate-pulse rounded bg-muted/40", className)}
     />
   );
 }

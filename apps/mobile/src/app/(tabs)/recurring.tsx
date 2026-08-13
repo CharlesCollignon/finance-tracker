@@ -21,6 +21,7 @@ import type {
 } from "@finance/core/types/database";
 
 import { RecurringFormModal } from "@/components/RecurringFormModal";
+import { PrivateAmount } from "@/components/PrivateAmount";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -100,9 +101,9 @@ export default function RecurringScreen() {
       {templates.length > 0 ? (
         <Card className="mb-3 flex-row items-center justify-between p-4">
           <Text className="font-bold">Expected budget impact</Text>
-          <Text className="text-lg font-bold tabular-nums">
+          <PrivateAmount className="text-lg font-bold">
             {formatEuro(budgetMonthly)}
-          </Text>
+          </PrivateAmount>
         </Card>
       ) : null}
 
@@ -148,9 +149,9 @@ export default function RecurringScreen() {
                 <Text variant="muted">{formatRecurrenceSchedule(item)}</Text>
               </Pressable>
               <View className="mt-2 flex-row items-center justify-between border-t border-border pt-2">
-                <Text className="font-bold tabular-nums">
+                <PrivateAmount className="font-bold">
                   {formatEuro(Number(item.amount))}
-                </Text>
+                </PrivateAmount>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityState={{ selected: item.active }}

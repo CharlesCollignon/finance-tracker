@@ -230,12 +230,12 @@ function PlanningMock() {
 }
 
 const PAGE_MOCKS: Record<LandingPageId, () => ReactNode> = {
-  home: HomeMock,
-  transactions: TransactionsMock,
-  recurring: RecurringMock,
-  calendar: CalendarMock,
-  wallets: WalletsMock,
-  planning: PlanningMock,
+  home: () => <HomeMock />,
+  transactions: () => <TransactionsMock />,
+  recurring: () => <RecurringMock />,
+  calendar: () => <CalendarMock />,
+  wallets: () => <WalletsMock />,
+  planning: () => <PlanningMock />,
 };
 
 function MotionFade({

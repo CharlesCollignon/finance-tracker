@@ -4,26 +4,41 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.108.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  const allowed = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const allowOrigin =
+    origin && (allowed.length === 0 || allowed.includes(origin))
+      ? origin
+      : allowed[0] ?? "";
+
+  return {
+    ...(allowOrigin ? { "Access-Control-Allow-Origin": allowOrigin } : {}),
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    Vary: "Origin",
+  };
+}
 
 Deno.serve(async (req) => {
+  const headers = corsHeaders(req);
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers });
   }
 
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return json({ error: "Missing authorization" }, 401);
+      return json({ error: "Missing authorization" }, 401, headers);
     }
 
     const body = await req.json().catch(() => ({}));
     if (body?.confirmation !== "DELETE") {
-      return json({ error: "Type DELETE to confirm" }, 400);
+      return json({ error: "Type DELETE to confirm" }, 400, headers);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -34,6 +49,7 @@ Deno.serve(async (req) => {
       return json(
         { error: "Account deletion is not configured on the server." },
         503,
+        headers,
       );
     }
 
@@ -46,7 +62,7 @@ Deno.serve(async (req) => {
     } = await userClient.auth.getUser();
 
     if (userError || !user) {
-      return json({ error: "Not authenticated" }, 401);
+      return json({ error: "Not authenticated" }, 401, headers);
     }
 
     const admin = createClient(supabaseUrl, serviceRole);
@@ -71,19 +87,23 @@ Deno.serve(async (req) => {
 
     const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
     if (deleteError) {
-      return json({ error: deleteError.message }, 500);
+      return json({ error: deleteError.message }, 500, headers);
     }
 
-    return json({ success: true });
+    return json({ success: true }, 200, headers);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Delete failed";
-    return json({ error: message }, 500);
+    return json({ error: message }, 500, headers);
   }
 });
 
-function json(body: Record<string, unknown>, status = 200): Response {
+function json(
+  body: Record<string, unknown>,
+  status = 200,
+  headers: Record<string, string> = {},
+): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...headers, "Content-Type": "application/json" },
   });
 }

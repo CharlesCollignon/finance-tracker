@@ -12,6 +12,7 @@ export const supabase = createClient<Database>(
   SUPABASE_ANON_KEY,
   {
     auth: {
+      experimental: { passkey: true },
       // AsyncStorage (not SecureStore) because Supabase sessions can exceed
       // SecureStore's 2KB per-key limit. RLS is the real security boundary.
       storage: AsyncStorage,

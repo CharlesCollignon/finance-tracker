@@ -22,5 +22,8 @@ export async function createClient() {
         }
       },
     },
+    auth: {
+      experimental: { passkey: true },
+    },
   });
 }

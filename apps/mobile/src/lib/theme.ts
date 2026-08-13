@@ -24,7 +24,7 @@ export async function applyThemePreference(
 ): Promise<void> {
   const scheme: ColorSchemeName =
     preference === "system" ? "unspecified" : preference;
-  Appearance.setColorScheme(scheme === "unspecified" ? null : scheme);
+  Appearance.setColorScheme(scheme);
 }
 
 export async function initTheme(): Promise<ThemePreference> {

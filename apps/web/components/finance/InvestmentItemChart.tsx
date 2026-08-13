@@ -17,6 +17,7 @@ import {
   paddedValueAxisRange,
 } from "@/lib/echarts-theme";
 import { useEchartsSize } from "@/lib/use-echarts-size";
+import { privateEuro, PRIVACY_MASK, usePrivacyOn } from "@/lib/use-privacy";
 
 type ChartMode = "value" | "pl";
 
@@ -48,6 +49,7 @@ export function InvestmentItemChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReactECharts>(null);
   useEchartsSize(containerRef, chartRef);
+  const hidden = usePrivacyOn();
   const [mode, setMode] = useState<ChartMode>("value");
   const [range, setRange] = useState<PositionChartRange>("1Y");
 
@@ -88,7 +90,8 @@ export function InvestmentItemChart({
     const labels = chartData.map((row) => row.label);
     const axisLabel = {
       ...chartTextStyle(),
-      formatter: (value: number) => formatAxisEuro(value),
+      formatter: (value: number) =>
+        hidden ? PRIVACY_MASK : formatAxisEuro(value),
     };
 
     if (mode === "pl") {
@@ -115,7 +118,9 @@ export function InvestmentItemChart({
               return "";
             }
             const plText = row.pl == null ? "—" : formatSignedEuro(row.pl);
-            return `${row.label}<br/>P/L: ${plText}`;
+            return hidden
+              ? `${row.label}<br/>P/L: ${PRIVACY_MASK}`
+              : `${row.label}<br/>P/L: ${plText}`;
           },
         },
         xAxis: {
@@ -175,12 +180,17 @@ export function InvestmentItemChart({
           if (!row) {
             return "";
           }
-          const lines = [row.label, `Invested: ${formatEuro(row.invested)}`];
+          const lines = [
+            row.label,
+            `Invested: ${privateEuro(row.invested, hidden)}`,
+          ];
           if (row.market != null) {
-            lines.push(`Market: ${formatEuro(row.market)}`);
+            lines.push(`Market: ${privateEuro(row.market, hidden)}`);
           }
           if (row.pl != null) {
-            lines.push(`P/L: ${formatSignedEuro(row.pl)}`);
+            lines.push(
+              `P/L: ${hidden ? PRIVACY_MASK : formatSignedEuro(row.pl)}`,
+            );
           }
           return lines.join("<br/>");
         },
@@ -255,7 +265,7 @@ export function InvestmentItemChart({
         },
       ],
     };
-  }, [accent, chartData, interactive, mode]);
+  }, [accent, chartData, hidden, interactive, mode]);
 
   if (points.length === 0) {
     return (
@@ -319,7 +329,7 @@ export function InvestmentItemChart({
       <div
         ref={containerRef}
         className={cn(
-          "min-w-0 max-w-full overflow-hidden",
+          "privacy-sensitive min-w-0 max-w-full overflow-hidden",
           !interactive && "h-full min-h-24",
           interactive && size === "md" && "h-40",
           interactive && size === "lg" && "h-56 md:h-64",

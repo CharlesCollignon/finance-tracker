@@ -6,19 +6,15 @@ import { Button } from "@/components/retroui/Button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
-import { CategoryIcon } from "@/components/finance/CategoryIcon";
+import { InstrumentLogo } from "@/components/finance/InstrumentLogo";
 import { InvestmentItemChart } from "@/components/finance/lazy-charts";
 import { InvestmentPositionSheet } from "@/components/finance/InvestmentPositionSheet";
 import { StatHero } from "@/components/finance/StatHero";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { formatBtcAmount, isCryptoWallet } from "@finance/core/crypto-holdings";
 import { formatEuro } from "@finance/core/constants";
-import type {
-  UpcomingInvestment,
-  WalletFundingNeed,
-} from "@finance/core/investment-upcoming";
+import type { WalletFundingNeed } from "@finance/core/investment-upcoming";
 import {
-  INVESTMENT_WALLET_COLORS,
   INVESTMENT_WALLET_LABELS,
   INVESTMENT_WALLET_IDS,
   type InvestmentWalletId,
@@ -36,7 +32,6 @@ import type { RecurringTemplateWithCategory } from "@finance/core/types/database
 interface InvestmentsViewProps {
   portfolio: InvestmentPortfolioSummary;
   recurringTemplates: RecurringTemplateWithCategory[];
-  nextUpcomingByWallet: Partial<Record<InvestmentWalletId, UpcomingInvestment>>;
   fundingNeeds: WalletFundingNeed[];
 }
 
@@ -66,7 +61,6 @@ function defaultWalletTab(
 export function InvestmentsView({
   portfolio,
   recurringTemplates,
-  nextUpcomingByWallet,
   fundingNeeds,
 }: InvestmentsViewProps) {
   const [activeWallet, setActiveWallet] = useState<InvestmentWalletId>(() =>
@@ -171,13 +165,12 @@ export function InvestmentsView({
 
           <StaggerItem className="w-full min-w-0">
             <div
-              className="flex w-full min-w-0 justify-start gap-2 overflow-x-auto pb-1 sm:justify-center"
+              className="flex w-full min-w-0 justify-center gap-2"
               role="tablist"
               aria-label="Investment wallet"
             >
               {INVESTMENT_WALLET_IDS.map((walletId) => {
                 const active = activeWallet === walletId;
-                const accent = INVESTMENT_WALLET_COLORS[walletId];
 
                 return (
                   <button
@@ -189,10 +182,9 @@ export function InvestmentsView({
                     className={cn(
                       "shrink-0 px-3 py-1.5 text-sm font-medium transition-colors",
                       active
-                        ? "underline underline-offset-4"
+                        ? "text-foreground underline underline-offset-4"
                         : "text-muted-foreground hover:text-foreground",
                     )}
-                    style={active ? { color: accent } : undefined}
                   >
                     {INVESTMENT_WALLET_LABELS[walletId]}
                   </button>
@@ -204,7 +196,6 @@ export function InvestmentsView({
           <StaggerItem className="w-full min-w-0">
             <WalletPanel
               column={activeColumn}
-              nextUpcoming={nextUpcomingByWallet[activeWallet] ?? null}
               onEdit={setEditingItem}
               onAdd={() => setAddingWallet(activeWallet)}
             />
@@ -242,14 +233,12 @@ function emptyColumn(walletId: InvestmentWalletId): InvestmentColumnSummary {
 
 interface WalletPanelProps {
   column: InvestmentColumnSummary;
-  nextUpcoming: UpcomingInvestment | null;
   onEdit: (item: InvestmentPositionItem) => void;
   onAdd: () => void;
 }
 
 function WalletPanel({
   column,
-  nextUpcoming,
   onEdit,
   onAdd,
 }: WalletPanelProps) {
@@ -258,17 +247,6 @@ function WalletPanel({
   return (
     <section className="flex w-full min-w-0 max-w-full flex-col gap-6">
       <div className="flex min-w-0 flex-col items-center gap-3 text-center">
-        <div className="min-w-0 max-w-full">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            {INVESTMENT_WALLET_LABELS[column.walletId]}
-          </h2>
-          {nextUpcoming ? (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Next: {formatEuro(nextUpcoming.amount)} before{" "}
-              {nextUpcoming.dateLabel}
-            </p>
-          ) : null}
-        </div>
         <div className="grid w-full min-w-0 max-w-md grid-cols-3 gap-2 sm:gap-4">
           <Metric label="Value" value={formatEuro(column.totalMarketValue)} />
           <Metric label="Invested" value={formatEuro(column.totalInvested)} />
@@ -339,15 +317,22 @@ interface InvestmentPositionRowProps {
 }
 
 function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
+  const [chartOpen, setChartOpen] = useState(false);
   const isCrypto = isCryptoWallet(item.walletId);
   const valueLabel =
     item.hasManualValue || item.hasMarketQuote ? "Market" : "Invested";
+  const hasChart = item.chartPoints.length > 0;
 
   return (
     <div className="min-w-0 max-w-full border-b border-border/40 py-4">
       <div className="flex min-w-0 items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-2">
-          <CategoryIcon icon={item.icon} className="size-8 shrink-0" />
+          <InstrumentLogo
+            symbol={item.instrumentSymbol}
+            name={item.name}
+            fallbackIcon={item.icon}
+            className="size-8 shrink-0"
+          />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium leading-snug">
               {item.name}
@@ -376,7 +361,7 @@ function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
         <button
           type="button"
           onClick={onEdit}
-          className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+          className="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
           aria-label={`Edit ${item.name}`}
         >
           <PencilSimple size={16} />
@@ -399,12 +384,24 @@ function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
         />
       </div>
 
-      <InvestmentItemChart
-        points={item.chartPoints}
-        gainLoss={item.gainLoss}
-        interactive
-        className="mt-3"
-      />
+      {hasChart ? (
+        <button
+          type="button"
+          onClick={() => setChartOpen((open) => !open)}
+          className="mt-2 min-h-11 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {chartOpen ? "Hide chart" : "Show chart"}
+        </button>
+      ) : null}
+
+      {chartOpen ? (
+        <InvestmentItemChart
+          points={item.chartPoints}
+          gainLoss={item.gainLoss}
+          interactive
+          className="mt-3"
+        />
+      ) : null}
     </div>
   );
 }

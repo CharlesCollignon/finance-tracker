@@ -64,6 +64,8 @@ cp apps/web/.env.local.example apps/web/.env.local
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Public anon key |
 | `NEXT_PUBLIC_SITE_URL` | yes | `http://localhost:3000` in dev; `https://pluclair.com` in production |
 | `SUPABASE_SERVICE_ROLE_KEY` | optional | Only for “Delete account” on web |
+| `APPLE_TEAM_ID` | optional | Passkeys on iOS — Apple Team ID for AASA |
+| `ANDROID_SHA256_FINGERPRINTS` | optional | Passkeys on Android — colon-hex SHA-256 fingerprints |
 
 Google OAuth is configured in the **Supabase dashboard**, not in env files.
 
@@ -134,6 +136,47 @@ In Supabase → Authentication → URL configuration:
   `https://pluclair.com/**` and  
   `https://pluclair.com/auth/callback`
 
+### Passkeys (WebAuthn) — dashboard
+
+In Supabase → Authentication → Passkeys. **Do not save the
+`example.com` placeholders.** Passkeys are bound to the Relying Party
+ID; changing it later invalidates every enrolled credential.
+
+| Field | Value |
+|-------|--------|
+| Enable Passkey authentication | on |
+| Relying Party Display Name | `Pluclair` |
+| Relying Party ID | `pluclair.com` (bare domain, no `https://`) |
+| Relying Party Origins | `https://pluclair.com` and, after you have the Android signing cert, `android:apk-key-hash:<base64url-sha256>` |
+
+The Android origin is **not** the colon-hex fingerprint used in
+`assetlinks.json`. From the same SHA-256 hex (no colons):
+
+```bash
+echo -n '<hex without colons>' | xxd -r -p | openssl base64 -A | tr '+/' '-_' | tr -d '='
+```
+
+Prefix the result with `android:apk-key-hash:`.
+
+Localhost web passkeys will not work against RP ID `pluclair.com`. Test
+on the production domain (or a tunnel to it). Native passkeys and Face
+ID unlock require an **EAS development/production build**, not Expo Go.
+
+Domain association files are served from the web app:
+
+- `https://pluclair.com/.well-known/apple-app-site-association`
+- `https://pluclair.com/.well-known/assetlinks.json`
+
+Set these server env vars on Vercel (and in `apps/web/.env.local`):
+
+| Variable | Notes |
+|----------|--------|
+| `APPLE_TEAM_ID` | 10-character Apple Team ID for the AASA `webcredentials` entry |
+| `ANDROID_SHA256_FINGERPRINTS` | Comma-separated colon-hex SHA-256 cert fingerprints (`eas credentials`) |
+
+iOS bundle ID: `com.salutcharles.pluclair`. Android package:
+`com.salut_charles.pluclair`.
+
 ---
 
 ## 4. Mobile (Expo Go)
@@ -181,7 +224,11 @@ Use **`preview`** for local testing; **`production`** when you are ready
 for the Play Store. Google OAuth deep links should use `pluclair://`
 (and work more reliably in a development build than in Expo Go).
 
-Android package id: `com.salut_charles.pluclair`.
+Android package id: `com.salut_charles.pluclair`. iOS bundle id:
+`com.salutcharles.pluclair`.
+
+Passkeys and Face ID / fingerprint unlock need a **development
+build** (`eas build --profile development`), not Expo Go.
 
 ---
 

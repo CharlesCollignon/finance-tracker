@@ -66,6 +66,7 @@
   --spacing: 0.25rem;
   --shell-header-height: 3.25rem;
   --shell-bottom-nav-height: 3.5rem;
+  --shell-bottom-nav-inset: 0.75rem;
   color-scheme: light;
 }
 
@@ -246,6 +247,21 @@
 
 .page-enter {
   animation: page-enter 0.2s ease-out both;
+}
+
+@keyframes account-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.account-menu-panel {
+  animation: account-menu-enter 0.2s ease-out both;
 }
 
 .stagger-item {

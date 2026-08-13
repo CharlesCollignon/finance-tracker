@@ -27,6 +27,7 @@ import type {
 import {
   applyRecurringSchema,
   authSchema,
+  parseUuid,
   recurringTemplateSchema,
   transactionSchema,
   updateTransactionSchema,
@@ -208,6 +209,14 @@ export async function signIn(
   return { success: true };
 }
 
+export async function seedCategoriesForCurrentUser(): Promise<void> {
+  const user = await getAuthUser();
+  if (!user) {
+    return;
+  }
+  await seedCategoriesSafely(user.id);
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
@@ -337,6 +346,10 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
     return { error: "Not authenticated" };
+  }
+
+  if (!parseUuid(id)) {
+    return { error: "Invalid transaction" };
   }
 
   const supabase = await createClient();
@@ -548,6 +561,10 @@ export async function deleteRecurringTemplate(
   const user = await getUser();
   if (!user) {
     return { error: "Not authenticated" };
+  }
+
+  if (!parseUuid(id)) {
+    return { error: "Invalid recurring template" };
   }
 
   const supabase = await createClient();

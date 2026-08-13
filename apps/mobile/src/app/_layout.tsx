@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
+import { BiometricLockProvider } from "@/providers/BiometricLockProvider";
 import { PrivacyProvider } from "@/providers/PrivacyProvider";
 import { initTheme } from "@/lib/theme";
 
@@ -62,9 +63,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
-          <PrivacyProvider>
-            <RootNavigator fontsReady={fontsReady} />
-          </PrivacyProvider>
+          <BiometricLockProvider>
+            <PrivacyProvider>
+              <RootNavigator fontsReady={fontsReady} />
+            </PrivacyProvider>
+          </BiometricLockProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

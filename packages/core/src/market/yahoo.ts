@@ -51,6 +51,11 @@ const ALLOWED_QUOTE_TYPES = new Set(["ETF", "EQUITY", "MUTUALFUND"]);
 const REQUEST_TIMEOUT_MS = 8000;
 
 const ISIN_REGEX = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
+const SYMBOL_REGEX = /^[A-Za-z0-9][A-Za-z0-9._^=-]{0,31}$/;
+
+export function isValidInstrumentSymbol(symbol: string): boolean {
+  return SYMBOL_REGEX.test(symbol.trim());
+}
 
 export function normalizeInstrumentQuery(query: string): string {
   return query.trim().toUpperCase().replace(/\s+/g, "");
@@ -72,7 +77,7 @@ export function canSearchInstruments(query: string): boolean {
     return false;
   }
 
-  return normalized.length >= 2;
+  return normalized.length >= 2 && normalized.length <= 32;
 }
 
 function rankSearchResults(
@@ -124,19 +129,24 @@ function mapQuote(
   };
 }
 
+type CachedFetchInit = RequestInit & {
+  next?: { revalidate: number };
+};
+
 async function fetchJson<T>(url: string): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch(url, {
+    const init: CachedFetchInit = {
       signal: controller.signal,
       headers: {
         Accept: "application/json",
         "User-Agent": "Pluclair/1.0",
       },
       next: { revalidate: 300 },
-    });
+    };
+    const response = await fetch(url, init);
 
     if (!response.ok) {
       throw new Error(`Market data request failed (${response.status})`);
@@ -187,6 +197,9 @@ export interface InstrumentQuote {
 export async function fetchInstrumentQuote(
   symbol: string,
 ): Promise<InstrumentQuote> {
+  if (!isValidInstrumentSymbol(symbol)) {
+    throw new Error("Invalid instrument symbol");
+  }
   const encoded = encodeURIComponent(symbol.trim());
   const params = new URLSearchParams({
     interval: "1d",
@@ -226,6 +239,9 @@ function monthKeyFromUnix(seconds: number): string {
 export async function fetchMonthlyCloses(
   symbol: string,
 ): Promise<{ currency: string; points: MonthlyClosePoint[] }> {
+  if (!isValidInstrumentSymbol(symbol)) {
+    throw new Error("Invalid instrument symbol");
+  }
   const encoded = encodeURIComponent(symbol.trim());
   const params = new URLSearchParams({
     interval: "1mo",

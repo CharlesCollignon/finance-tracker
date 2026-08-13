@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
-import { formatEuro } from "@finance/core/constants";
 import { CATEGORY_TYPE_LABELS } from "@finance/core/category-styles";
 import type { CategoryType } from "@finance/core/types/database";
 import { chartMotion, chartTextStyle } from "@/lib/echarts-theme";
 import { readCssVar } from "@/lib/css-var";
+import { privateEuro, usePrivacyOn } from "@/lib/use-privacy";
 import {
   useCompactViewport,
   useEchartsSize,
@@ -65,6 +65,7 @@ export function TransactionTypeSankey({
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReactECharts>(null);
   const [palette, setPalette] = useState<Palette>(readPalette);
+  const hidden = usePrivacyOn();
   useEchartsSize(containerRef, chartRef);
   const compact = useCompactViewport(419);
 
@@ -125,7 +126,7 @@ export function TransactionTypeSankey({
           },
           formatter: (params: unknown) => {
             const p = params as { name: string; value: number };
-            return `${p.name}<br/><strong>${formatEuro(p.value)}</strong>`;
+            return `${p.name}<br/><strong>${privateEuro(p.value, hidden)}</strong>`;
           },
         },
         series: [
@@ -187,9 +188,9 @@ export function TransactionTypeSankey({
             data?: { source?: string; target?: string; value?: number };
           };
           if (p.dataType === "edge" && p.data) {
-            return `${p.data.source} → ${p.data.target}<br/><strong>${formatEuro(p.data.value ?? 0)}</strong>`;
+            return `${p.data.source} → ${p.data.target}<br/><strong>${privateEuro(p.data.value ?? 0, hidden)}</strong>`;
           }
-          return `${p.name}<br/><strong>${formatEuro(Number(p.value ?? 0))}</strong>`;
+          return `${p.name}<br/><strong>${privateEuro(Number(p.value ?? 0), hidden)}</strong>`;
         },
       },
       series: [
@@ -200,11 +201,10 @@ export function TransactionTypeSankey({
           nodeGap: compact ? 10 : 12,
           nodeWidth: compact ? 12 : 14,
           layoutIterations: 0,
-          // Room for outside labels (Income left, outflows right).
-          left: compact ? 52 : 72,
-          right: compact ? 64 : 88,
-          top: 8,
-          bottom: 8,
+          left: compact ? 92 : 112,
+          right: compact ? 108 : 132,
+          top: 12,
+          bottom: 12,
           lineStyle: {
             color: "gradient",
             curveness: 0.5,
@@ -213,10 +213,11 @@ export function TransactionTypeSankey({
           label: {
             color: palette.foreground,
             fontSize: compact ? 10 : 11,
+            overflow: "none",
             formatter: (params: unknown) => {
               const p = params as { name: string; value?: unknown };
-              const amount = formatEuro(Number(p.value ?? 0));
-              return compact ? `${p.name}\n${amount}` : `${p.name}: ${amount}`;
+              const amount = privateEuro(Number(p.value ?? 0), hidden);
+              return `${p.name}\n${amount}`;
             },
           },
           data: nodes.map((node) => ({
@@ -232,7 +233,7 @@ export function TransactionTypeSankey({
         },
       ],
     };
-  }, [compact, hasIncome, palette, remainingPositive, typeTotals]);
+  }, [compact, hasIncome, hidden, palette, remainingPositive, typeTotals]);
 
   if (!option) {
     return (
@@ -245,7 +246,7 @@ export function TransactionTypeSankey({
   const height = hasIncome ? (compact ? 280 : 260) : 220;
 
   return (
-    <div ref={containerRef} className="privacy-sensitive w-full min-w-0">
+    <div ref={containerRef} className="privacy-sensitive w-full min-w-0 overflow-visible">
       <ReactECharts
         ref={chartRef}
         option={option}

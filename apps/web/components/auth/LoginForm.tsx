@@ -11,6 +11,7 @@ import { FormLabel } from "@/components/layout/FormLabel";
 import { Text } from "@/components/retroui/Text";
 import { signIn } from "@/lib/actions/finance";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 
 export function LoginForm() {
@@ -33,7 +34,10 @@ export function LoginForm() {
         <Card.Description>Sign in to track your finances</Card.Description>
       </Card.Header>
       <Card.Content>
-        <GoogleSignInButton label="Sign in with Google" />
+        <div className="flex flex-col gap-2">
+          <GoogleSignInButton label="Sign in with Google" />
+          <PasskeySignInButton />
+        </div>
         <AuthDivider />
         <form action={action} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">

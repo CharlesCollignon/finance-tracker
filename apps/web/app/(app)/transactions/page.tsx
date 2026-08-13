@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getCategories } from "@/lib/queries/categories";
@@ -22,33 +21,27 @@ export default async function TransactionsPage({
 
   const params = await searchParams;
   const { year, month } = parseMonthParams(params.y, params.m);
-  const [transactions, categories, recurringTemplates, tags] =
+  const [transactions, categories, recurringTemplates, tags, transactionTags] =
     await Promise.all([
       getTransactions(user.id, year, month),
       getCategories(user.id),
       getRecurringTemplates(user.id),
       getTags(user.id),
+      getTransactionTagMap(user.id, year, month),
     ]);
-
-  const transactionTags = await getTransactionTagMap(
-    user.id,
-    transactions.map((tx) => tx.id),
-  );
 
   const defaultDate = `${year}-${String(month).padStart(2, "0")}-01`;
 
   return (
-    <Suspense fallback={<div className="p-4">Loading…</div>}>
-      <TransactionsView
-        transactions={transactions}
-        categories={categories}
-        recurringTemplates={recurringTemplates}
-        tags={tags}
-        transactionTags={transactionTags}
-        year={year}
-        month={month}
-        defaultDate={defaultDate}
-      />
-    </Suspense>
+    <TransactionsView
+      transactions={transactions}
+      categories={categories}
+      recurringTemplates={recurringTemplates}
+      tags={tags}
+      transactionTags={transactionTags}
+      year={year}
+      month={month}
+      defaultDate={defaultDate}
+    />
   );
 }

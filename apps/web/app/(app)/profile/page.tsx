@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { ProfileView } from "@/components/profile/ProfileView";
+import { type PasskeyItem } from "@/components/profile/PasskeysCard";
+import { createClient } from "@/lib/supabase/server";
 
 function getProviderLabel(provider: string | undefined): string {
   if (!provider) {
@@ -30,12 +32,22 @@ export default async function ProfilePage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
   );
 
+  let initialPasskeys: PasskeyItem[] = [];
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.passkey.list();
+    initialPasskeys = data ?? [];
+  } catch {
+    initialPasskeys = [];
+  }
+
   return (
     <ProfileView
       email={user.email ?? ""}
       fullName={fullName}
       provider={provider}
       canDeleteAccount={canDeleteAccount}
+      initialPasskeys={initialPasskeys}
     />
   );
 }

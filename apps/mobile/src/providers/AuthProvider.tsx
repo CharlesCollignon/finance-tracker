@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { signInWithPasskeyCeremony } from "@/lib/passkeys";
 import { seedDefaultCategories } from "@/lib/seed-categories";
 import { supabase } from "@/lib/supabase";
 
@@ -25,6 +26,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signUp: (email: string, password: string) => Promise<AuthResult>;
   signInWithGoogle: () => Promise<AuthResult>;
+  signInWithPasskey: () => Promise<AuthResult>;
   signOut: () => Promise<void>;
 }
 
@@ -127,6 +129,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const ok = await handleAuthUrl(result.url);
         if (!ok) {
           return { error: "Could not complete Google sign-in." };
+        }
+        return {};
+      },
+      async signInWithPasskey() {
+        const result = await signInWithPasskeyCeremony();
+        if (result.error) {
+          return result;
+        }
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          await seedCategoriesSafely(user.id);
         }
         return {};
       },

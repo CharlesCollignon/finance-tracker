@@ -10,7 +10,7 @@ import { Text } from "@/components/retroui/Text";
 import { MobileSheet } from "@/components/layout/MobileSheet";
 import { useToast } from "@/components/layout/ToastProvider";
 import { InstrumentSearch } from "@/components/finance/InstrumentSearch";
-import { CategoryIcon } from "@/components/finance/CategoryIcon";
+import { InstrumentLogo } from "@/components/finance/InstrumentLogo";
 import {
   removeInvestmentPosition,
   saveInvestmentPosition,
@@ -226,7 +226,11 @@ function InvestmentPositionForm({
 
         {isRecurringLinked ? (
           <div className="flex items-center gap-3 rounded border border-border p-3">
-            <CategoryIcon icon={item.icon} />
+            <InstrumentLogo
+              symbol={item.instrumentSymbol}
+              name={item.name}
+              fallbackIcon={item.icon}
+            />
             <div>
               <p className="font-medium">{item.name}</p>
               <p className="text-xs text-muted-foreground">

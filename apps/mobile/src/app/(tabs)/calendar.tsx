@@ -26,6 +26,7 @@ import type {
 } from "@finance/core/types/database";
 
 import { MonthPicker } from "@/components/MonthPicker";
+import { PrivateAmount } from "@/components/PrivateAmount";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -97,28 +98,27 @@ export default function CalendarScreen() {
         onChange={(y, m) => {
           setYear(y);
           setMonth(m);
-          setSelectionKey(`${y}-${m}`);
         }}
       />
 
       <View className="my-3 flex-row gap-2">
         <Card className="flex-1 items-center p-2">
           <Text variant="muted">In</Text>
-          <Text className="font-bold tabular-nums">
+          <PrivateAmount className="font-bold">
             {formatEuro(monthTotals.income)}
-          </Text>
+          </PrivateAmount>
         </Card>
         <Card className="flex-1 items-center p-2">
           <Text variant="muted">Out</Text>
-          <Text className="font-bold tabular-nums">
+          <PrivateAmount className="font-bold">
             {formatEuro(monthTotals.outflow)}
-          </Text>
+          </PrivateAmount>
         </Card>
         <Card className="flex-1 items-center p-2">
           <Text variant="muted">Net</Text>
-          <Text className="font-bold tabular-nums">
+          <PrivateAmount className="font-bold">
             {formatEuro(monthTotals.net)}
-          </Text>
+          </PrivateAmount>
         </Card>
       </View>
 
@@ -179,8 +179,10 @@ export default function CalendarScreen() {
             <Button label="Add" size="sm" onPress={() => setFormOpen(true)} />
           </View>
           <Text variant="muted" className="mb-2">
-            In {formatEuro(dayTotals.income)} · Out{" "}
-            {formatEuro(dayTotals.outflow)}
+            In{" "}
+            <PrivateAmount>{formatEuro(dayTotals.income)}</PrivateAmount>
+            {" · Out "}
+            <PrivateAmount>{formatEuro(dayTotals.outflow)}</PrivateAmount>
           </Text>
 
           {dayTxs.length === 0 ? (
@@ -192,9 +194,9 @@ export default function CalendarScreen() {
             dayTxs.map((tx) => (
               <Card key={tx.id} className="mb-2 flex-row justify-between p-3">
                 <Text className="font-semibold">{tx.categories.name}</Text>
-                <Text className="font-bold tabular-nums">
+                <PrivateAmount className="font-bold">
                   {formatEuro(Number(tx.amount))}
-                </Text>
+                </PrivateAmount>
               </Card>
             ))
           )}

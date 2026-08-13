@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { revalidateRecurringDependents } from "@/lib/revalidate-paths";
-import { categorySchema } from "@finance/core/validations/finance";
+import { categorySchema, parseUuid } from "@finance/core/validations/finance";
 
 type ActionResult = { error?: string; success?: boolean };
 
@@ -99,6 +99,10 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
     return { error: "Not authenticated" };
+  }
+
+  if (!parseUuid(id)) {
+    return { error: "Invalid category" };
   }
 
   const supabase = await createClient();

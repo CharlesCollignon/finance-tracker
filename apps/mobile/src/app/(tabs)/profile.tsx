@@ -7,6 +7,10 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
+import {
+  BiometricUnlockCard,
+  PasskeysCard,
+} from "@/components/profile/SecurityCards";
 import { useAuth } from "@/providers/AuthProvider";
 import { deleteAllUserData, updateProfile } from "@/lib/mutations";
 import { supabase } from "@/lib/supabase";
@@ -121,6 +125,9 @@ export default function ProfileScreen() {
             </Text>
           ) : null}
         </Card>
+
+        <BiometricUnlockCard />
+        <PasskeysCard />
 
         <Card className="p-4">
           <Text className="font-bold">Budgets, goals & tags</Text>

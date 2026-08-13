@@ -9,6 +9,7 @@ export default function LoginScreen() {
       title="Sign in"
       submitLabel="Sign in"
       onSubmit={signIn}
+      showPasskey
       footerPrompt="No account yet?"
       footerLinkLabel="Create one"
       footerHref="/signup"

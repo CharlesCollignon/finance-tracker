@@ -7,7 +7,15 @@
     "icon": "./assets/images/icon.png",
     "scheme": "pluclair",
     "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.salutcharles.pluclair",
+      "associatedDomains": ["webcredentials:pluclair.com"],
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Allow Pluclair to use Face ID to unlock the app."
+      }
+    },
     "android": {
+      "package": "com.salut_charles.pluclair",
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
@@ -26,6 +34,12 @@
           "backgroundColor": "#000000",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 160
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Pluclair to use Face ID to unlock the app."
         }
       ]
     ],
