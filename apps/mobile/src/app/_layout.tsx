@@ -9,6 +9,7 @@ import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { BiometricLockProvider } from "@/providers/BiometricLockProvider";
 import { PrivacyProvider } from "@/providers/PrivacyProvider";
@@ -62,13 +63,15 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <BiometricLockProvider>
-            <PrivacyProvider>
-              <RootNavigator fontsReady={fontsReady} />
-            </PrivacyProvider>
-          </BiometricLockProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <BiometricLockProvider>
+              <PrivacyProvider>
+                <RootNavigator fontsReady={fontsReady} />
+              </PrivacyProvider>
+            </BiometricLockProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

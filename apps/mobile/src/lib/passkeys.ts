@@ -1,5 +1,3 @@
-import * as Passkeys from "react-native-passkeys";
-
 import { supabase } from "@/lib/supabase";
 
 export type PasskeyResult = { error?: string };
@@ -11,13 +9,27 @@ export type PasskeyItem = {
   last_used_at?: string;
 };
 
+type PasskeysModule = typeof import("react-native-passkeys");
+type CreatedPasskey = NonNullable<
+  Awaited<ReturnType<PasskeysModule["create"]>>
+>;
+
 function passkeyError(error: { message: string } | null | undefined): string {
   return error?.message ?? "Passkey request failed.";
 }
 
-function cancelledOrUnsupported(): string {
-  if (!Passkeys.isSupported()) {
-    return "Passkeys need a development build, not Expo Go.";
+async function loadPasskeys(): Promise<PasskeysModule | null> {
+  try {
+    return await import("react-native-passkeys");
+  } catch (err) {
+    console.error("Failed to load react-native-passkeys", err);
+    return null;
+  }
+}
+
+function cancelledOrUnsupported(passkeys: PasskeysModule | null): string {
+  if (!passkeys?.isSupported()) {
+    return "Passkeys are not available on this device.";
   }
   return "Passkey prompt was cancelled.";
 }
@@ -26,9 +38,7 @@ function cancelledOrUnsupported(): string {
  * Strip native-only helpers (e.g. getPublicKey) before sending JSON
  * back to Supabase Auth.
  */
-function registrationPayload(
-  credential: NonNullable<Awaited<ReturnType<typeof Passkeys.create>>>,
-) {
+function registrationPayload(credential: CreatedPasskey) {
   const { getPublicKey: _ignored, ...response } = credential.response;
   return {
     id: credential.id,
@@ -41,17 +51,22 @@ function registrationPayload(
 }
 
 export async function signInWithPasskeyCeremony(): Promise<PasskeyResult> {
+  const passkeys = await loadPasskeys();
+  if (!passkeys) {
+    return { error: cancelledOrUnsupported(null) };
+  }
+
   const { data, error } = await supabase.auth.passkey.startAuthentication();
   if (error || !data) {
     return { error: passkeyError(error) };
   }
 
   try {
-    const credential = await Passkeys.get(
-      data.options as Parameters<typeof Passkeys.get>[0],
+    const credential = await passkeys.get(
+      data.options as Parameters<PasskeysModule["get"]>[0],
     );
     if (!credential) {
-      return { error: cancelledOrUnsupported() };
+      return { error: cancelledOrUnsupported(passkeys) };
     }
 
     const { error: verifyError } =
@@ -65,23 +80,29 @@ export async function signInWithPasskeyCeremony(): Promise<PasskeyResult> {
     return {};
   } catch (err) {
     return {
-      error: err instanceof Error ? err.message : cancelledOrUnsupported(),
+      error:
+        err instanceof Error ? err.message : cancelledOrUnsupported(passkeys),
     };
   }
 }
 
 export async function registerPasskeyCeremony(): Promise<PasskeyResult> {
+  const passkeys = await loadPasskeys();
+  if (!passkeys) {
+    return { error: cancelledOrUnsupported(null) };
+  }
+
   const { data, error } = await supabase.auth.passkey.startRegistration();
   if (error || !data) {
     return { error: passkeyError(error) };
   }
 
   try {
-    const credential = await Passkeys.create(
-      data.options as Parameters<typeof Passkeys.create>[0],
+    const credential = await passkeys.create(
+      data.options as Parameters<PasskeysModule["create"]>[0],
     );
     if (!credential) {
-      return { error: cancelledOrUnsupported() };
+      return { error: cancelledOrUnsupported(passkeys) };
     }
 
     const { error: verifyError } =
@@ -95,7 +116,8 @@ export async function registerPasskeyCeremony(): Promise<PasskeyResult> {
     return {};
   } catch (err) {
     return {
-      error: err instanceof Error ? err.message : cancelledOrUnsupported(),
+      error:
+        err instanceof Error ? err.message : cancelledOrUnsupported(passkeys),
     };
   }
 }
