@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
-import { formatEuro, savingsRatePercent } from "@finance/core/constants";
+import { savingsRatePercent } from "@finance/core/constants";
 import { buildIncomeSankey } from "@finance/core/income-sankey";
 import type { MonthlySummary } from "@finance/core/types/database";
 import { chartMotion, chartTextStyle } from "@/lib/echarts-theme";
 import { readCssVar } from "@/lib/css-var";
 import { privateEuro, usePrivacyOn } from "@/lib/use-privacy";
+import { useCurrency, useFormatCurrency } from "@/lib/use-currency";
 
 interface DashboardAllocationChartProps {
   summary: MonthlySummary;
@@ -30,7 +31,7 @@ function readPalette(): Palette {
   return {
     income: readCssVar("--success", "#16a34a"),
     expenses: readCssVar("--destructive", "#dc2626"),
-    savings: readCssVar("--primary", "#ffc300"),
+    savings: readCssVar("--primary", "#d4af37"),
     investments: readCssVar("--info", "#2563eb"),
     remaining: readCssVar("--chart-5", "#a1a1aa"),
     foreground: readCssVar("--foreground", "#fafafa"),
@@ -50,6 +51,8 @@ export function DashboardAllocationChart({
 }: DashboardAllocationChartProps) {
   const graph = useMemo(() => buildIncomeSankey(summary), [summary]);
   const hidden = usePrivacyOn();
+  const currency = useCurrency();
+  const formatEuro = useFormatCurrency();
   const rate = savingsRatePercent(
     summary.savings,
     summary.investments,
@@ -116,10 +119,10 @@ export function DashboardAllocationChart({
           if (p.dataType === "edge" && p.data) {
             const from = labelByName.get(p.data.source ?? "") ?? p.data.source;
             const to = labelByName.get(p.data.target ?? "") ?? p.data.target;
-            return `${from} → ${to}<br/><strong>${privateEuro(p.data.value ?? 0, hidden)}</strong>`;
+            return `${from} → ${to}<br/><strong>${privateEuro(p.data.value ?? 0, hidden, currency)}</strong>`;
           }
           const label = labelByName.get(p.name ?? "") ?? p.name;
-          return `${label}<br/><strong>${privateEuro(Number(p.value ?? 0), hidden)}</strong>`;
+          return `${label}<br/><strong>${privateEuro(Number(p.value ?? 0), hidden, currency)}</strong>`;
         },
       },
       series: [
@@ -164,7 +167,7 @@ export function DashboardAllocationChart({
         },
       ],
     };
-  }, [graph, hidden, labelByName, palette]);
+  }, [graph, hidden, currency, formatEuro, labelByName, palette]);
 
   const legend = [
     { label: "Income", value: summary.income, color: palette.income },
@@ -187,8 +190,8 @@ export function DashboardAllocationChart({
   ].filter((row) => row.value > 0);
 
   return (
-    <section className="flex w-full flex-col items-center">
-      <div className="flex w-full max-w-lg items-center gap-4 text-left">
+    <section className="flex h-full w-full flex-col">
+      <div className="flex w-full items-center gap-4 text-left">
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-medium text-muted-foreground">
             Where your income goes
@@ -205,48 +208,50 @@ export function DashboardAllocationChart({
             <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
               Savings
             </span>
-            <span className="privacy-amount font-head text-xl leading-none text-primary tabular-nums">
+            <span className="privacy-amount font-serif text-xl leading-none text-primary-ink tabular-nums">
               {rate}%
             </span>
           </div>
         ) : null}
       </div>
       {option ? (
-        <div className="privacy-sensitive mt-4 w-full">
-          <ReactECharts
-            option={option}
-            style={{ height: 320, width: "100%" }}
-            opts={{ renderer: "svg" }}
-            notMerge
-          />
+        <div className="mt-4 flex flex-1 flex-col gap-4 lg:min-h-0 lg:flex-row">
+          <div className="privacy-sensitive min-h-[260px] w-full flex-1 lg:min-h-0">
+            <ReactECharts
+              option={option}
+              style={{ height: "100%", width: "100%" }}
+              opts={{ renderer: "svg" }}
+              notMerge
+            />
+          </div>
+          {graph ? (
+            <ul className="flex w-full shrink-0 flex-col gap-2 text-left lg:w-56 lg:overflow-y-auto">
+              {legend.map((row) => (
+                <li
+                  key={row.label}
+                  className="flex items-center justify-between gap-2 text-sm"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                      style={{ backgroundColor: row.color }}
+                      aria-hidden
+                    />
+                    <span className="truncate">{row.label}</span>
+                  </span>
+                  <PrivateAmount className="shrink-0 font-mono font-medium">
+                    {formatEuro(row.value)}
+                  </PrivateAmount>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : (
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Add income to see how your money is allocated.
         </p>
       )}
-      {graph ? (
-        <ul className="mt-4 flex w-full max-w-xs flex-col gap-2 text-left">
-          {legend.map((row) => (
-            <li
-              key={row.label}
-              className="flex items-center justify-between gap-2 text-sm"
-            >
-              <span className="flex min-w-0 items-center gap-2">
-                <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-sm"
-                  style={{ backgroundColor: row.color }}
-                  aria-hidden
-                />
-                <span className="truncate">{row.label}</span>
-              </span>
-              <PrivateAmount className="shrink-0 font-medium">
-                {formatEuro(row.value)}
-              </PrivateAmount>
-            </li>
-          ))}
-        </ul>
-      ) : null}
     </section>
   );
 }

@@ -15,13 +15,13 @@ import { CategorySelect } from "@/components/finance/CategorySelect";
 import { InstrumentSearch } from "@/components/finance/InstrumentSearch";
 import { estimateSharesAmountAction } from "@/lib/actions/market";
 import { formatMoney } from "@finance/core/market/fx";
-import { formatEuro } from "@finance/core/constants";
 import {
   BITCOIN_INSTRUMENT,
   isCryptoCategoryName,
 } from "@finance/core/crypto-holdings";
 import { DAY_OF_WEEK_LABELS, MONTH_LABELS } from "@finance/core/recurrence";
 import { cn } from "@/lib/utils";
+import { useFormatCurrency } from "@/lib/use-currency";
 import type {
   Category,
   PricingType,
@@ -72,6 +72,7 @@ function RecurringFormFields({
   onOpenChange,
 }: RecurringFormFieldsProps) {
   const { toast } = useToast();
+  const formatEuro = useFormatCurrency();
   const [state, action, pending] = useActionState(upsertRecurringTemplate, {});
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletePending, startDeleteTransition] = useTransition();
@@ -234,7 +235,7 @@ function RecurringFormFields({
                 type="button"
                 onClick={() => setPricingType("fixed")}
                 className={cn(
-                  "rounded border px-3 py-2 text-sm font-medium",
+                  "rounded-full border px-3 py-2 text-sm font-medium",
                   effectivePricingType === "fixed"
                     ? "border-foreground bg-primary text-primary-foreground"
                     : "border-border hover:bg-accent",
@@ -246,7 +247,7 @@ function RecurringFormFields({
                 type="button"
                 onClick={() => setPricingType("shares")}
                 className={cn(
-                  "rounded border px-3 py-2 text-sm font-medium",
+                  "rounded-full border px-3 py-2 text-sm font-medium",
                   effectivePricingType === "shares"
                     ? "border-foreground bg-primary text-primary-foreground"
                     : "border-border hover:bg-accent",
@@ -303,7 +304,7 @@ function RecurringFormFields({
                 <p className="mt-1 text-muted-foreground">Fetching price…</p>
               )}
               {!estimateLoading && estimateShown && (
-                <p className="mt-1 tabular-nums text-base font-semibold">
+                <p className="mt-1 font-mono tabular-nums text-base font-semibold">
                   ≈ {formatEuro(estimateShown.amount)}
                   <span className="ml-2 block text-xs font-normal text-muted-foreground">
                     @ {formatEuro(estimateShown.priceEur)} / share
@@ -403,7 +404,7 @@ function RecurringFormFields({
                 type="button"
                 onClick={() => setRecurrence(value)}
                 className={cn(
-                  "rounded border px-3 py-2 text-sm font-medium capitalize",
+                  "rounded-full border px-3 py-2 text-sm font-medium capitalize",
                   recurrence === value
                     ? "border-foreground bg-primary text-primary-foreground"
                     : "border-border hover:bg-accent",

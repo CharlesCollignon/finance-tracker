@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { PencilSimple, Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
+import { Card } from "@/components/retroui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
@@ -12,7 +13,6 @@ import { InvestmentPositionSheet } from "@/components/finance/InvestmentPosition
 import { StatHero } from "@/components/finance/StatHero";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { formatBtcAmount, isCryptoWallet } from "@finance/core/crypto-holdings";
-import { formatEuro } from "@finance/core/constants";
 import type { WalletFundingNeed } from "@finance/core/investment-upcoming";
 import {
   INVESTMENT_WALLET_LABELS,
@@ -27,6 +27,7 @@ import {
   type InvestmentPositionItem,
 } from "@finance/core/investment-positions";
 import { cn } from "@/lib/utils";
+import { useFormatCurrency } from "@/lib/use-currency";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 
 interface InvestmentsViewProps {
@@ -35,8 +36,12 @@ interface InvestmentsViewProps {
   fundingNeeds: WalletFundingNeed[];
 }
 
-function formatSignedEuro(amount: number): string {
-  const formatted = formatEuro(Math.abs(amount));
+/** Module-level (not a hook), so it takes the caller's already-bound formatter. */
+function formatSignedEuro(
+  amount: number,
+  format: (amount: number) => string,
+): string {
+  const formatted = format(Math.abs(amount));
   if (amount > 0) {
     return `+${formatted}`;
   }
@@ -63,6 +68,7 @@ export function InvestmentsView({
   recurringTemplates,
   fundingNeeds,
 }: InvestmentsViewProps) {
+  const formatEuro = useFormatCurrency();
   const [activeWallet, setActiveWallet] = useState<InvestmentWalletId>(() =>
     defaultWalletTab(portfolio),
   );
@@ -125,13 +131,13 @@ export function InvestmentsView({
                       {" · "}
                       <span
                         className={cn(
-                          "privacy-amount font-medium",
+                          "privacy-amount font-mono font-medium",
                           portfolio.totalGainLoss > 0
                             ? "text-success"
                             : "text-destructive",
                         )}
                       >
-                        {formatSignedEuro(portfolio.totalGainLoss)}
+                        {formatSignedEuro(portfolio.totalGainLoss, formatEuro)}
                       </span>
                     </>
                   ) : null}
@@ -145,7 +151,7 @@ export function InvestmentsView({
               {visibleFunding.map((need) => (
                 <p key={need.walletId}>
                   Send to {INVESTMENT_WALLET_LABELS[need.walletId]}{" "}
-                  <span className="privacy-amount font-medium text-foreground tabular-nums">
+                  <span className="privacy-amount font-mono font-medium text-foreground tabular-nums">
                     {formatEuro(need.monthlyTotal)}
                   </span>
                   <span> / month</span>
@@ -180,10 +186,11 @@ export function InvestmentsView({
                     aria-selected={active}
                     onClick={() => setActiveWallet(walletId)}
                     className={cn(
-                      "shrink-0 px-3 py-1.5 text-sm font-medium transition-colors",
+                      "shrink-0 rounded-full border px-4 py-2 text-sm font-semibold",
+                      "transition-colors duration-300",
                       active
-                        ? "text-foreground underline underline-offset-4"
-                        : "text-muted-foreground hover:text-foreground",
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border text-muted-foreground hover:text-foreground",
                     )}
                   >
                     {INVESTMENT_WALLET_LABELS[walletId]}
@@ -242,17 +249,20 @@ function WalletPanel({
   onEdit,
   onAdd,
 }: WalletPanelProps) {
+  const formatEuro = useFormatCurrency();
   const showPl = column.hasMarketSnapshot && column.totalGainLoss !== 0;
 
   return (
-    <section className="flex w-full min-w-0 max-w-full flex-col gap-6">
+    <Card.Bezel className="w-full" innerClassName="flex w-full min-w-0 max-w-full flex-col gap-6 p-5 md:p-6">
       <div className="flex min-w-0 flex-col items-center gap-3 text-center">
         <div className="grid w-full min-w-0 max-w-md grid-cols-3 gap-2 sm:gap-4">
           <Metric label="Value" value={formatEuro(column.totalMarketValue)} />
           <Metric label="Invested" value={formatEuro(column.totalInvested)} />
           <Metric
             label="P/L"
-            value={showPl ? formatSignedEuro(column.totalGainLoss) : "—"}
+            value={
+              showPl ? formatSignedEuro(column.totalGainLoss, formatEuro) : "—"
+            }
             tone={
               showPl
                 ? column.totalGainLoss > 0
@@ -285,7 +295,7 @@ function WalletPanel({
             Positions
           </h3>
           <Button size="sm" variant="link" onClick={onAdd}>
-            <Plus size={16} className="mr-1" />
+            <Plus size={16} weight="light" className="mr-1" />
             Add item
           </Button>
         </div>
@@ -295,7 +305,7 @@ function WalletPanel({
             No items yet in this wallet.
           </p>
         ) : (
-          <ul className="flex min-w-0 flex-col">
+          <ul className="flex min-w-0 flex-col divide-y divide-border">
             {column.items.map((item) => (
               <li key={item.id} className="min-w-0">
                 <InvestmentPositionRow
@@ -307,7 +317,7 @@ function WalletPanel({
           </ul>
         )}
       </div>
-    </section>
+    </Card.Bezel>
   );
 }
 
@@ -317,6 +327,7 @@ interface InvestmentPositionRowProps {
 }
 
 function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
+  const formatEuro = useFormatCurrency();
   const [chartOpen, setChartOpen] = useState(false);
   const isCrypto = isCryptoWallet(item.walletId);
   const valueLabel =
@@ -324,7 +335,7 @@ function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
   const hasChart = item.chartPoints.length > 0;
 
   return (
-    <div className="min-w-0 max-w-full border-b border-border/40 py-4">
+    <div className="min-w-0 max-w-full py-4">
       <div className="flex min-w-0 items-start justify-between gap-2">
         <div className="flex min-w-0 items-start gap-2">
           <InstrumentLogo
@@ -364,7 +375,7 @@ function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
           className="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
           aria-label={`Edit ${item.name}`}
         >
-          <PencilSimple size={16} />
+          <PencilSimple size={16} weight="light" />
         </button>
       </div>
 
@@ -373,7 +384,7 @@ function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
         <Metric label="Invested" value={formatEuro(item.totalInvested)} />
         <Metric
           label="P/L"
-          value={formatSignedEuro(item.gainLoss)}
+          value={formatSignedEuro(item.gainLoss, formatEuro)}
           tone={
             item.gainLoss > 0
               ? "positive"
@@ -419,7 +430,7 @@ function Metric({ label, value, tone = "neutral", className }: MetricProps) {
       <p className="text-xs text-muted-foreground sm:text-sm">{label}</p>
       <p
         className={cn(
-          "privacy-amount mt-0.5 truncate text-sm font-semibold tabular-nums sm:text-base",
+          "privacy-amount mt-0.5 truncate font-mono text-sm font-semibold tabular-nums sm:text-base",
           tone === "positive" && "text-success",
           tone === "negative" && "text-destructive",
         )}

@@ -8,11 +8,7 @@ import {
   View,
 } from "react-native";
 
-import {
-  formatEuro,
-  parseMonthParams,
-  todayIsoLocal,
-} from "@finance/core/constants";
+import { parseMonthParams, todayIsoLocal } from "@finance/core/constants";
 import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
 import { CATEGORY_TYPE_LABELS, TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import type {
@@ -25,12 +21,12 @@ import { MonthPicker } from "@/components/MonthPicker";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
+import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import {
   applyRecurringForMonth,
   deleteTransaction,
@@ -51,6 +47,7 @@ const FILTERS: FilterType[] = [
 
 export default function TransactionsScreen() {
   const { user } = useAuth();
+  const formatEuro = useFormatCurrency();
   const now = parseMonthParams();
   const [year, setYear] = useState(now.year);
   const [month, setMonth] = useState(now.month);
@@ -214,13 +211,17 @@ export default function TransactionsScreen() {
             <Pressable
               key={value}
               onPress={() => setFilter(value)}
-              className={`border px-3 py-1.5 ${
+              className={`rounded-full border px-4 py-1.5 ${
                 selected
-                  ? "border-foreground bg-primary"
-                  : "border-border bg-background"
+                  ? "border-foreground bg-foreground dark:border-foreground-dark dark:bg-foreground-dark"
+                  : "border-border bg-background dark:border-border-dark dark:bg-background-dark"
               }`}
             >
-              <Text className="text-xs font-semibold">
+              <Text
+                className={`text-xs font-semibold ${
+                  selected ? "text-background dark:text-background-dark" : ""
+                }`}
+              >
                 {value === "all" ? "All" : CATEGORY_TYPE_LABELS[value]}
               </Text>
             </Pressable>
@@ -233,54 +234,65 @@ export default function TransactionsScreen() {
       ) : error ? (
         <Text className="text-destructive">{error}</Text>
       ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          ListEmptyComponent={
-            <EmptyState
-              title="No transactions yet"
-              description="Add a manual entry or apply your recurring items for this month."
+        <View className="flex-1 rounded-[28px] border border-border bg-black/[0.03] p-1.5 dark:border-border-dark dark:bg-white/[0.04]">
+          <View className="flex-1 rounded-[22px] bg-card dark:bg-card-dark">
+            <FlatList
+              data={filtered}
+              keyExtractor={(item) => item.id}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+              ListEmptyComponent={
+                <EmptyState
+                  title="No transactions yet"
+                  description="Add a manual entry or apply your recurring items for this month."
+                />
+              }
+              contentContainerClassName="px-3 py-1 pb-8"
+              ItemSeparatorComponent={() => (
+                <View className="h-px bg-border dark:bg-border-dark" />
+              )}
+              renderItem={({ item }) => (
+                <View className="flex-row items-center gap-3 py-3">
+                  <View className="min-w-0 flex-1">
+                    <Text className="font-semibold">
+                      {item.categories.name}
+                    </Text>
+                    <Text variant="muted">
+                      {item.occurred_on}
+                      {item.note ? ` · ${item.note}` : ""}
+                    </Text>
+                  </View>
+                  <PrivateAmount
+                    className={cn(
+                      "font-mono font-bold",
+                      TYPE_AMOUNT_CLASS[item.categories.type],
+                    )}
+                  >
+                    {formatEuro(Number(item.amount))}
+                  </PrivateAmount>
+                  <Pressable
+                    onPress={() => {
+                      setEditing(item);
+                      setFormOpen(true);
+                    }}
+                    hitSlop={8}
+                    className="min-h-11 min-w-11 items-center justify-center rounded-full border border-border px-3 dark:border-border-dark"
+                  >
+                    <Text className="text-xs">Edit</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => handleDelete(item)}
+                    hitSlop={8}
+                    className="min-h-11 min-w-11 items-center justify-center rounded-full border border-destructive px-3"
+                  >
+                    <Text className="text-xs text-destructive">Del</Text>
+                  </Pressable>
+                </View>
+              )}
             />
-          }
-          contentContainerClassName="pb-8 gap-2"
-          renderItem={({ item }) => (
-            <Card className="flex-row items-center gap-3 p-3">
-              <View className="min-w-0 flex-1">
-                <Text className="font-semibold">{item.categories.name}</Text>
-                <Text variant="muted">
-                  {item.occurred_on}
-                  {item.note ? ` · ${item.note}` : ""}
-                </Text>
-              </View>
-              <PrivateAmount
-                className={cn(
-                  "font-bold",
-                  TYPE_AMOUNT_CLASS[item.categories.type],
-                )}
-              >
-                {formatEuro(Number(item.amount))}
-              </PrivateAmount>
-              <Pressable
-                onPress={() => {
-                  setEditing(item);
-                  setFormOpen(true);
-                }}
-                className="border border-border px-2 py-1"
-              >
-                <Text className="text-xs">Edit</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => handleDelete(item)}
-                className="border border-destructive px-2 py-1"
-              >
-                <Text className="text-xs text-destructive">Del</Text>
-              </Pressable>
-            </Card>
-          )}
-        />
+          </View>
+        </View>
       )}
 
       {formOpen ? (

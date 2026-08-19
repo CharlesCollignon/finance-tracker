@@ -10,7 +10,6 @@ import {
 import {
   budgetViewHint,
   budgetViewOptionLabel,
-  formatEuro,
   parseMonthParams,
   type BudgetViewMode,
 } from "@finance/core/constants";
@@ -22,12 +21,15 @@ import type { InvestmentPortfolioSummary } from "@finance/core/investment-positi
 import { IncomeSankeyCard } from "@/components/IncomeSankeyCard";
 import { MonthPicker } from "@/components/MonthPicker";
 import { PrivateAmount } from "@/components/PrivateAmount";
+import { StatHero } from "@/components/StatHero";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
+import { useFormatCurrency } from "@/providers/CurrencyProvider";
+import { progressTone } from "@/lib/progress-tone";
 import {
   getBudgets,
   getCategories,
@@ -35,42 +37,6 @@ import {
   getSavingsGoals,
   getWalletPortfolio,
 } from "@/lib/queries";
-
-function SummaryTile({
-  label,
-  amount,
-  highlight,
-  warning,
-  hint,
-}: {
-  label: string;
-  amount: number;
-  highlight?: boolean;
-  warning?: boolean;
-  hint?: string;
-}) {
-  return (
-    <Card
-      className={`flex-1 p-4 ${
-        warning
-          ? "border-destructive bg-destructive/10"
-          : highlight
-            ? "bg-primary/20"
-            : ""
-      }`}
-    >
-      <Text variant="muted">{label}</Text>
-      <PrivateAmount className="mt-1 text-2xl font-bold">
-        {formatEuro(amount)}
-      </PrivateAmount>
-      {hint ? (
-        <Text variant="muted" className="mt-1 text-xs">
-          {hint}
-        </Text>
-      ) : null}
-    </Card>
-  );
-}
 
 function Breakdown({
   title,
@@ -81,11 +47,14 @@ function Breakdown({
   total: number;
   items: MonthlySummary["expenseBreakdown"];
 }) {
+  const formatEuro = useFormatCurrency();
   return (
-    <Card className="p-0">
+    <Card bezel className="p-0" innerClassName="p-0">
       <View className="flex-row items-center justify-between border-b border-border p-4">
         <Text className="font-bold">{title}</Text>
-        <PrivateAmount className="font-bold">{formatEuro(total)}</PrivateAmount>
+        <PrivateAmount className="font-mono font-bold">
+          {formatEuro(total)}
+        </PrivateAmount>
       </View>
       {items.length === 0 ? (
         <Text variant="muted" className="p-4">
@@ -98,7 +67,7 @@ function Breakdown({
             className="flex-row items-center justify-between border-b border-border px-4 py-3"
           >
             <Text className="flex-1">{item.name}</Text>
-            <PrivateAmount className="font-semibold">
+            <PrivateAmount className="font-mono font-semibold">
               {formatEuro(item.total)}
             </PrivateAmount>
           </View>
@@ -110,6 +79,7 @@ function Breakdown({
 
 export default function DashboardScreen() {
   const { user } = useAuth();
+  const formatEuro = useFormatCurrency();
   const now = parseMonthParams();
   const [year, setYear] = useState(now.year);
   const [month, setMonth] = useState(now.month);
@@ -206,36 +176,50 @@ export default function DashboardScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-3 pb-8"
+          contentContainerClassName="gap-3 pb-28"
         >
-          <View className="flex-row gap-3">
-            <SummaryTile label="Income" amount={summary.income} />
-            <SummaryTile
+          <Card bezel className="items-center">
+            <StatHero
               label="Remaining"
-              amount={summary.remaining}
-              highlight
-              warning={overBudget}
-              hint={budgetViewHint(summary.budgetView)}
+              amount={formatEuro(summary.remaining)}
+              tone={overBudget ? "danger" : "default"}
+              subtitle={
+                <Text className="font-mono text-sm">
+                  <Text className="font-mono text-sm text-success">
+                    {formatEuro(summary.income)}
+                  </Text>
+                  {" earned · "}
+                  <Text className="font-mono text-sm text-destructive">
+                    {formatEuro(summary.expenses)}
+                  </Text>
+                  {" spent"}
+                </Text>
+              }
+              status={
+                <Text variant="muted" className="text-xs">
+                  {budgetViewHint(summary.budgetView)}
+                </Text>
+              }
             />
-          </View>
+          </Card>
 
           <IncomeSankeyCard summary={summary} />
 
           {portfolio ? (
-            <Card className="p-4">
+            <Card bezel className="p-4">
               <Text className="font-bold">Wallets</Text>
-              <PrivateAmount className="mt-1 text-2xl font-bold">
+              <PrivateAmount className="mt-1 font-mono text-2xl font-bold">
                 {formatEuro(portfolio.totalMarketValue)}
               </PrivateAmount>
               <Text variant="muted" className="mt-1">
                 Invested{" "}
-                <PrivateAmount>
+                <PrivateAmount className="font-mono">
                   {formatEuro(portfolio.totalInvested)}
                 </PrivateAmount>
                 {portfolio.hasMarketSnapshot ? (
                   <>
                     {" · P/L "}
-                    <PrivateAmount>
+                    <PrivateAmount className="font-mono">
                       {formatEuro(portfolio.totalGainLoss)}
                     </PrivateAmount>
                   </>
@@ -245,43 +229,48 @@ export default function DashboardScreen() {
           ) : null}
 
           {(budgetProgress.length > 0 || goalProgress.length > 0) && (
-            <Card className="p-4">
+            <Card bezel className="p-4">
               <Text className="font-bold">Budgets & goals</Text>
-              {budgetProgress.map((row) => (
-                <View key={row.budgetId} className="mt-3">
-                  <View className="flex-row justify-between">
-                    <Text>{row.label}</Text>
-                    <PrivateAmount
-                      className={
-                        row.over ? "font-semibold text-destructive" : ""
-                      }
-                    >
-                      {`${formatEuro(row.spent)} / ${formatEuro(row.limit)}`}
-                    </PrivateAmount>
+              {budgetProgress.map((row) => {
+                const tone = progressTone(row.ratio, row.over);
+                return (
+                  <View key={row.budgetId} className="mt-3">
+                    <View className="flex-row justify-between">
+                      <Text>{row.label}</Text>
+                      <PrivateAmount
+                        className={
+                          tone === "danger"
+                            ? "font-mono font-semibold text-destructive"
+                            : "font-mono"
+                        }
+                      >
+                        {`${formatEuro(row.spent)} / ${formatEuro(row.limit)}`}
+                      </PrivateAmount>
+                    </View>
+                    <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong dark:bg-hairline-strong-dark">
+                      <View
+                        className={`h-full rounded-full ${
+                          tone === "danger" ? "bg-destructive" : "bg-primary"
+                        }`}
+                        style={{
+                          width: `${Math.min(100, row.ratio * 100)}%`,
+                        }}
+                      />
+                    </View>
                   </View>
-                  <View className="mt-1.5 h-2 overflow-hidden rounded bg-muted">
-                    <View
-                      className={`h-full ${
-                        row.over ? "bg-destructive" : "bg-primary"
-                      }`}
-                      style={{
-                        width: `${Math.min(100, row.ratio * 100)}%`,
-                      }}
-                    />
-                  </View>
-                </View>
-              ))}
+                );
+              })}
               {goalProgress.map((row) => (
                 <View key={row.goal.id} className="mt-3">
                   <View className="flex-row justify-between">
                     <Text>{row.goal.name}</Text>
-                    <PrivateAmount>
+                    <PrivateAmount className="font-mono">
                       {`${formatEuro(row.saved)} / ${formatEuro(Number(row.goal.target_amount))}`}
                     </PrivateAmount>
                   </View>
-                  <View className="mt-1.5 h-2 overflow-hidden rounded bg-muted">
+                  <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong dark:bg-hairline-strong-dark">
                     <View
-                      className="h-full bg-primary"
+                      className="h-full rounded-full bg-primary"
                       style={{
                         width: `${Math.min(100, row.ratio * 100)}%`,
                       }}

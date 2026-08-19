@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { CurrencyToggle } from "@/components/profile/CurrencyToggle";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
   PasskeysCard,
@@ -79,8 +80,8 @@ export function ProfileView({
       <PageHeader title="Profile" />
 
       <PageContainer className="flex flex-col gap-4">
-        <Card className="block w-full p-4 md:p-5">
-          <h2 className="font-head text-base">Account</h2>
+        <Card.Bezel className="w-full" innerClassName="p-4 md:p-5">
+          <h2 className="text-base font-semibold">Account</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Signed in via {provider}
           </p>
@@ -116,20 +117,29 @@ export function ProfileView({
               {profilePending ? "Saving…" : "Save profile"}
             </Button>
           </form>
-        </Card>
+        </Card.Bezel>
 
         <PasskeysCard initialPasskeys={initialPasskeys} />
 
-        <Card className="block w-full p-4 md:p-5">
-          <h2 className="font-head text-base">Appearance</h2>
+        <Card.Bezel className="w-full" innerClassName="p-4 md:p-5">
+          <h2 className="text-base font-semibold">Appearance</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Switch between light and dark.
           </p>
           <ThemeToggle className="mt-4" />
-        </Card>
+        </Card.Bezel>
 
-        <Card className="block w-full p-4 md:p-5">
-          <h2 className="font-head text-base">Categories</h2>
+        <Card.Bezel className="w-full" innerClassName="p-4 md:p-5">
+          <h2 className="text-base font-semibold">Currency</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Choose how amounts are labeled across the app. This only changes
+            the symbol — it does not convert your numbers.
+          </p>
+          <CurrencyToggle className="mt-4" />
+        </Card.Bezel>
+
+        <Card.Bezel className="w-full" innerClassName="p-4 md:p-5">
+          <h2 className="text-base font-semibold">Categories</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Create, rename, archive, and organise your income, expense, savings,
             and investment categories.
@@ -140,10 +150,10 @@ export function ProfileView({
             className="mt-4 w-full md:w-auto"
             render={<Link href="/categories">Manage categories</Link>}
           />
-        </Card>
+        </Card.Bezel>
 
-        <Card className="block w-full p-4 md:p-5">
-          <h2 className="font-head text-base">Budgets, goals & tags</h2>
+        <Card.Bezel className="w-full" innerClassName="p-4 md:p-5">
+          <h2 className="text-base font-semibold">Budgets, goals & tags</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Set monthly spending caps, savings goals, and tags for organising
             transactions.
@@ -154,10 +164,10 @@ export function ProfileView({
             className="mt-4 w-full md:w-auto"
             render={<Link href="/budgets">Open planning</Link>}
           />
-        </Card>
+        </Card.Bezel>
 
-        <Card className="block w-full border-destructive p-4 md:p-5">
-          <h2 className="font-head text-base text-destructive">Danger zone</h2>
+        <Card.Bezel className="w-full border-destructive/40" innerClassName="p-4 md:p-5">
+          <h2 className="text-base font-semibold text-destructive">Danger zone</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Delete all transactions, recurring templates, and categories. Your
             account stays active.
@@ -186,10 +196,10 @@ export function ProfileView({
               {dataPending ? "Deleting…" : "Delete all my data"}
             </Button>
           </form>
-        </Card>
+        </Card.Bezel>
 
-        <Card className="block w-full border-destructive p-4 md:p-5">
-          <h2 className="font-head text-base text-destructive">
+        <Card.Bezel className="w-full border-destructive/40" innerClassName="p-4 md:p-5">
+          <h2 className="text-base font-semibold text-destructive">
             Delete account
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -226,7 +236,7 @@ export function ProfileView({
               {accountPending ? "Deleting…" : "Delete my account"}
             </Button>
           </form>
-        </Card>
+        </Card.Bezel>
 
         <SignOutButton className="px-0" />
       </PageContainer>

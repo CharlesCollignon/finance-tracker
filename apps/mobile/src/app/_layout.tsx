@@ -12,6 +12,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { BiometricLockProvider } from "@/providers/BiometricLockProvider";
+import { CurrencyProvider } from "@/providers/CurrencyProvider";
 import { PrivacyProvider } from "@/providers/PrivacyProvider";
 import { initTheme } from "@/lib/theme";
 
@@ -56,6 +57,10 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Orbit: require("../../assets/fonts/OrbitMaxenceDuterne-Regular.otf"),
+    "Fraunces-Regular": require("../../assets/fonts/Fraunces-Regular.ttf"),
+    "InstrumentSans-Regular": require("../../assets/fonts/InstrumentSans-Regular.ttf"),
+    "IBMPlexMono-Regular": require("../../assets/fonts/IBMPlexMono-Regular.ttf"),
+    "IBMPlexMono-Medium": require("../../assets/fonts/IBMPlexMono-Medium.ttf"),
   });
 
   const fontsReady = fontsLoaded || fontError != null;
@@ -67,7 +72,9 @@ export default function RootLayout() {
           <AuthProvider>
             <BiometricLockProvider>
               <PrivacyProvider>
-                <RootNavigator fontsReady={fontsReady} />
+                <CurrencyProvider>
+                  <RootNavigator fontsReady={fontsReady} />
+                </CurrencyProvider>
               </PrivacyProvider>
             </BiometricLockProvider>
           </AuthProvider>

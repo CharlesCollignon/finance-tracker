@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useColorScheme, View } from "react-native";
 import type { EChartsCoreOption } from "echarts/core";
 
-import { formatEuro, savingsRatePercent } from "@finance/core/constants";
+import { savingsRatePercent } from "@finance/core/constants";
 import { buildIncomeSankey } from "@finance/core/income-sankey";
 import type { MonthlySummary } from "@finance/core/types/database";
 
@@ -10,6 +10,7 @@ import { EChart } from "@/components/charts/EChart";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
+import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { usePrivacy } from "@/providers/PrivacyProvider";
 import { colorsForScheme } from "@/theme/tokens";
 
@@ -21,6 +22,7 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
   const scheme = useColorScheme();
   const colors = colorsForScheme(scheme === "light" ? "light" : "dark");
   const { hidden } = usePrivacy();
+  const formatEuro = useFormatCurrency();
   const graph = useMemo(() => buildIncomeSankey(summary), [summary]);
   const rate = savingsRatePercent(
     summary.savings,
@@ -97,7 +99,7 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
         },
       ],
     };
-  }, [colors, graph, hidden, labelByName]);
+  }, [colors, formatEuro, graph, hidden, labelByName]);
 
   if (!option) {
     return (
@@ -124,7 +126,7 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
             <Text variant="muted" className="text-[10px] uppercase">
               Savings rate
             </Text>
-            <PrivateAmount className="text-lg font-bold text-primary">
+            <PrivateAmount className="text-lg font-bold text-primary-ink dark:text-primary-ink-dark">
               {`${rate}%`}
             </PrivateAmount>
           </View>

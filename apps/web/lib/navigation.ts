@@ -4,6 +4,7 @@ import {
   ChartLine,
   ChartPieSlice,
   Repeat,
+  Target,
   User,
 } from "@phosphor-icons/react";
 
@@ -11,10 +12,11 @@ import {
  * an account menu (theme, settings, sign out). */
 export const APP_NAV_ITEMS = [
   { href: "/dashboard", label: "Home", icon: ChartPieSlice },
-  { href: "/transactions", label: "Transaction", icon: ArrowsLeftRight },
   { href: "/recurring", label: "Recurring", icon: Repeat },
+  { href: "/transactions", label: "Transaction", icon: ArrowsLeftRight },
   { href: "/calendar", label: "Calendar", icon: CalendarBlank },
   { href: "/investments", label: "Wallets", icon: ChartLine },
+  { href: "/budgets", label: "Planning", icon: Target },
 ] as const;
 
 export const PROFILE_NAV_ITEM = {

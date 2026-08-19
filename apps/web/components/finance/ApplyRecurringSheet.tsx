@@ -3,7 +3,7 @@
 import { Button } from "@/components/retroui/Button";
 import { Text } from "@/components/retroui/Text";
 import { MobileSheet } from "@/components/layout/MobileSheet";
-import { formatEuro } from "@finance/core/constants";
+import { useFormatCurrency } from "@/lib/use-currency";
 import type {
   ApplyRecurringPlan,
   RecurringOccurrenceUpdate,
@@ -18,6 +18,7 @@ interface ApplyRecurringSheetProps {
 }
 
 function UpdateRow({ item }: { item: RecurringOccurrenceUpdate }) {
+  const formatEuro = useFormatCurrency();
   const amountChanged = Math.abs(item.previousAmount - item.amount) > 0.009;
   const noteChanged =
     (item.previousNote?.trim() ?? "") !== (item.note?.trim() ?? "");
@@ -52,6 +53,7 @@ export function ApplyRecurringSheet({
   pending,
   onConfirm,
 }: ApplyRecurringSheetProps) {
+  const formatEuro = useFormatCurrency();
   if (!plan) {
     return null;
   }

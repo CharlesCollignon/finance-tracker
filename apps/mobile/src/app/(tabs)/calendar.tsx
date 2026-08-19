@@ -7,11 +7,7 @@ import {
   View,
 } from "react-native";
 
-import {
-  formatEuro,
-  parseMonthParams,
-  todayIsoLocal,
-} from "@finance/core/constants";
+import { parseMonthParams, todayIsoLocal } from "@finance/core/constants";
 import {
   buildCalendarWeeks,
   computeDayTotals,
@@ -35,6 +31,7 @@ import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
+import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import {
   getCategories,
   getRecurringTemplates,
@@ -43,6 +40,7 @@ import {
 
 export default function CalendarScreen() {
   const { user } = useAuth();
+  const formatEuro = useFormatCurrency();
   const now = parseMonthParams();
   const [year, setYear] = useState(now.year);
   const [month, setMonth] = useState(now.month);
@@ -102,21 +100,21 @@ export default function CalendarScreen() {
       />
 
       <View className="my-3 flex-row gap-2">
-        <Card className="flex-1 items-center p-2">
+        <Card bezel className="flex-1" innerClassName="items-center p-2">
           <Text variant="muted">In</Text>
-          <PrivateAmount className="font-bold">
+          <PrivateAmount className="font-mono font-bold">
             {formatEuro(monthTotals.income)}
           </PrivateAmount>
         </Card>
-        <Card className="flex-1 items-center p-2">
+        <Card bezel className="flex-1" innerClassName="items-center p-2">
           <Text variant="muted">Out</Text>
-          <PrivateAmount className="font-bold">
+          <PrivateAmount className="font-mono font-bold">
             {formatEuro(monthTotals.outflow)}
           </PrivateAmount>
         </Card>
-        <Card className="flex-1 items-center p-2">
+        <Card bezel className="flex-1" innerClassName="items-center p-2">
           <Text variant="muted">Net</Text>
-          <PrivateAmount className="font-bold">
+          <PrivateAmount className="font-mono font-bold">
             {formatEuro(monthTotals.net)}
           </PrivateAmount>
         </Card>
@@ -131,7 +129,7 @@ export default function CalendarScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="pb-8"
+          contentContainerClassName="pb-28"
         >
           <View className="mb-2 flex-row">
             {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
@@ -158,15 +156,15 @@ export default function CalendarScreen() {
                       setSelectedDate(day.date);
                       setSelectionKey(monthKey);
                     }}
-                    className={`min-h-12 flex-1 items-center justify-center border ${
+                    className={`min-h-12 flex-1 items-center justify-center rounded-2xl border ${
                       selected
-                        ? "border-foreground bg-primary"
-                        : "border-border bg-card"
+                        ? "border-foreground bg-primary dark:border-foreground-dark"
+                        : "border-border bg-card dark:border-border-dark dark:bg-card-dark"
                     } ${day.isCurrentMonth ? "" : "opacity-40"}`}
                   >
                     <Text className="text-sm font-semibold">{day.day}</Text>
                     {hasTx ? (
-                      <View className="mt-0.5 h-1.5 w-1.5 rounded-full bg-foreground" />
+                      <View className="mt-0.5 h-1.5 w-1.5 rounded-full bg-foreground dark:bg-foreground-dark" />
                     ) : null}
                   </Pressable>
                 );
@@ -180,9 +178,13 @@ export default function CalendarScreen() {
           </View>
           <Text variant="muted" className="mb-2">
             In{" "}
-            <PrivateAmount>{formatEuro(dayTotals.income)}</PrivateAmount>
+            <PrivateAmount className="font-mono">
+              {formatEuro(dayTotals.income)}
+            </PrivateAmount>
             {" · Out "}
-            <PrivateAmount>{formatEuro(dayTotals.outflow)}</PrivateAmount>
+            <PrivateAmount className="font-mono">
+              {formatEuro(dayTotals.outflow)}
+            </PrivateAmount>
           </Text>
 
           {dayTxs.length === 0 ? (
@@ -192,9 +194,14 @@ export default function CalendarScreen() {
             />
           ) : (
             dayTxs.map((tx) => (
-              <Card key={tx.id} className="mb-2 flex-row justify-between p-3">
+              <Card
+                key={tx.id}
+                bezel
+                className="mb-2"
+                innerClassName="flex-row justify-between p-3"
+              >
                 <Text className="font-semibold">{tx.categories.name}</Text>
-                <PrivateAmount className="font-bold">
+                <PrivateAmount className="font-mono font-bold">
                   {formatEuro(Number(tx.amount))}
                 </PrivateAmount>
               </Card>

@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowRight } from "@phosphor-icons/react";
 import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
-import { formatEuro } from "@finance/core/constants";
 import {
   INVESTMENT_WALLET_LABELS,
   INVESTMENT_WALLET_IDS,
@@ -24,13 +23,18 @@ import {
 import { readCssVar } from "@/lib/css-var";
 import { cn } from "@/lib/utils";
 import { privateEuro, usePrivacyOn } from "@/lib/use-privacy";
+import { useCurrency, useFormatCurrency } from "@/lib/use-currency";
 
 interface DashboardWalletsCardProps {
   portfolio: InvestmentPortfolioSummary;
 }
 
-function formatSignedEuro(amount: number): string {
-  const formatted = formatEuro(Math.abs(amount));
+/** Module-level (not a hook), so it takes the caller's already-bound formatter. */
+function formatSignedEuro(
+  amount: number,
+  format: (amount: number) => string,
+): string {
+  const formatted = format(Math.abs(amount));
   if (amount > 0) {
     return `+${formatted}`;
   }
@@ -40,15 +44,13 @@ function formatSignedEuro(amount: number): string {
   return formatted;
 }
 
-const WALLET_COLOR_VARS = [
-  "--chart-1",
-  "--chart-2",
-  "--chart-3",
-] as const;
+const WALLET_COLOR_VARS = ["--chart-1", "--chart-2", "--chart-3"] as const;
 
 export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
   const hasData = portfolioHasActivity(portfolio);
   const hidden = usePrivacyOn();
+  const currency = useCurrency();
+  const formatEuro = useFormatCurrency();
   const pl = portfolio.totalGainLoss;
   const showPl = portfolio.hasMarketSnapshot && pl !== 0;
 
@@ -121,7 +123,7 @@ export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
         },
         formatter: (params: unknown) => {
           const p = params as { name: string; value: number };
-          return `${p.name}<br/><strong>${privateEuro(p.value, hidden)}</strong>`;
+          return `${p.name}<br/><strong>${privateEuro(p.value, hidden, currency)}</strong>`;
         },
       },
       series: [
@@ -142,13 +144,13 @@ export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
         },
       ],
     };
-  }, [border, card, colors, foreground, hidden, slices]);
+  }, [border, card, colors, foreground, hidden, currency, slices]);
 
   return (
-    <section className="flex w-full flex-col items-center text-center">
+    <section className="flex h-full min-h-0 w-full flex-1 flex-col items-center text-center">
       {hasData ? (
         <>
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex shrink-0 items-center justify-center gap-2">
             <p className="text-sm font-medium text-muted-foreground">Wallets</p>
             <Link
               href="/investments"
@@ -159,8 +161,8 @@ export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
             </Link>
           </div>
           <StatHero
-            className="mt-1"
-            label="Market value"
+            className="mt-1 shrink-0"
+            label=""
             size="md"
             amount={formatEuro(portfolio.totalMarketValue)}
             subtitle={
@@ -177,7 +179,7 @@ export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
                         pl > 0 ? "text-success" : "text-destructive",
                       )}
                     >
-                      {formatSignedEuro(pl)}
+                      {formatSignedEuro(pl, formatEuro)}
                     </span>
                   </>
                 ) : null}
@@ -185,7 +187,7 @@ export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
             }
           />
           {option ? (
-            <div className="privacy-sensitive mt-4 h-52 w-full max-w-xs">
+            <div className="privacy-sensitive mt-2 min-h-[90px] w-full max-w-xs flex-1">
               <ReactECharts
                 option={option}
                 style={{ height: "100%", width: "100%" }}
@@ -194,11 +196,11 @@ export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
               />
             </div>
           ) : null}
-          <ul className="mt-2 flex w-full max-w-xs flex-col gap-2">
+          <ul className="mt-1 flex w-full max-w-xs shrink-0 flex-col gap-1">
             {slices.map((slice, index) => (
               <li
                 key={slice.id}
-                className="flex items-center justify-between gap-2 text-sm"
+                className="flex items-center justify-between gap-2 text-sm leading-tight"
               >
                 <span className="flex min-w-0 items-center gap-2">
                   <span
@@ -210,7 +212,7 @@ export function DashboardWalletsCard({ portfolio }: DashboardWalletsCardProps) {
                   />
                   <span className="truncate">{slice.label}</span>
                 </span>
-                <PrivateAmount className="shrink-0 font-medium">
+                <PrivateAmount className="shrink-0 font-mono font-medium tabular-nums">
                   {formatEuro(slice.value)}
                 </PrivateAmount>
               </li>

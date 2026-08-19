@@ -17,7 +17,9 @@ import {
   upsertSavingsGoal,
   upsertTag,
 } from "@/lib/actions/phase4";
-import { formatEuro } from "@finance/core/constants";
+import { progressTone } from "@/lib/progress-tone";
+import { useFormatCurrency } from "@/lib/use-currency";
+import type { GoalPacing } from "@finance/core/savings-goals";
 import type {
   Budget,
   Category,
@@ -43,7 +45,32 @@ type GoalProgress = {
   saved: number;
   remaining: number;
   ratio: number;
+  pacing: GoalPacing;
 };
+
+/** Plain-language pacing line under a goal's progress bar — no jargon, just what to do.
+ * Module-level (not a hook), so it takes the caller's already-bound formatter. */
+function pacingHint(
+  pacing: GoalPacing,
+  format: (amount: number) => string,
+): { text: string; className: string } | null {
+  switch (pacing.status) {
+    case "reached":
+      return { text: "Goal reached!", className: "text-success" };
+    case "overdue":
+      return {
+        text: `Target date passed — ${format(pacing.monthlyAmount ?? 0)} still to save.`,
+        className: "text-destructive",
+      };
+    case "on-schedule":
+      return {
+        text: `Save ${format(pacing.monthlyAmount ?? 0)}/month to reach this by ${pacing.targetLabel}.`,
+        className: "text-muted-foreground",
+      };
+    case "no-date":
+      return null;
+  }
+}
 
 type Props = {
   budgets: Budget[];
@@ -63,6 +90,7 @@ export function BudgetsView({
   goalProgress,
 }: Props) {
   const { toast } = useToast();
+  const formatEuro = useFormatCurrency();
   const [budgetState, budgetAction, budgetPending] = useActionState(
     upsertBudget,
     {},
@@ -107,32 +135,40 @@ export function BudgetsView({
 
   return (
     <>
-      <PageHeader title="Budgets & goals" />
+      <PageHeader title="Planning" />
 
       <PageContainer className="flex flex-col gap-6">
         <section className="space-y-3">
           <h2 className="font-head text-base">Monthly budgets</h2>
-          {budgetProgress.map((row) => (
-            <Card key={row.budgetId} className="w-full p-4">
-              <div className="flex justify-between text-sm font-medium">
-                <span>{row.label}</span>
-                <span className={row.over ? "text-destructive" : ""}>
-                  {formatEuro(row.spent)} / {formatEuro(row.limit)}
-                </span>
-              </div>
-              <div className="mt-2 h-2 overflow-hidden rounded bg-muted">
-                <div
-                  className={cn(
-                    "h-full",
-                    row.over ? "bg-destructive" : "bg-primary",
-                  )}
-                  style={{
-                    width: `${Math.min(100, row.ratio * 100)}%`,
-                  }}
-                />
-              </div>
-            </Card>
-          ))}
+          {budgetProgress.map((row) => {
+            const tone = progressTone(row.ratio, row.over);
+            return (
+              <Card.Bezel key={row.budgetId} className="w-full" innerClassName="p-4">
+                <div className="flex justify-between text-sm font-medium">
+                  <span>{row.label}</span>
+                  <span
+                    className={cn(
+                      "font-mono tabular-nums",
+                      tone === "danger" && "text-destructive",
+                    )}
+                  >
+                    {formatEuro(row.spent)} / {formatEuro(row.limit)}
+                  </span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--hairline-strong)]">
+                  <div
+                    className={cn(
+                      "h-full rounded-full",
+                      tone === "danger" ? "bg-destructive" : "bg-primary",
+                    )}
+                    style={{
+                      width: `${Math.min(100, row.ratio * 100)}%`,
+                    }}
+                  />
+                </div>
+              </Card.Bezel>
+            );
+          })}
 
           <Card className="w-full p-4">
             <form
@@ -203,25 +239,27 @@ export function BudgetsView({
                   <Card className="flex w-full items-center justify-between p-3">
                     <span className="text-sm font-medium">
                       {cat?.name ?? "All expenses"} —{" "}
-                      {formatEuro(Number(b.amount))}
+                      <span className="font-mono tabular-nums">
+                        {formatEuro(Number(b.amount))}
+                      </span>
                     </span>
                     <div className="flex gap-1.5">
                       <button
                         type="button"
                         className={cn(
-                          "flex h-10 w-10 items-center justify-center",
-                          "rounded border border-border hover:bg-accent",
+                          "flex h-11 w-11 items-center justify-center",
+                          "rounded-full border border-border hover:bg-accent",
                         )}
                         aria-label="Edit budget"
                         onClick={() => setEditingBudget(b)}
                       >
-                        <PencilSimple size={18} />
+                        <PencilSimple size={18} weight="light" />
                       </button>
                       <button
                         type="button"
                         className={cn(
-                          "flex h-10 w-10 items-center justify-center",
-                          "rounded border border-border",
+                          "flex h-11 w-11 items-center justify-center",
+                          "rounded-full border border-border",
                           "hover:bg-destructive hover:text-destructive-foreground",
                         )}
                         aria-label="Delete budget"
@@ -237,7 +275,7 @@ export function BudgetsView({
                           })
                         }
                       >
-                        <Trash size={18} />
+                        <Trash size={18} weight="light" />
                       </button>
                     </div>
                   </Card>
@@ -249,24 +287,32 @@ export function BudgetsView({
 
         <section className="space-y-3">
           <h2 className="font-head text-base">Savings goals</h2>
-          {goalProgress.map((row) => (
-            <Card key={row.goalId} className="w-full p-4">
-              <div className="flex justify-between text-sm font-medium">
-                <span>{row.name}</span>
-                <span>
-                  {formatEuro(row.saved)} / {formatEuro(row.target)}
-                </span>
-              </div>
-              <div className="mt-2 h-2 overflow-hidden rounded bg-muted">
-                <div
-                  className="h-full bg-[var(--chart-4)]"
-                  style={{
-                    width: `${Math.min(100, row.ratio * 100)}%`,
-                  }}
-                />
-              </div>
-            </Card>
-          ))}
+          {goalProgress.map((row) => {
+            const hint = pacingHint(row.pacing, formatEuro);
+            return (
+              <Card.Bezel key={row.goalId} className="w-full" innerClassName="p-4">
+                <div className="flex justify-between text-sm font-medium">
+                  <span>{row.name}</span>
+                  <span className="font-mono tabular-nums">
+                    {formatEuro(row.saved)} / {formatEuro(row.target)}
+                  </span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--hairline-strong)]">
+                  <div
+                    className="h-full rounded-full bg-[var(--chart-4)]"
+                    style={{
+                      width: `${Math.min(100, row.ratio * 100)}%`,
+                    }}
+                  />
+                </div>
+                {hint ? (
+                  <p className={cn("mt-2 text-xs", hint.className)}>
+                    {hint.text}
+                  </p>
+                ) : null}
+              </Card.Bezel>
+            );
+          })}
 
           <Card className="w-full p-4">
             <form
@@ -355,25 +401,28 @@ export function BudgetsView({
               <li key={g.id}>
                 <Card className="flex w-full items-center justify-between p-3">
                   <span className="text-sm font-medium">
-                    {g.name} — {formatEuro(Number(g.target_amount))}
+                    {g.name} —{" "}
+                    <span className="font-mono tabular-nums">
+                      {formatEuro(Number(g.target_amount))}
+                    </span>
                   </span>
                   <div className="flex gap-1.5">
                     <button
                       type="button"
                       className={cn(
-                        "flex h-10 w-10 items-center justify-center",
-                        "rounded border border-border hover:bg-accent",
+                        "flex h-11 w-11 items-center justify-center",
+                        "rounded-full border border-border hover:bg-accent",
                       )}
                       aria-label="Edit goal"
                       onClick={() => setEditingGoal(g)}
                     >
-                      <PencilSimple size={18} />
+                      <PencilSimple size={18} weight="light" />
                     </button>
                     <button
                       type="button"
                       className={cn(
-                        "flex h-10 w-10 items-center justify-center",
-                        "rounded border border-border",
+                        "flex h-11 w-11 items-center justify-center",
+                        "rounded-full border border-border",
                         "hover:bg-destructive hover:text-destructive-foreground",
                       )}
                       aria-label="Delete goal"
@@ -389,7 +438,7 @@ export function BudgetsView({
                         })
                       }
                     >
-                      <Trash size={18} />
+                      <Trash size={18} weight="light" />
                     </button>
                   </div>
                 </Card>
@@ -416,7 +465,7 @@ export function BudgetsView({
               <span
                 key={t.id}
                 className={cn(
-                  "rounded border border-border bg-muted",
+                  "rounded-full border border-border bg-muted",
                   "px-3 py-1 text-xs font-semibold",
                 )}
               >

@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
 import { useColorScheme } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colorsForScheme } from "@/theme/tokens";
 
@@ -22,16 +23,16 @@ const TABS: TabConfig[] = [
     iconInactive: "pie-chart-outline",
   },
   {
-    name: "transactions",
-    title: "Transactions",
-    icon: "swap-horizontal",
-    iconInactive: "swap-horizontal-outline",
-  },
-  {
     name: "recurring",
     title: "Recurring",
     icon: "repeat",
     iconInactive: "repeat-outline",
+  },
+  {
+    name: "transactions",
+    title: "Transactions",
+    icon: "swap-horizontal",
+    iconInactive: "swap-horizontal-outline",
   },
   {
     name: "calendar",
@@ -46,6 +47,12 @@ const TABS: TabConfig[] = [
     iconInactive: "analytics-outline",
   },
   {
+    name: "planning",
+    title: "Planning",
+    icon: "flag",
+    iconInactive: "flag-outline",
+  },
+  {
     name: "profile",
     title: "Profile",
     icon: "person",
@@ -56,6 +63,7 @@ const TABS: TabConfig[] = [
 export default function TabsLayout() {
   const scheme = useColorScheme();
   const colors = colorsForScheme(scheme === "light" ? "light" : "dark");
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -64,10 +72,19 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarLabelStyle: { fontSize: 10, fontWeight: "500" },
+        tabBarItemStyle: { borderRadius: 999 },
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
+          position: "absolute",
+          left: 16,
+          right: 16,
+          bottom: insets.bottom + 8,
+          height: 64,
+          borderRadius: 999,
+          backgroundColor: colors.card,
+          borderWidth: 1,
+          borderColor: colors.border,
+          elevation: 0,
+          shadowOpacity: 0,
         },
       }}
     >
@@ -87,13 +104,6 @@ export default function TabsLayout() {
           }}
         />
       ))}
-      <Tabs.Screen
-        name="planning"
-        options={{
-          href: null,
-          title: "Planning",
-        }}
-      />
     </Tabs>
   );
 }

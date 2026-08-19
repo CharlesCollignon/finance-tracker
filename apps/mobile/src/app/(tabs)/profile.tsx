@@ -12,6 +12,7 @@ import {
   PasskeysCard,
 } from "@/components/profile/SecurityCards";
 import { useAuth } from "@/providers/AuthProvider";
+import { useCurrency } from "@/providers/CurrencyProvider";
 import { deleteAllUserData, updateProfile } from "@/lib/mutations";
 import { supabase } from "@/lib/supabase";
 import {
@@ -30,6 +31,7 @@ export default function ProfileScreen() {
       "",
   );
   const [theme, setTheme] = useState<ThemePreference>("system");
+  const { currency, setCurrency } = useCurrency();
   const [confirmData, setConfirmData] = useState("");
   const [confirmAccount, setConfirmAccount] = useState("");
   const [pending, setPending] = useState(false);
@@ -96,8 +98,8 @@ export default function ProfileScreen() {
 
   return (
     <Screen title="Profile">
-      <ScrollView contentContainerClassName="gap-3 pb-10">
-        <Card className="p-4">
+      <ScrollView contentContainerClassName="gap-3 pb-28">
+        <Card bezel className="p-4">
           <Text className="font-bold">Account</Text>
           <Text variant="muted" className="mt-1">
             Signed in via {provider}
@@ -129,7 +131,7 @@ export default function ProfileScreen() {
         <BiometricUnlockCard />
         <PasskeysCard />
 
-        <Card className="p-4">
+        <Card bezel className="p-4">
           <Text className="font-bold">Budgets, goals & tags</Text>
           <Text variant="muted" className="mt-1 mb-3">
             Set monthly spending caps, savings goals, and tags.
@@ -141,12 +143,12 @@ export default function ProfileScreen() {
           />
         </Card>
 
-        <Card className="p-4">
+        <Card bezel className="p-4">
           <Text className="font-bold">Appearance</Text>
           <Text variant="muted" className="mt-1 mb-3">
             Light, dark, or follow the device.
           </Text>
-          <View className="flex-row border border-border">
+          <View className="flex-row flex-wrap gap-2">
             {(["light", "dark", "system"] as const).map((value) => {
               const selected = theme === value;
               return (
@@ -157,11 +159,19 @@ export default function ProfileScreen() {
                     await setThemePreference(value);
                     await applyThemePreference(value);
                   }}
-                  className={`flex-1 py-2 ${
-                    selected ? "bg-primary" : "bg-background"
+                  className={`rounded-full border px-4 py-1.5 ${
+                    selected
+                      ? "border-foreground bg-foreground dark:border-foreground-dark dark:bg-foreground-dark"
+                      : "border-border bg-background dark:border-border-dark dark:bg-background-dark"
                   }`}
                 >
-                  <Text className="text-center text-xs font-semibold capitalize">
+                  <Text
+                    className={`text-center text-xs font-semibold capitalize ${
+                      selected
+                        ? "text-background dark:text-background-dark"
+                        : ""
+                    }`}
+                  >
                     {value}
                   </Text>
                 </Pressable>
@@ -170,7 +180,41 @@ export default function ProfileScreen() {
           </View>
         </Card>
 
-        <Card className="border-destructive p-4">
+        <Card bezel className="p-4">
+          <Text className="font-bold">Currency</Text>
+          <Text variant="muted" className="mt-1 mb-3">
+            Choose how amounts are labeled. This only changes the symbol —
+            it does not convert your numbers.
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {(["EUR", "USD"] as const).map((value) => {
+              const selected = currency === value;
+              return (
+                <Pressable
+                  key={value}
+                  onPress={() => setCurrency(value)}
+                  className={`rounded-full border px-4 py-1.5 ${
+                    selected
+                      ? "border-foreground bg-foreground dark:border-foreground-dark dark:bg-foreground-dark"
+                      : "border-border bg-background dark:border-border-dark dark:bg-background-dark"
+                  }`}
+                >
+                  <Text
+                    className={`text-center text-xs font-semibold ${
+                      selected
+                        ? "text-background dark:text-background-dark"
+                        : ""
+                    }`}
+                  >
+                    {value === "EUR" ? "Euro (€)" : "US Dollar ($)"}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Card>
+
+        <Card bezel className="border-destructive/40" innerClassName="p-4">
           <Text className="font-bold text-destructive">Danger zone</Text>
           <Text variant="muted" className="mt-1">
             Delete all transactions, recurring templates, positions, and
@@ -191,7 +235,7 @@ export default function ProfileScreen() {
           />
         </Card>
 
-        <Card className="border-destructive p-4">
+        <Card bezel className="border-destructive/40" innerClassName="p-4">
           <Text className="font-bold text-destructive">Delete account</Text>
           <Text variant="muted" className="mt-1">
             Permanently removes your account via the delete-account Edge

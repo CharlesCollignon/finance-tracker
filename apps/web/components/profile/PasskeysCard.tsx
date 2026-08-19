@@ -60,21 +60,21 @@ export function PasskeysCard({ initialPasskeys }: PasskeysCardProps) {
   }
 
   return (
-    <Card className="block w-full p-4 md:p-5">
-      <h2 className="font-head text-base">Passkeys</h2>
+    <Card.Bezel className="w-full" innerClassName="p-4 md:p-5">
+      <h2 className="text-base font-semibold">Passkeys</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Passwordless sign-in on this browser. Bound to pluclair.com.
       </p>
       {passkeys.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">No passkeys yet.</p>
       ) : (
-        <ul className="mt-4 flex flex-col gap-3">
+        <ul className="mt-4 flex flex-col divide-y divide-border">
           {passkeys.map((item) => {
             const label = item.friendly_name ?? "Passkey";
             return (
               <li
                 key={item.id}
-                className="flex items-center justify-between gap-3"
+                className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
               >
                 <div>
                   <Text className="text-sm">{label}</Text>
@@ -113,6 +113,6 @@ export function PasskeysCard({ initialPasskeys }: PasskeysCardProps) {
       {message ? (
         <p className="mt-2 text-sm text-destructive">{message}</p>
       ) : null}
-    </Card>
+    </Card.Bezel>
   );
 }

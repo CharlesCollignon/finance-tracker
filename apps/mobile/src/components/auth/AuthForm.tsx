@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, View } from "react-native";
 
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
@@ -78,7 +79,7 @@ export function AuthForm({
         <View className="mb-6 items-center">
           <Logo size="hero" />
         </View>
-        <View className="gap-4">
+        <Card bezel innerClassName="gap-4 p-5">
           <Input
             placeholder="Email"
             autoCapitalize="none"
@@ -124,7 +125,7 @@ export function AuthForm({
               <Text className="font-bold underline">{footerLinkLabel}</Text>
             </Link>
           </View>
-        </View>
+        </Card>
       </KeyboardAvoidingView>
     </Screen>
   );

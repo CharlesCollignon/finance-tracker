@@ -40,7 +40,7 @@ function readPalette(): Palette {
   return {
     income: readCssVar("--success", "#16a34a"),
     expense: readCssVar("--destructive", "#dc2626"),
-    savings: readCssVar("--primary", "#ffc300"),
+    savings: readCssVar("--primary", "#d4af37"),
     investment: readCssVar("--info", "#2563eb"),
     remaining: readCssVar("--chart-5", "#a1a1aa"),
     foreground: readCssVar("--foreground", "#fafafa"),

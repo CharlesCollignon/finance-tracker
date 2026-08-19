@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { type Href, useRouter } from "expo-router";
 
-import { formatEuro, parseMonthParams } from "@finance/core/constants";
+import { parseMonthParams } from "@finance/core/constants";
 import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
 import {
   estimateMonthlyAmount,
@@ -29,6 +29,7 @@ import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
+import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import {
   previewApplyRecurringForMonth,
   toggleRecurringActive,
@@ -37,6 +38,7 @@ import { getCategories, getRecurringTemplates } from "@/lib/queries";
 
 export default function RecurringScreen() {
   const { user } = useAuth();
+  const formatEuro = useFormatCurrency();
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<RecurringTemplateWithCategory | null>(
@@ -99,9 +101,13 @@ export default function RecurringScreen() {
       ) : null}
 
       {templates.length > 0 ? (
-        <Card className="mb-3 flex-row items-center justify-between p-4">
+        <Card
+          bezel
+          className="mb-3"
+          innerClassName="flex-row items-center justify-between p-4"
+        >
           <Text className="font-bold">Expected budget impact</Text>
-          <PrivateAmount className="text-lg font-bold">
+          <PrivateAmount className="font-mono text-lg font-bold">
             {formatEuro(budgetMonthly)}
           </PrivateAmount>
         </Card>
@@ -133,9 +139,13 @@ export default function RecurringScreen() {
               description="Set up salary, rent, DCA contributions, and other monthly flows."
             />
           }
-          contentContainerClassName="gap-2 pb-8"
+          contentContainerClassName="gap-2 pb-28"
           renderItem={({ item }) => (
-            <Card className={`p-3 ${item.active ? "" : "opacity-60"}`}>
+            <Card
+              bezel
+              className={item.active ? "" : "opacity-60"}
+              innerClassName="p-3"
+            >
               <Pressable
                 onPress={() => {
                   setEditing(item);
@@ -148,8 +158,8 @@ export default function RecurringScreen() {
                 ) : null}
                 <Text variant="muted">{formatRecurrenceSchedule(item)}</Text>
               </Pressable>
-              <View className="mt-2 flex-row items-center justify-between border-t border-border pt-2">
-                <PrivateAmount className="font-bold">
+              <View className="mt-2 flex-row items-center justify-between border-t border-border pt-2 dark:border-border-dark">
+                <PrivateAmount className="font-mono font-bold">
                   {formatEuro(Number(item.amount))}
                 </PrivateAmount>
                 <Pressable
@@ -171,10 +181,10 @@ export default function RecurringScreen() {
                     await reload();
                     await refreshApplyPending();
                   }}
-                  className={`border px-3 py-1 ${
+                  className={`rounded-full border px-3 py-1 ${
                     item.active
-                      ? "border-foreground bg-primary"
-                      : "border-border"
+                      ? "border-foreground bg-primary dark:border-foreground-dark"
+                      : "border-border dark:border-border-dark"
                   }`}
                 >
                   <Text className="text-xs font-semibold">

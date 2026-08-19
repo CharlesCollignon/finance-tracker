@@ -9,8 +9,12 @@ import {
 } from "react-native";
 
 import { buildBudgetProgress } from "@finance/core/budget-limits";
-import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
-import { formatEuro, getCurrentMonth } from "@finance/core/constants";
+import {
+  buildSavingsGoalProgress,
+  computeGoalPacing,
+  type GoalPacing,
+} from "@finance/core/savings-goals";
+import { getCurrentMonth } from "@finance/core/constants";
 import type {
   Budget,
   Category,
@@ -26,6 +30,8 @@ import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
+import { useFormatCurrency } from "@/providers/CurrencyProvider";
+import { progressTone } from "@/lib/progress-tone";
 import {
   getBudgets,
   getCategories,
@@ -41,12 +47,37 @@ import {
   upsertTag,
 } from "@/lib/mutations";
 
+/** Plain-language pacing line under a goal's progress bar — no jargon, just what to do. */
+function pacingHint(
+  pacing: GoalPacing,
+  formatEuro: (amount: number) => string,
+): { text: string; className: string } | null {
+  switch (pacing.status) {
+    case "reached":
+      return { text: "Goal reached!", className: "text-success" };
+    case "overdue":
+      return {
+        text: `Target date passed — ${formatEuro(pacing.monthlyAmount ?? 0)} still to save.`,
+        className: "text-destructive",
+      };
+    case "on-schedule":
+      return {
+        text: `Save ${formatEuro(pacing.monthlyAmount ?? 0)}/month to reach this by ${pacing.targetLabel}.`,
+        className: "text-muted-foreground",
+      };
+    case "no-date":
+      return null;
+  }
+}
+
 export default function PlanningScreen() {
   const { user } = useAuth();
+  const formatEuro = useFormatCurrency();
   const current = getCurrentMonth();
   const [budgetAmount, setBudgetAmount] = useState("");
   const [goalName, setGoalName] = useState("");
   const [goalTarget, setGoalTarget] = useState("");
+  const [goalTargetDate, setGoalTargetDate] = useState("");
   const [tagName, setTagName] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -114,6 +145,7 @@ export default function PlanningScreen() {
     const result = await upsertSavingsGoal({
       name: goalName,
       targetAmount: Number(goalTarget),
+      targetDate: goalTargetDate.trim() || undefined,
       categoryId: null,
     });
     setPending(false);
@@ -123,6 +155,7 @@ export default function PlanningScreen() {
     }
     setGoalName("");
     setGoalTarget("");
+    setGoalTargetDate("");
     await onRefresh();
   }
 
@@ -149,34 +182,39 @@ export default function PlanningScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-3 pb-10"
+          contentContainerClassName="gap-3 pb-28"
         >
-          <Card className="p-4">
+          <Card bezel className="p-4">
             <Text className="font-bold">Monthly budgets</Text>
-            {(data?.budgetProgress ?? []).map((row) => (
-              <View key={row.budgetId} className="mt-3">
-                <View className="flex-row justify-between">
-                  <Text>{row.label}</Text>
-                  <PrivateAmount
-                    className={
-                      row.over ? "font-semibold text-destructive" : ""
-                    }
-                  >
-                    {`${formatEuro(row.spent)} / ${formatEuro(row.limit)}`}
-                  </PrivateAmount>
+            {(data?.budgetProgress ?? []).map((row) => {
+              const tone = progressTone(row.ratio, row.over);
+              return (
+                <View key={row.budgetId} className="mt-3">
+                  <View className="flex-row justify-between">
+                    <Text>{row.label}</Text>
+                    <PrivateAmount
+                      className={
+                        tone === "danger"
+                          ? "font-mono font-semibold text-destructive"
+                          : "font-mono"
+                      }
+                    >
+                      {`${formatEuro(row.spent)} / ${formatEuro(row.limit)}`}
+                    </PrivateAmount>
+                  </View>
+                  <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong dark:bg-hairline-strong-dark">
+                    <View
+                      className={`h-full rounded-full ${
+                        tone === "danger" ? "bg-destructive" : "bg-primary"
+                      }`}
+                      style={{
+                        width: `${Math.min(100, row.ratio * 100)}%`,
+                      }}
+                    />
+                  </View>
                 </View>
-                <View className="mt-1.5 h-2 overflow-hidden rounded bg-muted">
-                  <View
-                    className={`h-full ${
-                      row.over ? "bg-destructive" : "bg-primary"
-                    }`}
-                    style={{
-                      width: `${Math.min(100, row.ratio * 100)}%`,
-                    }}
-                  />
-                </View>
-              </View>
-            ))}
+              );
+            })}
             <Text variant="label" className="mb-2 mt-4">
               Global monthly limit (€)
             </Text>
@@ -215,33 +253,41 @@ export default function PlanningScreen() {
                         ?.name ?? "Category")
                     : "All expenses"}
                 </Text>
-                <PrivateAmount className="font-semibold">
+                <PrivateAmount className="font-mono font-semibold">
                   {formatEuro(Number(b.amount))}
                 </PrivateAmount>
               </Pressable>
             ))}
           </Card>
 
-          <Card className="p-4">
+          <Card bezel className="p-4">
             <Text className="font-bold">Savings goals</Text>
-            {(data?.goalProgress ?? []).map((row) => (
-              <View key={row.goal.id} className="mt-3">
-                <View className="flex-row justify-between">
-                  <Text>{row.goal.name}</Text>
-                  <PrivateAmount>
-                    {`${formatEuro(row.saved)} / ${formatEuro(Number(row.goal.target_amount))}`}
-                  </PrivateAmount>
+            {(data?.goalProgress ?? []).map((row) => {
+              const hint = pacingHint(computeGoalPacing(row), formatEuro);
+              return (
+                <View key={row.goal.id} className="mt-3">
+                  <View className="flex-row justify-between">
+                    <Text>{row.goal.name}</Text>
+                    <PrivateAmount className="font-mono">
+                      {`${formatEuro(row.saved)} / ${formatEuro(Number(row.goal.target_amount))}`}
+                    </PrivateAmount>
+                  </View>
+                  <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong dark:bg-hairline-strong-dark">
+                    <View
+                      className="h-full rounded-full bg-primary"
+                      style={{
+                        width: `${Math.min(100, row.ratio * 100)}%`,
+                      }}
+                    />
+                  </View>
+                  {hint ? (
+                    <Text className={`mt-1.5 text-xs ${hint.className}`}>
+                      {hint.text}
+                    </Text>
+                  ) : null}
                 </View>
-                <View className="mt-1.5 h-2 overflow-hidden rounded bg-muted">
-                  <View
-                    className="h-full bg-primary"
-                    style={{
-                      width: `${Math.min(100, row.ratio * 100)}%`,
-                    }}
-                  />
-                </View>
-              </View>
-            ))}
+              );
+            })}
             <Text variant="label" className="mb-2 mt-4">
               Goal name
             </Text>
@@ -257,6 +303,15 @@ export default function PlanningScreen() {
               value={goalTarget}
               onChangeText={setGoalTarget}
               keyboardType="decimal-pad"
+              className="mb-3"
+            />
+            <Text variant="label" className="mb-2">
+              Target date (optional)
+            </Text>
+            <Input
+              value={goalTargetDate}
+              onChangeText={setGoalTargetDate}
+              placeholder="YYYY-MM-DD"
               className="mb-3"
             />
             <Button
@@ -283,20 +338,20 @@ export default function PlanningScreen() {
                 }
               >
                 <Text>{g.name}</Text>
-                <PrivateAmount className="font-semibold">
+                <PrivateAmount className="font-mono font-semibold">
                   {formatEuro(Number(g.target_amount))}
                 </PrivateAmount>
               </Pressable>
             ))}
           </Card>
 
-          <Card className="p-4">
+          <Card bezel className="p-4">
             <Text className="font-bold">Tags</Text>
             <View className="mt-3 flex-row flex-wrap gap-2">
               {(data?.tags ?? []).map((t) => (
                 <View
                   key={t.id}
-                  className="border border-border bg-muted px-3 py-1"
+                  className="rounded-full border border-border bg-muted px-3 py-1 dark:border-border-dark dark:bg-muted-dark"
                 >
                   <Text className="text-xs font-semibold">{t.name}</Text>
                 </View>

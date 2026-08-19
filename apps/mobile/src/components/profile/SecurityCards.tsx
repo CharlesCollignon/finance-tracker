@@ -36,7 +36,7 @@ export function BiometricUnlockCard() {
   }
 
   return (
-    <Card className="p-4">
+    <Card bezel className="p-4">
       <Text className="font-bold">App unlock</Text>
       <Text variant="muted" className="mt-1">
         Require Face ID or a fingerprint when opening the app. This does not
@@ -118,7 +118,7 @@ export function PasskeysCard() {
   }
 
   return (
-    <Card className="p-4">
+    <Card bezel className="p-4">
       <Text className="font-bold">Passkeys</Text>
       <Text variant="muted" className="mt-1 mb-3">
         Passwordless sign-in with this device. Requires a development build

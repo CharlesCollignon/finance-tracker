@@ -125,8 +125,8 @@ export function RecurringFormModal({
   return (
     <Modal visible={open} animationType="slide" transparent>
       <View className="flex-1 justify-end bg-black/70">
-        <View className="max-h-[90%] border border-border bg-background">
-          <View className="flex-row items-center justify-between border-b border-border bg-card px-4 py-3">
+        <View className="max-h-[90%] rounded-t-[28px] border border-border bg-background dark:border-border-dark dark:bg-background-dark">
+          <View className="flex-row items-center justify-between rounded-t-[28px] border-b border-border bg-card px-4 py-3 dark:border-border-dark dark:bg-card-dark">
             <Text className="font-bold">
               {isEditing ? "Edit recurring" : "Add recurring"}
             </Text>
@@ -148,10 +148,10 @@ export function RecurringFormModal({
                       <Pressable
                         key={cat.id}
                         onPress={() => setCategoryId(cat.id)}
-                        className={`border px-3 py-2 ${
+                        className={`rounded-full border px-3 py-2 ${
                           selected
-                            ? "border-foreground bg-primary"
-                            : "border-border"
+                            ? "border-foreground bg-primary dark:border-foreground-dark"
+                            : "border-border dark:border-border-dark"
                         }`}
                       >
                         <Text>{formatCategoryOptionLabel(cat)}</Text>
@@ -189,10 +189,10 @@ export function RecurringFormModal({
                 <Pressable
                   key={value}
                   onPress={() => setRecurrence(value)}
-                  className={`flex-1 border py-2 ${
+                  className={`flex-1 rounded-full border py-2 ${
                     recurrence === value
-                      ? "border-foreground bg-primary"
-                      : "border-border"
+                      ? "border-foreground bg-primary dark:border-foreground-dark"
+                      : "border-border dark:border-border-dark"
                   }`}
                 >
                   <Text className="text-center text-xs font-semibold capitalize">

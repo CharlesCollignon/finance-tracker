@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Plus } from "@phosphor-icons/react";
-import { Button } from "@/components/retroui/Button";
+import { Button, ButtonNub } from "@/components/retroui/Button";
+import { Card } from "@/components/retroui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
@@ -10,7 +11,7 @@ import { MonthPicker } from "@/components/layout/MonthPicker";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { StatHero } from "@/components/finance/StatHero";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
-import { formatEuro, formatMonthLabel } from "@finance/core/constants";
+import { formatMonthLabel } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { computeMonthlyBudget } from "@finance/core/budget";
 import {
@@ -23,6 +24,7 @@ import {
   WEEKDAY_LABELS,
 } from "@finance/core/calendar";
 import { cn } from "@/lib/utils";
+import { useFormatCurrency } from "@/lib/use-currency";
 import type {
   Category,
   RecurringTemplateWithCategory,
@@ -44,6 +46,7 @@ export function CalendarView({
   year,
   month,
 }: CalendarViewProps) {
+  const formatEuro = useFormatCurrency();
   const [editTransaction, setEditTransaction] =
     useState<TransactionWithCategory | null>(null);
   const byDate = useMemo(
@@ -90,25 +93,27 @@ export function CalendarView({
           stagger={0.05}
         >
           <StaggerItem className="w-full min-w-0">
-            <StatHero
-              label={monthLabel}
-              amount={`${monthTotals.net >= 0 ? "+" : "−"}${formatEuro(Math.abs(monthTotals.net))}`}
-              amountClassName={
-                monthTotals.net < 0 ? "text-destructive" : "text-success"
-              }
-              subtitle={
-                <p>
-                  <span className="privacy-amount text-success tabular-nums">
-                    {formatEuro(monthTotals.income)}
-                  </span>
-                  {" in · "}
-                  <span className="privacy-amount text-destructive tabular-nums">
-                    {formatEuro(monthTotals.outflow)}
-                  </span>
-                  {" out"}
-                </p>
-              }
-            />
+            <Card.Bezel className="w-full" innerClassName="p-6 md:p-8">
+              <StatHero
+                label={monthLabel}
+                amount={`${monthTotals.net >= 0 ? "+" : "−"}${formatEuro(Math.abs(monthTotals.net))}`}
+                amountClassName={
+                  monthTotals.net < 0 ? "text-destructive" : "text-success"
+                }
+                subtitle={
+                  <p className="font-mono">
+                    <span className="privacy-amount text-success tabular-nums">
+                      {formatEuro(monthTotals.income)}
+                    </span>
+                    {" in · "}
+                    <span className="privacy-amount text-destructive tabular-nums">
+                      {formatEuro(monthTotals.outflow)}
+                    </span>
+                    {" out"}
+                  </p>
+                }
+              />
+            </Card.Bezel>
           </StaggerItem>
 
           <StaggerItem className="w-full min-w-0">
@@ -180,7 +185,7 @@ export function CalendarView({
                           {totals.income > 0 ? (
                             <span
                               className={cn(
-                                "mt-auto truncate text-[10px] font-medium",
+                                "mt-auto truncate font-mono text-[10px] font-medium",
                                 "leading-tight text-success",
                                 "md:text-xs",
                               )}
@@ -191,7 +196,7 @@ export function CalendarView({
                           {totals.outflow > 0 ? (
                             <span
                               className={cn(
-                                "truncate text-[10px] font-medium leading-tight",
+                                "truncate font-mono text-[10px] font-medium leading-tight",
                                 "text-destructive md:text-xs",
                                 totals.income > 0 && "-mt-0.5",
                               )}
@@ -224,9 +229,13 @@ export function CalendarView({
                       : `${selectedTotals.count} transaction${
                           selectedTotals.count === 1 ? "" : "s"
                         }`}
-                    {selectedTotals.count > 0
-                      ? ` · ${formatEuro(selectedTotals.income)} in · ${formatEuro(selectedTotals.outflow)} out`
-                      : ""}
+                    {selectedTotals.count > 0 ? (
+                      <span className="font-mono">
+                        {` · ${formatEuro(selectedTotals.income)} in · ${formatEuro(selectedTotals.outflow)} out`}
+                      </span>
+                    ) : (
+                      ""
+                    )}
                   </p>
                 </div>
                 <Button
@@ -244,49 +253,52 @@ export function CalendarView({
                   title="Nothing on this day"
                   description="Add a transaction or pick another date."
                 >
-                  <Button size="md" onClick={() => setFormOpen(true)}>
+                  <Button
+                    variant="pill"
+                    size="md"
+                    onClick={() => setFormOpen(true)}
+                  >
                     Add transaction
+                    <ButtonNub>
+                      <Plus size={16} weight="bold" />
+                    </ButtonNub>
                   </Button>
                 </EmptyState>
               ) : (
-                <ul className="flex flex-col">
+                <Card.Bezel className="w-full" innerClassName="divide-y divide-border px-2 py-1">
                   {selectedTransactions.map((tx) => (
-                    <li key={tx.id}>
-                      <button
-                        type="button"
-                        onClick={() => setEditTransaction(tx)}
-                        aria-label={`Edit ${tx.categories.name}`}
+                    <button
+                      key={tx.id}
+                      type="button"
+                      onClick={() => setEditTransaction(tx)}
+                      aria-label={`Edit ${tx.categories.name}`}
+                      className="flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium leading-snug">
+                          {tx.categories.name}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {[
+                            tx.recurring_template_id ? "Recurring" : null,
+                            tx.note,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ") || "—"}
+                        </p>
+                      </div>
+                      <span
                         className={cn(
-                          "flex w-full items-start gap-3 border-b border-border/40",
-                          "py-3 text-left transition-colors hover:bg-muted/30",
+                          "privacy-amount shrink-0 font-mono text-sm font-semibold tabular-nums",
+                          TYPE_AMOUNT_CLASS[tx.categories.type],
                         )}
                       >
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium leading-snug">
-                            {tx.categories.name}
-                          </p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {[
-                              tx.recurring_template_id ? "Recurring" : null,
-                              tx.note,
-                            ]
-                              .filter(Boolean)
-                              .join(" · ") || "—"}
-                          </p>
-                        </div>
-                        <span
-                          className={cn(
-                            "privacy-amount shrink-0 text-sm font-semibold tabular-nums",
-                            TYPE_AMOUNT_CLASS[tx.categories.type],
-                          )}
-                        >
-                          {tx.categories.type === "income" ? "+" : "−"}
-                          {formatEuro(Number(tx.amount))}
-                        </span>
-                      </button>
-                    </li>
+                        {tx.categories.type === "income" ? "+" : "−"}
+                        {formatEuro(Number(tx.amount))}
+                      </span>
+                    </button>
                   ))}
-                </ul>
+                </Card.Bezel>
               )}
             </section>
           </StaggerItem>

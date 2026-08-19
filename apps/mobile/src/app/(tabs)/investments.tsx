@@ -8,11 +8,7 @@ import {
   View,
 } from "react-native";
 
-import {
-  formatEuro,
-  getCurrentMonth,
-  todayIsoLocal,
-} from "@finance/core/constants";
+import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import {
   INVESTMENT_WALLET_IDS,
   INVESTMENT_WALLET_LABELS,
@@ -41,6 +37,7 @@ import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
+import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { deleteWalletTransfer, upsertWalletTransfer } from "@/lib/mutations";
 import {
   getInvestmentTransactions,
@@ -51,6 +48,7 @@ import {
 
 export default function InvestmentsScreen() {
   const { user } = useAuth();
+  const formatEuro = useFormatCurrency();
   const current = getCurrentMonth();
   const [toWallet, setToWallet] = useState<InvestmentWalletId>("pea");
   const [amount, setAmount] = useState("");
@@ -135,22 +133,22 @@ export default function InvestmentsScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-3 pb-8"
+          contentContainerClassName="gap-3 pb-28"
         >
-          <Card className="p-4">
+          <Card bezel className="p-4">
             <Text variant="muted">Portfolio value</Text>
-            <PrivateAmount className="mt-1 text-3xl font-bold">
+            <PrivateAmount className="mt-1 font-mono text-3xl font-bold">
               {formatEuro(portfolio.totalMarketValue)}
             </PrivateAmount>
             <Text variant="muted" className="mt-2">
               Invested{" "}
-              <PrivateAmount>
+              <PrivateAmount className="font-mono">
                 {formatEuro(portfolio.totalInvested)}
               </PrivateAmount>
               {portfolio.hasMarketSnapshot ? (
                 <>
                   {" · P/L "}
-                  <PrivateAmount>
+                  <PrivateAmount className="font-mono">
                     {formatEuro(portfolio.totalGainLoss)}
                   </PrivateAmount>
                 </>
@@ -159,7 +157,7 @@ export default function InvestmentsScreen() {
             {upcoming.length > 0 ? (
               <Text variant="muted" className="mt-1">
                 Upcoming DCA{" "}
-                <PrivateAmount>
+                <PrivateAmount className="font-mono">
                   {formatEuro(sumUpcomingAmount(upcoming))}
                 </PrivateAmount>
               </Text>
@@ -167,12 +165,12 @@ export default function InvestmentsScreen() {
           </Card>
 
           {fundingNeeds.map((need) => (
-            <Card key={need.walletId} className="p-4">
+            <Card key={need.walletId} bezel className="p-4">
               <Text variant="muted">
                 Send to {INVESTMENT_WALLET_LABELS[need.walletId]}
               </Text>
               <View className="mt-1 flex-row items-baseline gap-1">
-                <PrivateAmount className="text-2xl font-bold">
+                <PrivateAmount className="font-mono text-2xl font-bold">
                   {formatEuro(need.monthlyTotal)}
                 </PrivateAmount>
                 <Text variant="muted" className="text-sm">
@@ -195,40 +193,42 @@ export default function InvestmentsScreen() {
               null;
             const next = nextByWallet[walletId];
             return (
-              <Card key={walletId} className="p-4">
+              <Card key={walletId} bezel className="p-4">
                 <Text className="font-bold">
                   {INVESTMENT_WALLET_LABELS[walletId]}
                 </Text>
-                <PrivateAmount className="mt-1 text-xl font-bold">
+                <PrivateAmount className="mt-1 font-mono text-xl font-bold">
                   {formatEuro(column?.totalMarketValue ?? 0)}
                 </PrivateAmount>
                 <Text variant="muted">
                   Invested{" "}
-                  <PrivateAmount>
+                  <PrivateAmount className="font-mono">
                     {formatEuro(column?.totalInvested ?? 0)}
                   </PrivateAmount>
                 </Text>
                 {next ? (
                   <Text variant="muted" className="mt-1">
                     Next: {next.name} · {next.dateLabel} ·{" "}
-                    <PrivateAmount>{formatEuro(next.amount)}</PrivateAmount>
+                    <PrivateAmount className="font-mono">
+                      {formatEuro(next.amount)}
+                    </PrivateAmount>
                   </Text>
                 ) : null}
                 <View className="mt-3 gap-2">
                   {(column?.items ?? []).map((item) => (
                     <View
                       key={item.id}
-                      className="border border-border bg-background p-3"
+                      className="rounded-2xl bg-muted/60 p-3 dark:bg-muted-dark/60"
                     >
                       <Text className="font-semibold">{item.name}</Text>
                       <Text variant="muted">
-                        <PrivateAmount>
+                        <PrivateAmount className="font-mono">
                           {formatEuro(item.marketValue)}
                         </PrivateAmount>
                         {item.gainLoss !== 0 ? (
                           <>
                             {" · "}
-                            <PrivateAmount>
+                            <PrivateAmount className="font-mono">
                               {formatEuro(item.gainLoss)}
                             </PrivateAmount>
                           </>
@@ -241,23 +241,31 @@ export default function InvestmentsScreen() {
             );
           })}
 
-          <Card className="p-4">
+          <Card bezel className="p-4">
             <Text className="font-bold">Cash → wallet transfers</Text>
             <Text variant="muted" className="mt-1 mb-3">
               This month
             </Text>
-            <View className="mb-3 flex-row border border-border">
+            <View className="mb-3 flex-row flex-wrap gap-2">
               {INVESTMENT_WALLET_IDS.map((id) => {
                 const selected = toWallet === id;
                 return (
                   <Pressable
                     key={id}
                     onPress={() => setToWallet(id)}
-                    className={`flex-1 py-2 ${
-                      selected ? "bg-primary" : "bg-background"
+                    className={`rounded-full border px-4 py-1.5 ${
+                      selected
+                        ? "border-foreground bg-foreground dark:border-foreground-dark dark:bg-foreground-dark"
+                        : "border-border bg-background dark:border-border-dark dark:bg-background-dark"
                     }`}
                   >
-                    <Text className="text-center text-xs font-semibold">
+                    <Text
+                      className={`text-center text-xs font-semibold ${
+                        selected
+                          ? "text-background dark:text-background-dark"
+                          : ""
+                      }`}
+                    >
                       {INVESTMENT_WALLET_LABELS[id]}
                     </Text>
                   </Pressable>
@@ -279,7 +287,7 @@ export default function InvestmentsScreen() {
             {transfers.map((t) => (
               <Pressable
                 key={t.id}
-                className="mt-3 flex-row items-center justify-between border-t border-border pt-3"
+                className="mt-3 flex-row items-center justify-between border-t border-border pt-3 dark:border-border-dark"
                 onLongPress={() =>
                   Alert.alert("Delete transfer?", undefined, [
                     { text: "Cancel", style: "cancel" },
@@ -297,7 +305,7 @@ export default function InvestmentsScreen() {
                 <Text>
                   {INVESTMENT_WALLET_LABELS[t.to_wallet]} · {t.occurred_on}
                 </Text>
-                <PrivateAmount className="font-semibold">
+                <PrivateAmount className="font-mono font-semibold">
                   {formatEuro(Number(t.amount))}
                 </PrivateAmount>
               </Pressable>

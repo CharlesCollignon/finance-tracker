@@ -16,8 +16,8 @@ import {
   saveInvestmentPosition,
 } from "@/lib/actions/investments";
 import { estimateSharesAmountAction } from "@/lib/actions/market";
+import { useFormatCurrency } from "@/lib/use-currency";
 import { formatMoney } from "@finance/core/market/fx";
-import { formatEuro } from "@finance/core/constants";
 import {
   BITCOIN_INSTRUMENT,
   isCryptoWallet,
@@ -78,6 +78,7 @@ function InvestmentPositionForm({
 }: InvestmentPositionFormProps) {
   const isEdit = item !== null;
   const { toast } = useToast();
+  const formatEuro = useFormatCurrency();
   const [state, action, pending] = useActionState(saveInvestmentPosition, {});
   const [deletePending, startDelete] = useTransition();
   const [sourceType, setSourceType] = useState<"recurring" | "custom">(
@@ -204,7 +205,7 @@ function InvestmentPositionForm({
                 id="recurringTemplateId"
                 name="recurringTemplateId"
                 required
-                className="h-10 w-full border border-border bg-input px-3 text-base"
+                className="h-10 w-full rounded-lg border border-border bg-input px-3 text-base"
                 value={recurringTemplateId}
                 onChange={(event) => setRecurringTemplateId(event.target.value)}
               >
@@ -225,7 +226,7 @@ function InvestmentPositionForm({
         )}
 
         {isRecurringLinked ? (
-          <div className="flex items-center gap-3 rounded border border-border p-3">
+          <div className="flex items-center gap-3 rounded-xl border border-border p-3">
             <InstrumentLogo
               symbol={item.instrumentSymbol}
               name={item.name}
@@ -281,7 +282,7 @@ function InvestmentPositionForm({
         </div>
 
         {isRecurringLinked && instrumentFromRecurring ? (
-          <div className="rounded border border-border bg-muted/20 p-3 text-sm">
+          <div className="rounded-xl border border-border bg-muted/20 p-3 text-sm">
             <p className="font-medium">
               {isCrypto ? "Tracked asset" : "Tracked ETF"}
             </p>
@@ -320,7 +321,7 @@ function InvestmentPositionForm({
           </Text>
         ) : isCrypto ? (
           <>
-            <div className="rounded border border-border bg-muted/20 p-3 text-sm">
+            <div className="rounded-xl border border-border bg-muted/20 p-3 text-sm">
               <p className="font-medium">Bitcoin</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Market value uses BTC-EUR live price × your total BTC.
@@ -390,16 +391,16 @@ function InvestmentPositionForm({
         {estimateShown !== null && (
           <Text className="text-sm text-muted-foreground">
             Live market estimate:{" "}
-            <span className="font-semibold text-foreground">
+            <span className="font-mono font-semibold text-foreground">
               ≈ {formatEuro(estimateShown.amount)}
             </span>
             {isCrypto ? (
-              <span className="block text-xs">
+              <span className="block font-mono text-xs">
                 @ {formatEuro(estimateShown.priceEur)} / BTC
               </span>
             ) : (
               estimateShown.currency !== "EUR" && (
-                <span className="block text-xs">
+                <span className="block font-mono text-xs">
                   {formatMoney(
                     estimateShown.priceOriginal,
                     estimateShown.currency,
@@ -459,7 +460,7 @@ function InvestmentPositionForm({
             disabled={deletePending}
             onClick={handleDelete}
           >
-            <Trash size={16} />
+            <Trash size={16} weight="light" />
             {deletePending ? "Removing…" : "Remove from portfolio"}
           </Button>
         )}

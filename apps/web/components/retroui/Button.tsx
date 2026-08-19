@@ -14,6 +14,7 @@ export const buttonVariants = cva(
           "bg-transparent border border-border text-foreground hover:bg-muted",
         link: "bg-transparent text-foreground underline-offset-4 hover:underline",
         ghost: "bg-transparent text-foreground hover:bg-muted",
+        pill: "group rounded-full bg-primary text-primary-foreground hover:bg-primary-hover",
       },
       size: {
         sm: "px-3 py-1.5 text-sm",
@@ -22,6 +23,11 @@ export const buttonVariants = cva(
         icon: "p-2",
       },
     },
+    compoundVariants: [
+      { variant: "pill", size: "sm", class: "pl-4 pr-1 py-1" },
+      { variant: "pill", size: "md", class: "pl-5 pr-1.5 py-1.5" },
+      { variant: "pill", size: "lg", class: "pl-6 pr-2 py-2" },
+    ],
     defaultVariants: {
       size: "md",
       variant: "default",
@@ -59,3 +65,12 @@ export const Button = ({
     </BaseButton>
   );
 };
+
+/** Circular chip for a pill button's trailing icon — nests flush inside the button's end padding. */
+export function ButtonNub({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-black/10 transition-transform duration-500 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
+      {children}
+    </span>
+  );
+}

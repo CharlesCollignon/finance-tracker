@@ -4,9 +4,43 @@ import { cn } from "@/lib/cn";
 
 export interface CardProps extends ViewProps {
   className?: string;
+  /** Double-bezel nested look: tinted outer shell around the real surface. */
+  bezel?: boolean;
+  innerClassName?: string;
 }
 
-export function Card({ className, style, ...props }: CardProps) {
+export function Card({
+  className,
+  innerClassName,
+  style,
+  bezel,
+  children,
+  ...props
+}: CardProps) {
+  if (bezel) {
+    return (
+      <View
+        style={style}
+        className={cn(
+          "rounded-[28px] border border-border bg-black/[0.03] p-1.5",
+          "dark:border-border-dark dark:bg-white/[0.04]",
+          className,
+        )}
+        {...props}
+      >
+        <View
+          className={cn(
+            "rounded-[22px] bg-card p-4",
+            "dark:bg-card-dark",
+            innerClassName,
+          )}
+        >
+          {children}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View
       style={style}
@@ -16,6 +50,8 @@ export function Card({ className, style, ...props }: CardProps) {
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+    </View>
   );
 }

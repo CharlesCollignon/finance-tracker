@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, type ReactNode } from "react";
 import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
 import { cn } from "@/lib/utils";
-import { formatEuro } from "@finance/core/constants";
+import { useCurrency, useFormatCurrency } from "@/lib/use-currency";
 import {
   sliceChartPointsByRange,
   type PositionChartPoint,
@@ -50,6 +50,8 @@ export function InvestmentItemChart({
   const chartRef = useRef<ReactECharts>(null);
   useEchartsSize(containerRef, chartRef);
   const hidden = usePrivacyOn();
+  const currency = useCurrency();
+  const formatEuro = useFormatCurrency();
   const [mode, setMode] = useState<ChartMode>("value");
   const [range, setRange] = useState<PositionChartRange>("1Y");
 
@@ -117,7 +119,8 @@ export function InvestmentItemChart({
             if (!row) {
               return "";
             }
-            const plText = row.pl == null ? "—" : formatSignedEuro(row.pl);
+            const plText =
+              row.pl == null ? "—" : formatSignedEuro(row.pl, formatEuro);
             return hidden
               ? `${row.label}<br/>P/L: ${PRIVACY_MASK}`
               : `${row.label}<br/>P/L: ${plText}`;
@@ -182,14 +185,14 @@ export function InvestmentItemChart({
           }
           const lines = [
             row.label,
-            `Invested: ${privateEuro(row.invested, hidden)}`,
+            `Invested: ${privateEuro(row.invested, hidden, currency)}`,
           ];
           if (row.market != null) {
-            lines.push(`Market: ${privateEuro(row.market, hidden)}`);
+            lines.push(`Market: ${privateEuro(row.market, hidden, currency)}`);
           }
           if (row.pl != null) {
             lines.push(
-              `P/L: ${hidden ? PRIVACY_MASK : formatSignedEuro(row.pl)}`,
+              `P/L: ${hidden ? PRIVACY_MASK : formatSignedEuro(row.pl, formatEuro)}`,
             );
           }
           return lines.join("<br/>");
@@ -265,7 +268,7 @@ export function InvestmentItemChart({
         },
       ],
     };
-  }, [accent, chartData, hidden, interactive, mode]);
+  }, [accent, chartData, hidden, currency, formatEuro, interactive, mode]);
 
   if (points.length === 0) {
     return (
@@ -285,7 +288,7 @@ export function InvestmentItemChart({
       {interactive && (
         <div className="mb-2 flex min-w-0 flex-col gap-2">
           <div
-            className="flex rounded-lg border border-border p-0.5"
+            className="flex rounded-full border border-border p-0.5"
             role="tablist"
             aria-label="Chart mode"
           >
@@ -311,7 +314,7 @@ export function InvestmentItemChart({
                 type="button"
                 onClick={() => setRange(option)}
                 className={cn(
-                  "rounded-md border px-2 py-0.5 text-[11px] font-medium transition-colors",
+                  "rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors",
                   range === option
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-transparent text-muted-foreground hover:text-foreground",
@@ -363,7 +366,7 @@ function ModeButton({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+        "flex-1 rounded-full px-2 py-1 text-xs font-medium transition-colors",
         active
           ? "bg-primary text-primary-foreground"
           : "text-muted-foreground hover:text-foreground",
@@ -411,8 +414,12 @@ function formatAxisEuro(value: number): string {
   return String(Math.round(value));
 }
 
-function formatSignedEuro(amount: number): string {
-  const formatted = formatEuro(Math.abs(amount));
+/** Module-level (not a hook), so it takes the caller's already-bound formatter. */
+function formatSignedEuro(
+  amount: number,
+  format: (amount: number) => string,
+): string {
+  const formatted = format(Math.abs(amount));
   if (amount > 0) {
     return `+${formatted}`;
   }

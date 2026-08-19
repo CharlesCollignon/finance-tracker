@@ -57,7 +57,7 @@ export function CategoryIcon({ icon, className }: CategoryIconProps) {
       )}
       aria-hidden
     >
-      <IconComponent size={18} weight="regular" />
+      <IconComponent size={18} weight="light" />
     </span>
   );
 }

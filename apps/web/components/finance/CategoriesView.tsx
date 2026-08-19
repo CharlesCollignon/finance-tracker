@@ -9,7 +9,7 @@ import {
   Trash,
 } from "@phosphor-icons/react";
 import { Badge } from "@/components/retroui/Badge";
-import { Button } from "@/components/retroui/Button";
+import { Button, ButtonNub } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { Input } from "@/components/retroui/Input";
 import { Text } from "@/components/retroui/Text";
@@ -90,12 +90,15 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
 
         <div className="flex md:justify-end">
           <Button
+            variant="pill"
             size="lg"
             className="w-full md:w-auto md:min-w-[14rem]"
             onClick={() => setFormOpen(true)}
           >
-            <Plus size={18} className="mr-1" />
             Add category
+            <ButtonNub>
+              <Plus size={16} weight="bold" />
+            </ButtonNub>
           </Button>
         </div>
 
@@ -105,16 +108,20 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
               <h2 className="mb-2 font-head text-sm uppercase tracking-wide text-muted-foreground">
                 {group.label}
               </h2>
-              <ul className="flex flex-col gap-2">
-                {group.categories.map((category) => (
-                  <li key={category.id}>
-                    <Card
+              <Card.Bezel innerClassName="p-2">
+                <ul className="flex flex-col divide-y divide-border">
+                  {group.categories.map((category) => (
+                    <li
+                      key={category.id}
                       className={cn(
-                        "flex w-full items-center gap-3 p-3 sm:p-4",
+                        "flex w-full items-center gap-3 px-2 py-3 sm:py-3.5",
                         category.archived && "opacity-60",
                       )}
                     >
-                      <CategoryIcon icon={category.icon} />
+                      <CategoryIcon
+                        icon={category.icon}
+                        className="h-10 w-10 rounded-[13px] border-0 bg-muted"
+                      />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="truncate font-medium">
@@ -159,20 +166,20 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                             type="button"
                             onClick={() => setEditCategory(category)}
                             className={cn(
-                              "flex h-10 w-10 items-center justify-center",
-                              "rounded border border-border hover:bg-accent",
+                              "flex h-11 w-11 items-center justify-center",
+                              "rounded-full border border-border hover:bg-accent",
                             )}
                             aria-label={`Edit ${category.name}`}
                           >
-                            <PencilSimple size={18} />
+                            <PencilSimple size={18} weight="light" />
                           </button>
                           <button
                             type="button"
                             onClick={() => handleArchiveToggle(category)}
                             disabled={pending}
                             className={cn(
-                              "flex h-10 w-10 items-center justify-center",
-                              "rounded border border-border hover:bg-accent",
+                              "flex h-11 w-11 items-center justify-center",
+                              "rounded-full border border-border hover:bg-accent",
                             )}
                             aria-label={
                               category.archived
@@ -181,29 +188,29 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                             }
                           >
                             {category.archived ? (
-                              <ArrowCounterClockwise size={18} />
+                              <ArrowCounterClockwise size={18} weight="light" />
                             ) : (
-                              <Archive size={18} />
+                              <Archive size={18} weight="light" />
                             )}
                           </button>
                           <button
                             type="button"
                             onClick={() => setConfirmDeleteId(category.id)}
                             className={cn(
-                              "flex h-10 w-10 items-center justify-center",
-                              "rounded border border-border",
+                              "flex h-11 w-11 items-center justify-center",
+                              "rounded-full border border-border",
                               "hover:bg-destructive hover:text-destructive-foreground",
                             )}
                             aria-label={`Delete ${category.name}`}
                           >
-                            <Trash size={18} />
+                            <Trash size={18} weight="light" />
                           </button>
                         </div>
                       )}
-                    </Card>
-                  </li>
-                ))}
-              </ul>
+                    </li>
+                  ))}
+                </ul>
+              </Card.Bezel>
             </section>
           ))}
         </div>
@@ -349,7 +356,7 @@ function CategoryFormSheet({
                 aria-label={key}
                 onClick={() => setIcon(key)}
                 className={cn(
-                  "flex h-11 items-center justify-center rounded border",
+                  "flex h-11 items-center justify-center rounded-xl border",
                   icon === key
                     ? "border-foreground bg-primary text-primary-foreground"
                     : "border-border bg-background hover:bg-accent",

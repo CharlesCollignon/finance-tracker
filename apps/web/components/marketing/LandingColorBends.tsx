@@ -21,7 +21,7 @@ export function LandingColorBends() {
 
   return (
     <ColorBends
-      colors={["#ffc300", "#71717a", "#3f3f46"]}
+      colors={["#d4af37", "#71717a", "#3f3f46"]}
       rotation={90}
       speed={0.12}
       scale={1}

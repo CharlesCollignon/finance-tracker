@@ -50,7 +50,7 @@ export function SideNav({
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              <Icon size={18} weight={active ? "fill" : "regular"} />
+              <Icon size={18} weight={active ? "fill" : "light"} />
               {label}
             </Link>
           );

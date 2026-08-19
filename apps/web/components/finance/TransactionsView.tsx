@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { DownloadSimple, MagnifyingGlass, Plus } from "@phosphor-icons/react";
-import { Button } from "@/components/retroui/Button";
+import { Button, ButtonNub } from "@/components/retroui/Button";
+import { Card } from "@/components/retroui/Card";
+import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
@@ -12,12 +14,12 @@ import { TransactionForm } from "@/components/finance/TransactionForm";
 import { StatHero } from "@/components/finance/StatHero";
 import { TransactionTypeSankey } from "@/components/finance/lazy-charts";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
-import { formatEuro } from "@finance/core/constants";
 import {
   CATEGORY_TYPE_LABELS,
   TYPE_AMOUNT_CLASS,
 } from "@finance/core/category-styles";
 import { cn } from "@/lib/utils";
+import { useFormatCurrency } from "@/lib/use-currency";
 import {
   applyRecurringForMonth,
   previewApplyRecurringForMonth,
@@ -140,6 +142,7 @@ export function TransactionsView({
   defaultDate,
 }: TransactionsViewProps) {
   const { toast } = useToast();
+  const formatEuro = useFormatCurrency();
   const [formOpen, setFormOpen] = useState(false);
   const [editTransaction, setEditTransaction] =
     useState<TransactionWithCategory | null>(null);
@@ -351,9 +354,15 @@ export function TransactionsView({
               >
                 {pending ? "Applying…" : "Apply recurring"}
               </Button>
-              <Button size="md" onClick={() => setFormOpen(true)}>
-                <Plus size={18} className="mr-1" />
+              <Button
+                variant="pill"
+                size="md"
+                onClick={() => setFormOpen(true)}
+              >
                 Add transaction
+                <ButtonNub>
+                  <Plus size={16} weight="bold" />
+                </ButtonNub>
               </Button>
             </div>
           </StaggerItem>
@@ -373,11 +382,11 @@ export function TransactionsView({
                     aria-selected={filter === option.value}
                     onClick={() => setFilter(option.value)}
                     className={cn(
-                      "shrink-0 px-3 py-1.5 text-sm font-medium",
-                      "transition-colors",
+                      "shrink-0 rounded-full border px-4 py-2 text-sm font-semibold",
+                      "transition-colors duration-300",
                       filter === option.value
-                        ? "text-foreground underline underline-offset-4"
-                        : "text-muted-foreground hover:text-foreground",
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border text-muted-foreground hover:text-foreground",
                     )}
                   >
                     {option.label}
@@ -389,7 +398,8 @@ export function TransactionsView({
                 <div className="relative flex-1 sm:max-w-xs">
                   <MagnifyingGlass
                     size={16}
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    weight="light"
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
                     aria-hidden
                   />
                   <input
@@ -399,8 +409,8 @@ export function TransactionsView({
                     placeholder="Search category or note…"
                     aria-label="Search transactions"
                     className={cn(
-                      "h-10 w-full border-b border-border bg-transparent",
-                      "pl-9 pr-3 text-sm text-foreground outline-none",
+                      "h-10 w-full rounded-full border border-border bg-card",
+                      "pl-10 pr-3 text-sm text-foreground outline-none",
                       "focus:border-foreground",
                     )}
                   />
@@ -410,7 +420,7 @@ export function TransactionsView({
                   onChange={(event) => setCategoryFilter(event.target.value)}
                   aria-label="Filter by category"
                   className={cn(
-                    "h-10 border-b border-border bg-transparent px-1",
+                    "h-10 rounded-full border border-border bg-card px-4",
                     "text-sm text-foreground outline-none sm:w-44",
                     "focus:border-foreground",
                   )}
@@ -428,7 +438,7 @@ export function TransactionsView({
                     onChange={(event) => setTagFilter(event.target.value)}
                     aria-label="Filter by tag"
                     className={cn(
-                      "h-10 border-b border-border bg-transparent px-1",
+                      "h-10 rounded-full border border-border bg-card px-4",
                       "text-sm text-foreground outline-none sm:w-36",
                       "focus:border-foreground",
                     )}
@@ -447,7 +457,7 @@ export function TransactionsView({
                   className="h-10 px-2"
                   onClick={handleExport}
                 >
-                  <DownloadSimple size={16} className="mr-1.5" />
+                  <DownloadSimple size={16} weight="light" className="mr-1.5" />
                   Export CSV
                 </Button>
               </div>
@@ -480,54 +490,41 @@ export function TransactionsView({
                 ) : null}
               </EmptyState>
             ) : (
-              <div className="w-full overflow-x-auto">
-                <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
-                  <thead>
-                    <tr className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      <th className="pb-2 pr-3 font-medium">Date</th>
-                      <th className="pb-2 pr-3 font-medium">Category</th>
-                      <th className="pb-2 pr-3 font-medium">Note</th>
-                      <th className="pb-2 text-right font-medium">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedRows.map((tx) => (
-                      <tr
-                        key={tx.id}
-                        className="cursor-pointer border-b border-border/40 transition-colors hover:bg-muted/30"
-                        onClick={() => setEditTransaction(tx)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            setEditTransaction(tx);
-                          }
-                        }}
-                        tabIndex={0}
-                        role="button"
-                        aria-label={`Edit ${tx.categories.name}`}
-                      >
-                        <td className="whitespace-nowrap py-3 pr-3 text-muted-foreground">
-                          {formatDisplayDate(tx.occurred_on)}
-                        </td>
-                        <td className="max-w-[10rem] truncate py-3 pr-3 font-medium">
+              <Card.Bezel className="w-full" innerClassName="divide-y divide-border px-2 py-1">
+                {sortedRows.map((tx) => (
+                  <button
+                    key={tx.id}
+                    type="button"
+                    onClick={() => setEditTransaction(tx)}
+                    aria-label={`Edit ${tx.categories.name}`}
+                    className="flex w-full items-center justify-between gap-3 py-3.5 px-2 text-left transition-colors hover:bg-muted/30"
+                  >
+                    <div className="flex min-w-0 items-center gap-3.5">
+                      <CategoryIcon
+                        icon={tx.categories.icon}
+                        className="h-10 w-10 rounded-[13px] border-0 bg-muted"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">
                           {tx.categories.name}
-                        </td>
-                        <td className="max-w-[12rem] truncate py-3 pr-3 text-muted-foreground">
-                          {tx.note || "—"}
-                        </td>
-                        <td
-                          className={cn(
-                            "privacy-amount whitespace-nowrap py-3 text-right font-semibold tabular-nums",
-                            TYPE_AMOUNT_CLASS[tx.categories.type],
-                          )}
-                        >
-                          {formatEuro(Number(tx.amount))}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {formatDisplayDate(tx.occurred_on)}
+                          {tx.note ? ` · ${tx.note}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={cn(
+                        "privacy-amount shrink-0 whitespace-nowrap font-mono text-sm font-medium tabular-nums",
+                        TYPE_AMOUNT_CLASS[tx.categories.type],
+                      )}
+                    >
+                      {formatEuro(Number(tx.amount))}
+                    </span>
+                  </button>
+                ))}
+              </Card.Bezel>
             )}
           </StaggerItem>
         </Stagger>

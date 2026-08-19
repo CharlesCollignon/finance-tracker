@@ -5,7 +5,10 @@ import { getMonthlySummary } from "@/lib/queries/finance";
 import { getBudgets, getSavingsGoals, getTags } from "@/lib/queries/phase4";
 import { getCurrentMonth } from "@finance/core/constants";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
-import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
+import {
+  buildSavingsGoalProgress,
+  computeGoalPacing,
+} from "@finance/core/savings-goals";
 import { BudgetsView } from "./BudgetsView";
 
 export default async function BudgetsPage() {
@@ -45,6 +48,7 @@ export default async function BudgetsPage() {
     saved: row.saved,
     remaining: row.remaining,
     ratio: row.ratio,
+    pacing: computeGoalPacing(row),
   }));
 
   return (

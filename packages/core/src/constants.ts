@@ -81,6 +81,32 @@ export function formatEuro(amount: number): string {
   }).format(amount);
 }
 
+/** The two display currencies a user can pick between. Amounts are never
+ * converted between them — this only changes how a number is labeled. */
+export type CurrencyCode = "EUR" | "USD";
+
+export const DEFAULT_CURRENCY: CurrencyCode = "EUR";
+
+export const CURRENCY_LABELS: Record<CurrencyCode, string> = {
+  EUR: "Euro (€)",
+  USD: "US Dollar ($)",
+};
+
+/** Same formatting convention as `formatEuro`, generalized to the user's
+ * chosen display currency. This is a display preference only — it does not
+ * convert amounts, it just relabels them. */
+export function formatCurrency(
+  amount: number,
+  currency: CurrencyCode = DEFAULT_CURRENCY,
+): string {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 /** The app is EUR/France-centric; anchor "today" to this timezone so
  * server (often UTC) and client agree on the calendar date. */
 export const APP_TIME_ZONE = "Europe/Paris";

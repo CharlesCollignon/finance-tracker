@@ -1,10 +1,26 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
@@ -32,7 +48,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} h-full`}
+      className={`${instrumentSans.variable} ${fraunces.variable} ${plexMono.variable} h-full`}
       suppressHydrationWarning
     >
       <head>

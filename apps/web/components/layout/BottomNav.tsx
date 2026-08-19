@@ -26,7 +26,7 @@ export function BottomNav({
         className={cn(
           "mx-auto flex h-[var(--shell-bottom-nav-height)] max-w-lg",
           "items-stretch justify-around rounded-full",
-          "border border-foreground/10 bg-background/40 backdrop-blur-xl",
+          "border border-border bg-background/40 backdrop-blur-xl",
         )}
       >
         {APP_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -46,7 +46,7 @@ export function BottomNav({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <Icon size={20} weight={active ? "fill" : "regular"} />
+              <Icon size={20} weight={active ? "fill" : "light"} />
               <span className="truncate">{label}</span>
             </Link>
           );

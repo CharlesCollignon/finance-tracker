@@ -6,6 +6,7 @@ import type { EChartsOption } from "echarts";
 import { cn } from "@/lib/utils";
 import { chartMotion } from "@/lib/echarts-theme";
 import { readCssVar } from "@/lib/css-var";
+import { progressTone } from "@/lib/progress-tone";
 
 interface ProgressRingProps {
   ratio: number;
@@ -23,25 +24,32 @@ export function ProgressRing({
   label,
   detail,
   colorVar = "--primary",
-  colorFallback = "#ffc300",
+  colorFallback = "#d4af37",
   over = false,
   className,
 }: ProgressRingProps) {
+  const tone = progressTone(ratio, over);
+
   const [fill, setFill] = useState(() =>
     readCssVar(
-      over ? "--destructive" : colorVar,
-      over ? "#dc2626" : colorFallback,
+      tone === "danger" ? "--destructive" : colorVar,
+      tone === "danger" ? "#f87171" : colorFallback,
     ),
   );
-  const [track, setTrack] = useState(() => readCssVar("--muted", "#27272a"));
+  const [track, setTrack] = useState(() =>
+    readCssVar("--hairline-strong", "rgba(255,246,230,0.15)"),
+  );
 
   useEffect(() => {
     const sync = () => {
       const nextFill = readCssVar(
-        over ? "--destructive" : colorVar,
-        over ? "#dc2626" : colorFallback,
+        tone === "danger" ? "--destructive" : colorVar,
+        tone === "danger" ? "#f87171" : colorFallback,
       );
-      const nextTrack = readCssVar("--muted", "#27272a");
+      const nextTrack = readCssVar(
+        "--hairline-strong",
+        "rgba(255,246,230,0.15)",
+      );
       setFill((prev) => (prev === nextFill ? prev : nextFill));
       setTrack((prev) => (prev === nextTrack ? prev : nextTrack));
     };
@@ -53,7 +61,7 @@ export function ProgressRing({
       attributeFilter: ["class", "data-privacy"],
     });
     return () => observer.disconnect();
-  }, [colorFallback, colorVar, over]);
+  }, [colorFallback, colorVar, tone]);
 
   const pct = Math.round(Math.min(Math.max(ratio, 0), 1) * 100);
   const clamped = Math.min(Math.max(ratio, 0), 1);
@@ -102,15 +110,15 @@ export function ProgressRing({
         />
         <p
           className={cn(
-            "pointer-events-none absolute inset-0 flex items-center justify-center font-head text-lg font-semibold tabular-nums",
-            over ? "text-destructive" : "text-foreground",
+            "pointer-events-none absolute inset-0 flex items-center justify-center text-lg font-semibold tabular-nums",
+            tone === "danger" ? "text-destructive" : "text-foreground",
           )}
         >
           {pct}%
         </p>
       </div>
       <p className="mt-1 truncate text-sm font-medium">{label}</p>
-      <p className="privacy-amount mt-0.5 text-xs text-muted-foreground tabular-nums">
+      <p className="privacy-amount mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">
         {detail}
       </p>
     </div>

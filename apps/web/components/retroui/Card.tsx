@@ -18,6 +18,32 @@ const Card = ({ className, ...props }: ICardProps) => {
   );
 };
 
+interface ICardBezelProps extends ICardProps {
+  innerClassName?: string;
+}
+
+/** Double-bezel nested card: tinted outer shell around the real surface. */
+const CardBezel = ({ className, innerClassName, children, ...props }: ICardBezelProps) => {
+  return (
+    <div
+      className={cn(
+        "rounded-[2rem] border border-border bg-foreground/[0.04] p-[0.4rem]",
+        className,
+      )}
+      {...props}
+    >
+      <div
+        className={cn(
+          "h-full rounded-[1.6rem] bg-card shadow-bezel-inset",
+          innerClassName,
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
 const CardHeader = ({ className, ...props }: ICardProps) => {
   return (
     <div
@@ -44,6 +70,7 @@ const CardComponent = Object.assign(Card, {
   Title: CardTitle,
   Description: CardDescription,
   Content: CardContent,
+  Bezel: CardBezel,
 });
 
 export { CardComponent as Card };

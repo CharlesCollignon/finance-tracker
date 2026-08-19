@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatEuro } from "@finance/core/constants";
+import {
+  formatCurrency,
+  type CurrencyCode,
+} from "@finance/core/constants";
 
 export const PRIVACY_MASK = "••••";
 
@@ -25,6 +28,10 @@ export function usePrivacyOn(): boolean {
   return on;
 }
 
-export function privateEuro(amount: number, hidden: boolean): string {
-  return hidden ? PRIVACY_MASK : formatEuro(amount);
+export function privateEuro(
+  amount: number,
+  hidden: boolean,
+  currency: CurrencyCode = "EUR",
+): string {
+  return hidden ? PRIVACY_MASK : formatCurrency(amount, currency);
 }

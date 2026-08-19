@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Animated, {
+  Easing,
   FadeInDown,
   useReducedMotion,
 } from "react-native-reanimated";
@@ -12,7 +13,9 @@ interface FadeInProps {
   className?: string;
 }
 
-/** Soft enter: opacity + slight rise, ~200ms ease-out. */
+const NOCTURNE_EASING = Easing.bezier(0.32, 0.72, 0, 1);
+
+/** Soft enter: opacity + slight rise, 500ms ledger-style ease. */
 export function FadeIn({ children, delayMs = 0, className }: FadeInProps) {
   const reduce = useReducedMotion();
 
@@ -22,7 +25,7 @@ export function FadeIn({ children, delayMs = 0, className }: FadeInProps) {
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(200).delay(delayMs)}
+      entering={FadeInDown.duration(500).easing(NOCTURNE_EASING).delay(delayMs)}
       className={cn(className)}
     >
       {children}
