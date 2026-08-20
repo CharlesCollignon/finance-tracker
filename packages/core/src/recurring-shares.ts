@@ -1,6 +1,7 @@
 import { formatEuro } from "./constants";
-import { fetchInstrumentQuoteInEur, formatMoney } from "./market/fx";
-import { computeSharesAmount, fetchInstrumentQuote } from "./market/yahoo";
+import { formatMoney } from "./market/fx";
+import type { QuoteSource } from "./market/quote-source";
+import { computeSharesAmount } from "./market/yahoo";
 
 interface SharesTemplateFields {
   pricing_type: string | null;
@@ -22,8 +23,14 @@ export interface ResolvedRecurringAmount {
   } | null;
 }
 
+/**
+ * Amount and note for one occurrence of a template. Fixed pricing never
+ * consults `quotes`; shares pricing falls back to `last_quote_price` when the
+ * source has no price, and throws when there is nothing to fall back to.
+ */
 export async function resolveRecurringAmount(
   template: SharesTemplateFields,
+  quotes: QuoteSource,
 ): Promise<ResolvedRecurringAmount> {
   if (
     template.pricing_type !== "shares" ||
@@ -37,24 +44,16 @@ export async function resolveRecurringAmount(
     };
   }
 
-  const live = await fetchInstrumentQuoteInEur(template.instrument_symbol).then(
-    (quote) => ({
-      priceEur: quote.priceEur,
-      priceOriginal: quote.priceOriginal,
-      currency: quote.currency,
-      amount: computeSharesAmount(template.share_count!, quote.priceEur),
-      quotedAt: new Date().toISOString(),
-    }),
-    () => null,
-  );
+  const shareCount = template.share_count;
+  const live = await quotes.quoteInEur(template.instrument_symbol);
 
   let price = live?.priceEur ?? null;
-  let amount = live?.amount ?? null;
-  let quotedAt = live?.quotedAt ?? null;
+  let amount = live ? computeSharesAmount(shareCount, live.priceEur) : null;
+  const quotedAt = live?.quotedAt ?? null;
 
   if (price === null && template.last_quote_price) {
     price = Number(template.last_quote_price);
-    amount = Math.round(template.share_count * price * 100) / 100;
+    amount = computeSharesAmount(shareCount, price);
   }
 
   if (price === null || amount === null) {
@@ -66,7 +65,7 @@ export async function resolveRecurringAmount(
       ? `${formatEuro(price)} (${formatMoney(live.priceOriginal, live.currency)} / share)`
       : formatEuro(price);
   const shareNote =
-    `${template.share_count} × ` +
+    `${shareCount} × ` +
     `${template.instrument_name ?? template.instrument_symbol} @ ${priceLabel}`;
 
   const note = template.description?.trim()

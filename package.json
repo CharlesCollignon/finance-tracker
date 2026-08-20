@@ -5,7 +5,8 @@
   "packageManager": "pnpm@11.7.0",
   "scripts": {
     "dev:web": "pnpm --filter web dev",
-    "dev:mobile": "pnpm --filter mobile start"
+    "dev:mobile": "pnpm --filter mobile start",
+    "test": "pnpm --filter @finance/core test"
   },
   "devDependencies": {
     "prettier": "^3.9.6"

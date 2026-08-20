@@ -13,7 +13,7 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
     <>
       <section className="relative flex min-h-dvh flex-col items-center justify-center px-6">
         <div className="page-enter relative z-10 flex w-full max-w-md flex-col items-center text-center">
-          <Logo size="hero" />
+          <Logo as="h1" size="hero" />
           <p className="mt-4 max-w-sm text-base text-muted-foreground sm:text-lg">
             {landingCopy.hero.tagline}
           </p>

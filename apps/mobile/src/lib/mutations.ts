@@ -33,6 +33,7 @@ import type {
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
 
+import { quoteSource } from "@/lib/quote-source";
 import { supabase } from "@/lib/supabase";
 
 type ActionResult = { error?: string; success?: boolean; message?: string };
@@ -228,15 +229,18 @@ export async function upsertRecurringTemplate(
 
   if (data.pricingType === "shares") {
     try {
-      const resolved = await resolveRecurringAmount({
-        pricing_type: "shares",
-        amount: 0,
-        share_count: data.shareCount ?? null,
-        instrument_symbol: data.instrumentSymbol ?? null,
-        instrument_name: data.instrumentName ?? null,
-        description: data.description ?? null,
-        last_quote_price: null,
-      });
+      const resolved = await resolveRecurringAmount(
+        {
+          pricing_type: "shares",
+          amount: 0,
+          share_count: data.shareCount ?? null,
+          instrument_symbol: data.instrumentSymbol ?? null,
+          instrument_name: data.instrumentName ?? null,
+          description: data.description ?? null,
+          last_quote_price: null,
+        },
+        quoteSource,
+      );
       amount = resolved.amount;
       pricingPayload = {
         pricing_type: "shares",
@@ -494,7 +498,7 @@ export async function previewApplyRecurringForMonth(
       existingByKey,
       year,
       month,
-      skippedKeys,
+      { quotes: quoteSource, skippedKeys },
     );
     return { success: true, plan };
   } catch (error) {
@@ -530,7 +534,7 @@ export async function applyRecurringForMonth(
       existingByKey,
       year,
       month,
-      skippedKeys,
+      { quotes: quoteSource, skippedKeys },
     );
     const templatesById = new Map(
       templates.map((template) => [template.id, template]),
@@ -550,15 +554,18 @@ export async function applyRecurringForMonth(
 
       if (template) {
         try {
-          const resolved = await resolveRecurringAmount({
-            pricing_type: template.pricing_type ?? "fixed",
-            amount: Number(template.amount),
-            share_count: template.share_count,
-            instrument_symbol: template.instrument_symbol,
-            instrument_name: template.instrument_name,
-            description: template.description,
-            last_quote_price: template.last_quote_price,
-          });
+          const resolved = await resolveRecurringAmount(
+            {
+              pricing_type: template.pricing_type ?? "fixed",
+              amount: Number(template.amount),
+              share_count: template.share_count,
+              instrument_symbol: template.instrument_symbol,
+              instrument_name: template.instrument_name,
+              description: template.description,
+              last_quote_price: template.last_quote_price,
+            },
+            quoteSource,
+          );
           quoteUpdate = resolved.quoteUpdate;
         } catch {
           quoteUpdate = null;

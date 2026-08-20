@@ -1,5 +1,6 @@
 import { formatShortDate } from "./constants";
 import { displayNameForRecurringTemplate } from "./investment-positions";
+import type { QuoteSource } from "./market/quote-source";
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
@@ -65,13 +66,21 @@ export function recurringOccurrenceKey(
   return `${templateId}:${occurredOn}`;
 }
 
+export interface ApplyRecurringDeps {
+  /** Prices for share-priced templates. */
+  quotes: QuoteSource;
+  /** Occurrence keys the user chose to skip this month. */
+  skippedKeys?: Set<string>;
+}
+
 export async function buildApplyRecurringPlan(
   templates: RecurringTemplateWithCategory[],
   existingByKey: Map<string, ExistingRecurringTx>,
   year: number,
   month: number,
-  skippedKeys: Set<string> = new Set(),
+  deps: ApplyRecurringDeps,
 ): Promise<ApplyRecurringPlan> {
+  const { quotes, skippedKeys = new Set<string>() } = deps;
   const toCreate: RecurringOccurrencePlan[] = [];
   const toUpdate: RecurringOccurrenceUpdate[] = [];
 
@@ -105,15 +114,18 @@ export async function buildApplyRecurringPlan(
       let note = template.description?.trim() || null;
 
       try {
-        const resolved = await resolveRecurringAmount({
-          pricing_type: template.pricing_type ?? "fixed",
-          amount: Number(template.amount),
-          share_count: template.share_count,
-          instrument_symbol: template.instrument_symbol,
-          instrument_name: template.instrument_name,
-          description: template.description,
-          last_quote_price: template.last_quote_price,
-        });
+        const resolved = await resolveRecurringAmount(
+          {
+            pricing_type: template.pricing_type ?? "fixed",
+            amount: Number(template.amount),
+            share_count: template.share_count,
+            instrument_symbol: template.instrument_symbol,
+            instrument_name: template.instrument_name,
+            description: template.description,
+            last_quote_price: template.last_quote_price,
+          },
+          quotes,
+        );
         amount = resolved.amount;
         note = resolved.note;
       } catch {

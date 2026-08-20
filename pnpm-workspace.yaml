@@ -16,6 +16,8 @@ ignoredOptionalDependencies:
 # false = do not run scripts AND do not fail the install.
 allowBuilds:
   "@shopify/react-native-skia": false
+  # vitest bundles test files with esbuild; its postinstall places the binary.
+  esbuild: true
   sharp: false
   unrs-resolver: false
 

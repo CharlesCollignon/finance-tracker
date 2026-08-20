@@ -1,55 +1,26 @@
-import {
-  fetchInstrumentQuote,
-  fetchMonthlyCloses,
-  type MonthlyClosePoint,
-} from "./yahoo";
+import { createEurRates } from "./eur-rates";
+import { createYahooQuoteSource } from "./quote-source";
+import { fetchMonthlyCloses, type MonthlyClosePoint } from "./yahoo";
 
-const rateCache = new Map<string, { rate: number; fetchedAt: number }>();
+/**
+ * Convenience layer for callers that have no seam yet: the investment read
+ * paths in both apps. Anything with a test around it should take a
+ * `QuoteSource` instead of importing from here.
+ */
+const defaultRates = createEurRates();
+const defaultQuotes = createYahooQuoteSource({ rates: defaultRates });
+
 const historyCache = new Map<
   string,
   { points: MonthlyClosePoint[]; fetchedAt: number }
 >();
-const CACHE_TTL_MS = 5 * 60 * 1000;
 const HISTORY_CACHE_TTL_MS = 60 * 60 * 1000;
-
-/** Multiplier: amount in `currency` × rate = amount in EUR. */
-async function eurMultiplier(currency: string): Promise<number> {
-  const normalized = currency.toUpperCase();
-  if (normalized === "EUR") {
-    return 1;
-  }
-
-  const cached = rateCache.get(normalized);
-  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
-    return cached.rate;
-  }
-
-  let rate: number;
-
-  if (normalized === "USD") {
-    const { price } = await fetchInstrumentQuote("EURUSD=X");
-    rate = 1 / price;
-  } else if (normalized === "GBP") {
-    const { price } = await fetchInstrumentQuote("EURGBP=X");
-    rate = 1 / price;
-  } else if (normalized === "CHF") {
-    const { price } = await fetchInstrumentQuote("EURCHF=X");
-    rate = 1 / price;
-  } else {
-    const { price } = await fetchInstrumentQuote(`${normalized}EUR=X`);
-    rate = price;
-  }
-
-  rateCache.set(normalized, { rate, fetchedAt: Date.now() });
-  return rate;
-}
 
 export async function convertToEur(
   amount: number,
   currency: string,
 ): Promise<number> {
-  const rate = await eurMultiplier(currency);
-  return Math.round(amount * rate * 100) / 100;
+  return defaultRates.toEur(amount, currency);
 }
 
 export interface QuoteInEur {
@@ -59,29 +30,21 @@ export interface QuoteInEur {
   currency: string;
 }
 
-const quoteCache = new Map<string, { quote: QuoteInEur; fetchedAt: number }>();
-
 export async function fetchInstrumentQuoteInEur(
   symbol: string,
 ): Promise<QuoteInEur> {
-  const key = symbol.trim().toUpperCase();
-  const cached = quoteCache.get(key);
-  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
-    return cached.quote;
+  const quote = await defaultQuotes.quoteInEur(symbol);
+
+  if (!quote) {
+    throw new Error(`No price available for ${symbol}`);
   }
 
-  const quote = await fetchInstrumentQuote(symbol);
-  const priceEur = await convertToEur(quote.price, quote.currency);
-
-  const result: QuoteInEur = {
+  return {
     symbol: quote.symbol,
-    priceEur,
-    priceOriginal: quote.price,
+    priceEur: quote.priceEur,
+    priceOriginal: quote.priceOriginal,
     currency: quote.currency,
   };
-
-  quoteCache.set(key, { quote: result, fetchedAt: Date.now() });
-  return result;
 }
 
 export function formatMoney(amount: number, currency: string): string {
@@ -109,7 +72,7 @@ export async function fetchMonthlyClosesInEur(
   const converted: MonthlyClosePoint[] = [];
 
   for (const point of points) {
-    const closeEur = await convertToEur(point.close, currency);
+    const closeEur = await defaultRates.toEur(point.close, currency);
     converted.push({ month: point.month, close: closeEur });
   }
 
