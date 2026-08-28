@@ -247,7 +247,7 @@ export default function DashboardScreen() {
                         {`${formatEuro(row.spent)} / ${formatEuro(row.limit)}`}
                       </PrivateAmount>
                     </View>
-                    <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong dark:bg-hairline-strong-dark">
+                    <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong">
                       <View
                         className={`h-full rounded-full ${
                           tone === "danger" ? "bg-destructive" : "bg-primary"
@@ -268,7 +268,7 @@ export default function DashboardScreen() {
                       {`${formatEuro(row.saved)} / ${formatEuro(Number(row.goal.target_amount))}`}
                     </PrivateAmount>
                   </View>
-                  <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong dark:bg-hairline-strong-dark">
+                  <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong">
                     <View
                       className="h-full rounded-full bg-primary"
                       style={{

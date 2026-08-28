@@ -1,7 +1,7 @@
 import "@/global.css";
 
 import { useFonts } from "expo-font";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, usePathname, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
@@ -21,6 +21,7 @@ SplashScreen.preventAutoHideAsync();
 function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   const { session, initializing } = useAuth();
   const segments = useSegments();
+  const pathname = usePathname();
   const router = useRouter();
   const colorScheme = useColorScheme();
 
@@ -36,18 +37,22 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
     SplashScreen.hideAsync();
 
     const inAuthGroup = segments[0] === "(auth)";
-    if (!session && !inAuthGroup) {
+    // The OAuth redirect lands on /auth/callback before the session exists.
+    // Bouncing it to /login here would cancel the sign-in it is completing.
+    const inAuthCallback = pathname.startsWith("/auth/callback");
+    if (!session && !inAuthGroup && !inAuthCallback) {
       router.replace("/login");
     } else if (session && inAuthGroup) {
       router.replace("/");
     }
-  }, [session, initializing, fontsReady, segments, router]);
+  }, [session, initializing, fontsReady, segments, pathname, router]);
 
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
+        <Stack.Screen name="auth/callback" />
       </Stack>
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </>

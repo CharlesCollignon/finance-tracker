@@ -12,9 +12,7 @@ import {
   TooltipComponent,
   LegendComponent,
 } from "echarts/components";
-import SvgChart, {
-  SVGRenderer,
-} from "@wuba/react-native-echarts/svgChart";
+import SvgChart, { SVGRenderer } from "@wuba/react-native-echarts/svgChart";
 import type { EChartsCoreOption } from "echarts/core";
 
 import { cn } from "@/lib/cn";
@@ -107,9 +105,7 @@ export function EChart({
       style={{ height }}
       {...props}
     >
-      {width > 0 ? (
-        <SvgChart ref={svgRef} style={{ width, height }} />
-      ) : null}
+      {width > 0 ? <SvgChart ref={svgRef} style={{ width, height }} /> : null}
     </View>
   );
 }

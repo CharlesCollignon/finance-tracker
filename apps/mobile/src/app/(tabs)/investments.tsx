@@ -216,10 +216,7 @@ export default function InvestmentsScreen() {
                 ) : null}
                 <View className="mt-3 gap-2">
                   {(column?.items ?? []).map((item) => (
-                    <View
-                      key={item.id}
-                      className="rounded-2xl bg-muted/60 p-3 dark:bg-muted-dark/60"
-                    >
+                    <View key={item.id} className="rounded-2xl bg-muted/60 p-3">
                       <Text className="font-semibold">{item.name}</Text>
                       <Text variant="muted">
                         <PrivateAmount className="font-mono">
@@ -255,15 +252,13 @@ export default function InvestmentsScreen() {
                     onPress={() => setToWallet(id)}
                     className={`rounded-full border px-4 py-1.5 ${
                       selected
-                        ? "border-foreground bg-foreground dark:border-foreground-dark dark:bg-foreground-dark"
-                        : "border-border bg-background dark:border-border-dark dark:bg-background-dark"
+                        ? "border-foreground bg-foreground"
+                        : "border-border bg-background"
                     }`}
                   >
                     <Text
                       className={`text-center text-xs font-semibold ${
-                        selected
-                          ? "text-background dark:text-background-dark"
-                          : ""
+                        selected ? "text-background" : ""
                       }`}
                     >
                       {INVESTMENT_WALLET_LABELS[id]}
@@ -287,7 +282,7 @@ export default function InvestmentsScreen() {
             {transfers.map((t) => (
               <Pressable
                 key={t.id}
-                className="mt-3 flex-row items-center justify-between border-t border-border pt-3 dark:border-border-dark"
+                className="mt-3 flex-row items-center justify-between border-t border-border pt-3"
                 onLongPress={() =>
                   Alert.alert("Delete transfer?", undefined, [
                     { text: "Cancel", style: "cancel" },

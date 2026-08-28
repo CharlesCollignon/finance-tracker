@@ -28,12 +28,12 @@ export function Screen({
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
-      className="flex-1 bg-background dark:bg-background-dark"
+      className="flex-1 bg-background"
     >
       <FadeIn className={cn("flex-1 px-4 pt-2", className)}>
         {title ? (
           <View className="mb-4 flex-row items-center justify-between gap-3">
-            <Text variant="title" className="flex-1 dark:text-foreground-dark">
+            <Text variant="title" className="flex-1">
               {title}
             </Text>
             {showPrivacyToggle ? <PrivacyToggle /> : null}

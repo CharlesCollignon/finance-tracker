@@ -1,10 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
-import { useColorScheme } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colorsForScheme } from "@/theme/tokens";
+import { useThemeColors } from "@/theme/useThemeColors";
 
 type IoniconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -61,8 +60,7 @@ const TABS: TabConfig[] = [
 ];
 
 export default function TabsLayout() {
-  const scheme = useColorScheme();
-  const colors = colorsForScheme(scheme === "light" ? "light" : "dark");
+  const colors = useThemeColors();
   const insets = useSafeAreaInsets();
 
   return (

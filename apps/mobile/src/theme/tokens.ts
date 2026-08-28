@@ -59,12 +59,7 @@ export const CHART_COLORS = {
   dark: ["#d4af37", "#f87171", "#34d399", "#60a5fa", "#7c7360"],
 } as const;
 
-/** Default export keeps existing imports working. */
-export const COLORS = DARK_COLORS;
-
-export function colorsForScheme(
-  scheme: "light" | "dark" | null | undefined,
-) {
+export function colorsForScheme(scheme: "light" | "dark" | null | undefined) {
   return scheme === "light" ? LIGHT_COLORS : DARK_COLORS;
 }
 

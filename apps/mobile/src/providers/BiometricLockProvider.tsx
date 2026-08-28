@@ -30,8 +30,9 @@ interface BiometricLockContextValue {
   disable: () => Promise<void>;
 }
 
-const BiometricLockContext =
-  createContext<BiometricLockContextValue | null>(null);
+const BiometricLockContext = createContext<BiometricLockContextValue | null>(
+  null,
+);
 
 export function BiometricLockProvider({ children }: { children: ReactNode }) {
   const { session, initializing, signOut } = useAuth();
@@ -152,7 +153,7 @@ export function BiometricLockProvider({ children }: { children: ReactNode }) {
           /* stay locked */
         }}
       >
-        <View className="flex-1 items-center justify-center gap-8 bg-background px-6 dark:bg-background-dark">
+        <View className="flex-1 items-center justify-center gap-8 bg-background px-6">
           <Logo size="hero" />
           <View className="items-center gap-2">
             <Text variant="title" className="text-center">

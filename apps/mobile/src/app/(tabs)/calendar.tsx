@@ -158,13 +158,13 @@ export default function CalendarScreen() {
                     }}
                     className={`min-h-12 flex-1 items-center justify-center rounded-2xl border ${
                       selected
-                        ? "border-foreground bg-primary dark:border-foreground-dark"
-                        : "border-border bg-card dark:border-border-dark dark:bg-card-dark"
+                        ? "border-foreground bg-primary"
+                        : "border-border bg-card"
                     } ${day.isCurrentMonth ? "" : "opacity-40"}`}
                   >
                     <Text className="text-sm font-semibold">{day.day}</Text>
                     {hasTx ? (
-                      <View className="mt-0.5 h-1.5 w-1.5 rounded-full bg-foreground dark:bg-foreground-dark" />
+                      <View className="mt-0.5 h-1.5 w-1.5 rounded-full bg-foreground" />
                     ) : null}
                   </Pressable>
                 );

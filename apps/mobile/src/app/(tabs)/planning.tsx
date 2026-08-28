@@ -202,7 +202,7 @@ export default function PlanningScreen() {
                       {`${formatEuro(row.spent)} / ${formatEuro(row.limit)}`}
                     </PrivateAmount>
                   </View>
-                  <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong dark:bg-hairline-strong-dark">
+                  <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong">
                     <View
                       className={`h-full rounded-full ${
                         tone === "danger" ? "bg-destructive" : "bg-primary"
@@ -272,7 +272,7 @@ export default function PlanningScreen() {
                       {`${formatEuro(row.saved)} / ${formatEuro(Number(row.goal.target_amount))}`}
                     </PrivateAmount>
                   </View>
-                  <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong dark:bg-hairline-strong-dark">
+                  <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong">
                     <View
                       className="h-full rounded-full bg-primary"
                       style={{
@@ -351,7 +351,7 @@ export default function PlanningScreen() {
               {(data?.tags ?? []).map((t) => (
                 <View
                   key={t.id}
-                  className="rounded-full border border-border bg-muted px-3 py-1 dark:border-border-dark dark:bg-muted-dark"
+                  className="rounded-full border border-border bg-muted px-3 py-1"
                 >
                   <Text className="text-xs font-semibold">{t.name}</Text>
                 </View>

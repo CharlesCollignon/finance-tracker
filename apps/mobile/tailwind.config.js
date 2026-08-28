@@ -1,4 +1,8 @@
 /** @type {import('tailwindcss').Config} */
+
+/** Token colors resolve per color scheme via the variables in src/global.css. */
+const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
@@ -6,59 +10,45 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "#fbfaf7",
-        foreground: "#1c1a16",
+        background: token("background"),
+        foreground: token("foreground"),
         card: {
-          DEFAULT: "#ffffff",
-          foreground: "#1c1a16",
+          DEFAULT: token("card"),
+          foreground: token("card-foreground"),
         },
         primary: {
-          DEFAULT: "#d4af37",
-          hover: "#c2992e",
-          foreground: "#171100",
-          ink: "#7a5f1c",
+          DEFAULT: token("primary"),
+          hover: token("primary-hover"),
+          foreground: token("primary-foreground"),
+          ink: token("primary-ink"),
         },
         secondary: {
-          DEFAULT: "#f2efe7",
-          foreground: "#1c1a16",
+          DEFAULT: token("secondary"),
+          foreground: token("secondary-foreground"),
         },
         muted: {
-          DEFAULT: "#f2efe7",
-          foreground: "#6b6459",
+          DEFAULT: token("muted"),
+          foreground: token("muted-foreground"),
         },
         accent: {
-          DEFAULT: "#f7f0d9",
-          foreground: "#1c1a16",
+          DEFAULT: token("accent"),
+          foreground: token("accent-foreground"),
         },
         success: {
-          DEFAULT: "#16803d",
-          foreground: "#ffffff",
+          DEFAULT: token("success"),
+          foreground: token("success-foreground"),
         },
         info: {
-          DEFAULT: "#2563eb",
-          foreground: "#ffffff",
+          DEFAULT: token("info"),
+          foreground: token("info-foreground"),
         },
         destructive: {
-          DEFAULT: "#c23b2e",
-          foreground: "#ffffff",
+          DEFAULT: token("destructive"),
+          foreground: token("destructive-foreground"),
         },
-        border: "rgba(28,26,22,0.08)",
-        "hairline-strong": "rgba(28,26,22,0.14)",
-        "background-dark": "#0b0905",
-        "foreground-dark": "#f6efe0",
-        "card-dark": "#15100a",
-        "border-dark": "rgba(255,246,230,0.08)",
-        "hairline-strong-dark": "rgba(255,246,230,0.15)",
-        "muted-foreground-dark": "#ab9f86",
-        "primary-dark": "#d4af37",
-        "primary-hover-dark": "#e0c35c",
-        "primary-foreground-dark": "#171100",
-        "primary-ink-dark": "#d4af37",
-        "secondary-dark": "#1d160d",
-        "muted-dark": "#1d160d",
-        "success-dark": "#34d399",
-        "info-dark": "#60a5fa",
-        "destructive-dark": "#f87171",
+        // Hairlines are always translucent; the channels flip per scheme.
+        border: "rgb(var(--border) / 0.08)",
+        "hairline-strong": "rgb(var(--hairline-strong) / 0.14)",
       },
       borderRadius: {
         DEFAULT: "10px",

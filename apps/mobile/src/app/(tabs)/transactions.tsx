@@ -10,7 +10,10 @@ import {
 
 import { parseMonthParams, todayIsoLocal } from "@finance/core/constants";
 import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
-import { CATEGORY_TYPE_LABELS, TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
+import {
+  CATEGORY_TYPE_LABELS,
+  TYPE_AMOUNT_CLASS,
+} from "@finance/core/category-styles";
 import type {
   Category,
   CategoryType,
@@ -213,13 +216,13 @@ export default function TransactionsScreen() {
               onPress={() => setFilter(value)}
               className={`rounded-full border px-4 py-1.5 ${
                 selected
-                  ? "border-foreground bg-foreground dark:border-foreground-dark dark:bg-foreground-dark"
-                  : "border-border bg-background dark:border-border-dark dark:bg-background-dark"
+                  ? "border-foreground bg-foreground"
+                  : "border-border bg-background"
               }`}
             >
               <Text
                 className={`text-xs font-semibold ${
-                  selected ? "text-background dark:text-background-dark" : ""
+                  selected ? "text-background" : ""
                 }`}
               >
                 {value === "all" ? "All" : CATEGORY_TYPE_LABELS[value]}
@@ -234,8 +237,8 @@ export default function TransactionsScreen() {
       ) : error ? (
         <Text className="text-destructive">{error}</Text>
       ) : (
-        <View className="flex-1 rounded-[28px] border border-border bg-black/[0.03] p-1.5 dark:border-border-dark dark:bg-white/[0.04]">
-          <View className="flex-1 rounded-[22px] bg-card dark:bg-card-dark">
+        <View className="flex-1 rounded-[28px] border border-border bg-foreground/[0.04] p-1.5">
+          <View className="flex-1 rounded-[22px] bg-card">
             <FlatList
               data={filtered}
               keyExtractor={(item) => item.id}
@@ -249,9 +252,7 @@ export default function TransactionsScreen() {
                 />
               }
               contentContainerClassName="px-3 py-1 pb-8"
-              ItemSeparatorComponent={() => (
-                <View className="h-px bg-border dark:bg-border-dark" />
-              )}
+              ItemSeparatorComponent={() => <View className="h-px bg-border" />}
               renderItem={({ item }) => (
                 <View className="flex-row items-center gap-3 py-3">
                   <View className="min-w-0 flex-1">
@@ -277,7 +278,7 @@ export default function TransactionsScreen() {
                       setFormOpen(true);
                     }}
                     hitSlop={8}
-                    className="min-h-11 min-w-11 items-center justify-center rounded-full border border-border px-3 dark:border-border-dark"
+                    className="min-h-11 min-w-11 items-center justify-center rounded-full border border-border px-3"
                   >
                     <Text className="text-xs">Edit</Text>
                   </Pressable>

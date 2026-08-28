@@ -114,10 +114,7 @@ export function RecurringFormModal({
       setError(result.error);
       return;
     }
-    Alert.alert(
-      "Deleted",
-      "Apply recurring on Transactions to see changes.",
-    );
+    Alert.alert("Deleted", "Apply recurring on Transactions to see changes.");
     onSaved();
     onClose();
   }
@@ -125,8 +122,8 @@ export function RecurringFormModal({
   return (
     <Modal visible={open} animationType="slide" transparent>
       <View className="flex-1 justify-end bg-black/70">
-        <View className="max-h-[90%] rounded-t-[28px] border border-border bg-background dark:border-border-dark dark:bg-background-dark">
-          <View className="flex-row items-center justify-between rounded-t-[28px] border-b border-border bg-card px-4 py-3 dark:border-border-dark dark:bg-card-dark">
+        <View className="max-h-[90%] rounded-t-[28px] border border-border bg-background">
+          <View className="flex-row items-center justify-between rounded-t-[28px] border-b border-border bg-card px-4 py-3">
             <Text className="font-bold">
               {isEditing ? "Edit recurring" : "Add recurring"}
             </Text>
@@ -150,8 +147,8 @@ export function RecurringFormModal({
                         onPress={() => setCategoryId(cat.id)}
                         className={`rounded-full border px-3 py-2 ${
                           selected
-                            ? "border-foreground bg-primary dark:border-foreground-dark"
-                            : "border-border dark:border-border-dark"
+                            ? "border-foreground bg-primary"
+                            : "border-border"
                         }`}
                       >
                         <Text>{formatCategoryOptionLabel(cat)}</Text>
@@ -191,8 +188,8 @@ export function RecurringFormModal({
                   onPress={() => setRecurrence(value)}
                   className={`flex-1 rounded-full border py-2 ${
                     recurrence === value
-                      ? "border-foreground bg-primary dark:border-foreground-dark"
-                      : "border-border dark:border-border-dark"
+                      ? "border-foreground bg-primary"
+                      : "border-border"
                   }`}
                 >
                   <Text className="text-center text-xs font-semibold capitalize">
