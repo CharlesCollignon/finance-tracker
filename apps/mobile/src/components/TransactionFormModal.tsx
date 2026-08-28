@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import { todayIsoLocal } from "@finance/core/constants";
 import {
@@ -17,6 +18,7 @@ import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
+import { useThemeColors } from "@/theme/useThemeColors";
 import {
   createTransaction,
   deleteTransaction,
@@ -48,6 +50,7 @@ export function TransactionFormModal({
   transaction = null,
   defaultDate = todayIsoLocal(),
 }: TransactionFormModalProps) {
+  const colors = useThemeColors();
   const isEditing = transaction !== null;
   const [categoryId, setCategoryId] = useState(transaction?.category_id ?? "");
   const [amount, setAmount] = useState(
@@ -62,7 +65,15 @@ export function TransactionFormModal({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSkip, setConfirmSkip] = useState(false);
 
-  const groups = groupCategoriesByType(categories);
+  const [categoryQuery, setCategoryQuery] = useState("");
+
+  // Filter before grouping so empty groups disappear while searching.
+  const visibleCategories = categoryQuery.trim()
+    ? categories.filter((cat) =>
+        cat.name.toLowerCase().includes(categoryQuery.trim().toLowerCase()),
+      )
+    : categories;
+  const groups = groupCategoriesByType(visibleCategories);
   const templateId = transaction?.recurring_template_id ?? null;
   const canSkip = isEditing && Boolean(templateId);
 
@@ -157,6 +168,23 @@ export function TransactionFormModal({
             showsVerticalScrollIndicator={false}
           >
             <Text className="mb-2 text-sm font-medium">Category</Text>
+            {categories.length > 8 ? (
+              <View className="mb-3 flex-row items-center gap-2 rounded-full border border-border bg-background px-3">
+                <Ionicons
+                  name="search-outline"
+                  size={16}
+                  color={colors.mutedForeground}
+                />
+                <TextInput
+                  value={categoryQuery}
+                  onChangeText={setCategoryQuery}
+                  placeholder="Filter categories…"
+                  placeholderTextColor={colors.mutedForeground}
+                  accessibilityLabel="Filter categories"
+                  className="h-10 flex-1 font-sans text-sm text-foreground"
+                />
+              </View>
+            ) : null}
             <View className="mb-4 gap-3">
               {groups.map((group) => (
                 <View key={group.type} className="gap-1.5">

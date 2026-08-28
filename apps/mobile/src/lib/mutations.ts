@@ -1,6 +1,7 @@
 import {
   applyRecurringSchema,
   authSchema,
+  categorySchema,
   recurringTemplateSchema,
   transactionSchema,
   updateTransactionSchema,
@@ -29,6 +30,7 @@ import {
   isCryptoWallet,
 } from "@finance/core/crypto-holdings";
 import type {
+  CategoryType,
   Database,
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
@@ -247,6 +249,101 @@ export async function removeInvestmentPosition(
 
   if (error) {
     return { error: error.message };
+  }
+  return { success: true };
+}
+
+/** Maps Postgres constraint failures onto something a user can act on. */
+function friendlyCategoryError(message: string): string {
+  if (message.includes("foreign key")) {
+    return "This category is used by transactions or recurring items. Archive it instead.";
+  }
+  if (message.includes("duplicate key")) {
+    return "A category with this name and type already exists.";
+  }
+  return message;
+}
+
+export async function upsertCategory(input: {
+  id?: string;
+  name: string;
+  type: CategoryType;
+  icon?: string | null;
+  countsTowardSummary?: boolean;
+}): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = categorySchema.safeParse({
+    id: input.id,
+    name: input.name,
+    type: input.type,
+    icon: input.icon ?? undefined,
+    countsTowardSummary: input.countsTowardSummary ?? true,
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const payload = {
+    name: parsed.data.name,
+    type: parsed.data.type,
+    icon: parsed.data.icon ?? null,
+    counts_toward_summary: parsed.data.countsTowardSummary ?? true,
+  };
+
+  const { error } = parsed.data.id
+    ? await supabase
+        .from("categories")
+        .update(payload)
+        .eq("id", parsed.data.id)
+        .eq("user_id", userId)
+    : await supabase.from("categories").insert({ user_id: userId, ...payload });
+
+  if (error) {
+    return { error: friendlyCategoryError(error.message) };
+  }
+  return { success: true };
+}
+
+export async function setCategoryArchived(
+  id: string,
+  archived: boolean,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const { error } = await supabase
+    .from("categories")
+    .update({ archived })
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
+}
+
+export async function deleteCategory(id: string): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const { error } = await supabase
+    .from("categories")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+
+  if (error) {
+    return { error: friendlyCategoryError(error.message) };
   }
   return { success: true };
 }
