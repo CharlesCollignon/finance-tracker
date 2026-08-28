@@ -29,6 +29,7 @@ import { StaggerItem } from "@/components/motion/Stagger";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ApplyRecurringSheet } from "@/components/ApplyRecurringSheet";
+import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -43,6 +44,7 @@ import { useThemeColors } from "@/theme/useThemeColors";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import {
   applyRecurringForMonth,
+  createTransaction,
   previewApplyRecurringForMonth,
 } from "@/lib/mutations";
 import { getCategories, getTransactions } from "@/lib/queries";
@@ -81,6 +83,8 @@ export default function TransactionsScreen() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
+  const [duplicating, setDuplicating] =
+    useState<TransactionWithCategory | null>(null);
   const [pending, setPending] = useState(false);
   const [applyPlan, setApplyPlan] = useState<ApplyRecurringPlan | null>(null);
   const [applySheetOpen, setApplySheetOpen] = useState(false);
@@ -126,6 +130,17 @@ export default function TransactionsScreen() {
     void refreshApplyPending();
   }, [refreshApplyPending, transactions]);
 
+  const recentCategoryIds = useMemo(() => {
+    const seen: string[] = [];
+    // transactions arrive newest-first from the query
+    for (const tx of transactions) {
+      if (!seen.includes(tx.category_id)) {
+        seen.push(tx.category_id);
+      }
+    }
+    return seen;
+  }, [transactions]);
+
   const usedCategories = useMemo(() => {
     const seen = new Map<string, string>();
     for (const tx of transactions) {
@@ -158,6 +173,26 @@ export default function TransactionsScreen() {
       );
     });
   }, [transactions, filter, categoryFilter, search]);
+
+  async function handleDuplicate() {
+    const source = duplicating;
+    setDuplicating(null);
+    if (!source) {
+      return;
+    }
+    const result = await createTransaction({
+      categoryId: source.category_id,
+      amount: String(Number(source.amount)),
+      occurredOn: todayIsoLocal(),
+      note: source.note ?? undefined,
+    });
+    if (result.error) {
+      toast(result.error, "error");
+      return;
+    }
+    toast(`${source.categories.name} added for today`, "success");
+    await reload();
+  }
 
   async function handleApplyRecurring() {
     setPending(true);
@@ -377,6 +412,13 @@ export default function TransactionsScreen() {
                 </EmptyState>
               }
               contentContainerClassName="px-3 py-1 pb-8"
+              ListFooterComponent={
+                filtered.length > 0 ? (
+                  <Text variant="muted" className="py-3 text-center text-xs">
+                    Tap to edit · long-press to repeat today
+                  </Text>
+                ) : null
+              }
               ItemSeparatorComponent={() => <View className="h-px bg-border" />}
               renderItem={({ item, index }) => (
                 <StaggerItem index={index}>
@@ -390,6 +432,10 @@ export default function TransactionsScreen() {
                       void hapticLight();
                       setEditing(item);
                       setFormOpen(true);
+                    }}
+                    onLongPress={() => {
+                      void hapticLight();
+                      setDuplicating(item);
                     }}
                   >
                     <CategoryIcon icon={item.categories.icon} />
@@ -433,9 +479,24 @@ export default function TransactionsScreen() {
           onSaved={reload}
           categories={categories}
           transaction={editing}
+          recentCategoryIds={recentCategoryIds}
           defaultDate={todayIsoLocal()}
         />
       ) : null}
+
+      <ConfirmSheet
+        open={duplicating !== null}
+        title="Repeat this today?"
+        message={
+          duplicating
+            ? `Adds another ${duplicating.categories.name} of ${formatEuro(Number(duplicating.amount))} dated today.`
+            : undefined
+        }
+        confirmLabel="Add for today"
+        destructive={false}
+        onConfirm={handleDuplicate}
+        onCancel={() => setDuplicating(null)}
+      />
 
       <ApplyRecurringSheet
         open={applySheetOpen}

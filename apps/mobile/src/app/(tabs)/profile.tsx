@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, Switch, View } from "react-native";
 import { type Href, useRouter } from "expo-router";
 
 import { Button } from "@/components/ui/Button";
@@ -13,6 +13,11 @@ import {
 } from "@/components/profile/SecurityCards";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
+import {
+  disableReminders,
+  enableReminders,
+  remindersEnabled,
+} from "@/lib/notifications";
 import { useCurrency } from "@/providers/CurrencyProvider";
 import { deleteAllUserData, updateProfile } from "@/lib/mutations";
 import { supabase } from "@/lib/supabase";
@@ -27,6 +32,25 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const [reminders, setReminders] = useState(false);
+
+  useEffect(() => {
+    void remindersEnabled().then(setReminders);
+  }, []);
+
+  async function handleRemindersChange(next: boolean) {
+    if (!next) {
+      await disableReminders();
+      setReminders(false);
+      toast("Reminders off");
+      return;
+    }
+    const granted = await enableReminders();
+    setReminders(granted);
+    if (!granted) {
+      toast("Reminders need notification permission", "error");
+    }
+  }
   const [fullName, setFullName] = useState(
     (user?.user_metadata?.full_name as string | undefined) ??
       (user?.user_metadata?.name as string | undefined) ??
@@ -140,6 +164,23 @@ export default function ProfileScreen() {
             variant="outline"
             onPress={() => router.push("/planning" as Href)}
           />
+        </Card>
+
+        <Card bezel>
+          <Text className="text-base font-semibold">Reminders</Text>
+          <Text variant="muted" className="mb-3 mt-1">
+            A nudge the evening before each recurring item is due. Scheduled on
+            this device only — nothing leaves your phone.
+          </Text>
+          <View className="flex-row items-center justify-between">
+            <Text className="text-sm">Recurring reminders</Text>
+            <Switch
+              value={reminders}
+              onValueChange={(next) => {
+                void handleRemindersChange(next);
+              }}
+            />
+          </View>
         </Card>
 
         <Card bezel>

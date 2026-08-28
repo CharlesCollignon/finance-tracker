@@ -18,6 +18,7 @@ import { MonthPicker } from "@/components/MonthPicker";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ProgressRing } from "@/components/charts/ProgressRing";
 import { StatHero } from "@/components/StatHero";
+import { TrendCard } from "@/components/TrendCard";
 import { WalletsCard } from "@/components/WalletsCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -34,8 +35,10 @@ import {
   getBudgets,
   getCategories,
   getMonthlySummary,
+  getMonthlyTrend,
   getSavingsGoals,
   getWalletPortfolio,
+  type MonthlyTrendPoint,
 } from "@/lib/queries";
 
 const VIEW_OPTIONS: BudgetViewMode[] = ["current", "month_end"];
@@ -141,15 +144,17 @@ export default function DashboardScreen() {
           portfolio: null as InvestmentPortfolioSummary | null,
           budgetProgress: [] as ReturnType<typeof buildBudgetProgress>,
           goalProgress: [] as ReturnType<typeof buildSavingsGoalProgress>,
+          trend: [] as MonthlyTrendPoint[],
         };
       }
-      const [summary, portfolio, budgets, goals, categories] =
+      const [summary, portfolio, budgets, goals, categories, trend] =
         await Promise.all([
           getMonthlySummary(user.id, year, month, view),
           getWalletPortfolio(user.id, { includeHistory: false }),
           getBudgets(user.id),
           getSavingsGoals(user.id),
           getCategories(user.id),
+          getMonthlyTrend(user.id),
         ]);
       const categoryNames = new Map(
         categories.map((c) => [c.id, c.name] as const),
@@ -157,6 +162,7 @@ export default function DashboardScreen() {
       return {
         summary,
         portfolio,
+        trend,
         budgetProgress: buildBudgetProgress(
           budgets,
           summary.expenseBreakdown,
@@ -173,6 +179,7 @@ export default function DashboardScreen() {
 
   const summary = data?.summary;
   const portfolio = data?.portfolio;
+  const trend = data?.trend ?? [];
   const budgetProgress = data?.budgetProgress ?? [];
   const goalProgress = data?.goalProgress ?? [];
   const overBudget = (summary?.remaining ?? 0) < 0;
@@ -309,6 +316,8 @@ export default function DashboardScreen() {
               <WalletsCard portfolio={portfolio} />
             </Card>
           ) : null}
+
+          <TrendCard points={trend} />
 
           <IncomeSankeyCard summary={summary} />
 

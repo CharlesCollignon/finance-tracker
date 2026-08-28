@@ -17,6 +17,12 @@ import type {
 
 import { StaggerItem } from "@/components/motion/Stagger";
 import { cn } from "@/lib/cn";
+import {
+  enableReminders,
+  markRemindersAsked,
+  remindersAsked,
+  syncRecurringReminders,
+} from "@/lib/notifications";
 import { hapticLight } from "@/lib/haptics";
 import { RecurringFormModal } from "@/components/RecurringFormModal";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -123,6 +129,44 @@ export default function RecurringScreen() {
   const activeItems =
     groups.find((group) => group.type === activeTab)?.items ?? [];
 
+  // Only offer reminders once there is something to be reminded about, so the
+  // permission prompt arrives with visible value behind it.
+  const [remindersPrompt, setRemindersPrompt] = useState(false);
+
+  useEffect(() => {
+    if (templates.length === 0) {
+      return;
+    }
+    let active = true;
+    void remindersAsked().then((asked) => {
+      if (active && !asked) {
+        setRemindersPrompt(true);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [templates.length]);
+
+  // Keep the schedule in step with the templates whenever they change.
+  useEffect(() => {
+    if (templates.length === 0) {
+      return;
+    }
+    void syncRecurringReminders(templates, formatEuro);
+  }, [templates, formatEuro]);
+
+  async function handleEnableReminders() {
+    const granted = await enableReminders();
+    setRemindersPrompt(false);
+    if (!granted) {
+      toast("Reminders need notification permission", "error");
+      return;
+    }
+    await syncRecurringReminders(templates, formatEuro);
+    toast("Reminders on — you'll hear the evening before", "success");
+  }
+
   return (
     <Screen title="Recurring">
       {applyPending ? (
@@ -135,6 +179,38 @@ export default function RecurringScreen() {
             recurring.
           </Text>
         </Pressable>
+      ) : null}
+
+      {remindersPrompt ? (
+        <Card bezel className="mb-4" innerClassName="gap-3 p-4">
+          <Text className="text-sm font-medium">
+            Want a nudge before these post?
+          </Text>
+          <Text variant="muted" className="text-sm">
+            One reminder the evening before each item is due, so nothing lands
+            unnoticed. Entirely on your device.
+          </Text>
+          <View className="flex-row gap-2">
+            <Button
+              label="Remind me"
+              size="sm"
+              className="flex-1"
+              onPress={() => {
+                void handleEnableReminders();
+              }}
+            />
+            <Button
+              label="No thanks"
+              variant="ghost"
+              size="sm"
+              className="flex-1"
+              onPress={() => {
+                void markRemindersAsked();
+                setRemindersPrompt(false);
+              }}
+            />
+          </View>
+        </Card>
       ) : null}
 
       {templates.length > 0 ? (

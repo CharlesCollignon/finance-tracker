@@ -18,6 +18,7 @@ import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
+import { hapticLight } from "@/lib/haptics";
 import { useThemeColors } from "@/theme/useThemeColors";
 import {
   createTransaction,
@@ -34,6 +35,8 @@ interface TransactionFormModalProps {
   categories: Category[];
   transaction?: TransactionWithCategory | null;
   defaultDate?: string;
+  /** Most-recently-used category ids, newest first. */
+  recentCategoryIds?: string[];
 }
 
 /**
@@ -49,6 +52,7 @@ export function TransactionFormModal({
   categories,
   transaction = null,
   defaultDate = todayIsoLocal(),
+  recentCategoryIds = [],
 }: TransactionFormModalProps) {
   const colors = useThemeColors();
   const isEditing = transaction !== null;
@@ -74,6 +78,13 @@ export function TransactionFormModal({
       )
     : categories;
   const groups = groupCategoriesByType(visibleCategories);
+
+  // One tap instead of scrolling the full grouped list, which is the common
+  // case: people log the same handful of categories over and over.
+  const recentCategories = recentCategoryIds
+    .map((id) => categories.find((cat) => cat.id === id))
+    .filter((cat): cat is Category => cat !== undefined)
+    .slice(0, 4);
   const templateId = transaction?.recurring_template_id ?? null;
   const canSkip = isEditing && Boolean(templateId);
 
@@ -185,6 +196,39 @@ export function TransactionFormModal({
                 />
               </View>
             ) : null}
+            {recentCategories.length > 0 && !categoryQuery.trim() ? (
+              <View className="mb-3">
+                <Text variant="muted" className="mb-2 text-xs">
+                  Recent
+                </Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {recentCategories.map((cat) => {
+                    const selected = categoryId === cat.id;
+                    return (
+                      <Pressable
+                        key={cat.id}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected }}
+                        onPress={() => {
+                          void hapticLight();
+                          setCategoryId(cat.id);
+                        }}
+                        className={cn(
+                          "flex-row items-center gap-2 rounded-full border px-3 py-2",
+                          selected
+                            ? "border-primary bg-primary/15"
+                            : "border-border bg-background",
+                        )}
+                      >
+                        <CategoryIcon icon={cat.icon} className="h-6 w-6" />
+                        <Text className="text-sm">{cat.name}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : null}
+
             <View className="mb-4 gap-3">
               {groups.map((group) => (
                 <View key={group.type} className="gap-1.5">
