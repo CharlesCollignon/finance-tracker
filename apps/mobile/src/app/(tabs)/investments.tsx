@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  View,
-} from "react-native";
+import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import {
@@ -39,6 +33,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Screen } from "@/components/ui/Screen";
+import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
@@ -134,7 +129,7 @@ export default function InvestmentsScreen() {
   return (
     <Screen title="Wallets">
       {loading && !portfolio ? (
-        <ActivityIndicator />
+        <ScreenSkeleton rows={3} />
       ) : error ? (
         <Text className="text-destructive">{error}</Text>
       ) : !portfolio ? (
@@ -152,6 +147,8 @@ export default function InvestmentsScreen() {
           <StatHero
             label="Market value"
             amount={formatEuro(portfolio.totalMarketValue)}
+            animateValue={portfolio.totalMarketValue}
+            format={formatEuro}
             subtitle={
               <>
                 {`${formatEuro(portfolio.totalInvested)} invested`}

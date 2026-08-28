@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  View,
-} from "react-native";
+import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import {
@@ -28,6 +22,7 @@ import { WalletsCard } from "@/components/WalletsCard";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
+import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
@@ -203,7 +198,7 @@ export default function DashboardScreen() {
       />
 
       {loading && !summary ? (
-        <ActivityIndicator className="mt-6" />
+        <ScreenSkeleton rows={3} />
       ) : error ? (
         <Text className="mt-6 text-destructive">{error}</Text>
       ) : !summary ? (
@@ -231,6 +226,8 @@ export default function DashboardScreen() {
             <StatHero
               label={remainingLabel(view, monthLabel)}
               amount={formatEuro(summary.remaining)}
+              animateValue={summary.remaining}
+              format={formatEuro}
               amountClassName={
                 overBudget ? "text-destructive" : "text-primary-ink"
               }
