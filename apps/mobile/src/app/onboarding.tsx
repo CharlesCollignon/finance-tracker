@@ -17,7 +17,7 @@ import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
-import { markOnboardingComplete } from "@/lib/onboarding";
+import { useOnboarding } from "@/providers/OnboardingProvider";
 import { upsertRecurringTemplate } from "@/lib/mutations";
 import { getCategories } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
@@ -43,6 +43,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { currency, setCurrency } = useCurrency();
   const { toast } = useToast();
+  const { markComplete } = useOnboarding();
 
   const [step, setStep] = useState<Step>("currency");
   const [incomeAmount, setIncomeAmount] = useState("");
@@ -69,9 +70,9 @@ export default function OnboardingScreen() {
   const stepIndex = STEP_ORDER.indexOf(step);
 
   async function finish() {
-    if (user) {
-      await markOnboardingComplete(user.id);
-    }
+    // Update shared state before navigating, or the navigator still reads
+    // "incomplete" and sends us straight back here.
+    await markComplete();
     router.replace("/");
   }
 
@@ -135,7 +136,7 @@ export default function OnboardingScreen() {
       showLogo={false}
     >
       <ScrollView
-        contentContainerClassName="gap-6 pb-8"
+        contentContainerClassName="gap-6 pb-28"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

@@ -411,7 +411,7 @@ export default function TransactionsScreen() {
                   />
                 </EmptyState>
               }
-              contentContainerClassName="px-3 py-1 pb-8"
+              contentContainerClassName="px-3 py-1 pb-28"
               ListFooterComponent={
                 filtered.length > 0 ? (
                   <Text variant="muted" className="py-3 text-center text-xs">

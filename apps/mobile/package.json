@@ -8,6 +8,7 @@
     "@finance/core": "workspace:*",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/datetimepicker": "9.1.0",
+    "@sbaiahmed1/react-native-blur": "^6.0.1",
     "@supabase/supabase-js": "2.108.2",
     "@wuba/react-native-echarts": "^3.1.1",
     "echarts": "^6.1.0",

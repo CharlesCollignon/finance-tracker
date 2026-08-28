@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal, Pressable, View } from "react-native";
-import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
@@ -83,27 +82,10 @@ export function AccountMenu() {
         >
           <View className="mt-16 items-end px-4">
             <Pressable onPress={(event) => event.stopPropagation()}>
-              {/* BlurView is not registered with NativeWind, so it takes
-                  style rather than className. */}
-              <BlurView
-                intensity={40}
-                tint={isDark ? "dark" : "light"}
-                style={{
-                  width: 288,
-                  borderRadius: 24,
-                  overflow: "hidden",
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}
-              >
-                <View
-                  className="gap-1 p-2"
-                  style={{
-                    backgroundColor: isDark
-                      ? "rgba(11,9,5,0.55)"
-                      : "rgba(251,250,247,0.55)",
-                  }}
-                >
+              {/* Solid surface: the frosted panel made the rows hard to
+                  read against busy content behind it. */}
+              <View className="w-72 overflow-hidden rounded-3xl border border-border bg-card">
+                <View className="gap-1 p-2">
                   <View className="flex-row items-center justify-between px-3 py-1.5">
                     <Text className="text-sm font-medium">Theme</Text>
                     <Pressable
@@ -159,7 +141,7 @@ export function AccountMenu() {
                     <Text className="text-sm font-medium">Sign out</Text>
                   </Pressable>
                 </View>
-              </BlurView>
+              </View>
             </Pressable>
           </View>
         </Pressable>

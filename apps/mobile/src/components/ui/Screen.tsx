@@ -57,34 +57,37 @@ export function Screen({
     >
       {showHeader ? (
         <View
-          className="flex-row items-center justify-between gap-3 border-b border-border px-4"
+          className="border-b border-border"
           style={{ height: HEADER_HEIGHT }}
         >
-          <View className="flex-1 flex-row items-center">
-            <Text
-              className="font-sans text-foreground"
-              style={{ fontSize: 18 }}
-              numberOfLines={1}
-            >
-              {title}
-            </Text>
+          <View className="flex-1 flex-row items-center justify-between gap-3 px-4">
+            <View className="min-w-0 flex-1 flex-row items-center">
+              <Text
+                className="font-sans text-foreground"
+                style={{ fontSize: 18 }}
+                numberOfLines={1}
+              >
+                {title}
+              </Text>
+            </View>
+
+            <View className="shrink-0 flex-row items-center gap-2">
+              {headerActions}
+              {showPrivacyToggle ? <PrivacyToggle /> : null}
+              {showAccountMenu ? <AccountMenu /> : null}
+            </View>
           </View>
 
+          {/* Overlay, not a row child: as a sibling of the row it cannot take
+              part in that row's layout and squeeze the title. */}
           {showLogo ? (
             <View
               pointerEvents="none"
-              className="absolute inset-x-0 items-center"
-              style={{ height: HEADER_HEIGHT, justifyContent: "center" }}
+              className="absolute inset-0 items-center justify-center"
             >
               <Logo size="sm" />
             </View>
           ) : null}
-
-          <View className="flex-row items-center justify-end gap-2">
-            {headerActions}
-            {showPrivacyToggle ? <PrivacyToggle /> : null}
-            {showAccountMenu ? <AccountMenu /> : null}
-          </View>
         </View>
       ) : null}
       <FadeIn className={cn("flex-1 px-4 py-4", className)}>{children}</FadeIn>

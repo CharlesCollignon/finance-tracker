@@ -71,11 +71,11 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
           // defaults to 20%, which clips them at phone widths.
           left: 8,
           right: 96,
-          top: 8,
-          bottom: 8,
+          top: 16,
+          bottom: 16,
           emphasis: { focus: "adjacency" },
           nodeAlign: "justify",
-          nodeGap: 8,
+          nodeGap: 18,
           nodeWidth: 14,
           layoutIterations: 0,
           lineStyle: {
@@ -86,6 +86,9 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
           label: {
             color: colors.foreground,
             fontSize: 10,
+            // Two-line labels on the last column need explicit leading, or the
+            // name and value collide.
+            lineHeight: 13,
             position: "right",
             formatter: (params: { name: string; value?: number }) => {
               const label = labelByName.get(params.name) ?? params.name;
@@ -176,7 +179,7 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
   return (
     <Card bezel innerClassName="p-4">
       {header}
-      <EChart option={option} height={280} className="mt-4" />
+      <EChart option={option} height={320} className="mt-4" />
       <View className="mt-4 gap-2">
         {legend.map((row) => (
           <View

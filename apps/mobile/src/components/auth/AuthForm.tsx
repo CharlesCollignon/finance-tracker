@@ -1,13 +1,14 @@
 import { Link, type Href } from "expo-router";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, View } from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Blur } from "@/components/ui/Blur";
 import { Input } from "@/components/ui/Input";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
+import { useThemeColors } from "@/theme/useThemeColors";
 import { validateAuthInput } from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
 
@@ -31,6 +32,7 @@ export function AuthForm({
   showPasskey = false,
 }: AuthFormProps) {
   const { signInWithGoogle, signInWithPasskey } = useAuth();
+  const colors = useThemeColors();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -78,59 +80,77 @@ export function AuthForm({
       showAccountMenu={false}
       showLogo={false}
     >
+      {/* Oversized mark sitting behind the form, low contrast so it reads as
+          a watermark rather than competing with the fields. */}
+      <View
+        pointerEvents="none"
+        className="absolute inset-0 items-center justify-center"
+      >
+        <Logo size="watermark" style={{ opacity: 0.06 }} />
+      </View>
+
       <KeyboardAvoidingView
+        className="flex-1 justify-center"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View className="mb-6 items-center">
-          <Logo size="hero" />
-        </View>
-        <Card bezel innerClassName="gap-4 p-5">
-          <Input
-            placeholder="Email"
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-          />
-          <Input
-            placeholder="Password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
+        <Blur
+          style={{
+            borderRadius: 24,
+            overflow: "hidden",
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: colors.border,
+          }}
+        >
+          <View className="gap-4 p-5">
+            <Input
+              placeholder="Email"
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+            />
+            <Input
+              placeholder="Password"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
 
-          {message ? <Text className="text-destructive">{message}</Text> : null}
+            {message ? (
+              <Text className="text-destructive">{message}</Text>
+            ) : null}
 
-          <Button
-            label={submitting ? "Please wait..." : submitLabel}
-            disabled={submitting || !email || !password}
-            onPress={handleSubmit}
-          />
-
-          <Button
-            label="Continue with Google"
-            variant="outline"
-            disabled={submitting}
-            onPress={handleGoogle}
-          />
-
-          {showPasskey ? (
             <Button
-              label="Sign in with passkey"
+              label={submitting ? "Please wait..." : submitLabel}
+              disabled={submitting || !email || !password}
+              onPress={handleSubmit}
+            />
+
+            <Button
+              label="Continue with Google"
               variant="outline"
               disabled={submitting}
-              onPress={handlePasskey}
+              onPress={handleGoogle}
             />
-          ) : null}
 
-          <View className="flex-row justify-center gap-1">
-            <Text variant="muted">{footerPrompt}</Text>
-            <Link href={footerHref}>
-              <Text className="font-bold underline">{footerLinkLabel}</Text>
-            </Link>
+            {showPasskey ? (
+              <Button
+                label="Sign in with passkey"
+                variant="outline"
+                disabled={submitting}
+                onPress={handlePasskey}
+              />
+            ) : null}
+
+            <View className="flex-row justify-center gap-1">
+              <Text variant="muted">{footerPrompt}</Text>
+              <Link href={footerHref}>
+                <Text className="font-bold underline">{footerLinkLabel}</Text>
+              </Link>
+            </View>
           </View>
-        </Card>
+        </Blur>
       </KeyboardAvoidingView>
     </Screen>
   );
