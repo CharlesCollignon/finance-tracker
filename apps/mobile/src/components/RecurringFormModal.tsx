@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Alert, Modal, Pressable, ScrollView, View } from "react-native";
+import { Modal, Pressable, ScrollView, View } from "react-native";
 
 import {
   formatCategoryOptionLabel,
@@ -12,8 +12,10 @@ import type {
 } from "@finance/core/types/database";
 
 import { Button } from "@/components/ui/Button";
+import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
+import { useToast } from "@/providers/ToastProvider";
 import {
   deleteRecurringTemplate,
   upsertRecurringTemplate,
@@ -34,6 +36,7 @@ export function RecurringFormModal({
   categories,
   template = null,
 }: RecurringFormModalProps) {
+  const { toast } = useToast();
   const isEditing = template !== null;
   const [categoryId, setCategoryId] = useState(template?.category_id ?? "");
   const [amount, setAmount] = useState(
@@ -95,10 +98,7 @@ export function RecurringFormModal({
       setError(result.error);
       return;
     }
-    Alert.alert(
-      isEditing ? "Updated" : "Saved",
-      "Apply recurring on Transactions to see changes.",
-    );
+    toast("Saved — apply recurring on Transactions to see changes.", "success");
     onSaved();
     onClose();
   }
@@ -114,7 +114,7 @@ export function RecurringFormModal({
       setError(result.error);
       return;
     }
-    Alert.alert("Deleted", "Apply recurring on Transactions to see changes.");
+    toast("Deleted — apply recurring on Transactions to see changes.");
     onSaved();
     onClose();
   }
@@ -246,26 +246,26 @@ export function RecurringFormModal({
               </>
             )}
 
-            <Text variant="label" className="mb-1">
+            <Text className="mb-1 text-sm font-medium">
               Active period (optional)
             </Text>
-            <Text variant="muted" className="mb-2 text-xs">
-              YYYY-MM-DD. Leave empty for open-ended.
+            <Text variant="muted" className="mb-3 text-xs">
+              Leave empty for open-ended.
             </Text>
             <Text className="mb-2 text-sm font-medium">Starts on</Text>
-            <Input
+            <DateField
               value={startsOn}
-              onChangeText={setStartsOn}
-              placeholder="2026-01-01"
-              autoCapitalize="none"
+              onChange={setStartsOn}
+              placeholder="No start date"
+              clearable
               className="mb-4"
             />
             <Text className="mb-2 text-sm font-medium">Ends on</Text>
-            <Input
+            <DateField
               value={endsOn}
-              onChangeText={setEndsOn}
-              placeholder="2026-10-31"
-              autoCapitalize="none"
+              onChange={setEndsOn}
+              placeholder="No end date"
+              clearable
               className="mb-4"
             />
 

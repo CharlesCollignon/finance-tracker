@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -34,6 +33,7 @@ import type {
 import { InvestmentPositionRow } from "@/components/InvestmentPositionRow";
 import { InvestmentPositionSheet } from "@/components/InvestmentPositionSheet";
 import { Button } from "@/components/ui/Button";
+import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
@@ -43,6 +43,7 @@ import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
+import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { deleteWalletTransfer, upsertWalletTransfer } from "@/lib/mutations";
 import {
@@ -55,6 +56,10 @@ import {
 export default function InvestmentsScreen() {
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
+  const { toast } = useToast();
+  const [confirmingTransfer, setConfirmingTransfer] = useState<string | null>(
+    null,
+  );
   const current = getCurrentMonth();
   const [toWallet, setToWallet] = useState<InvestmentWalletId>("pea");
   const [amount, setAmount] = useState("");
@@ -119,7 +124,7 @@ export default function InvestmentsScreen() {
     });
     setPending(false);
     if (result.error) {
-      Alert.alert("Error", result.error);
+      toast(result.error, "error");
       return;
     }
     setAmount("");
@@ -280,19 +285,7 @@ export default function InvestmentsScreen() {
               <Pressable
                 key={t.id}
                 className="mt-3 flex-row items-center justify-between border-t border-border pt-3"
-                onLongPress={() =>
-                  Alert.alert("Delete transfer?", undefined, [
-                    { text: "Cancel", style: "cancel" },
-                    {
-                      text: "Delete",
-                      style: "destructive",
-                      onPress: async () => {
-                        await deleteWalletTransfer(t.id);
-                        await onRefresh();
-                      },
-                    },
-                  ])
-                }
+                onLongPress={() => setConfirmingTransfer(t.id)}
               >
                 <Text>
                   {INVESTMENT_WALLET_LABELS[t.to_wallet]} · {t.occurred_on}
@@ -305,6 +298,26 @@ export default function InvestmentsScreen() {
           </Card>
         </ScrollView>
       )}
+
+      <ConfirmSheet
+        open={confirmingTransfer !== null}
+        title="Delete this transfer?"
+        message="The transfer record is removed; your transactions are not affected."
+        onConfirm={async () => {
+          const id = confirmingTransfer;
+          setConfirmingTransfer(null);
+          if (!id) {
+            return;
+          }
+          const result = await deleteWalletTransfer(id);
+          if (result.error) {
+            toast(result.error, "error");
+            return;
+          }
+          await onRefresh();
+        }}
+        onCancel={() => setConfirmingTransfer(null)}
+      />
 
       <InvestmentPositionSheet
         item={editingPosition}

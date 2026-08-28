@@ -13,6 +13,7 @@ import type {
 
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Button } from "@/components/ui/Button";
+import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
@@ -196,11 +197,9 @@ export function TransactionFormModal({
             />
 
             <Text className="mb-2 text-sm font-medium">Date</Text>
-            <Input
+            <DateField
               value={occurredOn}
-              onChangeText={setOccurredOn}
-              autoCapitalize="none"
-              placeholder="YYYY-MM-DD"
+              onChange={setOccurredOn}
               className="mb-4"
             />
 
