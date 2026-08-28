@@ -7,6 +7,16 @@ packages:
 # resolution (e.g. NativeWind's react-native-css-interop/jsx-runtime).
 nodeLinker: hoisted
 
+# echarts and zrender pin tslib 2.3.0, whose package "exports" map sends the
+# "import" condition to ./modules/index.js. That file does `import tslib from
+# '../tslib.js'`, but tslib.js sets __esModule without exporting a default, so
+# under Metro's interop the helpers come back undefined and Hermes throws
+# "Cannot read property '__extends' of undefined" as soon as a chart route
+# loads. tslib 2.8.1 maps "import" to real ESM (tslib.es6.mjs) instead.
+# @wuba/react-native-echarts applies the same override upstream.
+overrides:
+  tslib: ^2.8.1
+
 # Charts use SVG, not Skia. @wuba/react-native-echarts still lists Skia
 # as an optional peer, so pnpm may install it anyway.
 ignoredOptionalDependencies:
