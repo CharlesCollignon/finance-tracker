@@ -32,12 +32,29 @@ export class ErrorBoundary extends Component<Props, State> {
     const message = this.state.error.stack ?? this.state.error.message;
 
     return (
-      <View style={{ flex: 1, backgroundColor: "#111", padding: 16, paddingTop: 64 }}>
-        <Text style={{ marginBottom: 12, fontSize: 18, fontWeight: "700", color: "#f87171" }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#111",
+          padding: 16,
+          paddingTop: 64,
+        }}
+      >
+        <Text
+          style={{
+            marginBottom: 12,
+            fontSize: 18,
+            fontWeight: "700",
+            color: "#f87171",
+          }}
+        >
           App failed to start
         </Text>
         <ScrollView>
-          <Text selectable style={{ fontFamily: "monospace", fontSize: 12, color: "#fafafa" }}>
+          <Text
+            selectable
+            style={{ fontFamily: "monospace", fontSize: 12, color: "#fafafa" }}
+          >
             {message}
           </Text>
         </ScrollView>

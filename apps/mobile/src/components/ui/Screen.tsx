@@ -11,40 +11,45 @@ export interface ScreenProps {
   title?: string;
   children?: ReactNode;
   className?: string;
+  /** Extra controls in the header band, left of the privacy toggle. */
+  headerActions?: ReactNode;
   /** Show privacy eye on the right (default true when title set). */
   showPrivacyToggle?: boolean;
 }
 
 /**
- * Standard screen shell: safe-area padding, background, and an optional
- * page title with privacy toggle on the right.
+ * Standard screen shell, mirroring the web PageHeader + PageContainer: a
+ * bordered header band holding the page title and its actions, then the page
+ * body. Title sizing follows the web header (text-lg) rather than a large
+ * in-body heading, so both clients read the same way.
  */
 export function Screen({
   title,
   children,
   className,
+  headerActions,
   showPrivacyToggle = true,
 }: ScreenProps) {
+  const showHeader =
+    Boolean(title) || showPrivacyToggle || Boolean(headerActions);
+
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
       className="flex-1 bg-background"
     >
-      <FadeIn className={cn("flex-1 px-4 pt-2", className)}>
-        {title ? (
-          <View className="mb-4 flex-row items-center justify-between gap-3">
-            <Text variant="title" className="flex-1">
-              {title}
-            </Text>
+      {showHeader ? (
+        <View className="h-[52px] flex-row items-center justify-between gap-3 border-b border-border px-4">
+          <Text className="shrink-0 text-lg" numberOfLines={1}>
+            {title}
+          </Text>
+          <View className="min-w-0 shrink flex-row items-center justify-end gap-2">
+            {headerActions}
             {showPrivacyToggle ? <PrivacyToggle /> : null}
           </View>
-        ) : showPrivacyToggle ? (
-          <View className="mb-2 flex-row justify-end">
-            <PrivacyToggle />
-          </View>
-        ) : null}
-        <View className="flex-1">{children}</View>
-      </FadeIn>
+        </View>
+      ) : null}
+      <FadeIn className={cn("flex-1 px-4 py-4", className)}>{children}</FadeIn>
     </SafeAreaView>
   );
 }

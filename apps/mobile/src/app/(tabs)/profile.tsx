@@ -99,8 +99,8 @@ export default function ProfileScreen() {
   return (
     <Screen title="Profile">
       <ScrollView contentContainerClassName="gap-3 pb-28">
-        <Card bezel className="p-4">
-          <Text className="font-bold">Account</Text>
+        <Card bezel>
+          <Text className="text-base font-semibold">Account</Text>
           <Text variant="muted" className="mt-1">
             Signed in via {provider}
           </Text>
@@ -131,8 +131,8 @@ export default function ProfileScreen() {
         <BiometricUnlockCard />
         <PasskeysCard />
 
-        <Card bezel className="p-4">
-          <Text className="font-bold">Budgets, goals & tags</Text>
+        <Card bezel>
+          <Text className="text-base font-semibold">Budgets, goals & tags</Text>
           <Text variant="muted" className="mt-1 mb-3">
             Set monthly spending caps, savings goals, and tags.
           </Text>
@@ -143,8 +143,8 @@ export default function ProfileScreen() {
           />
         </Card>
 
-        <Card bezel className="p-4">
-          <Text className="font-bold">Appearance</Text>
+        <Card bezel>
+          <Text className="text-base font-semibold">Appearance</Text>
           <Text variant="muted" className="mt-1 mb-3">
             Light, dark, or follow the device.
           </Text>
@@ -178,8 +178,8 @@ export default function ProfileScreen() {
           </View>
         </Card>
 
-        <Card bezel className="p-4">
-          <Text className="font-bold">Currency</Text>
+        <Card bezel>
+          <Text className="text-base font-semibold">Currency</Text>
           <Text variant="muted" className="mt-1 mb-3">
             Choose how amounts are labeled. This only changes the symbol — it
             does not convert your numbers.

@@ -26,6 +26,7 @@ import { TransactionFormModal } from "@/components/TransactionFormModal";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
+import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
@@ -39,6 +40,15 @@ import { getCategories, getTransactions } from "@/lib/queries";
 import { cn } from "@/lib/cn";
 
 type FilterType = "all" | CategoryType;
+
+/** Same shape the web transactions view computes for its hero figure. */
+function computeTypeTotals(transactions: TransactionWithCategory[]) {
+  const totals = { income: 0, expense: 0, savings: 0, investment: 0 };
+  for (const tx of transactions) {
+    totals[tx.categories.type] += Number(tx.amount);
+  }
+  return totals;
+}
 
 const FILTERS: FilterType[] = [
   "all",
@@ -76,6 +86,15 @@ export default function TransactionsScreen() {
     }, [user?.id, year, month]);
 
   const transactions = data?.transactions ?? [];
+  const typeTotals = useMemo(
+    () => computeTypeTotals(transactions),
+    [transactions],
+  );
+  const netTotal =
+    typeTotals.income -
+    typeTotals.expense -
+    typeTotals.savings -
+    typeTotals.investment;
   const categories = data?.categories ?? [];
 
   const refreshApplyPending = useCallback(async () => {
@@ -171,7 +190,7 @@ export default function TransactionsScreen() {
   }
 
   return (
-    <Screen title="Transaction">
+    <Screen title="Transactions">
       <MonthPicker
         year={year}
         month={month}
@@ -181,13 +200,32 @@ export default function TransactionsScreen() {
         }}
       />
 
+      <StatHero
+        className="mt-5"
+        label="What's left"
+        amount={`${netTotal >= 0 ? "+" : "−"}${formatEuro(Math.abs(netTotal))}`}
+        amountClassName={netTotal >= 0 ? "text-success" : "text-destructive"}
+        subtitle={
+          <>
+            <Text className="text-sm text-success">
+              {formatEuro(typeTotals.income)}
+            </Text>
+            {" earned · "}
+            <Text className="text-sm text-destructive">
+              {formatEuro(typeTotals.expense)}
+            </Text>
+            {" spent"}
+          </>
+        }
+      />
+
       {applyPending ? (
-        <Text variant="muted" className="mb-2 text-center text-sm">
+        <Text variant="muted" className="mt-5 text-center text-sm">
           Recurring changed — apply to update this month.
         </Text>
       ) : null}
 
-      <View className="my-3 flex-row gap-2">
+      <View className="my-4 flex-row justify-center gap-2">
         <Button
           label={pending ? "…" : "Apply recurring"}
           variant={applyPending ? "default" : "outline"}
@@ -207,22 +245,22 @@ export default function TransactionsScreen() {
         />
       </View>
 
-      <View className="mb-3 flex-row flex-wrap gap-2">
+      <View className="mb-4 flex-row flex-wrap justify-center gap-2">
         {FILTERS.map((value) => {
           const selected = filter === value;
           return (
             <Pressable
               key={value}
               onPress={() => setFilter(value)}
-              className={`rounded-full border px-4 py-1.5 ${
+              className={`rounded-full border px-4 py-2 ${
                 selected
                   ? "border-foreground bg-foreground"
                   : "border-border bg-background"
               }`}
             >
               <Text
-                className={`text-xs font-semibold ${
-                  selected ? "text-background" : ""
+                className={`text-sm font-semibold ${
+                  selected ? "text-background" : "text-muted-foreground"
                 }`}
               >
                 {value === "all" ? "All" : CATEGORY_TYPE_LABELS[value]}

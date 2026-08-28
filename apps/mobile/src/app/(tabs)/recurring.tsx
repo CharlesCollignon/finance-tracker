@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
+import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
@@ -101,15 +102,11 @@ export default function RecurringScreen() {
       ) : null}
 
       {templates.length > 0 ? (
-        <Card
-          bezel
-          className="mb-3"
-          innerClassName="flex-row items-center justify-between p-4"
-        >
-          <Text className="font-bold">Expected budget impact</Text>
-          <PrivateAmount className="font-mono text-lg font-bold">
-            {formatEuro(budgetMonthly)}
-          </PrivateAmount>
+        <Card bezel className="my-5" innerClassName="p-6">
+          <StatHero
+            label="Expected budget impact"
+            amount={formatEuro(budgetMonthly)}
+          />
         </Card>
       ) : null}
 
