@@ -19,7 +19,7 @@
     "android": {
       "package": "com.salut_charles.pluclair",
       "adaptiveIcon": {
-        "backgroundColor": "#000000",
+        "backgroundColor": "#141415",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
       "predictiveBackGestureEnabled": false,
