@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -23,6 +22,8 @@ import type {
 } from "@finance/core/types/database";
 
 import { Button } from "@/components/ui/Button";
+import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
+import { DateField } from "@/components/ui/DateField";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -30,6 +31,7 @@ import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
+import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { progressTone } from "@/lib/progress-tone";
 import {
@@ -73,6 +75,11 @@ function pacingHint(
 export default function PlanningScreen() {
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
+  const { toast } = useToast();
+  const [confirming, setConfirming] = useState<{
+    kind: "budget" | "goal";
+    id: string;
+  } | null>(null);
   const current = getCurrentMonth();
   const [budgetAmount, setBudgetAmount] = useState("");
   const [goalName, setGoalName] = useState("");
@@ -133,7 +140,7 @@ export default function PlanningScreen() {
     });
     setPending(false);
     if (result.error) {
-      Alert.alert("Error", result.error);
+      toast(result.error, "error");
       return;
     }
     setBudgetAmount("");
@@ -150,7 +157,7 @@ export default function PlanningScreen() {
     });
     setPending(false);
     if (result.error) {
-      Alert.alert("Error", result.error);
+      toast(result.error, "error");
       return;
     }
     setGoalName("");
@@ -164,10 +171,26 @@ export default function PlanningScreen() {
     const result = await upsertTag(tagName);
     setPending(false);
     if (result.error) {
-      Alert.alert("Error", result.error);
+      toast(result.error, "error");
       return;
     }
     setTagName("");
+    await onRefresh();
+  }
+
+  async function handleConfirmDelete() {
+    if (!confirming) {
+      return;
+    }
+    const result =
+      confirming.kind === "budget"
+        ? await deleteBudget(confirming.id)
+        : await deleteSavingsGoal(confirming.id);
+    setConfirming(null);
+    if (result.error) {
+      toast(result.error, "error");
+      return;
+    }
     await onRefresh();
   }
 
@@ -235,19 +258,7 @@ export default function PlanningScreen() {
               <Pressable
                 key={b.id}
                 className="mt-3 flex-row items-center justify-between border-t border-border pt-3"
-                onLongPress={() =>
-                  Alert.alert("Delete budget?", undefined, [
-                    { text: "Cancel", style: "cancel" },
-                    {
-                      text: "Delete",
-                      style: "destructive",
-                      onPress: async () => {
-                        await deleteBudget(b.id);
-                        await onRefresh();
-                      },
-                    },
-                  ])
-                }
+                onLongPress={() => setConfirming({ kind: "budget", id: b.id })}
               >
                 <Text>
                   {b.category_id
@@ -310,10 +321,11 @@ export default function PlanningScreen() {
             <Text variant="label" className="mb-2">
               Target date (optional)
             </Text>
-            <Input
+            <DateField
               value={goalTargetDate}
-              onChangeText={setGoalTargetDate}
-              placeholder="YYYY-MM-DD"
+              onChange={setGoalTargetDate}
+              placeholder="No target date"
+              clearable
               className="mb-3"
             />
             <Button
@@ -325,19 +337,7 @@ export default function PlanningScreen() {
               <Pressable
                 key={g.id}
                 className="mt-3 flex-row items-center justify-between border-t border-border pt-3"
-                onLongPress={() =>
-                  Alert.alert("Delete goal?", undefined, [
-                    { text: "Cancel", style: "cancel" },
-                    {
-                      text: "Delete",
-                      style: "destructive",
-                      onPress: async () => {
-                        await deleteSavingsGoal(g.id);
-                        await onRefresh();
-                      },
-                    },
-                  ])
-                }
+                onLongPress={() => setConfirming({ kind: "goal", id: g.id })}
               >
                 <Text>{g.name}</Text>
                 <PrivateAmount className="font-mono font-semibold">
@@ -367,6 +367,18 @@ export default function PlanningScreen() {
           </Card>
         </ScrollView>
       )}
+
+      <ConfirmSheet
+        open={confirming !== null}
+        title={
+          confirming?.kind === "goal"
+            ? "Delete this goal?"
+            : "Delete this budget?"
+        }
+        message="This cannot be undone. Your transactions are not affected."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirming(null)}
+      />
     </Screen>
   );
 }

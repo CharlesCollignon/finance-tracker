@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -35,6 +34,7 @@ import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
+import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import {
   applyRecurringForMonth,
@@ -65,6 +65,7 @@ const FILTERS: FilterType[] = [
 export default function TransactionsScreen() {
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
+  const { toast } = useToast();
   const now = parseMonthParams();
   const [year, setYear] = useState(now.year);
   const [month, setMonth] = useState(now.month);
@@ -128,13 +129,13 @@ export default function TransactionsScreen() {
     const preview = await previewApplyRecurringForMonth(year, month);
     setPending(false);
     if (preview.error) {
-      Alert.alert("Error", preview.error);
+      toast(preview.error, "error");
       return;
     }
     const plan = preview.plan ?? { toCreate: [], toUpdate: [] };
     if (plan.toCreate.length === 0 && plan.toUpdate.length === 0) {
       setApplyPending(false);
-      Alert.alert("Done", "All recurring entries already applied");
+      toast("All recurring entries already applied");
       return;
     }
     setApplyPlan(plan);
@@ -146,7 +147,7 @@ export default function TransactionsScreen() {
     const result = await applyRecurringForMonth(year, month, includeUpdates);
     setPending(false);
     if (result.error) {
-      Alert.alert("Error", result.error);
+      toast(result.error, "error");
       return;
     }
     setApplySheetOpen(false);

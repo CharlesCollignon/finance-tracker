@@ -47,7 +47,8 @@
         {
           "faceIDPermission": "Allow Pluclair to use Face ID to unlock the app."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

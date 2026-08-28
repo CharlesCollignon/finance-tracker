@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Switch, View } from "react-native";
+import { Switch, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { Text } from "@/components/ui/Text";
 import {
   deletePasskey,
@@ -70,6 +71,10 @@ export function PasskeysCard() {
   const [passkeys, setPasskeys] = useState<PasskeyItem[]>([]);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<{
+    id: string;
+    label: string;
+  } | null>(null);
 
   const refresh = useCallback(async () => {
     const result = await listPasskeys();
@@ -96,25 +101,22 @@ export function PasskeysCard() {
   }
 
   function onDelete(id: string, label: string) {
-    Alert.alert("Remove passkey", `Remove ${label}?`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Remove",
-        style: "destructive",
-        onPress: () => {
-          void (async () => {
-            setPending(true);
-            const result = await deletePasskey(id);
-            setPending(false);
-            if (result.error) {
-              setMessage(result.error);
-              return;
-            }
-            await refresh();
-          })();
-        },
-      },
-    ]);
+    setConfirming({ id, label });
+  }
+
+  async function confirmDelete() {
+    if (!confirming) {
+      return;
+    }
+    setPending(true);
+    const result = await deletePasskey(confirming.id);
+    setPending(false);
+    setConfirming(null);
+    if (result.error) {
+      setMessage(result.error);
+      return;
+    }
+    await refresh();
   }
 
   return (
@@ -166,6 +168,22 @@ export function PasskeysCard() {
       {message ? (
         <Text className="mt-2 text-destructive">{message}</Text>
       ) : null}
+
+      <ConfirmSheet
+        open={confirming !== null}
+        title="Remove passkey"
+        message={
+          confirming
+            ? `Remove ${confirming.label}? You can add it again later.`
+            : undefined
+        }
+        confirmLabel="Remove"
+        pending={pending}
+        onConfirm={() => {
+          void confirmDelete();
+        }}
+        onCancel={() => setConfirming(null)}
+      />
     </Card>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { type Href, useRouter } from "expo-router";
 
 import { Button } from "@/components/ui/Button";
@@ -12,6 +12,7 @@ import {
   PasskeysCard,
 } from "@/components/profile/SecurityCards";
 import { useAuth } from "@/providers/AuthProvider";
+import { useToast } from "@/providers/ToastProvider";
 import { useCurrency } from "@/providers/CurrencyProvider";
 import { deleteAllUserData, updateProfile } from "@/lib/mutations";
 import { supabase } from "@/lib/supabase";
@@ -25,6 +26,7 @@ import {
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [fullName, setFullName] = useState(
     (user?.user_metadata?.full_name as string | undefined) ??
       (user?.user_metadata?.name as string | undefined) ??
@@ -56,16 +58,16 @@ export default function ProfileScreen() {
     const result = await deleteAllUserData(confirmData);
     setPending(false);
     if (result.error) {
-      Alert.alert("Error", result.error);
+      toast(result.error, "error");
       return;
     }
     setConfirmData("");
-    Alert.alert("Done", result.message ?? "Data deleted");
+    toast(result.message ?? "Data deleted", "success");
   }
 
   async function handleDeleteAccount() {
     if (confirmAccount !== "DELETE") {
-      Alert.alert("Confirm", "Type DELETE to confirm account deletion.");
+      toast("Type DELETE to confirm account deletion.", "error");
       return;
     }
 
@@ -87,10 +89,7 @@ export default function ProfileScreen() {
     } catch (err) {
       const fallback =
         "Account deletion requires the delete-account Edge Function. Your data can still be wiped below, then contact support to close the auth user.";
-      Alert.alert(
-        "Could not delete account",
-        err instanceof Error ? `${err.message}\n\n${fallback}` : fallback,
-      );
+      toast(err instanceof Error ? err.message : fallback, "error");
     } finally {
       setPending(false);
     }

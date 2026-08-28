@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -34,6 +33,7 @@ import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
+import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import {
   previewApplyRecurringForMonth,
@@ -55,6 +55,7 @@ const GROUP_LABELS: Record<AllocType, string> = {
 export default function RecurringScreen() {
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
+  const { toast } = useToast();
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<RecurringTemplateWithCategory | null>(
@@ -253,7 +254,7 @@ export default function RecurringScreen() {
                       !item.active,
                     );
                     if (result.error) {
-                      Alert.alert("Error", result.error);
+                      toast(result.error, "error");
                       return;
                     }
                     await reload();

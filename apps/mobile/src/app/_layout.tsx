@@ -14,6 +14,7 @@ import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { BiometricLockProvider } from "@/providers/BiometricLockProvider";
 import { CurrencyProvider } from "@/providers/CurrencyProvider";
 import { PrivacyProvider } from "@/providers/PrivacyProvider";
+import { ToastProvider } from "@/providers/ToastProvider";
 import { initTheme } from "@/lib/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -78,7 +79,9 @@ export default function RootLayout() {
             <BiometricLockProvider>
               <PrivacyProvider>
                 <CurrencyProvider>
-                  <RootNavigator fontsReady={fontsReady} />
+                  <ToastProvider>
+                    <RootNavigator fontsReady={fontsReady} />
+                  </ToastProvider>
                 </CurrencyProvider>
               </PrivacyProvider>
             </BiometricLockProvider>
