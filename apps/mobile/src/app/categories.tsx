@@ -120,7 +120,17 @@ export default function CategoriesScreen() {
             <EmptyState
               title="No categories yet"
               description="Categories group your transactions into income, spending, savings and investments."
-            />
+            >
+              <Button
+                label="New category"
+                variant="pill"
+                icon="add"
+                onPress={() => {
+                  setEditing(null);
+                  setFormOpen(true);
+                }}
+              />
+            </EmptyState>
           ) : (
             groups.map((group, groupIndex) => (
               <StaggerItem key={group.type} index={groupIndex}>

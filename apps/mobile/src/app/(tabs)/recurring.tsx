@@ -199,9 +199,19 @@ export default function RecurringScreen() {
           }
           ListEmptyComponent={
             <EmptyState
-              title="No recurring items"
-              description="Set up rent, DCA contributions, and other repeating flows."
-            />
+              title="No recurring items yet"
+              description="Rent, salary, subscriptions, DCA contributions — anything that repeats. Add them once and Pluclair fills each month for you."
+            >
+              <Button
+                label="Add recurring item"
+                variant="pill"
+                icon="add"
+                onPress={() => {
+                  setEditing(null);
+                  setFormOpen(true);
+                }}
+              />
+            </EmptyState>
           }
           contentContainerClassName="gap-2 pb-6"
           renderItem={({ item, index }) => (

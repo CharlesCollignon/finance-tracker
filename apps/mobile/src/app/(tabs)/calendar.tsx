@@ -196,9 +196,16 @@ export default function CalendarScreen() {
 
           {dayTxs.length === 0 ? (
             <EmptyState
-              title="No entries this day"
-              description="Add a transaction for the selected date."
-            />
+              title="Nothing on this day"
+              description="Pick another day, or add what happened on this one."
+            >
+              <Button
+                label="Add transaction"
+                variant="pill"
+                icon="add"
+                onPress={() => setFormOpen(true)}
+              />
+            </EmptyState>
           ) : (
             <Card bezel innerClassName="px-2 py-1">
               {dayTxs.map((tx, index) => (
