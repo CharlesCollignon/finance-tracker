@@ -1,5 +1,6 @@
-import "react-native-url-polyfill/auto";
-
+// No URL polyfill here: Expo's winter runtime already installs a spec-compliant
+// URL/URLSearchParams (whatwg-url-minimum) plus URL.createObjectURL. Importing
+// react-native-url-polyfill overwrote those globals with a weaker version.
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import { AppState } from "react-native";
