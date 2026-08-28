@@ -143,6 +143,19 @@ export default function ProfileScreen() {
         </Card>
 
         <Card bezel>
+          <Text className="text-base font-semibold">Categories</Text>
+          <Text variant="muted" className="mt-1 mb-3">
+            Add, rename, archive, or remove the categories you file transactions
+            under.
+          </Text>
+          <Button
+            label="Manage categories"
+            variant="outline"
+            onPress={() => router.push("/categories" as Href)}
+          />
+        </Card>
+
+        <Card bezel>
           <Text className="text-base font-semibold">Appearance</Text>
           <Text variant="muted" className="mt-1 mb-3">
             Light, dark, or follow the device.

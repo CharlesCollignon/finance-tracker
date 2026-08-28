@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, Pressable, RefreshControl, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  TextInput,
+  View,
+} from "react-native";
 
 import { parseMonthParams, todayIsoLocal } from "@finance/core/constants";
 import {
@@ -31,6 +39,7 @@ import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
+import { useThemeColors } from "@/theme/useThemeColors";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import {
   applyRecurringForMonth,
@@ -63,10 +72,13 @@ export default function TransactionsScreen() {
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
+  const colors = useThemeColors();
   const now = parseMonthParams();
   const [year, setYear] = useState(now.year);
   const [month, setMonth] = useState(now.month);
   const [filter, setFilter] = useState<FilterType>("all");
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
   const [pending, setPending] = useState(false);
@@ -114,12 +126,38 @@ export default function TransactionsScreen() {
     void refreshApplyPending();
   }, [refreshApplyPending, transactions]);
 
-  const filtered = useMemo(() => {
-    if (filter === "all") {
-      return transactions;
+  const usedCategories = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const tx of transactions) {
+      if (!seen.has(tx.category_id)) {
+        seen.set(tx.category_id, tx.categories.name);
+      }
     }
-    return transactions.filter((tx) => tx.categories.type === filter);
-  }, [transactions, filter]);
+    return [...seen.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [transactions]);
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return transactions.filter((tx) => {
+      if (filter !== "all" && tx.categories.type !== filter) {
+        return false;
+      }
+      if (categoryFilter !== "all" && tx.category_id !== categoryFilter) {
+        return false;
+      }
+      if (!query) {
+        return true;
+      }
+      // Same fields the web view searches: category name and note.
+      return (
+        tx.categories.name.toLowerCase().includes(query) ||
+        (tx.note ?? "").toLowerCase().includes(query)
+      );
+    });
+  }, [transactions, filter, categoryFilter, search]);
 
   async function handleApplyRecurring() {
     setPending(true);
@@ -214,6 +252,37 @@ export default function TransactionsScreen() {
         />
       </View>
 
+      <View className="mb-3 flex-row items-center gap-2 rounded-full border border-border bg-card px-3">
+        <Ionicons
+          name="search-outline"
+          size={16}
+          color={colors.mutedForeground}
+        />
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search category or note…"
+          placeholderTextColor={colors.mutedForeground}
+          accessibilityLabel="Search transactions"
+          returnKeyType="search"
+          className="h-11 flex-1 font-sans text-sm text-foreground"
+        />
+        {search ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
+            hitSlop={8}
+            onPress={() => setSearch("")}
+          >
+            <Ionicons
+              name="close-circle"
+              size={16}
+              color={colors.mutedForeground}
+            />
+          </Pressable>
+        ) : null}
+      </View>
+
       <View className="mb-4 flex-row flex-wrap justify-center gap-2">
         {FILTERS.map((value) => {
           const selected = filter === value;
@@ -238,6 +307,45 @@ export default function TransactionsScreen() {
           );
         })}
       </View>
+
+      {usedCategories.length > 1 ? (
+        <View className="mb-4">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerClassName="gap-2 px-0.5"
+          >
+            {[{ id: "all", name: "All categories" }, ...usedCategories].map(
+              (option) => {
+                const selected = categoryFilter === option.id;
+                return (
+                  <Pressable
+                    key={option.id}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    onPress={() => setCategoryFilter(option.id)}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5",
+                      selected
+                        ? "border-primary bg-primary/15"
+                        : "border-border bg-background",
+                    )}
+                  >
+                    <Text
+                      className={cn(
+                        "text-xs font-medium",
+                        selected ? "text-primary" : "text-muted-foreground",
+                      )}
+                    >
+                      {option.name}
+                    </Text>
+                  </Pressable>
+                );
+              },
+            )}
+          </ScrollView>
+        </View>
+      ) : null}
 
       {loading && !data ? (
         <ScreenSkeleton rows={5} />
