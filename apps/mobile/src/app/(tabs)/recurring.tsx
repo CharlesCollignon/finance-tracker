@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  View,
-} from "react-native";
+import { FlatList, Pressable, RefreshControl, View } from "react-native";
 import { type Href, useRouter } from "expo-router";
 
 import { parseMonthParams } from "@finance/core/constants";
@@ -21,7 +15,9 @@ import type {
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
 
+import { StaggerItem } from "@/components/motion/Stagger";
 import { cn } from "@/lib/cn";
+import { hapticLight } from "@/lib/haptics";
 import { RecurringFormModal } from "@/components/RecurringFormModal";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Badge } from "@/components/ui/Badge";
@@ -29,6 +25,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
+import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
@@ -190,7 +187,7 @@ export default function RecurringScreen() {
       </View>
 
       {loading && !data ? (
-        <ActivityIndicator />
+        <ScreenSkeleton rows={5} />
       ) : error ? (
         <Text className="text-destructive">{error}</Text>
       ) : (
@@ -207,69 +204,72 @@ export default function RecurringScreen() {
             />
           }
           contentContainerClassName="gap-2 pb-6"
-          renderItem={({ item }) => (
-            <Card
-              bezel
-              className={item.active ? "" : "opacity-60"}
-              innerClassName="flex-row items-start gap-3 p-3"
-            >
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Edit ${item.categories.name}`}
-                className="min-w-0 flex-1"
-                onPress={() => {
-                  setEditing(item);
-                  setFormOpen(true);
-                }}
+          renderItem={({ item, index }) => (
+            <StaggerItem index={index}>
+              <Card
+                bezel
+                className={item.active ? "" : "opacity-60"}
+                innerClassName="flex-row items-start gap-3 p-3"
               >
-                <Text className="text-sm font-medium">
-                  {item.categories.name}
-                </Text>
-                {isCryptoCategoryName(item.categories.name) ? (
-                  <Text variant="muted" className="mt-0.5 text-xs">
-                    Fixed EUR → Bitcoin
-                  </Text>
-                ) : null}
-                {item.description ? (
-                  <Text variant="muted" className="mt-0.5 text-xs">
-                    {item.description}
-                  </Text>
-                ) : null}
-                <Text variant="muted" className="mt-1 text-xs">
-                  {formatRecurrenceSchedule(item)}
-                </Text>
-              </Pressable>
-
-              <View className="shrink-0 items-end gap-2">
-                <PrivateAmount className="font-mono text-sm font-semibold">
-                  {`${item.pricing_type === "shares" ? "≈" : ""}${formatEuro(Number(item.amount))}`}
-                </PrivateAmount>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityState={{ selected: item.active }}
-                  accessibilityLabel={`${item.active ? "Deactivate" : "Activate"} ${item.categories.name}`}
-                  onPress={async () => {
-                    const result = await toggleRecurringActive(
-                      item.id,
-                      !item.active,
-                    );
-                    if (result.error) {
-                      toast(result.error, "error");
-                      return;
-                    }
-                    await reload();
-                    await refreshApplyPending();
+                  accessibilityLabel={`Edit ${item.categories.name}`}
+                  className="min-w-0 flex-1"
+                  onPress={() => {
+                    void hapticLight();
+                    setEditing(item);
+                    setFormOpen(true);
                   }}
                 >
-                  <Badge
-                    label={item.active ? "On" : "Off"}
-                    size="sm"
-                    variant={item.active ? "surface" : "outline"}
-                    className="rounded-full"
-                  />
+                  <Text className="text-sm font-medium">
+                    {item.categories.name}
+                  </Text>
+                  {isCryptoCategoryName(item.categories.name) ? (
+                    <Text variant="muted" className="mt-0.5 text-xs">
+                      Fixed EUR → Bitcoin
+                    </Text>
+                  ) : null}
+                  {item.description ? (
+                    <Text variant="muted" className="mt-0.5 text-xs">
+                      {item.description}
+                    </Text>
+                  ) : null}
+                  <Text variant="muted" className="mt-1 text-xs">
+                    {formatRecurrenceSchedule(item)}
+                  </Text>
                 </Pressable>
-              </View>
-            </Card>
+
+                <View className="shrink-0 items-end gap-2">
+                  <PrivateAmount className="font-mono text-sm font-semibold">
+                    {`${item.pricing_type === "shares" ? "≈" : ""}${formatEuro(Number(item.amount))}`}
+                  </PrivateAmount>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: item.active }}
+                    accessibilityLabel={`${item.active ? "Deactivate" : "Activate"} ${item.categories.name}`}
+                    onPress={async () => {
+                      const result = await toggleRecurringActive(
+                        item.id,
+                        !item.active,
+                      );
+                      if (result.error) {
+                        toast(result.error, "error");
+                        return;
+                      }
+                      await reload();
+                      await refreshApplyPending();
+                    }}
+                  >
+                    <Badge
+                      label={item.active ? "On" : "Off"}
+                      size="sm"
+                      variant={item.active ? "surface" : "outline"}
+                      className="rounded-full"
+                    />
+                  </Pressable>
+                </View>
+              </Card>
+            </StaggerItem>
           )}
         />
       )}

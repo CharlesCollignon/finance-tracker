@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { View } from "react-native";
 
+import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
@@ -10,6 +11,9 @@ type Size = "md" | "lg";
 interface StatHeroProps {
   label: string;
   amount: string;
+  /** Supply with `format` to count the figure up when it changes. */
+  animateValue?: number;
+  format?: (value: number) => string;
   amountClassName?: string;
   subtitle?: ReactNode;
   status?: ReactNode;
@@ -39,6 +43,8 @@ const GAP: Record<Size, string> = {
 export function StatHero({
   label,
   amount,
+  animateValue,
+  format,
   amountClassName,
   subtitle,
   status,
@@ -52,17 +58,31 @@ export function StatHero({
           {label}
         </Text>
       ) : null}
-      <PrivateAmount
-        className={cn(
-          "font-semibold tracking-tight",
-          label ? GAP[size] : undefined,
-          AMOUNT_FONT[size],
-          AMOUNT_SIZE[size],
-          amountClassName,
-        )}
-      >
-        {amount}
-      </PrivateAmount>
+      {animateValue !== undefined && format ? (
+        <AnimatedAmount
+          value={animateValue}
+          format={format}
+          className={cn(
+            "font-semibold tracking-tight",
+            label ? GAP[size] : undefined,
+            AMOUNT_FONT[size],
+            AMOUNT_SIZE[size],
+            amountClassName,
+          )}
+        />
+      ) : (
+        <PrivateAmount
+          className={cn(
+            "font-semibold tracking-tight",
+            label ? GAP[size] : undefined,
+            AMOUNT_FONT[size],
+            AMOUNT_SIZE[size],
+            amountClassName,
+          )}
+        >
+          {amount}
+        </PrivateAmount>
+      )}
       {subtitle ? (
         <View className={GAP[size]}>
           <Text className="text-center text-sm text-muted-foreground">

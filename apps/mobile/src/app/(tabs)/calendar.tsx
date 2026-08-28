@@ -1,11 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  View,
-} from "react-native";
+import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 
 import {
   formatMonthLabel,
@@ -34,9 +28,11 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
+import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
+import { hapticLight } from "@/lib/haptics";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -131,7 +127,7 @@ export default function CalendarScreen() {
       </Card>
 
       {loading && !data ? (
-        <ActivityIndicator />
+        <ScreenSkeleton rows={4} />
       ) : error ? (
         <Text className="text-destructive">{error}</Text>
       ) : (
@@ -163,6 +159,7 @@ export default function CalendarScreen() {
                     accessibilityLabel={day.date}
                     accessibilityState={{ selected }}
                     onPress={() => {
+                      void hapticLight();
                       setSelectedDate(day.date);
                       setSelectionKey(monthKey);
                     }}
@@ -209,7 +206,10 @@ export default function CalendarScreen() {
                   key={tx.id}
                   accessibilityRole="button"
                   accessibilityLabel={`Edit ${tx.categories.name}`}
-                  onPress={() => setEditing(tx)}
+                  onPress={() => {
+                    void hapticLight();
+                    setEditing(tx);
+                  }}
                   className={cn(
                     "flex-row items-start gap-3 px-2 py-3.5",
                     index > 0 && "border-t border-border",

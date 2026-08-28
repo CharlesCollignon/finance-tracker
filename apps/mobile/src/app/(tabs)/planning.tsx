@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  View,
-} from "react-native";
+import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 
 import { buildBudgetProgress } from "@finance/core/budget-limits";
 import {
@@ -28,6 +22,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Screen } from "@/components/ui/Screen";
+import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
@@ -197,7 +192,7 @@ export default function PlanningScreen() {
   return (
     <Screen title="Planning">
       {loading && !data ? (
-        <ActivityIndicator />
+        <ScreenSkeleton rows={4} />
       ) : error ? (
         <Text className="text-destructive">{error}</Text>
       ) : (
