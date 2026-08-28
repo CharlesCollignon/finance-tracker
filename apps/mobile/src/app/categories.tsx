@@ -102,7 +102,7 @@ export default function CategoriesScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-4 pb-6"
+          contentContainerClassName="gap-4 pb-28"
           showsVerticalScrollIndicator={false}
         >
           <Button

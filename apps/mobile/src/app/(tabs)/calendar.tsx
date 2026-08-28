@@ -135,7 +135,7 @@ export default function CalendarScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="pb-6"
+          contentContainerClassName="pb-28"
         >
           <View className="mb-2 flex-row">
             {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (

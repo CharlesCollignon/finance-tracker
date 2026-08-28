@@ -289,7 +289,7 @@ export default function RecurringScreen() {
               />
             </EmptyState>
           }
-          contentContainerClassName="gap-2 pb-6"
+          contentContainerClassName="gap-2 pb-28"
           renderItem={({ item, index }) => (
             <StaggerItem index={index}>
               <Card

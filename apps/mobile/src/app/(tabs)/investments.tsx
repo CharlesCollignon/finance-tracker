@@ -25,6 +25,7 @@ import type {
 } from "@finance/core/types/database";
 
 import { InvestmentPositionRow } from "@/components/InvestmentPositionRow";
+import { WalletPerformance } from "@/components/WalletPerformance";
 import { InvestmentPositionSheet } from "@/components/InvestmentPositionSheet";
 import { Button } from "@/components/ui/Button";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
@@ -59,6 +60,7 @@ export default function InvestmentsScreen() {
   const [toWallet, setToWallet] = useState<InvestmentWalletId>("pea");
   const [amount, setAmount] = useState("");
   const [pending, setPending] = useState(false);
+  const [activeWallet, setActiveWallet] = useState<InvestmentWalletId>("pea");
   const [editingPosition, setEditingPosition] =
     useState<InvestmentPositionItem | null>(null);
 
@@ -104,6 +106,9 @@ export default function InvestmentsScreen() {
   const fundingNeeds = (data?.fundingNeeds ?? []).filter(
     (need) => need.monthlyTotal > 0,
   );
+  const activeItems =
+    portfolio?.columns.find((entry) => entry.walletId === activeWallet)
+      ?.items ?? [];
   const hasData =
     portfolio &&
     portfolio.columns.some(
@@ -142,7 +147,7 @@ export default function InvestmentsScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-8 pb-6 pt-2"
+          contentContainerClassName="gap-8 pb-28 pt-2"
         >
           <StatHero
             label="Market value"
@@ -193,49 +198,37 @@ export default function InvestmentsScreen() {
             />
           ) : null}
 
-          {INVESTMENT_WALLET_IDS.map((walletId) => {
-            const column =
-              portfolio.columns.find((entry) => entry.walletId === walletId) ??
-              null;
-            const next = nextByWallet[walletId];
-            return (
-              <Card key={walletId} bezel>
-                <Text className="font-bold">
-                  {INVESTMENT_WALLET_LABELS[walletId]}
+          <WalletPerformance
+            portfolio={portfolio}
+            activeWallet={activeWallet}
+            onWalletChange={setActiveWallet}
+            nextByWallet={nextByWallet}
+          />
+
+          <View>
+            <Text className="mb-2 text-base">
+              {`${INVESTMENT_WALLET_LABELS[activeWallet]} positions`}
+            </Text>
+            <Card bezel innerClassName="px-4 py-1">
+              {activeItems.length === 0 ? (
+                <Text variant="muted" className="py-4 text-sm">
+                  No positions in this wallet yet.
                 </Text>
-                <PrivateAmount className="mt-1 font-mono text-xl font-bold">
-                  {formatEuro(column?.totalMarketValue ?? 0)}
-                </PrivateAmount>
-                <Text variant="muted">
-                  Invested{" "}
-                  <PrivateAmount className="font-mono">
-                    {formatEuro(column?.totalInvested ?? 0)}
-                  </PrivateAmount>
-                </Text>
-                {next ? (
-                  <Text variant="muted" className="mt-1">
-                    Next: {next.name} · {next.dateLabel} ·{" "}
-                    <PrivateAmount className="font-mono">
-                      {formatEuro(next.amount)}
-                    </PrivateAmount>
-                  </Text>
-                ) : null}
-                <View className="mt-1">
-                  {(column?.items ?? []).map((item, index) => (
-                    <View
-                      key={item.id}
-                      className={index > 0 ? "border-t border-border" : ""}
-                    >
-                      <InvestmentPositionRow
-                        item={item}
-                        onEdit={() => setEditingPosition(item)}
-                      />
-                    </View>
-                  ))}
-                </View>
-              </Card>
-            );
-          })}
+              ) : (
+                activeItems.map((item, index) => (
+                  <View
+                    key={item.id}
+                    className={index > 0 ? "border-t border-border" : ""}
+                  >
+                    <InvestmentPositionRow
+                      item={item}
+                      onEdit={() => setEditingPosition(item)}
+                    />
+                  </View>
+                ))
+              )}
+            </Card>
+          </View>
 
           <Card bezel>
             <Text className="font-bold">Cash → wallet transfers</Text>

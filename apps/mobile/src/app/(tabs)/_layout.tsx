@@ -1,7 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
+import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { Blur } from "@/components/ui/Blur";
 
 import { useThemeColors } from "@/theme/useThemeColors";
 
@@ -54,7 +57,7 @@ const TABS: TabConfig[] = [
   },
 ];
 
-/** Solid bar pinned to the bottom edge, full width. */
+/** Full-width bar on the bottom edge. Square corners, no inset. */
 const BAR_HEIGHT = 60;
 
 export default function TabsLayout() {
@@ -69,15 +72,24 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarLabelStyle: { fontSize: 10, fontWeight: "500" },
         tabBarItemStyle: { paddingVertical: 4 },
+        // Blur only means something if content passes beneath the bar, so it
+        // overlays rather than docks. Screens pad their scroll content to
+        // clear it.
+        tabBarBackground: () => <Blur style={StyleSheet.absoluteFill} />,
         tabBarStyle: {
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
           height: BAR_HEIGHT + insets.bottom,
           paddingBottom: insets.bottom,
-          backgroundColor: colors.card,
-          borderTopWidth: 1,
+          backgroundColor: "transparent",
+          borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: colors.border,
           elevation: 0,
           shadowOpacity: 0,
         },
+        sceneStyle: { backgroundColor: colors.background },
       }}
     >
       {TABS.map(({ name, title, icon, iconInactive }) => (
