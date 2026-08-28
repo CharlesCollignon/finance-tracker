@@ -19,6 +19,7 @@ import { PrivateAmount } from "@/components/PrivateAmount";
 import { ProgressRing } from "@/components/charts/ProgressRing";
 import { StatHero } from "@/components/StatHero";
 import { WalletsCard } from "@/components/WalletsCard";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
@@ -204,9 +205,16 @@ export default function DashboardScreen() {
       ) : !summary ? (
         <EmptyState
           className="mt-6"
-          title="No budget data"
-          description="Add income and expenses to see your overview."
-        />
+          title="Nothing to show for this month yet"
+          description="Pluclair works from what repeats: add your income and your fixed costs once, and every month is forecast for you."
+        >
+          <Button
+            label="Set up recurring"
+            variant="pill"
+            icon="arrow-forward"
+            onPress={() => router.push("/recurring")}
+          />
+        </EmptyState>
       ) : (
         <ScrollView
           refreshControl={

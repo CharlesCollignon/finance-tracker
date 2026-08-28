@@ -135,7 +135,7 @@ export default function InvestmentsScreen() {
       ) : !portfolio ? (
         <EmptyState
           title="No wallets"
-          description="Sign in to track PEA, CTO, and crypto positions."
+          description="PEA, CTO and crypto positions appear here once you have investment transactions or recurring contributions."
         />
       ) : (
         <ScrollView
@@ -189,7 +189,7 @@ export default function InvestmentsScreen() {
           {!hasData ? (
             <EmptyState
               title="No investments tracked yet"
-              description="Add positions on web, or link recurring DCA templates — they sync into wallets automatically."
+              description="Set up a recurring investment and it becomes a tracked position here automatically, with its own market value and P/L."
             />
           ) : null}
 

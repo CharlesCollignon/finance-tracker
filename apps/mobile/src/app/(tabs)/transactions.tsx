@@ -362,9 +362,19 @@ export default function TransactionsScreen() {
               }
               ListEmptyComponent={
                 <EmptyState
-                  title="No transactions yet"
-                  description="Add a manual entry or apply your recurring items for this month."
-                />
+                  title="No transactions this month"
+                  description="Apply your recurring items to fill the month in one tap, or add a one-off entry."
+                >
+                  <Button
+                    label="Add transaction"
+                    variant="pill"
+                    icon="add"
+                    onPress={() => {
+                      setEditing(null);
+                      setFormOpen(true);
+                    }}
+                  />
+                </EmptyState>
               }
               contentContainerClassName="px-3 py-1 pb-8"
               ItemSeparatorComponent={() => <View className="h-px bg-border" />}
