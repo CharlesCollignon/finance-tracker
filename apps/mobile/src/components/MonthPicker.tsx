@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { formatMonthLabel, shiftMonth } from "@finance/core/constants";
 import { Text } from "@/components/ui/Text";
-import { COLORS } from "@/theme/tokens";
+import { useThemeColors } from "@/theme/useThemeColors";
 
 interface MonthPickerProps {
   year: number;
@@ -12,8 +12,10 @@ interface MonthPickerProps {
 }
 
 export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
+  const colors = useThemeColors();
+
   return (
-    <View className="flex-row items-center justify-between border border-border bg-card px-2 py-1">
+    <View className="flex-row items-center justify-between rounded-lg border border-border bg-card px-2 py-1">
       <Pressable
         accessibilityLabel="Previous month"
         onPress={() => {
@@ -22,7 +24,7 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
         }}
         className="h-10 w-10 items-center justify-center"
       >
-        <Ionicons name="chevron-back" size={20} color={COLORS.foreground} />
+        <Ionicons name="chevron-back" size={20} color={colors.foreground} />
       </Pressable>
       <Text className="font-semibold">{formatMonthLabel(year, month)}</Text>
       <Pressable
@@ -33,7 +35,7 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
         }}
         className="h-10 w-10 items-center justify-center"
       >
-        <Ionicons name="chevron-forward" size={20} color={COLORS.foreground} />
+        <Ionicons name="chevron-forward" size={20} color={colors.foreground} />
       </Pressable>
     </View>
   );

@@ -9,8 +9,7 @@ export function chartPalette(scheme: ColorSchemeName): string[] {
 }
 
 export function chartTextColor(scheme: ColorSchemeName): string {
-  return colorsForScheme(scheme === "light" ? "light" : "dark")
-    .mutedForeground;
+  return colorsForScheme(scheme === "light" ? "light" : "dark").mutedForeground;
 }
 
 export function chartAxisSplitColor(scheme: ColorSchemeName): string {

@@ -161,15 +161,13 @@ export default function ProfileScreen() {
                   }}
                   className={`rounded-full border px-4 py-1.5 ${
                     selected
-                      ? "border-foreground bg-foreground dark:border-foreground-dark dark:bg-foreground-dark"
-                      : "border-border bg-background dark:border-border-dark dark:bg-background-dark"
+                      ? "border-foreground bg-foreground"
+                      : "border-border bg-background"
                   }`}
                 >
                   <Text
                     className={`text-center text-xs font-semibold capitalize ${
-                      selected
-                        ? "text-background dark:text-background-dark"
-                        : ""
+                      selected ? "text-background" : ""
                     }`}
                   >
                     {value}
@@ -183,8 +181,8 @@ export default function ProfileScreen() {
         <Card bezel className="p-4">
           <Text className="font-bold">Currency</Text>
           <Text variant="muted" className="mt-1 mb-3">
-            Choose how amounts are labeled. This only changes the symbol —
-            it does not convert your numbers.
+            Choose how amounts are labeled. This only changes the symbol — it
+            does not convert your numbers.
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {(["EUR", "USD"] as const).map((value) => {
@@ -195,15 +193,13 @@ export default function ProfileScreen() {
                   onPress={() => setCurrency(value)}
                   className={`rounded-full border px-4 py-1.5 ${
                     selected
-                      ? "border-foreground bg-foreground dark:border-foreground-dark dark:bg-foreground-dark"
-                      : "border-border bg-background dark:border-border-dark dark:bg-background-dark"
+                      ? "border-foreground bg-foreground"
+                      : "border-border bg-background"
                   }`}
                 >
                   <Text
                     className={`text-center text-xs font-semibold ${
-                      selected
-                        ? "text-background dark:text-background-dark"
-                        : ""
+                      selected ? "text-background" : ""
                     }`}
                   >
                     {value === "EUR" ? "Euro (€)" : "US Dollar ($)"}

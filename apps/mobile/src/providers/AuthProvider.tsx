@@ -171,18 +171,42 @@ async function seedCategoriesSafely(userId: string): Promise<void> {
   }
 }
 
-async function handleAuthUrl(url: string): Promise<boolean> {
+/**
+ * The OAuth redirect can arrive twice: once through the deep-link listener and
+ * once as the openAuthSessionAsync result. A PKCE code is single-use, so the
+ * second exchange would fail and report an error over a sign-in that actually
+ * worked. Share one in-flight exchange per code instead.
+ */
+const authCodeExchanges = new Map<string, Promise<boolean>>();
+
+function exchangeCodeOnce(code: string): Promise<boolean> {
+  const inFlight = authCodeExchanges.get(code);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const exchange = (async () => {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error || !data.user) {
+      // Allow a genuine retry; only a success should be sticky.
+      authCodeExchanges.delete(code);
+      return false;
+    }
+    await seedCategoriesSafely(data.user.id);
+    return true;
+  })();
+
+  authCodeExchanges.set(code, exchange);
+  return exchange;
+}
+
+export async function handleAuthUrl(url: string): Promise<boolean> {
   const parsed = Linking.parse(url);
   const params = parsed.queryParams ?? {};
   const code = typeof params.code === "string" ? params.code : null;
 
   if (code) {
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error || !data.user) {
-      return false;
-    }
-    await seedCategoriesSafely(data.user.id);
-    return true;
+    return exchangeCodeOnce(code);
   }
 
   // Some providers return tokens in the hash fragment.

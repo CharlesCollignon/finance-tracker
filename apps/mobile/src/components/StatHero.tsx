@@ -29,9 +29,7 @@ export function StatHero({
       <PrivateAmount
         className={cn(
           "mt-2 font-serif text-4xl",
-          tone === "danger"
-            ? "text-destructive"
-            : "text-primary-ink dark:text-primary-ink-dark",
+          tone === "danger" ? "text-destructive" : "text-primary-ink",
         )}
       >
         {amount}

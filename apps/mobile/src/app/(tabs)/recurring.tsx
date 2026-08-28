@@ -158,7 +158,7 @@ export default function RecurringScreen() {
                 ) : null}
                 <Text variant="muted">{formatRecurrenceSchedule(item)}</Text>
               </Pressable>
-              <View className="mt-2 flex-row items-center justify-between border-t border-border pt-2 dark:border-border-dark">
+              <View className="mt-2 flex-row items-center justify-between border-t border-border pt-2">
                 <PrivateAmount className="font-mono font-bold">
                   {formatEuro(Number(item.amount))}
                 </PrivateAmount>
@@ -183,8 +183,8 @@ export default function RecurringScreen() {
                   }}
                   className={`rounded-full border px-3 py-1 ${
                     item.active
-                      ? "border-foreground bg-primary dark:border-foreground-dark"
-                      : "border-border dark:border-border-dark"
+                      ? "border-foreground bg-primary"
+                      : "border-border"
                   }`}
                 >
                   <Text className="text-xs font-semibold">

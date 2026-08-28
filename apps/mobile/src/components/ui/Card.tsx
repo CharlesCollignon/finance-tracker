@@ -22,19 +22,12 @@ export function Card({
       <View
         style={style}
         className={cn(
-          "rounded-[28px] border border-border bg-black/[0.03] p-1.5",
-          "dark:border-border-dark dark:bg-white/[0.04]",
+          "rounded-[28px] border border-border bg-foreground/[0.04] p-1.5",
           className,
         )}
         {...props}
       >
-        <View
-          className={cn(
-            "rounded-[22px] bg-card p-4",
-            "dark:bg-card-dark",
-            innerClassName,
-          )}
-        >
+        <View className={cn("rounded-[22px] bg-card p-4", innerClassName)}>
           {children}
         </View>
       </View>
@@ -44,11 +37,7 @@ export function Card({
   return (
     <View
       style={style}
-      className={cn(
-        "rounded-lg border border-border bg-card p-4",
-        "dark:border-border-dark dark:bg-card-dark",
-        className,
-      )}
+      className={cn("rounded-lg border border-border bg-card p-4", className)}
       {...props}
     >
       {children}

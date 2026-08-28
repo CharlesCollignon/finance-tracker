@@ -1,15 +1,13 @@
 import { Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useColorScheme } from "react-native";
 
 import { usePrivacy } from "@/providers/PrivacyProvider";
-import { colorsForScheme } from "@/theme/tokens";
+import { useThemeColors } from "@/theme/useThemeColors";
 import { hapticLight } from "@/lib/haptics";
 
 export function PrivacyToggle() {
   const { hidden, toggle } = usePrivacy();
-  const scheme = useColorScheme();
-  const colors = colorsForScheme(scheme === "light" ? "light" : "dark");
+  const colors = useThemeColors();
 
   return (
     <Pressable
