@@ -1,4 +1,6 @@
-import { Pressable, Text, type PressableProps } from "react-native";
+import { Pressable, Text, View, type PressableProps } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import type { ComponentProps } from "react";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -10,7 +12,7 @@ import { cn } from "@/lib/cn";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-type Variant = "default" | "secondary" | "outline" | "ghost";
+type Variant = "default" | "secondary" | "outline" | "ghost" | "pill";
 type Size = "sm" | "md" | "lg";
 
 export interface ButtonProps extends PressableProps {
@@ -18,6 +20,8 @@ export interface ButtonProps extends PressableProps {
   variant?: Variant;
   size?: Size;
   className?: string;
+  /** Trailing icon chip; the web pill puts a nub here. */
+  icon?: ComponentProps<typeof Ionicons>["name"];
 }
 
 const CONTAINER: Record<Variant, string> = {
@@ -25,6 +29,7 @@ const CONTAINER: Record<Variant, string> = {
   secondary: "bg-secondary rounded-md",
   outline: "bg-transparent border border-border rounded-md",
   ghost: "bg-transparent rounded-md",
+  pill: "bg-primary rounded-full",
 };
 
 const LABEL: Record<Variant, string> = {
@@ -32,6 +37,7 @@ const LABEL: Record<Variant, string> = {
   secondary: "text-secondary-foreground",
   outline: "text-foreground",
   ghost: "text-foreground",
+  pill: "text-primary-foreground",
 };
 
 const PADDING: Record<Size, string> = {
@@ -52,6 +58,7 @@ export function Button({
   variant = "default",
   size = "md",
   className,
+  icon,
   disabled,
   onPress,
   ...props
@@ -67,9 +74,11 @@ export function Button({
       disabled={disabled}
       style={animatedStyle}
       className={cn(
-        "items-center justify-center",
+        "flex-row items-center justify-center gap-2",
         CONTAINER[variant],
-        PADDING[size],
+        // The pill's trailing nub sits inside its own end padding, as on web.
+        variant === "pill" && icon ? "py-1.5 pl-5 pr-1.5" : PADDING[size],
+        variant !== "pill" || !icon ? PADDING[size] : "",
         disabled && "opacity-50",
         className,
       )}
@@ -88,6 +97,11 @@ export function Button({
       <Text className={cn("font-semibold", LABEL[variant], LABEL_SIZE[size])}>
         {label}
       </Text>
+      {icon ? (
+        <View className="h-8 w-8 items-center justify-center rounded-full bg-black/10">
+          <Ionicons name={icon} size={16} color="#171100" />
+        </View>
+      ) : null}
     </AnimatedPressable>
   );
 }

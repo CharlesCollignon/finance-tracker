@@ -19,12 +19,14 @@ import {
   groupTransactionsByDate,
 } from "@finance/core/calendar";
 import { computeMonthlyBudget } from "@finance/core/budget";
+import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import type {
   Category,
   RecurringTemplateWithCategory,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { MonthPicker } from "@/components/MonthPicker";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
@@ -34,6 +36,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
+import { cn } from "@/lib/cn";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -51,6 +54,7 @@ export default function CalendarScreen() {
   const [month, setMonth] = useState(now.month);
   const [selectedDate, setSelectedDate] = useState(() => todayIsoLocal());
   const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
 
   const { data, loading, refreshing, onRefresh, reload, error } =
     useRefreshable(async () => {
@@ -135,7 +139,7 @@ export default function CalendarScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="pb-28"
+          contentContainerClassName="pb-6"
         >
           <View className="mb-2 flex-row">
             {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
@@ -199,19 +203,44 @@ export default function CalendarScreen() {
               description="Add a transaction for the selected date."
             />
           ) : (
-            dayTxs.map((tx) => (
-              <Card
-                key={tx.id}
-                bezel
-                className="mb-2"
-                innerClassName="flex-row justify-between p-3"
-              >
-                <Text className="font-semibold">{tx.categories.name}</Text>
-                <PrivateAmount className="font-mono font-bold">
-                  {formatEuro(Number(tx.amount))}
-                </PrivateAmount>
-              </Card>
-            ))
+            <Card bezel innerClassName="px-2 py-1">
+              {dayTxs.map((tx, index) => (
+                <Pressable
+                  key={tx.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Edit ${tx.categories.name}`}
+                  onPress={() => setEditing(tx)}
+                  className={cn(
+                    "flex-row items-start gap-3 px-2 py-3.5",
+                    index > 0 && "border-t border-border",
+                  )}
+                >
+                  <CategoryIcon icon={tx.categories.icon} />
+                  <View className="min-w-0 flex-1">
+                    <Text numberOfLines={1} className="text-sm font-medium">
+                      {tx.categories.name}
+                    </Text>
+                    <Text
+                      variant="muted"
+                      numberOfLines={1}
+                      className="mt-0.5 text-xs"
+                    >
+                      {[tx.recurring_template_id ? "Recurring" : null, tx.note]
+                        .filter(Boolean)
+                        .join(" · ") || "—"}
+                    </Text>
+                  </View>
+                  <PrivateAmount
+                    className={cn(
+                      "font-mono text-sm font-semibold",
+                      TYPE_AMOUNT_CLASS[tx.categories.type],
+                    )}
+                  >
+                    {`${tx.categories.type === "income" ? "+" : "−"}${formatEuro(Number(tx.amount))}`}
+                  </PrivateAmount>
+                </Pressable>
+              ))}
+            </Card>
           )}
         </ScrollView>
       )}
@@ -222,6 +251,18 @@ export default function CalendarScreen() {
           onClose={() => setFormOpen(false)}
           onSaved={reload}
           categories={categories}
+          defaultDate={effectiveSelected}
+        />
+      ) : null}
+
+      {editing ? (
+        <TransactionFormModal
+          open
+          onClose={() => setEditing(null)}
+          onSaved={reload}
+          onDeleted={reload}
+          categories={categories}
+          transaction={editing}
           defaultDate={effectiveSelected}
         />
       ) : null}

@@ -24,6 +24,7 @@ import type {
 } from "@finance/core/types/database";
 
 import { MonthPicker } from "@/components/MonthPicker";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ApplyRecurringSheet } from "@/components/ApplyRecurringSheet";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
@@ -37,7 +38,6 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import {
   applyRecurringForMonth,
-  deleteTransaction,
   previewApplyRecurringForMonth,
 } from "@/lib/mutations";
 import { getCategories, getTransactions } from "@/lib/queries";
@@ -156,24 +156,6 @@ export default function TransactionsScreen() {
     await refreshApplyPending();
   }
 
-  function handleDelete(tx: TransactionWithCategory) {
-    Alert.alert("Delete transaction", tx.categories.name, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          const result = await deleteTransaction(tx.id);
-          if (result.error) {
-            Alert.alert("Error", result.error);
-          } else {
-            await reload();
-          }
-        },
-      },
-    ]);
-  }
-
   return (
     <Screen title="Transactions">
       <MonthPicker
@@ -277,42 +259,36 @@ export default function TransactionsScreen() {
               contentContainerClassName="px-3 py-1 pb-8"
               ItemSeparatorComponent={() => <View className="h-px bg-border" />}
               renderItem={({ item }) => (
-                <View className="flex-row items-center gap-3 py-3">
+                // Whole row opens the edit sheet; delete lives inside it, as
+                // on web.
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Edit ${item.categories.name}`}
+                  className="min-h-14 flex-row items-center gap-3 py-3"
+                  onPress={() => {
+                    setEditing(item);
+                    setFormOpen(true);
+                  }}
+                >
+                  <CategoryIcon icon={item.categories.icon} />
                   <View className="min-w-0 flex-1">
-                    <Text className="font-semibold">
+                    <Text numberOfLines={1} className="text-sm font-medium">
                       {item.categories.name}
                     </Text>
-                    <Text variant="muted">
+                    <Text variant="muted" numberOfLines={1} className="text-xs">
                       {item.occurred_on}
                       {item.note ? ` · ${item.note}` : ""}
                     </Text>
                   </View>
                   <PrivateAmount
                     className={cn(
-                      "font-mono font-bold",
+                      "font-mono text-sm font-semibold",
                       TYPE_AMOUNT_CLASS[item.categories.type],
                     )}
                   >
                     {formatEuro(Number(item.amount))}
                   </PrivateAmount>
-                  <Pressable
-                    onPress={() => {
-                      setEditing(item);
-                      setFormOpen(true);
-                    }}
-                    hitSlop={8}
-                    className="min-h-11 min-w-11 items-center justify-center rounded-full border border-border px-3"
-                  >
-                    <Text className="text-xs">Edit</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => handleDelete(item)}
-                    hitSlop={8}
-                    className="min-h-11 min-w-11 items-center justify-center rounded-full border border-destructive px-3"
-                  >
-                    <Text className="text-xs text-destructive">Del</Text>
-                  </Pressable>
-                </View>
+                </Pressable>
               )}
             />
           </View>
@@ -322,6 +298,7 @@ export default function TransactionsScreen() {
       {formOpen ? (
         <TransactionFormModal
           open={formOpen}
+          onDeleted={reload}
           onClose={() => {
             setFormOpen(false);
             setEditing(null);

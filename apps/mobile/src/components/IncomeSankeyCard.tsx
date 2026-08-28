@@ -41,6 +41,14 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
     return map;
   }, [graph]);
 
+  const depthByName = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const node of graph?.nodes ?? []) {
+      map.set(node.name, node.depth ?? 0);
+    }
+    return map;
+  }, [graph]);
+
   const option = useMemo<EChartsCoreOption | null>(() => {
     if (!graph) {
       return null;
@@ -59,6 +67,12 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
       series: [
         {
           type: "sankey",
+          // The deepest column labels sit in this right margin. ECharts
+          // defaults to 20%, which clips them at phone widths.
+          left: 8,
+          right: 96,
+          top: 8,
+          bottom: 8,
           emphasis: { focus: "adjacency" },
           nodeAlign: "justify",
           nodeGap: 8,
@@ -78,7 +92,12 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
               if (hidden) {
                 return label;
               }
-              return `${label}: ${formatEuro(Number(params.value ?? 0))}`;
+              const value = formatEuro(Number(params.value ?? 0));
+              // Stack the value under the name on the last column so the pair
+              // fits the right margin instead of running off the canvas.
+              return depthByName.get(params.name) === 2
+                ? `${label}\n${value}`
+                : `${label}: ${value}`;
             },
           },
           data: graph.nodes.map((node) => {
@@ -98,13 +117,56 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
         },
       ],
     };
-  }, [colors, formatEuro, graph, hidden, labelByName]);
+  }, [colors, depthByName, formatEuro, graph, hidden, labelByName]);
+
+  const legend = [
+    { label: "Income", value: summary.income, color: colors.success },
+    { label: "Expenses", value: summary.expenses, color: colors.destructive },
+    { label: "Savings", value: summary.savings, color: colors.primary },
+    { label: "Investments", value: graph?.invested ?? 0, color: colors.info },
+    ...(summary.remaining > 0
+      ? [
+          {
+            label: "Remaining",
+            value: summary.remaining,
+            color: colors.mutedForeground,
+          },
+        ]
+      : []),
+  ].filter((row) => row.value > 0);
+
+  const header = (
+    <View className="flex-row items-center gap-4">
+      <View className="min-w-0 flex-1">
+        <Text className="text-sm font-medium text-muted-foreground">
+          Where your income goes
+        </Text>
+        <Text className="mt-1 text-sm text-muted-foreground">
+          Flow from income into spending, savings, and investments
+        </Text>
+      </View>
+      {rate != null ? (
+        // Circular savings-rate ring, matching the web allocation card.
+        <View
+          accessibilityLabel={`Savings rate ${rate}%`}
+          className="h-20 w-20 items-center justify-center rounded-full border-2 border-primary"
+        >
+          <Text className="text-[9px] font-medium uppercase text-muted-foreground">
+            Savings
+          </Text>
+          <PrivateAmount className="font-serif text-xl text-primary-ink">
+            {`${rate}%`}
+          </PrivateAmount>
+        </View>
+      ) : null}
+    </View>
+  );
 
   if (!option) {
     return (
-      <Card className="p-4">
-        <Text className="font-bold">Where your income goes</Text>
-        <Text variant="muted" className="mt-2">
+      <Card bezel innerClassName="p-4">
+        {header}
+        <Text variant="muted" className="mt-4 text-center text-sm">
           Add income to see how your money is allocated.
         </Text>
       </Card>
@@ -112,26 +174,30 @@ export function IncomeSankeyCard({ summary }: IncomeSankeyCardProps) {
   }
 
   return (
-    <Card className="p-0">
-      <View className="flex-row items-start justify-between gap-3 p-4">
-        <View className="flex-1">
-          <Text className="font-bold">Where your income goes</Text>
-          <Text variant="muted" className="mt-1 text-xs">
-            Income → spending, savings, investments
-          </Text>
-        </View>
-        {rate != null ? (
-          <View className="rounded-md border border-border bg-primary/10 px-3 py-2">
-            <Text variant="muted" className="text-[10px] uppercase">
-              Savings rate
-            </Text>
-            <PrivateAmount className="text-lg font-bold text-primary-ink">
-              {`${rate}%`}
+    <Card bezel innerClassName="p-4">
+      {header}
+      <EChart option={option} height={280} className="mt-4" />
+      <View className="mt-4 gap-2">
+        {legend.map((row) => (
+          <View
+            key={row.label}
+            className="flex-row items-center justify-between gap-2"
+          >
+            <View className="min-w-0 flex-1 flex-row items-center gap-2">
+              <View
+                className="h-2.5 w-2.5 rounded-sm"
+                style={{ backgroundColor: row.color }}
+              />
+              <Text numberOfLines={1} className="flex-1 text-sm">
+                {row.label}
+              </Text>
+            </View>
+            <PrivateAmount className="font-mono text-sm font-medium">
+              {formatEuro(row.value)}
             </PrivateAmount>
           </View>
-        ) : null}
+        ))}
       </View>
-      <EChart option={option} height={280} className="px-1" />
     </Card>
   );
 }

@@ -1,8 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
-import { Platform, useColorScheme, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useThemeColors } from "@/theme/useThemeColors";
@@ -56,12 +54,10 @@ const TABS: TabConfig[] = [
   },
 ];
 
-/** Web nav geometry: 3.5rem tall, 0.75rem inset, full-radius pill. */
-const BAR_HEIGHT = 56;
-const BAR_INSET = 12;
+/** Solid bar pinned to the bottom edge, full width. */
+const BAR_HEIGHT = 60;
 
 export default function TabsLayout() {
-  const scheme = useColorScheme();
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
 
@@ -72,41 +68,13 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarLabelStyle: { fontSize: 10, fontWeight: "500" },
-        tabBarItemStyle: { borderRadius: 999, marginHorizontal: 2 },
-        // The blur panel is the visible surface; the bar itself stays clear.
-        tabBarBackground: () => (
-          <BlurView
-            intensity={Platform.OS === "android" ? 60 : 40}
-            tint={scheme === "light" ? "light" : "dark"}
-            style={{
-              flex: 1,
-              borderRadius: 999,
-              overflow: "hidden",
-              borderWidth: 1,
-              borderColor: colors.border,
-            }}
-          >
-            {/* Android blur is weaker; a wash keeps the contrast web has. */}
-            <View
-              style={{
-                flex: 1,
-                backgroundColor:
-                  scheme === "light"
-                    ? "rgba(251,250,247,0.45)"
-                    : "rgba(11,9,5,0.45)",
-              }}
-            />
-          </BlurView>
-        ),
+        tabBarItemStyle: { paddingVertical: 4 },
         tabBarStyle: {
-          position: "absolute",
-          left: 16,
-          right: 16,
-          bottom: insets.bottom + BAR_INSET,
-          height: BAR_HEIGHT,
-          borderRadius: 999,
-          backgroundColor: "transparent",
-          borderTopWidth: 0,
+          height: BAR_HEIGHT + insets.bottom,
+          paddingBottom: insets.bottom,
+          backgroundColor: colors.card,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
           elevation: 0,
           shadowOpacity: 0,
         },

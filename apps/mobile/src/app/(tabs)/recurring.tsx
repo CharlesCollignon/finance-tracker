@@ -11,17 +11,21 @@ import { type Href, useRouter } from "expo-router";
 
 import { parseMonthParams } from "@finance/core/constants";
 import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
+import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
 import {
   estimateMonthlyAmount,
   formatRecurrenceSchedule,
 } from "@finance/core/recurrence";
 import type {
   Category,
+  CategoryType,
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
 
+import { cn } from "@/lib/cn";
 import { RecurringFormModal } from "@/components/RecurringFormModal";
 import { PrivateAmount } from "@/components/PrivateAmount";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -36,6 +40,17 @@ import {
   toggleRecurringActive,
 } from "@/lib/mutations";
 import { getCategories, getRecurringTemplates } from "@/lib/queries";
+
+/** Recurring only covers allocations; income has no recurring template. */
+type AllocType = Exclude<CategoryType, "income">;
+
+const GROUP_ORDER: AllocType[] = ["expense", "savings", "investment"];
+
+const GROUP_LABELS: Record<AllocType, string> = {
+  expense: "Expenses",
+  savings: "Savings",
+  investment: "Investments",
+};
 
 export default function RecurringScreen() {
   const { user } = useAuth();
@@ -87,6 +102,29 @@ export default function RecurringScreen() {
     [templates],
   );
 
+  const groups = useMemo(
+    () =>
+      GROUP_ORDER.map((type) => ({
+        type,
+        label: GROUP_LABELS[type],
+        items: templates.filter((t) => t.categories.type === type),
+      })),
+    [templates],
+  );
+
+  const defaultTab = useMemo<AllocType>(
+    () => groups.find((group) => group.items.length > 0)?.type ?? "expense",
+    [groups],
+  );
+
+  // Derived rather than synced through an effect: the tab follows the first
+  // non-empty group until the user picks one.
+  const [tabOverride, setTabOverride] = useState<AllocType | null>(null);
+  const activeTab = tabOverride ?? defaultTab;
+
+  const activeItems =
+    groups.find((group) => group.type === activeTab)?.items ?? [];
+
   return (
     <Screen title="Recurring">
       {applyPending ? (
@@ -112,12 +150,43 @@ export default function RecurringScreen() {
 
       <Button
         label="Add recurring item"
-        className="mb-3"
+        variant="pill"
+        icon="add"
+        className="mb-4 self-center"
         onPress={() => {
           setEditing(null);
           setFormOpen(true);
         }}
       />
+
+      <View className="mb-4 flex-row flex-wrap justify-center gap-2">
+        {groups.map(({ type, label, items }) => {
+          const selected = activeTab === type;
+          return (
+            <Pressable
+              key={type}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              onPress={() => setTabOverride(type)}
+              className={cn(
+                "rounded-full border px-4 py-1.5",
+                selected
+                  ? "border-foreground bg-foreground"
+                  : "border-border bg-background",
+              )}
+            >
+              <Text
+                className={cn(
+                  "text-sm font-semibold",
+                  selected ? "text-background" : "text-muted-foreground",
+                )}
+              >
+                {`${label}${items.length > 0 ? ` · ${items.length}` : ""}`}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
       {loading && !data ? (
         <ActivityIndicator />
@@ -125,7 +194,7 @@ export default function RecurringScreen() {
         <Text className="text-destructive">{error}</Text>
       ) : (
         <FlatList
-          data={templates}
+          data={activeItems}
           keyExtractor={(item) => item.id}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -133,35 +202,51 @@ export default function RecurringScreen() {
           ListEmptyComponent={
             <EmptyState
               title="No recurring items"
-              description="Set up salary, rent, DCA contributions, and other monthly flows."
+              description="Set up rent, DCA contributions, and other repeating flows."
             />
           }
-          contentContainerClassName="gap-2 pb-28"
+          contentContainerClassName="gap-2 pb-6"
           renderItem={({ item }) => (
             <Card
               bezel
               className={item.active ? "" : "opacity-60"}
-              innerClassName="p-3"
+              innerClassName="flex-row items-start gap-3 p-3"
             >
               <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Edit ${item.categories.name}`}
+                className="min-w-0 flex-1"
                 onPress={() => {
                   setEditing(item);
                   setFormOpen(true);
                 }}
               >
-                <Text className="font-semibold">{item.categories.name}</Text>
-                {item.description ? (
-                  <Text variant="muted">{item.description}</Text>
+                <Text className="text-sm font-medium">
+                  {item.categories.name}
+                </Text>
+                {isCryptoCategoryName(item.categories.name) ? (
+                  <Text variant="muted" className="mt-0.5 text-xs">
+                    Fixed EUR → Bitcoin
+                  </Text>
                 ) : null}
-                <Text variant="muted">{formatRecurrenceSchedule(item)}</Text>
+                {item.description ? (
+                  <Text variant="muted" className="mt-0.5 text-xs">
+                    {item.description}
+                  </Text>
+                ) : null}
+                <Text variant="muted" className="mt-1 text-xs">
+                  {formatRecurrenceSchedule(item)}
+                </Text>
               </Pressable>
-              <View className="mt-2 flex-row items-center justify-between border-t border-border pt-2">
-                <PrivateAmount className="font-mono font-bold">
-                  {formatEuro(Number(item.amount))}
+
+              <View className="shrink-0 items-end gap-2">
+                <PrivateAmount className="font-mono text-sm font-semibold">
+                  {`${item.pricing_type === "shares" ? "≈" : ""}${formatEuro(Number(item.amount))}`}
                 </PrivateAmount>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityState={{ selected: item.active }}
+                  accessibilityLabel={`${item.active ? "Deactivate" : "Activate"} ${item.categories.name}`}
                   onPress={async () => {
                     const result = await toggleRecurringActive(
                       item.id,
@@ -171,22 +256,16 @@ export default function RecurringScreen() {
                       Alert.alert("Error", result.error);
                       return;
                     }
-                    Alert.alert(
-                      "Updated",
-                      "Apply recurring on Transactions to see changes.",
-                    );
                     await reload();
                     await refreshApplyPending();
                   }}
-                  className={`rounded-full border px-3 py-1 ${
-                    item.active
-                      ? "border-foreground bg-primary"
-                      : "border-border"
-                  }`}
                 >
-                  <Text className="text-xs font-semibold">
-                    {item.active ? "On" : "Off"}
-                  </Text>
+                  <Badge
+                    label={item.active ? "On" : "Off"}
+                    size="sm"
+                    variant={item.active ? "surface" : "outline"}
+                    className="rounded-full"
+                  />
                 </Pressable>
               </View>
             </Card>

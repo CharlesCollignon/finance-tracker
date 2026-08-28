@@ -4,7 +4,13 @@
 const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
 
 module.exports = {
-  content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+    // @finance/core ships class names (TYPE_AMOUNT_CLASS), so it has to be
+    // scanned too. Without it text-info was never generated and investment
+    // amounts fell back to the platform default — black.
+    "../../packages/core/src/**/*.{js,jsx,ts,tsx}",
+  ],
   presets: [require("nativewind/preset")],
   darkMode: "media",
   theme: {
