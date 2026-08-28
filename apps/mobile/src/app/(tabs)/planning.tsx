@@ -182,40 +182,42 @@ export default function PlanningScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-3 pb-28"
+          contentContainerClassName="gap-3 pb-28 pt-1"
         >
-          <Card bezel className="p-4">
-            <Text className="font-bold">Monthly budgets</Text>
-            {(data?.budgetProgress ?? []).map((row) => {
-              const tone = progressTone(row.ratio, row.over);
-              return (
-                <View key={row.budgetId} className="mt-3">
-                  <View className="flex-row justify-between">
-                    <Text>{row.label}</Text>
-                    <PrivateAmount
-                      className={
-                        tone === "danger"
-                          ? "font-mono font-semibold text-destructive"
-                          : "font-mono"
-                      }
-                    >
-                      {`${formatEuro(row.spent)} / ${formatEuro(row.limit)}`}
-                    </PrivateAmount>
-                  </View>
-                  <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong">
-                    <View
-                      className={`h-full rounded-full ${
-                        tone === "danger" ? "bg-destructive" : "bg-primary"
-                      }`}
-                      style={{
-                        width: `${Math.min(100, row.ratio * 100)}%`,
-                      }}
-                    />
-                  </View>
+          <Text className="text-base">Monthly budgets</Text>
+
+          {(data?.budgetProgress ?? []).map((row) => {
+            const tone = progressTone(row.ratio, row.over);
+            return (
+              <Card key={row.budgetId} bezel innerClassName="p-4">
+                <View className="flex-row justify-between">
+                  <Text className="text-sm font-medium">{row.label}</Text>
+                  <PrivateAmount
+                    className={
+                      tone === "danger"
+                        ? "font-mono text-sm font-medium text-destructive"
+                        : "font-mono text-sm font-medium"
+                    }
+                  >
+                    {`${formatEuro(row.spent)} / ${formatEuro(row.limit)}`}
+                  </PrivateAmount>
                 </View>
-              );
-            })}
-            <Text variant="label" className="mb-2 mt-4">
+                <View className="mt-2 h-2 overflow-hidden rounded-full bg-hairline-strong">
+                  <View
+                    className={`h-full rounded-full ${
+                      tone === "danger" ? "bg-destructive" : "bg-primary"
+                    }`}
+                    style={{
+                      width: `${Math.min(100, row.ratio * 100)}%`,
+                    }}
+                  />
+                </View>
+              </Card>
+            );
+          })}
+
+          <Card bezel>
+            <Text variant="label" className="mb-2">
               Global monthly limit (€)
             </Text>
             <Input
@@ -260,8 +262,8 @@ export default function PlanningScreen() {
             ))}
           </Card>
 
-          <Card bezel className="p-4">
-            <Text className="font-bold">Savings goals</Text>
+          <Card bezel>
+            <Text className="text-base font-semibold">Savings goals</Text>
             {(data?.goalProgress ?? []).map((row) => {
               const hint = pacingHint(computeGoalPacing(row), formatEuro);
               return (
@@ -345,8 +347,8 @@ export default function PlanningScreen() {
             ))}
           </Card>
 
-          <Card bezel className="p-4">
-            <Text className="font-bold">Tags</Text>
+          <Card bezel>
+            <Text className="text-base font-semibold">Tags</Text>
             <View className="mt-3 flex-row flex-wrap gap-2">
               {(data?.tags ?? []).map((t) => (
                 <View

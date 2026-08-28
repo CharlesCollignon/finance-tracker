@@ -27,7 +27,10 @@ export function Logo({ size = "nav", className, style, ...props }: LogoProps) {
     <View
       accessibilityRole="image"
       accessibilityLabel="Pluclair"
-      className={cn("items-center justify-center border border-border", className)}
+      className={cn(
+        "items-center justify-center border border-border",
+        className,
+      )}
       style={[
         {
           width: box,

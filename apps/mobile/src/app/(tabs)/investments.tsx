@@ -34,6 +34,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Screen } from "@/components/ui/Screen";
+import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
@@ -133,39 +134,34 @@ export default function InvestmentsScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-3 pb-28"
+          contentContainerClassName="gap-8 pb-28 pt-2"
         >
-          <Card bezel className="p-4">
-            <Text variant="muted">Portfolio value</Text>
-            <PrivateAmount className="mt-1 font-mono text-3xl font-bold">
-              {formatEuro(portfolio.totalMarketValue)}
-            </PrivateAmount>
-            <Text variant="muted" className="mt-2">
-              Invested{" "}
-              <PrivateAmount className="font-mono">
-                {formatEuro(portfolio.totalInvested)}
-              </PrivateAmount>
-              {portfolio.hasMarketSnapshot ? (
-                <>
-                  {" · P/L "}
-                  <PrivateAmount className="font-mono">
-                    {formatEuro(portfolio.totalGainLoss)}
-                  </PrivateAmount>
-                </>
-              ) : null}
-            </Text>
-            {upcoming.length > 0 ? (
-              <Text variant="muted" className="mt-1">
-                Upcoming DCA{" "}
-                <PrivateAmount className="font-mono">
-                  {formatEuro(sumUpcomingAmount(upcoming))}
-                </PrivateAmount>
-              </Text>
-            ) : null}
-          </Card>
+          <StatHero
+            label="Market value"
+            amount={formatEuro(portfolio.totalMarketValue)}
+            subtitle={
+              <>
+                {`${formatEuro(portfolio.totalInvested)} invested`}
+                {portfolio.hasMarketSnapshot ? (
+                  <Text
+                    className={
+                      portfolio.totalGainLoss > 0
+                        ? "font-mono text-sm font-medium text-success"
+                        : "font-mono text-sm font-medium text-destructive"
+                    }
+                  >
+                    {` · ${formatEuro(portfolio.totalGainLoss)}`}
+                  </Text>
+                ) : null}
+                {upcoming.length > 0
+                  ? ` · upcoming DCA ${formatEuro(sumUpcomingAmount(upcoming))}`
+                  : ""}
+              </>
+            }
+          />
 
           {fundingNeeds.map((need) => (
-            <Card key={need.walletId} bezel className="p-4">
+            <Card key={need.walletId} bezel>
               <Text variant="muted">
                 Send to {INVESTMENT_WALLET_LABELS[need.walletId]}
               </Text>
@@ -193,7 +189,7 @@ export default function InvestmentsScreen() {
               null;
             const next = nextByWallet[walletId];
             return (
-              <Card key={walletId} bezel className="p-4">
+              <Card key={walletId} bezel>
                 <Text className="font-bold">
                   {INVESTMENT_WALLET_LABELS[walletId]}
                 </Text>
@@ -238,7 +234,7 @@ export default function InvestmentsScreen() {
             );
           })}
 
-          <Card bezel className="p-4">
+          <Card bezel>
             <Text className="font-bold">Cash → wallet transfers</Text>
             <Text variant="muted" className="mt-1 mb-3">
               This month

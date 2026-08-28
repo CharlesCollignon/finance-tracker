@@ -24,7 +24,7 @@ export function EmptyState({
         className,
       )}
     >
-      <Text className="text-center text-base font-semibold">{title}</Text>
+      <Text className="text-center text-base">{title}</Text>
       <Text className="mt-2 text-center text-sm text-muted-foreground">
         {description}
       </Text>

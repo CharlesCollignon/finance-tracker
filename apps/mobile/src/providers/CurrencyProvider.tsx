@@ -7,10 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  formatCurrency,
-  type CurrencyCode,
-} from "@finance/core/constants";
+import { formatCurrency, type CurrencyCode } from "@finance/core/constants";
 
 import { loadCurrency, saveCurrency } from "@/lib/currency";
 

@@ -37,13 +37,14 @@ const LABEL: Record<Variant, string> = {
 const PADDING: Record<Size, string> = {
   sm: "px-3 py-1.5",
   md: "px-4 py-2.5",
-  lg: "px-6 py-3.5",
+  lg: "px-6 py-3",
 };
 
+/** Web's scale; vertical padding stays a touch larger for finger targets. */
 const LABEL_SIZE: Record<Size, string> = {
   sm: "text-sm",
-  md: "text-base",
-  lg: "text-lg",
+  md: "text-sm",
+  lg: "text-base",
 };
 
 export function Button({

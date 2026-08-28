@@ -133,9 +133,7 @@ export async function listPasskeys(): Promise<{
   return { passkeys: data ?? [] };
 }
 
-export async function deletePasskey(
-  passkeyId: string,
-): Promise<PasskeyResult> {
+export async function deletePasskey(passkeyId: string): Promise<PasskeyResult> {
   const { error } = await supabase.auth.passkey.delete({ passkeyId });
   if (error) {
     return { error: error.message };

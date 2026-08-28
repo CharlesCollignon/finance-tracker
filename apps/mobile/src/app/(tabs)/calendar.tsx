@@ -7,7 +7,11 @@ import {
   View,
 } from "react-native";
 
-import { parseMonthParams, todayIsoLocal } from "@finance/core/constants";
+import {
+  formatMonthLabel,
+  parseMonthParams,
+  todayIsoLocal,
+} from "@finance/core/constants";
 import {
   buildCalendarWeeks,
   computeDayTotals,
@@ -28,6 +32,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
+import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
@@ -99,26 +104,27 @@ export default function CalendarScreen() {
         }}
       />
 
-      <View className="my-3 flex-row gap-2">
-        <Card bezel className="flex-1" innerClassName="items-center p-2">
-          <Text variant="muted">In</Text>
-          <PrivateAmount className="font-mono font-bold">
-            {formatEuro(monthTotals.income)}
-          </PrivateAmount>
-        </Card>
-        <Card bezel className="flex-1" innerClassName="items-center p-2">
-          <Text variant="muted">Out</Text>
-          <PrivateAmount className="font-mono font-bold">
-            {formatEuro(monthTotals.outflow)}
-          </PrivateAmount>
-        </Card>
-        <Card bezel className="flex-1" innerClassName="items-center p-2">
-          <Text variant="muted">Net</Text>
-          <PrivateAmount className="font-mono font-bold">
-            {formatEuro(monthTotals.net)}
-          </PrivateAmount>
-        </Card>
-      </View>
+      <Card bezel className="my-5" innerClassName="p-6">
+        <StatHero
+          label={formatMonthLabel(year, month)}
+          amount={`${monthTotals.net >= 0 ? "+" : "−"}${formatEuro(Math.abs(monthTotals.net))}`}
+          amountClassName={
+            monthTotals.net < 0 ? "text-destructive" : "text-success"
+          }
+          subtitle={
+            <>
+              <Text className="font-mono text-sm text-success">
+                {formatEuro(monthTotals.income)}
+              </Text>
+              {" in · "}
+              <Text className="font-mono text-sm text-destructive">
+                {formatEuro(monthTotals.outflow)}
+              </Text>
+              {" out"}
+            </>
+          }
+        />
+      </Card>
 
       {loading && !data ? (
         <ActivityIndicator />
