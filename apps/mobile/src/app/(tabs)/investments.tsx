@@ -21,13 +21,18 @@ import {
   sumUpcomingAmount,
   type WalletFundingNeed,
 } from "@finance/core/investment-upcoming";
-import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
+import type {
+  InvestmentPortfolioSummary,
+  InvestmentPositionItem,
+} from "@finance/core/investment-positions";
 import type {
   RecurringTemplateWithCategory,
   TransactionWithCategory,
   WalletTransfer,
 } from "@finance/core/types/database";
 
+import { InvestmentPositionRow } from "@/components/InvestmentPositionRow";
+import { InvestmentPositionSheet } from "@/components/InvestmentPositionSheet";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -54,6 +59,8 @@ export default function InvestmentsScreen() {
   const [toWallet, setToWallet] = useState<InvestmentWalletId>("pea");
   const [amount, setAmount] = useState("");
   const [pending, setPending] = useState(false);
+  const [editingPosition, setEditingPosition] =
+    useState<InvestmentPositionItem | null>(null);
 
   const { data, loading, refreshing, onRefresh, error } =
     useRefreshable(async () => {
@@ -67,7 +74,8 @@ export default function InvestmentsScreen() {
       }
       const [portfolio, templates, transactions, transfers] = await Promise.all(
         [
-          getWalletPortfolio(user.id, { includeHistory: false }),
+          // History powers the per-position charts.
+          getWalletPortfolio(user.id, { includeHistory: true }),
           getRecurringTemplates(user.id),
           getInvestmentTransactions(user.id),
           getWalletTransfers(user.id, current.year, current.month),
@@ -134,7 +142,7 @@ export default function InvestmentsScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-8 pb-28 pt-2"
+          contentContainerClassName="gap-8 pb-6 pt-2"
         >
           <StatHero
             label="Market value"
@@ -210,23 +218,16 @@ export default function InvestmentsScreen() {
                     </PrivateAmount>
                   </Text>
                 ) : null}
-                <View className="mt-3 gap-2">
-                  {(column?.items ?? []).map((item) => (
-                    <View key={item.id} className="rounded-2xl bg-muted/60 p-3">
-                      <Text className="font-semibold">{item.name}</Text>
-                      <Text variant="muted">
-                        <PrivateAmount className="font-mono">
-                          {formatEuro(item.marketValue)}
-                        </PrivateAmount>
-                        {item.gainLoss !== 0 ? (
-                          <>
-                            {" · "}
-                            <PrivateAmount className="font-mono">
-                              {formatEuro(item.gainLoss)}
-                            </PrivateAmount>
-                          </>
-                        ) : null}
-                      </Text>
+                <View className="mt-1">
+                  {(column?.items ?? []).map((item, index) => (
+                    <View
+                      key={item.id}
+                      className={index > 0 ? "border-t border-border" : ""}
+                    >
+                      <InvestmentPositionRow
+                        item={item}
+                        onEdit={() => setEditingPosition(item)}
+                      />
                     </View>
                   ))}
                 </View>
@@ -304,6 +305,12 @@ export default function InvestmentsScreen() {
           </Card>
         </ScrollView>
       )}
+
+      <InvestmentPositionSheet
+        item={editingPosition}
+        onClose={() => setEditingPosition(null)}
+        onSaved={onRefresh}
+      />
     </Screen>
   );
 }

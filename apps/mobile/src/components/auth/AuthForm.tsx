@@ -72,7 +72,12 @@ export function AuthForm({
   }
 
   return (
-    <Screen title={title} showPrivacyToggle={false} showAccountMenu={false}>
+    <Screen
+      title={title}
+      showPrivacyToggle={false}
+      showAccountMenu={false}
+      showLogo={false}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
@@ -119,7 +124,7 @@ export function AuthForm({
             />
           ) : null}
 
-          <View className="flex-row gap-1">
+          <View className="flex-row justify-center gap-1">
             <Text variant="muted">{footerPrompt}</Text>
             <Link href={footerHref}>
               <Text className="font-bold underline">{footerLinkLabel}</Text>

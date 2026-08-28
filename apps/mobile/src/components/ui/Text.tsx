@@ -3,8 +3,7 @@ import { Text as RNText, type TextProps as RNTextProps } from "react-native";
 import { cn } from "@/lib/cn";
 import { hasTextColor, withoutTextColor } from "@/lib/text-class";
 
-type Variant =
-  "body" | "head" | "heading" | "title" | "muted" | "label" | "amount";
+type Variant = "body" | "head" | "title" | "muted" | "label" | "amount";
 
 export interface TextProps extends RNTextProps {
   variant?: Variant;
@@ -19,8 +18,6 @@ export interface TextProps extends RNTextProps {
  */
 const VARIANTS: Record<Variant, string> = {
   body: "font-sans text-base text-foreground",
-  /** Page header title, matching the web PageHeader. */
-  heading: "font-sans text-lg leading-7 text-foreground",
   head: "font-sans text-base font-bold text-foreground",
   title: "font-sans text-2xl font-bold text-foreground",
   muted: "font-sans text-sm text-muted-foreground",

@@ -217,7 +217,7 @@ export default function DashboardScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-4 pb-28 pt-4"
+          contentContainerClassName="gap-4 pb-6 pt-4"
           showsVerticalScrollIndicator={false}
         >
           <BudgetViewToggle

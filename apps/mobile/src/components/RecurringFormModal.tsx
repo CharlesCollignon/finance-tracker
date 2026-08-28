@@ -120,21 +120,37 @@ export function RecurringFormModal({
   }
 
   return (
-    <Modal visible={open} animationType="slide" transparent>
-      <View className="flex-1 justify-end bg-black/70">
-        <View className="max-h-[90%] rounded-t-[28px] border border-border bg-background">
-          <View className="flex-row items-center justify-between rounded-t-[28px] border-b border-border bg-card px-4 py-3">
-            <Text className="font-bold">
-              {isEditing ? "Edit recurring" : "Add recurring"}
+    <Modal
+      visible={open}
+      animationType="slide"
+      transparent
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
+      <View className="flex-1 justify-end bg-black/50">
+        <Pressable
+          className="flex-1"
+          accessibilityLabel="Close"
+          onPress={onClose}
+        />
+        <View className="max-h-[90%] rounded-t-3xl border border-border bg-card">
+          <View className="items-center pt-3">
+            <View className="h-1 w-10 rounded-full bg-hairline-strong" />
+          </View>
+          <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
+            <Text className="font-semibold" style={{ fontSize: 18 }}>
+              {isEditing ? "Edit recurring item" : "Add recurring item"}
             </Text>
-            <Pressable onPress={onClose}>
-              <Text className="font-bold">Close</Text>
+            <Pressable onPress={onClose} accessibilityLabel="Close" hitSlop={8}>
+              <Text variant="muted">Close</Text>
             </Pressable>
           </View>
-          <ScrollView className="p-4" keyboardShouldPersistTaps="handled">
-            <Text variant="label" className="mb-2">
-              Category
-            </Text>
+          <ScrollView
+            className="px-5"
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <Text className="mb-2 text-sm font-medium">Category</Text>
             <View className="mb-4 gap-2">
               {groups.map((group) => (
                 <View key={group.type} className="gap-1">
@@ -159,9 +175,7 @@ export function RecurringFormModal({
               ))}
             </View>
 
-            <Text variant="label" className="mb-2">
-              Amount (EUR)
-            </Text>
+            <Text className="mb-2 text-sm font-medium">Amount (EUR)</Text>
             <Input
               value={amount}
               onChangeText={setAmount}
@@ -169,18 +183,14 @@ export function RecurringFormModal({
               className="mb-4"
             />
 
-            <Text variant="label" className="mb-2">
-              Description
-            </Text>
+            <Text className="mb-2 text-sm font-medium">Description</Text>
             <Input
               value={description}
               onChangeText={setDescription}
               className="mb-4"
             />
 
-            <Text variant="label" className="mb-2">
-              Schedule
-            </Text>
+            <Text className="mb-2 text-sm font-medium">Schedule</Text>
             <View className="mb-4 flex-row gap-2">
               {(["monthly", "weekly", "yearly"] as const).map((value) => (
                 <Pressable
@@ -201,7 +211,7 @@ export function RecurringFormModal({
 
             {recurrence === "weekly" ? (
               <>
-                <Text variant="label" className="mb-2">
+                <Text className="mb-2 text-sm font-medium">
                   Day of week (1=Mon … 7=Sun)
                 </Text>
                 <Input
@@ -215,7 +225,7 @@ export function RecurringFormModal({
               <>
                 {recurrence === "yearly" ? (
                   <>
-                    <Text variant="label" className="mb-2">
+                    <Text className="mb-2 text-sm font-medium">
                       Month (1–12)
                     </Text>
                     <Input
@@ -226,9 +236,7 @@ export function RecurringFormModal({
                     />
                   </>
                 ) : null}
-                <Text variant="label" className="mb-2">
-                  Day of month
-                </Text>
+                <Text className="mb-2 text-sm font-medium">Day of month</Text>
                 <Input
                   value={dayOfMonth}
                   onChangeText={setDayOfMonth}
@@ -244,9 +252,7 @@ export function RecurringFormModal({
             <Text variant="muted" className="mb-2 text-xs">
               YYYY-MM-DD. Leave empty for open-ended.
             </Text>
-            <Text variant="label" className="mb-2">
-              Starts on
-            </Text>
+            <Text className="mb-2 text-sm font-medium">Starts on</Text>
             <Input
               value={startsOn}
               onChangeText={setStartsOn}
@@ -254,9 +260,7 @@ export function RecurringFormModal({
               autoCapitalize="none"
               className="mb-4"
             />
-            <Text variant="label" className="mb-2">
-              Ends on
-            </Text>
+            <Text className="mb-2 text-sm font-medium">Ends on</Text>
             <Input
               value={endsOn}
               onChangeText={setEndsOn}

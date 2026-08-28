@@ -125,6 +125,132 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
   return { success: true };
 }
 
+/**
+ * Removes one generated occurrence and records a skip so Apply will not
+ * recreate it. The recurring rule itself stays active. Ported from the web
+ * skipRecurringOccurrence action.
+ */
+export async function skipRecurringOccurrence(
+  templateId: string,
+  occurredOn: string,
+  transactionId?: string | null,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  if (
+    !/^[0-9a-f-]{36}$/i.test(templateId) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)
+  ) {
+    return { error: "Invalid occurrence" };
+  }
+
+  const { data: template } = await supabase
+    .from("recurring_templates")
+    .select("id")
+    .eq("id", templateId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!template) {
+    return { error: "Recurring template not found" };
+  }
+
+  if (transactionId) {
+    const { error: deleteError } = await supabase
+      .from("transactions")
+      .delete()
+      .eq("id", transactionId)
+      .eq("user_id", userId)
+      .eq("recurring_template_id", templateId);
+
+    if (deleteError) {
+      return { error: deleteError.message };
+    }
+  } else {
+    await supabase
+      .from("transactions")
+      .delete()
+      .eq("user_id", userId)
+      .eq("recurring_template_id", templateId)
+      .eq("occurred_on", occurredOn);
+  }
+
+  const { error: skipError } = await supabase.from("recurring_skips").upsert(
+    {
+      user_id: userId,
+      template_id: templateId,
+      occurred_on: occurredOn,
+    },
+    { onConflict: "user_id,template_id,occurred_on" },
+  );
+
+  if (skipError) {
+    return { error: skipError.message };
+  }
+
+  return { success: true, message: "Skipped for this date" };
+}
+
+/**
+ * Saves a wallet position. Mirrors the web upsertInvestmentPosition query;
+ * mobile edits an existing position's figures rather than creating one from
+ * scratch, so name/category/template stay as they are unless supplied.
+ */
+export async function saveInvestmentPosition(input: {
+  positionId: string;
+  initialBalance: number;
+  currentValue: number | null;
+  shareCount: number | null;
+}): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  if (!Number.isFinite(input.initialBalance) || input.initialBalance < 0) {
+    return { error: "Enter a valid starting balance" };
+  }
+
+  const { error } = await supabase
+    .from("investment_positions")
+    .update({
+      initial_balance: input.initialBalance,
+      current_value: input.currentValue,
+      share_count: input.shareCount,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", input.positionId)
+    .eq("user_id", userId);
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
+}
+
+export async function removeInvestmentPosition(
+  positionId: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const { error } = await supabase
+    .from("investment_positions")
+    .delete()
+    .eq("id", positionId)
+    .eq("user_id", userId);
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
+}
+
 async function syncInvestmentPositionFromRecurring(
   userId: string,
   templateId: string,
