@@ -9,7 +9,10 @@ import {
 } from "react-native";
 
 import { parseMonthParams, todayIsoLocal } from "@finance/core/constants";
-import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
+import {
+  applyRecurringPlanCounts,
+  type ApplyRecurringPlan,
+} from "@finance/core/apply-recurring";
 import {
   CATEGORY_TYPE_LABELS,
   TYPE_AMOUNT_CLASS,
@@ -22,6 +25,7 @@ import type {
 
 import { MonthPicker } from "@/components/MonthPicker";
 import { PrivateAmount } from "@/components/PrivateAmount";
+import { ApplyRecurringSheet } from "@/components/ApplyRecurringSheet";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -68,6 +72,8 @@ export default function TransactionsScreen() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
   const [pending, setPending] = useState(false);
+  const [applyPlan, setApplyPlan] = useState<ApplyRecurringPlan | null>(null);
+  const [applySheetOpen, setApplySheetOpen] = useState(false);
   const [applyPending, setApplyPending] = useState(false);
 
   const { data, loading, refreshing, onRefresh, reload, error } =
@@ -131,44 +137,23 @@ export default function TransactionsScreen() {
       Alert.alert("Done", "All recurring entries already applied");
       return;
     }
-    Alert.alert(
-      "Apply recurring",
-      `${plan.toCreate.length} to add, ${plan.toUpdate.length} to update.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Add only",
-          onPress: async () => {
-            const result = await applyRecurringForMonth(year, month, false);
-            if (result.error) {
-              Alert.alert("Error", result.error);
-            } else {
-              Alert.alert("Applied", `${result.created ?? 0} added`);
-              setApplyPending(false);
-              await reload();
-              await refreshApplyPending();
-            }
-          },
-        },
-        {
-          text: "Add + update",
-          onPress: async () => {
-            const result = await applyRecurringForMonth(year, month, true);
-            if (result.error) {
-              Alert.alert("Error", result.error);
-            } else {
-              Alert.alert(
-                "Applied",
-                `${result.created ?? 0} added, ${result.updated ?? 0} updated`,
-              );
-              setApplyPending(false);
-              await reload();
-              await refreshApplyPending();
-            }
-          },
-        },
-      ],
-    );
+    setApplyPlan(plan);
+    setApplySheetOpen(true);
+  }
+
+  async function confirmApplyRecurring(includeUpdates: boolean) {
+    setPending(true);
+    const result = await applyRecurringForMonth(year, month, includeUpdates);
+    setPending(false);
+    if (result.error) {
+      Alert.alert("Error", result.error);
+      return;
+    }
+    setApplySheetOpen(false);
+    setApplyPlan(null);
+    setApplyPending(false);
+    await reload();
+    await refreshApplyPending();
   }
 
   function handleDelete(tx: TransactionWithCategory) {
@@ -347,6 +332,14 @@ export default function TransactionsScreen() {
           defaultDate={todayIsoLocal()}
         />
       ) : null}
+
+      <ApplyRecurringSheet
+        open={applySheetOpen}
+        onOpenChange={setApplySheetOpen}
+        plan={applyPlan}
+        pending={pending}
+        onConfirm={confirmApplyRecurring}
+      />
     </Screen>
   );
 }

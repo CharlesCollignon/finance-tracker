@@ -72,7 +72,7 @@ export function AuthForm({
   }
 
   return (
-    <Screen title={title}>
+    <Screen title={title} showPrivacyToggle={false} showAccountMenu={false}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >

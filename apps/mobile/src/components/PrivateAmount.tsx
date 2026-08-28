@@ -2,6 +2,7 @@ import { Text, type TextProps } from "react-native";
 
 import { usePrivacy } from "@/providers/PrivacyProvider";
 import { cn } from "@/lib/cn";
+import { hasTextColor } from "@/lib/text-class";
 
 interface PrivateAmountProps extends TextProps {
   children: string;
@@ -17,7 +18,15 @@ export function PrivateAmount({
   const { hidden } = usePrivacy();
 
   return (
-    <Text className={cn("tabular-nums", className)} {...props}>
+    <Text
+      className={cn(
+        "tabular-nums",
+        // Raw RN Text defaults to black, which is invisible in dark mode.
+        hasTextColor(className) ? undefined : "text-foreground",
+        className,
+      )}
+      {...props}
+    >
       {hidden ? "••••••" : children}
     </Text>
   );

@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { cn } from "@/lib/cn";
 import { FadeIn } from "@/components/motion/FadeIn";
+import { AccountMenu } from "@/components/layout/AccountMenu";
 import { PrivacyToggle } from "@/components/PrivacyToggle";
 import { Text } from "@/components/ui/Text";
 
@@ -15,6 +16,8 @@ export interface ScreenProps {
   headerActions?: ReactNode;
   /** Show privacy eye on the right (default true when title set). */
   showPrivacyToggle?: boolean;
+  /** Account monogram sits right of the eye; off for the auth screens. */
+  showAccountMenu?: boolean;
 }
 
 /**
@@ -29,9 +32,13 @@ export function Screen({
   className,
   headerActions,
   showPrivacyToggle = true,
+  showAccountMenu = true,
 }: ScreenProps) {
   const showHeader =
-    Boolean(title) || showPrivacyToggle || Boolean(headerActions);
+    Boolean(title) ||
+    showPrivacyToggle ||
+    showAccountMenu ||
+    Boolean(headerActions);
 
   return (
     <SafeAreaView
@@ -39,13 +46,14 @@ export function Screen({
       className="flex-1 bg-background"
     >
       {showHeader ? (
-        <View className="h-[52px] flex-row items-center justify-between gap-3 border-b border-border px-4">
-          <Text className="shrink-0 text-lg" numberOfLines={1}>
+        <View className="min-h-[52px] flex-row items-center justify-between gap-3 border-b border-border px-4 py-2">
+          <Text variant="heading" className="shrink-0" numberOfLines={1}>
             {title}
           </Text>
           <View className="min-w-0 shrink flex-row items-center justify-end gap-2">
             {headerActions}
             {showPrivacyToggle ? <PrivacyToggle /> : null}
+            {showAccountMenu ? <AccountMenu /> : null}
           </View>
         </View>
       ) : null}
