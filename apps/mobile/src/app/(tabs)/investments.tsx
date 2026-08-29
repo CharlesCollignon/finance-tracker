@@ -241,6 +241,9 @@ export default function InvestmentsScreen() {
                 return (
                   <Pressable
                     key={id}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={INVESTMENT_WALLET_LABELS[id]}
                     onPress={() => setToWallet(id)}
                     className={`rounded-full border px-4 py-1.5 ${
                       selected
@@ -274,6 +277,8 @@ export default function InvestmentsScreen() {
             {transfers.map((t) => (
               <Pressable
                 key={t.id}
+                accessibilityRole="button"
+                accessibilityHint="Long press to delete this transfer"
                 className="mt-3 flex-row items-center justify-between border-t border-border pt-3"
                 onLongPress={() => setConfirmingTransfer(t.id)}
               >

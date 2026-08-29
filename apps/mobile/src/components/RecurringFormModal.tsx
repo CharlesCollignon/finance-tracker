@@ -160,6 +160,9 @@ export function RecurringFormModal({
                     return (
                       <Pressable
                         key={cat.id}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected }}
+                        accessibilityLabel={cat.name}
                         onPress={() => setCategoryId(cat.id)}
                         className={`rounded-full border px-3 py-2 ${
                           selected
@@ -195,6 +198,9 @@ export function RecurringFormModal({
               {(["monthly", "weekly", "yearly"] as const).map((value) => (
                 <Pressable
                   key={value}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: recurrence === value }}
+                  accessibilityLabel={value}
                   onPress={() => setRecurrence(value)}
                   className={`flex-1 rounded-full border py-2 ${
                     recurrence === value

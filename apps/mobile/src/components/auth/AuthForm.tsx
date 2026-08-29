@@ -74,19 +74,14 @@ export function AuthForm({
   }
 
   return (
-    <Screen
-      title={title}
-      showPrivacyToggle={false}
-      showAccountMenu={false}
-      showLogo={false}
-    >
+    <Screen showPrivacyToggle={false} showAccountMenu={false} showLogo={false}>
       {/* Oversized mark sitting behind the form, low contrast so it reads as
           a watermark rather than competing with the fields. */}
       <View
         pointerEvents="none"
         className="absolute inset-0 items-center justify-center"
       >
-        <Logo size="watermark" style={{ opacity: 0.06 }} />
+        <Logo size="watermark" style={{ opacity: 0.1 }} />
       </View>
 
       <KeyboardAvoidingView
@@ -101,7 +96,8 @@ export function AuthForm({
             borderColor: colors.border,
           }}
         >
-          <View className="gap-4 p-5">
+          <View className="items-stretch gap-4 p-5">
+            <Text className="text-center text-2xl font-bold">{title}</Text>
             <Input
               placeholder="Email"
               autoCapitalize="none"
@@ -118,7 +114,7 @@ export function AuthForm({
             />
 
             {message ? (
-              <Text className="text-destructive">{message}</Text>
+              <Text className="text-center text-destructive">{message}</Text>
             ) : null}
 
             <Button

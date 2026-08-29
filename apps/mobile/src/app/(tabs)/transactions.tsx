@@ -21,6 +21,7 @@ import {
 import type {
   Category,
   CategoryType,
+  Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
@@ -32,6 +33,7 @@ import { ApplyRecurringSheet } from "@/components/ApplyRecurringSheet";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
@@ -46,8 +48,15 @@ import {
   applyRecurringForMonth,
   createTransaction,
   previewApplyRecurringForMonth,
+  unskipRecurringOccurrence,
 } from "@/lib/mutations";
-import { getCategories, getTransactions } from "@/lib/queries";
+import {
+  getCategories,
+  getSkippedOccurrences,
+  getTags,
+  getTransactions,
+  type SkippedOccurrence,
+} from "@/lib/queries";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 
@@ -96,13 +105,17 @@ export default function TransactionsScreen() {
         return {
           transactions: [] as TransactionWithCategory[],
           categories: [] as Category[],
+          skipped: [] as SkippedOccurrence[],
+          tags: [] as Tag[],
         };
       }
-      const [transactions, categories] = await Promise.all([
+      const [transactions, categories, skipped, tags] = await Promise.all([
         getTransactions(user.id, year, month),
         getCategories(user.id),
+        getSkippedOccurrences(user.id, year, month),
+        getTags(user.id),
       ]);
-      return { transactions, categories };
+      return { transactions, categories, skipped, tags };
     }, [user?.id, year, month]);
 
   const transactions = data?.transactions ?? [];
@@ -116,6 +129,8 @@ export default function TransactionsScreen() {
     typeTotals.savings -
     typeTotals.investment;
   const categories = data?.categories ?? [];
+  const skipped = data?.skipped ?? [];
+  const tags = data?.tags ?? [];
 
   const refreshApplyPending = useCallback(async () => {
     const result = await previewApplyRecurringForMonth(year, month);
@@ -192,6 +207,20 @@ export default function TransactionsScreen() {
     }
     toast(`${source.categories.name} added for today`, "success");
     await reload();
+  }
+
+  async function handleRestore(entry: SkippedOccurrence) {
+    const result = await unskipRecurringOccurrence(
+      entry.templateId,
+      entry.occurredOn,
+    );
+    if (result.error) {
+      toast(result.error, "error");
+      return;
+    }
+    toast(`${entry.name} restored — apply recurring to recreate it`, "success");
+    await reload();
+    await refreshApplyPending();
   }
 
   async function handleApplyRecurring() {
@@ -324,6 +353,11 @@ export default function TransactionsScreen() {
           return (
             <Pressable
               key={value}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              accessibilityLabel={
+                value === "all" ? "All types" : CATEGORY_TYPE_LABELS[value]
+              }
               onPress={() => setFilter(value)}
               className={`rounded-full border px-4 py-2 ${
                 selected
@@ -380,6 +414,40 @@ export default function TransactionsScreen() {
             )}
           </ScrollView>
         </View>
+      ) : null}
+
+      {skipped.length > 0 ? (
+        <Card bezel className="mb-4" innerClassName="gap-2 p-4">
+          <Text className="text-sm font-medium">
+            {`Skipped this month (${skipped.length})`}
+          </Text>
+          <Text variant="muted" className="text-xs">
+            Apply will leave these alone. Restore one to bring it back.
+          </Text>
+          {skipped.map((entry) => (
+            <View
+              key={`${entry.templateId}:${entry.occurredOn}`}
+              className="flex-row items-center justify-between gap-3"
+            >
+              <View className="min-w-0 flex-1">
+                <Text numberOfLines={1} className="text-sm">
+                  {entry.name}
+                </Text>
+                <Text variant="muted" className="text-xs">
+                  {entry.occurredOn}
+                </Text>
+              </View>
+              <Button
+                label="Restore"
+                variant="outline"
+                size="sm"
+                onPress={() => {
+                  void handleRestore(entry);
+                }}
+              />
+            </View>
+          ))}
+        </Card>
       ) : null}
 
       {loading && !data ? (
@@ -480,6 +548,7 @@ export default function TransactionsScreen() {
           categories={categories}
           transaction={editing}
           recentCategoryIds={recentCategoryIds}
+          tags={tags}
           defaultDate={todayIsoLocal()}
         />
       ) : null}

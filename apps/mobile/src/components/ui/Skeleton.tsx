@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import { Orb } from "@/components/Orb";
 import { cn } from "@/lib/cn";
 
 interface SkeletonProps extends ViewProps {
@@ -39,6 +40,19 @@ export function Skeleton({ className, style, ...props }: SkeletonProps) {
       className={cn("rounded-lg bg-hairline-strong", className)}
       {...props}
     />
+  );
+}
+
+/** Centred orb for indeterminate waits, where a shape preview would lie. */
+export function LoadingOrb({ label }: { label?: string }) {
+  return (
+    <View
+      accessibilityRole="progressbar"
+      accessibilityLabel={label ?? "Loading"}
+      className="items-center justify-center gap-3 py-10"
+    >
+      <Orb size="hero" spin="loading" />
+    </View>
   );
 }
 

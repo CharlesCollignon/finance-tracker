@@ -38,7 +38,13 @@ import type {
 import { quoteSource } from "@/lib/quote-source";
 import { supabase } from "@/lib/supabase";
 
-type ActionResult = { error?: string; success?: boolean; message?: string };
+type ActionResult = {
+  error?: string;
+  success?: boolean;
+  message?: string;
+  /** Set by creates, so callers can write related rows (tags). */
+  id?: string;
+};
 
 type RecurringTemplateInsert =
   Database["public"]["Tables"]["recurring_templates"]["Insert"];
@@ -65,18 +71,22 @@ export async function createTransaction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const { error } = await supabase.from("transactions").insert({
-    user_id: userId,
-    category_id: parsed.data.categoryId,
-    amount: parsed.data.amount,
-    occurred_on: parsed.data.occurredOn,
-    note: parsed.data.note ?? null,
-  });
+  const { data, error } = await supabase
+    .from("transactions")
+    .insert({
+      user_id: userId,
+      category_id: parsed.data.categoryId,
+      amount: parsed.data.amount,
+      occurred_on: parsed.data.occurredOn,
+      note: parsed.data.note ?? null,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return { error: error.message };
   }
-  return { success: true };
+  return { success: true, id: data?.id as string | undefined };
 }
 
 export async function updateTransaction(
@@ -345,6 +355,75 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
   if (error) {
     return { error: friendlyCategoryError(error.message) };
   }
+  return { success: true };
+}
+
+/**
+ * Lifts a skip so Apply will recreate the occurrence. Without this, skipping
+ * was a one-way door — the row simply vanished with no way back.
+ */
+export async function unskipRecurringOccurrence(
+  templateId: string,
+  occurredOn: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const { error } = await supabase
+    .from("recurring_skips")
+    .delete()
+    .eq("user_id", userId)
+    .eq("template_id", templateId)
+    .eq("occurred_on", occurredOn);
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
+}
+
+/** Replaces a transaction's tags wholesale, mirroring the web action. */
+export async function setTransactionTags(
+  transactionId: string,
+  tagIds: string[],
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const { data: tx } = await supabase
+    .from("transactions")
+    .select("id")
+    .eq("id", transactionId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!tx) {
+    return { error: "Transaction not found" };
+  }
+
+  await supabase
+    .from("transaction_tags")
+    .delete()
+    .eq("transaction_id", transactionId);
+
+  if (tagIds.length > 0) {
+    const { error } = await supabase
+      .from("transaction_tags")
+      .insert(
+        tagIds.map((tagId) => ({
+          transaction_id: transactionId,
+          tag_id: tagId,
+        })),
+      );
+    if (error) {
+      return { error: error.message };
+    }
+  }
+
   return { success: true };
 }
 
