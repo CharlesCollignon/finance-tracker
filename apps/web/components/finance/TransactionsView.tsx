@@ -262,9 +262,14 @@ export function TransactionsView({
     });
   }
 
-  function handleConfirmApply(includeUpdates: boolean) {
+  function handleConfirmApply(includeUpdates: boolean, selectedKeys: string[]) {
     startTransition(async () => {
-      const result = await applyRecurringForMonth(year, month, includeUpdates);
+      const result = await applyRecurringForMonth(
+        year,
+        month,
+        includeUpdates,
+        selectedKeys,
+      );
       if (result.error) {
         toast(result.error, "error");
         return;
@@ -350,14 +355,23 @@ export function TransactionsView({
               </p>
             ) : null}
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <Button
-                variant={applyPending ? "default" : "ghost"}
-                size="md"
-                onClick={handleApplyRecurring}
-                disabled={pending}
-              >
-                {pending ? "Applying…" : "Apply recurring"}
-              </Button>
+              <span className="relative inline-flex">
+                <Button
+                  variant={applyPending ? "default" : "ghost"}
+                  size="md"
+                  onClick={handleApplyRecurring}
+                  disabled={pending}
+                >
+                  {pending ? "Applying…" : "Apply recurring"}
+                </Button>
+                {applyPending && !pending ? (
+                  <span
+                    aria-label="Recurring changes are waiting to be applied"
+                    role="status"
+                    className="absolute -right-1 -top-1 size-2.5 rounded-full bg-destructive ring-2 ring-background"
+                  />
+                ) : null}
+              </span>
               <Button
                 variant="pill"
                 size="md"

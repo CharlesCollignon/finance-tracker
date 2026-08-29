@@ -21,6 +21,7 @@ import {
   buildApplyRecurringPlan,
   type ApplyRecurringPlan,
 } from "@finance/core/apply-recurring";
+import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { resolveRecurringAmount } from "@finance/core/recurring-shares";
 import { resolveWalletId } from "@finance/core/investments";
 import { displayNameForRecurringTemplate } from "@finance/core/investment-positions";
@@ -411,14 +412,12 @@ export async function setTransactionTags(
     .eq("transaction_id", transactionId);
 
   if (tagIds.length > 0) {
-    const { error } = await supabase
-      .from("transaction_tags")
-      .insert(
-        tagIds.map((tagId) => ({
-          transaction_id: transactionId,
-          tag_id: tagId,
-        })),
-      );
+    const { error } = await supabase.from("transaction_tags").insert(
+      tagIds.map((tagId) => ({
+        transaction_id: transactionId,
+        tag_id: tagId,
+      })),
+    );
     if (error) {
       return { error: error.message };
     }
@@ -817,6 +816,11 @@ export async function applyRecurringForMonth(
   year: number,
   month: number,
   includeUpdates = false,
+  /**
+   * Occurrence keys to apply. Omitted means everything in the plan; supplying
+   * it lets the caller deselect individual rows before confirming.
+   */
+  selectedKeys?: Set<string>,
 ): Promise<ActionResult & { created?: number; updated?: number }> {
   const userId = await requireUserId();
   if (!userId) {
@@ -847,6 +851,14 @@ export async function applyRecurringForMonth(
     const failures: string[] = [];
 
     for (const item of plan.toCreate) {
+      if (
+        selectedKeys &&
+        !selectedKeys.has(
+          recurringOccurrenceKey(item.templateId, item.occurredOn),
+        )
+      ) {
+        continue;
+      }
       const template = templatesById.get(item.templateId);
       let quoteUpdate: {
         amount: number;
@@ -900,6 +912,14 @@ export async function applyRecurringForMonth(
 
     if (includeUpdates) {
       for (const item of plan.toUpdate) {
+        if (
+          selectedKeys &&
+          !selectedKeys.has(
+            recurringOccurrenceKey(item.templateId, item.occurredOn),
+          )
+        ) {
+          continue;
+        }
         const { error } = await supabase
           .from("transactions")
           .update({

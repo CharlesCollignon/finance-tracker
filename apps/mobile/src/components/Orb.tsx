@@ -11,7 +11,7 @@ import Animated, {
 
 import { cn } from "@/lib/cn";
 
-type OrbSize = "sm" | "nav" | "hero" | "watermark";
+type OrbSize = "sm" | "nav" | "hero" | "login" | "watermark";
 
 export interface OrbProps extends ViewProps {
   size?: OrbSize;
@@ -24,6 +24,7 @@ const BOX: Record<OrbSize, number> = {
   sm: 26,
   nav: 40,
   hero: 88,
+  login: 160,
   watermark: 320,
 };
 

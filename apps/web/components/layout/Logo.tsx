@@ -11,6 +11,8 @@ interface LogoProps {
   as?: LogoTag;
   /** Drop the wordmark and show only the mark (tight spots, avatars). */
   markOnly?: boolean;
+  /** Drop the mark, e.g. where a larger orb is already on screen. */
+  showMark?: boolean;
 }
 
 const sizeStyles: Record<LogoSize, string> = {
@@ -29,6 +31,7 @@ export function Logo({
   size = "nav",
   as: Tag = "span",
   markOnly = false,
+  showMark = true,
 }: LogoProps) {
   const px = markSize[size];
 
@@ -41,16 +44,18 @@ export function Logo({
       )}
       aria-label="Pluclair"
     >
-      <Image
-        src="/logo-mark.png"
-        alt=""
-        aria-hidden
-        width={px}
-        height={px}
-        priority
-        className="shrink-0"
-        style={{ width: px, height: px }}
-      />
+      {showMark ? (
+        <Image
+          src="/logo-mark.png"
+          alt=""
+          aria-hidden
+          width={px}
+          height={px}
+          priority
+          className="shrink-0"
+          style={{ width: px, height: px }}
+        />
+      ) : null}
       {markOnly ? null : "Pluclair"}
     </Tag>
   );

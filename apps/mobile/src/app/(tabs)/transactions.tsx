@@ -241,9 +241,17 @@ export default function TransactionsScreen() {
     setApplySheetOpen(true);
   }
 
-  async function confirmApplyRecurring(includeUpdates: boolean) {
+  async function confirmApplyRecurring(
+    includeUpdates: boolean,
+    selectedKeys: Set<string>,
+  ) {
     setPending(true);
-    const result = await applyRecurringForMonth(year, month, includeUpdates);
+    const result = await applyRecurringForMonth(
+      year,
+      month,
+      includeUpdates,
+      selectedKeys,
+    );
     setPending(false);
     if (result.error) {
       toast(result.error, "error");
@@ -297,14 +305,22 @@ export default function TransactionsScreen() {
       ) : null}
 
       <View className="my-4 flex-row justify-center gap-2">
-        <Button
-          label={pending ? "…" : "Apply recurring"}
-          variant={applyPending ? "default" : "outline"}
-          size="sm"
-          className="flex-1"
-          disabled={pending}
-          onPress={handleApplyRecurring}
-        />
+        <View className="flex-1">
+          <Button
+            label={pending ? "…" : "Apply recurring"}
+            variant={applyPending ? "default" : "outline"}
+            size="sm"
+            disabled={pending}
+            onPress={handleApplyRecurring}
+          />
+          {applyPending && !pending ? (
+            <View
+              accessibilityRole="alert"
+              accessibilityLabel="Recurring changes are waiting to be applied"
+              className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-destructive"
+            />
+          ) : null}
+        </View>
         <Button
           label="Add"
           size="sm"

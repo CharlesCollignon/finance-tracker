@@ -33,7 +33,7 @@
   --info-foreground: #ffffff;
   --destructive: #c23b2e;
   --destructive-foreground: #ffffff;
-  --border: rgba(22, 22, 29, 0.10);
+  --border: rgba(22, 22, 29, 0.1);
   --hairline-strong: rgba(22, 22, 29, 0.16);
   --input: #ffffff;
   --ring: #4f2fd0;
@@ -48,7 +48,7 @@
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #eef0f5;
   --sidebar-accent-foreground: #16161d;
-  --sidebar-border: rgba(22, 22, 29, 0.10);
+  --sidebar-border: rgba(22, 22, 29, 0.1);
   --sidebar-ring: #4f2fd0;
   --shadow-bezel-inset: inset 0 1px 1px rgba(255, 255, 255, 0.7);
   color-scheme: light;
@@ -77,7 +77,7 @@
   --info-foreground: #0a0a10;
   --destructive: #f87171;
   --destructive-foreground: #0a0a10;
-  --border: rgba(236, 236, 241, 0.10);
+  --border: rgba(236, 236, 241, 0.1);
   --hairline-strong: rgba(236, 236, 241, 0.16);
   --input: #131320;
   --ring: #a78bfa;
@@ -92,7 +92,7 @@
   --sidebar-primary-foreground: #0a0a10;
   --sidebar-accent: #1c1c2b;
   --sidebar-accent-foreground: #ececf1;
-  --sidebar-border: rgba(236, 236, 241, 0.10);
+  --sidebar-border: rgba(236, 236, 241, 0.1);
   --sidebar-ring: #a78bfa;
   --shadow-bezel-inset: inset 0 1px 1px rgba(255, 246, 230, 0.08);
   color-scheme: dark;
@@ -100,7 +100,8 @@
 
 :root,
 .dark {
-  --font-sans: "Instrument Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-sans:
+    "Instrument Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-serif: "Fraunces", ui-serif, Georgia, serif;
   --font-mono: "IBM Plex Mono", "SF Mono", "Courier New", monospace;
   --font-head: var(--font-sans);
@@ -281,4 +282,71 @@ html[data-privacy="on"] .privacy-sensitive {
   transition: filter 150ms ease-out;
   user-select: none;
   pointer-events: none;
+}
+
+/*
+ * Hero orb. Turn, drift and breathe run on deliberately non-dividing periods
+ * (37s / 19s / 11s) so the combined loop takes minutes to visibly repeat
+ * rather than reading as one short cycle.
+ */
+@keyframes orb-turn {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orb-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  25% {
+    transform: translate3d(1.5%, -2.5%, 0) scale(1.02);
+  }
+  50% {
+    transform: translate3d(-1%, -1%, 0) scale(0.99);
+  }
+  75% {
+    transform: translate3d(-2%, 2%, 0) scale(1.03);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes orb-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1.05);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.18);
+  }
+}
+
+.landing-orb {
+  animation: orb-drift 19s ease-in-out infinite;
+  will-change: transform;
+}
+
+.landing-orb__body {
+  animation: orb-turn 37s linear infinite;
+  will-change: transform;
+}
+
+.landing-orb__glow {
+  animation: orb-breathe 11s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-orb,
+  .landing-orb__body,
+  .landing-orb__glow {
+    animation: none;
+  }
 }
