@@ -8,10 +8,10 @@ export const LIGHT_COLORS = {
   foreground: "#1c1a16",
   card: "#ffffff",
   cardForeground: "#1c1a16",
-  primary: "#d4af37",
-  primaryHover: "#c2992e",
-  primaryForeground: "#171100",
-  primaryInk: "#7a5f1c",
+  primary: "#0a6fbf",
+  primaryHover: "#005a99",
+  primaryForeground: "#ffffff",
+  primaryInk: "#0060a0",
   secondary: "#f2efe7",
   secondaryForeground: "#1c1a16",
   muted: "#f2efe7",
@@ -20,7 +20,7 @@ export const LIGHT_COLORS = {
   accentForeground: "#1c1a16",
   success: "#16803d",
   successForeground: "#ffffff",
-  info: "#2563eb",
+  info: "#7c3aed",
   infoForeground: "#ffffff",
   destructive: "#c23b2e",
   destructiveForeground: "#ffffff",
@@ -33,10 +33,10 @@ export const DARK_COLORS = {
   foreground: "#f6efe0",
   card: "#15100a",
   cardForeground: "#f6efe0",
-  primary: "#d4af37",
-  primaryHover: "#e0c35c",
-  primaryForeground: "#171100",
-  primaryInk: "#d4af37",
+  primary: "#38b6ff",
+  primaryHover: "#5cc8ff",
+  primaryForeground: "#04121c",
+  primaryInk: "#4cc2ff",
   secondary: "#1d160d",
   secondaryForeground: "#f6efe0",
   muted: "#1d160d",
@@ -45,7 +45,7 @@ export const DARK_COLORS = {
   accentForeground: "#f6efe0",
   success: "#34d399",
   successForeground: "#0a0a0a",
-  info: "#60a5fa",
+  info: "#a78bfa",
   infoForeground: "#0a0a0a",
   destructive: "#f87171",
   destructiveForeground: "#0a0a0a",
@@ -55,8 +55,8 @@ export const DARK_COLORS = {
 
 /** Charts: gold + semantic + gray. */
 export const CHART_COLORS = {
-  light: ["#d4af37", "#c23b2e", "#16803d", "#2563eb", "#948a73"],
-  dark: ["#d4af37", "#f87171", "#34d399", "#60a5fa", "#7c7360"],
+  light: ["#0a6fbf", "#c23b2e", "#16803d", "#7c3aed", "#948a73"],
+  dark: ["#38b6ff", "#f87171", "#34d399", "#a78bfa", "#7c7360"],
 } as const;
 
 export function colorsForScheme(scheme: "light" | "dark" | null | undefined) {
