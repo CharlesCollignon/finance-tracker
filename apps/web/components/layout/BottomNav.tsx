@@ -42,7 +42,7 @@ export function BottomNav({
                 "text-[10px] font-medium sm:text-xs",
                 "transition-colors duration-200",
                 active
-                  ? "bg-primary/15 text-primary"
+                  ? "bg-primary/15 text-primary-ink"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >

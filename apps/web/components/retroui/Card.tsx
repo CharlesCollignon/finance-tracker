@@ -23,7 +23,12 @@ interface ICardBezelProps extends ICardProps {
 }
 
 /** Double-bezel nested card: tinted outer shell around the real surface. */
-const CardBezel = ({ className, innerClassName, children, ...props }: ICardBezelProps) => {
+const CardBezel = ({
+  className,
+  innerClassName,
+  children,
+  ...props
+}: ICardBezelProps) => {
   return (
     <div
       className={cn(

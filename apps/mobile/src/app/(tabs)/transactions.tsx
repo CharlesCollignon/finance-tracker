@@ -348,7 +348,7 @@ export default function TransactionsScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerClassName="gap-2 px-0.5"
+            contentContainerClassName="gap-4 px-0.5"
           >
             {[{ id: "all", name: "All categories" }, ...usedCategories].map(
               (option) => {
@@ -369,7 +369,7 @@ export default function TransactionsScreen() {
                     <Text
                       className={cn(
                         "text-xs font-medium",
-                        selected ? "text-primary" : "text-muted-foreground",
+                        selected ? "text-primary-ink" : "text-muted-foreground",
                       )}
                     >
                       {option.name}

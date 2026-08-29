@@ -32,9 +32,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function FeatureRoutePage({
-  params,
-}: FeatureRouteProps) {
+export default async function FeatureRoutePage({ params }: FeatureRouteProps) {
   const { slug } = await params;
   if (!isLandingPageId(slug)) {
     notFound();

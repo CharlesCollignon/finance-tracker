@@ -2,10 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/layout/Logo";
 import { buttonVariants } from "@/components/retroui/Button";
 import { cn } from "@/lib/utils";
-import {
-  featureHref,
-  landingCopy,
-} from "@/components/marketing/landing-copy";
+import { featureHref, landingCopy } from "@/components/marketing/landing-copy";
 
 interface LandingFooterProps {
   isLoggedIn: boolean;

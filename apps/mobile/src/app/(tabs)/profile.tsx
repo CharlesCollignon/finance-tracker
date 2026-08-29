@@ -121,7 +121,7 @@ export default function ProfileScreen() {
 
   return (
     <Screen title="Profile">
-      <ScrollView contentContainerClassName="gap-3 pb-28">
+      <ScrollView contentContainerClassName="gap-4 pb-28">
         <Card bezel>
           <Text className="text-base font-semibold">Account</Text>
           <Text variant="muted" className="mt-1">

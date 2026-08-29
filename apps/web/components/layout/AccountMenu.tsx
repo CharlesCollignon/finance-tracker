@@ -68,9 +68,8 @@ export function AccountMenu({
     if (!open) {
       return;
     }
-    const first = panelRef.current?.querySelector<HTMLElement>(
-      "button, a[href]",
-    );
+    const first =
+      panelRef.current?.querySelector<HTMLElement>("button, a[href]");
     first?.focus();
   }, [open]);
 
@@ -156,7 +155,7 @@ export function AccountMenu({
             "text-[10px] font-medium sm:text-xs",
             "transition-colors duration-200",
             active
-              ? "bg-primary/15 text-primary"
+              ? "bg-primary/15 text-primary-ink"
               : "text-muted-foreground hover:text-foreground",
           )}
         >
@@ -181,7 +180,7 @@ export function AccountMenu({
           "flex w-full min-h-10 items-center gap-3 rounded-md px-3 py-2",
           "text-sm font-medium transition-colors duration-200",
           active
-            ? "bg-primary/10 text-primary"
+            ? "bg-primary/10 text-primary-ink"
             : "text-muted-foreground hover:bg-muted hover:text-foreground",
         )}
       >

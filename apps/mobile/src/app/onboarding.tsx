@@ -136,7 +136,7 @@ export default function OnboardingScreen() {
       showLogo={false}
     >
       <ScrollView
-        contentContainerClassName="gap-6 pb-28"
+        contentContainerClassName="gap-4 pb-28"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -195,7 +195,7 @@ export default function OnboardingScreen() {
                       <Text
                         className={cn(
                           "text-center text-sm font-semibold",
-                          selected && "text-primary",
+                          selected && "text-primary-ink",
                         )}
                       >
                         {CURRENCY_LABELS[code]}

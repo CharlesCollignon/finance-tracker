@@ -27,7 +27,7 @@ export function UserInitial({
     >
       <Text
         className={cn(
-          "font-semibold text-primary",
+          "font-semibold text-primary-ink",
           size === "sm" ? "text-[11px]" : "text-xs",
         )}
       >

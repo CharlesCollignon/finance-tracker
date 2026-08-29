@@ -6,10 +6,9 @@ import {
   usePrefersReducedMotion,
 } from "@/components/marketing/use-prefers-reduced-motion";
 
-const ColorBends = dynamic(
-  () => import("@/components/react-bits/ColorBends"),
-  { ssr: false },
-);
+const ColorBends = dynamic(() => import("@/components/react-bits/ColorBends"), {
+  ssr: false,
+});
 
 export function LandingColorBends() {
   const mounted = useHasMounted();

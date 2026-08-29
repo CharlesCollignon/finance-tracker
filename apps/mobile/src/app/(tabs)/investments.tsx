@@ -147,7 +147,7 @@ export default function InvestmentsScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-8 pb-28 pt-2"
+          contentContainerClassName="gap-4 pb-28 pt-2"
         >
           <StatHero
             label="Market value"

@@ -1,18 +1,18 @@
-import { type ReactNode, type SVGProps } from "react"
+import { type ReactNode, type SVGProps } from "react";
 
-const ANDROID_WIDTH = 433
-const ANDROID_HEIGHT = 882
-const SCREEN_X = 9
-const SCREEN_Y = 14
-const SCREEN_WIDTH = 360
-const SCREEN_HEIGHT = 800
+const ANDROID_WIDTH = 433;
+const ANDROID_HEIGHT = 882;
+const SCREEN_X = 9;
+const SCREEN_Y = 14;
+const SCREEN_WIDTH = 360;
+const SCREEN_HEIGHT = 800;
 
 export interface AndroidProps extends SVGProps<SVGSVGElement> {
-  width?: number
-  height?: number
-  src?: string
-  videoSrc?: string
-  children?: ReactNode
+  width?: number;
+  height?: number;
+  src?: string;
+  videoSrc?: string;
+  children?: ReactNode;
 }
 
 export function Android({
@@ -24,7 +24,7 @@ export function Android({
   className,
   ...props
 }: AndroidProps) {
-  const hasChildren = children != null
+  const hasChildren = children != null;
 
   return (
     <div
@@ -133,5 +133,5 @@ export function Android({
         </div>
       ) : null}
     </div>
-  )
+  );
 }

@@ -200,7 +200,7 @@ export default function PlanningScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-3 pb-28 pt-1"
+          contentContainerClassName="gap-4 pb-28 pt-1"
         >
           <Text className="text-base">Monthly budgets</Text>
 

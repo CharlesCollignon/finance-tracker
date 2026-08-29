@@ -21,7 +21,7 @@ export function UserInitial({
       title={name}
       className={cn(
         "flex shrink-0 items-center justify-center rounded-full",
-        "bg-primary/20 font-head font-semibold text-primary",
+        "bg-primary/20 font-head font-semibold text-primary-ink",
         size === "sm" ? "size-6 text-[11px]" : "size-7 text-xs",
         className,
       )}

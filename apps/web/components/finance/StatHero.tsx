@@ -40,7 +40,9 @@ export function StatHero({
   size = "lg",
 }: StatHeroProps) {
   return (
-    <div className={cn("flex w-full flex-col items-center text-center", className)}>
+    <div
+      className={cn("flex w-full flex-col items-center text-center", className)}
+    >
       {label ? (
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
       ) : null}
@@ -61,7 +63,9 @@ export function StatHero({
         </div>
       ) : null}
       {status ? (
-        <div className={cn(gapClass[size], "text-sm font-medium")}>{status}</div>
+        <div className={cn(gapClass[size], "text-sm font-medium")}>
+          {status}
+        </div>
       ) : null}
     </div>
   );

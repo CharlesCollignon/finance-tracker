@@ -11,11 +11,7 @@ interface AppShellProps {
   initial: string;
 }
 
-export function AppShell({
-  children,
-  displayName,
-  initial,
-}: AppShellProps) {
+export function AppShell({ children, displayName, initial }: AppShellProps) {
   return (
     <div className="flex min-h-screen md:bg-muted/30">
       <SideNav displayName={displayName} initial={initial} />
