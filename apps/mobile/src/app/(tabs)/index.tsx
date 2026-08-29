@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
 
@@ -30,6 +31,7 @@ import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { cn } from "@/lib/cn";
+import { hapticLight } from "@/lib/haptics";
 import { useThemeColors } from "@/theme/useThemeColors";
 import {
   getBudgets,
@@ -97,31 +99,58 @@ function Breakdown({
   items: MonthlySummary["expenseBreakdown"];
 }) {
   const formatEuro = useFormatCurrency();
+  const colors = useThemeColors();
+  // Collapsed by default: the sankey legend above already reports these
+  // totals, so the per-category detail is opt-in rather than a long scroll.
+  const [open, setOpen] = useState(false);
+
   return (
     <Card bezel className="p-0" innerClassName="p-0">
-      <View className="flex-row items-center justify-between border-b border-border p-4">
-        <Text className="font-bold">{title}</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel={`${title}, ${open ? "collapse" : "expand"}`}
+        onPress={() => {
+          void hapticLight();
+          setOpen((value) => !value);
+        }}
+        className="min-h-14 flex-row items-center justify-between gap-3 p-4"
+      >
+        <Text className="flex-1 font-bold">{title}</Text>
         <PrivateAmount className="font-mono font-bold">
           {formatEuro(total)}
         </PrivateAmount>
-      </View>
-      {items.length === 0 ? (
-        <Text variant="muted" className="p-4">
-          Nothing this month.
-        </Text>
-      ) : (
-        items.map((item) => (
-          <View
-            key={item.categoryId}
-            className="flex-row items-center justify-between border-b border-border px-4 py-3"
-          >
-            <Text className="flex-1">{item.name}</Text>
-            <PrivateAmount className="font-mono font-semibold">
-              {formatEuro(item.total)}
-            </PrivateAmount>
-          </View>
-        ))
-      )}
+        <Ionicons
+          name={open ? "chevron-up" : "chevron-down"}
+          size={16}
+          color={colors.mutedForeground}
+        />
+      </Pressable>
+
+      {open ? (
+        <View className="border-t border-border">
+          {items.length === 0 ? (
+            <Text variant="muted" className="p-4">
+              Nothing this month.
+            </Text>
+          ) : (
+            items.map((item, index) => (
+              <View
+                key={item.categoryId}
+                className={cn(
+                  "flex-row items-center justify-between px-4 py-3",
+                  index > 0 && "border-t border-border",
+                )}
+              >
+                <Text className="flex-1">{item.name}</Text>
+                <PrivateAmount className="font-mono font-semibold">
+                  {formatEuro(item.total)}
+                </PrivateAmount>
+              </View>
+            ))
+          )}
+        </View>
+      ) : null}
     </Card>
   );
 }
