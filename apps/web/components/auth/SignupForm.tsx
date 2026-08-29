@@ -29,8 +29,10 @@ export function SignupForm() {
       className="w-full max-w-md md:max-w-lg"
       innerClassName="p-6 md:p-8"
     >
-      <h1 className="font-serif text-2xl italic md:text-3xl">Create account</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <h1 className="text-center font-serif text-2xl italic md:text-3xl">
+        Create account
+      </h1>
+      <p className="mt-1 text-center text-sm text-muted-foreground">
         Start tracking income and expenses
       </p>
       <div className="mt-6">
@@ -62,10 +64,14 @@ export function SignupForm() {
           />
         </div>
         {state.error && (
-          <Text className="text-sm text-destructive">{state.error}</Text>
+          <Text className="text-center text-sm text-destructive">
+            {state.error}
+          </Text>
         )}
         {state.message && (
-          <Text className="text-sm text-muted-foreground">{state.message}</Text>
+          <Text className="text-center text-sm text-muted-foreground">
+            {state.message}
+          </Text>
         )}
         <Button
           type="submit"

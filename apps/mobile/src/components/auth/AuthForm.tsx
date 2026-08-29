@@ -2,7 +2,7 @@ import { Link, type Href } from "expo-router";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 
-import { Logo } from "@/components/Logo";
+import { Orb } from "@/components/Orb";
 import { Button } from "@/components/ui/Button";
 import { Blur } from "@/components/ui/Blur";
 import { Input } from "@/components/ui/Input";
@@ -75,19 +75,15 @@ export function AuthForm({
 
   return (
     <Screen showPrivacyToggle={false} showAccountMenu={false} showLogo={false}>
-      {/* Oversized mark sitting behind the form, low contrast so it reads as
-          a watermark rather than competing with the fields. */}
-      <View
-        pointerEvents="none"
-        className="absolute inset-0 items-center justify-center"
-      >
-        <Logo size="watermark" style={{ opacity: 0.1 }} />
-      </View>
-
       <KeyboardAvoidingView
         className="flex-1 justify-center"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
+        <View className="items-center gap-3 pb-8">
+          <Orb size="login" spin="drift" />
+          <Text className="font-logo text-4xl text-foreground">Pluclair</Text>
+        </View>
+
         <Blur
           style={{
             borderRadius: 24,

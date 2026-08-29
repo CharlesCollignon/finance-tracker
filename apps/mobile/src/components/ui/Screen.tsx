@@ -25,6 +25,9 @@ export interface ScreenProps {
 
 const HEADER_HEIGHT = 56;
 
+/** Space held for the right-hand controls: eye + account, plus breathing room. */
+const ACTIONS_WIDTH = 96;
+
 /**
  * Standard screen shell, mirroring the web PageHeader + PageContainer: title
  * on the left, mark centred, actions on the right, then the page body.
@@ -60,26 +63,26 @@ export function Screen({
           className="border-b border-border"
           style={{ height: HEADER_HEIGHT }}
         >
-          <View className="flex-1 flex-row items-center justify-between gap-3 px-4">
-            <View className="min-w-0 flex-1 flex-row items-center">
-              <Text
-                className="font-sans text-foreground"
-                style={{ fontSize: 18 }}
-                numberOfLines={1}
-              >
-                {title}
-              </Text>
-            </View>
-
-            <View className="shrink-0 flex-row items-center gap-2">
-              {headerActions}
-              {showPrivacyToggle ? <PrivacyToggle /> : null}
-              {showAccountMenu ? <AccountMenu /> : null}
-            </View>
+          {/*
+            All three zones are positioned absolutely rather than laid out as a
+            flex row. The title had been shrinking to a few characters on one
+            screen and not others, which is what row negotiation does when some
+            sibling reports an unexpected width. Reserving the actions' width
+            explicitly takes that negotiation out of the picture entirely.
+          */}
+          <View
+            className="absolute inset-y-0 left-4 justify-center"
+            style={{ right: ACTIONS_WIDTH }}
+          >
+            <Text
+              className="font-sans text-foreground"
+              style={{ fontSize: 18 }}
+              numberOfLines={1}
+            >
+              {title}
+            </Text>
           </View>
 
-          {/* Overlay, not a row child: as a sibling of the row it cannot take
-              part in that row's layout and squeeze the title. */}
           {showLogo ? (
             <View
               pointerEvents="none"
@@ -88,6 +91,12 @@ export function Screen({
               <Logo size="sm" />
             </View>
           ) : null}
+
+          <View className="absolute inset-y-0 right-4 flex-row items-center gap-2">
+            {headerActions}
+            {showPrivacyToggle ? <PrivacyToggle /> : null}
+            {showAccountMenu ? <AccountMenu /> : null}
+          </View>
         </View>
       ) : null}
       <FadeIn className={cn("flex-1 px-4 py-4", className)}>{children}</FadeIn>

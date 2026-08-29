@@ -33,8 +33,10 @@ export function LoginForm() {
       className="w-full max-w-md md:max-w-lg"
       innerClassName="p-6 md:p-8"
     >
-      <h1 className="font-serif text-2xl italic md:text-3xl">Welcome back</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <h1 className="text-center font-serif text-2xl italic md:text-3xl">
+        Welcome back
+      </h1>
+      <p className="mt-1 text-center text-sm text-muted-foreground">
         Sign in to track your finances
       </p>
       <div className="mt-6 flex flex-col gap-2">
@@ -66,7 +68,7 @@ export function LoginForm() {
           />
         </div>
         {(state.error || authError) && (
-          <Text className="text-sm text-destructive">
+          <Text className="text-center text-sm text-destructive">
             {state.error ??
               "Sign-in link expired or invalid. Please try again."}
           </Text>

@@ -11,6 +11,7 @@ import { resolveRecurringAmount } from "@finance/core/recurring-shares";
 import { quoteSource } from "@/lib/quote-source";
 import {
   buildApplyRecurringPlan,
+  recurringOccurrenceKey,
   type ApplyRecurringPlan,
 } from "@finance/core/apply-recurring";
 import {
@@ -636,7 +637,6 @@ export async function previewApplyRecurringForMonth(
       month,
       { quotes: quoteSource, skippedKeys },
     );
-
     return { success: true, plan };
   } catch (error) {
     return {
@@ -652,6 +652,11 @@ export async function applyRecurringForMonth(
   year: number,
   month: number,
   includeUpdates = false,
+  /**
+   * Occurrence keys to apply. Omitted means the whole plan; supplying it lets
+   * the caller deselect individual rows before confirming.
+   */
+  selectedKeys?: string[],
 ): Promise<ActionResult & { created?: number; updated?: number }> {
   const user = await getUser();
   if (!user) {
@@ -677,11 +682,18 @@ export async function applyRecurringForMonth(
       templates.map((template) => [template.id, template]),
     );
 
+    const selected = selectedKeys ? new Set(selectedKeys) : null;
+    const isSelected = (templateId: string, occurredOn: string) =>
+      !selected || selected.has(recurringOccurrenceKey(templateId, occurredOn));
+
     let created = 0;
     let updated = 0;
     const failures: string[] = [];
 
     for (const item of plan.toCreate) {
+      if (!isSelected(item.templateId, item.occurredOn)) {
+        continue;
+      }
       const template = templatesById.get(item.templateId);
       let quoteUpdate: {
         amount: number;
@@ -736,6 +748,9 @@ export async function applyRecurringForMonth(
 
     if (includeUpdates) {
       for (const item of plan.toUpdate) {
+        if (!isSelected(item.templateId, item.occurredOn)) {
+          continue;
+        }
         const { error } = await supabase
           .from("transactions")
           .update({

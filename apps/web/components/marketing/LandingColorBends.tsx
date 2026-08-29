@@ -20,7 +20,8 @@ export function LandingColorBends() {
 
   return (
     <ColorBends
-      colors={["#d4af37", "#71717a", "#3f3f46"]}
+      // Drawn from the orb: violet accent, its magenta core, and the app ground.
+      colors={["#4f2fd0", "#c2186f", "#131320"]}
       rotation={90}
       speed={0.12}
       scale={1}
