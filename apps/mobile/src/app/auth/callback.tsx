@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
+import { Orb } from "@/components/Orb";
 import { Text } from "@/components/ui/Text";
 import { useAuth } from "@/providers/AuthProvider";
 
@@ -37,7 +38,7 @@ export default function AuthCallbackScreen() {
 
   return (
     <View className="flex-1 items-center justify-center gap-4 bg-background">
-      <ActivityIndicator />
+      <Orb size="hero" spin="loading" />
       <Text variant="muted">Finishing sign-in…</Text>
     </View>
   );

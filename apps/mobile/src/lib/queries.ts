@@ -156,6 +156,59 @@ export async function getRecurringTemplates(
   return (data ?? []) as RecurringTemplateWithCategory[];
 }
 
+export interface SkippedOccurrence {
+  templateId: string;
+  occurredOn: string;
+  name: string;
+}
+
+/** Skipped occurrences for a month, so they can be surfaced and restored. */
+export async function getSkippedOccurrences(
+  userId: string,
+  year: number,
+  month: number,
+): Promise<SkippedOccurrence[]> {
+  const { start, end } = getMonthBounds(year, month);
+  const { data, error } = await supabase
+    .from("recurring_skips")
+    .select("template_id, occurred_on, recurring_templates(categories(name))")
+    .eq("user_id", userId)
+    .gte("occurred_on", start)
+    .lte("occurred_on", end)
+    .order("occurred_on");
+
+  if (error) {
+    throw error;
+  }
+
+  type Row = {
+    template_id: string;
+    occurred_on: string;
+    recurring_templates: { categories: { name: string } | null } | null;
+  };
+
+  return ((data ?? []) as unknown as Row[]).map((row) => ({
+    templateId: row.template_id,
+    occurredOn: row.occurred_on,
+    name: row.recurring_templates?.categories?.name ?? "Recurring item",
+  }));
+}
+
+/** Tag ids already attached to a transaction. */
+export async function getTransactionTagIds(
+  transactionId: string,
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("transaction_tags")
+    .select("tag_id")
+    .eq("transaction_id", transactionId);
+
+  if (error) {
+    throw error;
+  }
+  return (data ?? []).map((row) => row.tag_id as string);
+}
+
 async function getRecurringSkipKeys(
   userId: string,
   year: number,

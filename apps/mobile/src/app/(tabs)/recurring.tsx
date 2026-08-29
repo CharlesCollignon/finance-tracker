@@ -171,6 +171,8 @@ export default function RecurringScreen() {
     <Screen title="Recurring">
       {applyPending ? (
         <Pressable
+          accessibilityRole="link"
+          accessibilityLabel="Open Transactions to apply recurring changes"
           onPress={() => router.push("/(tabs)/transactions" as Href)}
           className="mb-3"
         >

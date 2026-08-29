@@ -81,7 +81,12 @@ export function AccountMenu() {
           onPress={() => setOpen(false)}
         >
           <View className="mt-16 items-end px-4">
-            <Pressable onPress={(event) => event.stopPropagation()}>
+            {/* Swallows taps so they do not close the sheet; not a control. */}
+            <Pressable
+              accessible={false}
+              importantForAccessibility="no"
+              onPress={(event) => event.stopPropagation()}
+            >
               {/* Solid surface: the frosted panel made the rows hard to
                   read against busy content behind it. */}
               <View className="w-72 overflow-hidden rounded-3xl border border-border bg-card">

@@ -252,6 +252,8 @@ export default function PlanningScreen() {
             {(data?.budgets ?? []).map((b) => (
               <Pressable
                 key={b.id}
+                accessibilityRole="button"
+                accessibilityHint="Long press to delete this budget"
                 className="mt-3 flex-row items-center justify-between border-t border-border pt-3"
                 onLongPress={() => setConfirming({ kind: "budget", id: b.id })}
               >
@@ -332,6 +334,8 @@ export default function PlanningScreen() {
               <Pressable
                 key={g.id}
                 className="mt-3 flex-row items-center justify-between border-t border-border pt-3"
+                accessibilityRole="button"
+                accessibilityHint="Long press to delete this goal"
                 onLongPress={() => setConfirming({ kind: "goal", id: g.id })}
               >
                 <Text>{g.name}</Text>

@@ -207,6 +207,9 @@ export default function ProfileScreen() {
               return (
                 <Pressable
                   key={value}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`${value} theme`}
                   onPress={async () => {
                     setTheme(value);
                     await setThemePreference(value);
@@ -243,6 +246,9 @@ export default function ProfileScreen() {
               return (
                 <Pressable
                   key={value}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`${value} currency`}
                   onPress={() => setCurrency(value)}
                   className={`rounded-full border px-4 py-1.5 ${
                     selected

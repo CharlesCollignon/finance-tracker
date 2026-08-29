@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -9,6 +9,7 @@ import {
 } from "@finance/core/categories";
 import type {
   Category,
+  Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
@@ -23,9 +24,11 @@ import { useThemeColors } from "@/theme/useThemeColors";
 import {
   createTransaction,
   deleteTransaction,
+  setTransactionTags,
   skipRecurringOccurrence,
   updateTransaction,
 } from "@/lib/mutations";
+import { getTransactionTagIds } from "@/lib/queries";
 
 interface TransactionFormModalProps {
   open: boolean;
@@ -37,6 +40,7 @@ interface TransactionFormModalProps {
   defaultDate?: string;
   /** Most-recently-used category ids, newest first. */
   recentCategoryIds?: string[];
+  tags?: Tag[];
 }
 
 /**
@@ -53,6 +57,7 @@ export function TransactionFormModal({
   transaction = null,
   defaultDate = todayIsoLocal(),
   recentCategoryIds = [],
+  tags = [],
 }: TransactionFormModalProps) {
   const colors = useThemeColors();
   const isEditing = transaction !== null;
@@ -68,6 +73,23 @@ export function TransactionFormModal({
   const [pending, setPending] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSkip, setConfirmSkip] = useState(false);
+  const [tagIds, setTagIds] = useState<string[]>([]);
+
+  // Existing tags load once per edited transaction.
+  useEffect(() => {
+    if (!transaction) {
+      return;
+    }
+    let active = true;
+    void getTransactionTagIds(transaction.id).then((ids) => {
+      if (active) {
+        setTagIds(ids);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [transaction]);
 
   const [categoryQuery, setCategoryQuery] = useState("");
 
@@ -105,6 +127,11 @@ export function TransactionFormModal({
     if (result.error) {
       setError(result.error);
       return;
+    }
+    // Tags are a separate table, so they are written after the row exists.
+    const savedId = isEditing ? transaction.id : result.id;
+    if (savedId && tags.length > 0) {
+      await setTransactionTags(savedId, tagIds);
     }
     onSaved();
     onClose();
@@ -240,6 +267,9 @@ export function TransactionFormModal({
                     return (
                       <Pressable
                         key={cat.id}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected }}
+                        accessibilityLabel={cat.name}
                         onPress={() => setCategoryId(cat.id)}
                         className={cn(
                           "flex-row items-center gap-3 rounded-lg border px-3 py-2",
@@ -282,6 +312,47 @@ export function TransactionFormModal({
               placeholder="Description"
               className="mb-4"
             />
+
+            {tags.length > 0 ? (
+              <>
+                <Text className="mb-2 text-sm font-medium">Tags</Text>
+                <View className="mb-4 flex-row flex-wrap gap-2">
+                  {tags.map((tag) => {
+                    const selected = tagIds.includes(tag.id);
+                    return (
+                      <Pressable
+                        key={tag.id}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: selected }}
+                        accessibilityLabel={tag.name}
+                        onPress={() =>
+                          setTagIds((current) =>
+                            current.includes(tag.id)
+                              ? current.filter((id) => id !== tag.id)
+                              : [...current, tag.id],
+                          )
+                        }
+                        className={cn(
+                          "rounded-full border px-3 py-2",
+                          selected
+                            ? "border-primary bg-primary/15"
+                            : "border-border bg-background",
+                        )}
+                      >
+                        <Text
+                          className={cn(
+                            "text-sm",
+                            selected && "text-primary-ink",
+                          )}
+                        >
+                          {tag.name}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            ) : null}
 
             {error ? (
               <Text className="mb-3 text-sm text-destructive">{error}</Text>
