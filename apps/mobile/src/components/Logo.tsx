@@ -1,14 +1,11 @@
 import { Image, View, type ViewProps } from "react-native";
 
 import { cn } from "@/lib/cn";
-import { useThemeColors } from "@/theme/useThemeColors";
 
 type LogoSize = "sm" | "nav" | "hero" | "watermark";
 
 export interface LogoProps extends ViewProps {
   size?: LogoSize;
-  /** Overrides the tint; defaults to the theme's foreground. */
-  color?: string;
   className?: string;
 }
 
@@ -22,18 +19,11 @@ const BOX: Record<LogoSize, number> = {
 /**
  * Pluclair mark.
  *
- * The artwork is a white glyph on transparency, which would disappear against
- * the light theme, so it is tinted to the current foreground rather than left
- * white. Callers can override the tint where the surface is fixed.
+ * Full-colour artwork, so it is deliberately not tinted — the glass and glow
+ * are the mark. Its black ground was converted to alpha, so the halo composites
+ * onto whatever surface it sits on rather than carrying a black rectangle.
  */
-export function Logo({
-  size = "nav",
-  color,
-  className,
-  style,
-  ...props
-}: LogoProps) {
-  const colors = useThemeColors();
+export function Logo({ size = "nav", className, style, ...props }: LogoProps) {
   const box = BOX[size];
 
   return (
@@ -48,7 +38,6 @@ export function Logo({
         source={require("../../assets/images/logo-mark.png")}
         style={{ width: box, height: box }}
         resizeMode="contain"
-        tintColor={color ?? colors.foreground}
       />
     </View>
   );
