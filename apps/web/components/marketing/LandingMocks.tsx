@@ -74,7 +74,10 @@ function MockCard({
   innerClassName?: string;
 }) {
   return (
-    <Card.Bezel className={cn("w-full", className)} innerClassName={innerClassName}>
+    <Card.Bezel
+      className={cn("w-full", className)}
+      innerClassName={innerClassName}
+    >
       {children}
     </Card.Bezel>
   );
@@ -348,7 +351,10 @@ export function TransactionsMock({ variant = "web" }: { variant?: Variant }) {
         </MockCard>
         <MockCard innerClassName="divide-y divide-border p-4">
           {rows.map((item) => (
-            <MobileTransactionRow key={`${item.name}-${item.day}`} item={item} />
+            <MobileTransactionRow
+              key={`${item.name}-${item.day}`}
+              item={item}
+            />
           ))}
         </MockCard>
       </MobileShell>
@@ -399,7 +405,11 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
   const { templates } = landingSample;
   const budgetMonthly = templates
     .filter((t) => t.amount < 0)
-    .reduce((sum, t) => sum + Math.abs(t.amount) * (t.frequency === "Weekly" ? 4.33 : 1), 0);
+    .reduce(
+      (sum, t) =>
+        sum + Math.abs(t.amount) * (t.frequency === "Weekly" ? 4.33 : 1),
+      0,
+    );
 
   if (variant === "mobile") {
     return (
@@ -482,7 +492,11 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
 
 /** Monday-first weeks for a fixed sample month, with leading/trailing days
  * from adjacent months dimmed — same convention as the real calendar. */
-function buildSampleWeeks(): { day: number; inMonth: boolean; isToday: boolean }[][] {
+function buildSampleWeeks(): {
+  day: number;
+  inMonth: boolean;
+  isToday: boolean;
+}[][] {
   const { year, month, today } = landingSample;
   const firstOfMonth = new Date(year, month - 1, 1);
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -648,7 +662,7 @@ export function CalendarMock({ variant = "web" }: { variant?: Variant }) {
                     className={cn(
                       "text-sm font-semibold leading-none",
                       !cell.inMonth && "text-muted-foreground/50",
-                      cell.isToday && "text-primary",
+                      cell.isToday && "text-primary-ink",
                     )}
                   >
                     {cell.day}
@@ -675,7 +689,8 @@ export function CalendarMock({ variant = "web" }: { variant?: Variant }) {
 }
 
 export function WalletsMock({ variant = "web" }: { variant?: Variant }) {
-  const { portfolio, portfolioInvested, portfolioGain, wallets } = landingSample;
+  const { portfolio, portfolioInvested, portfolioGain, wallets } =
+    landingSample;
   const total = wallets.reduce((sum, w) => sum + w.value, 0);
 
   const allocationBar = (
@@ -808,13 +823,21 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
         <MockCard innerClassName="p-4">
           <p className="text-sm font-bold">Monthly budgets</p>
           <div className="mt-3">
-            <GoalBar label={budget.label} spent={budget.spent} limit={budget.limit} />
+            <GoalBar
+              label={budget.label}
+              spent={budget.spent}
+              limit={budget.limit}
+            />
           </div>
         </MockCard>
         <MockCard innerClassName="p-4">
           <p className="text-sm font-bold">Savings goals</p>
           <div className="mt-3">
-            <GoalBar label={goal.label} spent={goal.saved} limit={goal.target} />
+            <GoalBar
+              label={goal.label}
+              spent={goal.saved}
+              limit={goal.target}
+            />
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
             Save {formatEuro(goal.monthlyPace)}/month to reach this by{" "}
@@ -830,7 +853,11 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
       <MockCard innerClassName="p-4">
         <p className="font-head text-base">Monthly budgets</p>
         <div className="mt-3">
-          <GoalBar label={budget.label} spent={budget.spent} limit={budget.limit} />
+          <GoalBar
+            label={budget.label}
+            spent={budget.spent}
+            limit={budget.limit}
+          />
         </div>
       </MockCard>
       <MockCard innerClassName="p-4">

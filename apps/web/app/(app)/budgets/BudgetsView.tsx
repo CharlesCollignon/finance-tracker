@@ -143,7 +143,11 @@ export function BudgetsView({
           {budgetProgress.map((row) => {
             const tone = progressTone(row.ratio, row.over);
             return (
-              <Card.Bezel key={row.budgetId} className="w-full" innerClassName="p-4">
+              <Card.Bezel
+                key={row.budgetId}
+                className="w-full"
+                innerClassName="p-4"
+              >
                 <div className="flex justify-between text-sm font-medium">
                   <span>{row.label}</span>
                   <span
@@ -290,7 +294,11 @@ export function BudgetsView({
           {goalProgress.map((row) => {
             const hint = pacingHint(row.pacing, formatEuro);
             return (
-              <Card.Bezel key={row.goalId} className="w-full" innerClassName="p-4">
+              <Card.Bezel
+                key={row.goalId}
+                className="w-full"
+                innerClassName="p-4"
+              >
                 <div className="flex justify-between text-sm font-medium">
                   <span>{row.name}</span>
                   <span className="font-mono tabular-nums">

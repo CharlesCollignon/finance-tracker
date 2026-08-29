@@ -78,12 +78,17 @@ export function DashboardHome({
         stagger={0.06}
       >
         <StaggerItem className="md:col-span-8 lg:h-full lg:min-h-0">
-          <Card.Bezel className="h-full w-full" innerClassName="flex h-full flex-col overflow-y-auto p-6 md:p-8">
+          <Card.Bezel
+            className="h-full w-full"
+            innerClassName="flex h-full flex-col overflow-y-auto p-6 md:p-8"
+          >
             <div className="flex flex-1 flex-col items-center justify-center">
               <StatHero
                 label={remainingLabel(budgetView, monthLabel)}
                 amount={formatEuro(remaining)}
-                amountClassName={overBudget ? "text-destructive" : "text-primary-ink"}
+                amountClassName={
+                  overBudget ? "text-destructive" : "text-primary-ink"
+                }
                 subtitle={
                   <p>
                     <span className="privacy-amount text-success tabular-nums">
@@ -99,7 +104,9 @@ export function DashboardHome({
                 status={
                   <span
                     className={cn(
-                      statusTone === "danger" ? "text-destructive" : "text-success",
+                      statusTone === "danger"
+                        ? "text-destructive"
+                        : "text-success",
                     )}
                   >
                     {statusLabel}
@@ -147,13 +154,19 @@ export function DashboardHome({
         </StaggerItem>
 
         <StaggerItem className="md:col-span-4 lg:h-full lg:min-h-0">
-          <Card.Bezel className="h-full w-full" innerClassName="flex h-full flex-col overflow-y-auto p-5 md:p-6">
+          <Card.Bezel
+            className="h-full w-full"
+            innerClassName="flex h-full flex-col overflow-y-auto p-5 md:p-6"
+          >
             {walletsSlot}
           </Card.Bezel>
         </StaggerItem>
 
         <StaggerItem className="md:col-span-12 lg:h-full lg:min-h-0">
-          <Card.Bezel className="h-full w-full" innerClassName="flex h-full flex-col overflow-y-auto p-5 md:p-6">
+          <Card.Bezel
+            className="h-full w-full"
+            innerClassName="flex h-full flex-col overflow-y-auto p-5 md:p-6"
+          >
             <DashboardAllocationChart summary={summary} />
           </Card.Bezel>
         </StaggerItem>

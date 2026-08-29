@@ -6,7 +6,8 @@ function ChartFallback({ className }: { className?: string }) {
   return (
     <div
       className={
-        className ?? "mx-auto h-40 w-full max-w-md animate-pulse rounded-md bg-muted/40"
+        className ??
+        "mx-auto h-40 w-full max-w-md animate-pulse rounded-md bg-muted/40"
       }
       aria-hidden
     />
@@ -14,9 +15,11 @@ function ChartFallback({ className }: { className?: string }) {
 }
 
 export const ProgressRing = dynamic(
-  () =>
-    import("@/components/finance/ProgressRing").then((m) => m.ProgressRing),
-  { ssr: false, loading: () => <ChartFallback className="h-[100px] w-[100px]" /> },
+  () => import("@/components/finance/ProgressRing").then((m) => m.ProgressRing),
+  {
+    ssr: false,
+    loading: () => <ChartFallback className="h-[100px] w-[100px]" />,
+  },
 );
 
 export const DashboardWalletsCard = dynamic(

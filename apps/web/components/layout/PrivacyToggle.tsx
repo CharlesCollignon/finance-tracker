@@ -53,7 +53,7 @@ export function PrivacyToggle({ className }: { className?: string }) {
         "inline-flex h-9 w-9 items-center justify-center rounded-md",
         "border border-border bg-card text-muted-foreground",
         "transition-colors hover:bg-muted hover:text-foreground",
-        hidden && "bg-primary/10 text-primary",
+        hidden && "bg-primary/10 text-primary-ink",
         className,
       )}
     >

@@ -8,10 +8,7 @@ import type { CategoryType } from "@finance/core/types/database";
 import { chartMotion, chartTextStyle } from "@/lib/echarts-theme";
 import { readCssVar } from "@/lib/css-var";
 import { privateEuro, usePrivacyOn } from "@/lib/use-privacy";
-import {
-  useCompactViewport,
-  useEchartsSize,
-} from "@/lib/use-echarts-size";
+import { useCompactViewport, useEchartsSize } from "@/lib/use-echarts-size";
 
 export interface TypeTotals {
   income: number;
@@ -91,8 +88,7 @@ export function TransactionTypeSankey({
       value: typeTotals[type],
     })).filter((row) => row.value > 0);
 
-    const hasAny =
-      hasIncome || outflows.length > 0 || remainingPositive > 0;
+    const hasAny = hasIncome || outflows.length > 0 || remainingPositive > 0;
     if (!hasAny) {
       return null;
     }
@@ -246,7 +242,10 @@ export function TransactionTypeSankey({
   const height = hasIncome ? (compact ? 280 : 260) : 220;
 
   return (
-    <div ref={containerRef} className="privacy-sensitive w-full min-w-0 overflow-visible">
+    <div
+      ref={containerRef}
+      className="privacy-sensitive w-full min-w-0 overflow-visible"
+    >
       <ReactECharts
         ref={chartRef}
         option={option}

@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import Link from "next/link";
 import { PencilSimple, Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/retroui/Button";
@@ -13,10 +19,7 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { RecurringForm } from "@/components/finance/RecurringForm";
 import { StatHero } from "@/components/finance/StatHero";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
-import {
-  monthSearchParams,
-  parseMonthParams,
-} from "@finance/core/constants";
+import { monthSearchParams, parseMonthParams } from "@finance/core/constants";
 import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
 import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
 import {
@@ -338,7 +341,10 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                   ))}
                 </div>
                 {activeGroup ? (
-                  <Card.Bezel className="mt-4 w-full" innerClassName="px-4 py-1">
+                  <Card.Bezel
+                    className="mt-4 w-full"
+                    innerClassName="px-4 py-1"
+                  >
                     <GroupList
                       label={activeGroup.label}
                       items={activeGroup.items}
@@ -356,7 +362,10 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                       {label}
                       {items.length > 0 ? ` · ${items.length}` : ""}
                     </h2>
-                    <Card.Bezel className="mt-3 w-full" innerClassName="px-4 py-1">
+                    <Card.Bezel
+                      className="mt-3 w-full"
+                      innerClassName="px-4 py-1"
+                    >
                       <GroupList
                         label={label}
                         items={items}

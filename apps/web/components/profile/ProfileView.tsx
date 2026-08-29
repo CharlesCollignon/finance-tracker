@@ -132,8 +132,8 @@ export function ProfileView({
         <Card.Bezel className="w-full" innerClassName="p-4 md:p-5">
           <h2 className="text-base font-semibold">Currency</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Choose how amounts are labeled across the app. This only changes
-            the symbol — it does not convert your numbers.
+            Choose how amounts are labeled across the app. This only changes the
+            symbol — it does not convert your numbers.
           </p>
           <CurrencyToggle className="mt-4" />
         </Card.Bezel>
@@ -166,8 +166,13 @@ export function ProfileView({
           />
         </Card.Bezel>
 
-        <Card.Bezel className="w-full border-destructive/40" innerClassName="p-4 md:p-5">
-          <h2 className="text-base font-semibold text-destructive">Danger zone</h2>
+        <Card.Bezel
+          className="w-full border-destructive/40"
+          innerClassName="p-4 md:p-5"
+        >
+          <h2 className="text-base font-semibold text-destructive">
+            Danger zone
+          </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Delete all transactions, recurring templates, and categories. Your
             account stays active.
@@ -198,7 +203,10 @@ export function ProfileView({
           </form>
         </Card.Bezel>
 
-        <Card.Bezel className="w-full border-destructive/40" innerClassName="p-4 md:p-5">
+        <Card.Bezel
+          className="w-full border-destructive/40"
+          innerClassName="p-4 md:p-5"
+        >
           <h2 className="text-base font-semibold text-destructive">
             Delete account
           </h2>

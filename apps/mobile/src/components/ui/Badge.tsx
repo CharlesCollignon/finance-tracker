@@ -23,7 +23,7 @@ const LABEL: Record<Variant, string> = {
   default: "text-muted-foreground",
   outline: "text-foreground",
   solid: "text-background",
-  surface: "text-primary",
+  surface: "text-primary-ink",
 };
 
 const PADDING: Record<Size, string> = {

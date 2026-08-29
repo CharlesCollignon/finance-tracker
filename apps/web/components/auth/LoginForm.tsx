@@ -29,7 +29,10 @@ export function LoginForm() {
   }, [state.success, router]);
 
   return (
-    <Card.Bezel className="w-full max-w-md md:max-w-lg" innerClassName="p-6 md:p-8">
+    <Card.Bezel
+      className="w-full max-w-md md:max-w-lg"
+      innerClassName="p-6 md:p-8"
+    >
       <h1 className="font-serif text-2xl italic md:text-3xl">Welcome back</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Sign in to track your finances

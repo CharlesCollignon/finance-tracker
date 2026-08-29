@@ -158,8 +158,7 @@ export function CalendarView({
                             "border-r border-border/40 p-1.5 text-left",
                             "transition-colors last:border-r-0",
                             "sm:min-h-[4.75rem] sm:p-2 md:min-h-[5.5rem]",
-                            !day.isCurrentMonth &&
-                              "text-muted-foreground/50",
+                            !day.isCurrentMonth && "text-muted-foreground/50",
                             day.isToday && "bg-primary/5",
                             isSelected && "bg-primary/10",
                             day.isCurrentMonth &&
@@ -176,7 +175,7 @@ export function CalendarView({
                           <span
                             className={cn(
                               "text-sm font-semibold leading-none",
-                              day.isToday && "text-primary",
+                              day.isToday && "text-primary-ink",
                             )}
                           >
                             {day.day}
@@ -265,7 +264,10 @@ export function CalendarView({
                   </Button>
                 </EmptyState>
               ) : (
-                <Card.Bezel className="w-full" innerClassName="divide-y divide-border px-2 py-1">
+                <Card.Bezel
+                  className="w-full"
+                  innerClassName="divide-y divide-border px-2 py-1"
+                >
                   {selectedTransactions.map((tx) => (
                     <button
                       key={tx.id}

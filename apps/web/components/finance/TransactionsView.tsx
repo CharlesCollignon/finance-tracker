@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { DownloadSimple, MagnifyingGlass, Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
@@ -225,9 +231,7 @@ export function TransactionsView({
 
   const sortedRows = useMemo(
     () =>
-      [...filtered].sort((a, b) =>
-        b.occurred_on.localeCompare(a.occurred_on),
-      ),
+      [...filtered].sort((a, b) => b.occurred_on.localeCompare(a.occurred_on)),
     [filtered],
   );
 
@@ -490,7 +494,10 @@ export function TransactionsView({
                 ) : null}
               </EmptyState>
             ) : (
-              <Card.Bezel className="w-full" innerClassName="divide-y divide-border px-2 py-1">
+              <Card.Bezel
+                className="w-full"
+                innerClassName="divide-y divide-border px-2 py-1"
+              >
                 {sortedRows.map((tx) => (
                   <button
                     key={tx.id}

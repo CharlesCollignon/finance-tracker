@@ -8,10 +8,7 @@ import { buttonVariants } from "@/components/retroui/Button";
 import { Logo } from "@/components/layout/Logo";
 import { MarketingThemeToggle } from "@/components/marketing/MarketingThemeToggle";
 import { cn } from "@/lib/utils";
-import {
-  featureHref,
-  landingCopy,
-} from "@/components/marketing/landing-copy";
+import { featureHref, landingCopy } from "@/components/marketing/landing-copy";
 
 interface LandingCtasProps {
   isLoggedIn: boolean;
@@ -44,10 +41,7 @@ export function LandingCtas({
 
   if (layout === "primary") {
     return (
-      <Link
-        href="/signup"
-        className={cn(buttonVariants({ size }), blockClass)}
-      >
+      <Link href="/signup" className={cn(buttonVariants({ size }), blockClass)}>
         {landingCopy.cta.getStarted}
       </Link>
     );
@@ -74,10 +68,7 @@ export function LandingCtas({
 
   return (
     <>
-      <Link
-        href="/signup"
-        className={cn(buttonVariants({ size }), blockClass)}
-      >
+      <Link href="/signup" className={cn(buttonVariants({ size }), blockClass)}>
         {landingCopy.cta.getStarted}
       </Link>
       <Link

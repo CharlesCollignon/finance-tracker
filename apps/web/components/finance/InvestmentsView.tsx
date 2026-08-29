@@ -101,8 +101,7 @@ export function InvestmentsView({
 
   const hasData = portfolioHasActivity(portfolio);
   const visibleFunding = fundingNeeds.filter((need) => need.monthlyTotal > 0);
-  const showPl =
-    portfolio.hasMarketSnapshot && portfolio.totalGainLoss !== 0;
+  const showPl = portfolio.hasMarketSnapshot && portfolio.totalGainLoss !== 0;
 
   const activeColumn =
     portfolio.columns.find((entry) => entry.walletId === activeWallet) ??
@@ -244,16 +243,15 @@ interface WalletPanelProps {
   onAdd: () => void;
 }
 
-function WalletPanel({
-  column,
-  onEdit,
-  onAdd,
-}: WalletPanelProps) {
+function WalletPanel({ column, onEdit, onAdd }: WalletPanelProps) {
   const formatEuro = useFormatCurrency();
   const showPl = column.hasMarketSnapshot && column.totalGainLoss !== 0;
 
   return (
-    <Card.Bezel className="w-full" innerClassName="flex w-full min-w-0 max-w-full flex-col gap-6 p-5 md:p-6">
+    <Card.Bezel
+      className="w-full"
+      innerClassName="flex w-full min-w-0 max-w-full flex-col gap-6 p-5 md:p-6"
+    >
       <div className="flex min-w-0 flex-col items-center gap-3 text-center">
         <div className="grid w-full min-w-0 max-w-md grid-cols-3 gap-2 sm:gap-4">
           <Metric label="Value" value={formatEuro(column.totalMarketValue)} />
@@ -356,7 +354,7 @@ function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
               </p>
             ) : null}
             {item.needsShareCount ? (
-              <p className="mt-1 text-xs font-medium text-primary">
+              <p className="mt-1 text-xs font-medium text-primary-ink">
                 {isCrypto
                   ? "Add total BTC for live market value"
                   : "Add total shares for live market value"}

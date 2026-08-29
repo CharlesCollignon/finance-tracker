@@ -128,7 +128,7 @@ export function InvestmentPositionRow({
               </Text>
             ) : null}
             {item.needsShareCount ? (
-              <Text className="mt-1 text-xs font-medium text-primary">
+              <Text className="mt-1 text-xs font-medium text-primary-ink">
                 {isCrypto
                   ? "Add total BTC for live market value"
                   : "Add total shares for live market value"}
