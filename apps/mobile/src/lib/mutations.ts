@@ -2,6 +2,7 @@ import {
   applyRecurringSchema,
   authSchema,
   categorySchema,
+  deleteTransactionsSchema,
   importTransactionsSchema,
   recurringTemplateSchema,
   transactionSchema,
@@ -1372,4 +1373,36 @@ export async function importTransactions(
     return { error: error.message };
   }
   return { success: true, imported: parsed.data.rows.length };
+}
+
+/**
+ * Deletes several transactions at once.
+ *
+ * The row-level policy already scopes deletes to the caller; the explicit
+ * user_id filter keeps it that way if the policy is ever loosened.
+ */
+export async function deleteTransactions(
+  ids: string[],
+): Promise<ActionResult & { deleted?: number }> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = deleteTransactionsSchema.safeParse({ ids });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid selection" };
+  }
+
+  const { error, count } = await supabase
+    .from("transactions")
+    .delete({ count: "exact" })
+    .eq("user_id", userId)
+    .in("id", parsed.data.ids);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true, deleted: count ?? parsed.data.ids.length };
 }

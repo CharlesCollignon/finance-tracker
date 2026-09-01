@@ -33,6 +33,17 @@ import { PrivateAmount } from "@/components/PrivateAmount";
 import { ApplyRecurringSheet } from "@/components/ApplyRecurringSheet";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
+import {
+  RowCheckbox,
+  SelectionBar,
+} from "@/components/SelectionBar";
+import {
+  pruneSelection,
+  selectAllState,
+  summarizeSelection,
+  toggleSelectAll,
+  toggleSelected,
+} from "@finance/core/selection";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -41,7 +52,7 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { useDataVersion } from "@/lib/data-version";
+import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
@@ -49,6 +60,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import {
   applyRecurringForMonth,
   createTransaction,
+  deleteTransactions,
   previewApplyRecurringForMonth,
   unskipRecurringOccurrence,
 } from "@/lib/mutations";
@@ -60,7 +72,7 @@ import {
   type SkippedOccurrence,
 } from "@/lib/queries";
 import { cn } from "@/lib/cn";
-import { hapticLight } from "@/lib/haptics";
+import { hapticLight, hapticSuccess } from "@/lib/haptics";
 
 type FilterType = "all" | CategoryType;
 
@@ -80,6 +92,9 @@ const FILTERS: FilterType[] = [
   "savings",
   "investment",
 ];
+
+/** Stable identity, so the derived selection keeps a steady reference. */
+const EMPTY_SELECTION: ReadonlySet<string> = new Set();
 
 export default function TransactionsScreen() {
   const { user } = useAuth();
@@ -103,6 +118,10 @@ export default function TransactionsScreen() {
 
   const router = useRouter();
   const dataVersion = useDataVersion();
+  const [selectMode, setSelectMode] = useState(false);
+  const [storedSelection, setSelected] =
+    useState<ReadonlySet<string>>(EMPTY_SELECTION);
+  const [deletePending, setDeletePending] = useState(false);
   const { data, loading, refreshing, onRefresh, reload, error } =
     useRefreshable(async () => {
       if (!user) {
@@ -122,7 +141,12 @@ export default function TransactionsScreen() {
       return { transactions, categories, skipped, tags };
     }, [user?.id, year, month, dataVersion]);
 
-  const transactions = data?.transactions ?? [];
+  // Memoised because every derived memo below depends on it; a fresh array
+  // each render would recompute the whole screen's derivations.
+  const transactions = useMemo(
+    () => data?.transactions ?? [],
+    [data?.transactions],
+  );
   const typeTotals = useMemo(
     () => computeTypeTotals(transactions),
     [transactions],
@@ -133,6 +157,7 @@ export default function TransactionsScreen() {
     typeTotals.savings -
     typeTotals.investment;
   const categories = data?.categories ?? [];
+
   const skipped = data?.skipped ?? [];
   const tags = data?.tags ?? [];
 
@@ -192,6 +217,43 @@ export default function TransactionsScreen() {
       );
     });
   }, [transactions, filter, categoryFilter, search]);
+  const visibleIds = useMemo(() => filtered.map((tx) => tx.id), [filtered]);
+  // A filter can hide rows still held in the stored set; pruning here rather
+  // than in an effect means the hidden ones can never be acted on.
+  const selected = useMemo(
+    () => pruneSelection(storedSelection, visibleIds),
+    [storedSelection, visibleIds],
+  );
+  const selectionSummary = useMemo(
+    () => summarizeSelection(transactions, selected),
+    [transactions, selected],
+  );
+  const allState = selectAllState(visibleIds, selected);
+
+  function leaveSelectMode() {
+    setSelectMode(false);
+    setSelected(EMPTY_SELECTION);
+  }
+
+  async function handleBulkDelete() {
+    setDeletePending(true);
+    const result = await deleteTransactions([...selected]);
+    setDeletePending(false);
+
+    if (result.error) {
+      toast(result.error, "error");
+      return;
+    }
+
+    void hapticSuccess();
+    notifyDataChanged();
+    toast(
+      `${result.deleted} ${result.deleted === 1 ? "transaction" : "transactions"} deleted`,
+      "success",
+    );
+    leaveSelectMode();
+    void onRefresh();
+  }
 
   async function handleDuplicate() {
     const source = duplicating;
@@ -336,14 +398,42 @@ export default function TransactionsScreen() {
         />
       </View>
 
-      <View className="mb-4 flex-row justify-center">
-        <Button
-          label="Import a bank CSV"
-          variant="ghost"
-          size="sm"
-          icon="document-outline"
-          onPress={() => router.push("/import" as Href)}
-        />
+      <View className="mb-4 flex-row items-center justify-center gap-2">
+        {selectMode ? (
+          <>
+            <Button
+              label={allState === "all" ? "Clear all" : "Select all"}
+              variant="ghost"
+              size="sm"
+              onPress={() =>
+                setSelected((current) => toggleSelectAll(visibleIds, current))
+              }
+            />
+            <Button
+              label="Done"
+              variant="ghost"
+              size="sm"
+              onPress={leaveSelectMode}
+            />
+          </>
+        ) : (
+          <>
+            <Button
+              label="Select"
+              variant="ghost"
+              size="sm"
+              icon="checkbox-outline"
+              onPress={() => setSelectMode(true)}
+            />
+            <Button
+              label="Import a bank CSV"
+              variant="ghost"
+              size="sm"
+              icon="document-outline"
+              onPress={() => router.push("/import" as Href)}
+            />
+          </>
+        )}
       </View>
 
       <View className="mb-3 flex-row items-center gap-2 rounded-full border border-border bg-card px-3">
@@ -513,7 +603,9 @@ export default function TransactionsScreen() {
               ListFooterComponent={
                 filtered.length > 0 ? (
                   <Text variant="muted" className="py-3 text-center text-xs">
-                    Tap to edit · long-press to repeat today
+                    {selectMode
+                      ? "Tap to select · Done to leave"
+                      : "Tap to edit · long-press to select"}
                   </Text>
                 ) : null
               }
@@ -524,18 +616,54 @@ export default function TransactionsScreen() {
                       as on web. */}
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`Edit ${item.categories.name}`}
-                    className="min-h-14 flex-row items-center gap-3 py-3"
+                    accessibilityLabel={
+                      selectMode
+                        ? `Select ${item.categories.name}`
+                        : `Edit ${item.categories.name}`
+                    }
+                    accessibilityState={
+                      selectMode
+                        ? { selected: selected.has(item.id) }
+                        : undefined
+                    }
+                    className={cn(
+                      "min-h-14 flex-row items-center gap-3 py-3",
+                      selectMode && selected.has(item.id) && "bg-primary/5",
+                    )}
                     onPress={() => {
                       void hapticLight();
+                      if (selectMode) {
+                        setSelected((current) =>
+                          toggleSelected(current, item.id),
+                        );
+                        return;
+                      }
                       setEditing(item);
                       setFormOpen(true);
                     }}
                     onLongPress={() => {
                       void hapticLight();
+                      // Long-press enters selection when it is not already on,
+                      // which is the gesture people expect from a list.
+                      if (!selectMode) {
+                        setSelectMode(true);
+                        setSelected(() => new Set([item.id]));
+                        return;
+                      }
                       setDuplicating(item);
                     }}
                   >
+                    {selectMode ? (
+                      <RowCheckbox
+                        checked={selected.has(item.id)}
+                        label={`Select ${item.categories.name}`}
+                        onPress={() =>
+                          setSelected((current) =>
+                            toggleSelected(current, item.id),
+                          )
+                        }
+                      />
+                    ) : null}
                     <CategoryIcon icon={item.categories.icon} />
                     <View className="min-w-0 flex-1">
                       <Text numberOfLines={1} className="text-sm font-medium">
@@ -595,6 +723,13 @@ export default function TransactionsScreen() {
         destructive={false}
         onConfirm={handleDuplicate}
         onCancel={() => setDuplicating(null)}
+      />
+
+      <SelectionBar
+        summary={selectionSummary}
+        pending={deletePending}
+        onCancel={leaveSelectMode}
+        onDelete={() => void handleBulkDelete()}
       />
 
       <ApplyRecurringSheet

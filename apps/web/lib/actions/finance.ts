@@ -31,6 +31,7 @@ import type {
 import {
   applyRecurringSchema,
   authSchema,
+  deleteTransactionsSchema,
   importTransactionsSchema,
   parseUuid,
   quickTransactionSchema,
@@ -462,6 +463,40 @@ export async function getExistingKeysForRange(
       note: row.note,
     })),
   };
+}
+
+/**
+ * Deletes several transactions at once.
+ *
+ * The row-level policy already scopes deletes to the caller, and the explicit
+ * user_id filter keeps it that way if the policy is ever loosened.
+ */
+export async function deleteTransactions(
+  ids: string[],
+): Promise<{ error?: string; deleted?: number }> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = deleteTransactionsSchema.safeParse({ ids });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid selection" };
+  }
+
+  const supabase = await createClient();
+  const { error, count } = await supabase
+    .from("transactions")
+    .delete({ count: "exact" })
+    .eq("user_id", user.id)
+    .in("id", parsed.data.ids);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateRecurringDependents();
+  return { deleted: count ?? parsed.data.ids.length };
 }
 
 export async function updateTransaction(

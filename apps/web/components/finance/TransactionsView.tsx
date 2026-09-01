@@ -34,9 +34,21 @@ import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import {
   applyRecurringForMonth,
+  deleteTransactions,
   previewApplyRecurringForMonth,
 } from "@/lib/actions/finance";
 import { ApplyRecurringSheet } from "@/components/finance/ApplyRecurringSheet";
+import {
+  RowCheckbox,
+  SelectionBar,
+} from "@/components/finance/SelectionBar";
+import {
+  pruneSelection,
+  selectAllState,
+  summarizeSelection,
+  toggleSelectAll,
+  toggleSelected,
+} from "@finance/core/selection";
 import {
   applyRecurringPlanCounts,
   type ApplyRecurringPlan,
@@ -160,6 +172,10 @@ export function TransactionsView({
     useState<TransactionWithCategory | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
   const [search, setSearch] = useState("");
+  const [selectMode, setSelectMode] = useState(false);
+  const [storedSelection, setSelected] =
+    useState<ReadonlySet<string>>(new Set());
+  const [deletePending, startDelete] = useTransition();
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
   const [applySheetOpen, setApplySheetOpen] = useState(false);
@@ -300,6 +316,40 @@ export function TransactionsView({
         "success",
       );
       void refreshApplyPending();
+    });
+  }
+
+  const visibleIds = useMemo(() => sortedRows.map((tx) => tx.id), [sortedRows]);
+  // A filter can hide rows that are still in the stored set. Pruning here
+  // rather than in an effect means the hidden ones can never be acted on,
+  // without a render pass spent synchronising state to itself.
+  const selected = useMemo(
+    () => pruneSelection(storedSelection, visibleIds),
+    [storedSelection, visibleIds],
+  );
+  const selectionSummary = useMemo(
+    () => summarizeSelection(transactions, selected),
+    [transactions, selected],
+  );
+  const allState = selectAllState(visibleIds, selected);
+
+  function leaveSelectMode() {
+    setSelectMode(false);
+    setSelected(new Set());
+  }
+
+  function handleBulkDelete() {
+    startDelete(async () => {
+      const result = await deleteTransactions([...selected]);
+      if (result.error) {
+        toast(result.error, "error");
+        return;
+      }
+      toast(
+        `${result.deleted} ${result.deleted === 1 ? "transaction" : "transactions"} deleted`,
+        "success",
+      );
+      leaveSelectMode();
     });
   }
 
@@ -479,6 +529,30 @@ export function TransactionsView({
                   variant="link"
                   size="sm"
                   className="h-10 px-2"
+                  onClick={() =>
+                    selectMode ? leaveSelectMode() : setSelectMode(true)
+                  }
+                >
+                  {selectMode ? "Done" : "Select"}
+                </Button>
+                {selectMode ? (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-10 px-2"
+                    onClick={() =>
+                      setSelected((current) =>
+                        toggleSelectAll(visibleIds, current),
+                      )
+                    }
+                  >
+                    {allState === "all" ? "Clear all" : "Select all"}
+                  </Button>
+                ) : null}
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-10 px-2"
                   onClick={handleExport}
                 >
                   <DownloadSimple size={16} weight="light" className="mr-1.5" />
@@ -537,11 +611,34 @@ export function TransactionsView({
                   <button
                     key={tx.id}
                     type="button"
-                    onClick={() => setEditTransaction(tx)}
-                    aria-label={`Edit ${tx.categories.name}`}
-                    className="flex w-full items-center justify-between gap-3 py-3.5 px-2 text-left transition-colors hover:bg-muted/30"
+                    onClick={() =>
+                      selectMode
+                        ? setSelected((current) => toggleSelected(current, tx.id))
+                        : setEditTransaction(tx)
+                    }
+                    aria-label={
+                      selectMode
+                        ? `Select ${tx.categories.name}`
+                        : `Edit ${tx.categories.name}`
+                    }
+                    aria-pressed={selectMode ? selected.has(tx.id) : undefined}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-3 py-3.5 px-2 text-left transition-colors hover:bg-muted/30",
+                      selectMode && selected.has(tx.id) && "bg-primary/5",
+                    )}
                   >
                     <div className="flex min-w-0 items-center gap-3.5">
+                      {selectMode ? (
+                        <RowCheckbox
+                          checked={selected.has(tx.id)}
+                          label={`Select ${tx.categories.name}`}
+                          onChange={() =>
+                            setSelected((current) =>
+                              toggleSelected(current, tx.id),
+                            )
+                          }
+                        />
+                      ) : null}
                       <CategoryIcon
                         icon={tx.categories.icon}
                         className="h-10 w-10 rounded-[13px] border-0 bg-muted"
@@ -596,6 +693,13 @@ export function TransactionsView({
           }
         }}
         transaction={editTransaction}
+      />
+
+      <SelectionBar
+        summary={selectionSummary}
+        pending={deletePending}
+        onCancel={leaveSelectMode}
+        onDelete={handleBulkDelete}
       />
 
       <ApplyRecurringSheet
