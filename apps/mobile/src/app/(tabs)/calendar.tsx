@@ -34,6 +34,7 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import {
@@ -52,6 +53,7 @@ export default function CalendarScreen() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
 
+  const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, reload, error } =
     useRefreshable(async () => {
       if (!user) {
@@ -67,7 +69,7 @@ export default function CalendarScreen() {
         getRecurringTemplates(user.id),
       ]);
       return { transactions, categories, templates };
-    }, [user?.id, year, month]);
+    }, [user?.id, year, month, dataVersion]);
 
   const transactions = data?.transactions ?? [];
   const categories = data?.categories ?? [];

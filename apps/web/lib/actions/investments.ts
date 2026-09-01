@@ -8,7 +8,11 @@ import {
   upsertInvestmentPosition,
 } from "@/lib/queries/investments";
 import { displayNameForRecurringTemplate } from "@finance/core/investment-positions";
-import { investmentPositionSchema } from "@finance/core/validations/investments";
+import {
+  investmentPositionSchema,
+  walletPlanSchema,
+  walletTargetsSchema,
+} from "@finance/core/validations/investments";
 import {
   BITCOIN_INSTRUMENT,
   isCryptoWallet,
@@ -123,6 +127,98 @@ export async function removeInvestmentPosition(
           ? error.message
           : "Could not remove this position.",
     };
+  }
+
+  revalidateRecurringDependents();
+  return { success: true };
+}
+
+/**
+ * Saves one wallet's plan — its target share of the portfolio, when the
+ * wrapper was opened, and any non-standard contribution ceiling.
+ *
+ * Upserted per wallet rather than as a set, so setting a PEA's opening date
+ * does not require the user to have decided on target weights first.
+ */
+export async function saveWalletPlan(input: {
+  wallet: string;
+  targetWeight?: string | number;
+  openedOn?: string;
+  contributionCeiling?: string | number;
+}): Promise<ActionResult> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = walletPlanSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("wallet_plans").upsert(
+    {
+      user_id: user.id,
+      wallet: parsed.data.wallet,
+      target_weight: parsed.data.targetWeight,
+      opened_on: parsed.data.openedOn,
+      contribution_ceiling: parsed.data.contributionCeiling,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,wallet" },
+  );
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateRecurringDependents();
+  return { success: true };
+}
+
+/**
+ * Saves every target at once.
+ *
+ * Drift is only reported when the targets cover the whole portfolio, so the
+ * UI edits them as a set and this writes them as one.
+ */
+export async function saveWalletTargets(
+  targets: { wallet: string; targetWeight: number }[],
+): Promise<ActionResult> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = walletTargetsSchema.safeParse({ targets });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid targets" };
+  }
+
+  const total = parsed.data.targets.reduce(
+    (sum, row) => sum + row.targetWeight,
+    0,
+  );
+
+  // Anything else would make every wallet look permanently off-target.
+  if (parsed.data.targets.length > 0 && Math.abs(total - 1) > 0.005) {
+    return { error: "Targets must add up to 100%" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("wallet_plans").upsert(
+    parsed.data.targets.map((row) => ({
+      user_id: user.id,
+      wallet: row.wallet,
+      target_weight: row.targetWeight,
+      updated_at: new Date().toISOString(),
+    })),
+    { onConflict: "user_id,wallet" },
+  );
+
+  if (error) {
+    return { error: error.message };
   }
 
   revalidateRecurringDependents();

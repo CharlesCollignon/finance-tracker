@@ -35,6 +35,7 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -67,6 +68,7 @@ export default function RecurringScreen() {
   const [applyPending, setApplyPending] = useState(false);
   const { year, month } = parseMonthParams();
 
+  const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, reload, error } =
     useRefreshable(async () => {
       if (!user) {
@@ -80,7 +82,7 @@ export default function RecurringScreen() {
         getCategories(user.id),
       ]);
       return { templates, categories };
-    }, [user?.id]);
+    }, [user?.id, dataVersion]);
 
   const templates = data?.templates ?? [];
   const categories = data?.categories ?? [];

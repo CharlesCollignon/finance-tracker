@@ -2,9 +2,13 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getCategories } from "@/lib/queries/categories";
-import { getMonthlySummary } from "@/lib/queries/finance";
+import {
+  getMonthComparison,
+  getMonthlySummary,
+} from "@/lib/queries/finance";
 import { getBudgets, getSavingsGoals } from "@/lib/queries/phase4";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
+import { previewApplyRecurringForMonth } from "@/lib/actions/finance";
 import {
   parseMonthParams,
   parseBudgetViewMode,
@@ -17,6 +21,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { BudgetViewToggle } from "@/components/finance/BudgetViewToggle";
 import { DashboardHome } from "@/components/finance/DashboardHome";
+import { MonthReadyCard } from "@/components/finance/MonthReadyCard";
 import { DashboardWalletsCard } from "@/components/finance/lazy-charts";
 
 interface DashboardPageProps {
@@ -28,6 +33,36 @@ async function DashboardWalletsSlot({ userId }: { userId: string }) {
     includeHistory: false,
   });
   return <DashboardWalletsCard portfolio={portfolio} />;
+}
+
+/**
+ * Streamed separately because pricing share-based templates calls out to a
+ * quote source, and the month's headline figures should not wait on it. A
+ * failed preview simply means no card rather than a failed page.
+ */
+async function MonthReadySlot({
+  monthLabel,
+  year,
+  month,
+}: {
+  monthLabel: string;
+  year: number;
+  month: number;
+}) {
+  const preview = await previewApplyRecurringForMonth(year, month);
+
+  if (!preview.plan) {
+    return null;
+  }
+
+  return (
+    <MonthReadyCard
+      monthLabel={monthLabel}
+      year={year}
+      month={month}
+      plan={preview.plan}
+    />
+  );
 }
 
 function WalletsFallback() {
@@ -51,11 +86,12 @@ export default async function DashboardPage({
   const params = await searchParams;
   const { year, month } = parseMonthParams(params.y, params.m);
   const budgetView = parseBudgetViewMode(params.view);
-  const [summary, budgets, goals, categories] = await Promise.all([
+  const [summary, budgets, goals, categories, comparison] = await Promise.all([
     getMonthlySummary(user.id, year, month, budgetView),
     getBudgets(user.id),
     getSavingsGoals(user.id),
     getCategories(user.id),
+    getMonthComparison(user.id, year, month),
   ]);
 
   const overBudget = summary.remaining < 0;
@@ -89,7 +125,15 @@ export default async function DashboardPage({
         </Suspense>
       </PageHeader>
 
-      <PageContainer>
+      <PageContainer className="flex flex-col gap-4">
+        <Suspense fallback={null}>
+          <MonthReadySlot
+            monthLabel={monthLabel}
+            year={year}
+            month={month}
+          />
+        </Suspense>
+
         <DashboardHome
           monthLabel={monthLabel}
           income={summary.income}
@@ -119,6 +163,7 @@ export default async function DashboardPage({
             </Suspense>
           }
           summary={summary}
+          comparison={comparison}
         />
       </PageContainer>
     </>

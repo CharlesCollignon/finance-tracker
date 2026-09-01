@@ -25,6 +25,7 @@ import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -83,6 +84,7 @@ export default function PlanningScreen() {
   const [tagName, setTagName] = useState("");
   const [pending, setPending] = useState(false);
 
+  const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, error } =
     useRefreshable(async () => {
       if (!user) {
@@ -125,7 +127,7 @@ export default function PlanningScreen() {
           summary.savings,
         ),
       };
-    }, [user?.id, current.year, current.month]);
+    }, [user?.id, current.year, current.month, dataVersion]);
 
   async function handleAddBudget() {
     setPending(true);

@@ -113,3 +113,40 @@ export const investmentPositionSchema = z
   }));
 
 export type InvestmentPositionInput = z.infer<typeof investmentPositionSchema>;
+
+/**
+ * The user's intent for a wallet: how much of the portfolio it should hold,
+ * and when the wrapper was opened (which starts a PEA's five-year clock).
+ */
+export const walletPlanSchema = z.object({
+  wallet: z.enum(["pea", "cto", "crypto"]),
+  /** Fraction of the portfolio, 0–1. Empty clears the target. */
+  targetWeight: z
+    .union([z.literal(""), z.coerce.number().min(0).max(1)])
+    .optional()
+    .transform((value) =>
+      value === "" || value === undefined ? null : value,
+    ),
+  openedOn: z
+    .union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date")])
+    .optional()
+    .transform((value) => (value ? value : null)),
+  contributionCeiling: z
+    .union([z.literal(""), z.coerce.number().positive()])
+    .optional()
+    .transform((value) =>
+      value === "" || value === undefined ? null : value,
+    ),
+});
+
+/** Targets are set together, so they can be checked as a set. */
+export const walletTargetsSchema = z.object({
+  targets: z
+    .array(
+      z.object({
+        wallet: z.enum(["pea", "cto", "crypto"]),
+        targetWeight: z.coerce.number().min(0).max(1),
+      }),
+    )
+    .max(3),
+});

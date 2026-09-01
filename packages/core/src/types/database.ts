@@ -417,6 +417,33 @@ export interface Database {
           },
         ];
       };
+      wallet_plans: {
+        Row: {
+          user_id: string;
+          wallet: WalletId;
+          target_weight: number | null;
+          opened_on: string | null;
+          contribution_ceiling: number | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          wallet: WalletId;
+          target_weight?: number | null;
+          opened_on?: string | null;
+          contribution_ceiling?: number | null;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          wallet?: WalletId;
+          target_weight?: number | null;
+          opened_on?: string | null;
+          contribution_ceiling?: number | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -443,6 +470,7 @@ export type WalletTransfer =
   Database["public"]["Tables"]["wallet_transfers"]["Row"];
 export type Tag = Database["public"]["Tables"]["tags"]["Row"];
 export type SavingsGoal = Database["public"]["Tables"]["savings_goals"]["Row"];
+export type WalletPlan = Database["public"]["Tables"]["wallet_plans"]["Row"];
 
 export type RecurringTemplateWithCategory = RecurringTemplate & {
   categories: Pick<

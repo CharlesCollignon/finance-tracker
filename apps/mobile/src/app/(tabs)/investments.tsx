@@ -3,6 +3,11 @@ import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import {
+  buildInvestmentReturns,
+  returnUnavailableLabel,
+} from "@finance/core/investment-returns";
+import { formatAnnualRate } from "@finance/core/xirr";
+import {
   INVESTMENT_WALLET_IDS,
   INVESTMENT_WALLET_LABELS,
   type InvestmentWalletId,
@@ -38,6 +43,8 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { cn } from "@/lib/cn";
+import { useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -64,6 +71,7 @@ export default function InvestmentsScreen() {
   const [editingPosition, setEditingPosition] =
     useState<InvestmentPositionItem | null>(null);
 
+  const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, error } =
     useRefreshable(async () => {
       if (!user) {
@@ -72,6 +80,7 @@ export default function InvestmentsScreen() {
           upcoming: [] as ReturnType<typeof buildUpcomingInvestments>,
           fundingNeeds: [] as WalletFundingNeed[],
           transfers: [] as WalletTransfer[],
+          returns: null as ReturnType<typeof buildInvestmentReturns> | null,
         };
       }
       const [portfolio, templates, transactions, transfers] = await Promise.all(
@@ -96,10 +105,16 @@ export default function InvestmentsScreen() {
         current.year,
         current.month,
       );
-      return { portfolio, upcoming, fundingNeeds, transfers };
-    }, [user?.id, current.year, current.month]);
+      const returns = buildInvestmentReturns(
+        transactions as TransactionWithCategory[],
+        portfolio,
+        todayIsoLocal(),
+      );
+      return { portfolio, upcoming, fundingNeeds, transfers, returns };
+    }, [user?.id, current.year, current.month, dataVersion]);
 
   const portfolio = data?.portfolio;
+  const returns = data?.returns ?? null;
   const upcoming = data?.upcoming ?? [];
   const transfers = data?.transfers ?? [];
   const nextByWallet = nextUpcomingByWallet(upcoming);
@@ -174,6 +189,34 @@ export default function InvestmentsScreen() {
               </>
             }
           />
+
+          {returns ? (
+            <Card bezel innerClassName="p-4">
+              <View className="flex-row items-baseline justify-between gap-3">
+                <Text variant="muted" className="text-sm">
+                  Money-weighted return
+                </Text>
+                <Text
+                  className={cn(
+                    "font-mono font-bold",
+                    returns.total.rate === null
+                      ? "text-muted-foreground"
+                      : returns.total.rate >= 0
+                        ? "text-success"
+                        : "text-destructive",
+                  )}
+                  style={{ fontSize: 18 }}
+                >
+                  {formatAnnualRate(returns.total.rate) ??
+                    returnUnavailableLabel(returns.total.unavailableReason)}
+                </Text>
+              </View>
+              <Text variant="muted" className="mt-2 text-xs">
+                Annualised across every dated contribution, so paying in monthly
+                is measured fairly against a lump sum.
+              </Text>
+            </Card>
+          ) : null}
 
           {fundingNeeds.map((need) => (
             <Card key={need.walletId} bezel>
