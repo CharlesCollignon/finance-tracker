@@ -24,6 +24,8 @@ function mapRow(row: InvestmentPosition): InvestmentPositionRow {
     share_count: row.share_count,
     instrument_symbol: row.instrument_symbol,
     instrument_name: row.instrument_name,
+    ongoing_charge:
+      row.ongoing_charge === null ? null : Number(row.ongoing_charge),
   };
 }
 
@@ -59,6 +61,7 @@ export async function upsertInvestmentPosition(
     shareCount: number | null;
     instrumentSymbol: string | null;
     instrumentName: string | null;
+    ongoingCharge: number | null;
   },
 ): Promise<void> {
   const supabase = await createClient();
@@ -73,6 +76,7 @@ export async function upsertInvestmentPosition(
     share_count: payload.shareCount,
     instrument_symbol: payload.instrumentSymbol,
     instrument_name: payload.instrumentName,
+    ongoing_charge: payload.ongoingCharge,
     updated_at: new Date().toISOString(),
   };
 

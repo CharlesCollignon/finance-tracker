@@ -222,6 +222,8 @@ export async function saveInvestmentPosition(input: {
   initialBalance: number;
   currentValue: number | null;
   shareCount: number | null;
+  /** Annual ongoing charge as a fraction: 0.002 = 0.20%. */
+  ongoingCharge?: number | null;
 }): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
@@ -238,6 +240,10 @@ export async function saveInvestmentPosition(input: {
       initial_balance: input.initialBalance,
       current_value: input.currentValue,
       share_count: input.shareCount,
+      // Undefined means the caller is not editing the charge; null clears it.
+      ...(input.ongoingCharge === undefined
+        ? {}
+        : { ongoing_charge: input.ongoingCharge }),
       updated_at: new Date().toISOString(),
     })
     .eq("id", input.positionId)

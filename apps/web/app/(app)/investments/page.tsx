@@ -6,6 +6,7 @@ import { getWalletPlans } from "@/lib/queries/investments";
 import { getInvestmentTransactions } from "@/lib/queries/finance";
 import { InvestmentsView } from "@/components/finance/InvestmentsView";
 import { WalletPlanPanel } from "@/components/finance/WalletPlanPanel";
+import { FundCostCard } from "@/components/finance/FundCostCard";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { buildWalletFundingNeeds } from "@finance/core/investment-upcoming";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
@@ -64,6 +65,10 @@ export default async function InvestmentsPage() {
           plans={plans}
           monthlyContribution={monthlyContribution}
         />
+
+        <div className="mt-4">
+          <FundCostCard portfolio={portfolio} />
+        </div>
       </PageContainer>
     </>
   );

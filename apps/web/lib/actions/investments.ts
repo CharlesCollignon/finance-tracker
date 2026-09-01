@@ -96,6 +96,7 @@ export async function saveInvestmentPosition(
       shareCount: parsed.data.shareCount,
       instrumentSymbol,
       instrumentName,
+      ongoingCharge: parsed.data.ongoingCharge,
     });
   } catch (error) {
     return {

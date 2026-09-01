@@ -41,6 +41,7 @@ import { Input } from "@/components/ui/Input";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
+import { FundCostCard } from "@/components/FundCostCard";
 import { StatHero } from "@/components/StatHero";
 import { WalletPlanPanel } from "@/components/WalletPlanPanel";
 import { Text } from "@/components/ui/Text";
@@ -222,6 +223,8 @@ export default function InvestmentsScreen() {
               </Text>
             </Card>
           ) : null}
+
+          <FundCostCard portfolio={portfolio} />
 
           <WalletPlanPanel
             portfolio={portfolio}

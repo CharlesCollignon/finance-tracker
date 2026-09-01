@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { parseShareCountInput } from "../share-count";
 import { isCryptoWallet } from "../crypto-holdings";
+import { parseChargeInput } from "../fund-costs";
 
 const optionalNumber = z
   .union([z.coerce.number().min(0, "Must be 0 or more"), z.literal("")])
@@ -37,6 +38,41 @@ const optionalText = z
     return trimmed ? trimmed : null;
   });
 
+/**
+ * The ongoing charge, typed the way it is written on a fund's KID — "0.20"
+ * meaning 0.20% a year — and stored as the fraction 0.002. Rejecting anything
+ * above 10% catches the common slip of entering 20 for 0.20%.
+ */
+const optionalCharge = z
+  .union([z.string(), z.coerce.number(), z.literal("")])
+  .optional()
+  .transform((value, ctx) => {
+    if (value === "" || value === undefined || value === null) {
+      return null;
+    }
+
+    const parsed = parseChargeInput(String(value));
+    if (parsed === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter the charge as a percentage, e.g. 0.20",
+        path: [],
+      });
+      return z.NEVER;
+    }
+
+    if (parsed > 0.1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "That looks too high — enter 0.20 for 0.20%, not 20",
+        path: [],
+      });
+      return z.NEVER;
+    }
+
+    return parsed;
+  });
+
 const optionalSymbol = z
   .string()
   .max(32)
@@ -57,6 +93,8 @@ export const investmentPositionSchema = z
     initialBalance: z.coerce.number().min(0, "Must be 0 or more"),
     currentValue: optionalNumber,
     shareCount: optionalShareCount,
+    /** Ongoing charge typed as a percentage ('0.20'), stored as a fraction. */
+    ongoingCharge: optionalCharge,
     instrumentSymbol: optionalSymbol,
     instrumentName: optionalText,
   })
@@ -108,6 +146,7 @@ export const investmentPositionSchema = z
     initialBalance: data.initialBalance,
     currentValue: data.currentValue,
     shareCount: data.shareCount,
+    ongoingCharge: data.ongoingCharge,
     instrumentSymbol: data.instrumentSymbol,
     instrumentName: data.instrumentName,
   }));

@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Linking, Modal, Pressable, ScrollView, View } from "react-native";
 
 import type { InvestmentPositionItem } from "@finance/core/investment-positions";
 import { isCryptoWallet } from "@finance/core/crypto-holdings";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import {
+  chargeLookupUrl,
+  chargeToInput,
+  parseChargeInput,
+} from "@finance/core/fund-costs";
 import { Text } from "@/components/ui/Text";
 import {
   removeInvestmentPosition,
@@ -42,6 +47,13 @@ export function InvestmentPositionSheet({
   const [shareCount, setShareCount] = useState(
     item?.shareCount != null ? String(item.shareCount) : "",
   );
+  const [ongoingCharge, setOngoingCharge] = useState(
+    chargeToInput(item?.ongoingCharge ?? null),
+  );
+  const lookupUrl = chargeLookupUrl(
+    item?.instrumentSymbol ?? null,
+    item?.instrumentName ?? null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -63,6 +75,7 @@ export function InvestmentPositionSheet({
       initialBalance: Number(initialBalance.replace(",", ".")) || 0,
       currentValue: toNumberOrNull(currentValue),
       shareCount: toNumberOrNull(shareCount),
+      ongoingCharge: parseChargeInput(ongoingCharge),
     });
     setPending(false);
     if (result.error) {
@@ -163,6 +176,38 @@ export function InvestmentPositionSheet({
               placeholder="Leave empty to use market"
               className="mb-4"
             />
+
+            <Text className="mb-2 text-sm font-medium">
+              Ongoing charge (optional)
+            </Text>
+            <Text variant="muted" className="mb-2 text-xs">
+              The yearly fee as a percentage — 0.20 for 0.20%. It is on the
+              fund&apos;s KID and never appears on a statement, because it is
+              taken out of the fund&apos;s value.
+            </Text>
+            <Input
+              value={ongoingCharge}
+              onChangeText={setOngoingCharge}
+              keyboardType="decimal-pad"
+              placeholder="e.g. 0,20"
+              className="mb-2"
+            />
+            {lookupUrl ? (
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel="Look up the charge on justETF"
+                onPress={() => {
+                  void Linking.openURL(lookupUrl);
+                }}
+                className="mb-4 self-start"
+              >
+                <Text className="text-xs text-primary-ink underline">
+                  Look it up on justETF
+                </Text>
+              </Pressable>
+            ) : (
+              <View className="mb-4" />
+            )}
 
             {error ? (
               <Text className="mb-3 text-sm text-destructive">{error}</Text>
