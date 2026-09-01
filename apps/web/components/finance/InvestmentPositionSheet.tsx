@@ -24,6 +24,10 @@ import {
 } from "@finance/core/crypto-holdings";
 import { parseShareCountInput } from "@finance/core/share-count";
 import {
+  chargeLookupUrl,
+  chargeToInput,
+} from "@finance/core/fund-costs";
+import {
   displayNameForRecurringTemplate,
   type InvestmentPositionItem,
 } from "@finance/core/investment-positions";
@@ -96,6 +100,9 @@ function InvestmentPositionForm({
   );
   const [shareCount, setShareCount] = useState(
     item?.shareCount ? String(item.shareCount) : "",
+  );
+  const [ongoingCharge, setOngoingCharge] = useState(
+    chargeToInput(item?.ongoingCharge ?? null),
   );
   const [estimate, setEstimate] = useState<{
     amount: number;
@@ -386,6 +393,40 @@ function InvestmentPositionForm({
             onChange={(event) => setShareCount(event.target.value)}
             placeholder={isCrypto ? "e.g. 0,01234" : "e.g. 42 or 1,1465"}
           />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <FormLabel htmlFor="ongoingCharge">
+            Ongoing charge (optional)
+          </FormLabel>
+          <Text className="text-xs text-muted-foreground">
+            The yearly fee as a percentage — 0.20 for 0.20%. It is on the
+            fund&apos;s KID and never appears on a statement, because it is
+            taken out of the fund&apos;s value.
+          </Text>
+          <div className="flex items-center gap-2">
+            <Input
+              id="ongoingCharge"
+              name="ongoingCharge"
+              type="text"
+              inputMode="decimal"
+              className="text-base"
+              value={ongoingCharge}
+              onChange={(event) => setOngoingCharge(event.target.value)}
+              placeholder="e.g. 0,20"
+            />
+            <span className="text-sm text-muted-foreground">% a year</span>
+          </div>
+          {chargeLookupUrl(instrumentSymbol, instrumentName) ? (
+            <a
+              href={chargeLookupUrl(instrumentSymbol, instrumentName)!}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="self-start text-xs text-primary-ink underline underline-offset-4"
+            >
+              Look it up on justETF
+            </a>
+          ) : null}
         </div>
 
         {estimateShown !== null && (

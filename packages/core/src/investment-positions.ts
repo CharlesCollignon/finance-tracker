@@ -24,6 +24,8 @@ export interface InvestmentPositionRow {
   share_count: number | null;
   instrument_symbol: string | null;
   instrument_name: string | null;
+  /** Annual ongoing charge as a fraction: 0.002 = 0.20%. */
+  ongoing_charge: number | null;
 }
 
 export interface PositionChartPoint {
@@ -83,6 +85,8 @@ export interface InvestmentPositionItem {
   shareCount: number | null;
   instrumentSymbol: string | null;
   instrumentName: string | null;
+  /** Annual ongoing charge as a fraction: 0.002 = 0.20%. */
+  ongoingCharge: number | null;
   totalInvested: number;
   marketValue: number;
   gainLoss: number;
@@ -405,6 +409,10 @@ function buildPositionItem(
     shareCount,
     instrumentSymbol,
     instrumentName,
+    ongoingCharge:
+      row.ongoing_charge === null || row.ongoing_charge === undefined
+        ? null
+        : Number(row.ongoing_charge),
     totalInvested,
     marketValue,
     gainLoss,

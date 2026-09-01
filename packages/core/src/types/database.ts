@@ -187,6 +187,7 @@ export interface Database {
           share_count: number | null;
           instrument_symbol: string | null;
           instrument_name: string | null;
+          ongoing_charge: number | null;
           updated_at: string;
         };
         Insert: {
@@ -201,6 +202,7 @@ export interface Database {
           share_count?: number | null;
           instrument_symbol?: string | null;
           instrument_name?: string | null;
+          ongoing_charge?: number | null;
           updated_at?: string;
         };
         Update: {
@@ -215,6 +217,7 @@ export interface Database {
           share_count?: number | null;
           instrument_symbol?: string | null;
           instrument_name?: string | null;
+          ongoing_charge?: number | null;
           updated_at?: string;
         };
         Relationships: [

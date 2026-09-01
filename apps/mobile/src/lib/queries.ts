@@ -303,6 +303,8 @@ export async function getInvestmentPositions(
     share_count: row.share_count,
     instrument_symbol: row.instrument_symbol,
     instrument_name: row.instrument_name,
+    ongoing_charge:
+      row.ongoing_charge === null ? null : Number(row.ongoing_charge),
   }));
 }
 
