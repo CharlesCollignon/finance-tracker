@@ -48,6 +48,7 @@ export default async function ProfilePage() {
       provider={provider}
       canDeleteAccount={canDeleteAccount}
       initialPasskeys={initialPasskeys}
+      pushPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""}
     />
   );
 }

@@ -420,6 +420,57 @@ export interface Database {
           },
         ];
       };
+      push_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent: string | null;
+          created_at: string;
+          last_seen_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent?: string | null;
+          created_at?: string;
+          last_seen_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          endpoint?: string;
+          p256dh?: string;
+          auth?: string;
+          user_agent?: string | null;
+          created_at?: string;
+          last_seen_at?: string;
+        };
+        Relationships: [];
+      };
+      notification_log: {
+        Row: {
+          user_id: string;
+          key: string;
+          sent_at: string;
+        };
+        Insert: {
+          user_id: string;
+          key: string;
+          sent_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          key?: string;
+          sent_at?: string;
+        };
+        Relationships: [];
+      };
       wallet_plans: {
         Row: {
           user_id: string;
@@ -474,6 +525,8 @@ export type WalletTransfer =
 export type Tag = Database["public"]["Tables"]["tags"]["Row"];
 export type SavingsGoal = Database["public"]["Tables"]["savings_goals"]["Row"];
 export type WalletPlan = Database["public"]["Tables"]["wallet_plans"]["Row"];
+export type PushSubscriptionRow =
+  Database["public"]["Tables"]["push_subscriptions"]["Row"];
 
 export type RecurringTemplateWithCategory = RecurringTemplate & {
   categories: Pick<

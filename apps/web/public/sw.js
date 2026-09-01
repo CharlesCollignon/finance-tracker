@@ -92,3 +92,60 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+/* ---------------------------------------------------------------- push --- */
+
+/*
+ * Notifications arrive as an encrypted payload the browser hands to us here.
+ * Everything is defensive: a malformed payload must still produce a
+ * notification, because the alternative on some browsers is a generic
+ * "This site has been updated in the background" that the user cannot act on.
+ */
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {};
+  }
+
+  const title = data.title || "Pluclair";
+  const options = {
+    body: data.body || "",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    // Collapses repeats of the same subject rather than stacking them.
+    tag: data.key || "pluclair",
+    data: { url: data.url || "/dashboard" },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL(
+    (event.notification.data && event.notification.data.url) || "/dashboard",
+    self.location.origin,
+  ).href;
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clients) => {
+        // Reuse an open tab where possible — opening a third Pluclair window
+        // every time a notification is tapped is its own annoyance.
+        for (const client of clients) {
+          if (client.url === target && "focus" in client) {
+            return client.focus();
+          }
+        }
+        for (const client of clients) {
+          if ("navigate" in client && "focus" in client) {
+            return client.navigate(target).then((c) => c && c.focus());
+          }
+        }
+        return self.clients.openWindow(target);
+      }),
+  );
+});
