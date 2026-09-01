@@ -26,6 +26,7 @@ import type {
 import type {
   RecurringTemplateWithCategory,
   TransactionWithCategory,
+  WalletPlan,
   WalletTransfer,
 } from "@finance/core/types/database";
 
@@ -41,6 +42,7 @@ import { PrivateAmount } from "@/components/PrivateAmount";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
+import { WalletPlanPanel } from "@/components/WalletPlanPanel";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
@@ -53,6 +55,7 @@ import {
   getInvestmentTransactions,
   getRecurringTemplates,
   getWalletPortfolio,
+  getWalletPlans,
   getWalletTransfers,
 } from "@/lib/queries";
 
@@ -81,17 +84,18 @@ export default function InvestmentsScreen() {
           fundingNeeds: [] as WalletFundingNeed[],
           transfers: [] as WalletTransfer[],
           returns: null as ReturnType<typeof buildInvestmentReturns> | null,
+          plans: [] as WalletPlan[],
         };
       }
-      const [portfolio, templates, transactions, transfers] = await Promise.all(
-        [
+      const [portfolio, templates, transactions, transfers, plans] =
+        await Promise.all([
           // History powers the per-position charts.
           getWalletPortfolio(user.id, { includeHistory: true }),
           getRecurringTemplates(user.id),
           getInvestmentTransactions(user.id),
           getWalletTransfers(user.id, current.year, current.month),
-        ],
-      );
+          getWalletPlans(user.id),
+        ]);
       const investmentTemplates = (
         templates as RecurringTemplateWithCategory[]
       ).filter((template) => template.categories.type === "investment");
@@ -110,11 +114,12 @@ export default function InvestmentsScreen() {
         portfolio,
         todayIsoLocal(),
       );
-      return { portfolio, upcoming, fundingNeeds, transfers, returns };
+      return { portfolio, upcoming, fundingNeeds, transfers, returns, plans };
     }, [user?.id, current.year, current.month, dataVersion]);
 
   const portfolio = data?.portfolio;
   const returns = data?.returns ?? null;
+  const plans = data?.plans ?? [];
   const upcoming = data?.upcoming ?? [];
   const transfers = data?.transfers ?? [];
   const nextByWallet = nextUpcomingByWallet(upcoming);
@@ -217,6 +222,17 @@ export default function InvestmentsScreen() {
               </Text>
             </Card>
           ) : null}
+
+          <WalletPlanPanel
+            portfolio={portfolio}
+            returns={returns}
+            plans={plans}
+            monthlyContribution={fundingNeeds.reduce(
+              (sum, need) => sum + need.monthlyTotal,
+              0,
+            )}
+            onSaved={onRefresh}
+          />
 
           {fundingNeeds.map((need) => (
             <Card key={need.walletId} bezel>

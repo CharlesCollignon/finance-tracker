@@ -21,6 +21,7 @@ import type {
   RecurringTemplateWithCategory,
   Tag,
   TransactionWithCategory,
+  WalletPlan,
 } from "@finance/core/types/database";
 import type { InvestmentPositionRow } from "@finance/core/investment-positions";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
@@ -500,4 +501,50 @@ export async function getQuickEntryContext(
     recentCategoryIds,
     merchants: [...buildMerchantIndex(rows).values()],
   };
+}
+
+/**
+ * The user's plan for each wallet: target weights and opening dates.
+ *
+ * Rows are created lazily, so a user who has never set a target simply has
+ * none — the right default, since drift against an unstated target is not
+ * worth showing.
+ */
+export async function getWalletPlans(userId: string): Promise<WalletPlan[]> {
+  const { data, error } = await supabase
+    .from("wallet_plans")
+    .select("*")
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+  return (data ?? []) as WalletPlan[];
+}
+
+/**
+ * The ledger rows overlapping an import's date range, for the duplicate check.
+ * Only the three fields that identify a line are fetched.
+ */
+export async function getExistingKeysForRange(
+  userId: string,
+  from: string,
+  to: string,
+): Promise<{ occurredOn: string; amount: number; note: string | null }[]> {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("occurred_on, amount, note")
+    .eq("user_id", userId)
+    .gte("occurred_on", from)
+    .lte("occurred_on", to);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((row) => ({
+    occurredOn: row.occurred_on as string,
+    amount: Number(row.amount),
+    note: (row.note as string | null) ?? null,
+  }));
 }

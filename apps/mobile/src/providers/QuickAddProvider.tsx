@@ -47,6 +47,8 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
   const dataVersion = useDataVersion();
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState<string | undefined>(undefined);
+  // Bumped on every open so the sheet's fields remount with clean state.
+  const [openToken, setOpenToken] = useState(0);
 
   const { data, reload } = useRefreshable(async () => {
     if (!user) {
@@ -57,6 +59,7 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
 
   const open = useCallback((nextDate?: string) => {
     setDate(nextDate);
+    setOpenToken((token) => token + 1);
     setIsOpen(true);
   }, []);
 
@@ -80,6 +83,7 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
         recentCategoryIds={context.recentCategoryIds}
         merchants={context.merchants}
         defaultDate={date}
+        openToken={openToken}
       />
     </QuickAddContext.Provider>
   );
