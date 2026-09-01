@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
+import { OutboxBanner } from "@/components/layout/OutboxBanner";
 import { QuickAddProvider } from "@/components/layout/QuickAddProvider";
+import { ServiceWorkerRegistration } from "@/components/layout/ServiceWorkerRegistration";
 import { ToastProvider } from "@/components/layout/ToastProvider";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getQuickEntryContext } from "@/lib/queries/quick-entry";
@@ -24,6 +26,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         recentCategoryIds={quickEntry.recentCategoryIds}
         merchants={quickEntry.merchants}
       >
+        <ServiceWorkerRegistration />
+        <OutboxBanner />
         <AppShell displayName={name} initial={initial}>
           {children}
         </AppShell>

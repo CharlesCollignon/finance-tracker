@@ -33,7 +33,6 @@ interface DashboardHomeProps {
   statusTone: "ok" | "danger";
   budgetProgress: BudgetProgress[];
   goalProgress: SavingsGoalProgress[];
-  viewToggle: ReactNode;
   walletsSlot: ReactNode;
   summary: MonthlySummary;
   /** Actual spend against the same window last month. */
@@ -109,7 +108,6 @@ export function DashboardHome({
   statusTone,
   budgetProgress,
   goalProgress,
-  viewToggle,
   walletsSlot,
   summary,
   comparison,
@@ -133,8 +131,6 @@ export function DashboardHome({
         "lg:h-[calc(100dvh-var(--shell-header-height)-3rem)]",
       )}
     >
-      <div className="flex w-full shrink-0 justify-center">{viewToggle}</div>
-
       <Stagger
         className={cn(
           "grid w-full flex-1 grid-cols-1 gap-4 md:grid-cols-12",

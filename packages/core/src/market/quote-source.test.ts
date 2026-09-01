@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createFakeQuoteSource, createYahooQuoteSource } from "./quote-source";
+import {
+  createFakeQuoteSource,
+  createYahooQuoteSource,
+} from "./quote-source";
 import type { EurRates } from "./eur-rates";
 
 vi.mock("./yahoo", () => ({
@@ -96,5 +99,148 @@ describe("createYahooQuoteSource", () => {
     const quotes = createYahooQuoteSource({ rates });
 
     await expect(quotes.quoteInEur("NOPE")).resolves.toBeNull();
+  });
+});
+
+describe("createYahooQuoteSource resilience", () => {
+  /** A controllable clock and a fetch that can be made to fail on demand. */
+  function harness(options: Parameters<typeof createYahooQuoteSource>[0] = {}) {
+    let clock = 1_000_000;
+    let failing = false;
+    let calls = 0;
+
+    const source = createYahooQuoteSource({
+      now: () => clock,
+      ttlMs: 1000,
+      staleMs: 10_000,
+      cooldownMs: 5000,
+      failureThreshold: 2,
+      fetchQuote: async (symbol: string) => {
+        calls += 1;
+        if (failing) {
+          throw new Error("Too Many Requests");
+        }
+        return { symbol, price: 100, currency: "EUR" };
+      },
+      ...options,
+    });
+
+    return {
+      source,
+      advance: (ms: number) => {
+        clock += ms;
+      },
+      fail: (value: boolean) => {
+        failing = value;
+      },
+      callCount: () => calls,
+    };
+  }
+
+  it("serves the cached price when the market cannot be reached", async () => {
+    const h = harness();
+    await h.source.quoteInEur("IWDA.AS");
+
+    h.fail(true);
+    h.advance(2000); // past the fresh TTL
+
+    const quote = await h.source.quoteInEur("IWDA.AS");
+    expect(quote?.priceEur).toBe(100);
+    expect(quote?.stale).toBe(true);
+  });
+
+  it("marks a live price as not stale", async () => {
+    const h = harness();
+    const quote = await h.source.quoteInEur("IWDA.AS");
+    expect(quote?.stale).toBeUndefined();
+  });
+
+  it("gives up once the cached price is too old to trust", async () => {
+    const h = harness();
+    await h.source.quoteInEur("IWDA.AS");
+
+    h.fail(true);
+    h.advance(20_000); // beyond staleMs
+
+    expect(await h.source.quoteInEur("IWDA.AS")).toBeNull();
+  });
+
+  it("returns null when it has never had a price", async () => {
+    const h = harness();
+    h.fail(true);
+    expect(await h.source.quoteInEur("NEW.AS")).toBeNull();
+  });
+
+  it("stops calling out after repeated failures", async () => {
+    const h = harness();
+    h.fail(true);
+
+    await h.source.quoteInEur("A.AS");
+    await h.source.quoteInEur("B.AS");
+    const afterThreshold = h.callCount();
+
+    // The cooldown has started; further requests must not reach the network.
+    await h.source.quoteInEur("C.AS");
+    await h.source.quoteInEur("D.AS");
+
+    expect(h.callCount()).toBe(afterThreshold);
+  });
+
+  it("still answers from cache while backing off", async () => {
+    const h = harness();
+    await h.source.quoteInEur("IWDA.AS");
+
+    h.fail(true);
+    h.advance(2000);
+    await h.source.quoteInEur("A.AS");
+    await h.source.quoteInEur("B.AS"); // cooldown starts here
+
+    const quote = await h.source.quoteInEur("IWDA.AS");
+    expect(quote?.priceEur).toBe(100);
+    expect(quote?.stale).toBe(true);
+  });
+
+  it("tries again once the cooldown expires", async () => {
+    const h = harness();
+    h.fail(true);
+    await h.source.quoteInEur("A.AS");
+    await h.source.quoteInEur("B.AS");
+    const duringCooldown = h.callCount();
+
+    h.advance(6000); // past cooldownMs
+    h.fail(false);
+
+    const quote = await h.source.quoteInEur("A.AS");
+    expect(h.callCount()).toBeGreaterThan(duringCooldown);
+    expect(quote?.priceEur).toBe(100);
+    expect(quote?.stale).toBeUndefined();
+  });
+
+  it("forgets past failures after a success", async () => {
+    const h = harness();
+    h.fail(true);
+    await h.source.quoteInEur("A.AS"); // one failure
+
+    h.fail(false);
+    await h.source.quoteInEur("A.AS"); // success resets the count
+
+    h.fail(true);
+    h.advance(2000);
+    await h.source.quoteInEur("A.AS"); // one failure again, not two
+
+    const before = h.callCount();
+    h.advance(2000);
+    await h.source.quoteInEur("A.AS");
+    // Still below the threshold, so it is still reaching out.
+    expect(h.callCount()).toBeGreaterThan(before);
+  });
+
+  it("keeps serving a fresh cache hit without any network call", async () => {
+    const h = harness();
+    await h.source.quoteInEur("IWDA.AS");
+    const after = h.callCount();
+
+    await h.source.quoteInEur("IWDA.AS");
+    expect(h.callCount()).toBe(after);
   });
 });

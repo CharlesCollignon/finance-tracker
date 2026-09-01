@@ -120,6 +120,12 @@ export default async function DashboardPage({
   return (
     <>
       <PageHeader title="Home">
+        {/* The current / month-end distinction is a real one, but it is not
+            the first decision to put in front of someone opening the app, so
+            it sits beside the month rather than above the figures. */}
+        <Suspense fallback={null}>
+          <BudgetViewToggle basePath="/dashboard" className="hidden sm:flex" />
+        </Suspense>
         <Suspense fallback={<span className="text-sm">…</span>}>
           <MonthPicker basePath="/dashboard" />
         </Suspense>
@@ -145,18 +151,6 @@ export default async function DashboardPage({
           statusTone={statusTone}
           budgetProgress={budgetProgress}
           goalProgress={goalProgress}
-          viewToggle={
-            <Suspense
-              fallback={
-                <div
-                  className="h-9 w-64 animate-pulse rounded-md bg-muted/40"
-                  aria-hidden
-                />
-              }
-            >
-              <BudgetViewToggle basePath="/dashboard" />
-            </Suspense>
-          }
           walletsSlot={
             <Suspense fallback={<WalletsFallback />}>
               <DashboardWalletsSlot userId={user.id} />
