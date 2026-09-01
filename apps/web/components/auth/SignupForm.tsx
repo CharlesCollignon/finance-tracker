@@ -19,7 +19,9 @@ export function SignupForm() {
 
   useEffect(() => {
     if (state.success && !state.message) {
-      router.push("/dashboard");
+      // New accounts go through setup first, so the dashboard has real
+      // numbers in it rather than a screen of zeros.
+      router.push("/welcome");
       router.refresh();
     }
   }, [state.success, state.message, router]);

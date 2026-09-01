@@ -11,9 +11,11 @@ import { CategorySelect } from "@/components/finance/CategorySelect";
 import {
   createTransaction,
   deleteTransaction,
+  saveQuickTransaction,
   skipRecurringOccurrence,
   updateTransaction,
 } from "@/lib/actions/finance";
+import { todayIsoLocal } from "@finance/core/constants";
 import type { Category, Tag, Transaction } from "@finance/core/types/database";
 
 interface TransactionFormProps {
@@ -84,6 +86,7 @@ function TransactionFormFields({
   const [confirmSkip, setConfirmSkip] = useState(false);
   const [deletePending, startDelete] = useTransition();
   const [skipPending, startSkip] = useTransition();
+  const [duplicatePending, startDuplicate] = useTransition();
   const [state, action, pending] = useActionState(
     isEditing ? updateTransaction : createTransaction,
     {},
@@ -101,6 +104,36 @@ function TransactionFormFields({
       toast(state.error, "error");
     }
   }, [state.success, state.error, onOpenChange, toast]);
+
+  /**
+   * Repeating an entry is the most common thing anyone does with a ledger —
+   * the same shop, a week later. Mobile has had this since the start; the
+   * desktop client was the slower one for the same task.
+   */
+  function handleDuplicate() {
+    if (!transaction) {
+      return;
+    }
+
+    startDuplicate(async () => {
+      const result = await saveQuickTransaction({
+        categoryId: transaction.category_id,
+        amount: Number(transaction.amount),
+        // Today, not the original date: a copy is a new occurrence.
+        occurredOn: todayIsoLocal(),
+        note: transaction.note ?? undefined,
+        tagIds: selectedTagIds,
+      });
+
+      if (result.error) {
+        toast(result.error, "error");
+        return;
+      }
+
+      toast("Duplicated to today", "success");
+      onOpenChange(false);
+    });
+  }
 
   function handleDelete() {
     if (!transaction) {
@@ -231,6 +264,16 @@ function TransactionFormFields({
 
       {isEditing && (
         <div className="mt-6 space-y-3 border-t border-border pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={duplicatePending}
+            onClick={handleDuplicate}
+          >
+            {duplicatePending ? "Duplicating…" : "Duplicate to today"}
+          </Button>
+
           {canSkip && (
             <div>
               {confirmSkip ? (

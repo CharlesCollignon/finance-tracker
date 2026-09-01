@@ -3,6 +3,12 @@ import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 
 import { buildBudgetProgress } from "@finance/core/budget-limits";
 import {
+  buildForwardProjection,
+  buildRunway,
+  type ProjectionPoint,
+  type Runway,
+} from "@finance/core/projection";
+import {
   buildSavingsGoalProgress,
   computeGoalPacing,
   type GoalPacing,
@@ -25,6 +31,7 @@ import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { ProjectionCard } from "@/components/ProjectionCard";
 import { useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
@@ -34,7 +41,9 @@ import {
   getBudgets,
   getCategories,
   getMonthlySummary,
+  getRecurringTemplates,
   getSavingsGoals,
+  getSavingsReserve,
   getTags,
 } from "@/lib/queries";
 import {
@@ -95,16 +104,21 @@ export default function PlanningScreen() {
           categories: [] as Category[],
           budgetProgress: [] as ReturnType<typeof buildBudgetProgress>,
           goalProgress: [] as ReturnType<typeof buildSavingsGoalProgress>,
+          projection: [] as ProjectionPoint[],
+          runway: null as Runway | null,
         };
       }
 
-      const [budgets, goals, tags, categories, summary] = await Promise.all([
-        getBudgets(user.id),
-        getSavingsGoals(user.id),
-        getTags(user.id),
-        getCategories(user.id),
-        getMonthlySummary(user.id, current.year, current.month),
-      ]);
+      const [budgets, goals, tags, categories, summary, templates, reserve] =
+        await Promise.all([
+          getBudgets(user.id),
+          getSavingsGoals(user.id),
+          getTags(user.id),
+          getCategories(user.id),
+          getMonthlySummary(user.id, current.year, current.month),
+          getRecurringTemplates(user.id),
+          getSavingsReserve(user.id),
+        ]);
 
       const categoryNames = new Map(
         categories.map((c) => [c.id, c.name] as const),
@@ -126,6 +140,13 @@ export default function PlanningScreen() {
           summary.savingsBreakdown,
           summary.savings,
         ),
+        projection: buildForwardProjection(
+          templates,
+          current.year,
+          current.month,
+          { months: 12 },
+        ),
+        runway: buildRunway(reserve, templates, current.year, current.month),
       };
     }, [user?.id, current.year, current.month, dataVersion]);
 
@@ -204,6 +225,11 @@ export default function PlanningScreen() {
           }
           contentContainerClassName="gap-4 pb-28 pt-1"
         >
+          <ProjectionCard
+            points={data?.projection ?? []}
+            runway={data?.runway ?? null}
+          />
+
           <Text className="text-base">Monthly budgets</Text>
 
           {(data?.budgetProgress ?? []).map((row) => {

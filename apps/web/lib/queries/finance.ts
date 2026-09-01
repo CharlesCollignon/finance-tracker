@@ -156,3 +156,34 @@ export async function getMonthComparison(
     type,
   });
 }
+
+/**
+ * Everything the user has ever recorded as savings.
+ *
+ * The app tracks flows, not balances, so this is a sum of savings
+ * transactions rather than an account balance — which is why the UI that uses
+ * it says "everything you have logged as savings" rather than implying the app
+ * knows what is in an account. Withdrawals are not modelled, so this is an
+ * upper bound; it is the honest best the ledger can offer.
+ */
+export async function getSavingsReserve(userId: string): Promise<number> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("amount, categories!inner(type, counts_toward_summary)")
+    .eq("user_id", userId)
+    .eq("categories.type", "savings");
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? [])
+    .filter(
+      (row) =>
+        (row.categories as unknown as { counts_toward_summary: boolean })
+          .counts_toward_summary !== false,
+    )
+    .reduce((sum, row) => sum + Number(row.amount), 0);
+}

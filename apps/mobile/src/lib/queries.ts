@@ -548,3 +548,31 @@ export async function getExistingKeysForRange(
     note: (row.note as string | null) ?? null,
   }));
 }
+
+/**
+ * Everything the user has ever recorded as savings.
+ *
+ * The app tracks flows, not balances, so this is a sum of savings
+ * transactions rather than an account balance — which is why the UI that uses
+ * it says "everything you have logged as savings". Withdrawals are not
+ * modelled, so this is an upper bound; it is the honest best the ledger offers.
+ */
+export async function getSavingsReserve(userId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("amount, categories!inner(type, counts_toward_summary)")
+    .eq("user_id", userId)
+    .eq("categories.type", "savings");
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? [])
+    .filter(
+      (row) =>
+        (row.categories as unknown as { counts_toward_summary: boolean })
+          .counts_toward_summary !== false,
+    )
+    .reduce((sum, row) => sum + Number(row.amount), 0);
+}

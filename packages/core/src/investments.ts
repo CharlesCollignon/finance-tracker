@@ -17,9 +17,6 @@ export const INVESTMENT_WALLET_COLORS: Record<WalletId, string> = {
 
 export const INVESTMENT_WALLET_IDS: WalletId[] = ["pea", "cto", "crypto"];
 
-export const WALLET_LABELS = INVESTMENT_WALLET_LABELS;
-export const WALLET_COLORS = INVESTMENT_WALLET_COLORS;
-export const WALLET_IDS = INVESTMENT_WALLET_IDS;
 
 export interface WalletTotals {
   pea: number;
@@ -248,7 +245,7 @@ function walletTotalsFromSettings(
 ): WalletTotals {
   const totals = { ...EMPTY_WALLET_TOTALS };
 
-  for (const walletId of WALLET_IDS) {
+  for (const walletId of INVESTMENT_WALLET_IDS) {
     const value = pick(settings[walletId]);
     if (value === null) {
       continue;
@@ -273,7 +270,7 @@ function marketValueTotals(
 ): WalletTotals {
   const totals = { ...EMPTY_WALLET_TOTALS };
 
-  for (const walletId of WALLET_IDS) {
+  for (const walletId of INVESTMENT_WALLET_IDS) {
     const currentValue = settings[walletId].currentValue;
     const value =
       currentValue === null ? totalInvested[walletId] : currentValue;
