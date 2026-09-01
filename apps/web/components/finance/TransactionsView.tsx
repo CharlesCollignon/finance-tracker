@@ -7,7 +7,13 @@ import {
   useState,
   useTransition,
 } from "react";
-import { DownloadSimple, MagnifyingGlass, Plus } from "@phosphor-icons/react";
+import Link from "next/link";
+import {
+  DownloadSimple,
+  MagnifyingGlass,
+  Plus,
+  UploadSimple,
+} from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
@@ -478,6 +484,21 @@ export function TransactionsView({
                   <DownloadSimple size={16} weight="light" className="mr-1.5" />
                   Export CSV
                 </Button>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-10 px-2"
+                  render={
+                    <Link href="/import">
+                      <UploadSimple
+                        size={16}
+                        weight="light"
+                        className="mr-1.5 inline"
+                      />
+                      Import CSV
+                    </Link>
+                  }
+                />
               </div>
             </StaggerItem>
           ) : null}

@@ -4,7 +4,10 @@ import {
   fetchInstrumentQuoteInEur,
   fetchMonthlyClosesInEur,
 } from "@finance/core/market/fx";
-import type { InvestmentPosition } from "@finance/core/types/database";
+import type {
+  InvestmentPosition,
+  WalletPlan,
+} from "@finance/core/types/database";
 import type { InvestmentPositionRow } from "@finance/core/investment-positions";
 import type { InvestmentWalletId } from "@finance/core/investments";
 
@@ -148,4 +151,25 @@ export async function fetchHistoricalQuotes(
   );
 
   return history;
+}
+
+/**
+ * The user's plan for each wallet: target weights and opening dates.
+ *
+ * Rows are created lazily, so a user who has never set a target simply has
+ * none — which is the right default, since drift against an unstated target is
+ * not a thing worth showing.
+ */
+export async function getWalletPlans(userId: string): Promise<WalletPlan[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("wallet_plans")
+    .select("*")
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as WalletPlan[];
 }

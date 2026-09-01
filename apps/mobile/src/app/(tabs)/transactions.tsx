@@ -40,6 +40,7 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
@@ -99,6 +100,7 @@ export default function TransactionsScreen() {
   const [applySheetOpen, setApplySheetOpen] = useState(false);
   const [applyPending, setApplyPending] = useState(false);
 
+  const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, reload, error } =
     useRefreshable(async () => {
       if (!user) {
@@ -116,7 +118,7 @@ export default function TransactionsScreen() {
         getTags(user.id),
       ]);
       return { transactions, categories, skipped, tags };
-    }, [user?.id, year, month]);
+    }, [user?.id, year, month, dataVersion]);
 
   const transactions = data?.transactions ?? [];
   const typeTotals = useMemo(

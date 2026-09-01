@@ -2,11 +2,41 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Plus } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { APP_NAV_ITEMS } from "@/lib/navigation";
 import { SHELL_HEADER_BAND_CLASS } from "@/lib/layout-shell";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { Logo } from "@/components/layout/Logo";
+import { useQuickAdd } from "@/components/layout/QuickAddProvider";
+
+/** The app's primary action, given the top slot rather than a page to visit. */
+function QuickAddButton() {
+  const quickAdd = useQuickAdd();
+
+  if (!quickAdd) {
+    return null;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => quickAdd.open()}
+      className={cn(
+        "flex min-h-10 w-full items-center gap-3 rounded-md px-3 py-2",
+        "bg-primary text-sm font-medium text-primary-foreground",
+        "transition-colors duration-200 hover:bg-primary-hover",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+      )}
+    >
+      <Plus size={18} weight="bold" />
+      Add transaction
+      <kbd className="ml-auto rounded bg-black/15 px-1.5 py-0.5 text-[10px] font-normal">
+        N
+      </kbd>
+    </button>
+  );
+}
 
 export function SideNav({
   displayName,
@@ -32,6 +62,10 @@ export function SideNav({
         )}
       >
         <Logo />
+      </div>
+
+      <div className="px-3 pt-3">
+        <QuickAddButton />
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">

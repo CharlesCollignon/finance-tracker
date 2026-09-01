@@ -11,10 +11,15 @@ import {
   fetchInstrumentQuoteInEur,
   fetchMonthlyClosesInEur,
 } from "@finance/core/market/fx";
+import {
+  buildMerchantIndex,
+  type MerchantRule,
+} from "@finance/core/merchant-memory";
 import type {
   Category,
   MonthlySummary,
   RecurringTemplateWithCategory,
+  Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 import type { InvestmentPositionRow } from "@finance/core/investment-positions";
@@ -437,4 +442,62 @@ export async function getSavingsGoals(userId: string) {
     throw error;
   }
   return data ?? [];
+}
+
+/**
+ * How far back the app looks to learn habits — far enough that a monthly
+ * merchant is seen several times, short enough that a year-old choice does not
+ * outvote how the user files things now.
+ */
+const QUICK_ENTRY_HISTORY_LIMIT = 400;
+
+/** Chips offered before the user searches. Four fits one row on a phone. */
+const RECENT_CATEGORY_COUNT = 4;
+
+export interface QuickEntryContext {
+  categories: Category[];
+  tags: Tag[];
+  /** Most recently used category ids, newest first. */
+  recentCategoryIds: string[];
+  merchants: MerchantRule[];
+}
+
+/** Everything the quick-add sheet needs, in one round trip. */
+export async function getQuickEntryContext(
+  userId: string,
+): Promise<QuickEntryContext> {
+  const [categories, tags, history] = await Promise.all([
+    getCategories(userId),
+    getTags(userId),
+    supabase
+      .from("transactions")
+      .select("*, categories(name, type, icon, counts_toward_summary)")
+      .eq("user_id", userId)
+      .order("occurred_on", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(QUICK_ENTRY_HISTORY_LIMIT),
+  ]);
+
+  if (history.error) {
+    throw history.error;
+  }
+
+  const rows = (history.data ?? []) as TransactionWithCategory[];
+
+  const recentCategoryIds: string[] = [];
+  for (const tx of rows) {
+    if (!recentCategoryIds.includes(tx.category_id)) {
+      recentCategoryIds.push(tx.category_id);
+    }
+    if (recentCategoryIds.length >= RECENT_CATEGORY_COUNT) {
+      break;
+    }
+  }
+
+  return {
+    categories,
+    tags,
+    recentCategoryIds,
+    merchants: [...buildMerchantIndex(rows).values()],
+  };
 }

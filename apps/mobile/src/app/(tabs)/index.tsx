@@ -10,12 +10,19 @@ import {
   type BudgetViewMode,
 } from "@finance/core/constants";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
+import {
+  buildMonthComparison,
+  formatMonthComparison,
+} from "@finance/core/month-comparison";
+import { savingsRatePercent, todayIsoLocal } from "@finance/core/constants";
 import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
+import type { ApplyRecurringPlan } from "@finance/core/apply-recurring";
 import type { MonthlySummary } from "@finance/core/types/database";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
 
 import { IncomeSankeyCard } from "@/components/IncomeSankeyCard";
 import { MonthPicker } from "@/components/MonthPicker";
+import { MonthReadyCard } from "@/components/MonthReadyCard";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ProgressRing } from "@/components/charts/ProgressRing";
 import { StatHero } from "@/components/StatHero";
@@ -28,6 +35,8 @@ import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
+import { previewApplyRecurringForMonth } from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { cn } from "@/lib/cn";
@@ -39,6 +48,7 @@ import {
   getMonthlySummary,
   getMonthlyTrend,
   getSavingsGoals,
+  getTransactions,
   getWalletPortfolio,
   type MonthlyTrendPoint,
 } from "@/lib/queries";
@@ -165,26 +175,46 @@ export default function DashboardScreen() {
   const [month, setMonth] = useState(now.month);
   const [view, setView] = useState<BudgetViewMode>("current");
 
+  const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, error } =
     useRefreshable(async () => {
       if (!user) {
         return {
           summary: null as MonthlySummary | null,
           portfolio: null as InvestmentPortfolioSummary | null,
+          comparison: null as ReturnType<typeof buildMonthComparison> | null,
+          plan: null as ApplyRecurringPlan | null,
           budgetProgress: [] as ReturnType<typeof buildBudgetProgress>,
           goalProgress: [] as ReturnType<typeof buildSavingsGoalProgress>,
           trend: [] as MonthlyTrendPoint[],
         };
       }
-      const [summary, portfolio, budgets, goals, categories, trend] =
-        await Promise.all([
-          getMonthlySummary(user.id, year, month, view),
-          getWalletPortfolio(user.id, { includeHistory: false }),
-          getBudgets(user.id),
-          getSavingsGoals(user.id),
-          getCategories(user.id),
-          getMonthlyTrend(user.id),
-        ]);
+      const [previousYear, previousMonth] =
+        month === 1 ? [year - 1, 12] : [year, month - 1];
+
+      const [
+        summary,
+        portfolio,
+        budgets,
+        goals,
+        categories,
+        trend,
+        currentTx,
+        previousTx,
+        preview,
+      ] = await Promise.all([
+        getMonthlySummary(user.id, year, month, view),
+        getWalletPortfolio(user.id, { includeHistory: false }),
+        getBudgets(user.id),
+        getSavingsGoals(user.id),
+        getCategories(user.id),
+        getMonthlyTrend(user.id),
+        getTransactions(user.id, year, month),
+        getTransactions(user.id, previousYear, previousMonth),
+        // Quoting share-priced templates can fail; Home must still render,
+        // so a failed preview simply means no card.
+        previewApplyRecurringForMonth(year, month),
+      ]);
       const categoryNames = new Map(
         categories.map((c) => [c.id, c.name] as const),
       );
@@ -192,6 +222,16 @@ export default function DashboardScreen() {
         summary,
         portfolio,
         trend,
+        plan: preview.plan ?? null,
+        // Actuals only: comparing two projections would move whenever a
+        // template changed, which is not a claim worth making.
+        comparison: buildMonthComparison({
+          current: currentTx,
+          previous: previousTx,
+          year,
+          month,
+          today: todayIsoLocal(),
+        }),
         budgetProgress: buildBudgetProgress(
           budgets,
           summary.expenseBreakdown,
@@ -204,17 +244,30 @@ export default function DashboardScreen() {
           summary.savings,
         ),
       };
-    }, [user?.id, year, month, view]);
+    }, [user?.id, year, month, view, dataVersion]);
 
   const summary = data?.summary;
   const portfolio = data?.portfolio;
   const trend = data?.trend ?? [];
+  const comparison = data?.comparison ?? null;
+  const plan = data?.plan ?? null;
   const budgetProgress = data?.budgetProgress ?? [];
   const goalProgress = data?.goalProgress ?? [];
   const overBudget = (summary?.remaining ?? 0) < 0;
   const anyCapOver = budgetProgress.some((row) => row.over);
   const showRings = budgetProgress.length > 0 || goalProgress.length > 0;
   const monthLabel = formatMonthLabel(year, month);
+  const comparisonLine = comparison
+    ? formatMonthComparison(comparison, formatEuro)
+    : null;
+  const savingsRate = summary
+    ? savingsRatePercent(
+        summary.savings,
+        summary.investments,
+        summary.investmentDeployments,
+        summary.income,
+      )
+    : null;
 
   const statusLabel = anyCapOver
     ? "A budget cap was exceeded"
@@ -259,6 +312,19 @@ export default function DashboardScreen() {
           contentContainerClassName="gap-4 pb-28 pt-4"
           showsVerticalScrollIndicator={false}
         >
+          {plan ? (
+            <MonthReadyCard
+              monthLabel={monthLabel}
+              year={year}
+              month={month}
+              plan={plan}
+              onApplied={() => {
+                notifyDataChanged();
+                void onRefresh();
+              }}
+            />
+          ) : null}
+
           <BudgetViewToggle
             view={view}
             year={year}
@@ -298,6 +364,33 @@ export default function DashboardScreen() {
                 </Text>
               }
             />
+
+            {comparisonLine || savingsRate !== null ? (
+              <View className="mt-4 flex-row flex-wrap items-center justify-center gap-x-4 gap-y-1">
+                {comparisonLine ? (
+                  <Text
+                    className={cn(
+                      "text-sm",
+                      // Spending less is good news; spending more is not an
+                      // error, just information.
+                      comparison?.direction === "down"
+                        ? "text-success"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {comparisonLine}
+                  </Text>
+                ) : null}
+                {savingsRate !== null ? (
+                  <Text className="text-sm text-muted-foreground">
+                    <Text className="font-mono font-semibold text-foreground">
+                      {`${savingsRate}%`}
+                    </Text>
+                    {" saved"}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
 
             {showRings ? (
               <View className="mt-6 w-full items-center border-t border-border pt-6">

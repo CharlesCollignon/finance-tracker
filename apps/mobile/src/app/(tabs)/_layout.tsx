@@ -5,6 +5,8 @@ import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Blur } from "@/components/ui/Blur";
+import { QuickAddProvider } from "@/providers/QuickAddProvider";
+import { ReminderProvider } from "@/providers/ReminderProvider";
 
 import { useThemeColors } from "@/theme/useThemeColors";
 
@@ -65,51 +67,55 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedForeground,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "500" },
-        tabBarItemStyle: { paddingVertical: 4 },
-        // Blur only means something if content passes beneath the bar, so it
-        // overlays rather than docks. Screens pad their scroll content to
-        // clear it.
-        tabBarBackground: () => <Blur style={StyleSheet.absoluteFill} />,
-        tabBarStyle: {
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: BAR_HEIGHT + insets.bottom,
-          paddingBottom: insets.bottom,
-          backgroundColor: "transparent",
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: colors.border,
-          elevation: 0,
-          shadowOpacity: 0,
-        },
-        sceneStyle: { backgroundColor: colors.background },
-      }}
-    >
-      {TABS.map(({ name, title, icon, iconInactive }) => (
-        <Tabs.Screen
-          key={name}
-          name={name}
-          options={{
-            title,
-            tabBarIcon: ({ focused, color, size }) => (
-              <Ionicons
-                name={focused ? icon : iconInactive}
-                size={size ?? 20}
-                color={color}
-              />
-            ),
+    <ReminderProvider>
+      <QuickAddProvider>
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: colors.primary,
+            tabBarInactiveTintColor: colors.mutedForeground,
+            tabBarLabelStyle: { fontSize: 10, fontWeight: "500" },
+            tabBarItemStyle: { paddingVertical: 4 },
+            // Blur only means something if content passes beneath the bar, so it
+            // overlays rather than docks. Screens pad their scroll content to
+            // clear it.
+            tabBarBackground: () => <Blur style={StyleSheet.absoluteFill} />,
+            tabBarStyle: {
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: BAR_HEIGHT + insets.bottom,
+              paddingBottom: insets.bottom,
+              backgroundColor: "transparent",
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderTopColor: colors.border,
+              elevation: 0,
+              shadowOpacity: 0,
+            },
+            sceneStyle: { backgroundColor: colors.background },
           }}
-        />
-      ))}
-      {/* Reachable from the header account menu, not the tab bar. */}
-      <Tabs.Screen name="profile" options={{ href: null }} />
-    </Tabs>
+        >
+          {TABS.map(({ name, title, icon, iconInactive }) => (
+            <Tabs.Screen
+              key={name}
+              name={name}
+              options={{
+                title,
+                tabBarIcon: ({ focused, color, size }) => (
+                  <Ionicons
+                    name={focused ? icon : iconInactive}
+                    size={size ?? 20}
+                    color={color}
+                  />
+                ),
+              }}
+            />
+          ))}
+          {/* Reachable from the header account menu, not the tab bar. */}
+          <Tabs.Screen name="profile" options={{ href: null }} />
+        </Tabs>
+      </QuickAddProvider>
+    </ReminderProvider>
   );
 }

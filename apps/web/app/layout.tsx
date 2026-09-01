@@ -28,12 +28,23 @@ export const metadata: Metadata = {
   title: "Pluclair",
   description:
     "Personal finance without a bank connection. Enter income, recurring, and investments in a private database.",
+  // iOS ignores the web manifest for these, so they have to be stated here
+  // for an installed app to open without browser chrome.
+  appleWebApp: {
+    capable: true,
+    title: "Pluclair",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8f9fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a10" },
+  ],
 };
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem("theme");var d=t==="light"?false:t==="system"?window.matchMedia("(prefers-color-scheme: dark)").matches:true;document.documentElement.classList.toggle("dark",d);}catch(e){document.documentElement.classList.add("dark");}})();`;

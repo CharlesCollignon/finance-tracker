@@ -1,5 +1,7 @@
 "use server";
 
+import { z } from "zod";
+
 import { revalidateRecurringDependents } from "@/lib/revalidate-paths";
 import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
@@ -29,7 +31,9 @@ import type {
 import {
   applyRecurringSchema,
   authSchema,
+  importTransactionsSchema,
   parseUuid,
+  quickTransactionSchema,
   recurringTemplateSchema,
   transactionSchema,
   updateTransactionSchema,
@@ -280,6 +284,184 @@ export async function createTransaction(
 
   revalidateRecurringDependents();
   return { success: true };
+}
+
+export interface QuickTransactionInput {
+  categoryId: string;
+  amount: string | number;
+  occurredOn: string;
+  note?: string;
+  tagIds?: string[];
+}
+
+/**
+ * Save from the quick-add sheet.
+ *
+ * Takes an object rather than a FormData because the sheet stays open across
+ * saves ("save and add another") and never navigates, so there is no form
+ * submission to piggyback on.
+ */
+export async function saveQuickTransaction(
+  input: QuickTransactionInput,
+): Promise<{ error?: string; id?: string }> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = quickTransactionSchema.safeParse({
+    categoryId: input.categoryId,
+    amount: input.amount,
+    occurredOn: input.occurredOn,
+    note: input.note?.trim() || undefined,
+    tagIds: input.tagIds ?? [],
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const supabase = await createClient();
+  const { data: created, error } = await supabase
+    .from("transactions")
+    .insert({
+      user_id: user.id,
+      category_id: parsed.data.categoryId,
+      amount: parsed.data.amount,
+      occurred_on: parsed.data.occurredOn,
+      note: parsed.data.note ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  const tagIds = parsed.data.tagIds ?? [];
+  if (created && tagIds.length > 0) {
+    const { error: tagError } = await supabase.from("transaction_tags").insert(
+      tagIds.map((tagId) => ({ transaction_id: created.id, tag_id: tagId })),
+    );
+    if (tagError) {
+      return { error: tagError.message };
+    }
+  }
+
+  revalidateRecurringDependents();
+  return { id: created?.id };
+}
+
+/**
+ * Commit a reviewed CSV import.
+ *
+ * The rows arriving here have already been parsed, de-duplicated and
+ * categorised in the review step — this only re-validates and writes, so a
+ * tampered payload cannot bypass the schema.
+ */
+export async function importTransactions(
+  rows: {
+    categoryId: string;
+    amount: number;
+    occurredOn: string;
+    note?: string;
+  }[],
+): Promise<{ error?: string; imported?: number }> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = importTransactionsSchema.safeParse({ rows });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid import" };
+  }
+
+  const supabase = await createClient();
+
+  // Every row must belong to one of the user's own categories; RLS covers the
+  // insert, but checking here turns a database error into a clear message.
+  const categoryIds = [...new Set(parsed.data.rows.map((row) => row.categoryId))];
+  const { data: owned, error: categoryError } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("user_id", user.id)
+    .in("id", categoryIds);
+
+  if (categoryError) {
+    return { error: categoryError.message };
+  }
+
+  if ((owned?.length ?? 0) !== categoryIds.length) {
+    return { error: "One of the categories no longer exists" };
+  }
+
+  const { error } = await supabase.from("transactions").insert(
+    parsed.data.rows.map((row) => ({
+      user_id: user.id,
+      category_id: row.categoryId,
+      amount: row.amount,
+      occurred_on: row.occurredOn,
+      note: row.note?.trim() || null,
+    })),
+  );
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateRecurringDependents();
+  return { imported: parsed.data.rows.length };
+}
+
+/**
+ * The ledger rows that overlap an import's date range.
+ *
+ * Only the three fields the duplicate check needs are returned, so importing a
+ * long statement does not drag the user's whole history to the browser.
+ */
+export async function getExistingKeysForRange(
+  from: string,
+  to: string,
+): Promise<{
+  error?: string;
+  keys?: { occurredOn: string; amount: number; note: string | null }[];
+}> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const range = z
+    .object({
+      from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    })
+    .safeParse({ from, to });
+
+  if (!range.success) {
+    return { error: "Invalid date range" };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("occurred_on, amount, note")
+    .eq("user_id", user.id)
+    .gte("occurred_on", range.data.from)
+    .lte("occurred_on", range.data.to);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return {
+    keys: (data ?? []).map((row) => ({
+      occurredOn: row.occurred_on,
+      amount: Number(row.amount),
+      note: row.note,
+    })),
+  };
 }
 
 export async function updateTransaction(

@@ -1,9 +1,18 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
-import { getMonthBounds, type BudgetViewMode } from "@finance/core/constants";
+import {
+  getMonthBounds,
+  todayIsoLocal,
+  type BudgetViewMode,
+} from "@finance/core/constants";
+import {
+  buildMonthComparison,
+  type MonthComparison,
+} from "@finance/core/month-comparison";
 import { buildMonthlySummary } from "@finance/core/monthly-summary";
 import type {
+  CategoryType,
   MonthlySummary,
   RecurringTemplateWithCategory,
   TransactionWithCategory,
@@ -115,3 +124,35 @@ export const getRecurringTemplates = cache(
     return (data ?? []) as RecurringTemplateWithCategory[];
   },
 );
+
+/**
+ * This month against the previous one, from actual transactions only.
+ *
+ * Deliberately not built on the projected summary: comparing what has really
+ * happened with what really happened last month is a claim the app can stand
+ * behind, whereas comparing two projections would move whenever a template
+ * changed.
+ */
+export async function getMonthComparison(
+  userId: string,
+  year: number,
+  month: number,
+  type: CategoryType = "expense",
+): Promise<MonthComparison> {
+  const [previousYear, previousMonthNumber] =
+    month === 1 ? [year - 1, 12] : [year, month - 1];
+
+  const [current, previous] = await Promise.all([
+    getTransactions(userId, year, month),
+    getTransactions(userId, previousYear, previousMonthNumber),
+  ]);
+
+  return buildMonthComparison({
+    current,
+    previous,
+    year,
+    month,
+    today: todayIsoLocal(),
+    type,
+  });
+}

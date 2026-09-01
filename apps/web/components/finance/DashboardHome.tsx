@@ -4,6 +4,11 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import type { BudgetViewMode } from "@finance/core/constants";
 import type { BudgetProgress } from "@finance/core/budget-limits";
+import {
+  formatMonthComparison,
+  type MonthComparison,
+} from "@finance/core/month-comparison";
+import { savingsRatePercent } from "@finance/core/constants";
 import type { SavingsGoalProgress } from "@finance/core/savings-goals";
 import type { MonthlySummary } from "@finance/core/types/database";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
@@ -31,6 +36,56 @@ interface DashboardHomeProps {
   viewToggle: ReactNode;
   walletsSlot: ReactNode;
   summary: MonthlySummary;
+  /** Actual spend against the same window last month. */
+  comparison: MonthComparison | null;
+}
+
+/**
+ * The two lines that make a repeat visit worth something.
+ *
+ * The hero number alone reads identically on the 3rd and the 5th. A comparison
+ * with the same window last month says whether the month is going well, and
+ * the savings rate — until now buried inside the allocation chart's legend —
+ * is the figure people actually track from month to month.
+ */
+function DashboardSignals({
+  comparisonLine,
+  comparisonDirection,
+  savingsRate,
+}: {
+  comparisonLine: string | null;
+  comparisonDirection: MonthComparison["direction"] | null;
+  savingsRate: number | null;
+}) {
+  if (!comparisonLine && savingsRate === null) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm">
+      {comparisonLine ? (
+        <p
+          className={cn(
+            // Spending less is good news; spending more is not an error.
+            comparisonDirection === "down"
+              ? "text-success"
+              : "text-muted-foreground",
+          )}
+        >
+          {comparisonLine}
+        </p>
+      ) : null}
+
+      {savingsRate !== null ? (
+        <p className="text-muted-foreground">
+          <span className="font-mono font-semibold tabular-nums text-foreground">
+            {savingsRate}%
+          </span>{" "}
+          saved
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 function remainingLabel(
@@ -57,9 +112,19 @@ export function DashboardHome({
   viewToggle,
   walletsSlot,
   summary,
+  comparison,
 }: DashboardHomeProps) {
   const formatEuro = useFormatCurrency();
   const showRings = budgetProgress.length > 0 || goalProgress.length > 0;
+  const comparisonLine = comparison
+    ? formatMonthComparison(comparison, formatEuro)
+    : null;
+  const savingsRate = savingsRatePercent(
+    summary.savings,
+    summary.investments,
+    summary.investmentDeployments,
+    summary.income,
+  );
 
   return (
     <div
@@ -112,6 +177,12 @@ export function DashboardHome({
                     {statusLabel}
                   </span>
                 }
+              />
+
+              <DashboardSignals
+                comparisonLine={comparisonLine}
+                comparisonDirection={comparison?.direction ?? null}
+                savingsRate={savingsRate}
               />
 
               {showRings ? (

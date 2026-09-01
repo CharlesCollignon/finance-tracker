@@ -11,6 +11,30 @@ export const updateTransactionSchema = transactionSchema.extend({
   id: z.string().uuid(),
 });
 
+/**
+ * The quick-add sheet posts an object rather than a FormData, because it stays
+ * open across saves and never navigates.
+ */
+export const quickTransactionSchema = transactionSchema.extend({
+  tagIds: z.array(z.string().uuid()).optional(),
+});
+
+/** One row of a reviewed CSV import, as the user confirmed it. */
+export const importedTransactionSchema = z.object({
+  categoryId: z.string().uuid(),
+  amount: z.coerce.number().positive("Amount must be positive"),
+  occurredOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date"),
+  note: z.string().max(500).optional(),
+});
+
+/** Import batches are capped so one paste cannot lock up the request. */
+export const importTransactionsSchema = z.object({
+  rows: z
+    .array(importedTransactionSchema)
+    .min(1, "Nothing to import")
+    .max(2000, "Import at most 2000 rows at a time"),
+});
+
 export const categorySchema = z.object({
   id: z.string().uuid().optional(),
   name: z
