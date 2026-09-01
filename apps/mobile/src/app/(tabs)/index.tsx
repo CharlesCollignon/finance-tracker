@@ -287,6 +287,20 @@ export default function DashboardScreen() {
         }}
       />
 
+      {/* The current / month-end distinction is a real one, but it is not the
+          first decision to put in front of someone opening the app, so it sits
+          under the month rather than above the figures. */}
+      {summary ? (
+        <View className="mb-1 items-center">
+          <BudgetViewToggle
+            view={view}
+            year={year}
+            month={month}
+            onChange={setView}
+          />
+        </View>
+      ) : null}
+
       {loading && !summary ? (
         <ScreenSkeleton rows={3} />
       ) : error ? (
@@ -324,13 +338,6 @@ export default function DashboardScreen() {
               }}
             />
           ) : null}
-
-          <BudgetViewToggle
-            view={view}
-            year={year}
-            month={month}
-            onChange={setView}
-          />
 
           <Card bezel innerClassName="p-6">
             <StatHero

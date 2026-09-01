@@ -23,7 +23,7 @@ import { Button } from "@/components/retroui/Button";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { MobileSheet } from "@/components/layout/MobileSheet";
 import { useToast } from "@/components/layout/ToastProvider";
-import { saveQuickTransaction } from "@/lib/actions/finance";
+import { saveWithOutbox } from "@/lib/offline-outbox";
 import { useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 
@@ -180,7 +180,7 @@ function QuickAddFields({
     setPending(true);
     setError(null);
 
-    const result = await saveQuickTransaction({
+    const result = await saveWithOutbox({
       categoryId,
       amount: amountInputToNumber(amount),
       occurredOn,
@@ -196,7 +196,12 @@ function QuickAddFields({
     }
 
     if (!andAnother) {
-      toast("Transaction saved", "success");
+      toast(
+        result.queued
+          ? "Saved on this device — it will sync when you are back online"
+          : "Transaction saved",
+        "success",
+      );
       onOpenChange(false);
       return;
     }

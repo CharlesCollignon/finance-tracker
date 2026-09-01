@@ -1,5 +1,5 @@
 import { createEurRates, type EurRates } from "./eur-rates";
-import { fetchInstrumentQuote } from "./yahoo";
+import { fetchInstrumentQuote, type InstrumentQuote } from "./yahoo";
 
 export interface Quote {
   symbol: string;
@@ -8,6 +8,8 @@ export interface Quote {
   currency: string;
   /** ISO timestamp of when this price was read. */
   quotedAt: string;
+  /** True when the market could not be reached and this is a kept price. */
+  stale?: boolean;
 }
 
 /**
@@ -26,9 +28,31 @@ export interface YahooQuoteSourceOptions {
   now?: () => number;
   /** Share a rate cache with other callers; one is created if omitted. */
   rates?: EurRates;
+  /**
+   * How long a cached price may still be served once the market cannot be
+   * reached. An hour-old price is worth far more than no price.
+   */
+  staleMs?: number;
+  /** How long to stop calling out after repeated failures. */
+  cooldownMs?: number;
+  /** Consecutive failures before the cooldown starts. */
+  failureThreshold?: number;
+  /** The network call, injected so failure handling is testable. */
+  fetchQuote?: (symbol: string) => Promise<InstrumentQuote>;
 }
 
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
+
+/** A day-old price still beats a blank where a figure should be. */
+const DEFAULT_STALE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Yahoo rate-limits by IP and answers 429 to everything once tripped, so
+ * retrying on every request is what keeps it tripped. Backing off is both
+ * kinder and the faster way back to working quotes.
+ */
+const DEFAULT_COOLDOWN_MS = 10 * 60 * 1000;
+const DEFAULT_FAILURE_THRESHOLD = 3;
 
 /** Live prices from Yahoo, converted to EUR. Caches are instance state. */
 export function createYahooQuoteSource(
@@ -37,7 +61,23 @@ export function createYahooQuoteSource(
   const ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
   const now = options.now ?? Date.now;
   const rates = options.rates ?? createEurRates({ ttlMs, now });
+  const staleMs = options.staleMs ?? DEFAULT_STALE_MS;
+  const cooldownMs = options.cooldownMs ?? DEFAULT_COOLDOWN_MS;
+  const failureThreshold = options.failureThreshold ?? DEFAULT_FAILURE_THRESHOLD;
+  const fetchQuote = options.fetchQuote ?? fetchInstrumentQuote;
+
   const cache = new Map<string, { quote: Quote; fetchedAt: number }>();
+  let consecutiveFailures = 0;
+  let cooldownUntil = 0;
+
+  /** The cached price, marked stale, while it is still worth showing. */
+  function staleFor(key: string): Quote | null {
+    const cached = cache.get(key);
+    if (!cached || now() - cached.fetchedAt > staleMs) {
+      return null;
+    }
+    return { ...cached.quote, stale: true };
+  }
 
   return {
     async quoteInEur(symbol) {
@@ -47,8 +87,14 @@ export function createYahooQuoteSource(
         return cached.quote;
       }
 
+      // While backing off, answer from the cache rather than calling out —
+      // hammering a rate-limited endpoint is what keeps it rate-limited.
+      if (now() < cooldownUntil) {
+        return staleFor(key);
+      }
+
       try {
-        const raw = await fetchInstrumentQuote(symbol);
+        const raw = await fetchQuote(symbol);
         const quote: Quote = {
           symbol: raw.symbol,
           priceEur: await rates.toEur(raw.price, raw.currency),
@@ -57,9 +103,15 @@ export function createYahooQuoteSource(
           quotedAt: new Date(now()).toISOString(),
         };
         cache.set(key, { quote, fetchedAt: now() });
+        consecutiveFailures = 0;
+        cooldownUntil = 0;
         return quote;
       } catch {
-        return null;
+        consecutiveFailures += 1;
+        if (consecutiveFailures >= failureThreshold) {
+          cooldownUntil = now() + cooldownMs;
+        }
+        return staleFor(key);
       }
     },
   };
