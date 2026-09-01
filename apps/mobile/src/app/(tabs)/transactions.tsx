@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter, type Href } from "expo-router";
 import {
   FlatList,
   Pressable,
@@ -100,6 +101,7 @@ export default function TransactionsScreen() {
   const [applySheetOpen, setApplySheetOpen] = useState(false);
   const [applyPending, setApplyPending] = useState(false);
 
+  const router = useRouter();
   const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, reload, error } =
     useRefreshable(async () => {
@@ -331,6 +333,16 @@ export default function TransactionsScreen() {
             setEditing(null);
             setFormOpen(true);
           }}
+        />
+      </View>
+
+      <View className="mb-4 flex-row justify-center">
+        <Button
+          label="Import a bank CSV"
+          variant="ghost"
+          size="sm"
+          icon="document-outline"
+          onPress={() => router.push("/import" as Href)}
         />
       </View>
 

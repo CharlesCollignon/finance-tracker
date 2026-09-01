@@ -72,8 +72,12 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
   const lastBreachCheck = useRef(0);
   const running = useRef(false);
 
-  userId.current = user?.id ?? null;
-  format.current = formatAmount;
+  // Written in an effect rather than during render: the AppState listener
+  // below is registered once and reads whatever the latest values are.
+  useEffect(() => {
+    userId.current = user?.id ?? null;
+    format.current = formatAmount;
+  });
 
   useEffect(() => {
     async function run(force: boolean) {

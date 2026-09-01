@@ -85,6 +85,7 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="auth/callback" />
         <Stack.Screen name="categories" />
+        <Stack.Screen name="import" />
         <Stack.Screen name="onboarding" />
       </Stack>
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />

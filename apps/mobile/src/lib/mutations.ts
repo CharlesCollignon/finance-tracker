@@ -2,6 +2,7 @@ import {
   applyRecurringSchema,
   authSchema,
   categorySchema,
+  importTransactionsSchema,
   recurringTemplateSchema,
   transactionSchema,
   updateTransactionSchema,
@@ -10,6 +11,10 @@ import {
   profileSchema,
   deleteConfirmSchema,
 } from "@finance/core/validations/profile";
+import {
+  walletPlanSchema,
+  walletTargetsSchema,
+} from "@finance/core/validations/investments";
 import {
   budgetSchema,
   savingsGoalSchema,
@@ -1234,4 +1239,131 @@ export async function deleteSavingsGoal(id: string): Promise<ActionResult> {
 /** Validate credentials shape for forms that don't go through AuthProvider. */
 export function validateAuthInput(email: string, password: string) {
   return authSchema.safeParse({ email, password });
+}
+
+/**
+ * Saves one wallet's plan — its target share of the portfolio, when the
+ * wrapper was opened, and any non-standard contribution ceiling.
+ *
+ * Upserted per wallet rather than as a set, so setting a PEA's opening date
+ * does not require having decided on target weights first.
+ */
+export async function saveWalletPlan(input: {
+  wallet: "pea" | "cto" | "crypto";
+  targetWeight?: string | number;
+  openedOn?: string;
+  contributionCeiling?: string | number;
+}): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = walletPlanSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const { error } = await supabase.from("wallet_plans").upsert(
+    {
+      user_id: userId,
+      wallet: parsed.data.wallet,
+      target_weight: parsed.data.targetWeight,
+      opened_on: parsed.data.openedOn,
+      contribution_ceiling: parsed.data.contributionCeiling,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,wallet" },
+  );
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
+}
+
+/**
+ * Saves every target at once.
+ *
+ * Drift is only reported when the targets cover the whole portfolio, so the
+ * UI edits them as a set and this writes them as one.
+ */
+export async function saveWalletTargets(
+  targets: { wallet: "pea" | "cto" | "crypto"; targetWeight: number }[],
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = walletTargetsSchema.safeParse({ targets });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid targets" };
+  }
+
+  const total = parsed.data.targets.reduce(
+    (sum, row) => sum + row.targetWeight,
+    0,
+  );
+
+  // Anything else would make every wallet look permanently off-target.
+  if (parsed.data.targets.length > 0 && Math.abs(total - 1) > 0.005) {
+    return { error: "Targets must add up to 100%" };
+  }
+
+  const { error } = await supabase.from("wallet_plans").upsert(
+    parsed.data.targets.map((row) => ({
+      user_id: userId,
+      wallet: row.wallet,
+      target_weight: row.targetWeight,
+      updated_at: new Date().toISOString(),
+    })),
+    { onConflict: "user_id,wallet" },
+  );
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
+}
+
+/**
+ * Commits a reviewed CSV import.
+ *
+ * The rows arriving here were parsed, de-duplicated and categorised in the
+ * review step; this re-validates and writes, so nothing reaches the ledger
+ * that has not been through the schema.
+ */
+export async function importTransactions(
+  rows: {
+    categoryId: string;
+    amount: number;
+    occurredOn: string;
+    note?: string;
+  }[],
+): Promise<ActionResult & { imported?: number }> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = importTransactionsSchema.safeParse({ rows });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid import" };
+  }
+
+  const { error } = await supabase.from("transactions").insert(
+    parsed.data.rows.map((row) => ({
+      user_id: userId,
+      category_id: row.categoryId,
+      amount: row.amount,
+      occurred_on: row.occurredOn,
+      note: row.note?.trim() || null,
+    })),
+  );
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true, imported: parsed.data.rows.length };
 }

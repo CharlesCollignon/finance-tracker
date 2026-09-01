@@ -17,6 +17,13 @@ nodeLinker: hoisted
 overrides:
   tslib: ^2.8.1
 
+  # expo-file-system contains native code, and a native build may only include
+  # one copy of a given native module. The CSV importer depends on it directly
+  # while something in the tree already pulled an older 57.0.2 in transitively,
+  # which left two copies under the hoisted layout. Pinning one version
+  # collapses them back to a single install.
+  expo-file-system: ~57.0.6
+
 # Charts use SVG, not Skia. @wuba/react-native-echarts still lists Skia
 # as an optional peer, so pnpm may install it anyway.
 ignoredOptionalDependencies:
