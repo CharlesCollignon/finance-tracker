@@ -16,6 +16,7 @@ import {
   PasskeysCard,
   type PasskeyItem,
 } from "@/components/profile/PasskeysCard";
+import { NotificationsCard } from "@/components/profile/NotificationsCard";
 import {
   deleteAccount,
   deleteAllData,
@@ -28,9 +29,12 @@ interface ProfileViewProps {
   provider: string;
   canDeleteAccount: boolean;
   initialPasskeys: PasskeyItem[];
+  /** Empty when the deployment has no VAPID key configured. */
+  pushPublicKey: string;
 }
 
 export function ProfileView({
+  pushPublicKey,
   email,
   fullName,
   provider,
@@ -120,6 +124,8 @@ export function ProfileView({
         </Card.Bezel>
 
         <PasskeysCard initialPasskeys={initialPasskeys} />
+
+        <NotificationsCard publicKey={pushPublicKey} />
 
         <Card.Bezel className="w-full" innerClassName="p-4 md:p-5">
           <h2 className="text-base font-semibold">Appearance</h2>
