@@ -18,7 +18,7 @@ import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useOnboarding } from "@/providers/OnboardingProvider";
-import { upsertRecurringTemplate } from "@/lib/mutations";
+import { upsertBudget, upsertRecurringTemplate } from "@/lib/mutations";
 import { getCategories } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCurrency } from "@/providers/CurrencyProvider";
@@ -26,9 +26,9 @@ import { useToast } from "@/providers/ToastProvider";
 
 const CURRENCIES: CurrencyCode[] = ["EUR", "USD"];
 
-type Step = "currency" | "income" | "recurring" | "done";
+type Step = "currency" | "income" | "recurring" | "cap" | "done";
 
-const STEP_ORDER: Step[] = ["currency", "income", "recurring", "done"];
+const STEP_ORDER: Step[] = ["currency", "income", "recurring", "cap", "done"];
 
 /**
  * First-run setup. Currency is required because it changes how every figure in
@@ -53,6 +53,8 @@ export default function OnboardingScreen() {
   const [expenseDay, setExpenseDay] = useState("1");
   const [pending, setPending] = useState(false);
   const [added, setAdded] = useState(0);
+  const [capCategory, setCapCategory] = useState<string | null>(null);
+  const [capAmount, setCapAmount] = useState("");
 
   const { data } = useRefreshable(async () => {
     if (!user) {
@@ -128,6 +130,29 @@ export default function OnboardingScreen() {
     }
   }
 
+  /**
+   * One spending cap, so the dashboard's rings have something to draw.
+   * Without this every new user's dashboard is half empty, which reads as a
+   * feature that does not work rather than one not set up yet.
+   */
+  async function handleCap() {
+    if (!capCategory || !capAmount.trim()) {
+      await finish();
+      return;
+    }
+    setPending(true);
+    const result = await upsertBudget({
+      amount: Number(capAmount),
+      categoryId: capCategory,
+    });
+    setPending(false);
+    if (result.error) {
+      toast(result.error, "error");
+      return;
+    }
+    await finish();
+  }
+
   return (
     <Screen
       title="Set up"
@@ -141,7 +166,7 @@ export default function OnboardingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row justify-center gap-1.5 pt-2">
-          {STEP_ORDER.slice(0, 3).map((value, index) => (
+          {STEP_ORDER.slice(0, 4).map((value, index) => (
             <View
               key={value}
               className={cn(
@@ -321,15 +346,81 @@ export default function OnboardingScreen() {
 
             <View className="gap-2">
               <Button
-                label="Finish setup"
+                label="Continue"
                 size="lg"
+                onPress={() => setStep("cap")}
+              />
+              <Button
+                label="Skip for now"
+                variant="ghost"
+                onPress={() => setStep("cap")}
+              />
+            </View>
+          </FadeIn>
+        ) : null}
+
+        {step === "cap" ? (
+          <FadeIn className="gap-6">
+            <View className="gap-2">
+              <Text className="text-2xl font-bold">
+                What would you rather not overspend?
+              </Text>
+              <Text variant="muted">
+                Pick one category and a monthly cap. Home will show a ring that
+                fills as you spend against it. You can add more in Planning.
+              </Text>
+            </View>
+
+            <Card bezel innerClassName="gap-3 p-5">
+              <Text className="text-sm font-medium">Category</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {expenseCategories.slice(0, 8).map((category) => {
+                  const selected = capCategory === category.id;
+                  return (
+                    <Pressable
+                      key={category.id}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      onPress={() => {
+                        void hapticLight();
+                        setCapCategory(category.id);
+                      }}
+                      className={cn(
+                        "flex-row items-center gap-2 rounded-full border px-3 py-2",
+                        selected
+                          ? "border-primary bg-primary/15"
+                          : "border-border bg-background",
+                      )}
+                    >
+                      <CategoryIcon icon={category.icon} className="h-6 w-6" />
+                      <Text className="text-sm">{category.name}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <Text className="mt-2 text-sm font-medium">Monthly cap</Text>
+              <Input
+                value={capAmount}
+                onChangeText={setCapAmount}
+                keyboardType="decimal-pad"
+                placeholder="0.00"
+              />
+            </Card>
+
+            <View className="gap-2">
+              <Button
+                label={pending ? "Saving…" : "Set the cap and finish"}
+                size="lg"
+                disabled={pending || !capCategory || !capAmount.trim()}
                 onPress={() => {
-                  void finish();
+                  void handleCap();
                 }}
               />
               <Button
                 label="Skip for now"
                 variant="ghost"
+                disabled={pending}
                 onPress={() => {
                   void finish();
                 }}
