@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
@@ -9,6 +9,18 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { TransactionForm } from "@/components/finance/TransactionForm";
+import {
+  RowCheckbox,
+  SelectionBar,
+} from "@/components/finance/SelectionBar";
+import { useToast } from "@/components/layout/ToastProvider";
+import { deleteTransactions } from "@/lib/actions/finance";
+import {
+  selectAllState,
+  summarizeSelection,
+  toggleSelectAll,
+  toggleSelected,
+} from "@finance/core/selection";
 import { StatHero } from "@/components/finance/StatHero";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { formatMonthLabel } from "@finance/core/constants";
@@ -31,6 +43,9 @@ import type {
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
+/** Stable identity, so the derived selection does not change every render. */
+const EMPTY_SELECTION: ReadonlySet<string> = new Set();
+
 interface CalendarViewProps {
   transactions: TransactionWithCategory[];
   categories: Category[];
@@ -47,6 +62,15 @@ export function CalendarView({
   month,
 }: CalendarViewProps) {
   const formatEuro = useFormatCurrency();
+  const { toast } = useToast();
+  // Row selection is keyed by day, the same way the day itself is keyed by
+  // month above: changing day empties it by derivation, with no effect.
+  const [rowSelection, setRowSelection] = useState<{
+    date: string;
+    mode: boolean;
+    ids: ReadonlySet<string>;
+  }>({ date: "", mode: false, ids: EMPTY_SELECTION });
+  const [deletePending, startDelete] = useTransition();
   const [editTransaction, setEditTransaction] =
     useState<TransactionWithCategory | null>(null);
   const byDate = useMemo(
@@ -78,6 +102,43 @@ export function CalendarView({
   }
 
   const selectedTransactions = byDate.get(selectedDate) ?? [];
+  const visibleIds = selectedTransactions.map((tx) => tx.id);
+  const onThisDay = rowSelection.date === selectedDate;
+  const selected = onThisDay ? rowSelection.ids : EMPTY_SELECTION;
+  const selectMode = onThisDay && rowSelection.mode;
+  const selectionSummary = summarizeSelection(selectedTransactions, selected);
+  const allState = selectAllState(visibleIds, selected);
+
+  function setSelected(next: (current: ReadonlySet<string>) => Set<string>) {
+    setRowSelection((current) => {
+      const base =
+        current.date === selectedDate ? current.ids : EMPTY_SELECTION;
+      return { date: selectedDate, mode: true, ids: next(base) };
+    });
+  }
+
+  function setSelectMode(mode: boolean) {
+    setRowSelection({ date: selectedDate, mode, ids: EMPTY_SELECTION });
+  }
+
+  function leaveSelectMode() {
+    setRowSelection({ date: selectedDate, mode: false, ids: EMPTY_SELECTION });
+  }
+
+  function handleBulkDelete() {
+    startDelete(async () => {
+      const result = await deleteTransactions([...selected]);
+      if (result.error) {
+        toast(result.error, "error");
+        return;
+      }
+      toast(
+        `${result.deleted} ${result.deleted === 1 ? "transaction" : "transactions"} deleted`,
+        "success",
+      );
+      leaveSelectMode();
+    });
+  }
   const selectedTotals = computeDayTotals(selectedTransactions);
   const monthLabel = formatMonthLabel(year, month);
 
@@ -237,14 +298,36 @@ export function CalendarView({
                     )}
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  className="shrink-0"
-                  onClick={() => setFormOpen(true)}
-                >
-                  <Plus size={16} weight="bold" />
-                  <span className="hidden sm:inline">Add</span>
-                </Button>
+                <div className="flex shrink-0 items-center gap-1">
+                  {selectedTransactions.length > 0 ? (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() =>
+                        selectMode ? leaveSelectMode() : setSelectMode(true)
+                      }
+                    >
+                      {selectMode ? "Done" : "Select"}
+                    </Button>
+                  ) : null}
+                  {selectMode ? (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() =>
+                        setSelected((current) =>
+                          toggleSelectAll(visibleIds, current),
+                        )
+                      }
+                    >
+                      {allState === "all" ? "Clear all" : "All"}
+                    </Button>
+                  ) : null}
+                  <Button size="sm" onClick={() => setFormOpen(true)}>
+                    <Plus size={16} weight="bold" />
+                    <span className="hidden sm:inline">Add</span>
+                  </Button>
+                </div>
               </div>
 
               {selectedTransactions.length === 0 ? (
@@ -272,10 +355,35 @@ export function CalendarView({
                     <button
                       key={tx.id}
                       type="button"
-                      onClick={() => setEditTransaction(tx)}
-                      aria-label={`Edit ${tx.categories.name}`}
-                      className="flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30"
+                      onClick={() =>
+                        selectMode
+                          ? setSelected((current) =>
+                              toggleSelected(current, tx.id),
+                            )
+                          : setEditTransaction(tx)
+                      }
+                      aria-label={
+                        selectMode
+                          ? `Select ${tx.categories.name}`
+                          : `Edit ${tx.categories.name}`
+                      }
+                      aria-pressed={selectMode ? selected.has(tx.id) : undefined}
+                      className={cn(
+                        "flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30",
+                        selectMode && selected.has(tx.id) && "bg-primary/5",
+                      )}
                     >
+                      {selectMode ? (
+                        <RowCheckbox
+                          checked={selected.has(tx.id)}
+                          label={`Select ${tx.categories.name}`}
+                          onChange={() =>
+                            setSelected((current) =>
+                              toggleSelected(current, tx.id),
+                            )
+                          }
+                        />
+                      ) : null}
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium leading-snug">
                           {tx.categories.name}
@@ -306,6 +414,13 @@ export function CalendarView({
           </StaggerItem>
         </Stagger>
       </PageContainer>
+
+      <SelectionBar
+        summary={selectionSummary}
+        pending={deletePending}
+        onCancel={leaveSelectMode}
+        onDelete={handleBulkDelete}
+      />
 
       <TransactionForm
         categories={categories}

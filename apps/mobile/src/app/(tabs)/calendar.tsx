@@ -23,7 +23,18 @@ import type {
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { MonthPicker } from "@/components/MonthPicker";
 import { PrivateAmount } from "@/components/PrivateAmount";
+import { deleteTransactions } from "@/lib/mutations";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
+import {
+  RowCheckbox,
+  SelectionBar,
+} from "@/components/SelectionBar";
+import {
+  selectAllState,
+  summarizeSelection,
+  toggleSelectAll,
+  toggleSelected,
+} from "@finance/core/selection";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -32,10 +43,11 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
-import { hapticLight } from "@/lib/haptics";
+import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { useDataVersion } from "@/lib/data-version";
+import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
+import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import {
   getCategories,
@@ -43,8 +55,12 @@ import {
   getTransactions,
 } from "@/lib/queries";
 
+/** Stable identity, so the derived selection keeps a steady reference. */
+const EMPTY_SELECTION: ReadonlySet<string> = new Set();
+
 export default function CalendarScreen() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const formatEuro = useFormatCurrency();
   const now = parseMonthParams();
   const [year, setYear] = useState(now.year);
@@ -52,6 +68,14 @@ export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(() => todayIsoLocal());
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
+  // Row selection is keyed by day, so changing day empties it by
+  // derivation rather than through a state-syncing effect.
+  const [rowSelection, setRowSelection] = useState<{
+    date: string;
+    mode: boolean;
+    ids: ReadonlySet<string>;
+  }>({ date: "", mode: false, ids: EMPTY_SELECTION });
+  const [deletePending, setDeletePending] = useState(false);
 
   const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, reload, error } =
@@ -94,6 +118,49 @@ export default function CalendarScreen() {
 
   const dayTxs = byDate.get(effectiveSelected) ?? [];
   const dayTotals = computeDayTotals(dayTxs);
+
+  const visibleIds = dayTxs.map((tx) => tx.id);
+  const onThisDay = rowSelection.date === effectiveSelected;
+  const selectedIds = onThisDay ? rowSelection.ids : EMPTY_SELECTION;
+  const selectMode = onThisDay && rowSelection.mode;
+  const selectionSummary = summarizeSelection(dayTxs, selectedIds);
+  const allState = selectAllState(visibleIds, selectedIds);
+
+  function setSelected(next: (current: ReadonlySet<string>) => Set<string>) {
+    setRowSelection((current) => {
+      const base =
+        current.date === effectiveSelected ? current.ids : EMPTY_SELECTION;
+      return { date: effectiveSelected, mode: true, ids: next(base) };
+    });
+  }
+
+  function leaveSelectMode() {
+    setRowSelection({
+      date: effectiveSelected,
+      mode: false,
+      ids: EMPTY_SELECTION,
+    });
+  }
+
+  async function handleBulkDelete() {
+    setDeletePending(true);
+    const result = await deleteTransactions([...selectedIds]);
+    setDeletePending(false);
+
+    if (result.error) {
+      toast(result.error, "error");
+      return;
+    }
+
+    void hapticSuccess();
+    notifyDataChanged();
+    toast(
+      `${result.deleted} ${result.deleted === 1 ? "transaction" : "transactions"} deleted`,
+      "success",
+    );
+    leaveSelectMode();
+    void onRefresh();
+  }
 
   return (
     <Screen title="Calendar">
@@ -196,6 +263,45 @@ export default function CalendarScreen() {
             </PrivateAmount>
           </Text>
 
+          {dayTxs.length > 0 ? (
+            <View className="mb-2 flex-row items-center justify-end gap-2">
+              {selectMode ? (
+                <>
+                  <Button
+                    label={allState === "all" ? "Clear all" : "Select all"}
+                    variant="ghost"
+                    size="sm"
+                    onPress={() =>
+                      setSelected((current) =>
+                        toggleSelectAll(visibleIds, current),
+                      )
+                    }
+                  />
+                  <Button
+                    label="Done"
+                    variant="ghost"
+                    size="sm"
+                    onPress={leaveSelectMode}
+                  />
+                </>
+              ) : (
+                <Button
+                  label="Select"
+                  variant="ghost"
+                  size="sm"
+                  icon="checkbox-outline"
+                  onPress={() =>
+                    setRowSelection({
+                      date: effectiveSelected,
+                      mode: true,
+                      ids: EMPTY_SELECTION,
+                    })
+                  }
+                />
+              )}
+            </View>
+          ) : null}
+
           {dayTxs.length === 0 ? (
             <EmptyState
               title="Nothing on this day"
@@ -214,16 +320,47 @@ export default function CalendarScreen() {
                 <Pressable
                   key={tx.id}
                   accessibilityRole="button"
-                  accessibilityLabel={`Edit ${tx.categories.name}`}
+                  accessibilityLabel={
+                    selectMode
+                      ? `Select ${tx.categories.name}`
+                      : `Edit ${tx.categories.name}`
+                  }
+                  accessibilityState={
+                    selectMode ? { selected: selectedIds.has(tx.id) } : undefined
+                  }
                   onPress={() => {
                     void hapticLight();
+                    if (selectMode) {
+                      setSelected((current) => toggleSelected(current, tx.id));
+                      return;
+                    }
                     setEditing(tx);
+                  }}
+                  onLongPress={() => {
+                    void hapticLight();
+                    if (!selectMode) {
+                      setRowSelection({
+                        date: effectiveSelected,
+                        mode: true,
+                        ids: new Set([tx.id]),
+                      });
+                    }
                   }}
                   className={cn(
                     "flex-row items-start gap-3 px-2 py-3.5",
                     index > 0 && "border-t border-border",
+                    selectMode && selectedIds.has(tx.id) && "bg-primary/5",
                   )}
                 >
+                  {selectMode ? (
+                    <RowCheckbox
+                      checked={selectedIds.has(tx.id)}
+                      label={`Select ${tx.categories.name}`}
+                      onPress={() =>
+                        setSelected((current) => toggleSelected(current, tx.id))
+                      }
+                    />
+                  ) : null}
                   <CategoryIcon icon={tx.categories.icon} />
                   <View className="min-w-0 flex-1">
                     <Text numberOfLines={1} className="text-sm font-medium">
@@ -253,6 +390,13 @@ export default function CalendarScreen() {
           )}
         </ScrollView>
       )}
+
+      <SelectionBar
+        summary={selectionSummary}
+        pending={deletePending}
+        onCancel={leaveSelectMode}
+        onDelete={() => void handleBulkDelete()}
+      />
 
       {formOpen ? (
         <TransactionFormModal

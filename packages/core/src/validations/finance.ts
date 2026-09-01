@@ -19,6 +19,18 @@ export const quickTransactionSchema = transactionSchema.extend({
   tagIds: z.array(z.string().uuid()).optional(),
 });
 
+/**
+ * Bulk delete. Capped so one request cannot ask for an unbounded delete, and
+ * because a selection larger than this is really "clear the month", which is
+ * a different feature with different consequences.
+ */
+export const deleteTransactionsSchema = z.object({
+  ids: z
+    .array(z.string().uuid())
+    .min(1, "Nothing selected")
+    .max(200, "Select at most 200 transactions at a time"),
+});
+
 /** One row of a reviewed CSV import, as the user confirmed it. */
 export const importedTransactionSchema = z.object({
   categoryId: z.string().uuid(),
