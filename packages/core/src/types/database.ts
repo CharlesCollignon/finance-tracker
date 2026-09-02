@@ -143,7 +143,11 @@ export interface Database {
           category_id: string;
           recurring_template_id?: string | null;
           occurred_on: string;
-          amount: number;
+          /**
+           * A decimal string is accepted so a bank's own figure can be written
+           * through without a float ever touching it.
+           */
+          amount: number | string;
           note?: string | null;
           created_at?: string;
         };
@@ -471,6 +475,61 @@ export interface Database {
         };
         Relationships: [];
       };
+      bank_feed_items: {
+        Row: {
+          id: string;
+          user_id: string;
+          provider_id: string;
+          provider_account_id: string;
+          occurred_on: string;
+          amount: number;
+          currency: string;
+          direction: "in" | "out";
+          counterparty: string | null;
+          note: string;
+          merchant_category_code: string | null;
+          status: "pending" | "imported" | "ignored";
+          transaction_id: string | null;
+          decided_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          provider_id: string;
+          provider_account_id: string;
+          occurred_on: string;
+          /** Accepts the provider's decimal string, so no float is involved. */
+          amount: number | string;
+          currency: string;
+          direction: "in" | "out";
+          counterparty?: string | null;
+          note: string;
+          merchant_category_code?: string | null;
+          status?: "pending" | "imported" | "ignored";
+          transaction_id?: string | null;
+          decided_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          provider_id?: string;
+          provider_account_id?: string;
+          occurred_on?: string;
+          amount?: number | string;
+          currency?: string;
+          direction?: "in" | "out";
+          counterparty?: string | null;
+          note?: string;
+          merchant_category_code?: string | null;
+          status?: "pending" | "imported" | "ignored";
+          transaction_id?: string | null;
+          decided_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       month_closes: {
         Row: {
           id: string;
@@ -575,6 +634,8 @@ export type SavingsGoal = Database["public"]["Tables"]["savings_goals"]["Row"];
 export type WalletPlan = Database["public"]["Tables"]["wallet_plans"]["Row"];
 export type PushSubscriptionRow =
   Database["public"]["Tables"]["push_subscriptions"]["Row"];
+export type BankFeedItem =
+  Database["public"]["Tables"]["bank_feed_items"]["Row"];
 export type MonthClose = Database["public"]["Tables"]["month_closes"]["Row"];
 export type MonthCloseSettings =
   Database["public"]["Tables"]["month_close_settings"]["Row"];

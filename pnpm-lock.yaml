@@ -151,6 +151,9 @@ importers:
       '@finance/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@open-banking-io/client':
+        specifier: ^1.1.0
+        version: 1.1.0
       '@phosphor-icons/react':
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1392,6 +1395,10 @@ packages:
   '@nolyfill/is-core-module@1.0.39':
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
+
+  '@open-banking-io/client@1.1.0':
+    resolution: {integrity: sha512-FfwG2sMOmTRGN5rmyTqC4PNNcv2Ssd3rMAMjE8G1VzZZICyvNlT9z79y+caaoIIlroK0aHDDCllcdKkzdo6FAw==}
+    engines: {node: '>=20'}
 
   '@phosphor-icons/react@2.1.10':
     resolution: {integrity: sha512-vt8Tvq8GLjheAZZYa+YG/pW7HDbov8El/MANW8pOAz4eGxrwhnbfrQZq0Cp4q8zBEu8NIhHdnr+r8thnfRSNYA==}
@@ -7038,6 +7045,8 @@ snapshots:
       fastq: 1.20.1
 
   '@nolyfill/is-core-module@1.0.39': {}
+
+  '@open-banking-io/client@1.1.0': {}
 
   '@phosphor-icons/react@2.1.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
