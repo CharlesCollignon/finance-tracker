@@ -1,47 +1,56 @@
 /**
- * Minimal Pluclair design tokens (gold accent + semantic colors).
+ * Pluclair design tokens, drawn from the logo's orb and ground.
  * Kept as plain JS for React Navigation / inline styles.
  */
 
 export const LIGHT_COLORS = {
-  background: "#f8f9fb",
-  foreground: "#16161d",
-  card: "#ffffff",
-  cardForeground: "#16161d",
-  primary: "#4f2fd0",
-  primaryHover: "#4426b8",
-  primaryForeground: "#ffffff",
-  primaryInk: "#4c2bb8",
-  secondary: "#eef0f5",
-  secondaryForeground: "#16161d",
-  muted: "#eef0f5",
-  mutedForeground: "#5f606b",
-  accent: "#ece9fd",
-  accentForeground: "#16161d",
-  success: "#16803d",
+  // Sampled from the logo: the ground it is drawn in, and the orb rolling
+  // through it. The gold is light, so it can only be a fill — white on it is
+  // 2.0:1 — which is why there are three of them.
+  background: "#f1ece5",
+  foreground: "#1c1814",
+  card: "#fbf7f1",
+  cardForeground: "#1c1814",
+  primary: "#d5b163",
+  primaryHover: "#c29e4f",
+  primaryForeground: "#1c1814",
+  /** Deep gold, for anything that has to be read. 5.4:1 on the ground. */
+  primaryInk: "#7a5a1e",
+  /** A gold fill is 1.7:1 against the ground; this carries the edge at 3.1:1. */
+  primaryRim: "#a8812c",
+  secondary: "#e9e2d8",
+  secondaryForeground: "#1c1814",
+  muted: "#e9e2d8",
+  mutedForeground: "#6b6259",
+  accent: "#f5e9ce",
+  accentForeground: "#1c1814",
+  success: "#157b3b",
   successForeground: "#ffffff",
   info: "#0e7490",
   infoForeground: "#ffffff",
   destructive: "#c23b2e",
   destructiveForeground: "#ffffff",
-  border: "rgba(22,22,29,0.10)",
-  hairlineStrong: "rgba(22,22,29,0.16)",
+  border: "rgba(28,24,20,0.12)",
+  hairlineStrong: "rgba(28,24,20,0.18)",
 } as const;
 
 export const DARK_COLORS = {
+  // Surfaces stay the cool near-black they were; only the accent turns gold.
+  // At 11:1 on this ground the orb gold reads as text too, and needs no rim.
   background: "#0a0a10",
   foreground: "#ececf1",
   card: "#131320",
   cardForeground: "#ececf1",
-  primary: "#a78bfa",
-  primaryHover: "#b39dff",
+  primary: "#e0be7a",
+  primaryHover: "#eacb8f",
   primaryForeground: "#0a0a10",
-  primaryInk: "#a78bfa",
+  primaryInk: "#e0be7a",
+  primaryRim: "#e0be7a",
   secondary: "#1c1c2b",
   secondaryForeground: "#ececf1",
   muted: "#1c1c2b",
   mutedForeground: "#9b9bad",
-  accent: "#241f3d",
+  accent: "#262015",
   accentForeground: "#ececf1",
   success: "#34d399",
   successForeground: "#0a0a10",
@@ -53,10 +62,14 @@ export const DARK_COLORS = {
   hairlineStrong: "rgba(236,236,241,0.16)",
 } as const;
 
-/** Charts: gold + semantic + gray. */
+/**
+ * Charts: gold-anchored but still categorical, and spread on lightness as
+ * well as hue. The closest pair stays 17 ΔE apart under protanopia,
+ * deuteranopia and tritanopia; the palette this replaced fell to 5.4.
+ */
 export const CHART_COLORS = {
-  light: ["#4f2fd0", "#c2186f", "#16803d", "#0e7490", "#6b6c78"],
-  dark: ["#a78bfa", "#f472b6", "#34d399", "#22d3ee", "#83849a"],
+  light: ["#a57b31", "#652b20", "#4b9157", "#2f5e6a", "#918883"],
+  dark: ["#d8a041", "#b05645", "#9fd08b", "#43acc7", "#968d88"],
 } as const;
 
 export function colorsForScheme(scheme: "light" | "dark" | null | undefined) {

@@ -15,8 +15,8 @@ type OrbSize = "sm" | "nav" | "hero" | "login" | "watermark";
 
 export interface OrbProps extends ViewProps {
   size?: OrbSize;
-  /** Rotates continuously. Loading spins; the brand mark drifts. */
-  spin?: "none" | "drift" | "loading";
+  /** Only the loading indicator turns; see the note on the component. */
+  spin?: "none" | "loading";
   className?: string;
 }
 
@@ -29,22 +29,23 @@ const BOX: Record<OrbSize, number> = {
 };
 
 /** A full turn takes this long, in ms. */
-const PERIOD: Record<"drift" | "loading", number> = {
-  drift: 24000,
-  loading: 1600,
-};
+const LOADING_PERIOD = 1600;
 
 /**
  * The Pluclair orb.
  *
- * Rotating the artwork is what makes its internal gradients appear to move —
- * the bands are asymmetric, so a slow turn reads as drifting colour rather
- * than as a spinning image. The same component at a faster period is the
- * app's loading indicator, so brand and progress share one object.
+ * It does not drift any more. The mark used to be a flat, roughly symmetric
+ * disc, so turning it slowly read as colour moving inside the sphere. The new
+ * artwork is a lit ball with a fixed highlight, and rotating that sends the
+ * highlight orbiting the surface — which reads as a rendering bug rather than
+ * a shine.
+ *
+ * Spinning survives for the loading indicator alone, where a gold ball
+ * rolling is the point and the logo is literally a ball that rolls.
  */
 export function Orb({
   size = "nav",
-  spin = "drift",
+  spin = "none",
   className,
   style,
   ...props
@@ -61,14 +62,11 @@ export function Orb({
     }
     angle.value = 0;
     angle.value = withRepeat(
-      withTiming(360, {
-        duration: PERIOD[spin === "loading" ? "loading" : "drift"],
-        easing: Easing.linear,
-      }),
+      withTiming(360, { duration: LOADING_PERIOD, easing: Easing.linear }),
       -1,
       false,
     );
-  }, [active, spin, angle]);
+  }, [active, angle]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${angle.value}deg` }],

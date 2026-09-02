@@ -8,13 +8,16 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary-hover",
+        // The rim is not decoration: a gold fill is 1.7:1 against the page,
+        // so without it the button's edge disappears.
+        default:
+          "border border-primary-rim bg-primary text-primary-foreground hover:bg-primary-hover",
         secondary: "bg-secondary text-secondary-foreground hover:bg-muted",
         outline:
           "bg-transparent border border-border text-foreground hover:bg-muted",
         link: "bg-transparent text-foreground underline-offset-4 hover:underline",
         ghost: "bg-transparent text-foreground hover:bg-muted",
-        pill: "group rounded-full bg-primary text-primary-foreground hover:bg-primary-hover",
+        pill: "group rounded-full border border-primary-rim bg-primary text-primary-foreground hover:bg-primary-hover",
       },
       size: {
         sm: "px-3 py-1.5 text-sm",

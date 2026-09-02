@@ -14,28 +14,29 @@
  */
 @layer base {
   :root {
-    --background: 248 249 251;
-    --foreground: 22 22 29;
-    --card: 255 255 255;
-    --card-foreground: 22 22 29;
-    --primary: 79 47 208;
-    --primary-hover: 68 38 184;
-    --primary-foreground: 255 255 255;
-    --primary-ink: 76 43 184;
-    --secondary: 238 240 245;
-    --secondary-foreground: 22 22 29;
-    --muted: 238 240 245;
-    --muted-foreground: 95 96 107;
-    --accent: 236 233 253;
-    --accent-foreground: 22 22 29;
-    --success: 22 128 61;
+    --background: 241 236 229;
+    --foreground: 28 24 20;
+    --card: 251 247 241;
+    --card-foreground: 28 24 20;
+    --primary: 213 177 99;
+    --primary-hover: 194 158 79;
+    --primary-foreground: 28 24 20;
+    --primary-ink: 122 90 30;
+    --primary-rim: 168 129 44;
+    --secondary: 233 226 216;
+    --secondary-foreground: 28 24 20;
+    --muted: 233 226 216;
+    --muted-foreground: 107 98 89;
+    --accent: 245 233 206;
+    --accent-foreground: 28 24 20;
+    --success: 21 123 59;
     --success-foreground: 255 255 255;
     --info: 14 116 144;
     --info-foreground: 255 255 255;
     --destructive: 194 59 46;
     --destructive-foreground: 255 255 255;
-    --border: 22 22 29;
-    --hairline-strong: 22 22 29;
+    --border: 28 24 20;
+    --hairline-strong: 28 24 20;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -44,15 +45,16 @@
       --foreground: 236 236 241;
       --card: 19 19 32;
       --card-foreground: 236 236 241;
-      --primary: 167 139 250;
-      --primary-hover: 179 157 255;
+      --primary: 224 190 122;
+      --primary-hover: 234 203 143;
       --primary-foreground: 10 10 16;
-      --primary-ink: 167 139 250;
+      --primary-ink: 224 190 122;
+      --primary-rim: 224 190 122;
       --secondary: 28 28 43;
       --secondary-foreground: 236 236 241;
       --muted: 28 28 43;
       --muted-foreground: 155 155 173;
-      --accent: 36 31 61;
+      --accent: 38 32 21;
       --accent-foreground: 236 236 241;
       --success: 52 211 153;
       --success-foreground: 10 10 16;

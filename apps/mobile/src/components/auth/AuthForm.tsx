@@ -80,7 +80,7 @@ export function AuthForm({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View className="items-center gap-3 pb-8">
-          <Orb size="login" spin="drift" />
+          <Orb size="login" />
           <Text className="font-logo text-4xl text-foreground">Pluclair</Text>
         </View>
 

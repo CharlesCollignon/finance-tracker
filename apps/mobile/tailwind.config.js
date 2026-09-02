@@ -27,6 +27,7 @@ module.exports = {
           hover: token("primary-hover"),
           foreground: token("primary-foreground"),
           ink: token("primary-ink"),
+          rim: token("primary-rim"),
         },
         secondary: {
           DEFAULT: token("secondary"),
