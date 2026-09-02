@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type { MonthCloseResult } from "@finance/core/month-close";
 import { runwayDaysAdded } from "@finance/core/month-close";
 import { formatShortDate } from "@finance/core/constants";
@@ -15,6 +15,7 @@ import {
   previewMonthCloseAction,
   recordMonthClose,
 } from "@/lib/actions/month-close";
+import { getBankBalanceSuggestion } from "@/lib/actions/bank";
 
 interface MonthCloseSheetProps {
   open: boolean;
@@ -79,11 +80,35 @@ export function MonthCloseSheet({
   const [stage, setStage] = useState<Stage>("entering");
   const [result, setResult] = useState<MonthCloseResult | null>(null);
   const [pending, startTransition] = useTransition();
+  const [fromBank, setFromBank] = useState<string | null>(null);
+
+  // Asked for when the sheet opens rather than stored: a balance only means
+  // anything at the instant it is read, and a stale one pre-filled into a
+  // close would be worse than an empty field the user has to go and look up.
+  useEffect(() => {
+    if (!open || stage !== "entering") {
+      return;
+    }
+    let live = true;
+    void getBankBalanceSuggestion().then((result) => {
+      if (!live || !result.total) {
+        return;
+      }
+      setFromBank(result.total);
+      setBalance((current) =>
+        current.trim() === "" ? result.total! : current,
+      );
+    });
+    return () => {
+      live = false;
+    };
+  }, [open, stage]);
 
   function reset() {
     setBalance("");
     setStage("entering");
     setResult(null);
+    setFromBank(null);
   }
 
   function close() {
@@ -172,6 +197,12 @@ export function MonthCloseSheet({
 
             <label className="flex flex-col gap-1.5">
               <span className="text-sm font-medium">Balance</span>
+              {fromBank ? (
+                <span className="text-xs text-muted-foreground">
+                  Filled in from your bank. Change it if the reading day differs
+                  from today.
+                </span>
+              ) : null}
               <Input
                 type="text"
                 inputMode="decimal"
