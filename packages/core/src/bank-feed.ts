@@ -19,6 +19,7 @@
  */
 
 import { categoryNameForMcc, mccNeedsReview } from "./bank-mcc";
+import { lookupBankMerchant, type BankMerchantIndex } from "./bank-merchant";
 import {
   lookupMerchant,
   normalizeMerchant,
@@ -194,15 +195,20 @@ export type ReviewReason =
 export const AUTO_MERCHANT_THRESHOLD = 2;
 
 export interface DecideOptions {
-  /** Built from the user's own transactions; see merchant-memory. */
+  /** Exact-note matching, shared with hand entry; see merchant-memory. */
   merchants: MerchantIndex;
+  /**
+   * Coarse matching for the way a bank spells a merchant. Optional, so the
+   * CSV path — whose notes are the user's own words — keeps exact matching.
+   */
+  bankMerchants?: BankMerchantIndex;
   /** Category name to id, for resolving what an MCC suggests. */
   categoryIdsByName: ReadonlyMap<string, { id: string; name: string }>;
 }
 
 export function decide(
   candidate: BankFeedCandidate,
-  { merchants, categoryIdsByName }: DecideOptions,
+  { merchants, bankMerchants, categoryIdsByName }: DecideOptions,
 ): FeedDecision {
   const rule = lookupMerchant(merchants, candidate.note);
 
@@ -246,6 +252,24 @@ export function decide(
     };
   }
 
+  // The coarse key catches the same shop spelled differently by the terminal.
+  // It is trusted only where every past transaction under it agreed: a key
+  // this blunt can gather two different merchants, and a split verdict is
+  // exactly what that looks like from here.
+  const coarse = bankMerchants
+    ? lookupBankMerchant(bankMerchants, candidate.note)
+    : null;
+  if (coarse && coarse.unanimous && coarse.count >= AUTO_MERCHANT_THRESHOLD) {
+    return {
+      kind: "auto",
+      suggestion: {
+        categoryId: coarse.categoryId,
+        categoryName: coarse.categoryName,
+        reason: "merchant",
+      },
+    };
+  }
+
   const mccName = categoryNameForMcc(candidate.merchantCategoryCode);
   if (mccName) {
     const category = categoryIdsByName.get(mccName.toLowerCase());
@@ -275,12 +299,13 @@ export function decide(
     };
   }
 
+  const fallback = rule ?? coarse;
   return {
     kind: "review",
-    suggestion: rule
+    suggestion: fallback
       ? {
-          categoryId: rule.categoryId,
-          categoryName: rule.categoryName,
+          categoryId: fallback.categoryId,
+          categoryName: fallback.categoryName,
           reason: "merchant",
         }
       : null,

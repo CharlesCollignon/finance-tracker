@@ -26,31 +26,6 @@ export interface BankConnection {
   source: "owner-credentials";
 }
 
-interface CredentialsBundle {
-  apiBaseUrl: string;
-  apiKey: string;
-  privateKeyPkcs8: string;
-}
-
-function readOwnerBundle(): CredentialsBundle | null {
-  const raw = process.env.OPEN_BANKING_CREDENTIALS?.trim();
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<CredentialsBundle>;
-    if (!parsed.apiBaseUrl || !parsed.apiKey || !parsed.privateKeyPkcs8) {
-      return null;
-    }
-    return parsed as CredentialsBundle;
-  } catch {
-    // A malformed bundle is a configuration mistake, not a runtime condition;
-    // answering "not connected" is the safe reading either way.
-    return null;
-  }
-}
-
 /**
  * Which user the owner bundle belongs to. Without it a single-user bundle
  * would answer for whoever asked, which on a deployment with more than one
@@ -60,28 +35,39 @@ function ownerUserId(): string | null {
   return process.env.OPEN_BANKING_OWNER_USER_ID?.trim() || null;
 }
 
+/**
+ * The bundle is handed to the SDK verbatim rather than picked apart here.
+ *
+ * Its shape is theirs to change — the private key sits under
+ * `encryptionKey.privateKey`, which is not what the README's constructor
+ * example suggests — and re-reading those field names in our own code is a
+ * silent breakage waiting to happen: a missing key would read as "no bank
+ * connected" rather than as the configuration error it is.
+ */
+function ownerClient(): OpenBankingClient | null {
+  const raw = process.env.OPEN_BANKING_CREDENTIALS?.trim();
+  if (!raw || !raw.startsWith("{")) {
+    return null;
+  }
+
+  try {
+    return OpenBankingClient.fromCredentials(raw);
+  } catch {
+    return null;
+  }
+}
+
 export function getBankConnection(userId: string): BankConnection | null {
   const owner = ownerUserId();
   if (!owner || owner !== userId) {
     return null;
   }
 
-  const bundle = readOwnerBundle();
-  if (!bundle) {
-    return null;
-  }
-
-  return {
-    client: new OpenBankingClient({
-      apiBaseUrl: bundle.apiBaseUrl,
-      apiKey: bundle.apiKey,
-      privateKeyPkcs8: bundle.privateKeyPkcs8,
-    }),
-    source: "owner-credentials",
-  };
+  const client = ownerClient();
+  return client ? { client, source: "owner-credentials" } : null;
 }
 
 /** Whether this deployment could connect at all, for the UI to explain itself. */
 export function bankFeedConfigured(): boolean {
-  return Boolean(ownerUserId() && readOwnerBundle());
+  return Boolean(ownerUserId() && ownerClient());
 }
