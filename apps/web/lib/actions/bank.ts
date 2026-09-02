@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/server";
 import { findLedgerMatch } from "@finance/core/bank-feed";
 import { getBankConnection } from "@/lib/bank/client";
 import { ledgerRowsAround } from "@/lib/bank/duplicates";
-import { getDuplicatePairs } from "@/lib/queries/bank";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
 
 type ActionResult = { error?: string; success?: boolean; message?: string };
@@ -249,81 +248,42 @@ export async function getBankBalanceSuggestion(): Promise<
 }
 
 /**
- * Drop the copy the feed made, keeping the one that was already there.
+ * Put back every bank row an earlier sync merged away on its own.
  *
- * The feed item is not deleted but re-filed against the survivor, which is
- * what stops the next sync offering the same bank row again — the provider
- * will keep returning it for as long as it sits in the statement window.
+ * Those rows were filed against a recurring transaction because the amounts
+ * matched within five days, which turned out to prove nothing on a statement
+ * full of small round figures. They never became transactions, so what is
+ * missing is spending rather than duplicated. Reopening returns the decision
+ * to the user; the sync no longer makes it.
  */
-export async function dropFeedDuplicate(
-  feedItemId: string,
-): Promise<ActionResult> {
-  const user = await getAuthUser();
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-  if (!uuid.safeParse(feedItemId).success) {
-    return { error: "Invalid selection" };
-  }
-
-  const pairs = await getDuplicatePairs(user.id);
-  const pair = pairs.find((candidate) => candidate.feedItemId === feedItemId);
-  if (!pair) {
-    return { error: "That pair is no longer there" };
-  }
-
-  const supabase = await createClient();
-
-  // Pointed at the survivor before the copy goes, so a failure between the
-  // two leaves the feed item attached to something real rather than dangling.
-  const { error: relinkError } = await supabase
-    .from("bank_feed_items")
-    .update({ transaction_id: pair.keptTransactionId })
-    .eq("id", feedItemId)
-    .eq("user_id", user.id);
-
-  if (relinkError) {
-    return { error: relinkError.message };
-  }
-
-  const { error } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("id", pair.bankTransactionId)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateFeedDependents();
-  return { success: true, message: "Duplicate removed" };
-}
-
-/** The same, for every pair at once. */
-export async function dropAllFeedDuplicates(): Promise<
-  ActionResult & { removed?: number }
+export async function reopenSwallowedFeedItems(): Promise<
+  ActionResult & { reopened?: number }
 > {
   const user = await getAuthUser();
   if (!user) {
     return { error: "Not authenticated" };
   }
 
-  const pairs = await getDuplicatePairs(user.id);
-  let removed = 0;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bank_feed_items")
+    .update({ status: "pending", transaction_id: null, decided_by: null })
+    .eq("user_id", user.id)
+    .eq("decided_by", "match:recurring")
+    .select("id");
 
-  for (const pair of pairs) {
-    const result = await dropFeedDuplicate(pair.feedItemId);
-    if (result.success) {
-      removed += 1;
-    }
+  if (error) {
+    return { error: error.message };
   }
 
   revalidateFeedDependents();
+  const reopened = data?.length ?? 0;
   return {
     success: true,
-    removed,
+    reopened,
     message:
-      removed === 1 ? "1 duplicate removed" : `${removed} duplicates removed`,
+      reopened === 1
+        ? "1 entry is back in the inbox"
+        : `${reopened} entries are back in the inbox`,
   };
 }
