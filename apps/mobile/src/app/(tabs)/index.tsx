@@ -23,6 +23,7 @@ import type { InvestmentPortfolioSummary } from "@finance/core/investment-positi
 import { IncomeSankeyCard } from "@/components/IncomeSankeyCard";
 import { MonthPicker } from "@/components/MonthPicker";
 import { MonthReadyCard } from "@/components/MonthReadyCard";
+import { MonthCloseCard } from "@/components/MonthCloseCard";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ProgressRing } from "@/components/charts/ProgressRing";
 import { StatHero } from "@/components/StatHero";
@@ -37,6 +38,7 @@ import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { previewApplyRecurringForMonth } from "@/lib/mutations";
+import { buildRunway } from "@finance/core/projection";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { cn } from "@/lib/cn";
@@ -45,11 +47,14 @@ import { useThemeColors } from "@/theme/useThemeColors";
 import {
   getBudgets,
   getCategories,
+  getMonthCloseOverview,
   getMonthlySummary,
   getMonthlyTrend,
+  getRecurringTemplates,
   getSavingsGoals,
   getTransactions,
   getWalletPortfolio,
+  type MonthCloseOverview,
   type MonthlyTrendPoint,
 } from "@/lib/queries";
 
@@ -187,6 +192,8 @@ export default function DashboardScreen() {
           budgetProgress: [] as ReturnType<typeof buildBudgetProgress>,
           goalProgress: [] as ReturnType<typeof buildSavingsGoalProgress>,
           trend: [] as MonthlyTrendPoint[],
+          closes: null as MonthCloseOverview | null,
+          monthlyCommitted: 0,
         };
       }
       const [previousYear, previousMonth] =
@@ -202,6 +209,8 @@ export default function DashboardScreen() {
         currentTx,
         previousTx,
         preview,
+        templates,
+        closes,
       ] = await Promise.all([
         getMonthlySummary(user.id, year, month, view),
         getWalletPortfolio(user.id, { includeHistory: false }),
@@ -214,6 +223,8 @@ export default function DashboardScreen() {
         // Quoting share-priced templates can fail; Home must still render,
         // so a failed preview simply means no card.
         previewApplyRecurringForMonth(year, month),
+        getRecurringTemplates(user.id),
+        getMonthCloseOverview(user.id, todayIsoLocal()),
       ]);
       const categoryNames = new Map(
         categories.map((c) => [c.id, c.name] as const),
@@ -243,6 +254,12 @@ export default function DashboardScreen() {
           summary.savingsBreakdown,
           summary.savings,
         ),
+        closes,
+        // Committed outgoings, for turning a month's saving into days of
+        // runway. Always the month in progress: closing an older month does
+        // not change what this one costs to live through.
+        monthlyCommitted: buildRunway(0, templates, year, month)
+          .monthlyCommitted,
       };
     }, [user?.id, year, month, view, dataVersion]);
 
@@ -253,6 +270,7 @@ export default function DashboardScreen() {
   const plan = data?.plan ?? null;
   const budgetProgress = data?.budgetProgress ?? [];
   const goalProgress = data?.goalProgress ?? [];
+  const closes = data?.closes ?? null;
   const overBudget = (summary?.remaining ?? 0) < 0;
   const anyCapOver = budgetProgress.some((row) => row.over);
   const showRings = budgetProgress.length > 0 || goalProgress.length > 0;
@@ -333,6 +351,24 @@ export default function DashboardScreen() {
               month={month}
               plan={plan}
               onApplied={() => {
+                notifyDataChanged();
+                void onRefresh();
+              }}
+            />
+          ) : null}
+
+          {closes?.next ? (
+            <MonthCloseCard
+              year={closes.next.year}
+              month={closes.next.month}
+              monthLabel={closes.next.label}
+              observeOn={closes.next.observeOn}
+              isBaseline={closes.next.isBaseline}
+              monthlyCommitted={data?.monthlyCommitted ?? 0}
+              unrecordedCap={closes.settings.unrecordedCap}
+              baseline={closes.summary.baseline}
+              streak={closes.summary.streak}
+              onClosed={() => {
                 notifyDataChanged();
                 void onRefresh();
               }}

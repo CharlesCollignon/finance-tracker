@@ -65,6 +65,44 @@ An applied occurrence whose date has passed. Its amount is what actually
 moved, so a later quote does not change it; only a reclassification does.
 _Avoid_: locked, frozen, historical
 
+### Closing the books
+
+**Closing balance**:
+What the accounts the user's day-to-day spending leaves from actually held on
+one date.
+The only figure in the app that is a balance rather than a flow, and the only
+one the user has to look up rather than record as it happens.
+_Avoid_: bank balance, statement, cash
+
+**Reading day**:
+The day of the following month a closing balance is read on. The same day
+every month, and deliberately not the last of the month: with a deferred-debit
+card the month's card spending has not landed by then.
+_Avoid_: cut-off, statement date
+
+**Month close**:
+Recording one month's closing balance, and what the app works out from it.
+Distinct from applying, which opens a month by filling it in.
+_Avoid_: reconciliation, month end, settle
+
+**Unrecorded spending**:
+What a closing balance proves left the account that no transaction accounts
+for — the restaurants, the rounds, the things bought on the way home. Measured
+rather than remembered, and never negative: a balance higher than the records
+allow means something is missing, not that spending was.
+_Avoid_: leak, untracked, missing
+
+**Kept**:
+What a month added to the user's wealth: the cash it left in the account plus
+everything deliberately set aside. The honest counterpart to the savings rate,
+which only counts what was moved.
+_Avoid_: saved, surplus, profit
+
+**Unrecorded allowance**:
+A cap on unrecorded spending for a month, set from the user's own history.
+Coming in under it is what a run of months is counted on.
+_Avoid_: budget, target, limit
+
 ### Caps and targets
 
 **Budget**:

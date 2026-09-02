@@ -7,7 +7,7 @@ import {
   getSavingsReserve,
 } from "@/lib/queries/finance";
 import { getBudgets, getSavingsGoals, getTags } from "@/lib/queries/phase4";
-import { getCurrentMonth } from "@finance/core/constants";
+import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
 import {
   buildSavingsGoalProgress,
@@ -15,6 +15,8 @@ import {
 } from "@finance/core/savings-goals";
 import { buildForwardProjection, buildRunway } from "@finance/core/projection";
 import { ProjectionCard } from "@/components/finance/ProjectionCard";
+import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
+import { getMonthCloseOverview } from "@/lib/queries/month-close";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { BudgetsView } from "./BudgetsView";
 
@@ -68,6 +70,7 @@ export default async function BudgetsPage() {
     { months: 12 },
   );
   const runway = buildRunway(reserve, templates, current.year, current.month);
+  const closes = await getMonthCloseOverview(user.id, todayIsoLocal());
 
   return (
     <>
@@ -80,8 +83,14 @@ export default async function BudgetsPage() {
         goalProgress={goalProgress}
       />
 
-      <PageContainer className="pt-0">
+      <PageContainer className="flex flex-col gap-4 pt-0">
         <ProjectionCard points={projection} runway={runway} />
+        <MonthCloseHistory
+          history={closes.history}
+          summary={closes.summary}
+          unrecordedCap={closes.settings.unrecordedCap}
+          closeDay={closes.settings.closeDay}
+        />
       </PageContainer>
     </>
   );

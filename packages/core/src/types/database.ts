@@ -471,6 +471,54 @@ export interface Database {
         };
         Relationships: [];
       };
+      month_closes: {
+        Row: {
+          id: string;
+          user_id: string;
+          month: string;
+          closing_balance: number;
+          observed_on: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          month: string;
+          closing_balance: number;
+          observed_on: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          month?: string;
+          closing_balance?: number;
+          observed_on?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      month_close_settings: {
+        Row: {
+          user_id: string;
+          close_day: number;
+          unrecorded_cap: number | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          close_day?: number;
+          unrecorded_cap?: number | null;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          close_day?: number;
+          unrecorded_cap?: number | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       wallet_plans: {
         Row: {
           user_id: string;
@@ -527,6 +575,9 @@ export type SavingsGoal = Database["public"]["Tables"]["savings_goals"]["Row"];
 export type WalletPlan = Database["public"]["Tables"]["wallet_plans"]["Row"];
 export type PushSubscriptionRow =
   Database["public"]["Tables"]["push_subscriptions"]["Row"];
+export type MonthClose = Database["public"]["Tables"]["month_closes"]["Row"];
+export type MonthCloseSettings =
+  Database["public"]["Tables"]["month_close_settings"]["Row"];
 
 export type RecurringTemplateWithCategory = RecurringTemplate & {
   categories: Pick<

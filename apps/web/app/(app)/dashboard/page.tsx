@@ -13,6 +13,8 @@ import {
   parseMonthParams,
   parseBudgetViewMode,
   formatMonthLabel,
+  getCurrentMonth,
+  todayIsoLocal,
 } from "@finance/core/constants";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
 import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
@@ -22,6 +24,10 @@ import { MonthPicker } from "@/components/layout/MonthPicker";
 import { BudgetViewToggle } from "@/components/finance/BudgetViewToggle";
 import { DashboardHome } from "@/components/finance/DashboardHome";
 import { MonthReadyCard } from "@/components/finance/MonthReadyCard";
+import { MonthCloseCard } from "@/components/finance/MonthCloseCard";
+import { getMonthCloseOverview } from "@/lib/queries/month-close";
+import { getRecurringTemplates } from "@/lib/queries/finance";
+import { buildRunway } from "@finance/core/projection";
 import { DashboardWalletsCard } from "@/components/finance/lazy-charts";
 
 interface DashboardPageProps {
@@ -61,6 +67,40 @@ async function MonthReadySlot({
       year={year}
       month={month}
       plan={preview.plan}
+    />
+  );
+}
+
+/**
+ * Streamed for the same reason as the apply preview: it replays every close
+ * the user has ever recorded, and the month's headline figures should not
+ * wait on that. Nothing to close means no card.
+ */
+async function MonthCloseSlot({ userId }: { userId: string }) {
+  const today = todayIsoLocal();
+  const [overview, templates] = await Promise.all([
+    getMonthCloseOverview(userId, today),
+    getRecurringTemplates(userId),
+  ]);
+
+  if (!overview.next) {
+    return null;
+  }
+
+  const current = getCurrentMonth();
+  const runway = buildRunway(0, templates, current.year, current.month);
+
+  return (
+    <MonthCloseCard
+      year={overview.next.year}
+      month={overview.next.month}
+      monthLabel={overview.next.label}
+      observeOn={overview.next.observeOn}
+      isBaseline={overview.next.isBaseline}
+      monthlyCommitted={runway.monthlyCommitted}
+      unrecordedCap={overview.settings.unrecordedCap}
+      baseline={overview.summary.baseline}
+      streak={overview.summary.streak}
     />
   );
 }
@@ -138,6 +178,10 @@ export default async function DashboardPage({
             year={year}
             month={month}
           />
+        </Suspense>
+
+        <Suspense fallback={null}>
+          <MonthCloseSlot userId={user.id} />
         </Suspense>
 
         <DashboardHome

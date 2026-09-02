@@ -27,7 +27,7 @@ finance-tracker/          (repo root)
 - **Mobile only:** [Expo Go](https://expo.dev/go) on your phone (SDK 57)
 
 Apply the database schema once on your Supabase project (SQL editor or
-CLI) using the files in `supabase/migrations/`, in order (`001` → `017`).
+CLI) using the files in `supabase/migrations/`, in order (`001` → `018`).
 Optional account deletion from mobile also needs the
 `delete-account` Edge Function in `supabase/functions/`.
 
@@ -154,6 +154,27 @@ checked by hand:
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" https://pluclair.com/api/cron/reprice
 ```
+
+### Closing a month
+
+The app tracks flows — money it was told about — so it cannot see the spending
+nobody enters: the restaurant, the round of drinks, the thing bought on the way
+home. One balance a month closes that gap. From the previous close, the
+recorded movements and the balance now, the app works out what it never heard
+about, and what the month actually kept.
+
+The balance is read on a fixed **reading day** of the following month
+(the 5th by default, changeable on the Planning/Budgets screen), not on the
+last of the month. With a deferred-debit card the month's card spending has
+not reached the account by the 31st, so a balance read then flatters the month
+and saddles the next one with the bill. Reading it a few days later catches
+the debit; keeping the day fixed makes whatever distortion remains the same
+every month, which is what lets one close be compared with the next. Against
+calendar-month transactions this is an approximation of a few days at each
+end — good enough for the trend, which is the part worth trusting.
+
+Nothing here needs configuring or deploying. A close is a row the user writes;
+skipping months costs nothing beyond having nothing to compare.
 
 ### Supabase auth URLs (production)
 
