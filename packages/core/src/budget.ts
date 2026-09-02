@@ -76,11 +76,23 @@ export function computeMonthlyBudget(
     deployed: 0,
   };
 
+  // Money that came back rather than came in. Netted off spending below.
+  let reimbursed = 0;
+
   for (const tx of transactions) {
     const amount = Number(tx.amount);
 
     if (tx.categories.type === "income") {
-      totals.income += amount;
+      // An income category can be marked as not counting, and that is how a
+      // reimbursement is told apart from earnings: a friend settling their
+      // half of a subscription is not a second salary, and treating it as one
+      // inflates income and leaves the whole expense standing, which flatters
+      // the month twice over.
+      if (countsTowardSummary(tx)) {
+        totals.income += amount;
+      } else {
+        reimbursed += amount;
+      }
       continue;
     }
 
@@ -101,6 +113,12 @@ export function computeMonthlyBudget(
   for (const template of yearlyTemplates) {
     totals.expense += amortizedMonthlyAmount(Number(template.amount));
   }
+
+  // Subtracted from spending rather than added to income, because that is
+  // what it is: twelve euros paid out and nine returned is three euros spent.
+  // Floored at zero so a month reimbursed more than it spent reads as having
+  // spent nothing, rather than as negative spending.
+  totals.expense = Math.max(0, totals.expense - reimbursed);
 
   const outflow =
     totals.expense + totals.savings + totals.investment + totals.deployed;
