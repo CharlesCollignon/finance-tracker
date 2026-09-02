@@ -27,7 +27,7 @@ finance-tracker/          (repo root)
 - **Mobile only:** [Expo Go](https://expo.dev/go) on your phone (SDK 57)
 
 Apply the database schema once on your Supabase project (SQL editor or
-CLI) using the files in `supabase/migrations/`, in order (`001` → `018`).
+CLI) using the files in `supabase/migrations/`, in order (`001` → `019`).
 Optional account deletion from mobile also needs the
 `delete-account` Edge Function in `supabase/functions/`.
 
@@ -135,15 +135,26 @@ without `CRON_SECRET` — Vercel sends it as `Authorization: Bearer <secret>`.
 
 | Route | When | What it does |
 |-------|------|--------------|
-| `/api/cron/reprice` | 07:00 | Reprices share-priced occurrences not yet due |
+| `/api/cron/refresh` | 07:00 | Reprices not-yet-due occurrences, then syncs the bank |
 | `/api/cron/notify` | 08:00 | Sends the day's web push digest |
 
-**Repricing** brings occurrences that are applied but still dated ahead back
-in line with their instrument's quote, and refreshes each template's stored
+**Refreshing** is everything that brings the ledger up to date from outside
+it, and it is one route rather than two because Vercel's Hobby plan allows
+two cron jobs and the digest has to be one of them. The two halves fail
+independently: an unreachable bank does not stop quotes refreshing, and a
+rate-limited quote source does not stop the statement being read.
+
+*Repricing* brings occurrences that are applied but still dated ahead back in
+line with their instrument's quote, and refreshes each template's stored
 price. It never touches a date that has passed and never creates a
 transaction. This is what stops "Apply recurring" from asking about a DCA
-every time the market moves; without it, a month applied in advance keeps the
-price it was applied at.
+every time the market moves.
+
+*The bank sync* reads the statement, files what the user's own history already
+answers for, and leaves the rest in the review inbox. It pushes only when the
+run left something needing a decision, keyed by the day so it is said once.
+Needs `OPEN_BANKING_CREDENTIALS` and `OPEN_BANKING_OWNER_USER_ID`; without
+them the step is skipped and the refresh still reprices.
 
 **Notifying** says at most one useful thing a day — a new month, a breached
 budget — and needs the VAPID keys as well; without them it no-ops.
@@ -152,7 +163,7 @@ Both answer `200` with a JSON summary of what they did, so a run can be
 checked by hand:
 
 ```bash
-curl -H "Authorization: Bearer $CRON_SECRET" https://pluclair.com/api/cron/reprice
+curl -H "Authorization: Bearer $CRON_SECRET" https://pluclair.com/api/cron/refresh
 ```
 
 ### Closing a month
