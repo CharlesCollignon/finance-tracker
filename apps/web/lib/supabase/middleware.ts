@@ -37,6 +37,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/calendar") ||
     pathname.startsWith("/investments") ||
     pathname.startsWith("/categories") ||
+    pathname.startsWith("/history") ||
     pathname.startsWith("/budgets") ||
     pathname.startsWith("/profile");
 

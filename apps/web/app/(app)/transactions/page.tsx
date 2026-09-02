@@ -8,7 +8,8 @@ import { TransactionsView } from "@/components/finance/TransactionsView";
 import { BankInbox } from "@/components/finance/BankInbox";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { bankFeedConfigured } from "@/lib/bank/client";
-import { getPendingFeedItems } from "@/lib/queries/bank";
+import { getDuplicatePairs, getPendingFeedItems } from "@/lib/queries/bank";
+import { DuplicateFinder } from "@/components/finance/DuplicateFinder";
 
 interface TransactionsPageProps {
   searchParams: Promise<{ y?: string; m?: string }>;
@@ -38,14 +39,18 @@ export default async function TransactionsPage({
 
   // Only queried when a bank is actually connected, so the page costs nothing
   // extra on a deployment that has never seen the feed.
-  const feedItems = bankFeedConfigured()
-    ? await getPendingFeedItems(user.id)
-    : null;
+  const [feedItems, duplicates] = bankFeedConfigured()
+    ? await Promise.all([
+        getPendingFeedItems(user.id),
+        getDuplicatePairs(user.id),
+      ])
+    : [null, []];
 
   return (
     <>
       {feedItems ? (
-        <PageContainer className="pb-0">
+        <PageContainer className="flex flex-col gap-4 pb-0">
+          <DuplicateFinder pairs={duplicates} />
           <BankInbox items={feedItems} categories={categories} />
         </PageContainer>
       ) : null}

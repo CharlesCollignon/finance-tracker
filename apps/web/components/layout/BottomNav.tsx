@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { cn } from "@/lib/utils";
-import { APP_NAV_ITEMS } from "@/lib/navigation";
+import { BOTTOM_NAV_ITEMS } from "@/lib/navigation";
 
 export function BottomNav({
   displayName,
@@ -29,7 +29,7 @@ export function BottomNav({
           "border border-border bg-background/40 backdrop-blur-xl",
         )}
       >
-        {APP_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {BOTTOM_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);
 
           return (
