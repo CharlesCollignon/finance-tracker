@@ -281,11 +281,7 @@ function CategoryFormSheet({
         <input
           type="hidden"
           name="countsTowardSummary"
-          value={
-            (type === "investment" || type === "income") && !countsTowardSummary
-              ? "false"
-              : "true"
-          }
+          value={type !== "expense" && !countsTowardSummary ? "false" : "true"}
         />
 
         <div className="flex flex-col gap-2">
@@ -323,7 +319,7 @@ function CategoryFormSheet({
           </select>
         </div>
 
-        {(type === "investment" || type === "income") && (
+        {type !== "expense" && (
           <label className="flex items-start gap-2 text-sm">
             <input
               type="checkbox"
@@ -336,7 +332,9 @@ function CategoryFormSheet({
               <span className="block text-muted-foreground">
                 {type === "income"
                   ? "Untick for money coming back rather than coming in — a friend settling their half, a refund. It is subtracted from the month's spending instead of counted as earnings."
-                  : "Untick for wallet DCA tracked outside the budget (e.g. buys funded by broker transfers)."}
+                  : type === "savings"
+                    ? "Untick for money coming back out of savings — a transfer to your current account. It is subtracted from what you set aside, and comes off the reserve behind the runway."
+                    : "Untick for wallet DCA tracked outside the budget (e.g. buys funded by broker transfers)."}
               </span>
             </span>
           </label>
