@@ -30,6 +30,8 @@ export interface SyncOutcome {
   discarded: number;
   /** Already in the ledger — a recurring template had written them. */
   matched: number;
+  /** Accounts whose consent has lapsed and were not read. */
+  needReconnect: number;
   /** Per-account balances, for pre-filling a month close. */
   balances: {
     accountId: string;
@@ -39,11 +41,16 @@ export interface SyncOutcome {
   }[];
 }
 
-/** How far back a sync looks. Enough to cover a missed month, not a history. */
+/** How far back a routine sync looks: enough to cover a missed month. */
 const LOOKBACK_DAYS = 90;
+/**
+ * How far back a backfill looks. Providers keep two years or so; asking for
+ * more costs nothing and gets whatever is there.
+ */
+const BACKFILL_DAYS = 900;
 const PAGE_LIMIT = 200;
 /** A stop, so a pathological account cannot run the sync out of memory. */
-const MAX_TRANSACTIONS = 2000;
+const MAX_TRANSACTIONS = 5000;
 
 function isoDaysAgo(days: number): string {
   const date = new Date();
@@ -58,17 +65,35 @@ function isoDaysAgo(days: number): string {
  * is the plumbing around them — what to fetch, what the user's history says,
  * and how a decision becomes rows.
  */
+export interface SyncOptions {
+  /**
+   * Reach for the whole statement rather than the recent window. Meant for
+   * the first sync: the categoriser learns from history, so a year of it
+   * makes almost everything after the first session automatic.
+   */
+  backfill?: boolean;
+}
+
 export async function syncBankFeed(
   supabase: Client,
   userId: string,
+  { backfill = false }: SyncOptions = {},
 ): Promise<SyncOutcome> {
   const connection = getBankConnection(userId);
   if (!connection) {
     throw new Error("No bank is connected to this account.");
   }
 
-  const accounts = await connection.client.getAccounts();
-  const since = isoDaysAgo(LOOKBACK_DAYS);
+  const allAccounts = await connection.client.getAccounts();
+
+  // A consent that has lapsed answers with an empty statement rather than an
+  // error, which would read as "nothing happened this month" — the most
+  // dangerous possible lie for a ledger. Skipped and counted instead, so the
+  // silence is visible. N26 alone contributes a Space per envelope, most of
+  // them empty, so this is not a rare case.
+  const accounts = allAccounts.filter((account) => !account.needsReconnect);
+  const needReconnect = allAccounts.length - accounts.length;
+  const since = isoDaysAgo(backfill ? BACKFILL_DAYS : LOOKBACK_DAYS);
 
   // The user's own answers are what make a sync mostly automatic, and the
   // categories are what an MCC has to resolve against.
@@ -126,6 +151,7 @@ export async function syncBankFeed(
 
   const outcome: SyncOutcome = {
     accounts: accounts.length,
+    needReconnect,
     imported: 0,
     pending: 0,
     duplicates: 0,

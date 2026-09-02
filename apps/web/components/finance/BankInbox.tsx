@@ -19,6 +19,8 @@ import type { PendingFeedRow } from "@/lib/queries/bank";
 interface BankInboxProps {
   items: PendingFeedRow[];
   categories: Category[];
+  /** True until the whole statement has been pulled once. */
+  showBackfill: boolean;
 }
 
 /**
@@ -30,15 +32,15 @@ interface BankInboxProps {
  * matcher, which is why the list gets shorter every month rather than being a
  * permanent chore.
  */
-export function BankInbox({ items, categories }: BankInboxProps) {
+export function BankInbox({ items, categories, showBackfill }: BankInboxProps) {
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
   const [pending, startTransition] = useTransition();
   const [choices, setChoices] = useState<Record<string, string>>({});
 
-  function sync() {
+  function sync(backfill = false) {
     startTransition(async () => {
-      const result = await syncBankFeedAction();
+      const result = await syncBankFeedAction(backfill);
       toast(
         result.error ?? result.message ?? "Synced",
         result.error ? "error" : "success",
@@ -70,17 +72,32 @@ export function BankInbox({ items, categories }: BankInboxProps) {
       <Card.Header>
         <div className="flex items-center justify-between gap-3">
           <Card.Title>From your bank</Card.Title>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            disabled={pending}
-            onClick={sync}
-          >
-            <ArrowsClockwise size={14} />
-            {pending ? "Syncing…" : "Sync"}
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Offered once: after the first pull there is nothing older to
+                fetch, and the routine window covers everything since. */}
+            {showBackfill ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={pending}
+                onClick={() => sync(true)}
+              >
+                Fetch everything
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              disabled={pending}
+              onClick={() => sync(false)}
+            >
+              <ArrowsClockwise size={14} />
+              {pending ? "Syncing…" : "Sync"}
+            </Button>
+          </div>
         </div>
         <Card.Description>
           {items.length === 0

@@ -10,6 +10,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { bankFeedConfigured } from "@/lib/bank/client";
 import {
   countSwallowedFeedItems,
+  countFeedItems,
   getPendingFeedItems,
 } from "@/lib/queries/bank";
 import { SwallowedRecovery } from "@/components/finance/SwallowedRecovery";
@@ -42,19 +43,25 @@ export default async function TransactionsPage({
 
   // Only queried when a bank is actually connected, so the page costs nothing
   // extra on a deployment that has never seen the feed.
-  const [feedItems, swallowed] = bankFeedConfigured()
+  const [feedItems, swallowed, feedSize] = bankFeedConfigured()
     ? await Promise.all([
         getPendingFeedItems(user.id),
         countSwallowedFeedItems(user.id),
+        countFeedItems(user.id),
       ])
-    : [null, 0];
+    : [null, 0, 0];
 
   return (
     <>
       {feedItems ? (
         <PageContainer className="flex flex-col gap-4 pb-0">
           <SwallowedRecovery count={swallowed} />
-          <BankInbox items={feedItems} categories={categories} />
+          <BankInbox
+            items={feedItems}
+            categories={categories}
+            // A statement worth of rows means the backfill has been done.
+            showBackfill={feedSize < 400}
+          />
         </PageContainer>
       ) : null}
       <TransactionsView

@@ -8,6 +8,8 @@ import { findLedgerMatch } from "@finance/core/bank-feed";
 import { getBankConnection } from "@/lib/bank/client";
 import { ledgerRowsAround } from "@/lib/bank/duplicates";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
+import { getRecurringProposals } from "@/lib/queries/bank";
+import { todayIsoLocal } from "@finance/core/constants";
 
 type ActionResult = { error?: string; success?: boolean; message?: string };
 
@@ -20,16 +22,18 @@ function revalidateFeedDependents(): void {
   revalidatePath("/budgets");
 }
 
-export async function syncBankFeedAction(): Promise<
-  ActionResult & { outcome?: SyncOutcome }
-> {
+export async function syncBankFeedAction(
+  backfill = false,
+): Promise<ActionResult & { outcome?: SyncOutcome }> {
   const user = await getAuthUser();
   if (!user) {
     return { error: "Not authenticated" };
   }
 
   try {
-    const outcome = await syncBankFeed(await createClient(), user.id);
+    const outcome = await syncBankFeed(await createClient(), user.id, {
+      backfill,
+    });
     revalidateFeedDependents();
 
     const parts = [`${outcome.imported} added`];
@@ -41,6 +45,11 @@ export async function syncBankFeedAction(): Promise<
     }
     if (outcome.duplicates > 0) {
       parts.push(`${outcome.duplicates} already seen`);
+    }
+    if (outcome.needReconnect > 0) {
+      parts.push(
+        `${outcome.needReconnect} ${outcome.needReconnect === 1 ? "account needs" : "accounts need"} reconnecting`,
+      );
     }
 
     return { success: true, outcome, message: parts.join(", ") };
@@ -214,6 +223,11 @@ export async function getBankBalanceSuggestion(): Promise<
     let counted = 0;
 
     for (const account of accounts) {
+      // A lapsed consent reports zero, and a zero folded into a total reads
+      // as money that is not there.
+      if (account.needsReconnect) {
+        continue;
+      }
       const booked =
         account.balances.find((b) => b.type === "ITBD") ?? account.balances[0];
       if (!booked) {
@@ -286,4 +300,50 @@ export async function reopenSwallowedFeedItems(): Promise<
         ? "1 entry is back in the inbox"
         : `${reopened} entries are back in the inbox`,
   };
+}
+
+/**
+ * Turn one proposal into a real recurring template.
+ *
+ * Only ever from an explicit press. A template nobody agreed to joins every
+ * projection, every runway figure and every month-end view, and is invisible
+ * once it is there.
+ */
+export async function acceptRecurringProposal(
+  key: string,
+): Promise<ActionResult> {
+  const user = await getAuthUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const proposals = await getRecurringProposals(user.id, todayIsoLocal());
+  const proposal = proposals.find((candidate) => candidate.key === key);
+  if (!proposal) {
+    return { error: "That one is no longer being suggested" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("recurring_templates").insert({
+    user_id: user.id,
+    category_id: proposal.categoryId,
+    amount: proposal.amount,
+    recurrence: proposal.recurrence,
+    day_of_month: proposal.dayOfMonth,
+    day_of_week: proposal.dayOfWeek,
+    month_of_year:
+      proposal.recurrence === "yearly"
+        ? Number(proposal.lastSeenOn.slice(5, 7))
+        : null,
+    description: proposal.label,
+    active: true,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateFeedDependents();
+  revalidatePath("/recurring");
+  return { success: true, message: `${proposal.label} added` };
 }

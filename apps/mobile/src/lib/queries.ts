@@ -838,3 +838,16 @@ export async function previewMonthClose(
     },
   });
 }
+
+/**
+ * Whether this user's ledger is fed by a bank. See the web twin for why this
+ * is a fact about the data rather than about configuration.
+ */
+export async function hasBankFeed(userId: string): Promise<boolean> {
+  const { count } = await supabase
+    .from("bank_feed_items")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  return (count ?? 0) > 0;
+}
