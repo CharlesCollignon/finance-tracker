@@ -2,7 +2,7 @@ import { LandingCtas } from "@/components/marketing/LandingHeader";
 import { LandingDeviceStack } from "@/components/marketing/LandingDeviceStack";
 import { LandingHowItWorks } from "@/components/marketing/LandingMocks";
 import { landingCopy } from "@/components/marketing/landing-copy";
-import { LandingOrb } from "@/components/marketing/LandingOrb";
+import { LandingLogo } from "@/components/marketing/LandingLogo";
 import { Logo } from "@/components/layout/Logo";
 
 interface LandingPageProps {
@@ -14,7 +14,7 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
     <>
       <section className="relative flex min-h-dvh flex-col items-center justify-center px-6">
         <div className="page-enter relative z-10 flex w-full max-w-md flex-col items-center text-center">
-          <LandingOrb className="mb-6" size={220} />
+          <LandingLogo className="mb-6" size={240} />
           <Logo as="h1" size="hero" showMark={false} />
           <p className="mt-4 max-w-sm text-base text-muted-foreground sm:text-lg">
             {landingCopy.hero.tagline}

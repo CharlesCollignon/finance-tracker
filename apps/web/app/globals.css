@@ -11,28 +11,29 @@
 }
 
 :root {
-  /* Sampled from the logo: the ground it is drawn in, and the orb rolling
-     through it. The gold is light — luminance ~0.46 — so it can only ever be
-     a fill, never text: white on it is 2.0:1. Hence three golds. */
-  --background: #f1ece5;
+  /* Warmed off the logo's ground but pulled back toward white, so the app
+     reads as paper rather than parchment. The gold is light — luminance
+     ~0.46 — so it can only ever be a fill, never text: white on it is 2.0:1.
+     Hence three golds. */
+  --background: #f7f5f2;
   --foreground: #1c1814;
-  --card: #fbf7f1;
+  --card: #ffffff;
   --card-foreground: #1c1814;
-  --popover: #fbf7f1;
+  --popover: #ffffff;
   --popover-foreground: #1c1814;
   /* The orb itself. Carries dark ink at 8.7:1. */
   --primary: #d5b163;
   --primary-hover: #c29e4f;
   --primary-foreground: #1c1814;
-  /* Deep gold, for anything that has to be read: links, focus rings. 5.4:1
-     on the ground, where the orb gold would be 2.0:1 and illegible. */
+  /* Deep gold, for anything that has to be read: links, focus rings. 5.8:1
+     on the ground, where the orb gold would be 1.9:1 and illegible. */
   --primary-ink: #7a5a1e;
-  /* A filled gold button is only 1.7:1 against the ground, so its edge would
-     dissolve. This rim carries the boundary at 3.1:1. */
+  /* A filled gold button is only 1.9:1 against the ground, so its edge would
+     dissolve. This rim carries the boundary at 3.3:1. */
   --primary-rim: #a8812c;
-  --secondary: #e9e2d8;
+  --secondary: #ece9e4;
   --secondary-foreground: #1c1814;
-  --muted: #e9e2d8;
+  --muted: #ece9e4;
   --muted-foreground: #6b6259;
   --accent: #f5e9ce;
   --accent-foreground: #1c1814;
@@ -42,9 +43,9 @@
   --info-foreground: #ffffff;
   --destructive: #c23b2e;
   --destructive-foreground: #ffffff;
-  --border: rgba(28, 24, 20, 0.12);
-  --hairline-strong: rgba(28, 24, 20, 0.18);
-  --input: #fbf7f1;
+  --border: rgba(28, 24, 20, 0.1);
+  --hairline-strong: rgba(28, 24, 20, 0.16);
+  --input: #ffffff;
   --ring: #7a5a1e;
   /* Gold-anchored but still categorical, and spread on lightness as well as
      hue: the closest pair stays 17 ΔE apart under protanopia, deuteranopia
@@ -54,13 +55,13 @@
   --chart-3: #4b9157;
   --chart-4: #2f5e6a;
   --chart-5: #918883;
-  --sidebar: #ede7df;
+  --sidebar: #f2efeb;
   --sidebar-foreground: #1c1814;
   --sidebar-primary: #d5b163;
   --sidebar-primary-foreground: #1c1814;
-  --sidebar-accent: #e9e2d8;
+  --sidebar-accent: #ece9e4;
   --sidebar-accent-foreground: #1c1814;
-  --sidebar-border: rgba(28, 24, 20, 0.12);
+  --sidebar-border: rgba(28, 24, 20, 0.1);
   --sidebar-ring: #7a5a1e;
   --shadow-bezel-inset: inset 0 1px 1px rgba(255, 252, 246, 0.8);
   color-scheme: light;
@@ -300,4 +301,26 @@ html[data-privacy="on"] .privacy-sensitive {
   transition: filter 150ms ease-out;
   user-select: none;
   pointer-events: none;
+}
+
+/* Hero logo: a slow float, since the artwork itself no longer moves. */
+@keyframes logo-float {
+  0%,
+  100% {
+    transform: translateY(-6px);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+.landing-logo {
+  animation: logo-float 9s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-logo {
+    animation: none;
+  }
 }

@@ -61,7 +61,7 @@ export function SideNav({
           "flex items-center justify-center px-5",
         )}
       >
-        <Logo />
+        <Logo mark="full" />
       </div>
 
       <div className="px-3 pt-3">

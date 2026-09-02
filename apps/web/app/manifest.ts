@@ -21,8 +21,8 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait",
     // Matches --background in globals.css so the splash does not flash white
     // on a device in dark mode.
-    background_color: "#f1ece5",
-    theme_color: "#f1ece5",
+    background_color: "#f7f5f2",
+    theme_color: "#f7f5f2",
     categories: ["finance", "productivity"],
     icons: [
       {

@@ -19,7 +19,7 @@
     "android": {
       "package": "com.salut_charles.pluclair",
       "adaptiveIcon": {
-        "backgroundColor": "#f1ece5",
+        "backgroundColor": "#f1eae6",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -37,7 +37,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#f1ece5",
+          "backgroundColor": "#f7f5f2",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 160,
           "dark": {
