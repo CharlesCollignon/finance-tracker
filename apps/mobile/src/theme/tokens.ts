@@ -4,23 +4,23 @@
  */
 
 export const LIGHT_COLORS = {
-  // Sampled from the logo: the ground it is drawn in, and the orb rolling
-  // through it. The gold is light, so it can only be a fill — white on it is
+  // Warmed off the logo's ground but pulled back toward white, so the app
+  // reads as paper rather than parchment. The gold is light, so it can only be a fill — white on it is
   // 2.0:1 — which is why there are three of them.
-  background: "#f1ece5",
+  background: "#f7f5f2",
   foreground: "#1c1814",
-  card: "#fbf7f1",
+  card: "#ffffff",
   cardForeground: "#1c1814",
   primary: "#d5b163",
   primaryHover: "#c29e4f",
   primaryForeground: "#1c1814",
-  /** Deep gold, for anything that has to be read. 5.4:1 on the ground. */
+  /** Deep gold, for anything that has to be read. 5.8:1 on the ground. */
   primaryInk: "#7a5a1e",
-  /** A gold fill is 1.7:1 against the ground; this carries the edge at 3.1:1. */
+  /** A gold fill is 1.9:1 against the ground; this carries the edge at 3.3:1. */
   primaryRim: "#a8812c",
-  secondary: "#e9e2d8",
+  secondary: "#ece9e4",
   secondaryForeground: "#1c1814",
-  muted: "#e9e2d8",
+  muted: "#ece9e4",
   mutedForeground: "#6b6259",
   accent: "#f5e9ce",
   accentForeground: "#1c1814",
@@ -30,8 +30,8 @@ export const LIGHT_COLORS = {
   infoForeground: "#ffffff",
   destructive: "#c23b2e",
   destructiveForeground: "#ffffff",
-  border: "rgba(28,24,20,0.12)",
-  hairlineStrong: "rgba(28,24,20,0.18)",
+  border: "rgba(28,24,20,0.10)",
+  hairlineStrong: "rgba(28,24,20,0.16)",
 } as const;
 
 export const DARK_COLORS = {

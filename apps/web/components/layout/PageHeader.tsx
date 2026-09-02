@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import {
   SHELL_HEADER_ACTIONS_CLASS,
@@ -23,9 +24,22 @@ export function PageHeader({ title, children, className }: PageHeaderProps) {
       )}
     >
       <div className={SHELL_HEADER_INNER_CLASS}>
-        <h1 className="shrink-0 font-head text-lg leading-none md:text-xl">
-          {title}
-        </h1>
+        <div className="flex shrink-0 items-center gap-2">
+          {/* The bare orb rather than the full composition: at this size the
+              furrow drawn in the ground is a smudge, while the sphere still
+              reads. */}
+          <Image
+            src="/logo-mark.png"
+            alt=""
+            aria-hidden
+            width={22}
+            height={22}
+            priority
+            className="shrink-0"
+            style={{ width: 22, height: 22 }}
+          />
+          <h1 className="font-head text-lg leading-none md:text-xl">{title}</h1>
+        </div>
         <div className={SHELL_HEADER_ACTIONS_CLASS}>
           {children}
           <PrivacyToggle className="shrink-0" />
