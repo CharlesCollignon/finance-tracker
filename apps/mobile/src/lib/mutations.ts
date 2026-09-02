@@ -33,7 +33,11 @@ import {
   monthCloseSchema,
   unrecordedCapSchema,
 } from "@finance/core/validations/month-close";
-import { getMonthCloseSettings, previewMonthClose } from "@/lib/queries";
+import {
+  getMonthCloseSettings,
+  hasBankFeed,
+  previewMonthClose,
+} from "@/lib/queries";
 import {
   buildApplyRecurringPlan,
   type ApplyRecurringPlan,
@@ -814,6 +818,15 @@ export async function previewApplyRecurringForMonth(
     return { error: "Invalid month" };
   }
 
+  // With a bank feeding the ledger, templates only forecast; an empty plan is
+  // what makes every apply affordance stand down at once. See the web twin.
+  if (await hasBankFeed(userId)) {
+    return {
+      success: true,
+      plan: { toCreate: [], toUpdate: [], toReprice: [] },
+    };
+  }
+
   try {
     const { templates, existingByKey, skippedKeys } =
       await loadApplyRecurringData(userId, year, month);
@@ -853,6 +866,15 @@ export async function applyRecurringForMonth(
   const parsed = applyRecurringSchema.safeParse({ year, month });
   if (!parsed.success) {
     return { error: "Invalid month" };
+  }
+
+  // Refused rather than merely hidden, so a stale screen cannot reintroduce
+  // the second writer this model exists to avoid.
+  if (await hasBankFeed(userId)) {
+    return {
+      error:
+        "Your bank fills this in now — recurring items are a forecast rather than something to apply.",
+    };
   }
 
   try {

@@ -17,6 +17,7 @@ import {
   type ApplyRecurringPlan,
 } from "@finance/core/apply-recurring";
 import { loadApplyRecurringData, writeReprices } from "@/lib/recurring-apply";
+import { hasBankFeed } from "@/lib/queries/bank";
 import {
   removeInvestmentPositionForRecurring,
   syncInvestmentPositionFromRecurring,
@@ -257,9 +258,11 @@ export async function saveQuickTransaction(
 
   const tagIds = parsed.data.tagIds ?? [];
   if (created && tagIds.length > 0) {
-    const { error: tagError } = await supabase.from("transaction_tags").insert(
-      tagIds.map((tagId) => ({ transaction_id: created.id, tag_id: tagId })),
-    );
+    const { error: tagError } = await supabase
+      .from("transaction_tags")
+      .insert(
+        tagIds.map((tagId) => ({ transaction_id: created.id, tag_id: tagId })),
+      );
     if (tagError) {
       return { error: tagError.message };
     }
@@ -298,7 +301,9 @@ export async function importTransactions(
 
   // Every row must belong to one of the user's own categories; RLS covers the
   // insert, but checking here turns a database error into a clear message.
-  const categoryIds = [...new Set(parsed.data.rows.map((row) => row.categoryId))];
+  const categoryIds = [
+    ...new Set(parsed.data.rows.map((row) => row.categoryId)),
+  ];
   const { data: owned, error: categoryError } = await supabase
     .from("categories")
     .select("id")
@@ -760,6 +765,17 @@ export async function previewApplyRecurringForMonth(
     return { error: "Invalid month" };
   }
 
+  // With a bank feeding the ledger, templates do not write: the account is
+  // the record of what happened and a template only says what is coming. An
+  // empty plan is what makes the card, the badges and the sheets all stand
+  // down, without each of them having to know why.
+  if (await hasBankFeed(user.id)) {
+    return {
+      success: true,
+      plan: { toCreate: [], toUpdate: [], toReprice: [] },
+    };
+  }
+
   try {
     const supabase = await createClient();
     const { templates, existingByKey, skippedKeys } =
@@ -800,6 +816,15 @@ export async function applyRecurringForMonth(
   const parsed = applyRecurringSchema.safeParse({ year, month });
   if (!parsed.success) {
     return { error: "Invalid month" };
+  }
+
+  // Refused rather than merely hidden. A stale tab or an old client must not
+  // be able to introduce the second writer this whole model exists to avoid.
+  if (await hasBankFeed(user.id)) {
+    return {
+      error:
+        "Your bank fills this in now — recurring items are a forecast rather than something to apply.",
+    };
   }
 
   try {
