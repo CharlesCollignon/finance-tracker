@@ -8,7 +8,7 @@ import { getSiteUrl } from "@/lib/supabase/env";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
-import { getMonthBounds } from "@finance/core/constants";
+import { todayIsoLocal } from "@finance/core/constants";
 import { resolveRecurringAmount } from "@finance/core/recurring-shares";
 import { quoteSource } from "@/lib/quote-source";
 import {
@@ -16,6 +16,7 @@ import {
   recurringOccurrenceKey,
   type ApplyRecurringPlan,
 } from "@finance/core/apply-recurring";
+import { loadApplyRecurringData, writeReprices } from "@/lib/recurring-apply";
 import {
   removeInvestmentPositionForRecurring,
   syncInvestmentPositionFromRecurring,
@@ -24,10 +25,7 @@ import {
   BITCOIN_INSTRUMENT,
   isCryptoCategoryName,
 } from "@finance/core/crypto-holdings";
-import type {
-  Database,
-  RecurringTemplateWithCategory,
-} from "@finance/core/types/database";
+import type { Database } from "@finance/core/types/database";
 import {
   applyRecurringSchema,
   authSchema,
@@ -41,88 +39,6 @@ import {
 } from "@finance/core/validations/finance";
 
 type ActionResult = { error?: string; success?: boolean; message?: string };
-
-async function loadApplyRecurringData(
-  userId: string,
-  year: number,
-  month: number,
-) {
-  const supabase = await createClient();
-  const { start, end } = getMonthBounds(year, month);
-
-  const [
-    { data: templates, error: tplError },
-    { data: transactions, error: txError },
-    { data: skips, error: skipError },
-  ] = await Promise.all([
-    supabase
-      .from("recurring_templates")
-      .select("*, categories(name, type, icon, counts_toward_summary)")
-      .eq("user_id", userId)
-      .eq("active", true),
-    supabase
-      .from("transactions")
-      .select(
-        "id, amount, note, category_id, recurring_template_id, occurred_on",
-      )
-      .eq("user_id", userId)
-      .not("recurring_template_id", "is", null)
-      .gte("occurred_on", start)
-      .lte("occurred_on", end),
-    supabase
-      .from("recurring_skips")
-      .select("template_id, occurred_on")
-      .eq("user_id", userId)
-      .gte("occurred_on", start)
-      .lte("occurred_on", end),
-  ]);
-
-  if (tplError) {
-    throw new Error(tplError.message);
-  }
-
-  if (txError) {
-    throw new Error(txError.message);
-  }
-
-  if (skipError) {
-    throw new Error(skipError.message);
-  }
-
-  const existingByKey = new Map<
-    string,
-    {
-      id: string;
-      amount: number;
-      note: string | null;
-      category_id: string;
-    }
-  >();
-
-  for (const tx of transactions ?? []) {
-    if (!tx.recurring_template_id) {
-      continue;
-    }
-
-    existingByKey.set(`${tx.recurring_template_id}:${tx.occurred_on}`, {
-      id: tx.id,
-      amount: Number(tx.amount),
-      note: tx.note,
-      category_id: tx.category_id,
-    });
-  }
-
-  const skippedKeys = new Set(
-    (skips ?? []).map((row) => `${row.template_id}:${row.occurred_on}`),
-  );
-
-  return {
-    supabase,
-    templates: (templates ?? []) as RecurringTemplateWithCategory[],
-    existingByKey,
-    skippedKeys,
-  };
-}
 
 async function getUser() {
   const user = await getAuthUser();
@@ -845,14 +761,15 @@ export async function previewApplyRecurringForMonth(
   }
 
   try {
+    const supabase = await createClient();
     const { templates, existingByKey, skippedKeys } =
-      await loadApplyRecurringData(user.id, year, month);
+      await loadApplyRecurringData(supabase, user.id, year, month);
     const plan = await buildApplyRecurringPlan(
       templates,
       existingByKey,
       year,
       month,
-      { quotes: quoteSource, skippedKeys },
+      { quotes: quoteSource, skippedKeys, today: todayIsoLocal() },
     );
     return { success: true, plan };
   } catch (error) {
@@ -886,14 +803,15 @@ export async function applyRecurringForMonth(
   }
 
   try {
-    const { supabase, templates, existingByKey, skippedKeys } =
-      await loadApplyRecurringData(user.id, year, month);
+    const supabase = await createClient();
+    const { templates, existingByKey, skippedKeys } =
+      await loadApplyRecurringData(supabase, user.id, year, month);
     const plan = await buildApplyRecurringPlan(
       templates,
       existingByKey,
       year,
       month,
-      { quotes: quoteSource, skippedKeys },
+      { quotes: quoteSource, skippedKeys, today: todayIsoLocal() },
     );
     const templatesById = new Map(
       templates.map((template) => [template.id, template]),
@@ -986,6 +904,12 @@ export async function applyRecurringForMonth(
         updated += 1;
       }
     }
+
+    // Not offered and not selectable: a market move is nobody's decision.
+    // The daily run does this too; here it is free, because the write is
+    // already open.
+    const reprices = await writeReprices(supabase, user.id, plan.toReprice);
+    failures.push(...reprices.failures);
 
     revalidateRecurringDependents();
 

@@ -22,7 +22,7 @@ import {
   tagSchema,
   walletTransferSchema,
 } from "@finance/core/validations/phase4";
-import { getMonthBounds } from "@finance/core/constants";
+import { getMonthBounds, todayIsoLocal } from "@finance/core/constants";
 import {
   buildApplyRecurringPlan,
   type ApplyRecurringPlan,
@@ -811,7 +811,7 @@ export async function previewApplyRecurringForMonth(
       existingByKey,
       year,
       month,
-      { quotes: quoteSource, skippedKeys },
+      { quotes: quoteSource, skippedKeys, today: todayIsoLocal() },
     );
     return { success: true, plan };
   } catch (error) {
@@ -852,7 +852,7 @@ export async function applyRecurringForMonth(
       existingByKey,
       year,
       month,
-      { quotes: quoteSource, skippedKeys },
+      { quotes: quoteSource, skippedKeys, today: todayIsoLocal() },
     );
     const templatesById = new Map(
       templates.map((template) => [template.id, template]),
@@ -947,6 +947,25 @@ export async function applyRecurringForMonth(
           continue;
         }
         updated += 1;
+      }
+    }
+
+    // Not offered and not selectable: a market move is nobody's decision.
+    // The server's daily run does this too; here it is free, because the
+    // write is already open.
+    for (const item of plan.toReprice) {
+      const { error } = await supabase
+        .from("transactions")
+        .update({
+          amount: item.amount,
+          note: item.note,
+          category_id: item.categoryId,
+        })
+        .eq("id", item.transactionId)
+        .eq("user_id", userId);
+
+      if (error) {
+        failures.push(error.message);
       }
     }
 

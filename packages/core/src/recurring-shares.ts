@@ -24,6 +24,23 @@ export interface ResolvedRecurringAmount {
 }
 
 /**
+ * Whether this template's amount comes off the market rather than out of a
+ * decision. A share count without an instrument to price it against, or an
+ * instrument without a share count, is still a fixed amount.
+ */
+export function isQuotePriced(template: {
+  pricing_type: string | null;
+  share_count: number | null;
+  instrument_symbol: string | null;
+}): boolean {
+  return (
+    template.pricing_type === "shares" &&
+    Boolean(template.share_count) &&
+    Boolean(template.instrument_symbol)
+  );
+}
+
+/**
  * Amount and note for one occurrence of a template. Fixed pricing never
  * consults `quotes`; shares pricing falls back to `last_quote_price` when the
  * source has no price, and throws when there is nothing to fall back to.
@@ -32,11 +49,7 @@ export async function resolveRecurringAmount(
   template: SharesTemplateFields,
   quotes: QuoteSource,
 ): Promise<ResolvedRecurringAmount> {
-  if (
-    template.pricing_type !== "shares" ||
-    !template.share_count ||
-    !template.instrument_symbol
-  ) {
+  if (!isQuotePriced(template)) {
     return {
       amount: Number(template.amount),
       note: template.description?.trim() || null,
@@ -44,8 +57,8 @@ export async function resolveRecurringAmount(
     };
   }
 
-  const shareCount = template.share_count;
-  const live = await quotes.quoteInEur(template.instrument_symbol);
+  const shareCount = template.share_count!;
+  const live = await quotes.quoteInEur(template.instrument_symbol!);
 
   let price = live?.priceEur ?? null;
   let amount = live ? computeSharesAmount(shareCount, live.priceEur) : null;
