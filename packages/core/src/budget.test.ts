@@ -498,7 +498,10 @@ describe("computeMonthlyBudgetWithProjection", () => {
 
   it("ignores transactions from other months", () => {
     const totals = computeMonthlyBudgetWithProjection(
-      [tx({ on: "2026-08-31", amount: 500 }), tx({ on: "2026-10-01", amount: 500 })],
+      [
+        tx({ on: "2026-08-31", amount: 500 }),
+        tx({ on: "2026-10-01", amount: 500 }),
+      ],
       [],
       2026,
       9,
@@ -587,5 +590,78 @@ describe("buildBudgetExpenseBreakdownWithProjection", () => {
     );
 
     expect(rows[0]?.categoryId).toBe("cat-b");
+  });
+});
+
+describe("money that came back rather than came in", () => {
+  const income = (amount: number, counts: boolean, name = "Reimbursements") =>
+    ({
+      id: `tx-${Math.random()}`,
+      user_id: "u",
+      category_id: "cat-r",
+      recurring_template_id: null,
+      occurred_on: "2026-09-10",
+      amount,
+      note: null,
+      created_at: "2026-09-10T00:00:00.000Z",
+      categories: {
+        name,
+        type: "income" as const,
+        icon: null,
+        counts_toward_summary: counts,
+      },
+    }) as TransactionWithCategory;
+
+  const spend = (amount: number) =>
+    ({
+      id: `tx-${Math.random()}`,
+      user_id: "u",
+      category_id: "cat-subs",
+      recurring_template_id: null,
+      occurred_on: "2026-09-05",
+      amount,
+      note: null,
+      created_at: "2026-09-05T00:00:00.000Z",
+      categories: {
+        name: "Subscriptions",
+        type: "expense" as const,
+        icon: null,
+        counts_toward_summary: true,
+      },
+    }) as TransactionWithCategory;
+
+  it("nets a reimbursement off spending instead of counting it as earnings", () => {
+    // Twelve euros paid out for a family plan, nine returned by the others.
+    const totals = computeMonthlyBudget([spend(12), income(9, false)], []);
+
+    expect(totals.income).toBe(0);
+    expect(totals.expense).toBe(3);
+  });
+
+  it("still counts a real income category in full", () => {
+    const totals = computeMonthlyBudget(
+      [spend(12), income(9, true, "Gifts")],
+      [],
+    );
+
+    expect(totals.income).toBe(9);
+    expect(totals.expense).toBe(12);
+  });
+
+  it("reads a month reimbursed more than it spent as having spent nothing", () => {
+    const totals = computeMonthlyBudget([spend(5), income(20, false)], []);
+
+    expect(totals.expense).toBe(0);
+    expect(totals.income).toBe(0);
+  });
+
+  it("leaves the savings rate undistorted by money that was never earned", () => {
+    const withReimbursement = computeMonthlyBudget(
+      [income(2000, true, "Salary"), spend(12), income(9, false)],
+      [],
+    );
+
+    // Income is the earnings alone, so the rate is not diluted.
+    expect(withReimbursement.income).toBe(2000);
   });
 });
