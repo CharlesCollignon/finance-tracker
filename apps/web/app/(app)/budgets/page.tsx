@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getCategories } from "@/lib/queries/categories";
@@ -85,6 +87,19 @@ export default async function BudgetsPage() {
 
       <PageContainer className="flex flex-col gap-4 pt-0">
         <ProjectionCard points={projection} runway={runway} />
+        <Link
+          href="/history"
+          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm transition-colors hover:border-primary-rim"
+        >
+          <span>
+            <span className="font-medium">History</span>
+            <span className="block text-xs text-muted-foreground">
+              Each category, month by month
+            </span>
+          </span>
+          <ArrowRight size={16} />
+        </Link>
+
         <MonthCloseHistory
           history={closes.history}
           summary={closes.summary}

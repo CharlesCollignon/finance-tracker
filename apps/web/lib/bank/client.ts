@@ -67,6 +67,11 @@ export function getBankConnection(userId: string): BankConnection | null {
   return client ? { client, source: "owner-credentials" } : null;
 }
 
+/** Who the feed belongs to, for the unattended run that has no session. */
+export function bankFeedOwnerId(): string | null {
+  return ownerUserId() && ownerClient() ? ownerUserId() : null;
+}
+
 /** Whether this deployment could connect at all, for the UI to explain itself. */
 export function bankFeedConfigured(): boolean {
   return Boolean(ownerUserId() && ownerClient());

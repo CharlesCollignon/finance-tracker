@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
+import { findLedgerMatch } from "@finance/core/bank-feed";
 import { getBankConnection } from "@/lib/bank/client";
+import { ledgerRowsAround } from "@/lib/bank/duplicates";
+import { getDuplicatePairs } from "@/lib/queries/bank";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
 
 type ActionResult = { error?: string; success?: boolean; message?: string };
@@ -50,11 +53,20 @@ export async function syncBankFeedAction(): Promise<
   }
 }
 
-/** Accept one waiting row into the ledger, under the category the user picked. */
+/**
+ * Accept one waiting row into the ledger, under the category the user picked.
+ *
+ * The same duplicate check the sync does, because pressing Add is no less
+ * likely to double-record a movement than a sync is: a card fee written by a
+ * recurring template days earlier is still there whichever path the bank's
+ * copy arrives by. `force` is how the user says they know better — two
+ * identical coffees on the same day are two coffees.
+ */
 export async function importFeedItem(
   itemId: string,
   categoryId: string,
-): Promise<ActionResult> {
+  force = false,
+): Promise<ActionResult & { duplicateOf?: string }> {
   const user = await getAuthUser();
   if (!user) {
     return { error: "Not authenticated" };
@@ -66,7 +78,7 @@ export async function importFeedItem(
   const supabase = await createClient();
   const { data: item } = await supabase
     .from("bank_feed_items")
-    .select("id, occurred_on, amount, note, status")
+    .select("id, occurred_on, amount, note, status, direction")
     .eq("id", itemId)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -76,6 +88,42 @@ export async function importFeedItem(
   }
   if (item.status !== "pending") {
     return { error: "That entry has already been dealt with" };
+  }
+
+  if (!force) {
+    const existing = await ledgerRowsAround(
+      supabase,
+      user.id,
+      item.occurred_on,
+    );
+    const already = findLedgerMatch(
+      {
+        providerId: "",
+        occurredOn: item.occurred_on,
+        amount: String(item.amount),
+        currency: "EUR",
+        direction: item.direction,
+        counterparty: null,
+        merchantCategoryCode: null,
+        note: item.note,
+      },
+      existing,
+    );
+
+    if (already) {
+      await supabase
+        .from("bank_feed_items")
+        .update({ status: "imported", transaction_id: already.transactionId })
+        .eq("id", itemId)
+        .eq("user_id", user.id);
+
+      revalidateFeedDependents();
+      return {
+        success: true,
+        duplicateOf: already.transactionId,
+        message: "Already in your ledger — filed against the entry you had",
+      };
+    }
   }
 
   const { data: transaction, error } = await supabase
@@ -198,4 +246,84 @@ export async function getBankBalanceSuggestion(): Promise<
     // A bank that cannot be reached should not stop a month being closed.
     return { success: true };
   }
+}
+
+/**
+ * Drop the copy the feed made, keeping the one that was already there.
+ *
+ * The feed item is not deleted but re-filed against the survivor, which is
+ * what stops the next sync offering the same bank row again — the provider
+ * will keep returning it for as long as it sits in the statement window.
+ */
+export async function dropFeedDuplicate(
+  feedItemId: string,
+): Promise<ActionResult> {
+  const user = await getAuthUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+  if (!uuid.safeParse(feedItemId).success) {
+    return { error: "Invalid selection" };
+  }
+
+  const pairs = await getDuplicatePairs(user.id);
+  const pair = pairs.find((candidate) => candidate.feedItemId === feedItemId);
+  if (!pair) {
+    return { error: "That pair is no longer there" };
+  }
+
+  const supabase = await createClient();
+
+  // Pointed at the survivor before the copy goes, so a failure between the
+  // two leaves the feed item attached to something real rather than dangling.
+  const { error: relinkError } = await supabase
+    .from("bank_feed_items")
+    .update({ transaction_id: pair.keptTransactionId })
+    .eq("id", feedItemId)
+    .eq("user_id", user.id);
+
+  if (relinkError) {
+    return { error: relinkError.message };
+  }
+
+  const { error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", pair.bankTransactionId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateFeedDependents();
+  return { success: true, message: "Duplicate removed" };
+}
+
+/** The same, for every pair at once. */
+export async function dropAllFeedDuplicates(): Promise<
+  ActionResult & { removed?: number }
+> {
+  const user = await getAuthUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const pairs = await getDuplicatePairs(user.id);
+  let removed = 0;
+
+  for (const pair of pairs) {
+    const result = await dropFeedDuplicate(pair.feedItemId);
+    if (result.success) {
+      removed += 1;
+    }
+  }
+
+  revalidateFeedDependents();
+  return {
+    success: true,
+    removed,
+    message:
+      removed === 1 ? "1 duplicate removed" : `${removed} duplicates removed`,
+  };
 }

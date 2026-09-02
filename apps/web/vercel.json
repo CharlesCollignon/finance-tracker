@@ -6,6 +6,10 @@
       "schedule": "0 7 * * *"
     },
     {
+      "path": "/api/cron/bank",
+      "schedule": "15 7 * * *"
+    },
+    {
       "path": "/api/cron/notify",
       "schedule": "0 8 * * *"
     }
