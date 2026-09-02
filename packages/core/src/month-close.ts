@@ -86,7 +86,11 @@ export function buildRecordedCashFlows(
     }
 
     if (type === "savings") {
-      flows.savings += amount;
+      // A withdrawal is money arriving in the account, so it reduces what
+      // left it. Without this the close would report the balance as
+      // unexplainably high by exactly the amount moved back.
+      flows.savings +=
+        tx.categories.counts_toward_summary === false ? -amount : amount;
       continue;
     }
 

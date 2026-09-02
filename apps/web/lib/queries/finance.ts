@@ -179,11 +179,13 @@ export async function getSavingsReserve(userId: string): Promise<number> {
     throw error;
   }
 
-  return (data ?? [])
-    .filter(
-      (row) =>
-        (row.categories as unknown as { counts_toward_summary: boolean })
-          .counts_toward_summary !== false,
-    )
-    .reduce((sum, row) => sum + Number(row.amount), 0);
+  // A savings category marked as not counting is a withdrawal, so it comes
+  // off the reserve rather than being skipped. Skipping it was what made the
+  // reserve only ever grow, and the runway it feeds only ever flatter.
+  return (data ?? []).reduce((sum, row) => {
+    const withdrawal =
+      (row.categories as unknown as { counts_toward_summary: boolean })
+        .counts_toward_summary === false;
+    return sum + (withdrawal ? -Number(row.amount) : Number(row.amount));
+  }, 0);
 }

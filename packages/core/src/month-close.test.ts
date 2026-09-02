@@ -427,3 +427,50 @@ describe("closableMonth", () => {
     expect(closableMonth("2026-11-20", 5, "2026-10")).toBeNull();
   });
 });
+
+describe("a transfer out of savings", () => {
+  function savingsTx(amount: number, counts: boolean): TransactionWithCategory {
+    return {
+      ...tx(amount, "savings"),
+      categories: {
+        name: counts ? "Savings account" : "From savings",
+        type: "savings",
+        icon: null,
+        counts_toward_summary: counts,
+      },
+    };
+  }
+
+  it("counts money coming back out as reducing what left the account", () => {
+    const result = buildRecordedCashFlows([savingsTx(500, false)]);
+
+    expect(result.savings).toBe(-500);
+    expect(recordedOutflow(result)).toBe(-500);
+  });
+
+  it("reconciles a month whose only movement was moving your own money", () => {
+    // €500 out of savings into the current account: the balance rises by 500,
+    // nothing was earned and nothing was spent.
+    const close = buildMonthClose({
+      openingBalance: 2000,
+      closingBalance: 2500,
+      flows: buildRecordedCashFlows([savingsTx(500, false)]),
+    });
+
+    expect(close.status).toBe("reconciled");
+    expect(close.unrecorded).toBe(0);
+    // Wealth is unchanged: the money only changed pockets.
+    expect(close.kept).toBe(0);
+  });
+
+  it("would have reported the balance as unexplainable without it", () => {
+    const close = buildMonthClose({
+      openingBalance: 2000,
+      closingBalance: 2500,
+      flows: buildRecordedCashFlows([]),
+    });
+
+    expect(close.status).toBe("over-recorded");
+    expect(close.unexplainedCredit).toBe(500);
+  });
+});

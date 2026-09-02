@@ -105,6 +105,15 @@ export function computeMonthlyBudget(
       continue;
     }
 
+    // A savings category marked as not counting is the mirror of one that
+    // does: money coming back out of the pot rather than going into it. It
+    // subtracts, so the month's figure is what was net set aside, and moving
+    // your own money between accounts stops reading as saving it twice.
+    if (tx.categories.type === "savings" && !countsTowardSummary(tx)) {
+      totals.savings -= amount;
+      continue;
+    }
+
     if (countsTowardSummary(tx)) {
       totals[tx.categories.type as Exclude<CategoryType, "income">] += amount;
     }

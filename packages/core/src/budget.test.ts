@@ -665,3 +665,49 @@ describe("money that came back rather than came in", () => {
     expect(withReimbursement.income).toBe(2000);
   });
 });
+
+describe("money coming back out of savings", () => {
+  const saving = (amount: number, counts: boolean) =>
+    ({
+      id: `tx-${Math.random()}`,
+      user_id: "u",
+      category_id: counts ? "cat-save" : "cat-withdraw",
+      recurring_template_id: null,
+      occurred_on: "2026-09-10",
+      amount,
+      note: null,
+      created_at: "2026-09-10T00:00:00.000Z",
+      categories: {
+        name: counts ? "Savings account" : "From savings",
+        type: "savings" as const,
+        icon: null,
+        counts_toward_summary: counts,
+      },
+    }) as TransactionWithCategory;
+
+  it("subtracts a withdrawal from what was set aside", () => {
+    const totals = computeMonthlyBudget(
+      [saving(800, true), saving(500, false)],
+      [],
+    );
+
+    expect(totals.savings).toBe(300);
+  });
+
+  it("does not let a withdrawal read as income or spending", () => {
+    const totals = computeMonthlyBudget([saving(500, false)], []);
+
+    expect(totals.income).toBe(0);
+    expect(totals.expense).toBe(0);
+    expect(totals.savings).toBe(-500);
+  });
+
+  it("leaves the outflow lower by what came back", () => {
+    // Moving your own money is not spending, and the month's net has to say so.
+    const moved = computeMonthlyBudget([saving(500, false)], []);
+    const nothing = computeMonthlyBudget([], []);
+
+    expect(moved.outflow).toBe(nothing.outflow - 500);
+    expect(moved.net).toBe(nothing.net + 500);
+  });
+});
