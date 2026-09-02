@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img" aria-labelledby="pcOrbTitle">
+<title id="pcOrbTitle">Bille dorée</title>
+<defs>
+<radialGradient id="pcOrbBody" cx="0.5" cy="0.5" r="0.6" fx="0.63" fy="0.325">
+<stop offset="0" stop-color="#FDEFB4"/>
+<stop offset="0.2" stop-color="#F2D7A3"/>
+<stop offset="0.52" stop-color="#DCBB7C"/>
+<stop offset="0.8" stop-color="#C6A362"/>
+<stop offset="1" stop-color="#B68C42"/>
+</radialGradient>
+<radialGradient id="pcOrbBounce" cx="0.5" cy="0.5" r="0.42" fx="0.32" fy="0.82">
+<stop offset="0" stop-color="#FFF6D2" stop-opacity="0.5"/>
+<stop offset="0.6" stop-color="#FFF6D2" stop-opacity="0.12"/>
+<stop offset="1" stop-color="#FFF6D2" stop-opacity="0"/>
+</radialGradient>
+<radialGradient id="pcOrbSpec" cx="0.5" cy="0.5" r="0.5">
+<stop offset="0" stop-color="#FFFDF0" stop-opacity="0.9"/>
+<stop offset="0.45" stop-color="#FFF8DC" stop-opacity="0.28"/>
+<stop offset="1" stop-color="#FFF8DC" stop-opacity="0"/>
+</radialGradient>
+<clipPath id="pcOrbClip"><circle cx="120" cy="120" r="110"/></clipPath>
+</defs>
+<style>
+.pc-orb-shade,.pc-orb-spec{transform:translate(0,0)}
+@media (prefers-reduced-motion:no-preference){
+.pc-orb-shade{animation:pc-orb-shade var(--orb-duration,11s) cubic-bezier(.4,0,.6,1) infinite}
+.pc-orb-spec{animation:pc-orb-spec var(--orb-duration,11s) cubic-bezier(.4,0,.6,1) infinite}
+.pc-orb-spec ellipse{animation:pc-orb-tight var(--orb-duration,11s) cubic-bezier(.4,0,.6,1) infinite}
+}
+@keyframes pc-orb-shade{0%,100%{transform:translate(-15px,11px)}50%{transform:translate(15px,-11px)}}
+@keyframes pc-orb-spec{0%,100%{transform:translate(-15px,9px)}50%{transform:translate(15px,-9px)}}
+@keyframes pc-orb-tight{0%,100%{rx:34px}50%{rx:28px}}
+</style>
+<g clip-path="url(#pcOrbClip)">
+<g class="pc-orb-shade"><circle cx="120" cy="120" r="132" fill="url(#pcOrbBody)"/></g>
+<circle cx="120" cy="120" r="110" fill="url(#pcOrbBounce)"/>
+<g class="pc-orb-spec"><ellipse cx="154" cy="74" rx="34" ry="27" fill="url(#pcOrbSpec)"/></g>
+</g>
+<circle cx="120" cy="120" r="110" fill="none" stroke="#B68C42" stroke-opacity="0.3" stroke-width="0.5"/>
+</svg>

@@ -10,41 +10,42 @@ interface LandingOrbProps {
 /**
  * The hero orb.
  *
- * Three motions run at different periods so the loop never reads as a single
- * repeating cycle: the artwork turns, the whole orb drifts on a slow figure,
- * and a blurred copy behind it breathes. Because the periods do not divide
- * evenly, the combination takes minutes to repeat.
+ * The artwork now carries its own motion: inside the SVG, the body gradient
+ * and the specular highlight drift on a slow loop, so the sphere reads as
+ * being lit rather than drawn. That is also why it no longer rotates — the
+ * light source is fixed, and spinning it would send the highlight orbiting,
+ * which looks like a bug rather than a shine.
  *
- * All of it is CSS, so it costs nothing on the main thread and stops dead
- * under prefers-reduced-motion.
+ * Loaded as an image rather than inlined, so its animation and its
+ * prefers-reduced-motion guard stay sealed inside the file. `unoptimized`
+ * because the optimizer refuses SVG by default and has nothing to add to two
+ * kilobytes of gradients anyway.
  */
 export function LandingOrb({ className, size = 220 }: LandingOrbProps) {
   return (
     <div
-      className={cn("landing-orb relative", className)}
+      className={cn("relative", className)}
       style={{ width: size, height: size }}
       aria-hidden
     >
-      <div className="landing-orb__glow absolute inset-0">
-        <Image
-          src="/logo-mark.png"
-          alt=""
-          width={size}
-          height={size}
-          priority
-          className="h-full w-full blur-2xl"
-        />
-      </div>
-      <div className="landing-orb__body absolute inset-0">
-        <Image
-          src="/logo-mark.png"
-          alt=""
-          width={size}
-          height={size}
-          priority
-          className="h-full w-full"
-        />
-      </div>
+      {/* A radial wash rather than a blurred copy of the orb: blurring a
+          square image leaves a faint boxy edge where the blur runs out. */}
+      <div
+        className="absolute -inset-1/4 rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle, color-mix(in srgb, var(--primary) 38%, transparent) 0%, transparent 62%)",
+        }}
+      />
+      <Image
+        src="/pluclair-orb.svg"
+        alt=""
+        width={size}
+        height={size}
+        priority
+        unoptimized
+        className="relative h-full w-full"
+      />
     </div>
   );
 }
