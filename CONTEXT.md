@@ -54,6 +54,17 @@ _Avoid_: ignore, dismiss
 Turning the occurrences a month calls for into transactions.
 _Avoid_: sync, generate, run
 
+**Reprice**:
+Bringing an already-applied occurrence's amount back in line with its
+instrument's current quote. Only ever done to an occurrence still dated ahead,
+and never asked about: the market moving is not a decision anyone made.
+_Avoid_: refresh, recalculate, update
+
+**Settled occurrence**:
+An applied occurrence whose date has passed. Its amount is what actually
+moved, so a later quote does not change it; only a reclassification does.
+_Avoid_: locked, frozen, historical
+
 ### Caps and targets
 
 **Budget**:

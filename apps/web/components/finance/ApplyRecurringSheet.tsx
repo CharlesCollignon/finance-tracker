@@ -33,6 +33,7 @@ function UpdateRow({
   const amountChanged = Math.abs(item.previousAmount - item.amount) > 0.009;
   const noteChanged =
     (item.previousNote?.trim() ?? "") !== (item.note?.trim() ?? "");
+  const categoryChanged = item.previousCategoryId !== item.categoryId;
 
   return (
     <li
@@ -67,6 +68,11 @@ function UpdateRow({
           {noteChanged && (
             <p className="mt-1 text-xs text-muted-foreground">
               Note updated to match recurring template
+            </p>
+          )}
+          {categoryChanged && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Moved to the recurring template&rsquo;s category
             </p>
           )}
         </span>
@@ -133,6 +139,15 @@ export function ApplyRecurringSheet({
           Adds missing recurring transactions for this month. Existing entries
           are left as-is unless you confirm updates below.
         </Text>
+
+        {plan.toReprice.length > 0 && (
+          <Text className="text-sm text-muted-foreground">
+            {plan.toReprice.length}{" "}
+            {plan.toReprice.length === 1 ? "entry is" : "entries are"} priced
+            from the market and still ahead of today. Those follow their
+            instrument on their own — nothing to confirm.
+          </Text>
+        )}
 
         {hasUpdates && (
           <div className="flex flex-col gap-2">

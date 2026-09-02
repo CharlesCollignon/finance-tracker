@@ -297,7 +297,11 @@ export default function TransactionsScreen() {
       toast(preview.error, "error");
       return;
     }
-    const plan = preview.plan ?? { toCreate: [], toUpdate: [] };
+    const plan = preview.plan ?? {
+      toCreate: [],
+      toUpdate: [],
+      toReprice: [],
+    };
     if (plan.toCreate.length === 0 && plan.toUpdate.length === 0) {
       setApplyPending(false);
       toast("All recurring entries already applied");

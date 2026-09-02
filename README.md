@@ -27,7 +27,7 @@ finance-tracker/          (repo root)
 - **Mobile only:** [Expo Go](https://expo.dev/go) on your phone (SDK 57)
 
 Apply the database schema once on your Supabase project (SQL editor or
-CLI) using the files in `supabase/migrations/`, in order (`001` → `013`).
+CLI) using the files in `supabase/migrations/`, in order (`001` → `017`).
 Optional account deletion from mobile also needs the
 `delete-account` Edge Function in `supabase/functions/`.
 
@@ -63,7 +63,7 @@ cp apps/web/.env.local.example apps/web/.env.local
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | `https://xxxx.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Public anon key |
 | `NEXT_PUBLIC_SITE_URL` | yes | `http://localhost:3000` in dev; `https://pluclair.com` in production |
-| `SUPABASE_SERVICE_ROLE_KEY` | optional | Only for “Delete account” on web |
+| `SUPABASE_SERVICE_ROLE_KEY` | optional | “Delete account” on web, and the daily cron jobs |
 | `APPLE_TEAM_ID` | optional | Passkeys on iOS — Apple Team ID for AASA |
 | `ANDROID_SHA256_FINGERPRINTS` | optional | Passkeys on Android — colon-hex SHA-256 fingerprints |
 
@@ -126,6 +126,34 @@ Set the same env vars as in `apps/web/.env.local`, and for **Production**:
 Domain: attach `pluclair.com` (and optionally `www`) under Project → Domains,
 then point Namecheap DNS at the records Vercel shows (usually A `@` →
 `10.0.1.2` and CNAME `www` → `cname.vercel-dns.com`).
+
+### Background jobs (Vercel cron)
+
+Two daily jobs are declared in `apps/web/vercel.json`. Both run under the
+service role, so both need `SUPABASE_SERVICE_ROLE_KEY`, and both refuse to run
+without `CRON_SECRET` — Vercel sends it as `Authorization: Bearer <secret>`.
+
+| Route | When | What it does |
+|-------|------|--------------|
+| `/api/cron/reprice` | 07:00 | Reprices share-priced occurrences not yet due |
+| `/api/cron/notify` | 08:00 | Sends the day's web push digest |
+
+**Repricing** brings occurrences that are applied but still dated ahead back
+in line with their instrument's quote, and refreshes each template's stored
+price. It never touches a date that has passed and never creates a
+transaction. This is what stops "Apply recurring" from asking about a DCA
+every time the market moves; without it, a month applied in advance keeps the
+price it was applied at.
+
+**Notifying** says at most one useful thing a day — a new month, a breached
+budget — and needs the VAPID keys as well; without them it no-ops.
+
+Both answer `200` with a JSON summary of what they did, so a run can be
+checked by hand:
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" https://pluclair.com/api/cron/reprice
+```
 
 ### Supabase auth URLs (production)
 

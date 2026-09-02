@@ -271,7 +271,7 @@ export function TransactionsView({
         return;
       }
 
-      const plan = result.plan ?? { toCreate: [], toUpdate: [] };
+      const plan = result.plan ?? { toCreate: [], toUpdate: [], toReprice: [] };
 
       if (plan.toCreate.length === 0 && plan.toUpdate.length === 0) {
         setApplyPending(false);

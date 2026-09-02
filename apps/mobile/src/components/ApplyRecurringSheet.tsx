@@ -56,6 +56,7 @@ function UpdateRow({
   const amountChanged = Math.abs(item.previousAmount - item.amount) > 0.009;
   const noteChanged =
     (item.previousNote?.trim() ?? "") !== (item.note?.trim() ?? "");
+  const categoryChanged = item.previousCategoryId !== item.categoryId;
 
   return (
     <Pressable
@@ -89,6 +90,11 @@ function UpdateRow({
         {noteChanged ? (
           <Text variant="muted" className="mt-1 text-xs">
             Note updated to match recurring template
+          </Text>
+        ) : null}
+        {categoryChanged ? (
+          <Text variant="muted" className="mt-1 text-xs">
+            Moved to the recurring template’s category
           </Text>
         ) : null}
       </View>
@@ -180,6 +186,13 @@ export function ApplyRecurringSheet({
             Adds missing recurring transactions for this month. Existing entries
             are left as-is unless you confirm updates below.
           </Text>
+          {plan.toReprice.length > 0 ? (
+            <Text variant="muted" className="mt-2 text-sm">
+              {`${plan.toReprice.length} ${
+                plan.toReprice.length === 1 ? "entry is" : "entries are"
+              } priced from the market and still ahead of today. Those follow their instrument on their own — nothing to confirm.`}
+            </Text>
+          ) : null}
 
           <ScrollView className="mt-4" showsVerticalScrollIndicator={false}>
             {hasUpdates ? (
