@@ -3,6 +3,7 @@ import {
   indexCategoriesByName,
   planFeed,
   type BankTransaction,
+  type ExistingLedgerRow,
   type FeedPlan,
   type PlannedFeedRow,
 } from "@finance/core/bank-feed";
@@ -27,6 +28,8 @@ export interface SyncOutcome {
   duplicates: number;
   /** Own transfers, unparseable rows, zero amounts. */
   discarded: number;
+  /** Already in the ledger — a recurring template had written them. */
+  matched: number;
   /** Per-account balances, for pre-filling a month close. */
   balances: {
     accountId: string;
@@ -84,7 +87,7 @@ export async function syncBankFeed(
         .eq("archived", false),
       supabase
         .from("bank_feed_items")
-        .select("provider_id")
+        .select("provider_id, transaction_id")
         .eq("user_id", userId),
     ]);
 
@@ -94,6 +97,23 @@ export async function syncBankFeed(
   // 85% of card payments against 65% for exact matching: the same shop split
   // across keys by a trailing branch or street was most of the difference.
   const bankMerchants = buildBankMerchantIndex(past);
+
+  // Which ledger rows a bank row could be a copy of. A feed item that already
+  // points at a transaction has claimed it, so a later sync cannot file a
+  // second bank row against the same one.
+  const claimedIds = new Set(
+    (seen ?? [])
+      .map((row) => (row as { transaction_id?: string | null }).transaction_id)
+      .filter((id): id is string => Boolean(id)),
+  );
+  const existing: ExistingLedgerRow[] = past.map((tx) => ({
+    transactionId: tx.id,
+    occurredOn: tx.occurred_on,
+    amount: Number(tx.amount),
+    isIncome: tx.categories.type === "income",
+    fromRecurringTemplate: tx.recurring_template_id !== null,
+    alreadyClaimed: claimedIds.has(tx.id),
+  }));
   const categoryIdsByName = indexCategoriesByName(categories ?? []);
   const seenProviderIds = new Set(
     (seen ?? []).map((row) => row.provider_id as string),
@@ -110,6 +130,7 @@ export async function syncBankFeed(
     pending: 0,
     duplicates: 0,
     discarded: 0,
+    matched: 0,
     balances: [],
   };
 
@@ -148,6 +169,7 @@ export async function syncBankFeed(
     const plan = planFeed(items, {
       merchants,
       bankMerchants,
+      existing,
       categoryIdsByName,
       seenProviderIds,
       ownIbans,
@@ -159,6 +181,7 @@ export async function syncBankFeed(
     const written = await writePlan(supabase, userId, account.id, plan);
     outcome.imported += written.imported;
     outcome.pending += written.pending;
+    outcome.matched += written.matched;
   }
 
   return outcome;
@@ -169,9 +192,36 @@ async function writePlan(
   userId: string,
   providerAccountId: string,
   plan: FeedPlan,
-): Promise<{ imported: number; pending: number }> {
+): Promise<{ imported: number; pending: number; matched: number }> {
   let imported = 0;
   let pending = 0;
+  let matched = 0;
+
+  // Recorded, but nothing new is written: the transaction is already there.
+  for (const row of plan.matched) {
+    if (row.decision.kind !== "match") {
+      continue;
+    }
+    const item = await insertFeedItem(
+      supabase,
+      userId,
+      providerAccountId,
+      row,
+      "pending",
+    );
+    if (!item) {
+      continue;
+    }
+    await supabase
+      .from("bank_feed_items")
+      .update({
+        status: "imported",
+        transaction_id: row.decision.transactionId,
+      })
+      .eq("id", item)
+      .eq("user_id", userId);
+    matched += 1;
+  }
 
   for (const row of plan.review) {
     const inserted = await insertFeedItem(
@@ -231,7 +281,7 @@ async function writePlan(
     imported += 1;
   }
 
-  return { imported, pending };
+  return { imported, pending, matched };
 }
 
 /** Returns the new item's id, or null when the row was already there. */
@@ -246,7 +296,9 @@ async function insertFeedItem(
   const decidedBy =
     decision.kind === "auto"
       ? `auto:${decision.suggestion.reason}`
-      : `review:${decision.why}`;
+      : decision.kind === "match"
+        ? "match:recurring"
+        : `review:${decision.why}`;
 
   const { data, error } = await supabase
     .from("bank_feed_items")
