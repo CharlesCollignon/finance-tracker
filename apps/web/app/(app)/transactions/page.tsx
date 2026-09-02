@@ -8,8 +8,11 @@ import { TransactionsView } from "@/components/finance/TransactionsView";
 import { BankInbox } from "@/components/finance/BankInbox";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { bankFeedConfigured } from "@/lib/bank/client";
-import { getDuplicatePairs, getPendingFeedItems } from "@/lib/queries/bank";
-import { DuplicateFinder } from "@/components/finance/DuplicateFinder";
+import {
+  countSwallowedFeedItems,
+  getPendingFeedItems,
+} from "@/lib/queries/bank";
+import { SwallowedRecovery } from "@/components/finance/SwallowedRecovery";
 
 interface TransactionsPageProps {
   searchParams: Promise<{ y?: string; m?: string }>;
@@ -39,18 +42,18 @@ export default async function TransactionsPage({
 
   // Only queried when a bank is actually connected, so the page costs nothing
   // extra on a deployment that has never seen the feed.
-  const [feedItems, duplicates] = bankFeedConfigured()
+  const [feedItems, swallowed] = bankFeedConfigured()
     ? await Promise.all([
         getPendingFeedItems(user.id),
-        getDuplicatePairs(user.id),
+        countSwallowedFeedItems(user.id),
       ])
-    : [null, []];
+    : [null, 0];
 
   return (
     <>
       {feedItems ? (
         <PageContainer className="flex flex-col gap-4 pb-0">
-          <DuplicateFinder pairs={duplicates} />
+          <SwallowedRecovery count={swallowed} />
           <BankInbox items={feedItems} categories={categories} />
         </PageContainer>
       ) : null}

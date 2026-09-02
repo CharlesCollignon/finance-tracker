@@ -298,23 +298,26 @@ export function decide(
   candidate: BankFeedCandidate,
   { merchants, bankMerchants, categoryIdsByName, existing = [] }: DecideOptions,
 ): FeedDecision {
-  // Asked first: whether this movement is already recorded is a different
-  // question from what category it belongs in, and the wrong answer here
-  // records the money twice.
+  // Whether this movement is already recorded is asked first, because the
+  // wrong answer here records the money twice. But it is only ever raised
+  // with the user, never acted on.
+  //
+  // It used to merge on its own when the existing row came from a recurring
+  // template, on the reasoning that a standing instruction predicts its own
+  // debit. That reasoning does not survive contact with a real statement.
+  // Matching on amount and a five-day window is far too weak where the
+  // amounts are small and round: a weekly ten-euro DCA and a ten-euro packet
+  // of cigarettes are indistinguishable to it, and the merge swallowed the
+  // cigarettes — no duplicate, just an expense that never arrived. A visible
+  // wrong guess is recoverable; a silent one is not.
   const already = findLedgerMatch(candidate, existing);
   if (already) {
-    // A standing instruction predicted this exact debit, so the bank
-    // confirming it is not news. A one-off that happens to share an amount
-    // and a date might be coincidence, and merging would quietly delete a
-    // real expense — so that one is put to the user.
-    return already.fromRecurringTemplate
-      ? { kind: "match", transactionId: already.transactionId }
-      : {
-          kind: "review",
-          suggestion: null,
-          why: "possible-duplicate",
-          matchTransactionId: already.transactionId,
-        };
+    return {
+      kind: "review",
+      suggestion: null,
+      why: "possible-duplicate",
+      matchTransactionId: already.transactionId,
+    };
   }
 
   const rule = lookupMerchant(merchants, candidate.note);

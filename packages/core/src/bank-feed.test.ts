@@ -356,15 +356,20 @@ describe("not recording the same movement twice", () => {
 
   const opts = { merchants: NO_MERCHANTS, categoryIdsByName: CATEGORIES };
 
-  it("files a bank row against the transaction a recurring template already wrote", () => {
-    // The card fee was applied from a template on the 1st; the bank now
-    // reports the same debit. One movement, one row.
+  it("raises a possible duplicate rather than merging it away", () => {
+    // It used to merge on its own when the existing row came from a
+    // template. On a real statement that swallowed a ten-euro purchase into
+    // an unrelated ten-euro DCA, so the guess is now always the user's.
     const decision = decide(toCandidate(bank())!, {
       ...opts,
       existing: [ledger()],
     });
 
-    expect(decision).toEqual({ kind: "match", transactionId: "tx-existing" });
+    expect(decision).toMatchObject({
+      kind: "review",
+      why: "possible-duplicate",
+      matchTransactionId: "tx-existing",
+    });
   });
 
   it("tolerates the bank debiting a few days off the nominal day", () => {
@@ -373,7 +378,7 @@ describe("not recording the same movement twice", () => {
       existing: [ledger({ occurredOn: "2026-09-09" })],
     });
 
-    expect(decision.kind).toBe("match");
+    expect(decision).toMatchObject({ why: "possible-duplicate" });
   });
 
   it("does not reach past the window", () => {
@@ -382,21 +387,19 @@ describe("not recording the same movement twice", () => {
       existing: [ledger({ occurredOn: "2026-09-01" })],
     });
 
-    expect(decision.kind).not.toBe("match");
+    expect(decision).not.toMatchObject({ why: "possible-duplicate" });
   });
 
-  it("will not merge on an amount that is merely close", () => {
+  it("will not pair on an amount that is merely close", () => {
     const decision = decide(toCandidate(bank())!, {
       ...opts,
       existing: [ledger({ amount: 42.2 })],
     });
 
-    expect(decision.kind).not.toBe("match");
+    expect(decision).not.toMatchObject({ why: "possible-duplicate" });
   });
 
-  it("asks before merging with something entered by hand", () => {
-    // A one-off that happens to share an amount and a date may be a
-    // coincidence, and merging would quietly delete a real expense.
+  it("asks about something entered by hand too", () => {
     const decision = decide(toCandidate(bank())!, {
       ...opts,
       existing: [ledger({ fromRecurringTemplate: false })],
@@ -424,16 +427,16 @@ describe("not recording the same movement twice", () => {
     expect(decision.kind).not.toBe("match");
   });
 
-  it("lets one ledger row answer for only one bank row", () => {
-    // Two identical debits, one existing transaction: the first is matched,
-    // the second is a genuinely new expense and must not vanish into it.
+  it("never files anything as matched, whatever it suspects", () => {
+    // Nothing may leave the ledger on a guess. Two identical debits against
+    // one existing transaction are two rows the user is asked about, not one
+    // row and one disappearance.
     const plan = planFeed([bank({ id: "a" }), bank({ id: "b" })], {
       ...opts,
       existing: [ledger()],
     });
 
-    expect(plan.matched).toHaveLength(1);
-    expect(plan.matched[0]!.candidate.providerId).toBe("a");
-    expect([...plan.automatic, ...plan.review]).toHaveLength(1);
+    expect(plan.matched).toHaveLength(0);
+    expect(plan.review).toHaveLength(2);
   });
 });
