@@ -166,6 +166,79 @@ export function toCandidate(
 
 /* ------------------------------------------------------------- deciding */
 
+/* ------------------------------------------------- what is already there */
+
+/**
+ * A transaction the ledger already holds, narrowed to what matching needs.
+ *
+ * The feed is not the only thing that knows about a debit. A recurring
+ * template predicts one — the card fee, the rent, the DCA — and applying it
+ * writes the row before the bank ever reports it. Importing the bank's copy
+ * on top would record the money twice and, worse, would make the month close
+ * say the account holds less than the ledger allows.
+ */
+export interface ExistingLedgerRow {
+  transactionId: string;
+  occurredOn: string;
+  /** Positive, as stored. */
+  amount: number;
+  /** Money out for everything except income. */
+  isIncome: boolean;
+  /** Written by applying a standing instruction, rather than by hand. */
+  fromRecurringTemplate: boolean;
+  /** A feed row already claims this one; it cannot answer for a second. */
+  alreadyClaimed: boolean;
+}
+
+/**
+ * How far a bank's date may sit from the ledger's and still be the same
+ * movement. A recurring template names a nominal day; the bank debits when it
+ * debits, and a weekend pushes it further.
+ */
+export const MATCH_WINDOW_DAYS = 5;
+
+function daysBetween(left: string, right: string): number {
+  const a = Date.parse(`${left}T00:00:00Z`);
+  const b = Date.parse(`${right}T00:00:00Z`);
+  return Math.abs(a - b) / 86_400_000;
+}
+
+/**
+ * The ledger row this bank row is probably a copy of.
+ *
+ * Amount must agree to the cent — a near-miss is a different purchase, not a
+ * rounding difference — and the nearest date within the window wins.
+ */
+export function findLedgerMatch(
+  candidate: BankFeedCandidate,
+  existing: readonly ExistingLedgerRow[],
+): ExistingLedgerRow | null {
+  const amount = Number(candidate.amount);
+  const wantsIncome = candidate.direction === "in";
+
+  let best: ExistingLedgerRow | null = null;
+  let bestDistance = Infinity;
+
+  for (const row of existing) {
+    if (row.alreadyClaimed || row.isIncome !== wantsIncome) {
+      continue;
+    }
+    if (Math.abs(row.amount - amount) > 0.009) {
+      continue;
+    }
+    const distance = daysBetween(row.occurredOn, candidate.occurredOn);
+    if (distance > MATCH_WINDOW_DAYS) {
+      continue;
+    }
+    if (distance < bestDistance) {
+      best = row;
+      bestDistance = distance;
+    }
+  }
+
+  return best;
+}
+
 export type FeedReason = "merchant" | "mcc";
 
 export interface FeedSuggestion {
@@ -177,10 +250,23 @@ export interface FeedSuggestion {
 export type FeedDecision =
   /** Written straight through: the user has already answered this one. */
   | { kind: "auto"; suggestion: FeedSuggestion }
+  /**
+   * The ledger already holds this movement — applying a recurring template
+   * wrote it before the bank reported it. Nothing new is created; the feed
+   * row is filed against the transaction that is already there.
+   */
+  | { kind: "match"; transactionId: string }
   /** Waits to be looked at, with a starting point where there is one. */
-  | { kind: "review"; suggestion: FeedSuggestion | null; why: ReviewReason };
+  | {
+      kind: "review";
+      suggestion: FeedSuggestion | null;
+      why: ReviewReason;
+      /** A ledger row this might be a duplicate of, for the user to judge. */
+      matchTransactionId?: string;
+    };
 
 export type ReviewReason =
+  | "possible-duplicate"
   | "unknown-merchant"
   | "needs-a-look"
   | "money-in"
@@ -202,14 +288,35 @@ export interface DecideOptions {
    * CSV path — whose notes are the user's own words — keeps exact matching.
    */
   bankMerchants?: BankMerchantIndex;
+  /** What the ledger already holds, so the feed does not record it twice. */
+  existing?: readonly ExistingLedgerRow[];
   /** Category name to id, for resolving what an MCC suggests. */
   categoryIdsByName: ReadonlyMap<string, { id: string; name: string }>;
 }
 
 export function decide(
   candidate: BankFeedCandidate,
-  { merchants, bankMerchants, categoryIdsByName }: DecideOptions,
+  { merchants, bankMerchants, categoryIdsByName, existing = [] }: DecideOptions,
 ): FeedDecision {
+  // Asked first: whether this movement is already recorded is a different
+  // question from what category it belongs in, and the wrong answer here
+  // records the money twice.
+  const already = findLedgerMatch(candidate, existing);
+  if (already) {
+    // A standing instruction predicted this exact debit, so the bank
+    // confirming it is not news. A one-off that happens to share an amount
+    // and a date might be coincidence, and merging would quietly delete a
+    // real expense — so that one is put to the user.
+    return already.fromRecurringTemplate
+      ? { kind: "match", transactionId: already.transactionId }
+      : {
+          kind: "review",
+          suggestion: null,
+          why: "possible-duplicate",
+          matchTransactionId: already.transactionId,
+        };
+  }
+
   const rule = lookupMerchant(merchants, candidate.note);
 
   // Money arriving is rarer and more consequential than money leaving — a
@@ -320,6 +427,8 @@ export interface PlannedFeedRow {
 
 export interface FeedPlan {
   automatic: PlannedFeedRow[];
+  /** Already in the ledger; filed against the row that is there. */
+  matched: PlannedFeedRow[];
   review: PlannedFeedRow[];
   /** Rows the ledger should never hold: own transfers, unparseable, zero. */
   discarded: number;
@@ -341,7 +450,14 @@ export function planFeed(
     ToCandidateOptions & { seenProviderIds?: ReadonlySet<string> },
 ): FeedPlan {
   const seen = options.seenProviderIds ?? new Set<string>();
+  // Grows as the pass goes on: one ledger row can only answer for one bank row.
+  const claimed = new Set<string>();
+  const unclaimed = () =>
+    (options.existing ?? []).map((row) =>
+      claimed.has(row.transactionId) ? { ...row, alreadyClaimed: true } : row,
+    );
   const automatic: PlannedFeedRow[] = [];
+  const matched: PlannedFeedRow[] = [];
   const review: PlannedFeedRow[] = [];
   let discarded = 0;
   let duplicates = 0;
@@ -358,14 +474,22 @@ export function planFeed(
       continue;
     }
 
-    const decision = decide(candidate, options);
-    (decision.kind === "auto" ? automatic : review).push({
-      candidate,
-      decision,
-    });
+    const decision = decide(candidate, { ...options, existing: unclaimed() });
+    const row = { candidate, decision };
+
+    if (decision.kind === "match") {
+      // Claimed, so a second bank row with the same amount and date cannot
+      // also answer to it.
+      claimed.add(decision.transactionId);
+      matched.push(row);
+    } else if (decision.kind === "auto") {
+      automatic.push(row);
+    } else {
+      review.push(row);
+    }
   }
 
-  return { automatic, review, discarded, duplicates };
+  return { automatic, matched, review, discarded, duplicates };
 }
 
 /** Category name index in the shape `decide` wants. */
@@ -391,6 +515,8 @@ export function describeReviewReason(why: ReviewReason): string {
       return "Cash or a transfer — not spending yet";
     case "no-such-category":
       return "No category for this kind of spending yet";
+    case "possible-duplicate":
+      return "You may already have entered this";
     case "unknown-merchant":
       return "First time here";
   }

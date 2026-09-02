@@ -183,7 +183,9 @@ describe("decide", () => {
       categoryIdsByName: new Map(),
     });
     expect(decision.kind).toBe("review");
-    expect(decision.suggestion).toMatchObject({ categoryId: "cat-groceries" });
+    expect(decision.kind === "review" && decision.suggestion).toMatchObject({
+      categoryId: "cat-groceries",
+    });
   });
 
   it("falls back to the card network's own code for an unseen merchant", () => {
@@ -209,7 +211,7 @@ describe("decide", () => {
       { merchants: NO_MERCHANTS, categoryIdsByName: CATEGORIES },
     );
     expect(decision).toMatchObject({ kind: "review", why: "no-such-category" });
-    expect(decision.suggestion).toBeNull();
+    expect(decision.kind === "review" && decision.suggestion).toBeNull();
   });
 
   it("never writes a cash withdrawal through, however familiar", () => {
@@ -336,5 +338,102 @@ describe("planFeed", () => {
       categoryIdsByName: CATEGORIES,
     });
     expect(plan.automatic).toHaveLength(2);
+  });
+});
+
+describe("not recording the same movement twice", () => {
+  const ledger = (
+    overrides: Partial<import("./bank-feed").ExistingLedgerRow> = {},
+  ) => ({
+    transactionId: "tx-existing",
+    occurredOn: "2026-09-12",
+    amount: 42.1,
+    isIncome: false,
+    fromRecurringTemplate: true,
+    alreadyClaimed: false,
+    ...overrides,
+  });
+
+  const opts = { merchants: NO_MERCHANTS, categoryIdsByName: CATEGORIES };
+
+  it("files a bank row against the transaction a recurring template already wrote", () => {
+    // The card fee was applied from a template on the 1st; the bank now
+    // reports the same debit. One movement, one row.
+    const decision = decide(toCandidate(bank())!, {
+      ...opts,
+      existing: [ledger()],
+    });
+
+    expect(decision).toEqual({ kind: "match", transactionId: "tx-existing" });
+  });
+
+  it("tolerates the bank debiting a few days off the nominal day", () => {
+    const decision = decide(toCandidate(bank())!, {
+      ...opts,
+      existing: [ledger({ occurredOn: "2026-09-09" })],
+    });
+
+    expect(decision.kind).toBe("match");
+  });
+
+  it("does not reach past the window", () => {
+    const decision = decide(toCandidate(bank())!, {
+      ...opts,
+      existing: [ledger({ occurredOn: "2026-09-01" })],
+    });
+
+    expect(decision.kind).not.toBe("match");
+  });
+
+  it("will not merge on an amount that is merely close", () => {
+    const decision = decide(toCandidate(bank())!, {
+      ...opts,
+      existing: [ledger({ amount: 42.2 })],
+    });
+
+    expect(decision.kind).not.toBe("match");
+  });
+
+  it("asks before merging with something entered by hand", () => {
+    // A one-off that happens to share an amount and a date may be a
+    // coincidence, and merging would quietly delete a real expense.
+    const decision = decide(toCandidate(bank())!, {
+      ...opts,
+      existing: [ledger({ fromRecurringTemplate: false })],
+    });
+
+    expect(decision).toMatchObject({
+      kind: "review",
+      why: "possible-duplicate",
+      matchTransactionId: "tx-existing",
+    });
+  });
+
+  it("never merges money in with money out", () => {
+    const decision = decide(
+      toCandidate(
+        bank({
+          creditDebitIndicator: "CRDT",
+          creditorName: null,
+          debtorName: "X",
+        }),
+      )!,
+      { ...opts, existing: [ledger()] },
+    );
+
+    expect(decision.kind).not.toBe("match");
+  });
+
+  it("lets one ledger row answer for only one bank row", () => {
+    // Two identical debits, one existing transaction: the first is matched,
+    // the second is a genuinely new expense and must not vanish into it.
+    const plan = planFeed([bank({ id: "a" }), bank({ id: "b" })], {
+      ...opts,
+      existing: [ledger()],
+    });
+
+    expect(plan.matched).toHaveLength(1);
+    expect(plan.matched[0]!.candidate.providerId).toBe("a");
+    expect([...plan.automatic, ...plan.review]).toHaveLength(1);
   });
 });

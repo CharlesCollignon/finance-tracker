@@ -31,6 +31,9 @@ export async function syncBankFeedAction(): Promise<
     revalidateFeedDependents();
 
     const parts = [`${outcome.imported} added`];
+    if (outcome.matched > 0) {
+      parts.push(`${outcome.matched} already recorded`);
+    }
     if (outcome.pending > 0) {
       parts.push(`${outcome.pending} to review`);
     }
