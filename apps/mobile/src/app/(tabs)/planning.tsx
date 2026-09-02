@@ -13,7 +13,7 @@ import {
   computeGoalPacing,
   type GoalPacing,
 } from "@finance/core/savings-goals";
-import { getCurrentMonth } from "@finance/core/constants";
+import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import type {
   Budget,
   Category,
@@ -32,7 +32,8 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { ProjectionCard } from "@/components/ProjectionCard";
-import { useDataVersion } from "@/lib/data-version";
+import { MonthCloseHistoryCard } from "@/components/MonthCloseHistoryCard";
+import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -40,11 +41,13 @@ import { progressTone } from "@/lib/progress-tone";
 import {
   getBudgets,
   getCategories,
+  getMonthCloseOverview,
   getMonthlySummary,
   getRecurringTemplates,
   getSavingsGoals,
   getSavingsReserve,
   getTags,
+  type MonthCloseOverview,
 } from "@/lib/queries";
 import {
   deleteBudget,
@@ -106,19 +109,29 @@ export default function PlanningScreen() {
           goalProgress: [] as ReturnType<typeof buildSavingsGoalProgress>,
           projection: [] as ProjectionPoint[],
           runway: null as Runway | null,
+          closes: null as MonthCloseOverview | null,
         };
       }
 
-      const [budgets, goals, tags, categories, summary, templates, reserve] =
-        await Promise.all([
-          getBudgets(user.id),
-          getSavingsGoals(user.id),
-          getTags(user.id),
-          getCategories(user.id),
-          getMonthlySummary(user.id, current.year, current.month),
-          getRecurringTemplates(user.id),
-          getSavingsReserve(user.id),
-        ]);
+      const [
+        budgets,
+        goals,
+        tags,
+        categories,
+        summary,
+        templates,
+        reserve,
+        closes,
+      ] = await Promise.all([
+        getBudgets(user.id),
+        getSavingsGoals(user.id),
+        getTags(user.id),
+        getCategories(user.id),
+        getMonthlySummary(user.id, current.year, current.month),
+        getRecurringTemplates(user.id),
+        getSavingsReserve(user.id),
+        getMonthCloseOverview(user.id, todayIsoLocal()),
+      ]);
 
       const categoryNames = new Map(
         categories.map((c) => [c.id, c.name] as const),
@@ -147,6 +160,7 @@ export default function PlanningScreen() {
           { months: 12 },
         ),
         runway: buildRunway(reserve, templates, current.year, current.month),
+        closes,
       };
     }, [user?.id, current.year, current.month, dataVersion]);
 
@@ -229,6 +243,19 @@ export default function PlanningScreen() {
             points={data?.projection ?? []}
             runway={data?.runway ?? null}
           />
+
+          {data?.closes ? (
+            <MonthCloseHistoryCard
+              history={data.closes.history}
+              summary={data.closes.summary}
+              unrecordedCap={data.closes.settings.unrecordedCap}
+              closeDay={data.closes.settings.closeDay}
+              onChanged={() => {
+                notifyDataChanged();
+                void onRefresh();
+              }}
+            />
+          ) : null}
 
           <Text className="text-base">Monthly budgets</Text>
 
