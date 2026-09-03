@@ -105,8 +105,8 @@ function RecurringFormFields({
     if (state.success) {
       toast(
         template
-          ? "Updated. Apply recurring on Transactions to see changes."
-          : "Saved. Apply recurring on Transactions to see changes.",
+          ? "Updated. Apply recurring in the Ledger to see the change."
+          : "Saved. Apply recurring in the Ledger to see the change.",
         "success",
       );
       onOpenChange(false);
@@ -126,7 +126,7 @@ function RecurringFormFields({
         toast(result.error, "error");
       } else {
         toast(
-          "Deleted. Apply recurring on Transactions to see changes.",
+          "Deleted. Apply recurring in the Ledger to see the change.",
           "success",
         );
         onOpenChange(false);

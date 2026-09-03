@@ -30,11 +30,13 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
   const next = shiftMonth(year, month, 1);
 
   return (
-    <div className={cn("flex items-center gap-1", className)}>
+    <div className={cn("flex items-center gap-0.5 sm:gap-1", className)}>
       <Link
         href={`${basePath}${monthSearchParams(prev.year, prev.month, view)}`}
         className={cn(
-          "flex h-11 w-11 items-center justify-center rounded",
+          // Narrower, never shorter: the 44px touch height is kept, and only
+          // the horizontal padding gives way on a phone.
+          "flex h-11 w-10 items-center justify-center rounded sm:w-11",
           "border border-border hover:bg-accent",
         )}
         aria-label="Previous month"
@@ -44,13 +46,13 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
       <span className="hidden min-w-[9rem] text-center text-sm font-medium sm:inline">
         {formatMonthLabel(year, month)}
       </span>
-      <span className="min-w-[4.5rem] text-center text-sm font-medium sm:hidden">
+      <span className="min-w-[3.75rem] text-center text-sm font-medium sm:hidden">
         {formatMonthCompact(year, month)}
       </span>
       <Link
         href={`${basePath}${monthSearchParams(next.year, next.month, view)}`}
         className={cn(
-          "flex h-11 w-11 items-center justify-center rounded",
+          "flex h-11 w-10 items-center justify-center rounded sm:w-11",
           "border border-border hover:bg-accent",
         )}
         aria-label="Next month"

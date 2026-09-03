@@ -369,7 +369,7 @@ export function TransactionsView({
       <PageContainer className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <SurfaceTabs tabs={LEDGER_TABS} />
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             <span className="relative inline-flex">
               <Button
                 variant={applyPending ? "default" : "ghost"}

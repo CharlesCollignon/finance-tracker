@@ -244,7 +244,7 @@ function InvestmentPositionForm({
               <p className="text-xs text-muted-foreground">
                 {isCrypto
                   ? "Fixed EUR DCA · Bitcoin on Bitstack"
-                  : "Fixed EUR DCA · ETF set on Recurring"}
+                  : "Fixed EUR DCA · ETF set under Plan"}
               </p>
             </div>
           </div>

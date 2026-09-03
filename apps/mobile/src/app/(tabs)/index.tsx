@@ -24,8 +24,12 @@ import type { MonthlySummary } from "@finance/core/types/database";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
 
 import { ApplyRecurringSheet } from "@/components/ApplyRecurringSheet";
-import { MonthAttention, type AttentionItem } from "@/components/MonthAttention";
+import {
+  MonthAttention,
+  type AttentionItem,
+} from "@/components/MonthAttention";
 import { MonthCloseSheet } from "@/components/MonthCloseSheet";
+import { MonthFirstRun } from "@/components/MonthFirstRun";
 import { MonthPicker } from "@/components/MonthPicker";
 import { MonthStanding } from "@/components/MonthStanding";
 import { MonthWallets } from "@/components/MonthWallets";
@@ -171,6 +175,7 @@ export default function MonthScreen() {
           goalProgress: [] as ReturnType<typeof buildSavingsGoalProgress>,
           trend: [] as MonthlyTrendPoint[],
           closes: null as MonthCloseOverview | null,
+          templateCount: 0,
           monthlyCommitted: 0,
         };
       }
@@ -233,6 +238,7 @@ export default function MonthScreen() {
           summary.savings,
         ),
         closes,
+        templateCount: templates.length,
         // Committed outgoings, for turning a month's saving into days of
         // runway. Always the month in progress: closing an older month does
         // not change what this one costs to live through.
@@ -250,6 +256,16 @@ export default function MonthScreen() {
   const goalProgress = data?.goalProgress ?? [];
   const closes = data?.closes ?? null;
   const monthLabel = formatMonthLabel(year, month);
+
+  // Nothing set up and nothing recorded: the standing card would report "0 €
+  // left" over two more zeros, which is a correct answer to a question nobody
+  // asked. Show the way in instead.
+  const firstRun =
+    (data?.templateCount ?? 0) === 0 &&
+    budgetProgress.length === 0 &&
+    goalProgress.length === 0 &&
+    (summary?.income ?? 0) === 0 &&
+    (summary?.expenses ?? 0) === 0;
 
   const savingsRate = summary
     ? savingsRatePercent(
@@ -372,16 +388,20 @@ export default function MonthScreen() {
         >
           <MonthAttention items={attention} />
 
-          <MonthStanding
-            monthLabel={monthLabel}
-            income={summary.income}
-            expenses={summary.expenses}
-            remaining={summary.remaining}
-            budgetView={view}
-            elapsed={elapsed}
-            comparison={comparison}
-            savingsRate={savingsRate}
-          />
+          {firstRun ? (
+            <MonthFirstRun />
+          ) : (
+            <MonthStanding
+              monthLabel={monthLabel}
+              income={summary.income}
+              expenses={summary.expenses}
+              remaining={summary.remaining}
+              budgetView={view}
+              elapsed={elapsed}
+              comparison={comparison}
+              savingsRate={savingsRate}
+            />
+          )}
 
           {summary.expenses > 0 ? (
             <SummaryCard
