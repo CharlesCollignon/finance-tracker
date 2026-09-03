@@ -43,6 +43,13 @@ export interface BankTransaction {
   debtorIban: string | null;
   remittanceInformation: string | null;
   merchantCategoryCode: string | null;
+  /**
+   * The account's running balance after this row, as a decimal string, where
+   * the bank gave one. Optional in PSD2 and absent from some banks — but
+   * where it is present it is what lets a past month-end balance be read off
+   * the statement instead of typed in by hand.
+   */
+  balanceAfterTransaction?: string | null;
 }
 
 export type FeedDirection = "in" | "out";
@@ -63,6 +70,11 @@ export interface BankFeedCandidate {
   /** Merchant for money out, payer for money in. */
   counterparty: string | null;
   merchantCategoryCode: string | null;
+  /**
+   * The running balance after this row, kept as the provider's decimal string
+   * for the same reason `amount` is. Null where the bank gave none.
+   */
+  balanceAfter: string | null;
   /** What the transaction's note becomes, and what merchant memory matches on. */
   note: string;
 }
@@ -160,6 +172,7 @@ export function toCandidate(
     direction,
     counterparty,
     merchantCategoryCode: tx.merchantCategoryCode?.trim() || null,
+    balanceAfter: tx.balanceAfterTransaction?.trim() || null,
     note,
   };
 }

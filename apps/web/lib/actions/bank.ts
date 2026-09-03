@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { findLedgerMatch } from "@finance/core/bank-feed";
 import { getBankConnection } from "@/lib/bank/client";
 import { ledgerRowsAround } from "@/lib/bank/duplicates";
+import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
 import { getRecurringProposals } from "@/lib/queries/bank";
 import { todayIsoLocal } from "@finance/core/constants";
@@ -31,12 +32,24 @@ export async function syncBankFeedAction(
   }
 
   try {
-    const outcome = await syncBankFeed(await createClient(), user.id, {
+    const supabase = await createClient();
+    const outcome = await syncBankFeed(supabase, user.id, {
       backfill,
     });
+
+    // Straight after the statement is filed: the balance a close measures
+    // against has just arrived, and waiting for tomorrow's cron to notice
+    // would leave the month sitting there asking to be closed by hand.
+    const closes = await autoCloseMonths(supabase, user.id);
+
     revalidateFeedDependents();
 
     const parts = [`${outcome.imported} added`];
+    if (closes.closed.length > 0) {
+      parts.push(
+        `${closes.closed.length} ${closes.closed.length === 1 ? "month" : "months"} closed`,
+      );
+    }
     if (outcome.matched > 0) {
       parts.push(`${outcome.matched} already recorded`);
     }
@@ -113,6 +126,7 @@ export async function importFeedItem(
         direction: item.direction,
         counterparty: null,
         merchantCategoryCode: null,
+        balanceAfter: null,
         note: item.note,
       },
       existing,
@@ -374,4 +388,44 @@ export async function dismissRecurringProposal(
 
   revalidatePath("/recurring");
   return { success: true, message: "Won't suggest that again" };
+}
+
+/**
+ * Say whether an account's money is part of "what I have to spend".
+ *
+ * Nothing is counted until it is said explicitly. A connection can expose
+ * accounts nobody spends from, and one whose consent has lapsed reads as an
+ * empty account rather than an unreadable one — so counting by default is how
+ * a month close ends up explaining a phantom hole with invented spending.
+ */
+export async function setAccountCountsAsCash(
+  providerAccountId: string,
+  counts: boolean,
+): Promise<ActionResult> {
+  const user = await getAuthUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("bank_accounts")
+    .update({ counts_as_cash: counts })
+    .eq("user_id", user.id)
+    .eq("provider_account_id", providerAccountId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  // Ticking an account can make a month closable that was not before.
+  try {
+    await autoCloseMonths(supabase, user.id);
+  } catch {
+    // A close that cannot be worked out is not a reason to reject the tick.
+  }
+
+  revalidatePath("/budgets");
+  revalidatePath("/dashboard");
+  return { success: true };
 }
