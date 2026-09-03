@@ -25,10 +25,7 @@ import { MonthPicker } from "@/components/MonthPicker";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { deleteTransactions } from "@/lib/mutations";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
-import {
-  RowCheckbox,
-  SelectionBar,
-} from "@/components/SelectionBar";
+import { RowCheckbox, SelectionBar } from "@/components/SelectionBar";
 import {
   selectAllState,
   summarizeSelection,
@@ -329,7 +326,9 @@ export default function CalendarScreen() {
                       : `Edit ${tx.categories.name}`
                   }
                   accessibilityState={
-                    selectMode ? { selected: selectedIds.has(tx.id) } : undefined
+                    selectMode
+                      ? { selected: selectedIds.has(tx.id) }
+                      : undefined
                   }
                   onPress={() => {
                     void hapticLight();

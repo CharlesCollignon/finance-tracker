@@ -135,7 +135,11 @@ export function BankInbox({ items, categories, showBackfill }: BankInboxProps) {
               >
                 <div className="flex items-baseline justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
+                    {/* Wraps rather than truncates: the whole decision on
+                        this row is what the line says, and a bank writes
+                        "PRELEVEMENT Navigo Annuel - COMUTITRES SAS", which
+                        clipped to "PRELEVEMENT Navi…" tells you nothing. */}
+                    <p className="text-sm font-medium">
                       {item.counterparty ?? item.note}
                     </p>
                     <p className="text-xs text-muted-foreground">

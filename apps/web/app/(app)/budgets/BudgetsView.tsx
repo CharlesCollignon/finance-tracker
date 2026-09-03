@@ -8,7 +8,6 @@ import { Input } from "@/components/retroui/Input";
 import { FormLabel } from "@/components/layout/FormLabel";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { PLAN_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { ProgressRing } from "@/components/finance/charts";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
@@ -149,7 +148,6 @@ export function BudgetsView({
       <PageHeader title="Plan" />
 
       <PageContainer className="flex flex-col gap-4">
-        <SurfaceTabs tabs={PLAN_TABS} />
 
         <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 md:p-5">
           <div className="flex items-baseline justify-between gap-3">

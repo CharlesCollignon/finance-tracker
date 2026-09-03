@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { cn } from "@/lib/utils";
-import { BOTTOM_NAV_ITEMS } from "@/lib/navigation";
+import { activeNavHref, BOTTOM_NAV_ITEMS } from "@/lib/navigation";
 
 export function BottomNav({
   displayName,
@@ -30,7 +30,7 @@ export function BottomNav({
         )}
       >
         {BOTTOM_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const active = pathname.startsWith(href);
+          const active = activeNavHref(pathname) === href;
 
           return (
             <Link
@@ -38,7 +38,7 @@ export function BottomNav({
               href={href}
               className={cn(
                 "relative flex min-w-[44px] flex-1 flex-col items-center",
-                "justify-center gap-0.5 rounded-full mx-0.5 my-1 px-1 py-1",
+                "justify-center gap-0.5 rounded-full mx-0.5 my-1 px-0.5 py-1",
                 "text-[10px] font-medium sm:text-xs",
                 "transition-colors duration-200",
                 active

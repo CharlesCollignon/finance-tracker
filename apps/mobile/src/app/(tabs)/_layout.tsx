@@ -20,12 +20,14 @@ type TabConfig = {
 };
 
 /**
- * Four surfaces, mirroring APP_NAV_ITEMS on web.
+ * Five surfaces, mirroring APP_NAV_ITEMS on web.
  *
- * There were six, and two of them were not destinations at all: Calendar is
- * the Ledger seen by date, and Recurring is the Plan seen as a list of
- * charges. Both are now views inside the surface they belong to, reached by
- * the tabs at the top of it — see SurfaceTabs. Profile lives in the header
+ * There were six, and one of them was not a destination: Calendar is the
+ * Ledger seen by date, and it is now a view inside it — see SurfaceTabs.
+ * Charges briefly went the same way, filed under Plan on the reasoning that a
+ * standing charge is part of the plan. True about the data, wrong about the
+ * use: it is the list people edit most often, and a tab away is the wrong
+ * place for the app's most frequent destination. Profile lives in the header
  * account menu.
  */
 const TABS: TabConfig[] = [
@@ -40,6 +42,12 @@ const TABS: TabConfig[] = [
     title: "Ledger",
     icon: "swap-horizontal",
     iconInactive: "swap-horizontal-outline",
+  },
+  {
+    name: "recurring",
+    title: "Charges",
+    icon: "repeat",
+    iconInactive: "repeat-outline",
   },
   {
     name: "planning",
@@ -71,7 +79,7 @@ export default function TabsLayout() {
             tabBarActiveTintColor: colors.primary,
             tabBarInactiveTintColor: colors.mutedForeground,
             tabBarLabelStyle: { fontSize: 10, fontWeight: "500" },
-            tabBarItemStyle: { paddingVertical: 4 },
+            tabBarItemStyle: { paddingVertical: 4, paddingHorizontal: 2 },
             // Blur only means something if content passes beneath the bar, so it
             // overlays rather than docks. Screens pad their scroll content to
             // clear it.
@@ -108,9 +116,8 @@ export default function TabsLayout() {
               }}
             />
           ))}
-          {/* Views of a surface above, not destinations of their own. */}
+          {/* A view of the Ledger, not a destination of its own. */}
           <Tabs.Screen name="calendar" options={{ href: null }} />
-          <Tabs.Screen name="recurring" options={{ href: null }} />
           {/* Reachable from the header account menu, not the tab bar. */}
           <Tabs.Screen name="profile" options={{ href: null }} />
         </Tabs>

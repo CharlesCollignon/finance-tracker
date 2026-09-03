@@ -63,9 +63,3 @@ export const LEDGER_TABS: SurfaceTab[] = [
   { href: "/calendar", label: "Calendar" },
   { href: "/history", label: "By category" },
 ];
-
-/** The Plan's views: what repeats, and what it adds up to. */
-export const PLAN_TABS: SurfaceTab[] = [
-  { href: "/recurring", label: "Charges" },
-  { href: "/budgets", label: "Caps & goals" },
-];

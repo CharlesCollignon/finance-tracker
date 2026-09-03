@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Plus } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { APP_NAV_ITEMS } from "@/lib/navigation";
+import { activeNavHref, APP_NAV_ITEMS } from "@/lib/navigation";
 import { SHELL_HEADER_BAND_CLASS } from "@/lib/layout-shell";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { Logo } from "@/components/layout/Logo";
@@ -69,24 +69,54 @@ export function SideNav({
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
-        {APP_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const active = pathname.startsWith(href);
+        {APP_NAV_ITEMS.map(({ href, label, icon: Icon, children }) => {
+          const active = activeNavHref(pathname) === href;
 
           return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex min-h-10 items-center gap-3 rounded-md px-3 py-2",
-                "text-sm font-medium transition-colors duration-200",
-                active
-                  ? "bg-primary/10 text-primary-ink"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              <Icon size={18} weight={active ? "fill" : "light"} />
-              {label}
-            </Link>
+            <div key={href} className="flex flex-col gap-0.5">
+              <Link
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex min-h-10 items-center gap-3 rounded-md px-3 py-2",
+                  "text-sm font-medium transition-colors duration-200",
+                  active
+                    ? "bg-primary/10 text-primary-ink"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <Icon size={18} weight={active ? "fill" : "light"} />
+                {label}
+              </Link>
+
+              {/* Only while you are in the surface: a permanently expanded
+                  tree turns five destinations back into eight, which is the
+                  thing the nav was collapsed to avoid. */}
+              {active && children.length > 0 ? (
+                <ul className="ml-[1.65rem] flex flex-col border-l border-border">
+                  {children.map((child) => {
+                    const here = pathname === child.href;
+                    return (
+                      <li key={child.href}>
+                        <Link
+                          href={child.href}
+                          aria-current={here ? "page" : undefined}
+                          className={cn(
+                            "-ml-px flex min-h-9 items-center border-l pl-3 text-sm",
+                            "transition-colors duration-200",
+                            here
+                              ? "border-primary-rim font-medium text-foreground"
+                              : "border-transparent text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          {child.label}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : null}
+            </div>
           );
         })}
       </nav>

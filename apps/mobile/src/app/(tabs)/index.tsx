@@ -13,6 +13,7 @@ import {
   type BudgetViewMode,
 } from "@finance/core/constants";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
+import { buildStillToCome } from "@finance/core/still-to-come";
 import { buildMonthComparison } from "@finance/core/month-comparison";
 import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
 import { buildRunway } from "@finance/core/projection";
@@ -32,6 +33,7 @@ import { MonthCloseSheet } from "@/components/MonthCloseSheet";
 import { MonthFirstRun } from "@/components/MonthFirstRun";
 import { MonthPicker } from "@/components/MonthPicker";
 import { MonthStanding } from "@/components/MonthStanding";
+import { StillToCome } from "@/components/StillToCome";
 import { MonthWallets } from "@/components/MonthWallets";
 import { ProgressRing, SpendStrip } from "@/components/charts";
 import { TrendCard } from "@/components/TrendCard";
@@ -61,6 +63,7 @@ import {
   getMonthlyTrend,
   getRecurringTemplates,
   getSavingsGoals,
+  getSkippedOccurrences,
   getTransactions,
   getWalletPortfolio,
   type MonthCloseOverview,
@@ -176,6 +179,7 @@ export default function MonthScreen() {
           trend: [] as MonthlyTrendPoint[],
           closes: null as MonthCloseOverview | null,
           templateCount: 0,
+          upcoming: null as ReturnType<typeof buildStillToCome> | null,
           monthlyCommitted: 0,
         };
       }
@@ -194,6 +198,7 @@ export default function MonthScreen() {
         preview,
         templates,
         closes,
+        skipped,
       ] = await Promise.all([
         getMonthlySummary(user.id, year, month, view),
         getWalletPortfolio(user.id, { includeHistory: false }),
@@ -208,6 +213,7 @@ export default function MonthScreen() {
         previewApplyRecurringForMonth(year, month),
         getRecurringTemplates(user.id),
         getMonthCloseOverview(user.id, todayIsoLocal()),
+        getSkippedOccurrences(user.id, year, month),
       ]);
       const categoryNames = new Map(
         categories.map((c) => [c.id, c.name] as const),
@@ -239,6 +245,16 @@ export default function MonthScreen() {
         ),
         closes,
         templateCount: templates.length,
+        upcoming: buildStillToCome(
+          currentTx,
+          templates,
+          year,
+          month,
+          todayIsoLocal(),
+          new Set(
+            skipped.map((entry) => `${entry.templateId}:${entry.occurredOn}`),
+          ),
+        ),
         // Committed outgoings, for turning a month's saving into days of
         // runway. Always the month in progress: closing an older month does
         // not change what this one costs to live through.
@@ -255,6 +271,7 @@ export default function MonthScreen() {
   const budgetProgress = data?.budgetProgress ?? [];
   const goalProgress = data?.goalProgress ?? [];
   const closes = data?.closes ?? null;
+  const upcoming = data?.upcoming ?? null;
   const monthLabel = formatMonthLabel(year, month);
 
   // Nothing set up and nothing recorded: the standing card would report "0 €
@@ -278,11 +295,10 @@ export default function MonthScreen() {
 
   // Only a month in progress has an "of it gone" to report.
   const current = getCurrentMonth();
-  const elapsed =
-    year === current.year && month === current.month
-      ? Number(todayIsoLocal().slice(8, 10)) /
-        new Date(year, month, 0).getDate()
-      : null;
+  const isCurrentMonth = year === current.year && month === current.month;
+  const elapsed = isCurrentMonth
+    ? Number(todayIsoLocal().slice(8, 10)) / new Date(year, month, 0).getDate()
+    : null;
 
   const planCounts = plan ? applyRecurringPlanCounts(plan) : null;
   const attention: AttentionItem[] = [];
@@ -400,8 +416,23 @@ export default function MonthScreen() {
               elapsed={elapsed}
               comparison={comparison}
               savingsRate={savingsRate}
+              asOf={
+                isCurrentMonth && view === "current" ? todayIsoLocal() : null
+              }
             />
           )}
+
+          {/* Only in the as-of-today view: the month-end view has already
+              counted these into the headline, so listing them again would
+              invite the reader to subtract them twice. */}
+          {!firstRun && view === "current" && upcoming ? (
+            <StillToCome
+              outgoing={upcoming.outgoing}
+              leaving={upcoming.leaving}
+              incoming={upcoming.incoming}
+              arriving={upcoming.arriving}
+            />
+          ) : null}
 
           {summary.expenses > 0 ? (
             <SummaryCard
