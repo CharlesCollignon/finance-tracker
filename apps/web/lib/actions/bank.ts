@@ -347,3 +347,31 @@ export async function acceptRecurringProposal(
   revalidatePath("/recurring");
   return { success: true, message: `${proposal.label} added` };
 }
+
+/** Refuse one suggestion for good. */
+export async function dismissRecurringProposal(
+  key: string,
+): Promise<ActionResult> {
+  const user = await getAuthUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+  if (!key.trim()) {
+    return { error: "Invalid selection" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("recurring_proposal_dismissals")
+    .upsert(
+      { user_id: user.id, merchant_key: key.trim() },
+      { onConflict: "user_id,merchant_key", ignoreDuplicates: true },
+    );
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/recurring");
+  return { success: true, message: "Won't suggest that again" };
+}

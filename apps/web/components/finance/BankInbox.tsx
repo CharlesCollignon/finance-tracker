@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { ArrowsClockwise } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
+import { MobileSheet } from "@/components/layout/MobileSheet";
 import { CategorySelect } from "@/components/finance/CategorySelect";
 import { useToast } from "@/components/layout/ToastProvider";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -37,6 +37,7 @@ export function BankInbox({ items, categories, showBackfill }: BankInboxProps) {
   const formatMoney = useFormatCurrency();
   const [pending, startTransition] = useTransition();
   const [choices, setChoices] = useState<Record<string, string>>({});
+  const [open, setOpen] = useState(false);
 
   function sync(backfill = false) {
     startTransition(async () => {
@@ -67,48 +68,66 @@ export function BankInbox({ items, categories, showBackfill }: BankInboxProps) {
     });
   }
 
-  return (
-    <Card className="block w-full">
-      <Card.Header>
-        <div className="flex items-center justify-between gap-3">
-          <Card.Title>From your bank</Card.Title>
-          <div className="flex items-center gap-2">
-            {/* Offered once: after the first pull there is nothing older to
-                fetch, and the routine window covers everything since. */}
-            {showBackfill ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={pending}
-                onClick={() => sync(true)}
-              >
-                Fetch everything
-              </Button>
-            ) : null}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              disabled={pending}
-              onClick={() => sync(false)}
-            >
-              <ArrowsClockwise size={14} />
-              {pending ? "Syncing…" : "Sync"}
-            </Button>
-          </div>
-        </div>
-        <Card.Description>
-          {items.length === 0
-            ? "Nothing waiting. Anything the app already recognised went straight in."
-            : `${items.length} ${items.length === 1 ? "entry needs" : "entries need"} a category. Answering one teaches the app for next time.`}
-        </Card.Description>
-      </Card.Header>
+  const bar = (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-2.5">
+      <p className="min-w-0 text-sm">
+        {items.length === 0 ? (
+          <span className="text-muted-foreground">
+            Nothing waiting from your bank.
+          </span>
+        ) : (
+          <>
+            <span className="font-medium">{items.length}</span>{" "}
+            <span className="text-muted-foreground">
+              {items.length === 1 ? "entry needs" : "entries need"} a category
+            </span>
+          </>
+        )}
+      </p>
+      <div className="flex shrink-0 items-center gap-2">
+        {items.length > 0 ? (
+          <Button type="button" size="sm" onClick={() => setOpen(true)}>
+            Review
+          </Button>
+        ) : null}
+        {showBackfill ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={pending}
+            onClick={() => sync(true)}
+          >
+            Fetch everything
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="gap-2"
+          disabled={pending}
+          onClick={() => sync(false)}
+        >
+          <ArrowsClockwise size={14} />
+          {pending ? "Syncing…" : "Sync"}
+        </Button>
+      </div>
+    </div>
+  );
 
-      {items.length > 0 && (
-        <Card.Content>
-          <ul className="flex flex-col gap-3">
+  return (
+    <>
+      {bar}
+
+      <MobileSheet open={open} onOpenChange={setOpen} title="From your bank">
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-muted-foreground">
+            Anything the app already recognised went straight in. These are the
+            exceptions — answering one teaches it for next time.
+          </p>
+
+          <ul className="flex max-h-[60vh] flex-col gap-3 overflow-y-auto">
             {items.map((item) => (
               <li
                 key={item.id}
@@ -124,7 +143,7 @@ export function BankInbox({ items, categories, showBackfill }: BankInboxProps) {
                     </p>
                   </div>
                   <span className="shrink-0 tabular-nums text-sm font-semibold">
-                    {item.direction === "in" ? "+" : "−"}
+                    {item.direction === "in" ? "+" : "\u2212"}
                     {formatMoney(item.amount)}
                   </span>
                 </div>
@@ -163,8 +182,8 @@ export function BankInbox({ items, categories, showBackfill }: BankInboxProps) {
               </li>
             ))}
           </ul>
-        </Card.Content>
-      )}
-    </Card>
+        </div>
+      </MobileSheet>
+    </>
   );
 }
