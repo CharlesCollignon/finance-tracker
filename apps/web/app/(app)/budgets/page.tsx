@@ -19,7 +19,6 @@ import { buildForwardProjection, buildRunway } from "@finance/core/projection";
 import { ProjectionCard } from "@/components/finance/ProjectionCard";
 import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
 import { getMonthCloseOverview } from "@/lib/queries/month-close";
-import { PageContainer } from "@/components/layout/PageContainer";
 import { BudgetsView } from "./BudgetsView";
 
 export default async function BudgetsPage() {
@@ -75,54 +74,54 @@ export default async function BudgetsPage() {
   const closes = await getMonthCloseOverview(user.id, todayIsoLocal());
 
   return (
-    <>
-      <BudgetsView
-        budgets={budgets}
-        categories={categories.filter((c) => !c.archived)}
-        tags={tags}
-        goals={goals}
-        budgetProgress={budgetProgress}
-        goalProgress={goalProgress}
-      />
+    <BudgetsView
+      budgets={budgets}
+      categories={categories.filter((c) => !c.archived)}
+      tags={tags}
+      goals={goals}
+      budgetProgress={budgetProgress}
+      goalProgress={goalProgress}
+      footer={
+        <>
+          <ProjectionCard points={projection} runway={runway} />
 
-      <PageContainer className="flex flex-col gap-4 pt-0">
-        <ProjectionCard points={projection} runway={runway} />
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[
-            {
-              href: "/categories",
-              title: "Categories",
-              hint: "Where money is allowed to go",
-            },
-            {
-              href: "/import",
-              title: "Import a statement",
-              hint: "A CSV, when there is no bank feed",
-            },
-          ].map(({ href, title, hint }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm transition-colors hover:border-primary-rim"
-            >
-              <span>
-                <span className="font-medium">{title}</span>
-                <span className="block text-xs text-muted-foreground">
-                  {hint}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              {
+                href: "/categories",
+                title: "Categories",
+                hint: "Where money is allowed to go",
+              },
+              {
+                href: "/import",
+                title: "Import a statement",
+                hint: "A CSV, when there is no bank feed",
+              },
+            ].map(({ href, title, hint }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm transition-colors hover:border-primary-rim"
+              >
+                <span>
+                  <span className="font-medium">{title}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {hint}
+                  </span>
                 </span>
-              </span>
-              <ArrowRight size={16} />
-            </Link>
-          ))}
-        </div>
+                <ArrowRight size={16} />
+              </Link>
+            ))}
+          </div>
 
-        <MonthCloseHistory
-          history={closes.history}
-          summary={closes.summary}
-          unrecordedCap={closes.settings.unrecordedCap}
-          closeDay={closes.settings.closeDay}
-        />
-      </PageContainer>
-    </>
+          <MonthCloseHistory
+            history={closes.history}
+            summary={closes.summary}
+            unrecordedCap={closes.settings.unrecordedCap}
+            closeDay={closes.settings.closeDay}
+          />
+        </>
+      }
+    />
   );
 }

@@ -8,7 +8,7 @@ import {
   resolveWalletId,
   type InvestmentWalletId,
 } from "./investments";
-import { todayIsoLocal } from "./constants";
+import { formatMonthCompact, todayIsoLocal } from "./constants";
 import { BITCOIN_INSTRUMENT, isCryptoWallet } from "./crypto-holdings";
 
 export type { InvestmentWalletId };
@@ -158,10 +158,7 @@ function formatMonthLabelShort(monthKey: string): string {
   const [yearText, monthText] = monthKey.split("-");
   const year = Number(yearText);
   const month = Number(monthText);
-  return new Intl.DateTimeFormat("en-GB", {
-    month: "short",
-    year: "2-digit",
-  }).format(new Date(year, month - 1, 1));
+  return formatMonthCompact(year, month);
 }
 
 function listMonthKeys(startMonth: string, endMonth: string): string[] {

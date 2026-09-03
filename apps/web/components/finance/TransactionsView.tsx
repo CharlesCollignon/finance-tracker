@@ -15,7 +15,6 @@ import {
   UploadSimple,
 } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -25,14 +24,16 @@ import { EmptyState } from "@/components/layout/EmptyState";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { useToast } from "@/components/layout/ToastProvider";
 import { TransactionForm } from "@/components/finance/TransactionForm";
-import { StatHero } from "@/components/finance/StatHero";
-import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import {
   CATEGORY_TYPE_LABELS,
   TYPE_AMOUNT_CLASS,
 } from "@finance/core/category-styles";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
+import {
+  formatShortDate,
+  relativeDayLabel,
+} from "@finance/core/constants";
 import {
   applyRecurringForMonth,
   deleteTransactions,
@@ -80,32 +81,6 @@ interface TransactionsViewProps {
   defaultDate: string;
   /** Bank feed bar, rendered inside the page rather than above its header. */
   bankSlot?: ReactNode;
-}
-
-function formatDisplayDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-
-  const sameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-
-  if (sameDay(date, today)) {
-    return "Today";
-  }
-  if (sameDay(date, yesterday)) {
-    return "Yesterday";
-  }
-
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  }).format(date);
 }
 
 function toCsvValue(value: string): string {
@@ -197,20 +172,6 @@ export function TransactionsView({
   useEffect(() => {
     void refreshApplyPending();
   }, [refreshApplyPending, transactions]);
-
-  const typeTotals = useMemo(
-    () => computeTypeTotals(transactions),
-    [transactions],
-  );
-
-  const netTotal = useMemo(
-    () =>
-      typeTotals.income -
-      typeTotals.expense -
-      typeTotals.savings -
-      typeTotals.investment,
-    [typeTotals],
-  );
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -366,111 +327,91 @@ export function TransactionsView({
     toast(`Exported ${filtered.length} transactions`, "success");
   }
 
+  // A ledger is read a day at a time, not as one unbroken column of two
+  // hundred rows. Grouping here rather than in the markup keeps a heading and
+  // its rows in the same object, so the list can never draw a date with
+  // nothing under it.
+  const days = useMemo(() => {
+    const out: {
+      date: string;
+      rows: TransactionWithCategory[];
+      net: number;
+    }[] = [];
+
+    for (const tx of sortedRows) {
+      const amount = Number(tx.amount);
+      const signed = tx.categories.type === "income" ? amount : -amount;
+      const last = out[out.length - 1];
+
+      if (last && last.date === tx.occurred_on) {
+        last.rows.push(tx);
+        last.net += signed;
+      } else {
+        out.push({ date: tx.occurred_on, rows: [tx], net: signed });
+      }
+    }
+
+    return out;
+  }, [sortedRows]);
+
+  // The figures describe what is on screen, which is the whole reason they
+  // are here: the month's own totals are Month's job, and repeating them
+  // under a filter would state something the list below contradicts.
+  const shown = useMemo(() => computeTypeTotals(filtered), [filtered]);
+  const shownOut = shown.expense + shown.savings + shown.investment;
+
   return (
     <>
       <PageHeader title="Ledger">
         <MonthPicker basePath="/transactions" />
       </PageHeader>
 
-      <PageContainer>
-        <SurfaceTabs tabs={LEDGER_TABS} className="mb-4" />
-        {bankSlot ? <div className="mb-4">{bankSlot}</div> : null}
-        <Stagger
-          className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
-          stagger={0.05}
-        >
-          <StaggerItem className="w-full min-w-0">
-            <StatHero
-              label="What's left"
-              amount={`${netTotal >= 0 ? "+" : "−"}${formatEuro(Math.abs(netTotal))}`}
-              amountClassName={
-                netTotal >= 0 ? "text-success" : "text-destructive"
-              }
-              subtitle={
-                <p>
-                  <span className="privacy-amount text-success tabular-nums">
-                    {formatEuro(typeTotals.income)}
-                  </span>
-                  {" earned · "}
-                  <span className="privacy-amount text-destructive tabular-nums">
-                    {formatEuro(typeTotals.expense)}
-                  </span>
-                  {" spent"}
-                </p>
-              }
-            />
-          </StaggerItem>
-
-          <StaggerItem className="flex w-full flex-col items-center gap-3">
-            {applyPending ? (
-              <p className="text-center text-sm text-muted-foreground">
-                Recurring changed — apply to update this month.
-              </p>
-            ) : null}
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <span className="relative inline-flex">
-                <Button
-                  variant={applyPending ? "default" : "ghost"}
-                  size="md"
-                  onClick={handleApplyRecurring}
-                  disabled={pending}
-                >
-                  {pending ? "Applying…" : "Apply recurring"}
-                </Button>
-                {applyPending && !pending ? (
-                  <span
-                    aria-label="Recurring changes are waiting to be applied"
-                    role="status"
-                    className="absolute -right-1 -top-1 size-2.5 rounded-full bg-destructive ring-2 ring-background"
-                  />
-                ) : null}
-              </span>
+      <PageContainer className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <SurfaceTabs tabs={LEDGER_TABS} />
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="relative inline-flex">
               <Button
-                variant="pill"
-                size="md"
-                onClick={() => setFormOpen(true)}
+                variant={applyPending ? "default" : "ghost"}
+                size="sm"
+                onClick={handleApplyRecurring}
+                disabled={pending}
               >
-                Add transaction
-                <ButtonNub>
-                  <Plus size={16} weight="bold" />
-                </ButtonNub>
+                {pending ? "Applying…" : "Apply recurring"}
               </Button>
-            </div>
-          </StaggerItem>
+              {applyPending && !pending ? (
+                <span
+                  aria-label="Recurring changes are waiting to be applied"
+                  role="status"
+                  className="absolute -right-1 -top-1 size-2.5 rounded-full bg-destructive ring-2 ring-background"
+                />
+              ) : null}
+            </span>
+            <Button variant="pill" size="sm" onClick={() => setFormOpen(true)}>
+              Add
+              <ButtonNub>
+                <Plus size={16} weight="bold" />
+              </ButtonNub>
+            </Button>
+          </div>
+        </div>
 
-          {transactions.length > 0 ? (
-            <StaggerItem className="w-full space-y-3">
-              <div
-                className="flex justify-center gap-2 overflow-x-auto pb-1"
-                role="tablist"
-                aria-label="Filter transactions"
-              >
-                {FILTER_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="tab"
-                    aria-selected={filter === option.value}
-                    onClick={() => setFilter(option.value)}
-                    className={cn(
-                      "shrink-0 rounded-full border px-4 py-2 text-sm font-semibold",
-                      "transition-colors duration-300",
-                      filter === option.value
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-border text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+        {bankSlot}
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-                <div className="relative flex-1 sm:max-w-xs">
+        {transactions.length === 0 ? (
+          <EmptyState
+            title="Nothing recorded this month"
+            description="Add an entry, or apply the charges you already know repeat."
+          />
+        ) : (
+          <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 md:p-5">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative min-w-0 flex-1">
                   <MagnifyingGlass
                     size={16}
                     weight="light"
-                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                     aria-hidden
                   />
                   <input
@@ -480,114 +421,162 @@ export function TransactionsView({
                     placeholder="Search category or note…"
                     aria-label="Search transactions"
                     className={cn(
-                      "h-10 w-full rounded-full border border-border bg-card",
-                      "pl-10 pr-3 text-sm text-foreground outline-none",
+                      "h-9 w-full rounded-full border border-border bg-background",
+                      "pl-9 pr-3 text-sm text-foreground outline-none",
                       "focus:border-foreground",
                     )}
                   />
                 </div>
-                <select
-                  value={categoryFilter}
-                  onChange={(event) => setCategoryFilter(event.target.value)}
-                  aria-label="Filter by category"
-                  className={cn(
-                    "h-10 rounded-full border border-border bg-card px-4",
-                    "text-sm text-foreground outline-none sm:w-44",
-                    "focus:border-foreground",
-                  )}
-                >
-                  <option value="all">All categories</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                {tags.length > 0 ? (
+                <div className="flex shrink-0 gap-2">
                   <select
-                    value={tagFilter}
-                    onChange={(event) => setTagFilter(event.target.value)}
-                    aria-label="Filter by tag"
+                    value={categoryFilter}
+                    onChange={(event) => setCategoryFilter(event.target.value)}
+                    aria-label="Filter by category"
                     className={cn(
-                      "h-10 rounded-full border border-border bg-card px-4",
-                      "text-sm text-foreground outline-none sm:w-36",
-                      "focus:border-foreground",
+                      "h-9 min-w-0 flex-1 rounded-full border border-border",
+                      "bg-background px-3.5 text-sm text-foreground outline-none",
+                      "focus:border-foreground sm:w-44 sm:flex-none",
                     )}
                   >
-                    <option value="all">All tags</option>
-                    {tags.map((tag) => (
-                      <option key={tag.id} value={tag.id}>
-                        {tag.name}
+                    <option value="all">All categories</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
                       </option>
                     ))}
                   </select>
-                ) : null}
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="h-10 px-2"
-                  onClick={() =>
-                    selectMode ? leaveSelectMode() : setSelectMode(true)
-                  }
+                  {tags.length > 0 ? (
+                    <select
+                      value={tagFilter}
+                      onChange={(event) => setTagFilter(event.target.value)}
+                      aria-label="Filter by tag"
+                      className={cn(
+                        "h-9 min-w-0 flex-1 rounded-full border border-border",
+                        "bg-background px-3.5 text-sm text-foreground outline-none",
+                        "focus:border-foreground sm:w-36 sm:flex-none",
+                      )}
+                    >
+                      <option value="all">All tags</option>
+                      {tags.map((tag) => (
+                        <option key={tag.id} value={tag.id}>
+                          {tag.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-x-4">
+                <div
+                  className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto"
+                  role="tablist"
+                  aria-label="Filter transactions"
                 >
-                  {selectMode ? "Done" : "Select"}
-                </Button>
-                {selectMode ? (
+                  {FILTER_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="tab"
+                      aria-selected={filter === option.value}
+                      onClick={() => setFilter(option.value)}
+                      className={cn(
+                        "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
+                        "transition-colors duration-200",
+                        filter === option.value
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex shrink-0 items-center justify-end gap-1">
                   <Button
                     variant="link"
                     size="sm"
-                    className="h-10 px-2"
+                    className="h-8 px-2"
                     onClick={() =>
-                      setSelected((current) =>
-                        toggleSelectAll(visibleIds, current),
-                      )
+                      selectMode ? leaveSelectMode() : setSelectMode(true)
                     }
                   >
-                    {allState === "all" ? "Clear all" : "Select all"}
+                    {selectMode ? "Done" : "Select"}
                   </Button>
-                ) : null}
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="h-10 px-2"
-                  onClick={handleExport}
-                >
-                  <DownloadSimple size={16} weight="light" className="mr-1.5" />
-                  Export CSV
-                </Button>
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="h-10 px-2"
-                  render={
-                    <Link href="/import">
-                      <UploadSimple
-                        size={16}
-                        weight="light"
-                        className="mr-1.5 inline"
-                      />
-                      Import CSV
-                    </Link>
-                  }
-                />
+                  {selectMode ? (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() =>
+                        setSelected((current) =>
+                          toggleSelectAll(visibleIds, current),
+                        )
+                      }
+                    >
+                      {allState === "all" ? "Clear all" : "Select all"}
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-8 px-2"
+                    onClick={handleExport}
+                    title="Export these entries as CSV"
+                    aria-label="Export these entries as CSV"
+                  >
+                    <DownloadSimple size={16} weight="light" />
+                  </Button>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-8 px-2"
+                    render={
+                      <Link
+                        href="/import"
+                        title="Import a CSV statement"
+                        aria-label="Import a CSV statement"
+                      >
+                        <UploadSimple size={16} weight="light" />
+                      </Link>
+                    }
+                  />
+                </div>
               </div>
-            </StaggerItem>
-          ) : null}
+            </div>
 
-          <StaggerItem className="w-full">
-            {transactions.length === 0 ? (
-              <EmptyState
-                title="No transactions yet"
-                description="Add a manual entry or apply your recurring items for this month."
-              />
-            ) : filtered.length === 0 ? (
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t border-border pt-3 text-sm">
+              <p className="text-muted-foreground">
+                {filtered.length === transactions.length
+                  ? `${transactions.length} ${transactions.length === 1 ? "entry" : "entries"}`
+                  : `${filtered.length} of ${transactions.length} entries`}
+              </p>
+              <p className="flex gap-5">
+                <span>
+                  <span className="text-muted-foreground">In </span>
+                  <span className="privacy-amount tabular-nums text-success">
+                    {formatEuro(shown.income)}
+                  </span>
+                </span>
+                <span>
+                  <span className="text-muted-foreground">Out </span>
+                  <span className="privacy-amount tabular-nums text-destructive">
+                    {formatEuro(shownOut)}
+                  </span>
+                </span>
+              </p>
+            </div>
+
+            {filtered.length === 0 ? (
               <EmptyState
                 title="No matching entries"
-                description="Try another search or filter, or add a new transaction."
+                description="Try another search or filter."
+                className="border-0 bg-transparent p-6"
               >
                 {hasActiveFilters ? (
                   <Button
-                    size="md"
+                    size="sm"
                     onClick={() => {
                       setFilter("all");
                       setCategoryFilter("all");
@@ -600,72 +589,91 @@ export function TransactionsView({
                 ) : null}
               </EmptyState>
             ) : (
-              <Card.Bezel
-                className="w-full"
-                innerClassName="divide-y divide-border px-2 py-1"
-              >
-                {sortedRows.map((tx) => (
-                  <button
-                    key={tx.id}
-                    type="button"
-                    onClick={() =>
-                      selectMode
-                        ? setSelected((current) =>
-                            toggleSelected(current, tx.id),
-                          )
-                        : setEditTransaction(tx)
-                    }
-                    aria-label={
-                      selectMode
-                        ? `Select ${tx.categories.name}`
-                        : `Edit ${tx.categories.name}`
-                    }
-                    aria-pressed={selectMode ? selected.has(tx.id) : undefined}
-                    className={cn(
-                      "flex w-full items-center justify-between gap-3 py-3.5 px-2 text-left transition-colors hover:bg-muted/30",
-                      selectMode && selected.has(tx.id) && "bg-primary/5",
-                    )}
-                  >
-                    <div className="flex min-w-0 items-center gap-3.5">
-                      {selectMode ? (
-                        <RowCheckbox
-                          checked={selected.has(tx.id)}
-                          label={`Select ${tx.categories.name}`}
-                          onChange={() =>
-                            setSelected((current) =>
-                              toggleSelected(current, tx.id),
-                            )
-                          }
-                        />
-                      ) : null}
-                      <CategoryIcon
-                        icon={tx.categories.icon}
-                        className="h-10 w-10 rounded-[13px] border-0 bg-muted"
-                      />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold">
-                          {tx.categories.name}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {formatDisplayDate(tx.occurred_on)}
-                          {tx.note ? ` · ${tx.note}` : ""}
-                        </p>
-                      </div>
+              <div className="flex flex-col gap-5">
+                {days.map((day) => (
+                  <div key={day.date} className="flex flex-col gap-1">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        {relativeDayLabel(day.date, formatShortDate)}
+                      </h3>
+                      <span className="privacy-amount text-xs tabular-nums text-muted-foreground">
+                        {day.net >= 0 ? "+" : "−"}
+                        {formatEuro(Math.abs(day.net))}
+                      </span>
                     </div>
-                    <span
-                      className={cn(
-                        "privacy-amount shrink-0 whitespace-nowrap font-mono text-sm font-medium tabular-nums",
-                        TYPE_AMOUNT_CLASS[tx.categories.type],
-                      )}
-                    >
-                      {formatEuro(Number(tx.amount))}
-                    </span>
-                  </button>
+
+                    <div className="divide-y divide-border">
+                      {day.rows.map((tx) => (
+                        <button
+                          key={tx.id}
+                          type="button"
+                          onClick={() =>
+                            selectMode
+                              ? setSelected((current) =>
+                                  toggleSelected(current, tx.id),
+                                )
+                              : setEditTransaction(tx)
+                          }
+                          aria-label={
+                            selectMode
+                              ? `Select ${tx.categories.name}`
+                              : `Edit ${tx.categories.name}`
+                          }
+                          aria-pressed={
+                            selectMode ? selected.has(tx.id) : undefined
+                          }
+                          className={cn(
+                            "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-left",
+                            "transition-colors hover:bg-muted/40",
+                            selectMode &&
+                              selected.has(tx.id) &&
+                              "bg-primary/5",
+                          )}
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            {selectMode ? (
+                              <RowCheckbox
+                                checked={selected.has(tx.id)}
+                                label={`Select ${tx.categories.name}`}
+                                onChange={() =>
+                                  setSelected((current) =>
+                                    toggleSelected(current, tx.id),
+                                  )
+                                }
+                              />
+                            ) : null}
+                            <CategoryIcon
+                              icon={tx.categories.icon}
+                              className="size-9 shrink-0 rounded-[12px] border-0 bg-muted"
+                            />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium">
+                                {tx.categories.name}
+                              </p>
+                              {tx.note ? (
+                                <p className="truncate text-xs text-muted-foreground">
+                                  {tx.note}
+                                </p>
+                              ) : null}
+                            </div>
+                          </div>
+                          <span
+                            className={cn(
+                              "privacy-amount shrink-0 whitespace-nowrap text-sm tabular-nums",
+                              TYPE_AMOUNT_CLASS[tx.categories.type],
+                            )}
+                          >
+                            {formatEuro(Number(tx.amount))}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
-              </Card.Bezel>
+              </div>
             )}
-          </StaggerItem>
-        </Stagger>
+          </section>
+        )}
       </PageContainer>
 
       <TransactionForm

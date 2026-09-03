@@ -1,3 +1,5 @@
+import { formatMonthShortYear } from "./constants";
+
 export type Recurrence = "monthly" | "weekly" | "yearly";
 
 export const DAY_OF_WEEK_LABELS: Record<number, string> = {
@@ -54,10 +56,7 @@ export function getWeeklyDatesInMonth(
 
 function formatIsoMonthYear(isoDate: string): string {
   const [year, month] = isoDate.split("-").map(Number);
-  return new Intl.DateTimeFormat("en-GB", {
-    month: "short",
-    year: "numeric",
-  }).format(new Date(year, month - 1, 1));
+  return formatMonthShortYear(year, month);
 }
 
 /** Compact échéancier label, or null when open-ended. */
