@@ -13,14 +13,22 @@ interface ProgressRingProps {
   detail: string;
   /** Overrides the fill; ignored once the tone turns to danger. */
   color?: string;
+  /**
+   * What filling the ring means. A cap is a limit — nearing it is a warning
+   * and passing it is a problem. A goal is a target: nearing it is the whole
+   * point, and colouring that red tells someone their savings are going
+   * wrong.
+   */
+  meaning?: "limit" | "target";
   over?: boolean;
   className?: string;
 }
 
 /*
- * Web draws this ring with an ECharts donut at radius 72%–88%. Mirroring those
- * proportions with react-native-svg keeps the look identical without spinning
- * up a chart instance per ring.
+ * Both apps draw this ring by hand — web in inline SVG, here in
+ * react-native-svg — at the same 72%–88% radius, so a cap looks like a cap on
+ * either. Web's used to be an ECharts gauge, which meant loading a charting
+ * runtime to draw two arcs and a percentage; nothing here ever did.
  */
 const SIZE = 112;
 const OUTER = SIZE * 0.44;
@@ -35,15 +43,16 @@ export function ProgressRing({
   label,
   detail,
   color,
+  meaning = "limit",
   over = false,
   className,
 }: ProgressRingProps) {
   const colors = useThemeColors();
-  const tone = progressTone(ratio, over);
   const clamped = Math.min(Math.max(ratio, 0), 1);
+  const danger =
+    meaning === "limit" && progressTone(clamped, over) === "danger";
   const percent = Math.round(clamped * 100);
-  const fill =
-    tone === "danger" ? colors.destructive : (color ?? colors.primary);
+  const fill = danger ? colors.destructive : (color ?? colors.primary);
 
   return (
     <View className={cn("w-32 items-center", className)}>
@@ -75,7 +84,7 @@ export function ProgressRing({
         <Text
           className={cn(
             "text-lg font-semibold",
-            tone === "danger" ? "text-destructive" : "text-foreground",
+            danger ? "text-destructive" : "text-foreground",
           )}
         >
           {`${percent}%`}

@@ -1,11 +1,17 @@
 import type { ColorSchemeName } from "react-native";
 
-import { colorsForScheme } from "@/theme/tokens";
+import { CHART_COLORS, colorsForScheme } from "@/theme/tokens";
 
-/** Gold + semantic chart palette matching web. */
+/**
+ * The categorical series, shared with the hand-drawn marks and with web.
+ *
+ * This used to return [primary, destructive, success, info, muted] — which
+ * spends the two colours that mean "good" and "bad" on categories that mean
+ * neither, and left the app with two different palettes depending on which
+ * kind of chart you were looking at.
+ */
 export function chartPalette(scheme: ColorSchemeName): string[] {
-  const c = colorsForScheme(scheme === "light" ? "light" : "dark");
-  return [c.primary, c.destructive, c.success, c.info, c.mutedForeground];
+  return [...CHART_COLORS[scheme === "light" ? "light" : "dark"]];
 }
 
 export function chartTextColor(scheme: ColorSchemeName): string {

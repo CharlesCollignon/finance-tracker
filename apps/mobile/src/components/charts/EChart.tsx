@@ -6,7 +6,7 @@ import {
   useColorScheme,
 } from "react-native";
 import * as echarts from "echarts/core";
-import { LineChart, PieChart, SankeyChart } from "echarts/charts";
+import { LineChart } from "echarts/charts";
 import {
   GridComponent,
   TooltipComponent,
@@ -18,11 +18,16 @@ import type { EChartsCoreOption } from "echarts/core";
 import { cn } from "@/lib/cn";
 import { chartPalette, chartTextColor } from "@/theme/echarts";
 
+/*
+ * One series type, deliberately. The donut and the Sankey that used to be
+ * registered here were drawing a split and a one-stage flow — shapes a few
+ * views can draw for nothing — and registering them pulled their code into
+ * every screen that imported this host. What is left is the mark that earns a
+ * runtime: a dense price history you can scrub, on Wallets.
+ */
 echarts.use([
   SVGRenderer,
   LineChart,
-  PieChart,
-  SankeyChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,
@@ -35,7 +40,7 @@ export interface EChartProps extends ViewProps {
 }
 
 /**
- * Theme-aware ECharts host for future chart screens.
+ * Theme-aware ECharts host for the one mark that needs it.
  * Uses SVG renderer (Expo-friendly); series colors default to gold/gray.
  *
  * The chart is created only once the container has been measured. SvgChart

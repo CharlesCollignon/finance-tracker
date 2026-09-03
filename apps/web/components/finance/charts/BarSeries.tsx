@@ -16,8 +16,12 @@ interface BarSeriesProps {
   points: BarPoint[];
   /** Chart token, e.g. "var(--chart-1)". */
   color?: string;
-  /** What the bars are measured against. Defaults to the tallest. */
-  peak?: number;
+  /**
+   * Let the series cross zero, with a baseline and bars hanging below it.
+   * Off by default: a run of spending never goes negative, and reserving room
+   * under a baseline that is never used wastes half the chart.
+   */
+  signed?: boolean;
   className?: string;
 }
 
@@ -31,24 +35,30 @@ interface BarSeriesProps {
  * you want to hover — which lives on Wallets.
  *
  * Scaled against the series' own peak, so what shows is the shape of the run
- * rather than the scale it happens to sit at. Months with nothing recorded
+ * rather than the scale it happens to sit at. Periods with nothing recorded
  * are drawn as gaps, because a charge that stopped is information.
  */
 export function BarSeries({
   points,
   color = "var(--chart-1)",
-  peak,
+  signed = false,
   className,
 }: BarSeriesProps) {
   const formatMoney = useFormatCurrency();
-  const scale =
-    peak ?? points.reduce((max, p) => Math.max(max, p.value), 0) ?? 1;
-  const ceiling = scale > 0 ? scale : 1;
+
+  const up = points.reduce((max, p) => Math.max(max, p.value), 0);
+  const down = signed
+    ? points.reduce((max, p) => Math.max(max, -p.value), 0)
+    : 0;
+  const span = up + down || 1;
+  // The baseline sits where zero falls between the two peaks, so a month that
+  // lost a little does not draw the same bar as one that lost everything.
+  const above = (up / span) * 100;
 
   return (
     <div className={cn("flex items-end gap-1.5 sm:gap-2", className)}>
       {points.map((point) => {
-        const share = Math.max(0, point.value) / ceiling;
+        const size = Math.max((Math.abs(point.value) / span) * 100, 2);
         return (
           <div
             key={point.key}
@@ -57,17 +67,30 @@ export function BarSeries({
             <span className="text-[0.65rem] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
               {point.empty ? "—" : formatMoney(point.value)}
             </span>
-            <div className="flex h-32 w-full items-end sm:h-40">
+            <div className="h-32 w-full sm:h-40">
               <div
-                className={cn(
-                  "w-full rounded-t transition-[height]",
-                  point.empty && "border-t border-dashed border-border",
-                )}
-                style={{
-                  height: point.empty ? 1 : `${Math.max(share * 100, 2)}%`,
-                  backgroundColor: point.empty ? "transparent" : color,
-                }}
-              />
+                className="flex w-full items-end"
+                style={{ height: `${above}%` }}
+              >
+                {point.empty ? (
+                  <div className="w-full border-t border-dashed border-border" />
+                ) : point.value > 0 ? (
+                  <div
+                    className="w-full rounded-t transition-[height]"
+                    style={{ height: `${size}%`, backgroundColor: color }}
+                  />
+                ) : null}
+              </div>
+              {above < 100 ? (
+                <div className="w-full" style={{ height: `${100 - above}%` }}>
+                  {!point.empty && point.value < 0 ? (
+                    <div
+                      className="w-full rounded-b bg-destructive transition-[height]"
+                      style={{ height: `${size}%` }}
+                    />
+                  ) : null}
+                </div>
+              ) : null}
             </div>
             <span className="truncate text-[0.65rem] text-muted-foreground">
               {point.label}

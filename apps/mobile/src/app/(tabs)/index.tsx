@@ -1,34 +1,36 @@
 import { useState } from "react";
-import { Ionicons } from "@expo/vector-icons";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 import {
   budgetViewOptionLabel,
   formatMonthLabel,
+  getCurrentMonth,
   parseMonthParams,
+  savingsRatePercent,
+  todayIsoLocal,
   type BudgetViewMode,
 } from "@finance/core/constants";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
-import {
-  buildMonthComparison,
-  formatMonthComparison,
-} from "@finance/core/month-comparison";
-import { savingsRatePercent, todayIsoLocal } from "@finance/core/constants";
+import { buildMonthComparison } from "@finance/core/month-comparison";
 import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
-import type { ApplyRecurringPlan } from "@finance/core/apply-recurring";
+import { buildRunway } from "@finance/core/projection";
+import {
+  applyRecurringPlanCounts,
+  type ApplyRecurringPlan,
+} from "@finance/core/apply-recurring";
 import type { MonthlySummary } from "@finance/core/types/database";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
 
-import { IncomeSankeyCard } from "@/components/IncomeSankeyCard";
+import { ApplyRecurringSheet } from "@/components/ApplyRecurringSheet";
+import { MonthAttention, type AttentionItem } from "@/components/MonthAttention";
+import { MonthCloseSheet } from "@/components/MonthCloseSheet";
 import { MonthPicker } from "@/components/MonthPicker";
-import { MonthReadyCard } from "@/components/MonthReadyCard";
-import { MonthCloseCard } from "@/components/MonthCloseCard";
-import { PrivateAmount } from "@/components/PrivateAmount";
-import { ProgressRing } from "@/components/charts/ProgressRing";
-import { StatHero } from "@/components/StatHero";
+import { MonthStanding } from "@/components/MonthStanding";
+import { MonthWallets } from "@/components/MonthWallets";
+import { ProgressRing, SpendStrip } from "@/components/charts";
 import { TrendCard } from "@/components/TrendCard";
-import { WalletsCard } from "@/components/WalletsCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -37,12 +39,15 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
-import { previewApplyRecurringForMonth } from "@/lib/mutations";
-import { buildRunway } from "@finance/core/projection";
+import {
+  applyRecurringForMonth,
+  previewApplyRecurringForMonth,
+} from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
-import { useFormatCurrency } from "@/providers/CurrencyProvider";
+import { useToast } from "@/providers/ToastProvider";
 import { cn } from "@/lib/cn";
-import { hapticLight } from "@/lib/haptics";
+import { hapticSuccess } from "@/lib/haptics";
+import { useChartSeries } from "@/theme/chart-series";
 import { useThemeColors } from "@/theme/useThemeColors";
 import {
   getBudgets,
@@ -59,12 +64,6 @@ import {
 } from "@/lib/queries";
 
 const VIEW_OPTIONS: BudgetViewMode[] = ["current", "month_end"];
-
-function remainingLabel(view: BudgetViewMode, monthLabel: string): string {
-  return view === "month_end"
-    ? `At end of ${monthLabel}`
-    : `Left in ${monthLabel}`;
-}
 
 /** Compact segmented control, matching the web BudgetViewToggle. */
 function BudgetViewToggle({
@@ -104,81 +103,60 @@ function BudgetViewToggle({
   );
 }
 
-function Breakdown({
+/**
+ * A card that both links onward and shows the thing it links to.
+ *
+ * Home is a summary screen; every block on it is a preview of a surface that
+ * holds the full version, and saying so in the heading is cheaper than making
+ * someone find out by tapping.
+ */
+function SummaryCard({
   title,
-  total,
-  items,
+  linkLabel,
+  onPress,
+  children,
 }: {
   title: string;
-  total: number;
-  items: MonthlySummary["expenseBreakdown"];
+  linkLabel: string;
+  onPress: () => void;
+  children: React.ReactNode;
 }) {
-  const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
-  // Collapsed by default: the sankey legend above already reports these
-  // totals, so the per-category detail is opt-in rather than a long scroll.
-  const [open, setOpen] = useState(false);
 
   return (
-    <Card bezel className="p-0" innerClassName="p-0">
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ expanded: open }}
-        accessibilityLabel={`${title}, ${open ? "collapse" : "expand"}`}
-        onPress={() => {
-          void hapticLight();
-          setOpen((value) => !value);
-        }}
-        className="min-h-14 flex-row items-center justify-between gap-3 p-4"
-      >
-        <Text className="flex-1 font-bold">{title}</Text>
-        <PrivateAmount className="font-mono font-bold">
-          {formatEuro(total)}
-        </PrivateAmount>
-        <Ionicons
-          name={open ? "chevron-up" : "chevron-down"}
-          size={16}
-          color={colors.mutedForeground}
-        />
-      </Pressable>
-
-      {open ? (
-        <View className="border-t border-border">
-          {items.length === 0 ? (
-            <Text variant="muted" className="p-4">
-              Nothing this month.
-            </Text>
-          ) : (
-            items.map((item, index) => (
-              <View
-                key={item.categoryId}
-                className={cn(
-                  "flex-row items-center justify-between px-4 py-3",
-                  index > 0 && "border-t border-border",
-                )}
-              >
-                <Text className="flex-1">{item.name}</Text>
-                <PrivateAmount className="font-mono font-semibold">
-                  {formatEuro(item.total)}
-                </PrivateAmount>
-              </View>
-            ))
-          )}
-        </View>
-      ) : null}
+    <Card bezel innerClassName="gap-4 p-5">
+      <View className="flex-row items-center justify-between gap-3">
+        <Text className="text-sm font-medium">{title}</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={linkLabel}
+          onPress={onPress}
+          hitSlop={8}
+          className="flex-row items-center gap-1"
+        >
+          <Text className="text-sm text-primary-ink">{linkLabel}</Text>
+          <Ionicons name="arrow-forward" size={13} color={colors.primaryInk} />
+        </Pressable>
+      </View>
+      {children}
     </Card>
   );
 }
 
-export default function DashboardScreen() {
+export default function MonthScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const formatEuro = useFormatCurrency();
-  const colors = useThemeColors();
+  const { toast } = useToast();
+  // The third chart series, matching the web app's goal rings. Read here
+  // rather than in the map below, where it would be a hook inside a loop.
+  const goalColor = useChartSeries()[2];
   const now = parseMonthParams();
   const [year, setYear] = useState(now.year);
   const [month, setMonth] = useState(now.month);
   const [view, setView] = useState<BudgetViewMode>("current");
+  const [applyOpen, setApplyOpen] = useState(false);
+  const [applyPending, setApplyPending] = useState(false);
+  const [closeOpen, setCloseOpen] = useState(false);
 
   const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, error } =
@@ -220,8 +198,8 @@ export default function DashboardScreen() {
         getMonthlyTrend(user.id),
         getTransactions(user.id, year, month),
         getTransactions(user.id, previousYear, previousMonth),
-        // Quoting share-priced templates can fail; Home must still render,
-        // so a failed preview simply means no card.
+        // Quoting share-priced templates can fail; the month must still
+        // render, so a failed preview simply means no row.
         previewApplyRecurringForMonth(year, month),
         getRecurringTemplates(user.id),
         getMonthCloseOverview(user.id, todayIsoLocal()),
@@ -271,13 +249,8 @@ export default function DashboardScreen() {
   const budgetProgress = data?.budgetProgress ?? [];
   const goalProgress = data?.goalProgress ?? [];
   const closes = data?.closes ?? null;
-  const overBudget = (summary?.remaining ?? 0) < 0;
-  const anyCapOver = budgetProgress.some((row) => row.over);
-  const showRings = budgetProgress.length > 0 || goalProgress.length > 0;
   const monthLabel = formatMonthLabel(year, month);
-  const comparisonLine = comparison
-    ? formatMonthComparison(comparison, formatEuro)
-    : null;
+
   const savingsRate = summary
     ? savingsRatePercent(
         summary.savings,
@@ -287,15 +260,68 @@ export default function DashboardScreen() {
       )
     : null;
 
-  const statusLabel = anyCapOver
-    ? "A budget cap was exceeded"
-    : overBudget
-      ? "You are over budget"
-      : "You are on track";
-  const statusDanger = anyCapOver || overBudget;
+  // Only a month in progress has an "of it gone" to report.
+  const current = getCurrentMonth();
+  const elapsed =
+    year === current.year && month === current.month
+      ? Number(todayIsoLocal().slice(8, 10)) /
+        new Date(year, month, 0).getDate()
+      : null;
+
+  const planCounts = plan ? applyRecurringPlanCounts(plan) : null;
+  const attention: AttentionItem[] = [];
+
+  if (planCounts && planCounts.creates > 0) {
+    attention.push({
+      id: "apply",
+      text: `${planCounts.creates} recurring ${
+        planCounts.creates === 1 ? "item is" : "items are"
+      } ready to add`,
+      action: "Apply",
+      onPress: () => setApplyOpen(true),
+    });
+  }
+
+  if (closes?.next) {
+    attention.push({
+      id: "close",
+      text: closes.next.isBaseline
+        ? "Set a starting balance to begin closing months"
+        : `${closes.next.label} is ready to close`,
+      action: "Close",
+      onPress: () => setCloseOpen(true),
+    });
+  }
+
+  async function confirmApply(includeUpdates: boolean, keys: Set<string>) {
+    setApplyPending(true);
+    const result = await applyRecurringForMonth(
+      year,
+      month,
+      includeUpdates,
+      keys,
+    );
+    setApplyPending(false);
+
+    if (result.error) {
+      toast(result.error, "error");
+      return;
+    }
+
+    void hapticSuccess();
+    setApplyOpen(false);
+    toast(
+      result.created
+        ? `${result.created} added to ${monthLabel}`
+        : "Nothing to apply",
+      "success",
+    );
+    notifyDataChanged();
+    void onRefresh();
+  }
 
   return (
-    <Screen title="Home">
+    <Screen title="Month">
       <MonthPicker
         year={year}
         month={month}
@@ -330,7 +356,7 @@ export default function DashboardScreen() {
           description="Pluclair works from what repeats: add your income and your fixed costs once, and every month is forecast for you."
         >
           <Button
-            label="Set up recurring"
+            label="Set up charges"
             variant="pill"
             icon="arrow-forward"
             onPress={() => router.push("/recurring")}
@@ -344,165 +370,100 @@ export default function DashboardScreen() {
           contentContainerClassName="gap-4 pb-28 pt-4"
           showsVerticalScrollIndicator={false}
         >
-          {plan ? (
-            <MonthReadyCard
-              monthLabel={monthLabel}
-              year={year}
-              month={month}
-              plan={plan}
-              onApplied={() => {
-                notifyDataChanged();
-                void onRefresh();
-              }}
-            />
+          <MonthAttention items={attention} />
+
+          <MonthStanding
+            monthLabel={monthLabel}
+            income={summary.income}
+            expenses={summary.expenses}
+            remaining={summary.remaining}
+            budgetView={view}
+            elapsed={elapsed}
+            comparison={comparison}
+            savingsRate={savingsRate}
+          />
+
+          {summary.expenses > 0 ? (
+            <SummaryCard
+              title="Where it went"
+              linkLabel="Ledger"
+              onPress={() => router.push("/transactions")}
+            >
+              <SpendStrip
+                rows={summary.expenseBreakdown}
+                total={summary.expenses}
+              />
+            </SummaryCard>
           ) : null}
 
-          {closes?.next ? (
-            <MonthCloseCard
-              year={closes.next.year}
-              month={closes.next.month}
-              monthLabel={closes.next.label}
-              observeOn={closes.next.observeOn}
-              isBaseline={closes.next.isBaseline}
-              monthlyCommitted={data?.monthlyCommitted ?? 0}
-              unrecordedCap={closes.settings.unrecordedCap}
-              baseline={closes.summary.baseline}
-              streak={closes.summary.streak}
-              onClosed={() => {
-                notifyDataChanged();
-                void onRefresh();
-              }}
-            />
-          ) : null}
-
-          <Card bezel innerClassName="p-6">
-            <StatHero
-              label={remainingLabel(view, monthLabel)}
-              amount={formatEuro(summary.remaining)}
-              animateValue={summary.remaining}
-              format={formatEuro}
-              amountClassName={
-                overBudget ? "text-destructive" : "text-primary-ink"
-              }
-              subtitle={
-                <>
-                  <Text className="text-sm text-success">
-                    {formatEuro(summary.income)}
-                  </Text>
-                  {" earned · "}
-                  <Text className="text-sm text-destructive">
-                    {formatEuro(summary.expenses)}
-                  </Text>
-                  {" spent"}
-                </>
-              }
-              status={
-                <Text
-                  className={cn(
-                    "text-sm font-medium",
-                    statusDanger ? "text-destructive" : "text-success",
-                  )}
-                >
-                  {statusLabel}
-                </Text>
-              }
-            />
-
-            {comparisonLine || savingsRate !== null ? (
-              <View className="mt-4 flex-row flex-wrap items-center justify-center gap-x-4 gap-y-1">
-                {comparisonLine ? (
-                  <Text
-                    className={cn(
-                      "text-sm",
-                      // Spending less is good news; spending more is not an
-                      // error, just information.
-                      comparison?.direction === "down"
-                        ? "text-success"
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    {comparisonLine}
-                  </Text>
-                ) : null}
-                {savingsRate !== null ? (
-                  <Text className="text-sm text-muted-foreground">
-                    <Text className="font-mono font-semibold text-foreground">
-                      {`${savingsRate}%`}
-                    </Text>
-                    {" saved"}
-                  </Text>
-                ) : null}
+          {budgetProgress.length > 0 || goalProgress.length > 0 ? (
+            <SummaryCard
+              title="Caps and goals"
+              linkLabel="Plan"
+              onPress={() => router.push("/planning")}
+            >
+              <View className="flex-row flex-wrap items-start gap-4">
+                {budgetProgress.slice(0, 2).map((row) => (
+                  <ProgressRing
+                    key={row.budgetId}
+                    ratio={row.ratio}
+                    label={row.label}
+                    detail={`${Math.round(row.ratio * 100)}% of cap`}
+                    over={row.over}
+                    meaning="limit"
+                  />
+                ))}
+                {goalProgress.slice(0, 2).map((row) => (
+                  <ProgressRing
+                    key={row.goal.id}
+                    ratio={row.ratio}
+                    label={row.goal.name}
+                    detail={
+                      row.complete
+                        ? "reached"
+                        : `${Math.round(row.ratio * 100)}% saved`
+                    }
+                    // A goal is a target, not a limit: filling it is the point.
+                    meaning="target"
+                    color={goalColor}
+                  />
+                ))}
               </View>
-            ) : null}
-
-            {showRings ? (
-              <View className="mt-6 w-full items-center border-t border-border pt-6">
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-sm font-medium text-muted-foreground">
-                    Budgets & goals
-                  </Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Manage budgets and goals"
-                    onPress={() => router.push("/planning")}
-                    hitSlop={8}
-                  >
-                    <Text className="text-sm font-medium text-primary-ink">
-                      Manage
-                    </Text>
-                  </Pressable>
-                </View>
-                <View className="mt-4 flex-row flex-wrap items-start justify-center gap-6">
-                  {budgetProgress.map((row) => (
-                    <ProgressRing
-                      key={row.budgetId}
-                      ratio={row.ratio}
-                      label={row.label}
-                      detail={`${formatEuro(row.spent)} / ${formatEuro(row.limit)}`}
-                      over={row.over}
-                    />
-                  ))}
-                  {goalProgress.map((row) => (
-                    <ProgressRing
-                      key={row.goal.id}
-                      ratio={row.ratio}
-                      label={row.goal.name}
-                      detail={`${formatEuro(row.saved)} / ${formatEuro(Number(row.goal.target_amount))}`}
-                      color={colors.info}
-                    />
-                  ))}
-                </View>
-              </View>
-            ) : null}
-          </Card>
-
-          {portfolio ? (
-            <Card bezel innerClassName="p-5">
-              <WalletsCard portfolio={portfolio} />
-            </Card>
+            </SummaryCard>
           ) : null}
+
+          {portfolio ? <MonthWallets portfolio={portfolio} /> : null}
 
           <TrendCard points={trend} />
-
-          <IncomeSankeyCard summary={summary} />
-
-          <Breakdown
-            title="Expenses"
-            total={summary.expenses}
-            items={summary.expenseBreakdown}
-          />
-          <Breakdown
-            title="Broker transfers"
-            total={summary.investments}
-            items={summary.investmentBreakdown}
-          />
-          <Breakdown
-            title="Savings"
-            total={summary.savings}
-            items={summary.savingsBreakdown}
-          />
         </ScrollView>
       )}
+
+      <ApplyRecurringSheet
+        open={applyOpen}
+        onOpenChange={setApplyOpen}
+        plan={plan}
+        pending={applyPending}
+        onConfirm={confirmApply}
+      />
+
+      {closes?.next ? (
+        <MonthCloseSheet
+          open={closeOpen}
+          onOpenChange={setCloseOpen}
+          year={closes.next.year}
+          month={closes.next.month}
+          monthLabel={closes.next.label}
+          observeOn={closes.next.observeOn}
+          isBaseline={closes.next.isBaseline}
+          monthlyCommitted={data?.monthlyCommitted ?? 0}
+          unrecordedCap={closes.settings.unrecordedCap}
+          baseline={closes.summary.baseline}
+          onClosed={() => {
+            notifyDataChanged();
+            void onRefresh();
+          }}
+        />
+      ) : null}
     </Screen>
   );
 }

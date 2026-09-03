@@ -26,7 +26,8 @@ import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { DateField } from "@/components/ui/DateField";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { PrivateAmount } from "@/components/PrivateAmount";
+import { ProgressRing } from "@/components/charts";
+import { PLAN_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
@@ -37,7 +38,7 @@ import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
-import { progressTone } from "@/lib/progress-tone";
+import { useChartSeries } from "@/theme/chart-series";
 import {
   getBudgets,
   getCategories,
@@ -83,6 +84,8 @@ function pacingHint(
 export default function PlanningScreen() {
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
+  // The third chart series, matching the web app's goal rings.
+  const goalColor = useChartSeries()[2];
   const { toast } = useToast();
   const [confirming, setConfirming] = useState<{
     kind: "budget" | "goal";
@@ -227,7 +230,9 @@ export default function PlanningScreen() {
   }
 
   return (
-    <Screen title="Planning">
+    <Screen title="Plan">
+      <SurfaceTabs tabs={PLAN_TABS} className="mb-3" />
+
       {loading && !data ? (
         <ScreenSkeleton rows={4} />
       ) : error ? (
@@ -257,148 +262,122 @@ export default function PlanningScreen() {
             />
           ) : null}
 
-          <Text className="text-base">Monthly budgets</Text>
+          <Card bezel innerClassName="gap-4 p-5">
+            <Text className="text-sm font-medium">Spending caps</Text>
 
-          {(data?.budgetProgress ?? []).map((row) => {
-            const tone = progressTone(row.ratio, row.over);
-            return (
-              <Card key={row.budgetId} bezel innerClassName="p-4">
-                <View className="flex-row justify-between">
-                  <Text className="text-sm font-medium">{row.label}</Text>
-                  <PrivateAmount
-                    className={
-                      tone === "danger"
-                        ? "font-mono text-sm font-medium text-destructive"
-                        : "font-mono text-sm font-medium"
+            {(data?.budgetProgress ?? []).length > 0 ? (
+              <View className="flex-row flex-wrap items-start gap-2">
+                {(data?.budgetProgress ?? []).map((row) => (
+                  <Pressable
+                    key={row.budgetId}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Cap on ${row.label}`}
+                    accessibilityHint="Long press to remove this cap"
+                    onLongPress={() =>
+                      setConfirming({ kind: "budget", id: row.budgetId })
                     }
+                    className="rounded-lg p-1"
                   >
-                    {`${formatEuro(row.spent)} / ${formatEuro(row.limit)}`}
-                  </PrivateAmount>
-                </View>
-                <View className="mt-2 h-2 overflow-hidden rounded-full bg-hairline-strong">
-                  <View
-                    className={`h-full rounded-full ${
-                      tone === "danger" ? "bg-destructive" : "bg-primary"
-                    }`}
-                    style={{
-                      width: `${Math.min(100, row.ratio * 100)}%`,
-                    }}
-                  />
-                </View>
-              </Card>
-            );
-          })}
+                    <ProgressRing
+                      ratio={row.ratio}
+                      label={row.label}
+                      detail={`${formatEuro(row.spent)} of ${formatEuro(row.limit)}`}
+                      over={row.over}
+                      meaning="limit"
+                    />
+                  </Pressable>
+                ))}
+              </View>
+            ) : (
+              <Text variant="muted" className="text-sm">
+                A cap is a monthly ceiling — on one category, or on everything.
+                Month shows how close you are to each.
+              </Text>
+            )}
 
-          <Card bezel>
-            <Text variant="label" className="mb-2">
-              Global monthly limit (€)
-            </Text>
-            <Input
-              value={budgetAmount}
-              onChangeText={setBudgetAmount}
-              keyboardType="decimal-pad"
-              className="mb-3"
-            />
-            <Button
-              label="Add budget"
-              disabled={pending}
-              onPress={handleAddBudget}
-            />
-            {(data?.budgets ?? []).map((b) => (
-              <Pressable
-                key={b.id}
-                accessibilityRole="button"
-                accessibilityHint="Long press to delete this budget"
-                className="mt-3 flex-row items-center justify-between border-t border-border pt-3"
-                onLongPress={() => setConfirming({ kind: "budget", id: b.id })}
-              >
-                <Text>
-                  {b.category_id
-                    ? (data?.categories.find((c) => c.id === b.category_id)
-                        ?.name ?? "Category")
-                    : "All expenses"}
-                </Text>
-                <PrivateAmount className="font-mono font-semibold">
-                  {formatEuro(Number(b.amount))}
-                </PrivateAmount>
-              </Pressable>
-            ))}
+            <View className="gap-2 border-t border-border pt-4">
+              <Text variant="label">Global monthly limit (€)</Text>
+              <Input
+                value={budgetAmount}
+                onChangeText={setBudgetAmount}
+                keyboardType="decimal-pad"
+              />
+              <Button
+                label="Add cap"
+                disabled={pending}
+                onPress={handleAddBudget}
+              />
+            </View>
           </Card>
 
-          <Card bezel>
-            <Text className="text-base font-semibold">Savings goals</Text>
-            {(data?.goalProgress ?? []).map((row) => {
-              const hint = pacingHint(computeGoalPacing(row), formatEuro);
-              return (
-                <View key={row.goal.id} className="mt-3">
-                  <View className="flex-row justify-between">
-                    <Text>{row.goal.name}</Text>
-                    <PrivateAmount className="font-mono">
-                      {`${formatEuro(row.saved)} / ${formatEuro(Number(row.goal.target_amount))}`}
-                    </PrivateAmount>
-                  </View>
-                  <View className="mt-1.5 h-2 overflow-hidden rounded-full bg-hairline-strong">
-                    <View
-                      className="h-full rounded-full bg-primary"
-                      style={{
-                        width: `${Math.min(100, row.ratio * 100)}%`,
-                      }}
-                    />
-                  </View>
-                  {hint ? (
-                    <Text className={`mt-1.5 text-xs ${hint.className}`}>
-                      {hint.text}
-                    </Text>
-                  ) : null}
-                </View>
-              );
-            })}
-            <Text variant="label" className="mb-2 mt-4">
-              Goal name
-            </Text>
-            <Input
-              value={goalName}
-              onChangeText={setGoalName}
-              className="mb-3"
-            />
-            <Text variant="label" className="mb-2">
-              Target (€)
-            </Text>
-            <Input
-              value={goalTarget}
-              onChangeText={setGoalTarget}
-              keyboardType="decimal-pad"
-              className="mb-3"
-            />
-            <Text variant="label" className="mb-2">
-              Target date (optional)
-            </Text>
-            <DateField
-              value={goalTargetDate}
-              onChange={setGoalTargetDate}
-              placeholder="No target date"
-              clearable
-              className="mb-3"
-            />
-            <Button
-              label="Add goal"
-              disabled={pending}
-              onPress={handleAddGoal}
-            />
-            {(data?.goals ?? []).map((g) => (
-              <Pressable
-                key={g.id}
-                className="mt-3 flex-row items-center justify-between border-t border-border pt-3"
-                accessibilityRole="button"
-                accessibilityHint="Long press to delete this goal"
-                onLongPress={() => setConfirming({ kind: "goal", id: g.id })}
-              >
-                <Text>{g.name}</Text>
-                <PrivateAmount className="font-mono font-semibold">
-                  {formatEuro(Number(g.target_amount))}
-                </PrivateAmount>
-              </Pressable>
-            ))}
+          <Card bezel innerClassName="gap-4 p-5">
+            <Text className="text-sm font-medium">Savings goals</Text>
+
+            {(data?.goalProgress ?? []).length > 0 ? (
+              <View className="flex-row flex-wrap items-start gap-2">
+                {(data?.goalProgress ?? []).map((row) => {
+                  const hint = pacingHint(computeGoalPacing(row), formatEuro);
+                  return (
+                    <Pressable
+                      key={row.goal.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Goal ${row.goal.name}`}
+                      accessibilityHint="Long press to remove this goal"
+                      onLongPress={() =>
+                        setConfirming({ kind: "goal", id: row.goal.id })
+                      }
+                      className="items-center gap-1 rounded-lg p-1"
+                    >
+                      <ProgressRing
+                        ratio={row.ratio}
+                        label={row.goal.name}
+                        detail={`${formatEuro(row.saved)} of ${formatEuro(Number(row.goal.target_amount))}`}
+                        // A goal is a target, not a limit: filling it is the
+                        // point, and a full ring in red says the opposite.
+                        meaning="target"
+                        color={goalColor}
+                      />
+                      {hint ? (
+                        <Text
+                          numberOfLines={2}
+                          className={`w-32 text-center text-xs ${hint.className}`}
+                        >
+                          {hint.text}
+                        </Text>
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : (
+              <Text variant="muted" className="text-sm">
+                A goal is an amount to reach — a deposit, a trip, a buffer. Set
+                aside money in a savings category and it fills.
+              </Text>
+            )}
+
+            <View className="gap-2 border-t border-border pt-4">
+              <Text variant="label">Goal name</Text>
+              <Input value={goalName} onChangeText={setGoalName} />
+              <Text variant="label">Target (€)</Text>
+              <Input
+                value={goalTarget}
+                onChangeText={setGoalTarget}
+                keyboardType="decimal-pad"
+              />
+              <Text variant="label">Target date (optional)</Text>
+              <DateField
+                value={goalTargetDate}
+                onChange={setGoalTargetDate}
+                placeholder="No target date"
+                clearable
+              />
+              <Button
+                label="Add goal"
+                disabled={pending}
+                onPress={handleAddGoal}
+              />
+            </View>
           </Card>
 
           <Card bezel>

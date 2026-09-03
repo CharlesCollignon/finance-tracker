@@ -85,7 +85,6 @@ export function CategoryHistoryView({
         <Card.Content>
           <BarSeries
             color={TONE[selected.type] ?? "var(--chart-1)"}
-            peak={selected.peak}
             points={selected.points.map((point) => ({
               key: point.monthKey,
               label: point.shortLabel,
