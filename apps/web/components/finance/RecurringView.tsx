@@ -15,6 +15,7 @@ import { Card } from "@/components/retroui/Card";
 import { RecurringProposals } from "@/components/finance/RecurringProposals";
 import type { RecurringProposal } from "@finance/core/recurring-detection";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { PLAN_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { useToast } from "@/components/layout/ToastProvider";
@@ -270,9 +271,10 @@ export function RecurringView({
 
   return (
     <>
-      <PageHeader title="Recurring" />
+      <PageHeader title="Plan" />
 
       <PageContainer>
+        <SurfaceTabs tabs={PLAN_TABS} className="mb-4" />
         <Stagger
           className="flex flex-col items-center gap-8 md:gap-10"
           stagger={0.05}

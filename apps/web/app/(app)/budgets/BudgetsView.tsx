@@ -9,6 +9,7 @@ import { Text } from "@/components/retroui/Text";
 import { FormLabel } from "@/components/layout/FormLabel";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { PLAN_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
   deleteBudget,
@@ -135,9 +136,10 @@ export function BudgetsView({
 
   return (
     <>
-      <PageHeader title="Planning" />
+      <PageHeader title="Plan" />
 
       <PageContainer className="flex flex-col gap-6">
+        <SurfaceTabs tabs={PLAN_TABS} className="mb-4" />
         <section className="space-y-3">
           <h2 className="font-head text-base">Monthly budgets</h2>
           {budgetProgress.map((row) => {
