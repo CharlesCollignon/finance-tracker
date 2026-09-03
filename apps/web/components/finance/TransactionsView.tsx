@@ -33,7 +33,9 @@ import { useFormatCurrency } from "@/lib/use-currency";
 import {
   formatShortDate,
   relativeDayLabel,
+  todayIsoLocal,
 } from "@finance/core/constants";
+import { buildStillToCome } from "@finance/core/still-to-come";
 import {
   applyRecurringForMonth,
   deleteTransactions,
@@ -74,6 +76,8 @@ interface TransactionsViewProps {
   transactions: TransactionWithCategory[];
   categories: Category[];
   recurringTemplates: RecurringTemplateWithCategory[];
+  /** Occurrences waved off for this month, so they are not counted as owed. */
+  skippedKeys?: string[];
   tags: Tag[];
   transactionTags: Record<string, Tag[]>;
   year: number;
@@ -133,7 +137,8 @@ function computeTypeTotals(transactions: TransactionWithCategory[]) {
 export function TransactionsView({
   transactions,
   categories,
-  recurringTemplates: _recurringTemplates,
+  recurringTemplates,
+  skippedKeys,
   tags,
   transactionTags,
   year,
@@ -360,6 +365,25 @@ export function TransactionsView({
   const shown = useMemo(() => computeTypeTotals(filtered), [filtered]);
   const shownOut = shown.expense + shown.savings + shown.investment;
 
+  // What the month ends at, which is a fact about the whole month and does
+  // not move with the filters beside it — hence its own label rather than a
+  // third figure in the In / Out pair.
+  const monthEnd = useMemo(() => {
+    const all = computeTypeTotals(transactions);
+    const upcoming = buildStillToCome(
+      transactions,
+      recurringTemplates,
+      year,
+      month,
+      todayIsoLocal(),
+      new Set(skippedKeys ?? []),
+    );
+    const inflow = all.income + upcoming.arriving;
+    const outflow =
+      all.expense + all.savings + all.investment + upcoming.budgetedOutflow;
+    return inflow - outflow;
+  }, [transactions, recurringTemplates, year, month, skippedKeys]);
+
   return (
     <>
       <PageHeader title="Ledger">
@@ -552,7 +576,7 @@ export function TransactionsView({
                   ? `${transactions.length} ${transactions.length === 1 ? "entry" : "entries"}`
                   : `${filtered.length} of ${transactions.length} entries`}
               </p>
-              <p className="flex gap-5">
+              <p className="flex flex-wrap gap-x-5 gap-y-1">
                 <span>
                   <span className="text-muted-foreground">In </span>
                   <span className="privacy-amount tabular-nums text-success">
@@ -563,6 +587,19 @@ export function TransactionsView({
                   <span className="text-muted-foreground">Out </span>
                   <span className="privacy-amount tabular-nums text-destructive">
                     {formatEuro(shownOut)}
+                  </span>
+                </span>
+                <span className="border-l border-border pl-5">
+                  <span className="text-muted-foreground">
+                    Left at month end{" "}
+                  </span>
+                  <span
+                    className={cn(
+                      "privacy-amount tabular-nums",
+                      monthEnd < 0 && "text-destructive",
+                    )}
+                  >
+                    {formatEuro(monthEnd)}
                   </span>
                 </span>
               </p>
@@ -625,9 +662,7 @@ export function TransactionsView({
                           className={cn(
                             "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-left",
                             "transition-colors hover:bg-muted/40",
-                            selectMode &&
-                              selected.has(tx.id) &&
-                              "bg-primary/5",
+                            selectMode && selected.has(tx.id) && "bg-primary/5",
                           )}
                         >
                           <div className="flex min-w-0 items-center gap-3">

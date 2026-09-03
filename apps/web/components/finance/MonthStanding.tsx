@@ -24,6 +24,34 @@ interface MonthStandingProps {
    */
   comparison: MonthComparison | null;
   savingsRate: number | null;
+  /**
+   * The date the figure is true as of, when that is today. "Left in September"
+   * reads as a claim about the whole month, which is exactly what it is not
+   * while the month is running — half the rent may still be owed. Null for a
+   * finished month, or for the month-end view, where the month really is the
+   * unit.
+   */
+  asOf?: string | null;
+}
+
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function asOfPhrase(iso: string): string {
+  const [, month, day] = iso.split("-").map(Number);
+  return `as of today, ${day} ${MONTH_NAMES[month - 1]}`;
 }
 
 /**
@@ -46,6 +74,7 @@ export function MonthStanding({
   elapsed,
   comparison,
   savingsRate,
+  asOf = null,
 }: MonthStandingProps) {
   const formatMoney = useFormatCurrency();
   const short = remaining < 0;
@@ -59,7 +88,8 @@ export function MonthStanding({
     <section className="flex flex-col gap-5 rounded-xl border border-border bg-card p-5 md:p-6">
       <div className="flex flex-col gap-1">
         <p className="text-sm text-muted-foreground">
-          {short ? "Over" : "Left"} in {monthLabel}
+          {short ? "Over" : "Left"}{" "}
+          {asOf ? asOfPhrase(asOf) : `in ${monthLabel}`}
           {budgetView === "month_end" ? ", counting what is still to come" : ""}
         </p>
         <PrivateAmount

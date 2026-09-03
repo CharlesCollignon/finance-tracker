@@ -30,7 +30,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PLAN_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
@@ -170,9 +169,7 @@ export default function RecurringScreen() {
   }
 
   return (
-    <Screen title="Plan">
-      <SurfaceTabs tabs={PLAN_TABS} className="mb-3" />
-
+    <Screen title="Charges">
       {applyPending ? (
         <Pressable
           accessibilityRole="link"

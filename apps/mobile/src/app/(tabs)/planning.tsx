@@ -27,7 +27,6 @@ import { DateField } from "@/components/ui/DateField";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { ProgressRing } from "@/components/charts";
-import { PLAN_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
@@ -231,8 +230,6 @@ export default function PlanningScreen() {
 
   return (
     <Screen title="Plan">
-      <SurfaceTabs tabs={PLAN_TABS} className="mb-3" />
-
       {loading && !data ? (
         <ScreenSkeleton rows={4} />
       ) : error ? (

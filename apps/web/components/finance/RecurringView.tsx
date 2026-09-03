@@ -14,7 +14,6 @@ import { Badge } from "@/components/retroui/Badge";
 import { RecurringProposals } from "@/components/finance/RecurringProposals";
 import type { RecurringProposal } from "@finance/core/recurring-detection";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { PLAN_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { useToast } from "@/components/layout/ToastProvider";
@@ -148,9 +147,7 @@ function GroupList({
 }) {
   if (items.length === 0) {
     return (
-      <p className="py-2 text-sm text-muted-foreground">
-        Nothing here yet.
-      </p>
+      <p className="py-2 text-sm text-muted-foreground">Nothing here yet.</p>
     );
   }
 
@@ -303,11 +300,13 @@ export function RecurringView({
 
   return (
     <>
-      <PageHeader title="Plan" />
+      <PageHeader title="Charges" />
 
       <PageContainer className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <SurfaceTabs tabs={PLAN_TABS} />
+          <p className="text-sm text-muted-foreground">
+            What you already know is coming, every month.
+          </p>
           <Button
             variant="pill"
             size="sm"

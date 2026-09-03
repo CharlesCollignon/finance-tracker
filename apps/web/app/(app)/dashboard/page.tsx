@@ -4,9 +4,14 @@ import { redirect } from "next/navigation";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getCategories } from "@/lib/queries/categories";
-import { getMonthComparison, getMonthlySummary } from "@/lib/queries/finance";
+import {
+  getMonthComparison,
+  getMonthlySummary,
+  getRecurringSkipKeys,
+  getRecurringTemplates,
+  getTransactions,
+} from "@/lib/queries/finance";
 import { getBudgets, getSavingsGoals } from "@/lib/queries/phase4";
-import { getRecurringTemplates } from "@/lib/queries/finance";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import {
   countSwallowedFeedItems,
@@ -25,6 +30,7 @@ import {
   todayIsoLocal,
 } from "@finance/core/constants";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
+import { buildStillToCome } from "@finance/core/still-to-come";
 import {
   buildSavingsGoalProgress,
   type SavingsGoalProgress,
@@ -39,6 +45,7 @@ import {
 } from "@/components/finance/MonthAttention";
 import { MonthFirstRun } from "@/components/finance/MonthFirstRun";
 import { MonthStanding } from "@/components/finance/MonthStanding";
+import { StillToCome } from "@/components/finance/StillToCome";
 import { ProgressRing, SpendStrip } from "@/components/finance/charts";
 import { MonthWallets } from "@/components/finance/MonthWallets";
 import type { BudgetProgress } from "@finance/core/budget-limits";
@@ -113,10 +120,10 @@ async function AttentionSlot({
     items.push({
       id: "close",
       text: closes.next.isBaseline
-        ? `Set a starting balance to begin closing months`
+        ? "Enter your account balance once, to start catching spending the app never sees"
         : `${closes.next.label} is ready to close`,
       href: "/budgets",
-      action: "Close",
+      action: closes.next.isBaseline ? "Start" : "Close",
     });
   }
 
@@ -214,15 +221,25 @@ export default async function DashboardPage({
   const { year, month } = parseMonthParams(params.y, params.m);
   const budgetView = parseBudgetViewMode(params.view);
 
-  const [summary, budgets, goals, categories, comparison, templates] =
-    await Promise.all([
-      getMonthlySummary(user.id, year, month, budgetView),
-      getBudgets(user.id),
-      getSavingsGoals(user.id),
-      getCategories(user.id),
-      getMonthComparison(user.id, year, month),
-      getRecurringTemplates(user.id),
-    ]);
+  const [
+    summary,
+    budgets,
+    goals,
+    categories,
+    comparison,
+    templates,
+    monthTransactions,
+    skippedKeys,
+  ] = await Promise.all([
+    getMonthlySummary(user.id, year, month, budgetView),
+    getBudgets(user.id),
+    getSavingsGoals(user.id),
+    getCategories(user.id),
+    getMonthComparison(user.id, year, month),
+    getRecurringTemplates(user.id),
+    getTransactions(user.id, year, month),
+    getRecurringSkipKeys(user.id, year, month),
+  ]);
 
   const categoryNames = new Map(categories.map((c) => [c.id, c.name] as const));
   const budgetProgress = buildBudgetProgress(
@@ -237,14 +254,14 @@ export default async function DashboardPage({
     summary.savings,
   );
 
+  const today = todayIsoLocal();
   const monthLabel = formatMonthLabel(year, month);
   const current = getCurrentMonth();
+  const isCurrentMonth = year === current.year && month === current.month;
   // Only a month in progress has an "of it gone" to report.
-  const elapsed =
-    year === current.year && month === current.month
-      ? Number(todayIsoLocal().slice(8, 10)) /
-        new Date(year, month, 0).getDate()
-      : null;
+  const elapsed = isCurrentMonth
+    ? Number(today.slice(8, 10)) / new Date(year, month, 0).getDate()
+    : null;
 
   // Nothing set up and nothing recorded: the standing card would report "0 €
   // left" over two more zeros, which is a correct answer to a question nobody
@@ -255,6 +272,15 @@ export default async function DashboardPage({
     goals.length === 0 &&
     summary.income === 0 &&
     summary.expenses === 0;
+
+  const upcoming = buildStillToCome(
+    monthTransactions,
+    templates,
+    year,
+    month,
+    today,
+    skippedKeys,
+  );
 
   const savingsRate = savingsRatePercent(
     summary.savings,
@@ -291,8 +317,21 @@ export default async function DashboardPage({
             elapsed={elapsed}
             comparison={comparison}
             savingsRate={savingsRate}
+            asOf={isCurrentMonth && budgetView === "current" ? today : null}
           />
         )}
+
+        {/* Only in the as-of-today view: the month-end view has already
+            counted these into the headline, so listing them again would
+            invite the reader to subtract them twice. */}
+        {!firstRun && budgetView === "current" ? (
+          <StillToCome
+            outgoing={upcoming.outgoing}
+            leaving={upcoming.leaving}
+            incoming={upcoming.incoming}
+            arriving={upcoming.arriving}
+          />
+        ) : null}
 
         {summary.expenses > 0 ? (
           <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">

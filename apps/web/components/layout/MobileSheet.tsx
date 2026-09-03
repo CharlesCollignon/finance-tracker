@@ -113,8 +113,12 @@ export function MobileSheet({
           "relative z-10 w-full overflow-y-auto border border-border",
           "bg-background",
           "max-h-[90dvh] max-w-lg",
+          // Sheets that list rows to read need more than a phone's width once
+          // there is a desktop to spend: a bank description is long, and the
+          // whole job here is deciding what it is.
+          "md:max-w-xl",
           "rounded-t-lg border-b-0",
-          "md:max-w-md md:rounded-lg md:border-b",
+          "md:rounded-lg md:border-b",
         )}
       >
         <header

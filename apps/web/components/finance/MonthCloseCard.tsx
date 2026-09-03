@@ -44,7 +44,7 @@ export function MonthCloseCard({
   const [open, setOpen] = useState(false);
 
   const detail = isBaseline
-    ? "One balance sets the starting point. From next month the app can tell you what it never saw."
+    ? "Type in what your account actually holds today. From next month the app can compare that against what it recorded, and tell you what it never saw — cash, a forgotten tap, a card you do not track."
     : unrecordedCap !== null
       ? `Stay under ${formatMoney(unrecordedCap)} of unrecorded spending to keep the run going.`
       : baseline !== null
@@ -58,7 +58,9 @@ export function MonthCloseCard({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="font-head text-lg">
-                {monthLabel} is ready to close
+                {isBaseline
+                  ? "Set your starting balance"
+                  : `${monthLabel} is ready to close`}
               </h2>
               {streak > 1 && (
                 <span

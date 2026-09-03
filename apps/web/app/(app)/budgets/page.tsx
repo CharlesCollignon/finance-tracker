@@ -17,6 +17,7 @@ import {
 } from "@finance/core/savings-goals";
 import { buildForwardProjection, buildRunway } from "@finance/core/projection";
 import { ProjectionCard } from "@/components/finance/ProjectionCard";
+import { MonthCloseCard } from "@/components/finance/MonthCloseCard";
 import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
 import { getMonthCloseOverview } from "@/lib/queries/month-close";
 import { BudgetsView } from "./BudgetsView";
@@ -83,6 +84,25 @@ export default async function BudgetsPage() {
       goalProgress={goalProgress}
       footer={
         <>
+          {/* The close itself, at the top of the surface its history and
+              settings already live on. Month links here for it; until now
+              nothing on this page could actually do it, so that link was a
+              dead end that told people to close a month and then offered no
+              way to. */}
+          {closes.next ? (
+            <MonthCloseCard
+              year={closes.next.year}
+              month={closes.next.month}
+              monthLabel={closes.next.label}
+              observeOn={closes.next.observeOn}
+              isBaseline={closes.next.isBaseline}
+              monthlyCommitted={runway?.monthlyCommitted ?? 0}
+              unrecordedCap={closes.settings.unrecordedCap}
+              baseline={closes.summary.baseline}
+              streak={closes.summary.streak}
+            />
+          ) : null}
+
           <ProjectionCard points={projection} runway={runway} />
 
           <div className="grid gap-3 sm:grid-cols-2">

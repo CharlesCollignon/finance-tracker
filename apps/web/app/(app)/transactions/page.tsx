@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getCategories } from "@/lib/queries/categories";
-import { getRecurringTemplates, getTransactions } from "@/lib/queries/finance";
+import {
+  getRecurringSkipKeys,
+  getRecurringTemplates,
+  getTransactions,
+} from "@/lib/queries/finance";
 import { getTags, getTransactionTagMap } from "@/lib/queries/phase4";
 import { parseMonthParams } from "@finance/core/constants";
 import { TransactionsView } from "@/components/finance/TransactionsView";
@@ -29,14 +33,21 @@ export default async function TransactionsPage({
 
   const params = await searchParams;
   const { year, month } = parseMonthParams(params.y, params.m);
-  const [transactions, categories, recurringTemplates, tags, transactionTags] =
-    await Promise.all([
-      getTransactions(user.id, year, month),
-      getCategories(user.id),
-      getRecurringTemplates(user.id),
-      getTags(user.id),
-      getTransactionTagMap(user.id, year, month),
-    ]);
+  const [
+    transactions,
+    categories,
+    recurringTemplates,
+    tags,
+    transactionTags,
+    skippedKeys,
+  ] = await Promise.all([
+    getTransactions(user.id, year, month),
+    getCategories(user.id),
+    getRecurringTemplates(user.id),
+    getTags(user.id),
+    getTransactionTagMap(user.id, year, month),
+    getRecurringSkipKeys(user.id, year, month),
+  ]);
 
   const defaultDate = `${year}-${String(month).padStart(2, "0")}-01`;
 
@@ -55,6 +66,7 @@ export default async function TransactionsPage({
       transactions={transactions}
       categories={categories}
       recurringTemplates={recurringTemplates}
+      skippedKeys={[...skippedKeys]}
       tags={tags}
       transactionTags={transactionTags}
       year={year}

@@ -16,6 +16,7 @@ import {
   relativeDayLabel,
   todayIsoLocal,
 } from "@finance/core/constants";
+import { buildStillToCome } from "@finance/core/still-to-come";
 import {
   applyRecurringPlanCounts,
   type ApplyRecurringPlan,
@@ -28,6 +29,7 @@ import type {
   Category,
   CategoryType,
   Tag,
+  RecurringTemplateWithCategory,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
@@ -38,10 +40,7 @@ import { PrivateAmount } from "@/components/PrivateAmount";
 import { ApplyRecurringSheet } from "@/components/ApplyRecurringSheet";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
-import {
-  RowCheckbox,
-  SelectionBar,
-} from "@/components/SelectionBar";
+import { RowCheckbox, SelectionBar } from "@/components/SelectionBar";
 import {
   pruneSelection,
   selectAllState,
@@ -71,6 +70,7 @@ import {
 } from "@/lib/mutations";
 import {
   getCategories,
+  getRecurringTemplates,
   getSkippedOccurrences,
   getTags,
   getTransactions,
@@ -135,15 +135,19 @@ export default function TransactionsScreen() {
           categories: [] as Category[],
           skipped: [] as SkippedOccurrence[],
           tags: [] as Tag[],
+          templates: [] as RecurringTemplateWithCategory[],
         };
       }
-      const [transactions, categories, skipped, tags] = await Promise.all([
-        getTransactions(user.id, year, month),
-        getCategories(user.id),
-        getSkippedOccurrences(user.id, year, month),
-        getTags(user.id),
-      ]);
-      return { transactions, categories, skipped, tags };
+      const [transactions, categories, skipped, tags, templates] =
+        await Promise.all([
+          getTransactions(user.id, year, month),
+          getCategories(user.id),
+          getSkippedOccurrences(user.id, year, month),
+          getTags(user.id),
+          // For "left at month end": what the rest of the month still owes.
+          getRecurringTemplates(user.id),
+        ]);
+      return { transactions, categories, skipped, tags, templates };
     }, [user?.id, year, month, dataVersion]);
 
   // Memoised because every derived memo below depends on it; a fresh array
@@ -218,6 +222,30 @@ export default function TransactionsScreen() {
   // under a filter would state something the list below contradicts.
   const shown = useMemo(() => computeTypeTotals(filtered), [filtered]);
   const shownOut = shown.expense + shown.savings + shown.investment;
+
+  // What the month ends at, which is a fact about the whole month and does
+  // not move with the filters beside it — hence its own label rather than a
+  // third figure in the In / Out pair.
+  const monthEnd = useMemo(() => {
+    const all = computeTypeTotals(transactions);
+    const upcoming = buildStillToCome(
+      transactions,
+      data?.templates ?? [],
+      year,
+      month,
+      todayIsoLocal(),
+      new Set(
+        (data?.skipped ?? []).map(
+          (entry) => `${entry.templateId}:${entry.occurredOn}`,
+        ),
+      ),
+    );
+    return (
+      all.income +
+      upcoming.arriving -
+      (all.expense + all.savings + all.investment + upcoming.budgetedOutflow)
+    );
+  }, [transactions, data?.templates, data?.skipped, year, month]);
 
   // A ledger is read a day at a time, not as one unbroken column. Grouping
   // here keeps a heading and its rows in the same object, so the list can
@@ -599,6 +627,17 @@ export default function TransactionsScreen() {
             </PrivateAmount>
           </Text>
         </View>
+      </View>
+
+      <View className="mb-2 flex-row items-baseline justify-between gap-3">
+        <Text variant="muted" className="text-sm">
+          Left at month end
+        </Text>
+        <PrivateAmount
+          className={cn("text-sm", monthEnd < 0 && "text-destructive")}
+        >
+          {formatEuro(monthEnd)}
+        </PrivateAmount>
       </View>
 
       {loading && !data ? (
