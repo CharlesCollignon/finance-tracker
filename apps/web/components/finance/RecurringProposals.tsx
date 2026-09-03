@@ -14,6 +14,23 @@ interface RecurringProposalsProps {
   proposals: RecurringProposal[];
 }
 
+/**
+ * A name to show for a suggestion.
+ *
+ * The raw statement line is unreadable in a column this narrow — "PRELEVEMENT
+ * Navigo Annuel - COMUTITRES SAS" truncates to "PRELEVEMENT Navi…", which
+ * says nothing about what is being accepted. The merchant key is what the
+ * detector grouped on and is already stripped of the bank's noise, so it
+ * makes the better label; the full line stays available on hover and can be
+ * edited once the template exists.
+ */
+function displayName(key: string): string {
+  return key
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 const CADENCE: Record<string, string> = {
   weekly: "every week",
   monthly: "every month",
@@ -85,19 +102,27 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
         {visible.map((proposal) => (
           <li
             key={proposal.key}
-            className="flex flex-wrap items-center justify-between gap-2"
+            className="flex flex-col gap-1.5 rounded-md border border-border/60 p-2"
           >
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{proposal.label}</p>
-              <p className="text-xs text-muted-foreground">
-                {formatMoney(proposal.amount)} {CADENCE[proposal.recurrence]} ·
-                seen {proposal.count} times
+            <div className="flex items-baseline justify-between gap-2">
+              <p
+                className="min-w-0 truncate text-sm font-medium"
+                title={proposal.label}
+              >
+                {displayName(proposal.key)}
               </p>
+              <span className="shrink-0 tabular-nums text-sm font-semibold">
+                {formatMoney(proposal.amount)}
+              </span>
             </div>
-            <div className="flex shrink-0 items-center gap-1">
+            <p className="text-xs text-muted-foreground">
+              {CADENCE[proposal.recurrence]} · seen {proposal.count} times
+            </p>
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 size="sm"
+                className="flex-1"
                 disabled={pending}
                 onClick={() => accept(proposal.key)}
               >
