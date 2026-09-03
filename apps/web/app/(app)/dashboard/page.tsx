@@ -6,6 +6,7 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { getCategories } from "@/lib/queries/categories";
 import { getMonthComparison, getMonthlySummary } from "@/lib/queries/finance";
 import { getBudgets, getSavingsGoals } from "@/lib/queries/phase4";
+import { getRecurringTemplates } from "@/lib/queries/finance";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import {
   countSwallowedFeedItems,
@@ -36,6 +37,7 @@ import {
   MonthAttention,
   type AttentionItem,
 } from "@/components/finance/MonthAttention";
+import { MonthFirstRun } from "@/components/finance/MonthFirstRun";
 import { MonthStanding } from "@/components/finance/MonthStanding";
 import { ProgressRing, SpendStrip } from "@/components/finance/charts";
 import { MonthWallets } from "@/components/finance/MonthWallets";
@@ -212,13 +214,15 @@ export default async function DashboardPage({
   const { year, month } = parseMonthParams(params.y, params.m);
   const budgetView = parseBudgetViewMode(params.view);
 
-  const [summary, budgets, goals, categories, comparison] = await Promise.all([
-    getMonthlySummary(user.id, year, month, budgetView),
-    getBudgets(user.id),
-    getSavingsGoals(user.id),
-    getCategories(user.id),
-    getMonthComparison(user.id, year, month),
-  ]);
+  const [summary, budgets, goals, categories, comparison, templates] =
+    await Promise.all([
+      getMonthlySummary(user.id, year, month, budgetView),
+      getBudgets(user.id),
+      getSavingsGoals(user.id),
+      getCategories(user.id),
+      getMonthComparison(user.id, year, month),
+      getRecurringTemplates(user.id),
+    ]);
 
   const categoryNames = new Map(categories.map((c) => [c.id, c.name] as const));
   const budgetProgress = buildBudgetProgress(
@@ -241,6 +245,16 @@ export default async function DashboardPage({
       ? Number(todayIsoLocal().slice(8, 10)) /
         new Date(year, month, 0).getDate()
       : null;
+
+  // Nothing set up and nothing recorded: the standing card would report "0 €
+  // left" over two more zeros, which is a correct answer to a question nobody
+  // asked. Show the way in instead.
+  const firstRun =
+    templates.length === 0 &&
+    budgets.length === 0 &&
+    goals.length === 0 &&
+    summary.income === 0 &&
+    summary.expenses === 0;
 
   const savingsRate = savingsRatePercent(
     summary.savings,
@@ -265,16 +279,20 @@ export default async function DashboardPage({
           <AttentionSlot userId={user.id} year={year} month={month} />
         </Suspense>
 
-        <MonthStanding
-          monthLabel={monthLabel}
-          income={summary.income}
-          expenses={summary.expenses}
-          remaining={summary.remaining}
-          budgetView={budgetView}
-          elapsed={elapsed}
-          comparison={comparison}
-          savingsRate={savingsRate}
-        />
+        {firstRun ? <MonthFirstRun /> : null}
+
+        {firstRun ? null : (
+          <MonthStanding
+            monthLabel={monthLabel}
+            income={summary.income}
+            expenses={summary.expenses}
+            remaining={summary.remaining}
+            budgetView={budgetView}
+            elapsed={elapsed}
+            comparison={comparison}
+            savingsRate={savingsRate}
+          />
+        )}
 
         {summary.expenses > 0 ? (
           <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">

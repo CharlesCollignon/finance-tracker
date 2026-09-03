@@ -5,8 +5,8 @@ export const SHELL_HEADER_BAND_CLASS =
 
 export const SHELL_HEADER_INNER_CLASS =
   "mx-auto flex h-[var(--shell-header-height)] w-full min-w-0 max-w-lg " +
-  "items-center justify-between gap-3 px-4 " +
-  "md:max-w-3xl md:gap-4 md:px-6 lg:max-w-5xl";
+  "items-center justify-between gap-2 px-4 " +
+  "sm:gap-3 md:max-w-3xl md:gap-4 md:px-6 lg:max-w-5xl";
 
 export const SHELL_HEADER_ACTIONS_CLASS =
   "flex min-w-0 shrink items-center justify-end gap-2";

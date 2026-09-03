@@ -366,8 +366,8 @@ export default function OnboardingScreen() {
                 What would you rather not overspend?
               </Text>
               <Text variant="muted">
-                Pick one category and a monthly cap. Home will show a ring that
-                fills as you spend against it. You can add more in Planning.
+                Pick one category and a monthly cap. Month will show a ring that
+                fills as you spend against it. You can add more under Plan.
               </Text>
             </View>
 

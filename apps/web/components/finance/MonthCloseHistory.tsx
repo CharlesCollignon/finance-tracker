@@ -92,7 +92,7 @@ export function MonthCloseHistory({
             ? `A normal month costs you about ${formatMoney(summary.baseline)} the app never sees.`
             : history.length > 0
               ? "One more close and there will be a normal month to compare against."
-              : "Close a month from the home screen and it will appear here."}
+              : "Close a month from Month and it will appear here."}
         </Card.Description>
       </Card.Header>
 

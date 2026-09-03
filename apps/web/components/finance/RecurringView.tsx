@@ -308,7 +308,12 @@ export function RecurringView({
       <PageContainer className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <SurfaceTabs tabs={PLAN_TABS} />
-          <Button variant="pill" size="sm" onClick={openCreate}>
+          <Button
+            variant="pill"
+            size="sm"
+            className="ml-auto"
+            onClick={openCreate}
+          >
             Add charge
             <ButtonNub>
               <Plus size={16} weight="bold" />

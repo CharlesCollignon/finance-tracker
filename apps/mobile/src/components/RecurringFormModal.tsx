@@ -98,7 +98,7 @@ export function RecurringFormModal({
       setError(result.error);
       return;
     }
-    toast("Saved — apply recurring on Transactions to see changes.", "success");
+    toast("Saved — apply recurring in the Ledger to see the change.", "success");
     onSaved();
     onClose();
   }
@@ -114,7 +114,7 @@ export function RecurringFormModal({
       setError(result.error);
       return;
     }
-    toast("Deleted — apply recurring on Transactions to see changes.");
+    toast("Deleted — apply recurring in the Ledger to see the change.");
     onSaved();
     onClose();
   }

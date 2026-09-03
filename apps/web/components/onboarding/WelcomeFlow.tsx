@@ -316,8 +316,8 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
               What would you rather not overspend?
             </h1>
             <p className="text-muted-foreground">
-              Pick one category and a monthly cap. Home will show a ring that
-              fills as you spend against it. You can add more in Planning.
+              Pick one category and a monthly cap. Month will show a ring that
+              fills as you spend against it. You can add more under Plan.
             </p>
           </div>
 

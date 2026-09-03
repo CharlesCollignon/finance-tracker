@@ -24,7 +24,11 @@ export function PageHeader({ title, children, className }: PageHeaderProps) {
       )}
     >
       <div className={SHELL_HEADER_INNER_CLASS}>
-        <div className="flex shrink-0 items-center gap-2">
+        {/* Shrinks and truncates rather than holding its width: on a 320px
+            screen the month picker and the title together are wider than the
+            band, and a fixed title zone means they overlap rather than one of
+            them giving way. */}
+        <div className="flex min-w-0 shrink items-center gap-2">
           {/* The bare orb rather than the full composition: at this size the
               furrow drawn in the ground is a smudge, while the sphere still
               reads. */}
@@ -38,7 +42,9 @@ export function PageHeader({ title, children, className }: PageHeaderProps) {
             className="shrink-0"
             style={{ width: 22, height: 22 }}
           />
-          <h1 className="font-head text-lg leading-none md:text-xl">{title}</h1>
+          <h1 className="truncate font-head text-lg leading-none md:text-xl">
+            {title}
+          </h1>
         </div>
         <div className={SHELL_HEADER_ACTIONS_CLASS}>
           {children}
