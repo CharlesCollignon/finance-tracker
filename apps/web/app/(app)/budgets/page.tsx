@@ -87,18 +87,34 @@ export default async function BudgetsPage() {
 
       <PageContainer className="flex flex-col gap-4 pt-0">
         <ProjectionCard points={projection} runway={runway} />
-        <Link
-          href="/history"
-          className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm transition-colors hover:border-primary-rim"
-        >
-          <span>
-            <span className="font-medium">History</span>
-            <span className="block text-xs text-muted-foreground">
-              Each category, month by month
-            </span>
-          </span>
-          <ArrowRight size={16} />
-        </Link>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            {
+              href: "/categories",
+              title: "Categories",
+              hint: "Where money is allowed to go",
+            },
+            {
+              href: "/import",
+              title: "Import a statement",
+              hint: "A CSV, when there is no bank feed",
+            },
+          ].map(({ href, title, hint }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm transition-colors hover:border-primary-rim"
+            >
+              <span>
+                <span className="font-medium">{title}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {hint}
+                </span>
+              </span>
+              <ArrowRight size={16} />
+            </Link>
+          ))}
+        </div>
 
         <MonthCloseHistory
           history={closes.history}

@@ -19,6 +19,7 @@ import { Card } from "@/components/retroui/Card";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { MonthPicker } from "@/components/layout/MonthPicker";
@@ -368,11 +369,12 @@ export function TransactionsView({
 
   return (
     <>
-      <PageHeader title="Transactions">
+      <PageHeader title="Ledger">
         <MonthPicker basePath="/transactions" />
       </PageHeader>
 
       <PageContainer>
+        <SurfaceTabs tabs={LEDGER_TABS} className="mb-4" />
         {bankSlot ? <div className="mb-4">{bankSlot}</div> : null}
         <Stagger
           className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"

@@ -6,6 +6,7 @@ import { getCurrentMonth, shiftMonth } from "@finance/core/constants";
 import type { TransactionWithCategory } from "@finance/core/types/database";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { CategoryHistoryView } from "@/components/finance/CategoryHistoryView";
 
 /** How far back the page looks. A year is one of every seasonal thing. */
@@ -39,8 +40,9 @@ export default async function HistoryPage() {
 
   return (
     <>
-      <PageHeader title="History" />
+      <PageHeader title="Ledger" />
       <PageContainer>
+        <SurfaceTabs tabs={LEDGER_TABS} className="mb-4" />
         <CategoryHistoryView histories={histories} months={MONTHS} />
       </PageContainer>
     </>

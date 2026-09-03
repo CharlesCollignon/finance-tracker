@@ -5,14 +5,12 @@ import { Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { TransactionForm } from "@/components/finance/TransactionForm";
-import {
-  RowCheckbox,
-  SelectionBar,
-} from "@/components/finance/SelectionBar";
+import { RowCheckbox, SelectionBar } from "@/components/finance/SelectionBar";
 import { useToast } from "@/components/layout/ToastProvider";
 import { deleteTransactions } from "@/lib/actions/finance";
 import {
@@ -144,11 +142,12 @@ export function CalendarView({
 
   return (
     <>
-      <PageHeader title="Calendar">
+      <PageHeader title="Ledger">
         <MonthPicker basePath="/calendar" />
       </PageHeader>
 
       <PageContainer>
+        <SurfaceTabs tabs={LEDGER_TABS} className="mb-4" />
         <Stagger
           className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
           stagger={0.05}
@@ -367,7 +366,9 @@ export function CalendarView({
                           ? `Select ${tx.categories.name}`
                           : `Edit ${tx.categories.name}`
                       }
-                      aria-pressed={selectMode ? selected.has(tx.id) : undefined}
+                      aria-pressed={
+                        selectMode ? selected.has(tx.id) : undefined
+                      }
                       className={cn(
                         "flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30",
                         selectMode && selected.has(tx.id) && "bg-primary/5",

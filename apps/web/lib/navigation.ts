@@ -1,24 +1,29 @@
 import {
   ArrowsLeftRight,
-  CalendarBlank,
-  ChartBar,
   ChartLine,
   ChartPieSlice,
-  Repeat,
   Target,
   User,
 } from "@phosphor-icons/react";
 
-/** The side nav's main list, where there is room for all of it. Profile opens
- * an account menu (theme, settings, sign out). */
+/**
+ * The four surfaces.
+ *
+ * Organised by time rather than by table. The bank records what happened and
+ * templates forecast what is coming, so the app already divides along that
+ * line: Month is now, Ledger is the record, Plan is ahead, Wallets is what is
+ * being built. Seven destinations became four, which is what let the phone bar
+ * hold all of them.
+ *
+ * The paths are the old ones. Renaming them would have touched twenty-five
+ * revalidation calls and the manifest to change strings nobody reads in an
+ * installed app.
+ */
 export const APP_NAV_ITEMS = [
-  { href: "/dashboard", label: "Home", icon: ChartPieSlice },
-  { href: "/recurring", label: "Recurring", icon: Repeat },
-  { href: "/transactions", label: "Transaction", icon: ArrowsLeftRight },
-  { href: "/calendar", label: "Calendar", icon: CalendarBlank },
+  { href: "/dashboard", label: "Month", icon: ChartPieSlice },
+  { href: "/transactions", label: "Ledger", icon: ArrowsLeftRight },
+  { href: "/budgets", label: "Plan", icon: Target },
   { href: "/investments", label: "Wallets", icon: ChartLine },
-  { href: "/budgets", label: "Planning", icon: Target },
-  { href: "/history", label: "History", icon: ChartBar },
 ] as const;
 
 export const PROFILE_NAV_ITEM = {
@@ -28,16 +33,7 @@ export const PROFILE_NAV_ITEM = {
 } as const;
 
 /**
- * The phone's bottom bar: the side nav's list, one item shorter.
- *
- * Seven destinations plus the account trigger leaves each slot at about the
- * 44px touch minimum on a 375px screen, with 10px labels truncated to
- * nothing. History is the one you go to deliberately rather than repeatedly,
- * so it is reached from Planning instead and the bar stays legible.
- *
- * Profile is not in the list because the bar renders an account menu of its
- * own for thumb reach.
+ * The phone's bottom bar. Four destinations and the account trigger leave each
+ * slot room for a legible label, which seven did not.
  */
-export const BOTTOM_NAV_ITEMS = APP_NAV_ITEMS.filter(
-  (item) => item.href !== "/history",
-);
+export const BOTTOM_NAV_ITEMS = APP_NAV_ITEMS;
