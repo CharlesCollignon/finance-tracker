@@ -1,16 +1,14 @@
 import { useMemo } from "react";
 import { View } from "react-native";
-import type { EChartsCoreOption } from "echarts/core";
 
 import type { MonthlyTrendPoint } from "@/lib/queries";
 
-import { EChart } from "@/components/charts/EChart";
+import { BarSeries } from "@/components/charts";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
-import { useThemeColors } from "@/theme/useThemeColors";
 
 /** Below this a "trend" would be a straight line between two dots. */
 const MIN_MONTHS_FOR_CHART = 3;
@@ -23,12 +21,15 @@ interface TrendCardProps {
  * Net per month over the last half-year.
  *
  * Deliberately honest about thin data: with fewer than three months that have
- * activity it says so and shows the months it does have, rather than drawing a
- * shape that implies a trend which isn't there yet.
+ * activity it says so and lists the months it does have, rather than drawing
+ * a shape that implies a trend which isn't there yet.
+ *
+ * Drawn with the shared bar mark rather than a chart runtime. It was an
+ * ECharts bar chart, which was the whole reason this screen mounted one — a
+ * few dozen kilobytes and a canvas to draw six rectangles.
  */
 export function TrendCard({ points }: TrendCardProps) {
   const formatEuro = useFormatCurrency();
-  const colors = useThemeColors();
 
   const active = useMemo(
     () => points.filter((point) => point.income !== 0 || point.outflow !== 0),
@@ -47,39 +48,7 @@ export function TrendCard({ points }: TrendCardProps) {
     active.length > 1 &&
     best.monthKey === active.at(-1)?.monthKey;
 
-  const option = useMemo<EChartsCoreOption | null>(() => {
-    if (active.length < MIN_MONTHS_FOR_CHART) {
-      return null;
-    }
-    return {
-      animationDuration: 450,
-      grid: { left: 8, right: 8, top: 16, bottom: 8, containLabel: true },
-      xAxis: {
-        type: "category",
-        data: active.map((point) => point.label.split(" ")[0]),
-        axisLine: { show: false },
-        axisTick: { show: false },
-        axisLabel: { color: colors.mutedForeground, fontSize: 9 },
-      },
-      yAxis: {
-        type: "value",
-        splitLine: { lineStyle: { color: colors.border, type: "dashed" } },
-        axisLabel: { color: colors.mutedForeground, fontSize: 9 },
-      },
-      series: [
-        {
-          type: "bar",
-          data: active.map((point) => ({
-            value: point.net,
-            itemStyle: {
-              color: point.net < 0 ? colors.destructive : colors.primary,
-              borderRadius: [4, 4, 0, 0],
-            },
-          })),
-        },
-      ],
-    };
-  }, [active, colors]);
+  const enough = active.length >= MIN_MONTHS_FOR_CHART;
 
   return (
     <Card bezel innerClassName="p-4">
@@ -90,11 +59,20 @@ export function TrendCard({ points }: TrendCardProps) {
         Income minus everything else, month by month.
       </Text>
 
-      {option ? (
+      {enough ? (
         <>
-          <EChart option={option} height={160} className="mt-3" />
+          <BarSeries
+            className="mt-4"
+            height={140}
+            signed
+            points={active.map((point) => ({
+              key: point.monthKey,
+              label: point.label.split(" ")[0] ?? point.label,
+              value: point.net,
+            }))}
+          />
           {best ? (
-            <View className="mt-2 flex-row items-center justify-between">
+            <View className="mt-3 flex-row items-center justify-between">
               <Text variant="muted" className="text-xs">
                 {isBestThisMonth ? "Best month so far" : `Best: ${best.label}`}
               </Text>

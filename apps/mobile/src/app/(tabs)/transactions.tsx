@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, type Href } from "expo-router";
 import {
-  FlatList,
+  SectionList,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -10,7 +10,12 @@ import {
   View,
 } from "react-native";
 
-import { parseMonthParams, todayIsoLocal } from "@finance/core/constants";
+import {
+  formatShortDate,
+  parseMonthParams,
+  relativeDayLabel,
+  todayIsoLocal,
+} from "@finance/core/constants";
 import {
   applyRecurringPlanCounts,
   type ApplyRecurringPlan,
@@ -47,9 +52,9 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
-import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
@@ -147,15 +152,6 @@ export default function TransactionsScreen() {
     () => data?.transactions ?? [],
     [data?.transactions],
   );
-  const typeTotals = useMemo(
-    () => computeTypeTotals(transactions),
-    [transactions],
-  );
-  const netTotal =
-    typeTotals.income -
-    typeTotals.expense -
-    typeTotals.savings -
-    typeTotals.investment;
   const categories = data?.categories ?? [];
 
   const skipped = data?.skipped ?? [];
@@ -217,6 +213,38 @@ export default function TransactionsScreen() {
       );
     });
   }, [transactions, filter, categoryFilter, search]);
+  // The figures describe what is on screen, which is the whole reason they
+  // are here: the month's own totals are Month's job, and repeating them
+  // under a filter would state something the list below contradicts.
+  const shown = useMemo(() => computeTypeTotals(filtered), [filtered]);
+  const shownOut = shown.expense + shown.savings + shown.investment;
+
+  // A ledger is read a day at a time, not as one unbroken column. Grouping
+  // here keeps a heading and its rows in the same object, so the list can
+  // never draw a date with nothing under it.
+  const days = useMemo(() => {
+    const out: {
+      date: string;
+      net: number;
+      data: TransactionWithCategory[];
+    }[] = [];
+
+    for (const tx of filtered) {
+      const amount = Number(tx.amount);
+      const signed = tx.categories.type === "income" ? amount : -amount;
+      const last = out[out.length - 1];
+
+      if (last && last.date === tx.occurred_on) {
+        last.data.push(tx);
+        last.net += signed;
+      } else {
+        out.push({ date: tx.occurred_on, net: signed, data: [tx] });
+      }
+    }
+
+    return out;
+  }, [filtered]);
+
   const visibleIds = useMemo(() => filtered.map((tx) => tx.id), [filtered]);
   // A filter can hide rows still held in the stored set; pruning here rather
   // than in an effect means the hidden ones can never be acted on.
@@ -335,7 +363,9 @@ export default function TransactionsScreen() {
   }
 
   return (
-    <Screen title="Transactions">
+    <Screen title="Ledger">
+      <SurfaceTabs tabs={LEDGER_TABS} className="mb-3" />
+
       <MonthPicker
         year={year}
         month={month}
@@ -345,36 +375,7 @@ export default function TransactionsScreen() {
         }}
       />
 
-      <StatHero
-        className="mt-5"
-        label="What's left"
-        amount={`${netTotal >= 0 ? "+" : "−"}${formatEuro(Math.abs(netTotal))}`}
-        animateValue={netTotal}
-        format={(value) =>
-          `${value >= 0 ? "+" : "−"}${formatEuro(Math.abs(value))}`
-        }
-        amountClassName={netTotal >= 0 ? "text-success" : "text-destructive"}
-        subtitle={
-          <>
-            <Text className="text-sm text-success">
-              {formatEuro(typeTotals.income)}
-            </Text>
-            {" earned · "}
-            <Text className="text-sm text-destructive">
-              {formatEuro(typeTotals.expense)}
-            </Text>
-            {" spent"}
-          </>
-        }
-      />
-
-      {applyPending ? (
-        <Text variant="muted" className="mt-5 text-center text-sm">
-          Recurring changed — apply to update this month.
-        </Text>
-      ) : null}
-
-      <View className="my-4 flex-row justify-center gap-2">
+      <View className="mb-3 mt-4 flex-row items-center gap-2">
         <View className="flex-1">
           <Button
             label={pending ? "…" : "Apply recurring"}
@@ -395,6 +396,7 @@ export default function TransactionsScreen() {
           label="Add"
           size="sm"
           className="flex-1"
+          icon="add"
           onPress={() => {
             setEditing(null);
             setFormOpen(true);
@@ -402,7 +404,10 @@ export default function TransactionsScreen() {
         />
       </View>
 
-      <View className="mb-4 flex-row items-center justify-center gap-2">
+      {/* Housekeeping, not the main action: right-aligned and quiet, where a
+          centred row of full-width buttons used to read as the point of the
+          screen. */}
+      <View className="mb-3 flex-row items-center justify-end gap-1">
         {selectMode ? (
           <>
             <Button
@@ -430,7 +435,7 @@ export default function TransactionsScreen() {
               onPress={() => setSelectMode(true)}
             />
             <Button
-              label="Import a bank CSV"
+              label="Import CSV"
               variant="ghost"
               size="sm"
               icon="document-outline"
@@ -471,7 +476,7 @@ export default function TransactionsScreen() {
         ) : null}
       </View>
 
-      <View className="mb-4 flex-row flex-wrap justify-center gap-2">
+      <View className="mb-3 flex-row flex-wrap gap-1.5">
         {FILTERS.map((value) => {
           const selected = filter === value;
           return (
@@ -483,14 +488,14 @@ export default function TransactionsScreen() {
                 value === "all" ? "All types" : CATEGORY_TYPE_LABELS[value]
               }
               onPress={() => setFilter(value)}
-              className={`rounded-full border px-4 py-2 ${
+              className={`rounded-full border px-3 py-1 ${
                 selected
                   ? "border-foreground bg-foreground"
                   : "border-border bg-background"
               }`}
             >
               <Text
-                className={`text-sm font-semibold ${
+                className={`text-xs font-medium ${
                   selected ? "text-background" : "text-muted-foreground"
                 }`}
               >
@@ -574,6 +579,28 @@ export default function TransactionsScreen() {
         </Card>
       ) : null}
 
+      <View className="mb-2 flex-row items-baseline justify-between gap-3">
+        <Text variant="muted" className="text-sm">
+          {filtered.length === transactions.length
+            ? `${transactions.length} ${transactions.length === 1 ? "entry" : "entries"}`
+            : `${filtered.length} of ${transactions.length} entries`}
+        </Text>
+        <View className="flex-row gap-4">
+          <Text className="text-sm text-muted-foreground">
+            {"In "}
+            <PrivateAmount className="text-sm text-success">
+              {formatEuro(shown.income)}
+            </PrivateAmount>
+          </Text>
+          <Text className="text-sm text-muted-foreground">
+            {"Out "}
+            <PrivateAmount className="text-sm text-destructive">
+              {formatEuro(shownOut)}
+            </PrivateAmount>
+          </Text>
+        </View>
+      </View>
+
       {loading && !data ? (
         <ScreenSkeleton rows={5} />
       ) : error ? (
@@ -581,9 +608,20 @@ export default function TransactionsScreen() {
       ) : (
         <View className="flex-1 rounded-[28px] border border-border bg-foreground/[0.04] p-1.5">
           <View className="flex-1 rounded-[22px] bg-card">
-            <FlatList
-              data={filtered}
+            <SectionList
+              sections={days}
               keyExtractor={(item) => item.id}
+              stickySectionHeadersEnabled={false}
+              renderSectionHeader={({ section }) => (
+                <View className="flex-row items-baseline justify-between gap-3 pb-1 pt-4">
+                  <Text className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {relativeDayLabel(section.date, formatShortDate)}
+                  </Text>
+                  <PrivateAmount className="text-xs text-muted-foreground">
+                    {`${section.net >= 0 ? "+" : "−"}${formatEuro(Math.abs(section.net))}`}
+                  </PrivateAmount>
+                </View>
+              )}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
@@ -614,6 +652,7 @@ export default function TransactionsScreen() {
                 ) : null
               }
               ItemSeparatorComponent={() => <View className="h-px bg-border" />}
+              SectionSeparatorComponent={null}
               renderItem={({ item, index }) => (
                 <StaggerItem index={index}>
                   {/* Whole row opens the edit sheet; delete lives inside it,
@@ -673,14 +712,15 @@ export default function TransactionsScreen() {
                       <Text numberOfLines={1} className="text-sm font-medium">
                         {item.categories.name}
                       </Text>
-                      <Text
-                        variant="muted"
-                        numberOfLines={1}
-                        className="text-xs"
-                      >
-                        {item.occurred_on}
-                        {item.note ? ` · ${item.note}` : ""}
-                      </Text>
+                      {item.note ? (
+                        <Text
+                          variant="muted"
+                          numberOfLines={1}
+                          className="text-xs"
+                        >
+                          {item.note}
+                        </Text>
+                      ) : null}
                     </View>
                     <PrivateAmount
                       className={cn(

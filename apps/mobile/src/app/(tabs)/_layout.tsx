@@ -19,43 +19,39 @@ type TabConfig = {
   iconInactive: IoniconName;
 };
 
-/** Mirrors APP_NAV_ITEMS on web; Profile lives in the header account menu. */
+/**
+ * Four surfaces, mirroring APP_NAV_ITEMS on web.
+ *
+ * There were six, and two of them were not destinations at all: Calendar is
+ * the Ledger seen by date, and Recurring is the Plan seen as a list of
+ * charges. Both are now views inside the surface they belong to, reached by
+ * the tabs at the top of it — see SurfaceTabs. Profile lives in the header
+ * account menu.
+ */
 const TABS: TabConfig[] = [
   {
     name: "index",
-    title: "Home",
+    title: "Month",
     icon: "pie-chart",
     iconInactive: "pie-chart-outline",
   },
   {
-    name: "recurring",
-    title: "Recurring",
-    icon: "repeat",
-    iconInactive: "repeat-outline",
-  },
-  {
     name: "transactions",
-    title: "Transaction",
+    title: "Ledger",
     icon: "swap-horizontal",
     iconInactive: "swap-horizontal-outline",
   },
   {
-    name: "calendar",
-    title: "Calendar",
-    icon: "calendar",
-    iconInactive: "calendar-outline",
+    name: "planning",
+    title: "Plan",
+    icon: "flag",
+    iconInactive: "flag-outline",
   },
   {
     name: "investments",
     title: "Wallets",
     icon: "analytics",
     iconInactive: "analytics-outline",
-  },
-  {
-    name: "planning",
-    title: "Planning",
-    icon: "flag",
-    iconInactive: "flag-outline",
   },
 ];
 
@@ -112,6 +108,9 @@ export default function TabsLayout() {
               }}
             />
           ))}
+          {/* Views of a surface above, not destinations of their own. */}
+          <Tabs.Screen name="calendar" options={{ href: null }} />
+          <Tabs.Screen name="recurring" options={{ href: null }} />
           {/* Reachable from the header account menu, not the tab bar. */}
           <Tabs.Screen name="profile" options={{ href: null }} />
         </Tabs>

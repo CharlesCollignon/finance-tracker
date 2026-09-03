@@ -30,9 +30,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { PLAN_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
-import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useDataVersion } from "@/lib/data-version";
@@ -170,17 +170,19 @@ export default function RecurringScreen() {
   }
 
   return (
-    <Screen title="Recurring">
+    <Screen title="Plan">
+      <SurfaceTabs tabs={PLAN_TABS} className="mb-3" />
+
       {applyPending ? (
         <Pressable
           accessibilityRole="link"
-          accessibilityLabel="Open Transactions to apply recurring changes"
+          accessibilityLabel="Open the Ledger to apply these charges"
           onPress={() => router.push("/(tabs)/transactions" as Href)}
-          className="mb-3"
+          className="mb-3 rounded-lg border border-dashed border-primary-rim/50 px-4 py-3"
         >
-          <Text variant="muted" className="text-center text-sm">
-            Recurring changes need apply. Open Transactions and tap Apply
-            recurring.
+          <Text variant="muted" className="text-sm">
+            These charges have changed since this month was written. Open the
+            Ledger and apply them.
           </Text>
         </Pressable>
       ) : null}
@@ -218,16 +220,18 @@ export default function RecurringScreen() {
       ) : null}
 
       {templates.length > 0 ? (
-        <Card bezel className="my-5" innerClassName="p-6">
-          <StatHero
-            label="Expected budget impact"
-            amount={formatEuro(budgetMonthly)}
-          />
+        <Card bezel className="mb-4" innerClassName="gap-1 p-5">
+          <Text variant="muted" className="text-sm">
+            Committed every month
+          </Text>
+          <PrivateAmount className="text-3xl font-semibold">
+            {formatEuro(budgetMonthly)}
+          </PrivateAmount>
         </Card>
       ) : null}
 
       <Button
-        label="Add recurring item"
+        label="Add charge"
         variant="pill"
         icon="add"
         className="mb-4 self-center"

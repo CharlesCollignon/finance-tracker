@@ -38,6 +38,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
@@ -163,7 +164,9 @@ export default function CalendarScreen() {
   }
 
   return (
-    <Screen title="Calendar">
+    <Screen title="Ledger">
+      <SurfaceTabs tabs={LEDGER_TABS} className="mb-3" />
+
       <MonthPicker
         year={year}
         month={month}
