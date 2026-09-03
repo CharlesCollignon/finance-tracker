@@ -37,9 +37,8 @@ import {
   type AttentionItem,
 } from "@/components/finance/MonthAttention";
 import { MonthStanding } from "@/components/finance/MonthStanding";
-import { SpendStrip } from "@/components/finance/SpendStrip";
-import { ProgressRing } from "@/components/finance/ProgressRing";
-import { DashboardWalletsCard } from "@/components/finance/lazy-charts";
+import { ProgressRing, SpendStrip } from "@/components/finance/charts";
+import { MonthWallets } from "@/components/finance/MonthWallets";
 import type { BudgetProgress } from "@finance/core/budget-limits";
 
 interface DashboardPageProps {
@@ -143,13 +142,20 @@ function Caps({
       detail: `${Math.round(row.ratio * 100)}% of cap`,
       ratio: row.ratio,
       over: row.over,
+      meaning: "limit" as const,
+      colorVar: "--chart-1",
     })),
     ...goalProgress.slice(0, 2).map((row) => ({
       key: `g-${row.goal.id}`,
       label: row.goal.name,
-      detail: `${Math.round(row.ratio * 100)}% saved`,
+      detail: row.complete
+        ? "reached"
+        : `${Math.round(row.ratio * 100)}% saved`,
       ratio: row.ratio,
       over: false,
+      // A goal is a target, not a limit: filling it is the point.
+      meaning: "target" as const,
+      colorVar: "--chart-3",
     })),
   ];
 
@@ -177,6 +183,8 @@ function Caps({
             label={ring.label}
             detail={ring.detail}
             over={ring.over}
+            meaning={ring.meaning}
+            colorVar={ring.colorVar}
           />
         ))}
       </div>
@@ -186,7 +194,7 @@ function Caps({
 
 async function WalletsSlot({ userId }: { userId: string }) {
   const portfolio = await getWalletPortfolio(userId, { includeHistory: false });
-  return <DashboardWalletsCard portfolio={portfolio} />;
+  return <MonthWallets portfolio={portfolio} />;
 }
 
 export default async function DashboardPage({

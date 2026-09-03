@@ -26,7 +26,6 @@ import { MonthPicker } from "@/components/layout/MonthPicker";
 import { useToast } from "@/components/layout/ToastProvider";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { StatHero } from "@/components/finance/StatHero";
-import { TransactionTypeSankey } from "@/components/finance/lazy-charts";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import {
   CATEGORY_TYPE_LABELS,
@@ -399,13 +398,6 @@ export function TransactionsView({
                   {" spent"}
                 </p>
               }
-            />
-          </StaggerItem>
-
-          <StaggerItem className="w-full min-w-0 max-w-2xl">
-            <TransactionTypeSankey
-              typeTotals={typeTotals}
-              remaining={netTotal}
             />
           </StaggerItem>
 

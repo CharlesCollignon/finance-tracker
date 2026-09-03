@@ -2,6 +2,11 @@
 
 import dynamic from "next/dynamic";
 
+/**
+ * Only the one mark that needs a runtime is lazy now. The rest render on the
+ * server in plain markup, so deferring them would cost a flash of nothing to
+ * save a download that no longer happens.
+ */
 function ChartFallback({ className }: { className?: string }) {
   return (
     <div
@@ -13,36 +18,6 @@ function ChartFallback({ className }: { className?: string }) {
     />
   );
 }
-
-export const ProgressRing = dynamic(
-  () => import("@/components/finance/ProgressRing").then((m) => m.ProgressRing),
-  {
-    ssr: false,
-    loading: () => <ChartFallback className="h-[100px] w-[100px]" />,
-  },
-);
-
-export const DashboardWalletsCard = dynamic(
-  () =>
-    import("@/components/finance/DashboardWalletsCard").then(
-      (m) => m.DashboardWalletsCard,
-    ),
-  {
-    ssr: false,
-    loading: () => <ChartFallback className="mx-auto h-56 w-full max-w-md" />,
-  },
-);
-
-export const TransactionTypeSankey = dynamic(
-  () =>
-    import("@/components/finance/TransactionTypeSankey").then(
-      (m) => m.TransactionTypeSankey,
-    ),
-  {
-    ssr: false,
-    loading: () => <ChartFallback className="mx-auto h-64 w-full max-w-2xl" />,
-  },
-);
 
 export const InvestmentItemChart = dynamic(
   () =>
