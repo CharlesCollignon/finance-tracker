@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { TrendDown, TrendUp } from "@phosphor-icons/react";
 import type { CategoryHistory } from "@finance/core/category-history";
 import { CATEGORY_TYPE_LABELS } from "@finance/core/category-styles";
+import { BarSeries } from "@/components/finance/charts";
 import { Card } from "@/components/retroui/Card";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -20,60 +21,6 @@ const TONE: Record<string, string> = {
   savings: "var(--chart-4)",
   investment: "var(--chart-1)",
 };
-
-/**
- * One category's months, as bars.
- *
- * Drawn the way the landing mocks are — plain elements sized by percentage
- * and coloured with the chart tokens — rather than through the charting
- * library the dashboard uses. Twelve bars need no axis engine, no tooltip
- * layer and no zoom, and doing it this way keeps the page server-rendered
- * and weightless.
- */
-function Bars({ history }: { history: CategoryHistory }) {
-  const formatMoney = useFormatCurrency();
-  const tone = TONE[history.type] ?? "var(--chart-1)";
-  // Against the peak rather than a round number, so the shape of the run is
-  // what shows rather than the scale it happens to sit at.
-  const scale = history.peak > 0 ? history.peak : 1;
-
-  return (
-    <div
-      className="flex items-end gap-1.5 sm:gap-2"
-      role="img"
-      aria-label={`${history.name}, ${history.points.length} months`}
-    >
-      {history.points.map((point) => {
-        const share = Math.max(0, point.total) / scale;
-        return (
-          <div
-            key={point.monthKey}
-            className="group flex min-w-0 flex-1 flex-col items-center gap-1.5"
-          >
-            <span className="text-[0.65rem] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-              {point.empty ? "—" : formatMoney(point.total)}
-            </span>
-            <div className="flex h-32 w-full items-end sm:h-40">
-              <div
-                className={cn(
-                  "w-full rounded-t transition-[height]",
-                  point.empty && "border-t border-dashed border-border",
-                )}
-                style={{
-                  height: point.empty ? 1 : `${Math.max(share * 100, 2)}%`,
-                  backgroundColor: point.empty ? "transparent" : tone,
-                }}
-              />
-            </div>
-            <span className="truncate text-[0.65rem] text-muted-foreground">
-              {point.shortLabel}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export function CategoryHistoryView({
   histories,
@@ -136,7 +83,16 @@ export function CategoryHistoryView({
           </Card.Description>
         </Card.Header>
         <Card.Content>
-          <Bars history={selected} />
+          <BarSeries
+            color={TONE[selected.type] ?? "var(--chart-1)"}
+            peak={selected.peak}
+            points={selected.points.map((point) => ({
+              key: point.monthKey,
+              label: point.shortLabel,
+              value: point.total,
+              empty: point.empty,
+            }))}
+          />
         </Card.Content>
       </Card>
 
