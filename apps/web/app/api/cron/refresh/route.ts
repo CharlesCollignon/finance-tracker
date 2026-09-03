@@ -4,6 +4,7 @@ import { todayIsoLocal } from "@finance/core/constants";
 import { isGoneStatus } from "@finance/core/push-digest";
 import type { PushSubscriptionRow } from "@finance/core/types/database";
 import { bankFeedOwnerId } from "@/lib/bank/client";
+import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
 import { repriceEveryUser } from "@/lib/recurring-reprice-run";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -94,9 +95,17 @@ export async function GET(request: NextRequest) {
   const ownerId = bankFeedOwnerId();
   let bank: SyncOutcome | null = null;
 
+  let monthsClosed = 0;
+
   if (ownerId) {
     try {
       bank = await syncBankFeed(supabase, ownerId);
+      // Straight after the statement is filed, because that is when the
+      // balance a close needs has just arrived. Closing is arithmetic on
+      // rows this run has already stored, so it costs no network call and
+      // cannot be the thing that runs the function out of time.
+      const closes = await autoCloseMonths(supabase, ownerId);
+      monthsClosed = closes.closed.length;
     } catch (error) {
       // A bank that cannot be reached today is an ordinary outcome, not an
       // incident; tomorrow's run picks up everything this one missed.
@@ -115,6 +124,7 @@ export async function GET(request: NextRequest) {
   return Response.json({
     reprice,
     bank: bank ? { ...bank, notified } : null,
+    monthsClosed,
     ...(failures.length > 0 ? { failures } : {}),
   });
 }

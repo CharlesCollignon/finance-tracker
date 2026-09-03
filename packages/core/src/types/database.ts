@@ -506,6 +506,10 @@ export interface Database {
           counterparty: string | null;
           note: string;
           merchant_category_code: string | null;
+          /** The provider's running balance after this row, where it gave one. */
+          balance_after: number | null;
+          /** Position among the day's rows, newest first; 0 is the day's last. */
+          intraday_index: number;
           status: "pending" | "imported" | "ignored";
           transaction_id: string | null;
           decided_by: string | null;
@@ -524,6 +528,8 @@ export interface Database {
           counterparty?: string | null;
           note: string;
           merchant_category_code?: string | null;
+          balance_after?: number | string | null;
+          intraday_index?: number;
           status?: "pending" | "imported" | "ignored";
           transaction_id?: string | null;
           decided_by?: string | null;
@@ -541,6 +547,8 @@ export interface Database {
           counterparty?: string | null;
           note?: string;
           merchant_category_code?: string | null;
+          balance_after?: number | string | null;
+          intraday_index?: number;
           status?: "pending" | "imported" | "ignored";
           transaction_id?: string | null;
           decided_by?: string | null;
@@ -555,6 +563,8 @@ export interface Database {
           month: string;
           closing_balance: number;
           observed_on: string;
+          /** Typed in by hand, or read off the statement. */
+          balance_source: "manual" | "bank";
           created_at: string;
         };
         Insert: {
@@ -563,6 +573,7 @@ export interface Database {
           month: string;
           closing_balance: number;
           observed_on: string;
+          balance_source?: "manual" | "bank";
           created_at?: string;
         };
         Update: {
@@ -571,7 +582,47 @@ export interface Database {
           month?: string;
           closing_balance?: number;
           observed_on?: string;
+          balance_source?: "manual" | "bank";
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      bank_accounts: {
+        Row: {
+          user_id: string;
+          provider_account_id: string;
+          label: string;
+          currency: string;
+          reported_balance: number | null;
+          reported_on: string | null;
+          needs_reconnect: boolean;
+          counts_as_cash: boolean;
+          first_seen_at: string;
+          last_seen_at: string;
+        };
+        Insert: {
+          user_id: string;
+          provider_account_id: string;
+          label: string;
+          currency: string;
+          reported_balance?: number | string | null;
+          reported_on?: string | null;
+          needs_reconnect?: boolean;
+          counts_as_cash?: boolean;
+          first_seen_at?: string;
+          last_seen_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          provider_account_id?: string;
+          label?: string;
+          currency?: string;
+          reported_balance?: number | string | null;
+          reported_on?: string | null;
+          needs_reconnect?: boolean;
+          counts_as_cash?: boolean;
+          first_seen_at?: string;
+          last_seen_at?: string;
         };
         Relationships: [];
       };
@@ -654,6 +705,7 @@ export type PushSubscriptionRow =
   Database["public"]["Tables"]["push_subscriptions"]["Row"];
 export type BankFeedItem =
   Database["public"]["Tables"]["bank_feed_items"]["Row"];
+export type BankAccount = Database["public"]["Tables"]["bank_accounts"]["Row"];
 export type MonthClose = Database["public"]["Tables"]["month_closes"]["Row"];
 export type MonthCloseSettings =
   Database["public"]["Tables"]["month_close_settings"]["Row"];

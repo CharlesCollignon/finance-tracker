@@ -43,6 +43,7 @@ import {
   MonthAttention,
   type AttentionItem,
 } from "@/components/finance/MonthAttention";
+import { MonthClosedRecap } from "@/components/finance/MonthClosedRecap";
 import { MonthFirstRun } from "@/components/finance/MonthFirstRun";
 import { MonthStanding } from "@/components/finance/MonthStanding";
 import { StillToCome } from "@/components/finance/StillToCome";
@@ -136,7 +137,20 @@ async function AttentionSlot({
     });
   }
 
-  return <MonthAttention items={items} />;
+  const latest = closes.history[0] ?? null;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <MonthAttention items={items} />
+      {latest ? (
+        <MonthClosedRecap
+          row={latest}
+          streak={closes.summary.streak}
+          cap={closes.settings.unrecordedCap}
+        />
+      ) : null}
+    </div>
+  );
 }
 
 function Caps({

@@ -17,9 +17,12 @@ import {
 } from "@finance/core/savings-goals";
 import { buildForwardProjection, buildRunway } from "@finance/core/projection";
 import { ProjectionCard } from "@/components/finance/ProjectionCard";
+import { CashAccountsCard } from "@/components/finance/CashAccountsCard";
 import { MonthCloseCard } from "@/components/finance/MonthCloseCard";
 import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
 import { getMonthCloseOverview } from "@/lib/queries/month-close";
+import { getBankAccounts } from "@/lib/queries/bank-balance";
+import { bankFeedConfigured } from "@/lib/bank/client";
 import { BudgetsView } from "./BudgetsView";
 
 export default async function BudgetsPage() {
@@ -73,6 +76,11 @@ export default async function BudgetsPage() {
   );
   const runway = buildRunway(reserve, templates, current.year, current.month);
   const closes = await getMonthCloseOverview(user.id, todayIsoLocal());
+  // Only asked of people who have connected a bank; on a deployment that has
+  // never seen one this costs nothing and shows nothing.
+  const bankAccounts = bankFeedConfigured()
+    ? await getBankAccounts(user.id)
+    : [];
 
   return (
     <BudgetsView
@@ -89,6 +97,12 @@ export default async function BudgetsPage() {
               nothing on this page could actually do it, so that link was a
               dead end that told people to close a month and then offered no
               way to. */}
+          <CashAccountsCard accounts={bankAccounts} />
+
+          {/* Still here when the statement cannot answer: a lapsed consent, a
+              month the provider's window no longer covers, or no bank at all.
+              With the accounts ticked and readable, months close themselves
+              and this never appears. */}
           {closes.next ? (
             <MonthCloseCard
               year={closes.next.year}

@@ -30,6 +30,7 @@ import {
   type AttentionItem,
 } from "@/components/MonthAttention";
 import { MonthCloseSheet } from "@/components/MonthCloseSheet";
+import { MonthClosedRecap } from "@/components/MonthClosedRecap";
 import { MonthFirstRun } from "@/components/MonthFirstRun";
 import { MonthPicker } from "@/components/MonthPicker";
 import { MonthStanding } from "@/components/MonthStanding";
@@ -403,6 +404,14 @@ export default function MonthScreen() {
           showsVerticalScrollIndicator={false}
         >
           <MonthAttention items={attention} />
+
+          {closes?.history[0] ? (
+            <MonthClosedRecap
+              row={closes.history[0]}
+              streak={closes.summary.streak}
+              cap={closes.settings.unrecordedCap}
+            />
+          ) : null}
 
           {firstRun ? (
             <MonthFirstRun />

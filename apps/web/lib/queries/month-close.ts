@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { formatMonthLabel, getMonthBounds } from "@finance/core/constants";
 import {
@@ -13,6 +14,7 @@ import {
   type RecordedCashFlows,
 } from "@finance/core/month-close";
 import type {
+  Database,
   MonthClose,
   TransactionWithCategory,
 } from "@finance/core/types/database";
@@ -75,8 +77,14 @@ export async function getRecordedCashFlows(
   userId: string,
   year: number,
   month: number,
+  /**
+   * The client to read through. Defaults to the caller's session; the
+   * unattended close run hands in the service role, which has no session to
+   * read a user id from.
+   */
+  client?: SupabaseClient<Database>,
 ): Promise<RecordedCashFlows> {
-  const supabase = await createClient();
+  const supabase = client ?? (await createClient());
   const { start, end } = getMonthBounds(year, month);
 
   const [
@@ -116,6 +124,13 @@ export interface ClosedMonthRow extends ClosedMonthOutcome {
   observedOn: string;
   status: MonthCloseResult["status"];
   keptRate: number | null;
+  /**
+   * What the account actually moved over the month. Null on a baseline, which
+   * has nothing before it to have moved from.
+   */
+  cashChange: number | null;
+  /** Whether the figure was typed in or read off the statement. */
+  source: "manual" | "bank";
 }
 
 export interface MonthCloseOverview {
@@ -256,6 +271,9 @@ export async function getMonthCloseOverview(
       unrecorded: result.unrecorded,
       kept: result.kept,
       keptRate: result.keptRate,
+      cashChange:
+        openingBalance === null ? null : closingBalance - openingBalance,
+      source: close.balance_source,
     });
 
     openingBalance = closingBalance;

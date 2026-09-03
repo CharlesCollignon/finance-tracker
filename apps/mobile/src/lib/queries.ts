@@ -726,6 +726,13 @@ export interface ClosedMonthRow extends ClosedMonthOutcome {
   observedOn: string;
   status: MonthCloseResult["status"];
   keptRate: number | null;
+  /**
+   * What the account actually moved over the month. Null on a baseline, which
+   * has nothing before it to have moved from.
+   */
+  cashChange: number | null;
+  /** Whether the figure was typed in or read off the statement. */
+  source: "manual" | "bank";
 }
 
 export interface MonthCloseOverview {
@@ -786,6 +793,9 @@ export async function getMonthCloseOverview(
       unrecorded: result.unrecorded,
       kept: result.kept,
       keptRate: result.keptRate,
+      cashChange:
+        openingBalance === null ? null : closingBalance - openingBalance,
+      source: close.balance_source,
     });
 
     openingBalance = closingBalance;

@@ -7,6 +7,7 @@ import {
   type FeedPlan,
   type PlannedFeedRow,
 } from "@finance/core/bank-feed";
+import { intradayIndexes } from "@finance/core/bank-balance";
 import { buildMerchantIndex } from "@finance/core/merchant-memory";
 import { buildBankMerchantIndex } from "@finance/core/bank-merchant";
 import type {
@@ -161,19 +162,28 @@ export async function syncBankFeed(
   };
 
   for (const account of accounts) {
-    const booked =
-      account.balances.find((b) => b.type === "ITBD") ?? account.balances[0];
+    const label =
+      account.displayName ??
+      account.accountName ??
+      account.iban ??
+      account.aspspName;
+    const booked = pickBookedBalance(account);
+
     if (booked) {
       outcome.balances.push({
         accountId: account.id,
-        label:
-          account.displayName ??
-          account.accountName ??
-          account.iban ??
-          account.aspspName,
+        label,
         amount: booked.amount,
         currency: booked.currency,
       });
+    }
+
+    // Recorded whether or not it can be read, so the account picker can list
+    // a lapsed connection and say why it is not counted.
+    await rememberAccount(supabase, userId, account, label, booked);
+
+    if (account.needsReconnect) {
+      continue;
     }
 
     // Paged rather than one shot: a busy current account clears 200
@@ -192,6 +202,13 @@ export async function syncBankFeed(
       }
     }
 
+    const positions = intradayIndexes(
+      items.map((tx) => ({
+        id: tx.id,
+        date: tx.bookingDate ?? tx.valueDate ?? tx.transactionDate,
+      })),
+    );
+
     const plan = planFeed(items, {
       merchants,
       bankMerchants,
@@ -204,7 +221,13 @@ export async function syncBankFeed(
     outcome.duplicates += plan.duplicates;
     outcome.discarded += plan.discarded;
 
-    const written = await writePlan(supabase, userId, account.id, plan);
+    const written = await writePlan(
+      supabase,
+      userId,
+      account.id,
+      plan,
+      positions,
+    );
     outcome.imported += written.imported;
     outcome.pending += written.pending;
     outcome.matched += written.matched;
@@ -213,11 +236,64 @@ export async function syncBankFeed(
   return outcome;
 }
 
+/**
+ * The account's own figure for what it holds, in preference order.
+ *
+ * ISO 20022 defines several and banks publish different ones. CLBD is the
+ * closing booked balance and ITBD the interim booked; either is the money
+ * that is actually there. XPCD — "expected" — is not: on a lapsed connection
+ * this provider returns XPCD 0.00, and taking the first balance in the list
+ * would read that as an empty account rather than as an unreadable one.
+ */
+function pickBookedBalance(account: {
+  balances: { type: string; amount: string; currency: string }[];
+}) {
+  for (const type of ["CLBD", "ITBD", "ITAV", "CLAV"]) {
+    const found = account.balances.find((b) => b.type === type);
+    if (found) {
+      return found;
+    }
+  }
+  return null;
+}
+
+/**
+ * Keep a record of the accounts a connection exposes.
+ *
+ * The picker that decides which balances a month close counts has to list
+ * them before any of their transactions have been stored, and has to be able
+ * to show a lapsed connection and say why it is not counted. `counts_as_cash`
+ * is deliberately left alone on update: it is the user's answer, not the
+ * provider's.
+ */
+async function rememberAccount(
+  supabase: Client,
+  userId: string,
+  account: { id: string; currency: string; needsReconnect: boolean },
+  label: string,
+  booked: { amount: string; currency: string } | null,
+): Promise<void> {
+  await supabase.from("bank_accounts").upsert(
+    {
+      user_id: userId,
+      provider_account_id: account.id,
+      label,
+      currency: account.currency,
+      reported_balance: booked?.amount ?? null,
+      reported_on: booked ? new Date().toISOString().slice(0, 10) : null,
+      needs_reconnect: account.needsReconnect,
+      last_seen_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,provider_account_id" },
+  );
+}
+
 async function writePlan(
   supabase: Client,
   userId: string,
   providerAccountId: string,
   plan: FeedPlan,
+  positions: Map<string, number>,
 ): Promise<{ imported: number; pending: number; matched: number }> {
   let imported = 0;
   let pending = 0;
@@ -234,6 +310,7 @@ async function writePlan(
       providerAccountId,
       row,
       "pending",
+      positions,
     );
     if (!item) {
       continue;
@@ -256,6 +333,7 @@ async function writePlan(
       providerAccountId,
       row,
       "pending",
+      positions,
     );
     if (inserted) {
       pending += 1;
@@ -269,6 +347,7 @@ async function writePlan(
       providerAccountId,
       row,
       "pending",
+      positions,
     );
     if (!item) {
       continue;
@@ -317,6 +396,7 @@ async function insertFeedItem(
   providerAccountId: string,
   row: PlannedFeedRow,
   status: "pending",
+  positions: Map<string, number>,
 ): Promise<string | null> {
   const { candidate, decision } = row;
   const decidedBy =
@@ -340,6 +420,8 @@ async function insertFeedItem(
         counterparty: candidate.counterparty,
         note: candidate.note,
         merchant_category_code: candidate.merchantCategoryCode,
+        balance_after: candidate.balanceAfter,
+        intraday_index: positions.get(candidate.providerId) ?? 0,
         status,
         decided_by: decidedBy,
       },
