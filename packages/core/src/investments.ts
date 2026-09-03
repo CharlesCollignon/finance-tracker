@@ -1,3 +1,4 @@
+import { formatMonthCompact } from "./constants";
 import type { TransactionWithCategory } from "./types/database";
 import type { WalletId } from "./types/database";
 
@@ -158,10 +159,7 @@ export function buildCumulativeMonthlySeries(
 
     return {
       monthKey,
-      label: new Intl.DateTimeFormat("en-GB", {
-        month: "short",
-        year: "2-digit",
-      }).format(new Date(year, month - 1, 1)),
+      label: formatMonthCompact(year, month),
       pea: running.pea,
       cto: running.cto,
       crypto: running.crypto,
@@ -193,10 +191,7 @@ export function buildMonthlyContributionSeries(
 
       return {
         monthKey,
-        label: new Intl.DateTimeFormat("en-GB", {
-          month: "short",
-          year: "2-digit",
-        }).format(new Date(year, month - 1, 1)),
+        label: formatMonthCompact(year, month),
         ...totals,
       };
     });

@@ -1,3 +1,4 @@
+import { formatLongDate, relativeDayLabel } from "./constants";
 import type { TransactionWithCategory } from "./types/database";
 
 export interface CalendarDay {
@@ -134,29 +135,7 @@ export function computeDayTotals(
 }
 
 export function formatCalendarDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-
-  const sameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate();
-
-  if (sameDay(date, today)) {
-    return "Today";
-  }
-  if (sameDay(date, yesterday)) {
-    return "Yesterday";
-  }
-
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(date);
+  return relativeDayLabel(isoDate, formatLongDate);
 }
 
 export function formatShortAmount(amount: number): string {

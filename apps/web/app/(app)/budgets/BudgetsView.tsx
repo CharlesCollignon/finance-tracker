@@ -1,15 +1,15 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { PencilSimple, Trash } from "@phosphor-icons/react";
+import type { ReactNode } from "react";
+import { Trash } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
 import { Input } from "@/components/retroui/Input";
-import { Text } from "@/components/retroui/Text";
 import { FormLabel } from "@/components/layout/FormLabel";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PLAN_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
+import { ProgressRing } from "@/components/finance/charts";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
   deleteBudget,
@@ -18,7 +18,6 @@ import {
   upsertSavingsGoal,
   upsertTag,
 } from "@/lib/actions/phase4";
-import { progressTone } from "@/lib/progress-tone";
 import { useFormatCurrency } from "@/lib/use-currency";
 import type { GoalPacing } from "@finance/core/savings-goals";
 import type {
@@ -77,6 +76,8 @@ type Props = {
   budgets: Budget[];
   categories: Category[];
   tags: Tag[];
+  /** Projection, links and close history — same column, one container. */
+  footer?: ReactNode;
   goals: SavingsGoal[];
   budgetProgress: BudgetProgress[];
   goalProgress: GoalProgress[];
@@ -89,6 +90,7 @@ export function BudgetsView({
   goals,
   budgetProgress,
   goalProgress,
+  footer,
 }: Props) {
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
@@ -104,14 +106,21 @@ export function BudgetsView({
   const [pending, startTransition] = useTransition();
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
+  // The forms used to sit open under a duplicate list of everything they
+  // could edit. A cap now appears once, as its own ring, and tapping it is
+  // how you edit it — so the form is only on screen when there is something
+  // to fill in.
+  const [budgetFormOpen, setBudgetFormOpen] = useState(false);
+  const [goalFormOpen, setGoalFormOpen] = useState(false);
 
   const expenseCategories = categories.filter((c) => c.type === "expense");
   const savingsCategories = categories.filter((c) => c.type === "savings");
 
   useEffect(() => {
     if (budgetState.success) {
-      toast("Budget saved", "success");
+      toast("Cap saved", "success");
       setEditingBudget(null);
+      setBudgetFormOpen(false);
     } else if (budgetState.error) {
       toast(budgetState.error, "error");
     }
@@ -121,6 +130,7 @@ export function BudgetsView({
     if (goalState.success) {
       toast("Goal saved", "success");
       setEditingGoal(null);
+      setGoalFormOpen(false);
     } else if (goalState.error) {
       toast(goalState.error, "error");
     }
@@ -138,48 +148,70 @@ export function BudgetsView({
     <>
       <PageHeader title="Plan" />
 
-      <PageContainer className="flex flex-col gap-6">
-        <SurfaceTabs tabs={PLAN_TABS} className="mb-4" />
-        <section className="space-y-3">
-          <h2 className="font-head text-base">Monthly budgets</h2>
-          {budgetProgress.map((row) => {
-            const tone = progressTone(row.ratio, row.over);
-            return (
-              <Card.Bezel
-                key={row.budgetId}
-                className="w-full"
-                innerClassName="p-4"
-              >
-                <div className="flex justify-between text-sm font-medium">
-                  <span>{row.label}</span>
-                  <span
+      <PageContainer className="flex flex-col gap-4">
+        <SurfaceTabs tabs={PLAN_TABS} />
+
+        <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 md:p-5">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-sm font-medium">Spending caps</h2>
+            <Button
+              variant="link"
+              size="sm"
+              className="h-8 px-1"
+              onClick={() => {
+                setEditingBudget(null);
+                setBudgetFormOpen((open) => !(open && !editingBudget));
+              }}
+            >
+              {budgetFormOpen && !editingBudget ? "Cancel" : "Add a cap"}
+            </Button>
+          </div>
+
+          {budgetProgress.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {budgetProgress.map((row) => {
+                const budget = budgets.find((b) => b.id === row.budgetId);
+                return (
+                  <button
+                    key={row.budgetId}
+                    type="button"
+                    onClick={() => {
+                      if (!budget) {
+                        return;
+                      }
+                      setEditingBudget(budget);
+                      setBudgetFormOpen(true);
+                    }}
+                    aria-label={`Edit the cap on ${row.label}`}
                     className={cn(
-                      "font-mono tabular-nums",
-                      tone === "danger" && "text-destructive",
+                      "rounded-lg p-2 transition-colors hover:bg-muted/40",
+                      editingBudget?.id === row.budgetId && "bg-muted/60",
                     )}
                   >
-                    {formatEuro(row.spent)} / {formatEuro(row.limit)}
-                  </span>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--hairline-strong)]">
-                  <div
-                    className={cn(
-                      "h-full rounded-full",
-                      tone === "danger" ? "bg-destructive" : "bg-primary",
-                    )}
-                    style={{
-                      width: `${Math.min(100, row.ratio * 100)}%`,
-                    }}
-                  />
-                </div>
-              </Card.Bezel>
-            );
-          })}
+                    <ProgressRing
+                      ratio={row.ratio}
+                      label={row.label}
+                      detail={`${formatEuro(row.spent)} of ${formatEuro(row.limit)}`}
+                      over={row.over}
+                      meaning="limit"
+                      colorVar="--chart-1"
+                      size={84}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          ) : budgetFormOpen ? null : (
+            <p className="text-sm text-muted-foreground">
+              A cap is a monthly ceiling — on one category, or on everything.
+              Month shows how close you are to each.
+            </p>
+          )}
 
-          <Card className="w-full p-4">
+          {budgetFormOpen ? (
             <form
               action={budgetAction}
-              className="grid gap-3 sm:grid-cols-3"
+              className="grid gap-3 border-t border-border pt-4 sm:grid-cols-3"
               key={editingBudget?.id ?? "new-budget"}
             >
               {editingBudget && (
@@ -220,114 +252,120 @@ export function BudgetsView({
                   }
                 />
               </div>
-              <div className="flex items-end gap-2">
+              <div className="flex flex-wrap items-end gap-2">
                 <Button type="submit" disabled={budgetPending}>
-                  {editingBudget ? "Update" : "Add budget"}
+                  {editingBudget ? "Update" : "Add cap"}
                 </Button>
-                {editingBudget && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditingBudget(null);
+                    setBudgetFormOpen(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                {editingBudget ? (
                   <Button
                     type="button"
-                    variant="outline"
-                    onClick={() => setEditingBudget(null)}
+                    variant="link"
+                    className="text-destructive"
+                    disabled={pending}
+                    onClick={() =>
+                      startTransition(async () => {
+                        const result = await deleteBudget(editingBudget.id);
+                        if (result.error) {
+                          toast(result.error, "error");
+                          return;
+                        }
+                        toast("Cap removed", "success");
+                        setEditingBudget(null);
+                        setBudgetFormOpen(false);
+                      })
+                    }
                   >
-                    Cancel
+                    <Trash size={16} weight="light" className="mr-1.5" />
+                    Remove
                   </Button>
-                )}
+                ) : null}
               </div>
             </form>
-          </Card>
-
-          <ul className="space-y-2">
-            {budgets.map((b) => {
-              const cat = categories.find((c) => c.id === b.category_id);
-              return (
-                <li key={b.id}>
-                  <Card className="flex w-full items-center justify-between p-3">
-                    <span className="text-sm font-medium">
-                      {cat?.name ?? "All expenses"} —{" "}
-                      <span className="font-mono tabular-nums">
-                        {formatEuro(Number(b.amount))}
-                      </span>
-                    </span>
-                    <div className="flex gap-1.5">
-                      <button
-                        type="button"
-                        className={cn(
-                          "flex h-11 w-11 items-center justify-center",
-                          "rounded-full border border-border hover:bg-accent",
-                        )}
-                        aria-label="Edit budget"
-                        onClick={() => setEditingBudget(b)}
-                      >
-                        <PencilSimple size={18} weight="light" />
-                      </button>
-                      <button
-                        type="button"
-                        className={cn(
-                          "flex h-11 w-11 items-center justify-center",
-                          "rounded-full border border-border",
-                          "hover:bg-destructive hover:text-destructive-foreground",
-                        )}
-                        aria-label="Delete budget"
-                        disabled={pending}
-                        onClick={() =>
-                          startTransition(async () => {
-                            const result = await deleteBudget(b.id);
-                            if (result.error) {
-                              toast(result.error, "error");
-                            } else {
-                              toast("Budget deleted", "success");
-                            }
-                          })
-                        }
-                      >
-                        <Trash size={18} weight="light" />
-                      </button>
-                    </div>
-                  </Card>
-                </li>
-              );
-            })}
-          </ul>
+          ) : null}
         </section>
 
-        <section className="space-y-3">
-          <h2 className="font-head text-base">Savings goals</h2>
-          {goalProgress.map((row) => {
-            const hint = pacingHint(row.pacing, formatEuro);
-            return (
-              <Card.Bezel
-                key={row.goalId}
-                className="w-full"
-                innerClassName="p-4"
-              >
-                <div className="flex justify-between text-sm font-medium">
-                  <span>{row.name}</span>
-                  <span className="font-mono tabular-nums">
-                    {formatEuro(row.saved)} / {formatEuro(row.target)}
-                  </span>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--hairline-strong)]">
-                  <div
-                    className="h-full rounded-full bg-[var(--chart-4)]"
-                    style={{
-                      width: `${Math.min(100, row.ratio * 100)}%`,
-                    }}
-                  />
-                </div>
-                {hint ? (
-                  <p className={cn("mt-2 text-xs", hint.className)}>
-                    {hint.text}
-                  </p>
-                ) : null}
-              </Card.Bezel>
-            );
-          })}
+        <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 md:p-5">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-sm font-medium">Savings goals</h2>
+            <Button
+              variant="link"
+              size="sm"
+              className="h-8 px-1"
+              onClick={() => {
+                setEditingGoal(null);
+                setGoalFormOpen((open) => !(open && !editingGoal));
+              }}
+            >
+              {goalFormOpen && !editingGoal ? "Cancel" : "Add a goal"}
+            </Button>
+          </div>
 
-          <Card className="w-full p-4">
+          {goalProgress.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {goalProgress.map((row) => {
+                const goal = goals.find((g) => g.id === row.goalId);
+                const hint = pacingHint(row.pacing, formatEuro);
+                return (
+                  <button
+                    key={row.goalId}
+                    type="button"
+                    onClick={() => {
+                      if (!goal) {
+                        return;
+                      }
+                      setEditingGoal(goal);
+                      setGoalFormOpen(true);
+                    }}
+                    aria-label={`Edit the goal ${row.name}`}
+                    className={cn(
+                      "flex flex-col items-center gap-1 rounded-lg p-2",
+                      "transition-colors hover:bg-muted/40",
+                      editingGoal?.id === row.goalId && "bg-muted/60",
+                    )}
+                  >
+                    <ProgressRing
+                      ratio={row.ratio}
+                      label={row.name}
+                      detail={`${formatEuro(row.saved)} of ${formatEuro(row.target)}`}
+                      meaning="target"
+                      colorVar="--chart-3"
+                      size={84}
+                    />
+                    {hint ? (
+                      <span
+                        className={cn(
+                          "max-w-36 text-balance text-center text-xs",
+                          hint.className,
+                        )}
+                      >
+                        {hint.text}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : goalFormOpen ? null : (
+            <p className="text-sm text-muted-foreground">
+              A goal is an amount to reach — a deposit, a trip, a buffer. Set
+              aside money in a savings category and it fills.
+            </p>
+          )}
+
+          {goalFormOpen ? (
             <form
               action={goalAction}
-              className="grid gap-3 sm:grid-cols-2"
+              className="grid gap-3 border-t border-border pt-4 sm:grid-cols-2"
               key={editingGoal?.id ?? "new-goal"}
             >
               {editingGoal && (
@@ -389,107 +427,81 @@ export function BudgetsView({
                   ))}
                 </select>
               </div>
-              <div className="flex gap-2 sm:col-span-2">
+              <div className="flex flex-wrap gap-2 sm:col-span-2">
                 <Button type="submit" disabled={goalPending}>
                   {editingGoal ? "Update goal" : "Add goal"}
                 </Button>
-                {editingGoal && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditingGoal(null);
+                    setGoalFormOpen(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                {editingGoal ? (
                   <Button
                     type="button"
-                    variant="outline"
-                    onClick={() => setEditingGoal(null)}
+                    variant="link"
+                    className="text-destructive"
+                    disabled={pending}
+                    onClick={() =>
+                      startTransition(async () => {
+                        const result = await deleteSavingsGoal(editingGoal.id);
+                        if (result.error) {
+                          toast(result.error, "error");
+                          return;
+                        }
+                        toast("Goal removed", "success");
+                        setEditingGoal(null);
+                        setGoalFormOpen(false);
+                      })
+                    }
                   >
-                    Cancel
+                    <Trash size={16} weight="light" className="mr-1.5" />
+                    Remove
                   </Button>
-                )}
+                ) : null}
               </div>
             </form>
-          </Card>
-
-          <ul className="space-y-2">
-            {goals.map((g) => (
-              <li key={g.id}>
-                <Card className="flex w-full items-center justify-between p-3">
-                  <span className="text-sm font-medium">
-                    {g.name} —{" "}
-                    <span className="font-mono tabular-nums">
-                      {formatEuro(Number(g.target_amount))}
-                    </span>
-                  </span>
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      className={cn(
-                        "flex h-11 w-11 items-center justify-center",
-                        "rounded-full border border-border hover:bg-accent",
-                      )}
-                      aria-label="Edit goal"
-                      onClick={() => setEditingGoal(g)}
-                    >
-                      <PencilSimple size={18} weight="light" />
-                    </button>
-                    <button
-                      type="button"
-                      className={cn(
-                        "flex h-11 w-11 items-center justify-center",
-                        "rounded-full border border-border",
-                        "hover:bg-destructive hover:text-destructive-foreground",
-                      )}
-                      aria-label="Delete goal"
-                      disabled={pending}
-                      onClick={() =>
-                        startTransition(async () => {
-                          const result = await deleteSavingsGoal(g.id);
-                          if (result.error) {
-                            toast(result.error, "error");
-                          } else {
-                            toast("Goal deleted", "success");
-                          }
-                        })
-                      }
-                    >
-                      <Trash size={18} weight="light" />
-                    </button>
-                  </div>
-                </Card>
-              </li>
-            ))}
-          </ul>
+          ) : null}
         </section>
 
-        <section className="space-y-3">
-          <h2 className="font-head text-base">Tags</h2>
-          <Card className="w-full p-4">
-            <form action={tagAction} className="flex flex-wrap items-end gap-3">
-              <div className="flex min-w-48 flex-1 flex-col gap-2">
-                <FormLabel htmlFor="tag-name">New tag</FormLabel>
-                <Input id="tag-name" name="name" required maxLength={40} />
-              </div>
-              <Button type="submit" disabled={tagPending}>
-                Add tag
-              </Button>
-            </form>
-          </Card>
-          <div className="flex flex-wrap gap-2">
-            {tags.map((t) => (
-              <span
-                key={t.id}
-                className={cn(
-                  "rounded-full border border-border bg-muted",
-                  "px-3 py-1 text-xs font-semibold",
-                )}
-              >
-                {t.name}
-              </span>
-            ))}
-            {tags.length === 0 && (
-              <Text className="text-sm text-muted-foreground">
-                No tags yet. Create tags here, then attach them when editing a
-                transaction.
-              </Text>
-            )}
-          </div>
+        <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 md:p-5">
+          <h2 className="text-sm font-medium">Tags</h2>
+          <p className="text-sm text-muted-foreground">
+            A second way to group an entry, cutting across categories — a
+            holiday, a flatmate, a side project.
+          </p>
+          {tags.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {tags.map((t) => (
+                <span
+                  key={t.id}
+                  className={cn(
+                    "rounded-full border border-border bg-muted",
+                    "px-3 py-1 text-xs font-medium",
+                  )}
+                >
+                  {t.name}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <form action={tagAction} className="flex flex-wrap items-end gap-3">
+            <div className="flex min-w-48 flex-1 flex-col gap-2">
+              <FormLabel htmlFor="tag-name">New tag</FormLabel>
+              <Input id="tag-name" name="name" required maxLength={40} />
+            </div>
+            <Button type="submit" variant="outline" disabled={tagPending}>
+              Add tag
+            </Button>
+          </form>
         </section>
+
+        {footer}
       </PageContainer>
     </>
   );

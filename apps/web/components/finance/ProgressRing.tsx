@@ -89,8 +89,11 @@ export function ProgressRing({
           {Math.round(clamped * 100)}%
         </span>
       </div>
-      <span className="max-w-28 truncate text-sm font-medium">{label}</span>
-      <span className="max-w-28 truncate text-xs text-muted-foreground">
+      {/* Wide enough for "1 240 € of 1 500 €", which is what a cap's detail
+          says on the Plan screen; anything longer is a category name, and
+          truncating those is the intent. */}
+      <span className="max-w-36 truncate text-sm font-medium">{label}</span>
+      <span className="max-w-36 truncate text-xs text-muted-foreground">
         {detail}
       </span>
     </div>

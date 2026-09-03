@@ -100,7 +100,9 @@ async function AttentionSlot({
     items.push({
       id: "apply",
       text: `${creates} recurring ${creates === 1 ? "item is" : "items are"} ready to add`,
-      href: "/recurring",
+      // The Ledger, not the Charges list: applying writes rows, and the
+      // button that writes them lives where the rows land.
+      href: "/transactions",
       action: "Apply",
     });
   }

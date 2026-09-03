@@ -129,22 +129,112 @@ export function todayIsoLocal(): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+/**
+ * Day and month names, written out rather than asked of Intl.
+ *
+ * `Intl.DateTimeFormat("en-GB", { month: "short" })` is not the same string
+ * everywhere: Node 20 ships an ICU that says "Sep" and current Chrome says
+ * "Sept", and the short weekday picks up a comma in one and not the other.
+ * Every one of these labels is rendered inside a client component, so the two
+ * disagreeing is a hydration mismatch — React throws away the server's tree
+ * and redraws the page on the client. Fixed tables cost nothing and cannot
+ * drift with a Node upgrade.
+ */
+const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const MONTH_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const MONTH_LONG = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const WEEKDAY_LONG = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+/** "Sep 2026" — a month named next to its full year. */
+export function formatMonthShortYear(year: number, month: number): string {
+  return `${MONTH_SHORT[month - 1]} ${year}`;
+}
+
+/** "Sep 26" — the same, squeezed for an axis tick or a phone header. */
+export function formatMonthCompact(year: number, month: number): string {
+  return `${MONTH_SHORT[month - 1]} ${String(year).slice(-2)}`;
+}
+
+/** "Tuesday 1 September" — the unhurried form, for a calendar heading. */
+export function formatLongDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const weekday = WEEKDAY_LONG[new Date(year, month - 1, day).getDay()];
+  return `${weekday} ${day} ${MONTH_LONG[month - 1]}`;
+}
+
+/**
+ * "Today", "Yesterday", or whatever `fallback` makes of the date.
+ *
+ * Anchored to the app timezone rather than the runtime's, so a page rendered
+ * at half past midnight in Paris does not come back from a UTC server calling
+ * the same row "Yesterday" while the browser calls it "Today" — which is a
+ * hydration mismatch, not a cosmetic difference.
+ */
+export function relativeDayLabel(
+  isoDate: string,
+  fallback: (isoDate: string) => string,
+): string {
+  const today = todayIsoLocal();
+  if (isoDate === today) {
+    return "Today";
+  }
+
+  const [year, month, day] = today.split("-").map(Number);
+  const previous = new Date(year, month - 1, day - 1);
+  const yesterday = `${previous.getFullYear()}-${String(
+    previous.getMonth() + 1,
+  ).padStart(2, "0")}-${String(previous.getDate()).padStart(2, "0")}`;
+
+  return isoDate === yesterday ? "Yesterday" : fallback(isoDate);
+}
+
 export function formatShortDate(isoDate: string): string {
   const [year, month, day] = isoDate.split("-").map(Number);
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  }).format(new Date(year, month - 1, day));
+  const weekday = WEEKDAY_SHORT[new Date(year, month - 1, day).getDay()];
+  return `${weekday} ${day} ${MONTH_SHORT[month - 1]}`;
 }
 
 /** Compact day + month for toggles (e.g. "12 Aug"). */
 export function formatDayMonth(isoDate: string): string {
-  const [year, month, day] = isoDate.split("-").map(Number);
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-  }).format(new Date(year, month - 1, day));
+  const [, month, day] = isoDate.split("-").map(Number);
+  return `${day} ${MONTH_SHORT[month - 1]}`;
 }
 
 export function getMonthBounds(year: number, month: number) {
@@ -190,10 +280,7 @@ export function shiftMonth(
 }
 
 export function formatMonthLabel(year: number, month: number): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(year, month - 1, 1));
+  return `${MONTH_LONG[month - 1]} ${year}`;
 }
 
 export type BudgetViewMode = "current" | "month_end";
