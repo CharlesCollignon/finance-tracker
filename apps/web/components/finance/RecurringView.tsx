@@ -12,6 +12,8 @@ import { PencilSimple, Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/retroui/Button";
 import { Badge } from "@/components/retroui/Badge";
 import { Card } from "@/components/retroui/Card";
+import { RecurringProposals } from "@/components/finance/RecurringProposals";
+import type { RecurringProposal } from "@finance/core/recurring-detection";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
@@ -52,6 +54,8 @@ const GROUP_LABELS: Record<AllocType, string> = {
 interface RecurringViewProps {
   templates: RecurringTemplateWithCategory[];
   categories: Category[];
+  /** Standing charges the statement implies, keyed by category type. */
+  proposals?: RecurringProposal[];
 }
 
 interface RecurringItemRowProps {
@@ -178,7 +182,11 @@ function GroupList({
   );
 }
 
-export function RecurringView({ templates, categories }: RecurringViewProps) {
+export function RecurringView({
+  templates,
+  categories,
+  proposals = [],
+}: RecurringViewProps) {
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
   const [formOpen, setFormOpen] = useState(false);
@@ -341,17 +349,21 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                   ))}
                 </div>
                 {activeGroup ? (
-                  <Card.Bezel
-                    className="mt-4 w-full"
-                    innerClassName="px-4 py-1"
-                  >
-                    <GroupList
-                      label={activeGroup.label}
-                      items={activeGroup.items}
-                      onEdit={openEdit}
-                      onToggle={handleToggle}
+                  <div className="mt-4 w-full">
+                    <RecurringProposals
+                      proposals={proposals.filter(
+                        (p) => p.categoryType === activeGroup.type,
+                      )}
                     />
-                  </Card.Bezel>
+                    <Card.Bezel className="w-full" innerClassName="px-4 py-1">
+                      <GroupList
+                        label={activeGroup.label}
+                        items={activeGroup.items}
+                        onEdit={openEdit}
+                        onToggle={handleToggle}
+                      />
+                    </Card.Bezel>
+                  </div>
                 ) : null}
               </StaggerItem>
 
@@ -362,10 +374,14 @@ export function RecurringView({ templates, categories }: RecurringViewProps) {
                       {label}
                       {items.length > 0 ? ` · ${items.length}` : ""}
                     </h2>
-                    <Card.Bezel
-                      className="mt-3 w-full"
-                      innerClassName="px-4 py-1"
-                    >
+                    <div className="mt-3">
+                      <RecurringProposals
+                        proposals={proposals.filter(
+                          (p) => p.categoryType === type,
+                        )}
+                      />
+                    </div>
+                    <Card.Bezel className="w-full" innerClassName="px-4 py-1">
                       <GroupList
                         label={label}
                         items={items}

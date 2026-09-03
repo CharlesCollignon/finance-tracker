@@ -17,6 +17,7 @@ import {
 import { Button, ButtonNub } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
+import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
@@ -38,10 +39,7 @@ import {
   previewApplyRecurringForMonth,
 } from "@/lib/actions/finance";
 import { ApplyRecurringSheet } from "@/components/finance/ApplyRecurringSheet";
-import {
-  RowCheckbox,
-  SelectionBar,
-} from "@/components/finance/SelectionBar";
+import { RowCheckbox, SelectionBar } from "@/components/finance/SelectionBar";
 import {
   pruneSelection,
   selectAllState,
@@ -80,6 +78,8 @@ interface TransactionsViewProps {
   year: number;
   month: number;
   defaultDate: string;
+  /** Bank feed bar, rendered inside the page rather than above its header. */
+  bankSlot?: ReactNode;
 }
 
 function formatDisplayDate(isoDate: string): string {
@@ -164,6 +164,7 @@ export function TransactionsView({
   year,
   month,
   defaultDate,
+  bankSlot,
 }: TransactionsViewProps) {
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
@@ -173,8 +174,9 @@ export function TransactionsView({
   const [filter, setFilter] = useState<FilterType>("all");
   const [search, setSearch] = useState("");
   const [selectMode, setSelectMode] = useState(false);
-  const [storedSelection, setSelected] =
-    useState<ReadonlySet<string>>(new Set());
+  const [storedSelection, setSelected] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
   const [deletePending, startDelete] = useTransition();
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
@@ -371,6 +373,7 @@ export function TransactionsView({
       </PageHeader>
 
       <PageContainer>
+        {bankSlot ? <div className="mb-4">{bankSlot}</div> : null}
         <Stagger
           className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
           stagger={0.05}
@@ -613,7 +616,9 @@ export function TransactionsView({
                     type="button"
                     onClick={() =>
                       selectMode
-                        ? setSelected((current) => toggleSelected(current, tx.id))
+                        ? setSelected((current) =>
+                            toggleSelected(current, tx.id),
+                          )
                         : setEditTransaction(tx)
                     }
                     aria-label={

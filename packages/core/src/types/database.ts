@@ -475,6 +475,24 @@ export interface Database {
         };
         Relationships: [];
       };
+      recurring_proposal_dismissals: {
+        Row: {
+          user_id: string;
+          merchant_key: string;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          merchant_key: string;
+          created_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          merchant_key?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       bank_feed_items: {
         Row: {
           id: string;

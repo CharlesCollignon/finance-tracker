@@ -6,7 +6,6 @@ import { getTags, getTransactionTagMap } from "@/lib/queries/phase4";
 import { parseMonthParams } from "@finance/core/constants";
 import { TransactionsView } from "@/components/finance/TransactionsView";
 import { BankInbox } from "@/components/finance/BankInbox";
-import { PageContainer } from "@/components/layout/PageContainer";
 import { bankFeedConfigured } from "@/lib/bank/client";
 import {
   countSwallowedFeedItems,
@@ -52,28 +51,28 @@ export default async function TransactionsPage({
     : [null, 0, 0];
 
   return (
-    <>
-      {feedItems ? (
-        <PageContainer className="flex flex-col gap-4 pb-0">
-          <SwallowedRecovery count={swallowed} />
-          <BankInbox
-            items={feedItems}
-            categories={categories}
-            // A statement worth of rows means the backfill has been done.
-            showBackfill={feedSize < 400}
-          />
-        </PageContainer>
-      ) : null}
-      <TransactionsView
-        transactions={transactions}
-        categories={categories}
-        recurringTemplates={recurringTemplates}
-        tags={tags}
-        transactionTags={transactionTags}
-        year={year}
-        month={month}
-        defaultDate={defaultDate}
-      />
-    </>
+    <TransactionsView
+      transactions={transactions}
+      categories={categories}
+      recurringTemplates={recurringTemplates}
+      tags={tags}
+      transactionTags={transactionTags}
+      year={year}
+      month={month}
+      defaultDate={defaultDate}
+      bankSlot={
+        feedItems ? (
+          <div className="flex flex-col gap-3">
+            <SwallowedRecovery count={swallowed} />
+            <BankInbox
+              items={feedItems}
+              categories={categories}
+              // A statement worth of rows means the backfill has been done.
+              showBackfill={feedSize < 400}
+            />
+          </div>
+        ) : null
+      }
+    />
   );
 }

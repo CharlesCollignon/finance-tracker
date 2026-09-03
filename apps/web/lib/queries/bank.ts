@@ -121,28 +121,37 @@ export async function getRecurringProposals(
 ): Promise<RecurringProposal[]> {
   const supabase = await createClient();
 
-  const [{ data: transactions }, { data: templates }] = await Promise.all([
-    supabase
-      .from("transactions")
-      .select(
-        "occurred_on, amount, note, category_id, categories!inner(name, type)",
-      )
-      .eq("user_id", userId)
-      .order("occurred_on", { ascending: false })
-      .limit(3000),
-    supabase
-      .from("recurring_templates")
-      .select("description, instrument_name")
-      .eq("user_id", userId),
-  ]);
+  const [{ data: transactions }, { data: templates }, { data: refused }] =
+    await Promise.all([
+      supabase
+        .from("transactions")
+        .select(
+          "occurred_on, amount, note, category_id, categories!inner(name, type)",
+        )
+        .eq("user_id", userId)
+        .order("occurred_on", { ascending: false })
+        .limit(3000),
+      supabase
+        .from("recurring_templates")
+        .select("description, instrument_name")
+        .eq("user_id", userId),
+      supabase
+        .from("recurring_proposal_dismissals")
+        .select("merchant_key")
+        .eq("user_id", userId),
+    ]);
 
-  const covered = new Set(
-    (templates ?? []).flatMap((row) =>
+  // Covered either by a template that already exists, or by the user having
+  // looked at the suggestion and said no. A refusal that does not stick is
+  // not a refusal.
+  const covered = new Set([
+    ...(templates ?? []).flatMap((row) =>
       [row.description, row.instrument_name]
         .map((value) => bankMerchantKey(value as string | null))
         .filter((key) => key !== ""),
     ),
-  );
+    ...(refused ?? []).map((row) => row.merchant_key as string),
+  ]);
 
   const proposals = detectRecurring(
     (transactions ?? []).map((row) => {
