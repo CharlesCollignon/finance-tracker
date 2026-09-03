@@ -33,17 +33,6 @@ export const DashboardWalletsCard = dynamic(
   },
 );
 
-export const DashboardAllocationChart = dynamic(
-  () =>
-    import("@/components/finance/DashboardAllocationChart").then(
-      (m) => m.DashboardAllocationChart,
-    ),
-  {
-    ssr: false,
-    loading: () => <ChartFallback className="mx-auto h-72 w-full max-w-lg" />,
-  },
-);
-
 export const TransactionTypeSankey = dynamic(
   () =>
     import("@/components/finance/TransactionTypeSankey").then(
