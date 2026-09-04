@@ -10,6 +10,22 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 type Client = SupabaseClient<Database>;
 
+/**
+ * Whether an error means "this feature's schema is not here yet".
+ *
+ * PGRST205 is PostgREST's missing table, 42P01 is Postgres', and 42703 is a
+ * missing column. Every other error still throws: swallowing them all would
+ * turn a permissions mistake or a broken query into a screen that quietly
+ * shows nothing, which is how a wrong balance gets believed.
+ */
+function isMissingSchema(error: { code?: string } | null): boolean {
+  return (
+    error?.code === "PGRST205" ||
+    error?.code === "42P01" ||
+    error?.code === "42703"
+  );
+}
+
 /** Every account the connection has ever shown, ticked or not. */
 export async function getBankAccounts(
   userId: string,
@@ -22,7 +38,14 @@ export async function getBankAccounts(
     .eq("user_id", userId)
     .order("label");
 
+  // Before migration 021 this table does not exist, and reading balances is
+  // an enhancement to a screen that has to work without it. A surface people
+  // use every day must not fall over because an optional feature's migration
+  // has not been run yet.
   if (error) {
+    if (isMissingSchema(error)) {
+      return [];
+    }
     throw error;
   }
 
@@ -72,6 +95,9 @@ export async function readCashBalance(
     .limit(400);
 
   if (error) {
+    if (isMissingSchema(error)) {
+      return null;
+    }
     throw error;
   }
 
