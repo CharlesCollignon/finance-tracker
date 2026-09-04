@@ -273,7 +273,7 @@ export async function getMonthCloseOverview(
       keptRate: result.keptRate,
       cashChange:
         openingBalance === null ? null : closingBalance - openingBalance,
-      source: close.balance_source,
+      source: close.balance_source ?? "manual",
     });
 
     openingBalance = closingBalance;
