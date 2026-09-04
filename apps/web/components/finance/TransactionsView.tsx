@@ -420,7 +420,8 @@ export function TransactionsView({
           </div>
         </div>
 
-        {bankSlot}
+        {/* Wrapped rather than dropped in bare: see PageContainer. */}
+        {bankSlot ? <div className="contents">{bankSlot}</div> : null}
 
         {transactions.length === 0 ? (
           <EmptyState
