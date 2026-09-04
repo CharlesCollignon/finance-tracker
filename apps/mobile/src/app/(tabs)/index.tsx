@@ -16,6 +16,8 @@ import { buildBudgetProgress } from "@finance/core/budget-limits";
 import { buildStillToCome } from "@finance/core/still-to-come";
 import { buildMonthComparison } from "@finance/core/month-comparison";
 import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
+import { buildMonthPulse } from "@finance/core/month-pulse";
+import { previousMonthKey } from "@finance/core/month-close";
 import { buildRunway } from "@finance/core/projection";
 import {
   applyRecurringPlanCounts,
@@ -23,8 +25,17 @@ import {
 } from "@finance/core/apply-recurring";
 import type { MonthlySummary } from "@finance/core/types/database";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
+import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
+import {
+  getMonthRead,
+  monthFactsFromScreen,
+  monthReadWritable,
+  type MonthReadView,
+} from "@/lib/month-read";
+import type { MonthFacts } from "@finance/core/month-facts";
 
 import { ApplyRecurringSheet } from "@/components/ApplyRecurringSheet";
+import { ArrivedCharges } from "@/components/ArrivedCharges";
 import {
   MonthAttention,
   type AttentionItem,
@@ -33,7 +44,10 @@ import { MonthCloseSheet } from "@/components/MonthCloseSheet";
 import { MonthClosedRecap } from "@/components/MonthClosedRecap";
 import { MonthFirstRun } from "@/components/MonthFirstRun";
 import { MonthPicker } from "@/components/MonthPicker";
-import { MonthStanding } from "@/components/MonthStanding";
+import { MoneyOnHand } from "@/components/MoneyOnHand";
+import { MonthRead } from "@/components/MonthRead";
+import { MonthScore } from "@/components/MonthScore";
+import { RecentOnAccount } from "@/components/RecentOnAccount";
 import { StillToCome } from "@/components/StillToCome";
 import { MonthWallets } from "@/components/MonthWallets";
 import { ProgressRing, SpendStrip } from "@/components/charts";
@@ -62,11 +76,18 @@ import {
   getMonthCloseOverview,
   getMonthlySummary,
   getMonthlyTrend,
+  countPendingFeedItems,
+  getFulfilledKeys,
+  getFulfilmentProposals,
+  getRecentBankMovements,
+  getRecordedCashFlows,
   getRecurringTemplates,
   getSavingsGoals,
   getSkippedOccurrences,
   getTransactions,
   getWalletPortfolio,
+  readCashBalance,
+  type BankMovement,
   type MonthCloseOverview,
   type MonthlyTrendPoint,
 } from "@/lib/queries";
@@ -182,10 +203,21 @@ export default function MonthScreen() {
           templateCount: 0,
           upcoming: null as ReturnType<typeof buildStillToCome> | null,
           monthlyCommitted: 0,
+          pulse: null as ReturnType<typeof buildMonthPulse> | null,
+          unreadable: [] as string[],
+          movements: [] as BankMovement[],
+          arrived: [] as FulfilmentProposal[],
+          readView: null as MonthReadView | null,
+          readFacts: null as MonthFacts | null,
+          readWritesLeft: 0,
         };
       }
       const [previousYear, previousMonth] =
         month === 1 ? [year - 1, 12] : [year, month - 1];
+
+      const today = todayIsoLocal();
+      const nowMonth = getCurrentMonth();
+      const viewingCurrent = year === nowMonth.year && month === nowMonth.month;
 
       const [
         summary,
@@ -200,6 +232,15 @@ export default function MonthScreen() {
         templates,
         closes,
         skipped,
+        // What the accounts hold now, and what the month has recorded against
+        // it. Only for the month in progress: the balance is today's, and
+        // presenting it beside March's totals would invite arithmetic across
+        // two different moments.
+        cash,
+        flows,
+        movements,
+        fulfilledKeys,
+        inboxPending,
       ] = await Promise.all([
         getMonthlySummary(user.id, year, month, view),
         getWalletPortfolio(user.id, { includeHistory: false }),
@@ -213,17 +254,149 @@ export default function MonthScreen() {
         // render, so a failed preview simply means no row.
         previewApplyRecurringForMonth(year, month),
         getRecurringTemplates(user.id),
-        getMonthCloseOverview(user.id, todayIsoLocal()),
+        getMonthCloseOverview(user.id, today),
         getSkippedOccurrences(user.id, year, month),
+        viewingCurrent ? readCashBalance(user.id, today) : null,
+        viewingCurrent ? getRecordedCashFlows(user.id, year, month) : null,
+        getRecentBankMovements(user.id),
+        getFulfilledKeys(user.id),
+        countPendingFeedItems(user.id),
       ]);
       const categoryNames = new Map(
         categories.map((c) => [c.id, c.name] as const),
       );
+
+      // Asked after the batch, because it needs the templates and categories
+      // the batch fetched. A failure is not worth losing the month over: the
+      // block simply does not appear.
+      let arrived: FulfilmentProposal[] = [];
+      try {
+        arrived = await getFulfilmentProposals(
+          user.id,
+          templates,
+          categories,
+          year,
+          month,
+        );
+      } catch {
+        arrived = [];
+      }
+
+      const upcoming = buildStillToCome(
+        currentTx,
+        templates,
+        year,
+        month,
+        today,
+        new Set(
+          skipped.map((entry) => `${entry.templateId}:${entry.occurredOn}`),
+        ),
+        // Without this, every recurring charge the bank delivers is forecast
+        // on top of the movement that already paid it.
+        fulfilledKeys,
+      );
+
+      // Only the close of the month immediately before counts. A user who has
+      // fallen behind has a newest close two or three months back, and
+      // measuring this month's flows against that balance would compare a
+      // balance against transactions from a different window — a figure that
+      // looks authoritative and is nonsense.
+      const latestClose = closes.history[0];
+      const wantedKey = previousMonthKey(
+        `${year}-${String(month).padStart(2, "0")}`,
+      );
+      const openingBalance =
+        latestClose && latestClose.monthKey === wantedKey
+          ? latestClose.closingBalance
+          : null;
+
+      // Mapped from what this batch already fetched rather than gathered
+      // again, so the figures the read refers to are literally the ones
+      // rendered above it.
+      const readFacts = monthFactsFromScreen({
+        year,
+        month,
+        isCurrentMonth: viewingCurrent,
+        summary,
+        comparison: buildMonthComparison({
+          current: currentTx,
+          previous: previousTx,
+          year,
+          month,
+          today,
+        }),
+        closes,
+        pulse: viewingCurrent
+          ? buildMonthPulse({
+              onHand: cash?.ok ? cash.total : null,
+              committed: upcoming.leaving,
+              arriving: upcoming.arriving,
+              flows: flows ?? {
+                income: 0,
+                expenses: 0,
+                savings: 0,
+                transfers: 0,
+              },
+              openingBalance,
+              cap: closes.settings.unrecordedCap,
+            })
+          : null,
+        budgets: buildBudgetProgress(
+          budgets,
+          summary.expenseBreakdown,
+          summary.expenses,
+          categoryNames,
+        ),
+        goals: buildSavingsGoalProgress(
+          goals,
+          summary.savingsBreakdown,
+          summary.savings,
+        ),
+        investedValue: portfolio.totalMarketValue,
+        inboxPending,
+        chargesUnconfirmed: arrived.length,
+      });
+
+      // The row itself, read straight out of Supabase — select-own under row
+      // level security, so no server of ours is involved in looking at it.
+      let stored = {
+        view: null as MonthReadView | null,
+        writesLeft: 0,
+        tracked: false,
+      };
+      try {
+        stored = await getMonthRead(user.id, year, month, readFacts);
+      } catch {
+        // A missing read is not a reason to lose the month.
+      }
+
       return {
         summary,
         portfolio,
         trend,
         plan: preview.plan ?? null,
+        movements,
+        arrived,
+        readFacts,
+        readView: stored.view,
+        readWritesLeft: stored.writesLeft,
+        // A reading that failed comes back with `ok: false`, and its total is
+        // short by whatever the unreadable accounts hold — so it is not a
+        // balance and must not be presented as one.
+        pulse: buildMonthPulse({
+          onHand: cash?.ok ? cash.total : null,
+          committed: upcoming.leaving,
+          arriving: upcoming.arriving,
+          flows: flows ?? {
+            income: 0,
+            expenses: 0,
+            savings: 0,
+            transfers: 0,
+          },
+          openingBalance,
+          cap: closes.settings.unrecordedCap,
+        }),
+        unreadable: (cash?.missing ?? []).map((entry) => entry.label),
         // Actuals only: comparing two projections would move whenever a
         // template changed, which is not a claim worth making.
         comparison: buildMonthComparison({
@@ -231,7 +404,7 @@ export default function MonthScreen() {
           previous: previousTx,
           year,
           month,
-          today: todayIsoLocal(),
+          today,
         }),
         budgetProgress: buildBudgetProgress(
           budgets,
@@ -246,16 +419,7 @@ export default function MonthScreen() {
         ),
         closes,
         templateCount: templates.length,
-        upcoming: buildStillToCome(
-          currentTx,
-          templates,
-          year,
-          month,
-          todayIsoLocal(),
-          new Set(
-            skipped.map((entry) => `${entry.templateId}:${entry.occurredOn}`),
-          ),
-        ),
+        upcoming,
         // Committed outgoings, for turning a month's saving into days of
         // runway. Always the month in progress: closing an older month does
         // not change what this one costs to live through.
@@ -273,6 +437,10 @@ export default function MonthScreen() {
   const goalProgress = data?.goalProgress ?? [];
   const closes = data?.closes ?? null;
   const upcoming = data?.upcoming ?? null;
+  const pulse = data?.pulse ?? null;
+  const movements = data?.movements ?? [];
+  const arrived = data?.arrived ?? [];
+  const readFacts = data?.readFacts ?? null;
   const monthLabel = formatMonthLabel(year, month);
 
   // Nothing set up and nothing recorded: the standing card would report "0 €
@@ -403,7 +571,20 @@ export default function MonthScreen() {
           contentContainerClassName="gap-4 pb-28 pt-4"
           showsVerticalScrollIndicator={false}
         >
-          <MonthAttention items={attention} />
+          <MonthAttention
+            items={attention}
+            slot={
+              arrived.length > 0 ? (
+                <ArrivedCharges
+                  proposals={arrived}
+                  onDecided={() => {
+                    notifyDataChanged();
+                    void onRefresh();
+                  }}
+                />
+              ) : undefined
+            }
+          />
 
           {closes?.history[0] ? (
             <MonthClosedRecap
@@ -413,10 +594,30 @@ export default function MonthScreen() {
             />
           ) : null}
 
+          {/* After the figures, never before them: the read interprets what
+              is above it. */}
+          {!firstRun && readFacts ? (
+            <MonthRead
+              year={year}
+              month={month}
+              monthLabel={monthLabel}
+              read={data?.readView?.read ?? null}
+              freshness={data?.readView?.freshness ?? null}
+              facts={readFacts}
+              writesLeft={data?.readWritesLeft ?? 0}
+              writable={monthReadWritable()}
+              onWritten={() => {
+                notifyDataChanged();
+                void onRefresh();
+              }}
+            />
+          ) : null}
+
           {firstRun ? (
             <MonthFirstRun />
-          ) : (
-            <MonthStanding
+          ) : pulse ? (
+            <MoneyOnHand
+              pulse={pulse}
               monthLabel={monthLabel}
               income={summary.income}
               expenses={summary.expenses}
@@ -425,11 +626,21 @@ export default function MonthScreen() {
               elapsed={elapsed}
               comparison={comparison}
               savingsRate={savingsRate}
-              asOf={
-                isCurrentMonth && view === "current" ? todayIsoLocal() : null
-              }
+              unreadable={data?.unreadable ?? []}
             />
-          )}
+          ) : null}
+
+          {/* Only for the month in progress. A finished month's untracked
+              spending is a settled figure and belongs to its close, which the
+              recap above reports. */}
+          {!firstRun && isCurrentMonth && pulse && closes ? (
+            <MonthScore
+              pulse={pulse}
+              streak={closes.summary.streak}
+              bestStreak={closes.summary.bestStreak}
+              baseline={closes.summary.baseline}
+            />
+          ) : null}
 
           {/* Only in the as-of-today view: the month-end view has already
               counted these into the headline, so listing them again would
@@ -442,6 +653,8 @@ export default function MonthScreen() {
               arriving={upcoming.arriving}
             />
           ) : null}
+
+          <RecentOnAccount movements={movements} />
 
           {summary.expenses > 0 ? (
             <SummaryCard

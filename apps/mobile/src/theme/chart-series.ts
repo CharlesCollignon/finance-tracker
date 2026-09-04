@@ -1,5 +1,3 @@
-import { useColorScheme } from "react-native";
-
 import { CHART_COLORS } from "@/theme/tokens";
 
 /**
@@ -12,6 +10,5 @@ import { CHART_COLORS } from "@/theme/tokens";
  * on categories that mean neither. Everything categorical uses this one.
  */
 export function useChartSeries(): readonly string[] {
-  const scheme = useColorScheme();
-  return CHART_COLORS[scheme === "light" ? "light" : "dark"];
+  return CHART_COLORS;
 }

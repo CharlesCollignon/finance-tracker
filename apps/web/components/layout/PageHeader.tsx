@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { GLASS_CHROME } from "@/lib/glass";
 import {
   SHELL_HEADER_ACTIONS_CLASS,
   SHELL_HEADER_INNER_CLASS,
 } from "@/lib/layout-shell";
 import { PrivacyToggle } from "@/components/layout/PrivacyToggle";
+import { RefreshButton } from "@/components/layout/RefreshButton";
 
 interface PageHeaderProps {
   title: string;
@@ -18,8 +20,9 @@ export function PageHeader({ title, children, className }: PageHeaderProps) {
     <header
       className={cn(
         "sticky top-0 z-30 box-border h-[calc(var(--shell-header-height)+env(safe-area-inset-top,0px))] shrink-0",
-        "border-b border-border bg-background/95 pt-safe backdrop-blur-sm",
-        "md:static md:h-[var(--shell-header-height)] md:bg-background md:pt-0",
+        "border-b pt-safe",
+        GLASS_CHROME,
+        "md:static md:h-[var(--shell-header-height)] md:pt-0",
         className,
       )}
     >
@@ -48,6 +51,11 @@ export function PageHeader({ title, children, className }: PageHeaderProps) {
         </div>
         <div className={SHELL_HEADER_ACTIONS_CLASS}>
           {children}
+          {/* Renders nothing outside the app shell, so the auth and marketing
+              headers are unaffected. On a desktop the sidebar carries the
+              wide version and this one would be a second button saying the
+              same thing. */}
+          <RefreshButton className="md:hidden" />
           <PrivacyToggle className="shrink-0" />
         </div>
       </div>

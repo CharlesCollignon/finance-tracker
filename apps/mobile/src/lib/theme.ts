@@ -1,34 +1,14 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Appearance, type ColorSchemeName } from "react-native";
+import { Appearance } from "react-native";
 
-export type ThemePreference = "light" | "dark" | "system";
-
-const STORAGE_KEY = "theme";
-
-export async function getThemePreference(): Promise<ThemePreference> {
-  const stored = await AsyncStorage.getItem(STORAGE_KEY);
-  if (stored === "light" || stored === "dark" || stored === "system") {
-    return stored;
-  }
-  return "dark";
-}
-
-export async function setThemePreference(
-  preference: ThemePreference,
-): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEY, preference);
-}
-
-export async function applyThemePreference(
-  preference: ThemePreference,
-): Promise<void> {
-  const scheme: ColorSchemeName =
-    preference === "system" ? "unspecified" : preference;
-  Appearance.setColorScheme(scheme);
-}
-
-export async function initTheme(): Promise<ThemePreference> {
-  const preference = await getThemePreference();
-  await applyThemePreference(preference);
-  return preference;
+/**
+ * Pin the app to its one theme.
+ *
+ * There used to be a stored preference of light, dark or system here. There
+ * is one palette now, and the scheme is still set explicitly rather than left
+ * alone: NativeWind resolves `dark:` variants from it, and a phone in light
+ * mode would otherwise render the light half of every variant over a dark
+ * palette.
+ */
+export function initTheme(): void {
+  Appearance.setColorScheme("dark");
 }

@@ -142,7 +142,8 @@ export function todayIsoLocal(): string {
  */
 const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const MONTH_SHORT = [
+/** Exported for the month grid, which labels twelve buttons with them. */
+export const MONTH_SHORT = [
   "Jan",
   "Feb",
   "Mar",

@@ -23,63 +23,20 @@
   font-display: swap;
 }
 
-:root {
-  /* Warmed off the logo's ground but pulled back toward white, so the app
-     reads as paper rather than parchment. The gold is light — luminance
-     ~0.46 — so it can only ever be a fill, never text: white on it is 2.0:1.
-     Hence three golds. */
-  --background: #f7f5f2;
-  --foreground: #1c1814;
-  --card: #ffffff;
-  --card-foreground: #1c1814;
-  --popover: #ffffff;
-  --popover-foreground: #1c1814;
-  /* The orb itself. Carries dark ink at 8.7:1. */
-  --primary: #d5b163;
-  --primary-hover: #c29e4f;
-  --primary-foreground: #1c1814;
-  /* Deep gold, for anything that has to be read: links, focus rings. 5.8:1
-     on the ground, where the orb gold would be 1.9:1 and illegible. */
-  --primary-ink: #7a5a1e;
-  /* A filled gold button is only 1.9:1 against the ground, so its edge would
-     dissolve. This rim carries the boundary at 3.3:1. */
-  --primary-rim: #a8812c;
-  --secondary: #ece9e4;
-  --secondary-foreground: #1c1814;
-  --muted: #ece9e4;
-  --muted-foreground: #6b6259;
-  --accent: #f5e9ce;
-  --accent-foreground: #1c1814;
-  --success: #157b3b;
-  --success-foreground: #ffffff;
-  --info: #0e7490;
-  --info-foreground: #ffffff;
-  --destructive: #c23b2e;
-  --destructive-foreground: #ffffff;
-  --border: rgba(28, 24, 20, 0.1);
-  --hairline-strong: rgba(28, 24, 20, 0.16);
-  --input: #ffffff;
-  --ring: #7a5a1e;
-  /* Gold-anchored but still categorical, and spread on lightness as well as
-     hue: the closest pair stays 17 ΔE apart under protanopia, deuteranopia
-     and tritanopia. The palette this replaced fell to 5.4. */
-  --chart-1: #a57b31;
-  --chart-2: #652b20;
-  --chart-3: #4b9157;
-  --chart-4: #2f5e6a;
-  --chart-5: #918883;
-  --sidebar: #f2efeb;
-  --sidebar-foreground: #1c1814;
-  --sidebar-primary: #d5b163;
-  --sidebar-primary-foreground: #1c1814;
-  --sidebar-accent: #ece9e4;
-  --sidebar-accent-foreground: #1c1814;
-  --sidebar-border: rgba(28, 24, 20, 0.1);
-  --sidebar-ring: #7a5a1e;
-  --shadow-bezel-inset: inset 0 1px 1px rgba(255, 252, 246, 0.8);
-  color-scheme: light;
-}
-
+/*
+ * The palette. There is one.
+ *
+ * Pluclair used to ship a warm paper light theme alongside this, and the
+ * light one was the default in the CSS while every entry point defaulted the
+ * user to dark — two palettes to keep honest, and only one anybody saw. The
+ * screen now leads with a figure over an animated veil, and a veil on paper
+ * is a smudge, so the choice is made: this is a dark app.
+ *
+ * Set on `:root` as well as `.dark` so nothing here depends on the class
+ * being present. The class is still rendered on <html>, because a few dozen
+ * `dark:` utilities across the app resolve against it.
+ */
+:root,
 .dark {
   /* Surfaces stay the cool near-black they were; only the accent turns gold.
      On this ground the orb gold is 11:1, so here it can be text as well as

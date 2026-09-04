@@ -27,7 +27,7 @@ finance-tracker/          (repo root)
 - **Mobile only:** [Expo Go](https://expo.dev/go) on your phone (SDK 57)
 
 Apply the database schema once on your Supabase project (SQL editor or
-CLI) using the files in `supabase/migrations/`, in order (`001` → `019`).
+CLI) using the files in `supabase/migrations/`, in order (`001` → `025`).
 Optional account deletion from mobile also needs the
 `delete-account` Edge Function in `supabase/functions/`.
 
@@ -78,10 +78,11 @@ key in the mobile app):
 cp apps/mobile/.env.example apps/mobile/.env
 ```
 
-| Variable | Required |
-|----------|----------|
-| `EXPO_PUBLIC_SUPABASE_URL` | yes |
-| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | yes |
+| Variable | Required | Notes |
+|----------|----------|--------|
+| `EXPO_PUBLIC_SUPABASE_URL` | yes | Same project as the web app |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | yes | Public anon key |
+| `EXPO_PUBLIC_WEB_APP_URL` | optional | The web app's origin. Anything needing a server secret — asking the bank for new movements, writing a month read — goes through it. Without it the phone still works; those two buttons are simply absent. |
 
 After changing `.env`, restart Expo with a cleared cache (`-c`).
 
@@ -129,20 +130,30 @@ then point Namecheap DNS at the records Vercel shows (usually A `@` →
 
 ### Background jobs (Vercel cron)
 
-Two daily jobs are declared in `apps/web/vercel.json`. Both run under the
-service role, so both need `SUPABASE_SERVICE_ROLE_KEY`, and both refuse to run
-without `CRON_SECRET` — Vercel sends it as `Authorization: Bearer <secret>`.
+Five daily jobs are declared in `apps/web/vercel.json`, four of them pointed
+at the same refresh route. All run under the service role, so all need
+`SUPABASE_SERVICE_ROLE_KEY`, and all refuse to run without `CRON_SECRET` —
+Vercel sends it as `Authorization: Bearer <secret>`.
 
 | Route | When | What it does |
 |-------|------|--------------|
-| `/api/cron/refresh` | 07:00 | Reprices not-yet-due occurrences, then syncs the bank |
+| `/api/cron/refresh` | 07:00 | Reprices not-yet-due occurrences, then pulls and syncs the bank |
 | `/api/cron/notify` | 08:00 | Sends the day's web push digest |
+| `/api/cron/refresh` | 12:00, 17:00, 21:00 | Pulls and syncs the bank only |
 
 **Refreshing** is everything that brings the ledger up to date from outside
-it, and it is one route rather than two because Vercel's Hobby plan allows
-two cron jobs and the digest has to be one of them. The two halves fail
-independently: an unreachable bank does not stop quotes refreshing, and a
-rate-limited quote source does not stop the statement being read.
+it. Hobby allows a hundred cron jobs per project but insists each runs at most
+once a day, so four separate daily entries at four different hours is how the
+app is current four times a day rather than once. Vercel sends the firing
+schedule as `x-vercel-cron-schedule`, and the route reads it to decide how
+much to do: only the 07:00 run reprices, because quoting every user's
+templates against the market is slow and prices move on a scale of days,
+while the statement is worth re-reading. A hand-run `curl` sends no such
+header and gets the full job.
+
+The two halves fail independently: an unreachable bank does not stop quotes
+refreshing, and a rate-limited quote source does not stop the statement being
+read.
 
 *Repricing* brings occurrences that are applied but still dated ahead back in
 line with their instrument's quote, and refreshes each template's stored
@@ -150,14 +161,12 @@ price. It never touches a date that has passed and never creates a
 transaction. This is what stops "Apply recurring" from asking about a DCA
 every time the market moves.
 
-*The bank sync* reads the statement, files what the user's own history already
-answers for, and leaves the rest in the review inbox. It pushes only when the
-run left something needing a decision, keyed by the day so it is said once.
-Needs `OPEN_BANKING_CREDENTIALS` and `OPEN_BANKING_OWNER_USER_ID`; without
-them the step is skipped and the refresh still reprices.
-
-**Notifying** says at most one useful thing a day — a new month, a breached
-budget — and needs the VAPID keys as well; without them it no-ops.
+*The bank sync* asks the bank for anything new, then reads the statement,
+files what the user's own history already answers for, and leaves the rest in
+the review inbox. It pushes only when the run left something needing a
+decision, keyed by the day so it is said once. Needs
+`OPEN_BANKING_CREDENTIALS` and `OPEN_BANKING_OWNER_USER_ID`; without them the
+step is skipped and the refresh still reprices.
 
 Both answer `200` with a JSON summary of what they did, so a run can be
 checked by hand:
@@ -165,6 +174,41 @@ checked by hand:
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" https://pluclair.com/api/cron/refresh
 ```
+
+**Notifying** says at most one useful thing a day — a new month, a breached
+budget — and needs the VAPID keys as well; without them it no-ops.
+
+### Asking the bank, and how often
+
+Two different calls hide behind the word "sync", and only one of them has a
+limit.
+
+Reading open-banking.io's stored statement (`getAccounts`, `getTransactions`)
+is a read of our own copy. It reaches no bank, costs nothing, and can be done
+as often as anyone likes — but it is only as current as whatever the provider
+last fetched on its own schedule.
+
+*Pulling* — the SDK's `syncAll` — is the call that reaches the bank. Its
+ceiling is regulatory rather than commercial: under PSD2 an account
+information service may read an account **four times a day when the user is
+not present**, and **without limit when they are**. So the two kinds are
+counted separately:
+
+| Kind | Who | Limit |
+|------|-----|-------|
+| Attended | Someone pressed refresh | None, beyond a 90-second cooldown so a double-tap is not two round trips |
+| Unattended | The cron | Four a day, which is why there are four refresh schedules |
+
+The tally lives in `bank_pulls` (migration 022), one row per user per day,
+because a serverless function remembers nothing between invocations and an
+in-memory guard would reset on every cold start. The decision itself is in
+`packages/core/src/bank-pull.ts` and is unit-tested; `apps/web/lib/bank/pull.ts`
+is the plumbing around it.
+
+A refused pull is an ordinary outcome, not an error: the stored statement is
+still read, and every screen says how old the figures are. Without migration
+022 applied, attended refreshes still work and the unattended run simply does
+not pull — which is exactly what it did before any of this existed.
 
 ### Closing a month
 
@@ -186,6 +230,64 @@ end — good enough for the trend, which is the part worth trusting.
 
 Nothing here needs configuring or deploying. A close is a row the user writes;
 skipping months costs nothing beyond having nothing to compare.
+
+### A month, in words
+
+The Month page can carry a short written read of the month: a headline, up to
+four observations, and up to three suggestions. It is written on request — a
+button on the card — never on page load, and stored, so opening the page costs
+nothing.
+
+Set `MISTRAL_API_KEY` to enable it (`MISTRAL_MODEL` is optional and defaults
+to `mistral-small-latest`). Without the key the card is simply absent, the way
+the bank buttons are absent without bank credentials. The key is server-side
+only; the phone reaches the feature through the web app's
+`POST /api/month-read` with its Supabase session as a bearer token, which is
+the same route the bank refresh takes.
+
+**The model never writes a number.** It is given a set of named figures — the
+labels, values and directions in `packages/core/src/month-facts.ts` — and
+answers in prose containing references like `{{fact:unrecorded}}`, which the
+app replaces with its own formatted value at render time. That is what lets
+the currency toggle and the privacy blur work on a written paragraph, and it
+means a figure nobody computed cannot reach the screen: `verifyMonthRead`
+refuses any answer citing a datum that was never sent, and drops any single
+claim that writes a number of its own. The severities are deliberate — an
+invented figure is fatal, whereas a claim thirty characters too long, or one
+suggestion too many, is trimmed and the rest of the read survives, because
+spending someone's allowance to show them nothing is the wrong price for a
+wrapping problem. All of it is pure and unit-tested, with a fake source that
+asserts no network happened.
+
+Reads are capped at five a month per user, with a minute's cooldown and a
+reservation taken *before* the call so two presses cannot both spend the last
+one. The counters live in `month_reads` (migration 024) behind `security
+definer` functions, for the same reason the bank tally does: a serverless
+function remembers nothing, and a counter a client may write is a counter a
+client may reset. Without migration 024 the feature is off rather than
+uncapped.
+
+Migration 025 is not optional. A `security definer` function is only as good
+as the check on who may call it, and the ones in 022 and 024 shipped with two
+mistakes that compound: Postgres grants EXECUTE to PUBLIC by default, so the
+explicit grant restricted nothing, and the guard trusted any caller with no
+`auth.uid()` — written for the service role, which has none because it is not
+a person, but equally true of `anon`, which has none for the opposite reason.
+025 revokes the default grant and makes the guard name the service role
+instead of inferring it from an absence.
+
+What goes over the wire is aggregates only — totals, rates, category sums, the
+close figures. No merchant names, no individual transactions, no balances, no
+IBANs, no account holder. Switch on the training opt-out in Mistral's console
+before using the key in earnest; that is a console setting, not something this
+repo can do for you.
+
+The read is rendered against the figures as they stand *now*, not the ones
+stored with it, so a number in the prose can never contradict the card above
+it. What can age is the judgement: when a figure it rests on has moved, the
+card says which and how long ago it was written. A month still in progress is
+never called stale — its figures change whenever anything is recorded, and a
+warning that is always on is one nobody reads.
 
 ### Supabase auth URLs (production)
 

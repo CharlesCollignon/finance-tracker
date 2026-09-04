@@ -7,7 +7,7 @@ import {
   getTransactions,
 } from "@/lib/queries/finance";
 import { getTags, getTransactionTagMap } from "@/lib/queries/phase4";
-import { parseMonthParams } from "@finance/core/constants";
+import { resolveMonthScope } from "@/lib/month-scope";
 import { TransactionsView } from "@/components/finance/TransactionsView";
 import { BankInbox } from "@/components/finance/BankInbox";
 import { bankFeedConfigured } from "@/lib/bank/client";
@@ -33,7 +33,10 @@ export default async function TransactionsPage({
   }
 
   const params = await searchParams;
-  const { year, month } = parseMonthParams(params.y, params.m);
+  // The month the user was last looking at. The middleware has already put
+  // it into the address; this reads it back, and falls back to the cookie for
+  // a request that did not pass through there.
+  const { year, month } = await resolveMonthScope(params);
   const [
     transactions,
     categories,

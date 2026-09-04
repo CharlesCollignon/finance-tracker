@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Modal, Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -8,12 +8,6 @@ import { Text } from "@/components/ui/Text";
 import { useAuth } from "@/providers/AuthProvider";
 import { hapticLight } from "@/lib/haptics";
 import { cn } from "@/lib/cn";
-import {
-  applyThemePreference,
-  getThemePreference,
-  setThemePreference,
-  type ThemePreference,
-} from "@/lib/theme";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 function initialFor(email: string | undefined, name: string | undefined) {
@@ -22,33 +16,22 @@ function initialFor(email: string | undefined, name: string | undefined) {
 }
 
 /**
- * Header account control: monogram trigger opening a glass panel with the
- * theme toggle, a link to Profile and sign out — the mobile counterpart of the
- * web AccountMenu.
+ * Header account control: monogram trigger opening a panel with a link to
+ * Profile and sign out — the mobile counterpart of the web AccountMenu.
+ *
+ * The theme toggle used to live here. Pluclair is dark now, with no light
+ * palette to switch to.
  */
 export function AccountMenu() {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const colors = useThemeColors();
   const [open, setOpen] = useState(false);
-  const [theme, setTheme] = useState<ThemePreference>("system");
-
-  useEffect(() => {
-    void getThemePreference().then(setTheme);
-  }, []);
 
   const displayName =
     (user?.user_metadata?.full_name as string | undefined) ??
     (user?.user_metadata?.name as string | undefined);
   const initial = initialFor(user?.email, displayName);
-  const isDark = theme === "dark";
-
-  const toggleTheme = useCallback(async () => {
-    const next: ThemePreference = isDark ? "light" : "dark";
-    setTheme(next);
-    await setThemePreference(next);
-    await applyThemePreference(next);
-  }, [isDark]);
 
   const rowClass =
     "min-h-11 w-full flex-row items-center gap-3 rounded-xl px-3";
@@ -91,29 +74,6 @@ export function AccountMenu() {
                   read against busy content behind it. */}
               <View className="w-72 overflow-hidden rounded-3xl border border-border bg-card">
                 <View className="gap-1 p-2">
-                  <View className="flex-row items-center justify-between px-3 py-1.5">
-                    <Text className="text-sm font-medium">Theme</Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        isDark
-                          ? "Switch to light theme"
-                          : "Switch to dark theme"
-                      }
-                      onPress={() => {
-                        void hapticLight();
-                        void toggleTheme();
-                      }}
-                      className="h-9 w-9 items-center justify-center rounded-md"
-                    >
-                      <Ionicons
-                        name={isDark ? "sunny-outline" : "moon-outline"}
-                        size={18}
-                        color={colors.foreground}
-                      />
-                    </Pressable>
-                  </View>
-
                   <Pressable
                     accessibilityRole="link"
                     className={cn(rowClass)}

@@ -35,6 +35,9 @@ export async function syncBankFeedAction(
     const supabase = await createClient();
     const outcome = await syncBankFeed(supabase, user.id, {
       backfill,
+      // Somebody pressed a button, so this is attended access: PSD2 caps the
+      // unattended kind at four a day and leaves this one alone.
+      pull: "attended",
     });
 
     // Straight after the statement is filed: the balance a close measures
@@ -44,7 +47,13 @@ export async function syncBankFeedAction(
 
     revalidateFeedDependents();
 
-    const parts = [`${outcome.imported} added`];
+    // Led with, because it is the thing the press was for. "0 added" after a
+    // refused pull reads as "nothing happened"; "asked moments ago" says why.
+    const parts: string[] = [];
+    if (outcome.pull && !outcome.pull.pulled && outcome.pull.why) {
+      parts.push(outcome.pull.why);
+    }
+    parts.push(`${outcome.imported} added`);
     if (closes.closed.length > 0) {
       parts.push(
         `${closes.closed.length} ${closes.closed.length === 1 ? "month" : "months"} closed`,

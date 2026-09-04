@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getCategories } from "@/lib/queries/categories";
 import { getRecurringTemplates, getTransactions } from "@/lib/queries/finance";
-import { parseMonthParams } from "@finance/core/constants";
+import { resolveMonthScope } from "@/lib/month-scope";
 import { CalendarView } from "@/components/finance/CalendarView";
 
 interface CalendarPageProps {
@@ -19,7 +19,7 @@ export default async function CalendarPage({
   }
 
   const params = await searchParams;
-  const { year, month } = parseMonthParams(params.y, params.m);
+  const { year, month } = await resolveMonthScope(params);
   const [transactions, categories, recurringTemplates] = await Promise.all([
     getTransactions(user.id, year, month),
     getCategories(user.id),

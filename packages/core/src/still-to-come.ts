@@ -46,9 +46,7 @@ export interface StillToCome {
   budgetedOutflow: number;
 }
 
-function countsTowardSummary(
-  template: RecurringTemplateWithCategory,
-): boolean {
+function countsTowardSummary(template: RecurringTemplateWithCategory): boolean {
   return template.categories.counts_toward_summary !== false;
 }
 
@@ -69,6 +67,11 @@ function countsTowardSummary(
  *     at face value in the cash view rather than spread across the month;
  *   - an occurrence already written into the ledger is not owed twice;
  *   - a skipped occurrence is not owed at all;
+ *   - nor is a fulfilled one: the bank has already delivered it, and the
+ *     movement is counted in the month's actuals. Without this every
+ *     recurring charge a bank feed delivers is counted twice, which on a
+ *     salary means a whole month's income added to a figure the user is
+ *     about to spend against;
  *   - rows already dated later this month count, because they are real and
  *     they have not happened yet.
  */
@@ -79,6 +82,13 @@ export function buildStillToCome(
   month: number,
   today: string,
   skippedKeys: Set<string> = new Set(),
+  /**
+   * Occurrences the user has confirmed a bank movement already satisfied.
+   * Same shape as `skippedKeys` and applied at the same point, because the
+   * projection treats them alike — the difference between "should not exist"
+   * and "already happened" matters to the history, not to the forecast.
+   */
+  fulfilledKeys: Set<string> = new Set(),
 ): StillToCome {
   const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
   const outgoing: UpcomingCharge[] = [];
@@ -158,7 +168,7 @@ export function buildStillToCome(
 
     for (const date of dates) {
       const key = recurringOccurrenceKey(template.id, date);
-      if (applied.has(key) || skippedKeys.has(key)) {
+      if (applied.has(key) || skippedKeys.has(key) || fulfilledKeys.has(key)) {
         continue;
       }
 

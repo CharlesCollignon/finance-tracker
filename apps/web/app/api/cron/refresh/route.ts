@@ -10,17 +10,26 @@ import { repriceEveryUser } from "@/lib/recurring-reprice-run";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * The morning refresh: everything that brings the ledger up to date from
- * somewhere outside it.
+ * The refresh: everything that brings the ledger up to date from somewhere
+ * outside it.
  *
- * Two jobs share this schedule. Repricing corrects share-priced occurrences
- * that are applied but not yet due, so a DCA written in advance carries the
- * price it will actually cost rather than the one it cost when it was
- * written. The bank sync files what the account has seen since yesterday.
- * Both are the same shape of work — reconcile with an outside source, under
- * the service role, before the digest at eight decides what is worth saying —
- * and they run together because Vercel's Hobby plan allows two cron jobs and
- * the notification run has to be one of them.
+ * Two jobs share this route. Repricing corrects share-priced occurrences that
+ * are applied but not yet due, so a DCA written in advance carries the price
+ * it will actually cost rather than the one it cost when it was written. The
+ * bank sync asks the bank for anything new and files what it says.
+ *
+ * They run several times a day, from several schedules pointed at this one
+ * path. Hobby allows a hundred cron jobs but insists each runs at most once a
+ * day, so four daily entries at four different hours is the legal way to be
+ * current four times a day — and four is also exactly what PSD2 allows an
+ * account information service to read an account without the user present.
+ * The two ceilings agreeing is a coincidence, but a convenient one.
+ *
+ * Only the first run of the day does the expensive half. Repricing walks
+ * every user's templates and quotes each against the market; doing that four
+ * times would quadruple the load on the quote source to correct prices that
+ * move on a scale of days. The statement is the thing worth re-reading, so
+ * the later runs read only that.
  *
  * Sharing a request does not mean sharing a fate. They talk to different
  * third parties and fail independently, so each is wrapped: an unreachable
@@ -28,14 +37,34 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * must not stop the statement being read.
  */
 
-// Two network-bound walks back to back. Sixty seconds is also the ceiling a
-// Hobby function gets, so this is the most that can be asked for.
+// Network-bound throughout: two walks back to back on the full run, one on
+// the bank-only runs — which is part of why the split is worth having, since
+// it gives the bank fetch the whole budget three times a day. Sixty seconds
+// is also the ceiling a Hobby function gets, so this is the most that can be
+// asked for.
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 interface StepFailure {
   step: "reprice" | "bank";
   message: string;
+}
+
+/**
+ * The schedule that does the whole job, quotes included.
+ *
+ * Vercel sends the firing schedule as a header, which is the only thing
+ * distinguishing one entry from another when they all point at the same path.
+ * A missing or unrecognised header means do everything: a hand-run curl and a
+ * single-schedule deployment should both get the full job, and a schedule
+ * renamed in `vercel.json` without this constant being updated should degrade
+ * to repricing too often rather than never.
+ */
+const FULL_RUN_SCHEDULE = "0 7 * * *";
+
+function isFullRun(request: NextRequest): boolean {
+  const schedule = request.headers.get("x-vercel-cron-schedule");
+  return schedule === null || schedule === FULL_RUN_SCHEDULE;
 }
 
 function configureWebPush(): boolean {
@@ -69,25 +98,29 @@ export async function GET(request: NextRequest) {
 
   const today = todayIsoLocal();
   const failures: StepFailure[] = [];
+  const full = isFullRun(request);
 
   // --- quotes ------------------------------------------------------------
 
-  let reprice = { users: 0, repriced: 0, refreshed: 0 };
-  try {
-    const outcome = await repriceEveryUser(supabase, today);
-    reprice = {
-      users: outcome.users,
-      repriced: outcome.repriced,
-      refreshed: outcome.refreshed,
-    };
-    for (const message of outcome.failures.slice(0, 3)) {
-      failures.push({ step: "reprice", message });
+  let reprice: { users: number; repriced: number; refreshed: number } | null =
+    null;
+  if (full) {
+    try {
+      const outcome = await repriceEveryUser(supabase, today);
+      reprice = {
+        users: outcome.users,
+        repriced: outcome.repriced,
+        refreshed: outcome.refreshed,
+      };
+      for (const message of outcome.failures.slice(0, 3)) {
+        failures.push({ step: "reprice", message });
+      }
+    } catch (error) {
+      failures.push({
+        step: "reprice",
+        message: error instanceof Error ? error.message : "Repricing failed",
+      });
     }
-  } catch (error) {
-    failures.push({
-      step: "reprice",
-      message: error instanceof Error ? error.message : "Repricing failed",
-    });
   }
 
   // --- the bank ----------------------------------------------------------
@@ -99,7 +132,10 @@ export async function GET(request: NextRequest) {
 
   if (ownerId) {
     try {
-      bank = await syncBankFeed(supabase, ownerId);
+      // Unattended: nobody is watching, so this spends from the four-a-day
+      // allowance. When it is spent the sync still runs and reads the stored
+      // statement, which is what every run did before pulling existed.
+      bank = await syncBankFeed(supabase, ownerId, { pull: "unattended" });
       // Straight after the statement is filed, because that is when the
       // balance a close needs has just arrived. Closing is arithmetic on
       // rows this run has already stored, so it costs no network call and
@@ -122,6 +158,7 @@ export async function GET(request: NextRequest) {
       : 0;
 
   return Response.json({
+    run: full ? "full" : "bank-only",
     reprice,
     bank: bank ? { ...bank, notified } : null,
     monthsClosed,
@@ -190,7 +227,10 @@ async function notifyPendingReview(
   for (const row of rows) {
     try {
       await webpush.sendNotification(
-        { endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth } },
+        {
+          endpoint: row.endpoint,
+          keys: { p256dh: row.p256dh, auth: row.auth },
+        },
         payload,
       );
       notified += 1;

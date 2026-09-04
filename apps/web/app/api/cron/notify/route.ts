@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import webpush from "web-push";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
+import { countFulfilmentProposals } from "@/lib/queries/fulfilment";
 import {
   buildDueNotifications,
   isGoneStatus,
@@ -192,7 +193,8 @@ async function notificationsFor(
 
   const budgetRows = (budgets.data ?? []) as Budget[];
   const categoryRows = (categories.data ?? []) as Category[];
-  const templateRows = (templates.data ?? []) as RecurringTemplateWithCategory[];
+  const templateRows = (templates.data ??
+    []) as RecurringTemplateWithCategory[];
 
   // Nothing to say to someone with no caps and no templates.
   if (budgetRows.length === 0 && templateRows.length === 0) {
@@ -214,9 +216,27 @@ async function notificationsFor(
     new Map(categoryRows.map((row) => [row.id, row.name] as const)),
   );
 
+  // Asked here rather than in `buildDueNotifications`, which is deliberately
+  // free of database concerns. A failure is not worth losing the rest of the
+  // digest over: the Month page asks the same question on every visit.
+  let arrivedCharges = 0;
+  try {
+    arrivedCharges = await countFulfilmentProposals(
+      userId,
+      templateRows,
+      categoryRows,
+      year!,
+      month!,
+      supabase,
+    );
+  } catch {
+    arrivedCharges = 0;
+  }
+
   return buildDueNotifications({
     today,
     budgetProgress: progress,
+    arrivedCharges,
     alreadySent: new Set(
       ((alreadySent.data ?? []) as { key: string }[]).map((row) => row.key),
     ),

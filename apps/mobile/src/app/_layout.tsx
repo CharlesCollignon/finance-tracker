@@ -11,7 +11,6 @@ import {
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -24,6 +23,7 @@ import {
   useOnboarding,
 } from "@/providers/OnboardingProvider";
 import { PrivacyProvider } from "@/providers/PrivacyProvider";
+import { RefreshProvider } from "@/providers/RefreshProvider";
 import { ToastProvider } from "@/providers/ToastProvider";
 import { initTheme } from "@/lib/theme";
 
@@ -35,10 +35,12 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   const segments = useSegments();
   const pathname = usePathname();
   const router = useRouter();
-  const colorScheme = useColorScheme();
 
+  // Pinned rather than read: Pluclair has one palette, and NativeWind
+  // resolves `dark:` variants from the scheme, so a phone in light mode would
+  // otherwise render the light half of every variant over a dark palette.
   useEffect(() => {
-    void initTheme();
+    initTheme();
   }, []);
 
   useEffect(() => {
@@ -88,7 +90,8 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="import" />
         <Stack.Screen name="onboarding" />
       </Stack>
-      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      {/* Light glyphs, always: the ground behind them is near-black. */}
+      <StatusBar style="light" />
     </>
   );
 }
@@ -113,9 +116,14 @@ export default function RootLayout() {
               <PrivacyProvider>
                 <CurrencyProvider>
                   <ToastProvider>
-                    <OnboardingProvider>
-                      <RootNavigator fontsReady={fontsReady} />
-                    </OnboardingProvider>
+                    {/* Inside ToastProvider: a refresh reports its outcome
+                        through a toast. Outside the navigator, so one request
+                        is in flight at a time whichever screen is showing. */}
+                    <RefreshProvider>
+                      <OnboardingProvider>
+                        <RootNavigator fontsReady={fontsReady} />
+                      </OnboardingProvider>
+                    </RefreshProvider>
                   </ToastProvider>
                 </CurrencyProvider>
               </PrivacyProvider>

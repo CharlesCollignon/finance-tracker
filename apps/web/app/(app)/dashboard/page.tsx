@@ -16,19 +16,37 @@ import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import {
   countSwallowedFeedItems,
   getPendingFeedItems,
+  getRecentBankMovements,
   getRecurringProposals,
   hasBankFeed,
 } from "@/lib/queries/bank";
-import { getMonthCloseOverview } from "@/lib/queries/month-close";
+import { readCashBalance } from "@/lib/queries/bank-balance";
+import {
+  getFulfilledKeys,
+  getFulfilmentReport,
+} from "@/lib/queries/fulfilment";
+import { bankFeedConfigured } from "@/lib/bank/client";
+import { monthReadConfigured } from "@/lib/month-read/client";
+import { gatherMonthFacts } from "@/lib/month-read/facts";
+import { getMonthRead } from "@/lib/queries/month-read";
+import { writesRemaining } from "@finance/core/month-read-budget";
+import { readMonthReadState } from "@/lib/month-read/store";
+import {
+  getMonthCloseOverview,
+  getRecordedCashFlows,
+  type MonthCloseOverview,
+} from "@/lib/queries/month-close";
 import { previewApplyRecurringForMonth } from "@/lib/actions/finance";
 import {
   formatMonthLabel,
   getCurrentMonth,
   parseBudgetViewMode,
-  parseMonthParams,
   savingsRatePercent,
   todayIsoLocal,
 } from "@finance/core/constants";
+import { resolveMonthScope } from "@/lib/month-scope";
+import { previousMonthKey } from "@finance/core/month-close";
+import { buildMonthPulse } from "@finance/core/month-pulse";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
 import { buildStillToCome } from "@finance/core/still-to-come";
 import {
@@ -45,11 +63,21 @@ import {
 } from "@/components/finance/MonthAttention";
 import { MonthClosedRecap } from "@/components/finance/MonthClosedRecap";
 import { MonthFirstRun } from "@/components/finance/MonthFirstRun";
-import { MonthStanding } from "@/components/finance/MonthStanding";
+import { MoneyOnHand } from "@/components/finance/MoneyOnHand";
+import { MonthScore } from "@/components/finance/MonthScore";
+import { RecentOnAccount } from "@/components/finance/RecentOnAccount";
+import { MonthRead } from "@/components/finance/MonthRead";
+import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
 import { StillToCome } from "@/components/finance/StillToCome";
 import { ProgressRing, SpendStrip } from "@/components/finance/charts";
 import { MonthWallets } from "@/components/finance/MonthWallets";
+import { GLASS_CARD } from "@/lib/glass";
+import { cn } from "@/lib/utils";
 import type { BudgetProgress } from "@finance/core/budget-limits";
+import type {
+  Category,
+  RecurringTemplateWithCategory,
+} from "@finance/core/types/database";
 
 interface DashboardPageProps {
   searchParams: Promise<{ y?: string; m?: string; view?: string }>;
@@ -58,31 +86,46 @@ interface DashboardPageProps {
 /**
  * Everything outstanding, gathered from wherever it actually lives.
  *
- * Streamed on its own because it asks the bank, replays every month close and
- * runs pattern detection over the statement — none of which the month's
+ * Streamed on its own because it asks the bank for its inbox and runs pattern
+ * detection over three thousand transactions — neither of which the month's
  * headline figures should wait behind. A slow or unreachable answer means no
  * block, not a slow page.
+ *
+ * The month closes are no longer fetched here. The hero now needs them too —
+ * measuring untracked spending starts from the last close — so they are read
+ * once in the page body and handed down, rather than replayed twice.
  */
 async function AttentionSlot({
   userId,
   year,
   month,
+  closes,
+  templates,
+  categories,
 }: {
   userId: string;
   year: number;
   month: number;
+  closes: MonthCloseOverview;
+  templates: RecurringTemplateWithCategory[];
+  categories: Category[];
 }) {
   const today = todayIsoLocal();
   const bankFed = await hasBankFeed(userId);
 
-  const [pending, swallowed, closes, proposals, applyPlan] = await Promise.all([
-    bankFed ? getPendingFeedItems(userId) : [],
-    bankFed ? countSwallowedFeedItems(userId) : 0,
-    getMonthCloseOverview(userId, today),
-    bankFed ? getRecurringProposals(userId, today) : [],
-    // Only meaningful without a feed: with one, templates never apply.
-    bankFed ? null : previewApplyRecurringForMonth(year, month),
-  ]);
+  const [pending, swallowed, proposals, applyPlan, arrived] = await Promise.all(
+    [
+      bankFed ? getPendingFeedItems(userId) : [],
+      bankFed ? countSwallowedFeedItems(userId) : 0,
+      bankFed ? getRecurringProposals(userId, today) : [],
+      // Only meaningful without a feed: with one, templates never apply.
+      bankFed ? null : previewApplyRecurringForMonth(year, month),
+      // Asked whether or not a bank feeds the ledger. A CSV import produces
+      // the same situation: rows no template wrote that look like the charges
+      // a template calls for.
+      getFulfilmentReport(userId, templates, categories, year, month),
+    ],
+  );
 
   const items: AttentionItem[] = [];
 
@@ -137,19 +180,73 @@ async function AttentionSlot({
     });
   }
 
-  const latest = closes.history[0] ?? null;
+  return (
+    <MonthAttention
+      items={items}
+      slot={
+        arrived.proposals.length > 0 ? (
+          <ArrivedCharges
+            proposals={arrived.proposals}
+            misses={arrived.misses}
+          />
+        ) : undefined
+      }
+    />
+  );
+}
+
+/**
+ * The month in words, streamed.
+ *
+ * The fact pack is a dozen reads — every figure the Month page shows, plus
+ * the close history — and the headline figures must not wait behind it. The
+ * card renders from the stored row, so nothing here calls a model: a page
+ * render never spends money, only a press does.
+ */
+async function ReadSlot({
+  userId,
+  year,
+  month,
+  monthLabel,
+}: {
+  userId: string;
+  year: number;
+  month: number;
+  monthLabel: string;
+}) {
+  const configured = monthReadConfigured();
+  const facts = await gatherMonthFacts(userId, year, month);
+
+  const [view, { stored }] = await Promise.all([
+    getMonthRead(userId, year, month, facts),
+    readMonthReadState(userId, year, month),
+  ]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <MonthAttention items={items} />
-      {latest ? (
-        <MonthClosedRecap
-          row={latest}
-          streak={closes.summary.streak}
-          cap={closes.settings.unrecordedCap}
-        />
-      ) : null}
-    </div>
+    <MonthRead
+      year={year}
+      month={month}
+      monthLabel={monthLabel}
+      read={view?.read ?? null}
+      freshness={view?.freshness ?? null}
+      facts={facts}
+      writesLeft={writesRemaining(stored?.tally ?? null)}
+      configured={configured}
+    />
+  );
+}
+
+/**
+ * The statement itself, streamed because it is a second read of the feed and
+ * the figures above it do not depend on it.
+ */
+async function RecentSlot({ userId }: { userId: string }) {
+  const movements = await getRecentBankMovements(userId);
+  return (
+    <RecentOnAccount
+      movements={movements}
+      pending={movements.filter((movement) => movement.pending).length}
+    />
   );
 }
 
@@ -189,7 +286,7 @@ function Caps({
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+    <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">Caps and goals</h2>
         <Link
@@ -232,8 +329,17 @@ export default async function DashboardPage({
   }
 
   const params = await searchParams;
-  const { year, month } = parseMonthParams(params.y, params.m);
   const budgetView = parseBudgetViewMode(params.view);
+  // The month the user was last looking at. Restored into the address by the
+  // middleware, which clones the URL and so keeps `view` along with it.
+  const { year, month } = await resolveMonthScope(params);
+
+  const today = todayIsoLocal();
+  const current = getCurrentMonth();
+  const isCurrentMonth = year === current.year && month === current.month;
+  // Whether a balance could exist at all, as against whether one was read.
+  // The hero needs the difference to explain itself honestly.
+  const bankConnected = bankFeedConfigured();
 
   const [
     summary,
@@ -244,6 +350,13 @@ export default async function DashboardPage({
     templates,
     monthTransactions,
     skippedKeys,
+    closes,
+    // What the accounts hold now. Only for the month in progress: the figure
+    // is today's, and presenting it beside March's totals would be inviting
+    // the reader to do arithmetic across two different moments.
+    cash,
+    flows,
+    fulfilledKeys,
   ] = await Promise.all([
     getMonthlySummary(user.id, year, month, budgetView),
     getBudgets(user.id),
@@ -253,6 +366,10 @@ export default async function DashboardPage({
     getRecurringTemplates(user.id),
     getTransactions(user.id, year, month),
     getRecurringSkipKeys(user.id, year, month),
+    getMonthCloseOverview(user.id, today),
+    isCurrentMonth ? readCashBalance(user.id, today) : null,
+    isCurrentMonth ? getRecordedCashFlows(user.id, year, month) : null,
+    getFulfilledKeys(user.id),
   ]);
 
   const categoryNames = new Map(categories.map((c) => [c.id, c.name] as const));
@@ -268,10 +385,7 @@ export default async function DashboardPage({
     summary.savings,
   );
 
-  const today = todayIsoLocal();
   const monthLabel = formatMonthLabel(year, month);
-  const current = getCurrentMonth();
-  const isCurrentMonth = year === current.year && month === current.month;
   // Only a month in progress has an "of it gone" to report.
   const elapsed = isCurrentMonth
     ? Number(today.slice(8, 10)) / new Date(year, month, 0).getDate()
@@ -294,6 +408,9 @@ export default async function DashboardPage({
     month,
     today,
     skippedKeys,
+    // Without this, every recurring charge the bank delivers is forecast on
+    // top of the movement that already paid it.
+    fulfilledKeys,
   );
 
   const savingsRate = savingsRatePercent(
@@ -302,6 +419,21 @@ export default async function DashboardPage({
     summary.investmentDeployments,
     summary.income,
   );
+
+  const pulse = buildMonthPulse({
+    // A reading that failed comes back with `ok: false`, and its total is
+    // short by whatever the unreadable accounts hold — so it is not a balance
+    // and must not be presented as one.
+    onHand: cash?.ok ? cash.total : null,
+    committed: upcoming.leaving,
+    arriving: upcoming.arriving,
+    flows: flows ?? { income: 0, expenses: 0, savings: 0, transfers: 0 },
+    openingBalance: openingBalanceFor(closes, year, month),
+    cap: closes.settings.unrecordedCap,
+  });
+
+  const unreadable = (cash?.missing ?? []).map((entry) => entry.label);
+  const latestClose = closes.history[0] ?? null;
 
   return (
     <>
@@ -316,13 +448,21 @@ export default async function DashboardPage({
 
       <PageContainer className="flex flex-col gap-4">
         <Suspense fallback={null}>
-          <AttentionSlot userId={user.id} year={year} month={month} />
+          <AttentionSlot
+            userId={user.id}
+            year={year}
+            month={month}
+            closes={closes}
+            templates={templates}
+            categories={categories}
+          />
         </Suspense>
 
         {firstRun ? <MonthFirstRun /> : null}
 
         {firstRun ? null : (
-          <MonthStanding
+          <MoneyOnHand
+            pulse={pulse}
             monthLabel={monthLabel}
             income={summary.income}
             expenses={summary.expenses}
@@ -331,9 +471,24 @@ export default async function DashboardPage({
             elapsed={elapsed}
             comparison={comparison}
             savingsRate={savingsRate}
-            asOf={isCurrentMonth && budgetView === "current" ? today : null}
+            unreadable={unreadable}
+            noBalanceReason={
+              isCurrentMonth ? (bankConnected ? null : "no-bank") : "past-month"
+            }
           />
         )}
+
+        {/* Only for the month in progress. A finished month's untracked
+            spending is a settled figure and belongs to its close, which the
+            recap below reports. */}
+        {!firstRun && isCurrentMonth ? (
+          <MonthScore
+            pulse={pulse}
+            streak={closes.summary.streak}
+            bestStreak={closes.summary.bestStreak}
+            baseline={closes.summary.baseline}
+          />
+        ) : null}
 
         {/* Only in the as-of-today view: the month-end view has already
             counted these into the headline, so listing them again would
@@ -347,8 +502,36 @@ export default async function DashboardPage({
           />
         ) : null}
 
+        <Suspense fallback={null}>
+          <RecentSlot userId={user.id} />
+        </Suspense>
+
+        {latestClose ? (
+          <MonthClosedRecap
+            row={latestClose}
+            streak={closes.summary.streak}
+            cap={closes.settings.unrecordedCap}
+          />
+        ) : null}
+
+        {/* After the figures, never before them. The read interprets what is
+            above it, and a paragraph above the numbers it discusses asks the
+            reader to take it on trust. */}
+        {firstRun ? null : (
+          <Suspense fallback={null}>
+            <ReadSlot
+              userId={user.id}
+              year={year}
+              month={month}
+              monthLabel={monthLabel}
+            />
+          </Suspense>
+        )}
+
         {summary.expenses > 0 ? (
-          <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+          <section
+            className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}
+          >
             <div className="flex items-baseline justify-between gap-3">
               <h2 className="text-sm font-medium">Where it went</h2>
               <Link
@@ -374,4 +557,27 @@ export default async function DashboardPage({
       </PageContainer>
     </>
   );
+}
+
+/**
+ * The balance this month's untracked spending is measured from.
+ *
+ * Only the close of the month immediately before counts. A user who has
+ * fallen behind has a newest close two or three months back, and measuring
+ * this month's recorded flows against that balance would compare a balance
+ * against transactions from a different window — producing a figure that
+ * looks authoritative and is nonsense. Null instead, which reads as "not
+ * known yet" everywhere downstream.
+ */
+function openingBalanceFor(
+  closes: MonthCloseOverview,
+  year: number,
+  month: number,
+): number | null {
+  const latest = closes.history[0];
+  if (!latest) {
+    return null;
+  }
+  const wanted = previousMonthKey(`${year}-${String(month).padStart(2, "0")}`);
+  return latest.monthKey === wanted ? latest.closingBalance : null;
 }

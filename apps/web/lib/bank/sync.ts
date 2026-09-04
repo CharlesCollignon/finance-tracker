@@ -14,13 +14,29 @@ import type {
   Database,
   TransactionWithCategory,
 } from "@finance/core/types/database";
+import type { PullKind } from "@finance/core/bank-pull";
 import { getBankConnection } from "@/lib/bank/client";
+import { pullFromBank } from "@/lib/bank/pull";
 
 type Client = SupabaseClient<Database>;
 
 export interface SyncOutcome {
   /** Accounts the provider answered for. */
   accounts: number;
+  /**
+   * What asking the bank itself came to, or null when it was not asked.
+   *
+   * Distinct from everything else here, which describes what was done with
+   * the statement once we had it. A sync with `pull: null` read the copy the
+   * provider already held — correct, and possibly hours old.
+   */
+  pull: {
+    pulled: boolean;
+    /** Rows the bank had that the provider did not, when it was asked. */
+    newTransactions: number | null;
+    /** Why it was not asked, when it was not. */
+    why: string | null;
+  } | null;
   /** Written straight into the ledger. */
   imported: number;
   /** Waiting in the inbox. */
@@ -73,17 +89,33 @@ export interface SyncOptions {
    * makes almost everything after the first session automatic.
    */
   backfill?: boolean;
+  /**
+   * Ask the bank for anything new before reading the statement, and say who
+   * is asking — the two have different allowances under PSD2, so the caller
+   * has to name itself rather than let this guess.
+   *
+   * Omitted means read the copy the provider already holds, which is what
+   * every caller did before pulling existed and is still the right thing for
+   * anything that only needs the statement re-planned.
+   */
+  pull?: PullKind;
 }
 
 export async function syncBankFeed(
   supabase: Client,
   userId: string,
-  { backfill = false }: SyncOptions = {},
+  { backfill = false, pull }: SyncOptions = {},
 ): Promise<SyncOutcome> {
   const connection = getBankConnection(userId);
   if (!connection) {
     throw new Error("No bank is connected to this account.");
   }
+
+  // Before the accounts are listed, so the balances and the statement below
+  // are read after whatever the bank had to add. A refusal is not an error:
+  // the stored statement is still readable, and the outcome says how it was
+  // obtained so a screen can be honest about it.
+  const pullOutcome = pull ? await pullFromBank(supabase, userId, pull) : null;
 
   const allAccounts = await connection.client.getAccounts();
 
@@ -153,6 +185,15 @@ export async function syncBankFeed(
   const outcome: SyncOutcome = {
     accounts: accounts.length,
     needReconnect,
+    pull: pullOutcome
+      ? {
+          pulled: pullOutcome.pulled,
+          newTransactions: pullOutcome.pulled
+            ? pullOutcome.newTransactions
+            : null,
+          why: pullOutcome.pulled ? null : pullOutcome.why,
+        }
+      : null,
     imported: 0,
     pending: 0,
     duplicates: 0,

@@ -7,6 +7,7 @@ import type { InvestmentPortfolioSummary } from "@finance/core/investment-positi
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { SpendStrip } from "@/components/finance/charts";
 import { cn } from "@/lib/utils";
+import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 import type { CategoryBreakdown } from "@finance/core/types/database";
 
@@ -56,7 +57,7 @@ export function MonthWallets({ portfolio }: MonthWalletsProps) {
   const showPl = portfolio.hasMarketSnapshot && pl !== 0;
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+    <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">Invested</h2>
         <Link

@@ -133,28 +133,26 @@ export function BankInbox({
             {items.length > 0 ? "Review" : "Recently added"}
           </Button>
         ) : null}
+        {/* "Fetch everything" reaches for the whole statement rather than the
+            recent window, which is a different job and worth its own button.
+            A plain "Sync" used to sit beside it and did exactly what the
+            Refresh in the header now does — the same attended pull, the same
+            filing, the same auto-close — so two controls sat here doing one
+            thing with two different wordings. The header one won: it is on
+            every surface, and it says how old the figures are. */}
         {showBackfill ? (
           <Button
             type="button"
             variant="outline"
             size="sm"
+            className="gap-2"
             disabled={pending}
             onClick={() => run(() => syncBankFeedAction(true))}
           >
-            Fetch everything
+            <ArrowsClockwise size={14} />
+            {pending ? "Fetching…" : "Fetch everything"}
           </Button>
         ) : null}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="gap-2"
-          disabled={pending}
-          onClick={() => run(() => syncBankFeedAction(false))}
-        >
-          <ArrowsClockwise size={14} />
-          {pending ? "Syncing…" : "Sync"}
-        </Button>
       </div>
     </div>
   );

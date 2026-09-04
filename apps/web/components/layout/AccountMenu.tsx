@@ -5,14 +5,11 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Gear, SignOut } from "@phosphor-icons/react";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { UserInitial } from "@/components/layout/UserInitial";
 import { signOut } from "@/lib/actions/finance";
 import { PROFILE_NAV_ITEM } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
-
-const GLASS_PANEL =
-  "border border-foreground/10 bg-background/70 backdrop-blur-xl";
+import { GLASS_PANEL } from "@/lib/glass";
 
 interface AccountMenuProps {
   variant: "bottom" | "side";
@@ -114,10 +111,6 @@ export function AccountMenu({
                 <p id={titleId} className="sr-only">
                   Account
                 </p>
-                <div className="flex items-center justify-between px-3 py-1.5">
-                  <span className="text-sm font-medium">Theme</span>
-                  <ThemeToggle />
-                </div>
                 <Link
                   href={PROFILE_NAV_ITEM.href}
                   className={rowClass}
