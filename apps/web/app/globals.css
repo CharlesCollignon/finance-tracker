@@ -2,6 +2,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* The hero orb's rotation.
+   A custom property is a string unless it is registered, and a string cannot
+   be interpolated: unregistered, the keyframe below jumps from 0deg to 360deg
+   at the halfway mark instead of sweeping. This has to sit at the top level of
+   a stylesheet, which is also why the orb's CSS lives here rather than in a
+   styled-jsx block inside the component — that would need a style registry
+   and would drag the hero across the client boundary for a decoration. */
+@property --angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 @font-face {
   font-family: "Orbit";
   src: url("/fonts/OrbitMaxenceDuterne-Regular.otf") format("opentype");
@@ -323,4 +336,493 @@ html[data-privacy="on"] .privacy-sensitive {
   .landing-logo {
     animation: none;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   The marketing surface
+   ---------------------------------------------------------------------------
+   The marketing pages are dark whatever the app's theme is. That is not a
+   preference: the logo is a lit gold sphere, and a lit object needs a dark
+   room — on the paper ground it reads as a bead on a table rather than a
+   thing giving off light. `.marketing-shell` therefore carries the `dark`
+   class beside it, so every token and every `dark:` variant inside resolves
+   to the dark palette without touching <html>, which the app's own theme
+   toggle owns and must keep owning.
+   --------------------------------------------------------------------------- */
+
+/* The shell paints its own ground, but overscroll rubber-banding reveals what
+   is behind it, so the root has to agree or the bounce flashes paper. */
+html:has(.marketing-shell) {
+  background-color: #06060a;
+}
+
+.marketing-shell {
+  /* A touch deeper than the app's --background, which the mocks keep using:
+     the device frames need to sit *on* something, not dissolve into it. */
+  --marketing-ground: #06060a;
+  --marketing-hairline: rgba(255, 255, 255, 0.09);
+  --marketing-hairline-strong: rgba(255, 255, 255, 0.16);
+  /* The orb's own specular highlight, hotter than --primary. Glows and rims
+     only; at 1.3:1 on the ground it can never carry text. */
+  --marketing-gold-hot: #f7e6bb;
+  background-color: var(--marketing-ground);
+}
+
+/* --- glass ---------------------------------------------------------------- */
+
+/* The floating cards: the heaviest of the three, for panels that lie directly
+   over the orb and have the most light to fight. A backdrop filter needs
+   something behind it to blur, which is why these still overlap the artwork
+   rather than trusting `.marketing-ambient` alone.
+   The inset top hairline is what sells it as a physical surface: real glass
+   catches the light on its upper edge. */
+.glass-panel {
+  border: 1px solid var(--marketing-hairline);
+  /* The white gradient is the glass; the dark layer under it is what keeps
+     white text readable when the panel drifts over the lit side of the orb,
+     where a purely additive fill would leave it at about 1.5:1. */
+  background:
+    linear-gradient(
+      157deg,
+      rgba(255, 255, 255, 0.085) 0%,
+      rgba(255, 255, 255, 0.02) 42%,
+      rgba(255, 255, 255, 0.05) 100%
+    ),
+    linear-gradient(157deg, rgba(8, 8, 13, 0.62) 0%, rgba(8, 8, 13, 0.78) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 24px 60px -20px rgba(0, 0, 0, 0.7);
+  /* -webkit- first, then the standard property: Lightning CSS keeps
+     the prefix set of the last of the pair it sees, so standard-last
+     is what makes it emit both. Reversed, Firefox gets no blur. */
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(150%);
+}
+
+/* The dropdowns. These lie over a 5rem headline, so they need to hide it, and
+   at 0.97 alpha with no blur it still read through — 3% of white is eight
+   levels above a near-black ground and the eye is at its most sensitive
+   exactly there. The answer is not more opacity but the blur: at 32px the
+   headline behind becomes a smooth field instead of legible edges, which is
+   what lets the panel sit at 0.72 and still hold white text above 6:1. */
+.glass-menu {
+  border: 1px solid var(--marketing-hairline);
+  background:
+    linear-gradient(
+      157deg,
+      rgba(255, 255, 255, 0.075) 0%,
+      rgba(255, 255, 255, 0.02) 45%,
+      rgba(255, 255, 255, 0.05) 100%
+    ),
+    rgba(11, 11, 17, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 30px 70px -20px rgba(0, 0, 0, 0.85);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  backdrop-filter: blur(32px) saturate(160%);
+}
+
+/* The same material, lighter and cheaper: one blur pass instead of two, and a
+   thinner dark layer, for panels that carry their own text rather than
+   floating over a lit sphere. It used to skip the blur entirely — nothing sat
+   behind these but flat ground, and the blur of a flat field is that field.
+   `.marketing-ambient` is what changed: with grain and a slow gold wash
+   running under the whole page there is now something to smear everywhere,
+   so these read as glass wherever they land. */
+.glass-flat {
+  border: 1px solid var(--marketing-hairline);
+  background:
+    linear-gradient(
+      157deg,
+      rgba(255, 255, 255, 0.07) 0%,
+      rgba(255, 255, 255, 0.018) 52%,
+      rgba(255, 255, 255, 0.045) 100%
+    ),
+    rgba(9, 9, 14, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+}
+
+/* A grid whose cells are the glass and whose gaps are the seams between them.
+   The wrapper holds the blur and the light edge; each cell tints the blurred
+   backdrop a shade deeper, which is what leaves the 1px `gap` reading as a
+   lit hairline rather than as a drawn border. Replaces the
+   `border + bg-white/5` wrapper with opaque cells that was here before: those
+   cells painted the ground back in and killed the blur under them. */
+.glass-grid {
+  border: 1px solid var(--marketing-hairline);
+  background: rgba(255, 255, 255, 0.075);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+}
+
+.glass-grid > * {
+  background:
+    linear-gradient(
+      157deg,
+      rgba(255, 255, 255, 0.045) 0%,
+      rgba(255, 255, 255, 0.008) 60%
+    ),
+    rgba(9, 9, 14, 0.5);
+}
+
+.glass-flat-hover {
+  transition:
+    border-color 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.glass-flat-hover:hover {
+  border-color: var(--marketing-hairline-strong);
+  background-color: rgba(255, 255, 255, 0.03);
+  transform: translateY(-2px);
+}
+
+/* --- the hero headline --------------------------------------------------- */
+
+/* Instrument Sans at 500 rather than the 600 of .font-head: at this size the
+   heavier cut turns from confident into loud. */
+.marketing-display {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 500;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  /* Bright at the cap line, cooling toward the baseline, which is how type
+     behaves under a light source and reads as depth rather than as a
+     gradient. Falls back to flat near-white where clipping is unsupported. */
+  color: #f6f3ed;
+}
+
+@supports (background-clip: text) {
+  .marketing-display {
+    background: linear-gradient(177deg, #fffdf7 0%, #ffffff 30%, #bdb5a7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+/* --- the orb and its light ----------------------------------------------- */
+
+/* The warm bloom the sphere throws. Sized by its box, so callers scale the
+   light by scaling the element rather than by editing stops. */
+.marketing-bloom {
+  background: radial-gradient(
+    closest-side,
+    rgba(224, 190, 122, 0.32) 0%,
+    rgba(224, 190, 122, 0.13) 42%,
+    rgba(224, 190, 122, 0.04) 64%,
+    transparent 78%
+  );
+}
+
+@keyframes marketing-orb-float {
+  0%,
+  100% {
+    transform: translateY(-10px) scale(1);
+  }
+  50% {
+    transform: translateY(10px) scale(1.012);
+  }
+}
+
+.marketing-orb {
+  animation: marketing-orb-float 16s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* --- the sphere ---------------------------------------------------------- */
+
+/* The orb is drawn, not photographed.
+   `logo-mark.png` was the hero until now: a still render of the mark. A still
+   cannot move light around inside itself, so the sphere only ever floated —
+   the surface never lived. This is the same object in CSS: a lit gold body
+   here, and above it a layer that walks light across it.
+
+   Sizing is the caller's business — the hero's orb is `min(58vw,352px)` and
+   so has no fixed pixel size to compute a blur radius from. `container-type`
+   makes the orb its own query container, which lets the blur be a `cqw`: a
+   percentage of whatever width it ends up at, correct at every size, with no
+   JS measuring anything. */
+.siri-orb {
+  container-type: inline-size;
+  display: grid;
+  grid-template-areas: "stack";
+  overflow: hidden;
+  border-radius: 50%;
+  position: relative;
+  /* Overridable per instance. c1 is the light the surface catches, c2 the
+     body gold, c3 the gold it falls to in shadow — all three inside the
+     mark's own family, which is what keeps the moving light reading as gold
+     rather than as a second colour crossing the sphere. */
+  --orb-c1: #fdf0cb;
+  --orb-c2: #e9cd8b;
+  --orb-c3: #5c4415;
+  --orb-duration: 22s;
+  --orb-blur: 7.5cqw;
+  /* The satin body, lit from the upper right exactly where the render's
+     highlight sits, deepening through gold to a dark rim. On its own this is
+     already the sphere the mark has always been; everything above it only
+     moves light around on the surface. */
+  background: radial-gradient(
+    circle at 62% 27%,
+    #f4dfa4 0%,
+    #ebcb80 22%,
+    #ddb865 46%,
+    #bf9546 72%,
+    #96702c 92%,
+    #79591f 100%
+  );
+}
+
+/* The living surface: five conic gradients pinned at different points inside
+   the disc, each turning at its own multiple of `--angle` and two of them
+   backwards, blurred into each other until the seams are gone. Nothing is
+   random, but because the multipliers do not divide into one another the
+   pattern takes minutes to come back round, so the eye never finds the loop.
+
+   The blend mode is what makes this light rather than paint. Composited
+   normally the gradients are amber blobs lying on top of the sphere, and the
+   whole thing reads as a fried egg. Through `overlay` they can only modulate
+   what is already there: anything above mid lightness brightens the gold
+   under it, anything below darkens it. Which is also why c3 is a dark gold —
+   it is the only one of the three that can cast a shadow — and why c1 stops
+   short of white: `overlay` lightens hard, and from a white c1 the hot patch
+   left the gold family altogether for a third of the cycle. */
+.siri-orb::before {
+  content: "";
+  display: block;
+  grid-area: stack;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      from calc(var(--angle) * 1.2) at 30% 65%,
+      var(--orb-c3) 0deg,
+      transparent 45deg 315deg,
+      var(--orb-c3) 360deg
+    ),
+    conic-gradient(
+      from calc(var(--angle) * 0.8) at 70% 35%,
+      var(--orb-c2) 0deg,
+      transparent 60deg 300deg,
+      var(--orb-c2) 360deg
+    ),
+    conic-gradient(
+      from calc(var(--angle) * -1.5) at 65% 75%,
+      var(--orb-c1) 0deg,
+      transparent 90deg 270deg,
+      var(--orb-c1) 360deg
+    ),
+    conic-gradient(
+      from calc(var(--angle) * 2.1) at 25% 25%,
+      var(--orb-c2) 0deg,
+      transparent 30deg 330deg,
+      var(--orb-c2) 360deg
+    ),
+    conic-gradient(
+      from calc(var(--angle) * -0.7) at 80% 80%,
+      var(--orb-c1) 0deg,
+      transparent 45deg 315deg,
+      var(--orb-c1) 360deg
+    ),
+    radial-gradient(
+      ellipse 120% 80% at 40% 60%,
+      var(--orb-c3) 0%,
+      transparent 50%
+    );
+  filter: blur(var(--orb-blur)) contrast(1.18) saturate(1.05);
+  /* Scaled past its box because the blur feathers inward from the edge: at
+     100% the outer 8% of the disc is washed out and the sphere ends in a grey
+     ring instead of on a lit rim. */
+  transform: scale(1.14);
+  mix-blend-mode: overlay;
+  animation: orb-turn var(--orb-duration) linear infinite;
+}
+
+/* The optics, which do not move: the specular where the render's is, the
+   terminator where the surface turns away from its light, and — the detail
+   that sells a sphere over a lit disc — a rim of bounce along the bottom,
+   light the ground throws back up at it. */
+.siri-orb::after {
+  content: "";
+  display: block;
+  grid-area: stack;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 63% 24%,
+      rgba(255, 252, 242, 0.42) 0%,
+      rgba(255, 248, 228, 0.1) 18%,
+      transparent 36%
+    ),
+    radial-gradient(
+      circle at 58% 33%,
+      transparent 38%,
+      rgba(72, 49, 13, 0.26) 72%,
+      rgba(22, 14, 4, 0.58) 100%
+    );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 244, 214, 0.2),
+    inset 0 -7cqw 11cqw -5cqw rgba(255, 237, 194, 0.22);
+}
+
+@keyframes orb-turn {
+  from {
+    --angle: 0deg;
+  }
+  to {
+    --angle: 360deg;
+  }
+}
+
+/* The bloom breathes on a different period from the sphere, so the two never
+   settle into a single pulse the eye can lock onto. */
+@keyframes marketing-bloom-breathe {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+.marketing-bloom-breathe {
+  animation: marketing-bloom-breathe 11s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-orb,
+  .marketing-bloom-breathe,
+  .siri-orb::before {
+    animation: none;
+  }
+}
+
+/* --- ground texture ------------------------------------------------------ */
+
+/* A handful of hand-placed sparks. Cheaper than a canvas field and, at this
+   density, closer to what a long exposure actually looks like. */
+.marketing-sparks {
+  background-image:
+    radial-gradient(
+      1.5px 1.5px at 12% 18%,
+      rgba(255, 255, 255, 0.5),
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 27% 42%,
+      rgba(255, 255, 255, 0.32),
+      transparent 100%
+    ),
+    radial-gradient(
+      1.5px 1.5px at 42% 12%,
+      rgba(255, 246, 224, 0.42),
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 58% 33%,
+      rgba(255, 255, 255, 0.28),
+      transparent 100%
+    ),
+    radial-gradient(
+      1.5px 1.5px at 71% 8%,
+      rgba(255, 255, 255, 0.45),
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 84% 26%,
+      rgba(255, 246, 224, 0.3),
+      transparent 100%
+    ),
+    radial-gradient(
+      1.5px 1.5px at 93% 48%,
+      rgba(255, 255, 255, 0.36),
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 8% 62%,
+      rgba(255, 255, 255, 0.24),
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 34% 71%,
+      rgba(255, 246, 224, 0.26),
+      transparent 100%
+    ),
+    radial-gradient(
+      1.5px 1.5px at 66% 58%,
+      rgba(255, 255, 255, 0.3),
+      transparent 100%
+    );
+}
+
+/* Film grain. The single cheapest thing that stops a large flat dark field
+   from banding, and the reason the ground reads as a photograph. */
+.marketing-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+}
+
+/* Something for the glass to blur.
+   `backdrop-filter` over a flat field is a no-op — the blur of one colour is
+   that colour — and below the hero every panel sat on exactly that, which is
+   why the flat variants used to skip the filter. This is a fixed, page-wide
+   bed of light: two slow golds thrown from opposite corners and a cool one
+   rising from the bottom, faint enough that no section reads as tinted but
+   textured enough that a 16px blur has something to move. It is fixed rather
+   than scrolled so the light stays where it is while the page passes through
+   it, which is how a room behaves.
+
+   Position is `fixed`, so it also covers the overscroll gap the ground colour
+   used to have to fill on its own. */
+.marketing-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(
+      58% 42% at 10% 16%,
+      rgba(224, 190, 122, 0.055),
+      transparent 72%
+    ),
+    radial-gradient(
+      54% 46% at 90% 64%,
+      rgba(224, 190, 122, 0.045),
+      transparent 74%
+    ),
+    radial-gradient(
+      72% 48% at 50% 104%,
+      rgba(140, 150, 190, 0.05),
+      transparent 70%
+    );
+}
+
+/* A hairline that fades out at both ends, for section seams that should not
+   read as a boxed border. */
+.marketing-rule {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--marketing-hairline-strong) 22%,
+    var(--marketing-hairline-strong) 78%,
+    transparent
+  );
+}
+
+/* An in-page anchor lands under the fixed nav pill without this. */
+.marketing-shell [id] {
+  scroll-margin-top: 6.5rem;
 }

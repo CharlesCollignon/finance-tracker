@@ -82,10 +82,30 @@ export const landingSample = {
   ],
   today: 19,
   templates: [
-    { name: "Salary", frequency: "Monthly", amount: 3200, type: "income" as CategoryType },
-    { name: "Rent", frequency: "Monthly", amount: -850, type: "expense" as CategoryType },
-    { name: "PEA DCA", frequency: "Weekly", amount: -50, type: "investment" as CategoryType },
-    { name: "Netflix", frequency: "Monthly", amount: -15, type: "expense" as CategoryType },
+    {
+      name: "Salary",
+      frequency: "Monthly",
+      amount: 3200,
+      type: "income" as CategoryType,
+    },
+    {
+      name: "Rent",
+      frequency: "Monthly",
+      amount: -850,
+      type: "expense" as CategoryType,
+    },
+    {
+      name: "PEA DCA",
+      frequency: "Weekly",
+      amount: -50,
+      type: "investment" as CategoryType,
+    },
+    {
+      name: "Netflix",
+      frequency: "Monthly",
+      amount: -15,
+      type: "expense" as CategoryType,
+    },
   ],
   wallets: [
     { label: "PEA", value: 6800, colorVar: "--chart-1" },
@@ -95,4 +115,29 @@ export const landingSample = {
   portfolio: 12480,
   portfolioInvested: 11000,
   portfolioGain: 1480,
+  /**
+   * The close of the month before this one — February, read on the reading
+   * day in March. Deliberately a reconciled close rather than a baseline:
+   * a baseline has nothing to show, and the whole point of the section it
+   * feeds is the figure a baseline cannot produce yet.
+   */
+  close: {
+    monthLabel: "February 2026",
+    readingDay: "the 8th",
+    openingBalance: 4180,
+    closingBalance: 4906,
+    unrecorded: 218,
+    unrecordedCap: 260,
+    kept: 1142,
+    keptRate: 35.7,
+    streak: 4,
+  },
+  /** Where the month's spending went, largest first. Sums to `spent`. */
+  spendByCategory: [
+    { label: "Housing", amount: 850, colorVar: "--chart-1" },
+    { label: "Investments", amount: 400, colorVar: "--chart-4" },
+    { label: "Savings", amount: 300, colorVar: "--chart-3" },
+    { label: "Groceries", amount: 218, colorVar: "--chart-2" },
+    { label: "Everything else", amount: 185, colorVar: "--chart-5" },
+  ],
 } as const;
