@@ -8,9 +8,10 @@
  *   checkable; "effortless clarity" is not, and a reader who has been sold to
  *   before can tell the difference in about a second.
  *
- *   Never promise what the app does not do. There is no bank connection, no
- *   automation that fires on its own, and no advice. Writing around those
- *   would win a signup and lose the first session.
+ *   Never promise what the app does not do. A bank can now be connected, and
+ *   that changes what is safe to claim: the access is read-only, a row is only
+ *   ever filed by a rule the user wrote, and there is still no advice. Writing
+ *   around any of that would win a signup and lose the first session.
  */
 
 export const landingCopy = {
@@ -36,12 +37,12 @@ export const landingCopy = {
     heading: "Three things it will not do",
     items: [
       {
-        title: "Connect to your bank",
-        body: "No credentials, no read-only tokens, no aggregator in the middle. You record what moved, which is the only version you can vouch for.",
+        title: "Move your money",
+        body: "The bank connection reads and nothing else. It can see what left the account; it cannot start a payment, and there is no version of it that could.",
       },
       {
-        title: "Act without you",
-        body: "Recurring items are templates, not automations. Nothing posts to a month until you apply it, and an applied row is still yours to edit.",
+        title: "Act on a rule you did not write",
+        body: "A statement row files itself only where you have already put that shop somewhere twice. Everything else waits in a list, and a recurring item is a template until you apply it.",
       },
       {
         title: "Tell you what to do",
@@ -52,19 +53,19 @@ export const landingCopy = {
 
   devices: {
     heading: "The same month, whichever screen is closest",
-    body: "One account, one ledger, three clients that agree. Add a row on the phone on the way home and it is on the dashboard before you sit down.",
+    body: "One account, one ledger, three clients that agree. Add a row on the phone on the way home and it is on Month before you sit down.",
   },
 
   features: {
-    heading: "Seven screens over one ledger",
-    body: "Nothing here keeps a second set of numbers. Every screen is a different reading of the rows you entered.",
+    heading: "Every screen is the same ledger",
+    body: "Nothing here keeps a second set of numbers. Your entries and your statement land in one place, and every screen is a different reading of it.",
   },
 
   monthClose: {
-    heading: "The one number the app cannot work out for itself",
+    heading: "The number that checks all the others",
     body: [
-      "Every total on every other screen is a sum of movements you recorded. That is honest, and it is incomplete: the restaurant, the round of drinks, the thing bought on the way home never became a row, and no amount of arithmetic over the ledger can find them.",
-      "One balance a month can. If the account held one figure at the last close and holds another now, and the rows only explain part of the difference, the remainder is spending the app never heard about. It costs you one number, once a month, on the same day each month.",
+      "Every total on every other screen is a sum of movements — some you typed, some the statement brought. That is honest, and it is incomplete: cash out of a machine, a card the feed does not cover, a month the sync missed. No amount of arithmetic over the rows can find what is not in them.",
+      "The balance can. If the account held one figure at the end of last month and another at the end of this one, and the rows only explain part of the gap, the remainder is spending nothing accounted for. With a bank connected the app reads both figures off the statement itself, so the check costs you nothing; without one, it costs a single number a month.",
     ],
     /** The three outcomes a close produces, in the order the sheet shows them. */
     outcomes: [
@@ -98,7 +99,7 @@ export const landingCopy = {
       },
       {
         title: "Add the rest as you go",
-        body: "Everything else you type in. What is left, the day-by-day calendar and the rings on the dashboard all read from that one ledger.",
+        body: "Everything else you type in. What is left, the day-by-day calendar and the rings on Month all read from that one ledger.",
       },
       {
         title: "Close it against the bank",
@@ -108,11 +109,12 @@ export const landingCopy = {
   },
 
   privacy: {
-    heading: "Nothing is connected, so there is nothing to revoke",
-    body: "Your figures live in rows behind your login, and every query is scoped to your account — no other account can read them, because there is no query that would. There is no aggregator holding credentials on your behalf and nothing to sell, because there is nobody to sell it to.",
+    heading: "Read-only, server-side, and yours to cut off",
+    body: "Your figures live in rows behind your login, and every query is scoped to your account — no other account can read them, because there is no query that would. Connecting a bank is optional; where you do, the access is the kind that can only read, the credentials never reach a browser, and there is nothing to sell because there is nobody to sell it to.",
     points: [
-      "Wipe every row and keep the account.",
-      "Delete the account and take the rows with it.",
+      "Read-only access, so it can see what moved and never move it.",
+      "Revoke the bank at any time; the rows it already filed stay yours.",
+      "Wipe every row and keep the account, or delete both.",
       "Blur every figure on screen with one tap, for the train.",
     ],
   },
@@ -125,14 +127,14 @@ export const landingCopy = {
   pages: [
     {
       id: "home",
-      title: "Dashboard",
+      title: "Month",
       body: "What is left this month, where the income went, and whether the budget and the goal still hold.",
       utility:
         "One screen for the month: what is left, where income went, and whether the cap and the savings target still hold. It answers the question you opened the app to ask before you have finished asking it.",
       steps: [
         {
           title: "Open the month",
-          body: "Home is the current month. Income, spending and every recurring item you applied land here, under whichever budget view you prefer — counted up to today, or counted for everything the month will contain.",
+          body: "Month is the month you are in. Income, spending and every charge that has landed appear here, under whichever budget view you prefer — counted up to today, or counted for everything the month will contain.",
         },
         {
           title: "Read what is left",
@@ -140,13 +142,13 @@ export const landingCopy = {
         },
         {
           title: "Check the rings",
-          body: "The budget ring and the goal ring follow the caps and targets you set in Planning. Nothing here is a projection: both read from rows that exist.",
+          body: "The cap ring and the goal ring follow what you set under Plan. Nothing here is a projection: both read from rows that exist.",
         },
       ],
     },
     {
       id: "transactions",
-      title: "Transactions",
+      title: "Ledger",
       body: "A manual ledger you own. Apply what recurs, then change anything.",
       utility:
         "The ledger is the source of truth for every other screen. Nothing is imported, so nothing arrives miscategorised, duplicated, or three days late — you type the rows, and what is left follows them.",
@@ -161,13 +163,13 @@ export const landingCopy = {
         },
         {
           title: "Everything else follows",
-          body: "What is left, the dashboard split, the calendar and the close all read from here. There is no second place a number can disagree with itself.",
+          body: "What is left, the spending split, the calendar and the close all read from here. There is no second place a number can disagree with itself.",
         },
       ],
     },
     {
       id: "recurring",
-      title: "Recurring",
+      title: "Charges",
       body: "Salary, rent, subscriptions, a monthly buy. Applied when you say so.",
       utility:
         "Templates for what repeats, monthly, weekly or yearly, optionally bounded by a start and an end. They do not run on their own — which is the point, because a standing instruction that fires unattended is how a ledger drifts away from the truth.",
@@ -230,10 +232,10 @@ export const landingCopy = {
     },
     {
       id: "planning",
-      title: "Planning",
+      title: "Plan",
       body: "A cap per category, a savings target per month.",
       utility:
-        "Caps and targets, and nothing that enforces them. A budget is a cap on what one category may spend in a month; a savings goal is an amount you intend to accumulate. Both turn into rings on the dashboard and neither moves money.",
+        "Caps and targets, and nothing that enforces them. A budget is a cap on what one category may spend in a month; a savings goal is an amount you intend to accumulate. Both turn into rings on Month and neither moves money.",
       steps: [
         {
           title: "Set a cap",
@@ -244,8 +246,8 @@ export const landingCopy = {
           body: "An amount to accumulate, tracked against your savings rows, with the monthly pace it would take to arrive by the date you named.",
         },
         {
-          title: "Watch it on Home",
-          body: "The dashboard reads these figures directly. Change a cap or a target and the rings move with it.",
+          title: "Watch it on Month",
+          body: "Month reads these figures directly. Change a cap or a target and the rings move with it.",
         },
       ],
     },
@@ -276,7 +278,7 @@ export const landingCopy = {
     getStarted: "Get started",
     signIn: "Sign in",
     openApp: "Open app",
-    goToDashboard: "Go to dashboard",
+    goToDashboard: "Open the month",
   },
   exampleLabel: "Example data",
 } as const;

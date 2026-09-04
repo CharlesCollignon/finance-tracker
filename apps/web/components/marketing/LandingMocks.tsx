@@ -225,16 +225,18 @@ function MockCard({
 /* ------------------------------------------------------------------ chrome */
 
 /** Which nav entry the screen belongs under, so the mock's chrome agrees with
- * the screen it is showing. Month close has no nav entry of its own: it is met
- * on the dashboard, which is where the mock puts it. */
+ * the screen it is showing. These have to be the labels APP_NAV_ITEMS uses,
+ * because the side nav below renders those and highlights by matching on the
+ * string. Calendar has no slot of its own — it is the Ledger seen by date —
+ * and the month close is met on Month. */
 const ACTIVE_NAV: Record<LandingPageId, string> = {
-  home: "Home",
-  transactions: "Transaction",
-  recurring: "Recurring",
-  calendar: "Calendar",
+  home: "Month",
+  transactions: "Ledger",
+  recurring: "Charges",
+  calendar: "Ledger",
   wallets: "Wallets",
-  planning: "Planning",
-  "month-close": "Home",
+  planning: "Plan",
+  "month-close": "Month",
 };
 
 /** The real side nav's structure — logo band, primary action, then the same
@@ -457,7 +459,7 @@ export function HomeMock({ variant = "web" }: { variant?: Variant }) {
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Home" active="Home">
+      <MobileShell title="Month" active="Month">
         <MockCard innerClassName="p-4">
           <MobileHero
             label={`Left in ${shortMonth}`}
@@ -506,7 +508,7 @@ export function HomeMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell title="Home" active="Home" monthLabel={monthLabel}>
+    <WebShell title="Month" active="Month" monthLabel={monthLabel}>
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-8">
           <MockCard innerClassName="flex h-full flex-col items-center justify-center px-8 py-7">
@@ -653,7 +655,7 @@ export function TransactionsMock({ variant = "web" }: { variant?: Variant }) {
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Transactions" active="Transaction">
+      <MobileShell title="Ledger" active="Ledger">
         <MockCard innerClassName="p-4">
           <MobileHero
             label="What's left"
@@ -686,7 +688,7 @@ export function TransactionsMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell title="Transactions" active="Transaction" monthLabel={monthLabel}>
+    <WebShell title="Ledger" active="Ledger" monthLabel={monthLabel}>
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-4">
           <MockCard innerClassName="flex h-full flex-col items-center justify-center px-6 py-6">
@@ -750,7 +752,7 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Recurring" active="Recurring">
+      <MobileShell title="Charges" active="Charges">
         <MockCard innerClassName="flex flex-row items-center justify-between p-4">
           <p className="text-sm font-bold">Expected impact</p>
           <p className="font-mono text-lg font-bold tabular-nums">
@@ -787,7 +789,7 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell title="Recurring" active="Recurring" monthLabel={monthLabel}>
+    <WebShell title="Charges" active="Charges" monthLabel={monthLabel}>
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-4">
           <MockCard innerClassName="flex h-full flex-col items-center justify-center px-6 py-6">
@@ -898,7 +900,7 @@ export function CalendarMock({ variant = "web" }: { variant?: Variant }) {
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Calendar" active="Calendar">
+      <MobileShell title="Ledger" active="Ledger">
         <div className="flex gap-2">
           <MockCard innerClassName="flex flex-col items-center p-2">
             <p className="text-[11px] text-muted-foreground">In</p>
@@ -969,8 +971,8 @@ export function CalendarMock({ variant = "web" }: { variant?: Variant }) {
 
   return (
     <WebShell
-      title="Calendar"
-      active="Calendar"
+      title="Ledger"
+      active="Ledger"
       monthLabel={landingSample.monthLabel}
     >
       <div className="flex gap-4">
@@ -1203,7 +1205,7 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Planning" active="Planning">
+      <MobileShell title="Plan" active="Plan">
         <MockCard innerClassName="p-4">
           <p className="text-sm font-bold">Monthly budgets</p>
           <div className="mt-3">
@@ -1233,7 +1235,7 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell title="Planning" active="Planning">
+    <WebShell title="Plan" active="Plan">
       <div className="grid grid-cols-2 gap-4">
         <MockCard innerClassName="flex h-full flex-col px-6 py-5">
           <p className="font-head text-base">Monthly budgets</p>
@@ -1312,7 +1314,7 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Home" active="Home">
+      <MobileShell title="Month" active="Month">
         <MockCard innerClassName="p-4">
           <MobileHero
             label={`Unrecorded in ${close.monthLabel.split(" ")[0]}`}
@@ -1356,7 +1358,11 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell title="Home" active="Home" monthLabel={landingSample.monthLabel}>
+    <WebShell
+      title="Month"
+      active="Month"
+      monthLabel={landingSample.monthLabel}
+    >
       <MockCard innerClassName="flex items-center justify-between gap-6 px-6 py-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
