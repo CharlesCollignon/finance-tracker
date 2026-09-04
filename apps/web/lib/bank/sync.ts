@@ -218,6 +218,14 @@ export async function syncBankFeed(
       ownIbans,
     });
 
+    // A row the database already holds is skipped by the planner, which is
+    // right for the ledger and wrong for the balance: the running figure is a
+    // fact about the account that arrived with this fetch, and the rows that
+    // carry it are overwhelmingly ones seen on an earlier sync. Without this,
+    // adding the column would have left it null on every row already stored
+    // and no amount of syncing would ever fill it.
+    await refreshBalances(supabase, userId, items, seenProviderIds, positions);
+
     outcome.duplicates += plan.duplicates;
     outcome.discarded += plan.discarded;
 
@@ -286,6 +294,63 @@ async function rememberAccount(
     },
     { onConflict: "user_id,provider_account_id" },
   );
+}
+
+/**
+ * How many balance updates to have in flight at once. Small on purpose: this
+ * runs inside a sixty-second cron alongside a bank fetch, and firing a couple
+ * of hundred concurrent requests at PostgREST to save a second is a poor
+ * trade against the run finishing at all.
+ */
+const BALANCE_CHUNK = 25;
+
+/**
+ * Fill in the running balance on rows the ledger already has.
+ *
+ * Only the two balance columns are the point, but PostgREST needs a payload
+ * that would be valid as an insert, so the row's own unchanging facts go with
+ * it. Deliberately absent: `status`, `transaction_id` and `decided_by`. Those
+ * carry decisions the user or an earlier sync made, and resending them would
+ * push an imported row back to pending.
+ */
+async function refreshBalances(
+  supabase: Client,
+  userId: string,
+  items: BankTransaction[],
+  seenProviderIds: ReadonlySet<string>,
+  positions: Map<string, number>,
+): Promise<void> {
+  const rows = items
+    .filter((tx) => seenProviderIds.has(tx.id))
+    .map((tx) => {
+      const balance = tx.balanceAfterTransaction?.trim() || null;
+      const index = positions.get(tx.id);
+      if (balance === null || index === undefined) {
+        return null;
+      }
+      return {
+        provider_id: tx.id,
+        balance_after: balance,
+        intraday_index: index,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null);
+
+  for (let start = 0; start < rows.length; start += BALANCE_CHUNK) {
+    const chunk = rows.slice(start, start + BALANCE_CHUNK);
+    await Promise.all(
+      chunk.map((row) =>
+        supabase
+          .from("bank_feed_items")
+          .update({
+            balance_after: row.balance_after,
+            intraday_index: row.intraday_index,
+          })
+          .eq("user_id", userId)
+          .eq("provider_id", row.provider_id),
+      ),
+    );
+  }
 }
 
 async function writePlan(

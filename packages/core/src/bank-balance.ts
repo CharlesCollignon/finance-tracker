@@ -42,7 +42,19 @@ export interface BalanceReading {
 /** Why a balance could not be read, in words a screen can use. */
 export type BalanceMiss =
   | "no-rows-before"
-  | "no-running-balance";
+  | "no-running-balance"
+  /**
+   * The day's last movement is not in the set, so the newest balance held for
+   * it is the one from before that movement.
+   *
+   * Happens because not every row the bank reports is kept: a transfer
+   * between two of the user's own accounts is dropped before it reaches the
+   * ledger, and it still moved the balance. Positions are numbered over the
+   * bank's whole batch precisely so this is detectable — index 0 is the day's
+   * last movement, and if the row chosen is not index 0 then something after
+   * it was dropped.
+   */
+  | "day-incomplete";
 
 export type BalanceLookup =
   | { ok: true; reading: BalanceReading }
@@ -84,6 +96,13 @@ export function balanceAsOf(rows: BalanceRow[], date: string): BalanceLookup {
 
   if (latest.balanceAfter === null) {
     return { ok: false, reason: "no-running-balance" };
+  }
+
+  // Refusing beats answering with the balance from earlier in the day. A
+  // month that waits is visible and fixable; a month closed against a figure
+  // that is short by one transfer looks exactly like unrecorded spending.
+  if (latest.intradayIndex !== 0) {
+    return { ok: false, reason: "day-incomplete" };
   }
 
   return {

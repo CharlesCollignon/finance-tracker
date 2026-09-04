@@ -162,3 +162,33 @@ describe("intradayIndexes", () => {
     expect(map.get("y")).toBe(0);
   });
 });
+
+describe("balanceAsOf, when a day's last movement was dropped", () => {
+  /**
+   * Positions are numbered over the bank's whole batch, so index 0 is always
+   * the day's last movement. Its absence means a row was filtered out after
+   * numbering — an own-account transfer, say — and the newest balance held
+   * for that day is the one from before it.
+   */
+  it("refuses rather than answering with a mid-day balance", () => {
+    const rows: BalanceRow[] = [
+      { occurredOn: "2026-08-31", balanceAfter: -300, intradayIndex: 1 },
+      { occurredOn: "2026-08-31", balanceAfter: -250, intradayIndex: 2 },
+    ];
+
+    expect(balanceAsOf(rows, "2026-08-31")).toEqual({
+      ok: false,
+      reason: "day-incomplete",
+    });
+  });
+
+  it("is content when an earlier complete day answers", () => {
+    const rows: BalanceRow[] = [
+      { occurredOn: "2026-08-28", balanceAfter: 1200, intradayIndex: 0 },
+    ];
+
+    const result = balanceAsOf(rows, "2026-08-31");
+
+    expect(result.ok).toBe(true);
+  });
+});
