@@ -144,3 +144,89 @@ describe("buildCategoryHistory", () => {
     ]);
   });
 });
+
+describe("buildCategoryHistory, when payments straddle a month boundary", () => {
+  function salary(id: string, occurredOn: string): TransactionWithCategory {
+    return {
+      id,
+      user_id: "u",
+      category_id: "pay",
+      recurring_template_id: null,
+      occurred_on: occurredOn,
+      amount: 4500,
+      note: null,
+      created_at: "2026-01-01T00:00:00Z",
+      categories: {
+        name: "Salary",
+        type: "income",
+        icon: null,
+        counts_toward_summary: true,
+      },
+    };
+  }
+
+  /**
+   * A perfectly regular income clearing on the 30th or the 1st reads, on a
+   * calendar, as two payments one month and none the next. That makes the
+   * chart look wild and pushes "a normal month" up by however often it
+   * doubled.
+   */
+  it("counts one payment per period instead of two-then-none", () => {
+    const dates = [
+      "2025-10-31",
+      "2025-12-01",
+      "2025-12-31",
+      "2026-02-01",
+      "2026-02-28",
+      "2026-03-31",
+      "2026-05-01",
+      "2026-05-31",
+      "2026-06-30",
+      "2026-07-31",
+      "2026-08-31",
+      "2026-10-01",
+    ];
+    const [history] = buildCategoryHistory(
+      dates.map((date, index) => salary(`t${index}`, date)),
+      2026,
+      9,
+      { months: 12 },
+    );
+
+    expect(history!.periodShifted).toBe(true);
+    const active = history!.points.filter((point) => !point.empty);
+    // Every month in the window holds exactly one salary.
+    expect(active).toHaveLength(12);
+    expect(new Set(active.map((point) => point.total))).toEqual(
+      new Set([4500]),
+    );
+  });
+
+  it("leaves ordinary spending on the calendar", () => {
+    const dates = [
+      "2026-08-02",
+      "2026-08-11",
+      "2026-08-19",
+      "2026-09-04",
+      "2026-09-17",
+      "2026-09-28",
+    ];
+    const [history] = buildCategoryHistory(
+      dates.map((date, index) => ({
+        ...salary(`g${index}`, date),
+        category_id: "food",
+        categories: {
+          name: "Groceries",
+          type: "expense" as const,
+          icon: null,
+          counts_toward_summary: true,
+        },
+      })),
+      2026,
+      9,
+      { months: 12 },
+    );
+
+    expect(history!.periodShifted).toBe(false);
+  });
+});
