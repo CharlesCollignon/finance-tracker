@@ -148,7 +148,6 @@ export function BudgetsView({
       <PageHeader title="Plan" />
 
       <PageContainer className="flex flex-col gap-4">
-
         <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 md:p-5">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-sm font-medium">Spending caps</h2>
@@ -499,7 +498,8 @@ export function BudgetsView({
           </form>
         </section>
 
-        {footer}
+        {/* Wrapped rather than dropped in bare: see PageContainer. */}
+        {footer ? <div className="contents">{footer}</div> : null}
       </PageContainer>
     </>
   );
