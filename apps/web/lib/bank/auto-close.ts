@@ -3,11 +3,10 @@ import {
   closableMonth,
   monthColumnValue,
   monthKeyOfClose,
-  observationDateFor,
   previousMonthKey,
   type MonthCloseResult,
 } from "@finance/core/month-close";
-import { todayIsoLocal } from "@finance/core/constants";
+import { lastDayIsoOfMonth, todayIsoLocal } from "@finance/core/constants";
 import type { Database } from "@finance/core/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRecordedCashFlows } from "@/lib/queries/month-close";
@@ -97,7 +96,24 @@ export async function autoCloseMonths(
       return outcome;
     }
 
-    const closing = await readCashBalance(userId, next.observeOn, supabase);
+    // The last day of the month, not the day the month is looked at.
+    //
+    // A manual close reads the balance a few days into the following month,
+    // because a person cannot look up what their account held on a date that
+    // has passed and because a deferred-debit card lands late. Neither
+    // applies to a statement: it holds every past day, and the transactions
+    // this balance is checked against are the ones dated inside the month.
+    // Reading on the fifth would compare a sixth-to-fifth balance movement
+    // against a first-to-thirty-first set of transactions, and the gap
+    // between those two windows — the first few days of each month, one of
+    // which usually holds a salary — would be reported as unrecorded
+    // spending.
+    //
+    // Waiting until the fifth to *do* the close is still right, and is what
+    // `closableMonth` above decides. That is about the statement being
+    // settled, not about which day the figure comes from.
+    const closesOn = lastDayIsoOfMonth(next.year, next.month);
+    const closing = await readCashBalance(userId, closesOn, supabase);
     if (!closing || !closing.ok) {
       outcome.blocked = {
         kind: "unreadable",
@@ -127,7 +143,7 @@ export async function autoCloseMonths(
       const [priorYear, priorMonth] = monthKeyParts(priorKey);
       const opening = await readCashBalance(
         userId,
-        observationDateFor(priorYear, priorMonth, closeDay),
+        lastDayIsoOfMonth(priorYear, priorMonth),
         supabase,
       );
       openingBalance = opening?.ok ? opening.total : null;
@@ -150,7 +166,7 @@ export async function autoCloseMonths(
         user_id: userId,
         month: monthColumnValue(next.year, next.month),
         closing_balance: closing.total,
-        observed_on: next.observeOn,
+        observed_on: closesOn,
         balance_source: "bank",
       },
       { onConflict: "user_id,month" },
