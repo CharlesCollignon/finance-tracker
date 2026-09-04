@@ -12,6 +12,7 @@
  */
 
 import { formatMonthLabel, shiftMonth } from "./constants";
+import { groupByPayPeriod } from "./pay-period";
 import type { CategoryType, TransactionWithCategory } from "./types/database";
 
 export interface CategoryMonthPoint {
@@ -42,6 +43,13 @@ export interface CategoryHistory {
    * history for "normal" to mean anything.
    */
   trend: number | null;
+  /**
+   * True when payments were counted against the period they belong to rather
+   * than the calendar month they cleared in — see pay-period.ts. A month in
+   * this series can then differ from the same month in the ledger, so a
+   * screen showing it has to say so.
+   */
+  periodShifted: boolean;
 }
 
 /** Months back from and including (year, month), oldest first. */
@@ -84,11 +92,36 @@ export function buildCategoryHistory(
 
   const byCategory = new Map<
     string,
-    { name: string; type: CategoryType; totals: Map<string, number> }
+    {
+      name: string;
+      type: CategoryType;
+      totals: Map<string, number>;
+      shifted: boolean;
+    }
   >();
 
+  // Which bucket a payment falls in is a fact about its own category's
+  // rhythm, so the grouping has to be worked out per category before any
+  // totalling. A wider slice than the window is read for it: a rhythm needs
+  // half a year of payments to be visible at all, and the window's first
+  // month has neighbours outside it that decide where its payments land.
+  const datesByCategory = new Map<string, string[]>();
   for (const tx of transactions) {
-    const monthKey = tx.occurred_on.slice(0, 7);
+    const dates = datesByCategory.get(tx.category_id) ?? [];
+    dates.push(tx.occurred_on);
+    datesByCategory.set(tx.category_id, dates);
+  }
+  const groupingByCategory = new Map(
+    [...datesByCategory].map(
+      ([categoryId, dates]) => [categoryId, groupByPayPeriod(dates)] as const,
+    ),
+  );
+
+  for (const tx of transactions) {
+    const grouping = groupingByCategory.get(tx.category_id);
+    const monthKey = grouping
+      ? grouping.keyOf(tx.occurred_on)
+      : tx.occurred_on.slice(0, 7);
     if (!inWindow.has(monthKey)) {
       continue;
     }
@@ -97,6 +130,7 @@ export function buildCategoryHistory(
       name: tx.categories.name,
       type: tx.categories.type,
       totals: new Map<string, number>(),
+      shifted: grouping?.shifted ?? false,
     };
     // A withdrawal or a reimbursement subtracts, the same way it does in the
     // monthly figures; a series that ignored the sign would show a month of
@@ -150,6 +184,7 @@ export function buildCategoryHistory(
         baseline !== null && baseline > 0 && latest && !latest.empty
           ? Math.round(((latest.total - baseline) / baseline) * 100) / 100
           : null,
+      periodShifted: entry.shifted,
     });
   }
 

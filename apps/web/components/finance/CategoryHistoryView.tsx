@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { TrendDown, TrendUp } from "@phosphor-icons/react";
+import { Info, TrendDown, TrendUp } from "@phosphor-icons/react";
 import type { CategoryHistory } from "@finance/core/category-history";
 import { CATEGORY_TYPE_LABELS } from "@finance/core/category-styles";
 import { BarSeries } from "@/components/finance/charts";
@@ -64,7 +64,7 @@ export function CategoryHistoryView({
             <span className="tabular-nums">
               {formatMoney(selected.average)}
             </span>{" "}
-            in a normal month
+            {selected.periodShifted ? "per pay period" : "in a normal month"}
             {selected.trend !== null && (
               <>
                 {" · "}
@@ -82,7 +82,19 @@ export function CategoryHistoryView({
             )}
           </Card.Description>
         </Card.Header>
-        <Card.Content>
+        <Card.Content className="flex flex-col gap-3">
+          {/* Said out loud, because it is the one place in the app where a
+              month means something different from what the Ledger means by
+              it. Silently moving money between months is how an app ends up
+              with two answers to the same question. */}
+          {selected.periodShifted ? (
+            <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+              <Info size={13} className="mt-0.5 shrink-0" />
+              These land either side of a month end, so each is counted against
+              the period it belongs to. A month here can differ from the same
+              month in the Ledger.
+            </p>
+          ) : null}
           <BarSeries
             color={TONE[selected.type] ?? "var(--chart-1)"}
             points={selected.points.map((point) => ({
