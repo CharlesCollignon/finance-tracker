@@ -208,6 +208,111 @@ export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
 }
 
 /**
+ * Move an already-filed bank row to a different category.
+ *
+ * Edits the ledger row it became rather than unpicking and refiling it, so
+ * the transaction keeps its id — anything pointing at it, a tag or a month
+ * already closed against it, stays pointing at the same thing.
+ */
+export async function recategoriseFeedItem(
+  itemId: string,
+  categoryId: string,
+): Promise<ActionResult> {
+  const user = await getAuthUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+  if (!uuid.safeParse(itemId).success || !uuid.safeParse(categoryId).success) {
+    return { error: "Invalid selection" };
+  }
+
+  const supabase = await createClient();
+  const { data: item } = await supabase
+    .from("bank_feed_items")
+    .select("transaction_id, status")
+    .eq("id", itemId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!item?.transaction_id) {
+    return { error: "That entry is not in your ledger" };
+  }
+
+  const { error } = await supabase
+    .from("transactions")
+    .update({ category_id: categoryId })
+    .eq("id", item.transaction_id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateFeedDependents();
+  return { success: true, message: "Moved" };
+}
+
+/**
+ * Take back a decision and put the row back in the inbox.
+ *
+ * For something added, the ledger row it created goes with it: leaving the
+ * transaction behind while the bank row returns to the inbox is how the same
+ * expense gets recorded twice. For something left out, there is nothing to
+ * remove and it simply comes back.
+ */
+export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
+  const user = await getAuthUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+  if (!uuid.safeParse(itemId).success) {
+    return { error: "Invalid selection" };
+  }
+
+  const supabase = await createClient();
+  const { data: item } = await supabase
+    .from("bank_feed_items")
+    .select("transaction_id, status")
+    .eq("id", itemId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!item) {
+    return { error: "That entry is no longer here" };
+  }
+  if (item.status === "pending") {
+    return { error: "That entry is already waiting" };
+  }
+
+  // The feed row first: if deleting the transaction succeeded and this then
+  // failed, the row would point at a transaction that no longer exists.
+  const { error } = await supabase
+    .from("bank_feed_items")
+    .update({ status: "pending", transaction_id: null })
+    .eq("id", itemId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (item.transaction_id) {
+    const { error: deleteError } = await supabase
+      .from("transactions")
+      .delete()
+      .eq("id", item.transaction_id)
+      .eq("user_id", user.id);
+
+    if (deleteError) {
+      return { error: deleteError.message };
+    }
+  }
+
+  revalidateFeedDependents();
+  return { success: true, message: "Back in the inbox" };
+}
+
+/**
  * The balance the bank reports right now, for pre-filling a month close.
  *
  * Deliberately not stored: a balance is only meaningful at the instant it is

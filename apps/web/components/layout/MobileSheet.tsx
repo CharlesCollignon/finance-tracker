@@ -8,6 +8,8 @@ interface MobileSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  /** Room for two columns, for a sheet that puts a list beside a list. */
+  wide?: boolean;
   children: ReactNode;
 }
 
@@ -24,6 +26,7 @@ export function MobileSheet({
   open,
   onOpenChange,
   title,
+  wide = false,
   children,
 }: MobileSheetProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -93,7 +96,10 @@ export function MobileSheet({
   return (
     <div
       className={cn(
-        "fixed inset-0 z-50 flex justify-center",
+        // Above the phone's bottom bar, which is also fixed and was also
+        // z-50: same layer, later in the document, so the nav painted over
+        // the bottom of every sheet on a phone. Toasts stay above both.
+        "fixed inset-0 z-[60] flex justify-center",
         "items-end md:items-center md:p-4",
       )}
     >
@@ -116,7 +122,7 @@ export function MobileSheet({
           // Sheets that list rows to read need more than a phone's width once
           // there is a desktop to spend: a bank description is long, and the
           // whole job here is deciding what it is.
-          "md:max-w-xl",
+          wide ? "md:max-w-4xl" : "md:max-w-xl",
           "rounded-t-lg border-b-0",
           "md:rounded-lg md:border-b",
         )}

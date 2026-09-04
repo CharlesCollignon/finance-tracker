@@ -14,6 +14,7 @@ import { bankFeedConfigured } from "@/lib/bank/client";
 import {
   countSwallowedFeedItems,
   countFeedItems,
+  getDecidedFeedItems,
   getPendingFeedItems,
 } from "@/lib/queries/bank";
 import { SwallowedRecovery } from "@/components/finance/SwallowedRecovery";
@@ -53,13 +54,14 @@ export default async function TransactionsPage({
 
   // Only queried when a bank is actually connected, so the page costs nothing
   // extra on a deployment that has never seen the feed.
-  const [feedItems, swallowed, feedSize] = bankFeedConfigured()
+  const [feedItems, swallowed, feedSize, decided] = bankFeedConfigured()
     ? await Promise.all([
         getPendingFeedItems(user.id),
         countSwallowedFeedItems(user.id),
         countFeedItems(user.id),
+        getDecidedFeedItems(user.id),
       ])
-    : [null, 0, 0];
+    : [null, 0, 0, []];
 
   return (
     <TransactionsView
@@ -78,6 +80,7 @@ export default async function TransactionsPage({
             <SwallowedRecovery count={swallowed} />
             <BankInbox
               items={feedItems}
+              decided={decided}
               categories={categories}
               // A statement worth of rows means the backfill has been done.
               showBackfill={feedSize < 400}

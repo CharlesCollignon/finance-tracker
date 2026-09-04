@@ -60,6 +60,74 @@ export async function getPendingFeedItems(
   }));
 }
 
+export interface DecidedFeedRow {
+  id: string;
+  occurredOn: string;
+  amount: number;
+  direction: "in" | "out";
+  counterparty: string | null;
+  note: string;
+  /** Where it landed, or null when it was left out. */
+  categoryId: string | null;
+  categoryName: string | null;
+  categoryType: CategoryType | null;
+  /** The ledger row it became, if it became one. */
+  transactionId: string | null;
+  status: "imported" | "ignored";
+}
+
+/**
+ * What was decided recently, so a decision can be taken back.
+ *
+ * The inbox was a one-way door: pick a category, press Add, and the row was
+ * gone from the only screen that knew where it came from. Putting a card in
+ * the wrong category is the easiest mistake to make here — the list is long
+ * and the labels are bank shorthand — and the only way back was to hunt the
+ * transaction down in the ledger, where it no longer says which bank line it
+ * came from.
+ *
+ * Bounded rather than complete. This is a means of correcting what you just
+ * did, not an archive; the ledger is the archive.
+ */
+export async function getDecidedFeedItems(
+  userId: string,
+  limit = 40,
+): Promise<DecidedFeedRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("bank_feed_items")
+    .select("*, transactions(category_id, categories(name, type))")
+    .eq("user_id", userId)
+    .in("status", ["imported", "ignored"])
+    .order("occurred_on", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  type Joined = BankFeedItem & {
+    transactions: {
+      category_id: string;
+      categories: { name: string; type: CategoryType } | null;
+    } | null;
+  };
+
+  return ((data ?? []) as Joined[]).map((row) => ({
+    id: row.id,
+    occurredOn: row.occurred_on,
+    amount: Number(row.amount),
+    direction: row.direction,
+    counterparty: row.counterparty,
+    note: row.note,
+    categoryId: row.transactions?.category_id ?? null,
+    categoryName: row.transactions?.categories?.name ?? null,
+    categoryType: row.transactions?.categories?.type ?? null,
+    transactionId: row.transaction_id,
+    status: row.status === "ignored" ? "ignored" : "imported",
+  }));
+}
+
 /** How many bank rows exist at all, to tell a first sync from a routine one. */
 export async function countFeedItems(userId: string): Promise<number> {
   const supabase = await createClient();
