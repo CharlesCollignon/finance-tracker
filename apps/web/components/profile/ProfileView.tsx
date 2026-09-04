@@ -9,7 +9,6 @@ import { FormLabel } from "@/components/layout/FormLabel";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { SignOutButton } from "@/components/layout/SignOutButton";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { CurrencyToggle } from "@/components/profile/CurrencyToggle";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
@@ -126,14 +125,6 @@ export function ProfileView({
         <PasskeysCard initialPasskeys={initialPasskeys} />
 
         <NotificationsCard publicKey={pushPublicKey} />
-
-        <Card.Bezel className="w-full" innerClassName="p-4 md:p-5">
-          <h2 className="text-base font-semibold">Appearance</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Switch between light and dark.
-          </p>
-          <ThemeToggle className="mt-4" />
-        </Card.Bezel>
 
         <Card.Bezel className="w-full" innerClassName="p-4 md:p-5">
           <h2 className="text-base font-semibold">Currency</h2>

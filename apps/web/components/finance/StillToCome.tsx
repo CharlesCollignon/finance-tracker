@@ -7,6 +7,7 @@ import type { UpcomingCharge } from "@finance/core/still-to-come";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { cn } from "@/lib/utils";
+import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 
 interface StillToComeProps {
@@ -50,7 +51,7 @@ export function StillToCome({
   const restTotal = rest.reduce((sum, charge) => sum + charge.amount, 0);
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+    <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">Still to come</h2>
         <PrivateAmount className="tabular-nums">
@@ -62,7 +63,7 @@ export function StillToCome({
         {head.map((charge) => (
           <li
             key={charge.key}
-            className="flex items-baseline justify-between gap-3 border-b border-border py-2 text-sm last:border-0"
+            className="flex items-baseline justify-between gap-3 border-b border-foreground/10 py-2 text-sm last:border-0"
           >
             <span className="flex min-w-0 flex-1 items-baseline gap-3">
               <span className="w-20 shrink-0 text-xs text-muted-foreground">

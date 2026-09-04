@@ -554,7 +554,21 @@ export interface Database {
           decided_by?: string | null;
           created_at?: string;
         };
-        Relationships: [];
+        // The foreign key migration 019 actually declares. It was missing
+        // here, and `getDecidedFeedItems` selects through it — the cast on
+        // that query only compiled because the client's relationship
+        // resolver was bailing out early for want of a `Functions` member to
+        // resolve against, and it started reporting the join as a missing
+        // relation the moment one was added.
+        Relationships: [
+          {
+            foreignKeyName: "bank_feed_items_transaction_id_fkey";
+            columns: ["transaction_id"];
+            isOneToOne: false;
+            referencedRelation: "transactions";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       month_closes: {
         Row: {
@@ -626,6 +640,129 @@ export interface Database {
         };
         Relationships: [];
       };
+      recurring_fulfilments: {
+        Row: {
+          user_id: string;
+          template_id: string;
+          occurred_on: string;
+          transaction_id: string;
+          confirmed_at: string;
+        };
+        Insert: {
+          user_id: string;
+          template_id: string;
+          occurred_on: string;
+          transaction_id: string;
+          confirmed_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          template_id?: string;
+          occurred_on?: string;
+          transaction_id?: string;
+          confirmed_at?: string;
+        };
+        Relationships: [];
+      };
+      recurring_fulfilment_refusals: {
+        Row: {
+          user_id: string;
+          template_id: string;
+          occurred_on: string;
+          transaction_id: string;
+          refused_at: string;
+        };
+        Insert: {
+          user_id: string;
+          template_id: string;
+          occurred_on: string;
+          transaction_id: string;
+          refused_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          template_id?: string;
+          occurred_on?: string;
+          transaction_id?: string;
+          refused_at?: string;
+        };
+        Relationships: [];
+      };
+      month_reads: {
+        Row: {
+          user_id: string;
+          month: string;
+          writes: number;
+          refused: number;
+          last_written_at: string | null;
+          pending_since: string | null;
+          read: Json | null;
+          facts: Json | null;
+          facts_digest: string | null;
+          trimmed: number;
+          model: string | null;
+          prompt_version: number | null;
+          written_at: string | null;
+          source: "pressed" | "auto";
+        };
+        Insert: {
+          user_id: string;
+          month: string;
+          writes?: number;
+          refused?: number;
+          last_written_at?: string | null;
+          pending_since?: string | null;
+          read?: Json | null;
+          facts?: Json | null;
+          facts_digest?: string | null;
+          trimmed?: number;
+          model?: string | null;
+          prompt_version?: number | null;
+          written_at?: string | null;
+          source?: "pressed" | "auto";
+        };
+        Update: {
+          user_id?: string;
+          month?: string;
+          writes?: number;
+          refused?: number;
+          last_written_at?: string | null;
+          pending_since?: string | null;
+          read?: Json | null;
+          facts?: Json | null;
+          facts_digest?: string | null;
+          trimmed?: number;
+          model?: string | null;
+          prompt_version?: number | null;
+          written_at?: string | null;
+          source?: "pressed" | "auto";
+        };
+        Relationships: [];
+      };
+      bank_pulls: {
+        Row: {
+          user_id: string;
+          pulled_on: string;
+          unattended: number;
+          attended: number;
+          last_pulled_at: string;
+        };
+        Insert: {
+          user_id: string;
+          pulled_on: string;
+          unattended?: number;
+          attended?: number;
+          last_pulled_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          pulled_on?: string;
+          unattended?: number;
+          attended?: number;
+          last_pulled_at?: string;
+        };
+        Relationships: [];
+      };
       month_close_settings: {
         Row: {
           user_id: string;
@@ -676,7 +813,111 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      /**
+       * Count one pull of the bank, atomically.
+       *
+       * A function rather than a read-then-write, so two refreshes racing
+       * cannot both read 2 and write 3.
+       */
+      /** Take one attempt at writing a month read, if the allowance permits. */
+      reserve_month_read: {
+        Args: {
+          target_user: string;
+          target_month: string;
+          allowance: number;
+          cooldown_seconds: number;
+          reservation_seconds: number;
+        };
+        Returns: {
+          user_id: string;
+          month: string;
+          writes: number;
+          refused: number;
+          last_written_at: string | null;
+          pending_since: string | null;
+          read: Json | null;
+          facts: Json | null;
+          facts_digest: string | null;
+          trimmed: number;
+          model: string | null;
+          prompt_version: number | null;
+          written_at: string | null;
+          source: "pressed" | "auto";
+        };
+      };
+      /** Land a finished attempt, whether or not a read survived it. */
+      store_month_read: {
+        Args: {
+          target_user: string;
+          target_month: string;
+          new_read: Json | null;
+          new_facts: Json | null;
+          new_digest: string | null;
+          new_trimmed: number;
+          new_model: string | null;
+          new_prompt_version: number | null;
+          refused_delta: number;
+          new_source: string;
+        };
+        Returns: {
+          user_id: string;
+          month: string;
+          writes: number;
+          refused: number;
+          last_written_at: string | null;
+          pending_since: string | null;
+          read: Json | null;
+          facts: Json | null;
+          facts_digest: string | null;
+          trimmed: number;
+          model: string | null;
+          prompt_version: number | null;
+          written_at: string | null;
+          source: "pressed" | "auto";
+        };
+      };
+      /** Hand back an attempt that never reached the provider. */
+      refund_month_read: {
+        Args: { target_user: string; target_month: string };
+        Returns: {
+          user_id: string;
+          month: string;
+          writes: number;
+          refused: number;
+          last_written_at: string | null;
+          pending_since: string | null;
+          read: Json | null;
+          facts: Json | null;
+          facts_digest: string | null;
+          trimmed: number;
+          model: string | null;
+          prompt_version: number | null;
+          written_at: string | null;
+          source: "pressed" | "auto";
+        };
+      };
+      record_bank_pull: {
+        Args: {
+          target_user: string;
+          was_attended: boolean;
+          today: string;
+        };
+        // Spelled out rather than pointed at the table's own Row. Referring
+        // to `Database[...]` from inside `Database` is circular, and while
+        // TypeScript tolerates it, the resolver gives up part-way and
+        // PostgREST's relationship inference — which reads this same
+        // interface — starts reporting joins it had previously resolved as
+        // missing relations.
+        Returns: {
+          user_id: string;
+          pulled_on: string;
+          unattended: number;
+          attended: number;
+          last_pulled_at: string;
+        };
+      };
+    };
     Enums: {
       category_type: CategoryType;
       recurrence_type: Recurrence;
@@ -706,6 +947,10 @@ export type PushSubscriptionRow =
 export type BankFeedItem =
   Database["public"]["Tables"]["bank_feed_items"]["Row"];
 export type BankAccount = Database["public"]["Tables"]["bank_accounts"]["Row"];
+export type BankPullRow = Database["public"]["Tables"]["bank_pulls"]["Row"];
+export type MonthReadRow = Database["public"]["Tables"]["month_reads"]["Row"];
+export type RecurringFulfilment =
+  Database["public"]["Tables"]["recurring_fulfilments"]["Row"];
 export type MonthClose = Database["public"]["Tables"]["month_closes"]["Row"];
 export type MonthCloseSettings =
   Database["public"]["Tables"]["month_close_settings"]["Row"];

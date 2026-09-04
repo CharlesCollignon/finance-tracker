@@ -5,6 +5,7 @@ import { ArrowRight, Check, Flame } from "@phosphor-icons/react";
 import type { ClosedMonthRow } from "@/lib/queries/month-close";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { cn } from "@/lib/utils";
+import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 
 interface MonthClosedRecapProps {
@@ -38,7 +39,7 @@ export function MonthClosedRecap({ row, streak, cap }: MonthClosedRecapProps) {
   const withinCap = cap === null ? unrecorded < 0.01 : unrecorded <= cap;
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+    <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">{`${row.label} closed`}</h2>
         {streak > 1 ? (
@@ -76,7 +77,7 @@ export function MonthClosedRecap({ row, streak, cap }: MonthClosedRecapProps) {
       </div>
 
       {row.kept !== null ? (
-        <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-border pt-3">
+        <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 border-t border-foreground/10 pt-3">
           <span className="text-sm text-muted-foreground">
             {`Kept in ${row.label.split(" ")[0]}`}
           </span>

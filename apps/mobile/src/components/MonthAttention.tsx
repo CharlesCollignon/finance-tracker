@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -27,6 +28,15 @@ export interface AttentionItem {
 
 interface MonthAttentionProps {
   items: AttentionItem[];
+  /**
+   * Rows that ask a question rather than send you somewhere.
+   *
+   * Everything in `items` is a press that goes off to decide something else.
+   * Confirming that a charge arrived is decided here, on two buttons, which
+   * does not fit an item — so it arrives as a slot. Rendered above the rest,
+   * because a question in front of you outranks an errand elsewhere.
+   */
+  slot?: ReactNode;
 }
 
 /**
@@ -38,22 +48,23 @@ interface MonthAttentionProps {
  * is nothing outstanding this block is not empty, it is absent, which is the
  * strongest thing an interface can say about a quiet month.
  */
-export function MonthAttention({ items }: MonthAttentionProps) {
+export function MonthAttention({ items, slot }: MonthAttentionProps) {
   const colors = useThemeColors();
 
-  if (items.length === 0) {
+  if (items.length === 0 && !slot) {
     return null;
   }
 
   return (
     <View
       accessibilityLabel="Needs you"
-      className="overflow-hidden rounded-xl border bg-card"
+      className="overflow-hidden rounded-3xl border bg-card/70"
       style={{ borderColor: colors.primaryRim }}
     >
-      <Text className="border-b border-border px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <Text className="border-b border-foreground/10 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         Needs you
       </Text>
+      {slot}
       {items.map((item, index) => (
         <Pressable
           key={item.id}
@@ -65,7 +76,7 @@ export function MonthAttention({ items }: MonthAttentionProps) {
           }}
           className={cn(
             "min-h-14 flex-row items-center gap-3 px-4 py-3",
-            index > 0 && "border-t border-border",
+            (index > 0 || Boolean(slot)) && "border-t border-foreground/10",
           )}
         >
           <View

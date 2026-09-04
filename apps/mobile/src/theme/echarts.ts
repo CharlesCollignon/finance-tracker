@@ -10,8 +10,8 @@ import { CHART_COLORS, colorsForScheme } from "@/theme/tokens";
  * neither, and left the app with two different palettes depending on which
  * kind of chart you were looking at.
  */
-export function chartPalette(scheme: ColorSchemeName): string[] {
-  return [...CHART_COLORS[scheme === "light" ? "light" : "dark"]];
+export function chartPalette(_scheme?: ColorSchemeName): string[] {
+  return [...CHART_COLORS];
 }
 
 export function chartTextColor(scheme: ColorSchemeName): string {

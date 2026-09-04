@@ -41,13 +41,12 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8f9fb" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a10" },
-  ],
+  // One colour, because there is one theme. Pluclair is dark: the figures
+  // are the brightest thing on the screen and the veil behind them only
+  // reads on a dark ground.
+  themeColor: "#0a0a10",
+  colorScheme: "dark",
 };
-
-const themeInitScript = `(function(){try{var t=localStorage.getItem("theme");var d=t==="light"?false:t==="system"?window.matchMedia("(prefers-color-scheme: dark)").matches:true;document.documentElement.classList.toggle("dark",d);}catch(e){document.documentElement.classList.add("dark");}})();`;
 
 const privacyInitScript = `(function(){try{document.documentElement.dataset.privacy=localStorage.getItem("privacy-blur")==="1"?"on":"off";}catch(e){document.documentElement.dataset.privacy="off";}})();`;
 
@@ -57,13 +56,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // `dark` is rendered on the server rather than applied by a script, so
+    // there is no flash of the wrong theme and no blocking script in the
+    // head. The class stays — the tokens do not need it, but a few dozen
+    // `dark:` utilities across the app resolve against it.
     <html
       lang="en"
-      className={`${instrumentSans.variable} ${fraunces.variable} ${plexMono.variable} h-full`}
+      className={`dark ${instrumentSans.variable} ${fraunces.variable} ${plexMono.variable} h-full`}
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: privacyInitScript }} />
       </head>
       <body className="flex min-h-full flex-col bg-background text-foreground antialiased">

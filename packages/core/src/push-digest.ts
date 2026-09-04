@@ -30,6 +30,16 @@ export interface BuildDigestOptions {
   alreadySent: ReadonlySet<string>;
   /** How many recurring occurrences the new month is waiting to apply. */
   pendingRecurring?: number;
+  /**
+   * How many charges look as though the bank already delivered them and are
+   * waiting to be confirmed.
+   *
+   * Worth a notification because it is time-sensitive in a way a cap breach
+   * is not: until the salary is confirmed, every figure that answers "what
+   * can I spend" is overstated by a month's pay, and the person reading it
+   * has no way of knowing.
+   */
+  arrivedCharges?: number;
   formatAmount: (amount: number) => string;
 }
 
@@ -49,6 +59,7 @@ export function buildDueNotifications({
   budgetProgress,
   alreadySent,
   pendingRecurring = 0,
+  arrivedCharges = 0,
   formatAmount,
 }: BuildDigestOptions): PendingNotification[] {
   const monthKey = monthKeyOf(today);
@@ -67,6 +78,25 @@ export function buildDueNotifications({
                 pendingRecurring === 1 ? "item is" : "items are"
               } ready to apply.`
             : "Apply your recurring to fill it in, and see what's left.",
+        url: "/dashboard",
+      });
+    }
+  }
+
+  // Charges the bank appears to have delivered. Keyed by the day rather than
+  // the month: unlike a cap breach this recurs legitimately — a salary one
+  // week, a subscription the next — and it stops as soon as the answer is
+  // given, so a daily nudge cannot become a permanent one.
+  if (arrivedCharges > 0) {
+    const key = `arrived:${today}`;
+    if (!alreadySent.has(key)) {
+      due.push({
+        key,
+        title: arrivedCharges === 1 ? "Did this arrive?" : "Did these arrive?",
+        body:
+          arrivedCharges === 1
+            ? "One recurring charge looks like your bank already paid it."
+            : `${arrivedCharges} recurring charges look like your bank already paid them.`,
         url: "/dashboard",
       });
     }

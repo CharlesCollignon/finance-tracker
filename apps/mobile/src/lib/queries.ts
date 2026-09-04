@@ -4,6 +4,17 @@ import {
   type BudgetViewMode,
 } from "@finance/core/constants";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
+import {
+  filterDatesBySchedule,
+  getRecurringOccurrenceDates,
+} from "@finance/core/recurrence";
+import {
+  proposeFulfilments,
+  refusalKey,
+  type FulfilmentMovement,
+  type FulfilmentOccurrence,
+  type FulfilmentProposal,
+} from "@finance/core/recurring-fulfilment";
 import { buildMonthlySummary } from "@finance/core/monthly-summary";
 import {
   buildMonthClose,
@@ -27,7 +38,14 @@ import {
   buildMerchantIndex,
   type MerchantRule,
 } from "@finance/core/merchant-memory";
+import {
+  cashBalanceAsOf,
+  type AccountRows,
+  type CashBalance,
+} from "@finance/core/bank-balance";
 import type {
+  BankAccount,
+  BankFeedItem,
   Category,
   MonthClose,
   MonthlySummary,
@@ -847,6 +865,397 @@ export async function previewMonthClose(
       transfers: 0,
     },
   });
+}
+
+/**
+ * One month's recorded flows, for the live reconciliation the Month screen
+ * shows. The same two queries the close history uses, asked for one month.
+ */
+export async function getRecordedCashFlows(
+  userId: string,
+  year: number,
+  month: number,
+): Promise<RecordedCashFlows> {
+  const monthKey = `${year}-${String(month).padStart(2, "0")}`;
+  const byMonth = await cashFlowsByMonth(userId, [monthKey]);
+  return (
+    byMonth.get(monthKey) ?? {
+      income: 0,
+      expenses: 0,
+      savings: 0,
+      transfers: 0,
+    }
+  );
+}
+
+/* --------------------------------------------------------- the bank feed */
+
+/**
+ * Whether an error means "this feature's schema is not here yet".
+ *
+ * PGRST205 is PostgREST's missing table, 42P01 is Postgres', and 42703 a
+ * missing column. Every other error still throws: swallowing them all would
+ * turn a permissions mistake into a screen that quietly shows nothing, which
+ * is how a wrong balance gets believed.
+ */
+function isMissingSchema(error: { code?: string } | null): boolean {
+  return (
+    error?.code === "PGRST205" ||
+    error?.code === "42P01" ||
+    error?.code === "42703"
+  );
+}
+
+/** Every account the connection has ever shown, ticked or not. */
+export async function getBankAccounts(userId: string): Promise<BankAccount[]> {
+  const { data, error } = await supabase
+    .from("bank_accounts")
+    .select("*")
+    .eq("user_id", userId)
+    .order("label");
+
+  if (error) {
+    if (isMissingSchema(error)) {
+      return [];
+    }
+    throw error;
+  }
+
+  return (data ?? []) as BankAccount[];
+}
+
+/**
+ * What the counted accounts held at the end of a given day.
+ *
+ * Reads the stored statement rather than the bank, which is what lets the
+ * phone answer at all: it holds no credentials and cannot reach the provider.
+ * Null when the feature is not set up — no connection, or nobody has said
+ * which accounts hold spendable money. That is different from a reading that
+ * failed, which comes back with `ok: false` and the accounts it could not
+ * read.
+ */
+export async function readCashBalance(
+  userId: string,
+  date: string,
+): Promise<CashBalance | null> {
+  const accounts = await getBankAccounts(userId);
+  const counted = accounts.filter((account) => account.counts_as_cash);
+
+  if (counted.length === 0) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("bank_feed_items")
+    .select("provider_account_id, occurred_on, balance_after, intraday_index")
+    .eq("user_id", userId)
+    .in(
+      "provider_account_id",
+      counted.map((account) => account.provider_account_id),
+    )
+    .lte("occurred_on", date)
+    // Newest first and capped: only the last row of the last day is needed,
+    // and one page of it is far more than enough to find that row for every
+    // account. Ordering by intraday_index second keeps the day's last
+    // movement ahead of the ones before it.
+    .order("occurred_on", { ascending: false })
+    .order("intraday_index", { ascending: true })
+    .limit(400);
+
+  if (error) {
+    if (isMissingSchema(error)) {
+      return null;
+    }
+    throw error;
+  }
+
+  const byAccount = new Map<string, AccountRows>();
+  for (const account of counted) {
+    byAccount.set(account.provider_account_id, {
+      accountId: account.provider_account_id,
+      label: account.label,
+      rows: [],
+    });
+  }
+
+  for (const row of data ?? []) {
+    byAccount.get(row.provider_account_id as string)?.rows.push({
+      occurredOn: row.occurred_on as string,
+      balanceAfter:
+        row.balance_after === null ? null : Number(row.balance_after),
+      intradayIndex: row.intraday_index as number,
+    });
+  }
+
+  // A lapsed consent stores no rows, so it arrives here with an empty list
+  // and is reported as unreadable rather than as an empty account.
+  return cashBalanceAsOf([...byAccount.values()], date);
+}
+
+export interface BankMovement {
+  id: string;
+  occurredOn: string;
+  amount: number;
+  direction: "in" | "out";
+  /** The merchant, or the payer for money in. Falls back to the bank's note. */
+  label: string;
+  categoryName: string | null;
+  pending: boolean;
+  ignored: boolean;
+}
+
+/**
+ * The last movements the account actually saw, whatever became of them.
+ *
+ * Pending rows included on purpose: the card payment from an hour ago that is
+ * still waiting for a category is precisely the evidence that a refresh
+ * worked, and filtering to what has been filed would hide it.
+ */
+export async function getRecentBankMovements(
+  userId: string,
+  limit = 6,
+): Promise<BankMovement[]> {
+  const { data, error } = await supabase
+    .from("bank_feed_items")
+    .select("*, transactions(categories(name))")
+    .eq("user_id", userId)
+    .order("occurred_on", { ascending: false })
+    .order("intraday_index", { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    if (isMissingSchema(error)) {
+      return [];
+    }
+    throw error;
+  }
+
+  type Joined = BankFeedItem & {
+    transactions: { categories: { name: string } | null } | null;
+  };
+
+  return ((data ?? []) as Joined[]).map((row) => ({
+    id: row.id,
+    occurredOn: row.occurred_on,
+    amount: Number(row.amount),
+    direction: row.direction,
+    label: row.counterparty ?? row.note,
+    categoryName: row.transactions?.categories?.name ?? null,
+    pending: row.status === "pending",
+    ignored: row.status === "ignored",
+  }));
+}
+
+/* ------------------------------------------ charges the bank already paid */
+
+/**
+ * Which recurring charges the bank looks to have already delivered.
+ *
+ * The rules live in `@finance/core/recurring-fulfilment` and are tested
+ * there; this is the plumbing. See the web twin for the whole story — in
+ * short, a bank-imported transaction carries no template link, so every
+ * recurring charge the bank delivers was counted twice, once as money that
+ * moved and once as money still forecast to move.
+ */
+
+/** Occurrences already fulfilled, as occurrence keys. */
+export async function getFulfilledKeys(userId: string): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from("recurring_fulfilments")
+    .select("template_id, occurred_on")
+    .eq("user_id", userId);
+
+  if (error) {
+    if (isMissingSchema(error)) {
+      return new Set();
+    }
+    throw error;
+  }
+
+  return new Set(
+    (data ?? []).map((row) =>
+      recurringOccurrenceKey(row.template_id, row.occurred_on),
+    ),
+  );
+}
+
+/** Every occurrence a month's active templates call for. */
+function occurrencesFor(
+  templates: readonly RecurringTemplateWithCategory[],
+  categories: readonly Category[],
+  year: number,
+  month: number,
+): FulfilmentOccurrence[] {
+  const byId = new Map(categories.map((c) => [c.id, c] as const));
+  const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
+  const out: FulfilmentOccurrence[] = [];
+
+  for (const template of templates) {
+    if (!template.active) {
+      continue;
+    }
+    const category = byId.get(template.category_id);
+    if (!category) {
+      continue;
+    }
+
+    const dates = filterDatesBySchedule(
+      getRecurringOccurrenceDates(
+        {
+          recurrence: template.recurrence ?? "monthly",
+          day_of_month: template.day_of_month,
+          day_of_week: template.day_of_week,
+          month_of_year: template.month_of_year,
+        },
+        year,
+        month,
+      ),
+      template.starts_on,
+      template.ends_on,
+    ).filter((date) => date.startsWith(monthPrefix));
+
+    for (const date of dates) {
+      out.push({
+        templateId: template.id,
+        occurredOn: date,
+        amount: Number(template.amount),
+        categoryId: template.category_id,
+        categoryType: category.type,
+        label: template.description?.trim() || category.name,
+      });
+    }
+  }
+
+  return out;
+}
+
+function shiftDays(iso: string, days: number): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(Date.UTC(year!, month! - 1, day! + days))
+    .toISOString()
+    .slice(0, 10);
+}
+
+export async function getFulfilmentProposals(
+  userId: string,
+  templates: readonly RecurringTemplateWithCategory[],
+  categories: readonly Category[],
+  year: number,
+  month: number,
+): Promise<FulfilmentProposal[]> {
+  const occurrences = occurrencesFor(templates, categories, year, month);
+  if (occurrences.length === 0) {
+    return [];
+  }
+
+  const { start, end } = getMonthBounds(year, month);
+  // A window either side of the month, because a charge due on the 1st can be
+  // paid on the last day of the previous month and one due on the 31st on the
+  // 2nd of the next.
+  const from = shiftDays(start, -5);
+  const to = shiftDays(end, 5);
+
+  const [
+    { data: transactions, error: txError },
+    { data: fulfilments, error: fulfilError },
+    { data: refusals, error: refusalError },
+  ] = await Promise.all([
+    // Only rows no template wrote. A row a template wrote is already the
+    // occurrence; asking whether it fulfils one would be asking whether it is
+    // itself.
+    supabase
+      .from("transactions")
+      .select("id, occurred_on, amount, category_id, note")
+      .eq("user_id", userId)
+      .is("recurring_template_id", null)
+      .gte("occurred_on", from)
+      .lte("occurred_on", to),
+    supabase
+      .from("recurring_fulfilments")
+      .select("template_id, occurred_on, transaction_id")
+      .eq("user_id", userId),
+    supabase
+      .from("recurring_fulfilment_refusals")
+      .select("template_id, occurred_on, transaction_id")
+      .eq("user_id", userId),
+  ]);
+
+  if (txError) {
+    throw txError;
+  }
+  // The two decision tables are the optional half. Without them every
+  // proposal simply looks undecided, which is the right failure: the user is
+  // asked again rather than having a confirmation silently forgotten.
+  if (fulfilError && !isMissingSchema(fulfilError)) {
+    throw fulfilError;
+  }
+  if (refusalError && !isMissingSchema(refusalError)) {
+    throw refusalError;
+  }
+
+  const movements: FulfilmentMovement[] = (transactions ?? []).map((row) => ({
+    transactionId: row.id as string,
+    occurredOn: row.occurred_on as string,
+    amount: Number(row.amount),
+    categoryId: row.category_id as string,
+    note: (row.note as string | null) ?? null,
+  }));
+
+  return proposeFulfilments(occurrences, movements, {
+    // A movement dated after today has not arrived, whatever else matches.
+    today: todayIsoLocal(),
+    fulfilledKeys: new Set(
+      (fulfilments ?? []).map((row) =>
+        recurringOccurrenceKey(row.template_id, row.occurred_on),
+      ),
+    ),
+    claimedTransactionIds: new Set(
+      (fulfilments ?? []).map((row) => row.transaction_id as string),
+    ),
+    refusedPairs: new Set(
+      (refusals ?? []).map((row) =>
+        refusalKey(row.template_id, row.occurred_on, row.transaction_id),
+      ),
+    ),
+  });
+}
+
+/** How many are waiting, for the tab bar's badge. */
+export async function countFulfilmentProposals(
+  userId: string,
+  year: number,
+  month: number,
+): Promise<number> {
+  const [templates, categories] = await Promise.all([
+    getRecurringTemplates(userId),
+    getCategories(userId),
+  ]);
+  const proposals = await getFulfilmentProposals(
+    userId,
+    templates,
+    categories,
+    year,
+    month,
+  );
+  return proposals.length;
+}
+
+/** How many bank rows are still waiting for a category. */
+export async function countPendingFeedItems(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("bank_feed_items")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("status", "pending");
+
+  if (error) {
+    if (isMissingSchema(error)) {
+      return 0;
+    }
+    throw error;
+  }
+
+  return count ?? 0;
 }
 
 /**

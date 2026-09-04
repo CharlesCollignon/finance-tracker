@@ -237,12 +237,88 @@ describe("buildStillToCome", () => {
     );
     const upcoming = buildStillToCome(transactions, templates, 2026, 9, TODAY);
 
-    const currentOut =
-      current.expenses + current.savings + current.investments;
+    const currentOut = current.expenses + current.savings + current.investments;
     const monthEndOut =
       monthEnd.expenses + monthEnd.savings + monthEnd.investments;
 
     expect(upcoming.budgetedOutflow).toBeCloseTo(monthEndOut - currentOut, 6);
     expect(upcoming.arriving).toBeCloseTo(monthEnd.income - current.income, 6);
+  });
+});
+
+describe("fulfilled occurrences", () => {
+  /**
+   * The regression this exists for: with a bank feed a template never writes
+   * a transaction, so nothing carried `recurring_template_id` and every
+   * charge the bank delivered stayed in the forecast alongside the real
+   * movement. A salary was counted twice.
+   */
+  it("stops forecasting a charge the bank has already delivered", () => {
+    const templates = [template("tpl-salary", 28, 3400, "income")];
+
+    const before = buildStillToCome([], templates, 2026, 9, "2026-09-04");
+    expect(before.arriving).toBe(3400);
+
+    const after = buildStillToCome(
+      [],
+      templates,
+      2026,
+      9,
+      "2026-09-04",
+      new Set(),
+      new Set(["tpl-salary:2026-09-28"]),
+    );
+
+    expect(after.arriving).toBe(0);
+    expect(after.incoming).toEqual([]);
+  });
+
+  it("leaves every other occurrence alone", () => {
+    const templates = [
+      template("tpl-rent", 20, 780, "expense"),
+      template("tpl-phone", 22, 39.99, "expense"),
+    ];
+
+    const rest = buildStillToCome(
+      [],
+      templates,
+      2026,
+      9,
+      "2026-09-04",
+      new Set(),
+      new Set(["tpl-rent:2026-09-20"]),
+    );
+
+    expect(rest.outgoing.map((row) => row.key)).toEqual([
+      "tpl-phone:2026-09-22",
+    ]);
+    expect(rest.leaving).toBe(39.99);
+  });
+
+  it("is independent of skipping, which means something else", () => {
+    // Both remove an occurrence from the forecast, and the app has to be able
+    // to tell "the user cancelled it" from "the bank already paid it".
+    const templates = [template("tpl-rent", 20, 780, "expense")];
+
+    const skipped = buildStillToCome(
+      [],
+      templates,
+      2026,
+      9,
+      "2026-09-04",
+      new Set(["tpl-rent:2026-09-20"]),
+    );
+    const fulfilled = buildStillToCome(
+      [],
+      templates,
+      2026,
+      9,
+      "2026-09-04",
+      new Set(),
+      new Set(["tpl-rent:2026-09-20"]),
+    );
+
+    expect(skipped.leaving).toBe(0);
+    expect(fulfilled.leaving).toBe(0);
   });
 });

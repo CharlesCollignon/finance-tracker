@@ -9,6 +9,7 @@ import { QuickAddProvider } from "@/providers/QuickAddProvider";
 import { ReminderProvider } from "@/providers/ReminderProvider";
 
 import { useThemeColors } from "@/theme/useThemeColors";
+import { useArrivedCount } from "@/hooks/useArrivedCount";
 
 type IoniconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -69,6 +70,7 @@ const BAR_HEIGHT = 60;
 export default function TabsLayout() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const arrived = useArrivedCount();
 
   return (
     <ReminderProvider>
@@ -113,6 +115,22 @@ export default function TabsLayout() {
                     color={color}
                   />
                 ),
+                // Charges the bank looks to have already paid land in the
+                // Ledger. A dot rather than a count: the bar is five targets
+                // across a phone, and the number is on the Month screen.
+                ...(name === "transactions" && arrived > 0
+                  ? {
+                      tabBarBadge: "",
+                      tabBarBadgeStyle: {
+                        backgroundColor: colors.primary,
+                        minWidth: 8,
+                        maxWidth: 8,
+                        height: 8,
+                        borderRadius: 4,
+                        transform: [{ translateX: -2 }, { translateY: 2 }],
+                      },
+                    }
+                  : {}),
               }}
             />
           ))}

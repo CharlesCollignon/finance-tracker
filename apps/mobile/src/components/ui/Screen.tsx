@@ -3,10 +3,12 @@ import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { cn } from "@/lib/cn";
+import { AppBackdrop } from "@/components/AppBackdrop";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { Logo } from "@/components/Logo";
 import { PrivacyToggle } from "@/components/PrivacyToggle";
+import { RefreshButton } from "@/components/RefreshButton";
 import { Text } from "@/components/ui/Text";
 
 export interface ScreenProps {
@@ -17,6 +19,12 @@ export interface ScreenProps {
   headerActions?: ReactNode;
   /** Show privacy eye on the right (default true when title set). */
   showPrivacyToggle?: boolean;
+  /**
+   * Show the bank refresh on the right. On by default, and absent by itself
+   * when there is nothing to refresh — no signed-in session, or a build with
+   * no web app to ask through.
+   */
+  showRefresh?: boolean;
   /** Account monogram sits right of the eye; off for the auth screens. */
   showAccountMenu?: boolean;
   /** Centred mark; off for the auth screens, which show their own. */
@@ -25,8 +33,13 @@ export interface ScreenProps {
 
 const HEADER_HEIGHT = 56;
 
-/** Space held for the right-hand controls: eye + account, plus breathing room. */
-const ACTIONS_WIDTH = 96;
+/**
+ * Space held for the right-hand controls: refresh + eye + account, plus
+ * breathing room. Reserved explicitly rather than measured, for the reason
+ * the comment in the header explains — and it has to grow when a control is
+ * added, or the title starts negotiating width with it again.
+ */
+const ACTIONS_WIDTH = 136;
 
 /**
  * Standard screen shell, mirroring the web PageHeader + PageContainer: title
@@ -43,6 +56,7 @@ export function Screen({
   className,
   headerActions,
   showPrivacyToggle = true,
+  showRefresh = true,
   showAccountMenu = true,
   showLogo = true,
 }: ScreenProps) {
@@ -58,6 +72,8 @@ export function Screen({
       edges={["top", "left", "right"]}
       className="flex-1 bg-background"
     >
+      {/* First child, so everything below paints over it. */}
+      <AppBackdrop />
       {showHeader ? (
         <View
           className="border-b border-border"
@@ -94,6 +110,7 @@ export function Screen({
 
           <View className="absolute inset-y-0 right-4 flex-row items-center gap-2">
             {headerActions}
+            {showRefresh ? <RefreshButton /> : null}
             {showPrivacyToggle ? <PrivacyToggle /> : null}
             {showAccountMenu ? <AccountMenu /> : null}
           </View>

@@ -65,6 +65,15 @@ An applied occurrence whose date has passed. Its amount is what actually
 moved, so a later quote does not change it; only a reclassification does.
 _Avoid_: locked, frozen, historical
 
+**Fulfil**:
+The user's confirmation that a movement the bank reported *is* the occurrence
+a template called for. Distinct from applying, which writes a transaction the
+bank never saw, and from skipping, which says the occurrence should not exist:
+fulfilling says it already happened and here is the proof. Never inferred —
+an earlier version matched these automatically and had to grow a recovery
+action for the ones it got wrong.
+_Avoid_: match, settle, reconcile, link
+
 ### Closing the books
 
 **Closing balance**:
@@ -150,3 +159,20 @@ _Avoid_: DCA, variable template
 The most recent instrument quote stored on a template, used to price an
 occurrence when the quote source has no price to give.
 _Avoid_: cached price, fallback price
+
+### Words about a month
+
+**Month read**:
+A short written account of one month, asked for rather than generated on
+sight, and stored with the figures it was written from. The prose is a
+model's; every number in it is the app's, because the model refers to a figure
+by its name and never writes one itself. It is allowed to suggest changes,
+which is why suggestions sit under a heading of their own rather than mixed in
+with the observations.
+_Avoid_: summary, insight, report, AI analysis
+
+**Datum**:
+One named figure a month read may refer to — a label, a value, and whether
+going up is good, bad or neither. The read's whole vocabulary of numbers, and
+the reason a claim resting on anything else is thrown away.
+_Avoid_: metric, stat, data point

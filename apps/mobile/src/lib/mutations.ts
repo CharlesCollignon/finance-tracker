@@ -1642,3 +1642,133 @@ export async function updateCloseDay(closeDay: number): Promise<ActionResult> {
 
   return { success: true, message: "Reading day updated" };
 }
+
+/* ------------------------------------------ charges the bank already paid */
+
+/**
+ * Confirming, refusing and undoing a fulfilment.
+ *
+ * Nothing here ever runs on its own. An earlier version of this app matched
+ * bank rows to recurring templates automatically, on amount and a five-day
+ * window, and had to grow a recovery action for the ones it swallowed — so
+ * every one of these is the direct result of a press, and the undo is a
+ * first-class action rather than an afterthought.
+ *
+ * The web twin validates the template and the transaction belong to the
+ * caller before writing. Here that check is the database's: row level
+ * security scopes every one of these tables to `auth.uid()`, and the phone
+ * holds no service-role key with which to reach past it.
+ */
+
+/** Whether an error means migration 023 has not run. */
+function fulfilmentSchemaMissing(error: { code?: string } | null): boolean {
+  return (
+    error?.code === "PGRST205" ||
+    error?.code === "42P01" ||
+    error?.code === "42703"
+  );
+}
+
+const FULFILMENT_SETUP_MESSAGE =
+  "Confirming charges needs migration 023 — run it and this will work.";
+
+/** Yes: that movement is the occurrence this template called for. */
+export async function fulfilOccurrence(
+  templateId: string,
+  occurredOn: string,
+  transactionId: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const { error } = await supabase.from("recurring_fulfilments").upsert(
+    {
+      user_id: userId,
+      template_id: templateId,
+      occurred_on: occurredOn,
+      transaction_id: transactionId,
+    },
+    { onConflict: "user_id,template_id,occurred_on" },
+  );
+
+  if (error) {
+    if (fulfilmentSchemaMissing(error)) {
+      return { error: FULFILMENT_SETUP_MESSAGE };
+    }
+    // The unique index on transaction_id is the one worth translating: it
+    // means this movement is already standing in for a different occurrence.
+    if (error.code === "23505") {
+      return {
+        error: "That movement is already accounted for by another charge",
+      };
+    }
+    return { error: error.message };
+  }
+
+  return { success: true, message: "Counted — it is no longer forecast" };
+}
+
+/** No: that is not what this charge was. */
+export async function refuseFulfilment(
+  templateId: string,
+  occurredOn: string,
+  transactionId: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const { error } = await supabase.from("recurring_fulfilment_refusals").upsert(
+    {
+      user_id: userId,
+      template_id: templateId,
+      occurred_on: occurredOn,
+      transaction_id: transactionId,
+    },
+    {
+      onConflict: "user_id,template_id,occurred_on,transaction_id",
+      ignoreDuplicates: true,
+    },
+  );
+
+  if (error) {
+    if (fulfilmentSchemaMissing(error)) {
+      return { error: FULFILMENT_SETUP_MESSAGE };
+    }
+    return { error: error.message };
+  }
+
+  // Deliberately says what it will and will not do. The refusal names the
+  // pair, so a better candidate for the same occurrence is still offered.
+  return { success: true, message: "Won't suggest that pairing again" };
+}
+
+/** Take a confirmation back, and put the occurrence back in the forecast. */
+export async function undoFulfilment(
+  templateId: string,
+  occurredOn: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const { error } = await supabase
+    .from("recurring_fulfilments")
+    .delete()
+    .eq("user_id", userId)
+    .eq("template_id", templateId)
+    .eq("occurred_on", occurredOn);
+
+  if (error) {
+    if (fulfilmentSchemaMissing(error)) {
+      return { error: FULFILMENT_SETUP_MESSAGE };
+    }
+    return { error: error.message };
+  }
+
+  return { success: true, message: "Back in the forecast" };
+}

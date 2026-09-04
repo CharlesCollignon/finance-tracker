@@ -1,6 +1,8 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
+import { GLASS_CARD } from "@/lib/glass";
 
 export interface AttentionItem {
   /** Stable key, and the reason this row exists. */
@@ -20,6 +22,16 @@ export interface AttentionItem {
 
 interface MonthAttentionProps {
   items: AttentionItem[];
+  /**
+   * Rows that ask a question rather than send you somewhere.
+   *
+   * Everything in `items` is a link: the decision is made on another surface.
+   * Confirming that a charge arrived is decided here, which needs buttons and
+   * therefore a client component — so it arrives as a slot rather than as an
+   * item. Rendered above the links, because a question in front of you
+   * outranks an errand somewhere else.
+   */
+  slot?: ReactNode;
 }
 
 /**
@@ -33,22 +45,35 @@ interface MonthAttentionProps {
  * absent, which is the strongest thing an interface can say about a quiet
  * month.
  */
-export function MonthAttention({ items }: MonthAttentionProps) {
-  if (items.length === 0) {
+export function MonthAttention({ items, slot }: MonthAttentionProps) {
+  if (items.length === 0 && !slot) {
     return null;
   }
 
   return (
     <section
       aria-label="Needs you"
-      className="overflow-hidden rounded-xl border border-primary-rim/40 bg-card"
+      className={cn(
+        "overflow-hidden rounded-3xl border-primary-rim/40",
+        GLASS_CARD,
+      )}
     >
-      <h2 className="border-b border-border px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <h2 className="border-b border-foreground/10 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         Needs you
       </h2>
+
+      {/* Wrapped here rather than dropped in as a bare sibling. A slot handed
+          in from a server component is not marked as key-checked, and React
+          reports it as a missing key on a list it did not create — see the
+          note in PageContainer. */}
+      {slot ? <div className="flex flex-col">{slot}</div> : null}
+
       <ul className="flex flex-col">
         {items.map((item) => (
-          <li key={item.id} className="border-b border-border last:border-0">
+          <li
+            key={item.id}
+            className="border-b border-foreground/10 last:border-0"
+          >
             <Link
               href={item.href}
               className={cn(

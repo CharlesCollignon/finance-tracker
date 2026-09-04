@@ -21,12 +21,6 @@ import {
 import { useCurrency } from "@/providers/CurrencyProvider";
 import { deleteAllUserData, updateProfile } from "@/lib/mutations";
 import { supabase } from "@/lib/supabase";
-import {
-  applyThemePreference,
-  getThemePreference,
-  setThemePreference,
-  type ThemePreference,
-} from "@/lib/theme";
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -56,16 +50,11 @@ export default function ProfileScreen() {
       (user?.user_metadata?.name as string | undefined) ??
       "",
   );
-  const [theme, setTheme] = useState<ThemePreference>("system");
   const { currency, setCurrency } = useCurrency();
   const [confirmData, setConfirmData] = useState("");
   const [confirmAccount, setConfirmAccount] = useState("");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    void getThemePreference().then(setTheme);
-  }, []);
 
   const provider =
     (user?.app_metadata?.provider as string | undefined) ?? "email";
@@ -194,44 +183,6 @@ export default function ProfileScreen() {
             variant="outline"
             onPress={() => router.push("/categories" as Href)}
           />
-        </Card>
-
-        <Card bezel>
-          <Text className="text-base font-semibold">Appearance</Text>
-          <Text variant="muted" className="mt-1 mb-3">
-            Light, dark, or follow the device.
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {(["light", "dark", "system"] as const).map((value) => {
-              const selected = theme === value;
-              return (
-                <Pressable
-                  key={value}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={`${value} theme`}
-                  onPress={async () => {
-                    setTheme(value);
-                    await setThemePreference(value);
-                    await applyThemePreference(value);
-                  }}
-                  className={`rounded-full border px-4 py-1.5 ${
-                    selected
-                      ? "border-foreground bg-foreground"
-                      : "border-border bg-background"
-                  }`}
-                >
-                  <Text
-                    className={`text-center text-xs font-semibold capitalize ${
-                      selected ? "text-background" : ""
-                    }`}
-                  >
-                    {value}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
         </Card>
 
         <Card bezel>
