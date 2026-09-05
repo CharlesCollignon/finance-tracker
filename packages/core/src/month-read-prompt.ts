@@ -48,12 +48,22 @@ const FIGURE_RULE =
  * shape with a made-up one, the next answer cited it verbatim, and the
  * verifier refused the read — an instruction that demonstrates an id has to
  * demonstrate one that exists.
+ *
+ * The second half is about a failure the figure rule does not cover, because
+ * it is not a made-up number. A model that wants the overshoot and has only
+ * the allowance will point at the allowance and call it the overshoot: every
+ * figure real, the sentence false. `month-facts.ts` answers this properly by
+ * supplying the derived figures, and this sentence is the belt to that
+ * braces — the pack cannot anticipate every relationship a model might want.
  */
 const NAMING_RULE =
   "A placeholder is a number, not a name. Name the category, the cap or the " +
   'month in words, and put the figure beside it: "you spent ' +
   '{{fact:expenses}}", never "the {{fact:expenses}} was high". Each figure\'s ' +
-  "label is in the list; use those words for the name.";
+  "label is in the list; use those words for the name. And use each figure " +
+  'for what its label says it is: "exceeded the allowance by ' +
+  '{{fact:unrecorded-allowance}}" points at the allowance and calls it the ' +
+  "amount it was exceeded by, which is a different thing.";
 
 /**
  * What `basis` is for, which the shape alone does not say.

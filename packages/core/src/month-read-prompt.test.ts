@@ -141,7 +141,9 @@ describe("buildMonthReadPrompt", () => {
 
       expect(occurrences).toBe(2);
       // Last word to the pair, so nothing separates them from the answer.
-      expect(system.trimEnd().endsWith("for the name.")).toBe(true);
+      expect(system.trimEnd().endsWith("which is a different thing.")).toBe(
+        true,
+      );
     });
   });
 

@@ -294,6 +294,19 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
       "neutral",
       "a cap set from this person's own history",
     );
+
+    // How far over, when it is over. Same reasoning as the cap overshoot
+    // above: without it a model writes "exceeded the allowance by 240,00 €",
+    // which is the allowance itself rather than the amount it was exceeded by.
+    const measured = close?.unrecorded ?? pulse?.unrecordedSoFar ?? null;
+    if (measured !== null && measured > unrecordedCap) {
+      money(
+        "unrecorded-over",
+        "Unrecorded spending over the allowance",
+        measured - unrecordedCap,
+        "up-is-bad",
+      );
+    }
   } else {
     missing.push({
       id: "unrecorded-allowance",
@@ -358,6 +371,27 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
       row.remaining,
       "up-is-good",
     );
+    // The overshoot, positive, as a figure of its own.
+    //
+    // Every model tried wrote "overshooting the cap by -62,40 €": it saw the
+    // breach correctly and then quoted the negative balance as the size of it,
+    // because that was the only figure it had. A note telling it to drop the
+    // minus sign did not help, and should not have been expected to — the
+    // model was not confused, it was making do.
+    //
+    // This is the general lesson of the first live reads: a model asked to
+    // write only figures it has been given will, when the figure it wants is
+    // missing, reach for the nearest one it has and assert a relationship that
+    // is not true. The fix is arithmetic on this side of the line, where it can
+    // be tested, rather than an instruction not to do arithmetic on the other.
+    if (row.over) {
+      money(
+        `budget-over:${row.budgetId}`,
+        `${row.label} cap, gone over by`,
+        -row.remaining,
+        "up-is-bad",
+      );
+    }
   }
 
   for (const row of goals.slice(0, MAX_GOALS)) {
