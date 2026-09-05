@@ -184,6 +184,93 @@ describe("buildMonthFacts", () => {
       expect(findFact(pack, "budget-left:b1")!.value).toBe(-62.4);
     });
 
+    it("gives the overshoot as its own positive figure", () => {
+      // Without it a model writes "overshooting the cap by -62,40 €": it has
+      // the breach right and the only figure it holds is the negative balance.
+      // Supplying the subtraction is cheaper and safer than forbidding it.
+      const pack = buildMonthFacts(
+        input({
+          budgets: [
+            {
+              budgetId: "b1",
+              categoryId: "c1",
+              label: "Groceries",
+              limit: 450,
+              spent: 512.4,
+              remaining: -62.4,
+              ratio: 1.14,
+              over: true,
+            },
+          ],
+        }),
+      );
+
+      expect(findFact(pack, "budget-over:b1")).toMatchObject({
+        value: 62.4,
+        sense: "up-is-bad",
+      });
+    });
+
+    it("offers no overshoot for a cap that holds", () => {
+      const pack = buildMonthFacts(
+        input({
+          budgets: [
+            {
+              budgetId: "b1",
+              categoryId: "c1",
+              label: "Groceries",
+              limit: 450,
+              spent: 300,
+              remaining: 150,
+              ratio: 0.67,
+              over: false,
+            },
+          ],
+        }),
+      );
+
+      expect(factIds(pack).has("budget-over:b1")).toBe(false);
+    });
+
+    it("says how far unrecorded spending went past the allowance", () => {
+      // Same failure, different figure: "exceeded the allowance by 240,00 €"
+      // is the allowance itself, quoted for want of the difference.
+      const pack = buildMonthFacts(
+        input({
+          unrecordedCap: 240,
+          close: {
+            monthKey: "2026-03",
+            unrecorded: 268.3,
+            kept: 1240,
+            keptRate: 38.8,
+            cashChange: 900,
+          },
+        }),
+      );
+
+      expect(findFact(pack, "unrecorded-over")).toMatchObject({
+        value: 28.3,
+        sense: "up-is-bad",
+      });
+    });
+
+    it("offers no overshoot while the allowance holds", () => {
+      const pack = buildMonthFacts(
+        input({
+          unrecordedCap: 400,
+          close: {
+            monthKey: "2026-03",
+            unrecorded: 268.3,
+            kept: 1240,
+            keptRate: 38.8,
+            cashChange: 900,
+          },
+        }),
+      );
+
+      expect(factIds(pack).has("unrecorded-over")).toBe(false);
+    });
+
     it("bounds the per-entity families so the prompt cannot grow with a category list", () => {
       const pack = buildMonthFacts(
         input({
