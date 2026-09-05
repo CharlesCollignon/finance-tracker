@@ -41,7 +41,7 @@ export default function DashboardLoading() {
           </div>
         </div>
 
-        {/* Untracked spending against its target. */}
+        {/* Unrecorded spending against its target. */}
         <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
           <Bone className="h-4 w-44" />
           <div className="flex items-baseline justify-between gap-3">

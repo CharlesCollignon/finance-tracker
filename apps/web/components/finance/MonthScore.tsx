@@ -73,7 +73,7 @@ export function MonthScore({
   return (
     <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-medium">Untracked spending, so far</h2>
+        <h2 className="text-sm font-medium">Unrecorded spending, so far</h2>
         <div className="flex shrink-0 items-center gap-2">
           {streak > 1 ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
@@ -165,11 +165,22 @@ export function MonthScore({
         </p>
       )}
 
+      {/* Where the link goes depends on what the card just said. It used to
+          be one unconditional "Set this up → /budgets", which was a dead end
+          in the state above this one: when the ledger and the balance
+          disagree there is nothing on the Plan page that would help, and
+          being sent there to find nothing to do is worse than no link. The
+          fix for a disagreement is to find the missing entry or the
+          duplicate, which lives on the ledger. */}
       <Link
-        href="/budgets"
+        href={pulse.overRecorded ? "/transactions" : "/budgets"}
         className="flex w-fit items-center gap-1 text-sm text-primary-ink"
       >
-        {hasStreak ? "Every month you have closed" : "Set this up"}
+        {pulse.overRecorded
+          ? "Find the missing entry"
+          : hasStreak
+            ? "Every month you have closed"
+            : "Set this up"}
         <ArrowRight size={13} />
       </Link>
     </section>
