@@ -630,7 +630,7 @@ export default function MonthScreen() {
             />
           ) : null}
 
-          {/* Only for the month in progress. A finished month's untracked
+          {/* Only for the month in progress. A finished month's unrecorded
               spending is a settled figure and belongs to its close, which the
               recap above reports. */}
           {!firstRun && isCurrentMonth && pulse && closes ? (

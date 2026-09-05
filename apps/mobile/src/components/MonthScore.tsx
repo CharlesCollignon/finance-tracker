@@ -59,7 +59,7 @@ export function MonthScore({
   return (
     <Card bezel innerClassName="gap-4 p-5">
       <View className="flex-row flex-wrap items-center justify-between gap-2">
-        <Text className="text-sm font-medium">Untracked spending, so far</Text>
+        <Text className="text-sm font-medium">Unrecorded spending, so far</Text>
         <View className="flex-row items-center gap-2">
           {streak > 1 ? (
             <View className="flex-row items-center gap-1 rounded-full bg-accent px-2 py-0.5">

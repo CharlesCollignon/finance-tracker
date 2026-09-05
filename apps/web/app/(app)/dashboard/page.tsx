@@ -92,7 +92,7 @@ interface DashboardPageProps {
  * block, not a slow page.
  *
  * The month closes are no longer fetched here. The hero now needs them too —
- * measuring untracked spending starts from the last close — so they are read
+ * measuring unrecorded spending starts from the last close — so they are read
  * once in the page body and handed down, rather than replayed twice.
  */
 async function AttentionSlot({
@@ -478,7 +478,7 @@ export default async function DashboardPage({
           />
         )}
 
-        {/* Only for the month in progress. A finished month's untracked
+        {/* Only for the month in progress. A finished month's unrecorded
             spending is a settled figure and belongs to its close, which the
             recap below reports. */}
         {!firstRun && isCurrentMonth ? (
@@ -560,7 +560,7 @@ export default async function DashboardPage({
 }
 
 /**
- * The balance this month's untracked spending is measured from.
+ * The balance this month's unrecorded spending is measured from.
  *
  * Only the close of the month immediately before counts. A user who has
  * fallen behind has a newest close two or three months back, and measuring
