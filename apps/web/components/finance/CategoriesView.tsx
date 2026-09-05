@@ -38,6 +38,39 @@ interface CategoriesViewProps {
   categories: Category[];
 }
 
+/**
+ * What it means that this category does not count toward the month.
+ *
+ * The flag does something different, and differently important, for each
+ * type — and until now only the investment case was visible. That left a
+ * savings pair like "Savings account" and "From savings" looking identical in
+ * the list, when one adds to what was set aside and the other subtracts from
+ * it. The direction lives in the checkbox, not in the name someone typed, so
+ * the list has to show it.
+ *
+ * Null for a category that counts normally, and for expenses, which cannot
+ * carry the flag at all.
+ */
+function notCountingLabel(category: {
+  type: CategoryType;
+  counts_toward_summary: boolean;
+}): string | null {
+  if (category.counts_toward_summary !== false) {
+    return null;
+  }
+  switch (category.type) {
+    case "investment":
+      // Bought inside a wallet with money that already left as a transfer.
+      return "Tracking";
+    case "savings":
+      return "Withdrawal";
+    case "income":
+      return "Reimbursement";
+    default:
+      return null;
+  }
+}
+
 export function CategoriesView({ categories }: CategoriesViewProps) {
   const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
@@ -127,12 +160,11 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                           <p className="truncate font-medium">
                             {category.name}
                           </p>
-                          {category.type === "investment" &&
-                            category.counts_toward_summary === false && (
-                              <Badge size="sm" variant="outline">
-                                Tracking
-                              </Badge>
-                            )}
+                          {notCountingLabel(category) ? (
+                            <Badge size="sm" variant="outline">
+                              {notCountingLabel(category)}
+                            </Badge>
+                          ) : null}
                           {category.archived && (
                             <Badge size="sm" variant="outline">
                               Archived
