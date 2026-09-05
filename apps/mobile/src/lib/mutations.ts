@@ -3,6 +3,7 @@ import {
   authSchema,
   categorySchema,
   deleteTransactionsSchema,
+  moveTransactionsSchema,
   importTransactionsSchema,
   recurringTemplateSchema,
   transactionSchema,
@@ -1457,6 +1458,55 @@ export async function deleteTransactions(
   }
 
   return { success: true, deleted: count ?? parsed.data.ids.length };
+}
+
+/**
+ * Moves several transactions into another category.
+ *
+ * The web twin carries the reasoning. The check worth repeating here: the
+ * target category is confirmed to belong to this user before the update,
+ * because the policy on `transactions` polices which rows may be written and
+ * not what they may point at.
+ */
+export async function moveTransactions(
+  ids: string[],
+  categoryId: string,
+): Promise<ActionResult & { moved?: number }> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = moveTransactionsSchema.safeParse({ ids, categoryId });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid selection" };
+  }
+
+  const { data: category, error: categoryError } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("id", parsed.data.categoryId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (categoryError) {
+    return { error: categoryError.message };
+  }
+  if (!category) {
+    return { error: "That category does not exist." };
+  }
+
+  const { error, count } = await supabase
+    .from("transactions")
+    .update({ category_id: parsed.data.categoryId }, { count: "exact" })
+    .eq("user_id", userId)
+    .in("id", parsed.data.ids);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true, moved: count ?? parsed.data.ids.length };
 }
 
 /* ------------------------------------------------------------ closing a month */

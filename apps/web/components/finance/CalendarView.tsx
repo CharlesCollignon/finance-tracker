@@ -12,8 +12,9 @@ import { MonthPicker } from "@/components/layout/MonthPicker";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { RowCheckbox, SelectionBar } from "@/components/finance/SelectionBar";
 import { useToast } from "@/components/layout/ToastProvider";
-import { deleteTransactions } from "@/lib/actions/finance";
+import { deleteTransactions, moveTransactions } from "@/lib/actions/finance";
 import {
+  planSelectionMove,
   selectAllState,
   summarizeSelection,
   toggleSelectAll,
@@ -132,6 +133,34 @@ export function CalendarView({
       }
       toast(
         `${result.deleted} ${result.deleted === 1 ? "transaction" : "transactions"} deleted`,
+        "success",
+      );
+      leaveSelectMode();
+    });
+  }
+
+  function planMove(categoryId: string) {
+    const target = categories.find((category) => category.id === categoryId);
+    return target
+      ? planSelectionMove(transactions, selected, {
+          id: target.id,
+          type: target.type,
+        })
+      : null;
+  }
+
+  function handleBulkMove(categoryId: string) {
+    startDelete(async () => {
+      const result = await moveTransactions([...selected], categoryId);
+      if (result.error) {
+        toast(result.error, "error");
+        return;
+      }
+      const name =
+        categories.find((category) => category.id === categoryId)?.name ??
+        "the new category";
+      toast(
+        `${result.moved} ${result.moved === 1 ? "transaction" : "transactions"} moved to ${name}`,
         "success",
       );
       leaveSelectMode();
@@ -421,6 +450,9 @@ export function CalendarView({
         pending={deletePending}
         onCancel={leaveSelectMode}
         onDelete={handleBulkDelete}
+        categories={categories}
+        planMove={planMove}
+        onMove={handleBulkMove}
       />
 
       <TransactionForm

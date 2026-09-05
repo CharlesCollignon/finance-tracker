@@ -39,11 +39,13 @@ import { buildStillToCome } from "@finance/core/still-to-come";
 import {
   applyRecurringForMonth,
   deleteTransactions,
+  moveTransactions,
   previewApplyRecurringForMonth,
 } from "@/lib/actions/finance";
 import { ApplyRecurringSheet } from "@/components/finance/ApplyRecurringSheet";
 import { RowCheckbox, SelectionBar } from "@/components/finance/SelectionBar";
 import {
+  planSelectionMove,
   pruneSelection,
   selectAllState,
   summarizeSelection,
@@ -315,6 +317,34 @@ export function TransactionsView({
       }
       toast(
         `${result.deleted} ${result.deleted === 1 ? "transaction" : "transactions"} deleted`,
+        "success",
+      );
+      leaveSelectMode();
+    });
+  }
+
+  function planMove(categoryId: string) {
+    const target = categories.find((category) => category.id === categoryId);
+    return target
+      ? planSelectionMove(transactions, selected, {
+          id: target.id,
+          type: target.type,
+        })
+      : null;
+  }
+
+  function handleBulkMove(categoryId: string) {
+    startDelete(async () => {
+      const result = await moveTransactions([...selected], categoryId);
+      if (result.error) {
+        toast(result.error, "error");
+        return;
+      }
+      const name =
+        categories.find((category) => category.id === categoryId)?.name ??
+        "the new category";
+      toast(
+        `${result.moved} ${result.moved === 1 ? "transaction" : "transactions"} moved to ${name}`,
         "success",
       );
       leaveSelectMode();
@@ -743,6 +773,9 @@ export function TransactionsView({
         pending={deletePending}
         onCancel={leaveSelectMode}
         onDelete={handleBulkDelete}
+        categories={categories}
+        planMove={planMove}
+        onMove={handleBulkMove}
       />
 
       <ApplyRecurringSheet

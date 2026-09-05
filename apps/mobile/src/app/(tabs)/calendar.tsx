@@ -23,11 +23,12 @@ import type {
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { MonthPicker } from "@/components/MonthPicker";
 import { PrivateAmount } from "@/components/PrivateAmount";
-import { deleteTransactions } from "@/lib/mutations";
+import { deleteTransactions, moveTransactions } from "@/lib/mutations";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
 import { RowCheckbox, SelectionBar } from "@/components/SelectionBar";
 import {
   selectAllState,
+  planSelectionMove,
   summarizeSelection,
   toggleSelectAll,
   toggleSelected,
@@ -154,6 +155,41 @@ export default function CalendarScreen() {
     notifyDataChanged();
     toast(
       `${result.deleted} ${result.deleted === 1 ? "transaction" : "transactions"} deleted`,
+      "success",
+    );
+    leaveSelectMode();
+    void onRefresh();
+  }
+
+  function planMove(categoryId: string) {
+    const target = categories.find((category) => category.id === categoryId);
+    // The whole list, not the visible one: whether a merchant keeps being
+    // filed the old way turns on rows this screen may not be showing.
+    return target
+      ? planSelectionMove(transactions, selectedIds, {
+          id: target.id,
+          type: target.type,
+        })
+      : null;
+  }
+
+  async function handleBulkMove(categoryId: string) {
+    setDeletePending(true);
+    const result = await moveTransactions([...selectedIds], categoryId);
+    setDeletePending(false);
+
+    if (result.error) {
+      toast(result.error, "error");
+      return;
+    }
+
+    void hapticSuccess();
+    notifyDataChanged();
+    const name =
+      categories.find((category) => category.id === categoryId)?.name ??
+      "the new category";
+    toast(
+      `${result.moved} ${result.moved === 1 ? "transaction" : "transactions"} moved to ${name}`,
       "success",
     );
     leaveSelectMode();
@@ -398,6 +434,9 @@ export default function CalendarScreen() {
         pending={deletePending}
         onCancel={leaveSelectMode}
         onDelete={() => void handleBulkDelete()}
+        categories={categories}
+        planMove={planMove}
+        onMove={(categoryId) => void handleBulkMove(categoryId)}
       />
 
       {formOpen ? (
