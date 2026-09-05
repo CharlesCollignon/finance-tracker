@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Trash, X } from "@phosphor-icons/react";
+import { ArrowsLeftRight, Trash, X } from "@phosphor-icons/react";
 import {
   describeSelectionDeletion,
+  describeSelectionMove,
+  type MoveEffect,
   type SelectionSummary,
 } from "@finance/core/selection";
+import type { Category } from "@finance/core/types/database";
 import { Button } from "@/components/retroui/Button";
+import { CategorySelect } from "@/components/finance/CategorySelect";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +19,11 @@ interface SelectionBarProps {
   pending: boolean;
   onCancel: () => void;
   onDelete: () => void;
+  /** Everything the selection could be moved into. */
+  categories: Category[];
+  /** What moving into `categoryId` would do, for the sentence above the button. */
+  planMove: (categoryId: string) => MoveEffect | null;
+  onMove: (categoryId: string) => void;
 }
 
 /**
@@ -27,21 +36,47 @@ interface SelectionBarProps {
  *
  * Deleting is behind a second press: it is irreversible, and on a list of
  * checkboxes a stray click is easy.
+ *
+ * Moving is not, and deliberately. A move is undone by moving back, so a
+ * confirm step would be friction charging for nothing — except when the
+ * category type changes, which silently rewrites the totals and the unrecorded
+ * spending of every past month the selection touches. That one is worth a
+ * press, and it is the only one that gets it.
  */
 export function SelectionBar({
   summary,
   pending,
   onCancel,
   onDelete,
+  categories,
+  planMove,
+  onMove,
 }: SelectionBarProps) {
   const formatEuro = useFormatCurrency();
   const [confirming, setConfirming] = useState(false);
+  const [choosing, setChoosing] = useState(false);
+  const [target, setTarget] = useState("");
 
   if (summary.count === 0) {
     return null;
   }
 
   const warning = describeSelectionDeletion(summary);
+  const effect = target ? planMove(target) : null;
+  const moveNote = effect
+    ? describeSelectionMove(
+        effect,
+        summary,
+        categories.find((category) => category.id === target)?.name ?? "",
+      )
+    : null;
+  // The only move that asks twice; see the note on this component.
+  const needsConfirm = (effect?.typeChanges ?? 0) > 0;
+
+  function close() {
+    setChoosing(false);
+    setTarget("");
+  }
 
   return (
     <div
@@ -81,6 +116,55 @@ export function SelectionBar({
               </Button>
             </div>
           </>
+        ) : choosing ? (
+          <>
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="selection-move-category"
+                className="text-sm font-medium"
+              >
+                {`Move ${summary.count} ${
+                  summary.count === 1 ? "transaction" : "transactions"
+                } to`}
+              </label>
+              <CategorySelect
+                id="selection-move-category"
+                categories={categories}
+                value={target}
+                placeholder="Pick a category"
+                disabled={pending}
+                onChange={(event) => setTarget(event.target.value)}
+              />
+            </div>
+
+            {/* What it will do, before it does it — including the merchants
+                this will not teach, which is the part nothing else says. */}
+            {moveNote ? (
+              <p className="text-sm text-muted-foreground">{moveNote}</p>
+            ) : null}
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                disabled={pending || !target}
+                onClick={() => {
+                  onMove(target);
+                  close();
+                }}
+              >
+                {pending ? "Moving…" : needsConfirm ? "Yes, move them" : "Move"}
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                disabled={pending}
+                onClick={close}
+              >
+                Cancel
+              </Button>
+            </div>
+          </>
         ) : (
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -100,6 +184,16 @@ export function SelectionBar({
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                disabled={pending}
+                onClick={() => setChoosing(true)}
+              >
+                <ArrowsLeftRight size={16} />
+                Move
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

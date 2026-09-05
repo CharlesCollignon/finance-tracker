@@ -44,6 +44,7 @@ import { RowCheckbox, SelectionBar } from "@/components/SelectionBar";
 import {
   pruneSelection,
   selectAllState,
+  planSelectionMove,
   summarizeSelection,
   toggleSelectAll,
   toggleSelected,
@@ -65,6 +66,7 @@ import {
   applyRecurringForMonth,
   createTransaction,
   deleteTransactions,
+  moveTransactions,
   previewApplyRecurringForMonth,
   unskipRecurringOccurrence,
 } from "@/lib/mutations";
@@ -305,6 +307,41 @@ export default function TransactionsScreen() {
     notifyDataChanged();
     toast(
       `${result.deleted} ${result.deleted === 1 ? "transaction" : "transactions"} deleted`,
+      "success",
+    );
+    leaveSelectMode();
+    void onRefresh();
+  }
+
+  function planMove(categoryId: string) {
+    const target = categories.find((category) => category.id === categoryId);
+    // The whole list, not the visible one: whether a merchant keeps being
+    // filed the old way turns on rows this screen may not be showing.
+    return target
+      ? planSelectionMove(transactions, selected, {
+          id: target.id,
+          type: target.type,
+        })
+      : null;
+  }
+
+  async function handleBulkMove(categoryId: string) {
+    setDeletePending(true);
+    const result = await moveTransactions([...selected], categoryId);
+    setDeletePending(false);
+
+    if (result.error) {
+      toast(result.error, "error");
+      return;
+    }
+
+    void hapticSuccess();
+    notifyDataChanged();
+    const name =
+      categories.find((category) => category.id === categoryId)?.name ??
+      "the new category";
+    toast(
+      `${result.moved} ${result.moved === 1 ? "transaction" : "transactions"} moved to ${name}`,
       "success",
     );
     leaveSelectMode();
@@ -813,6 +850,9 @@ export default function TransactionsScreen() {
         pending={deletePending}
         onCancel={leaveSelectMode}
         onDelete={() => void handleBulkDelete()}
+        categories={categories}
+        planMove={planMove}
+        onMove={(categoryId) => void handleBulkMove(categoryId)}
       />
 
       <ApplyRecurringSheet

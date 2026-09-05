@@ -31,6 +31,23 @@ export const deleteTransactionsSchema = z.object({
     .max(200, "Select at most 200 transactions at a time"),
 });
 
+/**
+ * Moving a selection into another category.
+ *
+ * The same ceiling as deleting, for the same reason: past it, the user means
+ * "refile the whole month", which wants a different interface and a different
+ * set of warnings. Reversible where deleting is not — moving them back is a
+ * second move — which is why the UI only asks twice when the category type
+ * changes and past months' arithmetic moves with it.
+ */
+export const moveTransactionsSchema = z.object({
+  ids: z
+    .array(z.string().uuid())
+    .min(1, "Nothing selected")
+    .max(200, "Select at most 200 transactions at a time"),
+  categoryId: z.string().uuid("Pick a category"),
+});
+
 /** One row of a reviewed CSV import, as the user confirmed it. */
 export const importedTransactionSchema = z.object({
   categoryId: z.string().uuid(),

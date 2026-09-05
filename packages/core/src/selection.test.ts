@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   describeSelectionDeletion,
+  describeSelectionMove,
+  planSelectionMove,
   pruneSelection,
   selectAllState,
   summarizeSelection,
@@ -201,5 +203,182 @@ describe("describeSelectionDeletion", () => {
     expect(describe_(["a", "c", "d"])).toContain(
       "2 of them come from recurring templates",
     );
+  });
+});
+
+/* ------------------------------------------------ moving a selection */
+
+/** A row with a merchant note and a date, which the move logic needs. */
+function shop(
+  id: string,
+  note: string,
+  occurredOn: string,
+  categoryId = "cat-1",
+  type: CategoryType = "expense",
+  templateId: string | null = null,
+): TransactionWithCategory {
+  return {
+    id,
+    user_id: "user-1",
+    category_id: categoryId,
+    recurring_template_id: templateId,
+    occurred_on: occurredOn,
+    amount: 10,
+    note,
+    created_at: `${occurredOn}T10:00:00.000Z`,
+    categories: {
+      name: "Groceries",
+      type,
+      icon: null,
+      counts_toward_summary: true,
+    },
+  };
+}
+
+const GROCERIES = { id: "cat-1", type: "expense" as CategoryType };
+const BROKER = { id: "cat-9", type: "investment" as CategoryType };
+
+describe("planSelectionMove", () => {
+  it("counts the rows whose kind of category changes", () => {
+    const effect = planSelectionMove(rows, new Set(["a", "b", "d"]), BROKER);
+
+    // All three are expense/income/savings, none of them investment.
+    expect(effect.typeChanges).toBe(3);
+  });
+
+  it("counts no type change when the target is the same kind", () => {
+    const effect = planSelectionMove(rows, new Set(["a", "c"]), GROCERIES);
+
+    expect(effect.typeChanges).toBe(0);
+  });
+
+  it("reports a merchant it will teach, when the newest row is selected", () => {
+    const history = [
+      shop("old", "CARREFOUR PARIS", "2026-07-04"),
+      shop("new", "CARREFOUR PARIS", "2026-09-01"),
+    ];
+
+    const effect = planSelectionMove(history, new Set(["old", "new"]), BROKER);
+
+    expect(effect.rulesRewritten).toEqual(["CARREFOUR PARIS"]);
+    expect(effect.rulesLeftBehind).toEqual([]);
+  });
+
+  it("reports a merchant left behind when a newer row is not selected", () => {
+    // The whole point of the feature: the merchant index keeps the category
+    // of the most recent transaction, so fixing only the old ones is undone
+    // by the next bank sync, silently.
+    const history = [
+      shop("old", "CARREFOUR PARIS", "2026-07-04"),
+      shop("newer", "CARREFOUR PARIS", "2026-09-01"),
+    ];
+
+    const effect = planSelectionMove(history, new Set(["old"]), BROKER);
+
+    expect(effect.rulesLeftBehind).toEqual(["CARREFOUR PARIS"]);
+    expect(effect.rulesRewritten).toEqual([]);
+  });
+
+  it("treats differently-spelled rows as the same shop", () => {
+    // Same normalisation the merchant index uses, so the two cannot disagree.
+    const history = [
+      shop("old", "carrefour  paris", "2026-07-04"),
+      shop("new", "CARREFOUR PARIS", "2026-09-01"),
+    ];
+
+    const effect = planSelectionMove(history, new Set(["old"]), BROKER);
+
+    expect(effect.rulesLeftBehind).toHaveLength(1);
+  });
+
+  it("says nothing about a merchant already filed to the target", () => {
+    const history = [shop("a", "CARREFOUR", "2026-09-01", "cat-9")];
+
+    const effect = planSelectionMove(history, new Set(["a"]), BROKER);
+
+    expect(effect.rulesRewritten).toEqual([]);
+    expect(effect.rulesLeftBehind).toEqual([]);
+  });
+
+  it("ignores rows with no merchant to key on", () => {
+    const effect = planSelectionMove(rows, new Set(["a"]), BROKER);
+
+    expect(effect.rulesRewritten).toEqual([]);
+    expect(effect.rulesLeftBehind).toEqual([]);
+  });
+
+  it("counts rows a template will keep filing its own way", () => {
+    const effect = planSelectionMove(rows, new Set(["c", "d"]), BROKER);
+
+    expect(effect.recurringCount).toBe(2);
+  });
+});
+
+describe("describeSelectionMove", () => {
+  const summaryOf = (ids: string[], list = rows) =>
+    summarizeSelection(list, new Set(ids));
+
+  it("says nothing when nothing unusual will happen", () => {
+    // Most moves are one category to another of the same kind. A sentence
+    // confirming that nothing happens is a sentence nobody reads.
+    const effect = planSelectionMove(rows, new Set(["a"]), GROCERIES);
+
+    expect(
+      describeSelectionMove(effect, summaryOf(["a"]), "Groceries"),
+    ).toBeNull();
+  });
+
+  it("says nothing for an empty selection", () => {
+    const effect = planSelectionMove(rows, new Set(), BROKER);
+
+    expect(describeSelectionMove(effect, summaryOf([]), "Broker")).toBeNull();
+  });
+
+  it("warns that past months will change when the kind changes", () => {
+    const effect = planSelectionMove(rows, new Set(["a"]), BROKER);
+    const sentence = describeSelectionMove(effect, summaryOf(["a"]), "Broker");
+
+    expect(sentence).toContain("unrecorded spending");
+  });
+
+  it("names the merchants that will keep being filed the old way", () => {
+    // Filed somewhere else today, so moving them to Groceries is a real
+    // change and the merchant rule is genuinely in play.
+    const history = [
+      shop("old", "CARREFOUR", "2026-07-04", "cat-wrong"),
+      shop("newer", "CARREFOUR", "2026-09-01", "cat-wrong"),
+    ];
+    const effect = planSelectionMove(history, new Set(["old"]), GROCERIES);
+    const sentence = describeSelectionMove(
+      effect,
+      summaryOf(["old"], history),
+      "Groceries",
+    );
+
+    expect(sentence).toContain("CARREFOUR");
+    expect(sentence).toContain("still be filed the old way");
+  });
+
+  it("prefers the warning to the reassurance when both apply", () => {
+    // One merchant taught, one left behind. The one that will surprise the
+    // user later is the one worth the space.
+    const history = [
+      shop("taught", "MONOPRIX", "2026-09-02", "cat-wrong"),
+      shop("old", "CARREFOUR", "2026-07-04", "cat-wrong"),
+      shop("newer", "CARREFOUR", "2026-09-01", "cat-wrong"),
+    ];
+    const effect = planSelectionMove(
+      history,
+      new Set(["taught", "old"]),
+      GROCERIES,
+    );
+    const sentence = describeSelectionMove(
+      effect,
+      summaryOf(["taught", "old"], history),
+      "Groceries",
+    );
+
+    expect(sentence).toContain("CARREFOUR");
+    expect(sentence).not.toContain("From now on");
   });
 });

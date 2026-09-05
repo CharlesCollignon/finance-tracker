@@ -31,6 +31,7 @@ import {
   applyRecurringSchema,
   authSchema,
   deleteTransactionsSchema,
+  moveTransactionsSchema,
   importTransactionsSchema,
   parseUuid,
   quickTransactionSchema,
@@ -418,6 +419,65 @@ export async function deleteTransactions(
 
   revalidateRecurringDependents();
   return { deleted: count ?? parsed.data.ids.length };
+}
+
+/**
+ * Moves several transactions into another category.
+ *
+ * The counterpart to the delete above, with one check it does not need: the
+ * target category is a caller-supplied foreign key, and the row-level policy
+ * on `transactions` polices which rows may be written, not what they may
+ * point at. So the category is confirmed to belong to this user first, rather
+ * than trusting an id that arrived from a browser.
+ *
+ * Nothing here touches `bank_feed_items`: a feed row carries no category of
+ * its own, only a `transaction_id`, so moving the transaction is the whole
+ * change. And nothing here rewrites merchant memory, because there is no
+ * merchant memory to rewrite — it is derived from the transactions on every
+ * bank sync, which is what makes this correction stick.
+ */
+export async function moveTransactions(
+  ids: string[],
+  categoryId: string,
+): Promise<{ error?: string; moved?: number }> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  const parsed = moveTransactionsSchema.safeParse({ ids, categoryId });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid selection" };
+  }
+
+  const supabase = await createClient();
+
+  const { data: category, error: categoryError } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("id", parsed.data.categoryId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (categoryError) {
+    return { error: categoryError.message };
+  }
+  if (!category) {
+    return { error: "That category does not exist." };
+  }
+
+  const { error, count } = await supabase
+    .from("transactions")
+    .update({ category_id: parsed.data.categoryId }, { count: "exact" })
+    .eq("user_id", user.id)
+    .in("id", parsed.data.ids);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateRecurringDependents();
+  return { moved: count ?? parsed.data.ids.length };
 }
 
 export async function updateTransaction(
