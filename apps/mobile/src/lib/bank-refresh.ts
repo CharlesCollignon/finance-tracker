@@ -27,8 +27,20 @@ export interface BankRefreshOutcome {
   freshness: PullFreshness | null;
 }
 
-/** Long enough for a bank round trip, short enough not to hang a gesture. */
-const TIMEOUT_MS = 45_000;
+/**
+ * Deliberately longer than the route's own ceiling.
+ *
+ * `/api/bank/refresh` declares `maxDuration = 60`, so by sixty seconds the
+ * server has answered one way or the other — with a result, or with its own
+ * account of what went wrong. Giving up at forty-five turned a slow but
+ * successful pull into "could not reach your bank" here while the server
+ * finished the sync and recorded the pull, which is the one report worse than
+ * a failure: an error for something that worked.
+ *
+ * So this waits the server out and lets the real answer win. It fires only
+ * when nothing answers at all.
+ */
+const TIMEOUT_MS = 70_000;
 
 /** Whether asking the bank is possible at all on this build. */
 export function bankRefreshAvailable(): boolean {

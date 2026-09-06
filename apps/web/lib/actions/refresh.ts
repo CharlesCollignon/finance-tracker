@@ -3,7 +3,7 @@
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
-import { bankFeedConfigured } from "@/lib/bank/client";
+import { bankFeedBelongsTo } from "@/lib/bank/client";
 import type { PullFreshness } from "@finance/core/bank-pull";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { syncBankFeed } from "@/lib/bank/sync";
@@ -46,7 +46,7 @@ export async function refreshEverythingAction(): Promise<RefreshResult> {
   // with, so a refresh is a re-read. Worth having anyway: another device may
   // have added something, and the button should not be missing on a screen
   // just because this deployment has no bank wired up.
-  if (!bankFeedConfigured()) {
+  if (!bankFeedBelongsTo(user.id)) {
     revalidateEverySurface();
     return { success: true, message: "Up to date" };
   }

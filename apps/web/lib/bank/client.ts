@@ -76,3 +76,20 @@ export function bankFeedOwnerId(): string | null {
 export function bankFeedConfigured(): boolean {
   return Boolean(ownerUserId() && ownerClient());
 }
+
+/**
+ * Whether the feed belongs to this user in particular.
+ *
+ * The distinction from `bankFeedConfigured()` matters at a gate: that one
+ * answers a deployment-wide question, while `getBankConnection` — which
+ * `syncBankFeed` calls and throws on — is per-user. Gating a refresh on the
+ * deployment-wide answer let a non-owner through the friendly "no bank"
+ * branch and into that throw, so the same condition came back as a hard
+ * error for them and as a soft notice for everyone else.
+ *
+ * Deliberately defined in terms of `getBankConnection` rather than repeating
+ * its ownership test, so the gate cannot drift from the requirement again.
+ */
+export function bankFeedBelongsTo(userId: string): boolean {
+  return getBankConnection(userId) !== null;
+}

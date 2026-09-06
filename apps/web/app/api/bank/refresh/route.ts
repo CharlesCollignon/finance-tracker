@@ -1,5 +1,5 @@
 import { autoCloseMonths } from "@/lib/bank/auto-close";
-import { bankFeedConfigured } from "@/lib/bank/client";
+import { bankFeedBelongsTo } from "@/lib/bank/client";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { syncBankFeed } from "@/lib/bank/sync";
 import { sessionFromBearer } from "@/lib/supabase/bearer";
@@ -39,9 +39,11 @@ export async function POST(request: Request) {
     return Response.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  if (!bankFeedConfigured()) {
+  if (!bankFeedBelongsTo(session.userId)) {
     // Nothing outside the database to reconcile with. Not an error: the
-    // client's own re-read is still the right thing to do.
+    // client's own re-read is still the right thing to do. Asked per user,
+    // because a deployment holding someone else's credentials has no bank to
+    // offer this caller either.
     return Response.json({ pulled: false, message: "No bank is connected." });
   }
 
