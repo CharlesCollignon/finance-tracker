@@ -43,6 +43,7 @@ import {
   toggleRecurringActive,
 } from "@/lib/mutations";
 import { getCategories, getRecurringTemplates } from "@/lib/queries";
+import { useTabBarClearance } from "@/theme/chrome";
 
 /** Recurring only covers allocations; income has no recurring template. */
 type AllocType = Exclude<CategoryType, "income">;
@@ -56,6 +57,7 @@ const GROUP_LABELS: Record<AllocType, string> = {
 };
 
 export default function RecurringScreen() {
+  const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
@@ -185,7 +187,7 @@ export default function RecurringScreen() {
       ) : null}
 
       {remindersPrompt ? (
-        <Card bezel className="mb-4" innerClassName="gap-3 p-4">
+        <Card bezel className="mb-4" innerClassName="gap-3 p-5">
           <Text className="text-sm font-medium">
             Want a nudge before these post?
           </Text>
@@ -243,6 +245,7 @@ export default function RecurringScreen() {
           const selected = activeTab === type;
           return (
             <Pressable
+              hitSlop={8}
               key={type}
               accessibilityRole="button"
               accessibilityState={{ selected }}
@@ -280,8 +283,8 @@ export default function RecurringScreen() {
           }
           ListEmptyComponent={
             <EmptyState
-              title="No recurring items yet"
-              description="Rent, salary, subscriptions, DCA contributions — anything that repeats. Add them once and Pluclair fills each month for you."
+              title="What repeats each month?"
+              description="Rent, salary, subscriptions, DCA."
             >
               <Button
                 label="Add recurring item"
@@ -294,12 +297,15 @@ export default function RecurringScreen() {
               />
             </EmptyState>
           }
-          contentContainerClassName="gap-4 pb-28"
+          contentContainerClassName="gap-4"
+          contentContainerStyle={{ paddingBottom: tabBarClearance }}
           renderItem={({ item, index }) => (
             <StaggerItem index={index}>
               <Card
                 bezel
                 className={item.active ? "" : "opacity-60"}
+                /* The one card off the 20 padding: these are list rows,
+                   and a row that tall stops the list being scannable. */
                 innerClassName="flex-row items-start gap-3 p-3"
               >
                 <Pressable

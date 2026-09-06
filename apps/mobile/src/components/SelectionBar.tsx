@@ -17,6 +17,7 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 /** Mirrors the tab bar height so the sheet clears it. */
 const TAB_BAR_HEIGHT = 60;
@@ -168,7 +169,7 @@ export function SelectionBar({
                       {target === category.id ? (
                         <Ionicons
                           name="checkmark"
-                          size={16}
+                          size={ICON.md}
                           color={colors.primary}
                         />
                       ) : null}
@@ -247,7 +248,11 @@ export function SelectionBar({
                 disabled={pending}
                 onPress={onCancel}
               >
-                <Ionicons name="close" size={20} color={colors.foreground} />
+                <Ionicons
+                  name="close"
+                  size={ICON.xl}
+                  color={colors.foreground}
+                />
               </Pressable>
             </View>
           </View>
@@ -282,7 +287,11 @@ export function RowCheckbox({
       )}
     >
       {checked ? (
-        <Ionicons name="checkmark" size={16} color={colors.primaryForeground} />
+        <Ionicons
+          name="checkmark"
+          size={ICON.md}
+          color={colors.primaryForeground}
+        />
       ) : null}
     </Pressable>
   );

@@ -23,11 +23,13 @@ import { Button } from "@/components/ui/Button";
 import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
+import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { createTransaction, setTransactionTags } from "@/lib/mutations";
 import { useCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", USD: "$" };
 
@@ -226,7 +228,7 @@ function QuickAddFields({
   return (
     <View className="max-h-[92%] rounded-t-3xl border border-border bg-card">
       <View className="items-center pt-3">
-        <View className="h-1 w-10 rounded-full bg-hairline-strong" />
+        <SheetGrabber />
       </View>
 
       <View className="flex-row items-center justify-between px-5 pb-1 pt-3">
@@ -302,7 +304,7 @@ function QuickAddFields({
                   {key === "backspace" ? (
                     <Ionicons
                       name="backspace-outline"
-                      size={22}
+                      size={ICON.xl}
                       color={colors.foreground}
                     />
                   ) : (
@@ -408,7 +410,7 @@ function QuickAddFields({
           <View className="mb-3 flex-row items-center gap-2 rounded-full border border-border bg-background px-3">
             <Ionicons
               name="search-outline"
-              size={16}
+              size={ICON.md}
               color={colors.mutedForeground}
             />
             <TextInput

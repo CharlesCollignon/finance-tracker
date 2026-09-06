@@ -58,7 +58,7 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
   const saving = savingAtCheapest(summary);
 
   return (
-    <Card bezel innerClassName="gap-2 p-4">
+    <Card bezel innerClassName="gap-2 p-5">
       <View className="flex-row flex-wrap items-baseline justify-between gap-2">
         <Text className="font-bold">What holding this costs</Text>
         {summary.weightedAverage !== null ? (
@@ -123,7 +123,10 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
       )}
 
       {summary.missingCount > 0 ? (
-        <Text variant="muted" className="mt-1 border-t border-border pt-2 text-xs">
+        <Text
+          variant="muted"
+          className="mt-1 border-t border-border pt-2 text-xs"
+        >
           {`${summary.missingCount} ${
             summary.missingCount === 1 ? "holding has" : "holdings have"
           } no charge recorded${

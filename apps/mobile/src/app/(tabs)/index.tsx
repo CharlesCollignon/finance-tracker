@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import {
-  budgetViewOptionLabel,
   formatMonthLabel,
   getCurrentMonth,
   parseMonthParams,
@@ -51,9 +50,14 @@ import { RecentOnAccount } from "@/components/RecentOnAccount";
 import { StillToCome } from "@/components/StillToCome";
 import { MonthWallets } from "@/components/MonthWallets";
 import { ProgressRing, SpendStrip } from "@/components/charts";
-import { TrendCard } from "@/components/TrendCard";
+import {
+  TrendCard,
+  TREND_RANGE_MONTHS,
+  type TrendRange,
+} from "@/components/TrendCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
@@ -66,10 +70,11 @@ import {
 } from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
-import { cn } from "@/lib/cn";
 import { hapticSuccess } from "@/lib/haptics";
 import { useChartSeries } from "@/theme/chart-series";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
+import { useTabBarClearance } from "@/theme/chrome";
 import {
   getBudgets,
   getCategories,
@@ -91,46 +96,6 @@ import {
   type MonthCloseOverview,
   type MonthlyTrendPoint,
 } from "@/lib/queries";
-
-const VIEW_OPTIONS: BudgetViewMode[] = ["current", "month_end"];
-
-/** Compact segmented control, matching the web BudgetViewToggle. */
-function BudgetViewToggle({
-  view,
-  year,
-  month,
-  onChange,
-}: {
-  view: BudgetViewMode;
-  year: number;
-  month: number;
-  onChange: (next: BudgetViewMode) => void;
-}) {
-  return (
-    <View className="flex-row self-center rounded-md border border-border p-0.5">
-      {VIEW_OPTIONS.map((value) => {
-        const active = view === value;
-        return (
-          <Pressable
-            key={value}
-            accessibilityRole="button"
-            onPress={() => onChange(value)}
-            className={cn("rounded-md px-3 py-1.5", active && "bg-primary")}
-          >
-            <Text
-              className={cn(
-                "text-xs font-medium",
-                active ? "text-primary-foreground" : "text-muted-foreground",
-              )}
-            >
-              {budgetViewOptionLabel(value, year, month)}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
 
 /**
  * A card that both links onward and shows the thing it links to.
@@ -164,7 +129,11 @@ function SummaryCard({
           className="flex-row items-center gap-1"
         >
           <Text className="text-sm text-primary-ink">{linkLabel}</Text>
-          <Ionicons name="arrow-forward" size={13} color={colors.primaryInk} />
+          <Ionicons
+            name="arrow-forward"
+            size={ICON.sm}
+            color={colors.primaryInk}
+          />
         </Pressable>
       </View>
       {children}
@@ -173,6 +142,7 @@ function SummaryCard({
 }
 
 export default function MonthScreen() {
+  const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -183,6 +153,7 @@ export default function MonthScreen() {
   const [year, setYear] = useState(now.year);
   const [month, setMonth] = useState(now.month);
   const [view, setView] = useState<BudgetViewMode>("current");
+  const [trendRange, setTrendRange] = useState<TrendRange>("6M");
   const [applyOpen, setApplyOpen] = useState(false);
   const [applyPending, setApplyPending] = useState(false);
   const [closeOpen, setCloseOpen] = useState(false);
@@ -247,7 +218,7 @@ export default function MonthScreen() {
         getBudgets(user.id),
         getSavingsGoals(user.id),
         getCategories(user.id),
-        getMonthlyTrend(user.id),
+        getMonthlyTrend(user.id, TREND_RANGE_MONTHS[trendRange]),
         getTransactions(user.id, year, month),
         getTransactions(user.id, previousYear, previousMonth),
         // Quoting share-priced templates can fail; the month must still
@@ -426,7 +397,7 @@ export default function MonthScreen() {
         monthlyCommitted: buildRunway(0, templates, year, month)
           .monthlyCommitted,
       };
-    }, [user?.id, year, month, view, dataVersion]);
+    }, [user?.id, year, month, view, trendRange, dataVersion]);
 
   const summary = data?.summary;
   const portfolio = data?.portfolio;
@@ -532,20 +503,6 @@ export default function MonthScreen() {
         }}
       />
 
-      {/* The current / month-end distinction is a real one, but it is not the
-          first decision to put in front of someone opening the app, so it sits
-          under the month rather than above the figures. */}
-      {summary ? (
-        <View className="mb-1 items-center">
-          <BudgetViewToggle
-            view={view}
-            year={year}
-            month={month}
-            onChange={setView}
-          />
-        </View>
-      ) : null}
-
       {loading && !summary ? (
         <ScreenSkeleton rows={3} />
       ) : error ? (
@@ -553,8 +510,8 @@ export default function MonthScreen() {
       ) : !summary ? (
         <EmptyState
           className="mt-6"
-          title="Nothing to show for this month yet"
-          description="Pluclair works from what repeats: add your income and your fixed costs once, and every month is forecast for you."
+          title="Set up your month"
+          description="Add what repeats once. Every month is forecast from it."
         >
           <Button
             label="Set up charges"
@@ -568,7 +525,8 @@ export default function MonthScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-4 pb-28 pt-4"
+          contentContainerClassName="gap-4 pt-4"
+          contentContainerStyle={{ paddingBottom: tabBarClearance }}
           showsVerticalScrollIndicator={false}
         >
           <MonthAttention
@@ -586,75 +544,26 @@ export default function MonthScreen() {
             }
           />
 
-          {closes?.history[0] ? (
-            <MonthClosedRecap
-              row={closes.history[0]}
-              streak={closes.summary.streak}
-              cap={closes.settings.unrecordedCap}
-            />
-          ) : null}
-
-          {/* After the figures, never before them: the read interprets what
-              is above it. */}
-          {!firstRun && readFacts ? (
-            <MonthRead
-              year={year}
-              month={month}
-              monthLabel={monthLabel}
-              read={data?.readView?.read ?? null}
-              freshness={data?.readView?.freshness ?? null}
-              facts={readFacts}
-              writesLeft={data?.readWritesLeft ?? 0}
-              writable={monthReadWritable()}
-              onWritten={() => {
-                notifyDataChanged();
-                void onRefresh();
-              }}
-            />
-          ) : null}
-
           {firstRun ? (
             <MonthFirstRun />
           ) : pulse ? (
             <MoneyOnHand
               pulse={pulse}
               monthLabel={monthLabel}
+              year={year}
+              month={month}
+              onBudgetViewChange={setView}
               income={summary.income}
               expenses={summary.expenses}
               remaining={summary.remaining}
               budgetView={view}
               elapsed={elapsed}
+              trend={trend.map((point) => point.net)}
               comparison={comparison}
               savingsRate={savingsRate}
               unreadable={data?.unreadable ?? []}
             />
           ) : null}
-
-          {/* Only for the month in progress. A finished month's unrecorded
-              spending is a settled figure and belongs to its close, which the
-              recap above reports. */}
-          {!firstRun && isCurrentMonth && pulse && closes ? (
-            <MonthScore
-              pulse={pulse}
-              streak={closes.summary.streak}
-              bestStreak={closes.summary.bestStreak}
-              baseline={closes.summary.baseline}
-            />
-          ) : null}
-
-          {/* Only in the as-of-today view: the month-end view has already
-              counted these into the headline, so listing them again would
-              invite the reader to subtract them twice. */}
-          {!firstRun && view === "current" && upcoming ? (
-            <StillToCome
-              outgoing={upcoming.outgoing}
-              leaving={upcoming.leaving}
-              incoming={upcoming.incoming}
-              arriving={upcoming.arriving}
-            />
-          ) : null}
-
-          <RecentOnAccount movements={movements} />
 
           {summary.expenses > 0 ? (
             <SummaryCard
@@ -705,9 +614,71 @@ export default function MonthScreen() {
             </SummaryCard>
           ) : null}
 
-          {portfolio ? <MonthWallets portfolio={portfolio} /> : null}
+          <TrendCard
+            points={trend}
+            range={trendRange}
+            onRangeChange={setTrendRange}
+          />
 
-          <TrendCard points={trend} />
+          {/* Everything that elaborates on the figures above rather than
+              stating them. Closed by default: the point of this screen is
+              the answer, not the whole file on the month. */}
+          <Disclosure label="More this month">
+            {/* After the figures, never before them: the read interprets what
+                is above it. */}
+            {!firstRun && readFacts ? (
+              <MonthRead
+                year={year}
+                month={month}
+                monthLabel={monthLabel}
+                read={data?.readView?.read ?? null}
+                freshness={data?.readView?.freshness ?? null}
+                facts={readFacts}
+                writesLeft={data?.readWritesLeft ?? 0}
+                writable={monthReadWritable()}
+                onWritten={() => {
+                  notifyDataChanged();
+                  void onRefresh();
+                }}
+              />
+            ) : null}
+
+            {/* Only in the as-of-today view: the month-end view has already
+                counted these into the headline, so listing them again would
+                invite the reader to subtract them twice. */}
+            {!firstRun && view === "current" && upcoming ? (
+              <StillToCome
+                outgoing={upcoming.outgoing}
+                leaving={upcoming.leaving}
+                incoming={upcoming.incoming}
+                arriving={upcoming.arriving}
+              />
+            ) : null}
+
+            {/* Only for the month in progress. A finished month's unrecorded
+                spending is a settled figure and belongs to its close, which the
+                recap above reports. */}
+            {!firstRun && isCurrentMonth && pulse && closes ? (
+              <MonthScore
+                pulse={pulse}
+                streak={closes.summary.streak}
+                bestStreak={closes.summary.bestStreak}
+                baseline={closes.summary.baseline}
+              />
+            ) : null}
+
+            <RecentOnAccount movements={movements} />
+
+            {portfolio ? <MonthWallets portfolio={portfolio} /> : null}
+
+            {closes?.history[0] ? (
+              <MonthClosedRecap
+                row={closes.history[0]}
+                streak={closes.summary.streak}
+                cap={closes.settings.unrecordedCap}
+              />
+            ) : null}
+          </Disclosure>
         </ScrollView>
       )}
 

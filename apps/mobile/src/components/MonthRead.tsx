@@ -19,6 +19,7 @@ import { writeMonthRead } from "@/lib/month-read";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 interface MonthReadProps {
   year: number;
@@ -99,7 +100,11 @@ export function MonthRead({
     <Card bezel innerClassName="gap-4 p-5">
       <View className="gap-1">
         <View className="flex-row items-center gap-1.5">
-          <Ionicons name="sparkles-outline" size={13} color={colors.primary} />
+          <Ionicons
+            name="sparkles-outline"
+            size={ICON.sm}
+            color={colors.primary}
+          />
           <Text className="text-sm font-medium">The read</Text>
         </View>
         <Text className="text-xs text-muted-foreground">
@@ -138,7 +143,7 @@ export function MonthRead({
               and a reader should still be able to tell which lines are
               measurements and which are opinions. */}
           {rendered.suggestions.length > 0 ? (
-            <View className="gap-2 border-t border-foreground/10 pt-3">
+            <View className="gap-2 border-t border-border pt-3">
               <Text className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 What to change
               </Text>
@@ -159,7 +164,7 @@ export function MonthRead({
         </Text>
       )}
 
-      <View className="gap-2 border-t border-foreground/10 pt-3">
+      <View className="gap-2 border-t border-border pt-3">
         {freshness ? <Standing freshness={freshness} /> : null}
 
         {writable ? (
@@ -182,7 +187,7 @@ export function MonthRead({
           >
             <Ionicons
               name="create-outline"
-              size={15}
+              size={ICON.md}
               color={
                 left > 0 ? colors.primaryForeground : colors.mutedForeground
               }

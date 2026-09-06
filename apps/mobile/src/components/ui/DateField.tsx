@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 interface DateFieldProps {
   /** ISO date, YYYY-MM-DD. Empty string means unset. */
@@ -100,14 +101,14 @@ export function DateField({
             >
               <Ionicons
                 name="close-circle"
-                size={18}
+                size={ICON.lg}
                 color={colors.mutedForeground}
               />
             </Pressable>
           ) : null}
           <Ionicons
             name="calendar-outline"
-            size={18}
+            size={ICON.lg}
             color={colors.mutedForeground}
           />
         </View>

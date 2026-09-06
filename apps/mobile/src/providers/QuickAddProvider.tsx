@@ -8,15 +8,22 @@ import {
 } from "react";
 import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { QuickAddSheet } from "@/components/QuickAddSheet";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { hapticLight } from "@/lib/haptics";
+import { hapticMedium } from "@/lib/haptics";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { getQuickEntryContext, type QuickEntryContext } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
+import { useTabBarHeight } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 const EMPTY: QuickEntryContext = {
   categories: [],
@@ -32,8 +39,7 @@ interface QuickAddValue {
 
 const QuickAddContext = createContext<QuickAddValue | null>(null);
 
-/** Height of the tab bar the button has to clear. Mirrors TabsLayout. */
-const TAB_BAR_HEIGHT = 60;
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
  * Adding a transaction from anywhere in the tab stack.
@@ -63,7 +69,10 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
     setIsOpen(true);
   }, []);
 
-  const value = useMemo<QuickAddValue>(() => ({ open, isOpen }), [open, isOpen]);
+  const value = useMemo<QuickAddValue>(
+    () => ({ open, isOpen }),
+    [open, isOpen],
+  );
   const context = data ?? EMPTY;
 
   return (
@@ -98,6 +107,14 @@ function QuickAddFab() {
   const quickAdd = useQuickAdd();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  // Asked for rather than restated: the bar grows with the system text size,
+  // and the copy of its height that used to live here did not, so the button
+  // drifted into the bar at the larger accessibility sizes.
+  const barHeight = useTabBarHeight();
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   if (!quickAdd || quickAdd.isOpen) {
     return null;
@@ -109,33 +126,45 @@ function QuickAddFab() {
       style={{
         position: "absolute",
         right: 16,
-        bottom: TAB_BAR_HEIGHT + insets.bottom + 16,
+        bottom: barHeight + insets.bottom + 16,
       }}
     >
-      <Pressable
+      <AnimatedPressable
         accessibilityRole="button"
         accessibilityLabel="Add transaction"
+        onPressIn={() => {
+          scale.value = withTiming(0.92, { duration: 110 });
+        }}
+        onPressOut={() => {
+          scale.value = withTiming(1, { duration: 140 });
+        }}
         onPress={() => {
-          void hapticLight();
+          void hapticMedium();
           quickAdd.open();
         }}
-        style={({ pressed }) => ({
-          height: 56,
-          width: 56,
-          borderRadius: 28,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: colors.primary,
-          transform: [{ scale: pressed ? 0.94 : 1 }],
-          shadowColor: "#000",
-          shadowOpacity: 0.25,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 6,
-        })}
+        style={[
+          {
+            height: 56,
+            width: 56,
+            borderRadius: 28,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: colors.primary,
+            shadowColor: "#000",
+            shadowOpacity: 0.25,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 4 },
+            elevation: 6,
+          },
+          animatedStyle,
+        ]}
       >
-        <Ionicons name="add" size={28} color={colors.primaryForeground} />
-      </Pressable>
+        <Ionicons
+          name="add"
+          size={ICON.hero}
+          color={colors.primaryForeground}
+        />
+      </AnimatedPressable>
     </View>
   );
 }

@@ -11,6 +11,7 @@ import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 interface MonthClosedRecapProps {
   row: ClosedMonthRow;
@@ -50,7 +51,7 @@ export function MonthClosedRecap({ row, streak, cap }: MonthClosedRecapProps) {
         <Text className="text-sm font-medium">{`${row.label} closed`}</Text>
         {streak > 1 ? (
           <View className="flex-row items-center gap-1 rounded-full bg-accent px-2 py-0.5">
-            <Ionicons name="flame" size={11} color={colors.foreground} />
+            <Ionicons name="flame" size={ICON.xs} color={colors.foreground} />
             <Text className="text-xs font-medium">{`${streak} in a row`}</Text>
           </View>
         ) : null}
@@ -115,7 +116,11 @@ export function MonthClosedRecap({ row, streak, cap }: MonthClosedRecapProps) {
         <Text className="text-sm text-primary-ink">
           Every month you have closed
         </Text>
-        <Ionicons name="arrow-forward" size={13} color={colors.primaryInk} />
+        <Ionicons
+          name="arrow-forward"
+          size={ICON.sm}
+          color={colors.primaryInk}
+        />
       </Pressable>
     </Card>
   );

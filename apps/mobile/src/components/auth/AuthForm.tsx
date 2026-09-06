@@ -1,6 +1,14 @@
 import { Link, type Href } from "expo-router";
-import { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
+import { useRef, useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import { Orb } from "@/components/Orb";
 import { Button } from "@/components/ui/Button";
@@ -8,6 +16,7 @@ import { Blur } from "@/components/ui/Blur";
 import { Input } from "@/components/ui/Input";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
+import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { validateAuthInput } from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
@@ -20,6 +29,11 @@ export interface AuthFormProps {
   footerLinkLabel: string;
   footerHref: Href;
   showPasskey?: boolean;
+  /**
+   * Signup rather than sign-in. Drives the password field's autofill contract:
+   * a manager should offer to generate here and to fill everywhere else.
+   */
+  newPassword?: boolean;
 }
 
 export function AuthForm({
@@ -30,6 +44,7 @@ export function AuthForm({
   footerLinkLabel,
   footerHref,
   showPasskey = false,
+  newPassword = false,
 }: AuthFormProps) {
   const { signInWithGoogle, signInWithPasskey } = useAuth();
   const colors = useThemeColors();
@@ -37,12 +52,22 @@ export function AuthForm({
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [reveal, setReveal] = useState(false);
+  /** Which field the message belongs to, so the error shows at the field. */
+  const [badField, setBadField] = useState<"email" | "password" | null>(null);
+  const passwordRef = useRef<TextInput>(null);
 
   async function handleSubmit() {
     setMessage(null);
+    setBadField(null);
     const parsed = validateAuthInput(email.trim(), password);
     if (!parsed.success) {
-      setMessage(parsed.error.issues[0]?.message ?? "Invalid credentials");
+      const issue = parsed.error.issues[0];
+      setMessage(issue?.message ?? "Invalid credentials");
+      // The schema names the field it rejected; anything else is a credential
+      // failure the server reports, which belongs to neither field alone.
+      const field = issue?.path[0];
+      setBadField(field === "email" || field === "password" ? field : null);
       return;
     }
     setSubmitting(true);
@@ -55,6 +80,7 @@ export function AuthForm({
 
   async function handleGoogle() {
     setMessage(null);
+    setBadField(null);
     setSubmitting(true);
     const { error } = await signInWithGoogle();
     setSubmitting(false);
@@ -65,6 +91,7 @@ export function AuthForm({
 
   async function handlePasskey() {
     setMessage(null);
+    setBadField(null);
     setSubmitting(true);
     const { error } = await signInWithPasskey();
     setSubmitting(false);
@@ -94,23 +121,77 @@ export function AuthForm({
         >
           <View className="items-stretch gap-4 p-5">
             <Text className="text-center text-2xl font-bold">{title}</Text>
-            <Input
-              placeholder="Email"
-              autoCapitalize="none"
-              autoComplete="email"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-            />
-            <Input
-              placeholder="Password"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
+            <View className="gap-1.5">
+              <Text variant="label">Email</Text>
+              <Input
+                accessibilityLabel="Email address"
+                placeholder="you@example.com"
+                autoCapitalize="none"
+                autoComplete="email"
+                textContentType="emailAddress"
+                keyboardType="email-address"
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                invalid={badField === "email"}
+                value={email}
+                onChangeText={setEmail}
+              />
+            </View>
+
+            <View className="gap-1.5">
+              <Text variant="label">Password</Text>
+              <View className="flex-row items-center gap-2">
+                {/*
+                  Wrapped rather than given flex-1 directly: Input carries
+                  w-full, and a plain class joiner would leave both on the same
+                  element for Yoga to reconcile.
+                */}
+                <View className="flex-1">
+                  <Input
+                    ref={passwordRef}
+                    accessibilityLabel="Password"
+                    placeholder="Your password"
+                    secureTextEntry={!reveal}
+                    autoCapitalize="none"
+                    autoComplete={
+                      newPassword ? "new-password" : "current-password"
+                    }
+                    textContentType={newPassword ? "newPassword" : "password"}
+                    returnKeyType="go"
+                    onSubmitEditing={() => void handleSubmit()}
+                    invalid={badField === "password"}
+                    value={password}
+                    onChangeText={setPassword}
+                  />
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    reveal ? "Hide password" : "Show password"
+                  }
+                  accessibilityState={{ selected: reveal }}
+                  hitSlop={8}
+                  onPress={() => setReveal((value) => !value)}
+                  className="h-12 w-12 items-center justify-center rounded-md border border-border"
+                >
+                  <Ionicons
+                    name={reveal ? "eye-off-outline" : "eye-outline"}
+                    size={ICON.xl}
+                    color={colors.mutedForeground}
+                  />
+                </Pressable>
+              </View>
+            </View>
 
             {message ? (
-              <Text className="text-center text-destructive">{message}</Text>
+              <Text
+                accessibilityRole="alert"
+                accessibilityLiveRegion="polite"
+                className="text-center text-destructive"
+              >
+                {message}
+              </Text>
             ) : null}
 
             <Button

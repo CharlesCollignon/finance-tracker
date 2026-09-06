@@ -9,6 +9,7 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 interface MonthScoreProps {
   pulse: MonthPulse;
@@ -63,7 +64,7 @@ export function MonthScore({
         <View className="flex-row items-center gap-2">
           {streak > 1 ? (
             <View className="flex-row items-center gap-1 rounded-full bg-accent px-2 py-0.5">
-              <Ionicons name="flame" size={11} color={colors.primaryInk} />
+              <Ionicons name="flame" size={ICON.xs} color={colors.primaryInk} />
               <Text className="text-xs font-medium text-accent-foreground">
                 {`${streak} in a row`}
               </Text>
@@ -73,7 +74,7 @@ export function MonthScore({
             <View className="flex-row items-center gap-1 rounded-full border border-border px-2 py-0.5">
               <Ionicons
                 name="trophy-outline"
-                size={11}
+                size={ICON.xs}
                 color={colors.mutedForeground}
               />
               <Text className="text-xs text-muted-foreground">

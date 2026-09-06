@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { FlatList, Pressable, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
@@ -29,14 +29,12 @@ import { cn } from "@/lib/cn";
 import { notifyDataChanged } from "@/lib/data-version";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { importTransactions } from "@/lib/mutations";
-import {
-  getExistingKeysForRange,
-  getQuickEntryContext,
-} from "@/lib/queries";
+import { getExistingKeysForRange, getQuickEntryContext } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 /** A statement bigger than this is almost certainly the wrong file. */
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -239,163 +237,21 @@ export default function ImportScreen() {
 
   return (
     <Screen title="Import">
-      <ScrollView
-        contentContainerClassName="gap-4 pb-16 pt-2"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* ---- 1. choose a file ----------------------------------- */}
-        {step === "choose" ? (
-          <Card bezel innerClassName="gap-4 p-5">
-            <Text className="font-bold" style={{ fontSize: 17 }}>
-              Import a bank statement
-            </Text>
-            <Text variant="muted" className="text-sm">
-              Export a CSV from your bank and pick it here. The file is read on
-              your phone — nothing is uploaded, and nothing is saved until you
-              have reviewed every row.
-            </Text>
-            <Button
-              label="Choose a file"
-              icon="document-outline"
-              onPress={() => void pickFile()}
-            />
-            {problem ? (
-              <Text className="text-sm text-destructive">{problem}</Text>
-            ) : null}
-          </Card>
-        ) : null}
-
-        {/* ---- 2. confirm the columns ------------------------------ */}
-        {step === "map" && mapping ? (
-          <>
-            <Card bezel innerClassName="gap-3 p-5">
-              <Text className="font-bold" style={{ fontSize: 17 }}>
-                Check the columns
-              </Text>
-              <Text variant="muted" className="font-mono text-xs">
-                {`${fileName} · ${dataRows.length} rows`}
-              </Text>
-
-              <Pressable
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: hasHeader }}
-                onPress={() => {
-                  const next = !hasHeader;
-                  setHasHeader(next);
-                  setMapping(
-                    guessColumnMapping(
-                      next
-                        ? (table[0] ?? [])
-                        : (table[0] ?? []).map(
-                            (_, index) => `Column ${index + 1}`,
-                          ),
-                    ),
-                  );
-                }}
-                className="flex-row items-center gap-2 py-1"
-              >
-                <Ionicons
-                  name={hasHeader ? "checkbox" : "square-outline"}
-                  size={20}
-                  color={hasHeader ? colors.primary : colors.mutedForeground}
-                />
-                <Text className="text-sm">The first row is column names</Text>
-              </Pressable>
-
-              <ColumnPicker
-                label="Date"
-                columns={table[0] ?? []}
-                headers={headers}
-                value={mapping.date}
-                onChange={(value) =>
-                  setMapping({ ...mapping, date: value ?? 0 })
-                }
-              />
-              <ColumnPicker
-                label="Description"
-                columns={table[0] ?? []}
-                headers={headers}
-                value={mapping.description}
-                onChange={(value) =>
-                  setMapping({ ...mapping, description: value ?? 0 })
-                }
-              />
-              <ColumnPicker
-                label="Amount"
-                columns={table[0] ?? []}
-                headers={headers}
-                value={mapping.amount}
-                allowNone
-                onChange={(value) =>
-                  setMapping({
-                    ...mapping,
-                    amount: value,
-                    debit: null,
-                    credit: null,
-                  })
-                }
-              />
-              {mapping.amount === null ? (
-                <>
-                  <ColumnPicker
-                    label="Money out (debit)"
-                    columns={table[0] ?? []}
-                    headers={headers}
-                    value={mapping.debit}
-                    allowNone
-                    onChange={(value) =>
-                      setMapping({ ...mapping, debit: value })
-                    }
-                  />
-                  <ColumnPicker
-                    label="Money in (credit)"
-                    columns={table[0] ?? []}
-                    headers={headers}
-                    value={mapping.credit}
-                    allowNone
-                    onChange={(value) =>
-                      setMapping({ ...mapping, credit: value })
-                    }
-                  />
-                </>
-              ) : null}
-            </Card>
-
-            <Card bezel innerClassName="gap-2 p-4">
-              <Text variant="muted" className="text-xs">
-                First rows as read
-              </Text>
-              {dataRows.slice(0, 3).map((row, index) => (
-                <Text
-                  key={index}
-                  numberOfLines={1}
-                  className="font-mono text-xs"
-                >
-                  {row.join(" · ")}
-                </Text>
-              ))}
-            </Card>
-
-            <View className="flex-row gap-2">
-              <Button
-                label="Back"
-                variant="outline"
-                className="flex-1"
-                onPress={() => setStep("choose")}
-              />
-              <Button
-                label={pending ? "Reading…" : "Continue"}
-                className="flex-1"
-                disabled={pending}
-                onPress={() => void buildReview()}
-              />
-            </View>
-          </>
-        ) : null}
-
-        {/* ---- 3. review ------------------------------------------- */}
-        {step === "review" ? (
-          <>
+      {step === "review" ? (
+        /*
+         * A statement can run to thousands of rows, so the review list is
+         * virtualized rather than mounted whole. The summary rides along as
+         * the list header so it scrolls with the rows as it did before.
+         */
+        <FlatList
+          data={rows}
+          keyExtractor={(row) => String(row.line)}
+          contentContainerClassName="gap-4 pb-16 pt-2"
+          showsVerticalScrollIndicator={false}
+          initialNumToRender={12}
+          maxToRenderPerBatch={12}
+          windowSize={7}
+          ListHeaderComponent={
             <Card bezel innerClassName="gap-3 p-5">
               <Text className="font-bold" style={{ fontSize: 17 }}>
                 {`${summary.ready} of ${summary.total} rows ready`}
@@ -444,122 +300,277 @@ export default function ImportScreen() {
                 />
               </View>
             </Card>
+          }
+          renderItem={({ item: row }) => {
+            const needsCategory =
+              row.status === "ready" && row.categoryId === null;
 
-            {rows.map((row) => {
-              const needsCategory =
-                row.status === "ready" && row.categoryId === null;
+            return (
+              <Card
+                key={row.line}
+                bezel
+                innerClassName={cn(
+                  "gap-2 p-5",
+                  row.status !== "ready" && "opacity-60",
+                )}
+              >
+                <View className="flex-row items-baseline justify-between gap-3">
+                  <Text
+                    numberOfLines={1}
+                    className="flex-1 text-sm font-medium"
+                  >
+                    {row.description || "—"}
+                  </Text>
+                  <Text
+                    className={cn(
+                      "font-mono text-sm",
+                      row.type === "income"
+                        ? "text-success"
+                        : "text-foreground",
+                    )}
+                  >
+                    {row.amount === null
+                      ? "—"
+                      : `${row.type === "income" ? "+" : "−"}${formatEuro(row.amount)}`}
+                  </Text>
+                </View>
 
-              return (
-                <Card
-                  key={row.line}
-                  bezel
-                  innerClassName={cn(
-                    "gap-2 p-4",
-                    row.status !== "ready" && "opacity-60",
-                  )}
-                >
-                  <View className="flex-row items-baseline justify-between gap-3">
-                    <Text
-                      numberOfLines={1}
-                      className="flex-1 text-sm font-medium"
-                    >
-                      {row.description || "—"}
+                <View className="flex-row items-center justify-between gap-3">
+                  <Text variant="muted" className="font-mono text-xs">
+                    {row.occurredOn ?? "no date"}
+                  </Text>
+                  <Text
+                    className={cn(
+                      "text-xs",
+                      row.status === "invalid"
+                        ? "text-destructive"
+                        : row.status === "duplicate"
+                          ? "text-muted-foreground"
+                          : "text-success",
+                    )}
+                  >
+                    {row.problem ?? STATUS_LABEL[row.status]}
+                  </Text>
+                </View>
+
+                {row.status !== "invalid" ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Category for ${row.description || "row"}`}
+                    onPress={() => {
+                      void hapticLight();
+                      setExpanded(expanded === row.line ? null : row.line);
+                    }}
+                    className={cn(
+                      "flex-row items-center justify-between rounded-lg border px-3 py-2",
+                      needsCategory
+                        ? "border-destructive"
+                        : "border-border bg-background",
+                    )}
+                  >
+                    <Text className="text-sm">
+                      {row.categoryName ?? "Choose a category"}
                     </Text>
-                    <Text
-                      className={cn(
-                        "font-mono text-sm",
+                    <Ionicons
+                      name={
+                        expanded === row.line ? "chevron-up" : "chevron-down"
+                      }
+                      size={ICON.sm}
+                      color={colors.mutedForeground}
+                    />
+                  </Pressable>
+                ) : null}
+
+                {expanded === row.line ? (
+                  <View className="gap-1.5">
+                    {categoryGroups
+                      .filter((group) =>
                         row.type === "income"
-                          ? "text-success"
-                          : "text-foreground",
-                      )}
-                    >
-                      {row.amount === null
-                        ? "—"
-                        : `${row.type === "income" ? "+" : "−"}${formatEuro(row.amount)}`}
-                    </Text>
+                          ? group.type === "income"
+                          : group.type !== "income",
+                      )
+                      .map((group) => (
+                        <View key={group.type} className="gap-1.5">
+                          <Text variant="muted" className="text-xs">
+                            {group.label}
+                          </Text>
+                          {group.categories.map((cat) => (
+                            <Pressable
+                              key={cat.id}
+                              accessibilityRole="button"
+                              accessibilityLabel={cat.name}
+                              onPress={() => setRowCategory(row.line, cat)}
+                              className="flex-row items-center gap-3 rounded-lg border border-border bg-background px-3 py-2"
+                            >
+                              <CategoryIcon icon={cat.icon} />
+                              <Text className="text-sm">{cat.name}</Text>
+                            </Pressable>
+                          ))}
+                        </View>
+                      ))}
                   </View>
+                ) : null}
+              </Card>
+            );
+          }}
+        />
+      ) : (
+        <ScrollView
+          contentContainerClassName="gap-4 pb-16 pt-2"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* ---- 1. choose a file ----------------------------------- */}
+          {step === "choose" ? (
+            <Card bezel innerClassName="gap-4 p-5">
+              <Text className="font-bold" style={{ fontSize: 17 }}>
+                Import a bank statement
+              </Text>
+              <Text variant="muted" className="text-sm">
+                Export a CSV from your bank and pick it here. The file is read
+                on your phone — nothing is uploaded, and nothing is saved until
+                you have reviewed every row.
+              </Text>
+              <Button
+                label="Choose a file"
+                icon="document-outline"
+                onPress={() => void pickFile()}
+              />
+              {problem ? (
+                <Text className="text-sm text-destructive">{problem}</Text>
+              ) : null}
+            </Card>
+          ) : null}
 
-                  <View className="flex-row items-center justify-between gap-3">
-                    <Text variant="muted" className="font-mono text-xs">
-                      {row.occurredOn ?? "no date"}
-                    </Text>
-                    <Text
-                      className={cn(
-                        "text-xs",
-                        row.status === "invalid"
-                          ? "text-destructive"
-                          : row.status === "duplicate"
-                            ? "text-muted-foreground"
-                            : "text-success",
-                      )}
-                    >
-                      {row.problem ?? STATUS_LABEL[row.status]}
-                    </Text>
-                  </View>
+          {/* ---- 2. confirm the columns ------------------------------ */}
+          {step === "map" && mapping ? (
+            <>
+              <Card bezel innerClassName="gap-3 p-5">
+                <Text className="font-bold" style={{ fontSize: 17 }}>
+                  Check the columns
+                </Text>
+                <Text variant="muted" className="font-mono text-xs">
+                  {`${fileName} · ${dataRows.length} rows`}
+                </Text>
 
-                  {row.status !== "invalid" ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Category for ${row.description || "row"}`}
-                      onPress={() => {
-                        void hapticLight();
-                        setExpanded(expanded === row.line ? null : row.line);
-                      }}
-                      className={cn(
-                        "flex-row items-center justify-between rounded-lg border px-3 py-2",
-                        needsCategory
-                          ? "border-destructive"
-                          : "border-border bg-background",
-                      )}
-                    >
-                      <Text className="text-sm">
-                        {row.categoryName ?? "Choose a category"}
-                      </Text>
-                      <Ionicons
-                        name={
-                          expanded === row.line ? "chevron-up" : "chevron-down"
-                        }
-                        size={14}
-                        color={colors.mutedForeground}
-                      />
-                    </Pressable>
-                  ) : null}
+                <Pressable
+                  hitSlop={8}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: hasHeader }}
+                  onPress={() => {
+                    const next = !hasHeader;
+                    setHasHeader(next);
+                    setMapping(
+                      guessColumnMapping(
+                        next
+                          ? (table[0] ?? [])
+                          : (table[0] ?? []).map(
+                              (_, index) => `Column ${index + 1}`,
+                            ),
+                      ),
+                    );
+                  }}
+                  className="flex-row items-center gap-2 py-1"
+                >
+                  <Ionicons
+                    name={hasHeader ? "checkbox" : "square-outline"}
+                    size={ICON.xl}
+                    color={hasHeader ? colors.primary : colors.mutedForeground}
+                  />
+                  <Text className="text-sm">The first row is column names</Text>
+                </Pressable>
 
-                  {expanded === row.line ? (
-                    <View className="gap-1.5">
-                      {categoryGroups
-                        .filter((group) =>
-                          row.type === "income"
-                            ? group.type === "income"
-                            : group.type !== "income",
-                        )
-                        .map((group) => (
-                          <View key={group.type} className="gap-1.5">
-                            <Text variant="muted" className="text-xs">
-                              {group.label}
-                            </Text>
-                            {group.categories.map((cat) => (
-                              <Pressable
-                                key={cat.id}
-                                accessibilityRole="button"
-                                accessibilityLabel={cat.name}
-                                onPress={() => setRowCategory(row.line, cat)}
-                                className="flex-row items-center gap-3 rounded-lg border border-border bg-background px-3 py-2"
-                              >
-                                <CategoryIcon icon={cat.icon} />
-                                <Text className="text-sm">{cat.name}</Text>
-                              </Pressable>
-                            ))}
-                          </View>
-                        ))}
-                    </View>
-                  ) : null}
-                </Card>
-              );
-            })}
-          </>
-        ) : null}
-      </ScrollView>
+                <ColumnPicker
+                  label="Date"
+                  columns={table[0] ?? []}
+                  headers={headers}
+                  value={mapping.date}
+                  onChange={(value) =>
+                    setMapping({ ...mapping, date: value ?? 0 })
+                  }
+                />
+                <ColumnPicker
+                  label="Description"
+                  columns={table[0] ?? []}
+                  headers={headers}
+                  value={mapping.description}
+                  onChange={(value) =>
+                    setMapping({ ...mapping, description: value ?? 0 })
+                  }
+                />
+                <ColumnPicker
+                  label="Amount"
+                  columns={table[0] ?? []}
+                  headers={headers}
+                  value={mapping.amount}
+                  allowNone
+                  onChange={(value) =>
+                    setMapping({
+                      ...mapping,
+                      amount: value,
+                      debit: null,
+                      credit: null,
+                    })
+                  }
+                />
+                {mapping.amount === null ? (
+                  <>
+                    <ColumnPicker
+                      label="Money out (debit)"
+                      columns={table[0] ?? []}
+                      headers={headers}
+                      value={mapping.debit}
+                      allowNone
+                      onChange={(value) =>
+                        setMapping({ ...mapping, debit: value })
+                      }
+                    />
+                    <ColumnPicker
+                      label="Money in (credit)"
+                      columns={table[0] ?? []}
+                      headers={headers}
+                      value={mapping.credit}
+                      allowNone
+                      onChange={(value) =>
+                        setMapping({ ...mapping, credit: value })
+                      }
+                    />
+                  </>
+                ) : null}
+              </Card>
+
+              <Card bezel innerClassName="gap-2 p-5">
+                <Text variant="muted" className="text-xs">
+                  First rows as read
+                </Text>
+                {dataRows.slice(0, 3).map((row, index) => (
+                  <Text
+                    key={index}
+                    numberOfLines={1}
+                    className="font-mono text-xs"
+                  >
+                    {row.join(" · ")}
+                  </Text>
+                ))}
+              </Card>
+
+              <View className="flex-row gap-2">
+                <Button
+                  label="Back"
+                  variant="outline"
+                  className="flex-1"
+                  onPress={() => setStep("choose")}
+                />
+                <Button
+                  label={pending ? "Reading…" : "Continue"}
+                  className="flex-1"
+                  disabled={pending}
+                  onPress={() => void buildReview()}
+                />
+              </View>
+            </>
+          ) : null}
+        </ScrollView>
+      )}
     </Screen>
   );
 }

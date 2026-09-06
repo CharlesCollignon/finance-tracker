@@ -10,6 +10,7 @@ import { Logo } from "@/components/Logo";
 import { PrivacyToggle } from "@/components/PrivacyToggle";
 import { RefreshButton } from "@/components/RefreshButton";
 import { Text } from "@/components/ui/Text";
+import { CHROME_MAX_FONT_SCALE, useChromeFontScale } from "@/theme/chrome";
 
 export interface ScreenProps {
   title?: string;
@@ -31,7 +32,10 @@ export interface ScreenProps {
   showLogo?: boolean;
 }
 
+/** At the system's default text size; it grows with the setting below. */
 const HEADER_HEIGHT = 56;
+
+const TITLE_SIZE = 18;
 
 /**
  * Space held for the right-hand controls: refresh + eye + account, plus
@@ -60,6 +64,15 @@ export function Screen({
   showAccountMenu = true,
   showLogo = true,
 }: ScreenProps) {
+  /*
+   * The band is a fixed height holding text that the user can scale, so it
+   * grows with the setting rather than cropping the title — the same bound the
+   * tab bar uses. The title is capped to match; past that the band would eat
+   * the screen to serve one line of chrome.
+   */
+  const fontScale = useChromeFontScale();
+  const headerHeight = Math.round(HEADER_HEIGHT * fontScale);
+
   const showHeader =
     Boolean(title) ||
     showPrivacyToggle ||
@@ -77,7 +90,7 @@ export function Screen({
       {showHeader ? (
         <View
           className="border-b border-border"
-          style={{ height: HEADER_HEIGHT }}
+          style={{ height: headerHeight }}
         >
           {/*
             All three zones are positioned absolutely rather than laid out as a
@@ -92,7 +105,8 @@ export function Screen({
           >
             <Text
               className="font-sans text-foreground"
-              style={{ fontSize: 18 }}
+              style={{ fontSize: TITLE_SIZE }}
+              maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
               numberOfLines={1}
             >
               {title}

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
+import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useThemeColors } from "@/theme/useThemeColors";
@@ -29,6 +30,7 @@ import {
   updateTransaction,
 } from "@/lib/mutations";
 import { getTransactionTagIds } from "@/lib/queries";
+import { ICON } from "@/theme/tokens";
 
 interface TransactionFormModalProps {
   open: boolean;
@@ -189,7 +191,7 @@ export function TransactionFormModal({
         />
         <View className="max-h-[90%] rounded-t-3xl border border-border bg-card">
           <View className="items-center pt-3">
-            <View className="h-1 w-10 rounded-full bg-hairline-strong" />
+            <SheetGrabber />
           </View>
           <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
             <Text className="font-semibold" style={{ fontSize: 18 }}>
@@ -210,7 +212,7 @@ export function TransactionFormModal({
               <View className="mb-3 flex-row items-center gap-2 rounded-full border border-border bg-background px-3">
                 <Ionicons
                   name="search-outline"
-                  size={16}
+                  size={ICON.md}
                   color={colors.mutedForeground}
                 />
                 <TextInput

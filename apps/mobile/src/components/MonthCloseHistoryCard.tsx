@@ -19,6 +19,7 @@ import type { ClosedMonthRow } from "@/lib/queries";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useToast } from "@/providers/ToastProvider";
+import { ICON } from "@/theme/tokens";
 
 interface MonthCloseHistoryCardProps {
   history: ClosedMonthRow[];
@@ -81,7 +82,7 @@ export function MonthCloseHistoryCard({
   }
 
   return (
-    <Card className="gap-4 p-4">
+    <Card className="gap-4 p-5">
       <View>
         <View className="flex-row items-center justify-between gap-3">
           <Text className="font-semibold" style={{ fontSize: 16 }}>
@@ -89,7 +90,11 @@ export function MonthCloseHistoryCard({
           </Text>
           {summary.streak > 0 ? (
             <View className="flex-row items-center gap-1 rounded-full bg-accent px-2.5 py-1">
-              <Ionicons name="flame" size={12} color={palette.foreground} />
+              <Ionicons
+                name="flame"
+                size={ICON.xs}
+                color={palette.foreground}
+              />
               <Text className="text-xs font-medium">
                 {summary.bestStreak > summary.streak
                   ? `${summary.streak} in a row · best ${summary.bestStreak}`

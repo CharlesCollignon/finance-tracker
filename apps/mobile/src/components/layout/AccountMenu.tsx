@@ -9,6 +9,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { hapticLight } from "@/lib/haptics";
 import { cn } from "@/lib/cn";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 function initialFor(email: string | undefined, name: string | undefined) {
   const source = (name ?? email ?? "?").trim();
@@ -84,7 +85,7 @@ export function AccountMenu() {
                   >
                     <Ionicons
                       name="settings-outline"
-                      size={18}
+                      size={ICON.lg}
                       color={colors.foreground}
                     />
                     <Text className="text-sm font-medium">Settings</Text>
@@ -100,7 +101,7 @@ export function AccountMenu() {
                   >
                     <Ionicons
                       name="log-out-outline"
-                      size={18}
+                      size={ICON.lg}
                       color={colors.foreground}
                     />
                     <Text className="text-sm font-medium">Sign out</Text>

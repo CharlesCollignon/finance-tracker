@@ -80,6 +80,8 @@ import {
 } from "@/lib/queries";
 import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
+import { ICON } from "@/theme/tokens";
+import { useTabBarClearance } from "@/theme/chrome";
 
 type FilterType = "all" | CategoryType;
 
@@ -104,6 +106,7 @@ const FILTERS: FilterType[] = [
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
 
 export default function TransactionsScreen() {
+  const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
@@ -513,7 +516,7 @@ export default function TransactionsScreen() {
       <View className="mb-3 flex-row items-center gap-2 rounded-full border border-border bg-card px-3">
         <Ionicons
           name="search-outline"
-          size={16}
+          size={ICON.md}
           color={colors.mutedForeground}
         />
         <TextInput
@@ -529,12 +532,11 @@ export default function TransactionsScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Clear search"
-            hitSlop={8}
             onPress={() => setSearch("")}
           >
             <Ionicons
               name="close-circle"
-              size={16}
+              size={ICON.md}
               color={colors.mutedForeground}
             />
           </Pressable>
@@ -583,6 +585,7 @@ export default function TransactionsScreen() {
                 const selected = categoryFilter === option.id;
                 return (
                   <Pressable
+                    hitSlop={8}
                     key={option.id}
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
@@ -611,7 +614,7 @@ export default function TransactionsScreen() {
       ) : null}
 
       {skipped.length > 0 ? (
-        <Card bezel className="mb-4" innerClassName="gap-2 p-4">
+        <Card bezel className="mb-4" innerClassName="gap-2 p-5">
           <Text className="text-sm font-medium">
             {`Skipped this month (${skipped.length})`}
           </Text>
@@ -682,8 +685,8 @@ export default function TransactionsScreen() {
       ) : error ? (
         <Text className="text-destructive">{error}</Text>
       ) : (
-        <View className="flex-1 rounded-[28px] border border-border bg-foreground/[0.04] p-1.5">
-          <View className="flex-1 rounded-[22px] bg-card">
+        <View className="flex-1 rounded-shell border border-border bg-foreground/[0.04] p-1.5">
+          <View className="flex-1 rounded-card bg-card">
             <SectionList
               sections={days}
               keyExtractor={(item) => item.id}
@@ -703,8 +706,8 @@ export default function TransactionsScreen() {
               }
               ListEmptyComponent={
                 <EmptyState
-                  title="No transactions this month"
-                  description="Apply your recurring items to fill the month in one tap, or add a one-off entry."
+                  title="Fill this month"
+                  description="Apply what repeats, or add one entry."
                 >
                   <Button
                     label="Add transaction"
@@ -717,7 +720,8 @@ export default function TransactionsScreen() {
                   />
                 </EmptyState>
               }
-              contentContainerClassName="px-3 py-1 pb-28"
+              contentContainerClassName="px-3 py-1"
+              contentContainerStyle={{ paddingBottom: tabBarClearance }}
               ListFooterComponent={
                 filtered.length > 0 ? (
                   <Text variant="muted" className="py-3 text-center text-xs">

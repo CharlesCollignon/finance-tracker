@@ -48,6 +48,7 @@ import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
+import { useTabBarClearance } from "@/theme/chrome";
 import {
   getCategories,
   getRecurringTemplates,
@@ -58,6 +59,7 @@ import {
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
 
 export default function CalendarScreen() {
+  const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
@@ -209,7 +211,7 @@ export default function CalendarScreen() {
         }}
       />
 
-      <Card bezel className="my-5" innerClassName="p-6">
+      <Card bezel className="my-5" innerClassName="p-5">
         <StatHero
           label={formatMonthLabel(year, month)}
           amount={`${monthTotals.net >= 0 ? "+" : "−"}${formatEuro(Math.abs(monthTotals.net))}`}
@@ -240,7 +242,7 @@ export default function CalendarScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="pb-28"
+          contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
           <View className="mb-2 flex-row">
             {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
@@ -341,7 +343,7 @@ export default function CalendarScreen() {
           {dayTxs.length === 0 ? (
             <EmptyState
               title="Nothing on this day"
-              description="Pick another day, or add what happened on this one."
+              description="Add what happened."
             >
               <Button
                 label="Add transaction"

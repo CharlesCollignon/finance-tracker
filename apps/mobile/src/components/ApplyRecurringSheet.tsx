@@ -12,9 +12,11 @@ import type {
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
+import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 const EMPTY_KEYS: ReadonlySet<string> = new Set();
 
@@ -37,7 +39,7 @@ function Checkbox({ checked }: { checked: boolean }) {
       )}
     >
       {checked ? (
-        <Ionicons name="checkmark" size={14} color={checkColor} />
+        <Ionicons name="checkmark" size={ICON.sm} color={checkColor} />
       ) : null}
     </View>
   );
@@ -178,7 +180,7 @@ export function ApplyRecurringSheet({
           onPress={() => onOpenChange(false)}
         />
         <View className="max-h-[85%] rounded-t-3xl border border-border bg-card p-5">
-          <View className="mb-3 h-1 w-10 self-center rounded-full bg-hairline-strong" />
+          <SheetGrabber />
           <Text className="mb-2 font-semibold" style={{ fontSize: 18 }}>
             Apply recurring
           </Text>

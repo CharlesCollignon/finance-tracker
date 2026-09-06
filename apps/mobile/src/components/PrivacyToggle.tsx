@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { usePrivacy } from "@/providers/PrivacyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { hapticLight } from "@/lib/haptics";
+import { ICON } from "@/theme/tokens";
 
 export function PrivacyToggle() {
   const { hidden, toggle } = usePrivacy();
@@ -11,6 +12,7 @@ export function PrivacyToggle() {
 
   return (
     <Pressable
+      hitSlop={6}
       accessibilityRole="button"
       accessibilityLabel={hidden ? "Show amounts" : "Hide amounts"}
       onPress={() => {
@@ -25,7 +27,7 @@ export function PrivacyToggle() {
     >
       <Ionicons
         name={hidden ? "eye-off-outline" : "eye-outline"}
-        size={18}
+        size={ICON.lg}
         color={hidden ? colors.primary : colors.mutedForeground}
       />
     </Pressable>

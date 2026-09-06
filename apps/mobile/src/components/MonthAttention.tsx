@@ -6,6 +6,7 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 export interface AttentionItem {
   /** Stable key, and the reason this row exists. */
@@ -61,7 +62,7 @@ export function MonthAttention({ items, slot }: MonthAttentionProps) {
       className="overflow-hidden rounded-3xl border bg-card/70"
       style={{ borderColor: colors.primaryRim }}
     >
-      <Text className="border-b border-foreground/10 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <Text className="border-b border-border px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         Needs you
       </Text>
       {slot}
@@ -76,7 +77,7 @@ export function MonthAttention({ items, slot }: MonthAttentionProps) {
           }}
           className={cn(
             "min-h-14 flex-row items-center gap-3 px-4 py-3",
-            (index > 0 || Boolean(slot)) && "border-t border-foreground/10",
+            (index > 0 || Boolean(slot)) && "border-t border-border",
           )}
         >
           <View
@@ -93,7 +94,7 @@ export function MonthAttention({ items, slot }: MonthAttentionProps) {
             </Text>
             <Ionicons
               name="arrow-forward"
-              size={14}
+              size={ICON.sm}
               color={colors.primaryInk}
             />
           </View>

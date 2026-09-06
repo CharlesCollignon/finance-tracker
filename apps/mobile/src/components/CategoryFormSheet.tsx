@@ -8,6 +8,7 @@ import { CATEGORY_ICONS, CategoryIcon } from "@/components/CategoryIcon";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
+import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { cn } from "@/lib/cn";
 import { upsertCategory } from "@/lib/mutations";
 import { useToast } from "@/providers/ToastProvider";
@@ -75,7 +76,7 @@ export function CategoryFormSheet({
         />
         <View className="max-h-[90%] rounded-t-3xl border border-border bg-card">
           <View className="items-center pt-3">
-            <View className="h-1 w-10 rounded-full bg-hairline-strong" />
+            <SheetGrabber />
           </View>
           <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
             <Text className="font-semibold" style={{ fontSize: 18 }}>

@@ -1,7 +1,10 @@
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import type { BudgetViewMode } from "@finance/core/constants";
+import {
+  budgetViewOptionLabel,
+  type BudgetViewMode,
+} from "@finance/core/constants";
 import type { MonthComparison } from "@finance/core/month-comparison";
 import {
   pulseExplanation,
@@ -10,12 +13,15 @@ import {
 } from "@finance/core/month-pulse";
 
 import { AnimatedAmount } from "@/components/AnimatedAmount";
+import { Sparkline } from "@/components/charts";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
+import { hapticSelection } from "@/lib/haptics";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON, TYPE } from "@/theme/tokens";
 
 interface MoneyOnHandProps {
   pulse: MonthPulse;
@@ -25,12 +31,18 @@ interface MoneyOnHandProps {
   /** What the month's arithmetic leaves, for the no-bank case. */
   remaining: number;
   budgetView: BudgetViewMode;
+  /** Switching the view is the label's job now, so the setter comes with it. */
+  onBudgetViewChange: (next: BudgetViewMode) => void;
+  year: number;
+  month: number;
   /** How far through the month today is, 0–1. Null for a month not running. */
   elapsed: number | null;
   comparison: MonthComparison | null;
   savingsRate: number | null;
   /** Named accounts whose balance could not be read, so the gap is visible. */
   unreadable: string[];
+  /** Net per month, oldest first, for the mark beside the figure. */
+  trend: number[];
 }
 
 /**
@@ -49,10 +61,14 @@ export function MoneyOnHand({
   expenses,
   remaining,
   budgetView,
+  onBudgetViewChange,
+  year,
+  month,
   elapsed,
   comparison,
   savingsRate,
   unreadable,
+  trend,
 }: MoneyOnHandProps) {
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
@@ -63,37 +79,42 @@ export function MoneyOnHand({
 
   return (
     <Card bezel innerClassName="gap-5 p-5">
-      <View className="gap-1">
-        <Text className="text-sm text-muted-foreground">
-          {banked
-            ? pulseHeadline(pulse)
-            : `${short ? "Over" : "Left"} in ${monthLabel}${
-                budgetView === "month_end"
-                  ? ", counting what is still to come"
-                  : ""
-              }`}
-        </Text>
-        <View className="flex-row flex-wrap items-end gap-x-3 gap-y-2">
-          <AnimatedAmount
-            value={headlineAmount}
-            format={formatEuro}
-            className={cn(
-              "text-4xl font-semibold",
-              short && "text-destructive",
-            )}
+      <View className="gap-2">
+        {/* The qualifier that used to trail the sentence — "counting what is
+            still to come" — is this control instead. It sits beside the label
+            it modifies rather than in a row of its own above the figures. */}
+        <View className="flex-row items-center justify-between gap-3">
+          <Text variant="label">
+            {banked ? pulseHeadline(pulse) : short ? "Over by" : "Left"}
+          </Text>
+          <BudgetViewControl
+            view={budgetView}
+            year={year}
+            month={month}
+            onChange={onBudgetViewChange}
           />
-          <SpendDelta comparison={comparison} />
         </View>
-        <Text className="text-sm text-muted-foreground">
-          {banked
-            ? pulseExplanation(pulse)
-            : "Connect a bank to lead with what is actually in your account."}
-        </Text>
+
+        <View className="flex-row items-center gap-3">
+          <View className="flex-1 flex-row flex-wrap items-center gap-x-3 gap-y-2">
+            <AnimatedAmount
+              value={headlineAmount}
+              format={formatEuro}
+              style={TYPE.hero}
+              className={cn(short && "text-destructive")}
+            />
+            <SpendDelta comparison={comparison} />
+          </View>
+          {/* Which way it has been going, at the size that answer deserves. */}
+          <Sparkline values={trend} />
+        </View>
       </View>
 
-      {/* The sum, spelled out: what is there, what leaves, what arrives. */}
+      {/* The arithmetic, in figures: what is there, what leaves, what arrives.
+          It says what the explanatory line under the figure used to say, so
+          that line is gone rather than repeating this in words. */}
       {banked ? (
-        <View className="flex-row flex-wrap items-baseline gap-x-1.5 gap-y-1">
+        <View className="-mt-3 flex-row flex-wrap items-baseline gap-x-1.5 gap-y-1">
           <Term label="in the account" amount={formatEuro(pulse.onHand!)} />
           {pulse.committed > 0 ? (
             <>
@@ -116,7 +137,11 @@ export function MoneyOnHand({
             </>
           ) : null}
         </View>
-      ) : null}
+      ) : (
+        <Text variant="micro" className="-mt-3">
+          {pulseExplanation(pulse)}
+        </Text>
+      )}
 
       {elapsed !== null ? (
         <View className="gap-1.5">
@@ -130,13 +155,13 @@ export function MoneyOnHand({
               style={{ width: `${Math.min(100, elapsed * 100)}%` }}
             />
           </View>
-          <Text className="text-xs text-muted-foreground">
+          <Text variant="micro">
             {`${Math.round(elapsed * 100)}% of ${monthLabel} gone`}
           </Text>
         </View>
       ) : null}
 
-      <View className="border-t border-foreground/10">
+      <View className="border-t border-border">
         <Row
           label="Came in"
           value={formatEuro(income)}
@@ -169,6 +194,51 @@ export function MoneyOnHand({
   );
 }
 
+/**
+ * Today's figure or the month's, as one pill.
+ *
+ * Two states, so it toggles rather than opening a menu — a chevron would
+ * promise a list that does not exist. The full wording, with the cutoff date
+ * the short label drops, is what a screen reader is given.
+ */
+function BudgetViewControl({
+  view,
+  year,
+  month,
+  onChange,
+}: {
+  view: BudgetViewMode;
+  year: number;
+  month: number;
+  onChange: (next: BudgetViewMode) => void;
+}) {
+  const colors = useThemeColors();
+  const next: BudgetViewMode = view === "current" ? "month_end" : "current";
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={budgetViewOptionLabel(view, year, month)}
+      accessibilityHint={`Switches to ${budgetViewOptionLabel(next, year, month)}`}
+      hitSlop={8}
+      onPress={() => {
+        void hapticSelection();
+        onChange(next);
+      }}
+      className="flex-row items-center gap-1.5 rounded-full border border-border px-3 py-1.5"
+    >
+      <Text variant="micro" className="text-foreground">
+        {view === "current" ? "Today" : "Month end"}
+      </Text>
+      <Ionicons
+        name="swap-horizontal"
+        size={ICON.xs}
+        color={colors.mutedForeground}
+      />
+    </Pressable>
+  );
+}
+
 function Term({
   label,
   amount,
@@ -182,14 +252,14 @@ function Term({
     <View className="flex-row items-baseline gap-1">
       <PrivateAmount
         className={cn(
-          "text-sm",
+          "text-xs",
           tone === "in" && "text-success",
           tone === "out" && "text-destructive",
         )}
       >
         {amount}
       </PrivateAmount>
-      <Text className="text-sm text-muted-foreground">{label}</Text>
+      <Text className="text-xs text-muted-foreground">{label}</Text>
     </View>
   );
 }
@@ -230,7 +300,7 @@ function SpendDelta({ comparison }: { comparison: MonthComparison | null }) {
     >
       <Ionicons
         name={down ? "trending-down" : "trending-up"}
-        size={11}
+        size={ICON.xs}
         color={down ? colors.success : colors.primary}
       />
       <Text
@@ -265,11 +335,13 @@ function Row({
     <View
       className={cn(
         "flex-row items-center justify-between gap-3 py-2.5",
-        !last && "border-b border-foreground/10",
+        !last && "border-b border-border",
       )}
     >
       <View className="flex-row items-center gap-1.5">
-        {icon ? <Ionicons name={icon} size={13} color={iconColor} /> : null}
+        {icon ? (
+          <Ionicons name={icon} size={ICON.sm} color={iconColor} />
+        ) : null}
         <Text className="text-sm text-muted-foreground">{label}</Text>
       </View>
       {plain ? <Text>{value}</Text> : <PrivateAmount>{value}</PrivateAmount>}

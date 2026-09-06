@@ -9,6 +9,8 @@ import Animated, {
 
 import { hapticLight } from "@/lib/haptics";
 import { cn } from "@/lib/cn";
+import { ICON, type COLORS } from "@/theme/tokens";
+import { useThemeColors } from "@/theme/useThemeColors";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -42,6 +44,19 @@ const LABEL: Record<Variant, string> = {
   pill: "text-primary-foreground",
 };
 
+/**
+ * The trailing nub's icon takes the same ink as the label above it. It had been
+ * a hardcoded warm brown, which is the one colour in the button that no theme
+ * token could move.
+ */
+const ICON_INK: Record<Variant, keyof typeof COLORS> = {
+  default: "primaryForeground",
+  secondary: "secondaryForeground",
+  outline: "foreground",
+  ghost: "foreground",
+  pill: "primaryForeground",
+};
+
 const PADDING: Record<Size, string> = {
   sm: "px-3 py-1.5",
   md: "px-4 py-2.5",
@@ -65,6 +80,7 @@ export function Button({
   onPress,
   ...props
 }: ButtonProps) {
+  const colors = useThemeColors();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -101,7 +117,11 @@ export function Button({
       </Text>
       {icon ? (
         <View className="h-8 w-8 items-center justify-center rounded-full bg-black/10">
-          <Ionicons name={icon} size={16} color="#171100" />
+          <Ionicons
+            name={icon}
+            size={ICON.md}
+            color={colors[ICON_INK[variant]]}
+          />
         </View>
       ) : null}
     </AnimatedPressable>

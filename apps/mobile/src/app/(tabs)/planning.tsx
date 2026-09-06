@@ -38,6 +38,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useChartSeries } from "@/theme/chart-series";
+import { useTabBarClearance } from "@/theme/chrome";
 import {
   getBudgets,
   getCategories,
@@ -81,6 +82,7 @@ function pacingHint(
 }
 
 export default function PlanningScreen() {
+  const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
   // The third chart series, matching the web app's goal rings.
@@ -239,7 +241,8 @@ export default function PlanningScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-4 pb-28 pt-1"
+          contentContainerClassName="gap-4 pt-1"
+          contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
           <ProjectionCard
             points={data?.projection ?? []}
@@ -266,6 +269,7 @@ export default function PlanningScreen() {
               <View className="flex-row flex-wrap items-start gap-2">
                 {(data?.budgetProgress ?? []).map((row) => (
                   <Pressable
+                    hitSlop={8}
                     key={row.budgetId}
                     accessibilityRole="button"
                     accessibilityLabel={`Cap on ${row.label}`}
@@ -316,6 +320,7 @@ export default function PlanningScreen() {
                   const hint = pacingHint(computeGoalPacing(row), formatEuro);
                   return (
                     <Pressable
+                      hitSlop={8}
                       key={row.goal.id}
                       accessibilityRole="button"
                       accessibilityLabel={`Goal ${row.goal.name}`}

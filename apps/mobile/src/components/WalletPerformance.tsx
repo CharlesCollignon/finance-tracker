@@ -15,6 +15,7 @@ import type {
 import type { UpcomingInvestment } from "@finance/core/investment-upcoming";
 
 import { EChart } from "@/components/charts/EChart";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
@@ -272,7 +273,7 @@ export function WalletPerformance({
       {option ? (
         <EChart option={option} height={200} />
       ) : (
-        <Card bezel innerClassName="items-center p-6">
+        <Card bezel innerClassName="items-center p-5">
           <Text variant="muted" className="text-center text-sm">
             {points.length === 0
               ? "No history for this wallet yet."
@@ -281,38 +282,16 @@ export function WalletPerformance({
         </Card>
       )}
 
-      <View className="flex-row flex-wrap justify-center gap-2">
-        {RANGES.map((key) => {
-          const selected = range === key;
-          const enabled = slice(points, key).length >= 2 || key === "All";
-          return (
-            <Pressable
-              key={key}
-              accessibilityRole="button"
-              accessibilityState={{ selected, disabled: !enabled }}
-              disabled={!enabled}
-              onPress={() => {
-                void hapticLight();
-                setRange(key);
-              }}
-              className={cn(
-                "rounded-full px-3 py-1.5",
-                selected ? "bg-muted" : "bg-transparent",
-                !enabled && "opacity-30",
-              )}
-            >
-              <Text
-                className={cn(
-                  "text-xs font-semibold",
-                  selected ? "text-foreground" : "text-muted-foreground",
-                )}
-              >
-                {key}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <SegmentedControl
+        label="Chart range"
+        value={range}
+        onChange={setRange}
+        segments={RANGES.map((key) => ({
+          value: key,
+          label: key,
+          disabled: slice(points, key).length < 2 && key !== "All",
+        }))}
+      />
 
       <Card bezel innerClassName="px-4 py-1">
         <StatRow label="Total invested" value={formatEuro(invested)} />

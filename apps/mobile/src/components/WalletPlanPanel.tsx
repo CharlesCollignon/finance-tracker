@@ -110,7 +110,7 @@ export function WalletPlanPanel({
 
   return (
     <>
-      <Card bezel innerClassName="gap-3 p-4">
+      <Card bezel innerClassName="gap-3 p-5">
         <View className="flex-row items-center justify-between">
           <Text className="font-bold">Allocation</Text>
           <Pressable
@@ -220,7 +220,7 @@ export function WalletPlanPanel({
       </Card>
 
       {peaStatus ? (
-        <Card bezel innerClassName="gap-3 p-4">
+        <Card bezel innerClassName="gap-3 p-5">
           <Text className="font-bold">PEA</Text>
 
           <View className="flex-row flex-wrap items-baseline justify-between gap-2">

@@ -13,6 +13,7 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 interface InvestmentPositionRowProps {
   item: InvestmentPositionItem;
@@ -145,7 +146,7 @@ export function InvestmentPositionRow({
         >
           <Ionicons
             name="pencil-outline"
-            size={16}
+            size={ICON.md}
             color={colors.mutedForeground}
           />
         </Pressable>

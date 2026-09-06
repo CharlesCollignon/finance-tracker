@@ -16,6 +16,7 @@ import { fulfilOccurrence, refuseFulfilment } from "@/lib/mutations";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 interface ArrivedChargesProps {
   proposals: FulfilmentProposal[];
@@ -88,7 +89,7 @@ export function ArrivedCharges({ proposals, onDecided }: ArrivedChargesProps) {
 
   return (
     <View accessibilityLabel="Charges that look like they arrived">
-      <Text className="border-b border-foreground/10 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <Text className="border-b border-border px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {waiting.length === 1 ? "Did this arrive?" : "Did these arrive?"}
       </Text>
 
@@ -99,7 +100,7 @@ export function ArrivedCharges({ proposals, onDecided }: ArrivedChargesProps) {
             key={proposal.key}
             className={cn(
               "gap-2 px-4 py-3",
-              index < waiting.length - 1 && "border-b border-foreground/10",
+              index < waiting.length - 1 && "border-b border-border",
             )}
           >
             <View className="flex-row flex-wrap items-baseline gap-x-2">
@@ -155,7 +156,7 @@ export function ArrivedCharges({ proposals, onDecided }: ArrivedChargesProps) {
               >
                 <Ionicons
                   name="checkmark"
-                  size={15}
+                  size={ICON.md}
                   color={colors.primaryForeground}
                 />
                 <Text className="text-sm font-medium text-primary-foreground">
@@ -188,7 +189,7 @@ export function ArrivedCharges({ proposals, onDecided }: ArrivedChargesProps) {
               >
                 <Ionicons
                   name="close"
-                  size={15}
+                  size={ICON.md}
                   color={colors.mutedForeground}
                 />
                 <Text className="text-sm text-muted-foreground">Not it</Text>

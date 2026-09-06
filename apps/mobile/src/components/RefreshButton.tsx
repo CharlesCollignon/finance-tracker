@@ -13,6 +13,7 @@ import Animated, {
 import { hapticLight } from "@/lib/haptics";
 import { useRefreshAll } from "@/providers/RefreshProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 /** A full turn takes this long, in ms. */
 const SPIN_PERIOD = 900;
@@ -69,6 +70,7 @@ export function RefreshButton() {
 
   return (
     <Pressable
+      hitSlop={6}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ busy: running }}
@@ -81,7 +83,11 @@ export function RefreshButton() {
       style={{ backgroundColor: colors.card, borderColor: colors.border }}
     >
       <Animated.View style={style}>
-        <Ionicons name="refresh" size={18} color={colors.mutedForeground} />
+        <Ionicons
+          name="refresh"
+          size={ICON.lg}
+          color={colors.mutedForeground}
+        />
       </Animated.View>
       {refresh.stale && !running ? (
         <View

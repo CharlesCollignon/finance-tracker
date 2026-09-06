@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { View } from "react-native";
+import { AccessibilityInfo, Platform, View } from "react-native";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -56,6 +56,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     (message: string, variant: ToastVariant = "default") => {
       const id = nextId.current++;
       setToasts((prev) => [...prev, { id, message, variant }]);
+      // Android speaks the live region on the toast itself; iOS has no
+      // equivalent, so it is announced explicitly there. Doing both on one
+      // platform would say the message twice.
+      if (Platform.OS === "ios") {
+        AccessibilityInfo.announceForAccessibility(message);
+      }
       setTimeout(() => {
         setToasts((prev) => prev.filter((entry) => entry.id !== id));
       }, VISIBLE_MS);
@@ -76,6 +82,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((entry) => (
           <Animated.View
             key={entry.id}
+            accessibilityRole="alert"
+            accessibilityLiveRegion="polite"
             entering={FadeInUp.duration(220)}
             exiting={FadeOutUp.duration(180)}
             className={cn(

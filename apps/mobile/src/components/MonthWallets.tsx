@@ -13,6 +13,7 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 interface MonthWalletsProps {
   portfolio: InvestmentPortfolioSummary;
@@ -73,7 +74,11 @@ export function MonthWallets({ portfolio }: MonthWalletsProps) {
           className="flex-row items-center gap-1"
         >
           <Text className="text-sm text-primary-ink">Wallets</Text>
-          <Ionicons name="arrow-forward" size={13} color={colors.primaryInk} />
+          <Ionicons
+            name="arrow-forward"
+            size={ICON.sm}
+            color={colors.primaryInk}
+          />
         </Pressable>
       </View>
 

@@ -6,6 +6,7 @@ import type { MonthlyTrendPoint } from "@/lib/queries";
 import { BarSeries } from "@/components/charts";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Card } from "@/components/ui/Card";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -13,8 +14,24 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 /** Below this a "trend" would be a straight line between two dots. */
 const MIN_MONTHS_FOR_CHART = 3;
 
+/** A plausible run, drawn faintly to hold the chart's space before it exists. */
+const GHOST = [38, 52, 31, 64, 45, 58];
+
+export type TrendRange = "6M" | "1Y" | "2Y";
+
+/** Months each range asks the query for. */
+export const TREND_RANGE_MONTHS: Record<TrendRange, number> = {
+  "6M": 6,
+  "1Y": 12,
+  "2Y": 24,
+};
+
+const TREND_RANGES: TrendRange[] = ["6M", "1Y", "2Y"];
+
 interface TrendCardProps {
   points: MonthlyTrendPoint[];
+  range: TrendRange;
+  onRangeChange: (next: TrendRange) => void;
 }
 
 /**
@@ -28,7 +45,7 @@ interface TrendCardProps {
  * ECharts bar chart, which was the whole reason this screen mounted one — a
  * few dozen kilobytes and a canvas to draw six rectangles.
  */
-export function TrendCard({ points }: TrendCardProps) {
+export function TrendCard({ points, range, onRangeChange }: TrendCardProps) {
   const formatEuro = useFormatCurrency();
 
   const active = useMemo(
@@ -51,13 +68,17 @@ export function TrendCard({ points }: TrendCardProps) {
   const enough = active.length >= MIN_MONTHS_FOR_CHART;
 
   return (
-    <Card bezel innerClassName="p-4">
-      <Text className="text-sm font-medium text-muted-foreground">
-        What you kept
-      </Text>
-      <Text className="mt-1 text-sm text-muted-foreground">
-        Income minus everything else, month by month.
-      </Text>
+    <Card bezel innerClassName="p-5">
+      <View className="flex-row items-center justify-between gap-3">
+        <Text variant="label">What you kept</Text>
+        <SegmentedControl
+          label="Trend range"
+          value={range}
+          onChange={onRangeChange}
+          segments={TREND_RANGES.map((key) => ({ value: key, label: key }))}
+          className="w-40"
+        />
+      </View>
 
       {enough ? (
         <>
@@ -88,21 +109,42 @@ export function TrendCard({ points }: TrendCardProps) {
           ) : null}
         </>
       ) : (
-        <View className="mt-3 gap-2">
-          <Text variant="muted" className="text-sm">
-            {active.length === 0
-              ? "Once you have a month of activity, it will show up here."
-              : `${active.length} month${active.length === 1 ? "" : "s"} of history so far — this becomes a chart at ${MIN_MONTHS_FOR_CHART}.`}
-          </Text>
+        /*
+          Not enough months to be a trend, so the card keeps its shape and
+          says what is missing. A placeholder run drawn at low contrast holds
+          the space the real chart will take: the screen does not reflow the
+          first time a third month lands, and the badge says why it is grey.
+        */
+        <View className="mt-4 gap-3">
+          <View className="relative">
+            <View className="opacity-[0.14]">
+              <BarSeries
+                height={140}
+                points={GHOST.map((value, index) => ({
+                  key: `ghost-${index}`,
+                  label: "",
+                  value,
+                }))}
+              />
+            </View>
+            <View className="absolute inset-0 items-center justify-center">
+              <View className="rounded-full border border-border bg-card px-3 py-1.5">
+                <Text variant="micro">
+                  {`${active.length} of ${MIN_MONTHS_FOR_CHART} months`}
+                </Text>
+              </View>
+            </View>
+          </View>
+
           {active.map((point) => (
             <View
               key={point.monthKey}
               className="flex-row items-center justify-between"
             >
-              <Text className="text-sm">{point.label}</Text>
+              <Text variant="micro">{point.label}</Text>
               <PrivateAmount
                 className={cn(
-                  "font-mono text-sm font-semibold",
+                  "font-mono text-xs font-semibold",
                   point.net < 0 ? "text-destructive" : "text-success",
                 )}
               >

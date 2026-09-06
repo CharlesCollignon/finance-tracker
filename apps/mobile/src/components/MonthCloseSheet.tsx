@@ -11,6 +11,7 @@ import { PrivateAmount } from "@/components/PrivateAmount";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
+import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { hapticSuccess } from "@/lib/haptics";
 import {
   deleteMonthClose,
@@ -161,7 +162,7 @@ export function MonthCloseSheet({
           onPress={dismiss}
         />
         <View className="max-h-[85%] rounded-t-3xl border border-border bg-card p-5">
-          <View className="mb-3 h-1 w-10 self-center rounded-full bg-hairline-strong" />
+          <SheetGrabber />
           <Text className="mb-2 font-semibold" style={{ fontSize: 18 }}>
             {stage === "closed" ? monthLabel : `Close ${monthLabel}`}
           </Text>

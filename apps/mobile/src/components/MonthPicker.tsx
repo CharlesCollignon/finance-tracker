@@ -5,6 +5,7 @@ import { formatMonthLabel, shiftMonth } from "@finance/core/constants";
 import { Blur } from "@/components/ui/Blur";
 import { Text } from "@/components/ui/Text";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 interface MonthPickerProps {
   year: number;
@@ -33,7 +34,11 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
           }}
           className="h-10 w-10 items-center justify-center"
         >
-          <Ionicons name="chevron-back" size={20} color={colors.foreground} />
+          <Ionicons
+            name="chevron-back"
+            size={ICON.xl}
+            color={colors.foreground}
+          />
         </Pressable>
         <Text className="font-semibold">{formatMonthLabel(year, month)}</Text>
         <Pressable
@@ -46,7 +51,7 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
         >
           <Ionicons
             name="chevron-forward"
-            size={20}
+            size={ICON.xl}
             color={colors.foreground}
           />
         </Pressable>

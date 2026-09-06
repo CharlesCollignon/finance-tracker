@@ -1,5 +1,5 @@
 /**
- * The chart vocabulary: four marks, and only one of them costs a runtime.
+ * The chart vocabulary: five marks, and only one of them costs a runtime.
  *
  * The same four the web app draws, so a screen described in one place looks
  * the way it is described in the other:
@@ -7,6 +7,7 @@
  *   BarSeries     one series over time     plain views
  *   SpendStrip    a whole split as one bar plain views
  *   ProgressRing  progress toward a limit  react-native-svg
+ *   Sparkline     the shape of a run       react-native-svg
  *   line          a dense time series      ECharts, on Wallets alone
  *
  * The mobile app had drifted the same way the web one had — a donut, a
@@ -17,3 +18,4 @@
 export { BarSeries, type BarPoint } from "./BarSeries";
 export { SpendStrip } from "./SpendStrip";
 export { ProgressRing } from "./ProgressRing";
+export { Sparkline } from "./Sparkline";

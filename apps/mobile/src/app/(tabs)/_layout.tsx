@@ -3,6 +3,7 @@ import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
 import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTabBarHeight } from "@/theme/chrome";
 
 import { Blur } from "@/components/ui/Blur";
 import { QuickAddProvider } from "@/providers/QuickAddProvider";
@@ -64,12 +65,15 @@ const TABS: TabConfig[] = [
   },
 ];
 
-/** Full-width bar on the bottom edge. Square corners, no inset. */
-const BAR_HEIGHT = 60;
-
+/*
+ * Full-width bar on the bottom edge. Square corners, no inset. Its height now
+ * comes from theme/chrome, which the screens also pad from, so the two cannot
+ * drift apart.
+ */
 export default function TabsLayout() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
+  const barHeight = useTabBarHeight();
   const arrived = useArrivedCount();
 
   return (
@@ -91,7 +95,7 @@ export default function TabsLayout() {
               left: 0,
               right: 0,
               bottom: 0,
-              height: BAR_HEIGHT + insets.bottom,
+              height: barHeight + insets.bottom,
               paddingBottom: insets.bottom,
               backgroundColor: "transparent",
               borderTopWidth: StyleSheet.hairlineWidth,

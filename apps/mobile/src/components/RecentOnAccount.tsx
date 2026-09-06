@@ -11,6 +11,7 @@ import { cn } from "@/lib/cn";
 import type { BankMovement } from "@/lib/queries";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 interface RecentOnAccountProps {
   movements: BankMovement[];
@@ -53,7 +54,11 @@ export function RecentOnAccount({ movements }: RecentOnAccountProps) {
           <Text className="text-sm text-primary-ink">
             {pending > 0 ? `${pending} to review` : "Ledger"}
           </Text>
-          <Ionicons name="arrow-forward" size={13} color={colors.primaryInk} />
+          <Ionicons
+            name="arrow-forward"
+            size={ICON.sm}
+            color={colors.primaryInk}
+          />
         </Pressable>
       </View>
 
@@ -63,7 +68,7 @@ export function RecentOnAccount({ movements }: RecentOnAccountProps) {
             key={movement.id}
             className={cn(
               "flex-row items-baseline justify-between gap-3 py-2",
-              index < movements.length - 1 && "border-b border-foreground/10",
+              index < movements.length - 1 && "border-b border-border",
             )}
           >
             <View className="min-w-0 flex-1 flex-row items-baseline gap-3">

@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, Switch, View } from "react-native";
+import { ScrollView, Switch, View } from "react-native";
 import { type Href, useRouter } from "expo-router";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { ListRow, ListSection } from "@/components/ui/ListRow";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
-import {
-  BiometricUnlockCard,
-  PasskeysCard,
-} from "@/components/profile/SecurityCards";
+import { PasskeysPanel } from "@/components/profile/SecurityCards";
 import { useAuth } from "@/providers/AuthProvider";
+import { useBiometricLock } from "@/providers/BiometricLockProvider";
 import { useToast } from "@/providers/ToastProvider";
 import {
   disableReminders,
@@ -21,16 +20,40 @@ import {
 import { useCurrency } from "@/providers/CurrencyProvider";
 import { deleteAllUserData, updateProfile } from "@/lib/mutations";
 import { supabase } from "@/lib/supabase";
+import { useTabBarClearance } from "@/theme/chrome";
+
+/** Which row has opened its editor. One at a time, so the list stays a list. */
+type OpenRow = "name" | "passkeys" | "wipe" | "close" | null;
 
 export default function ProfileScreen() {
+  const tabBarClearance = useTabBarClearance();
   const { user, signOut } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { currency, setCurrency } = useCurrency();
+  const biometrics = useBiometricLock();
+
+  const [open, setOpen] = useState<OpenRow>(null);
   const [reminders, setReminders] = useState(false);
+  const [fullName, setFullName] = useState(
+    (user?.user_metadata?.full_name as string | undefined) ??
+      (user?.user_metadata?.name as string | undefined) ??
+      "",
+  );
+  const [confirmData, setConfirmData] = useState("");
+  const [confirmAccount, setConfirmAccount] = useState("");
+  const [pending, setPending] = useState(false);
+
+  const provider =
+    (user?.app_metadata?.provider as string | undefined) ?? "email";
 
   useEffect(() => {
     void remindersEnabled().then(setReminders);
   }, []);
+
+  function toggle(row: Exclude<OpenRow, null>) {
+    setOpen((current) => (current === row ? null : row));
+  }
 
   async function handleRemindersChange(next: boolean) {
     if (!next) {
@@ -45,25 +68,37 @@ export default function ProfileScreen() {
       toast("Reminders need notification permission", "error");
     }
   }
-  const [fullName, setFullName] = useState(
-    (user?.user_metadata?.full_name as string | undefined) ??
-      (user?.user_metadata?.name as string | undefined) ??
-      "",
-  );
-  const { currency, setCurrency } = useCurrency();
-  const [confirmData, setConfirmData] = useState("");
-  const [confirmAccount, setConfirmAccount] = useState("");
-  const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
-  const provider =
-    (user?.app_metadata?.provider as string | undefined) ?? "email";
+  async function handleBiometricsChange(next: boolean) {
+    setPending(true);
+    const result = next ? await enableBiometrics() : await disableBiometrics();
+    setPending(false);
+    if (result) {
+      toast(result, "error");
+    }
+  }
+
+  async function enableBiometrics() {
+    const result = await biometrics.enable();
+    return result.error ?? null;
+  }
+
+  async function disableBiometrics() {
+    await biometrics.disable();
+    return null;
+  }
 
   async function handleSaveProfile() {
     setPending(true);
     const result = await updateProfile(fullName);
     setPending(false);
-    setMessage(result.error ?? result.message ?? "Saved");
+    toast(
+      result.error ?? result.message ?? "Saved",
+      result.error ? "error" : "success",
+    );
+    if (!result.error) {
+      setOpen(null);
+    }
   }
 
   async function handleDeleteData() {
@@ -75,12 +110,13 @@ export default function ProfileScreen() {
       return;
     }
     setConfirmData("");
+    setOpen(null);
     toast(result.message ?? "Data deleted", "success");
   }
 
   async function handleDeleteAccount() {
     if (confirmAccount !== "DELETE") {
-      toast("Type DELETE to confirm account deletion.", "error");
+      toast("Type DELETE to confirm.", "error");
       return;
     }
 
@@ -101,165 +137,194 @@ export default function ProfileScreen() {
       await signOut();
     } catch (err) {
       const fallback =
-        "Account deletion requires the delete-account Edge Function. Your data can still be wiped below, then contact support to close the auth user.";
+        "Account deletion needs the delete-account Edge Function. Delete your data above, then contact support.";
       toast(err instanceof Error ? err.message : fallback, "error");
     } finally {
       setPending(false);
     }
   }
 
+  const biometricsReady = biometrics.hardware && biometrics.enrolled;
+  const biometricsNote = !biometrics.hardware
+    ? "Not on this device"
+    : !biometrics.enrolled
+      ? "Set up in system settings"
+      : undefined;
+
   return (
     <Screen title="Profile">
-      <ScrollView contentContainerClassName="gap-4 pb-28">
-        <Card bezel>
-          <Text className="text-base font-semibold">Account</Text>
-          <Text variant="muted" className="mt-1">
-            Signed in via {provider}
-          </Text>
-          <Text variant="label" className="mb-2 mt-4">
-            Email
-          </Text>
-          <Input
-            value={user?.email ?? ""}
-            editable={false}
-            className="mb-3 opacity-70"
-          />
-          <Text variant="label" className="mb-2">
-            Display name
-          </Text>
-          <Input value={fullName} onChangeText={setFullName} className="mb-3" />
-          <Button
-            label={pending ? "Saving…" : "Save profile"}
-            disabled={pending}
-            onPress={handleSaveProfile}
-          />
-          {message ? (
-            <Text variant="muted" className="mt-2">
-              {message}
+      <ScrollView
+        contentContainerClassName="gap-6 pt-1"
+        contentContainerStyle={{ paddingBottom: tabBarClearance }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Who is signed in, before anything that can be changed about them. */}
+        <Card bezel innerClassName="items-center gap-1 py-6">
+          <View className="mb-2 h-16 w-16 items-center justify-center rounded-full bg-primary">
+            <Text
+              className="font-sans text-2xl font-bold text-primary-foreground"
+              maxFontSizeMultiplier={1.3}
+            >
+              {(fullName || user?.email || "?").slice(0, 1).toUpperCase()}
             </Text>
-          ) : null}
-        </Card>
-
-        <BiometricUnlockCard />
-        <PasskeysCard />
-
-        <Card bezel>
-          <Text className="text-base font-semibold">Budgets, goals & tags</Text>
-          <Text variant="muted" className="mt-1 mb-3">
-            Set monthly spending caps, savings goals, and tags.
-          </Text>
-          <Button
-            label="Open planning"
-            variant="outline"
-            onPress={() => router.push("/planning" as Href)}
-          />
-        </Card>
-
-        <Card bezel>
-          <Text className="text-base font-semibold">Reminders</Text>
-          <Text variant="muted" className="mb-3 mt-1">
-            A nudge the evening before each recurring item is due. Scheduled on
-            this device only — nothing leaves your phone.
-          </Text>
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm">Recurring reminders</Text>
-            <Switch
-              value={reminders}
-              onValueChange={(next) => {
-                void handleRemindersChange(next);
-              }}
-            />
           </View>
+          <Text variant="head">{fullName || "No name yet"}</Text>
+          <Text variant="micro">{user?.email}</Text>
         </Card>
 
-        <Card bezel>
-          <Text className="text-base font-semibold">Categories</Text>
-          <Text variant="muted" className="mt-1 mb-3">
-            Add, rename, archive, or remove the categories you file transactions
-            under.
-          </Text>
-          <Button
-            label="Manage categories"
-            variant="outline"
+        <ListSection title="Account">
+          <ListRow
+            icon="person-outline"
+            label="Name"
+            value={open === "name" ? undefined : fullName || "Not set"}
+            onPress={() => toggle("name")}
+            expanded={
+              open === "name" ? (
+                <View className="gap-3">
+                  <Input
+                    value={fullName}
+                    onChangeText={setFullName}
+                    accessibilityLabel="Display name"
+                    placeholder="Your name"
+                    returnKeyType="done"
+                    onSubmitEditing={() => void handleSaveProfile()}
+                  />
+                  <Button
+                    label={pending ? "Saving…" : "Save"}
+                    disabled={pending}
+                    onPress={() => void handleSaveProfile()}
+                  />
+                </View>
+              ) : null
+            }
+          />
+          <ListRow icon="mail-outline" label="Email" value={user?.email} />
+          <ListRow
+            icon="log-in-outline"
+            label="Signed in with"
+            value={provider}
+          />
+        </ListSection>
+
+        <ListSection
+          title="Money"
+          footer="Currency changes the symbol, not the amounts."
+        >
+          <ListRow
+            icon="pricetags-outline"
+            label="Categories"
             onPress={() => router.push("/categories" as Href)}
           />
-        </Card>
+          <ListRow
+            icon="flag-outline"
+            label="Budgets & goals"
+            onPress={() => router.push("/planning" as Href)}
+          />
+          <ListRow
+            icon="cash-outline"
+            label="Currency"
+            value={currency === "EUR" ? "Euro (€)" : "US Dollar ($)"}
+            onPress={() => setCurrency(currency === "EUR" ? "USD" : "EUR")}
+          />
+        </ListSection>
 
-        <Card bezel>
-          <Text className="text-base font-semibold">Currency</Text>
-          <Text variant="muted" className="mt-1 mb-3">
-            Choose how amounts are labeled. This only changes the symbol — it
-            does not convert your numbers.
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {(["EUR", "USD"] as const).map((value) => {
-              const selected = currency === value;
-              return (
-                <Pressable
-                  key={value}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={`${value} currency`}
-                  onPress={() => setCurrency(value)}
-                  className={`rounded-full border px-4 py-1.5 ${
-                    selected
-                      ? "border-foreground bg-foreground"
-                      : "border-border bg-background"
-                  }`}
-                >
-                  <Text
-                    className={`text-center text-xs font-semibold ${
-                      selected ? "text-background" : ""
-                    }`}
-                  >
-                    {value === "EUR" ? "Euro (€)" : "US Dollar ($)"}
+        <ListSection title="Security">
+          <ListRow
+            icon="finger-print-outline"
+            label="App unlock"
+            value={biometricsNote}
+            disabled={!biometricsReady}
+            trailing={
+              <Switch
+                accessibilityLabel="Unlock with biometrics"
+                value={biometrics.enabled && biometricsReady}
+                disabled={!biometrics.ready || pending || !biometricsReady}
+                onValueChange={(next) => void handleBiometricsChange(next)}
+              />
+            }
+          />
+          <ListRow
+            icon="key-outline"
+            label="Passkeys"
+            onPress={() => toggle("passkeys")}
+            expanded={open === "passkeys" ? <PasskeysPanel /> : null}
+          />
+        </ListSection>
+
+        <ListSection
+          title="Notifications"
+          footer="Scheduled on this device only."
+        >
+          <ListRow
+            icon="notifications-outline"
+            label="Recurring reminders"
+            trailing={
+              <Switch
+                value={reminders}
+                onValueChange={(next) => void handleRemindersChange(next)}
+              />
+            }
+          />
+        </ListSection>
+
+        <ListSection title="Data">
+          <ListRow
+            icon="trash-outline"
+            label="Delete all data"
+            destructive
+            onPress={() => toggle("wipe")}
+            expanded={
+              open === "wipe" ? (
+                <View className="gap-3">
+                  <Text variant="micro">
+                    Transactions, recurring, positions and categories. Your
+                    account stays.
                   </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </Card>
-
-        <Card bezel className="border-destructive/40" innerClassName="p-4">
-          <Text className="font-bold text-destructive">Danger zone</Text>
-          <Text variant="muted" className="mt-1">
-            Delete all transactions, recurring templates, positions, and
-            categories. Your account stays active.
-          </Text>
-          <Input
-            value={confirmData}
-            onChangeText={setConfirmData}
-            placeholder="Type DELETE"
-            autoCapitalize="characters"
-            className="my-3"
+                  <Input
+                    value={confirmData}
+                    onChangeText={setConfirmData}
+                    accessibilityLabel="Type DELETE to confirm"
+                    placeholder="Type DELETE"
+                    autoCapitalize="characters"
+                  />
+                  <Button
+                    label="Delete all my data"
+                    variant="outline"
+                    disabled={pending}
+                    onPress={() => void handleDeleteData()}
+                  />
+                </View>
+              ) : null
+            }
           />
-          <Button
-            label="Delete all my data"
-            variant="outline"
-            disabled={pending}
-            onPress={handleDeleteData}
+          <ListRow
+            icon="close-circle-outline"
+            label="Delete account"
+            destructive
+            onPress={() => toggle("close")}
+            expanded={
+              open === "close" ? (
+                <View className="gap-3">
+                  <Text variant="micro">
+                    Permanent. Everything above goes with it.
+                  </Text>
+                  <Input
+                    value={confirmAccount}
+                    onChangeText={setConfirmAccount}
+                    accessibilityLabel="Type DELETE to confirm"
+                    placeholder="Type DELETE"
+                    autoCapitalize="characters"
+                  />
+                  <Button
+                    label="Delete my account"
+                    disabled={pending}
+                    onPress={() => void handleDeleteAccount()}
+                  />
+                </View>
+              ) : null
+            }
           />
-        </Card>
-
-        <Card bezel className="border-destructive/40" innerClassName="p-4">
-          <Text className="font-bold text-destructive">Delete account</Text>
-          <Text variant="muted" className="mt-1">
-            Permanently removes your account via the delete-account Edge
-            Function.
-          </Text>
-          <Input
-            value={confirmAccount}
-            onChangeText={setConfirmAccount}
-            placeholder="Type DELETE"
-            autoCapitalize="characters"
-            className="my-3"
-          />
-          <Button
-            label="Delete my account"
-            disabled={pending}
-            onPress={handleDeleteAccount}
-          />
-        </Card>
+        </ListSection>
 
         <Button label="Sign out" variant="secondary" onPress={signOut} />
       </ScrollView>

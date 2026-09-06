@@ -40,6 +40,7 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
         const active = pathname === String(tab.href);
         return (
           <Pressable
+            hitSlop={8}
             key={String(tab.href)}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}

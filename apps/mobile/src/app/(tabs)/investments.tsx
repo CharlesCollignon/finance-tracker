@@ -52,6 +52,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { deleteWalletTransfer, upsertWalletTransfer } from "@/lib/mutations";
+import { useTabBarClearance } from "@/theme/chrome";
 import {
   getInvestmentTransactions,
   getRecurringTemplates,
@@ -61,6 +62,7 @@ import {
 } from "@/lib/queries";
 
 export default function InvestmentsScreen() {
+  const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
@@ -160,15 +162,16 @@ export default function InvestmentsScreen() {
         <Text className="text-destructive">{error}</Text>
       ) : !portfolio ? (
         <EmptyState
-          title="No wallets"
-          description="PEA, CTO and crypto positions appear here once you have investment transactions or recurring contributions."
+          title="Start a wallet"
+          description="PEA, CTO and crypto land here."
         />
       ) : (
         <ScrollView
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          contentContainerClassName="gap-4 pb-28 pt-2"
+          contentContainerClassName="gap-4 pt-2"
+          contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
           <StatHero
             label="Market value"
@@ -197,7 +200,7 @@ export default function InvestmentsScreen() {
           />
 
           {returns ? (
-            <Card bezel innerClassName="p-4">
+            <Card bezel innerClassName="p-5">
               <View className="flex-row items-baseline justify-between gap-3">
                 <Text variant="muted" className="text-sm">
                   Money-weighted return
@@ -255,8 +258,8 @@ export default function InvestmentsScreen() {
 
           {!hasData ? (
             <EmptyState
-              title="No investments tracked yet"
-              description="Set up a recurring investment and it becomes a tracked position here automatically, with its own market value and P/L."
+              title="Track an investment"
+              description="A recurring contribution becomes a position."
             />
           ) : null}
 

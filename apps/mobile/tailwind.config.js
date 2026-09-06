@@ -54,7 +54,10 @@ module.exports = {
           foreground: token("destructive-foreground"),
         },
         // Hairlines are always translucent; the channels flip per scheme.
-        border: "rgb(var(--border) / 0.08)",
+        // 0.10, matching COLORS.border in theme/tokens.ts. The class had been
+        // 0.08 while the imperative token was 0.10, so a hairline drawn from
+        // JS sat a shade darker than the one beside it drawn from a class.
+        border: "rgb(var(--border) / 0.10)",
         "hairline-strong": "rgb(var(--hairline-strong) / 0.14)",
       },
       borderRadius: {
@@ -62,6 +65,13 @@ module.exports = {
         sm: "6px",
         md: "10px",
         lg: "12px",
+        // Surfaces, named by role rather than by size. A plain card was 16px
+        // and a bezelled one 22px inside a 28px shell, so the two forms of the
+        // same component did not agree with each other. Both are `card` now,
+        // and `shell` stays concentric with it: 26 outer − 6 of bezel padding
+        // leaves exactly the 20 the inner surface uses.
+        card: "20px",
+        shell: "26px",
         none: "0px",
       },
       fontFamily: {

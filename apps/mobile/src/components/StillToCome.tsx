@@ -13,6 +13,7 @@ import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 interface StillToComeProps {
   /** What is still due to leave, soonest first. */
@@ -128,7 +129,11 @@ export function StillToCome({
         <Text className="text-sm text-primary-ink">
           See the month on a calendar
         </Text>
-        <Ionicons name="arrow-forward" size={13} color={colors.primaryInk} />
+        <Ionicons
+          name="arrow-forward"
+          size={ICON.sm}
+          color={colors.primaryInk}
+        />
       </Pressable>
     </Card>
   );

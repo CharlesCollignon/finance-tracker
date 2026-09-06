@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { StyleProp, TextStyle } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -8,6 +9,8 @@ interface AnimatedAmountProps {
   value: number;
   format: (value: number) => string;
   className?: string;
+  /** For the display sizes, which carry no text-* class. See TYPE in tokens. */
+  style?: StyleProp<TextStyle>;
 }
 
 const DURATION_MS = 650;
@@ -26,6 +29,7 @@ export function AnimatedAmount({
   value,
   format,
   className,
+  style,
 }: AnimatedAmountProps) {
   const { hidden } = usePrivacy();
   const reduce = useReducedMotion();
@@ -62,5 +66,9 @@ export function AnimatedAmount({
     };
   }, [value, hidden, reduce]);
 
-  return <PrivateAmount className={className}>{format(display)}</PrivateAmount>;
+  return (
+    <PrivateAmount className={className} style={style}>
+      {format(display)}
+    </PrivateAmount>
+  );
 }

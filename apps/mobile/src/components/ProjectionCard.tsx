@@ -1,5 +1,11 @@
 import { View } from "react-native";
-import Svg, { Circle, Defs, LinearGradient, Path, Stop } from "react-native-svg";
+import Svg, {
+  Circle,
+  Defs,
+  LinearGradient,
+  Path,
+  Stop,
+} from "react-native-svg";
 
 import {
   formatRunway,
@@ -113,7 +119,10 @@ function ProjectionSparkline({ points }: { points: ProjectionPoint[] }) {
   });
 
   const line = coords
-    .map((point, index) => `${index === 0 ? "M" : "L"}${point.x.toFixed(2)},${point.y.toFixed(2)}`)
+    .map(
+      (point, index) =>
+        `${index === 0 ? "M" : "L"}${point.x.toFixed(2)},${point.y.toFixed(2)}`,
+    )
     .join(" ");
   const area = `${line} L${width},${height} L0,${height} Z`;
   const last = coords[coords.length - 1]!;

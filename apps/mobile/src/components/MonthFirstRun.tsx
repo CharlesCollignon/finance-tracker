@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { hapticLight } from "@/lib/haptics";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 interface Step {
   n: number;
@@ -24,21 +25,21 @@ const STEPS: Step[] = [
   {
     n: 1,
     title: "Name what your money is for",
-    body: "Rent, groceries, salary, savings. Six or seven is plenty to start.",
+    body: "Rent, groceries, salary, savings.",
     href: "/categories",
     action: "Categories",
   },
   {
     n: 2,
     title: "Add what you already know repeats",
-    body: "Rent, a subscription, the transfer into savings. Each one only has to be entered once.",
+    body: "Rent, a subscription, a transfer. Once each.",
     href: "/recurring",
     action: "Plan",
   },
   {
     n: 3,
     title: "Then this screen fills itself in",
-    body: "Every month is written from what repeats, and you correct the difference rather than typing it all out.",
+    body: "Written from what repeats. You correct the difference.",
     href: null,
     action: null,
   },
@@ -100,7 +101,7 @@ export function MonthFirstRun() {
                   </Text>
                   <Ionicons
                     name="arrow-forward"
-                    size={13}
+                    size={ICON.sm}
                     color={colors.primaryInk}
                   />
                 </Pressable>

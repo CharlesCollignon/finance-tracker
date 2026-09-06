@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/cn";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 type IoniconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -44,7 +45,7 @@ export function CategoryIcon({ icon, className }: CategoryIconProps) {
         className,
       )}
     >
-      <Ionicons name={name} size={18} color={colors.foreground} />
+      <Ionicons name={name} size={ICON.lg} color={colors.foreground} />
     </View>
   );
 }

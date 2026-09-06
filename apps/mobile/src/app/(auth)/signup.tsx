@@ -9,6 +9,7 @@ export default function SignupScreen() {
       title="Create account"
       submitLabel="Create account"
       onSubmit={signUp}
+      newPassword
       footerPrompt="Already have an account?"
       footerLinkLabel="Sign in"
       footerHref="/login"

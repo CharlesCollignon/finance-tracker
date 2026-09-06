@@ -25,6 +25,7 @@ import { getCategories } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { ICON } from "@/theme/tokens";
 
 /**
  * Category management — the one thing mobile could not do at all. Mirrors the
@@ -88,7 +89,11 @@ export default function CategoriesScreen() {
           onPress={() => router.back()}
           className="h-9 w-9 items-center justify-center rounded-md"
         >
-          <Ionicons name="chevron-back" size={20} color={colors.foreground} />
+          <Ionicons
+            name="chevron-back"
+            size={ICON.xl}
+            color={colors.foreground}
+          />
         </Pressable>
       }
       showLogo={false}
@@ -118,8 +123,8 @@ export default function CategoriesScreen() {
 
           {categories.length === 0 ? (
             <EmptyState
-              title="No categories yet"
-              description="Categories group your transactions into income, spending, savings and investments."
+              title="Add your first category"
+              description="Income, spending, savings, investments."
             >
               <Button
                 label="New category"
@@ -185,7 +190,7 @@ export default function CategoriesScreen() {
                               ? "arrow-undo-outline"
                               : "archive-outline"
                           }
-                          size={16}
+                          size={ICON.md}
                           color={colors.mutedForeground}
                         />
                       </Pressable>
