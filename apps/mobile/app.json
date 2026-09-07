@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "pluclair",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "ios": {
       "bundleIdentifier": "com.salutcharles.pluclair",
       "associatedDomains": [
@@ -37,12 +37,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#f7f5f2",
+          "backgroundColor": "#0a0a10",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 160,
-          "dark": {
-            "backgroundColor": "#0a0a10"
-          }
+          "imageWidth": 160
         }
       ],
       [
