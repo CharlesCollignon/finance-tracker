@@ -62,11 +62,21 @@ export default function ProfileScreen() {
       toast("Reminders off");
       return;
     }
-    const granted = await enableReminders();
+    const { granted, remoteReady } = await enableReminders();
     setReminders(granted);
     if (!granted) {
       toast("Reminders need notification permission", "error");
+      return;
     }
+    // Said plainly rather than swallowed. Without it the switch reports
+    // success and the nudges never come, which is indistinguishable from the
+    // app being broken.
+    toast(
+      remoteReady
+        ? "Notifications on"
+        : "Reminders on. This build can't receive nudges from your bank.",
+      remoteReady ? "success" : undefined,
+    );
   }
 
   async function handleBiometricsChange(next: boolean) {

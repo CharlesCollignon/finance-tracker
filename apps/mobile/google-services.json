@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "50202754220",
+    "project_id": "pluclair-fdfe6",
+    "storage_bucket": "pluclair-fdfe6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:50202754220:android:8b090e4e2371c38798f309",
+        "android_client_info": {
+          "package_name": "com.salut_charles.pluclair"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDf0gomXRw_X5PMaxCSPwZTX3Ca_9YT-sc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -160,13 +160,16 @@ export default function RecurringScreen() {
   }, [templates, formatEuro]);
 
   async function handleEnableReminders() {
-    const granted = await enableReminders();
+    const { granted } = await enableReminders();
     setRemindersPrompt(false);
     if (!granted) {
       toast("Reminders need notification permission", "error");
       return;
     }
     await syncRecurringReminders(templates, formatEuro);
+    // This prompt is about the charges on this screen, which are scheduled on
+    // the device and work whether or not a server can reach it. Whether it
+    // can is Profile's business, where the switch lives.
     toast("Reminders on — you'll hear the evening before", "success");
   }
 

@@ -97,22 +97,26 @@ async function ensureChannel(): Promise<void> {
  * and the app was not, which is how six entries could sit unfiled while the
  * Month screen showed figures that were short by whatever they hold.
  *
- * Best-effort throughout. The token is a convenience on top of the local
+ * Best-effort, but not silent. The token is a convenience on top of the local
  * schedule, so nothing here is allowed to be the reason the switch fails to
- * turn on: no token means no push, and the reminders still fire.
+ * turn on — the reminders still fire without it. It does say whether it
+ * worked, though, because the alternative is the failure this whole change
+ * was about: a switch that reports success and then nothing ever arrives,
+ * with nowhere to find out why. Expo Go on Android cannot get a token at
+ * all, and neither can a build whose project has no FCM key uploaded.
  */
-async function registerPushToken(): Promise<void> {
+async function registerPushToken(): Promise<boolean> {
   // A simulator has no push service to register with, and asking anyway
   // throws.
   if (!Device.isDevice) {
-    return;
+    return false;
   }
 
   const projectId =
     Constants.expoConfig?.extra?.eas?.projectId ??
     Constants.easConfig?.projectId;
   if (!projectId) {
-    return;
+    return false;
   }
 
   try {
@@ -123,12 +127,12 @@ async function registerPushToken(): Promise<void> {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return;
+      return false;
     }
 
     // Upserted on the token: Expo hands back the same one for the same
     // install, and a second row would mean two copies of every notification.
-    await supabase.from("expo_push_tokens").upsert(
+    const { error } = await supabase.from("expo_push_tokens").upsert(
       {
         user_id: user.id,
         token,
@@ -138,9 +142,14 @@ async function registerPushToken(): Promise<void> {
       },
       { onConflict: "token" },
     );
+
+    // A token Expo gave us but we failed to store is no better than none:
+    // the server reads this table, not the device.
+    return !error;
   } catch {
-    // Expo Go on Android cannot get a token at all, and a device that is
-    // offline at the moment the switch is flipped simply has none yet.
+    // No token to be had — Expo Go on Android, a project with no FCM key, or
+    // a device that happens to be offline as the switch is flipped.
+    return false;
   }
 }
 
@@ -164,6 +173,22 @@ async function forgetPushToken(): Promise<void> {
   }
 }
 
+/** What turning notifications on actually achieved. */
+export interface ReminderOptIn {
+  /** Whether the OS will let this app show anything at all. */
+  granted: boolean;
+  /**
+   * Whether a server can now reach this device.
+   *
+   * False is an ordinary outcome, not an error: the schedule this app builds
+   * on the device works either way. What it costs is the half a phone cannot
+   * schedule for itself — a cap broken overnight, or the bank sync leaving
+   * entries needing a category — so it is worth saying out loud rather than
+   * leaving someone to conclude the switch does nothing.
+   */
+  remoteReady: boolean;
+}
+
 /**
  * Requests permission. Only ever called from an explicit opt-in — asking on
  * first launch is the standard way to get denied permanently.
@@ -174,7 +199,7 @@ async function forgetPushToken(): Promise<void> {
  * whatever the OS had decided on its own and the switch could report a denial
  * the user was never shown.
  */
-export async function enableReminders(): Promise<boolean> {
+export async function enableReminders(): Promise<ReminderOptIn> {
   await ensureChannel();
 
   const current = await Notifications.getPermissionsAsync();
@@ -184,11 +209,10 @@ export async function enableReminders(): Promise<boolean> {
   await markRemindersAsked();
   await setEnabledFlag(granted);
 
-  if (granted) {
-    await registerPushToken();
-  }
-
-  return granted;
+  return {
+    granted,
+    remoteReady: granted ? await registerPushToken() : false,
+  };
 }
 
 export async function disableReminders(): Promise<void> {
