@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
+import { ICON } from "@/lib/icon-scale";
 
 export interface AttentionItem {
   /** Stable key, and the reason this row exists. */
@@ -92,7 +93,7 @@ export function MonthAttention({ items, slot }: MonthAttentionProps) {
               <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary-ink">
                 {item.action}
                 <ArrowRight
-                  size={14}
+                  size={ICON.sm}
                   className="transition-transform group-hover:translate-x-0.5"
                 />
               </span>

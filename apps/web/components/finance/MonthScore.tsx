@@ -13,6 +13,7 @@ import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { ICON } from "@/lib/icon-scale";
 
 interface MonthScoreProps {
   pulse: MonthPulse;
@@ -77,13 +78,13 @@ export function MonthScore({
         <div className="flex shrink-0 items-center gap-2">
           {streak > 1 ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-              <Flame size={12} weight="fill" />
+              <Flame size={ICON.xs} weight="fill" />
               {`${streak} in a row`}
             </span>
           ) : null}
           {bestStreak > streak && bestStreak > 1 ? (
             <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
-              <Trophy size={12} />
+              <Trophy size={ICON.xs} />
               {`best ${bestStreak}`}
             </span>
           ) : null}
@@ -92,7 +93,10 @@ export function MonthScore({
 
       {pulse.overRecorded ? (
         <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
-          <Warning size={14} className="mt-0.5 shrink-0 text-destructive" />
+          <Warning
+            size={ICON.sm}
+            className="mt-0.5 shrink-0 text-destructive"
+          />
           Your account holds more than the ledger allows — income is missing, or
           something is recorded twice. Nothing to measure until that is sorted.
         </p>
@@ -144,7 +148,7 @@ export function MonthScore({
             )}
           >
             {over ? null : (
-              <Check size={14} weight="bold" className="mt-0.5 shrink-0" />
+              <Check size={ICON.sm} weight="bold" className="mt-0.5 shrink-0" />
             )}
             {target === null
               ? "Close two months and the app will know what normal looks like for you."
@@ -181,7 +185,7 @@ export function MonthScore({
           : hasStreak
             ? "Every month you have closed"
             : "Set this up"}
-        <ArrowRight size={13} />
+        <ArrowRight size={ICON.sm} />
       </Link>
     </section>
   );

@@ -30,6 +30,7 @@ import {
 } from "@/lib/actions/finance";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
+import { ICON } from "@/lib/icon-scale";
 
 /** A statement bigger than this is almost certainly the wrong file. */
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -118,7 +119,9 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
     setHasHeader(header);
     setMapping(
       guessColumnMapping(
-        header ? parsed[0]! : parsed[0]!.map((_, index) => `Column ${index + 1}`),
+        header
+          ? parsed[0]!
+          : parsed[0]!.map((_, index) => `Column ${index + 1}`),
       ),
     );
     setStep("map");
@@ -170,7 +173,10 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
           expenseSign,
           existing: existing.keys ?? [],
           guessCategory: (description) => {
-            const rule = guessCategoryForDescription(merchantIndex, description);
+            const rule = guessCategoryForDescription(
+              merchantIndex,
+              description,
+            );
             return rule
               ? {
                   categoryId: rule.categoryId,
@@ -252,7 +258,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
           size="sm"
           render={
             <Link href="/transactions">
-              <ArrowLeft size={16} className="mr-1 inline" />
+              <ArrowLeft size={ICON.md} className="mr-1 inline" />
               Transactions
             </Link>
           }
@@ -284,7 +290,10 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                 "rounded-lg border border-dashed border-border p-10 text-center",
               )}
             >
-              <UploadSimple size={28} className="text-muted-foreground" />
+              <UploadSimple
+                size={ICON.hero}
+                className="text-muted-foreground"
+              />
               <p className="text-sm text-muted-foreground">
                 Drop a .csv file here
               </p>
@@ -374,7 +383,12 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                 value={mapping.amount}
                 allowNone
                 onChange={(value) =>
-                  setMapping({ ...mapping, amount: value, debit: null, credit: null })
+                  setMapping({
+                    ...mapping,
+                    amount: value,
+                    debit: null,
+                    credit: null,
+                  })
                 }
               />
               {mapping.amount === null ? (
@@ -385,7 +399,9 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                     headers={headers}
                     value={mapping.debit}
                     allowNone
-                    onChange={(value) => setMapping({ ...mapping, debit: value })}
+                    onChange={(value) =>
+                      setMapping({ ...mapping, debit: value })
+                    }
                   />
                   <ColumnPicker
                     label="Money in (credit)"
@@ -393,7 +409,9 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                     headers={headers}
                     value={mapping.credit}
                     allowNone
-                    onChange={(value) => setMapping({ ...mapping, credit: value })}
+                    onChange={(value) =>
+                      setMapping({ ...mapping, credit: value })
+                    }
                   />
                 </>
               ) : (
@@ -459,9 +477,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                     onClick={commit}
                     disabled={pending || importable.length === 0}
                   >
-                    {pending
-                      ? "Importing…"
-                      : `Import ${importable.length}`}
+                    {pending ? "Importing…" : `Import ${importable.length}`}
                   </Button>
                 </div>
               </div>
@@ -535,7 +551,8 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                               }
                               className={cn(
                                 "h-9 w-full min-w-[10rem] rounded border bg-background px-2 text-sm",
-                                row.categoryId === null && row.status === "ready"
+                                row.categoryId === null &&
+                                  row.status === "ready"
                                   ? "border-destructive"
                                   : "border-border",
                               )}
@@ -605,7 +622,9 @@ function ColumnPicker({
         aria-label={label}
         value={value === null ? "" : String(value)}
         onChange={(event) =>
-          onChange(event.target.value === "" ? null : Number(event.target.value))
+          onChange(
+            event.target.value === "" ? null : Number(event.target.value),
+          )
         }
         className="h-11 rounded border border-border bg-background px-3 text-base"
       >
@@ -679,7 +698,10 @@ function PreviewTable({
         </thead>
         <tbody>
           {rows.map((row, rowIndex) => (
-            <tr key={rowIndex} className="border-b border-border/60 last:border-0">
+            <tr
+              key={rowIndex}
+              className="border-b border-border/60 last:border-0"
+            >
               {row.map((cell, cellIndex) => (
                 <td
                   key={cellIndex}
@@ -700,7 +722,7 @@ function PreviewTable({
 export function ImportEmptyHint() {
   return (
     <p className="flex items-center gap-2 text-sm text-muted-foreground">
-      <Warning size={16} />
+      <Warning size={ICON.md} />
       No rows could be read from that file.
     </p>
   );

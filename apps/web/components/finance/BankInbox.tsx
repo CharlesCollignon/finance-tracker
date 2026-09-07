@@ -18,6 +18,7 @@ import {
 } from "@/lib/actions/bank";
 import type { Category } from "@finance/core/types/database";
 import type { DecidedFeedRow, PendingFeedRow } from "@/lib/queries/bank";
+import { ICON } from "@/lib/icon-scale";
 
 interface BankInboxProps {
   items: PendingFeedRow[];
@@ -149,7 +150,7 @@ export function BankInbox({
             disabled={pending}
             onClick={() => run(() => syncBankFeedAction(true))}
           >
-            <ArrowsClockwise size={14} />
+            <ArrowsClockwise size={ICON.sm} />
             {pending ? "Fetching…" : "Fetch everything"}
           </Button>
         ) : null}
@@ -331,7 +332,7 @@ export function BankInbox({
                           disabled={pending}
                           onClick={() => run(() => undoFeedDecision(row.id))}
                         >
-                          <ArrowCounterClockwise size={13} />
+                          <ArrowCounterClockwise size={ICON.sm} />
                           Undo
                         </Button>
                       </div>

@@ -14,6 +14,7 @@ import type { MerchantRule } from "@finance/core/merchant-memory";
 import type { Category, Tag } from "@finance/core/types/database";
 import { QuickAddSheet } from "@/components/finance/QuickAddSheet";
 import { cn } from "@/lib/utils";
+import { ICON } from "@/lib/icon-scale";
 
 interface QuickAddValue {
   /** Opens the sheet, optionally on a specific date. */
@@ -107,7 +108,10 @@ export function QuickAddProvider({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const value = useMemo<QuickAddValue>(() => ({ open, isOpen }), [open, isOpen]);
+  const value = useMemo<QuickAddValue>(
+    () => ({ open, isOpen }),
+    [open, isOpen],
+  );
 
   return (
     <QuickAddContext.Provider value={value}>
@@ -156,7 +160,7 @@ function QuickAddFab() {
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       )}
     >
-      <Plus size={24} weight="bold" />
+      <Plus size={ICON.hero} weight="bold" />
     </button>
   );
 }

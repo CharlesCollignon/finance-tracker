@@ -58,14 +58,14 @@ Project Settings → API):
 cp apps/web/.env.local.example apps/web/.env.local
 ```
 
-| Variable | Required | Notes |
-|----------|----------|--------|
-| `NEXT_PUBLIC_SUPABASE_URL` | yes | `https://xxxx.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Public anon key |
-| `NEXT_PUBLIC_SITE_URL` | yes | `http://localhost:3000` in dev; `https://pluclair.com` in production |
-| `SUPABASE_SERVICE_ROLE_KEY` | optional | “Delete account” on web, and the daily cron jobs |
-| `APPLE_TEAM_ID` | optional | Passkeys on iOS — Apple Team ID for AASA |
-| `ANDROID_SHA256_FINGERPRINTS` | optional | Passkeys on Android — colon-hex SHA-256 fingerprints |
+| Variable                        | Required | Notes                                                                |
+| ------------------------------- | -------- | -------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | yes      | `https://xxxx.supabase.co`                                           |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes      | Public anon key                                                      |
+| `NEXT_PUBLIC_SITE_URL`          | yes      | `http://localhost:3000` in dev; `https://pluclair.com` in production |
+| `SUPABASE_SERVICE_ROLE_KEY`     | optional | “Delete account” on web, and the daily cron jobs                     |
+| `APPLE_TEAM_ID`                 | optional | Passkeys on iOS — Apple Team ID for AASA                             |
+| `ANDROID_SHA256_FINGERPRINTS`   | optional | Passkeys on Android — colon-hex SHA-256 fingerprints                 |
 
 Google OAuth is configured in the **Supabase dashboard**, not in env files.
 
@@ -78,11 +78,11 @@ key in the mobile app):
 cp apps/mobile/.env.example apps/mobile/.env
 ```
 
-| Variable | Required | Notes |
-|----------|----------|--------|
-| `EXPO_PUBLIC_SUPABASE_URL` | yes | Same project as the web app |
-| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | yes | Public anon key |
-| `EXPO_PUBLIC_WEB_APP_URL` | optional | The web app's origin. Anything needing a server secret — asking the bank for new movements, writing a month read — goes through it. Without it the phone still works; those two buttons are simply absent. |
+| Variable                        | Required | Notes                                                                                                                                                                                                      |
+| ------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EXPO_PUBLIC_SUPABASE_URL`      | yes      | Same project as the web app                                                                                                                                                                                |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | yes      | Public anon key                                                                                                                                                                                            |
+| `EXPO_PUBLIC_WEB_APP_URL`       | optional | The web app's origin. Anything needing a server secret — asking the bank for new movements, writing a month read — goes through it. Without it the phone still works; those two buttons are simply absent. |
 
 After changing `.env`, restart Expo with a cleared cache (`-c`).
 
@@ -135,11 +135,11 @@ at the same refresh route. All run under the service role, so all need
 `SUPABASE_SERVICE_ROLE_KEY`, and all refuse to run without `CRON_SECRET` —
 Vercel sends it as `Authorization: Bearer <secret>`.
 
-| Route | When | What it does |
-|-------|------|--------------|
-| `/api/cron/refresh` | 07:00 | Reprices not-yet-due occurrences, then pulls and syncs the bank |
-| `/api/cron/notify` | 08:00 | Sends the day's web push digest |
-| `/api/cron/refresh` | 12:00, 17:00, 21:00 | Pulls and syncs the bank only |
+| Route               | When                | What it does                                                    |
+| ------------------- | ------------------- | --------------------------------------------------------------- |
+| `/api/cron/refresh` | 07:00               | Reprices not-yet-due occurrences, then pulls and syncs the bank |
+| `/api/cron/notify`  | 08:00               | Sends the day's web push digest                                 |
+| `/api/cron/refresh` | 12:00, 17:00, 21:00 | Pulls and syncs the bank only                                   |
 
 **Refreshing** is everything that brings the ledger up to date from outside
 it. Hobby allows a hundred cron jobs per project but insists each runs at most
@@ -155,13 +155,13 @@ The two halves fail independently: an unreachable bank does not stop quotes
 refreshing, and a rate-limited quote source does not stop the statement being
 read.
 
-*Repricing* brings occurrences that are applied but still dated ahead back in
+_Repricing_ brings occurrences that are applied but still dated ahead back in
 line with their instrument's quote, and refreshes each template's stored
 price. It never touches a date that has passed and never creates a
 transaction. This is what stops "Apply recurring" from asking about a DCA
 every time the market moves.
 
-*The bank sync* asks the bank for anything new, then reads the statement,
+_The bank sync_ asks the bank for anything new, then reads the statement,
 files what the user's own history already answers for, and leaves the rest in
 the review inbox. It pushes only when the run left something needing a
 decision, keyed by the day so it is said once. Needs
@@ -188,16 +188,16 @@ is a read of our own copy. It reaches no bank, costs nothing, and can be done
 as often as anyone likes — but it is only as current as whatever the provider
 last fetched on its own schedule.
 
-*Pulling* — the SDK's `syncAll` — is the call that reaches the bank. Its
+_Pulling_ — the SDK's `syncAll` — is the call that reaches the bank. Its
 ceiling is regulatory rather than commercial: under PSD2 an account
 information service may read an account **four times a day when the user is
 not present**, and **without limit when they are**. So the two kinds are
 counted separately:
 
-| Kind | Who | Limit |
-|------|-----|-------|
-| Attended | Someone pressed refresh | None, beyond a 90-second cooldown so a double-tap is not two round trips |
-| Unattended | The cron | Four a day, which is why there are four refresh schedules |
+| Kind       | Who                     | Limit                                                                    |
+| ---------- | ----------------------- | ------------------------------------------------------------------------ |
+| Attended   | Someone pressed refresh | None, beyond a 90-second cooldown so a double-tap is not two round trips |
+| Unattended | The cron                | Four a day, which is why there are four refresh schedules                |
 
 The tally lives in `bank_pulls` (migration 022), one row per user per day,
 because a serverless function remembers nothing between invocations and an
@@ -260,7 +260,7 @@ wrapping problem. All of it is pure and unit-tested, with a fake source that
 asserts no network happened.
 
 Reads are capped at five a month per user, with a minute's cooldown and a
-reservation taken *before* the call so two presses cannot both spend the last
+reservation taken _before_ the call so two presses cannot both spend the last
 one. The counters live in `month_reads` (migration 024) behind `security
 definer` functions, for the same reason the bank tally does: a serverless
 function remembers nothing, and a counter a client may write is a counter a
@@ -282,7 +282,7 @@ IBANs, no account holder. Switch on the training opt-out in Mistral's console
 before using the key in earnest; that is a console setting, not something this
 repo can do for you.
 
-The read is rendered against the figures as they stand *now*, not the ones
+The read is rendered against the figures as they stand _now_, not the ones
 stored with it, so a number in the prose can never contradict the card above
 it. What can age is the judgement: when a figure it rests on has moved, the
 card says which and how long ago it was written. A month still in progress is
@@ -304,12 +304,12 @@ In Supabase → Authentication → Passkeys. **Do not save the
 `example.com` placeholders.** Passkeys are bound to the Relying Party
 ID; changing it later invalidates every enrolled credential.
 
-| Field | Value |
-|-------|--------|
-| Enable Passkey authentication | on |
-| Relying Party Display Name | `Pluclair` |
-| Relying Party ID | `pluclair.com` (bare domain, no `https://`) |
-| Relying Party Origins | `https://pluclair.com` and, after you have the Android signing cert, `android:apk-key-hash:<base64url-sha256>` |
+| Field                         | Value                                                                                                          |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Enable Passkey authentication | on                                                                                                             |
+| Relying Party Display Name    | `Pluclair`                                                                                                     |
+| Relying Party ID              | `pluclair.com` (bare domain, no `https://`)                                                                    |
+| Relying Party Origins         | `https://pluclair.com` and, after you have the Android signing cert, `android:apk-key-hash:<base64url-sha256>` |
 
 The Android origin is **not** the colon-hex fingerprint used in
 `assetlinks.json`. From the same SHA-256 hex (no colons):
@@ -331,9 +331,9 @@ Domain association files are served from the web app:
 
 Set these server env vars on Vercel (and in `apps/web/.env.local`):
 
-| Variable | Notes |
-|----------|--------|
-| `APPLE_TEAM_ID` | 10-character Apple Team ID for the AASA `webcredentials` entry |
+| Variable                      | Notes                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `APPLE_TEAM_ID`               | 10-character Apple Team ID for the AASA `webcredentials` entry          |
 | `ANDROID_SHA256_FINGERPRINTS` | Comma-separated colon-hex SHA-256 cert fingerprints (`eas credentials`) |
 
 iOS bundle ID: `com.salutcharles.pluclair`. Android package:
@@ -409,25 +409,42 @@ build step is required (TypeScript source is consumed directly).
 - Wordmark: **Pluclair** in Orbit (Maxence Duterne Regular)
   - Web: `apps/web/public/fonts/OrbitMaxenceDuterne-Regular.otf`
   - Mobile: `apps/mobile/assets/fonts/OrbitMaxenceDuterne-Regular.otf`
+- Text faces: Instrument Sans (body), Fraunces (figures), IBM Plex Mono
+  (ledger amounts). The web app loads all three through `next/font/google`;
+  the phone bundles them under `apps/mobile/assets/fonts/`.
+- The phone's two Fraunces files are **static instances**, not the variable
+  font. React Native cannot set variation axes, so a variable font renders
+  only its default location — and the file that used to sit here defaulted to
+  `wght 900 / opsz 9`, which is why `font-serif` had been drawing Black text
+  at the smallest optical size despite being named Regular. Both are
+  instanced at `opsz 48`, between the sizes `TYPE.figure` (32) and
+  `TYPE.hero` (56) actually render at:
+  - `Fraunces-Regular.ttf` — `wght 400`
+  - `Fraunces-SemiBold.ttf` — `wght 600`, the figure weight, matching web's
+    `font-semibold` on the same face
+    To regenerate either, ask the Google Fonts CSS API for the instance with a
+    legacy user agent (which makes it serve TrueType rather than woff2):
+    `curl -A "Mozilla/4.0" "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@48,600"`
+    and download the `.ttf` it points at.
 
 ---
 
 ## Troubleshooting
 
-| Issue | What to try |
-|-------|-------------|
+| Issue                                        | What to try                                                 |
+| -------------------------------------------- | ----------------------------------------------------------- |
 | Vercel `frozen-lockfile` / lockfile mismatch | Run `pnpm install` at repo root and commit `pnpm-lock.yaml` |
-| Vercel build finds no Next.js app | Set Root Directory to `apps/web` |
-| Expo Go cannot load the bundle | `expo start -c --tunnel` |
-| Styles missing after NativeWind changes | Restart with `-c` |
-| Supabase auth errors on web | Check `.env.local` / `NEXT_PUBLIC_SITE_URL` and restart |
-| Supabase auth errors on mobile | Check `apps/mobile/.env` and restart Expo with `-c` |
+| Vercel build finds no Next.js app            | Set Root Directory to `apps/web`                            |
+| Expo Go cannot load the bundle               | `expo start -c --tunnel`                                    |
+| Styles missing after NativeWind changes      | Restart with `-c`                                           |
+| Supabase auth errors on web                  | Check `.env.local` / `NEXT_PUBLIC_SITE_URL` and restart     |
+| Supabase auth errors on mobile               | Check `apps/mobile/.env` and restart Expo with `-c`         |
 
 ---
 
 ## Scripts (root)
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev:web` | Next.js dev server |
+| Command           | Description             |
+| ----------------- | ----------------------- |
+| `pnpm dev:web`    | Next.js dev server      |
 | `pnpm dev:mobile` | Expo / Metro dev server |

@@ -24,6 +24,7 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { saveWalletPlan, saveWalletTargets } from "@/lib/actions/investments";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
+import { ICON } from "@/lib/icon-scale";
 
 interface WalletPlanPanelProps {
   portfolio: InvestmentPortfolioSummary;
@@ -158,7 +159,7 @@ export function WalletPlanPanel({
             size="sm"
             onClick={() => setEditing((value) => !value)}
           >
-            <PencilSimple size={14} className="mr-1 inline" />
+            <PencilSimple size={ICON.sm} className="mr-1 inline" />
             {editing ? "Cancel" : "Set targets"}
           </Button>
         </div>
@@ -207,7 +208,9 @@ export function WalletPlanPanel({
                   >
                     <div
                       className="h-full rounded-full bg-primary"
-                      style={{ width: `${Math.round(row.currentWeight * 100)}%` }}
+                      style={{
+                        width: `${Math.round(row.currentWeight * 100)}%`,
+                      }}
                     />
                   </div>
 

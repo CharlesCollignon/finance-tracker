@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import { ICON } from "@/lib/icon-scale";
 
 /**
  * The screen a brand-new account actually lands on.
@@ -68,7 +69,7 @@ export function MonthFirstRun() {
                   className="mt-1 flex w-fit items-center gap-1 text-sm font-medium text-primary-ink"
                 >
                   {step.action}
-                  <ArrowRight size={13} />
+                  <ArrowRight size={ICON.sm} />
                 </Link>
               ) : null}
             </div>

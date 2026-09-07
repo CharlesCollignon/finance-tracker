@@ -19,7 +19,7 @@ export const landingCopy = {
     /** Split so the line break is a choice rather than whatever the box does. */
     titleLines: ["Your whole month,", "on one quiet screen"],
     tagline:
-      "Income, bills, savings and investments — recorded by you, held privately, and reconciled against your real balance at the end of every month.",
+      "Income, bills, savings and investments — recorded by you or read from your bank, held privately, and reconciled against your real balance at the end of every month.",
     /** The two figures on the floating cards. Same month as every mock. */
     cards: {
       remaining: {
@@ -84,6 +84,30 @@ export const landingCopy = {
     ],
     footnote:
       "A balance higher than the rows allow is not a win — it means something is missing, and the close says so instead of quietly counting it.",
+  },
+
+  monthRead: {
+    heading: "The words are written for you. The figures are not.",
+    body: [
+      "Ask for a read and a language model writes a few sentences about the month you are looking at. It never types a number. It refers to a figure by name — unrecorded spending, what you kept, the cap you set — and the app substitutes its own value before the sentence reaches you. A sentence resting on a figure the app did not compute is dropped; if the headline is the one that broke, the whole read is thrown away and nothing is stored.",
+      "That fixes the arithmetic, not the opinion. “You are spending noticeably more on groceries” contains no figure, so nothing above can check it — it is a judgement, and it is the model's. This is a second pair of eyes on the month, not a verdict on it, and it is the only place in the app where anything is written for you.",
+    ],
+    outcomes: [
+      {
+        label: "On request",
+        body: "Nothing is written until you ask. Each read is stored with the figures it was written from, so what it was looking at stays visible next to what it said.",
+      },
+      {
+        label: "Your words",
+        body: "The model is held to the app's own terms. A read calling a month close a “reconciliation” would contradict every label printed around it, and you would have no way to tell which of the two was wrong.",
+      },
+      {
+        label: "It ages",
+        body: "The figures on screen are always current. The judgement is not: “comfortably inside your allowance” stops being true when it stops being true, so a read is marked once the figures under it have moved.",
+      },
+    ],
+    footnote:
+      "Suggestions sit under a heading of their own, never mixed into the observations — so nothing it proposes can be mistaken for something it measured.",
   },
 
   how: {
@@ -269,6 +293,27 @@ export const landingCopy = {
         {
           title: "Read what it found",
           body: "Unrecorded spending, what you kept, and whether the month stayed inside your own allowance — which is set from your history, not from a round number you would only argue with.",
+        },
+      ],
+    },
+    {
+      id: "month-read",
+      title: "Month read",
+      body: "A few sentences about the month, where the prose is a model's and every figure is the app's.",
+      utility:
+        "Every other screen hands you a figure or a list. This one reads them together and says what stands out — without being allowed to invent a number to say it with. Useful on the months where the totals look ordinary and something underneath them is not.",
+      steps: [
+        {
+          title: "Ask for it",
+          body: "A read is written when you press for one, never on sight. Five a month, which is more than enough for a month that changes and a ceiling on anything that presses the button in a loop.",
+        },
+        {
+          title: "Read what it found",
+          body: "Observations first, and any suggestions under a heading of their own. Every figure in the prose is the app's own, substituted into the sentence after the model named which one it meant.",
+        },
+        {
+          title: "Ask again when it ages",
+          body: "The figures never go stale, but the judgement does. When what is underneath has moved enough to change the reading, the read says so and you can ask for another.",
         },
       ],
     },

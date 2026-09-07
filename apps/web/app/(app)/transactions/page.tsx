@@ -33,7 +33,7 @@ export default async function TransactionsPage({
   }
 
   const params = await searchParams;
-  // The month the user was last looking at. The middleware has already put
+  // The month the user was last looking at. The proxy has already put
   // it into the address; this reads it back, and falls back to the cookie for
   // a request that did not pass through there.
   const { year, month } = await resolveMonthScope(params);

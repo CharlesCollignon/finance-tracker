@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { CloudArrowUp } from "@phosphor-icons/react";
 import { drainOutbox, useOutbox, watchConnection } from "@/lib/offline-outbox";
 import { cn } from "@/lib/utils";
+import { ICON } from "@/lib/icon-scale";
 
 /**
  * Says what is still only on this device.
@@ -48,7 +49,7 @@ export function OutboxBanner() {
         failing ? "border-destructive/50" : "border-border",
       )}
     >
-      <CloudArrowUp size={16} className="shrink-0 text-muted-foreground" />
+      <CloudArrowUp size={ICON.md} className="shrink-0 text-muted-foreground" />
       <span className="truncate text-sm">{label}</span>
       <button
         type="button"

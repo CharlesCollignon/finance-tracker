@@ -24,6 +24,7 @@ import { getMonthCloseOverview } from "@/lib/queries/month-close";
 import { getBankAccounts } from "@/lib/queries/bank-balance";
 import { bankFeedConfigured } from "@/lib/bank/client";
 import { BudgetsView } from "./BudgetsView";
+import { ICON } from "@/lib/icon-scale";
 
 export default async function BudgetsPage() {
   const user = await getAuthUser();
@@ -143,7 +144,7 @@ export default async function BudgetsPage() {
                     {hint}
                   </span>
                 </span>
-                <ArrowRight size={16} />
+                <ArrowRight size={ICON.md} />
               </Link>
             ))}
           </div>

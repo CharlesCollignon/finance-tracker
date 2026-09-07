@@ -8,6 +8,7 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { ICON } from "@/lib/icon-scale";
 
 interface CashAccountsCardProps {
   accounts: BankAccount[];
@@ -85,7 +86,7 @@ export function CashAccountsCard({ accounts }: CashAccountsCardProps) {
                   </span>
                   {unreadable ? (
                     <span className="flex items-center gap-1 text-xs text-destructive">
-                      <Warning size={12} weight="fill" />
+                      <Warning size={ICON.xs} weight="fill" />
                       Consent has lapsed — nothing can be read from it
                     </span>
                   ) : account.reported_on ? (
@@ -106,7 +107,7 @@ export function CashAccountsCard({ accounts }: CashAccountsCardProps) {
       </ul>
 
       <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-        <ArrowClockwise size={13} className="mt-0.5 shrink-0" />
+        <ArrowClockwise size={ICON.sm} className="mt-0.5 shrink-0" />
         {counted === 0
           ? "Nothing is ticked, so months are still closed by hand."
           : "Months close on their own once the statement covers the day they are read on. A month whose ticked accounts cannot all be read waits instead of guessing."}

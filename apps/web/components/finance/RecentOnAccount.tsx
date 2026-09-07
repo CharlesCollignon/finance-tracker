@@ -8,6 +8,7 @@ import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { ICON } from "@/lib/icon-scale";
 
 interface RecentOnAccountProps {
   movements: BankMovement[];
@@ -49,7 +50,7 @@ export function RecentOnAccount({ movements, pending }: RecentOnAccountProps) {
           className="flex shrink-0 items-center gap-1 text-sm text-primary-ink"
         >
           {pending > 0 ? `${pending} to review` : "Ledger"}
-          <ArrowRight size={13} />
+          <ArrowRight size={ICON.sm} />
         </Link>
       </div>
 

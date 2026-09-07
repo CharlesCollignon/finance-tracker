@@ -3,6 +3,13 @@ import {
   getMonthBounds,
   type BudgetViewMode,
 } from "@finance/core/constants";
+import {
+  bucketMonthlyTrend,
+  monthlyTrendStart,
+  type MonthlyTrendPoint,
+} from "@finance/core/monthly-trend";
+
+export type { MonthlyTrendPoint };
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import {
   filterDatesBySchedule,
@@ -101,45 +108,28 @@ export async function getTransactions(
   return (data ?? []) as TransactionWithCategory[];
 }
 
-export interface MonthlyTrendPoint {
-  monthKey: string;
-  label: string;
-  income: number;
-  outflow: number;
-  net: number;
-}
-
 /**
  * Income/outflow per month for the last `months` months, in one round trip.
- * Only categories that count toward the summary are included, matching how the
- * dashboard totals are built.
+ *
+ * The bucketing lives in core so that the web app's server-side twin produces
+ * the same figures from the same window; this is only the query and the shape
+ * PostgREST hands back.
  */
 export async function getMonthlyTrend(
   userId: string,
   months = 6,
 ): Promise<MonthlyTrendPoint[]> {
   const now = new Date();
-  const first = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
-  const start = `${first.getFullYear()}-${`${first.getMonth() + 1}`.padStart(2, "0")}-01`;
 
   const { data, error } = await supabase
     .from("transactions")
     .select("amount, occurred_on, categories(type, counts_toward_summary)")
     .eq("user_id", userId)
-    .gte("occurred_on", start)
+    .gte("occurred_on", monthlyTrendStart(months, now))
     .order("occurred_on", { ascending: true });
 
   if (error) {
     throw error;
-  }
-
-  const buckets = new Map<string, { income: number; outflow: number }>();
-  for (let index = 0; index < months; index++) {
-    const date = new Date(now.getFullYear(), now.getMonth() - index, 1);
-    buckets.set(
-      `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, "0")}`,
-      { income: 0, outflow: 0 },
-    );
   }
 
   type Row = {
@@ -148,34 +138,16 @@ export async function getMonthlyTrend(
     categories: { type: string; counts_toward_summary: boolean } | null;
   };
 
-  for (const row of (data ?? []) as unknown as Row[]) {
-    if (!row.categories?.counts_toward_summary) {
-      continue;
-    }
-    const bucket = buckets.get(row.occurred_on.slice(0, 7));
-    if (!bucket) {
-      continue;
-    }
-    const amount = Number(row.amount);
-    if (row.categories.type === "income") {
-      bucket.income += amount;
-    } else {
-      bucket.outflow += amount;
-    }
-  }
-
-  return [...buckets.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([monthKey, totals]) => {
-      const [year, month] = monthKey.split("-").map(Number);
-      return {
-        monthKey,
-        label: formatMonthLabel(year, month),
-        income: totals.income,
-        outflow: totals.outflow,
-        net: totals.income - totals.outflow,
-      };
-    });
+  return bucketMonthlyTrend(
+    ((data ?? []) as unknown as Row[]).map((row) => ({
+      amount: row.amount,
+      occurredOn: row.occurred_on,
+      type: row.categories?.type ?? "",
+      countsTowardSummary: row.categories?.counts_toward_summary ?? false,
+    })),
+    months,
+    now,
+  );
 }
 
 export async function getRecurringTemplates(

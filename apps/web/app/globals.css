@@ -88,10 +88,17 @@
 
 :root,
 .dark {
+  /* next/font sets --font-instrument-sans, --font-fraunces and
+     --font-plex-mono on <html>, and each already ends in a metric-matched
+     "… Fallback" face that holds the same metrics as the real one until it
+     loads. Composing them here keeps that face in the chain — naming the
+     families by hand instead, which is what this did, silently dropped it and
+     let the hero figure jump on swap. The tails stay as a last resort for the
+     case where next/font served nothing at all. */
   --font-sans:
-    "Instrument Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-serif: "Fraunces", ui-serif, Georgia, serif;
-  --font-mono: "IBM Plex Mono", "SF Mono", "Courier New", monospace;
+    var(--font-instrument-sans), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-mono: var(--font-plex-mono), "SF Mono", "Courier New", monospace;
   --font-head: var(--font-sans);
   --font-logo: "Orbit", var(--font-sans);
   --radius: 0.625rem;

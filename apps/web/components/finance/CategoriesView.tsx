@@ -31,6 +31,7 @@ import { CATEGORY_TYPE_ORDER } from "@finance/core/categories";
 import { CATEGORY_TYPE_LABELS } from "@finance/core/category-styles";
 import type { Category, CategoryType } from "@finance/core/types/database";
 import { cn } from "@/lib/utils";
+import { ICON } from "@/lib/icon-scale";
 
 const ICON_KEYS = Object.keys(CATEGORY_ICONS);
 
@@ -130,7 +131,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
           >
             Add category
             <ButtonNub>
-              <Plus size={16} weight="bold" />
+              <Plus size={ICON.md} weight="bold" />
             </ButtonNub>
           </Button>
         </div>
@@ -203,7 +204,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                             )}
                             aria-label={`Edit ${category.name}`}
                           >
-                            <PencilSimple size={18} weight="light" />
+                            <PencilSimple size={ICON.lg} weight="light" />
                           </button>
                           <button
                             type="button"
@@ -220,9 +221,12 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                             }
                           >
                             {category.archived ? (
-                              <ArrowCounterClockwise size={18} weight="light" />
+                              <ArrowCounterClockwise
+                                size={ICON.lg}
+                                weight="light"
+                              />
                             ) : (
-                              <Archive size={18} weight="light" />
+                              <Archive size={ICON.lg} weight="light" />
                             )}
                           </button>
                           <button
@@ -235,7 +239,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                             )}
                             aria-label={`Delete ${category.name}`}
                           >
-                            <Trash size={18} weight="light" />
+                            <Trash size={ICON.lg} weight="light" />
                           </button>
                         </div>
                       )}

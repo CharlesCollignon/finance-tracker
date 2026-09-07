@@ -37,10 +37,12 @@ const VARIANTS: Record<Variant, string> = {
   muted: "font-sans text-sm text-muted-foreground",
   label: "font-sans text-xs font-semibold uppercase text-muted-foreground",
   amount: "font-mono text-base text-foreground",
-  // The display sizes carry no text-* class: their size comes from TYPE
-  // below, for the lineHeight reason described there.
-  hero: "font-mono text-foreground",
-  figure: "font-mono text-foreground",
+  // The display sizes carry no text-* class, and no font-* one either: size,
+  // face, tracking and digit metric all arrive together from TYPE below —
+  // for the lineHeight reason described there, and so that a figure cannot
+  // end up with the size of a hero and the face of body copy.
+  hero: "text-foreground",
+  figure: "text-foreground",
   micro: "font-sans text-muted-foreground",
 };
 

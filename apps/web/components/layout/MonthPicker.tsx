@@ -19,6 +19,7 @@ import { getMonthAvailabilityAction } from "@/lib/actions/months";
 import { rememberMonth } from "@/lib/month-memory";
 import { cn } from "@/lib/utils";
 import { SOLID_PANEL } from "@/lib/glass";
+import { ICON } from "@/lib/icon-scale";
 
 interface MonthPickerProps {
   basePath: string;
@@ -67,7 +68,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
         )}
         aria-label="Previous month"
       >
-        <CaretLeft size={20} weight="bold" />
+        <CaretLeft size={ICON.xl} weight="bold" />
       </Link>
 
       <button
@@ -88,7 +89,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
           {formatMonthCompact(year, month)}
         </span>
         <CaretDown
-          size={12}
+          size={ICON.xs}
           weight="bold"
           className={cn(
             "shrink-0 transition-transform duration-200",
@@ -106,7 +107,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
         )}
         aria-label="Next month"
       >
-        <CaretRight size={20} weight="bold" />
+        <CaretRight size={ICON.xl} weight="bold" />
       </Link>
 
       {open ? (
@@ -228,7 +229,7 @@ function MonthGrid({
           aria-label={`Show ${shownYear - 1}`}
           className="flex size-8 items-center justify-center rounded hover:bg-muted"
         >
-          <CaretLeft size={14} weight="bold" />
+          <CaretLeft size={ICON.sm} weight="bold" />
         </button>
         <span className="text-sm font-medium tabular-nums">{shownYear}</span>
         <button
@@ -237,7 +238,7 @@ function MonthGrid({
           aria-label={`Show ${shownYear + 1}`}
           className="flex size-8 items-center justify-center rounded hover:bg-muted"
         >
-          <CaretRight size={14} weight="bold" />
+          <CaretRight size={ICON.sm} weight="bold" />
         </button>
       </div>
 

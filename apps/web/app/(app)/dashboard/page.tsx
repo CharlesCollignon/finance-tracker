@@ -7,6 +7,7 @@ import { getCategories } from "@/lib/queries/categories";
 import {
   getMonthComparison,
   getMonthlySummary,
+  getMonthlyTrend,
   getRecurringSkipKeys,
   getRecurringTemplates,
   getTransactions,
@@ -55,6 +56,7 @@ import {
 } from "@finance/core/savings-goals";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { BudgetViewToggle } from "@/components/finance/BudgetViewToggle";
 import {
@@ -72,6 +74,7 @@ import { StillToCome } from "@/components/finance/StillToCome";
 import { ProgressRing, SpendStrip } from "@/components/finance/charts";
 import { MonthWallets } from "@/components/finance/MonthWallets";
 import { GLASS_CARD } from "@/lib/glass";
+import { ICON } from "@/lib/icon-scale";
 import { cn } from "@/lib/utils";
 import type { BudgetProgress } from "@finance/core/budget-limits";
 import type {
@@ -294,7 +297,7 @@ function Caps({
           className="flex items-center gap-1 text-sm text-primary-ink"
         >
           Plan
-          <ArrowRight size={13} />
+          <ArrowRight size={ICON.sm} />
         </Link>
       </div>
       <div className="flex flex-wrap gap-6">
@@ -331,7 +334,7 @@ export default async function DashboardPage({
   const params = await searchParams;
   const budgetView = parseBudgetViewMode(params.view);
   // The month the user was last looking at. Restored into the address by the
-  // middleware, which clones the URL and so keeps `view` along with it.
+  // proxy, which clones the URL and so keeps `view` along with it.
   const { year, month } = await resolveMonthScope(params);
 
   const today = todayIsoLocal();
@@ -357,6 +360,9 @@ export default async function DashboardPage({
     cash,
     flows,
     fulfilledKeys,
+    // Six months of net, for the mark beside the hero figure. Cheap enough to
+    // join the batch: one indexed read, and the bucketing is arithmetic.
+    trend,
   ] = await Promise.all([
     getMonthlySummary(user.id, year, month, budgetView),
     getBudgets(user.id),
@@ -370,6 +376,7 @@ export default async function DashboardPage({
     isCurrentMonth ? readCashBalance(user.id, today) : null,
     isCurrentMonth ? getRecordedCashFlows(user.id, year, month) : null,
     getFulfilledKeys(user.id),
+    getMonthlyTrend(user.id),
   ]);
 
   const categoryNames = new Map(categories.map((c) => [c.id, c.name] as const));
@@ -434,6 +441,10 @@ export default async function DashboardPage({
 
   const unreadable = (cash?.missing ?? []).map((entry) => entry.label);
   const latestClose = closes.history[0] ?? null;
+  // Exactly when `Caps` below has a ring to draw. The desktop layout needs to
+  // know before it lays out, because an empty rail would leave the main
+  // column at seven of twelve with nothing beside it.
+  const hasCaps = budgetProgress.length > 0 || goalProgress.length > 0;
 
   return (
     <>
@@ -446,114 +457,162 @@ export default async function DashboardPage({
         </Suspense>
       </PageHeader>
 
-      <PageContainer className="flex flex-col gap-4">
-        <Suspense fallback={null}>
-          <AttentionSlot
-            userId={user.id}
-            year={year}
-            month={month}
-            closes={closes}
-            templates={templates}
-            categories={categories}
-          />
-        </Suspense>
+      {/* Twelve columns above xl, one below it.
 
-        {firstRun ? <MonthFirstRun /> : null}
-
-        {firstRun ? null : (
-          <MoneyOnHand
-            pulse={pulse}
-            monthLabel={monthLabel}
-            income={summary.income}
-            expenses={summary.expenses}
-            remaining={summary.remaining}
-            budgetView={budgetView}
-            elapsed={elapsed}
-            comparison={comparison}
-            savingsRate={savingsRate}
-            unreadable={unreadable}
-            noBalanceReason={
-              isCurrentMonth ? (bankConnected ? null : "no-bank") : "past-month"
-            }
-          />
-        )}
-
-        {/* Only for the month in progress. A finished month's unrecorded
-            spending is a settled figure and belongs to its close, which the
-            recap below reports. */}
-        {!firstRun && isCurrentMonth ? (
-          <MonthScore
-            pulse={pulse}
-            streak={closes.summary.streak}
-            bestStreak={closes.summary.bestStreak}
-            baseline={closes.summary.baseline}
-          />
-        ) : null}
-
-        {/* Only in the as-of-today view: the month-end view has already
-            counted these into the headline, so listing them again would
-            invite the reader to subtract them twice. */}
-        {!firstRun && budgetView === "current" ? (
-          <StillToCome
-            outgoing={upcoming.outgoing}
-            leaving={upcoming.leaving}
-            incoming={upcoming.incoming}
-            arriving={upcoming.arriving}
-          />
-        ) : null}
-
-        <Suspense fallback={null}>
-          <RecentSlot userId={user.id} />
-        </Suspense>
-
-        {latestClose ? (
-          <MonthClosedRecap
-            row={latestClose}
-            streak={closes.summary.streak}
-            cap={closes.settings.unrecordedCap}
-          />
-        ) : null}
-
-        {/* After the figures, never before them. The read interprets what is
-            above it, and a paragraph above the numbers it discusses asks the
-            reader to take it on trust. */}
-        {firstRun ? null : (
+          The order here is the reading order on every width — what wants a
+          decision, then the figure, then what supports it — and the grid only
+          decides what sits beside what. Nothing above xl:, so the phone and
+          tablet layouts are untouched. */}
+      <PageContainer className="flex flex-col gap-4 xl:grid xl:grid-cols-12 xl:items-start xl:gap-6">
+        {/* Spanning the width: it is the one block on this screen that asks
+            rather than tells. `empty:hidden` because a month with nothing
+            outstanding renders nothing, and a wrapper left behind would show
+            as a gap. */}
+        <div className="empty:hidden xl:col-span-12">
           <Suspense fallback={null}>
-            <ReadSlot
+            <AttentionSlot
               userId={user.id}
               year={year}
               month={month}
-              monthLabel={monthLabel}
+              closes={closes}
+              templates={templates}
+              categories={categories}
             />
           </Suspense>
-        )}
+        </div>
 
-        {summary.expenses > 0 ? (
-          <section
-            className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}
-          >
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 className="text-sm font-medium">Where it went</h2>
-              <Link
-                href="/transactions"
-                className="flex items-center gap-1 text-sm text-primary-ink"
-              >
-                Ledger
-                <ArrowRight size={13} />
-              </Link>
-            </div>
-            <SpendStrip
-              rows={summary.expenseBreakdown}
-              total={summary.expenses}
+        {/* The answer, and the breakdown that supports it. */}
+        <div
+          className={cn(
+            "flex flex-col gap-4",
+            hasCaps ? "xl:col-span-7" : "xl:col-span-12",
+          )}
+        >
+          {firstRun ? <MonthFirstRun /> : null}
+
+          {firstRun ? null : (
+            <MoneyOnHand
+              pulse={pulse}
+              monthLabel={monthLabel}
+              income={summary.income}
+              expenses={summary.expenses}
+              remaining={summary.remaining}
+              budgetView={budgetView}
+              elapsed={elapsed}
+              comparison={comparison}
+              savingsRate={savingsRate}
+              unreadable={unreadable}
+              trend={trend.map((point) => point.net)}
+              noBalanceReason={
+                isCurrentMonth
+                  ? bankConnected
+                    ? null
+                    : "no-bank"
+                  : "past-month"
+              }
             />
-          </section>
+          )}
+
+          {/* Where the month went, and what it was allowed to spend. These
+            stay above the fold with the hero: they are the answer to "how is
+            the month going", not commentary on it. */}
+          {summary.expenses > 0 ? (
+            <section
+              className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 className="text-sm font-medium">Where it went</h2>
+                <Link
+                  href="/transactions"
+                  className="flex items-center gap-1 text-sm text-primary-ink"
+                >
+                  Ledger
+                  <ArrowRight size={ICON.sm} />
+                </Link>
+              </div>
+              <SpendStrip
+                rows={summary.expenseBreakdown}
+                total={summary.expenses}
+              />
+            </section>
+          ) : null}
+        </div>
+
+        {/* The rail: progress toward the things the user set themselves. */}
+        {hasCaps ? (
+          <div className="flex flex-col gap-4 xl:col-span-5">
+            <Caps budgetProgress={budgetProgress} goalProgress={goalProgress} />
+          </div>
         ) : null}
 
-        <Caps budgetProgress={budgetProgress} goalProgress={goalProgress} />
+        {/* Everything that elaborates on the figures above rather than
+            stating them, in the order the phone shows it. Closed by default:
+            the point of this screen is the answer, not the whole file on the
+            month.
 
-        <Suspense fallback={null}>
-          <WalletsSlot userId={user.id} />
-        </Suspense>
+            The children still render — `<details>` hides its contents rather
+            than dropping them — so the streamed slots below resolve on the
+            server as they always did and opening this costs nothing. */}
+        <div className="xl:col-span-12">
+          <Disclosure
+            label="More this month"
+            contentClassName="xl:grid xl:grid-cols-2 xl:items-start xl:gap-6"
+          >
+            {/* After the figures, never before them. The read interprets what
+              is above it, and a paragraph above the numbers it discusses asks
+              the reader to take it on trust. */}
+            {firstRun ? null : (
+              <Suspense fallback={null}>
+                <ReadSlot
+                  userId={user.id}
+                  year={year}
+                  month={month}
+                  monthLabel={monthLabel}
+                />
+              </Suspense>
+            )}
+
+            {/* Only in the as-of-today view: the month-end view has already
+              counted these into the headline, so listing them again would
+              invite the reader to subtract them twice. */}
+            {!firstRun && budgetView === "current" ? (
+              <StillToCome
+                outgoing={upcoming.outgoing}
+                leaving={upcoming.leaving}
+                incoming={upcoming.incoming}
+                arriving={upcoming.arriving}
+              />
+            ) : null}
+
+            {/* Only for the month in progress. A finished month's unrecorded
+              spending is a settled figure and belongs to its close, which the
+              recap below reports. */}
+            {!firstRun && isCurrentMonth ? (
+              <MonthScore
+                pulse={pulse}
+                streak={closes.summary.streak}
+                bestStreak={closes.summary.bestStreak}
+                baseline={closes.summary.baseline}
+              />
+            ) : null}
+
+            <Suspense fallback={null}>
+              <RecentSlot userId={user.id} />
+            </Suspense>
+
+            <Suspense fallback={null}>
+              <WalletsSlot userId={user.id} />
+            </Suspense>
+
+            {latestClose ? (
+              <MonthClosedRecap
+                row={latestClose}
+                streak={closes.summary.streak}
+                cap={closes.settings.unrecordedCap}
+              />
+            ) : null}
+          </Disclosure>
+        </div>
       </PageContainer>
     </>
   );

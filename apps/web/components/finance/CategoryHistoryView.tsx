@@ -8,6 +8,7 @@ import { BarSeries } from "@/components/finance/charts";
 import { Card } from "@/components/retroui/Card";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { ICON } from "@/lib/icon-scale";
 
 interface CategoryHistoryViewProps {
   histories: CategoryHistory[];
@@ -74,7 +75,11 @@ export function CategoryHistoryView({
                     rising ? "text-destructive" : "text-success",
                   )}
                 >
-                  {rising ? <TrendUp size={13} /> : <TrendDown size={13} />}
+                  {rising ? (
+                    <TrendUp size={ICON.sm} />
+                  ) : (
+                    <TrendDown size={ICON.sm} />
+                  )}
                   {Math.abs(Math.round(selected.trend * 100))}%{" "}
                   {rising ? "above" : "below"} that this month
                 </span>
@@ -89,7 +94,7 @@ export function CategoryHistoryView({
               with two answers to the same question. */}
           {selected.periodShifted ? (
             <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
-              <Info size={13} className="mt-0.5 shrink-0" />
+              <Info size={ICON.sm} className="mt-0.5 shrink-0" />
               These land either side of a month end, so each is counted against
               the period it belongs to. A month here can differ from the same
               month in the Ledger.

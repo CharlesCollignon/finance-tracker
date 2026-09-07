@@ -29,6 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
+import { ICON } from "@/lib/icon-scale";
 
 interface InvestmentsViewProps {
   portfolio: InvestmentPortfolioSummary;
@@ -120,6 +121,8 @@ export function InvestmentsView({
             <StatHero
               label="Market value"
               amount={formatEuro(portfolio.totalMarketValue)}
+              animateValue={portfolio.totalMarketValue}
+              format={formatEuro}
               subtitle={
                 <p>
                   <span className="privacy-amount">
@@ -293,7 +296,7 @@ function WalletPanel({ column, onEdit, onAdd }: WalletPanelProps) {
             Positions
           </h3>
           <Button size="sm" variant="link" onClick={onAdd}>
-            <Plus size={16} weight="light" className="mr-1" />
+            <Plus size={ICON.md} weight="light" className="mr-1" />
             Add item
           </Button>
         </div>
@@ -373,7 +376,7 @@ function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
           className="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
           aria-label={`Edit ${item.name}`}
         >
-          <PencilSimple size={16} weight="light" />
+          <PencilSimple size={ICON.md} weight="light" />
         </button>
       </div>
 

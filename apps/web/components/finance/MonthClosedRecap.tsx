@@ -7,6 +7,7 @@ import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { ICON } from "@/lib/icon-scale";
 
 interface MonthClosedRecapProps {
   row: ClosedMonthRow;
@@ -44,7 +45,7 @@ export function MonthClosedRecap({ row, streak, cap }: MonthClosedRecapProps) {
         <h2 className="text-sm font-medium">{`${row.label} closed`}</h2>
         {streak > 1 ? (
           <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-            <Flame size={12} weight="fill" />
+            <Flame size={ICON.xs} weight="fill" />
             {`${streak} in a row`}
           </span>
         ) : null}
@@ -67,7 +68,7 @@ export function MonthClosedRecap({ row, streak, cap }: MonthClosedRecapProps) {
             withinCap ? "text-success" : "text-muted-foreground",
           )}
         >
-          {withinCap ? <Check size={14} weight="bold" /> : null}
+          {withinCap ? <Check size={ICON.sm} weight="bold" /> : null}
           {row.status === "over-recorded"
             ? "The ledger recorded more than the account moved — something is counted twice."
             : unrecorded < 0.01
@@ -102,7 +103,7 @@ export function MonthClosedRecap({ row, streak, cap }: MonthClosedRecapProps) {
         className="flex w-fit items-center gap-1 text-sm text-primary-ink"
       >
         Every month you have closed
-        <ArrowRight size={13} />
+        <ArrowRight size={ICON.sm} />
       </Link>
     </section>
   );

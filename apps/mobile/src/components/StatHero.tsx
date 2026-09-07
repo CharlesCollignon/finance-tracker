@@ -5,8 +5,7 @@ import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
-
-type Size = "md" | "lg";
+import { TYPE } from "@/theme/tokens";
 
 interface StatHeroProps {
   label: string;
@@ -18,28 +17,23 @@ interface StatHeroProps {
   subtitle?: ReactNode;
   status?: ReactNode;
   className?: string;
-  /** lg = page hero; md = section KPI */
-  size?: Size;
 }
 
-const AMOUNT_SIZE: Record<Size, string> = {
-  lg: "text-5xl",
-  md: "text-2xl",
-};
-
-/** lg is the one hero figure per screen (Fraunces); md figures stay in the ledger mono. */
-const AMOUNT_FONT: Record<Size, string> = {
-  lg: "font-serif",
-  md: "font-mono",
-};
-
-/** md is a compact section KPI that needs a tighter rhythm than a page hero. */
-const GAP: Record<Size, string> = {
-  lg: "mt-2",
-  md: "mt-1",
-};
-
-/** Centered KPI block: quiet label, large amount, optional muted lines. */
+/**
+ * Centred KPI block: quiet label, the screen's one figure, optional muted
+ * lines under it.
+ *
+ * There used to be a `size` prop here, where `md` set its amount in the ledger
+ * mono and `lg` in the serif. No call site on either client ever passed it, so
+ * the two faces were never both on screen and the prop only existed to keep
+ * them from agreeing.
+ *
+ * The figure treatment arrives as `TYPE.hero` rather than as `text-*` and
+ * `font-*` classes: the size has to come through `style` anyway — Tailwind's
+ * size utilities set lineHeight too, and on Android that clipped this font's
+ * taller glyphs — and carrying the face in the same token is what stops a
+ * figure getting the size of a hero and the face of body copy.
+ */
 export function StatHero({
   label,
   amount,
@@ -49,8 +43,9 @@ export function StatHero({
   subtitle,
   status,
   className,
-  size = "lg",
 }: StatHeroProps) {
+  const figureClass = cn(label && "mt-2", amountClassName);
+
   return (
     <View className={cn("w-full items-center", className)}>
       {label ? (
@@ -62,37 +57,22 @@ export function StatHero({
         <AnimatedAmount
           value={animateValue}
           format={format}
-          className={cn(
-            "font-semibold tracking-tight",
-            label ? GAP[size] : undefined,
-            AMOUNT_FONT[size],
-            AMOUNT_SIZE[size],
-            amountClassName,
-          )}
+          style={TYPE.hero}
+          className={figureClass}
         />
       ) : (
-        <PrivateAmount
-          className={cn(
-            "font-semibold tracking-tight",
-            label ? GAP[size] : undefined,
-            AMOUNT_FONT[size],
-            AMOUNT_SIZE[size],
-            amountClassName,
-          )}
-        >
+        <PrivateAmount style={TYPE.hero} className={figureClass}>
           {amount}
         </PrivateAmount>
       )}
       {subtitle ? (
-        <View className={GAP[size]}>
+        <View className="mt-2">
           <Text className="text-center text-sm text-muted-foreground">
             {subtitle}
           </Text>
         </View>
       ) : null}
-      {status ? (
-        <View className={cn(GAP[size], "items-center")}>{status}</View>
-      ) : null}
+      {status ? <View className="mt-2 items-center">{status}</View> : null}
     </View>
   );
 }

@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 import type { CategoryBreakdown } from "@finance/core/types/database";
+import { ICON } from "@/lib/icon-scale";
 
 interface MonthWalletsProps {
   portfolio: InvestmentPortfolioSummary;
@@ -65,7 +66,7 @@ export function MonthWallets({ portfolio }: MonthWalletsProps) {
           className="flex items-center gap-1 text-sm text-primary-ink"
         >
           Wallets
-          <ArrowRight size={13} />
+          <ArrowRight size={ICON.sm} />
         </Link>
       </div>
 

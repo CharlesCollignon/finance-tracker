@@ -10,6 +10,7 @@ import { signOut } from "@/lib/actions/finance";
 import { PROFILE_NAV_ITEM } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { GLASS_PANEL } from "@/lib/glass";
+import { ICON } from "@/lib/icon-scale";
 
 interface AccountMenuProps {
   variant: "bottom" | "side";
@@ -116,12 +117,12 @@ export function AccountMenu({
                   className={rowClass}
                   onClick={() => setOpen(false)}
                 >
-                  <Gear size={18} />
+                  <Gear size={ICON.lg} />
                   Settings
                 </Link>
                 <form action={signOut}>
                   <button type="submit" className={rowClass}>
-                    <SignOut size={18} />
+                    <SignOut size={ICON.lg} />
                     Sign out
                   </button>
                 </form>

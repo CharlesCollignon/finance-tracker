@@ -26,6 +26,7 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { saveWithOutbox } from "@/lib/offline-outbox";
 import { useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
+import { ICON } from "@/lib/icon-scale";
 
 const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", USD: "$" };
 
@@ -123,9 +124,7 @@ function QuickAddFields({
     if (!trimmed) {
       return categories;
     }
-    return categories.filter((cat) =>
-      cat.name.toLowerCase().includes(trimmed),
-    );
+    return categories.filter((cat) => cat.name.toLowerCase().includes(trimmed));
   }, [categories, query]);
 
   const groups = useMemo(
@@ -216,7 +215,11 @@ function QuickAddFields({
   }
 
   return (
-    <MobileSheet open={open} onOpenChange={onOpenChange} title="Add transaction">
+    <MobileSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Add transaction"
+    >
       <div className="flex flex-col gap-5">
         {/* ---- amount ------------------------------------------------- */}
         <div className="relative flex items-center justify-center py-2">
@@ -468,7 +471,7 @@ function QuickAddFields({
 
         {savedCount > 0 ? (
           <p className="flex items-center gap-2 text-sm text-success">
-            <CheckCircle size={16} weight="fill" />
+            <CheckCircle size={ICON.md} weight="fill" />
             {savedCount === 1
               ? "1 saved — keep going."
               : `${savedCount} saved — keep going.`}
@@ -494,7 +497,7 @@ function QuickAddFields({
             disabled={!canSave || pending}
             onClick={() => void save(true)}
           >
-            <Plus size={16} />
+            <Plus size={ICON.md} />
             Save &amp; add another
           </Button>
         </div>

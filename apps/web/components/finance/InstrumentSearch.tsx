@@ -8,6 +8,7 @@ import { InstrumentLogo } from "@/components/finance/InstrumentLogo";
 import { canSearchInstruments } from "@finance/core/market/yahoo";
 import { cn } from "@/lib/utils";
 import type { InstrumentSearchResult } from "@finance/core/market/yahoo";
+import { ICON } from "@/lib/icon-scale";
 
 interface InstrumentSearchProps {
   symbol: string;
@@ -126,13 +127,13 @@ export function InstrumentSearch({
             )}
             aria-label="Clear selected instrument"
           >
-            <X size={16} weight="light" />
+            <X size={ICON.md} weight="light" />
           </button>
         </div>
       ) : (
         <div className="relative">
           <MagnifyingGlass
-            size={18}
+            size={ICON.lg}
             weight="light"
             className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
           />

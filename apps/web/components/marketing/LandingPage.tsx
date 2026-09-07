@@ -6,6 +6,7 @@ import {
   ChartPieSlice,
   Repeat,
   ScalesIcon,
+  Sparkle,
   Target,
 } from "@phosphor-icons/react/dist/ssr";
 import { LandingBloom, LandingOrb } from "@/components/marketing/LandingOrb";
@@ -34,6 +35,7 @@ const FEATURE_ICONS: Record<LandingPageId, React.ReactNode> = {
   wallets: <ChartLine size={18} />,
   planning: <Target size={18} />,
   "month-close": <ScalesIcon size={18} />,
+  "month-read": <Sparkle size={18} />,
 };
 
 /** Twelve months of unrecorded spending, as fractions of the worst one. The
@@ -78,6 +80,7 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
     devices,
     features,
     monthClose,
+    monthRead,
     how,
     privacy,
     finalCta,
@@ -290,6 +293,47 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
               the figures start from the second.
             </p>
           </Rise>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------ month read */}
+      {/* After the close, because it is the close's figures it has the most to
+          say about — and because the order on the page is the order in the
+          app: measure first, then read what the measurement came to. */}
+      <section id="read" className="relative px-6 pb-24 md:pb-32">
+        <div className="relative mx-auto grid max-w-6xl gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
+          <Rise className="order-2 flex flex-col gap-4 lg:order-1 lg:pt-24">
+            <LandingDeviceStack pageId="month-read" />
+          </Rise>
+
+          <Reveal className="order-1 lg:order-2">
+            <SectionHeading heading={monthRead.heading} align="left" />
+            <div className="mt-6 flex max-w-xl flex-col gap-4">
+              {monthRead.body.map((paragraph) => (
+                <p
+                  key={paragraph.slice(0, 24)}
+                  className="text-base leading-relaxed text-white/50"
+                >
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+            <dl className="mt-10 flex flex-col gap-6 border-t border-white/10 pt-8">
+              {monthRead.outcomes.map((outcome) => (
+                <div key={outcome.label} className="sm:flex sm:gap-6">
+                  <dt className="w-32 shrink-0 font-mono text-xs uppercase tracking-[0.14em] text-primary/80">
+                    {outcome.label}
+                  </dt>
+                  <dd className="mt-1 text-sm leading-relaxed text-white/50 sm:mt-0">
+                    {outcome.body}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <p className="mt-8 max-w-xl text-sm leading-relaxed text-white/35">
+              {monthRead.footnote}
+            </p>
+          </Reveal>
         </div>
       </section>
 

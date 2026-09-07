@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import ReactECharts from "echarts-for-react";
 import type { EChartsOption } from "echarts";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { cn } from "@/lib/utils";
 import { useCurrency, useFormatCurrency } from "@/lib/use-currency";
 import {
@@ -38,6 +39,8 @@ interface ChartRow extends PositionChartPoint {
 }
 
 const RANGES: PositionChartRange[] = ["1M", "3M", "6M", "1Y", "All"];
+
+const RANGE_SEGMENTS = RANGES.map((value) => ({ value, label: value }));
 
 export function InvestmentItemChart({
   points,
@@ -303,27 +306,15 @@ export function InvestmentItemChart({
             </ModeButton>
           </div>
 
-          <div
-            className="flex min-w-0 flex-wrap gap-1"
-            role="group"
-            aria-label="Chart range"
-          >
-            {RANGES.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setRange(option)}
-                className={cn(
-                  "rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors",
-                  range === option
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-transparent text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
+          {/* One control rather than five independent pills: the sliding
+              selection is what says these are alternatives. */}
+          <SegmentedControl
+            label="Chart range"
+            segments={RANGE_SEGMENTS}
+            value={range}
+            onChange={setRange}
+            className="min-w-0"
+          />
 
           <ChartLegend mode={mode} accent={accent} />
         </div>

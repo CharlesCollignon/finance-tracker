@@ -1,11 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Eye, Plus } from "@phosphor-icons/react";
+import { Eye, Plus, Sparkle } from "@phosphor-icons/react";
 import { formatEuro } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { WEEKDAY_LABELS } from "@finance/core/calendar";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
+import { ProgressRing } from "@/components/finance/charts";
 import { Card } from "@/components/retroui/Card";
 import { Badge } from "@/components/retroui/Badge";
 import { APP_NAV_ITEMS, PROFILE_NAV_ITEM } from "@/lib/navigation";
@@ -30,12 +31,19 @@ type Variant = "web" | "mobile";
 // whole thing like an image. Every class below is therefore a fixed size chosen
 // for that design width, and none of them are responsive on purpose.
 //
-// The same reasoning rules out two components the app itself uses. ProgressRing
-// is echarts, which would pull a charting runtime onto the marketing critical
-// path and reads its colours from document.documentElement — which on these
-// pages carries whatever theme the *app* is set to, not the dark one the
-// marketing shell scopes. MockRing below is plain SVG and inherits its colour
-// from the shell like everything else.
+// It does not rule out the app's own marks, though it used to. ProgressRing was
+// an echarts gauge that read its colours from document.documentElement — a
+// charting runtime on the marketing critical path, keyed to whatever theme the
+// *app* was set to rather than the dark one this shell scopes — so there was a
+// hand-drawn twin here to avoid it. The app's ring is plain SVG now, coloured
+// through CSS tokens, and carries no breakpoints, so the twin is gone and the
+// real component draws these.
+//
+// SpendStrip is still not reused, for a different reason: it picks its band
+// colours by sorted index, while landingSample assigns each category an
+// explicit token so the mock's colours match what the app shows for that kind
+// of spending. It also has one density, and the phone frame needs a tighter
+// one. SpendSplit below stays.
 // ---------------------------------------------------------------------------
 
 const WEB_WIDTH = 1200;
@@ -80,62 +88,6 @@ function MockViewport({
 }
 
 /* -------------------------------------------------------------- primitives */
-
-/** Plain-SVG donut, in place of the app's echarts ring. See the note above. */
-function MockRing({
-  ratio,
-  label,
-  detail,
-  colorVar = "--primary",
-  size = 108,
-}: {
-  ratio: number;
-  label: string;
-  detail: string;
-  colorVar?: string;
-  size?: number;
-}) {
-  const clamped = Math.min(1, Math.max(0, ratio));
-  const danger = progressTone(clamped, false) === "danger";
-  const stroke = 9;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="-rotate-90">
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke="var(--hairline-strong)"
-            strokeWidth={stroke}
-          />
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke={danger ? "var(--destructive)" : `var(${colorVar})`}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference * (1 - clamped)}
-          />
-        </svg>
-        <span className="absolute inset-0 flex items-center justify-center font-mono text-base font-semibold tabular-nums">
-          {Math.round(clamped * 100)}%
-        </span>
-      </div>
-      <div className="text-center">
-        <p className="text-xs font-medium">{label}</p>
-        <p className="font-mono text-[11px] text-muted-foreground">{detail}</p>
-      </div>
-    </div>
-  );
-}
 
 /** Centred KPI block, at the desktop mock's scale. */
 function WebHero({
@@ -231,6 +183,8 @@ function MockCard({
  * and the month close is met on Month. */
 const ACTIVE_NAV: Record<LandingPageId, string> = {
   home: "Month",
+  // The read lives on Month; it is a card on that surface, not a sixth one.
+  "month-read": "Month",
   transactions: "Ledger",
   recurring: "Charges",
   calendar: "Ledger",
@@ -482,17 +436,18 @@ export function HomeMock({ variant = "web" }: { variant?: Variant }) {
         </MockCard>
         <MockCard innerClassName="p-4">
           <div className="flex justify-around gap-2">
-            <MockRing
+            <ProgressRing
               ratio={budget.spent / budget.limit}
               label={budget.label}
               detail={`${formatEuro(budget.spent)} / ${formatEuro(budget.limit)}`}
               size={88}
             />
-            <MockRing
+            <ProgressRing
               ratio={goal.saved / goal.target}
               label={goal.label}
               detail={`${formatEuro(goal.saved)} / ${formatEuro(goal.target)}`}
               colorVar="--info"
+              meaning="target"
               size={88}
             />
           </div>
@@ -531,16 +486,21 @@ export function HomeMock({ variant = "web" }: { variant?: Variant }) {
               status={<span className="text-success">{onBudgetLabel}</span>}
             />
             <div className="mt-6 flex w-full justify-center gap-10 border-t border-border pt-6">
-              <MockRing
+              {/* 108 rather than the component's own default: these are
+                  authored at the desktop mock's scale, not the app's. */}
+              <ProgressRing
                 ratio={budget.spent / budget.limit}
                 label={budget.label}
                 detail={`${formatEuro(budget.spent)} / ${formatEuro(budget.limit)}`}
+                size={108}
               />
-              <MockRing
+              <ProgressRing
                 ratio={goal.saved / goal.target}
                 label={goal.label}
                 detail={`${formatEuro(goal.saved)} / ${formatEuro(goal.target)}`}
                 colorVar="--info"
+                meaning="target"
+                size={108}
               />
             </div>
           </MockCard>
@@ -1435,6 +1395,151 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
 
 /* -------------------------------------------------------------- the router */
 
+/* -------------------------------------------------------------- month read */
+
+/**
+ * The read card, as the app draws it: a headline, observations under a tone
+ * dot each, and suggestions below a rule under a heading of their own.
+ *
+ * The dots carry the tone rather than the text being coloured — a whole
+ * sentence in red reads as an error, and "this went up" is not one.
+ */
+function ReadCard({ compact = false }: { compact?: boolean }) {
+  const { read } = landingSample;
+  const dot = {
+    good: "bg-success",
+    bad: "bg-destructive",
+    flat: "bg-muted-foreground",
+  };
+
+  return (
+    <MockCard innerClassName={compact ? "p-4" : "p-5"}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="flex items-center gap-1.5 text-sm font-medium">
+          <Sparkle size={14} className="text-primary-rim" />
+          Month read
+        </h3>
+        <span className="text-[11px] text-muted-foreground">
+          {read.writtenOn}
+        </span>
+      </div>
+
+      <p
+        className={cn(
+          "mt-3 font-head leading-snug",
+          compact ? "text-base" : "text-lg",
+        )}
+      >
+        {read.headline}
+      </p>
+
+      <ul className="mt-3 flex flex-col gap-2">
+        {read.observations
+          .slice(0, compact ? 2 : 3)
+          .map((observation, index) => (
+            <li
+              key={index}
+              className={cn(
+                "flex items-start gap-2",
+                compact ? "text-[11px]" : "text-sm",
+              )}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "mt-1.5 size-1.5 shrink-0 rounded-full",
+                  dot[observation.tone],
+                )}
+              />
+              <span className="min-w-0 text-muted-foreground">
+                {observation.text}
+              </span>
+            </li>
+          ))}
+      </ul>
+
+      <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
+        <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          Suggestions
+        </h4>
+        {read.suggestions.map((suggestion) => (
+          <div
+            key={suggestion}
+            className={cn(
+              "flex items-start gap-2",
+              compact ? "text-[11px]" : "text-sm",
+            )}
+          >
+            <span
+              aria-hidden
+              className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary-rim"
+            />
+            <span className="min-w-0 text-muted-foreground">{suggestion}</span>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-3 border-t border-border pt-3 text-[11px] text-muted-foreground">
+        {read.standing}
+      </p>
+    </MockCard>
+  );
+}
+
+export function MonthReadMock({ variant = "web" }: { variant?: Variant }) {
+  const { monthLabel, remaining, income } = landingSample;
+
+  const monthWord = monthLabel.split(" ")[0];
+
+  if (variant === "mobile") {
+    return (
+      <MockViewport width={MOBILE_WIDTH} height={MOBILE_HEIGHT}>
+        <MobileShell title="Month" active={ACTIVE_NAV["month-read"]}>
+          <MockCard innerClassName="p-4">
+            <MobileHero
+              label={`Left in ${monthWord}`}
+              amount={formatEuro(remaining)}
+              subtitle={`of ${formatEuro(income)} earned`}
+            />
+          </MockCard>
+          <ReadCard compact />
+        </MobileShell>
+      </MockViewport>
+    );
+  }
+
+  return (
+    <MockViewport width={WEB_WIDTH} height={WEB_HEIGHT}>
+      <WebShell
+        title="Month"
+        active={ACTIVE_NAV["month-read"]}
+        monthLabel={monthLabel}
+      >
+        {/* Seven and five, the same split the surface itself uses on a wide
+            screen: the read sits under the figure it interprets, never
+            beside it. */}
+        <div className="grid flex-1 grid-cols-12 gap-4">
+          <div className="col-span-7 flex flex-col gap-4">
+            <MockCard innerClassName="p-5">
+              <WebHero
+                label={`Left in ${monthWord}`}
+                amount={formatEuro(remaining)}
+                subtitle={`of ${formatEuro(income)} earned`}
+              />
+            </MockCard>
+            <ReadCard />
+          </div>
+          <div className="col-span-5">
+            <MockCard innerClassName="p-4">
+              <SpendSplit compact />
+            </MockCard>
+          </div>
+        </div>
+      </WebShell>
+    </MockViewport>
+  );
+}
+
 const PAGE_MOCKS: Record<LandingPageId, (variant: Variant) => ReactNode> = {
   home: (variant) => <HomeMock variant={variant} />,
   transactions: (variant) => <TransactionsMock variant={variant} />,
@@ -1443,6 +1548,7 @@ const PAGE_MOCKS: Record<LandingPageId, (variant: Variant) => ReactNode> = {
   wallets: (variant) => <WalletsMock variant={variant} />,
   planning: (variant) => <PlanningMock variant={variant} />,
   "month-close": (variant) => <MonthCloseMock variant={variant} />,
+  "month-read": (variant) => <MonthReadMock variant={variant} />,
 };
 
 /** The right mock for a feature, at its design size, ready to be scaled by

@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { Eye, EyeSlash } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { ICON } from "@/lib/icon-scale";
 
 const STORAGE_KEY = "privacy-blur";
 const CHANGE_EVENT = "app-privacy-change";
@@ -58,9 +59,9 @@ export function PrivacyToggle({ className }: { className?: string }) {
       )}
     >
       {hidden ? (
-        <EyeSlash size={18} weight="regular" />
+        <EyeSlash size={ICON.lg} weight="regular" />
       ) : (
-        <Eye size={18} weight="regular" />
+        <Eye size={ICON.lg} weight="regular" />
       )}
     </button>
   );

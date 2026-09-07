@@ -41,6 +41,7 @@ import type {
   RecurringTemplateWithCategory,
   TransactionWithCategory,
 } from "@finance/core/types/database";
+import { ICON } from "@/lib/icon-scale";
 
 /** Stable identity, so the derived selection does not change every render. */
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
@@ -352,7 +353,7 @@ export function CalendarView({
                     </Button>
                   ) : null}
                   <Button size="sm" onClick={() => setFormOpen(true)}>
-                    <Plus size={16} weight="bold" />
+                    <Plus size={ICON.md} weight="bold" />
                     <span className="hidden sm:inline">Add</span>
                   </Button>
                 </div>
@@ -370,7 +371,7 @@ export function CalendarView({
                   >
                     Add transaction
                     <ButtonNub>
-                      <Plus size={16} weight="bold" />
+                      <Plus size={ICON.md} weight="bold" />
                     </ButtonNub>
                   </Button>
                 </EmptyState>

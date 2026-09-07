@@ -15,6 +15,7 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { ICON } from "@/lib/icon-scale";
 
 interface MonthReadProps {
   year: number;
@@ -91,7 +92,7 @@ export function MonthRead({
     <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="flex items-center gap-1.5 text-sm font-medium">
-          <Sparkle size={14} className="text-primary-rim" />
+          <Sparkle size={ICON.sm} className="text-primary-rim" />
           The read
         </h2>
         <p className="text-xs text-muted-foreground">
@@ -176,7 +177,7 @@ export function MonthRead({
               "disabled:opacity-60",
             )}
           >
-            <PencilSimple size={14} />
+            <PencilSimple size={ICON.sm} />
             {pending
               ? "Writing…"
               : left <= 0
@@ -203,7 +204,7 @@ function Standing({ freshness }: { freshness: ReadFreshness }) {
     const count = freshness.moved.length;
     return (
       <span className="flex items-center gap-1.5 text-primary-ink">
-        <WarningCircle size={13} />
+        <WarningCircle size={ICON.sm} />
         {`${count === 1 ? "One figure" : `${count} figures`} this rests on ${
           count === 1 ? "has" : "have"
         } moved since it was written, ${freshness.writtenAge}.`}

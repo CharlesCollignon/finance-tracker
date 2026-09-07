@@ -14,6 +14,7 @@ import { signIn } from "@/lib/actions/finance";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
+import { ICON } from "@/lib/icon-scale";
 
 export function LoginForm() {
   const router = useRouter();
@@ -82,7 +83,7 @@ export function LoginForm() {
         >
           {pending ? "Signing in…" : "Sign in"}
           <ButtonNub>
-            <ArrowRight size={16} weight="bold" />
+            <ArrowRight size={ICON.md} weight="bold" />
           </ButtonNub>
         </Button>
       </form>

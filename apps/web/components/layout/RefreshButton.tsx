@@ -3,6 +3,7 @@
 import { ArrowsClockwise } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useRefresh } from "@/components/layout/RefreshProvider";
+import { ICON } from "@/lib/icon-scale";
 
 /**
  * The refresh, in the band every surface already has.
@@ -53,7 +54,7 @@ export function RefreshButton({
         )}
       >
         <ArrowsClockwise
-          size={18}
+          size={ICON.lg}
           weight="regular"
           className={cn(running && "animate-spin")}
         />
@@ -85,7 +86,7 @@ export function RefreshButton({
       )}
     >
       <ArrowsClockwise
-        size={18}
+        size={ICON.lg}
         weight="light"
         className={cn("shrink-0", running && "animate-spin")}
       />

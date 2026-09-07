@@ -23,16 +23,14 @@ import {
   isCryptoWallet,
 } from "@finance/core/crypto-holdings";
 import { parseShareCountInput } from "@finance/core/share-count";
-import {
-  chargeLookupUrl,
-  chargeToInput,
-} from "@finance/core/fund-costs";
+import { chargeLookupUrl, chargeToInput } from "@finance/core/fund-costs";
 import {
   displayNameForRecurringTemplate,
   type InvestmentPositionItem,
 } from "@finance/core/investment-positions";
 import type { InvestmentWalletId } from "@finance/core/investments";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
+import { ICON } from "@/lib/icon-scale";
 
 interface InvestmentPositionSheetProps {
   item: InvestmentPositionItem | null;
@@ -501,7 +499,7 @@ function InvestmentPositionForm({
             disabled={deletePending}
             onClick={handleDelete}
           >
-            <Trash size={16} weight="light" />
+            <Trash size={ICON.md} weight="light" />
             {deletePending ? "Removing…" : "Remove from portfolio"}
           </Button>
         )}

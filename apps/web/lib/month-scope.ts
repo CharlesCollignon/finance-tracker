@@ -12,7 +12,7 @@ import { MONTH_COOKIE, parseRememberedMonth } from "@finance/core/month-memory";
  * surface. The arrows made that worse: getting back to March meant six
  * clicks, twice.
  *
- * A session cookie carries it, and the **middleware** puts it back into the
+ * A session cookie carries it, and the **proxy** puts it back into the
  * address before anything renders. This function deliberately does not
  * redirect — it used to, and that was wrong in a way only the development
  * overlay revealed. `/transactions` renders the Ledger's view tabs, Next
@@ -24,7 +24,7 @@ import { MONTH_COOKIE, parseRememberedMonth } from "@finance/core/month-memory";
  * away before it becomes a component. See `lib/supabase/middleware.ts`.
  *
  * What is left here is a plain resolver, and it still reads the cookie on
- * purpose: a request that reaches a page without having passed the middleware
+ * purpose: a request that reaches a page without having passed the proxy
  * should render the month the user was looking at rather than silently
  * jumping to today.
  *

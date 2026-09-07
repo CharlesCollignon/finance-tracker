@@ -132,6 +132,39 @@ export const landingSample = {
     keptRate: 35.7,
     streak: 4,
   },
+  /**
+   * A read of the month above.
+   *
+   * The prose is written for this page; every figure quoted in it is one of
+   * the numbers already in this file, which is the whole point being
+   * illustrated — the writer names a figure and the app substitutes its own
+   * value. Kept short: the real thing is a paragraph and a few lines, not an
+   * essay.
+   */
+  read: {
+    writtenOn: "19 March",
+    headline:
+      "March is holding, and the part that is not is the part you did not record.",
+    observations: [
+      {
+        tone: "good" as const,
+        text: "You have €1,247 left with twelve days to go, which is ahead of where February sat on the same day.",
+      },
+      {
+        tone: "bad" as const,
+        text: "February's unrecorded spending came to €218 — inside your €260 allowance, but it is the largest line you have no rows for.",
+      },
+      {
+        tone: "flat" as const,
+        text: "Housing, at €850, is unchanged for the fourth month and is now 44% of what you spend.",
+      },
+    ],
+    suggestions: [
+      "Groceries has been under its €600 cap every month since December. A lower cap would tell you something the current one cannot.",
+    ],
+    standing: "Written today. Nothing has moved since.",
+  },
+
   /** Where the month's spending went, largest first. Sums to `spent`. */
   spendByCategory: [
     { label: "Housing", amount: 850, colorVar: "--chart-1" },

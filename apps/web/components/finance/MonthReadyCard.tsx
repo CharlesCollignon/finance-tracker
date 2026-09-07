@@ -9,6 +9,7 @@ import { ApplyRecurringSheet } from "@/components/finance/ApplyRecurringSheet";
 import { useToast } from "@/components/layout/ToastProvider";
 import { applyRecurringForMonth } from "@/lib/actions/finance";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { ICON } from "@/lib/icon-scale";
 
 interface MonthReadyCardProps {
   monthLabel: string;
@@ -112,7 +113,11 @@ export function MonthReadyCard({
             >
               {pending ? "Applying…" : "Apply"}
               <ButtonNub>
-                {pending ? <Check size={16} /> : <ArrowRight size={16} />}
+                {pending ? (
+                  <Check size={ICON.md} />
+                ) : (
+                  <ArrowRight size={ICON.md} />
+                )}
               </ButtonNub>
             </Button>
           </div>

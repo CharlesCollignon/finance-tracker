@@ -63,6 +63,7 @@ import type {
   Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
+import { ICON } from "@/lib/icon-scale";
 
 type FilterType = "all" | CategoryType;
 
@@ -120,6 +121,27 @@ function downloadCsv(filename: string, csv: string): void {
   link.click();
   URL.revokeObjectURL(url);
 }
+
+/**
+ * The Ledger's desktop columns: category, note, tags, amount.
+ *
+ * Above xl a row stops being "name on the left, amount far right with a
+ * screen of nothing between them" and becomes four aligned columns. The note
+ * and the tags were already on the row — the note under the name, the tags
+ * only in the filter — and at this width there is room to show both without
+ * pushing the amount around.
+ *
+ * Shared by the day header so its net lands in the amount column. Kept as one
+ * constant because two copies of a grid template is two things to keep in
+ * step, and the failure is silent: the columns simply stop lining up.
+ *
+ * Deliberately not a `<table>`. Each row is a button — clicking it opens the
+ * editor, and in select mode it toggles — so the row is the control, and a
+ * table row cannot be one without either nesting a button per cell or
+ * wrapping a `<tr>` in something that is not allowed to contain it.
+ */
+const LEDGER_COLUMNS =
+  "xl:grid xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_minmax(0,12rem)_7rem] xl:items-center xl:gap-4";
 
 function computeTypeTotals(transactions: TransactionWithCategory[]) {
   const totals = {
@@ -444,7 +466,7 @@ export function TransactionsView({
             <Button variant="pill" size="sm" onClick={() => setFormOpen(true)}>
               Add
               <ButtonNub>
-                <Plus size={16} weight="bold" />
+                <Plus size={ICON.md} weight="bold" />
               </ButtonNub>
             </Button>
           </div>
@@ -464,7 +486,7 @@ export function TransactionsView({
               <div className="flex flex-col gap-2 sm:flex-row">
                 <div className="relative min-w-0 flex-1">
                   <MagnifyingGlass
-                    size={16}
+                    size={ICON.md}
                     weight="light"
                     className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                     aria-hidden
@@ -581,7 +603,7 @@ export function TransactionsView({
                     title="Export these entries as CSV"
                     aria-label="Export these entries as CSV"
                   >
-                    <DownloadSimple size={16} weight="light" />
+                    <DownloadSimple size={ICON.md} weight="light" />
                   </Button>
                   <Button
                     variant="link"
@@ -593,7 +615,7 @@ export function TransactionsView({
                         title="Import a CSV statement"
                         aria-label="Import a CSV statement"
                       >
-                        <UploadSimple size={16} weight="light" />
+                        <UploadSimple size={ICON.md} weight="light" />
                       </Link>
                     }
                   />
@@ -660,11 +682,16 @@ export function TransactionsView({
               <div className="flex flex-col gap-5">
                 {days.map((day) => (
                   <div key={day.date} className="flex flex-col gap-1">
-                    <div className="flex items-baseline justify-between gap-3">
+                    <div
+                      className={cn(
+                        "flex items-baseline justify-between gap-3",
+                        LEDGER_COLUMNS,
+                      )}
+                    >
                       <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                         {relativeDayLabel(day.date, formatShortDate)}
                       </h3>
-                      <span className="privacy-amount text-xs tabular-nums text-muted-foreground">
+                      <span className="privacy-amount text-xs tabular-nums text-muted-foreground xl:col-start-4 xl:text-right">
                         {day.net >= 0 ? "+" : "−"}
                         {formatEuro(Math.abs(day.net))}
                       </span>
@@ -693,10 +720,11 @@ export function TransactionsView({
                           className={cn(
                             "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-left",
                             "transition-colors hover:bg-muted/40",
+                            LEDGER_COLUMNS,
                             selectMode && selected.has(tx.id) && "bg-primary/5",
                           )}
                         >
-                          <div className="flex min-w-0 items-center gap-3">
+                          <span className="flex min-w-0 items-center gap-3">
                             {selectMode ? (
                               <RowCheckbox
                                 checked={selected.has(tx.id)}
@@ -712,20 +740,42 @@ export function TransactionsView({
                               icon={tx.categories.icon}
                               className="size-9 shrink-0 rounded-[12px] border-0 bg-muted"
                             />
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-medium">
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-medium">
                                 {tx.categories.name}
-                              </p>
+                              </span>
+                              {/* Under the name until there is a column for
+                                  it, so a narrow screen still shows it. */}
                               {tx.note ? (
-                                <p className="truncate text-xs text-muted-foreground">
+                                <span className="block truncate text-xs text-muted-foreground xl:hidden">
                                   {tx.note}
-                                </p>
+                                </span>
                               ) : null}
-                            </div>
-                          </div>
+                            </span>
+                          </span>
+
+                          <span className="hidden min-w-0 truncate text-sm text-muted-foreground xl:block">
+                            {tx.note}
+                          </span>
+
+                          {/* Three at most: past that the column starts
+                              deciding the row's width. */}
+                          <span className="hidden min-w-0 items-center gap-1 overflow-hidden xl:flex">
+                            {(transactionTags[tx.id] ?? [])
+                              .slice(0, 3)
+                              .map((tag) => (
+                                <span
+                                  key={tag.id}
+                                  className="truncate rounded-full bg-secondary px-2 py-0.5 text-[0.6875rem] text-muted-foreground"
+                                >
+                                  {tag.name}
+                                </span>
+                              ))}
+                          </span>
+
                           <span
                             className={cn(
-                              "privacy-amount shrink-0 whitespace-nowrap text-sm tabular-nums",
+                              "privacy-amount shrink-0 whitespace-nowrap text-sm tabular-nums xl:text-right",
                               TYPE_AMOUNT_CLASS[tx.categories.type],
                             )}
                           >

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { ProfileView } from "@/components/profile/ProfileView";
-import { type PasskeyItem } from "@/components/profile/PasskeysCard";
+import { type PasskeyItem } from "@/components/profile/PasskeysPanel";
 import { createClient } from "@/lib/supabase/server";
 
 function getProviderLabel(provider: string | undefined): string {

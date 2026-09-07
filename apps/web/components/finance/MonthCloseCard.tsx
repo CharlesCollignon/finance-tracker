@@ -6,6 +6,7 @@ import { Button, ButtonNub } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { MonthCloseSheet } from "@/components/finance/MonthCloseSheet";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { ICON } from "@/lib/icon-scale";
 
 interface MonthCloseCardProps {
   year: number;
@@ -67,7 +68,7 @@ export function MonthCloseCard({
                   className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground"
                   title={`${streak} months in a row`}
                 >
-                  <Flame size={12} weight="fill" />
+                  <Flame size={ICON.xs} weight="fill" />
                   {streak}
                 </span>
               )}
@@ -83,7 +84,7 @@ export function MonthCloseCard({
             >
               Close the month
               <ButtonNub>
-                <ArrowRight size={16} />
+                <ArrowRight size={ICON.md} />
               </ButtonNub>
             </Button>
           </div>

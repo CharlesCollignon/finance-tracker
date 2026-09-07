@@ -21,9 +21,16 @@ function easeOut(t: number): number {
 }
 
 /**
- * Counts a figure up when it changes, the mobile counterpart of the web
- * CountUp. Skips the animation when the value is masked (nothing to see) or
- * the user has asked for reduced motion, and always lands exactly on `value`.
+ * Counts a figure up when it changes.
+ *
+ * Paired with `components/finance/AnimatedAmount.tsx` on the web, which runs
+ * the same 650ms ease-out cubic for the reason given there: the two clients
+ * show the same figure, so it should arrive on the same curve. This used to
+ * name a vendored `CountUp` as its web counterpart, which had no call sites
+ * and could not format a currency.
+ *
+ * Skips the animation when the value is masked (nothing to see) or the user
+ * has asked for reduced motion, and always lands exactly on `value`.
  */
 export function AnimatedAmount({
   value,

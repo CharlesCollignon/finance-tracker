@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import AnimatedContent from "@/components/react-bits/AnimatedContent";
 import FadeContent from "@/components/react-bits/FadeContent";
-import { usePrefersReducedMotion } from "@/components/marketing/use-prefers-reduced-motion";
+import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 
 /**
  * The two scroll reveals the marketing pages use, and the only reason any of

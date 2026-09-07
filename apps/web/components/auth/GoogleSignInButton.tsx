@@ -5,6 +5,7 @@ import { GoogleLogo } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
 import { Text } from "@/components/retroui/Text";
 import { createClient } from "@/lib/supabase/client";
+import { ICON } from "@/lib/icon-scale";
 
 interface GoogleSignInButtonProps {
   label?: string;
@@ -44,7 +45,7 @@ export function GoogleSignInButton({
         onClick={handleGoogleSignIn}
         disabled={pending}
       >
-        <GoogleLogo size={20} weight="bold" />
+        <GoogleLogo size={ICON.xl} weight="bold" />
         {pending ? "Redirecting…" : label}
       </Button>
       {error && <Text className="text-sm text-destructive">{error}</Text>}

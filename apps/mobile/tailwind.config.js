@@ -77,6 +77,10 @@ module.exports = {
       fontFamily: {
         sans: ["InstrumentSans-Regular"],
         serif: ["Fraunces-Regular"],
+        // The figure weight. Matches web's `font-semibold` on the same face,
+        // which is what keeps one amount looking like one amount across the
+        // two clients.
+        "serif-semibold": ["Fraunces-SemiBold"],
         mono: ["IBMPlexMono-Regular"],
         "mono-medium": ["IBMPlexMono-Medium"],
         logo: ["Orbit"],

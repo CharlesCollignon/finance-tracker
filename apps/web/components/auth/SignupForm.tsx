@@ -12,6 +12,7 @@ import { Text } from "@/components/retroui/Text";
 import { signUp } from "@/lib/actions/finance";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
+import { ICON } from "@/lib/icon-scale";
 
 export function SignupForm() {
   const router = useRouter();
@@ -84,7 +85,7 @@ export function SignupForm() {
         >
           {pending ? "Creating…" : "Sign up"}
           <ButtonNub>
-            <ArrowRight size={16} weight="bold" />
+            <ArrowRight size={ICON.md} weight="bold" />
           </ButtonNub>
         </Button>
       </form>

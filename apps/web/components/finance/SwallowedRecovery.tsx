@@ -6,6 +6,7 @@ import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { useToast } from "@/components/layout/ToastProvider";
 import { reopenSwallowedFeedItems } from "@/lib/actions/bank";
+import { ICON } from "@/lib/icon-scale";
 
 interface SwallowedRecoveryProps {
   count: number;
@@ -56,7 +57,7 @@ export function SwallowedRecovery({ count }: SwallowedRecoveryProps) {
             disabled={pending}
             onClick={reopen}
           >
-            <ArrowCounterClockwise size={14} />
+            <ArrowCounterClockwise size={ICON.sm} />
             {pending ? "Reopening…" : "Reopen them all"}
           </Button>
         </div>

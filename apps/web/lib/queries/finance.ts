@@ -11,6 +11,11 @@ import {
   type MonthComparison,
 } from "@finance/core/month-comparison";
 import { buildMonthlySummary } from "@finance/core/monthly-summary";
+import {
+  bucketMonthlyTrend,
+  monthlyTrendStart,
+  type MonthlyTrendPoint,
+} from "@finance/core/monthly-trend";
 import type {
   CategoryType,
   MonthlySummary,
@@ -133,6 +138,49 @@ export const getRecurringTemplates = cache(
  * behind, whereas comparing two projections would move whenever a template
  * changed.
  */
+/**
+ * Income/outflow per month for the last `months` months, oldest first.
+ *
+ * The server-side twin of the phone's `getMonthlyTrend`, sharing the window
+ * and the bucketing so the two clients cannot disagree about a month. Cached
+ * per request because the Month surface asks for it beside a dozen other
+ * reads.
+ */
+export const getMonthlyTrend = cache(
+  async (userId: string, months = 6): Promise<MonthlyTrendPoint[]> => {
+    const supabase = await createClient();
+    const now = new Date();
+
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("amount, occurred_on, categories(type, counts_toward_summary)")
+      .eq("user_id", userId)
+      .gte("occurred_on", monthlyTrendStart(months, now))
+      .order("occurred_on", { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    type Row = {
+      amount: number | string;
+      occurred_on: string;
+      categories: { type: string; counts_toward_summary: boolean } | null;
+    };
+
+    return bucketMonthlyTrend(
+      ((data ?? []) as unknown as Row[]).map((row) => ({
+        amount: row.amount,
+        occurredOn: row.occurred_on,
+        type: row.categories?.type ?? "",
+        countsTowardSummary: row.categories?.counts_toward_summary ?? false,
+      })),
+      months,
+      now,
+    );
+  },
+);
+
 export async function getMonthComparison(
   userId: string,
   year: number,

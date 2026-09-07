@@ -19,10 +19,13 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    // Matches --background in globals.css so the splash does not flash white
-    // on a device in dark mode.
-    background_color: "#f7f5f2",
-    theme_color: "#f7f5f2",
+    // Matches --background in globals.css so the splash does not flash a
+    // ground the app never opens on. Both stood at #f7f5f2, which was right
+    // while a paper light palette shipped alongside the dark one; that
+    // palette is gone and --background is this near-black, so the pair had
+    // been left behind and the splash flashed light into a dark app.
+    background_color: "#0a0a10",
+    theme_color: "#0a0a10",
     categories: ["finance", "productivity"],
     icons: [
       {

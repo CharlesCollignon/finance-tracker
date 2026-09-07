@@ -11,6 +11,7 @@ import { AccountMenu } from "@/components/layout/AccountMenu";
 import { Logo } from "@/components/layout/Logo";
 import { useQuickAdd } from "@/components/layout/QuickAddProvider";
 import { RefreshButton } from "@/components/layout/RefreshButton";
+import { ICON } from "@/lib/icon-scale";
 
 /** The app's primary action, given the top slot rather than a page to visit. */
 function QuickAddButton() {
@@ -31,7 +32,7 @@ function QuickAddButton() {
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       )}
     >
-      <Plus size={18} weight="bold" />
+      <Plus size={ICON.lg} weight="bold" />
       Add transaction
       <kbd className="ml-auto rounded bg-black/15 px-1.5 py-0.5 text-[10px] font-normal">
         N
@@ -120,7 +121,7 @@ export function SideNav({
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
-                <Icon size={18} weight={active ? "fill" : "light"} />
+                <Icon size={ICON.lg} weight={active ? "fill" : "light"} />
                 {label}
                 {href === "/transactions" ? (
                   <NavBadge count={ledgerBadge} />

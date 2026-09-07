@@ -7,6 +7,7 @@ import { Button } from "@/components/retroui/Button";
 import { Text } from "@/components/retroui/Text";
 import { seedCategoriesForCurrentUser } from "@/lib/actions/finance";
 import { createClient } from "@/lib/supabase/client";
+import { ICON } from "@/lib/icon-scale";
 
 interface PasskeySignInButtonProps {
   label?: string;
@@ -53,7 +54,7 @@ export function PasskeySignInButton({
         }}
         disabled={pending}
       >
-        <Fingerprint size={20} weight="bold" />
+        <Fingerprint size={ICON.xl} weight="bold" />
         {pending ? "Waiting for passkey…" : label}
       </Button>
       {error && <Text className="text-sm text-destructive">{error}</Text>}

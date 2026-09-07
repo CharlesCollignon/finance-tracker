@@ -3,6 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { X } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { ICON } from "@/lib/icon-scale";
 
 interface MobileSheetProps {
   open: boolean;
@@ -142,7 +143,7 @@ export function MobileSheet({
             className="flex h-11 w-11 items-center justify-center"
             onClick={() => onOpenChange(false)}
           >
-            <X size={20} />
+            <X size={ICON.xl} />
           </button>
         </header>
         <div className="p-4 md:p-5">{children}</div>

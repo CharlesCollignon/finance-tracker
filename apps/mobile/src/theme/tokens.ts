@@ -93,15 +93,29 @@ export const SOFT_SHADOW = {
  * change width as a figure animates, so a counting amount visibly jitters and
  * a right-aligned column of them never settles.
  */
+/**
+ * The face the display sizes are set in.
+ *
+ * Named here rather than as a `font-serif-semibold` class at the call site so
+ * that one token carries the whole treatment — face, size, tracking and digit
+ * metric — and a figure cannot pick up three of the four. React Native takes
+ * the exact registered family and does not synthesise a weight from
+ * `fontWeight`, so the semibold instance has to be asked for by name; see the
+ * note in `src/app/_layout.tsx` about why these are static instances.
+ */
+const FIGURE_FACE = "Fraunces-SemiBold";
+
 export const TYPE: Record<"hero" | "figure" | "micro", TextStyle> = {
   /** The one figure that owns a screen. Month on hand, portfolio total. */
   hero: {
+    fontFamily: FIGURE_FACE,
     fontSize: 56,
     letterSpacing: -2,
     fontVariant: ["tabular-nums"],
   },
   /** Card-level amounts, one step under the hero. */
   figure: {
+    fontFamily: FIGURE_FACE,
     fontSize: 32,
     letterSpacing: -0.6,
     fontVariant: ["tabular-nums"],

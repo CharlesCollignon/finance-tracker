@@ -16,6 +16,7 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { updateCloseDay, updateUnrecordedCap } from "@/lib/actions/month-close";
 import type { ClosedMonthRow } from "@/lib/queries/month-close";
+import { ICON } from "@/lib/icon-scale";
 
 interface MonthCloseHistoryProps {
   history: ClosedMonthRow[];
@@ -80,7 +81,7 @@ export function MonthCloseHistory({
           <Card.Title>Closed months</Card.Title>
           {summary.streak > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-accent-foreground">
-              <Flame size={13} weight="fill" />
+              <Flame size={ICON.sm} weight="fill" />
               {summary.streak} in a row
               {summary.bestStreak > summary.streak &&
                 ` · best ${summary.bestStreak}`}

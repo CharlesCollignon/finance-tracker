@@ -37,6 +37,7 @@ import type {
   CategoryType,
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
+import { ICON } from "@/lib/icon-scale";
 
 type AllocType = Exclude<CategoryType, "income">;
 
@@ -315,7 +316,7 @@ export function RecurringView({
           >
             Add charge
             <ButtonNub>
-              <Plus size={16} weight="bold" />
+              <Plus size={ICON.md} weight="bold" />
             </ButtonNub>
           </Button>
         </div>
@@ -416,7 +417,7 @@ export function RecurringView({
             <Button variant="pill" size="md" onClick={openCreate}>
               Add charge
               <ButtonNub>
-                <Plus size={16} weight="bold" />
+                <Plus size={ICON.md} weight="bold" />
               </ButtonNub>
             </Button>
           </EmptyState>

@@ -99,7 +99,15 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Orbit: require("../../assets/fonts/OrbitMaxenceDuterne-Regular.otf"),
+    // Two static instances rather than the variable font that used to sit
+    // here. React Native cannot set variation axes, so a variable Fraunces
+    // renders only its default location — and this file's default was
+    // wght 900 / opsz 9, which is why `font-serif` had been drawing Black
+    // text at the smallest optical size despite being named Regular. Both
+    // are instanced at opsz 48, the middle of the range TYPE.figure (32) and
+    // TYPE.hero (56) actually render at.
     "Fraunces-Regular": require("../../assets/fonts/Fraunces-Regular.ttf"),
+    "Fraunces-SemiBold": require("../../assets/fonts/Fraunces-SemiBold.ttf"),
     "InstrumentSans-Regular": require("../../assets/fonts/InstrumentSans-Regular.ttf"),
     "IBMPlexMono-Regular": require("../../assets/fonts/IBMPlexMono-Regular.ttf"),
     "IBMPlexMono-Medium": require("../../assets/fonts/IBMPlexMono-Medium.ttf"),

@@ -14,6 +14,7 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { ICON } from "@/lib/icon-scale";
 
 interface ArrivedChargesProps {
   proposals: FulfilmentProposal[];
@@ -153,7 +154,7 @@ export function ArrivedCharges({
                     "disabled:opacity-60",
                   )}
                 >
-                  <Check size={14} weight="bold" />
+                  <Check size={ICON.sm} weight="bold" />
                   That&apos;s it
                 </button>
                 <button
@@ -174,7 +175,7 @@ export function ArrivedCharges({
                     "disabled:opacity-60",
                   )}
                 >
-                  <X size={14} />
+                  <X size={ICON.sm} />
                   Not it
                 </button>
               </div>

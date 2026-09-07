@@ -19,6 +19,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { ICON } from "@/lib/icon-scale";
 
 export const CATEGORY_ICONS: Record<string, Icon> = {
   wallet: Wallet,
@@ -57,7 +58,7 @@ export function CategoryIcon({ icon, className }: CategoryIconProps) {
       )}
       aria-hidden
     >
-      <IconComponent size={18} weight="light" />
+      <IconComponent size={ICON.lg} weight="light" />
     </span>
   );
 }

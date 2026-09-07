@@ -7,17 +7,17 @@ import {
   TrendDown,
   TrendUp,
 } from "@phosphor-icons/react";
-import {
-  pulseExplanation,
-  pulseHeadline,
-  type MonthPulse,
-} from "@finance/core/month-pulse";
+import { pulseHeadline, type MonthPulse } from "@finance/core/month-pulse";
 import type { BudgetViewMode } from "@finance/core/constants";
 import type { MonthComparison } from "@finance/core/month-comparison";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
+import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
+import { Sparkline } from "@/components/finance/charts";
 import { cn } from "@/lib/utils";
 import { GLASS_CARD, GLASS_HERO } from "@/lib/glass";
+import { FIGURE_HERO } from "@/lib/type-scale";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { ICON } from "@/lib/icon-scale";
 
 interface MoneyOnHandProps {
   pulse: MonthPulse;
@@ -34,6 +34,8 @@ interface MoneyOnHandProps {
   savingsRate: number | null;
   /** Named accounts whose balance could not be read, so the gap is visible. */
   unreadable: string[];
+  /** Net per month, oldest first, for the mark beside the figure. */
+  trend: number[];
   /**
    * Why there is no live balance to lead with, when there is none.
    *
@@ -75,6 +77,7 @@ export function MoneyOnHand({
   comparison,
   savingsRate,
   unreadable,
+  trend,
   noBalanceReason = null,
 }: MoneyOnHandProps) {
   const formatMoney = useFormatCurrency();
@@ -109,7 +112,7 @@ export function MoneyOnHand({
             as this month's. */}
         {noBalanceReason === "past-month" ? (
           <p className="flex w-fit items-center gap-1.5 rounded-full bg-foreground/10 px-3 py-1 text-xs font-medium">
-            <ClockCounterClockwise size={13} />
+            <ClockCounterClockwise size={ICON.sm} />
             {`Looking at ${monthLabel} — a month that has ended`}
           </p>
         ) : null}
@@ -131,25 +134,32 @@ export function MoneyOnHand({
               balance and a pill do not fit, and a hero that reflows is
               better than one that truncates. */}
           <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
-            <PrivateAmount
-              className={cn(
-                "font-serif text-[2.75rem] leading-[0.95] tracking-tight tabular-nums",
-                "sm:text-5xl md:text-6xl",
-                short && "text-destructive",
-              )}
-            >
-              {formatMoney(headlineAmount)}
-            </PrivateAmount>
+            <AnimatedAmount
+              value={headlineAmount}
+              format={formatMoney}
+              className={cn(FIGURE_HERO, short && "text-destructive")}
+            />
             <SpendDelta comparison={comparison} />
+            {/* Which way it has been going, at the size that answer
+                deserves. Pushed to the end of the row so it sits with the
+                delta rather than competing with the figure. */}
+            <Sparkline values={trend} className="mb-1 ml-auto" />
           </div>
 
-          <p className="text-sm text-muted-foreground">
-            {banked
-              ? pulseExplanation(pulse)
-              : noBalanceReason === "past-month"
+          {/* Only when there is no figure to explain.
+
+              With a bank connected this said `pulseExplanation(pulse)` — the
+              sum in words, immediately above the same sum in figures. The
+              phone dropped it for that reason and the terms below say it
+              better: they are checkable. The two remaining branches are not
+              restatements, they are the reason the hero is what it is. */}
+          {banked ? null : (
+            <p className="text-sm text-muted-foreground">
+              {noBalanceReason === "past-month"
                 ? "A finished month, as the ledger recorded it. What an account holds is only ever true today."
                 : "Connect a bank to lead with what is actually in your account."}
-          </p>
+            </p>
+          )}
         </div>
 
         {/* The sum, spelled out. Three terms in the order they happen to the
@@ -230,7 +240,7 @@ export function MoneyOnHand({
               className="ml-1 inline-flex items-center gap-1 text-primary-ink"
             >
               Fix
-              <ArrowRight size={12} />
+              <ArrowRight size={ICON.xs} />
             </Link>
           </p>
         ) : null}
@@ -276,9 +286,9 @@ function SpendDelta({ comparison }: { comparison: MonthComparison | null }) {
       title={`Spending ${down ? "down" : "up"} ${percent}% against the same days of ${comparison.previousLabel}`}
     >
       {down ? (
-        <TrendDown size={12} weight="bold" />
+        <TrendDown size={ICON.xs} weight="bold" />
       ) : (
-        <TrendUp size={12} weight="bold" />
+        <TrendUp size={ICON.xs} weight="bold" />
       )}
       {`${down ? "−" : "+"}${percent}%`}
     </span>
@@ -333,9 +343,9 @@ function Figure({
     <div className="flex items-center justify-between gap-3 border-b border-foreground/10 py-2.5 last:border-0">
       <dt className="flex items-center gap-1.5 text-sm text-muted-foreground">
         {icon === "in" ? (
-          <TrendUp size={13} className="text-success" />
+          <TrendUp size={ICON.sm} className="text-success" />
         ) : icon === "out" ? (
-          <TrendDown size={13} className="text-destructive" />
+          <TrendDown size={ICON.sm} className="text-destructive" />
         ) : null}
         {label}
       </dt>

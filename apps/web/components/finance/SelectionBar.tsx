@@ -13,6 +13,7 @@ import { Button } from "@/components/retroui/Button";
 import { CategorySelect } from "@/components/finance/CategorySelect";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
+import { ICON } from "@/lib/icon-scale";
 
 interface SelectionBarProps {
   summary: SelectionSummary;
@@ -191,7 +192,7 @@ export function SelectionBar({
                 disabled={pending}
                 onClick={() => setChoosing(true)}
               >
-                <ArrowsLeftRight size={16} />
+                <ArrowsLeftRight size={ICON.md} />
                 Move
               </Button>
               <Button
@@ -201,7 +202,7 @@ export function SelectionBar({
                 disabled={pending}
                 onClick={() => setConfirming(true)}
               >
-                <Trash size={16} />
+                <Trash size={ICON.md} />
                 Delete
               </Button>
               <Button
@@ -211,7 +212,7 @@ export function SelectionBar({
                 disabled={pending}
                 onClick={onCancel}
               >
-                <X size={18} />
+                <X size={ICON.lg} />
               </Button>
             </div>
           </div>

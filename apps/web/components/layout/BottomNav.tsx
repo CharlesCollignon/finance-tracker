@@ -6,6 +6,7 @@ import { AccountMenu } from "@/components/layout/AccountMenu";
 import { cn } from "@/lib/utils";
 import { activeNavHref, BOTTOM_NAV_ITEMS } from "@/lib/navigation";
 import { GLASS_PANEL } from "@/lib/glass";
+import { ICON } from "@/lib/icon-scale";
 
 export function BottomNav({
   displayName,
@@ -50,7 +51,7 @@ export function BottomNav({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <Icon size={20} weight={active ? "fill" : "light"} />
+              <Icon size={ICON.xl} weight={active ? "fill" : "light"} />
               {/* A dot rather than a count down here. The bar is six targets
                   across a phone; a numeral beside a 10px label is unreadable
                   and the number is on the Month screen anyway. */}

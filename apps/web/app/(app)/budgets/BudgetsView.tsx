@@ -26,6 +26,7 @@ import type {
   Tag,
 } from "@finance/core/types/database";
 import { cn } from "@/lib/utils";
+import { ICON } from "@/lib/icon-scale";
 
 type BudgetProgress = {
   budgetId: string;
@@ -282,7 +283,7 @@ export function BudgetsView({
                       })
                     }
                   >
-                    <Trash size={16} weight="light" className="mr-1.5" />
+                    <Trash size={ICON.md} weight="light" className="mr-1.5" />
                     Remove
                   </Button>
                 ) : null}
@@ -457,7 +458,7 @@ export function BudgetsView({
                       })
                     }
                   >
-                    <Trash size={16} weight="light" className="mr-1.5" />
+                    <Trash size={ICON.md} weight="light" className="mr-1.5" />
                     Remove
                   </Button>
                 ) : null}
