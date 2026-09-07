@@ -144,7 +144,15 @@ export async function importFeedItem(
     if (already) {
       await supabase
         .from("bank_feed_items")
-        .update({ status: "imported", transaction_id: already.transactionId })
+        .update({
+          status: "imported",
+          transaction_id: already.transactionId,
+          // Recorded as a match, because that is what it is: this row was
+          // filed against a transaction that was already there rather than
+          // one it wrote. Undo reads this to decide whether the transaction
+          // is its to delete — see `undoFeedDecision`.
+          decided_by: "match:ledger",
+        })
         .eq("id", itemId)
         .eq("user_id", user.id);
 
@@ -262,12 +270,35 @@ export async function recategoriseFeedItem(
 }
 
 /**
+ * Whether this row's transaction belongs to something else.
+ *
+ * `decided_by` records how the row was settled, and two of its three shapes
+ * mean "filed against a transaction that was already there": `match:recurring`
+ * when the sync paired it with a recurring charge, and `match:ledger` when
+ * pressing Add found the movement already recorded. Only `auto:` and a
+ * category picked by hand actually write a transaction.
+ */
+function matched(decidedBy: string | null): boolean {
+  return decidedBy?.startsWith("match:") ?? false;
+}
+
+/**
  * Take back a decision and put the row back in the inbox.
  *
- * For something added, the ledger row it created goes with it: leaving the
- * transaction behind while the bank row returns to the inbox is how the same
- * expense gets recorded twice. For something left out, there is nothing to
- * remove and it simply comes back.
+ * For something this row added, the ledger row it created goes with it:
+ * leaving the transaction behind while the bank row returns to the inbox is
+ * how the same expense gets recorded twice. For something left out, there is
+ * nothing to remove and it simply comes back.
+ *
+ * But not every decided row wrote a transaction. A row can be filed *against*
+ * one that was already there — the sync does it when a recurring charge looks
+ * to be the same movement, and pressing Add does it when the duplicate check
+ * finds the amount already recorded, which is the "Already in your ledger"
+ * message. This deleted whatever `transaction_id` pointed at either way, so
+ * undoing one of those took out a transaction the user had entered themselves
+ * and the bank row went back to pending — the ledger quietly a row short,
+ * with nothing to say it had happened. `reopenSwallowedFeedItems` knew this
+ * about the sync's matches and nulled them out; undo did not.
  */
 export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
   const user = await getAuthUser();
@@ -281,7 +312,7 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { data: item } = await supabase
     .from("bank_feed_items")
-    .select("transaction_id, status")
+    .select("transaction_id, status, decided_by")
     .eq("id", itemId)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -305,7 +336,7 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
     return { error: error.message };
   }
 
-  if (item.transaction_id) {
+  if (item.transaction_id && !matched(item.decided_by)) {
     const { error: deleteError } = await supabase
       .from("transactions")
       .delete()
