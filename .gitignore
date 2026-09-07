@@ -30,6 +30,15 @@ dist/
 .DS_Store
 *.pem
 
+# Firebase service account keys — the private half of FCM.
+#
+# Not to be confused with google-services.json, which is committed on
+# purpose: that one holds public identifiers the app needs baked in at build
+# time. These grant send-on-your-behalf access and belong only on EAS.
+*-firebase-adminsdk-*.json
+google-service-account*.json
+service-account*.json
+
 # debug
 npm-debug.log*
 yarn-debug.log*
