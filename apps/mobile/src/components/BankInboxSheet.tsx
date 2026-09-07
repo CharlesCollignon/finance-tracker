@@ -88,10 +88,23 @@ export function BankInboxSheet({
   const { toast } = useToast();
   const [pending, setPending] = useState(false);
   const [query, setQuery] = useState("");
-  const [choice, setChoice] = useState<{
-    itemId: string;
-    categoryId: string;
-  } | null>(null);
+  /*
+   * Keyed by item id, like the web inbox's `choices`, rather than a single
+   * {itemId, categoryId} for the card in front of you.
+   *
+   * The pair was a null-dereference waiting to happen, and it happened: the
+   * read was `choice?.itemId === current?.id ? choice.categoryId : ""`, and
+   * with an empty queue both sides are undefined, so the comparison is true
+   * and it reaches into null. An empty queue is the first render of this
+   * screen, every time, because the inbox has not loaded yet — so the Ledger
+   * crashed on mount and a tapped notification opened onto a red screen.
+   *
+   * A map has no such state. There is nothing to compare, and a missing key
+   * is an empty selection. It also means a decision undone comes back with
+   * the category it was filed under already picked, which is what someone
+   * correcting a mistake wants to see.
+   */
+  const [choices, setChoices] = useState<Record<string, string>>({});
 
   // Seeded from the props on first sight and owned locally after that. The
   // alternative — reloading the screen behind each decision and re-deriving
@@ -104,11 +117,23 @@ export function BankInboxSheet({
       ? stored
       : { queueKey, waiting: items, answered: [], later: [] };
 
+  /*
+   * Null when the queue is empty, which is the first render of this screen
+   * every time — the inbox has not loaded yet — as well as the end of a
+   * sitting. Every read of `current` below must cope with that.
+   *
+   * Do not expect the compiler to enforce it. Without
+   * `noUncheckedIndexedAccess`, `waiting[0]` is typed as always present, so
+   * `?? null` narrows to non-null and stays that way; annotating the
+   * declaration does not help, because narrowing follows the initializer
+   * rather than the declared type. That is how the dereference this replaced
+   * shipped: it type-checked, and crashed on mount.
+   */
   const current = session.waiting[0] ?? null;
   const total = items.length;
   const position = session.answered.length + session.later.length + 1;
 
-  const selected = choice?.itemId === current?.id ? choice.categoryId : "";
+  const selected = current ? (choices[current.id] ?? "") : "";
 
   // Filtered before grouping, so empty groups disappear while searching.
   const visible = query.trim()
@@ -143,7 +168,6 @@ export function BankInboxSheet({
       answered: [{ item, outcome }, ...session.answered],
       later: session.later,
     });
-    setChoice(null);
   }
 
   function decide(
@@ -319,10 +343,10 @@ export function BankInboxSheet({
                             accessibilityLabel={category.name}
                             onPress={() => {
                               void hapticLight();
-                              setChoice({
-                                itemId: current.id,
-                                categoryId: category.id,
-                              });
+                              setChoices((current$) => ({
+                                ...current$,
+                                [current.id]: category.id,
+                              }));
                             }}
                             className={cn(
                               "min-h-11 flex-row items-center gap-2 rounded-full border px-3 py-2",
@@ -359,10 +383,10 @@ export function BankInboxSheet({
                             accessibilityLabel={category.name}
                             onPress={() => {
                               void hapticLight();
-                              setChoice({
-                                itemId: current.id,
-                                categoryId: category.id,
-                              });
+                              setChoices((current$) => ({
+                                ...current$,
+                                [current.id]: category.id,
+                              }));
                             }}
                             className={cn(
                               "min-h-11 flex-row items-center gap-3 rounded-lg border px-3 py-2",
@@ -434,7 +458,6 @@ export function BankInboxSheet({
                       answered: session.answered,
                       later: [...session.later, current],
                     });
-                    setChoice(null);
                   }}
                   className={cn(
                     "min-h-11 items-center justify-center rounded-full px-3",
