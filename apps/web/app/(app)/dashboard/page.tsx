@@ -146,7 +146,11 @@ async function AttentionSlot({
     items.push({
       id: "inbox",
       text: `${pending.length} ${pending.length === 1 ? "entry needs" : "entries need"} a category`,
-      href: "/transactions",
+      // The review itself, not the page it lives on. Pressing Review used to
+      // land on the Ledger with the inbox still shut behind a second Review
+      // button, which is the same question asked twice and looks from here
+      // like nothing happened.
+      href: "/transactions?review=inbox",
       action: "Review",
     });
   }

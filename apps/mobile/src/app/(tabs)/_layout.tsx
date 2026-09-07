@@ -10,7 +10,7 @@ import { QuickAddProvider } from "@/providers/QuickAddProvider";
 import { ReminderProvider } from "@/providers/ReminderProvider";
 
 import { useThemeColors } from "@/theme/useThemeColors";
-import { useArrivedCount } from "@/hooks/useArrivedCount";
+import { useLedgerBadge } from "@/hooks/useLedgerBadge";
 
 type IoniconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -74,7 +74,7 @@ export default function TabsLayout() {
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const barHeight = useTabBarHeight();
-  const arrived = useArrivedCount();
+  const waiting = useLedgerBadge();
 
   return (
     <ReminderProvider>
@@ -119,10 +119,12 @@ export default function TabsLayout() {
                     color={color}
                   />
                 ),
-                // Charges the bank looks to have already paid land in the
-                // Ledger. A dot rather than a count: the bar is five targets
-                // across a phone, and the number is on the Month screen.
-                ...(name === "transactions" && arrived > 0
+                // Both of the Ledger's open questions: charges the bank
+                // looks to have already paid, and bank rows still waiting for
+                // a category. A dot rather than a count: the bar is five
+                // targets across a phone, and the numbers are on the Month
+                // screen, one Needs you row each.
+                ...(name === "transactions" && waiting > 0
                   ? {
                       tabBarBadge: "",
                       tabBarBadgeStyle: {

@@ -253,11 +253,11 @@ export default function ProfileScreen() {
 
         <ListSection
           title="Notifications"
-          footer="Scheduled on this device only."
+          footer="Reminders for what repeats, plus a nudge when the bank leaves something needing a category."
         >
           <ListRow
             icon="notifications-outline"
-            label="Recurring reminders"
+            label="Reminders and nudges"
             trailing={
               <Switch
                 value={reminders}

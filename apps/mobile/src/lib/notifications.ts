@@ -1,4 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
+import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
@@ -7,6 +9,8 @@ import {
   occurrenceWithinSchedule,
 } from "@finance/core/recurrence";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
+
+import { supabase } from "@/lib/supabase";
 
 const ENABLED_KEY = "notifications.reminders.enabled";
 const ASKED_KEY = "notifications.reminders.asked";
@@ -82,10 +86,97 @@ async function ensureChannel(): Promise<void> {
 }
 
 /**
+ * Registers this device with Expo, so a server can reach it.
+ *
+ * Two different things wear the word "notification" in this app, and only one
+ * of them used to work here. A reminder is something the phone already knows
+ * — a template says rent leaves on the 5th, so the evening of the 4th can be
+ * scheduled months ahead without anyone being asked anything. News is not:
+ * the overnight bank sync leaving six entries needing a category is a fact
+ * about the world, and the phone has no way to have it. The browser was told
+ * and the app was not, which is how six entries could sit unfiled while the
+ * Month screen showed figures that were short by whatever they hold.
+ *
+ * Best-effort throughout. The token is a convenience on top of the local
+ * schedule, so nothing here is allowed to be the reason the switch fails to
+ * turn on: no token means no push, and the reminders still fire.
+ */
+async function registerPushToken(): Promise<void> {
+  // A simulator has no push service to register with, and asking anyway
+  // throws.
+  if (!Device.isDevice) {
+    return;
+  }
+
+  const projectId =
+    Constants.expoConfig?.extra?.eas?.projectId ??
+    Constants.easConfig?.projectId;
+  if (!projectId) {
+    return;
+  }
+
+  try {
+    const { data: token } = await Notifications.getExpoPushTokenAsync({
+      projectId,
+    });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return;
+    }
+
+    // Upserted on the token: Expo hands back the same one for the same
+    // install, and a second row would mean two copies of every notification.
+    await supabase.from("expo_push_tokens").upsert(
+      {
+        user_id: user.id,
+        token,
+        platform: Platform.OS,
+        device_name: Device.deviceName,
+        last_seen_at: new Date().toISOString(),
+      },
+      { onConflict: "token" },
+    );
+  } catch {
+    // Expo Go on Android cannot get a token at all, and a device that is
+    // offline at the moment the switch is flipped simply has none yet.
+  }
+}
+
+/** Stop a server being able to reach this device. */
+async function forgetPushToken(): Promise<void> {
+  try {
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ??
+      Constants.easConfig?.projectId;
+    if (!projectId) {
+      return;
+    }
+    const { data: token } = await Notifications.getExpoPushTokenAsync({
+      projectId,
+    });
+    // By token rather than by user: turning notifications off on this phone
+    // should not silence the user's other devices.
+    await supabase.from("expo_push_tokens").delete().eq("token", token);
+  } catch {
+    // Nothing to forget, or no way to ask what to forget.
+  }
+}
+
+/**
  * Requests permission. Only ever called from an explicit opt-in — asking on
  * first launch is the standard way to get denied permanently.
+ *
+ * The channel is created before the request, not after. On Android 13 the
+ * system prompt does not appear until the app has at least one notification
+ * channel, so creating it afterwards meant the request resolved against
+ * whatever the OS had decided on its own and the switch could report a denial
+ * the user was never shown.
  */
 export async function enableReminders(): Promise<boolean> {
+  await ensureChannel();
+
   const current = await Notifications.getPermissionsAsync();
   const granted =
     current.granted || (await Notifications.requestPermissionsAsync()).granted;
@@ -94,7 +185,7 @@ export async function enableReminders(): Promise<boolean> {
   await setEnabledFlag(granted);
 
   if (granted) {
-    await ensureChannel();
+    await registerPushToken();
   }
 
   return granted;
@@ -103,6 +194,7 @@ export async function enableReminders(): Promise<boolean> {
 export async function disableReminders(): Promise<void> {
   await setEnabledFlag(false);
   await Notifications.cancelAllScheduledNotificationsAsync();
+  await forgetPushToken();
 }
 
 const channelId = Platform.OS === "android" ? CHANNEL_ID : undefined;

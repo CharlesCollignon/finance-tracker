@@ -25,6 +25,7 @@ import {
 import { PrivacyProvider } from "@/providers/PrivacyProvider";
 import { RefreshProvider } from "@/providers/RefreshProvider";
 import { ToastProvider } from "@/providers/ToastProvider";
+import { useNotificationRouting } from "@/lib/notification-routing";
 import { initTheme } from "@/lib/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -35,6 +36,11 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   const segments = useSegments();
   const pathname = usePathname();
   const router = useRouter();
+
+  // Only once there is a session to land in. Following a tapped notification
+  // to the Ledger while signed out would be immediately bounced to /login by
+  // the effect below, and the reason for the tap would be lost on the way.
+  useNotificationRouting(Boolean(session) && !initializing && fontsReady);
 
   // Pinned rather than read: Pluclair has one palette, and NativeWind
   // resolves `dark:` variants from the scheme, so a phone in light mode would

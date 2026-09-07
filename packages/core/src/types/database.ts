@@ -457,6 +457,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      expo_push_tokens: {
+        Row: {
+          id: string;
+          user_id: string;
+          token: string;
+          platform: string | null;
+          device_name: string | null;
+          created_at: string;
+          last_seen_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          token: string;
+          platform?: string | null;
+          device_name?: string | null;
+          created_at?: string;
+          last_seen_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          token?: string;
+          platform?: string | null;
+          device_name?: string | null;
+          created_at?: string;
+          last_seen_at?: string;
+        };
+        Relationships: [];
+      };
       notification_log: {
         Row: {
           user_id: string;
@@ -944,6 +974,8 @@ export type SavingsGoal = Database["public"]["Tables"]["savings_goals"]["Row"];
 export type WalletPlan = Database["public"]["Tables"]["wallet_plans"]["Row"];
 export type PushSubscriptionRow =
   Database["public"]["Tables"]["push_subscriptions"]["Row"];
+export type ExpoPushTokenRow =
+  Database["public"]["Tables"]["expo_push_tokens"]["Row"];
 export type BankFeedItem =
   Database["public"]["Tables"]["bank_feed_items"]["Row"];
 export type BankAccount = Database["public"]["Tables"]["bank_accounts"]["Row"];

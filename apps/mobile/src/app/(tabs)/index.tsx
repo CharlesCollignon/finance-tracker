@@ -348,6 +348,9 @@ export default function MonthScreen() {
         plan: preview.plan ?? null,
         movements,
         arrived,
+        // Fetched for the month read's fact pack, and now also the reason a
+        // Needs you row appears. One read, two uses.
+        inboxPending,
         readFacts,
         readView: stored.view,
         readWritesLeft: stored.writesLeft,
@@ -412,6 +415,7 @@ export default function MonthScreen() {
   const movements = data?.movements ?? [];
   const arrived = data?.arrived ?? [];
   const readFacts = data?.readFacts ?? null;
+  const inboxPending = data?.inboxPending ?? 0;
   const monthLabel = formatMonthLabel(year, month);
 
   // Nothing set up and nothing recorded: the standing card would report "0 €
@@ -442,6 +446,32 @@ export default function MonthScreen() {
 
   const planCounts = plan ? applyRecurringPlanCounts(plan) : null;
   const attention: AttentionItem[] = [];
+
+  // First, and not on this screen at all until now. The count was already
+  // being fetched — it feeds the month read's fact pack — but it went no
+  // further, so a bank feed the cron had filled overnight was invisible here
+  // while every figure below was short by whatever those entries hold.
+  //
+  // Led with because it is the only errand that makes the rest of the screen
+  // wrong: applying and closing are things left to do, whereas an entry with
+  // no category is money that moved and is not counted.
+  if (inboxPending > 0) {
+    attention.push({
+      id: "inbox",
+      text: `${inboxPending} ${
+        inboxPending === 1 ? "entry needs" : "entries need"
+      } a category`,
+      action: "Review",
+      // The review, not the Ledger it lives on. The sheet is there rather
+      // than here because one screen should own the queue, and the Ledger is
+      // where the rows land.
+      onPress: () =>
+        router.push({
+          pathname: "/transactions",
+          params: { review: "inbox" },
+        }),
+    });
+  }
 
   if (planCounts && planCounts.creates > 0) {
     attention.push({

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import {
   SectionList,
   Pressable,
@@ -38,6 +38,7 @@ import { StaggerItem } from "@/components/motion/Stagger";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ApplyRecurringSheet } from "@/components/ApplyRecurringSheet";
+import { BankInboxSheet } from "@/components/BankInboxSheet";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
 import { RowCheckbox, SelectionBar } from "@/components/SelectionBar";
@@ -72,10 +73,12 @@ import {
 } from "@/lib/mutations";
 import {
   getCategories,
+  getPendingFeedItems,
   getRecurringTemplates,
   getSkippedOccurrences,
   getTags,
   getTransactions,
+  type PendingFeedRow,
   type SkippedOccurrence,
 } from "@/lib/queries";
 import { cn } from "@/lib/cn";
@@ -127,6 +130,26 @@ export default function TransactionsScreen() {
   const [applyPending, setApplyPending] = useState(false);
 
   const router = useRouter();
+  /*
+   * `?review=inbox` is the address of the review, not of this screen.
+   * Everything that says "you have entries to categorise" — the Needs you
+   * block on Month, the statement card, a push tapped from the lock screen —
+   * navigates here with it, and the sheet opens on arrival. Read once into
+   * state rather than consulted every render, so closing the sheet closes it:
+   * the param is still in the address until the next navigation.
+   */
+  const params = useLocalSearchParams<{ review?: string }>();
+  const wantsInbox = params.review === "inbox";
+  /*
+   * Null until somebody says otherwise, then whatever they said. Derived
+   * rather than seeded into state at mount, because at mount the inbox has
+   * not loaded: opening on the param alone showed "Nothing waiting" for the
+   * length of one round trip before the six entries arrived. This way the
+   * sheet opens the moment there is something to open it onto, and a close
+   * still means closed — the param stays in the address until the next
+   * navigation, so consulting it every render would reopen the sheet.
+   */
+  const [inboxChoice, setInboxChoice] = useState<boolean | null>(null);
   const dataVersion = useDataVersion();
   const [selectMode, setSelectMode] = useState(false);
   const [storedSelection, setSelected] =
@@ -141,9 +164,10 @@ export default function TransactionsScreen() {
           skipped: [] as SkippedOccurrence[],
           tags: [] as Tag[],
           templates: [] as RecurringTemplateWithCategory[],
+          inbox: [] as PendingFeedRow[],
         };
       }
-      const [transactions, categories, skipped, tags, templates] =
+      const [transactions, categories, skipped, tags, templates, inbox] =
         await Promise.all([
           getTransactions(user.id, year, month),
           getCategories(user.id),
@@ -151,8 +175,12 @@ export default function TransactionsScreen() {
           getTags(user.id),
           // For "left at month end": what the rest of the month still owes.
           getRecurringTemplates(user.id),
+          // Not scoped to the month on screen. The inbox is a queue of
+          // decisions, not a view of a month: a coffee from the 29th of last
+          // month needs a category whichever month you happen to be reading.
+          getPendingFeedItems(user.id),
         ]);
-      return { transactions, categories, skipped, tags, templates };
+      return { transactions, categories, skipped, tags, templates, inbox };
     }, [user?.id, year, month, dataVersion]);
 
   // Memoised because every derived memo below depends on it; a fresh array
@@ -165,6 +193,8 @@ export default function TransactionsScreen() {
 
   const skipped = data?.skipped ?? [];
   const tags = data?.tags ?? [];
+  const inbox = useMemo(() => data?.inbox ?? [], [data?.inbox]);
+  const inboxOpen = inboxChoice ?? (wantsInbox && inbox.length > 0);
 
   const refreshApplyPending = useCallback(async () => {
     const result = await previewApplyRecurringForMonth(year, month);
@@ -669,6 +699,43 @@ export default function TransactionsScreen() {
         </View>
       </View>
 
+      {/* The one row on this screen that wants a decision, and the phone's
+          counterpart to the web inbox bar. Rimmed and dotted like the Needs
+          you block on Month, because it is the same errand seen from its
+          other end — and without it the only way to the review was a link
+          from another screen. */}
+      {inbox.length > 0 ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${inbox.length} ${
+            inbox.length === 1 ? "entry needs" : "entries need"
+          } a category. Review`}
+          onPress={() => {
+            void hapticLight();
+            setInboxChoice(true);
+          }}
+          className="mb-3 min-h-14 flex-row items-center gap-2.5 rounded-2xl border bg-primary/5 px-4 py-3"
+          style={{ borderColor: colors.primaryRim }}
+        >
+          <View
+            className="h-2 w-2 rounded-full"
+            style={{ backgroundColor: colors.primary }}
+          />
+          <Text className="min-w-0 flex-1 text-sm">
+            <Text className="text-sm font-medium">{inbox.length}</Text>
+            {` ${inbox.length === 1 ? "entry needs" : "entries need"} a category`}
+          </Text>
+          <View className="flex-row items-center gap-1">
+            <Text className="text-sm font-medium text-primary-ink">Review</Text>
+            <Ionicons
+              name="arrow-forward"
+              size={ICON.sm}
+              color={colors.primaryInk}
+            />
+          </View>
+        </Pressable>
+      ) : null}
+
       <View className="mb-2 flex-row items-baseline justify-between gap-3">
         <Text variant="muted" className="text-sm">
           Left at month end
@@ -857,6 +924,20 @@ export default function TransactionsScreen() {
         categories={categories}
         planMove={planMove}
         onMove={(categoryId) => void handleBulkMove(categoryId)}
+      />
+
+      <BankInboxSheet
+        open={inboxOpen}
+        onOpenChange={setInboxChoice}
+        items={inbox}
+        categories={categories}
+        recentCategoryIds={recentCategoryIds}
+        onDecided={() => {
+          // Every surface, not just this one: a categorised entry moves the
+          // month's totals, the statement card and the tab bar's dot.
+          notifyDataChanged();
+          void reload();
+        }}
       />
 
       <ApplyRecurringSheet

@@ -45,8 +45,11 @@ export function RecentOnAccount({ movements, pending }: RecentOnAccountProps) {
     <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">Last on your account</h2>
+        {/* A link that says "6 to review" has to land on the review. Left
+            pointing at the bare Ledger, it promised a decision and delivered
+            a list. */}
         <Link
-          href="/transactions"
+          href={pending > 0 ? "/transactions?review=inbox" : "/transactions"}
           className="flex shrink-0 items-center gap-1 text-sm text-primary-ink"
         >
           {pending > 0 ? `${pending} to review` : "Ledger"}

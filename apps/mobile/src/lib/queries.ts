@@ -50,6 +50,12 @@ import {
   type AccountRows,
   type CashBalance,
 } from "@finance/core/bank-balance";
+import {
+  describeReviewReason,
+  MATCH_WINDOW_DAYS,
+  type ExistingLedgerRow,
+  type ReviewReason,
+} from "@finance/core/bank-feed";
 import type {
   BankAccount,
   BankFeedItem,
@@ -1210,6 +1216,173 @@ export async function countFulfilmentProposals(
     month,
   );
   return proposals.length;
+}
+
+/* ------------------------------------------------------ the review inbox */
+
+/**
+ * A bank row still waiting for a category, and why it is waiting.
+ *
+ * Mirrors the web `PendingFeedRow`. The reason is stored packed into
+ * `decided_by` as `review:<reason>` and unpacked here, so both apps say the
+ * same sentence about the same row — the sentences themselves live in
+ * `@finance/core/bank-feed`.
+ */
+export interface PendingFeedRow {
+  id: string;
+  occurredOn: string;
+  amount: number;
+  direction: "in" | "out";
+  counterparty: string | null;
+  note: string;
+  /** Why it is waiting, in words. */
+  why: string;
+}
+
+/** Parses `review:<reason>` back out of `decided_by`. */
+function reasonOf(decidedBy: string | null): string {
+  const why = decidedBy?.startsWith("review:")
+    ? (decidedBy.slice("review:".length) as ReviewReason)
+    : null;
+  return why ? describeReviewReason(why) : "Waiting";
+}
+
+export async function getPendingFeedItems(
+  userId: string,
+): Promise<PendingFeedRow[]> {
+  const { data, error } = await supabase
+    .from("bank_feed_items")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("status", "pending")
+    .order("occurred_on", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    if (isMissingSchema(error)) {
+      return [];
+    }
+    throw error;
+  }
+
+  return ((data ?? []) as BankFeedItem[]).map((row) => ({
+    id: row.id,
+    occurredOn: row.occurred_on,
+    amount: Number(row.amount),
+    direction: row.direction,
+    counterparty: row.counterparty,
+    note: row.note,
+    why: reasonOf(row.decided_by),
+  }));
+}
+
+export interface DecidedFeedRow {
+  id: string;
+  occurredOn: string;
+  amount: number;
+  direction: "in" | "out";
+  counterparty: string | null;
+  note: string;
+  /** Where it landed, or null when it was left out. */
+  categoryId: string | null;
+  categoryName: string | null;
+  transactionId: string | null;
+  status: "imported" | "ignored";
+}
+
+/**
+ * What was decided recently, so a decision can be taken back.
+ *
+ * Filing a card payment under the wrong category is the easiest mistake to
+ * make in this flow — the labels are bank shorthand and the list is long —
+ * and without this the row vanishes from the only screen that knows which
+ * bank line it came from. Bounded rather than complete: this is how you undo
+ * what you just did, and the ledger is the archive.
+ */
+export async function getDecidedFeedItems(
+  userId: string,
+  limit = 20,
+): Promise<DecidedFeedRow[]> {
+  const { data, error } = await supabase
+    .from("bank_feed_items")
+    .select("*, transactions(category_id, categories(name))")
+    .eq("user_id", userId)
+    .in("status", ["imported", "ignored"])
+    .order("occurred_on", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    if (isMissingSchema(error)) {
+      return [];
+    }
+    throw error;
+  }
+
+  type Joined = BankFeedItem & {
+    transactions: {
+      category_id: string;
+      categories: { name: string } | null;
+    } | null;
+  };
+
+  return ((data ?? []) as Joined[]).map((row) => ({
+    id: row.id,
+    occurredOn: row.occurred_on,
+    amount: Number(row.amount),
+    direction: row.direction,
+    counterparty: row.counterparty,
+    note: row.note,
+    categoryId: row.transactions?.category_id ?? null,
+    categoryName: row.transactions?.categories?.name ?? null,
+    transactionId: row.transaction_id,
+    status: row.status === "ignored" ? "ignored" : "imported",
+  }));
+}
+
+/**
+ * Ledger rows close enough in time that one could be a copy of the other.
+ *
+ * The web twin is `lib/bank/duplicates.ts`. Duplicated rather than shared
+ * because core carries no Supabase dependency — but the rule that decides
+ * what counts as a copy is `findLedgerMatch` in `@finance/core/bank-feed`,
+ * which both call, so the two apps cannot drift on the judgement itself.
+ */
+export async function ledgerRowsAround(
+  userId: string,
+  isoDate: string,
+): Promise<ExistingLedgerRow[]> {
+  const [{ data: rows }, { data: claimed }] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select(
+        "id, occurred_on, amount, recurring_template_id, categories!inner(type)",
+      )
+      .eq("user_id", userId)
+      .gte("occurred_on", shiftDays(isoDate, -MATCH_WINDOW_DAYS))
+      .lte("occurred_on", shiftDays(isoDate, MATCH_WINDOW_DAYS)),
+    supabase
+      .from("bank_feed_items")
+      .select("transaction_id")
+      .eq("user_id", userId)
+      .not("transaction_id", "is", null),
+  ]);
+
+  const claimedIds = new Set(
+    (claimed ?? [])
+      .map((row) => row.transaction_id as string | null)
+      .filter((id): id is string => Boolean(id)),
+  );
+
+  return (rows ?? []).map((row) => ({
+    transactionId: row.id as string,
+    occurredOn: row.occurred_on as string,
+    amount: Number(row.amount),
+    isIncome: (row.categories as unknown as { type: string }).type === "income",
+    fromRecurringTemplate: row.recurring_template_id !== null,
+    // A row the feed already answers for cannot also be the thing a second
+    // bank row duplicates.
+    alreadyClaimed: claimedIds.has(row.id as string),
+  }));
 }
 
 /** How many bank rows are still waiting for a category. */

@@ -44,10 +44,20 @@ export function RecentOnAccount({ movements }: RecentOnAccountProps) {
     <Card bezel innerClassName="gap-4 p-5">
       <View className="flex-row items-center justify-between gap-3">
         <Text className="text-sm font-medium">Last on your account</Text>
+        {/* A link that says "6 to review" has to land on the review. Left
+            pointing at the bare Ledger it promised a decision and delivered a
+            list — and on the phone the Ledger had nothing to say about the
+            bank at all, so the promise could not be kept anywhere. */}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={pending > 0 ? `${pending} to review` : "Ledger"}
-          onPress={() => router.push("/transactions")}
+          onPress={() =>
+            router.push(
+              pending > 0
+                ? { pathname: "/transactions", params: { review: "inbox" } }
+                : "/transactions",
+            )
+          }
           hitSlop={8}
           className="flex-row items-center gap-1"
         >

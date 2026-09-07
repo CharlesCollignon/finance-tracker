@@ -20,7 +20,7 @@ import {
 import { SwallowedRecovery } from "@/components/finance/SwallowedRecovery";
 
 interface TransactionsPageProps {
-  searchParams: Promise<{ y?: string; m?: string }>;
+  searchParams: Promise<{ y?: string; m?: string; review?: string }>;
 }
 
 export default async function TransactionsPage({
@@ -87,6 +87,11 @@ export default async function TransactionsPage({
               categories={categories}
               // A statement worth of rows means the backfill has been done.
               showBackfill={feedSize < 400}
+              // Only when there is something in it. `?review=inbox` is a
+              // link somebody followed, possibly hours after the count it
+              // promised was true, and a sheet that opens onto "Nothing
+              // waiting" is a worse answer than the page itself.
+              openOnArrival={params.review === "inbox" && feedItems.length > 0}
             />
           </div>
         ) : null

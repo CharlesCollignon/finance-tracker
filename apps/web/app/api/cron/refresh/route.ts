@@ -1,8 +1,6 @@
 import type { NextRequest } from "next/server";
-import webpush from "web-push";
 import { todayIsoLocal } from "@finance/core/constants";
-import { isGoneStatus } from "@finance/core/push-digest";
-import type { PushSubscriptionRow } from "@finance/core/types/database";
+import { configureWebPush, fanOut, readDevicesFor } from "@/lib/push/send";
 import { bankFeedOwnerId } from "@/lib/bank/client";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
@@ -65,19 +63,6 @@ const FULL_RUN_SCHEDULE = "0 7 * * *";
 function isFullRun(request: NextRequest): boolean {
   const schedule = request.headers.get("x-vercel-cron-schedule");
   return schedule === null || schedule === FULL_RUN_SCHEDULE;
-}
-
-function configureWebPush(): boolean {
-  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const subject = process.env.VAPID_SUBJECT;
-
-  if (!publicKey || !privateKey || !subject) {
-    return false;
-  }
-
-  webpush.setVapidDetails(subject, publicKey, privateKey);
-  return true;
 }
 
 export async function GET(request: NextRequest) {
@@ -190,22 +175,23 @@ async function notifyPendingReview(
     .eq("key", key)
     .maybeSingle();
 
-  if (already || !configureWebPush()) {
+  if (already) {
     return 0;
   }
 
-  const { data: subscriptions } = await supabase
-    .from("push_subscriptions")
-    .select("*")
-    .eq("user_id", userId);
-
-  const rows = (subscriptions ?? []) as PushSubscriptionRow[];
-  if (rows.length === 0) {
+  // Both, and either alone is enough to be worth going on. Web Push needs
+  // VAPID keys this deployment may not have; Expo needs none, so a phone can
+  // be told on a deployment where a browser cannot.
+  const webPushReady = configureWebPush();
+  const devices = await readDevicesFor(supabase, userId);
+  if (devices.browsers.length === 0 && devices.phones.length === 0) {
     return 0;
   }
 
   // Written before sending: a duplicate notification is a worse outcome than
   // a missed one, and a crash mid-send would otherwise repeat it tomorrow.
+  // One row per user, not per device, which is what makes "said once" mean
+  // once across a laptop and a phone rather than once each.
   await supabase
     .from("notification_log")
     .upsert(
@@ -213,38 +199,23 @@ async function notifyPendingReview(
       { onConflict: "user_id,key", ignoreDuplicates: true },
     );
 
-  const payload = JSON.stringify({
-    key,
-    title: "From your bank",
-    body:
-      pending === 1
-        ? "One entry needs a category."
-        : `${pending} entries need a category.`,
-    url: "/transactions",
-  });
+  const { sent } = await fanOut(
+    supabase,
+    devices,
+    {
+      key,
+      title: "From your bank",
+      body:
+        pending === 1
+          ? "One entry needs a category."
+          : `${pending} entries need a category.`,
+      // Straight into the review, not onto the Ledger with it shut. A push
+      // tapped at breakfast should put the decision in front of the person
+      // who tapped it.
+      url: "/transactions?review=inbox",
+    },
+    webPushReady,
+  );
 
-  let notified = 0;
-  for (const row of rows) {
-    try {
-      await webpush.sendNotification(
-        {
-          endpoint: row.endpoint,
-          keys: { p256dh: row.p256dh, auth: row.auth },
-        },
-        payload,
-      );
-      notified += 1;
-    } catch (error) {
-      const status = (error as { statusCode?: number }).statusCode ?? 0;
-      if (isGoneStatus(status)) {
-        // The browser is gone for good; keeping the row means failing forever.
-        await supabase
-          .from("push_subscriptions")
-          .delete()
-          .eq("endpoint", row.endpoint);
-      }
-    }
-  }
-
-  return notified;
+  return sent;
 }

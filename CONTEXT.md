@@ -23,6 +23,15 @@ A free-form label attached to transactions for filtering. Distinct from a
 category: a transaction has exactly one category and any number of tags.
 _Avoid_: label, group
 
+**Review inbox**:
+The bank rows the app would not file on its own, waiting for the user to say
+what they were. Everything the user's own history already answered for is a
+transaction by the time they see this, so the inbox is the exceptions — and
+answering one teaches the matcher, which is why it shrinks rather than being a
+permanent chore. Addressed as `?review=inbox` on both apps, because it is a
+decision with a location rather than a section of a page.
+_Avoid_: pending, unfiled, queue, triage
+
 **Monthly summary**:
 Income, expense and savings totals for one month, with a per-category
 breakdown, computed under a budget view.

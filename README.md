@@ -27,7 +27,7 @@ finance-tracker/          (repo root)
 - **Mobile only:** [Expo Go](https://expo.dev/go) on your phone (SDK 57)
 
 Apply the database schema once on your Supabase project (SQL editor or
-CLI) using the files in `supabase/migrations/`, in order (`001` → `025`).
+CLI) using the files in `supabase/migrations/`, in order (`001` → `026`).
 Optional account deletion from mobile also needs the
 `delete-account` Edge Function in `supabase/functions/`.
 
@@ -176,7 +176,32 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://pluclair.com/api/cron/refre
 ```
 
 **Notifying** says at most one useful thing a day — a new month, a breached
-budget — and needs the VAPID keys as well; without them it no-ops.
+budget — to every device the user has granted permission on.
+
+Two kinds of device, reached two different ways, and neither is a fallback for
+the other. A browser is reached over Web Push and needs the VAPID keys; a
+phone is reached by handing its Expo token to Expo, which needs no
+configuration here at all. So a deployment with no VAPID keys still notifies
+phones and only skips browsers, and one without migration `026` still
+notifies browsers and only skips phones. Both fan out through
+`lib/push/send.ts`, which the daily digest and the bank sync share.
+
+`notification_log` keys what has already been said per user rather than per
+device, which is what makes "said once" mean once across a laptop and a phone
+rather than once each.
+
+Careful with the word "notification" on mobile: two things wear it. A
+_reminder_ is something the phone already knows — a template says rent leaves
+on the 5th, so the evening of the 4th can be scheduled months ahead, on the
+device, with no server involved. _News_ cannot be scheduled: a breached cap,
+or the overnight sync leaving entries needing a category, are facts about the
+world the phone has no way to have. Reminders were the only kind the app had,
+which is why a review inbox filled overnight was announced to the browser and
+not to the phone it mattered on. One switch in Profile covers both: granting
+permission schedules the reminders and registers an Expo push token.
+
+Expo push tokens need a development or production build — Expo Go on Android
+cannot get one — so this is a feature you test on an EAS build, not in Go.
 
 ### Asking the bank, and how often
 

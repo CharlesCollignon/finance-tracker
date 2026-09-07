@@ -27,6 +27,21 @@ interface BankInboxProps {
   categories: Category[];
   /** True until the whole statement has been pulled once. */
   showBackfill: boolean;
+  /**
+   * Whether to arrive with the review already open.
+   *
+   * Set by `?review=inbox`, which is the address of the decision rather than
+   * of the page it sits on. Everything that says "you have entries to
+   * categorise" — the Month screen's Needs you block, the statement card, the
+   * push the bank sync sends — links to that address, because sending someone
+   * who pressed Review to a page with a Review button on it is asking the
+   * same question twice.
+   *
+   * Read once, as the initial state: a server action in here revalidates this
+   * page, and a prop consulted on every render would force the sheet back
+   * open after the user had closed it.
+   */
+  openOnArrival?: boolean;
 }
 
 /**
@@ -81,11 +96,12 @@ export function BankInbox({
   decided,
   categories,
   showBackfill,
+  openOnArrival = false,
 }: BankInboxProps) {
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [choices, setChoices] = useState<Record<string, string>>({});
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(openOnArrival);
   const [editing, setEditing] = useState<string | null>(null);
 
   function run(work: () => Promise<{ error?: string; message?: string }>) {
@@ -107,31 +123,51 @@ export function BankInbox({
     run(() => importFeedItem(id, categoryId));
   }
 
+  const waiting = items.length > 0;
+
+  /* Rimmed and dotted when something is waiting, and plain when nothing is.
+     The bar used to be `border-border bg-card` either way, which made the one
+     row on this page that wants a decision look exactly like the search field
+     and the filter chips under it — so someone who arrived here to categorise
+     six entries had to find the errand among the furniture. Same dot and same
+     rim as the Needs you block on Month, because it is the same errand seen
+     from its other end. */
   const bar = (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-2.5">
-      <p className="min-w-0 text-sm">
-        {items.length === 0 ? (
-          <span className="text-muted-foreground">
-            Nothing waiting from your bank.
-          </span>
-        ) : (
-          <>
+    <div
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-2.5",
+        waiting ? "border-primary-rim bg-primary/5" : "border-border bg-card",
+      )}
+    >
+      <p className="flex min-w-0 items-center gap-2.5 text-sm">
+        {waiting ? (
+          <span
+            aria-hidden
+            className="size-2 shrink-0 rounded-full bg-primary"
+          />
+        ) : null}
+        {waiting ? (
+          <span className="min-w-0">
             <span className="font-medium">{items.length}</span>{" "}
             <span className="text-muted-foreground">
               {items.length === 1 ? "entry needs" : "entries need"} a category
             </span>
-          </>
+          </span>
+        ) : (
+          <span className="text-muted-foreground">
+            Nothing waiting from your bank.
+          </span>
         )}
       </p>
       <div className="flex shrink-0 items-center gap-2">
-        {items.length > 0 || decided.length > 0 ? (
+        {waiting || decided.length > 0 ? (
           <Button
             type="button"
             size="sm"
-            variant={items.length > 0 ? "default" : "ghost"}
+            variant={waiting ? "default" : "ghost"}
             onClick={() => setOpen(true)}
           >
-            {items.length > 0 ? "Review" : "Recently added"}
+            {waiting ? "Review" : "Recently added"}
           </Button>
         ) : null}
         {/* "Fetch everything" reaches for the whole statement rather than the
