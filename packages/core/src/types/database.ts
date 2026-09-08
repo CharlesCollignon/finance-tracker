@@ -1,4 +1,5 @@
 import type { BudgetViewMode } from "../constants";
+import type { Locale } from "../i18n/locale";
 
 export type CategoryType = "income" | "expense" | "savings" | "investment";
 
@@ -734,6 +735,7 @@ export interface Database {
           prompt_version: number | null;
           written_at: string | null;
           source: "pressed" | "auto";
+          locale: Locale | null;
         };
         Insert: {
           user_id: string;
@@ -750,6 +752,7 @@ export interface Database {
           prompt_version?: number | null;
           written_at?: string | null;
           source?: "pressed" | "auto";
+          locale?: Locale | null;
         };
         Update: {
           user_id?: string;
@@ -766,6 +769,7 @@ export interface Database {
           prompt_version?: number | null;
           written_at?: string | null;
           source?: "pressed" | "auto";
+          locale?: Locale | null;
         };
         Relationships: [];
       };
@@ -790,6 +794,24 @@ export interface Database {
           unattended?: number;
           attended?: number;
           last_pulled_at?: string;
+        };
+        Relationships: [];
+      };
+      user_preferences: {
+        Row: {
+          user_id: string;
+          locale: Locale;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          locale?: Locale;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          locale?: Locale;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -874,6 +896,7 @@ export interface Database {
           prompt_version: number | null;
           written_at: string | null;
           source: "pressed" | "auto";
+          locale: Locale | null;
         };
       };
       /** Land a finished attempt, whether or not a read survived it. */
@@ -889,6 +912,7 @@ export interface Database {
           new_prompt_version: number | null;
           refused_delta: number;
           new_source: string;
+          new_locale: string | null;
         };
         Returns: {
           user_id: string;
@@ -905,6 +929,7 @@ export interface Database {
           prompt_version: number | null;
           written_at: string | null;
           source: "pressed" | "auto";
+          locale: Locale | null;
         };
       };
       /** Hand back an attempt that never reached the provider. */
@@ -925,6 +950,7 @@ export interface Database {
           prompt_version: number | null;
           written_at: string | null;
           source: "pressed" | "auto";
+          locale: Locale | null;
         };
       };
       record_bank_pull: {
@@ -986,6 +1012,8 @@ export type RecurringFulfilment =
 export type MonthClose = Database["public"]["Tables"]["month_closes"]["Row"];
 export type MonthCloseSettings =
   Database["public"]["Tables"]["month_close_settings"]["Row"];
+export type UserPreferences =
+  Database["public"]["Tables"]["user_preferences"]["Row"];
 
 export type RecurringTemplateWithCategory = RecurringTemplate & {
   categories: Pick<

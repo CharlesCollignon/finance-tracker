@@ -5,6 +5,7 @@ import {
   CreditCard,
   EnvelopeSimple,
   Flag,
+  Globe,
   Key,
   SignIn,
   Tag,
@@ -28,6 +29,10 @@ import {
 } from "@/components/profile/PasskeysPanel";
 import { NotificationsRow } from "@/components/profile/NotificationsRow";
 import { setCurrencyPreference, useCurrency } from "@/lib/use-currency";
+import { CURRENCY_LABELS } from "@finance/core/constants";
+import { useLocale, useT } from "@/lib/locale-context";
+import { setLocalePreference } from "@/lib/actions/locale";
+import { LOCALE_LABELS, LOCALES } from "@finance/core/i18n/locale";
 import { MICRO } from "@/lib/type-scale";
 import { cn } from "@/lib/utils";
 import {
@@ -56,11 +61,6 @@ type ProfileActionResult = {
   message?: string;
 };
 
-const CURRENCY_LABEL = {
-  EUR: "Euro (€)",
-  USD: "US Dollar ($)",
-} as const;
-
 /**
  * Settings, as rows.
  *
@@ -81,11 +81,30 @@ export function ProfileView({
 }: ProfileViewProps) {
   const { toast } = useToast();
   const currency = useCurrency();
+  const locale = useLocale();
+  const t = useT();
   const [open, setOpen] = useState<OpenRow>(null);
   const [pending, setPending] = useState(false);
 
   function toggle(row: Exclude<OpenRow, null>) {
     setOpen((current) => (current === row ? null : row));
+  }
+
+  /**
+   * Move to the next language.
+   *
+   * A cycle rather than a picker while there are two of them, matching the
+   * Currency row directly above; it becomes a sheet when a third language
+   * arrives. The reply is not toasted on success because there is nothing to
+   * report that the screen does not already say — every word on it, including
+   * this row's own label, has just changed.
+   */
+  async function switchLocale() {
+    const next = LOCALES[(LOCALES.indexOf(locale) + 1) % LOCALES.length]!;
+    const result = await setLocalePreference(next);
+    if (result.error) {
+      toast(result.error, "error");
+    }
   }
 
   /**
@@ -109,7 +128,7 @@ export function ProfileView({
     const result = await action({}, formData);
     setPending(false);
     toast(
-      result.error ?? result.message ?? "Saved",
+      result.error ?? result.message ?? t("profile.saved"),
       result.error ? "error" : "success",
     );
     if (!result.error) {
@@ -134,7 +153,7 @@ export function ProfileView({
 
   return (
     <>
-      <PageHeader title="Profile" />
+      <PageHeader titleKey="nav.profile" />
 
       <PageContainer className="flex flex-col gap-6">
         {/* Who is signed in, said once at the top rather than as three rows
@@ -149,16 +168,18 @@ export function ProfileView({
             className="size-14 text-xl"
           />
           <p className="mt-2 text-base font-semibold">
-            {fullName || "No name yet"}
+            {fullName || t("profile.noName")}
           </p>
           <p className={cn("text-muted-foreground", MICRO)}>{email}</p>
         </Card.Bezel>
 
-        <ListSection title="Account">
+        <ListSection title={t("profile.accountSection")}>
           <ListRow
             icon={User}
-            label="Name"
-            value={open === "name" ? undefined : fullName || "Not set"}
+            label={t("profile.name")}
+            value={
+              open === "name" ? undefined : fullName || t("profile.notSet")
+            }
             onClick={() => toggle("name")}
             expanded={
               open === "name" ? (
@@ -174,8 +195,8 @@ export function ProfileView({
                     name="fullName"
                     type="text"
                     defaultValue={fullName}
-                    aria-label="Display name"
-                    placeholder="Your name"
+                    aria-label={t("profile.displayName")}
+                    placeholder={t("profile.namePlaceholder")}
                     required
                     className="text-base"
                   />
@@ -185,39 +206,66 @@ export function ProfileView({
                     className="self-start"
                     disabled={pending}
                   >
-                    {pending ? "Saving…" : "Save"}
+                    {pending ? t("profile.saving") : t("profile.save")}
                   </Button>
                 </form>
               ) : null
             }
           />
-          <ListRow icon={EnvelopeSimple} label="Email" value={email} />
-          <ListRow icon={SignIn} label="Signed in with" value={provider} />
-        </ListSection>
-
-        <ListSection
-          title="Money"
-          footer="Currency changes the symbol, not the amounts."
-        >
-          <ListRow icon={Tag} label="Categories" href="/categories" />
-          <ListRow icon={Flag} label="Budgets & goals" href="/budgets" />
           <ListRow
-            icon={CreditCard}
-            label="Currency"
-            value={CURRENCY_LABEL[currency]}
-            onClick={() =>
-              setCurrencyPreference(currency === "EUR" ? "USD" : "EUR")
-            }
+            icon={EnvelopeSimple}
+            label={t("profile.email")}
+            value={email}
+          />
+          <ListRow
+            icon={SignIn}
+            label={t("profile.signedInWith")}
+            value={provider}
           />
         </ListSection>
 
         <ListSection
-          title="Security"
-          footer="Passwordless sign-in, bound to this site and stored on your device."
+          title={t("profile.moneySection")}
+          footer={t("profile.moneyFooter")}
+        >
+          <ListRow
+            icon={Tag}
+            label={t("profile.categories")}
+            href="/categories"
+          />
+          <ListRow
+            icon={Flag}
+            label={t("profile.budgetsAndGoals")}
+            href="/budgets"
+          />
+          <ListRow
+            icon={CreditCard}
+            label={t("profile.currency")}
+            value={CURRENCY_LABELS[currency]}
+            onClick={() =>
+              setCurrencyPreference(currency === "EUR" ? "USD" : "EUR")
+            }
+          />
+          {/* Beside Currency because they are the two preferences that change
+              how a figure reads. Unlike Currency, this one is a server action:
+              it has to reach the database so that the language follows the
+              user to another device and so that the cron job knows which
+              language to send tomorrow's digest in. */}
+          <ListRow
+            icon={Globe}
+            label={t("locale.settingLabel")}
+            value={LOCALE_LABELS[locale]}
+            onClick={switchLocale}
+          />
+        </ListSection>
+
+        <ListSection
+          title={t("profile.securitySection")}
+          footer={t("profile.securityFooterWeb")}
         >
           <ListRow
             icon={Key}
-            label="Passkeys"
+            label={t("profile.passkeys")}
             onClick={() => toggle("passkeys")}
             expanded={
               open === "passkeys" ? (
@@ -228,16 +276,16 @@ export function ProfileView({
         </ListSection>
 
         <ListSection
-          title="Notifications"
-          footer="This browser only — your phone has its own reminders."
+          title={t("profile.notificationsSection")}
+          footer={t("profile.notificationsFooterWeb")}
         >
           <NotificationsRow publicKey={pushPublicKey} />
         </ListSection>
 
-        <ListSection title="Data">
+        <ListSection title={t("profile.dataSection")}>
           <ListRow
             icon={Trash}
-            label="Delete all data"
+            label={t("profile.deleteAllData")}
             destructive
             onClick={() => toggle("wipe")}
             expanded={
@@ -254,8 +302,8 @@ export function ProfileView({
                     name="confirmation"
                     type="text"
                     autoComplete="off"
-                    aria-label="Type DELETE to confirm"
-                    placeholder="Type DELETE"
+                    aria-label={t("profile.deleteConfirmLabel")}
+                    placeholder={t("profile.deleteConfirmPlaceholder")}
                     className="text-base"
                   />
                   <Button
@@ -265,7 +313,9 @@ export function ProfileView({
                     className="self-start border-destructive text-destructive"
                     disabled={pending}
                   >
-                    {pending ? "Deleting…" : "Delete all my data"}
+                    {pending
+                      ? t("profile.deleting")
+                      : t("profile.deleteAllMyData")}
                   </Button>
                 </form>
               ) : null
@@ -273,7 +323,7 @@ export function ProfileView({
           />
           <ListRow
             icon={XCircle}
-            label="Delete account"
+            label={t("profile.deleteAccount")}
             destructive
             onClick={() => toggle("close")}
             expanded={
@@ -295,8 +345,8 @@ export function ProfileView({
                     name="confirmation"
                     type="text"
                     autoComplete="off"
-                    aria-label="Type DELETE to confirm"
-                    placeholder="Type DELETE"
+                    aria-label={t("profile.deleteConfirmLabel")}
+                    placeholder={t("profile.deleteConfirmPlaceholder")}
                     className="text-base"
                     disabled={!canDeleteAccount}
                   />
@@ -306,7 +356,9 @@ export function ProfileView({
                     className="self-start bg-destructive text-destructive-foreground"
                     disabled={pending || !canDeleteAccount}
                   >
-                    {pending ? "Deleting…" : "Delete my account"}
+                    {pending
+                      ? t("profile.deleting")
+                      : t("profile.deleteMyAccount")}
                   </Button>
                 </form>
               ) : null

@@ -14,6 +14,7 @@ import { hapticLight } from "@/lib/haptics";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 interface StillToComeProps {
   /** What is still due to leave, soonest first. */
@@ -45,6 +46,7 @@ export function StillToCome({
   arriving,
   rows = 5,
 }: StillToComeProps) {
+  const t = useT();
   const router = useRouter();
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
@@ -118,7 +120,7 @@ export function StillToCome({
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="See the month on a calendar"
+        accessibilityLabel={t("common.seeOnCalendar")}
         onPress={() => {
           void hapticLight();
           router.push("/calendar" as Href);

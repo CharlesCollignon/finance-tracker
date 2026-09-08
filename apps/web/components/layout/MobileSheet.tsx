@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { X } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface MobileSheetProps {
   open: boolean;
@@ -30,6 +31,7 @@ export function MobileSheet({
   wide = false,
   children,
 }: MobileSheetProps) {
+  const t = useT();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -106,7 +108,7 @@ export function MobileSheet({
     >
       <button
         type="button"
-        aria-label="Close"
+        aria-label={t("common.close")}
         tabIndex={-1}
         className="absolute inset-0 bg-black/85"
         onClick={() => onOpenChange(false)}
@@ -139,7 +141,7 @@ export function MobileSheet({
           </h2>
           <button
             type="button"
-            aria-label="Close sheet"
+            aria-label={t("common.closeSheet")}
             className="flex h-11 w-11 items-center justify-center"
             onClick={() => onOpenChange(false)}
           >

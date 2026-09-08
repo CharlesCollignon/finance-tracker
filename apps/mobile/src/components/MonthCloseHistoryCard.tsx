@@ -20,6 +20,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 interface MonthCloseHistoryCardProps {
   history: ClosedMonthRow[];
@@ -44,6 +45,7 @@ export function MonthCloseHistoryCard({
   closeDay,
   onChanged,
 }: MonthCloseHistoryCardProps) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
   const palette = useThemeColors();
   const { toast } = useToast();
@@ -146,11 +148,11 @@ export function MonthCloseHistoryCard({
             placeholder="180"
             value={capDraft}
             onChangeText={setCapDraft}
-            accessibilityLabel="Unrecorded allowance"
+            accessibilityLabel={t("common.unrecordedAllowance")}
           />
           <View className="flex-row flex-wrap items-center gap-1.5">
             <Button
-              label="Save"
+              label={t("common.save")}
               size="sm"
               disabled={pending || !capIsUsable}
               onPress={() => void saveCap(parsedCap)}
@@ -166,7 +168,7 @@ export function MonthCloseHistoryCard({
             ) : null}
             {unrecordedCap !== null ? (
               <Button
-                label="Remove"
+                label={t("common.remove")}
                 size="sm"
                 variant="ghost"
                 disabled={pending}

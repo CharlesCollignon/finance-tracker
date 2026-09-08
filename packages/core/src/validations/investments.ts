@@ -1,10 +1,18 @@
+/**
+ * The messages here are keys, not sentences.
+ *
+ * A schema is built when this module loads, long before any request has a
+ * language, so it cannot translate its own message. It emits a key and
+ * whoever shows the failure resolves it — see `resolveMessage` in `../i18n/t`
+ * for why that is safe for the ordinary errors sharing the same field.
+ */
 import { z } from "zod";
 import { parseShareCountInput } from "../share-count";
 import { isCryptoWallet } from "../crypto-holdings";
 import { parseChargeInput } from "../fund-costs";
 
 const optionalNumber = z
-  .union([z.coerce.number().min(0, "Must be 0 or more"), z.literal("")])
+  .union([z.coerce.number().min(0, "errors.zeroOrMore"), z.literal("")])
   .optional()
   .transform((value) => (value === "" || value === undefined ? null : value));
 
@@ -20,7 +28,7 @@ const optionalShareCount = z
     if (parsed === null) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Enter a positive number (comma or dot for decimals)",
+        message: "errors.positiveNumber",
         path: [],
       });
       return z.NEVER;
@@ -55,7 +63,7 @@ const optionalCharge = z
     if (parsed === null) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Enter the charge as a percentage, e.g. 0.20",
+        message: "errors.chargeAsPercent",
         path: [],
       });
       return z.NEVER;
@@ -64,7 +72,7 @@ const optionalCharge = z
     if (parsed > 0.1) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "That looks too high — enter 0.20 for 0.20%, not 20",
+        message: "errors.chargeTooHigh",
         path: [],
       });
       return z.NEVER;
@@ -90,7 +98,7 @@ export const investmentPositionSchema = z
     recurringTemplateId: z.string().uuid().optional().or(z.literal("")),
     name: z.string().max(120).optional(),
     categoryId: z.string().uuid().optional().or(z.literal("")),
-    initialBalance: z.coerce.number().min(0, "Must be 0 or more"),
+    initialBalance: z.coerce.number().min(0, "errors.zeroOrMore"),
     currentValue: optionalNumber,
     shareCount: optionalShareCount,
     /** Ongoing charge typed as a percentage ('0.20'), stored as a fraction. */
@@ -103,7 +111,7 @@ export const investmentPositionSchema = z
       if (!data.recurringTemplateId) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Pick a recurring item",
+          message: "errors.pickRecurring",
           path: ["recurringTemplateId"],
         });
       }
@@ -113,7 +121,7 @@ export const investmentPositionSchema = z
     if (!data.name?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Name is required for custom holdings",
+        message: "errors.nameRequiredCustom",
         path: ["name"],
       });
     }
@@ -163,19 +171,18 @@ export const walletPlanSchema = z.object({
   targetWeight: z
     .union([z.literal(""), z.coerce.number().min(0).max(1)])
     .optional()
-    .transform((value) =>
-      value === "" || value === undefined ? null : value,
-    ),
+    .transform((value) => (value === "" || value === undefined ? null : value)),
   openedOn: z
-    .union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date")])
+    .union([
+      z.literal(""),
+      z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "errors.invalidDate"),
+    ])
     .optional()
     .transform((value) => (value ? value : null)),
   contributionCeiling: z
     .union([z.literal(""), z.coerce.number().positive()])
     .optional()
-    .transform((value) =>
-      value === "" || value === undefined ? null : value,
-    ),
+    .transform((value) => (value === "" || value === undefined ? null : value)),
 });
 
 /** Targets are set together, so they can be checked as a set. */

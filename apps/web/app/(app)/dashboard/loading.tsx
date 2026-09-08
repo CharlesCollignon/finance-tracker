@@ -18,7 +18,7 @@ function Bone({ className }: { className?: string }) {
 export default function DashboardLoading() {
   return (
     <>
-      <PageHeader title="Month" />
+      <PageHeader titleKey="nav.month" />
       <PageContainer className="flex flex-col gap-4">
         {/* The hero: label, the big figure, the sum that explains it. */}
         <div className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 md:p-6">

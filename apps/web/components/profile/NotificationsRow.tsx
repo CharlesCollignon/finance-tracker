@@ -6,6 +6,7 @@ import { BellSimple } from "@phosphor-icons/react";
 import { ListRow } from "@/components/ui/ListRow";
 import { Switch } from "@/components/ui/Switch";
 import { useToast } from "@/components/layout/ToastProvider";
+import { useT } from "@/lib/locale-context";
 import {
   checkPushSupport,
   currentSubscription,
@@ -37,6 +38,7 @@ type State =
  * vanishes on some browsers is one the user goes looking for.
  */
 export function NotificationsRow({ publicKey }: NotificationsRowProps) {
+  const t = useT();
   const { toast } = useToast();
   const [state, setState] = useState<State>({ kind: "loading" });
   const [pending, startTransition] = useTransition();
@@ -89,12 +91,12 @@ export function NotificationsRow({ publicKey }: NotificationsRowProps) {
   return (
     <ListRow
       icon={BellSimple}
-      label="Caps and new months"
+      label={t("common.capsAndNewMonths")}
       value={value}
       disabled={unavailable || state.kind === "loading"}
       trailing={
         <Switch
-          label="Browser notifications"
+          label={t("common.browserNotifications")}
           checked={state.kind === "on"}
           disabled={unavailable || state.kind === "loading" || pending}
           onChange={change}

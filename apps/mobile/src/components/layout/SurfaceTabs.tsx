@@ -4,10 +4,13 @@ import { usePathname, useRouter, type Href } from "expo-router";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
+import { useT } from "@/providers/LocaleProvider";
+import type { Key } from "@finance/core/i18n/t";
 
 export interface SurfaceTab {
   href: Href;
-  label: string;
+  /** The message key for the tab's label, not the label. */
+  labelKey: Key;
 }
 
 interface SurfaceTabsProps {
@@ -28,6 +31,7 @@ interface SurfaceTabsProps {
  * back gesture means what it says.
  */
 export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
+  const t = useT();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -62,7 +66,7 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
                 active ? "text-background" : "text-muted-foreground",
               )}
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </Text>
           </Pressable>
         );
@@ -73,6 +77,6 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
 
 /** The Ledger's views: the same record, looked at two ways. */
 export const LEDGER_TABS: SurfaceTab[] = [
-  { href: "/transactions", label: "List" },
-  { href: "/calendar", label: "Calendar" },
+  { href: "/transactions", labelKey: "nav.ledgerList" },
+  { href: "/calendar", labelKey: "nav.ledgerCalendar" },
 ];

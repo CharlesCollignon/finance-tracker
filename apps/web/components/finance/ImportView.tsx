@@ -31,6 +31,8 @@ import {
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
+import { useLocale, useT } from "@/lib/locale-context";
+import type { Key } from "@finance/core/i18n/t";
 
 /** A statement bigger than this is almost certainly the wrong file. */
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -48,10 +50,10 @@ const STATUS_STYLE: Record<ImportRow["status"], string> = {
   invalid: "text-destructive",
 };
 
-const STATUS_LABEL: Record<ImportRow["status"], string> = {
-  ready: "Ready",
-  duplicate: "Skipped",
-  invalid: "Problem",
+const STATUS_LABEL: Record<ImportRow["status"], Key> = {
+  ready: "importer.statusReady",
+  duplicate: "importer.statusSkipped",
+  invalid: "importer.statusProblem",
 };
 
 /**
@@ -66,6 +68,8 @@ const STATUS_LABEL: Record<ImportRow["status"], string> = {
 export function ImportView({ categories, merchants }: ImportViewProps) {
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
+  const locale = useLocale();
+  const t = useT();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>("choose");
@@ -135,6 +139,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
 
     startTransition(async () => {
       const provisional = buildImportRows(dataRows, {
+        locale,
         mapping,
         expenseSign,
         guessCategory: (description) => {
@@ -169,6 +174,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
 
       setRows(
         buildImportRows(dataRows, {
+          locale,
           mapping,
           expenseSign,
           existing: existing.keys ?? [],
@@ -242,7 +248,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
         return;
       }
 
-      toast(`Imported ${result.imported} transactions`, "success");
+      toast(t("importer.imported", { count: result.imported ?? 0 }), "success");
       setStep("choose");
       setRows([]);
       setTable([]);
@@ -252,7 +258,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
 
   return (
     <>
-      <PageHeader title="Import">
+      <PageHeader titleKey="pages.import">
         <Button
           variant="link"
           size="sm"
@@ -269,7 +275,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
         {/* ---- 1. choose a file ------------------------------------- */}
         {step === "choose" ? (
           <Card.Bezel className="w-full" innerClassName="p-6">
-            <h2 className="font-head text-lg">Import a bank statement</h2>
+            <h2 className="font-head text-lg">{t("importer.heading")}</h2>
             <p className="mt-2 max-w-prose text-sm text-muted-foreground">
               Export a CSV from your bank and drop it here. The file is read in
               your browser — nothing is uploaded, and nothing is saved until you
@@ -327,7 +333,9 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
         {step === "map" && mapping ? (
           <Card.Bezel className="w-full" innerClassName="p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="font-head text-lg">Check the columns</h2>
+              <h2 className="font-head text-lg">
+                {t("importer.checkColumns")}
+              </h2>
               <p className="font-mono text-xs text-muted-foreground">
                 {fileName} · {dataRows.length} rows
               </p>
@@ -359,7 +367,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <ColumnPicker
-                label="Date"
+                label={t("importer.columnDate")}
                 columns={table[0] ?? []}
                 headers={headers}
                 value={mapping.date}
@@ -368,7 +376,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                 }
               />
               <ColumnPicker
-                label="Description"
+                label={t("importer.columnDescription")}
                 columns={table[0] ?? []}
                 headers={headers}
                 value={mapping.description}
@@ -377,7 +385,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                 }
               />
               <ColumnPicker
-                label="Amount"
+                label={t("importer.columnAmount")}
                 columns={table[0] ?? []}
                 headers={headers}
                 value={mapping.amount}
@@ -394,7 +402,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
               {mapping.amount === null ? (
                 <>
                   <ColumnPicker
-                    label="Money out (debit)"
+                    label={t("importer.debitColumn")}
                     columns={table[0] ?? []}
                     headers={headers}
                     value={mapping.debit}
@@ -404,7 +412,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                     }
                   />
                   <ColumnPicker
-                    label="Money in (credit)"
+                    label={t("importer.creditColumn")}
                     columns={table[0] ?? []}
                     headers={headers}
                     value={mapping.credit}
@@ -442,7 +450,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                 Back
               </Button>
               <Button onClick={buildReview} disabled={pending}>
-                {pending ? "Reading…" : "Continue"}
+                {pending ? t("importer.reading") : t("importer.continue")}
               </Button>
             </div>
           </Card.Bezel>
@@ -455,29 +463,38 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <h2 className="font-head text-lg">
-                    {summary.ready} of {summary.total} rows ready
+                    {t("importer.rowsReady", {
+                      ready: summary.ready,
+                      total: summary.total,
+                    })}
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {summary.duplicate > 0
-                      ? `${summary.duplicate} already in your ledger. `
+                      ? t("importer.alreadyInLedger", {
+                          count: summary.duplicate,
+                        })
                       : ""}
                     {summary.invalid > 0
-                      ? `${summary.invalid} could not be read. `
+                      ? t("importer.couldNotRead", { count: summary.invalid })
                       : ""}
                     {summary.needsCategory > 0
-                      ? `${summary.needsCategory} still need a category.`
-                      : "Every row has a category."}
+                      ? t("importer.needCategory", {
+                          count: summary.needsCategory,
+                        })
+                      : t("importer.everyRowCategorised")}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setStep("map")}>
-                    Back
+                    {t("importer.back")}
                   </Button>
                   <Button
                     onClick={commit}
                     disabled={pending || importable.length === 0}
                   >
-                    {pending ? "Importing…" : `Import ${importable.length}`}
+                    {pending
+                      ? t("importer.importing")
+                      : t("importer.importCount", { count: importable.length })}
                   </Button>
                 </div>
               </div>
@@ -485,12 +502,12 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
               {summary.needsCategory > 0 ? (
                 <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row">
                   <BulkAssign
-                    label="Set all remaining spending to"
+                    label={t("importer.setRemainingSpending")}
                     groups={categoryGroups.filter((g) => g.type === "expense")}
                     onPick={(id) => fillUncategorised("expense", id)}
                   />
                   <BulkAssign
-                    label="Set all remaining income to"
+                    label={t("importer.setRemainingIncome")}
                     groups={categoryGroups.filter((g) => g.type === "income")}
                     onPick={(id) => fillUncategorised("income", id)}
                   />
@@ -503,11 +520,21 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                 <table className="w-full min-w-[44rem] text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                      <th className="p-3 font-medium">Date</th>
-                      <th className="p-3 font-medium">Description</th>
-                      <th className="p-3 text-right font-medium">Amount</th>
-                      <th className="p-3 font-medium">Category</th>
-                      <th className="p-3 font-medium">Status</th>
+                      <th className="p-3 font-medium">
+                        {t("importer.columnDate")}
+                      </th>
+                      <th className="p-3 font-medium">
+                        {t("importer.columnDescription")}
+                      </th>
+                      <th className="p-3 text-right font-medium">
+                        {t("importer.columnAmount")}
+                      </th>
+                      <th className="p-3 font-medium">
+                        {t("importer.columnCategory")}
+                      </th>
+                      <th className="p-3 font-medium">
+                        {t("importer.columnStatus")}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -585,7 +612,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                             STATUS_STYLE[row.status],
                           )}
                         >
-                          {row.problem ?? STATUS_LABEL[row.status]}
+                          {row.problem ?? t(STATUS_LABEL[row.status])}
                         </td>
                       </tr>
                     ))}
@@ -615,6 +642,7 @@ function ColumnPicker({
   allowNone?: boolean;
   onChange: (value: number | null) => void;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-2">
       <span className="text-sm font-medium">{label}</span>
@@ -628,7 +656,9 @@ function ColumnPicker({
         }
         className="h-11 rounded border border-border bg-background px-3 text-base"
       >
-        {allowNone ? <option value="">Not in this file</option> : null}
+        {allowNone ? (
+          <option value="">{t("importer.notInThisFile")}</option>
+        ) : null}
         {columns.map((_, index) => (
           <option key={index} value={index}>
             {headers[index] ?? `Column ${index + 1}`}

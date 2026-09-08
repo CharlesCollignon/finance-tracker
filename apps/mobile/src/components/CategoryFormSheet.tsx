@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 
-import { CATEGORY_TYPE_LABELS } from "@finance/core/category-styles";
+import { categoryTypeLabels } from "@finance/core/category-styles";
 import type { Category, CategoryType } from "@finance/core/types/database";
 
 import { CATEGORY_ICONS, CategoryIcon } from "@/components/CategoryIcon";
@@ -12,6 +12,7 @@ import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { cn } from "@/lib/cn";
 import { upsertCategory } from "@/lib/mutations";
 import { useToast } from "@/providers/ToastProvider";
+import { useT } from "@/providers/LocaleProvider";
 
 interface CategoryFormSheetProps {
   open: boolean;
@@ -31,6 +32,7 @@ export function CategoryFormSheet({
   onClose,
   onSaved,
 }: CategoryFormSheetProps) {
+  const t = useT();
   const { toast } = useToast();
   const isEditing = category !== null;
   const [name, setName] = useState(category?.name ?? "");
@@ -55,7 +57,10 @@ export function CategoryFormSheet({
       toast(result.error, "error");
       return;
     }
-    toast(isEditing ? "Category updated" : "Category added", "success");
+    toast(
+      isEditing ? t("categories.updated") : t("categories.added"),
+      "success",
+    );
     onSaved();
     onClose();
   }
@@ -71,7 +76,7 @@ export function CategoryFormSheet({
       <View className="flex-1 justify-end bg-black/50">
         <Pressable
           className="flex-1"
-          accessibilityLabel="Close"
+          accessibilityLabel={t("categories.close")}
           onPress={onClose}
         />
         <View className="max-h-[90%] rounded-t-3xl border border-border bg-card">
@@ -80,10 +85,16 @@ export function CategoryFormSheet({
           </View>
           <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
             <Text className="font-semibold" style={{ fontSize: 18 }}>
-              {isEditing ? "Edit category" : "New category"}
+              {isEditing
+                ? t("categories.editCategory")
+                : t("categories.newCategory")}
             </Text>
-            <Pressable onPress={onClose} accessibilityLabel="Close" hitSlop={8}>
-              <Text variant="muted">Close</Text>
+            <Pressable
+              onPress={onClose}
+              accessibilityLabel={t("categories.close")}
+              hitSlop={8}
+            >
+              <Text variant="muted">{t("categories.close")}</Text>
             </Pressable>
           </View>
 
@@ -92,15 +103,19 @@ export function CategoryFormSheet({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <Text className="mb-2 text-sm font-medium">Name</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("categories.name")}
+            </Text>
             <Input
               value={name}
               onChangeText={setName}
-              placeholder="Groceries"
+              placeholder={t("categories.namePlaceholder")}
               className="mb-4"
             />
 
-            <Text className="mb-2 text-sm font-medium">Type</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("categories.type")}
+            </Text>
             <View className="mb-4 flex-row flex-wrap gap-2">
               {TYPES.map((value) => {
                 const selected = type === value;
@@ -123,14 +138,16 @@ export function CategoryFormSheet({
                         selected ? "text-background" : "text-muted-foreground",
                       )}
                     >
-                      {CATEGORY_TYPE_LABELS[value]}
+                      {categoryTypeLabels()[value]}
                     </Text>
                   </Pressable>
                 );
               })}
             </View>
 
-            <Text className="mb-2 text-sm font-medium">Icon</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("categories.icon")}
+            </Text>
             <View className="mb-4 flex-row flex-wrap gap-2">
               {ICON_KEYS.map((key) => {
                 const selected = icon === key;
@@ -177,7 +194,9 @@ export function CategoryFormSheet({
             </Pressable>
 
             <Button
-              label={pending ? "Saving…" : "Save category"}
+              label={
+                pending ? t("categories.saving") : t("categories.saveCategory")
+              }
               size="lg"
               disabled={pending || !name.trim()}
               onPress={handleSave}

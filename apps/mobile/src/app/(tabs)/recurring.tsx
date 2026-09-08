@@ -44,22 +44,36 @@ import {
 } from "@/lib/mutations";
 import { getCategories, getRecurringTemplates } from "@/lib/queries";
 import { useTabBarClearance } from "@/theme/chrome";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import type { Translate } from "@finance/core/i18n/t";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 /** Recurring only covers allocations; income has no recurring template. */
 type AllocType = Exclude<CategoryType, "income">;
 
 const GROUP_ORDER: AllocType[] = ["expense", "savings", "investment"];
 
-const GROUP_LABELS: Record<AllocType, string> = {
-  expense: "Expenses",
-  savings: "Savings",
-  investment: "Investments",
-};
+/**
+ * What each of the three kinds of charge is called.
+ *
+ * A function of the locale, and drawn from the same `allocation.*` messages
+ * the flow chart and the caps use, so the three kinds are named identically
+ * wherever they appear.
+ */
+function groupLabels(t: Translate): Record<AllocType, string> {
+  return {
+    expense: t("allocation.expenses"),
+    savings: t("allocation.savings"),
+    investment: t("allocation.investments"),
+  };
+}
 
 export default function RecurringScreen() {
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
+  const locale = useLocale();
+  const t = useT();
   const { toast } = useToast();
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -106,17 +120,17 @@ export default function RecurringScreen() {
       templates
         .filter((t) => t.active && t.categories.counts_toward_summary !== false)
         .reduce((sum, t) => sum + estimateMonthlyAmount(t), 0),
-    [templates],
+    [templates, t],
   );
 
   const groups = useMemo(
     () =>
       GROUP_ORDER.map((type) => ({
         type,
-        label: GROUP_LABELS[type],
+        label: groupLabels(t)[type],
         items: templates.filter((t) => t.categories.type === type),
       })),
-    [templates],
+    [templates, t],
   );
 
   const defaultTab = useMemo<AllocType>(
@@ -163,22 +177,22 @@ export default function RecurringScreen() {
     const { granted } = await enableReminders();
     setRemindersPrompt(false);
     if (!granted) {
-      toast("Reminders need notification permission", "error");
+      toast(t("charges.remindNeedsPermission"), "error");
       return;
     }
     await syncRecurringReminders(templates, formatEuro);
     // This prompt is about the charges on this screen, which are scheduled on
     // the device and work whether or not a server can reach it. Whether it
     // can is Profile's business, where the switch lives.
-    toast("Reminders on — you'll hear the evening before", "success");
+    toast(t("charges.remindOn"), "success");
   }
 
   return (
-    <Screen title="Charges">
+    <Screen title={t("nav.charges")}>
       {applyPending ? (
         <Pressable
           accessibilityRole="link"
-          accessibilityLabel="Open the Ledger to apply these charges"
+          accessibilityLabel={t("charges.openLedgerToApply")}
           onPress={() => router.push("/(tabs)/transactions" as Href)}
           className="mb-3 rounded-lg border border-dashed border-primary-rim/50 px-4 py-3"
         >
@@ -192,15 +206,14 @@ export default function RecurringScreen() {
       {remindersPrompt ? (
         <Card bezel className="mb-4" innerClassName="gap-3 p-5">
           <Text className="text-sm font-medium">
-            Want a nudge before these post?
+            {t("charges.remindTitle")}
           </Text>
           <Text variant="muted" className="text-sm">
-            One reminder the evening before each item is due, so nothing lands
-            unnoticed. Entirely on your device.
+            {t("charges.remindBody")}
           </Text>
           <View className="flex-row gap-2">
             <Button
-              label="Remind me"
+              label={t("charges.remindYes")}
               size="sm"
               className="flex-1"
               onPress={() => {
@@ -208,7 +221,7 @@ export default function RecurringScreen() {
               }}
             />
             <Button
-              label="No thanks"
+              label={t("charges.remindNo")}
               variant="ghost"
               size="sm"
               className="flex-1"
@@ -233,7 +246,7 @@ export default function RecurringScreen() {
       ) : null}
 
       <Button
-        label="Add charge"
+        label={t("charges.addCharge")}
         variant="pill"
         icon="add"
         className="mb-4 self-center"
@@ -276,7 +289,7 @@ export default function RecurringScreen() {
       {loading && !data ? (
         <ScreenSkeleton rows={5} />
       ) : error ? (
-        <Text className="text-destructive">{error}</Text>
+        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
       ) : (
         <FlatList
           data={activeItems}
@@ -286,11 +299,11 @@ export default function RecurringScreen() {
           }
           ListEmptyComponent={
             <EmptyState
-              title="What repeats each month?"
-              description="Rent, salary, subscriptions, DCA."
+              title={t("charges.emptyTitleMobile")}
+              description={t("charges.emptyBodyMobile")}
             >
               <Button
-                label="Add recurring item"
+                label={t("recurring.addTitleMobile")}
                 variant="pill"
                 icon="add"
                 onPress={() => {
@@ -326,7 +339,7 @@ export default function RecurringScreen() {
                   </Text>
                   {isCryptoCategoryName(item.categories.name) ? (
                     <Text variant="muted" className="mt-0.5 text-xs">
-                      Fixed EUR → Bitcoin
+                      {t("charges.fixedToBitcoin")}
                     </Text>
                   ) : null}
                   {item.description ? (
@@ -335,7 +348,7 @@ export default function RecurringScreen() {
                     </Text>
                   ) : null}
                   <Text variant="muted" className="mt-1 text-xs">
-                    {formatRecurrenceSchedule(item)}
+                    {formatRecurrenceSchedule(item, locale)}
                   </Text>
                 </Pressable>
 
@@ -346,7 +359,12 @@ export default function RecurringScreen() {
                   <Pressable
                     accessibilityRole="button"
                     accessibilityState={{ selected: item.active }}
-                    accessibilityLabel={`${item.active ? "Deactivate" : "Activate"} ${item.categories.name}`}
+                    accessibilityLabel={t("charges.toggleFor", {
+                      action: item.active
+                        ? t("charges.deactivate")
+                        : t("charges.activate"),
+                      name: item.categories.name,
+                    })}
                     onPress={async () => {
                       const result = await toggleRecurringActive(
                         item.id,

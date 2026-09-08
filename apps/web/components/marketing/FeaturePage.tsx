@@ -3,6 +3,7 @@ import { LandingBloom } from "@/components/marketing/LandingOrb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LandingDeviceStack } from "@/components/marketing/LandingDeviceStack";
 import { Reveal, Rise } from "@/components/marketing/LandingReveal";
+import { getLocale, getT } from "@/lib/locale";
 import {
   adjacentLandingPages,
   featureHref,
@@ -15,9 +16,11 @@ interface FeaturePageProps {
   isLoggedIn: boolean;
 }
 
-export function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
-  const page = getLandingPage(pageId);
-  const { prev, next } = adjacentLandingPages(pageId);
+export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
+  const t = await getT();
+  const locale = await getLocale();
+  const page = getLandingPage(pageId, locale);
+  const { prev, next } = adjacentLandingPages(pageId, locale);
 
   return (
     // overflow-x-clip, not hidden: the bloom below is 36rem wide and centred,
@@ -74,7 +77,7 @@ export function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
 
         <nav
           className="mt-14 flex items-stretch gap-3 sm:gap-4"
-          aria-label="Nearby pages"
+          aria-label={t("common.nearbyPages")}
         >
           {prev ? (
             <Link

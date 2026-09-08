@@ -17,6 +17,8 @@ import {
 } from "@/lib/actions/finance";
 import { todayIsoLocal } from "@finance/core/constants";
 import type { Category, Tag, Transaction } from "@finance/core/types/database";
+import { useT } from "@/lib/locale-context";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 interface TransactionFormProps {
   categories: Category[];
@@ -81,6 +83,7 @@ function TransactionFormFields({
   onDeleted,
 }: TransactionFormFieldsProps) {
   const { toast } = useToast();
+  const t = useT();
   const isEditing = transaction !== null;
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSkip, setConfirmSkip] = useState(false);
@@ -98,12 +101,12 @@ function TransactionFormFields({
 
   useEffect(() => {
     if (state.success) {
-      toast("Transaction saved", "success");
+      toast(t("transaction.saved"), "success");
       onOpenChange(false);
     } else if (state.error) {
       toast(state.error, "error");
     }
-  }, [state.success, state.error, onOpenChange, toast]);
+  }, [state.success, state.error, onOpenChange, toast, t]);
 
   /**
    * Repeating an entry is the most common thing anyone does with a ledger —
@@ -130,7 +133,7 @@ function TransactionFormFields({
         return;
       }
 
-      toast("Duplicated to today", "success");
+      toast(t("transaction.duplicated"), "success");
       onOpenChange(false);
     });
   }
@@ -146,7 +149,7 @@ function TransactionFormFields({
         toast(result.error, "error");
         return;
       }
-      toast("Transaction deleted", "success");
+      toast(t("transaction.deleted"), "success");
       onOpenChange(false);
       onDeleted?.();
     });
@@ -167,7 +170,7 @@ function TransactionFormFields({
         toast(result.error, "error");
         return;
       }
-      toast("Skipped for this date — won’t be re-applied", "success");
+      toast(t("transaction.skipped"), "success");
       onOpenChange(false);
       onDeleted?.();
     });
@@ -177,12 +180,14 @@ function TransactionFormFields({
     <MobileSheet
       open={open}
       onOpenChange={onOpenChange}
-      title={isEditing ? "Edit transaction" : "Add transaction"}
+      title={isEditing ? t("transaction.editTitle") : t("transaction.addTitle")}
     >
       <form action={action} className="flex flex-col gap-4">
         {isEditing && <input type="hidden" name="id" value={transaction.id} />}
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="categoryId">Category</FormLabel>
+          <FormLabel htmlFor="categoryId">
+            {t("transaction.category")}
+          </FormLabel>
           <CategorySelect
             id="categoryId"
             categories={categories}
@@ -191,7 +196,7 @@ function TransactionFormFields({
           />
         </div>
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="amount">Amount (EUR)</FormLabel>
+          <FormLabel htmlFor="amount">{t("transaction.amount")}</FormLabel>
           <Input
             id="amount"
             name="amount"
@@ -224,13 +229,15 @@ function TransactionFormFields({
             name="note"
             type="text"
             className="text-base"
-            placeholder="Description"
+            placeholder={t("transaction.notePlaceholder")}
             defaultValue={transaction?.note ?? undefined}
           />
         </div>
         {tags.length > 0 && (
           <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm font-medium">Tags</legend>
+            <legend className="text-sm font-medium">
+              {t("transaction.tags")}
+            </legend>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => (
                 <label
@@ -250,7 +257,9 @@ function TransactionFormFields({
           </fieldset>
         )}
         {state.error && (
-          <Text className="text-sm text-destructive">{state.error}</Text>
+          <Text className="text-sm text-destructive">
+            {resolveMessage(t, state.error)}
+          </Text>
         )}
         <Button
           type="submit"
@@ -258,7 +267,7 @@ function TransactionFormFields({
           className="w-full"
           disabled={pending || deletePending || skipPending}
         >
-          {pending ? "Saving…" : "Save transaction"}
+          {pending ? t("transaction.saving") : t("transaction.saveTransaction")}
         </Button>
       </form>
 
@@ -271,7 +280,9 @@ function TransactionFormFields({
             disabled={duplicatePending}
             onClick={handleDuplicate}
           >
-            {duplicatePending ? "Duplicating…" : "Duplicate to today"}
+            {duplicatePending
+              ? t("transaction.duplicating")
+              : t("transaction.duplicateToToday")}
           </Button>
 
           {canSkip && (
@@ -279,9 +290,7 @@ function TransactionFormFields({
               {confirmSkip ? (
                 <div className="flex flex-col gap-2">
                   <p className="text-sm text-muted-foreground">
-                    Skip this date only? The entry will be removed and Apply
-                    won&apos;t recreate it. The recurring rule stays active for
-                    later months.
+                    {t("transaction.skipExplanation")}
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -291,7 +300,9 @@ function TransactionFormFields({
                       disabled={skipPending}
                       onClick={handleSkip}
                     >
-                      {skipPending ? "Skipping…" : "Yes, skip this date"}
+                      {skipPending
+                        ? t("transaction.skipping")
+                        : t("transaction.confirmSkip")}
                     </Button>
                     <Button
                       type="button"
@@ -314,7 +325,7 @@ function TransactionFormFields({
                     setConfirmSkip(true);
                   }}
                 >
-                  Skip this month / date
+                  {t("transaction.skipThisDate")}
                 </Button>
               )}
             </div>
@@ -334,7 +345,9 @@ function TransactionFormFields({
                   disabled={deletePending}
                   onClick={handleDelete}
                 >
-                  {deletePending ? "Deleting…" : "Yes, delete"}
+                  {deletePending
+                    ? t("transaction.deleting")
+                    : t("transaction.confirmDelete")}
                 </Button>
                 <Button
                   type="button"
@@ -357,7 +370,7 @@ function TransactionFormFields({
                 setConfirmDelete(true);
               }}
             >
-              Delete transaction
+              {t("transaction.deleteTransaction")}
             </Button>
           )}
         </div>

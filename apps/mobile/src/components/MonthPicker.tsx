@@ -6,6 +6,7 @@ import { Blur } from "@/components/ui/Blur";
 import { Text } from "@/components/ui/Text";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 interface MonthPickerProps {
   year: number;
@@ -14,6 +15,7 @@ interface MonthPickerProps {
 }
 
 export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
+  const t = useT();
   const colors = useThemeColors();
 
   return (
@@ -27,7 +29,7 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
     >
       <View className="flex-row items-center justify-between px-2 py-1">
         <Pressable
-          accessibilityLabel="Previous month"
+          accessibilityLabel={t("common.previousMonth")}
           onPress={() => {
             const next = shiftMonth(year, month, -1);
             onChange(next.year, next.month);
@@ -42,7 +44,7 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
         </Pressable>
         <Text className="font-semibold">{formatMonthLabel(year, month)}</Text>
         <Pressable
-          accessibilityLabel="Next month"
+          accessibilityLabel={t("common.nextMonth")}
           onPress={() => {
             const next = shiftMonth(year, month, 1);
             onChange(next.year, next.month);

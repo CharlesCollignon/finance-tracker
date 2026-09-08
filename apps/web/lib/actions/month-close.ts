@@ -40,7 +40,7 @@ export async function previewMonthCloseAction(
 ): Promise<ActionResult & { result?: MonthCloseResult }> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = monthCloseSchema.safeParse({ year, month, closingBalance });
@@ -71,7 +71,7 @@ export async function recordMonthClose(
 ): Promise<ActionResult & { result?: MonthCloseResult }> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = monthCloseSchema.safeParse({ year, month, closingBalance });
@@ -137,7 +137,7 @@ export async function deleteMonthClose(
 ): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = monthCloseSchema.safeParse({
@@ -169,7 +169,7 @@ export async function updateUnrecordedCap(
 ): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = unrecordedCapSchema.safeParse({ cap });
@@ -201,7 +201,7 @@ export async function updateUnrecordedCap(
 export async function updateCloseDay(closeDay: number): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = closeDaySchema.safeParse({ closeDay });

@@ -24,6 +24,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useTabBarHeight } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 const EMPTY: QuickEntryContext = {
   categories: [],
@@ -104,6 +105,7 @@ export function useQuickAdd(): QuickAddValue | null {
 }
 
 function QuickAddFab() {
+  const t = useT();
   const quickAdd = useQuickAdd();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -131,7 +133,7 @@ function QuickAddFab() {
     >
       <AnimatedPressable
         accessibilityRole="button"
-        accessibilityLabel="Add transaction"
+        accessibilityLabel={t("common.addTransaction")}
         onPressIn={() => {
           scale.value = withTiming(0.92, { duration: 110 });
         }}

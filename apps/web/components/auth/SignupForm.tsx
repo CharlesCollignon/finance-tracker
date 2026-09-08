@@ -13,8 +13,11 @@ import { signUp } from "@/lib/actions/finance";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 export function SignupForm() {
+  const t = useT();
   const router = useRouter();
   const [state, action, pending] = useActionState(signUp, {});
 
@@ -33,13 +36,13 @@ export function SignupForm() {
       innerClassName="p-6 md:p-8"
     >
       <h1 className="text-center font-serif text-2xl italic md:text-3xl">
-        Create account
+        {t("auth.createAccount")}
       </h1>
       <p className="mt-1 text-center text-sm text-muted-foreground">
         Start tracking income and expenses
       </p>
       <div className="mt-6">
-        <GoogleSignInButton label="Sign up with Google" />
+        <GoogleSignInButton label={t("auth.withGoogleSignUp")} />
       </div>
       <AuthDivider />
       <form action={action} className="flex flex-col gap-4">
@@ -55,7 +58,7 @@ export function SignupForm() {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="password">Password</FormLabel>
+          <FormLabel htmlFor="password">{t("auth.password")}</FormLabel>
           <Input
             id="password"
             name="password"
@@ -68,7 +71,7 @@ export function SignupForm() {
         </div>
         {state.error && (
           <Text className="text-center text-sm text-destructive">
-            {state.error}
+            {resolveMessage(t, state.error)}
           </Text>
         )}
         {state.message && (
@@ -83,16 +86,16 @@ export function SignupForm() {
           className="w-full justify-between"
           disabled={pending}
         >
-          {pending ? "Creating…" : "Sign up"}
+          {pending ? t("auth.creating") : t("auth.signUp")}
           <ButtonNub>
             <ArrowRight size={ICON.md} weight="bold" />
           </ButtonNub>
         </Button>
       </form>
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
+        {t("auth.haveAccount")}{" "}
         <Link href="/login" className="font-medium underline">
-          Sign in
+          {t("auth.signIn")}
         </Link>
       </p>
     </Card.Bezel>

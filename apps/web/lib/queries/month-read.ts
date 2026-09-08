@@ -6,6 +6,7 @@ import type { Database } from "@finance/core/types/database";
 import { readMonthReadState } from "@/lib/month-read/store";
 import type { ReadFreshness } from "@finance/core/month-read-budget";
 import type { MonthRead } from "@finance/core/month-read";
+import type { Locale } from "@finance/core/i18n/locale";
 
 type Client = SupabaseClient<Database>;
 
@@ -14,6 +15,14 @@ export interface MonthReadView {
   /** The pack the read was written from, for detecting movement. */
   storedFacts: MonthFacts;
   writtenAt: string;
+  /**
+   * The language the prose is in, which may not be the reader's.
+   *
+   * A read is not rewritten when somebody switches language — that would
+   * spend an allowance they did not ask to spend — so it stays in the
+   * language it was written in, and the card says so.
+   */
+  locale: Locale;
   freshness: ReadFreshness;
 }
 
@@ -42,6 +51,7 @@ export async function getMonthRead(
     read: stored.read,
     storedFacts: stored.facts,
     writtenAt: stored.writtenAt,
+    locale: stored.locale,
     freshness: describeReadFreshness({
       storedFacts: stored.facts,
       currentFacts,

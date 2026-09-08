@@ -188,8 +188,13 @@ describe("describeSelectionDeletion", () => {
   });
 
   it("warns that a single recurring entry will come back", () => {
+    // "a recurring template", singular. The sentence used to read "It comes
+    // from recurring templates" — a singular subject with a plural object,
+    // which only survived because the two halves were assembled from
+    // separate ternaries. Writing each form out as one message is what made
+    // the disagreement visible.
     const text = describe_(["c"])!;
-    expect(text).toContain("It comes from recurring templates");
+    expect(text).toContain("It comes from a recurring template");
     expect(text).toContain("recreate it");
   });
 

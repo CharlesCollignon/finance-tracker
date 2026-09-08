@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * Money-weighted return.
  *
@@ -234,21 +236,21 @@ export function buildPortfolioReturn(
   };
 }
 
-/** "+7.4% a year" / "−2.1% a year", or null when there is no rate. */
+/** "+7.4% a year" / "+7,4 % par an", or null when there is no rate. */
 export function formatAnnualRate(
   rate: number | null,
-  locale = "en-GB",
+  locale: Locale = DEFAULT_LOCALE,
 ): string | null {
   if (rate === null) {
     return null;
   }
 
-  const percent = new Intl.NumberFormat(locale, {
+  const percent = new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: "percent",
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
     signDisplay: "exceptZero",
   }).format(rate);
 
-  return `${percent} a year`;
+  return translator(locale)("units.perYear", { rate: percent });
 }

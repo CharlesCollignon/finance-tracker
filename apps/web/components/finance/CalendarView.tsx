@@ -32,7 +32,7 @@ import {
   formatCalendarDate,
   formatShortAmount,
   groupTransactionsByDate,
-  WEEKDAY_LABELS,
+  weekdayLabels,
 } from "@finance/core/calendar";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -42,6 +42,7 @@ import type {
   TransactionWithCategory,
 } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
+import { useLocale, useT } from "@/lib/locale-context";
 
 /** Stable identity, so the derived selection does not change every render. */
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
@@ -61,7 +62,9 @@ export function CalendarView({
   year,
   month,
 }: CalendarViewProps) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
+  const locale = useLocale();
   const { toast } = useToast();
   // Row selection is keyed by day, the same way the day itself is keyed by
   // month above: changing day empties it by derivation, with no effect.
@@ -172,7 +175,7 @@ export function CalendarView({
 
   return (
     <>
-      <PageHeader title="Ledger">
+      <PageHeader titleKey="nav.ledger">
         <MonthPicker basePath="/calendar" />
       </PageHeader>
 
@@ -210,10 +213,10 @@ export function CalendarView({
             {/* Full-bleed on mobile so the 7-day grid uses the screen width. */}
             <section
               className="-mx-4 w-[calc(100%+2rem)] min-w-0 sm:mx-0 sm:w-full"
-              aria-label="Monthly calendar"
+              aria-label={t("calendarView.monthlyCalendar")}
             >
               <div className="grid w-full grid-cols-7 border-b border-border/40">
-                {WEEKDAY_LABELS.map((label) => (
+                {weekdayLabels(locale).map((label) => (
                   <div
                     key={label}
                     className={cn(
@@ -279,7 +282,7 @@ export function CalendarView({
                                 "md:text-xs",
                               )}
                             >
-                              +{formatShortAmount(totals.income)}€
+                              +{formatShortAmount(totals.income, locale)} €
                             </span>
                           ) : null}
                           {totals.outflow > 0 ? (
@@ -290,7 +293,7 @@ export function CalendarView({
                                 totals.income > 0 && "-mt-0.5",
                               )}
                             >
-                              −{formatShortAmount(totals.outflow)}€
+                              −{formatShortAmount(totals.outflow, locale)} €
                             </span>
                           ) : null}
                         </button>
@@ -305,7 +308,7 @@ export function CalendarView({
           <StaggerItem className="w-full min-w-0">
             <section
               className="flex min-w-0 flex-col gap-3"
-              aria-label="Selected day details"
+              aria-label={t("calendarView.selectedDay")}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -314,7 +317,7 @@ export function CalendarView({
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {selectedTotals.count === 0
-                      ? "No transactions"
+                      ? t("calendarView.noTransactions")
                       : `${selectedTotals.count} transaction${
                           selectedTotals.count === 1 ? "" : "s"
                         }`}
@@ -336,7 +339,7 @@ export function CalendarView({
                         selectMode ? leaveSelectMode() : setSelectMode(true)
                       }
                     >
-                      {selectMode ? "Done" : "Select"}
+                      {selectMode ? t("ledger.selectDone") : t("ledger.select")}
                     </Button>
                   ) : null}
                   {selectMode ? (
@@ -349,7 +352,9 @@ export function CalendarView({
                         )
                       }
                     >
-                      {allState === "all" ? "Clear all" : "All"}
+                      {allState === "all"
+                        ? t("ledger.clearAll")
+                        : t("calendarView.all")}
                     </Button>
                   ) : null}
                   <Button size="sm" onClick={() => setFormOpen(true)}>
@@ -361,8 +366,8 @@ export function CalendarView({
 
               {selectedTransactions.length === 0 ? (
                 <EmptyState
-                  title="Nothing on this day"
-                  description="Add a transaction or pick another date."
+                  title={t("calendarView.emptyTitle")}
+                  description={t("calendarView.emptyBody")}
                 >
                   <Button
                     variant="pill"
@@ -421,7 +426,9 @@ export function CalendarView({
                         </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           {[
-                            tx.recurring_template_id ? "Recurring" : null,
+                            tx.recurring_template_id
+                              ? t("calendarView.recurring")
+                              : null,
                             tx.note,
                           ]
                             .filter(Boolean)

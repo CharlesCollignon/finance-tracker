@@ -35,16 +35,18 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import type { Key } from "@finance/core/i18n/t";
 
 /** A statement bigger than this is almost certainly the wrong file. */
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 type Step = "choose" | "map" | "review";
 
-const STATUS_LABEL: Record<ImportRow["status"], string> = {
-  ready: "Ready",
-  duplicate: "Skipped",
-  invalid: "Problem",
+const STATUS_LABEL: Record<ImportRow["status"], Key> = {
+  ready: "importer.statusReady",
+  duplicate: "importer.statusSkipped",
+  invalid: "importer.statusProblem",
 };
 
 /**
@@ -56,6 +58,8 @@ const STATUS_LABEL: Record<ImportRow["status"], string> = {
  * cards, with a bulk assignment for everything the app could not categorise.
  */
 export default function ImportScreen() {
+  const locale = useLocale();
+  const t = useT();
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -160,7 +164,11 @@ export default function ImportScreen() {
     }
     setPending(true);
 
-    const provisional = buildImportRows(dataRows, { mapping, guessCategory });
+    const provisional = buildImportRows(dataRows, {
+      mapping,
+      guessCategory,
+      locale,
+    });
     const dates = provisional
       .map((row) => row.occurredOn)
       .filter((date): date is string => date !== null)
@@ -181,7 +189,9 @@ export default function ImportScreen() {
       }
     }
 
-    setRows(buildImportRows(dataRows, { mapping, existing, guessCategory }));
+    setRows(
+      buildImportRows(dataRows, { mapping, existing, guessCategory, locale }),
+    );
     setPending(false);
     setStep("review");
   }
@@ -236,7 +246,7 @@ export default function ImportScreen() {
   }
 
   return (
-    <Screen title="Import">
+    <Screen title={t("pages.import")}>
       {step === "review" ? (
         /*
          * A statement can run to thousands of rows, so the review list is
@@ -254,31 +264,38 @@ export default function ImportScreen() {
           ListHeaderComponent={
             <Card bezel innerClassName="gap-3 p-5">
               <Text className="font-bold" style={{ fontSize: 17 }}>
-                {`${summary.ready} of ${summary.total} rows ready`}
+                {t("importer.rowsReady", {
+                  ready: summary.ready,
+                  total: summary.total,
+                })}
               </Text>
               <Text variant="muted" className="text-sm">
                 {summary.duplicate > 0
-                  ? `${summary.duplicate} already in your ledger. `
+                  ? t("importer.alreadyInLedger", {
+                      count: summary.duplicate,
+                    })
                   : ""}
                 {summary.invalid > 0
-                  ? `${summary.invalid} could not be read. `
+                  ? t("importer.couldNotRead", { count: summary.invalid })
                   : ""}
                 {summary.needsCategory > 0
-                  ? `${summary.needsCategory} still need a category.`
-                  : "Every row has a category."}
+                  ? t("importer.needCategory", {
+                      count: summary.needsCategory,
+                    })
+                  : t("importer.everyRowCategorised")}
               </Text>
 
               {summary.needsCategory > 0 ? (
                 <View className="gap-3 border-t border-border pt-3">
                   <BulkAssign
-                    label="Set all remaining spending to"
+                    label={t("importer.setRemainingSpending")}
                     categories={categories.filter((c) => c.type !== "income")}
                     onPick={(category) =>
                       fillUncategorised("expense", category)
                     }
                   />
                   <BulkAssign
-                    label="Set all remaining income to"
+                    label={t("importer.setRemainingIncome")}
                     categories={categories.filter((c) => c.type === "income")}
                     onPick={(category) => fillUncategorised("income", category)}
                   />
@@ -287,13 +304,19 @@ export default function ImportScreen() {
 
               <View className="flex-row gap-2">
                 <Button
-                  label="Back"
+                  label={t("importer.back")}
                   variant="outline"
                   className="flex-1"
                   onPress={() => setStep("map")}
                 />
                 <Button
-                  label={pending ? "Importing…" : `Import ${importable.length}`}
+                  label={
+                    pending
+                      ? t("importer.importing")
+                      : t("importer.importCount", {
+                          count: importable.length,
+                        })
+                  }
                   className="flex-1"
                   disabled={pending || importable.length === 0}
                   onPress={() => void commit()}
@@ -349,7 +372,7 @@ export default function ImportScreen() {
                           : "text-success",
                     )}
                   >
-                    {row.problem ?? STATUS_LABEL[row.status]}
+                    {row.problem ?? t(STATUS_LABEL[row.status])}
                   </Text>
                 </View>
 
@@ -369,7 +392,7 @@ export default function ImportScreen() {
                     )}
                   >
                     <Text className="text-sm">
-                      {row.categoryName ?? "Choose a category"}
+                      {row.categoryName ?? t("importer.chooseCategory")}
                     </Text>
                     <Ionicons
                       name={
@@ -431,7 +454,7 @@ export default function ImportScreen() {
                 you have reviewed every row.
               </Text>
               <Button
-                label="Choose a file"
+                label={t("importer.chooseFile")}
                 icon="document-outline"
                 onPress={() => void pickFile()}
               />
@@ -476,11 +499,13 @@ export default function ImportScreen() {
                     size={ICON.xl}
                     color={hasHeader ? colors.primary : colors.mutedForeground}
                   />
-                  <Text className="text-sm">The first row is column names</Text>
+                  <Text className="text-sm">
+                    {t("importer.firstRowIsHeader")}
+                  </Text>
                 </Pressable>
 
                 <ColumnPicker
-                  label="Date"
+                  label={t("importer.columnDate")}
                   columns={table[0] ?? []}
                   headers={headers}
                   value={mapping.date}
@@ -489,7 +514,7 @@ export default function ImportScreen() {
                   }
                 />
                 <ColumnPicker
-                  label="Description"
+                  label={t("importer.columnDescription")}
                   columns={table[0] ?? []}
                   headers={headers}
                   value={mapping.description}
@@ -498,7 +523,7 @@ export default function ImportScreen() {
                   }
                 />
                 <ColumnPicker
-                  label="Amount"
+                  label={t("importer.columnAmount")}
                   columns={table[0] ?? []}
                   headers={headers}
                   value={mapping.amount}
@@ -515,7 +540,7 @@ export default function ImportScreen() {
                 {mapping.amount === null ? (
                   <>
                     <ColumnPicker
-                      label="Money out (debit)"
+                      label={t("importer.debitColumn")}
                       columns={table[0] ?? []}
                       headers={headers}
                       value={mapping.debit}
@@ -525,7 +550,7 @@ export default function ImportScreen() {
                       }
                     />
                     <ColumnPicker
-                      label="Money in (credit)"
+                      label={t("importer.creditColumn")}
                       columns={table[0] ?? []}
                       headers={headers}
                       value={mapping.credit}
@@ -555,13 +580,15 @@ export default function ImportScreen() {
 
               <View className="flex-row gap-2">
                 <Button
-                  label="Back"
+                  label={t("importer.back")}
                   variant="outline"
                   className="flex-1"
                   onPress={() => setStep("choose")}
                 />
                 <Button
-                  label={pending ? "Reading…" : "Continue"}
+                  label={
+                    pending ? t("importer.reading") : t("importer.continue")
+                  }
                   className="flex-1"
                   disabled={pending}
                   onPress={() => void buildReview()}
@@ -591,6 +618,7 @@ function ColumnPicker({
   allowNone?: boolean;
   onChange: (value: number | null) => void;
 }) {
+  const t = useT();
   return (
     <View className="gap-1.5">
       <Text className="text-sm font-medium">{label}</Text>
@@ -601,7 +629,7 @@ function ColumnPicker({
       >
         {allowNone ? (
           <Chip
-            label="Not in this file"
+            label={t("importer.notInThisFile")}
             selected={value === null}
             onPress={() => onChange(null)}
           />

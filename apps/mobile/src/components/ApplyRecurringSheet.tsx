@@ -17,6 +17,7 @@ import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 const EMPTY_KEYS: ReadonlySet<string> = new Set();
 
@@ -116,6 +117,7 @@ export function ApplyRecurringSheet({
   pending,
   onConfirm,
 }: ApplyRecurringSheetProps) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
 
   const allKeys = useMemo(() => {
@@ -175,7 +177,7 @@ export function ApplyRecurringSheet({
     >
       <View className="flex-1 justify-end bg-black/50">
         <Pressable
-          accessibilityLabel="Close"
+          accessibilityLabel={t("common.close")}
           className="flex-1"
           onPress={() => onOpenChange(false)}
         />
@@ -285,7 +287,7 @@ export function ApplyRecurringSheet({
             />
             {hasUpdates && hasCreates ? (
               <Button
-                label="Add new only — skip updates"
+                label={t("common.addNewOnly")}
                 variant="outline"
                 size="lg"
                 disabled={pending}
@@ -293,7 +295,7 @@ export function ApplyRecurringSheet({
               />
             ) : null}
             <Button
-              label="Cancel"
+              label={t("common.cancel")}
               variant="outline"
               size="lg"
               disabled={pending}

@@ -2,6 +2,8 @@ import { Modal, Pressable, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
+import { useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 interface ConfirmSheetProps {
   open: boolean;
@@ -31,6 +33,7 @@ export function ConfirmSheet({
   onConfirm,
   onCancel,
 }: ConfirmSheetProps) {
+  const t = useT();
   return (
     <Modal
       visible={open}
@@ -41,7 +44,7 @@ export function ConfirmSheet({
     >
       <View className="flex-1 items-center justify-center bg-black/50 px-6">
         <Pressable
-          accessibilityLabel="Cancel"
+          accessibilityLabel={t("common.cancel")}
           className="absolute inset-0"
           onPress={onCancel}
         />
@@ -51,7 +54,7 @@ export function ConfirmSheet({
           </Text>
           {message ? (
             <Text variant="muted" className="mt-2 text-sm">
-              {message}
+              {resolveMessage(t, message)}
             </Text>
           ) : null}
           <View className="mt-5 gap-2">

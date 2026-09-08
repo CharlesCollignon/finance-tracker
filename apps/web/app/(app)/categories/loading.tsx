@@ -5,7 +5,7 @@ import { ListSkeleton } from "@/components/layout/PageSkeleton";
 export default function CategoriesLoading() {
   return (
     <>
-      <PageHeader title="Categories" />
+      <PageHeader titleKey="pages.categories" />
       <PageContainer>
         <ListSkeleton rows={6} />
       </PageContainer>

@@ -42,6 +42,7 @@ import {
 import { MonthCloseSheet } from "@/components/MonthCloseSheet";
 import { MonthClosedRecap } from "@/components/MonthClosedRecap";
 import { MonthFirstRun } from "@/components/MonthFirstRun";
+import { LocaleSuggestion } from "@/components/LocaleSuggestion";
 import { MonthPicker } from "@/components/MonthPicker";
 import { MoneyOnHand } from "@/components/MoneyOnHand";
 import { MonthRead } from "@/components/MonthRead";
@@ -75,6 +76,8 @@ import { useChartSeries } from "@/theme/chart-series";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
 import { useTabBarClearance } from "@/theme/chrome";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 import {
   getBudgets,
   getCategories,
@@ -142,6 +145,8 @@ function SummaryCard({
 }
 
 export default function MonthScreen() {
+  const t = useT();
+  const locale = useLocale();
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const router = useRouter();
@@ -180,6 +185,7 @@ export default function MonthScreen() {
           arrived: [] as FulfilmentProposal[],
           readView: null as MonthReadView | null,
           readFacts: null as MonthFacts | null,
+          readOwnFacts: null as MonthFacts | null,
           readWritesLeft: 0,
         };
       }
@@ -284,9 +290,10 @@ export default function MonthScreen() {
       // Mapped from what this batch already fetched rather than gathered
       // again, so the figures the read refers to are literally the ones
       // rendered above it.
-      const readFacts = monthFactsFromScreen({
+      const factsInput = {
         year,
         month,
+        locale,
         isCurrentMonth: viewingCurrent,
         summary,
         comparison: buildMonthComparison({
@@ -317,6 +324,7 @@ export default function MonthScreen() {
           summary.expenseBreakdown,
           summary.expenses,
           categoryNames,
+          locale,
         ),
         goals: buildSavingsGoalProgress(
           goals,
@@ -326,7 +334,8 @@ export default function MonthScreen() {
         investedValue: portfolio.totalMarketValue,
         inboxPending,
         chargesUnconfirmed: arrived.length,
-      });
+      };
+      const readFacts = monthFactsFromScreen(factsInput);
 
       // The row itself, read straight out of Supabase — select-own under row
       // level security, so no server of ours is involved in looking at it.
@@ -341,6 +350,15 @@ export default function MonthScreen() {
         // A missing read is not a reason to lose the month.
       }
 
+      // A read stays in the language it was written in, so its figures have
+      // to be labelled in that language too. Built only when the two have
+      // actually come apart, which is rare and only after a switch.
+      const storedLocale = stored.view?.locale ?? locale;
+      const readOwnFacts =
+        storedLocale === locale
+          ? readFacts
+          : monthFactsFromScreen({ ...factsInput, locale: storedLocale });
+
       return {
         summary,
         portfolio,
@@ -352,6 +370,7 @@ export default function MonthScreen() {
         // Needs you row appears. One read, two uses.
         inboxPending,
         readFacts,
+        readOwnFacts,
         readView: stored.view,
         readWritesLeft: stored.writesLeft,
         // A reading that failed comes back with `ok: false`, and its total is
@@ -385,6 +404,7 @@ export default function MonthScreen() {
           summary.expenseBreakdown,
           summary.expenses,
           categoryNames,
+          locale,
         ),
         goalProgress: buildSavingsGoalProgress(
           goals,
@@ -461,7 +481,7 @@ export default function MonthScreen() {
       text: `${inboxPending} ${
         inboxPending === 1 ? "entry needs" : "entries need"
       } a category`,
-      action: "Review",
+      action: t("month.actionReview"),
       // The review, not the Ledger it lives on. The sheet is there rather
       // than here because one screen should own the queue, and the Ledger is
       // where the rows land.
@@ -479,7 +499,7 @@ export default function MonthScreen() {
       text: `${planCounts.creates} recurring ${
         planCounts.creates === 1 ? "item is" : "items are"
       } ready to add`,
-      action: "Apply",
+      action: t("month.actionApply"),
       onPress: () => setApplyOpen(true),
     });
   }
@@ -488,9 +508,9 @@ export default function MonthScreen() {
     attention.push({
       id: "close",
       text: closes.next.isBaseline
-        ? "Set a starting balance to begin closing months"
+        ? t("month.startingBalanceHint")
         : `${closes.next.label} is ready to close`,
-      action: "Close",
+      action: t("month.actionClose"),
       onPress: () => setCloseOpen(true),
     });
   }
@@ -515,7 +535,7 @@ export default function MonthScreen() {
     toast(
       result.created
         ? `${result.created} added to ${monthLabel}`
-        : "Nothing to apply",
+        : t("month.nothingToApply"),
       "success",
     );
     notifyDataChanged();
@@ -523,7 +543,7 @@ export default function MonthScreen() {
   }
 
   return (
-    <Screen title="Month">
+    <Screen title={t("nav.month")}>
       <MonthPicker
         year={year}
         month={month}
@@ -536,15 +556,17 @@ export default function MonthScreen() {
       {loading && !summary ? (
         <ScreenSkeleton rows={3} />
       ) : error ? (
-        <Text className="mt-6 text-destructive">{error}</Text>
+        <Text className="mt-6 text-destructive">
+          {resolveMessage(t, error)}
+        </Text>
       ) : !summary ? (
         <EmptyState
           className="mt-6"
-          title="Set up your month"
-          description="Add what repeats once. Every month is forecast from it."
+          title={t("month.setUpTitle")}
+          description={t("month.setUpBody")}
         >
           <Button
-            label="Set up charges"
+            label={t("month.setUpCharges")}
             variant="pill"
             icon="arrow-forward"
             onPress={() => router.push("/recurring")}
@@ -559,6 +581,11 @@ export default function MonthScreen() {
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
           showsVerticalScrollIndicator={false}
         >
+          {/* Above everything, on the first screen the app opens on. The web
+              app puts the same question in a bar under the header; a phone has
+              no such bar, and the Month tab is the equivalent first thing
+              anybody sees. */}
+          <LocaleSuggestion />
           <MonthAttention
             items={attention}
             slot={
@@ -597,7 +624,7 @@ export default function MonthScreen() {
 
           {summary.expenses > 0 ? (
             <SummaryCard
-              title="Where it went"
+              title={t("month.whereItWent")}
               linkLabel="Ledger"
               onPress={() => router.push("/transactions")}
             >
@@ -610,7 +637,7 @@ export default function MonthScreen() {
 
           {budgetProgress.length > 0 || goalProgress.length > 0 ? (
             <SummaryCard
-              title="Caps and goals"
+              title={t("month.capsAndGoals")}
               linkLabel="Plan"
               onPress={() => router.push("/planning")}
             >
@@ -653,7 +680,7 @@ export default function MonthScreen() {
           {/* Everything that elaborates on the figures above rather than
               stating them. Closed by default: the point of this screen is
               the answer, not the whole file on the month. */}
-          <Disclosure label="More this month">
+          <Disclosure label={t("month.moreThisMonth")}>
             {/* After the figures, never before them: the read interprets what
                 is above it. */}
             {!firstRun && readFacts ? (
@@ -664,6 +691,8 @@ export default function MonthScreen() {
                 read={data?.readView?.read ?? null}
                 freshness={data?.readView?.freshness ?? null}
                 facts={readFacts}
+                readFacts={data?.readOwnFacts ?? readFacts}
+                readLocale={data?.readView?.locale ?? locale}
                 writesLeft={data?.readWritesLeft ?? 0}
                 writable={monthReadWritable()}
                 onWritten={() => {

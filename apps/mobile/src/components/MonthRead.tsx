@@ -20,6 +20,8 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { LOCALE_LABELS, type Locale } from "@finance/core/i18n/locale";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 
 interface MonthReadProps {
   year: number;
@@ -29,6 +31,10 @@ interface MonthReadProps {
   freshness: ReadFreshness | null;
   /** The figures as they stand now — what the read renders against. */
   facts: MonthFacts;
+  /** The same figures, labelled in the language the read was written in. */
+  readFacts: MonthFacts;
+  /** The language the prose is in, which may not be the reader's. */
+  readLocale: Locale;
   writesLeft: number;
   /** Whether a read can be written from this build at all. */
   writable: boolean;
@@ -55,6 +61,8 @@ export function MonthRead({
   read,
   freshness,
   facts,
+  readFacts,
+  readLocale,
   writesLeft,
   writable,
   onWritten,
@@ -65,7 +73,15 @@ export function MonthRead({
   const [pending, setPending] = useState(false);
   const [left, setLeft] = useState(writesLeft);
 
-  const rendered = read ? renderMonthRead(read, facts, formatEuro) : null;
+  const locale = useLocale();
+  const t = useT();
+  const rendered = read
+    ? renderMonthRead(read, readFacts, formatEuro, readLocale)
+    : null;
+  // Said rather than smoothed over, as on the web: the write button beside it
+  // is the fix, and spending an allowance is not a decision to make for
+  // somebody.
+  const inAnotherLanguage = Boolean(rendered) && readLocale !== locale;
 
   // Nothing to show and no way to write one.
   if (!rendered && (!writable || facts.thin)) {
@@ -166,6 +182,13 @@ export function MonthRead({
 
       <View className="gap-2 border-t border-border pt-3">
         {freshness ? <Standing freshness={freshness} /> : null}
+        {inAnotherLanguage ? (
+          <Text variant="micro" className="text-muted-foreground">
+            {t("monthRead.writtenInOtherLanguage", {
+              language: LOCALE_LABELS[readLocale],
+            })}
+          </Text>
+        ) : null}
 
         {writable ? (
           <Pressable

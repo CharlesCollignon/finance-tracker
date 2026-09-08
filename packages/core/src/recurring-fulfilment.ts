@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * Which bank movement looks like the occurrence a template called for.
  *
@@ -294,24 +296,34 @@ export function proposeFulfilments(
 export function describeFulfilment(
   proposal: FulfilmentProposal,
   formatMoney: (amount: number) => string,
+  locale: Locale = DEFAULT_LOCALE,
 ): string {
+  const t = translator(locale);
+
   // "on the day" beside a date label reads as a second, contradictory date:
   // "Yesterday … on the day". It is the *due* day that was hit.
+  //
+  // Late and early are two messages rather than one with the word slotted
+  // in: French turns them into "de retard" and "d'avance", which sit in a
+  // different place in the phrase and elide differently.
   const when =
     proposal.daysApart === 0
-      ? "on the day it was due"
-      : `${proposal.daysApart} day${proposal.daysApart === 1 ? "" : "s"} ${
-          proposal.actualOn > proposal.occurredOn ? "late" : "early"
-        }`;
+      ? t("fulfilment.onTheDay")
+      : t(
+          proposal.actualOn > proposal.occurredOn
+            ? "fulfilment.late"
+            : "fulfilment.early",
+          { count: proposal.daysApart },
+        );
 
   if (Math.abs(proposal.difference) < 0.005) {
-    return `The same to the cent, ${when}`;
+    return t("fulfilment.exact", { when });
   }
 
-  const more = proposal.difference > 0;
-  return `${formatMoney(Math.abs(proposal.difference))} ${
-    more ? "more" : "less"
-  } than expected, ${when}`;
+  return t(proposal.difference > 0 ? "fulfilment.more" : "fulfilment.less", {
+    amount: formatMoney(Math.abs(proposal.difference)),
+    when,
+  });
 }
 
 /* ------------------------------------------------------- why not, though */

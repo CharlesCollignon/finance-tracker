@@ -11,6 +11,7 @@
  */
 
 import type { BudgetProgress } from "./budget-limits";
+import type { Translate } from "./i18n/t";
 
 export interface PendingNotification {
   /** Dedupe key, checked against what has already been sent. */
@@ -41,6 +42,16 @@ export interface BuildDigestOptions {
    */
   arrivedCharges?: number;
   formatAmount: (amount: number) => string;
+  /**
+   * The reader's language, injected the same way the money formatter is and
+   * for the same reason: this module decides what is worth saying and must
+   * stay testable without a locale, a database or a network.
+   *
+   * The digest is the one surface where the language cannot come from a
+   * browser — it is composed on a server for somebody who is asleep — so the
+   * caller reads it from `user_preferences` and hands it in.
+   */
+  t: Translate;
 }
 
 /** At most this many in one run — a wall of notifications is noise. */
@@ -61,6 +72,7 @@ export function buildDueNotifications({
   pendingRecurring = 0,
   arrivedCharges = 0,
   formatAmount,
+  t,
 }: BuildDigestOptions): PendingNotification[] {
   const monthKey = monthKeyOf(today);
   const due: PendingNotification[] = [];
@@ -71,13 +83,11 @@ export function buildDueNotifications({
     if (!alreadySent.has(key)) {
       due.push({
         key,
-        title: "A new month",
+        title: t("push.monthOpen.title"),
         body:
           pendingRecurring > 0
-            ? `${pendingRecurring} recurring ${
-                pendingRecurring === 1 ? "item is" : "items are"
-              } ready to apply.`
-            : "Apply your recurring to fill it in, and see what's left.",
+            ? t("push.monthOpen.pending", { count: pendingRecurring })
+            : t("push.monthOpen.idle"),
         url: "/dashboard",
       });
     }
@@ -92,11 +102,8 @@ export function buildDueNotifications({
     if (!alreadySent.has(key)) {
       due.push({
         key,
-        title: arrivedCharges === 1 ? "Did this arrive?" : "Did these arrive?",
-        body:
-          arrivedCharges === 1
-            ? "One recurring charge looks like your bank already paid it."
-            : `${arrivedCharges} recurring charges look like your bank already paid them.`,
+        title: t("push.arrived.title", { count: arrivedCharges }),
+        body: t("push.arrived.body", { count: arrivedCharges }),
         url: "/dashboard",
       });
     }
@@ -116,8 +123,11 @@ export function buildDueNotifications({
     }
     due.push({
       key,
-      title: `${row.label} is over budget`,
-      body: `${formatAmount(row.spent)} spent of ${formatAmount(row.limit)}.`,
+      title: t("push.breach.title", { label: row.label }),
+      body: t("push.breach.body", {
+        spent: formatAmount(row.spent),
+        limit: formatAmount(row.limit),
+      }),
       url: "/budgets",
     });
   }

@@ -11,6 +11,7 @@ import { PROFILE_NAV_ITEM } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { GLASS_PANEL } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface AccountMenuProps {
   variant: "bottom" | "side";
@@ -23,6 +24,7 @@ export function AccountMenu({
   displayName,
   initial,
 }: AccountMenuProps) {
+  const t = useT();
   const pathname = usePathname();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -81,7 +83,7 @@ export function AccountMenu({
           <>
             <button
               type="button"
-              aria-label="Close account menu"
+              aria-label={t("common.closeAccountMenu")}
               className="fixed inset-0 z-[60] bg-black/25 md:bg-black/15"
               onClick={() => setOpen(false)}
             />

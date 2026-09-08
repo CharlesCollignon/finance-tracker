@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { activeNavHref, BOTTOM_NAV_ITEMS } from "@/lib/navigation";
 import { GLASS_PANEL } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 export function BottomNav({
   displayName,
@@ -17,6 +18,7 @@ export function BottomNav({
   initial: string;
   ledgerBadge?: number;
 }) {
+  const t = useT();
   const pathname = usePathname();
 
   return (
@@ -34,7 +36,7 @@ export function BottomNav({
           GLASS_PANEL,
         )}
       >
-        {BOTTOM_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {BOTTOM_NAV_ITEMS.map(({ href, labelKey, icon: Icon }) => {
           const active = activeNavHref(pathname) === href;
 
           return (
@@ -61,7 +63,7 @@ export function BottomNav({
                   className="absolute right-1.5 top-1 size-1.5 rounded-full bg-primary"
                 />
               ) : null}
-              <span className="truncate">{label}</span>
+              <span className="truncate">{t(labelKey)}</span>
             </Link>
           );
         })}

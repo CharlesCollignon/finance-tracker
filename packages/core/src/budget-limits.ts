@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 import type { Budget, CategoryBreakdown } from "./types/database";
 
 export interface BudgetProgress {
@@ -17,7 +19,10 @@ export function buildBudgetProgress(
   expenseBreakdown: CategoryBreakdown[],
   totalExpenses: number,
   categoryNames: Map<string, string>,
+  locale: Locale = DEFAULT_LOCALE,
 ): BudgetProgress[] {
+  const t = translator(locale);
+
   return budgets.map((budget) => {
     const spent =
       budget.category_id === null
@@ -34,8 +39,9 @@ export function buildBudgetProgress(
       categoryId: budget.category_id,
       label:
         budget.category_id === null
-          ? "All expenses"
-          : (categoryNames.get(budget.category_id) ?? "Category"),
+          ? t("allocation.allExpenses")
+          : (categoryNames.get(budget.category_id) ??
+            t("allocation.uncategorised")),
       limit,
       spent,
       remaining,

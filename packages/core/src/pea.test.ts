@@ -103,7 +103,7 @@ describe("peaMaturityHint", () => {
 
   it("counts years and months", () => {
     expect(hintFor("2024-01-01", "2026-09-01")).toBe(
-      "2 years 4 months until the five-year mark.",
+      "2 years and 4 months until the five-year mark.",
     );
   });
 

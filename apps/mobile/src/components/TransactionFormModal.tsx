@@ -31,6 +31,8 @@ import {
 } from "@/lib/mutations";
 import { getTransactionTagIds } from "@/lib/queries";
 import { ICON } from "@/theme/tokens";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 interface TransactionFormModalProps {
   open: boolean;
@@ -61,6 +63,8 @@ export function TransactionFormModal({
   recentCategoryIds = [],
   tags = [],
 }: TransactionFormModalProps) {
+  const locale = useLocale();
+  const t = useT();
   const colors = useThemeColors();
   const isEditing = transaction !== null;
   const [categoryId, setCategoryId] = useState(transaction?.category_id ?? "");
@@ -186,7 +190,7 @@ export function TransactionFormModal({
       <View className="flex-1 justify-end bg-black/50">
         <Pressable
           className="flex-1"
-          accessibilityLabel="Close"
+          accessibilityLabel={t("transaction.close")}
           onPress={onClose}
         />
         <View className="max-h-[90%] rounded-t-3xl border border-border bg-card">
@@ -195,9 +199,15 @@ export function TransactionFormModal({
           </View>
           <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
             <Text className="font-semibold" style={{ fontSize: 18 }}>
-              {isEditing ? "Edit transaction" : "Add transaction"}
+              {isEditing
+                ? t("transaction.editTitle")
+                : t("transaction.addTitle")}
             </Text>
-            <Pressable onPress={onClose} accessibilityLabel="Close" hitSlop={8}>
+            <Pressable
+              onPress={onClose}
+              accessibilityLabel={t("transaction.close")}
+              hitSlop={8}
+            >
               <Text variant="muted">Close</Text>
             </Pressable>
           </View>
@@ -207,7 +217,9 @@ export function TransactionFormModal({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <Text className="mb-2 text-sm font-medium">Category</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("transaction.category")}
+            </Text>
             {categories.length > 8 ? (
               <View className="mb-3 flex-row items-center gap-2 rounded-full border border-border bg-background px-3">
                 <Ionicons
@@ -218,9 +230,9 @@ export function TransactionFormModal({
                 <TextInput
                   value={categoryQuery}
                   onChangeText={setCategoryQuery}
-                  placeholder="Filter categories…"
+                  placeholder={t("transaction.filterCategoriesPlaceholder")}
                   placeholderTextColor={colors.mutedForeground}
-                  accessibilityLabel="Filter categories"
+                  accessibilityLabel={t("transaction.filterCategories")}
                   className="h-10 flex-1 font-sans text-sm text-foreground"
                 />
               </View>
@@ -282,7 +294,7 @@ export function TransactionFormModal({
                       >
                         <CategoryIcon icon={cat.icon} />
                         <Text className="flex-1 text-sm">
-                          {formatCategoryOptionLabel(cat)}
+                          {formatCategoryOptionLabel(cat, locale)}
                         </Text>
                       </Pressable>
                     );
@@ -291,7 +303,9 @@ export function TransactionFormModal({
               ))}
             </View>
 
-            <Text className="mb-2 text-sm font-medium">Amount (EUR)</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("transaction.amount")}
+            </Text>
             <Input
               value={amount}
               onChangeText={setAmount}
@@ -300,24 +314,30 @@ export function TransactionFormModal({
               className="mb-4"
             />
 
-            <Text className="mb-2 text-sm font-medium">Date</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("transaction.date")}
+            </Text>
             <DateField
               value={occurredOn}
               onChange={setOccurredOn}
               className="mb-4"
             />
 
-            <Text className="mb-2 text-sm font-medium">Note (optional)</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("transaction.note")}
+            </Text>
             <Input
               value={note}
               onChangeText={setNote}
-              placeholder="Description"
+              placeholder={t("transaction.notePlaceholder")}
               className="mb-4"
             />
 
             {tags.length > 0 ? (
               <>
-                <Text className="mb-2 text-sm font-medium">Tags</Text>
+                <Text className="mb-2 text-sm font-medium">
+                  {t("transaction.tags")}
+                </Text>
                 <View className="mb-4 flex-row flex-wrap gap-2">
                   {tags.map((tag) => {
                     const selected = tagIds.includes(tag.id);
@@ -357,11 +377,17 @@ export function TransactionFormModal({
             ) : null}
 
             {error ? (
-              <Text className="mb-3 text-sm text-destructive">{error}</Text>
+              <Text className="mb-3 text-sm text-destructive">
+                {resolveMessage(t, error)}
+              </Text>
             ) : null}
 
             <Button
-              label={pending ? "Saving…" : "Save transaction"}
+              label={
+                pending
+                  ? t("transaction.saving")
+                  : t("transaction.saveTransaction")
+              }
               size="lg"
               disabled={pending}
               onPress={handleSave}
@@ -379,14 +405,18 @@ export function TransactionFormModal({
                       </Text>
                       <View className="flex-row gap-2">
                         <Button
-                          label={pending ? "Skipping…" : "Yes, skip this date"}
+                          label={
+                            pending
+                              ? t("transaction.skipping")
+                              : t("transaction.confirmSkip")
+                          }
                           variant="outline"
                           className="flex-1"
                           disabled={pending}
                           onPress={handleSkip}
                         />
                         <Button
-                          label="Cancel"
+                          label={t("transaction.cancel")}
                           variant="outline"
                           className="flex-1"
                           disabled={pending}
@@ -396,7 +426,7 @@ export function TransactionFormModal({
                     </View>
                   ) : (
                     <Button
-                      label="Skip this month / date"
+                      label={t("transaction.skipThisDate")}
                       variant="outline"
                       disabled={pending}
                       onPress={() => {
@@ -415,14 +445,18 @@ export function TransactionFormModal({
                     </Text>
                     <View className="flex-row gap-2">
                       <Button
-                        label={pending ? "Deleting…" : "Yes, delete"}
+                        label={
+                          pending
+                            ? t("transaction.deleting")
+                            : t("transaction.confirmDelete")
+                        }
                         variant="outline"
                         className="flex-1 border-destructive"
                         disabled={pending}
                         onPress={handleDelete}
                       />
                       <Button
-                        label="Cancel"
+                        label={t("transaction.cancel")}
                         variant="outline"
                         className="flex-1"
                         disabled={pending}
@@ -432,7 +466,7 @@ export function TransactionFormModal({
                   </View>
                 ) : (
                   <Button
-                    label="Delete transaction"
+                    label={t("transaction.deleteTransaction")}
                     variant="outline"
                     className="border-destructive"
                     disabled={pending}

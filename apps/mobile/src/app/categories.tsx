@@ -3,7 +3,7 @@ import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-import { CATEGORY_TYPE_LABELS } from "@finance/core/category-styles";
+import { categoryTypeLabels } from "@finance/core/category-styles";
 import { groupCategoriesByType } from "@finance/core/categories";
 import type { Category } from "@finance/core/types/database";
 
@@ -26,12 +26,15 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 /**
  * Category management — the one thing mobile could not do at all. Mirrors the
  * web categories page: create, rename, re-icon, archive and delete.
  */
 export default function CategoriesScreen() {
+  const t = useT();
   const { user } = useAuth();
   const router = useRouter();
   const colors = useThemeColors();
@@ -60,7 +63,11 @@ export default function CategoriesScreen() {
       toast(result.error, "error");
       return;
     }
-    toast(category.archived ? "Restored" : "Archived");
+    toast(
+      category.archived
+        ? t("categories.restoredToast")
+        : t("categories.archivedToast"),
+    );
     await onRefresh();
   }
 
@@ -74,17 +81,17 @@ export default function CategoriesScreen() {
       toast(result.error, "error");
       return;
     }
-    toast("Category deleted");
+    toast(t("categories.deleted"));
     await onRefresh();
   }
 
   return (
     <Screen
-      title="Categories"
+      title={t("pages.categories")}
       headerActions={
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t("categories.back")}
           hitSlop={8}
           onPress={() => router.back()}
           className="h-9 w-9 items-center justify-center rounded-md"
@@ -101,7 +108,7 @@ export default function CategoriesScreen() {
       {loading && categories.length === 0 ? (
         <ScreenSkeleton rows={6} />
       ) : error ? (
-        <Text className="text-destructive">{error}</Text>
+        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
       ) : (
         <ScrollView
           refreshControl={
@@ -111,7 +118,7 @@ export default function CategoriesScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Button
-            label="New category"
+            label={t("categories.newCategory")}
             variant="pill"
             icon="add"
             className="self-center"
@@ -123,11 +130,11 @@ export default function CategoriesScreen() {
 
           {categories.length === 0 ? (
             <EmptyState
-              title="Add your first category"
-              description="Income, spending, savings, investments."
+              title={t("categories.emptyTitle")}
+              description={t("categories.emptyBody")}
             >
               <Button
-                label="New category"
+                label={t("categories.newCategory")}
                 variant="pill"
                 icon="add"
                 onPress={() => {
@@ -140,7 +147,7 @@ export default function CategoriesScreen() {
             groups.map((group, groupIndex) => (
               <StaggerItem key={group.type} index={groupIndex}>
                 <Text className="mb-2 text-base">
-                  {CATEGORY_TYPE_LABELS[group.type]}
+                  {categoryTypeLabels()[group.type]}
                 </Text>
                 <Card bezel innerClassName="px-2 py-1">
                   {group.categories.map((category, index) => (
@@ -222,7 +229,7 @@ export default function CategoriesScreen() {
       <ConfirmSheet
         open={confirming !== null}
         title={`Delete ${confirming?.name ?? "category"}?`}
-        message="If it is used by transactions or recurring items, archive it instead."
+        message={t("categories.deleteWarning")}
         onConfirm={handleDelete}
         onCancel={() => setConfirming(null)}
       />

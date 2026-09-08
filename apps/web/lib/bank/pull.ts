@@ -13,6 +13,7 @@ import {
 import { todayIsoLocal } from "@finance/core/constants";
 import type { Database } from "@finance/core/types/database";
 import { getBankConnection } from "@/lib/bank/client";
+import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
 
 type Client = SupabaseClient<Database>;
 
@@ -126,12 +127,15 @@ export async function readPullState(
 export async function readPullFreshness(
   supabase: Client,
   userId: string,
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<PullFreshness> {
   const state = await readPullState(supabase, userId);
   const now = new Date().toISOString();
 
   return {
-    age: describePullAge(state.lastPulledAt, now),
+    // Only the first paint: the client provider recomputes the age as the
+    // clock moves, and does so in the same language.
+    age: describePullAge(state.lastPulledAt, now, locale),
     lastPulledAt: state.lastPulledAt,
     // Only meaningful when the tally is readable. Untracked, the age is
     // unknown rather than infinite, and `known: false` is what says so.

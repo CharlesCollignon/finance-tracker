@@ -27,6 +27,8 @@ import type {
 } from "@finance/core/types/database";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
+import type { Translate } from "@finance/core/i18n/t";
 
 type BudgetProgress = {
   budgetId: string;
@@ -53,18 +55,24 @@ type GoalProgress = {
 function pacingHint(
   pacing: GoalPacing,
   format: (amount: number) => string,
+  t: Translate,
 ): { text: string; className: string } | null {
   switch (pacing.status) {
     case "reached":
-      return { text: "Goal reached!", className: "text-success" };
+      return { text: t("plan.goalReached"), className: "text-success" };
     case "overdue":
       return {
-        text: `Target date passed — ${format(pacing.monthlyAmount ?? 0)} still to save.`,
+        text: t("plan.goalOverdue", {
+          amount: format(pacing.monthlyAmount ?? 0),
+        }),
         className: "text-destructive",
       };
     case "on-schedule":
       return {
-        text: `Save ${format(pacing.monthlyAmount ?? 0)}/month to reach this by ${pacing.targetLabel}.`,
+        text: t("plan.goalOnSchedule", {
+          amount: format(pacing.monthlyAmount ?? 0),
+          month: pacing.targetLabel ?? "",
+        }),
         className: "text-muted-foreground",
       };
     case "no-date":
@@ -94,6 +102,7 @@ export function BudgetsView({
 }: Props) {
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
+  const t = useT();
   const [budgetState, budgetAction, budgetPending] = useActionState(
     upsertBudget,
     {},
@@ -118,40 +127,40 @@ export function BudgetsView({
 
   useEffect(() => {
     if (budgetState.success) {
-      toast("Cap saved", "success");
+      toast(t("plan.capSaved"), "success");
       setEditingBudget(null);
       setBudgetFormOpen(false);
     } else if (budgetState.error) {
       toast(budgetState.error, "error");
     }
-  }, [budgetState, toast]);
+  }, [budgetState, toast, t]);
 
   useEffect(() => {
     if (goalState.success) {
-      toast("Goal saved", "success");
+      toast(t("plan.goalSaved"), "success");
       setEditingGoal(null);
       setGoalFormOpen(false);
     } else if (goalState.error) {
       toast(goalState.error, "error");
     }
-  }, [goalState, toast]);
+  }, [goalState, toast, t]);
 
   useEffect(() => {
     if (tagState.success) {
-      toast("Tag added", "success");
+      toast(t("plan.tagAdded"), "success");
     } else if (tagState.error) {
       toast(tagState.error, "error");
     }
-  }, [tagState, toast]);
+  }, [tagState, toast, t]);
 
   return (
     <>
-      <PageHeader title="Plan" />
+      <PageHeader titleKey="nav.plan" />
 
       <PageContainer className="flex flex-col gap-4">
         <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 md:p-5">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-sm font-medium">Spending caps</h2>
+            <h2 className="text-sm font-medium">{t("plan.capsHeading")}</h2>
             <Button
               variant="link"
               size="sm"
@@ -161,7 +170,9 @@ export function BudgetsView({
                 setBudgetFormOpen((open) => !(open && !editingBudget));
               }}
             >
-              {budgetFormOpen && !editingBudget ? "Cancel" : "Add a cap"}
+              {budgetFormOpen && !editingBudget
+                ? t("plan.cancel")
+                : t("plan.addCap")}
             </Button>
           </div>
 
@@ -226,7 +237,7 @@ export function BudgetsView({
                     "bg-background px-3 text-base",
                   )}
                 >
-                  <option value="">All expenses</option>
+                  <option value="">{t("allocation.allExpenses")}</option>
                   {expenseCategories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -235,7 +246,9 @@ export function BudgetsView({
                 </select>
               </div>
               <div className="flex flex-col gap-2">
-                <FormLabel htmlFor="budget-amount">Monthly limit</FormLabel>
+                <FormLabel htmlFor="budget-amount">
+                  {t("plan.monthlyLimit")}
+                </FormLabel>
                 <Input
                   id="budget-amount"
                   name="amount"
@@ -252,7 +265,7 @@ export function BudgetsView({
               </div>
               <div className="flex flex-wrap items-end gap-2">
                 <Button type="submit" disabled={budgetPending}>
-                  {editingBudget ? "Update" : "Add cap"}
+                  {editingBudget ? t("plan.update") : t("plan.addCapSubmit")}
                 </Button>
                 <Button
                   type="button"
@@ -277,7 +290,7 @@ export function BudgetsView({
                           toast(result.error, "error");
                           return;
                         }
-                        toast("Cap removed", "success");
+                        toast(t("plan.capRemoved"), "success");
                         setEditingBudget(null);
                         setBudgetFormOpen(false);
                       })
@@ -294,7 +307,7 @@ export function BudgetsView({
 
         <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 md:p-5">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-sm font-medium">Savings goals</h2>
+            <h2 className="text-sm font-medium">{t("plan.goalsHeading")}</h2>
             <Button
               variant="link"
               size="sm"
@@ -304,7 +317,9 @@ export function BudgetsView({
                 setGoalFormOpen((open) => !(open && !editingGoal));
               }}
             >
-              {goalFormOpen && !editingGoal ? "Cancel" : "Add a goal"}
+              {goalFormOpen && !editingGoal
+                ? t("plan.cancel")
+                : t("plan.addGoal")}
             </Button>
           </div>
 
@@ -312,7 +327,7 @@ export function BudgetsView({
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {goalProgress.map((row) => {
                 const goal = goals.find((g) => g.id === row.goalId);
-                const hint = pacingHint(row.pacing, formatEuro);
+                const hint = pacingHint(row.pacing, formatEuro, t);
                 return (
                   <button
                     key={row.goalId}
@@ -380,7 +395,9 @@ export function BudgetsView({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <FormLabel htmlFor="goal-target">Target (€)</FormLabel>
+                <FormLabel htmlFor="goal-target">
+                  {t("plan.goalTarget")}
+                </FormLabel>
                 <Input
                   id="goal-target"
                   name="targetAmount"
@@ -396,7 +413,9 @@ export function BudgetsView({
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <FormLabel htmlFor="goal-date">Target date</FormLabel>
+                <FormLabel htmlFor="goal-date">
+                  {t("plan.goalTargetDate")}
+                </FormLabel>
                 <Input
                   id="goal-date"
                   name="targetDate"
@@ -417,7 +436,7 @@ export function BudgetsView({
                     "bg-background px-3 text-base",
                   )}
                 >
-                  <option value="">All savings</option>
+                  <option value="">{t("plan.allSavings")}</option>
                   {savingsCategories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -427,7 +446,7 @@ export function BudgetsView({
               </div>
               <div className="flex flex-wrap gap-2 sm:col-span-2">
                 <Button type="submit" disabled={goalPending}>
-                  {editingGoal ? "Update goal" : "Add goal"}
+                  {editingGoal ? t("plan.updateGoal") : t("plan.addGoalSubmit")}
                 </Button>
                 <Button
                   type="button"
@@ -452,7 +471,7 @@ export function BudgetsView({
                           toast(result.error, "error");
                           return;
                         }
-                        toast("Goal removed", "success");
+                        toast(t("plan.goalRemoved"), "success");
                         setEditingGoal(null);
                         setGoalFormOpen(false);
                       })
@@ -468,33 +487,30 @@ export function BudgetsView({
         </section>
 
         <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 md:p-5">
-          <h2 className="text-sm font-medium">Tags</h2>
-          <p className="text-sm text-muted-foreground">
-            A second way to group an entry, cutting across categories — a
-            holiday, a flatmate, a side project.
-          </p>
+          <h2 className="text-sm font-medium">{t("plan.tagsHeading")}</h2>
+          <p className="text-sm text-muted-foreground">{t("plan.tagsBlurb")}</p>
           {tags.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {tags.map((t) => (
+              {tags.map((tag) => (
                 <span
-                  key={t.id}
+                  key={tag.id}
                   className={cn(
                     "rounded-full border border-border bg-muted",
                     "px-3 py-1 text-xs font-medium",
                   )}
                 >
-                  {t.name}
+                  {tag.name}
                 </span>
               ))}
             </div>
           ) : null}
           <form action={tagAction} className="flex flex-wrap items-end gap-3">
             <div className="flex min-w-48 flex-1 flex-col gap-2">
-              <FormLabel htmlFor="tag-name">New tag</FormLabel>
+              <FormLabel htmlFor="tag-name">{t("plan.newTag")}</FormLabel>
               <Input id="tag-name" name="name" required maxLength={40} />
             </div>
             <Button type="submit" variant="outline" disabled={tagPending}>
-              Add tag
+              {t("plan.addTag")}
             </Button>
           </form>
         </section>

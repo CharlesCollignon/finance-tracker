@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * Selecting several transactions at once.
  *
@@ -144,27 +146,28 @@ export function pruneSelection(
  */
 export function describeSelectionDeletion(
   summary: SelectionSummary,
+  locale: Locale = DEFAULT_LOCALE,
 ): string | null {
   if (summary.count === 0) {
     return null;
   }
 
-  const noun = summary.count === 1 ? "transaction" : "transactions";
-  const base = `Delete ${summary.count} ${noun}?`;
+  const t = translator(locale);
+  const base = t("selection.deleteConfirm", { count: summary.count });
 
   if (summary.recurringCount === 0) {
-    return `${base} This cannot be undone.`;
+    return `${base} ${t("selection.deletePermanent")}`;
   }
 
   if (summary.allRecurring) {
-    return `${base} ${
-      summary.count === 1 ? "It comes" : "They come"
-    } from recurring templates, so Apply will recreate ${
-      summary.count === 1 ? "it" : "them"
-    } unless you skip the date.`;
+    return `${base} ${t("selection.deleteAllRecurring", {
+      count: summary.count,
+    })}`;
   }
 
-  return `${base} ${summary.recurringCount} of them come from recurring templates, so Apply will recreate those unless you skip the date.`;
+  return `${base} ${t("selection.deleteSomeRecurring", {
+    count: summary.recurringCount,
+  })}`;
 }
 
 /* ------------------------------------------------ moving a selection */
@@ -277,14 +280,18 @@ export function planSelectionMove(
   };
 }
 
-function nameList(names: string[]): string {
+function nameList(names: string[], locale: Locale): string {
+  const t = translator(locale);
   const shown = names.slice(0, MAX_NAMED_MERCHANTS);
   const rest = names.length - shown.length;
   const joined =
     shown.length === 1
       ? shown[0]!
-      : `${shown.slice(0, -1).join(", ")} and ${shown[shown.length - 1]}`;
-  return rest > 0 ? `${joined} and ${rest} more` : joined;
+      : t("list.conjunction", {
+          first: shown.slice(0, -1).join(", "),
+          last: shown[shown.length - 1]!,
+        });
+  return rest > 0 ? t("list.more", { names: joined, count: rest }) : joined;
 }
 
 /**
@@ -303,45 +310,44 @@ export function describeSelectionMove(
   effect: MoveEffect,
   summary: SelectionSummary,
   targetName: string,
+  locale: Locale = DEFAULT_LOCALE,
 ): string | null {
   if (summary.count === 0) {
     return null;
   }
+
+  const t = translator(locale);
 
   const lines: string[] = [];
 
   if (effect.typeChanges > 0) {
     const all = effect.typeChanges === summary.count;
     lines.push(
-      `${
-        all
-          ? summary.count === 1
-            ? "This one"
-            : "All of them"
-          : `${effect.typeChanges} of them`
-      } move to a different kind of category, so past months' totals and unrecorded spending will change.`,
+      all
+        ? t("selection.typeChangeAll", { count: summary.count })
+        : t("selection.typeChangeSome", { count: effect.typeChanges }),
     );
   }
 
   if (effect.rulesLeftBehind.length > 0) {
     lines.push(
-      `${nameList(
-        effect.rulesLeftBehind,
-      )} will still be filed the old way, because a newer entry for ${
-        effect.rulesLeftBehind.length === 1 ? "it" : "them"
-      } is not selected.`,
+      t("selection.rulesLeftBehind", {
+        names: nameList(effect.rulesLeftBehind, locale),
+        count: effect.rulesLeftBehind.length,
+      }),
     );
   } else if (effect.rulesRewritten.length > 0) {
     lines.push(
-      `From now on ${nameList(
-        effect.rulesRewritten,
-      )} will be filed as ${targetName}.`,
+      t("selection.rulesRewritten", {
+        names: nameList(effect.rulesRewritten, locale),
+        target: targetName,
+      }),
     );
   }
 
   if (effect.recurringCount > 0) {
     lines.push(
-      `${effect.recurringCount} came from recurring templates, which will keep using their own category.`,
+      t("selection.recurringKeepCategory", { count: effect.recurringCount }),
     );
   }
 

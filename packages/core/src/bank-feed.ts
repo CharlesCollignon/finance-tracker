@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * Turning what the bank says into what the ledger holds.
  *
@@ -123,6 +125,8 @@ export interface ToCandidateOptions {
    * it would double-count against whatever it was moved for.
    */
   ownIbans?: ReadonlySet<string>;
+  /** The language the fallback description is written in. */
+  locale?: Locale;
 }
 
 function cleanIban(iban: string | null): string | null {
@@ -134,6 +138,7 @@ export function toCandidate(
   tx: BankTransaction,
   options: ToCandidateOptions = {},
 ): BankFeedCandidate | null {
+  const locale = options.locale ?? DEFAULT_LOCALE;
   const occurredOn = tx.bookingDate ?? tx.valueDate ?? tx.transactionDate;
   if (!occurredOn || !/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)) {
     return null;
@@ -162,7 +167,9 @@ export function toCandidate(
   const counterparty =
     (direction === "out" ? tx.creditorName : tx.debtorName)?.trim() || null;
   const note =
-    counterparty ?? tx.remittanceInformation?.trim() ?? "Bank transaction";
+    counterparty ??
+    tx.remittanceInformation?.trim() ??
+    translator(locale)("fallback.bankTransaction");
 
   return {
     providerId: tx.id,
@@ -521,20 +528,24 @@ export function indexCategoriesByName(
 }
 
 /** Exposed for the review UI, which shows why a row is waiting. */
-export function describeReviewReason(why: ReviewReason): string {
+export function describeReviewReason(
+  why: ReviewReason,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  const t = translator(locale);
   switch (why) {
     case "money-in":
-      return "Money arriving — say what it was";
+      return t("bankReview.moneyIn");
     case "possible-refund":
-      return "Looks like a refund from somewhere you usually spend";
+      return t("bankReview.possibleRefund");
     case "needs-a-look":
-      return "Cash or a transfer — not spending yet";
+      return t("bankReview.needsALook");
     case "no-such-category":
-      return "No category for this kind of spending yet";
+      return t("bankReview.noSuchCategory");
     case "possible-duplicate":
-      return "You may already have entered this";
+      return t("bankReview.possibleDuplicate");
     case "unknown-merchant":
-      return "First time here";
+      return t("bankReview.unknownMerchant");
   }
 }
 

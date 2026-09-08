@@ -1,4 +1,5 @@
 import { formatEuro } from "@finance/core/constants";
+import { getLocale, getT } from "@/lib/locale";
 import {
   ArrowsLeftRight,
   CalendarBlank,
@@ -16,10 +17,10 @@ import { Reveal, Rise } from "@/components/marketing/LandingReveal";
 import { GlassLink, GlassStat } from "@/components/marketing/LandingGlass";
 import {
   featureHref,
-  landingCopy,
+  landingCopyFor,
   type LandingPageId,
 } from "@/components/marketing/landing-copy";
-import { landingSample } from "@/components/marketing/landing-sample";
+import { landingSampleFor } from "@/components/marketing/landing-sample";
 
 interface LandingPageProps {
   isLoggedIn: boolean;
@@ -73,7 +74,15 @@ function SectionHeading({
   );
 }
 
-export function LandingPage({ isLoggedIn }: LandingPageProps) {
+export async function LandingPage({ isLoggedIn }: LandingPageProps) {
+  const t = await getT();
+  // A server component, so the locale comes off the cookie rather than out of
+  // context. The mocks below are client components and read it themselves.
+  const locale = await getLocale();
+  const copy = landingCopyFor(locale);
+  const sample = landingSampleFor(locale);
+  const euro = (amount: number) => formatEuro(amount, locale);
+
   const {
     hero,
     pillars,
@@ -84,8 +93,8 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
     how,
     privacy,
     finalCta,
-  } = landingCopy;
-  const { close } = landingSample;
+  } = copy;
+  const { close } = sample;
 
   return (
     <>
@@ -129,16 +138,16 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
           <GlassStat
             href={featureHref("home")}
             label={hero.cards.remaining.label}
-            value={formatEuro(landingSample.remaining)}
+            value={euro(sample.remaining)}
             caption={hero.cards.remaining.caption}
-            meter={landingSample.remaining / landingSample.income}
+            meter={sample.remaining / sample.income}
             className="absolute left-0 top-5 z-10 w-[13.5rem] sm:top-6 sm:w-[15.5rem]"
           />
 
           <GlassStat
             href={featureHref("month-close")}
             label={hero.cards.unrecorded.label}
-            value={formatEuro(close.unrecorded)}
+            value={euro(close.unrecorded)}
             caption={hero.cards.unrecorded.caption}
             spark={UNRECORDED_TREND}
             className="absolute bottom-5 right-0 z-10 hidden w-[15.5rem] sm:block"
@@ -203,7 +212,7 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
             <SectionHeading heading={features.heading} body={features.body} />
           </Reveal>
           <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {landingCopy.pages.map((page, index) => (
+            {copy.pages.map((page, index) => (
               <Reveal
                 key={page.id}
                 delay={Math.min(index, 5) * 0.05}
@@ -267,21 +276,21 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
             <GlassStat
               href={featureHref("month-close")}
               label={`Unrecorded in ${close.monthLabel}`}
-              value={formatEuro(close.unrecorded)}
-              caption={`under your ${formatEuro(close.unrecordedCap)} allowance`}
+              value={euro(close.unrecorded)}
+              caption={`under your ${euro(close.unrecordedCap)} allowance`}
               spark={UNRECORDED_TREND}
               className="w-full"
             />
             <div className="grid gap-4 sm:grid-cols-2">
               <GlassStat
-                label="Kept"
-                value={formatEuro(close.kept)}
+                label={t("common.kept")}
+                value={euro(close.kept)}
                 caption={`${close.keptRate}% of what came in`}
                 spark={KEPT_TREND}
                 className="w-full"
               />
               <GlassStat
-                label="The run"
+                label={t("common.theRun")}
                 value={`${close.streak} months`}
                 caption="in a row inside the allowance"
                 meter={close.streak / 6}
@@ -289,8 +298,8 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
               />
             </div>
             <p className="px-1 text-xs text-white/30">
-              {landingCopy.exampleLabel}. Your first close sets the baseline;
-              the figures start from the second.
+              {copy.exampleLabel}. Your first close sets the baseline; the
+              figures start from the second.
             </p>
           </Rise>
         </div>

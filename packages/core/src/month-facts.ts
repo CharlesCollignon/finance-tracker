@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * The figures a month read is allowed to refer to.
  *
@@ -128,6 +130,15 @@ export interface BuildMonthFactsInput {
   inboxPending: number;
   /** Recurring charges the bank looks to have paid, not yet confirmed. */
   chargesUnconfirmed: number;
+  /**
+   * The language the labels are written in.
+   *
+   * Part of the input rather than a second argument because these labels do
+   * not only reach a screen: `../month-read-prompt` lists every fact as
+   * "id | label | value" for the model, so this is what decides which
+   * language the read comes back in.
+   */
+  locale?: Locale;
 }
 
 function round(value: number): number {
@@ -152,6 +163,7 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
     chargesUnconfirmed,
   } = input;
 
+  const t = translator(input.locale ?? DEFAULT_LOCALE);
   const facts: MonthFact[] = [];
   const missing: MissingFact[] = [];
 
@@ -166,19 +178,24 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
 
   /* ---------------------------------------------------------- the month */
 
-  money("income", "Money in", summary.income, "up-is-good");
-  money("expenses", "Money out", summary.expenses, "up-is-bad");
-  money("savings", "Set aside", summary.savings, "up-is-good");
-  money("remaining", "Left over", summary.remaining, "up-is-good");
+  money("income", t("facts.income"), summary.income, "up-is-good");
+  money("expenses", t("facts.expenses"), summary.expenses, "up-is-bad");
+  money("savings", t("facts.savings"), summary.savings, "up-is-good");
+  money("remaining", t("facts.remaining"), summary.remaining, "up-is-good");
 
   if (summary.investments > 0) {
-    money("investments", "Invested", summary.investments, "up-is-good");
+    money(
+      "investments",
+      t("facts.investments"),
+      summary.investments,
+      "up-is-good",
+    );
   }
 
   if (summary.income > 0) {
     facts.push({
       id: "savings-rate",
-      label: "Savings rate",
+      label: t("facts.savingsRate"),
       unit: "percent",
       // Not "kept": a month close already uses that word for a different
       // figure, and CONTEXT.md forbids the overlap.
@@ -194,23 +211,21 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
   if (comparison && comparison.comparable) {
     money(
       "expenses-previous",
-      `Money out over the same days of ${comparison.previousLabel}`,
+      t("facts.expensesPrevious", { month: comparison.previousLabel }),
       comparison.previous,
       "up-is-bad",
     );
     money(
       "expenses-vs-previous",
-      `Change against ${comparison.previousLabel}`,
+      t("facts.expensesVsPrevious", { month: comparison.previousLabel }),
       comparison.delta,
       "up-is-bad",
-      comparison.partial
-        ? "the same stretch of both months, not a whole month against a part"
-        : undefined,
+      comparison.partial ? t("facts.expensesVsPreviousNote") : undefined,
     );
   } else {
     missing.push({
       id: "expenses-vs-previous",
-      label: "Change against last month",
+      label: t("facts.expensesVsPreviousMissing"),
       why: "not-recorded",
     });
   }
@@ -219,12 +234,12 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
 
   if (close) {
     if (close.kept !== null) {
-      money("kept", "Kept", close.kept, "up-is-good");
+      money("kept", t("facts.kept"), close.kept, "up-is-good");
     }
     if (close.keptRate !== null) {
       facts.push({
         id: "kept-rate",
-        label: "Kept, as a share of what came in",
+        label: t("facts.keptRate"),
         unit: "percent",
         value: round(close.keptRate),
         sense: "up-is-good",
@@ -233,54 +248,49 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
     if (close.unrecorded !== null) {
       money(
         "unrecorded",
-        "Unrecorded spending",
+        t("facts.unrecorded"),
         close.unrecorded,
         "up-is-bad",
-        "measured against the account balance, not estimated",
+        t("facts.unrecordedNote"),
       );
     }
     if (close.cashChange !== null) {
-      money(
-        "cash-change",
-        "What the account moved",
-        close.cashChange,
-        "neutral",
-      );
+      money("cash-change", t("facts.cashChange"), close.cashChange, "neutral");
     }
   } else if (pulse && pulse.unrecordedSoFar !== null) {
     money(
       "unrecorded-so-far",
-      "Unrecorded spending so far",
+      t("facts.unrecordedSoFar"),
       pulse.unrecordedSoFar,
       "up-is-bad",
-      "measured, and not final until the month is closed",
+      t("facts.unrecordedSoFarNote"),
     );
   } else {
     missing.push({
       id: "unrecorded",
-      label: "Unrecorded spending",
+      label: t("facts.unrecorded"),
       why: state === "in-progress" ? "month-unfinished" : "no-close",
     });
   }
 
   if (pulse) {
     if (pulse.onHand !== null) {
-      money("on-hand", "What the accounts hold", pulse.onHand, "up-is-good");
+      money("on-hand", t("facts.onHand"), pulse.onHand, "up-is-good");
     } else {
       missing.push({
         id: "on-hand",
-        label: "What the accounts hold",
+        label: t("facts.onHand"),
         why: "no-bank",
       });
     }
     if (pulse.committed > 0) {
-      money("committed", "Still to leave", pulse.committed, "neutral");
+      money("committed", t("facts.committed"), pulse.committed, "neutral");
     }
     if (pulse.arriving > 0) {
-      money("arriving", "Still to arrive", pulse.arriving, "up-is-good");
+      money("arriving", t("facts.arriving"), pulse.arriving, "up-is-good");
     }
     if (pulse.free !== null) {
-      money("free", "Yours to spend", pulse.free, "up-is-good");
+      money("free", t("facts.free"), pulse.free, "up-is-good");
     }
   }
 
@@ -289,10 +299,10 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
   if (unrecordedCap !== null) {
     money(
       "unrecorded-allowance",
-      "Unrecorded allowance",
+      t("facts.unrecordedAllowance"),
       unrecordedCap,
       "neutral",
-      "a cap set from this person's own history",
+      t("facts.unrecordedAllowanceNote"),
     );
 
     // How far over, when it is over. Same reasoning as the cap overshoot
@@ -302,7 +312,7 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
     if (measured !== null && measured > unrecordedCap) {
       money(
         "unrecorded-over",
-        "Unrecorded spending over the allowance",
+        t("facts.unrecordedOver"),
         measured - unrecordedCap,
         "up-is-bad",
       );
@@ -310,7 +320,7 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
   } else {
     missing.push({
       id: "unrecorded-allowance",
-      label: "Unrecorded allowance",
+      label: t("facts.unrecordedAllowance"),
       why: "no-cap",
     });
   }
@@ -319,16 +329,16 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
     if (closeSummary.baseline !== null) {
       money(
         "unrecorded-baseline",
-        "Usual unrecorded spending",
+        t("facts.unrecordedBaseline"),
         closeSummary.baseline,
         "up-is-bad",
-        "the median across closed months, so one holiday does not move it",
+        t("facts.unrecordedBaselineNote"),
       );
     }
     if (closeSummary.streak > 0) {
       facts.push({
         id: "streak",
-        label: "Months in a row inside the allowance",
+        label: t("facts.streak"),
         unit: "count",
         value: closeSummary.streak,
         sense: "up-is-good",
@@ -337,7 +347,7 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
     if (closeSummary.bestStreak > 0) {
       facts.push({
         id: "best-streak",
-        label: "Best run so far",
+        label: t("facts.bestStreak"),
         unit: "count",
         value: closeSummary.bestStreak,
         sense: "up-is-good",
@@ -358,7 +368,7 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
   for (const row of budgets.slice(0, MAX_BUDGETS)) {
     money(
       `budget:${row.budgetId}`,
-      `${row.label} cap, spent`,
+      t("facts.budgetSpent", { label: row.label }),
       row.spent,
       "up-is-bad",
     );
@@ -367,7 +377,7 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
     // model reading "left" as a floor of zero would miss the breach entirely.
     money(
       `budget-left:${row.budgetId}`,
-      `${row.label} cap, left`,
+      t("facts.budgetLeft", { label: row.label }),
       row.remaining,
       "up-is-good",
     );
@@ -387,7 +397,7 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
     if (row.over) {
       money(
         `budget-over:${row.budgetId}`,
-        `${row.label} cap, gone over by`,
+        t("facts.budgetOver", { label: row.label }),
         -row.remaining,
         "up-is-bad",
       );
@@ -397,14 +407,19 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
   for (const row of goals.slice(0, MAX_GOALS)) {
     money(
       `goal:${row.goal.id}`,
-      `${row.goal.name}, saved`,
+      t("facts.goalSaved", { name: row.goal.name }),
       row.saved,
       "up-is-good",
     );
   }
 
   if (investedValue !== null && investedValue > 0) {
-    money("invested-value", "Invested value", investedValue, "up-is-good");
+    money(
+      "invested-value",
+      t("facts.investedValue"),
+      investedValue,
+      "up-is-good",
+    );
   }
 
   /* ------------------------------------------------- what is unfinished */
@@ -417,7 +432,7 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
   if (inboxPending > 0) {
     facts.push({
       id: "inbox-pending",
-      label: "Entries still waiting for a category",
+      label: t("facts.inboxPending"),
       unit: "count",
       value: inboxPending,
       sense: "up-is-bad",
@@ -426,7 +441,7 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
   if (chargesUnconfirmed > 0) {
     facts.push({
       id: "charges-unconfirmed",
-      label: "Recurring charges not yet confirmed",
+      label: t("facts.chargesUnconfirmed"),
       unit: "count",
       value: chargesUnconfirmed,
       sense: "up-is-bad",
@@ -442,7 +457,7 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
 
   return {
     monthKey: `${year}-${String(month).padStart(2, "0")}`,
-    monthLabel: formatMonthLabel(year, month),
+    monthLabel: formatMonthLabel(year, month, input.locale ?? DEFAULT_LOCALE),
     state,
     coverage: inboxPending > 0 || close === null ? "partial" : "full",
     facts,
@@ -470,16 +485,24 @@ export function findFact(facts: MonthFacts, id: string): MonthFact | null {
 export function formatFact(
   fact: MonthFact,
   formatMoney: (amount: number) => string,
+  locale: Locale = DEFAULT_LOCALE,
 ): string {
   switch (fact.unit) {
     case "money":
       return formatMoney(fact.value);
     case "percent":
       // One decimal at most: a savings rate of 11.4% is a real distinction,
-      // 11.42% is noise.
-      return `${Math.round(fact.value * 10) / 10}%`;
+      // 11.42% is noise. The separator and the space before the sign are the
+      // language's — French writes "11,4 %".
+      return translator(locale)("units.percent", {
+        value: new Intl.NumberFormat(INTL_LOCALES[locale], {
+          maximumFractionDigits: 1,
+        }).format(fact.value),
+      });
     case "count":
-      return String(Math.round(fact.value));
+      return new Intl.NumberFormat(INTL_LOCALES[locale]).format(
+        Math.round(fact.value),
+      );
   }
 }
 

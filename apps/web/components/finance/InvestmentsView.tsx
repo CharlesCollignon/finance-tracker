@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
+import { useLocale, useT } from "@/lib/locale-context";
 
 interface InvestmentsViewProps {
   portfolio: InvestmentPortfolioSummary;
@@ -69,6 +70,7 @@ export function InvestmentsView({
   recurringTemplates,
   fundingNeeds,
 }: InvestmentsViewProps) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
   const [activeWallet, setActiveWallet] = useState<InvestmentWalletId>(() =>
     defaultWalletTab(portfolio),
@@ -110,7 +112,7 @@ export function InvestmentsView({
 
   return (
     <>
-      <PageHeader title="Wallets" />
+      <PageHeader titleKey="nav.wallets" />
 
       <PageContainer>
         <Stagger
@@ -119,7 +121,7 @@ export function InvestmentsView({
         >
           <StaggerItem className="w-full min-w-0">
             <StatHero
-              label="Market value"
+              label={t("wallets.marketValue")}
               amount={formatEuro(portfolio.totalMarketValue)}
               animateValue={portfolio.totalMarketValue}
               format={formatEuro}
@@ -165,8 +167,8 @@ export function InvestmentsView({
           {!hasData ? (
             <StaggerItem className="w-full">
               <EmptyState
-                title="No investments tracked yet"
-                description="Add items in each wallet to track what you already invested and your current market value."
+                title={t("wallets.emptyTitle")}
+                description={t("wallets.emptyBody")}
               />
             </StaggerItem>
           ) : null}
@@ -175,7 +177,7 @@ export function InvestmentsView({
             <div
               className="flex w-full min-w-0 justify-center gap-2"
               role="tablist"
-              aria-label="Investment wallet"
+              aria-label={t("wallets.walletPicker")}
             >
               {INVESTMENT_WALLET_IDS.map((walletId) => {
                 const active = activeWallet === walletId;
@@ -247,6 +249,7 @@ interface WalletPanelProps {
 }
 
 function WalletPanel({ column, onEdit, onAdd }: WalletPanelProps) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
   const showPl = column.hasMarketSnapshot && column.totalGainLoss !== 0;
 
@@ -257,10 +260,16 @@ function WalletPanel({ column, onEdit, onAdd }: WalletPanelProps) {
     >
       <div className="flex min-w-0 flex-col items-center gap-3 text-center">
         <div className="grid w-full min-w-0 max-w-md grid-cols-3 gap-2 sm:gap-4">
-          <Metric label="Value" value={formatEuro(column.totalMarketValue)} />
-          <Metric label="Invested" value={formatEuro(column.totalInvested)} />
           <Metric
-            label="P/L"
+            label={t("wallets.value")}
+            value={formatEuro(column.totalMarketValue)}
+          />
+          <Metric
+            label={t("wallets.invested")}
+            value={formatEuro(column.totalInvested)}
+          />
+          <Metric
+            label={t("wallets.profitLoss")}
             value={
               showPl ? formatSignedEuro(column.totalGainLoss, formatEuro) : "—"
             }
@@ -328,11 +337,15 @@ interface InvestmentPositionRowProps {
 }
 
 function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
+  const locale = useLocale();
   const [chartOpen, setChartOpen] = useState(false);
   const isCrypto = isCryptoWallet(item.walletId);
   const valueLabel =
-    item.hasManualValue || item.hasMarketQuote ? "Market" : "Invested";
+    item.hasManualValue || item.hasMarketQuote
+      ? t("wallets.market")
+      : t("wallets.invested");
   const hasChart = item.chartPoints.length > 0;
 
   return (
@@ -359,13 +372,13 @@ function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
             {item.needsShareCount ? (
               <p className="mt-1 text-xs font-medium text-primary-ink">
                 {isCrypto
-                  ? "Add total BTC for live market value"
-                  : "Add total shares for live market value"}
+                  ? t("wallets.addBtcForValue")
+                  : t("wallets.addSharesForValue")}
               </p>
             ) : null}
             {isCrypto && item.shareCount !== null && item.shareCount > 0 ? (
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {formatBtcAmount(item.shareCount)}
+                {formatBtcAmount(item.shareCount, locale)}
               </p>
             ) : null}
           </div>
@@ -382,9 +395,12 @@ function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
 
       <div className="mt-3 grid min-w-0 grid-cols-3 gap-2 text-xs sm:text-sm">
         <Metric label={valueLabel} value={formatEuro(item.marketValue)} />
-        <Metric label="Invested" value={formatEuro(item.totalInvested)} />
         <Metric
-          label="P/L"
+          label={t("wallets.invested")}
+          value={formatEuro(item.totalInvested)}
+        />
+        <Metric
+          label={t("wallets.profitLoss")}
           value={formatSignedEuro(item.gainLoss, formatEuro)}
           tone={
             item.gainLoss > 0
@@ -402,7 +418,7 @@ function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
           onClick={() => setChartOpen((open) => !open)}
           className="mt-2 min-h-11 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          {chartOpen ? "Hide chart" : "Show chart"}
+          {chartOpen ? t("wallets.hideChart") : t("wallets.showChart")}
         </button>
       ) : null}
 

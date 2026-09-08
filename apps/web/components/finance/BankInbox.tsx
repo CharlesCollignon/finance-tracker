@@ -19,6 +19,7 @@ import {
 import type { Category } from "@finance/core/types/database";
 import type { DecidedFeedRow, PendingFeedRow } from "@/lib/queries/bank";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface BankInboxProps {
   items: PendingFeedRow[];
@@ -98,6 +99,7 @@ export function BankInbox({
   showBackfill,
   openOnArrival = false,
 }: BankInboxProps) {
+  const t = useT();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [choices, setChoices] = useState<Record<string, string>>({});
@@ -108,7 +110,7 @@ export function BankInbox({
     startTransition(async () => {
       const result = await work();
       toast(
-        result.error ?? result.message ?? "Done",
+        result.error ?? result.message ?? t("inbox.done"),
         result.error ? "error" : "success",
       );
     });
@@ -117,7 +119,7 @@ export function BankInbox({
   function accept(id: string) {
     const categoryId = choices[id];
     if (!categoryId) {
-      toast("Pick a category first", "error");
+      toast(t("inbox.pickCategoryFirst"), "error");
       return;
     }
     run(() => importFeedItem(id, categoryId));
@@ -167,7 +169,7 @@ export function BankInbox({
             variant={waiting ? "default" : "ghost"}
             onClick={() => setOpen(true)}
           >
-            {waiting ? "Review" : "Recently added"}
+            {waiting ? t("inbox.review") : t("inbox.recentlyAdded")}
           </Button>
         ) : null}
         {/* "Fetch everything" reaches for the whole statement rather than the
@@ -187,7 +189,7 @@ export function BankInbox({
             onClick={() => run(() => syncBankFeedAction(true))}
           >
             <ArrowsClockwise size={ICON.sm} />
-            {pending ? "Fetching…" : "Fetch everything"}
+            {pending ? t("inbox.fetching") : t("inbox.fetchEverything")}
           </Button>
         ) : null}
       </div>
@@ -201,13 +203,15 @@ export function BankInbox({
       <MobileSheet
         open={open}
         onOpenChange={setOpen}
-        title="From your bank"
+        title={t("inbox.fromYourBank")}
         wide={decided.length > 0}
       >
         <div className="flex flex-col gap-6 md:flex-row md:gap-8">
           <section className="flex min-w-0 flex-1 flex-col gap-3">
             <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {items.length > 0 ? "Needs a category" : "Nothing waiting"}
+              {items.length > 0
+                ? t("inbox.needsCategory")
+                : t("inbox.nothingWaiting")}
             </h3>
             <p className="text-sm text-muted-foreground">
               Anything the app already recognised went straight in. These are
@@ -328,7 +332,7 @@ export function BankInbox({
                           onClick={() => {
                             const categoryId = choices[row.id];
                             if (!categoryId) {
-                              toast("Pick a category first", "error");
+                              toast(t("inbox.pickCategoryFirst"), "error");
                               return;
                             }
                             setEditing(null);

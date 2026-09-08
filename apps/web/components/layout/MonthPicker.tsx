@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { CaretDown, CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { calendarNames } from "@finance/core/i18n/calendar-names";
 import {
-  MONTH_SHORT,
   formatMonthCompact,
   formatMonthLabel,
   getCurrentMonth,
@@ -20,6 +20,7 @@ import { rememberMonth } from "@/lib/month-memory";
 import { cn } from "@/lib/utils";
 import { SOLID_PANEL } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface MonthPickerProps {
   basePath: string;
@@ -40,6 +41,7 @@ interface MonthPickerProps {
  * a poor trade.
  */
 export function MonthPicker({ basePath, className }: MonthPickerProps) {
+  const t = useT();
   const searchParams = useSearchParams();
   const { year, month } = parseMonthParams(
     searchParams.get("y") ?? undefined,
@@ -66,7 +68,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
           "flex h-11 w-8 shrink-0 items-center justify-center rounded sm:w-11",
           "border border-border hover:bg-accent",
         )}
-        aria-label="Previous month"
+        aria-label={t("common.previousMonth")}
       >
         <CaretLeft size={ICON.xl} weight="bold" />
       </Link>
@@ -105,7 +107,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
           "flex h-11 w-8 shrink-0 items-center justify-center rounded sm:w-11",
           "border border-border hover:bg-accent",
         )}
-        aria-label="Next month"
+        aria-label={t("common.nextMonth")}
       >
         <CaretRight size={ICON.xl} weight="bold" />
       </Link>
@@ -147,6 +149,7 @@ function MonthGrid({
   view: "current" | "month_end";
   onClose: () => void;
 }) {
+  const t = useT();
   const router = useRouter();
   const [shownYear, setShownYear] = useState(year);
   const [availability, setAvailability] = useState<MonthAvailability | null>(
@@ -214,7 +217,7 @@ function MonthGrid({
       ref={panelRef}
       id={id}
       role="dialog"
-      aria-label="Pick a month"
+      aria-label={t("common.pickAMonth")}
       className={cn(
         "absolute right-0 top-full z-50 mt-1 w-[min(17rem,calc(100vw-2rem))]",
         "rounded-xl p-3",
@@ -243,7 +246,7 @@ function MonthGrid({
       </div>
 
       <div className="mt-2 grid grid-cols-4 gap-1">
-        {MONTH_SHORT.map((label, index) => {
+        {calendarNames().monthShort.map((label, index) => {
           const value = index + 1;
           const selected = shownYear === year && value === month;
           const isToday = shownYear === today.year && value === today.month;

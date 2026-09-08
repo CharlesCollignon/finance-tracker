@@ -3,6 +3,7 @@ import { bankFeedStatus, describeBankFeedStatus } from "@/lib/bank/client";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { syncBankFeed } from "@/lib/bank/sync";
 import { sessionFromBearer } from "@/lib/supabase/bearer";
+import { getLocale } from "@/lib/locale";
 
 /**
  * Asking the bank, for a client that cannot ask it directly.
@@ -63,7 +64,11 @@ export async function POST(request: Request) {
       return Response.json({
         pulled: false,
         message: outcome.pull.why,
-        freshness: await readPullFreshness(session.supabase, session.userId),
+        freshness: await readPullFreshness(
+          session.supabase,
+          session.userId,
+          await getLocale(),
+        ),
       });
     }
 
@@ -95,7 +100,11 @@ export async function POST(request: Request) {
       pending: outcome.pending,
       monthsClosed: closes.closed.length,
       message: parts.length > 0 ? parts.join(", ") : "Nothing new",
-      freshness: await readPullFreshness(session.supabase, session.userId),
+      freshness: await readPullFreshness(
+        session.supabase,
+        session.userId,
+        await getLocale(),
+      ),
     });
   } catch (error) {
     return Response.json(

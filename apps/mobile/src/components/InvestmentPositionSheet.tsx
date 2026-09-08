@@ -13,6 +13,8 @@ import {
 } from "@finance/core/fund-costs";
 import { Text } from "@/components/ui/Text";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
+import { useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 import {
   removeInvestmentPosition,
   saveInvestmentPosition,
@@ -39,6 +41,7 @@ export function InvestmentPositionSheet({
   onClose,
   onSaved,
 }: InvestmentPositionSheetProps) {
+  const t = useT();
   const [initialBalance, setInitialBalance] = useState(
     item ? String(item.initialBalance) : "",
   );
@@ -114,7 +117,7 @@ export function InvestmentPositionSheet({
       <View className="flex-1 justify-end bg-black/50">
         <Pressable
           className="flex-1"
-          accessibilityLabel="Close"
+          accessibilityLabel={t("position.close")}
           onPress={onClose}
         />
         <View className="max-h-[90%] rounded-t-3xl border border-border bg-card">
@@ -125,7 +128,11 @@ export function InvestmentPositionSheet({
             <Text className="font-semibold" style={{ fontSize: 18 }}>
               {item.name}
             </Text>
-            <Pressable onPress={onClose} accessibilityLabel="Close" hitSlop={8}>
+            <Pressable
+              onPress={onClose}
+              accessibilityLabel={t("position.close")}
+              hitSlop={8}
+            >
               <Text variant="muted">Close</Text>
             </Pressable>
           </View>
@@ -151,7 +158,7 @@ export function InvestmentPositionSheet({
             />
 
             <Text className="mb-2 text-sm font-medium">
-              {isCrypto ? "Total BTC" : "Total shares"}
+              {isCrypto ? t("position.totalBtc") : t("position.totalShares")}
             </Text>
             <Text variant="muted" className="mb-2 text-xs">
               Needed for a live market value.
@@ -174,7 +181,7 @@ export function InvestmentPositionSheet({
               value={currentValue}
               onChangeText={setCurrentValue}
               keyboardType="decimal-pad"
-              placeholder="Leave empty to use market"
+              placeholder={t("position.marketValuePlaceholder")}
               className="mb-4"
             />
 
@@ -196,7 +203,7 @@ export function InvestmentPositionSheet({
             {lookupUrl ? (
               <Pressable
                 accessibilityRole="link"
-                accessibilityLabel="Look up the charge on justETF"
+                accessibilityLabel={t("position.lookUpCharge")}
                 onPress={() => {
                   void Linking.openURL(lookupUrl);
                 }}
@@ -211,11 +218,15 @@ export function InvestmentPositionSheet({
             )}
 
             {error ? (
-              <Text className="mb-3 text-sm text-destructive">{error}</Text>
+              <Text className="mb-3 text-sm text-destructive">
+                {resolveMessage(t, error)}
+              </Text>
             ) : null}
 
             <Button
-              label={pending ? "Saving…" : "Save position"}
+              label={
+                pending ? t("position.saving") : t("position.savePosition")
+              }
               size="lg"
               disabled={pending}
               onPress={handleSave}
@@ -230,14 +241,18 @@ export function InvestmentPositionSheet({
                   </Text>
                   <View className="flex-row gap-2">
                     <Button
-                      label={pending ? "Removing…" : "Yes, remove"}
+                      label={
+                        pending
+                          ? t("position.removing")
+                          : t("position.confirmRemove")
+                      }
                       variant="outline"
                       className="flex-1 border-destructive"
                       disabled={pending}
                       onPress={handleDelete}
                     />
                     <Button
-                      label="Cancel"
+                      label={t("position.cancel")}
                       variant="outline"
                       className="flex-1"
                       disabled={pending}
@@ -247,7 +262,7 @@ export function InvestmentPositionSheet({
                 </View>
               ) : (
                 <Button
-                  label="Remove position"
+                  label={t("position.removePosition")}
                   variant="outline"
                   className="border-destructive"
                   disabled={pending}

@@ -18,6 +18,7 @@ import {
   getPendingFeedItems,
 } from "@/lib/queries/bank";
 import { SwallowedRecovery } from "@/components/finance/SwallowedRecovery";
+import { getLocale } from "@/lib/locale";
 
 interface TransactionsPageProps {
   searchParams: Promise<{ y?: string; m?: string; review?: string }>;
@@ -59,7 +60,7 @@ export default async function TransactionsPage({
   // extra on a deployment that has never seen the feed.
   const [feedItems, swallowed, feedSize, decided] = bankFeedConfigured()
     ? await Promise.all([
-        getPendingFeedItems(user.id),
+        getPendingFeedItems(user.id, await getLocale()),
         countSwallowedFeedItems(user.id),
         countFeedItems(user.id),
         getDecidedFeedItems(user.id),

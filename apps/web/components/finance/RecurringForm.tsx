@@ -19,7 +19,7 @@ import {
   BITCOIN_INSTRUMENT,
   isCryptoCategoryName,
 } from "@finance/core/crypto-holdings";
-import { DAY_OF_WEEK_LABELS, MONTH_LABELS } from "@finance/core/recurrence";
+import { dayOfWeekLabels, monthLabels } from "@finance/core/recurrence";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import type {
@@ -29,6 +29,8 @@ import type {
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
 import type { InstrumentSearchResult } from "@finance/core/market/yahoo";
+import { useLocale, useT } from "@/lib/locale-context";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 interface RecurringFormProps {
   categories: Category[];
@@ -73,6 +75,8 @@ function RecurringFormFields({
 }: RecurringFormFieldsProps) {
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
+  const locale = useLocale();
+  const t = useT();
   const [state, action, pending] = useActionState(upsertRecurringTemplate, {});
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletePending, startDeleteTransition] = useTransition();
@@ -104,16 +108,14 @@ function RecurringFormFields({
   useEffect(() => {
     if (state.success) {
       toast(
-        template
-          ? "Updated. Apply recurring in the Ledger to see the change."
-          : "Saved. Apply recurring in the Ledger to see the change.",
+        template ? t("recurring.updatedHint") : t("recurring.savedHint"),
         "success",
       );
       onOpenChange(false);
     } else if (state.error) {
       toast(state.error, "error");
     }
-  }, [state.success, state.error, template, onOpenChange, toast]);
+  }, [state.success, state.error, template, onOpenChange, toast, t]);
 
   function handleDelete() {
     if (!template) {
@@ -186,14 +188,14 @@ function RecurringFormFields({
   const estimateErrorShown = !estimateActive
     ? null
     : !sharesValid
-      ? "Enter a whole number of shares"
+      ? t("recurring.wholeSharesOnly")
       : estimateError;
 
   return (
     <MobileSheet
       open={open}
       onOpenChange={onOpenChange}
-      title={template ? "Edit recurring" : "Add recurring"}
+      title={template ? t("recurring.editTitle") : t("recurring.addTitle")}
     >
       <form action={action} className="flex flex-col gap-4">
         {template && <input type="hidden" name="id" value={template.id} />}
@@ -205,7 +207,9 @@ function RecurringFormFields({
           value={template?.active === false ? "false" : "true"}
         />
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="recurring-category">Category</FormLabel>
+          <FormLabel htmlFor="recurring-category">
+            {t("recurring.category")}
+          </FormLabel>
           <CategorySelect
             id="recurring-category"
             categories={categories}
@@ -216,20 +220,20 @@ function RecurringFormFields({
           />
           {isDeploymentCategory && !isCryptoCategory && (
             <Text className="text-xs text-muted-foreground">
-              Broker DCA entries are tracked for visibility but do not reduce
-              your remaining budget.
+              {t("recurring.brokerDcaNote")}
             </Text>
           )}
           {isCryptoCategory && (
             <Text className="text-xs text-muted-foreground">
-              Fixed EUR weekly buy on Bitstack. Market value on Wallets uses
-              your total BTC × live BTC/EUR price.
+              {t("recurring.bitstackNote")}
             </Text>
           )}
         </div>
         {supportsShares && (
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium">Amount type</span>
+            <span className="text-sm font-medium">
+              {t("recurring.amountType")}
+            </span>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -241,7 +245,7 @@ function RecurringFormFields({
                     : "border-border hover:bg-accent",
                 )}
               >
-                Fixed EUR
+                {t("recurring.fixedAmount")}
               </button>
               <button
                 type="button"
@@ -253,14 +257,12 @@ function RecurringFormFields({
                     : "border-border hover:bg-accent",
                 )}
               >
-                Shares × price
+                {t("recurring.sharesTimesPrice")}
               </button>
             </div>
             {effectivePricingType === "shares" && (
               <Text className="text-xs text-muted-foreground">
-                Pick your ETF and share count. Search by name or ISIN (e.g.
-                LU1681043599). The app fetches the live price and computes the
-                EUR amount when saving or applying recurring.
+                {t("recurring.sharesNote")}
               </Text>
             )}
           </div>
@@ -281,7 +283,9 @@ function RecurringFormFields({
               required
             />
             <div className="flex flex-col gap-2">
-              <FormLabel htmlFor="shareCount">Number of shares</FormLabel>
+              <FormLabel htmlFor="shareCount">
+                {t("recurring.shareCount")}
+              </FormLabel>
               <Input
                 id="shareCount"
                 name="shareCount"
@@ -299,7 +303,7 @@ function RecurringFormFields({
                 "rounded border border-border bg-muted/20 p-3 text-sm",
               )}
             >
-              <p className="font-medium">Estimated amount</p>
+              <p className="font-medium">{t("recurring.estimatedAmount")}</p>
               {estimateLoading && (
                 <p className="mt-1 text-muted-foreground">Fetching price…</p>
               )}
@@ -309,7 +313,7 @@ function RecurringFormFields({
                   <span className="ml-2 block text-xs font-normal text-muted-foreground">
                     @ {formatEuro(estimateShown.priceEur)} / share
                     {estimateShown.currency !== "EUR" &&
-                      ` (${formatMoney(estimateShown.priceOriginal, estimateShown.currency)} converted)`}
+                      ` (${formatMoney(estimateShown.priceOriginal, estimateShown.currency, locale)} converted)`}
                   </span>
                 </p>
               )}
@@ -323,8 +327,8 @@ function RecurringFormFields({
             <div className="flex flex-col gap-2">
               <FormLabel htmlFor="recurring-amount">
                 {recurrence === "yearly"
-                  ? "Annual amount (EUR)"
-                  : "Amount (EUR)"}
+                  ? t("recurring.annualAmount")
+                  : t("recurring.amount")}
               </FormLabel>
               <Input
                 id="recurring-amount"
@@ -392,11 +396,11 @@ function RecurringFormFields({
             maxLength={500}
             className="text-base"
             defaultValue={template?.description ?? ""}
-            placeholder="e.g. Netflix, gym membership, CTO DCA"
+            placeholder={t("recurring.descriptionPlaceholder")}
           />
         </div>
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium">Schedule</span>
+          <span className="text-sm font-medium">{t("recurring.schedule")}</span>
           <div className="grid grid-cols-3 gap-2">
             {(["monthly", "weekly", "yearly"] as const).map((value) => (
               <button
@@ -404,26 +408,27 @@ function RecurringFormFields({
                 type="button"
                 onClick={() => setRecurrence(value)}
                 className={cn(
-                  "rounded-full border px-3 py-2 text-sm font-medium capitalize",
+                  "rounded-full border px-3 py-2 text-sm font-medium",
                   recurrence === value
                     ? "border-foreground bg-primary text-primary-foreground"
                     : "border-border hover:bg-accent",
                 )}
               >
-                {value}
+                {t(`recurring.${value}`)}
               </button>
             ))}
           </div>
           {isYearlyExpense && (
             <Text className="text-xs text-muted-foreground">
-              Counts as a monthly share in your budget (annual ÷ 12). The full
-              payment is recorded once in the due month.
+              {t("recurring.yearlyNote")}
             </Text>
           )}
         </div>
         {recurrence === "monthly" ? (
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="dayOfMonth">Day of month</FormLabel>
+            <FormLabel htmlFor="dayOfMonth">
+              {t("recurring.dayOfMonth")}
+            </FormLabel>
             <Input
               id="dayOfMonth"
               name="dayOfMonth"
@@ -437,7 +442,9 @@ function RecurringFormFields({
           </div>
         ) : recurrence === "weekly" ? (
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="dayOfWeek">Day of week</FormLabel>
+            <FormLabel htmlFor="dayOfWeek">
+              {t("recurring.dayOfWeek")}
+            </FormLabel>
             <select
               id="dayOfWeek"
               name="dayOfWeek"
@@ -445,7 +452,7 @@ function RecurringFormFields({
               className="h-11 w-full rounded border border-border bg-background px-3 text-base text-foreground "
               defaultValue={template?.day_of_week ?? 1}
             >
-              {Object.entries(DAY_OF_WEEK_LABELS).map(([value, label]) => (
+              {Object.entries(dayOfWeekLabels(locale)).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>
@@ -463,7 +470,7 @@ function RecurringFormFields({
                 className="h-11 w-full rounded border border-border bg-background px-3 text-base text-foreground "
                 defaultValue={template?.month_of_year ?? 10}
               >
-                {Object.entries(MONTH_LABELS).map(([value, label]) => (
+                {Object.entries(monthLabels(locale)).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>
@@ -471,7 +478,9 @@ function RecurringFormFields({
               </select>
             </div>
             <div className="flex flex-col gap-2">
-              <FormLabel htmlFor="dayOfMonth">Day of month</FormLabel>
+              <FormLabel htmlFor="dayOfMonth">
+                {t("recurring.dayOfMonth")}
+              </FormLabel>
               <Input
                 id="dayOfMonth"
                 name="dayOfMonth"
@@ -493,7 +502,9 @@ function RecurringFormFields({
           </Text>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <FormLabel htmlFor="startsOn">Starts on</FormLabel>
+              <FormLabel htmlFor="startsOn">
+                {t("recurring.startsOn")}
+              </FormLabel>
               <Input
                 id="startsOn"
                 name="startsOn"
@@ -503,7 +514,7 @@ function RecurringFormFields({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <FormLabel htmlFor="endsOn">Ends on</FormLabel>
+              <FormLabel htmlFor="endsOn">{t("recurring.endsOn")}</FormLabel>
               <Input
                 id="endsOn"
                 name="endsOn"
@@ -515,10 +526,12 @@ function RecurringFormFields({
           </div>
         </div>
         {state.error && (
-          <Text className="text-sm text-destructive">{state.error}</Text>
+          <Text className="text-sm text-destructive">
+            {resolveMessage(t, state.error)}
+          </Text>
         )}
         <Button type="submit" size="lg" className="w-full" disabled={pending}>
-          {pending ? "Saving…" : "Save"}
+          {pending ? t("recurring.saving") : t("recurring.save")}
         </Button>
 
         {template && (
@@ -538,7 +551,9 @@ function RecurringFormFields({
                     onClick={handleDelete}
                     disabled={deletePending}
                   >
-                    {deletePending ? "Deleting…" : "Confirm delete"}
+                    {deletePending
+                      ? t("recurring.deleting")
+                      : t("recurring.confirmDelete")}
                   </Button>
                   <Button
                     type="button"

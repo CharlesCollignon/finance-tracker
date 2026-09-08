@@ -15,6 +15,7 @@ import type { Category, Tag } from "@finance/core/types/database";
 import { QuickAddSheet } from "@/components/finance/QuickAddSheet";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface QuickAddValue {
   /** Opens the sheet, optionally on a specific date. */
@@ -140,6 +141,7 @@ export function useQuickAdd(): QuickAddValue | null {
  * so this floats clear of it rather than competing for a slot.
  */
 function QuickAddFab() {
+  const t = useT();
   const quickAdd = useQuickAdd();
 
   if (!quickAdd || quickAdd.isOpen) {
@@ -149,7 +151,7 @@ function QuickAddFab() {
   return (
     <button
       type="button"
-      aria-label="Add transaction"
+      aria-label={t("common.addTransaction")}
       onClick={() => quickAdd.open()}
       className={cn(
         "fixed right-4 z-40 md:hidden",

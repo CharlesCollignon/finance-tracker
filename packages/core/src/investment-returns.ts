@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * Per-wallet and whole-portfolio money-weighted return.
  *
@@ -113,11 +115,7 @@ export function buildInvestmentReturns(
 
     return {
       walletId: column.walletId,
-      ...buildPortfolioReturn(
-        contributions,
-        column.totalMarketValue,
-        asOfDate,
-      ),
+      ...buildPortfolioReturn(contributions, column.totalMarketValue, asOfDate),
     };
   });
 
@@ -134,14 +132,16 @@ export function buildInvestmentReturns(
 /** Plain-language reason a rate is missing, for the UI to show in its place. */
 export function returnUnavailableLabel(
   reason: PortfolioReturn["unavailableReason"],
+  locale: Locale = DEFAULT_LOCALE,
 ): string | null {
+  const t = translator(locale);
   switch (reason) {
     case "no-contributions":
-      return "No contributions yet";
+      return t("investmentReturn.noContributions");
     case "too-short":
-      return "Too new to annualise";
+      return t("investmentReturn.tooShort");
     case "not-solvable":
-      return "Not enough history";
+      return t("investmentReturn.notSolvable");
     case null:
       return null;
   }

@@ -1,3 +1,5 @@
+import type { Locale } from "@finance/core/i18n/locale";
+import { landingSampleFr } from "@/components/marketing/landing-sample.fr";
 import type { CategoryType } from "@finance/core/types/database";
 
 /** A realistic month of made-up data, reused consistently across every
@@ -173,4 +175,61 @@ export const landingSample = {
     { label: "Groceries", amount: 218, colorVar: "--chart-2" },
     { label: "Everything else", amount: 185, colorVar: "--chart-5" },
   ],
-} as const;
+};
+
+/* --------------------------------------------------------------- languages */
+
+/**
+ * The sample month in one language.
+ *
+ * The figures come from `landingSample` in both, and only the words are
+ * swapped. Written out as explicit spreads rather than a generic deep merge:
+ * there are thirty-odd fields and the arrays have to stay index-aligned with
+ * the numbers beside them, which a clever recursion would hide and a plain
+ * list of assignments cannot.
+ */
+export function landingSampleFor(locale: Locale) {
+  if (locale === "en") {
+    return landingSample;
+  }
+
+  const fr = landingSampleFr;
+  return {
+    ...landingSample,
+    monthLabel: fr.monthLabel,
+    onBudgetLabel: fr.onBudgetLabel,
+    budget: { ...landingSample.budget, label: fr.budgetLabel },
+    goal: {
+      ...landingSample.goal,
+      label: fr.goalLabel,
+      targetLabel: fr.goalTargetLabel,
+    },
+    transactions: landingSample.transactions.map((row, index) => ({
+      ...row,
+      ...fr.transactions[index],
+    })),
+    templates: landingSample.templates.map((row, index) => ({
+      ...row,
+      ...fr.recurring[index],
+    })),
+    close: { ...landingSample.close, ...fr.close },
+    read: {
+      ...landingSample.read,
+      writtenOn: fr.read.writtenOn,
+      headline: fr.read.headline,
+      observations: landingSample.read.observations.map((row, index) => ({
+        ...row,
+        text: fr.read.observations[index] ?? row.text,
+      })),
+      suggestions: fr.read.suggestions,
+      standing: fr.read.standing,
+    },
+    spendByCategory: landingSample.spendByCategory.map((row, index) => ({
+      ...row,
+      label: fr.spendByCategory[index] ?? row.label,
+    })),
+  };
+}
+
+/** The shape both languages present. */
+export type LocalisedLandingSample = typeof landingSample;

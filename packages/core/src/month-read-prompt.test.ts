@@ -217,3 +217,46 @@ describe("buildMonthReadPrompt", () => {
     expect(MONTH_READ_PROMPT_VERSION).toBeGreaterThan(0);
   });
 });
+
+describe("the reader's language", () => {
+  const french = () =>
+    buildMonthReadPrompt(pack({ locale: "fr" }), { money, locale: "fr" });
+
+  it("asks in French for French", () => {
+    const { system } = french();
+    expect(system).toContain("Vous écrivez en français");
+    expect(system).not.toContain("You write a short read");
+  });
+
+  it("pins the French glossary, not the English one", () => {
+    // The point of translating the whole prompt rather than appending "write
+    // in French": the words it forbids have to be the French ones a model
+    // actually reaches for, and the words it requires have to be the ones the
+    // card prints beside the prose.
+    const { system } = french();
+    expect(system).toContain('"Dépenses non enregistrées"');
+    expect(system).toContain('"fuite"');
+    expect(system).toContain('"Gardé"');
+    expect(system).not.toContain('"Unrecorded spending"');
+  });
+
+  it("keeps the figure rule first and last, as English does", () => {
+    const { system } = french();
+    const rule = "Chaque chiffre que vous mentionnez";
+    expect(system.indexOf(rule)).toBeGreaterThan(-1);
+    expect(system.lastIndexOf(rule)).toBeGreaterThan(system.indexOf(rule));
+  });
+
+  it("hands over French labels and French sense words", () => {
+    const { user } = french();
+    expect(user).toContain("Argent sorti");
+    expect(user).toContain("une hausse est mauvaise");
+    // The ids are the protocol and never move.
+    expect(user).toContain("expenses |");
+  });
+
+  it("still lets the model write no number of its own", () => {
+    const { system } = french();
+    expect(system).toContain("N'écrivez jamais un nombre vous-même");
+  });
+});

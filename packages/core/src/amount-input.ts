@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
 /**
  * Keypad-driven amount entry, shared by the web and mobile quick-add sheets.
  *
@@ -27,22 +28,16 @@ export const AMOUNT_MAX_INTEGER_DIGITS = 9;
 
 const AMOUNT_MAX_FRACTION_DIGITS = 2;
 
-const DIGITS = new Set([
-  "0",
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-]);
+const DIGITS = new Set(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]);
 
 /** True for the keys a numeric keypad can send, so callers can validate input. */
 export function isAmountKey(value: string): value is AmountKey {
-  return DIGITS.has(value) || value === "." || value === "backspace" || value === "clear";
+  return (
+    DIGITS.has(value) ||
+    value === "." ||
+    value === "backspace" ||
+    value === "clear"
+  );
 }
 
 function appendDigit(current: string, digit: string): string {
@@ -143,8 +138,9 @@ export interface AmountDisplay {
  */
 export function formatAmountInput(
   value: string,
-  locale = "fr-FR",
+  locale: Locale = DEFAULT_LOCALE,
 ): AmountDisplay {
+  const tag = INTL_LOCALES[locale];
   if (value === "") {
     return { integer: "0", fraction: "", empty: true };
   }
@@ -153,13 +149,13 @@ export function formatAmountInput(
   const rawInteger = dot === -1 ? value : value.slice(0, dot);
   const rawFraction = dot === -1 ? null : value.slice(dot + 1);
 
-  const integer = new Intl.NumberFormat(locale, {
+  const integer = new Intl.NumberFormat(tag, {
     useGrouping: true,
     maximumFractionDigits: 0,
   }).format(Number.parseInt(rawInteger || "0", 10));
 
   const separator =
-    new Intl.NumberFormat(locale)
+    new Intl.NumberFormat(tag)
       .formatToParts(1.1)
       .find((part) => part.type === "decimal")?.value ?? ".";
 

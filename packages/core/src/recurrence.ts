@@ -1,31 +1,37 @@
 import { formatMonthShortYear } from "./constants";
+import { dayOfWeekLong, monthLong } from "./i18n/calendar-names";
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 
 export type Recurrence = "monthly" | "weekly" | "yearly";
 
-export const DAY_OF_WEEK_LABELS: Record<number, string> = {
-  1: "Monday",
-  2: "Tuesday",
-  3: "Wednesday",
-  4: "Thursday",
-  5: "Friday",
-  6: "Saturday",
-  7: "Sunday",
-};
+/**
+ * The seven weekdays a weekly template can fall on, keyed by ISO day number.
+ *
+ * A function over the shared tables rather than the two hardcoded records
+ * that used to sit here. They were the second and third copies of the
+ * weekday and month names in this package, and a third language would have
+ * needed all three updated in step or the app would have spoken two at once.
+ */
+export function dayOfWeekLabels(
+  locale: Locale = DEFAULT_LOCALE,
+): Record<number, string> {
+  return Object.fromEntries(
+    [1, 2, 3, 4, 5, 6, 7].map((day) => [day, dayOfWeekLong(day, locale)]),
+  );
+}
 
-export const MONTH_LABELS: Record<number, string> = {
-  1: "January",
-  2: "February",
-  3: "March",
-  4: "April",
-  5: "May",
-  6: "June",
-  7: "July",
-  8: "August",
-  9: "September",
-  10: "October",
-  11: "November",
-  12: "December",
-};
+/** The twelve months a yearly template can fall in, keyed 1-12. */
+export function monthLabels(
+  locale: Locale = DEFAULT_LOCALE,
+): Record<number, string> {
+  return Object.fromEntries(
+    Array.from({ length: 12 }, (_, index) => [
+      index + 1,
+      monthLong(index + 1, locale),
+    ]),
+  );
+}
 
 /** ISO weekday: Monday = 1 … Sunday = 7 */
 export function toIsoWeekday(date: Date): number {
@@ -54,43 +60,63 @@ export function getWeeklyDatesInMonth(
   return dates;
 }
 
-function formatIsoMonthYear(isoDate: string): string {
+function formatIsoMonthYear(isoDate: string, locale: Locale): string {
   const [year, month] = isoDate.split("-").map(Number);
-  return formatMonthShortYear(year, month);
+  return formatMonthShortYear(year!, month!, locale);
 }
 
-/** Compact échéancier label, or null when open-ended. */
+/**
+ * Compact échéancier label, or null when open-ended.
+ *
+ * No message of its own: two dates, an arrow and an ellipsis read the same in
+ * both languages, and a sentence that is only punctuation is not a sentence
+ * worth translating twice.
+ */
 export function formatScheduleWindow(
   startsOn: string | null | undefined,
   endsOn: string | null | undefined,
+  locale: Locale = DEFAULT_LOCALE,
 ): string | null {
   if (!startsOn && !endsOn) {
     return null;
   }
-  const start = startsOn ? formatIsoMonthYear(startsOn) : "…";
-  const end = endsOn ? formatIsoMonthYear(endsOn) : "…";
+  const start = startsOn ? formatIsoMonthYear(startsOn, locale) : "…";
+  const end = endsOn ? formatIsoMonthYear(endsOn, locale) : "…";
   return `${start} → ${end}`;
 }
 
-export function formatRecurrenceSchedule(template: {
-  recurrence: Recurrence;
-  day_of_month: number | null;
-  day_of_week: number | null;
-  month_of_year: number | null;
-  starts_on?: string | null;
-  ends_on?: string | null;
-}): string {
+export function formatRecurrenceSchedule(
+  template: {
+    recurrence: Recurrence;
+    day_of_month: number | null;
+    day_of_week: number | null;
+    month_of_year: number | null;
+    starts_on?: string | null;
+    ends_on?: string | null;
+  },
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  const t = translator(locale);
+
   let base: string;
   if (template.recurrence === "weekly" && template.day_of_week) {
-    base = `Weekly · ${DAY_OF_WEEK_LABELS[template.day_of_week]}`;
+    base = t("recurrence.weekly", {
+      day: dayOfWeekLong(template.day_of_week, locale),
+    });
   } else if (template.recurrence === "yearly" && template.month_of_year) {
-    const month = MONTH_LABELS[template.month_of_year];
-    base = `Yearly · ${month} ${template.day_of_month ?? 1}`;
+    base = t("recurrence.yearly", {
+      month: monthLong(template.month_of_year, locale),
+      day: template.day_of_month ?? 1,
+    });
   } else {
-    base = `Monthly · day ${template.day_of_month ?? 1}`;
+    base = t("recurrence.monthly", { day: template.day_of_month ?? 1 });
   }
 
-  const window = formatScheduleWindow(template.starts_on, template.ends_on);
+  const window = formatScheduleWindow(
+    template.starts_on,
+    template.ends_on,
+    locale,
+  );
   return window ? `${base} · ${window}` : base;
 }
 

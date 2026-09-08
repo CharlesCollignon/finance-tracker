@@ -1,3 +1,5 @@
+import { monthShort } from "./i18n/calendar-names";
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
 /**
  * How one category has moved, month by month.
  *
@@ -72,6 +74,8 @@ function monthKeysEndingAt(
 
 export interface BuildCategoryHistoryOptions {
   months?: number;
+  /** The language the month labels are written in. */
+  locale?: Locale;
 }
 
 /**
@@ -85,7 +89,7 @@ export function buildCategoryHistory(
   transactions: readonly TransactionWithCategory[],
   year: number,
   month: number,
-  { months = 12 }: BuildCategoryHistoryOptions = {},
+  { months = 12, locale = DEFAULT_LOCALE }: BuildCategoryHistoryOptions = {},
 ): CategoryHistory[] {
   const window = monthKeysEndingAt(year, month, months);
   const inWindow = new Set(window.map((entry) => entry.key));
@@ -151,8 +155,13 @@ export function buildCategoryHistory(
       const raw = entry.totals.get(key);
       return {
         monthKey: key,
-        label: formatMonthLabel(y, m),
-        shortLabel: formatMonthLabel(y, m).slice(0, 3),
+        label: formatMonthLabel(y, m, locale),
+        // The first three characters of the long name happened to spell the
+        // English abbreviation, which is not a general fact about month
+        // names: "août" would have been cut to "aoû" and "septembre" to
+        // "sep" where French writes "sept.". The abbreviations are a table,
+        // not a substring.
+        shortLabel: monthShort(m, locale),
         total: Math.round((raw ?? 0) * 100) / 100,
         empty: raw === undefined,
       };

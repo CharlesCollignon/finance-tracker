@@ -14,6 +14,7 @@ import { bankRefreshAvailable, refreshFromBank } from "@/lib/bank-refresh";
 import { notifyDataChanged } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
+import { useLocale } from "@/providers/LocaleProvider";
 
 interface RefreshContextValue {
   /** Ask the bank, then tell every screen to reload. */
@@ -61,6 +62,7 @@ const TICK_MS = 30_000;
 export function RefreshProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const { toast } = useToast();
+  const locale = useLocale();
   const [running, setRunning] = useState(false);
   const [lastPulledAt, setLastPulledAt] = useState<string | null>(null);
   // The phone is told the age by the server it asks, so nothing is known
@@ -105,14 +107,14 @@ export function RefreshProvider({ children }: { children: ReactNode }) {
     () => ({
       refresh,
       running,
-      age: describePullAge(lastPulledAt, now),
+      age: describePullAge(lastPulledAt, now, locale),
       stale: known && pullIsStale(lastPulledAt, now),
       known,
       // Signed out there is nothing to refresh, and the auth screens should
       // not carry a control that cannot do anything.
       available: bankRefreshAvailable() && Boolean(session),
     }),
-    [refresh, running, lastPulledAt, now, session, known],
+    [refresh, running, lastPulledAt, now, session, known, locale],
   );
 
   return (

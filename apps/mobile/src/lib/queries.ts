@@ -9,6 +9,8 @@ import {
   type MonthlyTrendPoint,
 } from "@finance/core/monthly-trend";
 
+import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
+import { translator } from "@finance/core/i18n/t";
 export type { MonthlyTrendPoint };
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import {
@@ -1240,15 +1242,21 @@ export interface PendingFeedRow {
 }
 
 /** Parses `review:<reason>` back out of `decided_by`. */
-function reasonOf(decidedBy: string | null): string {
+function reasonOf(
+  decidedBy: string | null,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
   const why = decidedBy?.startsWith("review:")
     ? (decidedBy.slice("review:".length) as ReviewReason)
     : null;
-  return why ? describeReviewReason(why) : "Waiting";
+  return why
+    ? describeReviewReason(why, locale)
+    : translator(locale)("bankReview.waiting");
 }
 
 export async function getPendingFeedItems(
   userId: string,
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<PendingFeedRow[]> {
   const { data, error } = await supabase
     .from("bank_feed_items")
@@ -1272,7 +1280,7 @@ export async function getPendingFeedItems(
     direction: row.direction,
     counterparty: row.counterparty,
     note: row.note,
-    why: reasonOf(row.decided_by),
+    why: reasonOf(row.decided_by, locale),
   }));
 }
 

@@ -15,8 +15,10 @@ import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 export function LoginForm() {
+  const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const authError = searchParams.get("error");
@@ -38,10 +40,10 @@ export function LoginForm() {
         Welcome back
       </h1>
       <p className="mt-1 text-center text-sm text-muted-foreground">
-        Sign in to track your finances
+        {t("auth.signInHeading")}
       </p>
       <div className="mt-6 flex flex-col gap-2">
-        <GoogleSignInButton label="Sign in with Google" />
+        <GoogleSignInButton label={t("auth.withGoogleSignIn")} />
         <PasskeySignInButton />
       </div>
       <AuthDivider />
@@ -58,7 +60,7 @@ export function LoginForm() {
           />
         </div>
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="password">Password</FormLabel>
+          <FormLabel htmlFor="password">{t("auth.password")}</FormLabel>
           <Input
             id="password"
             name="password"
@@ -81,16 +83,16 @@ export function LoginForm() {
           className="w-full justify-between"
           disabled={pending}
         >
-          {pending ? "Signing in…" : "Sign in"}
+          {pending ? t("auth.signingIn") : t("auth.signIn")}
           <ButtonNub>
             <ArrowRight size={ICON.md} weight="bold" />
           </ButtonNub>
         </Button>
       </form>
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        No account?{" "}
+        {t("auth.noAccount")}{" "}
         <Link href="/signup" className="font-medium underline">
-          Sign up
+          {t("auth.signUp")}
         </Link>
       </p>
     </Card.Bezel>

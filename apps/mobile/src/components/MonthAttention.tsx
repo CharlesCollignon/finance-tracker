@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 export interface AttentionItem {
   /** Stable key, and the reason this row exists. */
@@ -50,6 +51,7 @@ interface MonthAttentionProps {
  * strongest thing an interface can say about a quiet month.
  */
 export function MonthAttention({ items, slot }: MonthAttentionProps) {
+  const t = useT();
   const colors = useThemeColors();
 
   if (items.length === 0 && !slot) {
@@ -58,7 +60,7 @@ export function MonthAttention({ items, slot }: MonthAttentionProps) {
 
   return (
     <View
-      accessibilityLabel="Needs you"
+      accessibilityLabel={t("common.needsYou")}
       className="overflow-hidden rounded-3xl border bg-card/70"
       style={{ borderColor: colors.primaryRim }}
     >

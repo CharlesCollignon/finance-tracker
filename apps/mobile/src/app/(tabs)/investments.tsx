@@ -60,8 +60,12 @@ import {
   getWalletPlans,
   getWalletTransfers,
 } from "@/lib/queries";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 export default function InvestmentsScreen() {
+  const t = useT();
+  const locale = useLocale();
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
@@ -155,15 +159,15 @@ export default function InvestmentsScreen() {
   }
 
   return (
-    <Screen title="Wallets">
+    <Screen title={t("nav.wallets")}>
       {loading && !portfolio ? (
         <ScreenSkeleton rows={3} />
       ) : error ? (
-        <Text className="text-destructive">{error}</Text>
+        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
       ) : !portfolio ? (
         <EmptyState
-          title="Start a wallet"
-          description="PEA, CTO and crypto land here."
+          title={t("wallets.emptyTitleMobile")}
+          description={t("wallets.emptyBodyMobile")}
         />
       ) : (
         <ScrollView
@@ -174,7 +178,7 @@ export default function InvestmentsScreen() {
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
           <StatHero
-            label="Market value"
+            label={t("wallets.marketValue")}
             amount={formatEuro(portfolio.totalMarketValue)}
             animateValue={portfolio.totalMarketValue}
             format={formatEuro}
@@ -217,7 +221,10 @@ export default function InvestmentsScreen() {
                   style={{ fontSize: 18 }}
                 >
                   {formatAnnualRate(returns.total.rate) ??
-                    returnUnavailableLabel(returns.total.unavailableReason)}
+                    returnUnavailableLabel(
+                      returns.total.unavailableReason,
+                      locale,
+                    )}
                 </Text>
               </View>
               <Text variant="muted" className="mt-2 text-xs">
@@ -258,8 +265,8 @@ export default function InvestmentsScreen() {
 
           {!hasData ? (
             <EmptyState
-              title="Track an investment"
-              description="A recurring contribution becomes a position."
+              title={t("wallets.trackTitle")}
+              description={t("wallets.trackBody")}
             />
           ) : null}
 
@@ -331,11 +338,11 @@ export default function InvestmentsScreen() {
               value={amount}
               onChangeText={setAmount}
               keyboardType="decimal-pad"
-              placeholder="Amount (€)"
+              placeholder={t("wallets.transferAmountPlaceholder")}
               className="mb-3"
             />
             <Button
-              label="Add transfer"
+              label={t("wallets.addTransfer")}
               disabled={pending}
               onPress={handleAddTransfer}
             />
@@ -361,8 +368,8 @@ export default function InvestmentsScreen() {
 
       <ConfirmSheet
         open={confirmingTransfer !== null}
-        title="Delete this transfer?"
-        message="The transfer record is removed; your transactions are not affected."
+        title={t("wallets.deleteTransferTitle")}
+        message={t("wallets.deleteTransferBody")}
         onConfirm={async () => {
           const id = confirmingTransfer;
           setConfirmingTransfer(null);

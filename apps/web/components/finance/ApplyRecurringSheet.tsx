@@ -7,6 +7,7 @@ import { Button } from "@/components/retroui/Button";
 import { Text } from "@/components/retroui/Text";
 import { MobileSheet } from "@/components/layout/MobileSheet";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { useT } from "@/lib/locale-context";
 import type {
   ApplyRecurringPlan,
   RecurringOccurrenceUpdate,
@@ -88,6 +89,7 @@ export function ApplyRecurringSheet({
   pending,
   onConfirm,
 }: ApplyRecurringSheetProps) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
 
   const allKeys = useMemo(
@@ -132,7 +134,7 @@ export function ApplyRecurringSheet({
     <MobileSheet
       open={open}
       onOpenChange={onOpenChange}
-      title="Apply recurring"
+      title={t("common.applyRecurring")}
     >
       <div className="flex flex-col gap-4">
         <Text className="text-sm text-muted-foreground">

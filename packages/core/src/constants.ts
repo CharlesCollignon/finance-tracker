@@ -1,3 +1,7 @@
+import { calendarNames, monthLong, monthShort } from "./i18n/calendar-names";
+import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
+
 export const DEFAULT_CATEGORIES = [
   { name: "Salary", type: "income" as const, icon: "wallet" },
   { name: "Electricity", type: "expense" as const, icon: "lightning" },
@@ -72,8 +76,11 @@ export function savingsRatePercent(
   return Math.round(((savings + invested) / income) * 1000) / 10;
 }
 
-export function formatEuro(amount: number): string {
-  return new Intl.NumberFormat("fr-FR", {
+export function formatEuro(
+  amount: number,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  return new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: "currency",
     currency: "EUR",
     minimumFractionDigits: 0,
@@ -98,8 +105,9 @@ export const CURRENCY_LABELS: Record<CurrencyCode, string> = {
 export function formatCurrency(
   amount: number,
   currency: CurrencyCode = DEFAULT_CURRENCY,
+  locale: Locale = DEFAULT_LOCALE,
 ): string {
-  return new Intl.NumberFormat("fr-FR", {
+  return new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: "currency",
     currency,
     minimumFractionDigits: 0,
@@ -130,74 +138,41 @@ export function todayIsoLocal(): string {
 }
 
 /**
- * Day and month names, written out rather than asked of Intl.
- *
- * `Intl.DateTimeFormat("en-GB", { month: "short" })` is not the same string
- * everywhere: Node 20 ships an ICU that says "Sep" and current Chrome says
- * "Sept", and the short weekday picks up a comma in one and not the other.
- * Every one of these labels is rendered inside a client component, so the two
- * disagreeing is a hydration mismatch — React throws away the server's tree
- * and redraws the page on the client. Fixed tables cost nothing and cannot
- * drift with a Node upgrade.
+ * Day and month names come from `./i18n/calendar-names`, which still writes
+ * them out rather than asking Intl — see the comment there for why, and note
+ * that it applies more strongly now that there are two languages to disagree
+ * about, not less.
  */
-const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-/** Exported for the month grid, which labels twelve buttons with them. */
-export const MONTH_SHORT = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-const MONTH_LONG = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-const WEEKDAY_LONG = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
 
 /** "Sep 2026" — a month named next to its full year. */
-export function formatMonthShortYear(year: number, month: number): string {
-  return `${MONTH_SHORT[month - 1]} ${year}`;
+export function formatMonthShortYear(
+  year: number,
+  month: number,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  return `${monthShort(month, locale)} ${year}`;
 }
 
 /** "Sep 26" — the same, squeezed for an axis tick or a phone header. */
-export function formatMonthCompact(year: number, month: number): string {
-  return `${MONTH_SHORT[month - 1]} ${String(year).slice(-2)}`;
+export function formatMonthCompact(
+  year: number,
+  month: number,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  return `${monthShort(month, locale)} ${String(year).slice(-2)}`;
 }
 
 /** "Tuesday 1 September" — the unhurried form, for a calendar heading. */
-export function formatLongDate(isoDate: string): string {
+export function formatLongDate(
+  isoDate: string,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
   const [year, month, day] = isoDate.split("-").map(Number);
-  const weekday = WEEKDAY_LONG[new Date(year, month - 1, day).getDay()];
-  return `${weekday} ${day} ${MONTH_LONG[month - 1]}`;
+  const weekday =
+    calendarNames(locale).weekdayLong[
+      new Date(year!, month! - 1, day).getDay()
+    ];
+  return `${weekday} ${day} ${monthLong(month!, locale)}`;
 }
 
 /**
@@ -210,32 +185,45 @@ export function formatLongDate(isoDate: string): string {
  */
 export function relativeDayLabel(
   isoDate: string,
-  fallback: (isoDate: string) => string,
+  fallback: (isoDate: string, locale: Locale) => string,
+  locale: Locale = DEFAULT_LOCALE,
 ): string {
+  const t = translator(locale);
   const today = todayIsoLocal();
   if (isoDate === today) {
-    return "Today";
+    return t("calendar.today");
   }
 
   const [year, month, day] = today.split("-").map(Number);
-  const previous = new Date(year, month - 1, day - 1);
+  const previous = new Date(year!, month! - 1, day! - 1);
   const yesterday = `${previous.getFullYear()}-${String(
     previous.getMonth() + 1,
   ).padStart(2, "0")}-${String(previous.getDate()).padStart(2, "0")}`;
 
-  return isoDate === yesterday ? "Yesterday" : fallback(isoDate);
+  return isoDate === yesterday
+    ? t("calendar.yesterday")
+    : fallback(isoDate, locale);
 }
 
-export function formatShortDate(isoDate: string): string {
+export function formatShortDate(
+  isoDate: string,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
   const [year, month, day] = isoDate.split("-").map(Number);
-  const weekday = WEEKDAY_SHORT[new Date(year, month - 1, day).getDay()];
-  return `${weekday} ${day} ${MONTH_SHORT[month - 1]}`;
+  const weekday =
+    calendarNames(locale).weekdayShort[
+      new Date(year!, month! - 1, day).getDay()
+    ];
+  return `${weekday} ${day} ${monthShort(month!, locale)}`;
 }
 
 /** Compact day + month for toggles (e.g. "12 Aug"). */
-export function formatDayMonth(isoDate: string): string {
+export function formatDayMonth(
+  isoDate: string,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
   const [, month, day] = isoDate.split("-").map(Number);
-  return `${day} ${MONTH_SHORT[month - 1]}`;
+  return `${day} ${monthShort(month!, locale)}`;
 }
 
 export function getMonthBounds(year: number, month: number) {
@@ -280,8 +268,12 @@ export function shiftMonth(
   return { year: date.getFullYear(), month: date.getMonth() + 1 };
 }
 
-export function formatMonthLabel(year: number, month: number): string {
-  return `${MONTH_LONG[month - 1]} ${year}`;
+export function formatMonthLabel(
+  year: number,
+  month: number,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  return `${monthLong(month, locale)} ${year}`;
 }
 
 export type BudgetViewMode = "current" | "month_end";
@@ -295,20 +287,28 @@ export function budgetViewOptionLabel(
   mode: BudgetViewMode,
   year: number,
   month: number,
+  locale: Locale = DEFAULT_LOCALE,
 ): string {
+  const t = translator(locale);
   if (mode === "month_end") {
     const { end } = getMonthBounds(year, month);
-    return `End of month · ${formatDayMonth(end)}`;
+    return t("budgetView.monthEndOption", {
+      date: formatDayMonth(end, locale),
+    });
   }
-  return `Current · ${formatDayMonth(todayIsoLocal())}`;
+  return t("budgetView.currentOption", {
+    date: formatDayMonth(todayIsoLocal(), locale),
+  });
 }
 
-export function budgetViewHint(view: BudgetViewMode): string {
-  if (view === "month_end") {
-    return "Includes all recurring due this month, including wallet DCA.";
-  }
-
-  return "Through today only — future expenses and DCA not counted yet.";
+export function budgetViewHint(
+  view: BudgetViewMode,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  const t = translator(locale);
+  return view === "month_end"
+    ? t("budgetView.monthEndHint")
+    : t("budgetView.currentHint");
 }
 
 export function lastDayIsoOfMonth(year: number, month: number): string {

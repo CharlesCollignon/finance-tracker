@@ -20,6 +20,8 @@ import {
   saveBiometricUnlockEnabled,
 } from "@/lib/biometrics";
 import { useAuth } from "@/providers/AuthProvider";
+import { useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 interface BiometricLockContextValue {
   enabled: boolean;
@@ -35,6 +37,7 @@ const BiometricLockContext = createContext<BiometricLockContextValue | null>(
 );
 
 export function BiometricLockProvider({ children }: { children: ReactNode }) {
+  const t = useT();
   const { session, initializing, signOut } = useAuth();
   const [enabled, setEnabled] = useState(false);
   const [hardware, setHardware] = useState(false);
@@ -164,7 +167,9 @@ export function BiometricLockProvider({ children }: { children: ReactNode }) {
             </Text>
           </View>
           {message ? (
-            <Text className="text-center text-destructive">{message}</Text>
+            <Text className="text-center text-destructive">
+              {resolveMessage(t, message)}
+            </Text>
           ) : null}
           <View className="w-full max-w-sm gap-3">
             <Button
@@ -175,7 +180,7 @@ export function BiometricLockProvider({ children }: { children: ReactNode }) {
               }}
             />
             <Button
-              label="Use password"
+              label={t("common.usePassword")}
               variant="outline"
               disabled={prompting}
               onPress={() => {

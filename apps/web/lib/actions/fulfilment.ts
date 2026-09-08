@@ -53,7 +53,7 @@ export async function fulfilOccurrence(
 ): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = input.safeParse({ templateId, occurredOn, transactionId });
@@ -122,7 +122,7 @@ export async function refuseFulfilment(
 ): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = input.safeParse({ templateId, occurredOn, transactionId });
@@ -164,7 +164,7 @@ export async function undoFulfilment(
 ): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   if (

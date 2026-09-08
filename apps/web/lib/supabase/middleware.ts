@@ -1,6 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { parseRememberedMonth, MONTH_COOKIE } from "@finance/core/month-memory";
+import {
+  COUNTRY_COOKIE,
+  LOCALE_COOKIE,
+  negotiateLocale,
+  parseLocale,
+} from "@finance/core/i18n/locale";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
 /**
@@ -40,6 +46,43 @@ function restoredMonthUrl(request: NextRequest): URL | null {
   url.searchParams.set("y", String(remembered.year));
   url.searchParams.set("m", String(remembered.month));
   return url;
+}
+
+/**
+ * The language and the country, decided before anything renders.
+ *
+ * Both are written onto the response as cookies rather than passed on as
+ * headers, because both have to outlive this request: the language so that
+ * `Accept-Language` is negotiated once rather than on every navigation, and
+ * the country because `x-vercel-ip-country` exists only on the platform and a
+ * cookie is a cleaner absence than a header that means "no geo" in production
+ * and "not deployed" on a laptop.
+ *
+ * `request.geo` would have been the obvious place to read the country from,
+ * and was removed in Next 15 — the platform header is now the only source.
+ *
+ * A locale cookie that is already there is left alone. It is either the
+ * browser's negotiated guess from an earlier request or, for somebody signed
+ * in, the choice pushed into it at sign-in, and re-deciding it here would
+ * quietly overrule a reader who has chosen English in a French browser.
+ */
+function stampLocale(request: NextRequest, response: NextResponse): void {
+  if (!parseLocale(request.cookies.get(LOCALE_COOKIE)?.value)) {
+    response.cookies.set(
+      LOCALE_COOKIE,
+      negotiateLocale(request.headers.get("accept-language")),
+      { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" },
+    );
+  }
+
+  const country = request.headers.get("x-vercel-ip-country");
+  if (country) {
+    response.cookies.set(COUNTRY_COOKIE, country, {
+      path: "/",
+      maxAge: 60 * 60 * 24,
+      sameSite: "lax",
+    });
+  }
 }
 
 export async function updateSession(request: NextRequest) {
@@ -109,6 +152,11 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(restored);
     }
   }
+
+  // Last, and only on the response that will actually render something: the
+  // redirects above are followed immediately, and a cookie set on a redirect
+  // that is about to be replaced by another response is a cookie set twice.
+  stampLocale(request, supabaseResponse);
 
   return supabaseResponse;
 }

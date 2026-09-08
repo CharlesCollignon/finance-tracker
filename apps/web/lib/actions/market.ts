@@ -21,7 +21,7 @@ export async function searchInstrumentsAction(
 ): Promise<MarketActionResult<InstrumentSearchResult[]>> {
   const user = await requireUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   try {
@@ -37,7 +37,7 @@ export async function fetchInstrumentQuoteAction(
 ): Promise<MarketActionResult<InstrumentQuote>> {
   const user = await requireUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   try {
@@ -61,7 +61,7 @@ export async function estimateSharesAmountAction(
 > {
   const user = await requireUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   if (!Number.isFinite(shareCount) || shareCount <= 0) {

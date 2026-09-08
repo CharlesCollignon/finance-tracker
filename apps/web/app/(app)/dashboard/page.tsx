@@ -77,6 +77,7 @@ import { GLASS_CARD } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { cn } from "@/lib/utils";
 import type { BudgetProgress } from "@finance/core/budget-limits";
+import { getLocale, getT } from "@/lib/locale";
 import type {
   Category,
   RecurringTemplateWithCategory,
@@ -113,12 +114,14 @@ async function AttentionSlot({
   templates: RecurringTemplateWithCategory[];
   categories: Category[];
 }) {
+  const locale = await getLocale();
+  const t = await getT();
   const today = todayIsoLocal();
   const bankFed = await hasBankFeed(userId);
 
   const [pending, swallowed, proposals, applyPlan, arrived] = await Promise.all(
     [
-      bankFed ? getPendingFeedItems(userId) : [],
+      bankFed ? getPendingFeedItems(userId, locale) : [],
       bankFed ? countSwallowedFeedItems(userId) : 0,
       bankFed ? getRecurringProposals(userId, today) : [],
       // Only meaningful without a feed: with one, templates never apply.
@@ -136,22 +139,22 @@ async function AttentionSlot({
     items.push({
       id: "swallowed",
       tone: "wrong",
-      text: `${swallowed} bank ${swallowed === 1 ? "entry was" : "entries were"} merged away by an earlier sync`,
+      text: t("month.attentionSwallowed", { count: swallowed }),
       href: "/transactions",
-      action: "Reopen",
+      action: t("month.actionReopen"),
     });
   }
 
   if (pending.length > 0) {
     items.push({
       id: "inbox",
-      text: `${pending.length} ${pending.length === 1 ? "entry needs" : "entries need"} a category`,
+      text: t("month.attentionInbox", { count: pending.length }),
       // The review itself, not the page it lives on. Pressing Review used to
       // land on the Ledger with the inbox still shut behind a second Review
       // button, which is the same question asked twice and looks from here
       // like nothing happened.
       href: "/transactions?review=inbox",
-      action: "Review",
+      action: t("month.actionReview"),
     });
   }
 
@@ -159,11 +162,11 @@ async function AttentionSlot({
   if (creates > 0) {
     items.push({
       id: "apply",
-      text: `${creates} recurring ${creates === 1 ? "item is" : "items are"} ready to add`,
+      text: t("month.attentionApply", { count: creates }),
       // The Ledger, not the Charges list: applying writes rows, and the
       // button that writes them lives where the rows land.
       href: "/transactions",
-      action: "Apply",
+      action: t("month.actionApply"),
     });
   }
 
@@ -171,19 +174,21 @@ async function AttentionSlot({
     items.push({
       id: "close",
       text: closes.next.isBaseline
-        ? "Enter your account balance once, to start catching spending the app never sees"
-        : `${closes.next.label} is ready to close`,
+        ? t("month.attentionBaseline")
+        : t("month.attentionReadyToClose", { month: closes.next.label }),
       href: "/budgets",
-      action: closes.next.isBaseline ? "Start" : "Close",
+      action: closes.next.isBaseline
+        ? t("month.actionStart")
+        : t("month.actionClose"),
     });
   }
 
   if (proposals.length > 0) {
     items.push({
       id: "proposals",
-      text: `${proposals.length} ${proposals.length === 1 ? "charge looks" : "charges look"} like they repeat`,
+      text: t("month.attentionProposals", { count: proposals.length }),
       href: "/recurring",
-      action: "Review",
+      action: t("month.actionReview"),
     });
   }
 
@@ -222,12 +227,22 @@ async function ReadSlot({
   monthLabel: string;
 }) {
   const configured = monthReadConfigured();
+  const locale = await getLocale();
   const facts = await gatherMonthFacts(userId, year, month);
 
   const [view, { stored }] = await Promise.all([
     getMonthRead(userId, year, month, facts),
     readMonthReadState(userId, year, month),
   ]);
+
+  // A read stays in the language it was written in, so its figures have to be
+  // labelled in that language too — otherwise a French paragraph comes back
+  // with English labels dropped into its sentences. Only built when the two
+  // actually differ, which is rare and only after somebody switches.
+  const readFacts =
+    view && view.locale !== locale
+      ? await gatherMonthFacts(userId, year, month, undefined, view.locale)
+      : facts;
 
   return (
     <MonthRead
@@ -237,6 +252,8 @@ async function ReadSlot({
       read={view?.read ?? null}
       freshness={view?.freshness ?? null}
       facts={facts}
+      readFacts={readFacts}
+      readLocale={view?.locale ?? locale}
       writesLeft={writesRemaining(stored?.tally ?? null)}
       configured={configured}
     />
@@ -329,6 +346,7 @@ async function WalletsSlot({ userId }: { userId: string }) {
 export default async function DashboardPage({
   searchParams,
 }: DashboardPageProps) {
+  const t = await getT();
   const user = await getAuthUser();
 
   if (!user) {
@@ -347,6 +365,7 @@ export default async function DashboardPage({
   // Whether a balance could exist at all, as against whether one was read.
   // The hero needs the difference to explain itself honestly.
   const bankConnected = bankFeedConfigured();
+  const locale = await getLocale();
 
   const [
     summary,
@@ -389,6 +408,7 @@ export default async function DashboardPage({
     summary.expenseBreakdown,
     summary.expenses,
     categoryNames,
+    locale,
   );
   const goalProgress = buildSavingsGoalProgress(
     goals,
@@ -452,7 +472,7 @@ export default async function DashboardPage({
 
   return (
     <>
-      <PageHeader title="Month">
+      <PageHeader titleKey="nav.month">
         <Suspense fallback={null}>
           <BudgetViewToggle basePath="/dashboard" className="hidden sm:flex" />
         </Suspense>
@@ -559,7 +579,7 @@ export default async function DashboardPage({
             server as they always did and opening this costs nothing. */}
         <div className="xl:col-span-12">
           <Disclosure
-            label="More this month"
+            label={t("month.moreThisMonth")}
             contentClassName="xl:grid xl:grid-cols-2 xl:items-start xl:gap-6"
           >
             {/* After the figures, never before them. The read interprets what

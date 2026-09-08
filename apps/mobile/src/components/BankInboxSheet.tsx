@@ -26,6 +26,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON, TYPE } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 
 interface BankInboxSheetProps {
   open: boolean;
@@ -83,6 +84,8 @@ export function BankInboxSheet({
   recentCategoryIds = [],
   onDecided,
 }: BankInboxSheetProps) {
+  const t = useT();
+  const locale = useLocale();
   const colors = useThemeColors();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
@@ -199,7 +202,7 @@ export function BankInboxSheet({
 
   function add(item: PendingFeedRow) {
     if (!selected) {
-      toast("Pick a category first", "error");
+      toast(t("inbox.pickCategoryFirst"), "error");
       return;
     }
     const name =
@@ -249,7 +252,11 @@ export function BankInboxSheet({
           </Text>
         ) : null}
       </View>
-      <Pressable onPress={close} accessibilityLabel="Close" hitSlop={8}>
+      <Pressable
+        onPress={close}
+        accessibilityLabel={t("inbox.close")}
+        hitSlop={8}
+      >
         <Text variant="muted">Close</Text>
       </Pressable>
     </View>
@@ -265,7 +272,7 @@ export function BankInboxSheet({
     >
       <View className="flex-1 justify-end bg-black/50">
         <Pressable
-          accessibilityLabel="Close"
+          accessibilityLabel={t("inbox.close")}
           className="flex-1"
           onPress={close}
         />
@@ -319,9 +326,9 @@ export function BankInboxSheet({
                     <TextInput
                       value={query}
                       onChangeText={setQuery}
-                      placeholder="Filter categories…"
+                      placeholder={t("inbox.filterCategoriesPlaceholder")}
                       placeholderTextColor={colors.mutedForeground}
-                      accessibilityLabel="Filter categories"
+                      accessibilityLabel={t("inbox.filterCategories")}
                       className="h-10 flex-1 font-sans text-sm text-foreground"
                     />
                   </View>
@@ -397,7 +404,7 @@ export function BankInboxSheet({
                           >
                             <CategoryIcon icon={category.icon} />
                             <Text className="flex-1 text-sm">
-                              {formatCategoryOptionLabel(category)}
+                              {formatCategoryOptionLabel(category, locale)}
                             </Text>
                           </Pressable>
                         );
@@ -411,7 +418,7 @@ export function BankInboxSheet({
                   not depend on where the category list happens to be. */}
               <View className="mt-4 flex-row items-center gap-2">
                 <Button
-                  label={pending ? "Adding…" : "Add"}
+                  label={pending ? t("inbox.adding") : t("inbox.add")}
                   className="flex-1"
                   disabled={pending || !selected}
                   onPress={() => add(current)}
@@ -447,7 +454,7 @@ export function BankInboxSheet({
                     original one. */}
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Decide this one later"
+                  accessibilityLabel={t("inbox.later")}
                   accessibilityState={{ disabled: pending }}
                   disabled={pending}
                   onPress={() => {
@@ -480,15 +487,15 @@ export function BankInboxSheet({
                 />
                 <Text className="text-base font-medium">
                   {session.answered.length > 0
-                    ? "That's the inbox"
-                    : "Nothing waiting"}
+                    ? t("inbox.thatsTheInbox")
+                    : t("inbox.nothingWaiting")}
                 </Text>
                 <Text variant="muted" className="text-center text-sm">
                   {session.later.length > 0
-                    ? `${session.later.length} left for later — ${
-                        session.later.length === 1 ? "it is" : "they are"
-                      } still in the inbox.`
-                    : "Anything the app already recognised went straight in. Answering these teaches it for next time."}
+                    ? t("inbox.leftForLater", {
+                        count: session.later.length,
+                      })
+                    : t("inbox.taughtIt")}
                 </Text>
               </View>
 
@@ -538,7 +545,7 @@ export function BankInboxSheet({
               ) : null}
 
               <Button
-                label="Done"
+                label={t("inbox.done")}
                 variant="outline"
                 className="mt-4"
                 onPress={close}

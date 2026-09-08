@@ -16,6 +16,9 @@ import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
+import type { Locale } from "@finance/core/i18n/locale";
+import { LOCALE_LABELS } from "@finance/core/i18n/locale";
+import { useLocale, useT } from "@/lib/locale-context";
 
 interface MonthReadProps {
   year: number;
@@ -26,6 +29,16 @@ interface MonthReadProps {
   freshness: ReadFreshness | null;
   /** The figures as they stand now — what the read renders against. */
   facts: MonthFacts;
+  /**
+   * The same figures, labelled in the language the read was written in.
+   *
+   * Identical to `facts` in the ordinary case. They diverge only after
+   * somebody switches language with a read already stored, and then only in
+   * their labels — which is exactly what the prose refers to.
+   */
+  readFacts: MonthFacts;
+  /** The language the prose is in, which may not be the reader's. */
+  readLocale: Locale;
   writesLeft: number;
   /** Whether a writer exists on this deployment at all. */
   configured: boolean;
@@ -55,15 +68,26 @@ export function MonthRead({
   read,
   freshness,
   facts,
+  readFacts,
+  readLocale,
   writesLeft,
   configured,
 }: MonthReadProps) {
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
+  const locale = useLocale();
+  const t = useT();
   const [pending, startTransition] = useTransition();
   const [left, setLeft] = useState(writesLeft);
 
-  const rendered = read ? renderMonthRead(read, facts, formatMoney) : null;
+  const rendered = read
+    ? renderMonthRead(read, readFacts, formatMoney, readLocale)
+    : null;
+  // Stated rather than smoothed over. A reader who has switched language and
+  // finds a paragraph in the old one should be told why, and offered the one
+  // action that fixes it — writing a new read — rather than left to wonder
+  // whether the app is broken.
+  const inAnotherLanguage = Boolean(rendered) && readLocale !== locale;
 
   // Nothing to show and nothing that could be written. The same honesty as
   // the bank capability probe: no broken button on a deployment with no key.
@@ -161,6 +185,14 @@ export function MonthRead({
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-foreground/10 pt-3">
         <p className="text-xs text-muted-foreground">
           {freshness ? <Standing freshness={freshness} /> : null}
+          {inAnotherLanguage ? (
+            <>
+              {freshness ? " " : null}
+              {t("monthRead.writtenInOtherLanguage", {
+                language: LOCALE_LABELS[readLocale],
+              })}
+            </>
+          ) : null}
         </p>
 
         {configured ? (

@@ -10,6 +10,7 @@ import { hapticLight } from "@/lib/haptics";
 import { cn } from "@/lib/cn";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 function initialFor(email: string | undefined, name: string | undefined) {
   const source = (name ?? email ?? "?").trim();
@@ -24,6 +25,7 @@ function initialFor(email: string | undefined, name: string | undefined) {
  * palette to switch to.
  */
 export function AccountMenu() {
+  const t = useT();
   const { user, signOut } = useAuth();
   const router = useRouter();
   const colors = useThemeColors();
@@ -41,7 +43,7 @@ export function AccountMenu() {
     <>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Account menu"
+        accessibilityLabel={t("common.accountMenu")}
         hitSlop={6}
         onPress={() => {
           void hapticLight();
@@ -60,7 +62,7 @@ export function AccountMenu() {
         onRequestClose={() => setOpen(false)}
       >
         <Pressable
-          accessibilityLabel="Close account menu"
+          accessibilityLabel={t("common.closeAccountMenu")}
           className="flex-1 bg-black/25"
           onPress={() => setOpen(false)}
         >

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
 import React, { HTMLAttributes, ReactNode } from "react";
 import { X } from "@phosphor-icons/react";
+import { useT } from "@/lib/locale-context";
 
 const Dialog = BaseDialog.Root;
 const DialogTrigger = BaseDialog.Trigger;
@@ -181,10 +182,14 @@ const dialogHeaderVariants = cva(
 );
 
 const DialogHeaderDefaultLayout = ({ children }: { children: ReactNode }) => {
+  const t = useT();
   return (
     <>
       {children}
-      <BaseDialog.Close title="Close pop-up" className="cursor-pointer">
+      <BaseDialog.Close
+        title={t("common.closePopUp")}
+        className="cursor-pointer"
+      >
         <X />
       </BaseDialog.Close>
     </>

@@ -27,6 +27,8 @@ import { saveWithOutbox } from "@/lib/offline-outbox";
 import { useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
+import { useLocale, useT } from "@/lib/locale-context";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", USD: "$" };
 
@@ -141,7 +143,9 @@ function QuickAddFields({
     return suggestMerchants(merchantIndex, note, 3);
   }, [merchantIndex, note, noteFocused]);
 
-  const display = formatAmountInput(amount, "fr-FR");
+  const locale = useLocale();
+  const t = useT();
+  const display = formatAmountInput(amount, locale);
   const canSave = isAmountInputComplete(amount) && categoryId !== "";
 
   /** Applies everything a remembered merchant knows, without overwriting
@@ -196,9 +200,7 @@ function QuickAddFields({
 
     if (!andAnother) {
       toast(
-        result.queued
-          ? "Saved on this device — it will sync when you are back online"
-          : "Transaction saved",
+        result.queued ? t("quickAdd.savedOffline") : t("quickAdd.saved"),
         "success",
       );
       onOpenChange(false);
@@ -218,7 +220,7 @@ function QuickAddFields({
     <MobileSheet
       open={open}
       onOpenChange={onOpenChange}
-      title="Add transaction"
+      title={t("quickAdd.title")}
     >
       <div className="flex flex-col gap-5">
         {/* ---- amount ------------------------------------------------- */}
@@ -263,8 +265,8 @@ function QuickAddFields({
         {/* ---- date --------------------------------------------------- */}
         <div className="flex flex-wrap items-center gap-2">
           {[
-            { label: "Today", value: today },
-            { label: "Yesterday", value: shiftDays(today, -1) },
+            { label: t("calendar.today"), value: today },
+            { label: t("calendar.yesterday"), value: shiftDays(today, -1) },
           ].map((option) => (
             <button
               key={option.value}
@@ -282,7 +284,7 @@ function QuickAddFields({
           ))}
           <input
             type="date"
-            aria-label="Date"
+            aria-label={t("quickAdd.date")}
             value={occurredOn}
             onChange={(event) => setOccurredOn(event.target.value)}
             className="min-h-9 rounded-full border border-border bg-background px-3 text-sm"
@@ -291,7 +293,7 @@ function QuickAddFields({
 
         {/* ---- category ----------------------------------------------- */}
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium">Category</span>
+          <span className="text-sm font-medium">{t("quickAdd.category")}</span>
 
           {recentCategories.length > 0 && !query.trim() ? (
             <div className="flex flex-wrap gap-2">
@@ -319,8 +321,8 @@ function QuickAddFields({
           {categories.length > SEARCH_THRESHOLD ? (
             <input
               type="search"
-              aria-label="Search categories"
-              placeholder="Search categories…"
+              aria-label={t("quickAdd.searchCategories")}
+              placeholder={t("quickAdd.searchCategoriesPlaceholder")}
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);
@@ -336,7 +338,7 @@ function QuickAddFields({
               onClick={() => setShowAllCategories(true)}
               className="self-start text-sm text-muted-foreground underline underline-offset-4"
             >
-              {formatCategoryOptionLabel(selected)} — change
+              {formatCategoryOptionLabel(selected, locale)} — change
             </button>
           ) : null}
 
@@ -401,7 +403,7 @@ function QuickAddFields({
             id="quick-note"
             type="text"
             autoComplete="off"
-            placeholder="Where did it go?"
+            placeholder={t("quickAdd.notePlaceholder")}
             value={note}
             onChange={(event) => setNote(event.target.value)}
             onFocus={() => setNoteFocused(true)}
@@ -467,7 +469,9 @@ function QuickAddFields({
           </fieldset>
         ) : null}
 
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        {error ? (
+          <p className="text-sm text-destructive">{resolveMessage(t, error)}</p>
+        ) : null}
 
         {savedCount > 0 ? (
           <p className="flex items-center gap-2 text-sm text-success">
@@ -487,7 +491,7 @@ function QuickAddFields({
             disabled={!canSave || pending}
             onClick={() => void save(false)}
           >
-            {pending ? "Saving…" : "Save"}
+            {pending ? t("quickAdd.saving") : t("quickAdd.save")}
           </Button>
           <Button
             type="button"

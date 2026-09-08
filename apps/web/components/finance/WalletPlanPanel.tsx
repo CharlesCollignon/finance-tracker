@@ -25,6 +25,7 @@ import { saveWalletPlan, saveWalletTargets } from "@/lib/actions/investments";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
+import { useLocale, useT } from "@/lib/locale-context";
 
 interface WalletPlanPanelProps {
   portfolio: InvestmentPortfolioSummary;
@@ -49,7 +50,9 @@ export function WalletPlanPanel({
   plans,
   monthlyContribution,
 }: WalletPlanPanelProps) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
+  const locale = useLocale();
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -107,7 +110,7 @@ export function WalletPlanPanel({
       )
     : null;
 
-  const portfolioRate = formatAnnualRate(returns.total.rate);
+  const portfolioRate = formatAnnualRate(returns.total.rate, locale);
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -129,7 +132,7 @@ export function WalletPlanPanel({
               )}
             >
               {portfolioRate ??
-                returnUnavailableLabel(returns.total.unavailableReason)}
+                returnUnavailableLabel(returns.total.unavailableReason, locale)}
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -153,14 +156,14 @@ export function WalletPlanPanel({
       {/* ---- allocation -------------------------------------------- */}
       <Card.Bezel className="w-full" innerClassName="p-5 md:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-head text-base">Allocation</h2>
+          <h2 className="font-head text-base">{t("position.allocation")}</h2>
           <Button
             variant="link"
             size="sm"
             onClick={() => setEditing((value) => !value)}
           >
             <PencilSimple size={ICON.sm} className="mr-1 inline" />
-            {editing ? "Cancel" : "Set targets"}
+            {editing ? t("position.cancel") : t("position.setTargets")}
           </Button>
         </div>
 
@@ -180,7 +183,7 @@ export function WalletPlanPanel({
                   toast(result.error, "error");
                   return;
                 }
-                toast("Targets saved", "success");
+                toast(t("position.targetsSaved"), "success");
                 setEditing(false);
               })
             }
@@ -189,7 +192,7 @@ export function WalletPlanPanel({
           <ul className="mt-4 flex flex-col gap-3">
             {allocation.rows.map((row) => {
               const walletReturn = returnByWallet.get(row.walletId);
-              const rate = formatAnnualRate(walletReturn?.rate ?? null);
+              const rate = formatAnnualRate(walletReturn?.rate ?? null, locale);
 
               return (
                 <li key={row.walletId} className="flex flex-col gap-1.5">
@@ -314,7 +317,7 @@ export function WalletPlanPanel({
 
           <PeaOpenedField
             openedOn={peaPlan?.opened_on ?? null}
-            hint={peaMaturityHint(peaStatus)}
+            hint={peaMaturityHint(peaStatus, locale)}
           />
         </Card.Bezel>
       ) : null}
@@ -331,6 +334,7 @@ function TargetEditor({
   pending: boolean;
   onSave: (targets: WalletTarget[]) => void;
 }) {
+  const t = useT();
   const [draft, setDraft] = useState(() =>
     initial.map((target) => ({
       walletId: target.walletId,
@@ -391,7 +395,7 @@ function TargetEditor({
           )
         }
       >
-        {pending ? "Saving…" : "Save targets"}
+        {pending ? t("position.saving") : t("position.saveTargets")}
       </Button>
     </div>
   );
@@ -405,6 +409,7 @@ function PeaOpenedField({
   openedOn: string | null;
   hint: string | null;
 }) {
+  const t = useT();
   const { toast } = useToast();
   const [value, setValue] = useState(openedOn ?? "");
   const [pending, startTransition] = useTransition();
@@ -436,11 +441,11 @@ function PeaOpenedField({
                 toast(result.error, "error");
                 return;
               }
-              toast("Saved", "success");
+              toast(t("position.saved"), "success");
             })
           }
         >
-          {pending ? "Saving…" : "Save"}
+          {pending ? t("position.saving") : t("position.save")}
         </Button>
       </div>
       {hint ? (

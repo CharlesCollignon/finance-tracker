@@ -17,6 +17,7 @@ import { useFormatCurrency } from "@/lib/use-currency";
 import { updateCloseDay, updateUnrecordedCap } from "@/lib/actions/month-close";
 import type { ClosedMonthRow } from "@/lib/queries/month-close";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface MonthCloseHistoryProps {
   history: ClosedMonthRow[];
@@ -39,6 +40,7 @@ export function MonthCloseHistory({
   unrecordedCap,
   closeDay,
 }: MonthCloseHistoryProps) {
+  const t = useT();
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
   const [capDraft, setCapDraft] = useState(
@@ -113,7 +115,7 @@ export function MonthCloseHistory({
                 placeholder="180"
                 value={capDraft}
                 onChange={(event) => setCapDraft(event.target.value)}
-                aria-label="Unrecorded allowance"
+                aria-label={t("common.unrecordedAllowance")}
               />
               <Button
                 type="button"

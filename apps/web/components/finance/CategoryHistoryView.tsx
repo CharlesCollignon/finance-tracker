@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Info, TrendDown, TrendUp } from "@phosphor-icons/react";
 import type { CategoryHistory } from "@finance/core/category-history";
-import { CATEGORY_TYPE_LABELS } from "@finance/core/category-styles";
+import { categoryTypeLabels } from "@finance/core/category-styles";
 import { BarSeries } from "@/components/finance/charts";
 import { Card } from "@/components/retroui/Card";
 import { cn } from "@/lib/utils";
@@ -58,7 +58,7 @@ export function CategoryHistoryView({
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <Card.Title>{selected.name}</Card.Title>
             <span className="text-sm text-muted-foreground">
-              {CATEGORY_TYPE_LABELS[selected.type]} · last {months} months
+              {categoryTypeLabels()[selected.type]} · last {months} months
             </span>
           </div>
           <Card.Description>

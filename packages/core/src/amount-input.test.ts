@@ -142,16 +142,16 @@ describe("formatAmountInput", () => {
 
   it("groups thousands in the integer part", () => {
     // fr-FR groups with a narrow no-break space.
-    expect(formatAmountInput("1234", "fr-FR").integer).toBe("1 234");
-    expect(formatAmountInput("1234", "en-GB").integer).toBe("1,234");
+    expect(formatAmountInput("1234", "fr").integer).toBe("1 234");
+    expect(formatAmountInput("1234", "en").integer).toBe("1,234");
   });
 
   it("keeps a trailing separator visible while typing", () => {
-    expect(formatAmountInput("12.", "en-GB").fraction).toBe(".");
+    expect(formatAmountInput("12.", "en").fraction).toBe(".");
   });
 
   it("uses the locale's decimal separator", () => {
-    expect(formatAmountInput("12.5", "fr-FR").fraction).toBe(",5");
-    expect(formatAmountInput("12.5", "en-GB").fraction).toBe(".5");
+    expect(formatAmountInput("12.5", "fr").fraction).toBe(",5");
+    expect(formatAmountInput("12.5", "en").fraction).toBe(".5");
   });
 });

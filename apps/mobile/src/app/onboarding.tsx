@@ -23,6 +23,7 @@ import { getCategories } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
+import { useT } from "@/providers/LocaleProvider";
 
 const CURRENCIES: CurrencyCode[] = ["EUR", "USD"];
 
@@ -39,6 +40,7 @@ const STEP_ORDER: Step[] = ["currency", "income", "recurring", "cap", "done"];
  * screen of zeros that gives a new user nothing to react to.
  */
 export default function OnboardingScreen() {
+  const t = useT();
   const { user } = useAuth();
   const router = useRouter();
   const { currency, setCurrency } = useCurrency();
@@ -109,7 +111,7 @@ export default function OnboardingScreen() {
     const ok = await saveMonthly(incomeCategory.id, incomeAmount, incomeDay);
     setPending(false);
     if (ok) {
-      toast("Income added", "success");
+      toast(t("onboarding.incomeAdded"), "success");
       setStep("recurring");
     }
   }
@@ -155,7 +157,7 @@ export default function OnboardingScreen() {
 
   return (
     <Screen
-      title="Set up"
+      title={t("common.setUp")}
       showPrivacyToggle={false}
       showAccountMenu={false}
       showLogo={false}
@@ -182,17 +184,17 @@ export default function OnboardingScreen() {
             <View className="items-center gap-3">
               <Logo size="hero" />
               <Text className="text-center text-2xl font-bold">
-                Welcome to Pluclair
+                {t("onboarding.welcomeTitle")}
               </Text>
               <Text variant="muted" className="text-center">
-                Two minutes now and your dashboard will have real numbers in it
+                {t("onboarding.welcomeBody")}
                 instead of zeros.
               </Text>
             </View>
 
             <Card bezel innerClassName="gap-3 p-5">
               <Text className="text-base font-semibold">
-                Which currency do you think in?
+                {t("onboarding.currencyTitle")}
               </Text>
               <Text variant="muted" className="text-sm">
                 Every amount in the app is shown this way. You can change it
@@ -232,7 +234,7 @@ export default function OnboardingScreen() {
             </Card>
 
             <Button
-              label="Continue"
+              label={t("onboarding.continue")}
               size="lg"
               onPress={() => setStep("income")}
             />
@@ -242,22 +244,25 @@ export default function OnboardingScreen() {
         {step === "income" ? (
           <FadeIn className="gap-6">
             <View className="gap-2">
-              <Text className="text-2xl font-bold">What comes in?</Text>
-              <Text variant="muted">
-                Your monthly income is what everything else is measured against.
-                Add it once and it repeats every month.
+              <Text className="text-2xl font-bold">
+                {t("onboarding.incomeTitle")}
               </Text>
+              <Text variant="muted">{t("onboarding.incomeBody")}</Text>
             </View>
 
             <Card bezel innerClassName="gap-3 p-5">
-              <Text className="text-sm font-medium">Monthly amount</Text>
+              <Text className="text-sm font-medium">
+                {t("onboarding.monthlyAmount")}
+              </Text>
               <Input
                 value={incomeAmount}
                 onChangeText={setIncomeAmount}
                 keyboardType="decimal-pad"
                 placeholder="0.00"
               />
-              <Text className="mt-1 text-sm font-medium">Day of the month</Text>
+              <Text className="mt-1 text-sm font-medium">
+                {t("onboarding.dayOfMonth")}
+              </Text>
               <Input
                 value={incomeDay}
                 onChangeText={setIncomeDay}
@@ -268,13 +273,15 @@ export default function OnboardingScreen() {
 
             <View className="gap-2">
               <Button
-                label={pending ? "Saving…" : "Add income"}
+                label={
+                  pending ? t("onboarding.saving") : t("onboarding.addIncome")
+                }
                 size="lg"
                 disabled={pending || !incomeAmount.trim()}
                 onPress={handleIncome}
               />
               <Button
-                label="Skip for now"
+                label={t("onboarding.skipForNow")}
                 variant="ghost"
                 onPress={() => setStep("recurring")}
               />
@@ -285,15 +292,19 @@ export default function OnboardingScreen() {
         {step === "recurring" ? (
           <FadeIn className="gap-6">
             <View className="gap-2">
-              <Text className="text-2xl font-bold">What goes out?</Text>
+              <Text className="text-2xl font-bold">
+                {t("onboarding.expensesTitle")}
+              </Text>
               <Text variant="muted">
-                Rent, subscriptions, bills — the charges you already know are
+                {t("onboarding.expensesBody")}
                 coming. These are what make the forecast useful.
               </Text>
             </View>
 
             <Card bezel innerClassName="gap-3 p-5">
-              <Text className="text-sm font-medium">Category</Text>
+              <Text className="text-sm font-medium">
+                {t("onboarding.category")}
+              </Text>
               <View className="flex-row flex-wrap gap-2">
                 {expenseCategories.slice(0, 8).map((category) => {
                   const selected = expenseName === category.id;
@@ -317,14 +328,18 @@ export default function OnboardingScreen() {
                 })}
               </View>
 
-              <Text className="mt-2 text-sm font-medium">Monthly amount</Text>
+              <Text className="mt-2 text-sm font-medium">
+                {t("onboarding.monthlyAmount")}
+              </Text>
               <Input
                 value={expenseAmount}
                 onChangeText={setExpenseAmount}
                 keyboardType="decimal-pad"
                 placeholder="0.00"
               />
-              <Text className="mt-1 text-sm font-medium">Day of the month</Text>
+              <Text className="mt-1 text-sm font-medium">
+                {t("onboarding.dayOfMonth")}
+              </Text>
               <Input
                 value={expenseDay}
                 onChangeText={setExpenseDay}
@@ -332,26 +347,28 @@ export default function OnboardingScreen() {
                 placeholder="1"
               />
               <Button
-                label={pending ? "Adding…" : "Add this one"}
+                label={
+                  pending ? t("onboarding.adding") : t("onboarding.addThisOne")
+                }
                 variant="outline"
                 disabled={pending || !expenseName || !expenseAmount.trim()}
                 onPress={handleExpense}
               />
               {added > 0 ? (
                 <Text variant="muted" className="text-center text-xs">
-                  {`${added} added — add another or finish below.`}
+                  {t("onboarding.addedCount", { count: added })}
                 </Text>
               ) : null}
             </Card>
 
             <View className="gap-2">
               <Button
-                label="Continue"
+                label={t("onboarding.continue")}
                 size="lg"
                 onPress={() => setStep("cap")}
               />
               <Button
-                label="Skip for now"
+                label={t("onboarding.skipForNow")}
                 variant="ghost"
                 onPress={() => setStep("cap")}
               />
@@ -363,16 +380,15 @@ export default function OnboardingScreen() {
           <FadeIn className="gap-6">
             <View className="gap-2">
               <Text className="text-2xl font-bold">
-                What would you rather not overspend?
+                {t("onboarding.capTitle")}
               </Text>
-              <Text variant="muted">
-                Pick one category and a monthly cap. Month will show a ring that
-                fills as you spend against it. You can add more under Plan.
-              </Text>
+              <Text variant="muted">{t("onboarding.capBody")}</Text>
             </View>
 
             <Card bezel innerClassName="gap-3 p-5">
-              <Text className="text-sm font-medium">Category</Text>
+              <Text className="text-sm font-medium">
+                {t("onboarding.category")}
+              </Text>
               <View className="flex-row flex-wrap gap-2">
                 {expenseCategories.slice(0, 8).map((category) => {
                   const selected = capCategory === category.id;
@@ -399,7 +415,9 @@ export default function OnboardingScreen() {
                 })}
               </View>
 
-              <Text className="mt-2 text-sm font-medium">Monthly cap</Text>
+              <Text className="mt-2 text-sm font-medium">
+                {t("onboarding.monthlyCap")}
+              </Text>
               <Input
                 value={capAmount}
                 onChangeText={setCapAmount}
@@ -410,7 +428,11 @@ export default function OnboardingScreen() {
 
             <View className="gap-2">
               <Button
-                label={pending ? "Saving…" : "Set the cap and finish"}
+                label={
+                  pending
+                    ? t("onboarding.saving")
+                    : t("onboarding.setCapAndFinish")
+                }
                 size="lg"
                 disabled={pending || !capCategory || !capAmount.trim()}
                 onPress={() => {
@@ -418,7 +440,7 @@ export default function OnboardingScreen() {
                 }}
               />
               <Button
-                label="Skip for now"
+                label={t("onboarding.skipForNow")}
                 variant="ghost"
                 disabled={pending}
                 onPress={() => {

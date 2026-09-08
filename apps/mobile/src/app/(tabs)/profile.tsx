@@ -18,6 +18,9 @@ import {
   remindersEnabled,
 } from "@/lib/notifications";
 import { useCurrency } from "@/providers/CurrencyProvider";
+import { CURRENCY_LABELS } from "@finance/core/constants";
+import { useLocaleContext } from "@/providers/LocaleProvider";
+import { LOCALE_LABELS, LOCALES } from "@finance/core/i18n/locale";
 import { deleteAllUserData, updateProfile } from "@/lib/mutations";
 import { supabase } from "@/lib/supabase";
 import { useTabBarClearance } from "@/theme/chrome";
@@ -31,6 +34,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { toast } = useToast();
   const { currency, setCurrency } = useCurrency();
+  const { locale, setLocale, t } = useLocaleContext();
   const biometrics = useBiometricLock();
 
   const [open, setOpen] = useState<OpenRow>(null);
@@ -59,13 +63,13 @@ export default function ProfileScreen() {
     if (!next) {
       await disableReminders();
       setReminders(false);
-      toast("Reminders off");
+      toast(t("common.remindersOff"));
       return;
     }
     const { granted, remoteReady } = await enableReminders();
     setReminders(granted);
     if (!granted) {
-      toast("Reminders need notification permission", "error");
+      toast(t("common.remindersNeedPermission"), "error");
       return;
     }
     // Said plainly rather than swallowed. Without it the switch reports
@@ -126,7 +130,7 @@ export default function ProfileScreen() {
 
   async function handleDeleteAccount() {
     if (confirmAccount !== "DELETE") {
-      toast("Type DELETE to confirm.", "error");
+      toast(t("common.typeDeleteToConfirm"), "error");
       return;
     }
 
@@ -162,7 +166,7 @@ export default function ProfileScreen() {
       : undefined;
 
   return (
-    <Screen title="Profile">
+    <Screen title={t("nav.profile")}>
       <ScrollView
         contentContainerClassName="gap-6 pt-1"
         contentContainerStyle={{ paddingBottom: tabBarClearance }}
@@ -178,15 +182,17 @@ export default function ProfileScreen() {
               {(fullName || user?.email || "?").slice(0, 1).toUpperCase()}
             </Text>
           </View>
-          <Text variant="head">{fullName || "No name yet"}</Text>
+          <Text variant="head">{fullName || t("profile.noName")}</Text>
           <Text variant="micro">{user?.email}</Text>
         </Card>
 
-        <ListSection title="Account">
+        <ListSection title={t("profile.accountSection")}>
           <ListRow
             icon="person-outline"
-            label="Name"
-            value={open === "name" ? undefined : fullName || "Not set"}
+            label={t("profile.name")}
+            value={
+              open === "name" ? undefined : fullName || t("profile.notSet")
+            }
             onPress={() => toggle("name")}
             expanded={
               open === "name" ? (
@@ -194,13 +200,13 @@ export default function ProfileScreen() {
                   <Input
                     value={fullName}
                     onChangeText={setFullName}
-                    accessibilityLabel="Display name"
-                    placeholder="Your name"
+                    accessibilityLabel={t("profile.displayName")}
+                    placeholder={t("profile.namePlaceholder")}
                     returnKeyType="done"
                     onSubmitEditing={() => void handleSaveProfile()}
                   />
                   <Button
-                    label={pending ? "Saving…" : "Save"}
+                    label={pending ? t("profile.saving") : t("profile.save")}
                     disabled={pending}
                     onPress={() => void handleSaveProfile()}
                   />
@@ -208,45 +214,63 @@ export default function ProfileScreen() {
               ) : null
             }
           />
-          <ListRow icon="mail-outline" label="Email" value={user?.email} />
+          <ListRow
+            icon="mail-outline"
+            label={t("profile.email")}
+            value={user?.email}
+          />
           <ListRow
             icon="log-in-outline"
-            label="Signed in with"
+            label={t("profile.signedInWith")}
             value={provider}
           />
         </ListSection>
 
         <ListSection
-          title="Money"
-          footer="Currency changes the symbol, not the amounts."
+          title={t("profile.moneySection")}
+          footer={t("profile.moneyFooter")}
         >
           <ListRow
             icon="pricetags-outline"
-            label="Categories"
+            label={t("profile.categories")}
             onPress={() => router.push("/categories" as Href)}
           />
           <ListRow
             icon="flag-outline"
-            label="Budgets & goals"
+            label={t("profile.budgetsAndGoals")}
             onPress={() => router.push("/planning" as Href)}
           />
           <ListRow
             icon="cash-outline"
-            label="Currency"
-            value={currency === "EUR" ? "Euro (€)" : "US Dollar ($)"}
+            label={t("profile.currency")}
+            value={CURRENCY_LABELS[currency]}
             onPress={() => setCurrency(currency === "EUR" ? "USD" : "EUR")}
+          />
+          {/* Beside Currency because they are the two preferences that change
+              how a figure reads. A cycle rather than a picker while there are
+              two languages, matching the row above; it becomes a sheet when a
+              third arrives. */}
+          <ListRow
+            icon="language-outline"
+            label={t("locale.settingLabel")}
+            value={LOCALE_LABELS[locale]}
+            onPress={() =>
+              setLocale(
+                LOCALES[(LOCALES.indexOf(locale) + 1) % LOCALES.length]!,
+              )
+            }
           />
         </ListSection>
 
-        <ListSection title="Security">
+        <ListSection title={t("profile.securitySection")}>
           <ListRow
             icon="finger-print-outline"
-            label="App unlock"
+            label={t("profile.appUnlock")}
             value={biometricsNote}
             disabled={!biometricsReady}
             trailing={
               <Switch
-                accessibilityLabel="Unlock with biometrics"
+                accessibilityLabel={t("profile.unlockWithBiometrics")}
                 value={biometrics.enabled && biometricsReady}
                 disabled={!biometrics.ready || pending || !biometricsReady}
                 onValueChange={(next) => void handleBiometricsChange(next)}
@@ -255,19 +279,19 @@ export default function ProfileScreen() {
           />
           <ListRow
             icon="key-outline"
-            label="Passkeys"
+            label={t("profile.passkeys")}
             onPress={() => toggle("passkeys")}
             expanded={open === "passkeys" ? <PasskeysPanel /> : null}
           />
         </ListSection>
 
         <ListSection
-          title="Notifications"
-          footer="Reminders for what repeats, plus a nudge when the bank leaves something needing a category."
+          title={t("profile.notificationsSection")}
+          footer={t("profile.notificationsFooterMobile")}
         >
           <ListRow
             icon="notifications-outline"
-            label="Reminders and nudges"
+            label={t("profile.remindersAndNudges")}
             trailing={
               <Switch
                 value={reminders}
@@ -277,10 +301,10 @@ export default function ProfileScreen() {
           />
         </ListSection>
 
-        <ListSection title="Data">
+        <ListSection title={t("profile.dataSection")}>
           <ListRow
             icon="trash-outline"
-            label="Delete all data"
+            label={t("profile.deleteAllData")}
             destructive
             onPress={() => toggle("wipe")}
             expanded={
@@ -293,12 +317,12 @@ export default function ProfileScreen() {
                   <Input
                     value={confirmData}
                     onChangeText={setConfirmData}
-                    accessibilityLabel="Type DELETE to confirm"
-                    placeholder="Type DELETE"
+                    accessibilityLabel={t("profile.deleteConfirmLabel")}
+                    placeholder={t("profile.deleteConfirmPlaceholder")}
                     autoCapitalize="characters"
                   />
                   <Button
-                    label="Delete all my data"
+                    label={t("profile.deleteAllMyData")}
                     variant="outline"
                     disabled={pending}
                     onPress={() => void handleDeleteData()}
@@ -309,7 +333,7 @@ export default function ProfileScreen() {
           />
           <ListRow
             icon="close-circle-outline"
-            label="Delete account"
+            label={t("profile.deleteAccount")}
             destructive
             onPress={() => toggle("close")}
             expanded={
@@ -321,12 +345,12 @@ export default function ProfileScreen() {
                   <Input
                     value={confirmAccount}
                     onChangeText={setConfirmAccount}
-                    accessibilityLabel="Type DELETE to confirm"
-                    placeholder="Type DELETE"
+                    accessibilityLabel={t("profile.deleteConfirmLabel")}
+                    placeholder={t("profile.deleteConfirmPlaceholder")}
                     autoCapitalize="characters"
                   />
                   <Button
-                    label="Delete my account"
+                    label={t("profile.deleteMyAccount")}
                     disabled={pending}
                     onPress={() => void handleDeleteAccount()}
                   />
@@ -336,7 +360,11 @@ export default function ProfileScreen() {
           />
         </ListSection>
 
-        <Button label="Sign out" variant="secondary" onPress={signOut} />
+        <Button
+          label={t("common.signOut")}
+          variant="secondary"
+          onPress={signOut}
+        />
       </ScrollView>
     </Screen>
   );

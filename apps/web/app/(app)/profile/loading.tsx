@@ -5,7 +5,7 @@ import { PageSkeleton } from "@/components/layout/PageSkeleton";
 export default function ProfileLoading() {
   return (
     <>
-      <PageHeader title="Profile" />
+      <PageHeader titleKey="nav.profile" />
       <PageContainer>
         <PageSkeleton />
       </PageContainer>

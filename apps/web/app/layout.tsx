@@ -8,6 +8,9 @@ import type { Metadata, Viewport } from "next";
 // swaps in. globals.css now composes these instead.
 import { Fraunces, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
+import { getLocale } from "@/lib/locale";
+import { LocaleProvider } from "@/lib/locale-context";
+import { LocaleSuggestion } from "@/components/layout/LocaleSuggestion";
 
 const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
@@ -60,18 +63,23 @@ export const viewport: Viewport = {
 
 const privacyInitScript = `(function(){try{document.documentElement.dataset.privacy=localStorage.getItem("privacy-blur")==="1"?"on":"off";}catch(e){document.documentElement.dataset.privacy="off";}})();`;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Reading a cookie makes this layout dynamic, which costs nothing here:
+  // both group layouts below already call `getAuthUser()`, so every route in
+  // the app was dynamic before this line existed.
+  const locale = await getLocale();
+
   return (
     // `dark` is rendered on the server rather than applied by a script, so
     // there is no flash of the wrong theme and no blocking script in the
     // head. The class stays — the tokens do not need it, but a few dozen
     // `dark:` utilities across the app resolve against it.
     <html
-      lang="en"
+      lang={locale}
       className={`dark ${instrumentSans.variable} ${fraunces.variable} ${plexMono.variable} h-full`}
       suppressHydrationWarning
     >
@@ -79,7 +87,10 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: privacyInitScript }} />
       </head>
       <body className="flex min-h-full flex-col bg-background text-foreground antialiased">
-        {children}
+        <LocaleProvider locale={locale}>
+          <LocaleSuggestion />
+          {children}
+        </LocaleProvider>
       </body>
     </html>
   );

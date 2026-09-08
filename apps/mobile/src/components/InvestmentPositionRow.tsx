@@ -14,6 +14,7 @@ import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 interface InvestmentPositionRowProps {
   item: InvestmentPositionItem;
@@ -60,6 +61,7 @@ export function InvestmentPositionRow({
   item,
   onEdit,
 }: InvestmentPositionRowProps) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
   const [chartOpen, setChartOpen] = useState(false);
@@ -154,7 +156,10 @@ export function InvestmentPositionRow({
 
       <View className="mt-3 flex-row gap-2">
         <Metric label={valueLabel} value={formatEuro(item.marketValue)} />
-        <Metric label="Invested" value={formatEuro(item.totalInvested)} />
+        <Metric
+          label={t("wallets.invested")}
+          value={formatEuro(item.totalInvested)}
+        />
         <Metric
           label="P/L"
           value={formatSigned(item.gainLoss, formatEuro)}

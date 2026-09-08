@@ -31,6 +31,8 @@ import {
 import type { InvestmentWalletId } from "@finance/core/investments";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
+import { useLocale, useT } from "@/lib/locale-context";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 interface InvestmentPositionSheetProps {
   item: InvestmentPositionItem | null;
@@ -78,9 +80,11 @@ function InvestmentPositionForm({
   open,
   onOpenChange,
 }: InvestmentPositionFormProps) {
+  const t = useT();
   const isEdit = item !== null;
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
+  const locale = useLocale();
   const [state, action, pending] = useActionState(saveInvestmentPosition, {});
   const [deletePending, startDelete] = useTransition();
   const [sourceType, setSourceType] = useState<"recurring" | "custom">(
@@ -111,12 +115,17 @@ function InvestmentPositionForm({
 
   useEffect(() => {
     if (state.success) {
-      toast(isEdit ? `${item?.name} updated` : "Item added", "success");
+      toast(
+        isEdit
+          ? t("position.itemUpdated", { name: item?.name ?? "" })
+          : t("position.itemAdded"),
+        "success",
+      );
       onOpenChange(false);
     } else if (state.error) {
       toast(state.error, "error");
     }
-  }, [state.success, state.error, isEdit, item?.name, onOpenChange, toast]);
+  }, [state.success, state.error, isEdit, item?.name, onOpenChange, toast, t]);
 
   const parsedShares = shareCount ? parseShareCountInput(shareCount) : null;
   const estimateActive = Boolean(instrumentSymbol) && parsedShares !== null;
@@ -161,7 +170,11 @@ function InvestmentPositionForm({
   }
 
   const isCrypto = isCryptoWallet(walletId);
-  const title = isEdit ? item.name : isCrypto ? "Add crypto item" : "Add item";
+  const title = isEdit
+    ? item.name
+    : isCrypto
+      ? t("position.addCryptoItem")
+      : t("position.addItem");
   const isRecurringLinked = isEdit && Boolean(item.recurringTemplateId);
   const instrumentFromRecurring =
     isRecurringLinked && Boolean(item.instrumentSymbol || isCrypto);
@@ -182,7 +195,7 @@ function InvestmentPositionForm({
 
         {!isEdit && (
           <div className="flex flex-col gap-2">
-            <FormLabel>Item type</FormLabel>
+            <FormLabel>{t("position.itemType")}</FormLabel>
             <div className="grid grid-cols-2 gap-2">
               <Button
                 type="button"
@@ -204,7 +217,9 @@ function InvestmentPositionForm({
 
         {!isEdit && sourceType === "recurring" && (
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="recurringTemplateId">Recurring item</FormLabel>
+            <FormLabel htmlFor="recurringTemplateId">
+              {t("position.recurringItem")}
+            </FormLabel>
             {recurringOptions.length > 0 ? (
               <select
                 id="recurringTemplateId"
@@ -240,9 +255,7 @@ function InvestmentPositionForm({
             <div>
               <p className="font-medium">{item.name}</p>
               <p className="text-xs text-muted-foreground">
-                {isCrypto
-                  ? "Fixed EUR DCA · Bitcoin on Bitstack"
-                  : "Fixed EUR DCA · ETF set under Plan"}
+                {isCrypto ? t("position.dcaBitcoin") : t("position.dcaEtf")}
               </p>
             </div>
           </div>
@@ -289,7 +302,7 @@ function InvestmentPositionForm({
         {isRecurringLinked && instrumentFromRecurring ? (
           <div className="rounded-xl border border-border bg-muted/20 p-3 text-sm">
             <p className="font-medium">
-              {isCrypto ? "Tracked asset" : "Tracked ETF"}
+              {isCrypto ? t("position.trackedAsset") : t("position.trackedEtf")}
             </p>
             <p className="mt-1 text-muted-foreground">
               {isCrypto
@@ -327,7 +340,7 @@ function InvestmentPositionForm({
         ) : isCrypto ? (
           <>
             <div className="rounded-xl border border-border bg-muted/20 p-3 text-sm">
-              <p className="font-medium">Bitcoin</p>
+              <p className="font-medium">{t("position.bitcoin")}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Market value uses BTC-EUR live price × your total BTC.
               </p>
@@ -369,16 +382,14 @@ function InvestmentPositionForm({
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="shareCount">
             {isCrypto
-              ? "Total BTC held"
+              ? t("position.totalBtcHeld")
               : instrumentSymbol
-                ? "Total shares held"
-                : "Shares held (optional)"}
+                ? t("position.totalSharesHeld")
+                : t("position.sharesHeldOptional")}
           </FormLabel>
           {(instrumentSymbol || isCrypto) && (
             <Text className="text-xs text-muted-foreground">
-              {isCrypto
-                ? "From Bitstack — fractional BTC OK (use comma or dot)."
-                : "From your broker — fractional shares OK (use comma or dot, e.g. 1,1465)."}
+              {isCrypto ? t("position.btcHint") : t("position.sharesHint")}
             </Text>
           )}
           <Input
@@ -443,6 +454,7 @@ function InvestmentPositionForm({
                   {formatMoney(
                     estimateShown.priceOriginal,
                     estimateShown.currency,
+                    locale,
                   )}{" "}
                   / share → {formatEuro(estimateShown.priceEur)} / share
                 </span>
@@ -468,12 +480,14 @@ function InvestmentPositionForm({
             min="0"
             className="text-base"
             defaultValue={item?.currentValue ?? ""}
-            placeholder="Total portfolio value from your broker"
+            placeholder={t("position.manualValuePlaceholder")}
           />
         </div>
 
         {state.error && (
-          <Text className="text-sm text-destructive">{state.error}</Text>
+          <Text className="text-sm text-destructive">
+            {resolveMessage(t, state.error)}
+          </Text>
         )}
 
         <Button
@@ -487,7 +501,11 @@ function InvestmentPositionForm({
               recurringOptions.length === 0)
           }
         >
-          {pending ? "Saving…" : isEdit ? "Save item" : "Add item"}
+          {pending
+            ? t("position.saving")
+            : isEdit
+              ? t("position.saveItem")
+              : t("position.addItem")}
         </Button>
 
         {isEdit && (
@@ -500,7 +518,9 @@ function InvestmentPositionForm({
             onClick={handleDelete}
           >
             <Trash size={ICON.md} weight="light" />
-            {deletePending ? "Removing…" : "Remove from portfolio"}
+            {deletePending
+              ? t("position.removing")
+              : t("position.removeFromPortfolio")}
           </Button>
         )}
       </form>

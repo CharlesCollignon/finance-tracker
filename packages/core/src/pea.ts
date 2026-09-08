@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * What a PEA is, as opposed to just another wallet id.
  *
@@ -51,7 +53,8 @@ function wholeMonthsBetween(fromIso: string, toIso: string): number {
   const [toYear, toMonth, toDay] = toIso.split("-").map(Number);
 
   let months =
-    ((toYear ?? 0) - (fromYear ?? 0)) * 12 + ((toMonth ?? 0) - (fromMonth ?? 0));
+    ((toYear ?? 0) - (fromYear ?? 0)) * 12 +
+    ((toMonth ?? 0) - (fromMonth ?? 0));
 
   // Not a full month until the day of month is reached.
   if ((toDay ?? 0) < (fromDay ?? 0)) {
@@ -109,34 +112,38 @@ export function buildPeaStatus(
 }
 
 /** One plain-language line about the five-year clock. */
-export function peaMaturityHint(status: PeaStatus): string | null {
+export function peaMaturityHint(
+  status: PeaStatus,
+  locale: Locale = DEFAULT_LOCALE,
+): string | null {
   if (!status.openedOn || !status.maturesOn) {
     return null;
   }
 
+  const t = translator(locale);
+
   if (status.matured) {
-    return "Past five years — withdrawals keep the plan's tax treatment.";
+    return t("pea.matured");
   }
 
   const months = status.monthsToMaturity ?? 0;
 
   if (months <= 0) {
-    return "Five years is reached this month.";
-  }
-
-  if (months === 1) {
-    return "One month until the five-year mark.";
+    return t("pea.thisMonth");
   }
 
   if (months < 12) {
-    return `${months} months until the five-year mark.`;
+    return t("pea.inMonths", { count: months });
   }
 
   const years = Math.floor(months / 12);
   const rest = months % 12;
-  const yearPart = years === 1 ? "1 year" : `${years} years`;
+  const yearPart = t("pea.yearCount", { count: years });
 
   return rest === 0
-    ? `${yearPart} until the five-year mark.`
-    : `${yearPart} ${rest} months until the five-year mark.`;
+    ? t("pea.inYears", { years: yearPart })
+    : t("pea.inYearsAndMonths", {
+        years: yearPart,
+        months: t("pea.monthCount", { count: rest }),
+      });
 }

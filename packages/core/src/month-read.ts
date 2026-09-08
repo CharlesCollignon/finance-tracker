@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * A month read: prose written by a model, figures written by the app.
  *
@@ -39,6 +41,15 @@ import {
 export interface MonthReadRequest {
   system: string;
   user: string;
+  /**
+   * The language the whole request is in.
+   *
+   * Carried with the prompt rather than passed alongside it, because the
+   * response format is part of the same request and its descriptions are
+   * instructions in the same language. An adapter that forgets it would send
+   * a French prompt with an English schema.
+   */
+  locale: Locale;
 }
 
 /**
@@ -174,71 +185,100 @@ export interface MonthRead {
  * `$ref` — strict-mode support for references is uneven across providers, and
  * this schema is small enough to inline.
  */
-export const MONTH_READ_JSON_SCHEMA = {
-  type: "json_schema",
-  json_schema: {
-    name: "month_read",
-    strict: true,
-    schema: {
-      type: "object",
-      additionalProperties: false,
-      required: ["headline", "observations", "suggestions"],
-      properties: {
-        headline: {
-          type: "string",
-          description: "One short clause. No figures, not even as {{fact:id}}.",
-        },
-        observations: {
-          type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            required: ["text", "basis", "tone"],
-            properties: {
-              text: {
-                type: "string",
-                description:
-                  "Two sentences at most. Write every figure as {{fact:id}}.",
+
+/**
+ * The wording inside the response format, per language.
+ *
+ * A schema description is an instruction the model reads, so it follows the
+ * prompt's language rather than sitting in English beside a French one. Short
+ * restatements of rules the system prompt already gives twice — see the
+ * comment on `FIGURE_RULE_EN` in `./month-read-prompt` for why that
+ * repetition is deliberate rather than redundant.
+ */
+const SCHEMA_WORDS: Record<
+  Locale,
+  { headline: string; claim: string; basis: string }
+> = {
+  en: {
+    headline: "One short clause. No figures, not even as {{fact:id}}.",
+    claim: "Two sentences at most. Write every figure as {{fact:id}}.",
+    basis:
+      'The ids this rests on, bare: "expenses", not "{{fact:expenses}}". Every id used in the text must appear here.',
+  },
+  fr: {
+    headline:
+      "Une seule courte proposition. Aucun chiffre, pas même sous la forme {{fact:id}}.",
+    claim:
+      "Deux phrases au plus. Écrivez chaque chiffre sous la forme {{fact:id}}.",
+    basis:
+      'Les ids sur lesquels cela repose, nus : "expenses", pas "{{fact:expenses}}". Tout id utilisé dans le texte doit figurer ici.',
+  },
+};
+
+export function monthReadJsonSchema(locale: Locale = DEFAULT_LOCALE) {
+  const words = SCHEMA_WORDS[locale];
+  return {
+    type: "json_schema",
+    json_schema: {
+      name: "month_read",
+      strict: true,
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        required: ["headline", "observations", "suggestions"],
+        properties: {
+          headline: {
+            type: "string",
+            description: words.headline,
+          },
+          observations: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["text", "basis", "tone"],
+              properties: {
+                text: {
+                  type: "string",
+                  description: words.claim,
+                },
+                basis: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: words.basis,
+                },
+                tone: { type: "string", enum: ["good", "neutral", "watch"] },
               },
-              basis: {
-                type: "array",
-                items: { type: "string" },
-                description:
-                  'The ids this rests on, bare: "expenses", not "{{fact:expenses}}". Every id used in the text must appear here.',
-              },
-              tone: { type: "string", enum: ["good", "neutral", "watch"] },
             },
           },
-        },
-        suggestions: {
-          type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            required: ["text", "basis", "effort"],
-            properties: {
-              text: {
-                type: "string",
-                description:
-                  "Two sentences at most. Write every figure as {{fact:id}}.",
-              },
-              basis: {
-                type: "array",
-                items: { type: "string" },
-                description:
-                  'The ids this rests on, bare: "expenses", not "{{fact:expenses}}". Every id used in the text must appear here.',
-              },
-              effort: {
-                type: "string",
-                enum: ["now", "this-month", "habit"],
+          suggestions: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["text", "basis", "effort"],
+              properties: {
+                text: {
+                  type: "string",
+                  description: words.claim,
+                },
+                basis: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: words.basis,
+                },
+                effort: {
+                  type: "string",
+                  enum: ["now", "this-month", "habit"],
+                },
               },
             },
           },
         },
       },
     },
-  },
-} as const;
+  };
+}
 
 /* ----------------------------------------------------- the verification */
 
@@ -391,13 +431,16 @@ function normalise(answer: MonthReadAnswer): MonthReadAnswer {
 export function verifyMonthRead(
   raw: unknown,
   facts: MonthFacts,
+  locale: Locale = DEFAULT_LOCALE,
 ): MonthReadVerdict {
+  const t = translator(locale);
   const parsed = monthReadAnswerSchema.safeParse(raw);
   if (!parsed.success) {
     return {
       ok: false,
       reason: "unreadable",
-      detail: parsed.error.issues[0]?.message ?? "Not the shape asked for",
+      detail:
+        parsed.error.issues[0]?.message ?? t("monthRead.refusal.wrongShape"),
     };
   }
 
@@ -421,7 +464,7 @@ export function verifyMonthRead(
     return {
       ok: false,
       reason: "unknown-datum",
-      detail: `It referred to "${unknown}", which was never sent`,
+      detail: t("monthRead.refusal.unknownDatum", { id: unknown }),
     };
   }
 
@@ -429,7 +472,7 @@ export function verifyMonthRead(
     return {
       ok: false,
       reason: "invented-figure",
-      detail: "The headline contained a figure of its own",
+      detail: t("monthRead.refusal.headlineHadFigure"),
     };
   }
 
@@ -439,7 +482,7 @@ export function verifyMonthRead(
     return {
       ok: false,
       reason: "unreadable",
-      detail: "The headline was longer than one line",
+      detail: t("monthRead.refusal.headlineTooLong"),
     };
   }
 
@@ -485,7 +528,7 @@ export function verifyMonthRead(
     return {
       ok: false,
       reason: "nothing-left",
-      detail: "Every observation had to be dropped",
+      detail: t("monthRead.refusal.everythingDropped"),
     };
   }
 
@@ -522,6 +565,7 @@ function segmentsFor(
   text: string,
   facts: MonthFacts,
   formatMoney: (amount: number) => string,
+  locale: Locale,
 ): ReadSegment[] | null {
   const segments: ReadSegment[] = [];
   let cursor = 0;
@@ -542,7 +586,7 @@ function segmentsFor(
       kind: "figure",
       factId: id,
       label: fact.label,
-      display: formatFact(fact, formatMoney),
+      display: formatFact(fact, formatMoney, locale),
     });
     cursor = match.index! + match[0].length;
   }
@@ -566,19 +610,30 @@ function segmentsFor(
  * Null when the headline can no longer be rendered — at that point there is
  * nothing honest left to show.
  */
+/**
+ * A stored read, filled in from the figures as they stand now.
+ *
+ * `locale` is the language the *prose* was written in, which is not
+ * necessarily the one the reader is in. It has to be the prose's, because the
+ * labels this drops into the sentences are the model's own words for those
+ * figures: a French paragraph with "Unrecorded spending" spliced into it is
+ * two correct halves making one wrong sentence. The caller hands in a facts
+ * pack built in the same language for the same reason.
+ */
 export function renderMonthRead(
   read: MonthRead,
   facts: MonthFacts,
   formatMoney: (amount: number) => string,
+  locale: Locale = DEFAULT_LOCALE,
 ): RenderedRead | null {
-  const headline = segmentsFor(read.headline, facts, formatMoney);
+  const headline = segmentsFor(read.headline, facts, formatMoney, locale);
   if (!headline) {
     return null;
   }
 
   const observations: RenderedClaim[] = [];
   for (const row of read.observations) {
-    const segments = segmentsFor(row.text, facts, formatMoney);
+    const segments = segmentsFor(row.text, facts, formatMoney, locale);
     if (segments) {
       observations.push({ segments, tone: row.tone });
     }
@@ -590,7 +645,7 @@ export function renderMonthRead(
 
   const suggestions: RenderedSuggestion[] = [];
   for (const row of read.suggestions) {
-    const segments = segmentsFor(row.text, facts, formatMoney);
+    const segments = segmentsFor(row.text, facts, formatMoney, locale);
     if (segments) {
       suggestions.push({ segments, effort: row.effort });
     }

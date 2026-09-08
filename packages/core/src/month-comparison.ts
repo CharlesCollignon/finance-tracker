@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * This month against the last one.
  *
@@ -73,6 +75,8 @@ export interface BuildMonthComparisonOptions {
   /** Today, so a month in the past compares whole rather than truncated. */
   today: string;
   type?: CategoryType;
+  /** The language the previous month is named in. */
+  locale?: Locale;
 }
 
 /**
@@ -86,9 +90,14 @@ export function buildMonthComparison({
   month,
   today,
   type = "expense",
+  locale = DEFAULT_LOCALE,
 }: BuildMonthComparisonOptions): MonthComparison {
   const [previousYear, previousMonthNumber] = previousMonth(year, month);
-  const previousLabel = formatMonthLabel(previousYear, previousMonthNumber);
+  const previousLabel = formatMonthLabel(
+    previousYear,
+    previousMonthNumber,
+    locale,
+  );
 
   const monthLength = lastDayOfMonth(year, month);
   const [todayYear, todayMonth, todayDay] = today.split("-").map(Number);
@@ -143,22 +152,29 @@ export function buildMonthComparison({
 export function formatMonthComparison(
   comparison: MonthComparison,
   formatAmount: (amount: number) => string,
+  locale: Locale = DEFAULT_LOCALE,
 ): string | null {
   if (!comparison.comparable) {
     return null;
   }
 
-  if (comparison.direction === "flat") {
-    return comparison.partial
-      ? `About the same as this point in ${comparison.previousLabel}.`
-      : `About the same as ${comparison.previousLabel}.`;
-  }
-
-  const amount = formatAmount(Math.abs(comparison.delta));
-  const word = comparison.direction === "up" ? "more" : "less";
+  const t = translator(locale);
   const when = comparison.partial
-    ? `this point in ${comparison.previousLabel}`
+    ? t("comparison.thisPointIn", { month: comparison.previousLabel })
     : comparison.previousLabel;
 
-  return `${amount} ${word} than ${when}.`;
+  if (comparison.direction === "flat") {
+    return t("comparison.flat", { when });
+  }
+
+  // Two whole sentences rather than one with the direction word slotted in:
+  // "more than" and "de plus, comparé à" do not have the same shape, and a
+  // shared template would have had to be the shape of one of them.
+  return t(
+    comparison.direction === "up" ? "comparison.up" : "comparison.down",
+    {
+      amount: formatAmount(Math.abs(comparison.delta)),
+      when,
+    },
+  );
 }

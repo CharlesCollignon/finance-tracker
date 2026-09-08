@@ -4,6 +4,8 @@ import { View } from "react-native";
 import { Button } from "@/components/ui/Button";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { Text } from "@/components/ui/Text";
+import { useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 import {
   deletePasskey,
   listPasskeys,
@@ -12,6 +14,7 @@ import {
 } from "@/lib/passkeys";
 
 export function PasskeysPanel() {
+  const t = useT();
   const [passkeys, setPasskeys] = useState<PasskeyItem[]>([]);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -83,7 +86,7 @@ export function PasskeysPanel() {
                   </Text>
                 </View>
                 <Button
-                  label="Remove"
+                  label={t("common.remove")}
                   variant="ghost"
                   size="sm"
                   disabled={pending}
@@ -104,19 +107,19 @@ export function PasskeysPanel() {
       />
       {message ? (
         <Text variant="micro" className="text-destructive">
-          {message}
+          {resolveMessage(t, message)}
         </Text>
       ) : null}
 
       <ConfirmSheet
         open={confirming !== null}
-        title="Remove passkey"
+        title={t("common.removePasskey")}
         message={
           confirming
             ? `Remove ${confirming.label}? You can add it again later.`
             : undefined
         }
-        confirmLabel="Remove"
+        confirmLabel={t("common.remove")}
         pending={pending}
         onConfirm={() => {
           void confirmDelete();

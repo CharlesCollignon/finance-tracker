@@ -12,6 +12,7 @@ import { Logo } from "@/components/layout/Logo";
 import { useQuickAdd } from "@/components/layout/QuickAddProvider";
 import { RefreshButton } from "@/components/layout/RefreshButton";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 /** The app's primary action, given the top slot rather than a page to visit. */
 function QuickAddButton() {
@@ -76,6 +77,7 @@ export function SideNav({
   initial: string;
   ledgerBadge?: number;
 }) {
+  const t = useT();
   const pathname = usePathname();
 
   return (
@@ -105,7 +107,7 @@ export function SideNav({
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
-        {APP_NAV_ITEMS.map(({ href, label, icon: Icon, children }) => {
+        {APP_NAV_ITEMS.map(({ href, labelKey, icon: Icon, children }) => {
           const active = activeNavHref(pathname) === href;
 
           return (
@@ -122,7 +124,7 @@ export function SideNav({
                 )}
               >
                 <Icon size={ICON.lg} weight={active ? "fill" : "light"} />
-                {label}
+                {t(labelKey)}
                 {href === "/transactions" ? (
                   <NavBadge count={ledgerBadge} />
                 ) : null}
@@ -155,7 +157,7 @@ export function SideNav({
                             !active && !here && "text-muted-foreground/60",
                           )}
                         >
-                          {child.label}
+                          {t(child.labelKey)}
                         </Link>
                       </li>
                     );

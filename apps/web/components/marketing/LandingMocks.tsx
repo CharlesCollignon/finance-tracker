@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Eye, Plus, Sparkle } from "@phosphor-icons/react";
 import { formatEuro } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
-import { WEEKDAY_LABELS } from "@finance/core/calendar";
+import { weekdayLabels } from "@finance/core/calendar";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { ProgressRing } from "@/components/finance/charts";
 import { Card } from "@/components/retroui/Card";
@@ -12,8 +12,28 @@ import { Badge } from "@/components/retroui/Badge";
 import { APP_NAV_ITEMS, PROFILE_NAV_ITEM } from "@/lib/navigation";
 import { progressTone } from "@/lib/progress-tone";
 import type { LandingPageId } from "@/components/marketing/landing-copy";
-import { landingSample } from "@/components/marketing/landing-sample";
+import {
+  landingSample,
+  landingSampleFor,
+  type LocalisedLandingSample,
+} from "@/components/marketing/landing-sample";
 import { cn } from "@/lib/utils";
+import { useLocale, useT } from "@/lib/locale-context";
+import type { Key } from "@finance/core/i18n/t";
+
+/**
+ * Sample figures, formatted the way the reader's own would be.
+ *
+ * These mocks are the only money on the marketing site, and the point of
+ * them is that the app looks like this — so a French visitor has to see
+ * "3 200 €" and an English one "€3,200". A hook rather than a bare call
+ * because the locale lives in context, and one per component rather than a
+ * prop threaded through thirteen of them.
+ */
+function useEuro(): (amount: number) => string {
+  const locale = useLocale();
+  return (amount: number) => formatEuro(amount, locale);
+}
 
 type Variant = "web" | "mobile";
 
@@ -40,7 +60,7 @@ type Variant = "web" | "mobile";
 // real component draws these.
 //
 // SpendStrip is still not reused, for a different reason: it picks its band
-// colours by sorted index, while landingSample assigns each category an
+// colours by sorted index, while sample assigns each category an
 // explicit token so the mock's colours match what the app shows for that kind
 // of spending. It also has one density, and the phone frame needs a tighter
 // one. SpendSplit below stays.
@@ -177,25 +197,27 @@ function MockCard({
 /* ------------------------------------------------------------------ chrome */
 
 /** Which nav entry the screen belongs under, so the mock's chrome agrees with
- * the screen it is showing. These have to be the labels APP_NAV_ITEMS uses,
- * because the side nav below renders those and highlights by matching on the
- * string. Calendar has no slot of its own — it is the Ledger seen by date —
- * and the month close is met on Month. */
-const ACTIVE_NAV: Record<LandingPageId, string> = {
-  home: "Month",
+ * the screen it is showing. These are the message keys APP_NAV_ITEMS holds
+ * rather than the words it renders: the nav below highlights by matching, and
+ * matching on a key survives both a reword and a change of language, where
+ * matching on "Month" survived neither. Calendar has no slot of its own — it
+ * is the Ledger seen by date — and the month close is met on Month. */
+const ACTIVE_NAV: Record<LandingPageId, Key> = {
+  home: "nav.month",
   // The read lives on Month; it is a card on that surface, not a sixth one.
-  "month-read": "Month",
-  transactions: "Ledger",
-  recurring: "Charges",
-  calendar: "Ledger",
-  wallets: "Wallets",
-  planning: "Plan",
-  "month-close": "Month",
+  "month-read": "nav.month",
+  transactions: "nav.ledger",
+  recurring: "nav.charges",
+  calendar: "nav.ledger",
+  wallets: "nav.wallets",
+  planning: "nav.plan",
+  "month-close": "nav.month",
 };
 
 /** The real side nav's structure — logo band, primary action, then the same
  * APP_NAV_ITEMS the app renders, so the two can never drift apart. */
-function WebSideNav({ active }: { active: string }) {
+function WebSideNav({ active }: { active: Key }) {
+  const t = useT();
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="flex h-[52px] shrink-0 items-center justify-center gap-2 border-b border-border px-5">
@@ -214,11 +236,11 @@ function WebSideNav({ active }: { active: string }) {
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 p-3">
-        {APP_NAV_ITEMS.map(({ label, icon: Icon }) => {
-          const isActive = label === active;
+        {APP_NAV_ITEMS.map(({ labelKey, icon: Icon }) => {
+          const isActive = labelKey === active;
           return (
             <span
-              key={label}
+              key={labelKey}
               className={cn(
                 "flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm",
                 isActive
@@ -227,7 +249,7 @@ function WebSideNav({ active }: { active: string }) {
               )}
             >
               <Icon size={18} weight={isActive ? "fill" : "regular"} />
-              {label}
+              {t(labelKey)}
             </span>
           );
         })}
@@ -275,22 +297,21 @@ function MonthStepper({ label }: { label: string }) {
 }
 
 function WebShell({
-  title,
   active,
   monthLabel,
   children,
 }: {
-  title: string;
-  active: string;
+  active: Key;
   monthLabel?: string;
   children: ReactNode;
 }) {
+  const t = useT();
   return (
     <div className="flex size-full">
       <WebSideNav active={active} />
       <div className="flex min-w-0 flex-1 flex-col">
         <WebHeaderBand
-          title={title}
+          title={t(active)}
           trailing={monthLabel ? <MonthStepper label={monthLabel} /> : null}
         />
         <div className="flex min-h-0 flex-1 flex-col gap-4 px-6 py-5">
@@ -303,22 +324,25 @@ function WebShell({
 
 /** The phone's bottom bar carries Profile alongside the six screens, for
  * thumb reach — the same BOTTOM_NAV_ITEMS split the app uses. */
-function MobileTabBar({ active }: { active: string }) {
+function MobileTabBar({ active }: { active: Key }) {
+  const t = useT();
   const items = [...APP_NAV_ITEMS, PROFILE_NAV_ITEM];
   return (
     <nav className="flex h-14 shrink-0 items-stretch border-t border-border bg-background/95">
-      {items.map(({ label, icon: Icon }) => {
-        const isActive = label === active;
+      {items.map(({ labelKey, icon: Icon }) => {
+        const isActive = labelKey === active;
         return (
           <span
-            key={label}
+            key={labelKey}
             className={cn(
               "flex flex-1 flex-col items-center justify-center gap-0.5",
               isActive ? "text-primary" : "text-muted-foreground",
             )}
           >
             <Icon size={19} weight={isActive ? "fill" : "regular"} />
-            <span className="text-[9px] font-medium leading-none">{label}</span>
+            <span className="text-[9px] font-medium leading-none">
+              {t(labelKey)}
+            </span>
           </span>
         );
       })}
@@ -327,20 +351,19 @@ function MobileTabBar({ active }: { active: string }) {
 }
 
 function MobileShell({
-  title,
   active,
   children,
 }: {
-  title: string;
-  active: string;
+  active: Key;
   children: ReactNode;
 }) {
+  const t = useT();
   return (
     <div className="flex size-full flex-col">
       <header className="flex h-[52px] shrink-0 items-center justify-between gap-3 border-b border-border px-4">
         <div className="flex items-center gap-2">
           <span className="h-[22px] w-[22px] shrink-0 rounded-full bg-[radial-gradient(circle_at_35%_30%,#fdefb4,#dcbb7c_52%,#b68c42)]" />
-          <h1 className="font-head text-lg leading-none">{title}</h1>
+          <h1 className="font-head text-lg leading-none">{t(active)}</h1>
         </div>
         <Eye size={18} className="text-muted-foreground" />
       </header>
@@ -357,7 +380,9 @@ function MobileShell({
 /** Where the month's spending went — the stacked bar plus its legend, shared
  * by both variants at different densities. */
 function SpendSplit({ compact = false }: { compact?: boolean }) {
-  const rows = landingSample.spendByCategory;
+  const sample = landingSampleFor(useLocale());
+  const euro = useEuro();
+  const rows = sample.spendByCategory;
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
 
   return (
@@ -396,9 +421,7 @@ function SpendSplit({ compact = false }: { compact?: boolean }) {
               />
               {row.label}
             </span>
-            <span className="font-mono tabular-nums">
-              {formatEuro(row.amount)}
-            </span>
+            <span className="font-mono tabular-nums">{euro(row.amount)}</span>
           </li>
         ))}
       </ul>
@@ -407,26 +430,29 @@ function SpendSplit({ compact = false }: { compact?: boolean }) {
 }
 
 export function HomeMock({ variant = "web" }: { variant?: Variant }) {
+  const sample = landingSampleFor(useLocale());
+  const t = useT();
+  const euro = useEuro();
   const { remaining, income, spent, monthLabel, onBudgetLabel, budget, goal } =
-    landingSample;
+    sample;
   const shortMonth = monthLabel.split(" ")[0];
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Month" active="Month">
+      <MobileShell active="nav.month">
         <MockCard innerClassName="p-4">
           <MobileHero
             label={`Left in ${shortMonth}`}
-            amount={formatEuro(remaining)}
+            amount={euro(remaining)}
             amountClassName="text-primary-ink"
             subtitle={
               <p>
                 <span className="privacy-amount text-success tabular-nums">
-                  {formatEuro(income)}
+                  {euro(income)}
                 </span>
                 {" earned · "}
                 <span className="privacy-amount text-destructive tabular-nums">
-                  {formatEuro(spent)}
+                  {euro(spent)}
                 </span>
                 {" spent"}
               </p>
@@ -439,13 +465,13 @@ export function HomeMock({ variant = "web" }: { variant?: Variant }) {
             <ProgressRing
               ratio={budget.spent / budget.limit}
               label={budget.label}
-              detail={`${formatEuro(budget.spent)} / ${formatEuro(budget.limit)}`}
+              detail={`${euro(budget.spent)} / ${euro(budget.limit)}`}
               size={88}
             />
             <ProgressRing
               ratio={goal.saved / goal.target}
               label={goal.label}
-              detail={`${formatEuro(goal.saved)} / ${formatEuro(goal.target)}`}
+              detail={`${euro(goal.saved)} / ${euro(goal.target)}`}
               colorVar="--info"
               meaning="target"
               size={88}
@@ -453,7 +479,9 @@ export function HomeMock({ variant = "web" }: { variant?: Variant }) {
           </div>
         </MockCard>
         <MockCard innerClassName="p-4">
-          <p className="text-sm font-semibold">Where it went</p>
+          <p className="text-sm font-semibold">
+            {t("marketingMock.whereItWent")}
+          </p>
           <div className="mt-3">
             <SpendSplit compact />
           </div>
@@ -463,22 +491,22 @@ export function HomeMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell title="Month" active="Month" monthLabel={monthLabel}>
+    <WebShell active="nav.month" monthLabel={monthLabel}>
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-8">
           <MockCard innerClassName="flex h-full flex-col items-center justify-center px-8 py-7">
             <WebHero
               label={`Left in ${monthLabel}`}
-              amount={formatEuro(remaining)}
+              amount={euro(remaining)}
               amountClassName="text-primary-ink"
               subtitle={
                 <p>
                   <span className="privacy-amount text-success tabular-nums">
-                    {formatEuro(income)}
+                    {euro(income)}
                   </span>
                   {" earned · "}
                   <span className="privacy-amount text-destructive tabular-nums">
-                    {formatEuro(spent)}
+                    {euro(spent)}
                   </span>
                   {" spent"}
                 </p>
@@ -491,13 +519,13 @@ export function HomeMock({ variant = "web" }: { variant?: Variant }) {
               <ProgressRing
                 ratio={budget.spent / budget.limit}
                 label={budget.label}
-                detail={`${formatEuro(budget.spent)} / ${formatEuro(budget.limit)}`}
+                detail={`${euro(budget.spent)} / ${euro(budget.limit)}`}
                 size={108}
               />
               <ProgressRing
                 ratio={goal.saved / goal.target}
                 label={goal.label}
-                detail={`${formatEuro(goal.saved)} / ${formatEuro(goal.target)}`}
+                detail={`${euro(goal.saved)} / ${euro(goal.target)}`}
                 colorVar="--info"
                 meaning="target"
                 size={108}
@@ -512,11 +540,11 @@ export function HomeMock({ variant = "web" }: { variant?: Variant }) {
                 Wallets
               </p>
               <p className="font-mono text-lg font-semibold tabular-nums">
-                {formatEuro(landingSample.portfolio)}
+                {euro(sample.portfolio)}
               </p>
             </div>
             <ul className="flex flex-col gap-1.5">
-              {landingSample.wallets.map((wallet) => (
+              {sample.wallets.map((wallet) => (
                 <li
                   key={wallet.label}
                   className="flex items-center justify-between gap-2 text-xs"
@@ -530,7 +558,7 @@ export function HomeMock({ variant = "web" }: { variant?: Variant }) {
                     {wallet.label}
                   </span>
                   <span className="font-mono tabular-nums">
-                    {formatEuro(wallet.value)}
+                    {euro(wallet.value)}
                   </span>
                 </li>
               ))}
@@ -553,8 +581,9 @@ export function HomeMock({ variant = "web" }: { variant?: Variant }) {
 function WebTransactionRow({
   item,
 }: {
-  item: (typeof landingSample.transactions)[number];
+  item: LocalisedLandingSample["transactions"][number];
 }) {
+  const euro = useEuro();
   return (
     <div className="flex items-center justify-between gap-3 px-2 py-2.5">
       <div className="flex min-w-0 items-center gap-3">
@@ -576,7 +605,7 @@ function WebTransactionRow({
         )}
       >
         {item.amount >= 0 ? "+" : "−"}
-        {formatEuro(Math.abs(item.amount))}
+        {euro(Math.abs(item.amount))}
       </span>
     </div>
   );
@@ -586,8 +615,9 @@ function WebTransactionRow({
 function MobileTransactionRow({
   item,
 }: {
-  item: (typeof landingSample.transactions)[number];
+  item: LocalisedLandingSample["transactions"][number];
 }) {
+  const euro = useEuro();
   return (
     <div className="flex items-center justify-between gap-3 px-1 py-2.5">
       <div className="min-w-0 text-left">
@@ -603,32 +633,35 @@ function MobileTransactionRow({
         )}
       >
         {item.amount >= 0 ? "+" : "−"}
-        {formatEuro(Math.abs(item.amount))}
+        {euro(Math.abs(item.amount))}
       </span>
     </div>
   );
 }
 
 export function TransactionsMock({ variant = "web" }: { variant?: Variant }) {
-  const { remaining, income, spent, transactions, monthLabel } = landingSample;
+  const sample = landingSampleFor(useLocale());
+  const t = useT();
+  const euro = useEuro();
+  const { remaining, income, spent, transactions, monthLabel } = sample;
   const rows = [...transactions].reverse();
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Ledger" active="Ledger">
+      <MobileShell active="nav.ledger">
         <MockCard innerClassName="p-4">
           <MobileHero
-            label="What's left"
-            amount={`+${formatEuro(remaining)}`}
+            label={t("marketingMock.whatsLeft")}
+            amount={`+${euro(remaining)}`}
             amountClassName="text-success"
             subtitle={
               <p>
                 <span className="privacy-amount text-success tabular-nums">
-                  {formatEuro(income)}
+                  {euro(income)}
                 </span>
                 {" in · "}
                 <span className="privacy-amount text-destructive tabular-nums">
-                  {formatEuro(spent)}
+                  {euro(spent)}
                 </span>
                 {" out"}
               </p>
@@ -648,22 +681,22 @@ export function TransactionsMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell title="Ledger" active="Ledger" monthLabel={monthLabel}>
+    <WebShell active="nav.ledger" monthLabel={monthLabel}>
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-4">
           <MockCard innerClassName="flex h-full flex-col items-center justify-center px-6 py-6">
             <WebHero
-              label="What's left"
-              amount={`+${formatEuro(remaining)}`}
+              label={t("marketingMock.whatsLeft")}
+              amount={`+${euro(remaining)}`}
               amountClassName="text-success"
               subtitle={
                 <p>
                   <span className="privacy-amount text-success tabular-nums">
-                    {formatEuro(income)}
+                    {euro(income)}
                   </span>
                   {" in · "}
                   <span className="privacy-amount text-destructive tabular-nums">
-                    {formatEuro(spent)}
+                    {euro(spent)}
                   </span>
                   {" out"}
                 </p>
@@ -699,7 +732,10 @@ const SCHEDULE_LABEL: Record<string, string> = {
 const SHARE_PRICED = "PEA DCA";
 
 export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
-  const { templates, monthLabel } = landingSample;
+  const sample = landingSampleFor(useLocale());
+  const t = useT();
+  const euro = useEuro();
+  const { templates, monthLabel } = sample;
   const monthlyImpact = templates
     .filter((template) => template.amount < 0)
     .reduce(
@@ -712,11 +748,13 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Charges" active="Charges">
+      <MobileShell active="nav.charges">
         <MockCard innerClassName="flex flex-row items-center justify-between p-4">
-          <p className="text-sm font-bold">Expected impact</p>
+          <p className="text-sm font-bold">
+            {t("marketingMock.expectedImpact")}
+          </p>
           <p className="font-mono text-lg font-bold tabular-nums">
-            {formatEuro(monthlyImpact)}
+            {euro(monthlyImpact)}
           </p>
         </MockCard>
         <div className="flex flex-col gap-2">
@@ -735,7 +773,7 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
                   )}
                 >
                   {template.amount >= 0 ? "+" : "−"}
-                  {formatEuro(Math.abs(template.amount))}
+                  {euro(Math.abs(template.amount))}
                 </span>
                 <span className="rounded-full border border-primary-rim bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
                   On
@@ -749,13 +787,13 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell title="Charges" active="Charges" monthLabel={monthLabel}>
+    <WebShell active="nav.charges" monthLabel={monthLabel}>
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-4">
           <MockCard innerClassName="flex h-full flex-col items-center justify-center px-6 py-6">
             <WebHero
-              label="Expected impact per month"
-              amount={formatEuro(monthlyImpact)}
+              label={t("marketingMock.expectedImpactPerMonth")}
+              amount={euro(monthlyImpact)}
               subtitle={<p>{templates.length} templates, all applied</p>}
             />
           </MockCard>
@@ -789,7 +827,7 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
                     )}
                   >
                     {template.amount >= 0 ? "+" : "−"}
-                    {formatEuro(Math.abs(template.amount))}
+                    {euro(Math.abs(template.amount))}
                   </span>
                   <Badge variant="surface" size="sm" className="rounded-full">
                     On
@@ -813,6 +851,8 @@ function buildSampleWeeks(): {
   inMonth: boolean;
   isToday: boolean;
 }[][] {
+  // Three numbers, identical in both languages, so this reads the shared
+  // sample rather than a localised one and stays a plain function.
   const { year, month, today } = landingSample;
   const first = new Date(year, month - 1, 1);
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -841,14 +881,17 @@ function buildSampleWeeks(): {
 }
 
 export function CalendarMock({ variant = "web" }: { variant?: Variant }) {
+  const sample = landingSampleFor(useLocale());
+  const locale = useLocale();
+  const euro = useEuro();
   const weeks = buildSampleWeeks();
-  // Annotated because landingSample is `as const`: inferred from the entries
+  // Annotated because sample is `as const`: inferred from the entries
   // the key type would be the union of the sample's literal days, and the
   // grid asks about days that are not in it.
-  const byDay = new Map<number, (typeof landingSample.transactions)[number]>(
-    landingSample.transactions.map((item) => [item.day, item]),
+  const byDay = new Map<number, LocalisedLandingSample["transactions"][number]>(
+    sample.transactions.map((item) => [item.day, item]),
   );
-  const totals = landingSample.transactions.reduce(
+  const totals = sample.transactions.reduce(
     (acc, item) => {
       if (item.amount > 0) acc.income += item.amount;
       else acc.outflow += Math.abs(item.amount);
@@ -860,29 +903,29 @@ export function CalendarMock({ variant = "web" }: { variant?: Variant }) {
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Ledger" active="Ledger">
+      <MobileShell active="nav.ledger">
         <div className="flex gap-2">
           <MockCard innerClassName="flex flex-col items-center p-2">
             <p className="text-[11px] text-muted-foreground">In</p>
             <p className="font-mono text-sm font-bold tabular-nums text-success">
-              +{formatEuro(totals.income)}
+              +{euro(totals.income)}
             </p>
           </MockCard>
           <MockCard innerClassName="flex flex-col items-center p-2">
             <p className="text-[11px] text-muted-foreground">Out</p>
             <p className="font-mono text-sm font-bold tabular-nums text-destructive">
-              −{formatEuro(totals.outflow)}
+              −{euro(totals.outflow)}
             </p>
           </MockCard>
           <MockCard innerClassName="flex flex-col items-center p-2">
             <p className="text-[11px] text-muted-foreground">Net</p>
             <p className="font-mono text-sm font-bold tabular-nums">
-              {formatEuro(net)}
+              {euro(net)}
             </p>
           </MockCard>
         </div>
         <div className="grid grid-cols-7 gap-1">
-          {WEEKDAY_LABELS.map((label) => (
+          {weekdayLabels().map((label) => (
             <div
               key={label}
               className="pb-1 text-center text-[9px] font-semibold uppercase tracking-wide text-muted-foreground"
@@ -930,34 +973,30 @@ export function CalendarMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell
-      title="Ledger"
-      active="Ledger"
-      monthLabel={landingSample.monthLabel}
-    >
+    <WebShell active="nav.ledger" monthLabel={sample.monthLabel}>
       <div className="flex gap-4">
         <MockCard innerClassName="flex flex-1 flex-col items-center px-5 py-3">
           <p className="text-xs text-muted-foreground">In</p>
           <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-success">
-            +{formatEuro(totals.income)}
+            +{euro(totals.income)}
           </p>
         </MockCard>
         <MockCard innerClassName="flex flex-1 flex-col items-center px-5 py-3">
           <p className="text-xs text-muted-foreground">Out</p>
           <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-destructive">
-            −{formatEuro(totals.outflow)}
+            −{euro(totals.outflow)}
           </p>
         </MockCard>
         <MockCard innerClassName="flex flex-1 flex-col items-center px-5 py-3">
           <p className="text-xs text-muted-foreground">Net</p>
           <p className="mt-1 font-mono text-xl font-semibold tabular-nums">
-            {formatEuro(net)}
+            {euro(net)}
           </p>
         </MockCard>
       </div>
       <MockCard className="flex-1" innerClassName="flex h-full flex-col p-3">
         <div className="grid grid-cols-7">
-          {WEEKDAY_LABELS.map((label) => (
+          {weekdayLabels(locale).map((label) => (
             <div
               key={label}
               className="pb-2 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
@@ -999,7 +1038,7 @@ export function CalendarMock({ variant = "web" }: { variant?: Variant }) {
                         )}
                       >
                         {item.amount > 0 ? "+" : "−"}
-                        {formatEuro(Math.abs(item.amount))}
+                        {euro(Math.abs(item.amount))}
                       </span>
                     ) : null}
                   </div>
@@ -1016,8 +1055,10 @@ export function CalendarMock({ variant = "web" }: { variant?: Variant }) {
 /* ----------------------------------------------------------------- wallets */
 
 export function WalletsMock({ variant = "web" }: { variant?: Variant }) {
-  const { portfolio, portfolioInvested, portfolioGain, wallets } =
-    landingSample;
+  const sample = landingSampleFor(useLocale());
+  const t = useT();
+  const euro = useEuro();
+  const { portfolio, portfolioInvested, portfolioGain, wallets } = sample;
   const total = wallets.reduce((sum, wallet) => sum + wallet.value, 0);
 
   const allocationBar = (
@@ -1051,9 +1092,7 @@ export function WalletsMock({ variant = "web" }: { variant?: Variant }) {
             />
             {wallet.label}
           </span>
-          <span className="font-mono tabular-nums">
-            {formatEuro(wallet.value)}
-          </span>
+          <span className="font-mono tabular-nums">{euro(wallet.value)}</span>
         </li>
       ))}
     </ul>
@@ -1061,17 +1100,19 @@ export function WalletsMock({ variant = "web" }: { variant?: Variant }) {
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Wallets" active="Wallets">
+      <MobileShell active="nav.wallets">
         <MockCard innerClassName="p-4">
-          <p className="text-sm text-muted-foreground">Portfolio value</p>
+          <p className="text-sm text-muted-foreground">
+            {t("marketingMock.portfolioValue")}
+          </p>
           <p className="mt-1 font-mono text-3xl font-bold tabular-nums">
-            {formatEuro(portfolio)}
+            {euro(portfolio)}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            <span className="font-mono">{formatEuro(portfolioInvested)}</span>
+            <span className="font-mono">{euro(portfolioInvested)}</span>
             {" invested · "}
             <span className="font-mono text-success">
-              +{formatEuro(portfolioGain)}
+              +{euro(portfolioGain)}
             </span>
           </p>
         </MockCard>
@@ -1084,21 +1125,21 @@ export function WalletsMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell title="Wallets" active="Wallets">
+    <WebShell active="nav.wallets">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-7">
           <MockCard innerClassName="flex h-full flex-col items-center justify-center px-8 py-7">
             <WebHero
-              label="Market value"
-              amount={formatEuro(portfolio)}
+              label={t("wallets.marketValue")}
+              amount={euro(portfolio)}
               subtitle={
                 <p>
                   <span className="privacy-amount tabular-nums">
-                    {formatEuro(portfolioInvested)}
+                    {euro(portfolioInvested)}
                   </span>
                   {" invested · "}
                   <span className="privacy-amount font-mono font-medium tabular-nums text-success">
-                    +{formatEuro(portfolioGain)}
+                    +{euro(portfolioGain)}
                   </span>
                 </p>
               }
@@ -1132,6 +1173,7 @@ function GoalBar({
   limit: number;
   over?: boolean;
 }) {
+  const euro = useEuro();
   const ratio = Math.min(1, spent / limit);
   const tone = progressTone(ratio, over);
   return (
@@ -1144,7 +1186,7 @@ function GoalBar({
             tone === "danger" && "text-destructive",
           )}
         >
-          {formatEuro(spent)} / {formatEuro(limit)}
+          {euro(spent)} / {euro(limit)}
         </span>
       </div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--hairline-strong)]">
@@ -1161,13 +1203,18 @@ function GoalBar({
 }
 
 export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
-  const { budget, goal } = landingSample;
+  const sample = landingSampleFor(useLocale());
+  const t = useT();
+  const euro = useEuro();
+  const { budget, goal } = sample;
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Plan" active="Plan">
+      <MobileShell active="nav.plan">
         <MockCard innerClassName="p-4">
-          <p className="text-sm font-bold">Monthly budgets</p>
+          <p className="text-sm font-bold">
+            {t("marketingMock.monthlyBudgets")}
+          </p>
           <div className="mt-3">
             <GoalBar
               label={budget.label}
@@ -1177,7 +1224,7 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
           </div>
         </MockCard>
         <MockCard innerClassName="p-4">
-          <p className="text-sm font-bold">Savings goals</p>
+          <p className="text-sm font-bold">{t("marketingMock.savingsGoals")}</p>
           <div className="mt-3">
             <GoalBar
               label={goal.label}
@@ -1186,7 +1233,7 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
             />
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            Save {formatEuro(goal.monthlyPace)}/month to reach this by{" "}
+            Save {euro(goal.monthlyPace)}/month to reach this by{" "}
             {goal.targetLabel}.
           </p>
         </MockCard>
@@ -1195,22 +1242,34 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell title="Plan" active="Plan">
+    <WebShell active="nav.plan">
       <div className="grid grid-cols-2 gap-4">
         <MockCard innerClassName="flex h-full flex-col px-6 py-5">
-          <p className="font-head text-base">Monthly budgets</p>
+          <p className="font-head text-base">
+            {t("marketingMock.monthlyBudgets")}
+          </p>
           <div className="mt-4 flex flex-col gap-4">
             <GoalBar
               label={budget.label}
               spent={budget.spent}
               limit={budget.limit}
             />
-            <GoalBar label="Housing" spent={850} limit={900} />
-            <GoalBar label="Everything else" spent={185} limit={400} />
+            <GoalBar
+              label={t("marketingMock.sampleHousing")}
+              spent={850}
+              limit={900}
+            />
+            <GoalBar
+              label={t("marketingMock.sampleEverythingElse")}
+              spent={185}
+              limit={400}
+            />
           </div>
         </MockCard>
         <MockCard innerClassName="flex h-full flex-col px-6 py-5">
-          <p className="font-head text-base">Savings goals</p>
+          <p className="font-head text-base">
+            {t("marketingMock.savingsGoals")}
+          </p>
           <div className="mt-4">
             <GoalBar
               label={goal.label}
@@ -1219,7 +1278,7 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
             />
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Save {formatEuro(goal.monthlyPace)}/month to reach this by{" "}
+            Save {euro(goal.monthlyPace)}/month to reach this by{" "}
             {goal.targetLabel}.
           </p>
         </MockCard>
@@ -1233,15 +1292,17 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
 /** The reconciliation, laid out the way the close sheet lays it out: what the
  * account did, then the two figures only a balance can produce. */
 function CloseLedger({ dense = false }: { dense?: boolean }) {
-  const { close } = landingSample;
+  const sample = landingSampleFor(useLocale());
+  const euro = useEuro();
+  const { close } = sample;
   const rows = [
-    { label: "Opening balance", value: formatEuro(close.openingBalance) },
-    { label: "Recorded in", value: `+${formatEuro(landingSample.income)}` },
+    { label: "Opening balance", value: euro(close.openingBalance) },
+    { label: "Recorded in", value: `+${euro(sample.income)}` },
     {
       label: "Recorded out",
-      value: `−${formatEuro(landingSample.spent)}`,
+      value: `−${euro(sample.spent)}`,
     },
-    { label: "Closing balance", value: formatEuro(close.closingBalance) },
+    { label: "Closing balance", value: euro(close.closingBalance) },
   ];
 
   return (
@@ -1269,20 +1330,20 @@ function CloseLedger({ dense = false }: { dense?: boolean }) {
 }
 
 export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
-  const { close } = landingSample;
+  const sample = landingSampleFor(useLocale());
+  const euro = useEuro();
+  const { close } = sample;
   const capRatio = close.unrecorded / close.unrecordedCap;
 
   if (variant === "mobile") {
     return (
-      <MobileShell title="Month" active="Month">
+      <MobileShell active="nav.month">
         <MockCard innerClassName="p-4">
           <MobileHero
             label={`Unrecorded in ${close.monthLabel.split(" ")[0]}`}
-            amount={formatEuro(close.unrecorded)}
+            amount={euro(close.unrecorded)}
             amountClassName="text-primary-ink"
-            subtitle={
-              <p>under your {formatEuro(close.unrecordedCap)} allowance</p>
-            }
+            subtitle={<p>under your {euro(close.unrecordedCap)} allowance</p>}
             status={
               <span className="text-success">
                 {close.streak} months in a row
@@ -1300,7 +1361,7 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
           <div className="flex items-baseline justify-between gap-2">
             <p className="text-sm font-semibold">Kept</p>
             <p className="font-mono text-lg font-bold tabular-nums text-success">
-              {formatEuro(close.kept)}
+              {euro(close.kept)}
             </p>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -1318,24 +1379,20 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell
-      title="Month"
-      active="Month"
-      monthLabel={landingSample.monthLabel}
-    >
+    <WebShell active="nav.month" monthLabel={sample.monthLabel}>
       <MockCard innerClassName="flex items-center justify-between gap-6 px-6 py-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-head text-lg">
-              {landingSample.monthLabel} is ready to close
+              {sample.monthLabel} is ready to close
             </p>
             <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
               {close.streak} in a row
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Stay under {formatEuro(close.unrecordedCap)} of unrecorded spending
-            to keep the run going.
+            Stay under {euro(close.unrecordedCap)} of unrecorded spending to
+            keep the run going.
           </p>
         </div>
         <span className="flex shrink-0 items-center gap-3 rounded-full border border-primary-rim bg-primary py-1.5 pl-5 pr-1.5 text-sm font-medium text-primary-foreground">
@@ -1351,11 +1408,9 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
           <MockCard innerClassName="flex h-full flex-col justify-center px-7 py-6">
             <WebHero
               label={`Unrecorded in ${close.monthLabel}`}
-              amount={formatEuro(close.unrecorded)}
+              amount={euro(close.unrecorded)}
               amountClassName="text-primary-ink"
-              subtitle={
-                <p>under your {formatEuro(close.unrecordedCap)} allowance</p>
-              }
+              subtitle={<p>under your {euro(close.unrecordedCap)} allowance</p>}
             />
             <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--hairline-strong)]">
               <div
@@ -1371,7 +1426,7 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
               Kept in {close.monthLabel.split(" ")[0]}
             </p>
             <p className="font-serif text-4xl font-semibold tabular-nums text-success">
-              {formatEuro(close.kept)}
+              {euro(close.kept)}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {close.keptRate}% of what came in
@@ -1405,7 +1460,8 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
  * sentence in red reads as an error, and "this went up" is not one.
  */
 function ReadCard({ compact = false }: { compact?: boolean }) {
-  const { read } = landingSample;
+  const sample = landingSampleFor(useLocale());
+  const { read } = sample;
   const dot = {
     good: "bg-success",
     bad: "bg-destructive",
@@ -1487,19 +1543,21 @@ function ReadCard({ compact = false }: { compact?: boolean }) {
 }
 
 export function MonthReadMock({ variant = "web" }: { variant?: Variant }) {
-  const { monthLabel, remaining, income } = landingSample;
+  const sample = landingSampleFor(useLocale());
+  const euro = useEuro();
+  const { monthLabel, remaining, income } = sample;
 
   const monthWord = monthLabel.split(" ")[0];
 
   if (variant === "mobile") {
     return (
       <MockViewport width={MOBILE_WIDTH} height={MOBILE_HEIGHT}>
-        <MobileShell title="Month" active={ACTIVE_NAV["month-read"]}>
+        <MobileShell active={ACTIVE_NAV["month-read"]}>
           <MockCard innerClassName="p-4">
             <MobileHero
               label={`Left in ${monthWord}`}
-              amount={formatEuro(remaining)}
-              subtitle={`of ${formatEuro(income)} earned`}
+              amount={euro(remaining)}
+              subtitle={`of ${euro(income)} earned`}
             />
           </MockCard>
           <ReadCard compact />
@@ -1510,11 +1568,7 @@ export function MonthReadMock({ variant = "web" }: { variant?: Variant }) {
 
   return (
     <MockViewport width={WEB_WIDTH} height={WEB_HEIGHT}>
-      <WebShell
-        title="Month"
-        active={ACTIVE_NAV["month-read"]}
-        monthLabel={monthLabel}
-      >
+      <WebShell active={ACTIVE_NAV["month-read"]} monthLabel={monthLabel}>
         {/* Seven and five, the same split the surface itself uses on a wide
             screen: the read sits under the figure it interprets, never
             beside it. */}
@@ -1523,8 +1577,8 @@ export function MonthReadMock({ variant = "web" }: { variant?: Variant }) {
             <MockCard innerClassName="p-5">
               <WebHero
                 label={`Left in ${monthWord}`}
-                amount={formatEuro(remaining)}
-                subtitle={`of ${formatEuro(income)} earned`}
+                amount={euro(remaining)}
+                subtitle={`of ${euro(income)} earned`}
               />
             </MockCard>
             <ReadCard />

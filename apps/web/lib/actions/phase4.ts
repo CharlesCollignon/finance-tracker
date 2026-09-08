@@ -33,7 +33,7 @@ export async function upsertBudget(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const rawCategory = formData.get("categoryId");
@@ -44,7 +44,7 @@ export async function upsertBudget(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -79,7 +79,7 @@ export async function upsertBudget(
 export async function deleteBudget(id: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   if (!parseUuid(id)) {
@@ -106,7 +106,7 @@ export async function upsertWalletTransfer(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = walletTransferSchema.safeParse({
@@ -118,7 +118,7 @@ export async function upsertWalletTransfer(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -155,7 +155,7 @@ export async function upsertWalletTransfer(
 export async function deleteWalletTransfer(id: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   if (!parseUuid(id)) {
@@ -182,7 +182,7 @@ export async function upsertTag(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = tagSchema.safeParse({
@@ -191,7 +191,7 @@ export async function upsertTag(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -224,7 +224,7 @@ export async function setTransactionTags(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const supabase = await createClient();
@@ -266,7 +266,7 @@ export async function upsertSavingsGoal(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const rawCategory = formData.get("categoryId");
@@ -279,7 +279,7 @@ export async function upsertSavingsGoal(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -316,7 +316,7 @@ export async function upsertSavingsGoal(
 export async function deleteSavingsGoal(id: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   if (!parseUuid(id)) {

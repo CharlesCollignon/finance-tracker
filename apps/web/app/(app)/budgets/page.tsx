@@ -25,6 +25,7 @@ import { getBankAccounts } from "@/lib/queries/bank-balance";
 import { bankFeedConfigured } from "@/lib/bank/client";
 import { BudgetsView } from "./BudgetsView";
 import { ICON } from "@/lib/icon-scale";
+import { getLocale } from "@/lib/locale";
 
 export default async function BudgetsPage() {
   const user = await getAuthUser();
@@ -53,6 +54,7 @@ export default async function BudgetsPage() {
     summary.expenseBreakdown,
     summary.expenses,
     categoryNames,
+    await getLocale(),
   );
 
   const goalProgress = buildSavingsGoalProgress(

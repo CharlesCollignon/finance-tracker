@@ -18,6 +18,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { BiometricLockProvider } from "@/providers/BiometricLockProvider";
 import { CurrencyProvider } from "@/providers/CurrencyProvider";
+import { LocaleProvider } from "@/providers/LocaleProvider";
 import {
   OnboardingProvider,
   useOnboarding,
@@ -128,18 +129,23 @@ export default function RootLayout() {
           <AuthProvider>
             <BiometricLockProvider>
               <PrivacyProvider>
-                <CurrencyProvider>
-                  <ToastProvider>
-                    {/* Inside ToastProvider: a refresh reports its outcome
-                        through a toast. Outside the navigator, so one request
-                        is in flight at a time whichever screen is showing. */}
-                    <RefreshProvider>
-                      <OnboardingProvider>
-                        <RootNavigator fontsReady={fontsReady} />
-                      </OnboardingProvider>
-                    </RefreshProvider>
-                  </ToastProvider>
-                </CurrencyProvider>
+                {/* Above CurrencyProvider, which formats figures and so needs
+                    the language; below AuthProvider, whose user is what lets
+                    the choice follow somebody to another device. */}
+                <LocaleProvider>
+                  <CurrencyProvider>
+                    <ToastProvider>
+                      {/* Inside ToastProvider: a refresh reports its outcome
+                          through a toast. Outside the navigator, so one request
+                          is in flight at a time whichever screen is showing. */}
+                      <RefreshProvider>
+                        <OnboardingProvider>
+                          <RootNavigator fontsReady={fontsReady} />
+                        </OnboardingProvider>
+                      </RefreshProvider>
+                    </ToastProvider>
+                  </CurrencyProvider>
+                </LocaleProvider>
               </PrivacyProvider>
             </BiometricLockProvider>
           </AuthProvider>

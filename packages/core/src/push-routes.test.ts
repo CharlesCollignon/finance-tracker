@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { buildDueNotifications } from "./push-digest";
 import { mobileRouteForPushUrl } from "./push-routes";
+import { translator } from "./i18n/t";
 
 describe("mobileRouteForPushUrl", () => {
   it("opens the review, not the Ledger it lives on", () => {
@@ -92,6 +93,7 @@ describe("mobileRouteForPushUrl", () => {
           pendingRecurring: 3,
           arrivedCharges,
           formatAmount: (amount) => `${amount} €`,
+          t: translator("en"),
         });
         for (const notification of due) {
           written.add(notification.url);

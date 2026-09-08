@@ -1,3 +1,6 @@
+import { weekdayShortMondayFirst } from "./i18n/calendar-names";
+import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 import { formatLongDate, relativeDayLabel } from "./constants";
 import type { TransactionWithCategory } from "./types/database";
 
@@ -95,7 +98,18 @@ export function buildCalendarWeeks(
   return weeks;
 }
 
-export const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+/**
+ * The column headings a calendar grid takes, Monday first.
+ *
+ * A function rather than the constant it used to be, because the seven words
+ * change with the language. `weekdayShortMondayFirst` owns the rotation, so
+ * this is only here to keep the calendar's own import surface unchanged.
+ */
+export function weekdayLabels(
+  locale: Locale = DEFAULT_LOCALE,
+): readonly string[] {
+  return weekdayShortMondayFirst(locale);
+}
 
 export function groupTransactionsByDate(
   transactions: TransactionWithCategory[],
@@ -134,16 +148,36 @@ export function computeDayTotals(
   };
 }
 
-export function formatCalendarDate(isoDate: string): string {
-  return relativeDayLabel(isoDate, formatLongDate);
+export function formatCalendarDate(
+  isoDate: string,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  return relativeDayLabel(isoDate, formatLongDate, locale);
 }
 
-export function formatShortAmount(amount: number): string {
+/**
+ * A figure squeezed to fit a calendar cell: "1.2k", or "1,2 k" in French.
+ *
+ * Both halves of that difference are the language's, not a style choice —
+ * the decimal separator comes from `Intl`, and whether a space precedes the
+ * suffix comes from the `units.thousands` message.
+ */
+export function formatShortAmount(
+  amount: number,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
   const rounded = Math.round(amount);
+  const format = (value: number) =>
+    new Intl.NumberFormat(INTL_LOCALES[locale], {
+      maximumFractionDigits: 1,
+    }).format(value);
+
   if (rounded >= 1000) {
-    return `${Math.round(rounded / 100) / 10}k`;
+    return translator(locale)("units.thousands", {
+      value: format(Math.round(rounded / 100) / 10),
+    });
   }
-  return String(rounded);
+  return format(rounded);
 }
 
 export function defaultSelectedDate(

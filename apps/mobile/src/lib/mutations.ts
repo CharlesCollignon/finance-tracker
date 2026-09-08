@@ -88,12 +88,12 @@ export async function createTransaction(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = transactionSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const { data, error } = await supabase
@@ -119,12 +119,12 @@ export async function updateTransaction(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = updateTransactionSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const { error } = await supabase
@@ -147,7 +147,7 @@ export async function updateTransaction(
 export async function deleteTransaction(id: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { error } = await supabase
@@ -174,7 +174,7 @@ export async function skipRecurringOccurrence(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   if (
@@ -246,7 +246,7 @@ export async function saveInvestmentPosition(input: {
 }): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   if (!Number.isFinite(input.initialBalance) || input.initialBalance < 0) {
@@ -279,7 +279,7 @@ export async function removeInvestmentPosition(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { error } = await supabase
@@ -314,7 +314,7 @@ export async function upsertCategory(input: {
 }): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = categorySchema.safeParse({
@@ -326,7 +326,7 @@ export async function upsertCategory(input: {
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const payload = {
@@ -356,7 +356,7 @@ export async function setCategoryArchived(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { error } = await supabase
@@ -374,7 +374,7 @@ export async function setCategoryArchived(
 export async function deleteCategory(id: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { error } = await supabase
@@ -399,7 +399,7 @@ export async function unskipRecurringOccurrence(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { error } = await supabase
@@ -422,7 +422,7 @@ export async function setTransactionTags(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { data: tx } = await supabase
@@ -538,12 +538,12 @@ export async function upsertRecurringTemplate(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = recurringTemplateSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const data = parsed.data;
@@ -688,7 +688,7 @@ export async function deleteRecurringTemplate(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   await supabase
@@ -715,7 +715,7 @@ export async function toggleRecurringActive(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { error } = await supabase
@@ -813,7 +813,7 @@ export async function previewApplyRecurringForMonth(
 ): Promise<ActionResult & { plan?: ApplyRecurringPlan }> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = applyRecurringSchema.safeParse({ year, month });
@@ -863,7 +863,7 @@ export async function applyRecurringForMonth(
 ): Promise<ActionResult & { created?: number; updated?: number }> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = applyRecurringSchema.safeParse({ year, month });
@@ -1027,7 +1027,7 @@ export async function applyRecurringForMonth(
 export async function updateProfile(fullName: string): Promise<ActionResult> {
   const parsed = profileSchema.safeParse({ fullName });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const { error } = await supabase.auth.updateUser({
@@ -1045,7 +1045,7 @@ export async function deleteAllUserData(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = deleteConfirmSchema.safeParse({ confirmation });
@@ -1123,12 +1123,12 @@ export async function upsertBudget(input: {
 }): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = budgetSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const payload = {
@@ -1160,7 +1160,7 @@ export async function upsertBudget(input: {
 export async function deleteBudget(id: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
   const { error } = await supabase
     .from("budgets")
@@ -1181,12 +1181,12 @@ export async function upsertWalletTransfer(input: {
 }): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = walletTransferSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const { error } = await supabase.from("wallet_transfers").insert({
@@ -1205,7 +1205,7 @@ export async function upsertWalletTransfer(input: {
 export async function deleteWalletTransfer(id: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
   const { error } = await supabase
     .from("wallet_transfers")
@@ -1221,11 +1221,11 @@ export async function deleteWalletTransfer(id: string): Promise<ActionResult> {
 export async function upsertTag(name: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
   const parsed = tagSchema.safeParse({ name });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
   const { error } = await supabase.from("tags").insert({
     user_id: userId,
@@ -1246,12 +1246,12 @@ export async function upsertSavingsGoal(input: {
 }): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = savingsGoalSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const payload = {
@@ -1285,7 +1285,7 @@ export async function upsertSavingsGoal(input: {
 export async function deleteSavingsGoal(id: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
   const { error } = await supabase
     .from("savings_goals")
@@ -1318,12 +1318,12 @@ export async function saveWalletPlan(input: {
 }): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = walletPlanSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const { error } = await supabase.from("wallet_plans").upsert(
@@ -1355,7 +1355,7 @@ export async function saveWalletTargets(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = walletTargetsSchema.safeParse({ targets });
@@ -1406,7 +1406,7 @@ export async function importTransactions(
 ): Promise<ActionResult & { imported?: number }> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = importTransactionsSchema.safeParse({ rows });
@@ -1441,7 +1441,7 @@ export async function deleteTransactions(
 ): Promise<ActionResult & { deleted?: number }> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = deleteTransactionsSchema.safeParse({ ids });
@@ -1476,7 +1476,7 @@ export async function moveTransactions(
 ): Promise<ActionResult & { moved?: number }> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = moveTransactionsSchema.safeParse({ ids, categoryId });
@@ -1520,7 +1520,7 @@ export async function previewMonthCloseFor(
 ): Promise<ActionResult & { result?: MonthCloseResult }> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = monthCloseSchema.safeParse({ year, month, closingBalance });
@@ -1551,7 +1551,7 @@ export async function recordMonthClose(
 ): Promise<ActionResult & { result?: MonthCloseResult }> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = monthCloseSchema.safeParse({ year, month, closingBalance });
@@ -1615,7 +1615,7 @@ export async function deleteMonthClose(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = monthCloseSchema.safeParse({ year, month, closingBalance: 0 });
@@ -1641,7 +1641,7 @@ export async function updateUnrecordedCap(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = unrecordedCapSchema.safeParse({ cap });
@@ -1671,7 +1671,7 @@ export async function updateUnrecordedCap(
 export async function updateCloseDay(closeDay: number): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = closeDaySchema.safeParse({ closeDay });
@@ -1732,7 +1732,7 @@ export async function fulfilOccurrence(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { error } = await supabase.from("recurring_fulfilments").upsert(
@@ -1770,7 +1770,7 @@ export async function refuseFulfilment(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { error } = await supabase.from("recurring_fulfilment_refusals").upsert(
@@ -1805,7 +1805,7 @@ export async function undoFulfilment(
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { error } = await supabase
@@ -1857,7 +1857,7 @@ export async function importFeedItem(
 ): Promise<ActionResult & { duplicateOf?: string }> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { data: item } = await supabase
@@ -1948,7 +1948,7 @@ export async function importFeedItem(
 export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { error } = await supabase
@@ -2006,7 +2006,7 @@ function matchedExistingTransaction(decidedBy: string | null): boolean {
 export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const { data: item } = await supabase
