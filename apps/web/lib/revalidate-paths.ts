@@ -20,6 +20,14 @@ export function revalidateRecurringDependents(): void {
  * can add a transaction, close a month and move a wallet's value in one go,
  * and the point of a refresh button on every screen is that you do not have
  * to know which screens the answer touched.
+ *
+ * Which is why it has to be every surface and not most of them. A server
+ * action updates the UI for the paths it names, so a page missing from this
+ * list is a page where the control spins, reports what it did, and leaves
+ * the figures exactly where they were — the button looking broken on the
+ * one screen you happened to press it from. `/import`, `/profile` and
+ * `/welcome` were missing, so they are here now, and anything added under
+ * `(app)` belongs here the day it is added.
  */
 export function revalidateEverySurface(): void {
   revalidatePath("/dashboard");
@@ -30,4 +38,7 @@ export function revalidateEverySurface(): void {
   revalidatePath("/budgets");
   revalidatePath("/investments");
   revalidatePath("/categories");
+  revalidatePath("/import");
+  revalidatePath("/profile");
+  revalidatePath("/welcome");
 }

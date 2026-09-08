@@ -78,6 +78,73 @@ export function bankFeedConfigured(): boolean {
 }
 
 /**
+ * Why this user has no bank — which is two answers, not one.
+ *
+ * `getBankConnection` returns null for two quite different reasons: nothing
+ * is configured, or something is and it is registered to somebody else.
+ * This file already refuses that collapse for the bundle itself — a
+ * malformed one is a configuration error and not "no bank" — and then
+ * reintroduced it for the owner id, where it is worse: a bundle whose
+ * `OPEN_BANKING_OWNER_USER_ID` does not match the signed-in user reads
+ * exactly like no bundle at all. So the one person who has connected a bank
+ * gets told there is nothing to reconcile with, and the deployment-wide
+ * `bankFeedConfigured()` still lights up the control that promises to ask
+ * it. A button that offers to reach your bank and then reports everything
+ * fine without having reached it is the shape that bug took.
+ *
+ * Named rather than left to each call site to infer from a null, because
+ * both apps have to say the same thing about it and neither can work it out
+ * afterwards.
+ */
+export type BankFeedStatus =
+  /** The bundle is here and it is this user's. */
+  | "connected"
+  /** No bundle on this deployment. Nothing is wrong; there is just no bank. */
+  | "unconfigured"
+  /** A bundle is here, registered to another account. */
+  | "other-owner";
+
+/**
+ * Deliberately built on `getBankConnection` rather than repeating its
+ * ownership test, so what the interface says can never drift from what the
+ * sync will actually accept.
+ */
+export function bankFeedStatus(userId: string): BankFeedStatus {
+  if (getBankConnection(userId)) {
+    return "connected";
+  }
+  return bankFeedConfigured() ? "other-owner" : "unconfigured";
+}
+
+/**
+ * What to tell someone whose refresh could not reach a bank, in words a
+ * screen can show.
+ *
+ * Both surfaces read it from here so they cannot drift: the web action and
+ * the route the phone calls were describing the same condition two different
+ * ways, one of them ("Up to date") a claim about a bank that was never asked.
+ * Mirrors `explain()` in `bank/pull`, which does the same job for a refusal.
+ *
+ * Each of these still follows a re-read, so each leads with what did happen.
+ * "Reloaded" is the honest half of a refresh with no bank behind it: another
+ * device may well have written something since.
+ */
+export function describeBankFeedStatus(
+  status: Exclude<BankFeedStatus, "connected">,
+): string {
+  switch (status) {
+    case "unconfigured":
+      return "Reloaded — no bank is connected.";
+    case "other-owner":
+      // Deliberately says which half is wrong. The alternative was the
+      // friendly "no bank", and on a single-user deployment that is the
+      // sentence that hid a mistyped OPEN_BANKING_OWNER_USER_ID behind a
+      // reassuring notice for as long as it took someone to file a bug.
+      return "Reloaded — this deployment's bank credentials are registered to another account.";
+  }
+}
+
+/**
  * Whether the feed belongs to this user in particular.
  *
  * The distinction from `bankFeedConfigured()` matters at a gate: that one
@@ -86,10 +153,7 @@ export function bankFeedConfigured(): boolean {
  * deployment-wide answer let a non-owner through the friendly "no bank"
  * branch and into that throw, so the same condition came back as a hard
  * error for them and as a soft notice for everyone else.
- *
- * Deliberately defined in terms of `getBankConnection` rather than repeating
- * its ownership test, so the gate cannot drift from the requirement again.
  */
 export function bankFeedBelongsTo(userId: string): boolean {
-  return getBankConnection(userId) !== null;
+  return bankFeedStatus(userId) === "connected";
 }

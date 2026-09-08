@@ -26,7 +26,11 @@ interface RefreshValue {
   age: string;
   /** Old enough that a figure could have moved since. */
   stale: boolean;
-  /** Whether a bank is connected at all, which decides what the control says. */
+  /**
+   * Whether a bank is connected *for this user*, which decides what the
+   * control promises. The deployment-wide answer is the wrong one here: it
+   * would have the button offer to ask a bank the action will not ask.
+   */
   connected: boolean;
   /**
    * Whether the age is knowable. False until migration 022 exists, when the
@@ -63,6 +67,7 @@ export function RefreshProvider({
   children: ReactNode;
   /** The freshness the server rendered with, or null without a connection. */
   initial: PullFreshness | null;
+  /** Whether this user in particular has a bank behind the control. */
   connected: boolean;
 }) {
   const { toast } = useToast();
@@ -93,8 +98,12 @@ export function RefreshProvider({
         setKnown(result.freshness.known);
       }
       setNow(new Date().toISOString());
+      // "Refreshed" rather than "Up to date": every branch of the action
+      // returns a message, so this only stands in for one that somehow did
+      // not — and a fallback is the last place that should be making a claim
+      // about a bank nobody can confirm was reached.
       toast(
-        result.error ?? result.message ?? "Up to date",
+        result.error ?? result.message ?? "Refreshed",
         result.error ? "error" : "success",
       );
     });

@@ -1,5 +1,5 @@
 import { autoCloseMonths } from "@/lib/bank/auto-close";
-import { bankFeedBelongsTo } from "@/lib/bank/client";
+import { bankFeedStatus, describeBankFeedStatus } from "@/lib/bank/client";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { syncBankFeed } from "@/lib/bank/sync";
 import { sessionFromBearer } from "@/lib/supabase/bearer";
@@ -39,12 +39,18 @@ export async function POST(request: Request) {
     return Response.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  if (!bankFeedBelongsTo(session.userId)) {
+  const status = bankFeedStatus(session.userId);
+  if (status !== "connected") {
     // Nothing outside the database to reconcile with. Not an error: the
     // client's own re-read is still the right thing to do. Asked per user,
     // because a deployment holding someone else's credentials has no bank to
-    // offer this caller either.
-    return Response.json({ pulled: false, message: "No bank is connected." });
+    // offer this caller either — and said in those words, because "No bank
+    // is connected" to the owner of a bundle whose user id does not match is
+    // a dead end rather than a report.
+    return Response.json({
+      pulled: false,
+      message: describeBankFeedStatus(status),
+    });
   }
 
   try {

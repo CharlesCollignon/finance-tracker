@@ -8,7 +8,7 @@ import { ToastProvider } from "@/components/layout/ToastProvider";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getQuickEntryContext } from "@/lib/queries/quick-entry";
 import { accountLabel } from "@/lib/account-label";
-import { bankFeedConfigured } from "@/lib/bank/client";
+import { bankFeedBelongsTo } from "@/lib/bank/client";
 import { countFulfilmentProposals } from "@/lib/queries/fulfilment";
 import { getRecurringTemplates } from "@/lib/queries/finance";
 import { getCurrentMonth } from "@finance/core/constants";
@@ -19,7 +19,13 @@ import { createClient } from "@/lib/supabase/server";
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await getAuthUser();
   const { name, initial } = accountLabel(user ?? {});
-  const connected = bankFeedConfigured();
+  // Per user, not per deployment. This flag decides what the refresh control
+  // promises, and the action behind it gates on whether *this* user has a
+  // bank — so a deployment-wide answer here is what let the button offer to
+  // ask your bank and then report back without having asked anything. The
+  // display surfaces keep the deployment-wide question, which is the one
+  // they are actually asking.
+  const connected = user ? bankFeedBelongsTo(user.id) : false;
 
   // Fetched here rather than per page so the quick-add sheet — reachable from
   // every screen — opens with no loading state.

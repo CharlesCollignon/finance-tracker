@@ -3,7 +3,7 @@
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
-import { bankFeedBelongsTo } from "@/lib/bank/client";
+import { bankFeedStatus, describeBankFeedStatus } from "@/lib/bank/client";
 import type { PullFreshness } from "@finance/core/bank-pull";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { syncBankFeed } from "@/lib/bank/sync";
@@ -46,9 +46,17 @@ export async function refreshEverythingAction(): Promise<RefreshResult> {
   // with, so a refresh is a re-read. Worth having anyway: another device may
   // have added something, and the button should not be missing on a screen
   // just because this deployment has no bank wired up.
-  if (!bankFeedBelongsTo(user.id)) {
+  //
+  // What it must not do is report "Up to date", which is what it used to.
+  // Nothing here asked a bank, so nothing here has earned a word about
+  // whether the figures match one — the same reason the cooldown branch
+  // below returns the refusal verbatim instead of "nothing new". And the two
+  // reasons a bank is missing are worth telling apart: `other-owner` is a
+  // configuration mistake wearing the costume of an ordinary absence.
+  const status = bankFeedStatus(user.id);
+  if (status !== "connected") {
     revalidateEverySurface();
-    return { success: true, message: "Up to date" };
+    return { success: true, message: describeBankFeedStatus(status) };
   }
 
   try {
