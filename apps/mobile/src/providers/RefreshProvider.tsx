@@ -41,11 +41,17 @@ const TICK_MS = 30_000;
 /**
  * Refreshing from anywhere.
  *
- * Every screen has pull-to-refresh, which re-reads Supabase — correct, and
- * only ever as current as the last time the web app's cron asked the bank.
- * This is the control that asks, and it lives above the navigator so one
- * request is in flight at a time no matter which screen is showing and so the
- * "last checked" wording is the same everywhere.
+ * Asking the bank used to be a press and only a press: dragging a list down
+ * re-read Supabase, which was correct but never more current than the last
+ * time the web app's cron had asked. Two controls with the same icon and
+ * different reach is a distinction nobody made from the outside — the
+ * gesture is what people reach for, and it was the one that could not get a
+ * newer answer. So both go through here now, and the drag is the bank
+ * refresh as much as the button is.
+ *
+ * Which makes living above the navigator the thing that holds it together:
+ * one request in flight at a time no matter how many screens have been
+ * dragged, and one "last checked" wording everywhere.
  *
  * A refresh always ends in `notifyDataChanged`, whether or not the bank
  * answered: screens reload from Supabase either way, and a gesture that
@@ -83,7 +89,14 @@ export function RefreshProvider({ children }: { children: ReactNode }) {
       // Always: the reload is what makes the gesture feel like it worked.
       notifyDataChanged();
       if (outcome.message) {
-        toast(outcome.message, outcome.pulled ? "success" : "default");
+        // Three states, three colours. Asked and answered is a success; a
+        // server that could not be reached is an error worth the red; and a
+        // refusal in between — a cooldown, no bank connected — is a plain
+        // report about a screen whose figures are still perfectly good.
+        toast(
+          outcome.message,
+          outcome.pulled ? "success" : outcome.failed ? "error" : "default",
+        );
       }
     })();
   }, [running, toast]);

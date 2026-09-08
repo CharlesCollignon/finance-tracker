@@ -101,7 +101,7 @@ export default function PlanningScreen() {
   const [pending, setPending] = useState(false);
 
   const dataVersion = useDataVersion();
-  const { data, loading, refreshing, onRefresh, error } =
+  const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
     useRefreshable(async () => {
       if (!user) {
         return {
@@ -239,7 +239,7 @@ export default function PlanningScreen() {
       ) : (
         <ScrollView
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
           }
           contentContainerClassName="gap-4 pt-1"
           contentContainerStyle={{ paddingBottom: tabBarClearance }}

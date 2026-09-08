@@ -79,7 +79,7 @@ export default function CalendarScreen() {
   const [deletePending, setDeletePending] = useState(false);
 
   const dataVersion = useDataVersion();
-  const { data, loading, refreshing, onRefresh, reload, error } =
+  const { data, loading, refreshing, onRefresh, onRefreshAll, reload, error } =
     useRefreshable(async () => {
       if (!user) {
         return {
@@ -240,7 +240,7 @@ export default function CalendarScreen() {
       ) : (
         <ScrollView
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
           }
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >

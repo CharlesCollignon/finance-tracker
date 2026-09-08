@@ -159,7 +159,7 @@ export default function MonthScreen() {
   const [closeOpen, setCloseOpen] = useState(false);
 
   const dataVersion = useDataVersion();
-  const { data, loading, refreshing, onRefresh, error } =
+  const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
     useRefreshable(async () => {
       if (!user) {
         return {
@@ -553,7 +553,7 @@ export default function MonthScreen() {
       ) : (
         <ScrollView
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
           }
           contentContainerClassName="gap-4 pt-4"
           contentContainerStyle={{ paddingBottom: tabBarClearance }}

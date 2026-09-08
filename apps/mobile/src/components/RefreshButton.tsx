@@ -21,10 +21,12 @@ const SPIN_PERIOD = 900;
 /**
  * Ask the bank, from the header band every screen already has.
  *
- * Pull-to-refresh re-reads Supabase and always has. This is the control that
- * asks the bank for anything new — a different and slower thing — so it is a
- * deliberate press rather than a gesture, and it spins while it waits because
- * a bank round trip is long enough that a still icon reads as a dead button.
+ * Dragging a list down asks the bank too, so this is no longer the only way
+ * in — but it is still the honest one, for three reasons. Dragging needs the
+ * list scrolled to the top, which is not where you are when a figure looks
+ * wrong. The drag's own spinner settles as soon as the local re-read does,
+ * so this icon's spin is the only thing on screen that says a bank ask is
+ * still running. And the dot below has nowhere else to live.
  *
  * The dot says the figures are some hours old. Not a warning: a statement
  * fetched this morning is a perfectly ordinary thing to be looking at, and

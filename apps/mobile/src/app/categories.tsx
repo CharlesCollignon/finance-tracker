@@ -40,7 +40,7 @@ export default function CategoriesScreen() {
   const [editing, setEditing] = useState<Category | null>(null);
   const [confirming, setConfirming] = useState<Category | null>(null);
 
-  const { data, loading, refreshing, onRefresh, error } =
+  const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
     useRefreshable(async () => {
       if (!user) {
         return { categories: [] as Category[] };
@@ -105,7 +105,7 @@ export default function CategoriesScreen() {
       ) : (
         <ScrollView
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
           }
           contentContainerClassName="gap-4 pb-28"
           showsVerticalScrollIndicator={false}

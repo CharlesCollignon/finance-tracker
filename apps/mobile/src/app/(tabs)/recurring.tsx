@@ -70,7 +70,7 @@ export default function RecurringScreen() {
   const { year, month } = parseMonthParams();
 
   const dataVersion = useDataVersion();
-  const { data, loading, refreshing, onRefresh, reload, error } =
+  const { data, loading, refreshing, onRefreshAll, reload, error } =
     useRefreshable(async () => {
       if (!user) {
         return {
@@ -282,7 +282,7 @@ export default function RecurringScreen() {
           data={activeItems}
           keyExtractor={(item) => item.id}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
           }
           ListEmptyComponent={
             <EmptyState

@@ -155,7 +155,7 @@ export default function TransactionsScreen() {
   const [storedSelection, setSelected] =
     useState<ReadonlySet<string>>(EMPTY_SELECTION);
   const [deletePending, setDeletePending] = useState(false);
-  const { data, loading, refreshing, onRefresh, reload, error } =
+  const { data, loading, refreshing, onRefresh, onRefreshAll, reload, error } =
     useRefreshable(async () => {
       if (!user) {
         return {
@@ -769,7 +769,7 @@ export default function TransactionsScreen() {
                 </View>
               )}
               refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
               }
               ListEmptyComponent={
                 <EmptyState

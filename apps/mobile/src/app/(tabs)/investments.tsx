@@ -78,7 +78,7 @@ export default function InvestmentsScreen() {
     useState<InvestmentPositionItem | null>(null);
 
   const dataVersion = useDataVersion();
-  const { data, loading, refreshing, onRefresh, error } =
+  const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
     useRefreshable(async () => {
       if (!user) {
         return {
@@ -168,7 +168,7 @@ export default function InvestmentsScreen() {
       ) : (
         <ScrollView
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
           }
           contentContainerClassName="gap-4 pt-2"
           contentContainerStyle={{ paddingBottom: tabBarClearance }}

@@ -22,6 +22,17 @@ import { supabase } from "@/lib/supabase";
 export interface BankRefreshOutcome {
   /** Whether the bank was actually asked. */
   pulled: boolean;
+  /**
+   * Whether the attempt broke, as against being declined.
+   *
+   * Both come back with `pulled: false` and both are survivable, but they do
+   * not deserve the same colour. "Your bank was asked moments ago" is the
+   * cooldown working and the figures on screen are fine; a server that could
+   * not be reached means nobody knows how current they are. Told apart here
+   * because this is the only place that can still see the difference — by
+   * the time a message is a string, a refusal and a 502 read alike.
+   */
+  failed: boolean;
   /** What to tell the user, when there is something worth saying. */
   message: string | null;
   freshness: PullFreshness | null;
@@ -48,8 +59,11 @@ export function bankRefreshAvailable(): boolean {
 }
 
 export async function refreshFromBank(): Promise<BankRefreshOutcome> {
+  // No bank ask is possible on this build, or nobody is signed in. Not a
+  // failure and nothing to report: the caller's own re-read still happens.
   const quiet: BankRefreshOutcome = {
     pulled: false,
+    failed: false,
     message: null,
     freshness: null,
   };
@@ -91,6 +105,7 @@ export async function refreshFromBank(): Promise<BankRefreshOutcome> {
       // unreachable is worse than one showing yesterday's statement.
       return {
         pulled: false,
+        failed: true,
         message: body?.error ?? "Could not reach your bank just now.",
         freshness: null,
       };
@@ -98,12 +113,18 @@ export async function refreshFromBank(): Promise<BankRefreshOutcome> {
 
     return {
       pulled: body?.pulled ?? false,
+      // A 200 is the server's considered answer, whatever it says. The
+      // reasons it comes back unpulled — a cooldown, no bank connected, a
+      // consent that has lapsed — are all reports rather than breakages.
+      failed: false,
       message: body?.message ?? null,
       freshness: body?.freshness ?? null,
     };
   } catch {
+    // Aborted at the timeout, offline, DNS, TLS. Nothing answered at all.
     return {
       pulled: false,
+      failed: true,
       message: "Could not reach your bank just now.",
       freshness: null,
     };
