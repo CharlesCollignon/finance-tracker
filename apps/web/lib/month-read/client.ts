@@ -1,5 +1,5 @@
 import {
-  MONTH_READ_JSON_SCHEMA,
+  monthReadJsonSchema,
   type MonthReadRequest,
   type MonthReadSource,
 } from "@finance/core/month-read";
@@ -169,7 +169,7 @@ export function createMistralMonthReadSource(
             model: monthReadModel(),
             temperature: TEMPERATURE,
             max_tokens: MAX_TOKENS,
-            response_format: MONTH_READ_JSON_SCHEMA,
+            response_format: monthReadJsonSchema(request.locale),
             messages: [
               { role: "system", content: request.system },
               { role: "user", content: request.user },

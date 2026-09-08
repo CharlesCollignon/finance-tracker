@@ -7,6 +7,7 @@ import { Text } from "@/components/ui/Text";
 import { hapticLight } from "@/lib/haptics";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 interface Step {
   n: number;
@@ -59,6 +60,7 @@ const STEPS: Step[] = [
  * other two are.
  */
 export function MonthFirstRun() {
+  const t = useT();
   const router = useRouter();
   const colors = useThemeColors();
 
@@ -113,7 +115,7 @@ export function MonthFirstRun() {
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Walk me through the setup"
+        accessibilityLabel={t("common.walkMeThrough")}
         onPress={() => {
           void hapticLight();
           router.push("/onboarding" as Href);

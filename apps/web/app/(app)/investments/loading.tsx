@@ -9,7 +9,7 @@ function Bone({ className }: { className?: string }) {
 export default function InvestmentsLoading() {
   return (
     <>
-      <PageHeader title="Wallets" />
+      <PageHeader titleKey="nav.wallets" />
       <PageContainer>
         <div className="flex flex-col items-center gap-8 md:gap-10">
           <div className="flex w-full flex-col items-center gap-2">

@@ -1,3 +1,4 @@
+import type { Key } from "@finance/core/i18n/t";
 import {
   ArrowsLeftRight,
   ChartLine,
@@ -9,7 +10,15 @@ import {
 
 export interface NavChild {
   href: string;
-  label: string;
+  /**
+   * The message key for the label, not the label.
+   *
+   * This module is imported by the sidebar, the phone's bottom bar, the
+   * account menu and the marketing mocks. Holding a key rather than a word
+   * keeps all four naming the surfaces identically in whichever language the
+   * reader chose, which is what the file already promised about English.
+   */
+  labelKey: Key;
 }
 
 /**
@@ -34,33 +43,38 @@ export interface NavChild {
 export const APP_NAV_ITEMS = [
   {
     href: "/dashboard",
-    label: "Month",
+    labelKey: "nav.month" satisfies Key,
     icon: ChartPieSlice,
     children: [] as NavChild[],
   },
   {
     href: "/transactions",
-    label: "Ledger",
+    labelKey: "nav.ledger" satisfies Key,
     icon: ArrowsLeftRight,
     // The one surface with more than one way of looking at it. On a phone
     // these are the tabs at the top of the surface; the sidebar has the room
     // to show them without being asked.
     children: [
-      { href: "/transactions", label: "List" },
-      { href: "/calendar", label: "Calendar" },
-      { href: "/history", label: "By category" },
+      { href: "/transactions", labelKey: "nav.ledgerList" },
+      { href: "/calendar", labelKey: "nav.ledgerCalendar" },
+      { href: "/history", labelKey: "nav.ledgerByCategory" },
     ] as NavChild[],
   },
   {
     href: "/recurring",
-    label: "Charges",
+    labelKey: "nav.charges" satisfies Key,
     icon: Repeat,
     children: [] as NavChild[],
   },
-  { href: "/budgets", label: "Plan", icon: Target, children: [] as NavChild[] },
+  {
+    href: "/budgets",
+    labelKey: "nav.plan" satisfies Key,
+    icon: Target,
+    children: [] as NavChild[],
+  },
   {
     href: "/investments",
-    label: "Wallets",
+    labelKey: "nav.wallets" satisfies Key,
     icon: ChartLine,
     children: [] as NavChild[],
   },
@@ -68,7 +82,7 @@ export const APP_NAV_ITEMS = [
 
 export const PROFILE_NAV_ITEM = {
   href: "/profile",
-  label: "Profile",
+  labelKey: "nav.profile" satisfies Key,
   icon: User,
 } as const;
 

@@ -1,9 +1,16 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 import { formatMonthCompact } from "./constants";
 import type { TransactionWithCategory } from "./types/database";
 import type { WalletId } from "./types/database";
 
 export type { WalletId as InvestmentWalletId };
 
+/**
+ * Untranslated on purpose. "PEA" and "CTO" are the French names of French
+ * tax wrappers and have no English equivalent to translate to, and "Crypto"
+ * is the same word in both languages.
+ */
 export const INVESTMENT_WALLET_LABELS: Record<WalletId, string> = {
   pea: "PEA",
   cto: "CTO",
@@ -17,7 +24,6 @@ export const INVESTMENT_WALLET_COLORS: Record<WalletId, string> = {
 };
 
 export const INVESTMENT_WALLET_IDS: WalletId[] = ["pea", "cto", "crypto"];
-
 
 export interface WalletTotals {
   pea: number;
@@ -329,6 +335,7 @@ export function buildWalletOverview(
 export function buildTotalInvestedSeries(
   transactions: TransactionWithCategory[],
   settings: InvestmentWalletSettings,
+  locale: Locale = DEFAULT_LOCALE,
 ): MonthlyWalletPoint[] {
   const initial = initialTotals(settings);
   const contributionSeries = buildCumulativeMonthlySeries(transactions);
@@ -341,7 +348,7 @@ export function buildTotalInvestedSeries(
     return [
       {
         monthKey: "0000-00",
-        label: "Start",
+        label: translator(locale)("fallback.chartStart"),
         pea: initial.pea,
         cto: initial.cto,
         crypto: initial.crypto,

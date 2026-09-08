@@ -1,9 +1,17 @@
+/**
+ * The messages here are keys, not sentences.
+ *
+ * A schema is built when this module loads, long before any request has a
+ * language, so it cannot translate its own message. It emits a key and
+ * whoever shows the failure resolves it — see `resolveMessage` in `../i18n/t`
+ * for why that is safe for the ordinary errors sharing the same field.
+ */
 import { z } from "zod";
 
 export const transactionSchema = z.object({
   categoryId: z.string().uuid(),
-  amount: z.coerce.number().positive("Amount must be positive"),
-  occurredOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date"),
+  amount: z.coerce.number().positive("errors.amountPositive"),
+  occurredOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "errors.invalidDate"),
   note: z.string().max(500).optional(),
 });
 
@@ -27,8 +35,8 @@ export const quickTransactionSchema = transactionSchema.extend({
 export const deleteTransactionsSchema = z.object({
   ids: z
     .array(z.string().uuid())
-    .min(1, "Nothing selected")
-    .max(200, "Select at most 200 transactions at a time"),
+    .min(1, "errors.nothingSelected")
+    .max(200, "errors.tooManySelected"),
 });
 
 /**
@@ -43,16 +51,16 @@ export const deleteTransactionsSchema = z.object({
 export const moveTransactionsSchema = z.object({
   ids: z
     .array(z.string().uuid())
-    .min(1, "Nothing selected")
-    .max(200, "Select at most 200 transactions at a time"),
-  categoryId: z.string().uuid("Pick a category"),
+    .min(1, "errors.nothingSelected")
+    .max(200, "errors.tooManySelected"),
+  categoryId: z.string().uuid("errors.pickCategory"),
 });
 
 /** One row of a reviewed CSV import, as the user confirmed it. */
 export const importedTransactionSchema = z.object({
   categoryId: z.string().uuid(),
-  amount: z.coerce.number().positive("Amount must be positive"),
-  occurredOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date"),
+  amount: z.coerce.number().positive("errors.amountPositive"),
+  occurredOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "errors.invalidDate"),
   note: z.string().max(500).optional(),
 });
 
@@ -60,8 +68,8 @@ export const importedTransactionSchema = z.object({
 export const importTransactionsSchema = z.object({
   rows: z
     .array(importedTransactionSchema)
-    .min(1, "Nothing to import")
-    .max(2000, "Import at most 2000 rows at a time"),
+    .min(1, "errors.nothingToImport")
+    .max(2000, "errors.tooManyRows"),
 });
 
 export const categorySchema = z.object({
@@ -69,8 +77,8 @@ export const categorySchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Name is required")
-    .max(100, "Name must be 100 characters or less"),
+    .min(1, "errors.nameRequired")
+    .max(100, "errors.nameTooLong100"),
   type: z.enum(["income", "expense", "savings", "investment"]),
   icon: z.string().max(50).optional(),
   countsTowardSummary: z.boolean().optional(),
@@ -79,7 +87,7 @@ export const categorySchema = z.object({
 const optionalIsoDate = z
   .union([
     z.literal(""),
-    z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date"),
+    z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "errors.invalidDate"),
   ])
   .optional()
   .transform((value) => (value && value.length > 0 ? value : undefined));
@@ -87,13 +95,10 @@ const optionalIsoDate = z
 const recurringCommonSchema = z.object({
   id: z.string().uuid().optional(),
   categoryId: z.string().uuid(),
-  description: z
-    .string()
-    .max(500, "Description must be 500 characters or less")
-    .optional(),
+  description: z.string().max(500, "errors.descriptionTooLong").optional(),
   active: z.boolean().optional(),
   pricingType: z.enum(["fixed", "shares"]).default("fixed"),
-  amount: z.coerce.number().positive("Amount must be positive").optional(),
+  amount: z.coerce.number().positive("errors.amountPositive").optional(),
   shareCount: z.coerce.number().int().positive().optional(),
   instrumentSymbol: z.string().min(1).max(32).optional(),
   instrumentName: z.string().min(1).max(200).optional(),
@@ -111,7 +116,7 @@ function applyPricingRules(
     if (!data.amount || data.amount <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Amount must be positive",
+        message: "errors.amountPositive",
         path: ["amount"],
       });
     }
@@ -121,7 +126,7 @@ function applyPricingRules(
   if (!data.shareCount) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Share count is required",
+      message: "errors.shareCountRequired",
       path: ["shareCount"],
     });
   }
@@ -129,7 +134,7 @@ function applyPricingRules(
   if (!data.instrumentSymbol) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Select an ETF from the search results",
+      message: "errors.selectEtf",
       path: ["instrumentSymbol"],
     });
   }
@@ -137,7 +142,7 @@ function applyPricingRules(
   if (!data.instrumentName) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Select an ETF from the search results",
+      message: "errors.selectEtf",
       path: ["instrumentName"],
     });
   }
@@ -150,7 +155,7 @@ function applyScheduleRules(
   if (data.startsOn && data.endsOn && data.startsOn > data.endsOn) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "End date must be on or after start date",
+      message: "errors.endBeforeStart",
       path: ["endsOn"],
     });
   }
@@ -193,7 +198,7 @@ export const applyRecurringSchema = z.object({
 
 export const authSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(6, "errors.passwordTooShort"),
 });
 
 export type RecurringTemplateInput = z.infer<typeof recurringTemplateSchema>;

@@ -23,6 +23,7 @@ import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { useT } from "@/providers/LocaleProvider";
 
 interface WalletPerformanceProps {
   portfolio: InvestmentPortfolioSummary;
@@ -130,6 +131,7 @@ export function WalletPerformance({
   onWalletChange,
   nextByWallet,
 }: WalletPerformanceProps) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
   const [range, setRange] = useState<RangeKey>("All");
@@ -188,7 +190,7 @@ export function WalletPerformance({
       series: [
         {
           type: "line",
-          name: "Market value",
+          name: t("wallets.marketValue"),
           smooth: true,
           showSymbol: false,
           lineStyle: { color: colors.primary, width: 2 },
@@ -197,7 +199,7 @@ export function WalletPerformance({
         },
         {
           type: "line",
-          name: "Invested",
+          name: t("wallets.invested"),
           smooth: true,
           showSymbol: false,
           lineStyle: {
@@ -210,7 +212,7 @@ export function WalletPerformance({
         },
       ],
     };
-  }, [visible, colors]);
+  }, [visible, colors, t]);
 
   return (
     <View className="gap-4">
@@ -249,17 +251,17 @@ export function WalletPerformance({
 
       <View className="flex-row gap-3">
         <Metric
-          label="Market value"
+          label={t("wallets.marketValue")}
           value={formatEuro(marketValue)}
           color={colors.primary}
         />
         <Metric
-          label="Invested"
+          label={t("wallets.invested")}
           value={formatEuro(invested)}
           color={colors.mutedForeground}
         />
         <Metric
-          label={isCrypto ? "Bitcoin" : "Shares"}
+          label={isCrypto ? t("position.bitcoin") : t("position.shares")}
           value={
             holdings > 0
               ? isCrypto
@@ -276,14 +278,14 @@ export function WalletPerformance({
         <Card bezel innerClassName="items-center p-5">
           <Text variant="muted" className="text-center text-sm">
             {points.length === 0
-              ? "No history for this wallet yet."
-              : "One month of history so far — a line needs at least two."}
+              ? t("position.noHistory")
+              : t("position.oneMonthOnly")}
           </Text>
         </Card>
       )}
 
       <SegmentedControl
-        label="Chart range"
+        label={t("position.chartRange")}
         value={range}
         onChange={setRange}
         segments={RANGES.map((key) => ({
@@ -294,25 +296,32 @@ export function WalletPerformance({
       />
 
       <Card bezel innerClassName="px-4 py-1">
-        <StatRow label="Total invested" value={formatEuro(invested)} />
+        <StatRow
+          label={t("position.totalInvested")}
+          value={formatEuro(invested)}
+        />
         <View className="h-px bg-border" />
         <StatRow
-          label={isCrypto ? "Average buy price" : "Average share price"}
+          label={
+            isCrypto
+              ? t("position.averageBuyPrice")
+              : t("position.averageSharePrice")
+          }
           value={avgBuyPrice !== null ? formatEuro(avgBuyPrice) : "—"}
         />
         <View className="h-px bg-border" />
         <StatRow
-          label="Average monthly contribution"
+          label={t("position.averageMonthly")}
           value={avgMonthly !== null ? formatEuro(avgMonthly) : "—"}
         />
         <View className="h-px bg-border" />
         <StatRow
-          label="Next contribution"
+          label={t("position.nextContribution")}
           value={next ? `${next.dateLabel} · ${formatEuro(next.amount)}` : "—"}
         />
         <View className="h-px bg-border" />
         <StatRow
-          label="Return"
+          label={t("position.returnAmount")}
           value={formatSigned(gainLoss, formatEuro)}
           tone={
             gainLoss > 0 ? "positive" : gainLoss < 0 ? "negative" : undefined
@@ -320,7 +329,7 @@ export function WalletPerformance({
         />
         <View className="h-px bg-border" />
         <StatRow
-          label="Return %"
+          label={t("position.returnPercent")}
           value={
             returnPct !== null
               ? `${returnPct >= 0 ? "+" : "−"}${Math.abs(returnPct).toFixed(2)} %`

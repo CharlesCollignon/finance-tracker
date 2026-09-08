@@ -7,7 +7,11 @@ import { usePathname } from "next/navigation";
 import { CaretDown, List, X } from "@phosphor-icons/react";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { cn } from "@/lib/utils";
-import { featureHref, landingCopy } from "@/components/marketing/landing-copy";
+import {
+  featureHref,
+  landingCopyFor,
+} from "@/components/marketing/landing-copy";
+import { useLocale, useT } from "@/lib/locale-context";
 
 /** Section anchors on the homepage. Written absolute so they also work from a
  * feature page, where the section itself is not on screen. */
@@ -46,6 +50,7 @@ const linkClass =
  * gave a marketing nav the density of an app sidebar. Grouping them is also
  * more honest about the shape of the product: one ledger, seven readings. */
 function ProductMenu({ pathname }: { pathname: string }) {
+  const copy = landingCopyFor(useLocale());
   // Keyed by path rather than a boolean synced in an effect: navigating to a
   // feature page changes `pathname`, which makes the menu closed by
   // derivation instead of by a cascading setState after the render.
@@ -104,7 +109,7 @@ function ProductMenu({ pathname }: { pathname: string }) {
           role="menu"
           className="account-menu-panel glass-menu absolute left-1/2 top-full z-50 mt-3 w-[22rem] -translate-x-1/2 rounded-2xl p-2"
         >
-          {landingCopy.pages.map((page) => {
+          {copy.pages.map((page) => {
             const href = featureHref(page.id);
             return (
               <Link
@@ -133,6 +138,8 @@ function ProductMenu({ pathname }: { pathname: string }) {
 }
 
 export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
+  const t = useT();
+  const copy = landingCopyFor(useLocale());
   const pathname = usePathname();
   // Keyed by path so navigating from inside the sheet closes it.
   const [openForPath, setOpenForPath] = useState<string | null>(null);
@@ -145,7 +152,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
 
         <nav
           className="hidden items-center gap-8 lg:flex"
-          aria-label="Marketing"
+          aria-label={t("common.marketing")}
         >
           <ProductMenu pathname={pathname} />
           {SECTION_LINKS.map((link) => (
@@ -182,7 +189,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
         )}
       >
         <div className="grid gap-1 sm:grid-cols-2">
-          {landingCopy.pages.map((page) => (
+          {copy.pages.map((page) => (
             <Link
               key={page.id}
               href={featureHref(page.id)}
@@ -210,7 +217,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
               onClick={() => setOpenForPath(null)}
               className="rounded-xl px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white sm:hidden"
             >
-              {landingCopy.cta.signIn}
+              {copy.cta.signIn}
             </Link>
           )}
         </div>

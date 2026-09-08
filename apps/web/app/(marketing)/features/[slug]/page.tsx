@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { FeaturePage } from "@/components/marketing/FeaturePage";
+import { getLocale } from "@/lib/locale";
 import {
   isLandingPageId,
+  getLandingPage,
   landingCopy,
 } from "@/components/marketing/landing-copy";
 
@@ -12,6 +14,8 @@ interface FeatureRouteProps {
 }
 
 export function generateStaticParams() {
+  // The English array, deliberately: an id is a route, and routes do not
+  // change with the reader's language.
   return landingCopy.pages.map((page) => ({ slug: page.id }));
 }
 
@@ -22,10 +26,7 @@ export async function generateMetadata({
   if (!isLandingPageId(slug)) {
     return { title: "Pluclair" };
   }
-  const page = landingCopy.pages.find((entry) => entry.id === slug);
-  if (!page) {
-    return { title: "Pluclair" };
-  }
+  const page = getLandingPage(slug, await getLocale());
   return {
     title: `${page.title} — Pluclair`,
     description: page.body,

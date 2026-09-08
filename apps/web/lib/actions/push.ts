@@ -28,7 +28,7 @@ export async function savePushSubscription(input: {
 }): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = subscriptionSchema.safeParse(input);
@@ -61,7 +61,7 @@ export async function deletePushSubscription(
 ): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const supabase = await createClient();

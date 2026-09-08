@@ -17,6 +17,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 
 interface ArrivedChargesProps {
   proposals: FulfilmentProposal[];
@@ -40,6 +41,8 @@ interface ArrivedChargesProps {
  * counts as a candidate.
  */
 export function ArrivedCharges({ proposals, onDecided }: ArrivedChargesProps) {
+  const t = useT();
+  const locale = useLocale();
   const { toast } = useToast();
   const colors = useThemeColors();
   const formatEuro = useFormatCurrency();
@@ -88,7 +91,7 @@ export function ArrivedCharges({ proposals, onDecided }: ArrivedChargesProps) {
   }
 
   return (
-    <View accessibilityLabel="Charges that look like they arrived">
+    <View accessibilityLabel={t("common.arrivedCharges")}>
       <Text className="border-b border-border px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {waiting.length === 1 ? "Did this arrive?" : "Did these arrive?"}
       </Text>
@@ -127,7 +130,7 @@ export function ArrivedCharges({ proposals, onDecided }: ArrivedChargesProps) {
             ) : null}
 
             <Text className="text-xs text-muted-foreground">
-              {describeFulfilment(proposal, formatEuro)}
+              {describeFulfilment(proposal, formatEuro, locale)}
             </Text>
 
             <View className="mt-1 flex-row items-center gap-2">

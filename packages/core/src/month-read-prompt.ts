@@ -23,12 +23,13 @@
  * user's whole allowance on a change they did not ask for.
  */
 
-import { formatFact, type MonthFacts } from "./month-facts";
+import { formatFact, type MonthFact, type MonthFacts } from "./month-facts";
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
 import type { MonthReadRequest } from "./month-read";
 
-export const MONTH_READ_PROMPT_VERSION = 2;
+export const MONTH_READ_PROMPT_VERSION = 3;
 
-const FIGURE_RULE =
+const FIGURE_RULE_EN =
   "Every figure you mention must be written as {{fact:id}}, using an id from " +
   "the list you are given. Never write a number yourself — not a digit, not " +
   "a spelled-out amount, not a sum, a difference, a percentage or a target " +
@@ -56,7 +57,7 @@ const FIGURE_RULE =
  * supplying the derived figures, and this sentence is the belt to that
  * braces — the pack cannot anticipate every relationship a model might want.
  */
-const NAMING_RULE =
+const NAMING_RULE_EN =
   "A placeholder is a number, not a name. Name the category, the cap or the " +
   'month in words, and put the figure beside it: "you spent ' +
   '{{fact:expenses}}", never "the {{fact:expenses}} was high". Each figure\'s ' +
@@ -74,7 +75,7 @@ const NAMING_RULE =
  * with the placeholder form it was just taught; the app forgives that, and
  * this is the sentence that stops it happening in the first place.
  */
-const BASIS_RULE =
+const BASIS_RULE_EN =
   "Each observation and suggestion carries a basis: the ids it rests on, " +
   'written bare — "expenses", not "{{fact:expenses}}". Every id you use in ' +
   "the text must be listed there, and list nothing you did not use.";
@@ -88,7 +89,7 @@ const BASIS_RULE =
  * already scheduled, and "budget" for the allowance collides with the
  * per-category caps, which are a different feature.
  */
-const VOCABULARY = [
+const VOCABULARY_EN = [
   '"Unrecorded spending" — what a balance proves left the account that no ' +
     "entry explains. It is measured, not estimated, and never negative. " +
     'Never call it a "leak", "untracked" or "missing".',
@@ -101,25 +102,40 @@ const VOCABULARY = [
   'A projection of charges already scheduled is not a "forecast".',
 ];
 
+/**
+ * The three words that say which way a figure wants to move.
+ *
+ * Beside the line they annotate rather than in `PROMPT`, because they are
+ * read once per figure and never on their own.
+ */
+const SENSE_WORDS: Record<Locale, Record<MonthFact["sense"], string>> = {
+  en: {
+    "up-is-good": "rising is good",
+    "up-is-bad": "rising is bad",
+    neutral: "neither good nor bad",
+  },
+  fr: {
+    "up-is-good": "une hausse est bonne",
+    "up-is-bad": "une hausse est mauvaise",
+    neutral: "ni bonne ni mauvaise",
+  },
+};
+
 function factLines(
   facts: MonthFacts,
   formatMoney: (amount: number) => string,
+  locale: Locale,
 ): string {
   return facts.facts
     .map((fact) => {
-      const rise =
-        fact.sense === "up-is-good"
-          ? "rising is good"
-          : fact.sense === "up-is-bad"
-            ? "rising is bad"
-            : "neither good nor bad";
+      const rise = SENSE_WORDS[locale][fact.sense];
       const note = fact.note ? ` | ${fact.note}` : "";
-      return `  ${fact.id} | ${fact.label} | ${formatFact(fact, formatMoney)} | ${rise}${note}`;
+      return `  ${fact.id} | ${fact.label} | ${formatFact(fact, formatMoney, locale)} | ${rise}${note}`;
     })
     .join("\n");
 }
 
-const MISSING_WORDS: Record<string, string> = {
+const MISSING_WORDS_EN: Record<string, string> = {
   "no-bank": "no bank is connected, so this cannot be known",
   "no-close": "no month has been closed yet, so this cannot be measured",
   "no-cap": "no allowance has been set",
@@ -127,11 +143,217 @@ const MISSING_WORDS: Record<string, string> = {
   "not-recorded": "nothing was recorded for it",
 };
 
-function missingLines(facts: MonthFacts): string {
+function missingLines(facts: MonthFacts, locale: Locale): string {
   return facts.missing
-    .map((row) => `  ${row.id} | ${row.label} | ${MISSING_WORDS[row.why]}`)
+    .map(
+      (row) =>
+        `  ${row.id} | ${row.label} | ${PROMPT[locale].missingWords[row.why]}`,
+    )
     .join("\n");
 }
+
+/* ------------------------------------------------------------- en français */
+
+/**
+ * The same rules, in French.
+ *
+ * Translated rather than bolted on as "now write in French", and the reason
+ * is the vocabulary block below. Its whole job is to pin the words this app
+ * has chosen — and for a French read those are the French words, the ones
+ * `facts.*` in `./i18n/messages/fr` prints on the card beside the prose. A
+ * model given the English glossary and asked for French output invents its
+ * own French terms, which is precisely the contradiction between prose and
+ * label that the English block exists to prevent.
+ *
+ * The essays above each English constant explain *why* each rule is there,
+ * and those reasons are the same in both languages, so they are not repeated
+ * here. What is worth saying is that the structure is load-bearing and is
+ * preserved: the figure rule is still stated first and last, and the naming
+ * rule still sits beside it in both positions.
+ */
+const FIGURE_RULE_FR =
+  "Chaque chiffre que vous mentionnez doit être écrit {{fact:id}}, en " +
+  "utilisant un id de la liste qui vous est donnée. N'écrivez jamais un " +
+  "nombre vous-même — ni un chiffre, ni un montant en lettres, ni une somme, " +
+  "une différence, un pourcentage ou un objectif de votre invention. Si ce " +
+  "que vous voulez dire demande un chiffre absent de la liste, dites-le sans " +
+  "le chiffre, ou ne le dites pas.";
+
+const NAMING_RULE_FR =
+  "Un substitut est un nombre, pas un nom. Nommez la catégorie, le plafond " +
+  'ou le mois en mots, et mettez le chiffre à côté : "vous avez dépensé ' +
+  '{{fact:expenses}}", jamais "le {{fact:expenses}} était élevé". Le libellé ' +
+  "de chaque chiffre figure dans la liste ; utilisez ces mots comme nom. Et " +
+  "employez chaque chiffre pour ce que son libellé dit qu'il est : " +
+  '"dépassé l\'enveloppe de {{fact:unrecorded-allowance}}" désigne ' +
+  "l'enveloppe et l'appelle le montant du dépassement, ce qui est autre chose.";
+
+const BASIS_RULE_FR =
+  "Chaque observation et chaque suggestion porte une base : les ids sur " +
+  'lesquels elle repose, écrits nus — "expenses", pas "{{fact:expenses}}". ' +
+  "Tout id que vous utilisez dans le texte doit y figurer, et n'y listez " +
+  "rien que vous n'ayez utilisé.";
+
+/**
+ * The French glossary.
+ *
+ * Each entry names the term the card prints and the words to refuse, exactly
+ * as the English block does. The refused words are the French ones a model
+ * actually reaches for: "fuite" for unrecorded spending, "économisé" for
+ * kept, "budget" for the allowance — that last one colliding with the
+ * per-category caps the same way the English "budget" does.
+ */
+const VOCABULARY_FR = [
+  '"Dépenses non enregistrées" — ce qu\'un solde prouve être sorti du compte ' +
+    "et qu'aucune écriture n'explique. C'est mesuré, pas estimé, et jamais " +
+    'négatif. Ne parlez jamais de "fuite", de "non suivi" ni de "manquant".',
+  "\"Gardé\" — l'argent qu'un mois a laissé sur le compte plus tout ce qui a " +
+    'été mis de côté délibérément. Ne dites jamais "économisé", ' +
+    '"excédent" ni "bénéfice".',
+  '"Enveloppe non enregistrée" — un plafond sur les dépenses non ' +
+    "enregistrées, fixé d'après l'historique de cette personne. Ne l'appelez " +
+    'jamais un "budget", un "objectif" ni une "limite".',
+  '"Clôture du mois" — enregistrer ce que le compte contenait et ce qui en ' +
+    'découle. Ne parlez jamais de "réconciliation" ni de "fin de mois".',
+  "Une projection de charges déjà programmées n'est pas une " + '"prévision".',
+];
+
+const MISSING_WORDS_FR: Record<string, string> = {
+  "no-bank": "aucune banque n'est connectée, cela ne peut donc pas être su",
+  "no-close":
+    "aucun mois n'a encore été clôturé, cela ne peut donc pas être mesuré",
+  "no-cap": "aucune enveloppe n'a été fixée",
+  "month-unfinished": "le mois n'est pas terminé",
+  "not-recorded": "rien n'a été enregistré pour cela",
+};
+
+/**
+ * Everything the prompt says, per language.
+ *
+ * A record rather than a `t()` lookup because a system prompt is not UI copy:
+ * it changes on a different clock, it is reviewed by whoever is tuning the
+ * model rather than by whoever is writing labels, and each language's version
+ * has to be readable end to end in one sitting to be reviewable at all —
+ * which is the same argument the marketing copy makes for living in one file.
+ */
+interface PromptText {
+  figureRule: string;
+  namingRule: string;
+  basisRule: string;
+  vocabulary: readonly string[];
+  missingWords: Record<string, string>;
+  intro: readonly string[];
+  vocabularyHeading: string;
+  suggestions: readonly string[];
+  cannotKnow: readonly string[];
+  senseRule: readonly string[];
+  provisional: string;
+  settled: string;
+  partial: string;
+  lengthRule: readonly string[];
+  monthLine: (label: string, provisional: boolean) => string;
+  factsHeading: string;
+  missingHeading: string;
+}
+
+const PROMPT: Record<Locale, PromptText> = {
+  en: {
+    figureRule: FIGURE_RULE_EN,
+    namingRule: NAMING_RULE_EN,
+    basisRule: BASIS_RULE_EN,
+    vocabulary: VOCABULARY_EN,
+    missingWords: MISSING_WORDS_EN,
+    intro: [
+      "You write a short read of one person's month with their own money, for",
+      "them to read. Second person, no greeting, no sign-off, no emoji.",
+    ],
+    vocabularyHeading: "Use these words exactly, and avoid the ones marked:",
+    suggestions: [
+      "Say what to change. Name a cut, a cap, a habit or something to check.",
+      "Every suggestion must point at a category, a cap or one of the figures",
+      "you were given — advice that would fit anyone's month is not worth the",
+      "space. Do not congratulate; a suggestion is advice, not encouragement.",
+    ],
+    cannotKnow: [
+      "What you cannot know, and must not pretend to:",
+      "- You see only the totals given. You cannot see individual payments,",
+      "  merchants, or which shop anything came from.",
+      "- You know nothing about this person's job security, dependents, debts,",
+      "  risk tolerance or plans.",
+      "- Give no product, tax or investment advice, and never suggest moving",
+      "  money between real accounts.",
+    ],
+    senseRule: [
+      "Each figure says whether rising is good or bad. Do not treat a rise in a",
+      'figure marked "rising is bad" as good news.',
+    ],
+    provisional:
+      'This month is still running. Say "so far" where it matters, and never speak of it as finished or of its unrecorded spending as settled.',
+    settled: "This month is over, so its figures are settled.",
+    partial:
+      "The picture is incomplete — some entries are not yet categorised, or nothing has been closed. Say so rather than writing as though the categories were complete.",
+    lengthRule: [
+      "At most four observations and three suggestions. Two sentences each, and",
+      "no more. The headline is one short clause.",
+    ],
+    monthLine: (label, provisional) =>
+      `Month: ${label} (${provisional ? "still running" : "over"})`,
+    factsHeading:
+      "Figures you may refer to — id | what it is | value | when it rises",
+    missingHeading: "Not known, and why",
+  },
+  fr: {
+    figureRule: FIGURE_RULE_FR,
+    namingRule: NAMING_RULE_FR,
+    basisRule: BASIS_RULE_FR,
+    vocabulary: VOCABULARY_FR,
+    missingWords: MISSING_WORDS_FR,
+    intro: [
+      "Vous écrivez en français une courte lecture du mois d'une personne, sur",
+      "son propre argent, pour qu'elle la lise. Deuxième personne du pluriel,",
+      "sans salutation, sans formule de fin, sans emoji.",
+    ],
+    vocabularyHeading:
+      "Employez ces mots exactement, et évitez ceux qui sont signalés :",
+    suggestions: [
+      "Dites quoi changer. Nommez une coupe, un plafond, une habitude ou",
+      "quelque chose à vérifier. Chaque suggestion doit désigner une",
+      "catégorie, un plafond ou l'un des chiffres qui vous ont été donnés — un",
+      "conseil qui conviendrait au mois de n'importe qui ne vaut pas la place.",
+      "Ne félicitez pas ; une suggestion est un conseil, pas un encouragement.",
+    ],
+    cannotKnow: [
+      "Ce que vous ne pouvez pas savoir, et ne devez pas feindre de savoir :",
+      "- Vous ne voyez que les totaux fournis. Vous ne voyez ni les paiements",
+      "  individuels, ni les commerçants, ni d'où vient quoi que ce soit.",
+      "- Vous ne savez rien de la sécurité de l'emploi de cette personne, de",
+      "  ses personnes à charge, de ses dettes, de sa tolérance au risque ni",
+      "  de ses projets.",
+      "- Ne donnez aucun conseil sur un produit, la fiscalité ou",
+      "  l'investissement, et ne suggérez jamais de déplacer de l'argent entre",
+      "  des comptes réels.",
+    ],
+    senseRule: [
+      "Chaque chiffre indique si une hausse est bonne ou mauvaise. Ne traitez",
+      'pas la hausse d\'un chiffre marqué "une hausse est mauvaise" comme une',
+      "bonne nouvelle.",
+    ],
+    provisional:
+      'Ce mois est encore en cours. Dites "à ce jour" là où cela compte, et ne parlez jamais du mois comme terminé ni de ses dépenses non enregistrées comme définitives.',
+    settled: "Ce mois est terminé, ses chiffres sont donc définitifs.",
+    partial:
+      "Le tableau est incomplet — certaines écritures n'ont pas encore de catégorie, ou rien n'a été clôturé. Dites-le plutôt que d'écrire comme si les catégories étaient complètes.",
+    lengthRule: [
+      "Au plus quatre observations et trois suggestions. Deux phrases chacune,",
+      "pas plus. Le titre est une seule courte proposition.",
+    ],
+    monthLine: (label, provisional) =>
+      `Mois : ${label} (${provisional ? "en cours" : "terminé"})`,
+    factsHeading:
+      "Chiffres auxquels vous pouvez vous référer — id | ce que c'est | valeur | quand il monte",
+    missingHeading: "Non connu, et pourquoi",
+  },
+};
 
 export interface BuildPromptOptions {
   /**
@@ -140,73 +362,69 @@ export interface BuildPromptOptions {
    * because nothing the model formats ever reaches a screen.
    */
   money: (amount: number) => string;
+  /**
+   * The language the read is written in.
+   *
+   * Not an instruction appended to an English prompt: the whole prompt
+   * switches, because the glossary it enforces is the set of words the card
+   * around the prose actually prints. See the comment above `FIGURE_RULE_FR`.
+   *
+   * Stored on the read as well, so a read written in French is still
+   * rendered with French labels after the reader switches language.
+   */
+  locale?: Locale;
 }
 
 export function buildMonthReadPrompt(
   facts: MonthFacts,
-  { money }: BuildPromptOptions,
+  { money, locale = DEFAULT_LOCALE }: BuildPromptOptions,
 ): MonthReadRequest {
   const provisional = facts.state === "in-progress";
+  const text = PROMPT[locale];
 
   const system = [
-    "You write a short read of one person's month with their own money, for",
-    "them to read. Second person, no greeting, no sign-off, no emoji.",
+    ...text.intro,
     "",
-    FIGURE_RULE,
-    NAMING_RULE,
+    text.figureRule,
+    text.namingRule,
     "",
-    BASIS_RULE,
+    text.basisRule,
     "",
-    "Use these words exactly, and avoid the ones marked:",
-    ...VOCABULARY.map((line) => `- ${line}`),
+    text.vocabularyHeading,
+    ...text.vocabulary.map((line) => `- ${line}`),
     "",
-    "Say what to change. Name a cut, a cap, a habit or something to check.",
-    "Every suggestion must point at a category, a cap or one of the figures",
-    "you were given — advice that would fit anyone's month is not worth the",
-    "space. Do not congratulate; a suggestion is advice, not encouragement.",
+    ...text.suggestions,
     "",
-    "What you cannot know, and must not pretend to:",
-    "- You see only the totals given. You cannot see individual payments,",
-    "  merchants, or which shop anything came from.",
-    "- You know nothing about this person's job security, dependents, debts,",
-    "  risk tolerance or plans.",
-    "- Give no product, tax or investment advice, and never suggest moving",
-    "  money between real accounts.",
+    ...text.cannotKnow,
     "",
-    "Each figure says whether rising is good or bad. Do not treat a rise in a",
-    'figure marked "rising is bad" as good news.',
+    ...text.senseRule,
     "",
-    provisional
-      ? 'This month is still running. Say "so far" where it matters, and never speak of it as finished or of its unrecorded spending as settled.'
-      : "This month is over, so its figures are settled.",
+    provisional ? text.provisional : text.settled,
     "",
-    facts.coverage === "partial"
-      ? "The picture is incomplete — some entries are not yet categorised, or nothing has been closed. Say so rather than writing as though the categories were complete."
-      : "",
+    facts.coverage === "partial" ? text.partial : "",
     "",
     // Stated in sentences rather than characters. The app caps a claim at a
     // length a card can hold, and a model asked for "240 characters" cannot
     // count them; asked for two sentences, it lands inside the cap.
-    "At most four observations and three suggestions. Two sentences each, and",
-    "no more. The headline is one short clause.",
+    ...text.lengthRule,
     "",
-    FIGURE_RULE,
-    NAMING_RULE,
+    text.figureRule,
+    text.namingRule,
   ]
     .filter((line) => line !== "")
     .join("\n");
 
   const user = [
-    `Month: ${facts.monthLabel} (${provisional ? "still running" : "over"})`,
+    text.monthLine(facts.monthLabel, provisional),
     "",
-    "Figures you may refer to — id | what it is | value | when it rises",
-    factLines(facts, money),
+    text.factsHeading,
+    factLines(facts, money, locale),
     facts.missing.length > 0 ? "" : null,
-    facts.missing.length > 0 ? "Not known, and why" : null,
-    facts.missing.length > 0 ? missingLines(facts) : null,
+    facts.missing.length > 0 ? text.missingHeading : null,
+    facts.missing.length > 0 ? missingLines(facts, locale) : null,
   ]
     .filter((line): line is string => line !== null)
     .join("\n");
 
-  return { system, user };
+  return { system, user, locale };
 }

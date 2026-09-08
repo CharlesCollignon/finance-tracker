@@ -1,3 +1,6 @@
+import type { Locale } from "@finance/core/i18n/locale";
+import { landingCopyFr } from "@/components/marketing/landing-copy.fr";
+
 /**
  * Every word on the marketing site.
  *
@@ -330,6 +333,61 @@ export const landingCopy = {
 
 export type LandingPageId = (typeof landingCopy.pages)[number]["id"];
 
+/* --------------------------------------------------------------- languages */
+
+/**
+ * Widen the literal types `as const` gives the English copy.
+ *
+ * The `as const` is load-bearing above — `LandingPageId` is derived from it,
+ * and those ids are routes. But it also makes every sentence its own type,
+ * which no translation can satisfy. This maps the shape back to plain strings
+ * so another language can be checked against it: same keys, same nesting,
+ * different words.
+ */
+type Widen<T> = T extends string
+  ? string
+  : T extends readonly (infer U)[]
+    ? Widen<U>[]
+    : { -readonly [K in keyof T]: Widen<T[K]> };
+
+/** One feature page's prose, without the id — which is a route, not copy. */
+export type LandingPageCopy = Widen<
+  Omit<(typeof landingCopy.pages)[number], "id">
+>;
+
+/** Everything on the site except the feature pages. */
+export type LandingCopySections = Widen<Omit<typeof landingCopy, "pages">>;
+
+/**
+ * The copy for one language, in the shape every consumer already expects.
+ *
+ * The ids live once, in the English array, and each language supplies only
+ * the prose against them. That is what stops a translation from inventing a
+ * route or dropping a page: `Record<LandingPageId, …>` will not compile
+ * without all eight, and none of them can name a ninth.
+ */
+export function landingCopyFor(locale: Locale) {
+  if (locale === "en") {
+    return landingCopy as unknown as LandingCopySections & {
+      pages: ((typeof landingCopy.pages)[number] & { id: LandingPageId })[];
+    };
+  }
+
+  const { pages, ...sections } = landingCopyFr;
+  return {
+    ...sections,
+    // Ordered by the English array rather than by the record's own keys, so
+    // the feature nav and the previous/next links keep one order across both
+    // languages.
+    pages: landingCopy.pages.map((page) => ({
+      id: page.id,
+      ...pages[page.id],
+    })),
+  };
+}
+
+export type LocalisedLandingCopy = ReturnType<typeof landingCopyFor>;
+
 export function isLandingPageId(slug: string): slug is LandingPageId {
   return landingCopy.pages.some((page) => page.id === slug);
 }
@@ -338,21 +396,20 @@ export function featureHref(id: LandingPageId): string {
   return `/features/${id}`;
 }
 
-export function getLandingPage(id: LandingPageId) {
-  const page = landingCopy.pages.find((entry) => entry.id === id);
+export function getLandingPage(id: LandingPageId, locale: Locale = "en") {
+  const page = landingCopyFor(locale).pages.find((entry) => entry.id === id);
   if (!page) {
     throw new Error(`Unknown landing page: ${id}`);
   }
   return page;
 }
 
-export function adjacentLandingPages(id: LandingPageId) {
-  const index = landingCopy.pages.findIndex((page) => page.id === id);
-  const prev = index > 0 ? landingCopy.pages[index - 1] : undefined;
+export function adjacentLandingPages(id: LandingPageId, locale: Locale = "en") {
+  const all = landingCopyFor(locale).pages;
+  const index = all.findIndex((page) => page.id === id);
+  const prev = index > 0 ? all[index - 1] : undefined;
   const next =
-    index >= 0 && index < landingCopy.pages.length - 1
-      ? landingCopy.pages[index + 1]
-      : undefined;
+    index >= 0 && index < all.length - 1 ? all[index + 1] : undefined;
   return {
     prev: prev ?? null,
     next: next ?? null,

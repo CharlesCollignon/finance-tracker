@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "../i18n/locale";
 import { createEurRates } from "./eur-rates";
 import { createYahooQuoteSource } from "./quote-source";
 import { fetchMonthlyCloses, type MonthlyClosePoint } from "./yahoo";
@@ -47,8 +48,12 @@ export async function fetchInstrumentQuoteInEur(
   };
 }
 
-export function formatMoney(amount: number, currency: string): string {
-  return new Intl.NumberFormat("fr-FR", {
+export function formatMoney(
+  amount: number,
+  currency: string,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  return new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: "currency",
     currency: currency.toUpperCase(),
     minimumFractionDigits: 2,

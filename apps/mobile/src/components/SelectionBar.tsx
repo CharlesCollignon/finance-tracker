@@ -18,6 +18,7 @@ import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 
 /** Mirrors the tab bar height so the sheet clears it. */
 const TAB_BAR_HEIGHT = 60;
@@ -61,6 +62,8 @@ export function SelectionBar({
   planMove,
   onMove,
 }: SelectionBarProps) {
+  const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -100,7 +103,9 @@ export function SelectionBar({
     >
       <View
         accessibilityRole="summary"
-        accessibilityLabel={`${summary.count} transactions selected`}
+        accessibilityLabel={t("selectionBar.regionMobile", {
+          count: summary.count,
+        })}
         className="gap-3 rounded-2xl border border-border bg-card p-3"
         style={{
           shadowColor: "#000",
@@ -113,18 +118,22 @@ export function SelectionBar({
         {confirming ? (
           <>
             <Text className="text-sm">
-              {describeSelectionDeletion(summary)}
+              {describeSelectionDeletion(summary, locale)}
             </Text>
             <View className="flex-row gap-2">
               <Button
-                label={pending ? "Deleting…" : "Yes, delete"}
+                label={
+                  pending
+                    ? t("selectionBar.deleting")
+                    : t("selectionBar.confirmDelete")
+                }
                 variant="outline"
                 className="flex-1 border-destructive"
                 disabled={pending}
                 onPress={onDelete}
               />
               <Button
-                label="Cancel"
+                label={t("selectionBar.cancel")}
                 variant="outline"
                 className="flex-1"
                 disabled={pending}
@@ -135,9 +144,7 @@ export function SelectionBar({
         ) : choosing ? (
           <>
             <Text className="text-sm font-semibold">
-              {`Move ${summary.count} ${
-                summary.count === 1 ? "transaction" : "transactions"
-              } to`}
+              {t("selectionBar.moveTo", { count: summary.count })}
             </Text>
 
             <ScrollView
@@ -188,7 +195,11 @@ export function SelectionBar({
             <View className="flex-row gap-2">
               <Button
                 label={
-                  pending ? "Moving…" : needsConfirm ? "Yes, move them" : "Move"
+                  pending
+                    ? t("selectionBar.moving")
+                    : needsConfirm
+                      ? t("selectionBar.confirmMove")
+                      : t("selectionBar.move")
                 }
                 variant="outline"
                 className="flex-1"
@@ -199,7 +210,7 @@ export function SelectionBar({
                 }}
               />
               <Button
-                label="Cancel"
+                label={t("selectionBar.cancel")}
                 variant="outline"
                 className="flex-1"
                 disabled={pending}
@@ -211,7 +222,7 @@ export function SelectionBar({
           <View className="flex-row items-center justify-between gap-3">
             <View className="min-w-0 flex-1">
               <Text className="text-sm font-semibold">
-                {`${summary.count} selected`}
+                {`${t("selectionBar.countSelected", { count: summary.count })}`}
                 {summary.total > 0 ? (
                   <Text variant="muted" className="font-mono text-xs">
                     {`  ${formatEuro(summary.total)}`}
@@ -227,14 +238,14 @@ export function SelectionBar({
 
             <View className="flex-row items-center gap-2">
               <Button
-                label="Move"
+                label={t("selectionBar.move")}
                 variant="outline"
                 size="sm"
                 disabled={pending}
                 onPress={() => setChoosing(true)}
               />
               <Button
-                label="Delete"
+                label={t("selectionBar.delete")}
                 variant="outline"
                 size="sm"
                 className="border-destructive"
@@ -243,7 +254,7 @@ export function SelectionBar({
               />
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Clear selection"
+                accessibilityLabel={t("selectionBar.clear")}
                 hitSlop={8}
                 disabled={pending}
                 onPress={onCancel}

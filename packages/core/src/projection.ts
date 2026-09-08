@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * Looking forward.
  *
@@ -177,12 +179,16 @@ export function buildRunway(
 }
 
 /** "4.2 months of committed costs", or null when there is nothing to say. */
-export function formatRunway(runway: Runway): string | null {
+export function formatRunway(
+  runway: Runway,
+  locale: Locale = DEFAULT_LOCALE,
+): string | null {
   if (runway.months === null || runway.reserve <= 0) {
     return null;
   }
+  const t = translator(locale);
   if (runway.months < 1) {
-    return "Under a month of committed costs.";
+    return t("runway.underAMonth");
   }
-  return `${runway.months} months of committed costs.`;
+  return t("runway.months", { count: runway.months });
 }

@@ -48,6 +48,11 @@ export class ErrorBoundary extends Component<Props, State> {
             color: "#f87171",
           }}
         >
+          {/* Untranslated on purpose, and it is the one screen where that is
+              right: this boundary sits above LocaleProvider, so if it is
+              rendering then the provider never mounted and there is no
+              language to read. The message below it is a JavaScript
+              exception, which was never in a language either. */}
           App failed to start
         </Text>
         <ScrollView>

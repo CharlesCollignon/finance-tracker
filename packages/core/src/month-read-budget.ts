@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * Whether to ask the writer, and whether what it wrote still stands.
  *
@@ -148,18 +150,25 @@ export function writesRemaining(
 export function explainWriteRefusal(
   refusal: WriteRefusal,
   monthLabel: string,
+  locale: Locale = DEFAULT_LOCALE,
 ): string {
+  const t = translator(locale);
   switch (refusal.reason) {
     case "allowance-spent":
-      return `You have used all ${refusal.allowance} reads for ${monthLabel}.`;
+      return t("monthRead.allowanceSpent", {
+        allowance: refusal.allowance,
+        month: monthLabel,
+      });
     case "cooling-down":
-      return `One was just written — try again in ${refusal.retryAfterSeconds}s.`;
+      return t("monthRead.coolingDown", {
+        seconds: refusal.retryAfterSeconds,
+      });
     case "in-flight":
-      return "A read is already being written.";
+      return t("monthRead.inFlight");
     case "nothing-to-say":
-      return `There is not enough in ${monthLabel} to write about yet.`;
+      return t("monthRead.nothingToSay", { month: monthLabel });
     case "untracked":
-      return "Monthly reads are not set up yet (migration 024).";
+      return t("monthRead.untracked");
   }
 }
 

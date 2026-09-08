@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/locale-context";
+import type { Key } from "@finance/core/i18n/t";
 
 export interface SurfaceTab {
   href: string;
-  label: string;
+  /** The message key for the tab's label, not the label. */
+  labelKey: Key;
 }
 
 interface SurfaceTabsProps {
@@ -27,14 +30,15 @@ interface SurfaceTabsProps {
  * back button means what it says.
  */
 export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
+  const t = useT();
   const pathname = usePathname();
 
   return (
     <nav
-      aria-label="View"
+      aria-label={t("common.view")}
       className={cn("flex items-center gap-1 overflow-x-auto", className)}
     >
-      {tabs.map(({ href, label }) => {
+      {tabs.map(({ href, labelKey }) => {
         const active = pathname === href;
         return (
           <Link
@@ -49,7 +53,7 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            {label}
+            {t(labelKey)}
           </Link>
         );
       })}
@@ -59,7 +63,7 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
 
 /** The Ledger's views: the same record, looked at three ways. */
 export const LEDGER_TABS: SurfaceTab[] = [
-  { href: "/transactions", label: "List" },
-  { href: "/calendar", label: "Calendar" },
-  { href: "/history", label: "By category" },
+  { href: "/transactions", labelKey: "nav.ledgerList" },
+  { href: "/calendar", labelKey: "nav.ledgerCalendar" },
+  { href: "/history", labelKey: "nav.ledgerByCategory" },
 ];

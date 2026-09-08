@@ -38,16 +38,27 @@ import type {
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
+import { useLocale, useT } from "@/lib/locale-context";
+import type { Translate } from "@finance/core/i18n/t";
 
 type AllocType = Exclude<CategoryType, "income">;
 
 const GROUP_ORDER: AllocType[] = ["expense", "savings", "investment"];
 
-const GROUP_LABELS: Record<AllocType, string> = {
-  expense: "Expenses",
-  savings: "Savings",
-  investment: "Investments",
-};
+/**
+ * What each of the three kinds of charge is called.
+ *
+ * A function of the locale, and drawn from the same `allocation.*` messages
+ * the flow chart and the caps use, so the three kinds are named identically
+ * wherever they appear.
+ */
+function groupLabels(t: Translate): Record<AllocType, string> {
+  return {
+    expense: t("allocation.expenses"),
+    savings: t("allocation.savings"),
+    investment: t("allocation.investments"),
+  };
+}
 
 interface RecurringViewProps {
   templates: RecurringTemplateWithCategory[];
@@ -68,6 +79,8 @@ function RecurringItemRow({
   onToggle,
 }: RecurringItemRowProps) {
   const formatEuro = useFormatCurrency();
+  const locale = useLocale();
+  const t = useT();
   const sharesLabel = formatSharesLabel(template);
 
   return (
@@ -97,7 +110,7 @@ function RecurringItemRow({
         ) : null}
         {isCryptoCategoryName(template.categories.name) ? (
           <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
-            Fixed EUR → Bitcoin
+            {t("charges.fixedToBitcoin")}
           </p>
         ) : null}
         {template.description ? (
@@ -106,7 +119,7 @@ function RecurringItemRow({
           </p>
         ) : null}
         <p className="mt-1 text-xs text-muted-foreground">
-          {formatRecurrenceSchedule(template)}
+          {formatRecurrenceSchedule(template, locale)}
         </p>
       </button>
 
@@ -121,7 +134,7 @@ function RecurringItemRow({
           className="shrink-0"
           aria-pressed={template.active}
           aria-label={`${
-            template.active ? "Deactivate" : "Activate"
+            template.active ? t("charges.deactivate") : t("charges.activate")
           } ${template.categories.name}`}
         >
           <Badge
@@ -218,6 +231,7 @@ export function RecurringView({
   categories,
   proposals = [],
 }: RecurringViewProps) {
+  const t = useT();
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
   const [formOpen, setFormOpen] = useState(false);
@@ -233,10 +247,10 @@ export function RecurringView({
     () =>
       GROUP_ORDER.map((type) => ({
         type,
-        label: GROUP_LABELS[type],
+        label: groupLabels(t)[type],
         items: templates.filter((t) => t.categories.type === type),
       })),
-    [templates],
+    [templates, t],
   );
 
   const defaultTab = useMemo<AllocType>(() => {
@@ -301,7 +315,7 @@ export function RecurringView({
 
   return (
     <>
-      <PageHeader title="Charges" />
+      <PageHeader titleKey="nav.charges" />
 
       <PageContainer className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -314,7 +328,7 @@ export function RecurringView({
             className="ml-auto"
             onClick={openCreate}
           >
-            Add charge
+            {t("charges.addCharge")}
             <ButtonNub>
               <Plus size={ICON.md} weight="bold" />
             </ButtonNub>
@@ -361,7 +375,7 @@ export function RecurringView({
               <div
                 className="flex gap-1.5 overflow-x-auto"
                 role="tablist"
-                aria-label="Kind of charge"
+                aria-label={t("charges.kindOfCharge")}
               >
                 {groups.map(({ type, label, items }) => (
                   <button
@@ -411,11 +425,11 @@ export function RecurringView({
           </>
         ) : (
           <EmptyState
-            title="No charges yet"
-            description="Rent, subscriptions, a monthly transfer into savings — anything you already know is coming."
+            title={t("charges.emptyTitle")}
+            description={t("charges.emptyBody")}
           >
             <Button variant="pill" size="md" onClick={openCreate}>
-              Add charge
+              {t("charges.addCharge")}
               <ButtonNub>
                 <Plus size={ICON.md} weight="bold" />
               </ButtonNub>

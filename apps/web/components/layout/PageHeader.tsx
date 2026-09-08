@@ -6,16 +6,25 @@ import {
   SHELL_HEADER_ACTIONS_CLASS,
   SHELL_HEADER_INNER_CLASS,
 } from "@/lib/layout-shell";
+import type { Key } from "@finance/core/i18n/t";
+import { PageTitle } from "@/components/layout/PageTitle";
 import { PrivacyToggle } from "@/components/layout/PrivacyToggle";
 import { RefreshButton } from "@/components/layout/RefreshButton";
 
 interface PageHeaderProps {
-  title: string;
+  /**
+   * The message key for the heading, not the heading.
+   *
+   * Every page's title is one of a fixed set of surface names, so a key is
+   * all a caller ever needs — and it lets the skeletons in `loading.tsx`
+   * stay synchronous while still being translated. See `PageTitle`.
+   */
+  titleKey: Key;
   children?: ReactNode;
   className?: string;
 }
 
-export function PageHeader({ title, children, className }: PageHeaderProps) {
+export function PageHeader({ titleKey, children, className }: PageHeaderProps) {
   return (
     <header
       className={cn(
@@ -46,7 +55,7 @@ export function PageHeader({ title, children, className }: PageHeaderProps) {
             style={{ width: 22, height: 22 }}
           />
           <h1 className="truncate font-head text-lg leading-none md:text-xl">
-            {title}
+            <PageTitle titleKey={titleKey} />
           </h1>
         </div>
         <div className={SHELL_HEADER_ACTIONS_CLASS}>

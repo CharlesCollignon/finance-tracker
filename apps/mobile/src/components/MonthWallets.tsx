@@ -14,6 +14,7 @@ import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 interface MonthWalletsProps {
   portfolio: InvestmentPortfolioSummary;
@@ -35,6 +36,7 @@ const WALLET_LABELS: Record<string, string> = {
  * is only "how much, and roughly where", and a strip answers that.
  */
 export function MonthWallets({ portfolio }: MonthWalletsProps) {
+  const t = useT();
   const router = useRouter();
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
@@ -68,7 +70,7 @@ export function MonthWallets({ portfolio }: MonthWalletsProps) {
         <Text className="text-sm font-medium">Invested</Text>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Open wallets"
+          accessibilityLabel={t("common.openWallets")}
           onPress={() => router.push("/investments")}
           hitSlop={8}
           className="flex-row items-center gap-1"

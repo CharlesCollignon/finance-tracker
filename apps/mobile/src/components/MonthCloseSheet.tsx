@@ -20,6 +20,7 @@ import {
 } from "@/lib/mutations";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 
 interface MonthCloseSheetProps {
   open: boolean;
@@ -80,6 +81,8 @@ export function MonthCloseSheet({
   baseline,
   onClosed,
 }: MonthCloseSheetProps) {
+  const locale = useLocale();
+  const t = useT();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
   const [balance, setBalance] = useState("");
@@ -104,7 +107,7 @@ export function MonthCloseSheet({
     setPending(false);
 
     if (response.error || !response.result) {
-      toast(response.error ?? "Could not work that out.", "error");
+      toast(response.error ?? t("monthClose.couldNotWorkOut"), "error");
       return;
     }
     setResult(response.result);
@@ -117,7 +120,7 @@ export function MonthCloseSheet({
     setPending(false);
 
     if (response.error || !response.result) {
-      toast(response.error ?? "Could not close the month.", "error");
+      toast(response.error ?? t("monthClose.couldNotClose"), "error");
       return;
     }
     void hapticSuccess();
@@ -157,41 +160,53 @@ export function MonthCloseSheet({
     >
       <View className="flex-1 justify-end bg-black/50">
         <Pressable
-          accessibilityLabel="Close"
+          accessibilityLabel={t("monthClose.close")}
           className="flex-1"
           onPress={dismiss}
         />
         <View className="max-h-[85%] rounded-t-3xl border border-border bg-card p-5">
           <SheetGrabber />
           <Text className="mb-2 font-semibold" style={{ fontSize: 18 }}>
-            {stage === "closed" ? monthLabel : `Close ${monthLabel}`}
+            {stage === "closed"
+              ? monthLabel
+              : t("monthClose.closeMonth", { month: monthLabel })}
           </Text>
 
           <ScrollView showsVerticalScrollIndicator={false}>
             {stage === "entering" ? (
               <View className="gap-4">
                 <Text variant="muted" className="text-sm">
-                  {`What did your account hold on ${formatShortDate(observeOn)}? Add up the accounts your day-to-day spending leaves from — one number is all this needs.`}
+                  {t("monthClose.balancePrompt", {
+                    date: formatShortDate(observeOn, locale),
+                  })}
                 </Text>
                 <Text variant="muted" className="text-sm">
                   {isBaseline
-                    ? "This first one only sets the starting point. There is nothing to measure against yet; next month there will be."
-                    : "Read it on the same day every month. That way the card payments still in flight are the same distortion each time, and the months stay comparable."}
+                    ? t("monthClose.baselineNote")
+                    : t("monthClose.sameDayNote")}
                 </Text>
 
                 <View className="gap-1.5">
-                  <Text className="text-sm font-medium">Balance</Text>
+                  <Text className="text-sm font-medium">
+                    {t("monthClose.balance")}
+                  </Text>
                   <Input
                     keyboardType="decimal-pad"
                     placeholder="2400.50"
                     value={balance}
                     onChangeText={setBalance}
-                    accessibilityLabel={`Balance on ${observeOn}`}
+                    accessibilityLabel={t("monthClose.balanceOn", {
+                      date: observeOn,
+                    })}
                   />
                 </View>
 
                 <Button
-                  label={pending ? "Working it out…" : "See what that means"}
+                  label={
+                    pending
+                      ? t("monthClose.working")
+                      : t("monthClose.seeWhatThatMeans")
+                  }
                   disabled={pending || !balanceIsUsable}
                   onPress={() => void check()}
                 />
@@ -203,47 +218,51 @@ export function MonthCloseSheet({
                 <View>
                   <Text className="font-semibold" style={{ fontSize: 17 }}>
                     {result.status === "baseline"
-                      ? "Starting point set"
+                      ? t("monthClose.startingPointSet")
                       : result.status === "over-recorded"
-                        ? "Something is missing"
+                        ? t("monthClose.somethingMissing")
                         : result.kept !== null && result.kept > 0
-                          ? `You kept ${formatEuro(result.kept)}`
+                          ? t("monthClose.youKept", {
+                              amount: formatEuro(result.kept),
+                            })
                           : `${monthLabel} cost more than it brought in`}
                   </Text>
                   <Text variant="muted" className="mt-1 text-sm">
                     {result.status === "baseline"
                       ? `${formatEuro(result.closingBalance)} on ${formatShortDate(observeOn)}. Close next month and the app can start telling you what it never saw.`
                       : result.status === "over-recorded"
-                        ? `The account holds ${formatEuro(result.unexplainedCredit ?? 0)} more than the recorded movements allow. Usually that means income that was never entered — or an expense entered twice, or a broker transfer recorded both as a transaction and as a transfer.`
+                        ? t("monthClose.unexplainedCredit", {
+                            amount: formatEuro(result.unexplainedCredit ?? 0),
+                          })
                         : result.keptRate !== null
                           ? `${result.keptRate}% of what came in, counting what you set aside.`
-                          : "Counting what you set aside."}
+                          : t("monthClose.keptRateUnknown")}
                   </Text>
                   {days !== null ? (
                     <Text variant="muted" className="mt-1 text-sm">
-                      {`That is ${days} ${days === 1 ? "day" : "days"} of runway bought.`}
+                      {t("monthClose.runwayBought", { count: days })}
                     </Text>
                   ) : null}
                 </View>
 
                 <View className="rounded-lg border border-border p-3">
                   <Figure
-                    label="Came in"
+                    label={t("monthClose.cameIn")}
                     value={formatEuro(result.flows.income)}
                   />
                   <Figure
-                    label="Recorded spending"
+                    label={t("monthClose.recordedSpending")}
                     value={formatEuro(result.flows.expenses)}
                   />
                   <Figure
-                    label="Set aside"
+                    label={t("monthClose.setAside")}
                     value={formatEuro(
                       result.flows.savings + result.flows.transfers,
                     )}
                   />
                   {result.unrecorded !== null ? (
                     <Figure
-                      label="Never recorded"
+                      label={t("monthClose.neverRecorded")}
                       value={formatEuro(result.unrecorded)}
                       toneClass={
                         overCap
@@ -258,23 +277,35 @@ export function MonthCloseSheet({
                   <Text variant="muted" className="text-sm">
                     {unrecordedCap !== null
                       ? overCap
-                        ? `That is ${formatEuro(result.unrecorded - unrecordedCap)} over your ${formatEuro(unrecordedCap)} allowance.`
-                        : `Inside your ${formatEuro(unrecordedCap)} allowance, with ${formatEuro(unrecordedCap - result.unrecorded)} to spare.`
+                        ? t("monthClose.overAllowance", {
+                            over: formatEuro(result.unrecorded - unrecordedCap),
+                            cap: formatEuro(unrecordedCap),
+                          })
+                        : t("monthClose.insideAllowance", {
+                            cap: formatEuro(unrecordedCap),
+                            spare: formatEuro(
+                              unrecordedCap - result.unrecorded,
+                            ),
+                          })
                       : baseline !== null
                         ? `A normal month for you is around ${formatEuro(baseline)}.`
-                        : "Spending the app never heard about — the restaurants, the rounds, the things bought on the way home. Nothing to fix, just worth knowing."}
+                        : t("monthClose.unrecordedBlurb")}
                   </Text>
                 ) : null}
 
                 {stage === "checked" ? (
                   <View className="gap-2">
                     <Button
-                      label={pending ? "Closing…" : `Close ${monthLabel}`}
+                      label={
+                        pending
+                          ? t("monthClose.closing")
+                          : t("monthClose.closeMonth", { month: monthLabel })
+                      }
                       disabled={pending}
                       onPress={() => void confirm()}
                     />
                     <Button
-                      label="Change the balance"
+                      label={t("monthClose.changeTheBalance")}
                       variant="outline"
                       disabled={pending}
                       onPress={() => setStage("entering")}
@@ -282,9 +313,9 @@ export function MonthCloseSheet({
                   </View>
                 ) : (
                   <View className="gap-2">
-                    <Button label="Done" onPress={dismiss} />
+                    <Button label={t("monthClose.done")} onPress={dismiss} />
                     <Button
-                      label="That balance was wrong — reopen"
+                      label={t("monthClose.reopenShort")}
                       variant="ghost"
                       disabled={pending}
                       onPress={() => void undo()}

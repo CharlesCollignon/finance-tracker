@@ -25,6 +25,12 @@ import type {
   TransactionWithCategory,
 } from "@finance/core/types/database";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  DEFAULT_LOCALE,
+  parseLocale,
+  type Locale,
+} from "@finance/core/i18n/locale";
+import { translator } from "@finance/core/i18n/t";
 
 /**
  * The daily notification run.
@@ -81,12 +87,24 @@ export async function GET(request: NextRequest) {
   // that granted permission, a phone that registered a token, or both.
   const byUser = await readDevices(supabase);
 
+  // One query for everybody's language, rather than one per user inside the
+  // loop below. This is the query the whole `user_preferences` table exists
+  // for: there is no browser in a cron request and no session either, so the
+  // row is the only place the reader's language can come from.
+  const localeByUser = await readLocales(supabase, [...byUser.keys()]);
+
   const queue: { devices: UserDevices; notification: PendingNotification }[] =
     [];
   const logged: { user_id: string; key: string }[] = [];
 
   for (const [userId, devices] of byUser) {
-    const due = await notificationsFor(supabase, userId, today, monthKey);
+    const due = await notificationsFor(
+      supabase,
+      userId,
+      today,
+      monthKey,
+      localeByUser.get(userId) ?? DEFAULT_LOCALE,
+    );
     for (const notification of due) {
       logged.push({ user_id: userId, key: notification.key });
       queue.push({ devices, notification });
@@ -130,12 +148,43 @@ export async function GET(request: NextRequest) {
 
 type AdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
 
+/**
+ * What language each of these users reads in.
+ *
+ * Users with no row are simply absent from the map and fall back to the
+ * default, which is the right reading of an absent row: it means nobody has
+ * ever chosen, not that they chose English.
+ */
+async function readLocales(
+  supabase: AdminClient,
+  userIds: string[],
+): Promise<Map<string, Locale>> {
+  if (userIds.length === 0) {
+    return new Map();
+  }
+
+  const { data } = await supabase
+    .from("user_preferences")
+    .select("user_id, locale")
+    .in("user_id", userIds);
+
+  const byUser = new Map<string, Locale>();
+  for (const row of (data ?? []) as { user_id: string; locale: string }[]) {
+    const locale = parseLocale(row.locale);
+    if (locale) {
+      byUser.set(row.user_id, locale);
+    }
+  }
+  return byUser;
+}
+
 /** What this one user should hear about today. */
 async function notificationsFor(
   supabase: AdminClient,
   userId: string,
   today: string,
   monthKey: string,
+  locale: Locale,
 ): Promise<PendingNotification[]> {
   const [year, month] = monthKey.split("-").map(Number);
   const { start, end } = getMonthBounds(year!, month!);
@@ -185,6 +234,7 @@ async function notificationsFor(
     summary.expenseBreakdown,
     summary.expenses,
     new Map(categoryRows.map((row) => [row.id, row.name] as const)),
+    locale,
   );
 
   // Asked here rather than in `buildDueNotifications`, which is deliberately
@@ -214,7 +264,9 @@ async function notificationsFor(
     pendingRecurring: templateRows.length,
     // The cron has no access to a browser's currency preference, and EUR is
     // the app's default; a notification is not the place to get precious
-    // about a display setting.
-    formatAmount: (amount: number) => formatCurrency(amount, "EUR"),
+    // about a display setting. The language is a different matter — it is
+    // stored per user precisely so that this line can be right.
+    formatAmount: (amount: number) => formatCurrency(amount, "EUR", locale),
+    t: translator(locale),
   });
 }

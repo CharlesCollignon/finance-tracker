@@ -15,6 +15,7 @@ import { getCurrentMonth } from "@finance/core/constants";
 import type { PullFreshness } from "@finance/core/bank-pull";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/locale";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await getAuthUser();
@@ -40,7 +41,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   let freshness: PullFreshness | null = null;
   if (user && connected) {
     try {
-      freshness = await readPullFreshness(await createClient(), user.id);
+      freshness = await readPullFreshness(
+        await createClient(),
+        user.id,
+        await getLocale(),
+      );
     } catch {
       freshness = null;
     }

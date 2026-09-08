@@ -18,7 +18,11 @@ export async function writeMonthReadAction(
 ): Promise<{ written: boolean; message: string | null; writesLeft: number }> {
   const user = await getAuthUser();
   if (!user) {
-    return { written: false, message: "Not authenticated", writesLeft: 0 };
+    return {
+      written: false,
+      message: "errors.notAuthenticated",
+      writesLeft: 0,
+    };
   }
 
   const parsed = monthReadRequestSchema.safeParse({ year, month });

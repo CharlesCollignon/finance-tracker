@@ -19,6 +19,7 @@ import {
 } from "@/lib/echarts-theme";
 import { useEchartsSize } from "@/lib/use-echarts-size";
 import { privateEuro, PRIVACY_MASK, usePrivacyOn } from "@/lib/use-privacy";
+import { useT } from "@/lib/locale-context";
 
 type ChartMode = "value" | "pl";
 
@@ -49,6 +50,7 @@ export function InvestmentItemChart({
   interactive = false,
   size = "md",
 }: InvestmentItemChartProps) {
+  const t = useT();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReactECharts>(null);
   useEchartsSize(containerRef, chartRef);
@@ -293,7 +295,7 @@ export function InvestmentItemChart({
           <div
             className="flex rounded-full border border-border p-0.5"
             role="tablist"
-            aria-label="Chart mode"
+            aria-label={t("common.chartMode")}
           >
             <ModeButton
               active={mode === "value"}
@@ -309,7 +311,7 @@ export function InvestmentItemChart({
           {/* One control rather than five independent pills: the sliding
               selection is what says these are alternatives. */}
           <SegmentedControl
-            label="Chart range"
+            label={t("common.chartRange")}
             segments={RANGE_SEGMENTS}
             value={range}
             onChange={setRange}
@@ -369,18 +371,19 @@ function ModeButton({
 }
 
 function ChartLegend({ mode, accent }: { mode: ChartMode; accent: string }) {
+  const t = useT();
   if (mode === "pl") {
     return (
       <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-        <LegendSwatch color={accent} label="Unrealised P/L" />
+        <LegendSwatch color={accent} label={t("common.unrealisedProfitLoss")} />
       </div>
     );
   }
 
   return (
     <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-      <LegendSwatch color="var(--foreground)" label="Invested" />
-      <LegendSwatch color={accent} label="Market value" />
+      <LegendSwatch color="var(--foreground)" label={t("wallets.invested")} />
+      <LegendSwatch color={accent} label={t("wallets.marketValue")} />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import {
   MAX_CLAIM_LENGTH,
   MAX_OBSERVATIONS,
   MAX_SUGGESTIONS,
-  MONTH_READ_JSON_SCHEMA,
+  monthReadJsonSchema,
   readFooting,
   renderMonthRead,
   verifyMonthRead,
@@ -523,29 +523,31 @@ describe("createFakeMonthReadSource", () => {
     const source = createFakeMonthReadSource([answer()]);
 
     expect(source.calls).toEqual([]);
-    await source.write({ system: "s", user: "u" });
-    expect(source.calls).toEqual([{ system: "s", user: "u" }]);
+    await source.write({ system: "s", user: "u", locale: "en" });
+    expect(source.calls).toEqual([{ system: "s", user: "u", locale: "en" }]);
   });
 
   it("answers null once its script runs out, like an unreachable writer", async () => {
     const source = createFakeMonthReadSource([]);
 
-    expect(await source.write({ system: "s", user: "u" })).toBeNull();
+    expect(
+      await source.write({ system: "s", user: "u", locale: "en" }),
+    ).toBeNull();
   });
 });
 
-describe("MONTH_READ_JSON_SCHEMA", () => {
+describe("monthReadJsonSchema", () => {
   it("forbids extra properties, matching the strict zod parse", () => {
-    expect(MONTH_READ_JSON_SCHEMA.json_schema.schema.additionalProperties).toBe(
+    expect(monthReadJsonSchema().json_schema.schema.additionalProperties).toBe(
       false,
     );
-    expect(MONTH_READ_JSON_SCHEMA.json_schema.strict).toBe(true);
+    expect(monthReadJsonSchema().json_schema.strict).toBe(true);
   });
 
   it("carries no count or length rules, which zod enforces instead", () => {
     // Mistral's strict mode does not reliably honour minItems/maxLength, so
     // stating them here would imply a guarantee the app does not have.
-    const asText = JSON.stringify(MONTH_READ_JSON_SCHEMA);
+    const asText = JSON.stringify(monthReadJsonSchema());
     expect(asText).not.toContain("maxItems");
     expect(asText).not.toContain("minItems");
     expect(asText).not.toContain("maxLength");

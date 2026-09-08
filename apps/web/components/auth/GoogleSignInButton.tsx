@@ -6,6 +6,8 @@ import { Button } from "@/components/retroui/Button";
 import { Text } from "@/components/retroui/Text";
 import { createClient } from "@/lib/supabase/client";
 import { ICON } from "@/lib/icon-scale";
+import { resolveMessage } from "@finance/core/i18n/t";
+import { useT } from "@/lib/locale-context";
 
 interface GoogleSignInButtonProps {
   label?: string;
@@ -14,6 +16,7 @@ interface GoogleSignInButtonProps {
 export function GoogleSignInButton({
   label = "Continue with Google",
 }: GoogleSignInButtonProps) {
+  const t = useT();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,7 +51,11 @@ export function GoogleSignInButton({
         <GoogleLogo size={ICON.xl} weight="bold" />
         {pending ? "Redirecting…" : label}
       </Button>
-      {error && <Text className="text-sm text-destructive">{error}</Text>}
+      {error && (
+        <Text className="text-sm text-destructive">
+          {resolveMessage(t, error)}
+        </Text>
+      )}
     </div>
   );
 }

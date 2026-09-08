@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * How the month is actually going, in the one figure people open the app for.
  *
@@ -165,28 +167,38 @@ function standingOf(free: number | null, cap: number | null): MonthStanding {
  * calling both "on hand" would be the kind of small lie that costs an app its
  * credibility the first time someone checks.
  */
-export function pulseHeadline(pulse: MonthPulse): string {
+export function pulseHeadline(
+  pulse: MonthPulse,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  const t = translator(locale);
   if (pulse.onHand === null) {
-    return "Left this month";
+    return t("pulse.headlineLeft");
   }
-  return pulse.free !== null && pulse.free < 0 ? "Short by" : "Yours to spend";
+  return pulse.free !== null && pulse.free < 0
+    ? t("pulse.headlineShort")
+    : t("pulse.headlineFree");
 }
 
 /**
  * One line explaining the headline, without repeating the number above it.
  */
-export function pulseExplanation(pulse: MonthPulse): string {
+export function pulseExplanation(
+  pulse: MonthPulse,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  const t = translator(locale);
   if (pulse.onHand === null) {
-    return "Connect a bank to see what is actually in your account.";
+    return t("pulse.noBalance");
   }
   if (pulse.committed <= 0 && pulse.arriving <= 0) {
-    return "Nothing else is due this month.";
+    return t("pulse.nothingDue");
   }
   if (pulse.arriving <= 0) {
-    return "After everything still due to leave.";
+    return t("pulse.afterLeaving");
   }
   if (pulse.committed <= 0) {
-    return "Including what is still due to arrive.";
+    return t("pulse.includingArriving");
   }
-  return "After what is still due to leave, and what is still to arrive.";
+  return t("pulse.afterBoth");
 }

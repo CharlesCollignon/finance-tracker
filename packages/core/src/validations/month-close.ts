@@ -1,3 +1,11 @@
+/**
+ * The messages here are keys, not sentences.
+ *
+ * A schema is built when this module loads, long before any request has a
+ * language, so it cannot translate its own message. It emits a key and
+ * whoever shows the failure resolves it — see `resolveMessage` in `../i18n/t`
+ * for why that is safe for the ordinary errors sharing the same field.
+ */
 import { z } from "zod";
 
 /**
@@ -10,16 +18,16 @@ export const monthCloseSchema = z.object({
   month: z.coerce.number().int().min(1).max(12),
   closingBalance: z.coerce
     .number()
-    .min(-1_000_000, "That does not look like a balance")
-    .max(1_000_000_000, "That does not look like a balance"),
+    .min(-1_000_000, "errors.notABalance")
+    .max(1_000_000_000, "errors.notABalance"),
 });
 
 /** Null clears the cap and puts the user back on "ended the month ahead". */
 export const unrecordedCapSchema = z.object({
   cap: z.coerce
     .number()
-    .min(0, "A cap cannot be negative")
-    .max(1_000_000, "That does not look like a cap")
+    .min(0, "errors.capNotNegative")
+    .max(1_000_000, "errors.notACap")
     .nullable(),
 });
 
@@ -28,6 +36,6 @@ export const closeDaySchema = z.object({
   closeDay: z.coerce
     .number()
     .int()
-    .min(1, "Pick a day between 1 and 28")
-    .max(28, "Pick a day between 1 and 28"),
+    .min(1, "errors.pickDay")
+    .max(28, "errors.pickDay"),
 });

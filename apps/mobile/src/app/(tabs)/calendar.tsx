@@ -49,6 +49,8 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useTabBarClearance } from "@/theme/chrome";
+import { useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 import {
   getCategories,
   getRecurringTemplates,
@@ -59,6 +61,7 @@ import {
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
 
 export default function CalendarScreen() {
+  const t = useT();
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -199,7 +202,7 @@ export default function CalendarScreen() {
   }
 
   return (
-    <Screen title="Ledger">
+    <Screen title={t("nav.ledger")}>
       <SurfaceTabs tabs={LEDGER_TABS} className="mb-3" />
 
       <MonthPicker
@@ -236,7 +239,7 @@ export default function CalendarScreen() {
       {loading && !data ? (
         <ScreenSkeleton rows={4} />
       ) : error ? (
-        <Text className="text-destructive">{error}</Text>
+        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
       ) : (
         <ScrollView
           refreshControl={
@@ -288,7 +291,11 @@ export default function CalendarScreen() {
 
           <View className="mt-4 flex-row items-center justify-between">
             <Text className="font-bold">{effectiveSelected}</Text>
-            <Button label="Add" size="sm" onPress={() => setFormOpen(true)} />
+            <Button
+              label={t("ledger.add")}
+              size="sm"
+              onPress={() => setFormOpen(true)}
+            />
           </View>
           <Text variant="muted" className="mb-2">
             In{" "}
@@ -306,7 +313,11 @@ export default function CalendarScreen() {
               {selectMode ? (
                 <>
                   <Button
-                    label={allState === "all" ? "Clear all" : "Select all"}
+                    label={
+                      allState === "all"
+                        ? t("ledger.clearAll")
+                        : t("ledger.selectAll")
+                    }
                     variant="ghost"
                     size="sm"
                     onPress={() =>
@@ -316,7 +327,7 @@ export default function CalendarScreen() {
                     }
                   />
                   <Button
-                    label="Done"
+                    label={t("ledger.selectDone")}
                     variant="ghost"
                     size="sm"
                     onPress={leaveSelectMode}
@@ -324,7 +335,7 @@ export default function CalendarScreen() {
                 </>
               ) : (
                 <Button
-                  label="Select"
+                  label={t("ledger.select")}
                   variant="ghost"
                   size="sm"
                   icon="checkbox-outline"
@@ -342,11 +353,11 @@ export default function CalendarScreen() {
 
           {dayTxs.length === 0 ? (
             <EmptyState
-              title="Nothing on this day"
-              description="Add what happened."
+              title={t("calendarView.emptyTitle")}
+              description={t("calendarView.emptyBodyMobile")}
             >
               <Button
-                label="Add transaction"
+                label={t("ledger.addTransaction")}
                 variant="pill"
                 icon="add"
                 onPress={() => setFormOpen(true)}
@@ -411,7 +422,12 @@ export default function CalendarScreen() {
                       numberOfLines={1}
                       className="mt-0.5 text-xs"
                     >
-                      {[tx.recurring_template_id ? "Recurring" : null, tx.note]
+                      {[
+                        tx.recurring_template_id
+                          ? t("calendarView.recurring")
+                          : null,
+                        tx.note,
+                      ]
                         .filter(Boolean)
                         .join(" · ") || "—"}
                     </Text>

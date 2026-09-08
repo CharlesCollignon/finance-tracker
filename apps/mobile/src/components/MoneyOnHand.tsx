@@ -22,6 +22,7 @@ import { hapticSelection } from "@/lib/haptics";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON, TYPE } from "@/theme/tokens";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 
 interface MoneyOnHandProps {
   pulse: MonthPulse;
@@ -70,6 +71,8 @@ export function MoneyOnHand({
   unreadable,
   trend,
 }: MoneyOnHandProps) {
+  const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
 
@@ -85,7 +88,11 @@ export function MoneyOnHand({
             it modifies rather than in a row of its own above the figures. */}
         <View className="flex-row items-center justify-between gap-3">
           <Text variant="label">
-            {banked ? pulseHeadline(pulse) : short ? "Over by" : "Left"}
+            {banked
+              ? pulseHeadline(pulse, locale)
+              : short
+                ? t("month.over")
+                : t("month.left")}
           </Text>
           <BudgetViewControl
             view={budgetView}
@@ -139,7 +146,7 @@ export function MoneyOnHand({
         </View>
       ) : (
         <Text variant="micro" className="-mt-3">
-          {pulseExplanation(pulse)}
+          {pulseExplanation(pulse, locale)}
         </Text>
       )}
 
@@ -163,13 +170,13 @@ export function MoneyOnHand({
 
       <View className="border-t border-border">
         <Row
-          label="Came in"
+          label={t("month.cameIn")}
           value={formatEuro(income)}
           icon="trending-up"
           iconColor={colors.success}
         />
         <Row
-          label="Went out"
+          label={t("month.wentOut")}
           value={formatEuro(expenses)}
           icon="trending-down"
           iconColor={colors.destructive}
@@ -177,7 +184,12 @@ export function MoneyOnHand({
         {savingsRate !== null ? (
           /* Not "kept": a month close already uses that word for cash left
              plus what was set aside, which is a different figure. */
-          <Row label="Savings rate" value={`${savingsRate}%`} plain last />
+          <Row
+            label={t("month.savingsRate")}
+            value={`${savingsRate}%`}
+            plain
+            last
+          />
         ) : null}
       </View>
 
@@ -212,6 +224,7 @@ function BudgetViewControl({
   month: number;
   onChange: (next: BudgetViewMode) => void;
 }) {
+  const t = useT();
   const colors = useThemeColors();
   const next: BudgetViewMode = view === "current" ? "month_end" : "current";
 
@@ -228,7 +241,7 @@ function BudgetViewControl({
       className="flex-row items-center gap-1.5 rounded-full border border-border px-3 py-1.5"
     >
       <Text variant="micro" className="text-foreground">
-        {view === "current" ? "Today" : "Month end"}
+        {view === "current" ? t("month.today") : t("month.monthEnd")}
       </Text>
       <Ionicons
         name="swap-horizontal"

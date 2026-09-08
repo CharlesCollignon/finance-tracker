@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { landingCopy } from "@/components/marketing/landing-copy";
+import { landingCopyFor } from "@/components/marketing/landing-copy";
+import { useLocale } from "@/lib/locale-context";
 
 /**
  * The signup pair, in the three places it appears.
@@ -60,6 +63,7 @@ export function LandingCtas({
   layout = "pair",
   className,
 }: LandingCtasProps) {
+  const copy = landingCopyFor(useLocale());
   if (isLoggedIn) {
     return (
       <div className={cn("flex flex-wrap items-center gap-3", className)}>
@@ -67,9 +71,7 @@ export function LandingCtas({
           href="/dashboard"
           className={cn(base, sizes[size], solid, size === "lg" && solidGlow)}
         >
-          {layout === "solo"
-            ? landingCopy.cta.openApp
-            : landingCopy.cta.goToDashboard}
+          {layout === "solo" ? copy.cta.openApp : copy.cta.goToDashboard}
         </Link>
       </div>
     );
@@ -81,7 +83,7 @@ export function LandingCtas({
         href="/signup"
         className={cn(base, sizes[size], solid, size === "lg" && solidGlow)}
       >
-        {landingCopy.cta.getStarted}
+        {copy.cta.getStarted}
       </Link>
       {layout === "solo" ? null : (
         <Link
@@ -93,7 +95,7 @@ export function LandingCtas({
             layout === "pair-compact" && "max-sm:hidden",
           )}
         >
-          {landingCopy.cta.signIn}
+          {copy.cta.signIn}
         </Link>
       )}
     </div>

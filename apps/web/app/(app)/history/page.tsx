@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { CategoryHistoryView } from "@/components/finance/CategoryHistoryView";
+import { getLocale } from "@/lib/locale";
 
 /** How far back the page looks. A year is one of every seasonal thing. */
 const MONTHS = 12;
@@ -35,12 +36,12 @@ export default async function HistoryPage() {
     (data ?? []) as TransactionWithCategory[],
     current.year,
     current.month,
-    { months: MONTHS },
+    { months: MONTHS, locale: await getLocale() },
   );
 
   return (
     <>
-      <PageHeader title="Ledger" />
+      <PageHeader titleKey="nav.ledger" />
       <PageContainer>
         <SurfaceTabs tabs={LEDGER_TABS} className="mb-4" />
         <CategoryHistoryView histories={histories} months={MONTHS} />

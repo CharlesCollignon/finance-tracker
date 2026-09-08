@@ -20,6 +20,7 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { useLocale } from "@/providers/LocaleProvider";
 
 interface ProjectionCardProps {
   points: ProjectionPoint[];
@@ -40,9 +41,10 @@ export function ProjectionCard({
   runway,
   startingBalance = 0,
 }: ProjectionCardProps) {
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const summary = summarizeProjection(points, startingBalance);
-  const runwayLine = runway ? formatRunway(runway) : null;
+  const runwayLine = runway ? formatRunway(runway, locale) : null;
 
   if (!summary) {
     return null;

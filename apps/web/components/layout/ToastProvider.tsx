@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "@/lib/utils";
+import { resolveMessage } from "@finance/core/i18n/t";
+import { useT } from "@/lib/locale-context";
 
 type ToastVariant = "default" | "success" | "error";
 
@@ -26,15 +28,29 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  const t = useT();
+
   const toast = useCallback(
     (message: string, variant: ToastVariant = "default") => {
       const id = Date.now();
-      setToasts((prev) => [...prev, { id, message, variant }]);
+      // Resolved here, and here only.
+      //
+      // Every transient message in the app passes through this function, which
+      // makes it the one place a message key can become a sentence. The Zod
+      // schemas in `packages/core/src/validations` emit keys because they are
+      // built before any request has a language; a caller that already
+      // translated its own string is unaffected, because `resolveMessage`
+      // hands back anything it has no message for. See its comment for why
+      // that is by design rather than by luck.
+      setToasts((prev) => [
+        ...prev,
+        { id, message: resolveMessage(t, message), variant },
+      ]);
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
       }, 3500);
     },
-    [],
+    [t],
   );
 
   return (

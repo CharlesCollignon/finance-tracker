@@ -26,6 +26,7 @@ import { saveWalletPlan, saveWalletTargets } from "@/lib/mutations";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 
 interface WalletPlanPanelProps {
   portfolio: InvestmentPortfolioSummary;
@@ -51,6 +52,8 @@ export function WalletPlanPanel({
   monthlyContribution,
   onSaved,
 }: WalletPlanPanelProps) {
+  const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
   const [editing, setEditing] = useState(false);
@@ -112,14 +115,14 @@ export function WalletPlanPanel({
     <>
       <Card bezel innerClassName="gap-3 p-5">
         <View className="flex-row items-center justify-between">
-          <Text className="font-bold">Allocation</Text>
+          <Text className="font-bold">{t("position.allocation")}</Text>
           <Pressable
             accessibilityRole="button"
             onPress={() => setEditing((value) => !value)}
             hitSlop={8}
           >
             <Text className="text-sm font-medium text-primary-ink">
-              {editing ? "Cancel" : "Set targets"}
+              {editing ? t("position.cancel") : t("position.setTargets")}
             </Text>
           </Pressable>
         </View>
@@ -265,7 +268,7 @@ export function WalletPlanPanel({
 
           <PeaOpenedField
             openedOn={peaPlan?.opened_on ?? null}
-            hint={peaMaturityHint(peaStatus)}
+            hint={peaMaturityHint(peaStatus, locale)}
             onSaved={onSaved}
           />
         </Card>
@@ -281,6 +284,7 @@ function TargetEditor({
   initial: WalletTarget[];
   onSaved: () => void;
 }) {
+  const t = useT();
   const { toast } = useToast();
   const [pending, setPending] = useState(false);
   const [draft, setDraft] = useState(() =>
@@ -306,7 +310,7 @@ function TargetEditor({
       toast(result.error, "error");
       return;
     }
-    toast("Targets saved", "success");
+    toast(t("position.targetsSaved"), "success");
     onSaved();
   }
 
@@ -353,7 +357,7 @@ function TargetEditor({
       </Text>
 
       <Button
-        label={pending ? "Saving…" : "Save targets"}
+        label={pending ? t("position.saving") : t("position.saveTargets")}
         disabled={pending || total !== 100}
         onPress={() => void save()}
       />
@@ -371,6 +375,7 @@ function PeaOpenedField({
   hint: string | null;
   onSaved: () => void;
 }) {
+  const t = useT();
   const { toast } = useToast();
   const [value, setValue] = useState(openedOn ?? todayIsoLocal());
   const [editing, setEditing] = useState(false);
@@ -385,7 +390,7 @@ function PeaOpenedField({
       toast(result.error, "error");
       return;
     }
-    toast("Saved", "success");
+    toast(t("position.saved"), "success");
     setEditing(false);
     onSaved();
   }
@@ -394,18 +399,18 @@ function PeaOpenedField({
     <View className="gap-2 border-t border-border pt-3">
       {editing ? (
         <>
-          <Text className="text-sm font-medium">Opened on</Text>
+          <Text className="text-sm font-medium">{t("position.openedOn")}</Text>
           <DateField value={value} onChange={setValue} />
           <View className="flex-row gap-2">
             <Button
-              label={pending ? "Saving…" : "Save"}
+              label={pending ? t("position.saving") : t("position.save")}
               size="sm"
               className="flex-1"
               disabled={pending}
               onPress={() => void save()}
             />
             <Button
-              label="Cancel"
+              label={t("position.cancel")}
               variant="outline"
               size="sm"
               className="flex-1"
@@ -417,11 +422,11 @@ function PeaOpenedField({
       ) : (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Set the date the PEA was opened"
+          accessibilityLabel={t("position.peaOpenedLabel")}
           onPress={() => setEditing(true)}
         >
           <Text variant="muted" className="text-sm">
-            {hint ?? "Add the opening date to track the five-year mark."}
+            {hint ?? t("position.peaOpenedHint")}
             <Text className="text-sm font-medium text-primary-ink">
               {openedOn ? "  Change" : "  Add"}
             </Text>

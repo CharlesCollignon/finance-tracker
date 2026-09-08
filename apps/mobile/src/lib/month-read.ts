@@ -18,6 +18,11 @@ import type { MonthCloseOverview } from "@/lib/queries";
 
 import { WEB_APP_URL } from "@/lib/env";
 import { supabase } from "@/lib/supabase";
+import {
+  DEFAULT_LOCALE,
+  parseLocale,
+  type Locale,
+} from "@finance/core/i18n/locale";
 
 /**
  * The month read on the phone.
@@ -54,6 +59,8 @@ export function monthFactsFromScreen(input: {
   investedValue: number;
   inboxPending: number;
   chargesUnconfirmed: number;
+  /** The language the labels are written in — the model's vocabulary too. */
+  locale?: Locale;
 }): MonthFacts {
   const monthKey = `${input.year}-${String(input.month).padStart(2, "0")}`;
   const closed =
@@ -86,12 +93,15 @@ export function monthFactsFromScreen(input: {
     investedValue: input.investedValue,
     inboxPending: input.inboxPending,
     chargesUnconfirmed: input.chargesUnconfirmed,
+    locale: input.locale,
   });
 }
 
 export interface MonthReadView {
   read: MonthRead;
   writtenAt: string;
+  /** The language the prose is in, which may not be the reader's. */
+  locale: Locale;
   freshness: ReadFreshness;
 }
 
@@ -152,6 +162,9 @@ export async function getMonthRead(
     view: {
       read,
       writtenAt: row.written_at,
+      // Null on a row written before migration 028, which means English: the
+      // app was English-only when it was written.
+      locale: parseLocale(row.locale) ?? DEFAULT_LOCALE,
       freshness: describeReadFreshness({
         storedFacts,
         currentFacts,

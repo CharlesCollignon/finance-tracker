@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * Whether the bank itself may be asked right now.
  *
@@ -208,31 +210,38 @@ export function unattendedRemaining(
 export function describePullAge(
   lastPulledAt: string | null,
   now: string,
+  locale: Locale = DEFAULT_LOCALE,
 ): string {
+  const t = translator(locale);
+
   if (lastPulledAt === null) {
-    return "never";
+    return t("pullAge.never");
   }
 
   const seconds = secondsBetween(lastPulledAt, now);
   if (!Number.isFinite(seconds)) {
-    return "never";
+    return t("pullAge.never");
   }
   if (seconds < 60) {
-    return "just now";
+    return t("pullAge.justNow");
   }
 
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) {
-    return `${minutes} min ago`;
+    return t("pullAge.minutes", { count: minutes });
   }
 
   const hours = Math.floor(minutes / 60);
   if (hours < 24) {
-    return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
+    return t("pullAge.hours", { count: hours });
   }
 
   const days = Math.floor(hours / 24);
-  return days === 1 ? "yesterday" : `${days} days ago`;
+  // Yesterday is a name, not a count, so it is its own message rather than
+  // the singular of "days" — French says "hier", not "il y a 1 jour".
+  return days === 1
+    ? t("pullAge.yesterday")
+    : t("pullAge.days", { count: days });
 }
 
 /**

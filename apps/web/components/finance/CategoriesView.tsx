@@ -28,10 +28,12 @@ import {
   upsertCategory,
 } from "@/lib/actions/categories";
 import { CATEGORY_TYPE_ORDER } from "@finance/core/categories";
-import { CATEGORY_TYPE_LABELS } from "@finance/core/category-styles";
+import { categoryTypeLabels } from "@finance/core/category-styles";
 import type { Category, CategoryType } from "@finance/core/types/database";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 const ICON_KEYS = Object.keys(CATEGORY_ICONS);
 
@@ -73,6 +75,7 @@ function notCountingLabel(category: {
 }
 
 export function CategoriesView({ categories }: CategoriesViewProps) {
+  const t = useT();
   const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
   const [editCategory, setEditCategory] = useState<Category | null>(null);
@@ -81,7 +84,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
 
   const groups = CATEGORY_TYPE_ORDER.map((type) => ({
     type,
-    label: CATEGORY_TYPE_LABELS[type],
+    label: categoryTypeLabels()[type],
     categories: categories.filter((cat) => cat.type === type),
   })).filter((group) => group.categories.length > 0);
 
@@ -92,7 +95,9 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
         toast(result.error, "error");
       } else {
         toast(
-          category.archived ? "Category restored" : "Category archived",
+          category.archived
+            ? t("categories.restoredToast")
+            : t("categories.archivedToast"),
           "success",
         );
       }
@@ -106,21 +111,17 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
       if (result.error) {
         toast(result.error, "error");
       } else {
-        toast("Category deleted", "success");
+        toast(t("categories.deleted"), "success");
       }
     });
   }
 
   return (
     <>
-      <PageHeader title="Categories" />
+      <PageHeader titleKey="pages.categories" />
 
       <PageContainer className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground">
-          Categories organise your transactions and recurring items. Archived
-          categories keep their history but no longer appear when adding
-          entries.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("categories.blurb")}</p>
 
         <div className="flex md:justify-end">
           <Button
@@ -129,7 +130,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
             className="w-full md:w-auto md:min-w-[14rem]"
             onClick={() => setFormOpen(true)}
           >
-            Add category
+            {t("categories.addCategory")}
             <ButtonNub>
               <Plus size={ICON.md} weight="bold" />
             </ButtonNub>
@@ -168,7 +169,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                           ) : null}
                           {category.archived && (
                             <Badge size="sm" variant="outline">
-                              Archived
+                              {t("categories.archived")}
                             </Badge>
                           )}
                         </div>
@@ -216,8 +217,12 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                             )}
                             aria-label={
                               category.archived
-                                ? `Restore ${category.name}`
-                                : `Archive ${category.name}`
+                                ? t("categories.restoreNamed", {
+                                    name: category.name,
+                                  })
+                                : t("categories.archiveNamed", {
+                                    name: category.name,
+                                  })
                             }
                           >
                             {category.archived ? (
@@ -287,6 +292,7 @@ function CategoryFormSheet({
   onOpenChange,
   category,
 }: CategoryFormSheetProps) {
+  const t = useT();
   const { toast } = useToast();
   const isEditing = category !== null;
   const [state, action, pending] = useActionState(upsertCategory, {});
@@ -298,18 +304,20 @@ function CategoryFormSheet({
 
   useEffect(() => {
     if (state.success) {
-      toast("Category saved", "success");
+      toast(t("categories.saved"), "success");
       onOpenChange(false);
     } else if (state.error) {
       toast(state.error, "error");
     }
-  }, [state.success, state.error, onOpenChange, toast]);
+  }, [state.success, state.error, onOpenChange, toast, t]);
 
   return (
     <MobileSheet
       open={open}
       onOpenChange={onOpenChange}
-      title={isEditing ? "Edit category" : "Add category"}
+      title={
+        isEditing ? t("categories.editCategory") : t("categories.addCategory")
+      }
     >
       <form action={action} className="flex flex-col gap-4">
         {isEditing && <input type="hidden" name="id" value={category.id} />}
@@ -321,7 +329,7 @@ function CategoryFormSheet({
         />
 
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="category-name">Name</FormLabel>
+          <FormLabel htmlFor="category-name">{t("categories.name")}</FormLabel>
           <Input
             id="category-name"
             name="name"
@@ -335,7 +343,7 @@ function CategoryFormSheet({
         </div>
 
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="category-type">Type</FormLabel>
+          <FormLabel htmlFor="category-type">{t("categories.type")}</FormLabel>
           <select
             id="category-type"
             name="type"
@@ -349,7 +357,7 @@ function CategoryFormSheet({
           >
             {CATEGORY_TYPE_ORDER.map((option) => (
               <option key={option} value={option}>
-                {CATEGORY_TYPE_LABELS[option]}
+                {categoryTypeLabels()[option]}
               </option>
             ))}
           </select>
@@ -364,24 +372,24 @@ function CategoryFormSheet({
               className="mt-0.5 h-4 w-4 accent-primary"
             />
             <span>
-              Counts toward monthly budget
+              {t("categories.countsTowardBudget")}
               <span className="block text-muted-foreground">
                 {type === "income"
-                  ? "Untick for money coming back rather than coming in — a friend settling their half, a refund. It is subtracted from the month's spending instead of counted as earnings."
+                  ? t("categories.countsHintIncome")
                   : type === "savings"
-                    ? "Untick for money coming back out of savings — a transfer to your current account. It is subtracted from what you set aside, and comes off the reserve behind the runway."
-                    : "Untick for wallet DCA tracked outside the budget (e.g. buys funded by broker transfers)."}
+                    ? t("categories.countsHintSavings")
+                    : t("categories.countsHintInvestment")}
               </span>
             </span>
           </label>
         )}
 
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="category-icon">Icon</FormLabel>
+          <FormLabel htmlFor="category-icon">{t("categories.icon")}</FormLabel>
           <div
             id="category-icon"
             role="radiogroup"
-            aria-label="Category icon"
+            aria-label={t("categories.iconPicker")}
             className="grid grid-cols-6 gap-2"
           >
             {ICON_KEYS.map((key) => (
@@ -409,11 +417,13 @@ function CategoryFormSheet({
         </div>
 
         {state.error && (
-          <Text className="text-sm text-destructive">{state.error}</Text>
+          <Text className="text-sm text-destructive">
+            {resolveMessage(t, state.error)}
+          </Text>
         )}
 
         <Button type="submit" size="lg" className="w-full" disabled={pending}>
-          {pending ? "Saving…" : "Save category"}
+          {pending ? t("categories.saving") : t("categories.saveCategory")}
         </Button>
       </form>
     </MobileSheet>

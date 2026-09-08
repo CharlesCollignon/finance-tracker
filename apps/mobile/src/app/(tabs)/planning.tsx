@@ -39,6 +39,9 @@ import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useChartSeries } from "@/theme/chart-series";
 import { useTabBarClearance } from "@/theme/chrome";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import type { Translate } from "@finance/core/i18n/t";
+import { resolveMessage } from "@finance/core/i18n/t";
 import {
   getBudgets,
   getCategories,
@@ -62,18 +65,24 @@ import {
 function pacingHint(
   pacing: GoalPacing,
   formatEuro: (amount: number) => string,
+  t: Translate,
 ): { text: string; className: string } | null {
   switch (pacing.status) {
     case "reached":
-      return { text: "Goal reached!", className: "text-success" };
+      return { text: t("plan.goalReached"), className: "text-success" };
     case "overdue":
       return {
-        text: `Target date passed — ${formatEuro(pacing.monthlyAmount ?? 0)} still to save.`,
+        text: t("plan.goalOverdue", {
+          amount: formatEuro(pacing.monthlyAmount ?? 0),
+        }),
         className: "text-destructive",
       };
     case "on-schedule":
       return {
-        text: `Save ${formatEuro(pacing.monthlyAmount ?? 0)}/month to reach this by ${pacing.targetLabel}.`,
+        text: t("plan.goalOnSchedule", {
+          amount: formatEuro(pacing.monthlyAmount ?? 0),
+          month: pacing.targetLabel ?? "",
+        }),
         className: "text-muted-foreground",
       };
     case "no-date":
@@ -82,6 +91,8 @@ function pacingHint(
 }
 
 export default function PlanningScreen() {
+  const t = useT();
+  const locale = useLocale();
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
@@ -151,6 +162,7 @@ export default function PlanningScreen() {
           summary.expenseBreakdown,
           summary.expenses,
           categoryNames,
+          locale,
         ),
         goalProgress: buildSavingsGoalProgress(
           goals,
@@ -231,11 +243,11 @@ export default function PlanningScreen() {
   }
 
   return (
-    <Screen title="Plan">
+    <Screen title={t("nav.plan")}>
       {loading && !data ? (
         <ScreenSkeleton rows={4} />
       ) : error ? (
-        <Text className="text-destructive">{error}</Text>
+        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
       ) : (
         <ScrollView
           refreshControl={
@@ -263,7 +275,7 @@ export default function PlanningScreen() {
           ) : null}
 
           <Card bezel innerClassName="gap-4 p-5">
-            <Text className="text-sm font-medium">Spending caps</Text>
+            <Text className="text-sm font-medium">{t("plan.capsHeading")}</Text>
 
             {(data?.budgetProgress ?? []).length > 0 ? (
               <View className="flex-row flex-wrap items-start gap-2">
@@ -304,7 +316,7 @@ export default function PlanningScreen() {
                 keyboardType="decimal-pad"
               />
               <Button
-                label="Add cap"
+                label={t("plan.addCapSubmit")}
                 disabled={pending}
                 onPress={handleAddBudget}
               />
@@ -312,12 +324,18 @@ export default function PlanningScreen() {
           </Card>
 
           <Card bezel innerClassName="gap-4 p-5">
-            <Text className="text-sm font-medium">Savings goals</Text>
+            <Text className="text-sm font-medium">
+              {t("plan.goalsHeading")}
+            </Text>
 
             {(data?.goalProgress ?? []).length > 0 ? (
               <View className="flex-row flex-wrap items-start gap-2">
                 {(data?.goalProgress ?? []).map((row) => {
-                  const hint = pacingHint(computeGoalPacing(row), formatEuro);
+                  const hint = pacingHint(
+                    computeGoalPacing(row),
+                    formatEuro,
+                    t,
+                  );
                   return (
                     <Pressable
                       hitSlop={8}
@@ -359,7 +377,7 @@ export default function PlanningScreen() {
             )}
 
             <View className="gap-2 border-t border-border pt-4">
-              <Text variant="label">Goal name</Text>
+              <Text variant="label">{t("plan.goalName")}</Text>
               <Input value={goalName} onChangeText={setGoalName} />
               <Text variant="label">Target (€)</Text>
               <Input
@@ -371,11 +389,11 @@ export default function PlanningScreen() {
               <DateField
                 value={goalTargetDate}
                 onChange={setGoalTargetDate}
-                placeholder="No target date"
+                placeholder={t("recurring.noEndDate")}
                 clearable
               />
               <Button
-                label="Add goal"
+                label={t("plan.addGoalSubmit")}
                 disabled={pending}
                 onPress={handleAddGoal}
               />
@@ -398,7 +416,11 @@ export default function PlanningScreen() {
               New tag
             </Text>
             <Input value={tagName} onChangeText={setTagName} className="mb-3" />
-            <Button label="Add tag" disabled={pending} onPress={handleAddTag} />
+            <Button
+              label={t("plan.addTag")}
+              disabled={pending}
+              onPress={handleAddTag}
+            />
           </Card>
         </ScrollView>
       )}
@@ -407,10 +429,10 @@ export default function PlanningScreen() {
         open={confirming !== null}
         title={
           confirming?.kind === "goal"
-            ? "Delete this goal?"
-            : "Delete this budget?"
+            ? t("plan.deleteGoalTitle")
+            : t("plan.deleteCapTitle")
         }
-        message="This cannot be undone. Your transactions are not affected."
+        message={t("plan.deleteWarning")}
         onConfirm={handleConfirmDelete}
         onCancel={() => setConfirming(null)}
       />

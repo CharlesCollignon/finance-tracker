@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 /**
  * Reading a bank statement export.
  *
@@ -25,7 +27,10 @@ export type CsvDelimiter = (typeof DELIMITERS)[number];
  * contains commas.
  */
 export function detectDelimiter(text: string): CsvDelimiter {
-  const lines = text.split(/\r?\n/).filter((line) => line.trim() !== "").slice(0, 5);
+  const lines = text
+    .split(/\r?\n/)
+    .filter((line) => line.trim() !== "")
+    .slice(0, 5);
 
   if (lines.length === 0) {
     return ",";
@@ -35,9 +40,7 @@ export function detectDelimiter(text: string): CsvDelimiter {
   let bestScore = -1;
 
   for (const delimiter of DELIMITERS) {
-    const counts = lines.map(
-      (line) => line.split(delimiter).length - 1,
-    );
+    const counts = lines.map((line) => line.split(delimiter).length - 1);
     const first = counts[0] ?? 0;
 
     if (first === 0) {
@@ -192,7 +195,11 @@ export function parseCsvAmount(value: string): number | null {
     // ambiguous ("1.234"); grouping is the far more common intent in exports.
     else if (fractionLength === 3 && occurrences === 1 && decimalAt > 0) {
       const before = working.slice(0, decimalAt);
-      if (before.length <= 3 && !before.includes(".") && !before.includes(",")) {
+      if (
+        before.length <= 3 &&
+        !before.includes(".") &&
+        !before.includes(",")
+      ) {
         decimalAt = -1;
       }
     }
@@ -219,7 +226,12 @@ function isoFrom(year: number, month: number, day: number): string | null {
   if (month < 1 || month > 12 || day < 1 || day > 31) {
     return null;
   }
-  const full = year < 100 ? (year < TWO_DIGIT_YEAR_PIVOT ? 2000 + year : 1900 + year) : year;
+  const full =
+    year < 100
+      ? year < TWO_DIGIT_YEAR_PIVOT
+        ? 2000 + year
+        : 1900 + year
+      : year;
   const date = new Date(Date.UTC(full, month - 1, day));
   // Rejects 31 February and friends rather than silently rolling forward.
   if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
@@ -275,9 +287,38 @@ export interface ColumnMapping {
 }
 
 const HEADER_HINTS: Record<keyof ColumnMapping, string[]> = {
-  date: ["date", "date operation", "date de operation", "operation date", "booking date", "value date", "date valeur", "transaction date"],
-  description: ["description", "libelle", "libelle operation", "label", "details", "detail", "narrative", "reference", "merchant", "payee", "nature"],
-  amount: ["amount", "montant", "montant eur", "value", "somme", "betrag", "importo"],
+  date: [
+    "date",
+    "date operation",
+    "date de operation",
+    "operation date",
+    "booking date",
+    "value date",
+    "date valeur",
+    "transaction date",
+  ],
+  description: [
+    "description",
+    "libelle",
+    "libelle operation",
+    "label",
+    "details",
+    "detail",
+    "narrative",
+    "reference",
+    "merchant",
+    "payee",
+    "nature",
+  ],
+  amount: [
+    "amount",
+    "montant",
+    "montant eur",
+    "value",
+    "somme",
+    "betrag",
+    "importo",
+  ],
   debit: ["debit", "withdrawal", "depense", "sortie", "paid out", "money out"],
   credit: ["credit", "deposit", "recette", "entree", "paid in", "money in"],
 };
@@ -376,18 +417,26 @@ export interface BuildImportRowsOptions {
   /** Rows already in the ledger, so a re-import doesn't double everything. */
   existing?: ExistingTransactionKey[];
   /** Category guesser, normally bound to the user's merchant index. */
-  guessCategory?: (
-    description: string,
-  ) => { categoryId: string; categoryName: string; categoryType: CategoryType } | null;
+  guessCategory?: (description: string) => {
+    categoryId: string;
+    categoryName: string;
+    categoryType: CategoryType;
+  } | null;
   /**
    * Which sign the export uses for money leaving the account. Nearly every
    * bank uses negative, but a few "expenses" exports are positive-only.
    */
   expenseSign?: "negative" | "positive";
+  /** The language the row problems are reported in. */
+  locale?: Locale;
 }
 
 /** date + amount + merchant, which is as close to an identity as a line has. */
-function dedupeKey(occurredOn: string, amount: number, description: string): string {
+function dedupeKey(
+  occurredOn: string,
+  amount: number,
+  description: string,
+): string {
   return `${occurredOn}|${amount.toFixed(2)}|${normalizeMerchant(description)}`;
 }
 
@@ -408,7 +457,14 @@ export function buildImportRows(
   rows: string[][],
   options: BuildImportRowsOptions,
 ): ImportRow[] {
-  const { mapping, existing = [], guessCategory, expenseSign = "negative" } = options;
+  const {
+    mapping,
+    existing = [],
+    guessCategory,
+    expenseSign = "negative",
+    locale = DEFAULT_LOCALE,
+  } = options;
+  const t = translator(locale);
 
   const seen = new Set(
     existing.map((row) =>
@@ -449,15 +505,14 @@ export function buildImportRows(
     };
 
     if (occurredOn === null) {
-      return { ...base, status: "invalid", problem: "No readable date" };
+      return { ...base, status: "invalid", problem: t("csvImport.noDate") };
     }
 
     if (signed === null || signed === 0) {
-      return { ...base, status: "invalid", problem: "No readable amount" };
+      return { ...base, status: "invalid", problem: t("csvImport.noAmount") };
     }
 
-    const isExpense =
-      expenseSign === "negative" ? signed < 0 : signed > 0;
+    const isExpense = expenseSign === "negative" ? signed < 0 : signed > 0;
     const type: CategoryType = isExpense ? "expense" : "income";
     const amount = Math.abs(signed);
 
@@ -480,7 +535,7 @@ export function buildImportRows(
       categoryId: usable?.categoryId ?? null,
       categoryName: usable?.categoryName ?? null,
       status: duplicate ? "duplicate" : "ready",
-      problem: duplicate ? "Already in your ledger" : null,
+      problem: duplicate ? t("csvImport.duplicate") : null,
     };
   });
 }

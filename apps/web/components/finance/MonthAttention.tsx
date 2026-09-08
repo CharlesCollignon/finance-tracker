@@ -4,6 +4,7 @@ import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
+import { getT } from "@/lib/locale";
 
 export interface AttentionItem {
   /** Stable key, and the reason this row exists. */
@@ -46,14 +47,15 @@ interface MonthAttentionProps {
  * absent, which is the strongest thing an interface can say about a quiet
  * month.
  */
-export function MonthAttention({ items, slot }: MonthAttentionProps) {
+export async function MonthAttention({ items, slot }: MonthAttentionProps) {
+  const t = await getT();
   if (items.length === 0 && !slot) {
     return null;
   }
 
   return (
     <section
-      aria-label="Needs you"
+      aria-label={t("common.needsYou")}
       className={cn(
         "overflow-hidden rounded-3xl border-primary-rim/40",
         GLASS_CARD,

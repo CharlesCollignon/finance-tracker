@@ -14,6 +14,7 @@ import { CategorySelect } from "@/components/finance/CategorySelect";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
+import { useLocale, useT } from "@/lib/locale-context";
 
 interface SelectionBarProps {
   summary: SelectionSummary;
@@ -53,6 +54,8 @@ export function SelectionBar({
   planMove,
   onMove,
 }: SelectionBarProps) {
+  const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const [confirming, setConfirming] = useState(false);
   const [choosing, setChoosing] = useState(false);
@@ -62,7 +65,7 @@ export function SelectionBar({
     return null;
   }
 
-  const warning = describeSelectionDeletion(summary);
+  const warning = describeSelectionDeletion(summary, locale);
   const effect = target ? planMove(target) : null;
   const moveNote = effect
     ? describeSelectionMove(
@@ -82,7 +85,7 @@ export function SelectionBar({
   return (
     <div
       role="region"
-      aria-label="Selected transactions"
+      aria-label={t("selectionBar.region")}
       className={cn(
         "fixed inset-x-0 z-40 px-4",
         "bottom-[calc(var(--shell-bottom-nav-height)+var(--shell-bottom-nav-inset)+env(safe-area-inset-bottom,0px)+0.75rem)]",
@@ -105,7 +108,9 @@ export function SelectionBar({
                 disabled={pending}
                 onClick={onDelete}
               >
-                {pending ? "Deleting…" : "Yes, delete"}
+                {pending
+                  ? t("selectionBar.deleting")
+                  : t("selectionBar.confirmDelete")}
               </Button>
               <Button
                 variant="outline"
@@ -124,15 +129,13 @@ export function SelectionBar({
                 htmlFor="selection-move-category"
                 className="text-sm font-medium"
               >
-                {`Move ${summary.count} ${
-                  summary.count === 1 ? "transaction" : "transactions"
-                } to`}
+                {t("selectionBar.moveTo", { count: summary.count })}
               </label>
               <CategorySelect
                 id="selection-move-category"
                 categories={categories}
                 value={target}
-                placeholder="Pick a category"
+                placeholder={t("selectionBar.pickCategory")}
                 disabled={pending}
                 onChange={(event) => setTarget(event.target.value)}
               />
@@ -154,7 +157,11 @@ export function SelectionBar({
                   close();
                 }}
               >
-                {pending ? "Moving…" : needsConfirm ? "Yes, move them" : "Move"}
+                {pending
+                  ? t("selectionBar.moving")
+                  : needsConfirm
+                    ? t("selectionBar.confirmMove")
+                    : t("selectionBar.move")}
               </Button>
               <Button
                 variant="outline"
@@ -170,7 +177,7 @@ export function SelectionBar({
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-medium">
-                {summary.count} selected
+                {t("selectionBar.countSelected", { count: summary.count })}
                 {summary.total > 0 ? (
                   <span className="ml-2 font-mono text-xs text-muted-foreground tabular-nums">
                     {formatEuro(summary.total)}
@@ -208,7 +215,7 @@ export function SelectionBar({
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Clear selection"
+                aria-label={t("selectionBar.clear")}
                 disabled={pending}
                 onClick={onCancel}
               >

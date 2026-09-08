@@ -15,6 +15,7 @@ import type { Database } from "@finance/core/types/database";
 import { monthReadConfigured } from "@/lib/month-read/client";
 import { gatherMonthFacts } from "@/lib/month-read/facts";
 import { monthReadSource } from "@/lib/month-read/source";
+import { getLocale, getT } from "@/lib/locale";
 import {
   readMonthReadState,
   refundWrite,
@@ -51,12 +52,14 @@ export async function writeMonthRead(
   month: number,
   client?: Client,
 ): Promise<WriteMonthReadOutcome> {
-  const monthLabel = formatMonthLabel(year, month);
+  const locale = await getLocale();
+  const t = await getT();
+  const monthLabel = formatMonthLabel(year, month, locale);
 
   if (!monthReadConfigured()) {
     return {
       written: false,
-      message: "No writer is configured.",
+      message: t("monthRead.noWriter"),
       writesLeft: 0,
     };
   }
@@ -76,7 +79,7 @@ export async function writeMonthRead(
   if (!decision.write) {
     return {
       written: false,
-      message: explainWriteRefusal(decision, monthLabel),
+      message: explainWriteRefusal(decision, monthLabel, locale),
       writesLeft: writesRemaining(stored?.tally ?? null),
     };
   }
@@ -91,7 +94,7 @@ export async function writeMonthRead(
     // first. Its own state is the authority.
     return {
       written: false,
-      message: "A read is already being written.",
+      message: t("monthRead.inFlight"),
       writesLeft: writesRemaining(reserved ?? stored?.tally ?? null),
     };
   }
@@ -99,7 +102,11 @@ export async function writeMonthRead(
   const prompt = buildMonthReadPrompt(facts, {
     // The server has no idea which currency the reader has chosen, and does
     // not need one: nothing the model formats ever reaches a screen.
-    money: (amount) => formatCurrency(amount, "EUR"),
+    money: (amount) => formatCurrency(amount, "EUR", locale),
+    // The language, unlike the currency, is not a formatting detail the
+    // server can ignore: it decides which language the prose comes back in,
+    // and which glossary the model is held to.
+    locale,
   });
 
   const raw = await monthReadSource.write(prompt);
@@ -110,12 +117,12 @@ export async function writeMonthRead(
     await refundWrite(userId, year, month, client);
     return {
       written: false,
-      message: "The writer did not answer just now.",
+      message: t("monthRead.noAnswer"),
       writesLeft: writesRemaining(stored?.tally ?? null),
     };
   }
 
-  const verdict = verifyMonthRead(raw, facts);
+  const verdict = verifyMonthRead(raw, facts, locale);
 
   if (!verdict.ok) {
     // Kept, not refunded: an answer arrived and cost money. The previous
@@ -133,6 +140,7 @@ export async function writeMonthRead(
         model: monthReadSource.model,
         promptVersion: MONTH_READ_PROMPT_VERSION,
         refusedDelta: 1,
+        locale,
       },
       client,
     );
@@ -144,8 +152,8 @@ export async function writeMonthRead(
       message:
         verdict.reason === "invented-figure" ||
         verdict.reason === "unknown-datum"
-          ? `The writer used a figure the app did not give it, so the read was thrown away. (${verdict.detail})`
-          : "The writer's answer could not be used.",
+          ? t("monthRead.threwAway", { detail: verdict.detail })
+          : t("monthRead.unusable"),
       writesLeft: writesRemaining(reserved),
     };
   }
@@ -162,6 +170,7 @@ export async function writeMonthRead(
       model: monthReadSource.model,
       promptVersion: MONTH_READ_PROMPT_VERSION,
       refusedDelta: 0,
+      locale,
     },
     client,
   );

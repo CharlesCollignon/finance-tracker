@@ -13,6 +13,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
+import { resolveMessage } from "@finance/core/i18n/t";
+import { useT } from "@/providers/LocaleProvider";
 
 type ToastVariant = "default" | "success" | "error";
 
@@ -52,9 +54,21 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const nextId = useRef(0);
 
+  const t = useT();
+
   const toast = useCallback(
-    (message: string, variant: ToastVariant = "default") => {
+    (rawMessage: string, variant: ToastVariant = "default") => {
       const id = nextId.current++;
+      // Resolved here, and here only.
+      //
+      // Every transient message in the app passes through this function, which
+      // makes it the one place a message key can become a sentence. The Zod
+      // schemas in `packages/core/src/validations` emit keys because they are
+      // built before any request has a language; a caller that already
+      // translated its own string is unaffected, because `resolveMessage`
+      // hands back anything it has no message for. See its comment for why
+      // that is by design rather than by luck.
+      const message = resolveMessage(t, rawMessage);
       setToasts((prev) => [...prev, { id, message, variant }]);
       // Android speaks the live region on the toast itself; iOS has no
       // equivalent, so it is announced explicitly there. Doing both on one
@@ -66,7 +80,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         setToasts((prev) => prev.filter((entry) => entry.id !== id));
       }, VISIBLE_MS);
     },
-    [],
+    [t],
   );
 
   const value = useMemo(() => ({ toast }), [toast]);

@@ -10,6 +10,11 @@ import type { MonthRead } from "@finance/core/month-read";
 import { monthColumnValue } from "@finance/core/month-close";
 import type { Database, MonthReadRow } from "@finance/core/types/database";
 import { createClient } from "@/lib/supabase/server";
+import {
+  DEFAULT_LOCALE,
+  parseLocale,
+  type Locale,
+} from "@finance/core/i18n/locale";
 
 type Client = SupabaseClient<Database>;
 
@@ -45,6 +50,14 @@ export interface StoredMonthRead {
   model: string | null;
   promptVersion: number | null;
   trimmed: number;
+  /**
+   * The language the prose was written in.
+   *
+   * Null for a read stored before migration 028, which means English — the
+   * app was English-only when it was written. `parseLocale` reads the absence
+   * that way without the column having to claim it.
+   */
+  locale: Locale;
   tally: MonthReadTally;
 }
 
@@ -63,6 +76,7 @@ function toStored(row: MonthReadRow): StoredMonthRead {
     model: row.model,
     promptVersion: row.prompt_version,
     trimmed: row.trimmed,
+    locale: parseLocale(row.locale) ?? DEFAULT_LOCALE,
     tally: {
       writes: row.writes,
       refused: row.refused,
@@ -145,6 +159,8 @@ export async function storeWrite(
     model: string;
     promptVersion: number;
     refusedDelta: number;
+    /** The language the prose is in, stored so it can be rendered in it. */
+    locale: Locale;
   },
   client?: Client,
 ): Promise<void> {
@@ -160,6 +176,7 @@ export async function storeWrite(
     new_prompt_version: payload.promptVersion,
     refused_delta: payload.refusedDelta,
     new_source: "pressed",
+    new_locale: payload.locale,
   });
 
   if (error && !isMissingSchema(error)) {

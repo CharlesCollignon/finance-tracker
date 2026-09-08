@@ -7,6 +7,7 @@ import {
 } from "@finance/core/categories";
 import type { Category, CategoryType } from "@finance/core/types/database";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-context";
 
 export const CATEGORY_SELECT_CLASS =
   "h-11 w-full rounded border border-border bg-background px-3 text-base text-foreground";
@@ -38,6 +39,7 @@ export function CategorySelect({
   className,
   onChange,
 }: CategorySelectProps) {
+  const locale = useLocale();
   const groups = groupCategoriesByType(categories, { excludeTypes });
 
   return (
@@ -58,7 +60,7 @@ export function CategorySelect({
         <optgroup key={group.type} label={group.label}>
           {group.categories.map((cat) => (
             <option key={cat.id} value={cat.id}>
-              {formatCategoryOptionLabel(cat)}
+              {formatCategoryOptionLabel(cat, locale)}
             </option>
           ))}
         </optgroup>

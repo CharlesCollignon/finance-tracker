@@ -22,7 +22,7 @@ import {
   type ApplyRecurringPlan,
 } from "@finance/core/apply-recurring";
 import {
-  CATEGORY_TYPE_LABELS,
+  categoryTypeLabels,
   TYPE_AMOUNT_CLASS,
 } from "@finance/core/category-styles";
 import type {
@@ -85,6 +85,8 @@ import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { ICON } from "@/theme/tokens";
 import { useTabBarClearance } from "@/theme/chrome";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 type FilterType = "all" | CategoryType;
 
@@ -109,6 +111,8 @@ const FILTERS: FilterType[] = [
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
 
 export default function TransactionsScreen() {
+  const locale = useLocale();
+  const t = useT();
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
@@ -338,10 +342,7 @@ export default function TransactionsScreen() {
 
     void hapticSuccess();
     notifyDataChanged();
-    toast(
-      `${result.deleted} ${result.deleted === 1 ? "transaction" : "transactions"} deleted`,
-      "success",
-    );
+    toast(t("ledger.deleted", { count: result.deleted ?? 0 }), "success");
     leaveSelectMode();
     void onRefresh();
   }
@@ -373,10 +374,7 @@ export default function TransactionsScreen() {
     const name =
       categories.find((category) => category.id === categoryId)?.name ??
       "the new category";
-    toast(
-      `${result.moved} ${result.moved === 1 ? "transaction" : "transactions"} moved to ${name}`,
-      "success",
-    );
+    toast(t("ledger.moved", { count: result.moved ?? 0, name }), "success");
     leaveSelectMode();
     void onRefresh();
   }
@@ -430,7 +428,7 @@ export default function TransactionsScreen() {
     };
     if (plan.toCreate.length === 0 && plan.toUpdate.length === 0) {
       setApplyPending(false);
-      toast("All recurring entries already applied");
+      toast(t("ledger.applyAllDone"));
       return;
     }
     setApplyPlan(plan);
@@ -461,7 +459,7 @@ export default function TransactionsScreen() {
   }
 
   return (
-    <Screen title="Ledger">
+    <Screen title={t("nav.ledger")}>
       <SurfaceTabs tabs={LEDGER_TABS} className="mb-3" />
 
       <MonthPicker
@@ -476,7 +474,7 @@ export default function TransactionsScreen() {
       <View className="mb-3 mt-4 flex-row items-center gap-2">
         <View className="flex-1">
           <Button
-            label={pending ? "…" : "Apply recurring"}
+            label={pending ? "…" : t("ledger.applyRecurring")}
             variant={applyPending ? "default" : "outline"}
             size="sm"
             disabled={pending}
@@ -485,13 +483,13 @@ export default function TransactionsScreen() {
           {applyPending && !pending ? (
             <View
               accessibilityRole="alert"
-              accessibilityLabel="Recurring changes are waiting to be applied"
+              accessibilityLabel={t("ledger.applyWaiting")}
               className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-destructive"
             />
           ) : null}
         </View>
         <Button
-          label="Add"
+          label={t("ledger.add")}
           size="sm"
           className="flex-1"
           icon="add"
@@ -509,7 +507,11 @@ export default function TransactionsScreen() {
         {selectMode ? (
           <>
             <Button
-              label={allState === "all" ? "Clear all" : "Select all"}
+              label={
+                allState === "all"
+                  ? t("ledger.clearAll")
+                  : t("ledger.selectAll")
+              }
               variant="ghost"
               size="sm"
               onPress={() =>
@@ -517,7 +519,7 @@ export default function TransactionsScreen() {
               }
             />
             <Button
-              label="Done"
+              label={t("ledger.selectDone")}
               variant="ghost"
               size="sm"
               onPress={leaveSelectMode}
@@ -526,14 +528,14 @@ export default function TransactionsScreen() {
         ) : (
           <>
             <Button
-              label="Select"
+              label={t("ledger.select")}
               variant="ghost"
               size="sm"
               icon="checkbox-outline"
               onPress={() => setSelectMode(true)}
             />
             <Button
-              label="Import CSV"
+              label={t("ledger.importCsvShort")}
               variant="ghost"
               size="sm"
               icon="document-outline"
@@ -552,16 +554,16 @@ export default function TransactionsScreen() {
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Search category or note…"
+          placeholder={t("ledger.searchPlaceholder")}
           placeholderTextColor={colors.mutedForeground}
-          accessibilityLabel="Search transactions"
+          accessibilityLabel={t("ledger.searchLabel")}
           returnKeyType="search"
           className="h-11 flex-1 font-sans text-sm text-foreground"
         />
         {search ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Clear search"
+            accessibilityLabel={t("ledger.clearSearch")}
             onPress={() => setSearch("")}
           >
             <Ionicons
@@ -582,7 +584,9 @@ export default function TransactionsScreen() {
               accessibilityRole="button"
               accessibilityState={{ selected }}
               accessibilityLabel={
-                value === "all" ? "All types" : CATEGORY_TYPE_LABELS[value]
+                value === "all"
+                  ? t("ledger.allTypes")
+                  : categoryTypeLabels(locale)[value]
               }
               onPress={() => setFilter(value)}
               className={`rounded-full border px-3 py-1 ${
@@ -596,7 +600,7 @@ export default function TransactionsScreen() {
                   selected ? "text-background" : "text-muted-foreground"
                 }`}
               >
-                {value === "all" ? "All" : CATEGORY_TYPE_LABELS[value]}
+                {value === "all" ? "All" : categoryTypeLabels()[value]}
               </Text>
             </Pressable>
           );
@@ -610,35 +614,36 @@ export default function TransactionsScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerClassName="gap-4 px-0.5"
           >
-            {[{ id: "all", name: "All categories" }, ...usedCategories].map(
-              (option) => {
-                const selected = categoryFilter === option.id;
-                return (
-                  <Pressable
-                    hitSlop={8}
-                    key={option.id}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    onPress={() => setCategoryFilter(option.id)}
+            {[
+              { id: "all", name: t("ledger.allCategories") },
+              ...usedCategories,
+            ].map((option) => {
+              const selected = categoryFilter === option.id;
+              return (
+                <Pressable
+                  hitSlop={8}
+                  key={option.id}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  onPress={() => setCategoryFilter(option.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5",
+                    selected
+                      ? "border-primary bg-primary/15"
+                      : "border-border bg-background",
+                  )}
+                >
+                  <Text
                     className={cn(
-                      "rounded-full border px-3 py-1.5",
-                      selected
-                        ? "border-primary bg-primary/15"
-                        : "border-border bg-background",
+                      "text-xs font-medium",
+                      selected ? "text-primary-ink" : "text-muted-foreground",
                     )}
                   >
-                    <Text
-                      className={cn(
-                        "text-xs font-medium",
-                        selected ? "text-primary-ink" : "text-muted-foreground",
-                      )}
-                    >
-                      {option.name}
-                    </Text>
-                  </Pressable>
-                );
-              },
-            )}
+                    {option.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </ScrollView>
         </View>
       ) : null}
@@ -665,7 +670,7 @@ export default function TransactionsScreen() {
                 </Text>
               </View>
               <Button
-                label="Restore"
+                label={t("ledger.restore")}
                 variant="outline"
                 size="sm"
                 onPress={() => {
@@ -680,7 +685,7 @@ export default function TransactionsScreen() {
       <View className="mb-2 flex-row items-baseline justify-between gap-3">
         <Text variant="muted" className="text-sm">
           {filtered.length === transactions.length
-            ? `${transactions.length} ${transactions.length === 1 ? "entry" : "entries"}`
+            ? t("ledger.entryCount", { count: transactions.length })
             : `${filtered.length} of ${transactions.length} entries`}
         </Text>
         <View className="flex-row gap-4">
@@ -707,9 +712,9 @@ export default function TransactionsScreen() {
       {inbox.length > 0 ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${inbox.length} ${
-            inbox.length === 1 ? "entry needs" : "entries need"
-          } a category. Review`}
+          accessibilityLabel={t("ledger.needsCategoryAction", {
+            count: inbox.length,
+          })}
           onPress={() => {
             void hapticLight();
             setInboxChoice(true);
@@ -722,11 +727,12 @@ export default function TransactionsScreen() {
             style={{ backgroundColor: colors.primary }}
           />
           <Text className="min-w-0 flex-1 text-sm">
-            <Text className="text-sm font-medium">{inbox.length}</Text>
-            {` ${inbox.length === 1 ? "entry needs" : "entries need"} a category`}
+            {t("ledger.needsCategory", { count: inbox.length })}
           </Text>
           <View className="flex-row items-center gap-1">
-            <Text className="text-sm font-medium text-primary-ink">Review</Text>
+            <Text className="text-sm font-medium text-primary-ink">
+              {t("ledger.review")}
+            </Text>
             <Ionicons
               name="arrow-forward"
               size={ICON.sm}
@@ -750,7 +756,7 @@ export default function TransactionsScreen() {
       {loading && !data ? (
         <ScreenSkeleton rows={5} />
       ) : error ? (
-        <Text className="text-destructive">{error}</Text>
+        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
       ) : (
         <View className="flex-1 rounded-shell border border-border bg-foreground/[0.04] p-1.5">
           <View className="flex-1 rounded-card bg-card">
@@ -769,15 +775,18 @@ export default function TransactionsScreen() {
                 </View>
               )}
               refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefreshAll}
+                />
               }
               ListEmptyComponent={
                 <EmptyState
-                  title="Fill this month"
-                  description="Apply what repeats, or add one entry."
+                  title={t("ledger.fillThisMonth")}
+                  description={t("ledger.emptyBody")}
                 >
                   <Button
-                    label="Add transaction"
+                    label={t("ledger.addTransaction")}
                     variant="pill"
                     icon="add"
                     onPress={() => {
@@ -792,9 +801,7 @@ export default function TransactionsScreen() {
               ListFooterComponent={
                 filtered.length > 0 ? (
                   <Text variant="muted" className="py-3 text-center text-xs">
-                    {selectMode
-                      ? "Tap to select · Done to leave"
-                      : "Tap to edit · long-press to select"}
+                    {selectMode ? t("ledger.selectHint") : t("ledger.editHint")}
                   </Text>
                 ) : null
               }
@@ -904,13 +911,16 @@ export default function TransactionsScreen() {
 
       <ConfirmSheet
         open={duplicating !== null}
-        title="Repeat this today?"
+        title={t("ledger.repeatTitle")}
         message={
           duplicating
-            ? `Adds another ${duplicating.categories.name} of ${formatEuro(Number(duplicating.amount))} dated today.`
+            ? t("ledger.repeatBody", {
+                category: duplicating.categories.name,
+                amount: formatEuro(Number(duplicating.amount)),
+              })
             : undefined
         }
-        confirmLabel="Add for today"
+        confirmLabel={t("ledger.repeatConfirm")}
         destructive={false}
         onConfirm={handleDuplicate}
         onCancel={() => setDuplicating(null)}

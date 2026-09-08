@@ -24,6 +24,8 @@ import { getMonthCloseOverview } from "@/lib/queries/month-close";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { readCashBalance } from "@/lib/queries/bank-balance";
 import { getPendingFeedItems, hasBankFeed } from "@/lib/queries/bank";
+import { getLocale } from "@/lib/locale";
+import type { Locale } from "@finance/core/i18n/locale";
 import {
   getFulfilledKeys,
   getFulfilmentProposals,
@@ -51,6 +53,14 @@ export async function gatherMonthFacts(
   year: number,
   month: number,
   client?: Client,
+  /**
+   * Build the pack in this language rather than the request's.
+   *
+   * Used to render a stored read in the language it was written in. Nothing
+   * about the figures changes — only the labels — so the digest is identical
+   * either way and a language switch never makes a stored read look stale.
+   */
+  localeOverride?: Locale,
 ): Promise<MonthFacts> {
   const today = todayIsoLocal();
   const current = getCurrentMonth();
@@ -140,8 +150,9 @@ export async function gatherMonthFacts(
   // telling the writer, because this ships before the model helps categorise
   // anything and a month with a queue has a genuinely partial picture of
   // where money went. Which merchants they are is not its business.
+  const locale = localeOverride ?? (await getLocale());
   const [pending, proposals] = await Promise.all([
-    bankFed ? getPendingFeedItems(userId) : [],
+    bankFed ? getPendingFeedItems(userId, locale) : [],
     getFulfilmentProposals(userId, templates, categories, year, month, client),
   ]);
 
@@ -168,6 +179,7 @@ export async function gatherMonthFacts(
       summary.expenseBreakdown,
       summary.expenses,
       new Map(categories.map((row) => [row.id, row.name] as const)),
+      locale,
     ),
     goals: buildSavingsGoalProgress(
       goals,
@@ -179,5 +191,8 @@ export async function gatherMonthFacts(
     investedValue: portfolio.totalMarketValue,
     inboxPending: pending.length,
     chargesUnconfirmed: proposals.length,
+    // The labels are the model's vocabulary of figures as well as the card's,
+    // so this is what decides which language the read comes back in.
+    locale,
   });
 }

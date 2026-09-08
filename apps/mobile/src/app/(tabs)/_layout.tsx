@@ -11,12 +11,15 @@ import { ReminderProvider } from "@/providers/ReminderProvider";
 
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useLedgerBadge } from "@/hooks/useLedgerBadge";
+import { useT } from "@/providers/LocaleProvider";
+import type { Key } from "@finance/core/i18n/t";
 
 type IoniconName = ComponentProps<typeof Ionicons>["name"];
 
 type TabConfig = {
   name: string;
-  title: string;
+  /** The message key for the tab's label, not the label. */
+  titleKey: Key;
   icon: IoniconName;
   iconInactive: IoniconName;
 };
@@ -35,31 +38,31 @@ type TabConfig = {
 const TABS: TabConfig[] = [
   {
     name: "index",
-    title: "Month",
+    titleKey: "nav.month",
     icon: "pie-chart",
     iconInactive: "pie-chart-outline",
   },
   {
     name: "transactions",
-    title: "Ledger",
+    titleKey: "nav.ledger",
     icon: "swap-horizontal",
     iconInactive: "swap-horizontal-outline",
   },
   {
     name: "recurring",
-    title: "Charges",
+    titleKey: "nav.charges",
     icon: "repeat",
     iconInactive: "repeat-outline",
   },
   {
     name: "planning",
-    title: "Plan",
+    titleKey: "nav.plan",
     icon: "flag",
     iconInactive: "flag-outline",
   },
   {
     name: "investments",
-    title: "Wallets",
+    titleKey: "nav.wallets",
     icon: "analytics",
     iconInactive: "analytics-outline",
   },
@@ -71,6 +74,7 @@ const TABS: TabConfig[] = [
  * drift apart.
  */
 export default function TabsLayout() {
+  const t = useT();
   const colors = useThemeColors();
   const insets = useSafeAreaInsets();
   const barHeight = useTabBarHeight();
@@ -106,12 +110,12 @@ export default function TabsLayout() {
             sceneStyle: { backgroundColor: colors.background },
           }}
         >
-          {TABS.map(({ name, title, icon, iconInactive }) => (
+          {TABS.map(({ name, titleKey, icon, iconInactive }) => (
             <Tabs.Screen
               key={name}
               name={name}
               options={{
-                title,
+                title: t(titleKey),
                 tabBarIcon: ({ focused, color, size }) => (
                   <Ionicons
                     name={focused ? icon : iconInactive}

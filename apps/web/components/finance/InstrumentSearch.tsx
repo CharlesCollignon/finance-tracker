@@ -9,6 +9,8 @@ import { canSearchInstruments } from "@finance/core/market/yahoo";
 import { cn } from "@/lib/utils";
 import type { InstrumentSearchResult } from "@finance/core/market/yahoo";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 interface InstrumentSearchProps {
   symbol: string;
@@ -25,6 +27,7 @@ export function InstrumentSearch({
   onClear,
   required,
 }: InstrumentSearchProps) {
+  const t = useT();
   const listId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState(name || "");
@@ -125,7 +128,7 @@ export function InstrumentSearch({
               "flex h-9 w-9 shrink-0 items-center justify-center",
               "rounded-full border border-border hover:bg-accent",
             )}
-            aria-label="Clear selected instrument"
+            aria-label={t("common.clearInstrument")}
           >
             <X size={ICON.md} weight="light" />
           </button>
@@ -146,7 +149,7 @@ export function InstrumentSearch({
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
-            placeholder="Search by name or ISIN…"
+            placeholder={t("common.searchInstrument")}
             autoComplete="off"
             role="combobox"
             aria-expanded={open}
@@ -182,7 +185,9 @@ export function InstrumentSearch({
                   </li>
                 )}
               {!loading && error && (
-                <li className="px-3 py-2 text-sm text-destructive">{error}</li>
+                <li className="px-3 py-2 text-sm text-destructive">
+                  {resolveMessage(t, error)}
+                </li>
               )}
               {!loading && !error && results.length === 0 && (
                 <li className="px-3 py-2 text-sm text-muted-foreground">

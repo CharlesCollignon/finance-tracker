@@ -28,7 +28,7 @@ export async function syncBankFeedAction(
 ): Promise<ActionResult & { outcome?: SyncOutcome }> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   try {
@@ -99,7 +99,7 @@ export async function importFeedItem(
 ): Promise<ActionResult & { duplicateOf?: string }> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
   if (!uuid.safeParse(itemId).success || !uuid.safeParse(categoryId).success) {
     return { error: "Invalid selection" };
@@ -201,7 +201,7 @@ export async function importFeedItem(
 export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
   if (!uuid.safeParse(itemId).success) {
     return { error: "Invalid selection" };
@@ -237,7 +237,7 @@ export async function recategoriseFeedItem(
 ): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
   if (!uuid.safeParse(itemId).success || !uuid.safeParse(categoryId).success) {
     return { error: "Invalid selection" };
@@ -303,7 +303,7 @@ function matched(decidedBy: string | null): boolean {
 export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
   if (!uuid.safeParse(itemId).success) {
     return { error: "Invalid selection" };
@@ -364,7 +364,7 @@ export async function getBankBalanceSuggestion(): Promise<
 > {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const connection = getBankConnection(user.id);
@@ -434,7 +434,7 @@ export async function reopenSwallowedFeedItems(): Promise<
 > {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const supabase = await createClient();
@@ -473,7 +473,7 @@ export async function acceptRecurringProposal(
 ): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const proposals = await getRecurringProposals(user.id, todayIsoLocal());
@@ -513,7 +513,7 @@ export async function dismissRecurringProposal(
 ): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
   if (!key.trim()) {
     return { error: "Invalid selection" };
@@ -549,7 +549,7 @@ export async function setAccountCountsAsCash(
 ): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const supabase = await createClient();

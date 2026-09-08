@@ -12,6 +12,7 @@ import { hapticLight } from "@/lib/haptics";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 interface MonthClosedRecapProps {
   row: ClosedMonthRow;
@@ -34,6 +35,7 @@ interface MonthClosedRecapProps {
  * one they simply have to trust.
  */
 export function MonthClosedRecap({ row, streak, cap }: MonthClosedRecapProps) {
+  const t = useT();
   const router = useRouter();
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
@@ -105,7 +107,7 @@ export function MonthClosedRecap({ row, streak, cap }: MonthClosedRecapProps) {
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Every month you have closed"
+        accessibilityLabel={t("common.everyMonthClosed")}
         onPress={() => {
           void hapticLight();
           router.push("/planning" as Href);

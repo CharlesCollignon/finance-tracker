@@ -449,3 +449,53 @@ describe("formatFact", () => {
     expect(formatFact(fact({ unit: "count", value: 3 }), money)).toBe("3");
   });
 });
+
+describe("the reader's language", () => {
+  it("labels the figures in French", () => {
+    const pack = buildMonthFacts({ ...input(), locale: "fr" });
+    const labels = new Map(pack.facts.map((f) => [f.id, f.label]));
+
+    expect(labels.get("income")).toBe("Argent entré");
+    expect(labels.get("expenses")).toBe("Argent sorti");
+    expect(labels.get("savings")).toBe("Mis de côté");
+  });
+
+  it("keeps the ids in English, because a stored read refers to them", () => {
+    // The labels are prose and may be reworded; the ids are the tokens a
+    // model writes back as `{{fact:income}}`. Translating one must never
+    // translate the other, or every read written before the switch breaks.
+    const french = buildMonthFacts({ ...input(), locale: "fr" });
+    const english = buildMonthFacts({ ...input(), locale: "en" });
+    expect(factIds(french)).toEqual(factIds(english));
+  });
+
+  it("names the month in French, and in lower case", () => {
+    expect(buildMonthFacts({ ...input(), locale: "fr" }).monthLabel).toBe(
+      "mars 2026",
+    );
+  });
+
+  it("digests the same figures the same way in either language", () => {
+    // The digest exists to notice that the *figures* moved. A label change
+    // is not a figure change, so switching language must not make every
+    // stored read look stale.
+    expect(factsDigest(buildMonthFacts({ ...input(), locale: "fr" }))).toBe(
+      factsDigest(buildMonthFacts({ ...input(), locale: "en" })),
+    );
+  });
+
+  it("writes a percentage the French way", () => {
+    // A comma for the decimal and a space before the sign. Both are the
+    // language's, and neither was reachable while the unit was a template
+    // literal.
+    const rate = {
+      id: "savings-rate",
+      label: "Taux d'épargne",
+      unit: "percent" as const,
+      value: 11.42,
+      sense: "up-is-good" as const,
+    };
+    expect(formatFact(rate, money, "fr")).toBe("11,4 %");
+    expect(formatFact(rate, money, "en")).toBe("11.4%");
+  });
+});

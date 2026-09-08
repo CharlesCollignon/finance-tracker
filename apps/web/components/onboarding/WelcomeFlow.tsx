@@ -15,6 +15,7 @@ import { upsertBudget } from "@/lib/actions/phase4";
 import { upsertRecurringTemplate } from "@/lib/actions/finance";
 import { setCurrencyPreference, useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/locale-context";
 
 const CURRENCIES: CurrencyCode[] = ["EUR", "USD"];
 
@@ -38,6 +39,7 @@ interface WelcomeFlowProps {
  * to lose a first session, and all of it is reachable later.
  */
 export function WelcomeFlow({ categories }: WelcomeFlowProps) {
+  const t = useT();
   const router = useRouter();
   const { toast } = useToast();
   const currency = useCurrency();
@@ -92,7 +94,7 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
     }
     startTransition(async () => {
       if (await saveMonthly(incomeCategory.id, incomeAmount, incomeDay)) {
-        toast("Income added", "success");
+        toast(t("onboarding.incomeAdded"), "success");
         setStep("recurring");
       }
     });
@@ -140,7 +142,7 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
         aria-valuenow={stepIndex + 1}
         aria-valuemin={1}
         aria-valuemax={STEPS.length}
-        aria-label="Setup progress"
+        aria-label={t("onboarding.progress")}
       >
         {STEPS.map((value, index) => (
           <span
@@ -157,20 +159,20 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-3 text-center">
             <Logo />
-            <h1 className="font-head text-2xl">Welcome to Pluclair</h1>
+            <h1 className="font-head text-2xl">
+              {t("onboarding.welcomeTitle")}
+            </h1>
             <p className="text-muted-foreground">
-              Two minutes now and your dashboard will have real numbers in it
-              instead of zeros.
+              {t("onboarding.welcomeBody")}
             </p>
           </div>
 
           <Card.Bezel innerClassName="flex flex-col gap-3 p-5">
             <h2 className="text-base font-semibold">
-              Which currency do you think in?
+              {t("onboarding.currencyTitle")}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Every amount in the app is shown this way. You can change it later
-              in Profile.
+              {t("onboarding.currencyBody")}
             </p>
             <div className="mt-1 flex gap-2">
               {CURRENCIES.map((code) => (
@@ -193,7 +195,7 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
           </Card.Bezel>
 
           <Button size="lg" onClick={() => setStep("income")}>
-            Continue
+            {t("onboarding.continue")}
           </Button>
         </div>
       ) : null}
@@ -201,15 +203,18 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
       {step === "income" ? (
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="font-head text-2xl">What comes in?</h1>
+            <h1 className="font-head text-2xl">
+              {t("onboarding.incomeTitle")}
+            </h1>
             <p className="text-muted-foreground">
-              Your monthly income is what everything else is measured against.
-              Add it once and it repeats every month.
+              {t("onboarding.incomeBody")}
             </p>
           </div>
 
           <Card.Bezel innerClassName="flex flex-col gap-3 p-5">
-            <FormLabel htmlFor="income-amount">Monthly amount</FormLabel>
+            <FormLabel htmlFor="income-amount">
+              {t("onboarding.monthlyAmount")}
+            </FormLabel>
             <Input
               id="income-amount"
               type="number"
@@ -220,7 +225,9 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
               value={incomeAmount}
               onChange={(event) => setIncomeAmount(event.target.value)}
             />
-            <FormLabel htmlFor="income-day">Day of the month</FormLabel>
+            <FormLabel htmlFor="income-day">
+              {t("onboarding.dayOfMonth")}
+            </FormLabel>
             <Input
               id="income-day"
               type="number"
@@ -237,10 +244,10 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
               disabled={pending || !incomeAmount.trim()}
               onClick={handleIncome}
             >
-              {pending ? "Saving…" : "Add income"}
+              {pending ? t("onboarding.saving") : t("onboarding.addIncome")}
             </Button>
             <Button variant="ghost" onClick={() => setStep("recurring")}>
-              Skip for now
+              {t("onboarding.skipForNow")}
             </Button>
           </div>
         </div>
@@ -249,22 +256,27 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
       {step === "recurring" ? (
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="font-head text-2xl">What goes out?</h1>
+            <h1 className="font-head text-2xl">
+              {t("onboarding.expensesTitle")}
+            </h1>
             <p className="text-muted-foreground">
-              Rent, subscriptions, bills — the charges you already know are
-              coming. These are what make the forecast useful.
+              {t("onboarding.expensesBody")}
             </p>
           </div>
 
           <Card.Bezel innerClassName="flex flex-col gap-3 p-5">
-            <span className="text-sm font-medium">Category</span>
+            <span className="text-sm font-medium">
+              {t("onboarding.category")}
+            </span>
             <CategoryChips
               categories={expenseCategories.slice(0, 8)}
               selected={expenseCategory}
               onSelect={setExpenseCategory}
             />
 
-            <FormLabel htmlFor="expense-amount">Monthly amount</FormLabel>
+            <FormLabel htmlFor="expense-amount">
+              {t("onboarding.monthlyAmount")}
+            </FormLabel>
             <Input
               id="expense-amount"
               type="number"
@@ -275,7 +287,9 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
               value={expenseAmount}
               onChange={(event) => setExpenseAmount(event.target.value)}
             />
-            <FormLabel htmlFor="expense-day">Day of the month</FormLabel>
+            <FormLabel htmlFor="expense-day">
+              {t("onboarding.dayOfMonth")}
+            </FormLabel>
             <Input
               id="expense-day"
               type="number"
@@ -289,7 +303,7 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
               disabled={pending || !expenseCategory || !expenseAmount.trim()}
               onClick={handleExpense}
             >
-              {pending ? "Adding…" : "Add this one"}
+              {pending ? t("onboarding.adding") : t("onboarding.addThisOne")}
             </Button>
             {added > 0 ? (
               <p className="text-center text-xs text-muted-foreground">
@@ -300,10 +314,10 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
 
           <div className="flex flex-col gap-2">
             <Button size="lg" onClick={() => setStep("cap")}>
-              Continue
+              {t("onboarding.continue")}
             </Button>
             <Button variant="ghost" onClick={() => setStep("cap")}>
-              Skip for now
+              {t("onboarding.skipForNow")}
             </Button>
           </div>
         </div>
@@ -312,23 +326,22 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
       {step === "cap" ? (
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="font-head text-2xl">
-              What would you rather not overspend?
-            </h1>
-            <p className="text-muted-foreground">
-              Pick one category and a monthly cap. Month will show a ring that
-              fills as you spend against it. You can add more under Plan.
-            </p>
+            <h1 className="font-head text-2xl">{t("onboarding.capTitle")}</h1>
+            <p className="text-muted-foreground">{t("onboarding.capBody")}</p>
           </div>
 
           <Card.Bezel innerClassName="flex flex-col gap-3 p-5">
-            <span className="text-sm font-medium">Category</span>
+            <span className="text-sm font-medium">
+              {t("onboarding.category")}
+            </span>
             <CategoryChips
               categories={expenseCategories.slice(0, 8)}
               selected={capCategory}
               onSelect={setCapCategory}
             />
-            <FormLabel htmlFor="cap-amount">Monthly cap</FormLabel>
+            <FormLabel htmlFor="cap-amount">
+              {t("onboarding.monthlyCap")}
+            </FormLabel>
             <Input
               id="cap-amount"
               type="number"
@@ -347,10 +360,12 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
               disabled={pending || !capCategory || !capAmount.trim()}
               onClick={handleCap}
             >
-              {pending ? "Saving…" : "Set the cap and finish"}
+              {pending
+                ? t("onboarding.saving")
+                : t("onboarding.setCapAndFinish")}
             </Button>
             <Button variant="ghost" disabled={pending} onClick={finish}>
-              Skip for now
+              {t("onboarding.skipForNow")}
             </Button>
           </div>
         </div>

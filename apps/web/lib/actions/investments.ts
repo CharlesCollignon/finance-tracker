@@ -30,7 +30,7 @@ export async function saveInvestmentPosition(
 ): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const positionId = formData.get("positionId");
@@ -49,7 +49,7 @@ export async function saveInvestmentPosition(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   let name = parsed.data.name;
@@ -116,7 +116,7 @@ export async function removeInvestmentPosition(
 ): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   try {
@@ -149,12 +149,12 @@ export async function saveWalletPlan(input: {
 }): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = walletPlanSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -189,7 +189,7 @@ export async function saveWalletTargets(
 ): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = walletTargetsSchema.safeParse({ targets });

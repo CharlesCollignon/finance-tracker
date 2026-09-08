@@ -17,6 +17,7 @@ import {
 } from "@finance/core/bank-pull";
 import { refreshEverythingAction } from "@/lib/actions/refresh";
 import { useToast } from "@/components/layout/ToastProvider";
+import { useLocale, useT } from "@/lib/locale-context";
 
 interface RefreshValue {
   /** Ask the bank and re-read everything. */
@@ -80,6 +81,8 @@ export function RefreshProvider({
   // server and the first client render agree on it. A label computed from the
   // live clock during hydration is a mismatch by construction.
   const [now, setNow] = useState<string | null>(null);
+  const locale = useLocale();
+  const t = useT();
 
   // Only the interval sets it. Reading the clock in the effect body as well
   // would be a synchronous setState during an effect, and it buys nothing:
@@ -116,7 +119,7 @@ export function RefreshProvider({
       return {
         refresh,
         running,
-        age: initial?.age ?? "never",
+        age: initial?.age ?? t("pullAge.never"),
         stale: initial?.stale ?? false,
         connected,
         known,
@@ -126,12 +129,14 @@ export function RefreshProvider({
     return {
       refresh,
       running,
-      age: describePullAge(lastPulledAt, now),
+      age: describePullAge(lastPulledAt, now, locale),
       stale: known && pullIsStale(lastPulledAt, now),
       connected,
       known,
     };
   }, [
+    locale,
+    t,
     connected,
     initial?.age,
     initial?.stale,

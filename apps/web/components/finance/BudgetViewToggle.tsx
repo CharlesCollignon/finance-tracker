@@ -10,6 +10,7 @@ import {
   type BudgetViewMode,
 } from "@finance/core/constants";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/locale-context";
 
 interface BudgetViewToggleProps {
   basePath: string;
@@ -22,6 +23,7 @@ export function BudgetViewToggle({
   basePath,
   className,
 }: BudgetViewToggleProps) {
+  const t = useT();
   const searchParams = useSearchParams();
   const { year, month } = parseMonthParams(
     searchParams.get("y") ?? undefined,
@@ -36,7 +38,7 @@ export function BudgetViewToggle({
         className,
       )}
       role="group"
-      aria-label="Budget view"
+      aria-label={t("common.budgetView")}
     >
       {OPTIONS.map((value) => {
         const active = view === value;

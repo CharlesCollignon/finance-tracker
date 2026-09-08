@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 import { ALLOCATION_COLORS } from "./category-styles";
 import { investedForSavingsRate } from "./constants";
 import {
@@ -91,10 +93,15 @@ function sortLeavesByValueDesc(
  */
 export function buildIncomeSankey(
   summary: MonthlySummary,
+  locale: Locale = DEFAULT_LOCALE,
 ): IncomeSankeyGraph | null {
   if (summary.income <= 0) {
     return null;
   }
+
+  // The category and wallet names in the leaves are the user's own data and
+  // stay as they are; only the seven names the app supplies are translated.
+  const t = translator(locale);
 
   const invested = investedForSavingsRate(
     summary.investments,
@@ -107,7 +114,7 @@ export function buildIncomeSankey(
   if (remainder > 0.009) {
     investmentLeaves.push({
       id: "other",
-      name: "Other",
+      name: t("allocation.other"),
       total: remainder,
     });
   }
@@ -115,7 +122,7 @@ export function buildIncomeSankey(
   const mids: MidBucket[] = [
     {
       key: "expenses",
-      label: "Expenses",
+      label: t("allocation.expenses"),
       value: summary.expenses,
       color: ALLOCATION_COLORS.expenses,
       leaves: sortLeavesByValueDesc(
@@ -128,7 +135,7 @@ export function buildIncomeSankey(
     },
     {
       key: "savings",
-      label: "Savings",
+      label: t("allocation.savings"),
       value: summary.savings,
       color: ALLOCATION_COLORS.savings,
       leaves: sortLeavesByValueDesc(
@@ -141,7 +148,7 @@ export function buildIncomeSankey(
     },
     {
       key: "investments",
-      label: "Investments",
+      label: t("allocation.investments"),
       value: invested,
       color: ALLOCATION_COLORS.investments,
       leaves: investmentLeaves.filter((leaf) => leaf.total > 0),
@@ -151,14 +158,14 @@ export function buildIncomeSankey(
   if (summary.remaining > 0) {
     mids.push({
       key: "remaining",
-      label: "Remaining",
+      label: t("allocation.remaining"),
       value: summary.remaining,
       color: ALLOCATION_COLORS.remaining,
       // Terminal leaf so Remaining sits in the right column with others.
       leaves: [
         {
           id: "available",
-          name: "Available",
+          name: t("allocation.available"),
           total: summary.remaining,
         },
       ],
@@ -173,7 +180,7 @@ export function buildIncomeSankey(
   const nodes: SankeyNode[] = [
     {
       name: "income",
-      label: "Income",
+      label: t("allocation.income"),
       depth: 0,
       itemStyle: { color: ALLOCATION_COLORS.income },
     },

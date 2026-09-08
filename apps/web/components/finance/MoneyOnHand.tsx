@@ -18,6 +18,7 @@ import { GLASS_CARD, GLASS_HERO } from "@/lib/glass";
 import { FIGURE_HERO } from "@/lib/type-scale";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
+import { useLocale, useT } from "@/lib/locale-context";
 
 interface MoneyOnHandProps {
   pulse: MonthPulse;
@@ -80,6 +81,8 @@ export function MoneyOnHand({
   trend,
   noBalanceReason = null,
 }: MoneyOnHandProps) {
+  const t = useT();
+  const locale = useLocale();
   const formatMoney = useFormatCurrency();
 
   const banked = pulse.onHand !== null && pulse.free !== null;
@@ -120,8 +123,8 @@ export function MoneyOnHand({
         <div className="flex flex-col gap-1.5">
           <p className="text-sm text-muted-foreground">
             {banked
-              ? pulseHeadline(pulse)
-              : `${short ? "Over" : "Left"} in ${monthLabel}${
+              ? pulseHeadline(pulse, locale)
+              : `${t(short ? "month.overIn" : "month.leftIn", { month: monthLabel })}${
                   budgetView === "month_end"
                     ? ", counting what is still to come"
                     : ""
@@ -156,8 +159,8 @@ export function MoneyOnHand({
           {banked ? null : (
             <p className="text-sm text-muted-foreground">
               {noBalanceReason === "past-month"
-                ? "A finished month, as the ledger recorded it. What an account holds is only ever true today."
-                : "Connect a bank to lead with what is actually in your account."}
+                ? t("month.finishedMonthNote")
+                : t("month.connectBankNote")}
             </p>
           )}
         </div>
@@ -166,7 +169,10 @@ export function MoneyOnHand({
             account: what is there, what leaves, what arrives. */}
         {banked ? (
           <dl className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
-            <Term label="In the account" amount={formatMoney(pulse.onHand!)} />
+            <Term
+              label={t("month.inTheAccount")}
+              amount={formatMoney(pulse.onHand!)}
+            />
             {pulse.committed > 0 ? (
               <>
                 <Operator>−</Operator>
@@ -214,11 +220,19 @@ export function MoneyOnHand({
             figures in exactly this shape: label left, value right, hairline
             between. */}
         <dl className="flex flex-col border-t border-foreground/10">
-          <Figure label="Came in" value={formatMoney(income)} icon="in" />
-          <Figure label="Went out" value={formatMoney(expenses)} icon="out" />
+          <Figure
+            label={t("month.cameIn")}
+            value={formatMoney(income)}
+            icon="in"
+          />
+          <Figure
+            label={t("month.wentOut")}
+            value={formatMoney(expenses)}
+            icon="out"
+          />
           {savingsRate !== null ? (
             <Figure
-              label="Savings rate"
+              label={t("month.savingsRate")}
               value={`${savingsRate}%`}
               /* Not "kept": a month close already uses that word for cash
                  left plus what was set aside, a different figure. */

@@ -8,6 +8,7 @@ import type { PullFreshness } from "@finance/core/bank-pull";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { syncBankFeed } from "@/lib/bank/sync";
 import { revalidateEverySurface } from "@/lib/revalidate-paths";
+import { getLocale } from "@/lib/locale";
 
 /**
  * Bring everything up to date, from wherever the user happens to be.
@@ -37,7 +38,7 @@ export interface RefreshResult {
 export async function refreshEverythingAction(): Promise<RefreshResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const supabase = await createClient();
@@ -73,7 +74,11 @@ export async function refreshEverythingAction(): Promise<RefreshResult> {
       return {
         success: true,
         message: outcome.pull.why,
-        freshness: await readPullFreshness(supabase, user.id),
+        freshness: await readPullFreshness(
+          supabase,
+          user.id,
+          await getLocale(),
+        ),
       };
     }
 
@@ -101,7 +106,7 @@ export async function refreshEverythingAction(): Promise<RefreshResult> {
     return {
       success: true,
       message: parts.length > 0 ? parts.join(", ") : "Nothing new",
-      freshness: await readPullFreshness(supabase, user.id),
+      freshness: await readPullFreshness(supabase, user.id, await getLocale()),
     };
   } catch (error) {
     return {

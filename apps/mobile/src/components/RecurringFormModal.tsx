@@ -21,6 +21,8 @@ import {
   deleteRecurringTemplate,
   upsertRecurringTemplate,
 } from "@/lib/mutations";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 interface RecurringFormModalProps {
   open: boolean;
@@ -37,6 +39,8 @@ export function RecurringFormModal({
   categories,
   template = null,
 }: RecurringFormModalProps) {
+  const locale = useLocale();
+  const t = useT();
   const { toast } = useToast();
   const isEditing = template !== null;
   const [categoryId, setCategoryId] = useState(template?.category_id ?? "");
@@ -118,7 +122,7 @@ export function RecurringFormModal({
       setError(result.error);
       return;
     }
-    toast("Deleted — apply recurring in the Ledger to see the change.");
+    toast(t("recurring.deletedHint"));
     onSaved();
     onClose();
   }
@@ -134,7 +138,7 @@ export function RecurringFormModal({
       <View className="flex-1 justify-end bg-black/50">
         <Pressable
           className="flex-1"
-          accessibilityLabel="Close"
+          accessibilityLabel={t("recurring.close")}
           onPress={onClose}
         />
         <View className="max-h-[90%] rounded-t-3xl border border-border bg-card">
@@ -143,9 +147,15 @@ export function RecurringFormModal({
           </View>
           <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
             <Text className="font-semibold" style={{ fontSize: 18 }}>
-              {isEditing ? "Edit recurring item" : "Add recurring item"}
+              {isEditing
+                ? t("recurring.editTitleMobile")
+                : t("recurring.addTitleMobile")}
             </Text>
-            <Pressable onPress={onClose} accessibilityLabel="Close" hitSlop={8}>
+            <Pressable
+              onPress={onClose}
+              accessibilityLabel={t("recurring.close")}
+              hitSlop={8}
+            >
               <Text variant="muted">Close</Text>
             </Pressable>
           </View>
@@ -154,7 +164,9 @@ export function RecurringFormModal({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <Text className="mb-2 text-sm font-medium">Category</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("recurring.category")}
+            </Text>
             <View className="mb-4 gap-2">
               {groups.map((group) => (
                 <View key={group.type} className="gap-1">
@@ -174,7 +186,7 @@ export function RecurringFormModal({
                             : "border-border"
                         }`}
                       >
-                        <Text>{formatCategoryOptionLabel(cat)}</Text>
+                        <Text>{formatCategoryOptionLabel(cat, locale)}</Text>
                       </Pressable>
                     );
                   })}
@@ -190,21 +202,25 @@ export function RecurringFormModal({
               className="mb-4"
             />
 
-            <Text className="mb-2 text-sm font-medium">Description</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("recurring.description")}
+            </Text>
             <Input
               value={description}
               onChangeText={setDescription}
               className="mb-4"
             />
 
-            <Text className="mb-2 text-sm font-medium">Schedule</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("recurring.schedule")}
+            </Text>
             <View className="mb-4 flex-row gap-2">
               {(["monthly", "weekly", "yearly"] as const).map((value) => (
                 <Pressable
                   key={value}
                   accessibilityRole="button"
                   accessibilityState={{ selected: recurrence === value }}
-                  accessibilityLabel={value}
+                  accessibilityLabel={t(`recurring.${value}`)}
                   onPress={() => setRecurrence(value)}
                   className={`flex-1 rounded-full border py-2 ${
                     recurrence === value
@@ -212,8 +228,8 @@ export function RecurringFormModal({
                       : "border-border"
                   }`}
                 >
-                  <Text className="text-center text-xs font-semibold capitalize">
-                    {value}
+                  <Text className="text-center text-xs font-semibold">
+                    {t(`recurring.${value}`)}
                   </Text>
                 </Pressable>
               ))}
@@ -246,7 +262,9 @@ export function RecurringFormModal({
                     />
                   </>
                 ) : null}
-                <Text className="mb-2 text-sm font-medium">Day of month</Text>
+                <Text className="mb-2 text-sm font-medium">
+                  {t("recurring.dayOfMonth")}
+                </Text>
                 <Input
                   value={dayOfMonth}
                   onChangeText={setDayOfMonth}
@@ -262,36 +280,42 @@ export function RecurringFormModal({
             <Text variant="muted" className="mb-3 text-xs">
               Leave empty for open-ended.
             </Text>
-            <Text className="mb-2 text-sm font-medium">Starts on</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("recurring.startsOn")}
+            </Text>
             <DateField
               value={startsOn}
               onChange={setStartsOn}
-              placeholder="No start date"
+              placeholder={t("recurring.noStartDate")}
               clearable
               className="mb-4"
             />
-            <Text className="mb-2 text-sm font-medium">Ends on</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("recurring.endsOn")}
+            </Text>
             <DateField
               value={endsOn}
               onChange={setEndsOn}
-              placeholder="No end date"
+              placeholder={t("recurring.noEndDate")}
               clearable
               className="mb-4"
             />
 
             {error ? (
-              <Text className="mb-3 text-destructive">{error}</Text>
+              <Text className="mb-3 text-destructive">
+                {resolveMessage(t, error)}
+              </Text>
             ) : null}
 
             <Button
-              label={pending ? "Saving…" : "Save"}
+              label={pending ? t("recurring.saving") : t("recurring.save")}
               disabled={pending}
               onPress={handleSave}
               className="mb-3"
             />
             {isEditing ? (
               <Button
-                label="Delete"
+                label={t("recurring.delete")}
                 variant="outline"
                 disabled={pending}
                 onPress={handleDelete}

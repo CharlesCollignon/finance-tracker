@@ -67,7 +67,7 @@ export async function signUp(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -117,7 +117,7 @@ export async function signIn(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -154,7 +154,7 @@ export async function createTransaction(
 ): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = transactionSchema.safeParse({
@@ -165,7 +165,7 @@ export async function createTransaction(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const tagIds = formData
@@ -225,7 +225,7 @@ export async function saveQuickTransaction(
 ): Promise<{ error?: string; id?: string }> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = quickTransactionSchema.safeParse({
@@ -237,7 +237,7 @@ export async function saveQuickTransaction(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -290,7 +290,7 @@ export async function importTransactions(
 ): Promise<{ error?: string; imported?: number }> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = importTransactionsSchema.safeParse({ rows });
@@ -352,7 +352,7 @@ export async function getExistingKeysForRange(
 }> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const range = z
@@ -398,7 +398,7 @@ export async function deleteTransactions(
 ): Promise<{ error?: string; deleted?: number }> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = deleteTransactionsSchema.safeParse({ ids });
@@ -442,7 +442,7 @@ export async function moveTransactions(
 ): Promise<{ error?: string; moved?: number }> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = moveTransactionsSchema.safeParse({ ids, categoryId });
@@ -486,7 +486,7 @@ export async function updateTransaction(
 ): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = updateTransactionSchema.safeParse({
@@ -498,7 +498,7 @@ export async function updateTransaction(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const tagIds = formData
@@ -545,7 +545,7 @@ export async function updateTransaction(
 export async function deleteTransaction(id: string): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   if (!parseUuid(id)) {
@@ -573,7 +573,7 @@ export async function upsertRecurringTemplate(
 ): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = recurringTemplateSchema.safeParse({
@@ -595,7 +595,7 @@ export async function upsertRecurringTemplate(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const data = parsed.data;
@@ -763,7 +763,7 @@ export async function deleteRecurringTemplate(
 ): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   if (!parseUuid(id)) {
@@ -793,7 +793,7 @@ export async function toggleRecurringActive(
 ): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const supabase = await createClient();
@@ -817,7 +817,7 @@ export async function previewApplyRecurringForMonth(
 ): Promise<ActionResult & { plan?: ApplyRecurringPlan }> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = applyRecurringSchema.safeParse({ year, month });
@@ -870,7 +870,7 @@ export async function applyRecurringForMonth(
 ): Promise<ActionResult & { created?: number; updated?: number }> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const parsed = applyRecurringSchema.safeParse({ year, month });
@@ -1025,7 +1025,7 @@ export async function skipRecurringOccurrence(
 ): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   if (
@@ -1091,7 +1091,7 @@ export async function unskipRecurringOccurrence(
 ): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
-    return { error: "Not authenticated" };
+    return { error: "errors.notAuthenticated" };
   }
 
   const supabase = await createClient();

@@ -20,6 +20,8 @@ import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { validateAuthInput } from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
+import { useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 export interface AuthFormProps {
   title: string;
@@ -46,6 +48,7 @@ export function AuthForm({
   showPasskey = false,
   newPassword = false,
 }: AuthFormProps) {
+  const t = useT();
   const { signInWithGoogle, signInWithPasskey } = useAuth();
   const colors = useThemeColors();
   const [email, setEmail] = useState("");
@@ -63,7 +66,7 @@ export function AuthForm({
     const parsed = validateAuthInput(email.trim(), password);
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
-      setMessage(issue?.message ?? "Invalid credentials");
+      setMessage(issue?.message ?? t("auth.invalidCredentials"));
       // The schema names the field it rejected; anything else is a credential
       // failure the server reports, which belongs to neither field alone.
       const field = issue?.path[0];
@@ -122,9 +125,9 @@ export function AuthForm({
           <View className="items-stretch gap-4 p-5">
             <Text className="text-center text-2xl font-bold">{title}</Text>
             <View className="gap-1.5">
-              <Text variant="label">Email</Text>
+              <Text variant="label">{t("auth.email")}</Text>
               <Input
-                accessibilityLabel="Email address"
+                accessibilityLabel={t("auth.emailAddress")}
                 placeholder="you@example.com"
                 autoCapitalize="none"
                 autoComplete="email"
@@ -140,7 +143,7 @@ export function AuthForm({
             </View>
 
             <View className="gap-1.5">
-              <Text variant="label">Password</Text>
+              <Text variant="label">{t("auth.password")}</Text>
               <View className="flex-row items-center gap-2">
                 {/*
                   Wrapped rather than given flex-1 directly: Input carries
@@ -150,8 +153,8 @@ export function AuthForm({
                 <View className="flex-1">
                   <Input
                     ref={passwordRef}
-                    accessibilityLabel="Password"
-                    placeholder="Your password"
+                    accessibilityLabel={t("auth.password")}
+                    placeholder={t("auth.passwordPlaceholder")}
                     secureTextEntry={!reveal}
                     autoCapitalize="none"
                     autoComplete={
@@ -168,7 +171,7 @@ export function AuthForm({
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={
-                    reveal ? "Hide password" : "Show password"
+                    reveal ? t("auth.hidePassword") : t("auth.showPassword")
                   }
                   accessibilityState={{ selected: reveal }}
                   hitSlop={8}
@@ -190,18 +193,18 @@ export function AuthForm({
                 accessibilityLiveRegion="polite"
                 className="text-center text-destructive"
               >
-                {message}
+                {resolveMessage(t, message)}
               </Text>
             ) : null}
 
             <Button
-              label={submitting ? "Please wait..." : submitLabel}
+              label={submitting ? t("auth.pleaseWait") : submitLabel}
               disabled={submitting || !email || !password}
               onPress={handleSubmit}
             />
 
             <Button
-              label="Continue with Google"
+              label={t("auth.withGoogleContinue")}
               variant="outline"
               disabled={submitting}
               onPress={handleGoogle}
@@ -209,7 +212,7 @@ export function AuthForm({
 
             {showPasskey ? (
               <Button
-                label="Sign in with passkey"
+                label={t("auth.withPasskey")}
                 variant="outline"
                 disabled={submitting}
                 onPress={handlePasskey}

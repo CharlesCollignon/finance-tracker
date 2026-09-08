@@ -15,6 +15,7 @@ import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
+import { useLocale, useT } from "@/lib/locale-context";
 
 interface ArrivedChargesProps {
   proposals: FulfilmentProposal[];
@@ -54,8 +55,10 @@ export function ArrivedCharges({
   proposals,
   misses = [],
 }: ArrivedChargesProps) {
+  const t = useT();
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
+  const locale = useLocale();
   const [pending, startTransition] = useTransition();
   const [answered, setAnswered] = useState<Set<string>>(new Set());
 
@@ -91,10 +94,7 @@ export function ArrivedCharges({
   }
 
   return (
-    <section
-      aria-label="Charges that look like they arrived"
-      className="flex flex-col"
-    >
+    <section aria-label={t("common.arrivedCharges")} className="flex flex-col">
       <h3 className="border-b border-foreground/10 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {waiting.length === 1 ? "Did this arrive?" : "Did these arrive?"}
       </h3>
@@ -130,7 +130,7 @@ export function ArrivedCharges({
                   </p>
                 ) : null}
                 <p className="text-xs text-muted-foreground">
-                  {describeFulfilment(proposal, formatMoney)}
+                  {describeFulfilment(proposal, formatMoney, locale)}
                 </p>
               </div>
 

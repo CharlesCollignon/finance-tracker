@@ -10,6 +10,7 @@ import {
 import { formatCurrency, type CurrencyCode } from "@finance/core/constants";
 
 import { loadCurrency, saveCurrency } from "@/lib/currency";
+import { useLocale } from "@/providers/LocaleProvider";
 
 interface CurrencyContextValue {
   currency: CurrencyCode;
@@ -21,6 +22,7 @@ const CurrencyContext = createContext<CurrencyContextValue | null>(null);
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<CurrencyCode>("EUR");
+  const locale = useLocale();
 
   useEffect(() => {
     void loadCurrency().then(setCurrencyState);
@@ -31,9 +33,12 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     void saveCurrency(next);
   }, []);
 
+  // The two preferences do different jobs: the currency changes which symbol
+  // a figure carries without converting it, the language changes where that
+  // symbol sits and which separators the digits take.
   const format = useCallback(
-    (amount: number) => formatCurrency(amount, currency),
-    [currency],
+    (amount: number) => formatCurrency(amount, currency, locale),
+    [currency, locale],
   );
 
   const value = useMemo(

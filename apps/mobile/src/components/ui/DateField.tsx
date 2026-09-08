@@ -9,6 +9,9 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { formatShortDate } from "@finance/core/constants";
+import type { Locale } from "@finance/core/i18n/locale";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 
 interface DateFieldProps {
   /** ISO date, YYYY-MM-DD. Empty string means unset. */
@@ -36,17 +39,22 @@ function parseIsoDate(value: string): Date {
   return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12);
 }
 
-function formatDisplay(value: string): string {
+/**
+ * "Tue 1 Sep 2026" / "mar. 1 sept. 2026".
+ *
+ * Built from the app's own tables rather than from
+ * `toLocaleDateString(undefined, …)`, which was the one place in either app
+ * that formatted a date in the *device's* language. That made this field
+ * disagree with every other date on the screen as soon as the app's language
+ * and the phone's differed, and it read from the ICU the platform happens to
+ * ship — the drift `packages/core/src/i18n/calendar-names` exists to avoid.
+ */
+function formatDisplay(value: string, locale: Locale): string {
   if (!value) {
     return "";
   }
-  const date = parseIsoDate(value);
-  return date.toLocaleDateString(undefined, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  const year = parseIsoDate(value).getFullYear();
+  return `${formatShortDate(value, locale)} ${year}`;
 }
 
 /**
@@ -61,7 +69,9 @@ export function DateField({
   clearable = false,
   className,
 }: DateFieldProps) {
+  const t = useT();
   const colors = useThemeColors();
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
 
   function handleChange(event: DateTimePickerEvent, date?: Date) {
@@ -75,7 +85,7 @@ export function DateField({
     onChange(toIsoDate(date));
   }
 
-  const display = formatDisplay(value);
+  const display = formatDisplay(value, locale);
 
   return (
     <View className={className}>
@@ -95,7 +105,7 @@ export function DateField({
           {clearable && display ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Clear date"
+              accessibilityLabel={t("common.clearDate")}
               hitSlop={8}
               onPress={() => onChange("")}
             >

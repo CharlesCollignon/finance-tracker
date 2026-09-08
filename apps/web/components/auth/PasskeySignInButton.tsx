@@ -8,6 +8,8 @@ import { Text } from "@/components/retroui/Text";
 import { seedCategoriesForCurrentUser } from "@/lib/actions/finance";
 import { createClient } from "@/lib/supabase/client";
 import { ICON } from "@/lib/icon-scale";
+import { resolveMessage } from "@finance/core/i18n/t";
+import { useT } from "@/lib/locale-context";
 
 interface PasskeySignInButtonProps {
   label?: string;
@@ -16,6 +18,7 @@ interface PasskeySignInButtonProps {
 export function PasskeySignInButton({
   label = "Sign in with passkey",
 }: PasskeySignInButtonProps) {
+  const t = useT();
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +60,11 @@ export function PasskeySignInButton({
         <Fingerprint size={ICON.xl} weight="bold" />
         {pending ? "Waiting for passkey…" : label}
       </Button>
-      {error && <Text className="text-sm text-destructive">{error}</Text>}
+      {error && (
+        <Text className="text-sm text-destructive">
+          {resolveMessage(t, error)}
+        </Text>
+      )}
     </div>
   );
 }

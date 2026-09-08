@@ -5,6 +5,8 @@ import { Button } from "@/components/retroui/Button";
 import { createClient } from "@/lib/supabase/client";
 import { MICRO } from "@/lib/type-scale";
 import { cn } from "@/lib/utils";
+import { resolveMessage } from "@finance/core/i18n/t";
+import { useT } from "@/lib/locale-context";
 
 export type PasskeyItem = {
   id: string;
@@ -26,6 +28,7 @@ interface PasskeysPanelProps {
  * row: a variable-length list with an action on each entry.
  */
 export function PasskeysPanel({ initialPasskeys }: PasskeysPanelProps) {
+  const t = useT();
   const [passkeys, setPasskeys] = useState<PasskeyItem[]>(initialPasskeys);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -111,7 +114,9 @@ export function PasskeysPanel({ initialPasskeys }: PasskeysPanelProps) {
         {pending ? "Please wait…" : "Add passkey"}
       </Button>
 
-      {message ? <p className="text-sm text-destructive">{message}</p> : null}
+      {message ? (
+        <p className="text-sm text-destructive">{resolveMessage(t, message)}</p>
+      ) : null}
     </div>
   );
 }

@@ -30,6 +30,8 @@ import { createTransaction, setTransactionTags } from "@/lib/mutations";
 import { useCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", USD: "$" };
 
@@ -74,6 +76,7 @@ interface QuickAddSheetProps {
  * amount field below the fold whenever a user had more than a few categories.
  */
 export function QuickAddSheet(props: QuickAddSheetProps) {
+  const t = useT();
   // The Modal stays mounted so its slide-out animation still plays on close;
   // the fields inside are keyed on the open token, so every open starts from
   // clean state. Resetting in an effect instead would cascade a second render
@@ -90,7 +93,7 @@ export function QuickAddSheet(props: QuickAddSheetProps) {
       <View className="flex-1 justify-end bg-black/50">
         <Pressable
           className="flex-1"
-          accessibilityLabel="Close"
+          accessibilityLabel={t("quickAdd.close")}
           onPress={props.onClose}
         />
         <QuickAddFields key={props.openToken} {...props} />
@@ -155,7 +158,9 @@ function QuickAddFields({
     return suggestMerchants(merchantIndex, note, 3);
   }, [merchantIndex, note]);
 
-  const display = formatAmountInput(amount, "fr-FR");
+  const locale = useLocale();
+  const t = useT();
+  const display = formatAmountInput(amount, locale);
   const canSave = isAmountInputComplete(amount) && categoryId !== "";
   const categoryListOpen =
     showAllCategories || query.trim() !== "" || recentCategories.length === 0;
@@ -235,7 +240,11 @@ function QuickAddFields({
         <Text className="font-semibold" style={{ fontSize: 18 }}>
           Add transaction
         </Text>
-        <Pressable onPress={onClose} accessibilityLabel="Close" hitSlop={8}>
+        <Pressable
+          onPress={onClose}
+          accessibilityLabel={t("quickAdd.close")}
+          hitSlop={8}
+        >
           <Text variant="muted">Close</Text>
         </Pressable>
       </View>
@@ -290,7 +299,7 @@ function QuickAddFields({
                   key={key}
                   accessibilityRole="button"
                   accessibilityLabel={
-                    key === "backspace" ? "Delete last digit" : key
+                    key === "backspace" ? t("quickAdd.deleteLastDigit") : key
                   }
                   onPress={() => handleKey(key)}
                   onLongPress={
@@ -321,8 +330,8 @@ function QuickAddFields({
         {/* ---- date ----------------------------------------------- */}
         <View className="mb-4 flex-row flex-wrap gap-2">
           {[
-            { label: "Today", value: today },
-            { label: "Yesterday", value: shiftDays(today, -1) },
+            { label: t("calendar.today"), value: today },
+            { label: t("calendar.yesterday"), value: shiftDays(today, -1) },
           ].map((option) => {
             const active = occurredOn === option.value && !showDatePicker;
             return (
@@ -376,7 +385,9 @@ function QuickAddFields({
         ) : null}
 
         {/* ---- category ------------------------------------------- */}
-        <Text className="mb-2 text-sm font-medium">Category</Text>
+        <Text className="mb-2 text-sm font-medium">
+          {t("quickAdd.category")}
+        </Text>
 
         {recentCategories.length > 0 && !query.trim() ? (
           <View className="mb-3 flex-row flex-wrap gap-2">
@@ -416,9 +427,9 @@ function QuickAddFields({
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Filter categories…"
+              placeholder={t("quickAdd.filterCategoriesPlaceholder")}
               placeholderTextColor={colors.mutedForeground}
-              accessibilityLabel="Filter categories"
+              accessibilityLabel={t("quickAdd.filterCategories")}
               className="h-10 flex-1 font-sans text-sm text-foreground"
             />
           </View>
@@ -467,7 +478,9 @@ function QuickAddFields({
             className="mb-4 self-start"
           >
             <Text variant="muted" className="text-sm underline">
-              {selected ? `${selected.name} — change` : "All categories"}
+              {selected
+                ? t("quickAdd.changeCategory", { name: selected.name })
+                : t("ledger.allCategories")}
             </Text>
           </Pressable>
         )}
@@ -477,7 +490,7 @@ function QuickAddFields({
         <Input
           value={note}
           onChangeText={setNote}
-          placeholder="Where did it go?"
+          placeholder={t("quickAdd.notePlaceholder")}
           className={noteSuggestions.length > 0 ? "mb-2" : "mb-4"}
         />
 
@@ -540,7 +553,9 @@ function QuickAddFields({
         ) : null}
 
         {error ? (
-          <Text className="mb-3 text-sm text-destructive">{error}</Text>
+          <Text className="mb-3 text-sm text-destructive">
+            {resolveMessage(t, error)}
+          </Text>
         ) : null}
 
         {savedCount > 0 ? (
@@ -553,13 +568,13 @@ function QuickAddFields({
 
         <View className="gap-2 pb-2">
           <Button
-            label={pending ? "Saving…" : "Save"}
+            label={pending ? t("quickAdd.saving") : t("quickAdd.save")}
             size="lg"
             disabled={!canSave || pending}
             onPress={() => void save(false)}
           />
           <Button
-            label="Save & add another"
+            label={t("quickAdd.saveAndAnother")}
             variant="outline"
             size="lg"
             disabled={!canSave || pending}

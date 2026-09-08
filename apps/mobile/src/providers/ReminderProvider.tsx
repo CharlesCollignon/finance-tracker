@@ -20,6 +20,8 @@ import {
 } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
+import { useLocale } from "@/providers/LocaleProvider";
+import type { Locale } from "@finance/core/i18n/locale";
 
 const LAST_SYNC_KEY = "notifications.reminders.lastSync";
 
@@ -62,6 +64,7 @@ async function markSynced(): Promise<void> {
  * cap, since that depends on figures it has to load first.
  */
 export function ReminderProvider({ children }: { children: ReactNode }) {
+  const locale = useLocale();
   const { user } = useAuth();
   const formatAmount = useFormatCurrency();
   const dataVersion = useDataVersion();
@@ -69,6 +72,7 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
   // Kept in refs so the AppState listener is registered once.
   const userId = useRef<string | null>(null);
   const format = useRef(formatAmount);
+  const language = useRef(locale);
   const lastBreachCheck = useRef(0);
   const running = useRef(false);
 
@@ -77,6 +81,7 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     userId.current = user?.id ?? null;
     format.current = formatAmount;
+    language.current = locale;
   });
 
   useEffect(() => {
@@ -99,7 +104,7 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
 
         if (Date.now() - lastBreachCheck.current > BREACH_INTERVAL_MS) {
           lastBreachCheck.current = Date.now();
-          await checkBreaches(id, format.current);
+          await checkBreaches(id, format.current, language.current);
         }
       } catch {
         // Reminders are a convenience; a failure here must never surface as
@@ -129,6 +134,7 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
 async function checkBreaches(
   userId: string,
   formatAmount: (amount: number) => string,
+  locale: Locale,
 ): Promise<void> {
   const { year, month } = getCurrentMonth();
 
@@ -151,6 +157,7 @@ async function checkBreaches(
     summary.expenseBreakdown,
     summary.expenses,
     categoryNames,
+    locale,
   )
     .filter((row) => row.over)
     .map((row) => ({

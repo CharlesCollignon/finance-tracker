@@ -10,6 +10,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
+import { useT } from "@/providers/LocaleProvider";
 
 /** Below this a "trend" would be a straight line between two dots. */
 const MIN_MONTHS_FOR_CHART = 3;
@@ -46,6 +47,7 @@ interface TrendCardProps {
  * few dozen kilobytes and a canvas to draw six rectangles.
  */
 export function TrendCard({ points, range, onRangeChange }: TrendCardProps) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
 
   const active = useMemo(
@@ -72,7 +74,7 @@ export function TrendCard({ points, range, onRangeChange }: TrendCardProps) {
       <View className="flex-row items-center justify-between gap-3">
         <Text variant="label">What you kept</Text>
         <SegmentedControl
-          label="Trend range"
+          label={t("common.trendRange")}
           value={range}
           onChange={onRangeChange}
           segments={TREND_RANGES.map((key) => ({ value: key, label: key }))}

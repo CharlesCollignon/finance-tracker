@@ -25,7 +25,7 @@ import { MonthPicker } from "@/components/layout/MonthPicker";
 import { useToast } from "@/components/layout/ToastProvider";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import {
-  CATEGORY_TYPE_LABELS,
+  categoryTypeLabels,
   TYPE_AMOUNT_CLASS,
 } from "@finance/core/category-styles";
 import { cn } from "@/lib/utils";
@@ -64,15 +64,16 @@ import type {
   TransactionWithCategory,
 } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 type FilterType = "all" | CategoryType;
 
 const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "income", label: CATEGORY_TYPE_LABELS.income },
-  { value: "expense", label: CATEGORY_TYPE_LABELS.expense },
-  { value: "savings", label: CATEGORY_TYPE_LABELS.savings },
-  { value: "investment", label: CATEGORY_TYPE_LABELS.investment },
+  { value: "income", label: categoryTypeLabels().income },
+  { value: "expense", label: categoryTypeLabels().expense },
+  { value: "savings", label: categoryTypeLabels().savings },
+  { value: "investment", label: categoryTypeLabels().investment },
 ];
 
 interface TransactionsViewProps {
@@ -172,6 +173,7 @@ export function TransactionsView({
 }: TransactionsViewProps) {
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
+  const t = useT();
   const [formOpen, setFormOpen] = useState(false);
   const [editTransaction, setEditTransaction] =
     useState<TransactionWithCategory | null>(null);
@@ -267,7 +269,7 @@ export function TransactionsView({
 
       if (plan.toCreate.length === 0 && plan.toUpdate.length === 0) {
         setApplyPending(false);
-        toast("All recurring entries already applied", "success");
+        toast(t("ledger.applyAllDone"), "success");
         return;
       }
 
@@ -295,16 +297,16 @@ export function TransactionsView({
 
       const parts: string[] = [];
       if (result.created) {
-        parts.push(`${result.created} added`);
+        parts.push(t("ledger.applyAdded", { count: result.created }));
       }
       if (result.updated) {
-        parts.push(`${result.updated} updated`);
+        parts.push(t("ledger.applyUpdated", { count: result.updated }));
       }
 
       toast(
         parts.length > 0
-          ? `Recurring applied: ${parts.join(", ")}`
-          : "Nothing to apply",
+          ? t("ledger.applyResult", { parts: parts.join(", ") })
+          : t("ledger.applyNothing"),
         "success",
       );
       void refreshApplyPending();
@@ -337,10 +339,7 @@ export function TransactionsView({
         toast(result.error, "error");
         return;
       }
-      toast(
-        `${result.deleted} ${result.deleted === 1 ? "transaction" : "transactions"} deleted`,
-        "success",
-      );
+      toast(t("ledger.deleted", { count: result.deleted ?? 0 }), "success");
       leaveSelectMode();
     });
   }
@@ -365,17 +364,14 @@ export function TransactionsView({
       const name =
         categories.find((category) => category.id === categoryId)?.name ??
         "the new category";
-      toast(
-        `${result.moved} ${result.moved === 1 ? "transaction" : "transactions"} moved to ${name}`,
-        "success",
-      );
+      toast(t("ledger.moved", { count: result.moved ?? 0, name }), "success");
       leaveSelectMode();
     });
   }
 
   function handleExport() {
     if (filtered.length === 0) {
-      toast("Nothing to export for this view", "error");
+      toast(t("ledger.exportNothing"), "error");
       return;
     }
 
@@ -438,7 +434,7 @@ export function TransactionsView({
 
   return (
     <>
-      <PageHeader title="Ledger">
+      <PageHeader titleKey="nav.ledger">
         <MonthPicker basePath="/transactions" />
       </PageHeader>
 
@@ -453,11 +449,13 @@ export function TransactionsView({
                 onClick={handleApplyRecurring}
                 disabled={pending}
               >
-                {pending ? "Applying…" : "Apply recurring"}
+                {pending
+                  ? t("ledger.applyPending")
+                  : t("ledger.applyRecurring")}
               </Button>
               {applyPending && !pending ? (
                 <span
-                  aria-label="Recurring changes are waiting to be applied"
+                  aria-label={t("ledger.applyWaiting")}
                   role="status"
                   className="absolute -right-1 -top-1 size-2.5 rounded-full bg-destructive ring-2 ring-background"
                 />
@@ -477,8 +475,8 @@ export function TransactionsView({
 
         {transactions.length === 0 ? (
           <EmptyState
-            title="Nothing recorded this month"
-            description="Add an entry, or apply the charges you already know repeat."
+            title={t("ledger.emptyTitle")}
+            description={t("ledger.emptyBody")}
           />
         ) : (
           <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 md:p-5">
@@ -495,8 +493,8 @@ export function TransactionsView({
                     type="search"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search category or note…"
-                    aria-label="Search transactions"
+                    placeholder={t("ledger.searchPlaceholder")}
+                    aria-label={t("ledger.searchLabel")}
                     className={cn(
                       "h-9 w-full rounded-full border border-border bg-background",
                       "pl-9 pr-3 text-sm text-foreground outline-none",
@@ -508,14 +506,14 @@ export function TransactionsView({
                   <select
                     value={categoryFilter}
                     onChange={(event) => setCategoryFilter(event.target.value)}
-                    aria-label="Filter by category"
+                    aria-label={t("ledger.filterByCategory")}
                     className={cn(
                       "h-9 min-w-0 flex-1 rounded-full border border-border",
                       "bg-background px-3.5 text-sm text-foreground outline-none",
                       "focus:border-foreground sm:w-44 sm:flex-none",
                     )}
                   >
-                    <option value="all">All categories</option>
+                    <option value="all">{t("ledger.allCategories")}</option>
                     {categories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
@@ -526,14 +524,14 @@ export function TransactionsView({
                     <select
                       value={tagFilter}
                       onChange={(event) => setTagFilter(event.target.value)}
-                      aria-label="Filter by tag"
+                      aria-label={t("ledger.filterByTag")}
                       className={cn(
                         "h-9 min-w-0 flex-1 rounded-full border border-border",
                         "bg-background px-3.5 text-sm text-foreground outline-none",
                         "focus:border-foreground sm:w-36 sm:flex-none",
                       )}
                     >
-                      <option value="all">All tags</option>
+                      <option value="all">{t("ledger.allTags")}</option>
                       {tags.map((tag) => (
                         <option key={tag.id} value={tag.id}>
                           {tag.name}
@@ -548,7 +546,7 @@ export function TransactionsView({
                 <div
                   className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto"
                   role="tablist"
-                  aria-label="Filter transactions"
+                  aria-label={t("ledger.filterTransactions")}
                 >
                   {FILTER_OPTIONS.map((option) => (
                     <button
@@ -579,7 +577,7 @@ export function TransactionsView({
                       selectMode ? leaveSelectMode() : setSelectMode(true)
                     }
                   >
-                    {selectMode ? "Done" : "Select"}
+                    {selectMode ? t("ledger.selectDone") : t("ledger.select")}
                   </Button>
                   {selectMode ? (
                     <Button
@@ -592,7 +590,9 @@ export function TransactionsView({
                         )
                       }
                     >
-                      {allState === "all" ? "Clear all" : "Select all"}
+                      {allState === "all"
+                        ? t("ledger.clearAll")
+                        : t("ledger.selectAll")}
                     </Button>
                   ) : null}
                   <Button
@@ -600,8 +600,8 @@ export function TransactionsView({
                     size="sm"
                     className="h-8 px-2"
                     onClick={handleExport}
-                    title="Export these entries as CSV"
-                    aria-label="Export these entries as CSV"
+                    title={t("ledger.exportCsv")}
+                    aria-label={t("ledger.exportCsv")}
                   >
                     <DownloadSimple size={ICON.md} weight="light" />
                   </Button>
@@ -612,8 +612,8 @@ export function TransactionsView({
                     render={
                       <Link
                         href="/import"
-                        title="Import a CSV statement"
-                        aria-label="Import a CSV statement"
+                        title={t("ledger.importCsv")}
+                        aria-label={t("ledger.importCsv")}
                       >
                         <UploadSimple size={ICON.md} weight="light" />
                       </Link>
@@ -626,7 +626,7 @@ export function TransactionsView({
             <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t border-border pt-3 text-sm">
               <p className="text-muted-foreground">
                 {filtered.length === transactions.length
-                  ? `${transactions.length} ${transactions.length === 1 ? "entry" : "entries"}`
+                  ? t("ledger.entryCount", { count: transactions.length })
                   : `${filtered.length} of ${transactions.length} entries`}
               </p>
               <p className="flex flex-wrap gap-x-5 gap-y-1">
@@ -660,8 +660,8 @@ export function TransactionsView({
 
             {filtered.length === 0 ? (
               <EmptyState
-                title="No matching entries"
-                description="Try another search or filter."
+                title={t("ledger.noMatchTitle")}
+                description={t("ledger.noMatchBody")}
                 className="border-0 bg-transparent p-6"
               >
                 {hasActiveFilters ? (

@@ -6,6 +6,7 @@ import { formatRunway, summarizeProjection } from "@finance/core/projection";
 import { Card } from "@/components/retroui/Card";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-context";
 
 interface ProjectionCardProps {
   points: ProjectionPoint[];
@@ -26,9 +27,10 @@ export function ProjectionCard({
   runway,
   startingBalance = 0,
 }: ProjectionCardProps) {
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const summary = summarizeProjection(points, startingBalance);
-  const runwayLine = formatRunway(runway);
+  const runwayLine = formatRunway(runway, locale);
 
   if (!summary) {
     return null;

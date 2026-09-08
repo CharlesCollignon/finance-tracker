@@ -16,6 +16,7 @@ import {
   recordMonthClose,
 } from "@/lib/actions/month-close";
 import { getBankBalanceSuggestion } from "@/lib/actions/bank";
+import { useLocale, useT } from "@/lib/locale-context";
 
 interface MonthCloseSheetProps {
   open: boolean;
@@ -74,6 +75,8 @@ export function MonthCloseSheet({
   unrecordedCap,
   baseline,
 }: MonthCloseSheetProps) {
+  const locale = useLocale();
+  const t = useT();
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
   const [balance, setBalance] = useState("");
@@ -129,7 +132,7 @@ export function MonthCloseSheet({
         parsedBalance,
       );
       if (response.error || !response.result) {
-        toast(response.error ?? "Could not work that out.", "error");
+        toast(response.error ?? t("monthClose.couldNotWorkOut"), "error");
         return;
       }
       setResult(response.result);
@@ -141,7 +144,7 @@ export function MonthCloseSheet({
     startTransition(async () => {
       const response = await recordMonthClose(year, month, parsedBalance);
       if (response.error || !response.result) {
-        toast(response.error ?? "Could not close the month.", "error");
+        toast(response.error ?? t("monthClose.couldNotClose"), "error");
         return;
       }
       setResult(response.result);
@@ -172,31 +175,34 @@ export function MonthCloseSheet({
     <MobileSheet
       open={open}
       onOpenChange={(next) => (next ? onOpenChange(true) : close())}
-      title={stage === "closed" ? monthLabel : `Close ${monthLabel}`}
+      title={
+        stage === "closed"
+          ? monthLabel
+          : t("monthClose.closeMonth", { month: monthLabel })
+      }
     >
       <div className="flex flex-col gap-4">
         {stage === "entering" && (
           <>
             <Text className="text-sm text-muted-foreground">
-              What did your account hold on {formatShortDate(observeOn)}? Add up
-              the accounts your day-to-day spending leaves from — one number is
-              all this needs.
+              {t("monthClose.balancePrompt", {
+                date: formatShortDate(observeOn, locale),
+              })}
             </Text>
             {isBaseline ? (
               <Text className="text-sm text-muted-foreground">
-                This first one only sets the starting point. There is nothing to
-                measure against yet; next month there will be.
+                {t("monthClose.baselineNote")}
               </Text>
             ) : (
               <Text className="text-sm text-muted-foreground">
-                Read it on the same day every month. That way the card payments
-                still in flight are the same distortion each time, and the
-                months stay comparable.
+                {t("monthClose.sameDayNote")}
               </Text>
             )}
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium">Balance</span>
+              <span className="text-sm font-medium">
+                {t("monthClose.balance")}
+              </span>
               {fromBank ? (
                 <span className="text-xs text-muted-foreground">
                   Filled in from your bank. Change it if the reading day differs
@@ -210,7 +216,7 @@ export function MonthCloseSheet({
                 placeholder="2400.50"
                 value={balance}
                 onChange={(event) => setBalance(event.target.value)}
-                aria-label={`Balance on ${observeOn}`}
+                aria-label={t("monthClose.balanceOn", { date: observeOn })}
               />
             </label>
 
@@ -221,7 +227,9 @@ export function MonthCloseSheet({
               disabled={pending || !balanceIsUsable}
               onClick={check}
             >
-              {pending ? "Working it out…" : "See what that means"}
+              {pending
+                ? t("monthClose.working")
+                : t("monthClose.seeWhatThatMeans")}
             </Button>
           </>
         )}
@@ -230,7 +238,9 @@ export function MonthCloseSheet({
           <>
             {result.status === "baseline" ? (
               <div>
-                <h3 className="font-head text-lg">Starting point set</h3>
+                <h3 className="font-head text-lg">
+                  {t("monthClose.startingPointSet")}
+                </h3>
                 <Text className="mt-1 text-sm text-muted-foreground">
                   {formatMoney(result.closingBalance)} on{" "}
                   {formatShortDate(observeOn)}. Close next month and the app can
@@ -239,7 +249,9 @@ export function MonthCloseSheet({
               </div>
             ) : result.status === "over-recorded" ? (
               <div>
-                <h3 className="font-head text-lg">Something is missing</h3>
+                <h3 className="font-head text-lg">
+                  {t("monthClose.somethingMissing")}
+                </h3>
                 <Text className="mt-1 text-sm text-muted-foreground">
                   The account holds {formatMoney(result.unexplainedCredit ?? 0)}{" "}
                   more than the recorded movements allow. Usually that means
@@ -252,13 +264,17 @@ export function MonthCloseSheet({
               <div>
                 <h3 className="font-head text-lg">
                   {result.kept !== null && result.kept > 0
-                    ? `You kept ${formatMoney(result.kept)}`
-                    : `${monthLabel} cost more than it brought in`}
+                    ? t("monthClose.youKept", {
+                        amount: formatMoney(result.kept),
+                      })
+                    : t("monthClose.costMoreThanItBrought", {
+                        month: monthLabel,
+                      })}
                 </h3>
                 <Text className="mt-1 text-sm text-muted-foreground">
                   {result.keptRate !== null
-                    ? `${result.keptRate}% of what came in, counting what you set aside.`
-                    : "Counting what you set aside."}
+                    ? t("monthClose.keptRate", { rate: result.keptRate })
+                    : t("monthClose.keptRateUnknown")}
                 </Text>
                 {days !== null && (
                   <Text className="mt-1 text-sm text-muted-foreground">
@@ -271,22 +287,22 @@ export function MonthCloseSheet({
 
             <div className="rounded-lg border border-border p-3">
               <Figure
-                label="Came in"
+                label={t("monthClose.cameIn")}
                 value={formatMoney(result.flows.income)}
               />
               <Figure
-                label="Recorded spending"
+                label={t("monthClose.recordedSpending")}
                 value={formatMoney(result.flows.expenses)}
               />
               <Figure
-                label="Set aside"
+                label={t("monthClose.setAside")}
                 value={formatMoney(
                   result.flows.savings + result.flows.transfers,
                 )}
               />
               {result.unrecorded !== null && (
                 <Figure
-                  label="Never recorded"
+                  label={t("monthClose.neverRecorded")}
                   value={formatMoney(result.unrecorded)}
                   tone={overCap ? "warn" : "good"}
                 />
@@ -297,11 +313,19 @@ export function MonthCloseSheet({
               <Text className="text-sm text-muted-foreground">
                 {unrecordedCap !== null
                   ? overCap
-                    ? `That is ${formatMoney(result.unrecorded - unrecordedCap)} over your ${formatMoney(unrecordedCap)} allowance.`
-                    : `Inside your ${formatMoney(unrecordedCap)} allowance, with ${formatMoney(unrecordedCap - result.unrecorded)} to spare.`
+                    ? t("monthClose.overAllowance", {
+                        over: formatMoney(result.unrecorded - unrecordedCap),
+                        cap: formatMoney(unrecordedCap),
+                      })
+                    : t("monthClose.insideAllowance", {
+                        cap: formatMoney(unrecordedCap),
+                        spare: formatMoney(unrecordedCap - result.unrecorded),
+                      })
                   : baseline !== null
-                    ? `A normal month for you is around ${formatMoney(baseline)}.`
-                    : "Spending the app never heard about — the restaurants, the rounds, the things bought on the way home. Nothing to fix, just worth knowing."}
+                    ? t("monthClose.normalMonth", {
+                        amount: formatMoney(baseline),
+                      })
+                    : t("monthClose.unrecordedBlurb")}
               </Text>
             )}
 
@@ -314,7 +338,9 @@ export function MonthCloseSheet({
                   disabled={pending}
                   onClick={confirm}
                 >
-                  {pending ? "Closing…" : `Close ${monthLabel}`}
+                  {pending
+                    ? t("monthClose.closing")
+                    : t("monthClose.closeMonth", { month: monthLabel })}
                 </Button>
                 <Button
                   type="button"
@@ -324,7 +350,7 @@ export function MonthCloseSheet({
                   disabled={pending}
                   onClick={() => setStage("entering")}
                 >
-                  Change the balance
+                  {t("monthClose.changeTheBalance")}
                 </Button>
               </div>
             ) : (
@@ -335,7 +361,7 @@ export function MonthCloseSheet({
                   className="w-full"
                   onClick={close}
                 >
-                  Done
+                  {t("monthClose.done")}
                 </Button>
                 <Button
                   type="button"
@@ -345,7 +371,7 @@ export function MonthCloseSheet({
                   disabled={pending}
                   onClick={undo}
                 >
-                  That balance was wrong — reopen the month
+                  {t("monthClose.reopen")}
                 </Button>
               </div>
             )}

@@ -1,7 +1,7 @@
 import { Badge } from "@/components/retroui/Badge";
 import {
   CATEGORY_TYPE_BADGE_CLASS,
-  CATEGORY_TYPE_LABELS,
+  categoryTypeLabels,
 } from "@finance/core/category-styles";
 import type { CategoryType } from "@finance/core/types/database";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,7 @@ export function CategoryTypeBadge({ type, className }: CategoryTypeBadgeProps) {
       variant="default"
       className={cn(CATEGORY_TYPE_BADGE_CLASS[type], className)}
     >
-      {CATEGORY_TYPE_LABELS[type]}
+      {categoryTypeLabels()[type]}
     </Badge>
   );
 }
