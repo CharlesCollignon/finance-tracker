@@ -249,8 +249,7 @@ export const en = {
     goalName: "Goal name",
     deleteGoalTitle: "Delete this goal?",
     deleteCapTitle: "Delete this budget?",
-    deleteWarning:
-      "This cannot be undone. Your transactions are not affected.",
+    deleteWarning: "This cannot be undone. Your transactions are not affected.",
     goalReached: "Goal reached!",
     goalOverdue: "Target date passed — {amount} still to save.",
     goalOnSchedule: "Save {amount}/month to reach this by {month}.",
@@ -719,7 +718,8 @@ export const en = {
     monthEnd: "Month end",
     finishedMonthNote:
       "A finished month, as the ledger recorded it. What an account holds is only ever true today.",
-    connectBankNote: "Connect a bank to lead with what is actually in your account.",
+    connectBankNote:
+      "Connect a bank to lead with what is actually in your account.",
     setUpTitle: "Set up your month",
     setUpBody: "Add what repeats once. Every month is forecast from it.",
     setUpCharges: "Set up charges",
@@ -1076,8 +1076,10 @@ export const en = {
   budgetView: {
     currentOption: "Current · {date}",
     monthEndOption: "End of month · {date}",
-    currentHint: "Through today only — future expenses and DCA not counted yet.",
-    monthEndHint: "Includes all recurring due this month, including wallet DCA.",
+    currentHint:
+      "Through today only — future expenses and DCA not counted yet.",
+    monthEndHint:
+      "Includes all recurring due this month, including wallet DCA.",
   },
 
   /**
@@ -1120,6 +1122,46 @@ export const en = {
     exact: "The same to the cent, {when}",
     more: "{amount} more than expected, {when}",
     less: "{amount} less than expected, {when}",
+    /** Plural on how many are being asked about, which the words do not name. */
+    askTitle: { one: "Did this arrive?", other: "Did these arrive?" },
+    thatsIt: "That's it",
+    notIt: "Not it",
+    /**
+     * What a ledger row says about itself.
+     *
+     * Short enough to sit in a row's subtitle beside the note, and worded as
+     * the state rather than the action: the press that changes it lives on the
+     * Month screen, not on the row.
+     */
+    state: {
+      confirmed: "Confirmed",
+      toConfirm: "To confirm",
+    },
+    /**
+     * Why a charge was never offered for confirming.
+     *
+     * An absence needs a reason more than a presence does — a matcher that
+     * silently declines looks broken, where one that says "nothing in its
+     * category to match" is obviously working and obviously narrow. Lower case
+     * because each of these follows a "label · amount · date ·" prefix.
+     */
+    misses: {
+      hide: "Hide what was not offered",
+      show: {
+        one: "{count} other charge was not offered — why?",
+        other: "{count} other charges were not offered — why?",
+      },
+      nothingAlike: "nothing in its category to match",
+      refused: "you said the nearest movement was not it",
+      notArrived: "the nearest movement has not happened yet",
+      amountNear: "nearest was {amount}, too far from {expected}",
+      amountNone: "no movement of the right size",
+      dateNear: {
+        one: "nearest was {count} day away, beyond the {window}-day window",
+        other: "nearest was {count} days away, beyond the {window}-day window",
+      },
+      dateNone: "no movement near enough in time",
+    },
   },
 
   /** Bringing a bank statement in from a file. */

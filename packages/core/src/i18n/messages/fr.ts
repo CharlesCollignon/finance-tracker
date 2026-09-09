@@ -209,8 +209,7 @@ export const fr: Messages = {
     goalName: "Nom de l'objectif",
     deleteGoalTitle: "Supprimer cet objectif\u00A0?",
     deleteCapTitle: "Supprimer ce plafond\u00A0?",
-    deleteWarning:
-      "C'est irréversible. Vos transactions ne sont pas touchées.",
+    deleteWarning: "C'est irréversible. Vos transactions ne sont pas touchées.",
     goalReached: "Objectif atteint\u00A0!",
     goalOverdue: "Date cible dépassée — {amount} encore à épargner.",
     goalOnSchedule: "Épargnez {amount}/mois pour y arriver avant {month}.",
@@ -425,7 +424,8 @@ export const fr: Messages = {
     emptyBodyMobile: "PEA, CTO et crypto arrivent ici.",
     trackTitle: "Suivre un investissement",
     trackBody: "Une contribution récurrente devient une position.",
-    addBtcForValue: "Renseignez le total BTC pour la valeur de marché en direct",
+    addBtcForValue:
+      "Renseignez le total BTC pour la valeur de marché en direct",
     addSharesForValue:
       "Renseignez le nombre de parts pour la valeur de marché en direct",
     transferAmountPlaceholder: "Montant",
@@ -452,15 +452,15 @@ export const fr: Messages = {
     somethingMissing: "Il manque quelque chose",
     youKept: "Vous avez gardé {amount}",
     costMoreThanItBrought: "{month} a coûté plus qu'il n'a rapporté",
-    keptRate: "{rate}% de ce qui est entré, en comptant ce que vous avez mis de côté.",
+    keptRate:
+      "{rate}% de ce qui est entré, en comptant ce que vous avez mis de côté.",
     keptRateUnknown: "En comptant ce que vous avez mis de côté.",
     cameIn: "Entré",
     recordedSpending: "Dépenses enregistrées",
     setAside: "Mis de côté",
     neverRecorded: "Jamais enregistré",
     overAllowance: "C'est {over} au-delà de votre enveloppe de {cap}.",
-    insideAllowance:
-      "Dans votre enveloppe de {cap}, avec {spare} de marge.",
+    insideAllowance: "Dans votre enveloppe de {cap}, avec {spare} de marge.",
     normalMonth: "Un mois normal chez vous tourne autour de {amount}.",
     unrecordedBlurb:
       "Des dépenses dont l'application n'a jamais entendu parler — les restaurants, les tournées, ce qu'on achète en rentrant. Rien à corriger, juste bon à savoir.",
@@ -847,8 +847,7 @@ export const fr: Messages = {
     unrecordedNote: "mesuré sur le solde du compte, pas estimé",
     cashChange: "Ce que le compte a bougé",
     unrecordedSoFar: "Dépenses non enregistrées à ce jour",
-    unrecordedSoFarNote:
-      "mesuré, et pas définitif avant la clôture du mois",
+    unrecordedSoFarNote: "mesuré, et pas définitif avant la clôture du mois",
     onHand: "Ce que les comptes contiennent",
     committed: "Doit encore partir",
     arriving: "Doit encore arriver",
@@ -874,7 +873,8 @@ export const fr: Messages = {
     headlineLeft: "Reste ce mois-ci",
     headlineShort: "Il manque",
     headlineFree: "À vous de dépenser",
-    noBalance: "Connectez une banque pour voir ce qu'il y a vraiment sur le compte.",
+    noBalance:
+      "Connectez une banque pour voir ce qu'il y a vraiment sur le compte.",
     nothingDue: "Plus rien n'est prévu ce mois-ci.",
     afterLeaving: "Après tout ce qui doit encore partir.",
     includingArriving: "Y compris ce qui doit encore arriver.",
@@ -962,6 +962,36 @@ export const fr: Messages = {
     exact: "Au centime près, {when}",
     more: "{amount} de plus que prévu, {when}",
     less: "{amount} de moins que prévu, {when}",
+    askTitle: {
+      one: "Est-ce bien arrivé\u00A0?",
+      other: "Sont-ils bien arrivés\u00A0?",
+    },
+    thatsIt: "C'est ça",
+    notIt: "Ce n'est pas ça",
+    state: {
+      confirmed: "Confirmé",
+      toConfirm: "À confirmer",
+    },
+    misses: {
+      hide: "Masquer ce qui n'a pas été proposé",
+      show: {
+        one: "{count} autre charge n'a pas été proposée — pourquoi\u00A0?",
+        other:
+          "{count} autres charges n'ont pas été proposées — pourquoi\u00A0?",
+      },
+      nothingAlike: "rien dans sa catégorie à rapprocher",
+      refused:
+        "vous avez dit que le mouvement le plus proche n'était pas le bon",
+      notArrived: "le mouvement le plus proche n'a pas encore eu lieu",
+      amountNear: "le plus proche était {amount}, trop loin de {expected}",
+      amountNone: "aucun mouvement du bon montant",
+      dateNear: {
+        one: "le plus proche était à {count} jour, au-delà de la fenêtre de {window} jours",
+        other:
+          "le plus proche était à {count} jours, au-delà de la fenêtre de {window} jours",
+      },
+      dateNone: "aucun mouvement assez proche dans le temps",
+    },
   },
 
   csvImport: {
@@ -1019,7 +1049,8 @@ export const fr: Messages = {
     targetPositive: "L'objectif doit être positif",
     capNotNegative: "Un plafond ne peut pas être négatif",
     zeroOrMore: "Doit être 0 ou plus",
-    positiveNumber: "Saisissez un nombre positif (virgule ou point pour les décimales)",
+    positiveNumber:
+      "Saisissez un nombre positif (virgule ou point pour les décimales)",
     chargeAsPercent: "Saisissez les frais en pourcentage, par exemple 0,20",
     chargeTooHigh:
       "Cela semble trop élevé — saisissez 0,20 pour 0,20 %, pas 20",

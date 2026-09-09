@@ -65,9 +65,13 @@ export function ArrivedCharges({
   const [showMisses, setShowMisses] = useState(false);
   const waiting = proposals.filter((proposal) => !answered.has(proposal.key));
 
-  // The misses alone are not worth a block. They explain an absence, and an
-  // absence is only a question once something else has been offered.
-  if (waiting.length === 0) {
+  // This used to return on `waiting.length === 0` alone, on the reasoning that
+  // "an absence is only a question once something else has been offered". That
+  // was right while the misses were a footnote to a question; it is wrong now
+  // that they are the only place a charge which never arrived is mentioned. A
+  // month where nothing was offered and three charges are missing is the case
+  // this block exists for, and it was the one case it stayed silent for.
+  if (waiting.length === 0 && misses.length === 0) {
     return null;
   }
 
@@ -95,9 +99,11 @@ export function ArrivedCharges({
 
   return (
     <section aria-label={t("common.arrivedCharges")} className="flex flex-col">
-      <h3 className="border-b border-foreground/10 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        {waiting.length === 1 ? "Did this arrive?" : "Did these arrive?"}
-      </h3>
+      {waiting.length > 0 ? (
+        <h3 className="border-b border-foreground/10 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {t("fulfilment.askTitle", { count: waiting.length })}
+        </h3>
+      ) : null}
 
       <ul className="flex flex-col">
         {waiting.map((proposal) => {
@@ -185,7 +191,14 @@ export function ArrivedCharges({
       </ul>
 
       {misses.length > 0 ? (
-        <div className="border-t border-foreground/10 px-4 py-2.5">
+        <div
+          className={cn(
+            "px-4 py-2.5",
+            // No rule above it when nothing was offered: the block then starts
+            // here, and a top border would read as a stray line.
+            waiting.length > 0 && "border-t border-foreground/10",
+          )}
+        >
           <button
             type="button"
             onClick={() => setShowMisses((current) => !current)}
@@ -193,10 +206,8 @@ export function ArrivedCharges({
             className="text-xs text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
           >
             {showMisses
-              ? "Hide what was not offered"
-              : `${misses.length} other ${
-                  misses.length === 1 ? "charge was" : "charges were"
-                } not offered — why?`}
+              ? t("fulfilment.misses.hide")
+              : t("fulfilment.misses.show", { count: misses.length })}
           </button>
 
           {showMisses ? (
@@ -212,7 +223,7 @@ export function ArrivedCharges({
                   </PrivateAmount>
                   <span>{formatShortDate(miss.occurredOn)}</span>
                   <span>·</span>
-                  <span>{describeMiss(miss, formatMoney)}</span>
+                  <span>{describeMiss(miss, formatMoney, locale)}</span>
                 </li>
               ))}
             </ul>

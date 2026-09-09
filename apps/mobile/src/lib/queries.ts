@@ -18,11 +18,14 @@ import {
   getRecurringOccurrenceDates,
 } from "@finance/core/recurrence";
 import {
+  explainFulfilmentMisses,
   proposeFulfilments,
   refusalKey,
+  type FulfilmentMiss,
   type FulfilmentMovement,
   type FulfilmentOccurrence,
   type FulfilmentProposal,
+  type ProposeOptions,
 } from "@finance/core/recurring-fulfilment";
 import { buildMonthlySummary } from "@finance/core/monthly-summary";
 import {
@@ -1059,6 +1062,46 @@ export async function getFulfilledKeys(userId: string): Promise<Set<string>> {
   );
 }
 
+/**
+ * Which ledger rows stand in for an occurrence, by transaction id.
+ *
+ * The same table as `getFulfilledKeys` read down its other axis: that one
+ * answers "is this occurrence settled?" for the forecast, this one answers
+ * "does this row settle something?" for a row on screen. Cheap either way —
+ * `recurring_fulfilments` holds one row per confirmed occurrence, so a decade
+ * of a dozen charges is a few thousand rows of three columns.
+ *
+ * Deliberately not month-scoped, and it must stay that way.
+ * `recurring_fulfilments.occurred_on` is the date of the *occurrence*, not of
+ * the movement — that separation is the whole point of the table — so a
+ * payment on the 31st can settle an occurrence dated the 1st. Filtering this
+ * by the month on screen would take the mark off the very row that earned it.
+ *
+ * Separate from the fulfilment report rather than folded into it because the
+ * report gives up early when a month generates no occurrences, which happens
+ * whenever a template is inactive or outside its date range. Sourced from
+ * there, a confirmation would disappear the moment its template was switched
+ * off — retroactively, across every month.
+ */
+export async function getConfirmedTransactionIds(
+  userId: string,
+): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from("recurring_fulfilments")
+    .select("transaction_id")
+    .eq("user_id", userId);
+
+  if (error) {
+    if (isMissingSchema(error)) {
+      return new Set();
+    }
+    throw error;
+  }
+
+  // `transaction_id` is `not null` in migration 023, so nothing can slip in.
+  return new Set((data ?? []).map((row) => row.transaction_id as string));
+}
+
 /** Every occurrence a month's active templates call for. */
 function occurrencesFor(
   templates: readonly RecurringTemplateWithCategory[],
@@ -1116,18 +1159,32 @@ function shiftDays(iso: string, days: number): string {
     .slice(0, 10);
 }
 
-export async function getFulfilmentProposals(
+/**
+ * The proposals, and why every other charge was not one.
+ *
+ * Mirrors the web twin. The two halves account for every occurrence the month
+ * called for exactly once, which is what makes the pair worth reading: a
+ * matcher that offers two of five charges and says nothing about the other
+ * three looks broken rather than narrow.
+ */
+export interface FulfilmentReport {
+  proposals: FulfilmentProposal[];
+  misses: FulfilmentMiss[];
+}
+
+/**
+ * The movements that could fulfil something this month, and what the user has
+ * already decided about them.
+ *
+ * Split out so the report and the bare proposals share one round trip without
+ * either paying for the other's work — the tab bar's count asks for proposals
+ * on every data-version bump and has no use for the misses.
+ */
+async function readCandidates(
   userId: string,
-  templates: readonly RecurringTemplateWithCategory[],
-  categories: readonly Category[],
   year: number,
   month: number,
-): Promise<FulfilmentProposal[]> {
-  const occurrences = occurrencesFor(templates, categories, year, month);
-  if (occurrences.length === 0) {
-    return [];
-  }
-
+): Promise<{ movements: FulfilmentMovement[]; options: ProposeOptions }> {
   const { start, end } = getMonthBounds(year, month);
   // A window either side of the month, because a charge due on the 1st can be
   // paid on the last day of the previous month and one due on the 31st on the
@@ -1181,23 +1238,70 @@ export async function getFulfilmentProposals(
     note: (row.note as string | null) ?? null,
   }));
 
-  return proposeFulfilments(occurrences, movements, {
-    // A movement dated after today has not arrived, whatever else matches.
-    today: todayIsoLocal(),
-    fulfilledKeys: new Set(
-      (fulfilments ?? []).map((row) =>
-        recurringOccurrenceKey(row.template_id, row.occurred_on),
+  return {
+    movements,
+    options: {
+      // A movement dated after today has not arrived, whatever else matches.
+      today: todayIsoLocal(),
+      fulfilledKeys: new Set(
+        (fulfilments ?? []).map((row) =>
+          recurringOccurrenceKey(row.template_id, row.occurred_on),
+        ),
       ),
-    ),
-    claimedTransactionIds: new Set(
-      (fulfilments ?? []).map((row) => row.transaction_id as string),
-    ),
-    refusedPairs: new Set(
-      (refusals ?? []).map((row) =>
-        refusalKey(row.template_id, row.occurred_on, row.transaction_id),
+      claimedTransactionIds: new Set(
+        (fulfilments ?? []).map((row) => row.transaction_id as string),
       ),
-    ),
-  });
+      refusedPairs: new Set(
+        (refusals ?? []).map((row) =>
+          refusalKey(row.template_id, row.occurred_on, row.transaction_id),
+        ),
+      ),
+    },
+  };
+}
+
+export async function getFulfilmentReport(
+  userId: string,
+  templates: readonly RecurringTemplateWithCategory[],
+  categories: readonly Category[],
+  year: number,
+  month: number,
+): Promise<FulfilmentReport> {
+  const occurrences = occurrencesFor(templates, categories, year, month);
+  if (occurrences.length === 0) {
+    return { proposals: [], misses: [] };
+  }
+
+  const { movements, options } = await readCandidates(userId, year, month);
+  const proposals = proposeFulfilments(occurrences, movements, options);
+
+  return {
+    proposals,
+    misses: explainFulfilmentMisses(occurrences, movements, proposals, options),
+  };
+}
+
+/**
+ * The proposals alone, for a caller with no use for an absence.
+ *
+ * The tab bar's count asks this on every data-version bump; running
+ * `explainFulfilmentMisses` there and discarding it would be work done for
+ * nobody.
+ */
+export async function getFulfilmentProposals(
+  userId: string,
+  templates: readonly RecurringTemplateWithCategory[],
+  categories: readonly Category[],
+  year: number,
+  month: number,
+): Promise<FulfilmentProposal[]> {
+  const occurrences = occurrencesFor(templates, categories, year, month);
+  if (occurrences.length === 0) {
+    return [];
+  }
+
+  const { movements, options } = await readCandidates(userId, year, month);
+  return proposeFulfilments(occurrences, movements, options);
 }
 
 /** How many are waiting, for the tab bar's badge. */

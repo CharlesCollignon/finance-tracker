@@ -12,6 +12,7 @@ import { MonthPicker } from "@/components/layout/MonthPicker";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { RowCheckbox, SelectionBar } from "@/components/finance/SelectionBar";
 import { useToast } from "@/components/layout/ToastProvider";
+import { FulfilmentDot } from "@/components/finance/FulfilmentDot";
 import { deleteTransactions, moveTransactions } from "@/lib/actions/finance";
 import {
   planSelectionMove,
@@ -24,6 +25,10 @@ import { StatHero } from "@/components/finance/StatHero";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { formatMonthLabel } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
+import {
+  FULFILMENT_STATE_KEY,
+  indexFulfilmentStates,
+} from "@finance/core/fulfilment-state";
 import { computeMonthlyBudget } from "@finance/core/budget";
 import {
   buildCalendarWeeks,
@@ -51,6 +56,10 @@ interface CalendarViewProps {
   transactions: TransactionWithCategory[];
   categories: Category[];
   recurringTemplates: RecurringTemplateWithCategory[];
+  /** Rows the user has confirmed settle a recurring charge. */
+  confirmedTransactionIds?: string[];
+  /** Rows the matcher has offered as settling one, awaiting a press. */
+  proposedTransactionIds?: string[];
   year: number;
   month: number;
 }
@@ -59,6 +68,8 @@ export function CalendarView({
   transactions,
   categories,
   recurringTemplates,
+  confirmedTransactionIds,
+  proposedTransactionIds,
   year,
   month,
 }: CalendarViewProps) {
@@ -66,6 +77,16 @@ export function CalendarView({
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
   const { toast } = useToast();
+
+  /** What each row can say about itself, by transaction id. */
+  const fulfilmentStates = useMemo(
+    () =>
+      indexFulfilmentStates(
+        proposedTransactionIds ?? [],
+        confirmedTransactionIds ?? [],
+      ),
+    [proposedTransactionIds, confirmedTransactionIds],
+  );
   // Row selection is keyed by day, the same way the day itself is keyed by
   // month above: changing day empties it by derivation, with no effect.
   const [rowSelection, setRowSelection] = useState<{
@@ -385,67 +406,83 @@ export function CalendarView({
                   className="w-full"
                   innerClassName="divide-y divide-border px-2 py-1"
                 >
-                  {selectedTransactions.map((tx) => (
-                    <button
-                      key={tx.id}
-                      type="button"
-                      onClick={() =>
-                        selectMode
-                          ? setSelected((current) =>
-                              toggleSelected(current, tx.id),
-                            )
-                          : setEditTransaction(tx)
-                      }
-                      aria-label={
-                        selectMode
-                          ? `Select ${tx.categories.name}`
-                          : `Edit ${tx.categories.name}`
-                      }
-                      aria-pressed={
-                        selectMode ? selected.has(tx.id) : undefined
-                      }
-                      className={cn(
-                        "flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30",
-                        selectMode && selected.has(tx.id) && "bg-primary/5",
-                      )}
-                    >
-                      {selectMode ? (
-                        <RowCheckbox
-                          checked={selected.has(tx.id)}
-                          label={`Select ${tx.categories.name}`}
-                          onChange={() =>
-                            setSelected((current) =>
-                              toggleSelected(current, tx.id),
-                            )
-                          }
-                        />
-                      ) : null}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium leading-snug">
-                          {tx.categories.name}
-                        </p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {[
-                            tx.recurring_template_id
-                              ? t("calendarView.recurring")
-                              : null,
-                            tx.note,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ") || "—"}
-                        </p>
-                      </div>
-                      <span
+                  {selectedTransactions.map((tx) => {
+                    const fulfilment = fulfilmentStates.get(tx.id);
+                    return (
+                      <button
+                        key={tx.id}
+                        type="button"
+                        onClick={() =>
+                          selectMode
+                            ? setSelected((current) =>
+                                toggleSelected(current, tx.id),
+                              )
+                            : setEditTransaction(tx)
+                        }
+                        aria-label={
+                          selectMode
+                            ? `Select ${tx.categories.name}`
+                            : `Edit ${tx.categories.name}`
+                        }
+                        aria-pressed={
+                          selectMode ? selected.has(tx.id) : undefined
+                        }
                         className={cn(
-                          "privacy-amount shrink-0 font-mono text-sm font-semibold tabular-nums",
-                          TYPE_AMOUNT_CLASS[tx.categories.type],
+                          "flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30",
+                          selectMode && selected.has(tx.id) && "bg-primary/5",
                         )}
                       >
-                        {tx.categories.type === "income" ? "+" : "−"}
-                        {formatEuro(Number(tx.amount))}
-                      </span>
-                    </button>
-                  ))}
+                        {selectMode ? (
+                          <RowCheckbox
+                            checked={selected.has(tx.id)}
+                            label={`Select ${tx.categories.name}`}
+                            onChange={() =>
+                              setSelected((current) =>
+                                toggleSelected(current, tx.id),
+                              )
+                            }
+                          />
+                        ) : null}
+                        <div className="min-w-0 flex-1">
+                          {/* `items-baseline`, not `items-center`: this name is
+                            allowed to wrap to two lines, and a centred dot
+                            would then float in the middle of the block
+                            instead of sitting beside the first word. */}
+                          <p className="flex items-baseline gap-1.5 text-sm font-medium leading-snug">
+                            <span className="min-w-0">
+                              {tx.categories.name}
+                            </span>
+                            <FulfilmentDot state={fulfilment} />
+                          </p>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {[
+                              // Ahead of "recurring": this is the newer and more
+                              // specific fact about the row, and it is the one
+                              // the dot beside the name is pointing at.
+                              fulfilment
+                                ? t(FULFILMENT_STATE_KEY[fulfilment])
+                                : null,
+                              tx.recurring_template_id
+                                ? t("calendarView.recurring")
+                                : null,
+                              tx.note,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ") || "—"}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            "privacy-amount shrink-0 font-mono text-sm font-semibold tabular-nums",
+                            TYPE_AMOUNT_CLASS[tx.categories.type],
+                          )}
+                        >
+                          {tx.categories.type === "income" ? "+" : "−"}
+                          {formatEuro(Number(tx.amount))}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </Card.Bezel>
               )}
             </section>

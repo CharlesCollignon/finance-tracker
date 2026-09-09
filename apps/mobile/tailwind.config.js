@@ -53,6 +53,14 @@ module.exports = {
           DEFAULT: token("destructive"),
           foreground: token("destructive-foreground"),
         },
+        // Orange, and deliberately not the gold `primary`: this marks a row
+        // waiting on a decision, and at 8px it has to be told apart from both
+        // the tan accent and the salmon `destructive` already sitting on the
+        // amount in the same row.
+        warning: {
+          DEFAULT: token("warning"),
+          foreground: token("warning-foreground"),
+        },
         // Hairlines are always translucent; the channels flip per scheme.
         // 0.10, matching COLORS.border in theme/tokens.ts. The class had been
         // 0.08 while the imperative token was 0.10, so a hairline drawn from

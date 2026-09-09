@@ -14,6 +14,11 @@ import {
 } from "@finance/core/calendar";
 import { computeMonthlyBudget } from "@finance/core/budget";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
+import {
+  FULFILMENT_STATE_KEY,
+  indexFulfilmentStates,
+} from "@finance/core/fulfilment-state";
+import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
 import type {
   Category,
   RecurringTemplateWithCategory,
@@ -21,6 +26,7 @@ import type {
 } from "@finance/core/types/database";
 
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { FulfilmentDot } from "@/components/FulfilmentDot";
 import { MonthPicker } from "@/components/MonthPicker";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { deleteTransactions, moveTransactions } from "@/lib/mutations";
@@ -53,6 +59,8 @@ import { useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
 import {
   getCategories,
+  getConfirmedTransactionIds,
+  getFulfilmentProposals,
   getRecurringTemplates,
   getTransactions,
 } from "@/lib/queries";
@@ -89,19 +97,44 @@ export default function CalendarScreen() {
           transactions: [] as TransactionWithCategory[],
           categories: [] as Category[],
           templates: [] as RecurringTemplateWithCategory[],
+          confirmed: new Set<string>(),
+          proposals: [] as FulfilmentProposal[],
         };
       }
-      const [transactions, categories, templates] = await Promise.all([
-        getTransactions(user.id, year, month),
-        getCategories(user.id),
-        getRecurringTemplates(user.id),
-      ]);
-      return { transactions, categories, templates };
+      const [transactions, categories, templates, confirmed] =
+        await Promise.all([
+          getTransactions(user.id, year, month),
+          getCategories(user.id),
+          getRecurringTemplates(user.id),
+          // Which rows settle a charge. Needs nothing else the batch fetches,
+          // so it rides along rather than costing a second hop.
+          getConfirmedTransactionIds(user.id),
+        ]);
+      // Asked after the batch, because it needs the templates and categories
+      // the batch fetched.
+      const proposals = await getFulfilmentProposals(
+        user.id,
+        templates,
+        categories,
+        year,
+        month,
+      );
+      return { transactions, categories, templates, confirmed, proposals };
     }, [user?.id, year, month, dataVersion]);
 
   const transactions = data?.transactions ?? [];
   const categories = data?.categories ?? [];
   const templates = data?.templates ?? [];
+
+  /** What each row can say about itself, by transaction id. */
+  const fulfilmentStates = useMemo(
+    () =>
+      indexFulfilmentStates(
+        (data?.proposals ?? []).map((proposal) => proposal.transactionId),
+        data?.confirmed ?? EMPTY_SELECTION,
+      ),
+    [data?.proposals, data?.confirmed],
+  );
 
   const byDate = useMemo(
     () => groupTransactionsByDate(transactions),
@@ -365,83 +398,113 @@ export default function CalendarScreen() {
             </EmptyState>
           ) : (
             <Card bezel innerClassName="px-2 py-1">
-              {dayTxs.map((tx, index) => (
-                <Pressable
-                  key={tx.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    selectMode
-                      ? `Select ${tx.categories.name}`
-                      : `Edit ${tx.categories.name}`
-                  }
-                  accessibilityState={
-                    selectMode
-                      ? { selected: selectedIds.has(tx.id) }
-                      : undefined
-                  }
-                  onPress={() => {
-                    void hapticLight();
-                    if (selectMode) {
-                      setSelected((current) => toggleSelected(current, tx.id));
-                      return;
+              {dayTxs.map((tx, index) => {
+                const fulfilment = fulfilmentStates.get(tx.id);
+                return (
+                  <Pressable
+                    key={tx.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      selectMode
+                        ? `Select ${tx.categories.name}`
+                        : `Edit ${tx.categories.name}`
                     }
-                    setEditing(tx);
-                  }}
-                  onLongPress={() => {
-                    void hapticLight();
-                    if (!selectMode) {
-                      setRowSelection({
-                        date: effectiveSelected,
-                        mode: true,
-                        ids: new Set([tx.id]),
-                      });
+                    accessibilityState={
+                      selectMode
+                        ? { selected: selectedIds.has(tx.id) }
+                        : undefined
                     }
-                  }}
-                  className={cn(
-                    "flex-row items-start gap-3 px-2 py-3.5",
-                    index > 0 && "border-t border-border",
-                    selectMode && selectedIds.has(tx.id) && "bg-primary/5",
-                  )}
-                >
-                  {selectMode ? (
-                    <RowCheckbox
-                      checked={selectedIds.has(tx.id)}
-                      label={`Select ${tx.categories.name}`}
-                      onPress={() =>
-                        setSelected((current) => toggleSelected(current, tx.id))
+                    // A hint rather than part of the label: the label is the
+                    // action this row performs, and the row's standing is not
+                    // part of the name of a button.
+                    accessibilityHint={
+                      fulfilment
+                        ? t(FULFILMENT_STATE_KEY[fulfilment])
+                        : undefined
+                    }
+                    onPress={() => {
+                      void hapticLight();
+                      if (selectMode) {
+                        setSelected((current) =>
+                          toggleSelected(current, tx.id),
+                        );
+                        return;
                       }
-                    />
-                  ) : null}
-                  <CategoryIcon icon={tx.categories.icon} />
-                  <View className="min-w-0 flex-1">
-                    <Text numberOfLines={1} className="text-sm font-medium">
-                      {tx.categories.name}
-                    </Text>
-                    <Text
-                      variant="muted"
-                      numberOfLines={1}
-                      className="mt-0.5 text-xs"
-                    >
-                      {[
-                        tx.recurring_template_id
-                          ? t("calendarView.recurring")
-                          : null,
-                        tx.note,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ") || "—"}
-                    </Text>
-                  </View>
-                  <PrivateAmount
+                      setEditing(tx);
+                    }}
+                    onLongPress={() => {
+                      void hapticLight();
+                      if (!selectMode) {
+                        setRowSelection({
+                          date: effectiveSelected,
+                          mode: true,
+                          ids: new Set([tx.id]),
+                        });
+                      }
+                    }}
                     className={cn(
-                      "font-mono text-sm font-semibold",
-                      TYPE_AMOUNT_CLASS[tx.categories.type],
+                      "flex-row items-start gap-3 px-2 py-3.5",
+                      index > 0 && "border-t border-border",
+                      selectMode && selectedIds.has(tx.id) && "bg-primary/5",
                     )}
                   >
-                    {`${tx.categories.type === "income" ? "+" : "−"}${formatEuro(Number(tx.amount))}`}
-                  </PrivateAmount>
-                </Pressable>
-              ))}
+                    {selectMode ? (
+                      <RowCheckbox
+                        checked={selectedIds.has(tx.id)}
+                        label={`Select ${tx.categories.name}`}
+                        onPress={() =>
+                          setSelected((current) =>
+                            toggleSelected(current, tx.id),
+                          )
+                        }
+                      />
+                    ) : null}
+                    <CategoryIcon icon={tx.categories.icon} />
+                    <View className="min-w-0 flex-1">
+                      <View className="flex-row items-center gap-1.5">
+                        {/* `shrink` because Yoga defaults flexShrink to 0 and
+                          overflow to visible: without it a long name does not
+                          clip, it draws over the amount. */}
+                        <Text
+                          numberOfLines={1}
+                          className="shrink text-sm font-medium"
+                        >
+                          {tx.categories.name}
+                        </Text>
+                        <FulfilmentDot state={fulfilment} />
+                      </View>
+                      <Text
+                        variant="muted"
+                        numberOfLines={1}
+                        className="mt-0.5 text-xs"
+                      >
+                        {[
+                          // Ahead of "recurring": this is the newer and more
+                          // specific fact about the row, and it is the one the
+                          // dot beside the name is pointing at.
+                          fulfilment
+                            ? t(FULFILMENT_STATE_KEY[fulfilment])
+                            : null,
+                          tx.recurring_template_id
+                            ? t("calendarView.recurring")
+                            : null,
+                          tx.note,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "—"}
+                      </Text>
+                    </View>
+                    <PrivateAmount
+                      className={cn(
+                        "font-mono text-sm font-semibold",
+                        TYPE_AMOUNT_CLASS[tx.categories.type],
+                      )}
+                    >
+                      {`${tx.categories.type === "income" ? "+" : "−"}${formatEuro(Number(tx.amount))}`}
+                    </PrivateAmount>
+                  </Pressable>
+                );
+              })}
             </Card>
           )}
         </ScrollView>

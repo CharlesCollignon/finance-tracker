@@ -16,6 +16,7 @@ import {
 } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/retroui/Button";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
+import { FulfilmentDot } from "@/components/finance/FulfilmentDot";
 import type { ReactNode } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
@@ -36,6 +37,10 @@ import {
   todayIsoLocal,
 } from "@finance/core/constants";
 import { buildStillToCome } from "@finance/core/still-to-come";
+import {
+  FULFILMENT_STATE_KEY,
+  indexFulfilmentStates,
+} from "@finance/core/fulfilment-state";
 import {
   applyRecurringForMonth,
   deleteTransactions,
@@ -82,6 +87,10 @@ interface TransactionsViewProps {
   recurringTemplates: RecurringTemplateWithCategory[];
   /** Occurrences waved off for this month, so they are not counted as owed. */
   skippedKeys?: string[];
+  /** Rows the user has confirmed settle a recurring charge. */
+  confirmedTransactionIds?: string[];
+  /** Rows the matcher has offered as settling one, awaiting a press. */
+  proposedTransactionIds?: string[];
   tags: Tag[];
   transactionTags: Record<string, Tag[]>;
   year: number;
@@ -164,6 +173,8 @@ export function TransactionsView({
   categories,
   recurringTemplates,
   skippedKeys,
+  confirmedTransactionIds,
+  proposedTransactionIds,
   tags,
   transactionTags,
   year,
@@ -174,6 +185,40 @@ export function TransactionsView({
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
   const t = useT();
+
+  /**
+   * What each row can say about itself, by transaction id.
+   *
+   * Absent from the map is the ordinary case — a movement no template is
+   * involved with — and the dot renders nothing for it.
+   */
+  const fulfilmentStates = useMemo(
+    () =>
+      indexFulfilmentStates(
+        proposedTransactionIds ?? [],
+        confirmedTransactionIds ?? [],
+      ),
+    [proposedTransactionIds, confirmedTransactionIds],
+  );
+
+  /**
+   * The row's second line: its standing, then whatever the user wrote.
+   *
+   * The same " · " join the Calendar row already uses, and the state comes
+   * first because it is what the dot beside the name is pointing at. The word
+   * is not decoration: the amount in this row is already coloured by category
+   * type, green for income and red for expense, so a colour on its own does
+   * not say which of the row's two schemes it belongs to.
+   */
+  const rowSubtitle = useCallback(
+    (tx: TransactionWithCategory) => {
+      const state = fulfilmentStates.get(tx.id);
+      return [state ? t(FULFILMENT_STATE_KEY[state]) : null, tx.note]
+        .filter(Boolean)
+        .join(" · ");
+    },
+    [fulfilmentStates, t],
+  );
   const [formOpen, setFormOpen] = useState(false);
   const [editTransaction, setEditTransaction] =
     useState<TransactionWithCategory | null>(null);
@@ -741,21 +786,33 @@ export function TransactionsView({
                               className="size-9 shrink-0 rounded-[12px] border-0 bg-muted"
                             />
                             <span className="min-w-0">
-                              <span className="block truncate text-sm font-medium">
-                                {tx.categories.name}
+                              <span className="flex items-center gap-1.5">
+                                {/* `min-w-0` because a flex item defaults to
+                                    `min-width: auto`, which defeats `truncate`
+                                    and would push the dot out of the row. */}
+                                <span className="min-w-0 truncate text-sm font-medium">
+                                  {tx.categories.name}
+                                </span>
+                                <FulfilmentDot
+                                  state={fulfilmentStates.get(tx.id)}
+                                />
                               </span>
                               {/* Under the name until there is a column for
-                                  it, so a narrow screen still shows it. */}
-                              {tx.note ? (
+                                  it, so a narrow screen still shows it. The
+                                  state leads, ahead of the note: it is what
+                                  the dot beside the name is pointing at, and
+                                  the colour alone does not say which of the
+                                  row's two colour schemes it belongs to. */}
+                              {rowSubtitle(tx) ? (
                                 <span className="block truncate text-xs text-muted-foreground xl:hidden">
-                                  {tx.note}
+                                  {rowSubtitle(tx)}
                                 </span>
                               ) : null}
                             </span>
                           </span>
 
                           <span className="hidden min-w-0 truncate text-sm text-muted-foreground xl:block">
-                            {tx.note}
+                            {rowSubtitle(tx)}
                           </span>
 
                           {/* Three at most: past that the column starts

@@ -7,6 +7,10 @@ import {
   getTransactions,
 } from "@/lib/queries/finance";
 import { getTags, getTransactionTagMap } from "@/lib/queries/phase4";
+import {
+  getConfirmedTransactionIds,
+  getFulfilmentProposals,
+} from "@/lib/queries/fulfilment";
 import { resolveMonthScope } from "@/lib/month-scope";
 import { TransactionsView } from "@/components/finance/TransactionsView";
 import { BankInbox } from "@/components/finance/BankInbox";
@@ -45,6 +49,7 @@ export default async function TransactionsPage({
     tags,
     transactionTags,
     skippedKeys,
+    confirmedTransactionIds,
   ] = await Promise.all([
     getTransactions(user.id, year, month),
     getCategories(user.id),
@@ -52,7 +57,21 @@ export default async function TransactionsPage({
     getTags(user.id),
     getTransactionTagMap(user.id, year, month),
     getRecurringSkipKeys(user.id, year, month),
+    // Which rows settle a recurring charge. Needs nothing else this batch
+    // fetches, so it rides along rather than costing a second round trip.
+    getConfirmedTransactionIds(user.id),
   ]);
+
+  // Asked after the batch, because it needs the templates and categories the
+  // batch fetched. Only the ids are handed on: a proposal carries twelve
+  // fields explaining why it was offered, and a row needs none of them.
+  const proposals = await getFulfilmentProposals(
+    user.id,
+    recurringTemplates,
+    categories,
+    year,
+    month,
+  );
 
   const defaultDate = `${year}-${String(month).padStart(2, "0")}-01`;
 
@@ -73,6 +92,10 @@ export default async function TransactionsPage({
       categories={categories}
       recurringTemplates={recurringTemplates}
       skippedKeys={[...skippedKeys]}
+      confirmedTransactionIds={[...confirmedTransactionIds]}
+      proposedTransactionIds={proposals.map(
+        (proposal) => proposal.transactionId,
+      )}
       tags={tags}
       transactionTags={transactionTags}
       year={year}

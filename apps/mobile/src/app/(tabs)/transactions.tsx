@@ -18,6 +18,11 @@ import {
 } from "@finance/core/constants";
 import { buildStillToCome } from "@finance/core/still-to-come";
 import {
+  FULFILMENT_STATE_KEY,
+  indexFulfilmentStates,
+} from "@finance/core/fulfilment-state";
+import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
+import {
   applyRecurringPlanCounts,
   type ApplyRecurringPlan,
 } from "@finance/core/apply-recurring";
@@ -37,6 +42,7 @@ import { MonthPicker } from "@/components/MonthPicker";
 import { StaggerItem } from "@/components/motion/Stagger";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { PrivateAmount } from "@/components/PrivateAmount";
+import { FulfilmentDot } from "@/components/FulfilmentDot";
 import { ApplyRecurringSheet } from "@/components/ApplyRecurringSheet";
 import { BankInboxSheet } from "@/components/BankInboxSheet";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
@@ -73,6 +79,8 @@ import {
 } from "@/lib/mutations";
 import {
   getCategories,
+  getConfirmedTransactionIds,
+  getFulfilmentProposals,
   getPendingFeedItems,
   getRecurringTemplates,
   getSkippedOccurrences,
@@ -169,22 +177,53 @@ export default function TransactionsScreen() {
           tags: [] as Tag[],
           templates: [] as RecurringTemplateWithCategory[],
           inbox: [] as PendingFeedRow[],
+          confirmed: new Set<string>(),
+          proposals: [] as FulfilmentProposal[],
         };
       }
-      const [transactions, categories, skipped, tags, templates, inbox] =
-        await Promise.all([
-          getTransactions(user.id, year, month),
-          getCategories(user.id),
-          getSkippedOccurrences(user.id, year, month),
-          getTags(user.id),
-          // For "left at month end": what the rest of the month still owes.
-          getRecurringTemplates(user.id),
-          // Not scoped to the month on screen. The inbox is a queue of
-          // decisions, not a view of a month: a coffee from the 29th of last
-          // month needs a category whichever month you happen to be reading.
-          getPendingFeedItems(user.id),
-        ]);
-      return { transactions, categories, skipped, tags, templates, inbox };
+      const [
+        transactions,
+        categories,
+        skipped,
+        tags,
+        templates,
+        inbox,
+        confirmed,
+      ] = await Promise.all([
+        getTransactions(user.id, year, month),
+        getCategories(user.id),
+        getSkippedOccurrences(user.id, year, month),
+        getTags(user.id),
+        // For "left at month end": what the rest of the month still owes.
+        getRecurringTemplates(user.id),
+        // Not scoped to the month on screen. The inbox is a queue of
+        // decisions, not a view of a month: a coffee from the 29th of last
+        // month needs a category whichever month you happen to be reading.
+        getPendingFeedItems(user.id),
+        // Which rows settle a charge. Needs nothing else the batch fetches,
+        // so it rides along rather than costing a second hop.
+        getConfirmedTransactionIds(user.id),
+      ]);
+      // Asked after the batch, because it needs the templates and categories
+      // the batch fetched. Only the proposals: an absence is a question for
+      // the Month screen, which has room to explain it.
+      const proposals = await getFulfilmentProposals(
+        user.id,
+        templates,
+        categories,
+        year,
+        month,
+      );
+      return {
+        transactions,
+        categories,
+        skipped,
+        tags,
+        templates,
+        inbox,
+        confirmed,
+        proposals,
+      };
     }, [user?.id, year, month, dataVersion]);
 
   // Memoised because every derived memo below depends on it; a fresh array
@@ -197,6 +236,21 @@ export default function TransactionsScreen() {
 
   const skipped = data?.skipped ?? [];
   const tags = data?.tags ?? [];
+
+  /**
+   * What each row can say about itself, by transaction id.
+   *
+   * Absent from the map is the ordinary case — a movement no template is
+   * involved with — and the dot renders nothing for it.
+   */
+  const fulfilmentStates = useMemo(
+    () =>
+      indexFulfilmentStates(
+        (data?.proposals ?? []).map((proposal) => proposal.transactionId),
+        data?.confirmed ?? EMPTY_SELECTION,
+      ),
+    [data?.proposals, data?.confirmed],
+  );
   const inbox = useMemo(() => data?.inbox ?? [], [data?.inbox]);
   const inboxOpen = inboxChoice ?? (wantsInbox && inbox.length > 0);
 
@@ -807,86 +861,115 @@ export default function TransactionsScreen() {
               }
               ItemSeparatorComponent={() => <View className="h-px bg-border" />}
               SectionSeparatorComponent={null}
-              renderItem={({ item, index }) => (
-                <StaggerItem index={index}>
-                  {/* Whole row opens the edit sheet; delete lives inside it,
+              renderItem={({ item, index }) => {
+                const fulfilment = fulfilmentStates.get(item.id);
+                // The state leads the subtitle, ahead of the note, using the
+                // same " · " join the Calendar row already uses. The colour is
+                // the glance; this is what makes it mean something.
+                const subtitle = [
+                  fulfilment ? t(FULFILMENT_STATE_KEY[fulfilment]) : null,
+                  item.note,
+                ]
+                  .filter(Boolean)
+                  .join(" · ");
+                return (
+                  <StaggerItem index={index}>
+                    {/* Whole row opens the edit sheet; delete lives inside it,
                       as on web. */}
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      selectMode
-                        ? `Select ${item.categories.name}`
-                        : `Edit ${item.categories.name}`
-                    }
-                    accessibilityState={
-                      selectMode
-                        ? { selected: selected.has(item.id) }
-                        : undefined
-                    }
-                    className={cn(
-                      "min-h-14 flex-row items-center gap-3 py-3",
-                      selectMode && selected.has(item.id) && "bg-primary/5",
-                    )}
-                    onPress={() => {
-                      void hapticLight();
-                      if (selectMode) {
-                        setSelected((current) =>
-                          toggleSelected(current, item.id),
-                        );
-                        return;
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        selectMode
+                          ? `Select ${item.categories.name}`
+                          : `Edit ${item.categories.name}`
                       }
-                      setEditing(item);
-                      setFormOpen(true);
-                    }}
-                    onLongPress={() => {
-                      void hapticLight();
-                      // Long-press enters selection when it is not already on,
-                      // which is the gesture people expect from a list.
-                      if (!selectMode) {
-                        setSelectMode(true);
-                        setSelected(() => new Set([item.id]));
-                        return;
+                      accessibilityState={
+                        selectMode
+                          ? { selected: selected.has(item.id) }
+                          : undefined
                       }
-                      setDuplicating(item);
-                    }}
-                  >
-                    {selectMode ? (
-                      <RowCheckbox
-                        checked={selected.has(item.id)}
-                        label={`Select ${item.categories.name}`}
-                        onPress={() =>
+                      // A hint rather than part of the label: the label is the
+                      // action this row performs, and the row's standing is not
+                      // part of the name of a button.
+                      accessibilityHint={
+                        fulfilment
+                          ? t(FULFILMENT_STATE_KEY[fulfilment])
+                          : undefined
+                      }
+                      className={cn(
+                        "min-h-14 flex-row items-center gap-3 py-3",
+                        selectMode && selected.has(item.id) && "bg-primary/5",
+                      )}
+                      onPress={() => {
+                        void hapticLight();
+                        if (selectMode) {
                           setSelected((current) =>
                             toggleSelected(current, item.id),
-                          )
+                          );
+                          return;
                         }
-                      />
-                    ) : null}
-                    <CategoryIcon icon={item.categories.icon} />
-                    <View className="min-w-0 flex-1">
-                      <Text numberOfLines={1} className="text-sm font-medium">
-                        {item.categories.name}
-                      </Text>
-                      {item.note ? (
-                        <Text
-                          variant="muted"
-                          numberOfLines={1}
-                          className="text-xs"
-                        >
-                          {item.note}
-                        </Text>
-                      ) : null}
-                    </View>
-                    <PrivateAmount
-                      className={cn(
-                        "font-mono text-sm font-semibold",
-                        TYPE_AMOUNT_CLASS[item.categories.type],
-                      )}
+                        setEditing(item);
+                        setFormOpen(true);
+                      }}
+                      onLongPress={() => {
+                        void hapticLight();
+                        // Long-press enters selection when it is not already on,
+                        // which is the gesture people expect from a list.
+                        if (!selectMode) {
+                          setSelectMode(true);
+                          setSelected(() => new Set([item.id]));
+                          return;
+                        }
+                        setDuplicating(item);
+                      }}
                     >
-                      {formatEuro(Number(item.amount))}
-                    </PrivateAmount>
-                  </Pressable>
-                </StaggerItem>
-              )}
+                      {selectMode ? (
+                        <RowCheckbox
+                          checked={selected.has(item.id)}
+                          label={`Select ${item.categories.name}`}
+                          onPress={() =>
+                            setSelected((current) =>
+                              toggleSelected(current, item.id),
+                            )
+                          }
+                        />
+                      ) : null}
+                      <CategoryIcon icon={item.categories.icon} />
+                      <View className="min-w-0 flex-1">
+                        <View className="flex-row items-center gap-1.5">
+                          {/* `shrink` because Yoga defaults flexShrink to 0 and
+                            overflow to visible: without it a long name does
+                            not clip, it draws over the amount. */}
+                          <Text
+                            numberOfLines={1}
+                            className="shrink text-sm font-medium"
+                          >
+                            {item.categories.name}
+                          </Text>
+                          <FulfilmentDot state={fulfilment} />
+                        </View>
+                        {subtitle ? (
+                          <Text
+                            variant="muted"
+                            numberOfLines={1}
+                            className="text-xs"
+                          >
+                            {subtitle}
+                          </Text>
+                        ) : null}
+                      </View>
+                      <PrivateAmount
+                        className={cn(
+                          "font-mono text-sm font-semibold",
+                          TYPE_AMOUNT_CLASS[item.categories.type],
+                        )}
+                      >
+                        {formatEuro(Number(item.amount))}
+                      </PrivateAmount>
+                    </Pressable>
+                  </StaggerItem>
+                );
+              }}
             />
           </View>
         </View>

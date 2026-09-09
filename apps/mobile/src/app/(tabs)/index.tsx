@@ -24,7 +24,7 @@ import {
 } from "@finance/core/apply-recurring";
 import type { MonthlySummary } from "@finance/core/types/database";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
-import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
+
 import {
   getMonthRead,
   monthFactsFromScreen,
@@ -86,7 +86,8 @@ import {
   getMonthlyTrend,
   countPendingFeedItems,
   getFulfilledKeys,
-  getFulfilmentProposals,
+  getFulfilmentReport,
+  type FulfilmentReport,
   getRecentBankMovements,
   getRecordedCashFlows,
   getRecurringTemplates,
@@ -182,7 +183,7 @@ export default function MonthScreen() {
           pulse: null as ReturnType<typeof buildMonthPulse> | null,
           unreadable: [] as string[],
           movements: [] as BankMovement[],
-          arrived: [] as FulfilmentProposal[],
+          arrived: { proposals: [], misses: [] } as FulfilmentReport,
           readView: null as MonthReadView | null,
           readFacts: null as MonthFacts | null,
           readOwnFacts: null as MonthFacts | null,
@@ -246,9 +247,14 @@ export default function MonthScreen() {
       // Asked after the batch, because it needs the templates and categories
       // the batch fetched. A failure is not worth losing the month over: the
       // block simply does not appear.
-      let arrived: FulfilmentProposal[] = [];
+      //
+      // The report rather than the proposals alone, because the misses are the
+      // only place a charge that never arrived is mentioned — the Ledger's
+      // dots can mark a row as confirmed or waiting, but an occurrence with no
+      // movement behind it has no row to mark.
+      let arrived: FulfilmentReport = { proposals: [], misses: [] };
       try {
-        arrived = await getFulfilmentProposals(
+        arrived = await getFulfilmentReport(
           user.id,
           templates,
           categories,
@@ -256,7 +262,7 @@ export default function MonthScreen() {
           month,
         );
       } catch {
-        arrived = [];
+        arrived = { proposals: [], misses: [] };
       }
 
       const upcoming = buildStillToCome(
@@ -333,7 +339,7 @@ export default function MonthScreen() {
         ),
         investedValue: portfolio.totalMarketValue,
         inboxPending,
-        chargesUnconfirmed: arrived.length,
+        chargesUnconfirmed: arrived.proposals.length,
       };
       const readFacts = monthFactsFromScreen(factsInput);
 
@@ -433,7 +439,7 @@ export default function MonthScreen() {
   const upcoming = data?.upcoming ?? null;
   const pulse = data?.pulse ?? null;
   const movements = data?.movements ?? [];
-  const arrived = data?.arrived ?? [];
+  const arrived = data?.arrived ?? { proposals: [], misses: [] };
   const readFacts = data?.readFacts ?? null;
   const inboxPending = data?.inboxPending ?? 0;
   const monthLabel = formatMonthLabel(year, month);
@@ -589,9 +595,10 @@ export default function MonthScreen() {
           <MonthAttention
             items={attention}
             slot={
-              arrived.length > 0 ? (
+              arrived.proposals.length > 0 || arrived.misses.length > 0 ? (
                 <ArrivedCharges
-                  proposals={arrived}
+                  proposals={arrived.proposals}
+                  misses={arrived.misses}
                   onDecided={() => {
                     notifyDataChanged();
                     void onRefresh();

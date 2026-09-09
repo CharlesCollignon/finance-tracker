@@ -37,6 +37,11 @@ export const COLORS = {
   infoForeground: "#0a0a10",
   destructive: "#f87171",
   destructiveForeground: "#0a0a10",
+  // Orange, and deliberately not the gold `primary`: this marks a row waiting
+  // on a decision, and at 8px it has to be told apart from both the tan accent
+  // and the salmon `destructive` already sitting on the amount in the same row.
+  warning: "#fb923c",
+  warningForeground: "#0a0a10",
   border: "rgba(236,236,241,0.10)",
   hairlineStrong: "rgba(236,236,241,0.16)",
 } as const;

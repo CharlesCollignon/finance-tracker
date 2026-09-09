@@ -196,7 +196,10 @@ async function AttentionSlot({
     <MonthAttention
       items={items}
       slot={
-        arrived.proposals.length > 0 ? (
+        // Misses count too: a month where nothing was offered and three
+        // charges are missing is exactly what the block is for, and gating on
+        // proposals alone was the one case it stayed silent for.
+        arrived.proposals.length > 0 || arrived.misses.length > 0 ? (
           <ArrivedCharges
             proposals={arrived.proposals}
             misses={arrived.misses}

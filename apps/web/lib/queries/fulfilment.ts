@@ -79,6 +79,46 @@ export async function getFulfilledKeys(
 }
 
 /**
+ * Which ledger rows stand in for an occurrence, by transaction id.
+ *
+ * The same table as `getFulfilledKeys` read down its other axis: that one
+ * answers "is this occurrence settled?" for the forecast, this one answers
+ * "does this row settle something?" for a row on screen.
+ *
+ * Deliberately not month-scoped, and it must stay that way.
+ * `recurring_fulfilments.occurred_on` is the date of the *occurrence*, not of
+ * the movement — that separation is the whole point of the table — so a
+ * payment on the 31st can settle an occurrence dated the 1st. Filtering this
+ * by the month on screen would take the mark off the very row that earned it.
+ *
+ * Separate from `getFulfilmentReport` rather than folded into it because the
+ * report gives up early when a month generates no occurrences, which happens
+ * whenever a template is inactive or outside its date range. Sourced from
+ * there, a confirmation would disappear the moment its template was switched
+ * off — retroactively, across every month.
+ */
+export async function getConfirmedTransactionIds(
+  userId: string,
+  client?: Client,
+): Promise<Set<string>> {
+  const supabase = client ?? (await createClient());
+  const { data, error } = await supabase
+    .from("recurring_fulfilments")
+    .select("transaction_id")
+    .eq("user_id", userId);
+
+  if (error) {
+    if (isMissingSchema(error)) {
+      return new Set();
+    }
+    throw error;
+  }
+
+  // `transaction_id` is `not null` in migration 023, so nothing can slip in.
+  return new Set((data ?? []).map((row) => row.transaction_id as string));
+}
+
+/**
  * Every occurrence a month's active templates call for.
  *
  * The whole month rather than only the past: a charge due on the 5th that the

@@ -434,6 +434,55 @@ describe("explainFulfilmentMisses", () => {
     );
   });
 
+  /**
+   * A date miss is never one day out, so the singular form of the window
+   * message is unreachable: missing by a day is inside `MAX_DAYS_APART` and
+   * would have been offered. The plural stays a plural anyway, for the reason
+   * `pluralCategory` keeps French's `many` — a message that cannot express its
+   * own smallest case is a ternary with extra steps — but the floor is worth
+   * pinning, so nobody reads "{count} days" as a bug.
+   */
+  it("never misses the window by fewer than five days", () => {
+    const [justOutside] = explain(
+      [occurrence({ occurredOn: "2026-09-09" })],
+      [movement({ occurredOn: "2026-09-04" })],
+    );
+
+    expect(justOutside).toMatchObject({ reason: "date" });
+    expect(justOutside!.nearest!.daysApart).toBe(5);
+    expect(describeMiss(justOutside!, money)).toBe(
+      "nearest was 5 days away, beyond the 4-day window",
+    );
+
+    // One day closer and it is a proposal, not a miss.
+    expect(
+      explain(
+        [occurrence({ occurredOn: "2026-09-08" })],
+        [movement({ occurredOn: "2026-09-04" })],
+      ),
+    ).toEqual([]);
+  });
+
+  it("answers in the language it is asked in", () => {
+    const [miss] = explain(
+      [occurrence()],
+      [movement({ categoryId: SALARY_CATEGORY })],
+    );
+
+    expect(describeMiss(miss!, money, "fr")).toBe(
+      "rien dans sa catégorie à rapprocher",
+    );
+
+    const [tooFar] = explain(
+      [occurrence()],
+      [movement({ amount: 980, occurredOn: "2026-09-05" })],
+    );
+
+    expect(describeMiss(tooFar!, money, "fr")).toBe(
+      "le plus proche était 980.00 €, trop loin de 780.00 €",
+    );
+  });
+
   it("remembers a refusal rather than blaming the data", () => {
     const occurrences = [occurrence()];
     const movements = [movement()];

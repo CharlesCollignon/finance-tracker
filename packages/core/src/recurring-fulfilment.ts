@@ -466,27 +466,41 @@ export function explainFulfilmentMisses(
   );
 }
 
-/** The reason in one line, for a screen that has room for it. */
+/**
+ * The reason in one line, for a screen that has room for it.
+ *
+ * Takes a locale for the same reason `describeFulfilment` does: this is prose
+ * a reader sees, and it was the last string in this module still answering in
+ * English whatever the app was set to. The `date` case is plural because
+ * "1 days away" is how a matcher loses somebody's trust in its arithmetic.
+ */
 export function describeMiss(
   miss: FulfilmentMiss,
   formatMoney: (amount: number) => string,
+  locale: Locale = DEFAULT_LOCALE,
 ): string {
+  const t = translator(locale);
+
   switch (miss.reason) {
     case "nothing-alike":
-      return "nothing in its category to match";
+      return t("fulfilment.misses.nothingAlike");
     case "refused":
-      return "you said the nearest movement was not it";
+      return t("fulfilment.misses.refused");
     case "not-arrived":
-      return "the nearest movement has not happened yet";
+      return t("fulfilment.misses.notArrived");
     case "amount":
       return miss.nearest
-        ? `nearest was ${formatMoney(miss.nearest.amount)}, too far from ${formatMoney(
-            miss.expectedAmount,
-          )}`
-        : "no movement of the right size";
+        ? t("fulfilment.misses.amountNear", {
+            amount: formatMoney(miss.nearest.amount),
+            expected: formatMoney(miss.expectedAmount),
+          })
+        : t("fulfilment.misses.amountNone");
     case "date":
       return miss.nearest
-        ? `nearest was ${miss.nearest.daysApart} days away, beyond the ${MAX_DAYS_APART}-day window`
-        : "no movement near enough in time";
+        ? t("fulfilment.misses.dateNear", {
+            count: miss.nearest.daysApart,
+            window: MAX_DAYS_APART,
+          })
+        : t("fulfilment.misses.dateNone");
   }
 }

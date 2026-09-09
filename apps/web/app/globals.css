@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Tailwind v4 roots its automatic source detection at this app, so the class
+   maps in `@finance/core` — `TYPE_AMOUNT_CLASS`, `CATEGORY_TYPE_BADGE_CLASS`,
+   `FULFILMENT_DOT_CLASS` — were invisible to it. The classes those maps name
+   are real class strings this app renders, and without this every one of them
+   that no web file also spells out came back unstyled: `text-info` from
+   `TYPE_AMOUNT_CLASS.investment` emitted no rule at all, which is why an
+   investment amount was the only figure on the page with no colour. Mobile
+   never had the bug because `tailwind.config.js` lists the package explicitly. */
+@source "../../../packages/core/src/**/*.{ts,tsx}";
+
 @custom-variant dark (&:is(.dark *));
 
 /* The hero orb's rotation.
@@ -65,6 +75,12 @@
   --info-foreground: #0a0a10;
   --destructive: #f87171;
   --destructive-foreground: #0a0a10;
+  /* Orange rather than amber, and deliberately not the gold `--primary`: this
+     marks a row waiting on a decision, and it has to be told apart at 8px from
+     both the tan accent and the salmon `--destructive` sitting on the amount in
+     the same row. */
+  --warning: #fb923c;
+  --warning-foreground: #0a0a10;
   --border: rgba(236, 236, 241, 0.1);
   --hairline-strong: rgba(236, 236, 241, 0.16);
   --input: #131320;
@@ -141,6 +157,8 @@
   --color-info-foreground: var(--info-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-border: var(--border);
   --color-hairline-strong: var(--hairline-strong);
   --color-input: var(--input);
