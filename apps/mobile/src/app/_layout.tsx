@@ -127,12 +127,17 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ErrorBoundary>
           <AuthProvider>
-            <BiometricLockProvider>
-              <PrivacyProvider>
-                {/* Above CurrencyProvider, which formats figures and so needs
-                    the language; below AuthProvider, whose user is what lets
-                    the choice follow somebody to another device. */}
-                <LocaleProvider>
+            {/* Directly below AuthProvider, whose user is what lets the choice
+                follow somebody to another device, and above every provider
+                that reads a label. BiometricLockProvider is one of them — it
+                draws the lock screen — so it has to sit inside this and not
+                around it. `useT` throws when its context is missing rather
+                than falling back to English, so a consumer mounted above this
+                line takes the first render down to the ErrorBoundary, and
+                RootNavigator never gets to hide the splash screen. */}
+            <LocaleProvider>
+              <BiometricLockProvider>
+                <PrivacyProvider>
                   <CurrencyProvider>
                     <ToastProvider>
                       {/* Inside ToastProvider: a refresh reports its outcome
@@ -145,9 +150,9 @@ export default function RootLayout() {
                       </RefreshProvider>
                     </ToastProvider>
                   </CurrencyProvider>
-                </LocaleProvider>
-              </PrivacyProvider>
-            </BiometricLockProvider>
+                </PrivacyProvider>
+              </BiometricLockProvider>
+            </LocaleProvider>
           </AuthProvider>
         </ErrorBoundary>
       </SafeAreaProvider>
