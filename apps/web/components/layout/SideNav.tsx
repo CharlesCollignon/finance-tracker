@@ -95,7 +95,7 @@ export function SideNav({
           "flex items-center justify-center px-5",
         )}
       >
-        <Logo mark="full" />
+        <Logo />
       </div>
 
       <div className="flex flex-col gap-1 px-3 pt-3">

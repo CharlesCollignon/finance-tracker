@@ -40,8 +40,12 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
         purpose: "any",
       },
+      // Its own file, not the 512 above doing both jobs. A maskable icon is
+      // cropped to whatever shape the platform prefers, so it has to hold the
+      // orb well inside its edges — and an "any" icon padded that far in just
+      // looks small everywhere it is not cropped.
       {
-        src: "/icon-512.png",
+        src: "/icon-maskable-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",

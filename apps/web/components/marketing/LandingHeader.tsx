@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CaretDown, List, X } from "@phosphor-icons/react";
+import { Orb } from "@/components/brand/Orb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { cn } from "@/lib/utils";
 import {
@@ -27,15 +27,7 @@ function Wordmark() {
       className="inline-flex shrink-0 items-center gap-2.5 font-logo text-2xl leading-none text-white"
       aria-label="Pluclair"
     >
-      <Image
-        src="/logo-mark.png"
-        alt=""
-        aria-hidden
-        width={26}
-        height={26}
-        className="shrink-0"
-        style={{ width: 26, height: 26 }}
-      />
+      <Orb size="26px" tone="mark" className="shrink-0" />
       Pluclair
     </Link>
   );

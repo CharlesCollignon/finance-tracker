@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { Orb } from "@/components/brand/Orb";
 import { GLASS_CHROME } from "@/lib/glass";
 import {
   SHELL_HEADER_ACTIONS_CLASS,
@@ -41,19 +41,11 @@ export function PageHeader({ titleKey, children, className }: PageHeaderProps) {
             band, and a fixed title zone means they overlap rather than one of
             them giving way. */}
         <div className="flex min-w-0 shrink items-center gap-2">
-          {/* The bare orb rather than the full composition: at this size the
-              furrow drawn in the ground is a smudge, while the sphere still
-              reads. */}
-          <Image
-            src="/logo-mark.png"
-            alt=""
-            aria-hidden
-            width={22}
-            height={22}
-            priority
-            className="shrink-0"
-            style={{ width: 22, height: 22 }}
-          />
+          {/* The orb alone, with no wordmark: the app's own name is on the
+              tab and the home screen, and the band beside it is already
+              carrying the page title. `tone="mark"` because at 22px over a
+              glass header a clear shell has nothing to catch. */}
+          <Orb size="22px" tone="mark" className="shrink-0" />
           <h1 className="truncate font-head text-lg leading-none md:text-xl">
             <PageTitle titleKey={titleKey} />
           </h1>
