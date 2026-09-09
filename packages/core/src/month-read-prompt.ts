@@ -23,7 +23,14 @@
  * user's whole allowance on a change they did not ask for.
  */
 
-import { formatFact, type MonthFact, type MonthFacts } from "./month-facts";
+import {
+  formatFact,
+  type FactPack,
+  type MissingFact,
+  type MissingReason,
+  type MonthFact,
+  type MonthFacts,
+} from "./month-facts";
 import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
 import type { MonthReadRequest } from "./month-read";
 
@@ -121,8 +128,16 @@ const SENSE_WORDS: Record<Locale, Record<MonthFact["sense"], string>> = {
   },
 };
 
-function factLines(
-  facts: MonthFacts,
+/**
+ * The line format a model is taught to read figures in.
+ *
+ * Exported, and widened past `MonthFacts`, because `bearing-prompt.ts` hands
+ * over the same kind of list and the format is the part that must not differ.
+ * Two prompts describing figures two ways is two sets of parsing habits to
+ * get right in a model that only has one.
+ */
+export function factLines(
+  facts: FactPack,
   formatMoney: (amount: number) => string,
   locale: Locale,
 ): string {
@@ -135,15 +150,31 @@ function factLines(
     .join("\n");
 }
 
-const MISSING_WORDS_EN: Record<string, string> = {
+/**
+ * Exhaustive over `MissingReason`, and typed so it has to stay that way.
+ *
+ * A reason with no clause renders as `undefined` on a prompt line, which is
+ * both a worse instruction than saying nothing and invisible until someone
+ * reads a raw prompt. The Bearing's pack introduced three more reasons; these
+ * two maps cover every one of them even though a month never emits the last
+ * three, because the alternative is a map that is correct only by accident.
+ */
+const MISSING_WORDS_EN: Record<MissingReason, string> = {
   "no-bank": "no bank is connected, so this cannot be known",
   "no-close": "no month has been closed yet, so this cannot be measured",
   "no-cap": "no allowance has been set",
   "month-unfinished": "the month is not over yet",
   "not-recorded": "nothing was recorded for it",
+  "no-target": "no target allocation has been set",
+  "nothing-invested": "nothing is held, so there is no portfolio to say it of",
+  "too-short": "it has been held too briefly for a rate to mean anything",
 };
 
-function missingLines(facts: MonthFacts, locale: Locale): string {
+/** The same, for the figures that are not there and why. */
+export function missingLines(
+  facts: { missing: readonly MissingFact[] },
+  locale: Locale,
+): string {
   return facts.missing
     .map(
       (row) =>
@@ -218,13 +249,17 @@ const VOCABULARY_FR = [
   "Une projection de charges déjà programmées n'est pas une " + '"prévision".',
 ];
 
-const MISSING_WORDS_FR: Record<string, string> = {
+const MISSING_WORDS_FR: Record<MissingReason, string> = {
   "no-bank": "aucune banque n'est connectée, cela ne peut donc pas être su",
   "no-close":
     "aucun mois n'a encore été clôturé, cela ne peut donc pas être mesuré",
   "no-cap": "aucune enveloppe n'a été fixée",
   "month-unfinished": "le mois n'est pas terminé",
   "not-recorded": "rien n'a été enregistré pour cela",
+  "no-target": "aucune répartition cible n'a été fixée",
+  "nothing-invested":
+    "rien n'est détenu, il n'y a donc pas de portefeuille dont le dire",
+  "too-short": "c'est détenu depuis trop peu de temps pour qu'un taux ait un sens",
 };
 
 /**
@@ -241,7 +276,7 @@ interface PromptText {
   namingRule: string;
   basisRule: string;
   vocabulary: readonly string[];
-  missingWords: Record<string, string>;
+  missingWords: Record<MissingReason, string>;
   intro: readonly string[];
   vocabularyHeading: string;
   suggestions: readonly string[];

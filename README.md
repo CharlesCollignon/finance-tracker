@@ -27,7 +27,7 @@ finance-tracker/          (repo root)
 - **Mobile only:** [Expo Go](https://expo.dev/go) on your phone (SDK 57)
 
 Apply the database schema once on your Supabase project (SQL editor or
-CLI) using the files in `supabase/migrations/`, in order (`001` → `026`).
+CLI) using the files in `supabase/migrations/`, in order (`001` → `029`).
 Optional account deletion from mobile also needs the
 `delete-account` Edge Function in `supabase/functions/`.
 
@@ -264,7 +264,8 @@ button on the card — never on page load, and stored, so opening the page costs
 nothing.
 
 Set `MISTRAL_API_KEY` to enable it (`MISTRAL_MODEL` is optional and defaults
-to `mistral-small-latest`). Without the key the card is simply absent, the way
+to `mistral-small-latest`). The same key and model power the Bearing's
+arranger below — one provider, one account, one place the key is read. Without the key the card is simply absent, the way
 the bank buttons are absent without bank credentials. The key is server-side
 only; the phone reaches the feature through the web app's
 `POST /api/month-read` with its Supabase session as a bearer token, which is
@@ -313,6 +314,66 @@ it. What can age is the judgement: when a figure it rests on has moved, the
 card says which and how long ago it was written. A month still in progress is
 never called stale — its figures change whenever anything is recorded, and a
 warning that is always on is one nobody reads.
+
+### Where it all stands
+
+The app's landing page is the **Bearing**: one screen of figures answering
+"where do I stand, and where is this heading". Everything on it is computed by
+an engine some other surface already renders — the pulse from Month, the
+projection and runway from Plan, the returns, allocation and fund costs from
+Wallets — so a tile links to the page where its number is explained and the
+whole screen is checkable rather than a second source of truth.
+
+Month keeps its `/dashboard` URL and moves under the Bearing in the nav, the
+way Calendar and History sit under the Ledger. The bar holds five surfaces;
+that ceiling is why the Bearing took Month's place rather than being added
+beside it.
+
+**A model chooses which figures lead, and never computes one.** It is handed
+the same kind of fact pack the month read uses — every figure it may name,
+each with a stable id — and answers with an ordered list of ids and, at most,
+a six-word caption per tile containing references like `{{fact:on-hand}}`. The
+app substitutes its own formatted value at render, on the client, which is
+what lets the currency toggle and the privacy blur work on a caption.
+`verifyArrangement` refuses any answer naming a tile outside the catalogue or
+citing a datum that was never sent, and drops any single caption that writes a
+number of its own — the same two severities the month read uses, and for the
+same reason.
+
+The catalogue is closed and handed over in full, which is the one thing this
+prompt has that a month read's does not: there are twenty-eight possible
+figures and the model is given all of them, so naming something else is a
+refusal rather than a trim.
+
+**Without a model key the surface still works.** `defaultArrangement` is the
+app's own ordering — anything breached or missing first, then the headline
+figures, then the wallet — and it is what ships, what a deployment with no
+`MISTRAL_API_KEY` gets, and what the model is asked to improve on. There is no
+degraded state here, only an uncurated one.
+
+Arrangements are capped at eight a month per user, with a minute's cooldown
+and a reservation taken *before* the call, for the reasons `022` and `024`
+already set out. The tally resets when the month turns, inside the same
+statement that takes the next reservation, so no scheduled job can fail to run
+it.
+
+**Dragging overrules the model.** A tile moved by hand is *pinned* to its
+slot and a later arrangement fills only the slots that are not pinned — a
+model reshuffling a choice somebody just made with their finger is the feature
+undoing its own point. Pins live in `user_preferences` rather than beside the
+arrangement, because they are an ordinary preference: client-writable, no
+quota, and they follow the user between the laptop and the phone in a way
+browser storage would not. On the web the bento is a four-column grid with
+`@dnd-kit`; on the phone it is a single reorderable column, which is what a
+375px screen wants anyway. Same order, same row, either way.
+
+Migration `029` is what turns the model's half on. Without it the Bearing
+renders in the app's own ordering with no arrange button and no dragging,
+exactly as a deployment without `024` has no month read.
+
+What goes over the wire is aggregates only, and less than the month read
+sends: totals, rates and the close figures, with no category names at all. No
+merchants, no individual transactions, no balances, no IBANs.
 
 ### Supabase auth URLs (production)
 

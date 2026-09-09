@@ -44,7 +44,15 @@ import { formatMonthLabel } from "./constants";
  */
 export type FactSense = "up-is-good" | "up-is-bad" | "neutral";
 
-export type FactUnit = "money" | "percent" | "count";
+/**
+ * `months` is not a `count`, and the difference is a decimal place.
+ *
+ * A count is a thing you count — three entries waiting, four months in a row
+ * — and rounding one is meaningless because it was already whole. A runway is
+ * a measurement, and rounding 4.2 months of cover to "4" throws away the part
+ * a reader is actually weighing.
+ */
+export type FactUnit = "money" | "percent" | "count" | "months";
 
 export interface MonthFact {
   /** Stable and referenceable. Per-entity facts carry the entity's id. */
@@ -59,9 +67,28 @@ export interface MonthFact {
   note?: string;
 }
 
-/** Why a figure is not available. Said in words, never as a zero. */
+/**
+ * Why a figure is not available. Said in words, never as a zero.
+ *
+ * The last three are the Bearing's, and they are here rather than in a second
+ * enum because a reason is a property of an absent figure, not of the surface
+ * that went looking for it. `month-read-prompt.ts` and `bearing-prompt.ts`
+ * each map every one of these to a clause, exhaustively, so a reason added
+ * without words is a compile error rather than an `undefined` on a prompt
+ * line.
+ */
 export type MissingReason =
-  "no-bank" | "no-close" | "no-cap" | "month-unfinished" | "not-recorded";
+  | "no-bank"
+  | "no-close"
+  | "no-cap"
+  | "month-unfinished"
+  | "not-recorded"
+  /** No target allocation set, so drift cannot be measured against anything. */
+  | "no-target"
+  /** Nothing is held, so there is no portfolio to say it about. */
+  | "nothing-invested"
+  /** Held too briefly for a rate to be anything but noise. */
+  | "too-short";
 
 export interface MissingFact {
   id: string;
@@ -466,13 +493,26 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
   };
 }
 
-/** Every id in the pack, for verifying what a model claims to rest on. */
-export function factIds(facts: MonthFacts): Set<string> {
-  return new Set(facts.facts.map((fact) => fact.id));
+/**
+ * Anything carrying a list of datums.
+ *
+ * The four helpers below only ever read `.facts`, and there is now a second
+ * pack — `bearing-facts.ts` — with a different envelope around the same list.
+ * Widening the parameter is what lets the Bearing reuse the verification and
+ * freshness machinery instead of growing a parallel copy of it that would
+ * drift.
+ */
+export interface FactPack {
+  facts: readonly MonthFact[];
 }
 
-export function findFact(facts: MonthFacts, id: string): MonthFact | null {
-  return facts.facts.find((fact) => fact.id === id) ?? null;
+/** Every id in the pack, for verifying what a model claims to rest on. */
+export function factIds(pack: FactPack): Set<string> {
+  return new Set(pack.facts.map((fact) => fact.id));
+}
+
+export function findFact(pack: FactPack, id: string): MonthFact | null {
+  return pack.facts.find((fact) => fact.id === id) ?? null;
 }
 
 /**
@@ -503,6 +543,12 @@ export function formatFact(
       return new Intl.NumberFormat(INTL_LOCALES[locale]).format(
         Math.round(fact.value),
       );
+    case "months":
+      return translator(locale)("units.months", {
+        value: new Intl.NumberFormat(INTL_LOCALES[locale], {
+          maximumFractionDigits: 1,
+        }).format(fact.value),
+      });
   }
 }
 
@@ -514,8 +560,8 @@ export function formatFact(
  * is irrelevant here: the question is "did these values change", and the
  * values themselves are stored alongside for the answer that matters.
  */
-export function factsDigest(facts: MonthFacts): string {
-  const canonical = [...facts.facts]
+export function factsDigest(pack: FactPack): string {
+  const canonical = [...pack.facts]
     .map((fact) => `${fact.id}:${fact.value.toFixed(2)}`)
     .sort()
     .join("|");

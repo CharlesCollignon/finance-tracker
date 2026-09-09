@@ -34,6 +34,7 @@ export const en = {
    * the absence of one.
    */
   nav: {
+    bearing: "Bearing",
     month: "Month",
     ledger: "Ledger",
     charges: "Charges",
@@ -841,6 +842,7 @@ export const en = {
     thousands: "{value}k",
     perYear: "{rate} a year",
     percent: "{value}%",
+    months: "{value} months",
   },
 
   /**
@@ -1003,6 +1005,69 @@ export const en = {
     investedValue: "Invested value",
     inboxPending: "Entries still waiting for a category",
     chargesUnconfirmed: "Recurring charges not yet confirmed",
+  },
+
+  /**
+   * The figures the Bearing may show, and a model may name.
+   *
+   * A separate family from `facts` above even where a label is nearly the
+   * same, because the two packs are read in different company. On the Month
+   * page "Still to leave" sits under that month's heading and needs no
+   * qualifier; on the Bearing it sits beside a twelve-month projection and a
+   * portfolio, so it has to say which month it means. Merging them would
+   * force one wording to serve two contexts, and the loser is always the
+   * screen with less surrounding text — which here is the one made of
+   * nothing but figures.
+   */
+  bearingFacts: {
+    netPosition: "Everything, added up",
+    netPositionNote:
+      "accounts and investments only; this app records no debts",
+    onHand: "In the accounts",
+    invested: "Invested",
+    investedShare: "Share of it invested",
+    free: "Yours to spend this month",
+    committed: "Still to leave this month",
+    arriving: "Still to arrive this month",
+    savingsRate: "Savings rate this month",
+    expensesVsPrevious: "Money out against {month}",
+    expensesVsPreviousNote:
+      "the same stretch of both months, not a whole month against a part",
+    unrecordedSoFar: "Unrecorded spending so far",
+    unrecordedSoFarNote: "measured, and not final until the month is closed",
+    unrecordedAllowance: "Unrecorded allowance",
+    unrecordedAllowanceNote: "a cap set from this person's own history",
+    unrecordedOver: "Unrecorded spending over the allowance",
+    unrecordedBaseline: "Usual unrecorded spending",
+    unrecordedBaselineNote:
+      "the median across closed months, so one holiday does not move it",
+    streak: "Months in a row inside the allowance",
+    bestStreak: "Best run so far",
+    monthlyNetAverage: "What a month has typically kept, over {count} months",
+    projectedBalance: "Where the account lands by {month}",
+    projectedBalanceNote:
+      "arithmetic on charges already scheduled; no discretionary spending is assumed",
+    projectedMonthlyNet: "What each month adds, if nothing changes",
+    committedMonthly: "One month of committed costs",
+    runwayMonths: "Months the set-aside would cover",
+    walletCost: "Put into the wallets",
+    walletGain: "Gain on what was put in",
+    walletReturn: "Return a year",
+    walletReturnNote: "money-weighted, so the timing of each purchase counts",
+    walletDrag: "What holding it costs a year",
+    walletDragNote:
+      "charged inside the funds, so it never appears as a transaction",
+    walletDragPartial: {
+      one: "partial — {count} holding has no charge recorded",
+      other: "partial — {count} holdings have no charge recorded",
+    },
+    walletDrift: "Furthest a wallet is from its target",
+    walletDriftNote: "in percentage points, whichever way it has drifted",
+    walletConcentration: "{name}, share of the wallets",
+    walletConcentrationNote:
+      "the largest single holding, weighed against what is invested rather than against cash",
+    contributionPace: "Going into the wallets each month",
+    inboxPending: "Entries still waiting for a category",
   },
 
   /** The Month page's headline figure, and the line under it. */
@@ -1217,6 +1282,58 @@ export const en = {
       headlineHadFigure: "The headline contained a figure of its own",
       headlineTooLong: "The headline was longer than one line",
       everythingDropped: "Every observation had to be dropped",
+    },
+  },
+
+  /**
+   * The Bearing: the whole position, and the model that arranges it.
+   *
+   * Deliberately sparse. This is the app's most figure-dense screen and every
+   * sentence added to it is a sentence competing with the numbers it exists
+   * to frame — so the words here are labels, refusals and one explanation of
+   * what the arrange button does, and nothing else.
+   */
+  bearing: {
+    title: "Bearing",
+    asOf: "As of {date}",
+    /** The button that spends a call, and what it says while it is spending. */
+    arrange: "Rearrange",
+    arranging: "Arranging…",
+    arrangeHint:
+      "A model picks which figures lead. Drag any tile to overrule it.",
+    arrangementsLeft: {
+      one: "{count} left this month",
+      other: "{count} left this month",
+    },
+    /** Said when the app's own ordering is what is on screen. */
+    ownOrder: "In the app's own order",
+    pinned: "Moved by you",
+    /** The drag handle. Names the tile, because a screen reader reads it alone. */
+    reorder: "Reorder {label}",
+    resetPins: "Clear my order",
+    orderNotSaved: "Your order could not be saved.",
+    /** When figures the arrangement rests on have since moved. */
+    moved: {
+      one: "{count} figure has moved since this was arranged, {age}.",
+      other: "{count} figures have moved since this was arranged, {age}.",
+    },
+    empty:
+      "Once a month has been recorded there will be something to stand on.",
+    noWriter: "No writer is configured.",
+    noAnswer: "The writer did not answer just now.",
+    unusable: "The writer's answer could not be used.",
+    threwAway:
+      "The writer named a figure the app did not give it, so the arrangement was thrown away. ({detail})",
+    allowanceSpent: "You have used all {allowance} arrangements this month.",
+    coolingDown: "One was just arranged — try again in {seconds}s.",
+    inFlight: "An arrangement is already being written.",
+    nothingToSay: "There is not enough recorded yet to arrange.",
+    untracked: "Arrangements are not set up yet (migration 029).",
+    refusal: {
+      wrongShape: "Not the shape asked for",
+      unknownTile: 'It named "{id}", which is not one of the figures',
+      unknownDatum: 'A caption referred to "{id}", which was never sent',
+      nothingLeft: "No usable tile was left",
     },
   },
 

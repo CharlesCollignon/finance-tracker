@@ -53,7 +53,7 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
             <ul className="mt-4 flex flex-col gap-3">
               {isLoggedIn ? (
                 <li>
-                  <Link href="/dashboard" className={footerLink}>
+                  <Link href="/bearing" className={footerLink}>
                     {copy.cta.openApp}
                   </Link>
                 </li>

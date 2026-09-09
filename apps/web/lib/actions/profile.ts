@@ -74,6 +74,7 @@ export async function deleteAllData(
   }
 
   revalidatePath("/dashboard");
+  revalidatePath("/bearing");
   revalidatePath("/transactions");
   revalidatePath("/recurring");
   revalidatePath("/calendar");

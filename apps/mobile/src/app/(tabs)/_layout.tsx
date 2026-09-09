@@ -34,13 +34,19 @@ type TabConfig = {
  * use: it is the list people edit most often, and a tab away is the wrong
  * place for the app's most frequent destination. Profile lives in the header
  * account menu.
+ *
+ * Month is the newest one to leave the bar, and it left because the bar holds
+ * five. The Bearing answers "where do I stand" across all of them, and every
+ * one of its tiles links to the surface that explains its figure — so Month is
+ * one press from the tile that states this month's, rather than a sixth
+ * label squeezed into a row that already truncates on a small phone.
  */
 const TABS: TabConfig[] = [
   {
     name: "index",
-    titleKey: "nav.month",
-    icon: "pie-chart",
-    iconInactive: "pie-chart-outline",
+    titleKey: "nav.bearing",
+    icon: "compass",
+    iconInactive: "compass-outline",
   },
   {
     name: "transactions",
@@ -144,6 +150,8 @@ export default function TabsLayout() {
               }}
             />
           ))}
+          {/* Reached from a Bearing tile, not the bar — see TABS above. */}
+          <Tabs.Screen name="month" options={{ href: null }} />
           {/* A view of the Ledger, not a destination of its own. */}
           <Tabs.Screen name="calendar" options={{ href: null }} />
           {/* Reachable from the header account menu, not the tab bar. */}

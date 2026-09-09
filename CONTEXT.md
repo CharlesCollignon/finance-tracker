@@ -181,7 +181,38 @@ with the observations.
 _Avoid_: summary, insight, report, AI analysis
 
 **Datum**:
-One named figure a month read may refer to — a label, a value, and whether
-going up is good, bad or neither. The read's whole vocabulary of numbers, and
-the reason a claim resting on anything else is thrown away.
+One named figure a month read or a bearing may refer to — a label, a value,
+and whether going up is good, bad or neither. Their whole vocabulary of
+numbers, and the reason a claim resting on anything else is thrown away.
 _Avoid_: metric, stat, data point
+
+### Where it all stands
+
+**Bearing**:
+Where the whole of someone's money stands on one day, and where it is
+heading: what is on hand, what is committed to the months ahead, what is
+invested, and what a year of unchanged habits leads to. Distinct from a
+monthly summary, which is one month's flows, and from a projection, which is
+only the forward half. Every figure on it is one another surface already
+shows, which is what makes it checkable rather than a second source of truth.
+_Avoid_: dashboard, overview, home, net worth
+
+**Tile**:
+One datum on the bearing: a label, a value, and the surface that explains it.
+The unit the layout is made of, and the unit a model chooses between — which
+is why a tile is a figure rather than a component, and why choosing one is
+the same act as naming a datum.
+_Avoid_: card, widget, stat, KPI
+
+**Arrangement**:
+Which tiles the bearing shows, in what order, and the few words that may sit
+beside one. Proposed by a model from the whole pack and stored; the app has
+its own ordering underneath, so a deployment with no model key still has a
+bearing rather than an empty screen.
+_Avoid_: dashboard config, personalisation, layout
+
+**Pinned tile**:
+A tile someone has dragged into a slot themselves. A later arrangement fills
+only the slots that are not pinned, because a model reshuffling a choice
+somebody just made with their finger is the feature undoing its own point.
+_Avoid_: locked, favourite, sticky

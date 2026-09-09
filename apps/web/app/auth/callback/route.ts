@@ -17,7 +17,7 @@ function sanitizeNextPath(raw: string | null): string {
   ) {
     return raw;
   }
-  return "/dashboard";
+  return "/bearing";
 }
 
 export async function GET(request: Request) {

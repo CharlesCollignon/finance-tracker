@@ -15,7 +15,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Pluclair",
     description:
       "Your money, month by month — what came in, what went out, what is set aside and what is invested.",
-    start_url: "/dashboard",
+    start_url: "/bearing",
     scope: "/",
     display: "standalone",
     orientation: "portrait",

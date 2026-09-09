@@ -31,6 +31,7 @@ import { z } from "zod";
 import {
   factIds,
   findFact,
+  type FactPack,
   formatFact,
   type MonthFact,
   type MonthFacts,
@@ -371,7 +372,15 @@ function withoutPlaceholders(text: string): string {
   return text.replace(PLACEHOLDER, " ");
 }
 
-function citedIds(text: string): string[] {
+/**
+ * Every datum a piece of text points at.
+ *
+ * Exported alongside `writesAFigure` and `factSegments` because the Bearing
+ * holds its tile captions to the same three checks this module applies to a
+ * claim: what it cites must exist, what it cites must be declared, and what
+ * it writes in its own hand must not be a number.
+ */
+export function citedIds(text: string): string[] {
   return [...text.matchAll(PLACEHOLDER)].map((match) => match[1]!.trim());
 }
 
@@ -561,11 +570,24 @@ export interface RenderedRead {
   suggestions: RenderedSuggestion[];
 }
 
-function segmentsFor(
+/**
+ * One tokenised string, filled in from a pack.
+ *
+ * Exported and taking a `FactPack` rather than a `MonthFacts` because the
+ * Bearing's tile captions are the same construction over a different pack:
+ * words with `{{fact:id}}` holes in them, where the app owns every value that
+ * lands in a hole. One implementation means one place the substitution can be
+ * got wrong, and one place it is tested.
+ *
+ * Null when a cited figure has gone since the text was written — a deleted
+ * category, a removed cap, a disconnected bank. At that point the sentence
+ * cannot be rendered honestly and the caller drops it.
+ */
+export function factSegments(
   text: string,
-  facts: MonthFacts,
+  facts: FactPack,
   formatMoney: (amount: number) => string,
-  locale: Locale,
+  locale: Locale = DEFAULT_LOCALE,
 ): ReadSegment[] | null {
   const segments: ReadSegment[] = [];
   let cursor = 0;
@@ -626,14 +648,14 @@ export function renderMonthRead(
   formatMoney: (amount: number) => string,
   locale: Locale = DEFAULT_LOCALE,
 ): RenderedRead | null {
-  const headline = segmentsFor(read.headline, facts, formatMoney, locale);
+  const headline = factSegments(read.headline, facts, formatMoney, locale);
   if (!headline) {
     return null;
   }
 
   const observations: RenderedClaim[] = [];
   for (const row of read.observations) {
-    const segments = segmentsFor(row.text, facts, formatMoney, locale);
+    const segments = factSegments(row.text, facts, formatMoney, locale);
     if (segments) {
       observations.push({ segments, tone: row.tone });
     }
@@ -645,7 +667,7 @@ export function renderMonthRead(
 
   const suggestions: RenderedSuggestion[] = [];
   for (const row of read.suggestions) {
-    const segments = segmentsFor(row.text, facts, formatMoney, locale);
+    const segments = factSegments(row.text, facts, formatMoney, locale);
     if (segments) {
       suggestions.push({ segments, effort: row.effort });
     }

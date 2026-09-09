@@ -61,7 +61,7 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
   const stepIndex = STEPS.indexOf(step);
 
   function finish() {
-    router.push("/dashboard");
+    router.push("/bearing");
   }
 
   /** Both actions take FormData, so the wizard builds one rather than

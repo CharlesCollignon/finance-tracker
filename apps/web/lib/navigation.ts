@@ -2,7 +2,7 @@ import type { Key } from "@finance/core/i18n/t";
 import {
   ArrowsLeftRight,
   ChartLine,
-  ChartPieSlice,
+  Compass,
   Repeat,
   Target,
   User,
@@ -24,10 +24,20 @@ export interface NavChild {
 /**
  * The five surfaces.
  *
- * Organised by time rather than by table: Month is now, Ledger is the record,
- * Charges is what repeats, Plan is what those add up to, Wallets is what is
- * being built. Seven destinations became five, which is what let the phone bar
- * hold all of them with a legible label under each.
+ * Organised by time rather than by table: Bearing is where you stand, Ledger
+ * is the record, Charges is what repeats, Plan is what those add up to,
+ * Wallets is what is being built. Seven destinations became five, which is
+ * what let the phone bar hold all of them with a legible label under each,
+ * and it is still five — that ceiling is why the Bearing took Month's place
+ * rather than being added beside it.
+ *
+ * Month is now a view under the Bearing, the way Calendar and History sit
+ * under the Ledger. That is a demotion of position and not of importance: the
+ * Bearing answers "where do I stand" and every one of its tiles is a figure
+ * some other surface explains, so the screen that explains this month is one
+ * press from the tile that states it. What the swap fixes is that the app's
+ * front door used to be a single month, which is the right question on the
+ * 28th and the wrong one on the 2nd.
  *
  * Charges spent a while as a view inside Plan, on the reasoning that a
  * standing charge is part of the plan. That is true about the data and wrong
@@ -38,14 +48,15 @@ export interface NavChild {
  *
  * The paths are the old ones. Renaming them would have touched twenty-five
  * revalidation calls and the manifest to change strings nobody reads in an
- * installed app.
+ * installed app — which is also why Month kept `/dashboard` when it stopped
+ * being the dashboard.
  */
 export const APP_NAV_ITEMS = [
   {
-    href: "/dashboard",
-    labelKey: "nav.month" satisfies Key,
-    icon: ChartPieSlice,
-    children: [] as NavChild[],
+    href: "/bearing",
+    labelKey: "nav.bearing" satisfies Key,
+    icon: Compass,
+    children: [{ href: "/dashboard", labelKey: "nav.month" }] as NavChild[],
   },
   {
     href: "/transactions",

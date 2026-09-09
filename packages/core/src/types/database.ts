@@ -17,6 +17,32 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+/**
+ * The columns of `bearing_arrangements`, written out once.
+ *
+ * Declared outside `Database` and referred to from three `Returns` positions
+ * inside it. Pointing those at the table's own `Row` would be circular — see
+ * the note on `record_bank_pull` for what that circularity actually breaks —
+ * and repeating fourteen fields four times is how the month-read functions
+ * drifted from their table before.
+ */
+interface BearingArrangementColumns {
+  user_id: string;
+  tally_month: string;
+  writes: number;
+  refused: number;
+  last_written_at: string | null;
+  pending_since: string | null;
+  arrangement: Json | null;
+  facts: Json | null;
+  facts_digest: string | null;
+  dropped: number;
+  model: string | null;
+  prompt_version: number | null;
+  locale: Locale | null;
+  arranged_at: string | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -801,17 +827,80 @@ export interface Database {
         Row: {
           user_id: string;
           locale: Locale;
+          /**
+           * Which figure the user has dragged into which slot on the Bearing.
+           *
+           * A preference, and here rather than beside the model's arrangement
+           * for that reason: it is theirs, it costs nothing, and the only way
+           * it can go wrong is by being lost. Null for somebody who has never
+           * dragged anything, which is not the same as an empty object — no
+           * opinion is what lets the arrangement lead.
+           */
+          bearing_pins: Json | null;
           updated_at: string;
         };
         Insert: {
           user_id: string;
           locale?: Locale;
+          bearing_pins?: Json | null;
           updated_at?: string;
         };
         Update: {
           user_id?: string;
           locale?: Locale;
+          bearing_pins?: Json | null;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      bearing_arrangements: {
+        Row: {
+          user_id: string;
+          tally_month: string;
+          writes: number;
+          refused: number;
+          last_written_at: string | null;
+          pending_since: string | null;
+          arrangement: Json | null;
+          facts: Json | null;
+          facts_digest: string | null;
+          dropped: number;
+          model: string | null;
+          prompt_version: number | null;
+          locale: Locale | null;
+          arranged_at: string | null;
+        };
+        Insert: {
+          user_id: string;
+          tally_month: string;
+          writes?: number;
+          refused?: number;
+          last_written_at?: string | null;
+          pending_since?: string | null;
+          arrangement?: Json | null;
+          facts?: Json | null;
+          facts_digest?: string | null;
+          dropped?: number;
+          model?: string | null;
+          prompt_version?: number | null;
+          locale?: Locale | null;
+          arranged_at?: string | null;
+        };
+        Update: {
+          user_id?: string;
+          tally_month?: string;
+          writes?: number;
+          refused?: number;
+          last_written_at?: string | null;
+          pending_since?: string | null;
+          arrangement?: Json | null;
+          facts?: Json | null;
+          facts_digest?: string | null;
+          dropped?: number;
+          model?: string | null;
+          prompt_version?: number | null;
+          locale?: Locale | null;
+          arranged_at?: string | null;
         };
         Relationships: [];
       };
@@ -953,6 +1042,39 @@ export interface Database {
           locale: Locale | null;
         };
       };
+      /** Take one attempt at arranging the Bearing, if the allowance permits. */
+      reserve_bearing_arrangement: {
+        Args: {
+          target_user: string;
+          this_month: string;
+          allowance: number;
+          cooldown_seconds: number;
+          reservation_seconds: number;
+        };
+        // Spelled out rather than pointed at the table's own Row, for the
+        // reason recorded on record_bank_pull below.
+        Returns: BearingArrangementColumns;
+      };
+      /** Land a finished attempt, whether or not an arrangement survived it. */
+      store_bearing_arrangement: {
+        Args: {
+          target_user: string;
+          new_arrangement: Json | null;
+          new_facts: Json | null;
+          new_digest: string | null;
+          new_dropped: number;
+          new_model: string | null;
+          new_prompt_version: number | null;
+          new_locale: string | null;
+          refused_delta: number;
+        };
+        Returns: BearingArrangementColumns;
+      };
+      /** Hand back an attempt that never reached the provider. */
+      refund_bearing_arrangement: {
+        Args: { target_user: string };
+        Returns: BearingArrangementColumns;
+      };
       record_bank_pull: {
         Args: {
           target_user: string;
@@ -1007,6 +1129,8 @@ export type BankFeedItem =
 export type BankAccount = Database["public"]["Tables"]["bank_accounts"]["Row"];
 export type BankPullRow = Database["public"]["Tables"]["bank_pulls"]["Row"];
 export type MonthReadRow = Database["public"]["Tables"]["month_reads"]["Row"];
+export type BearingArrangementRow =
+  Database["public"]["Tables"]["bearing_arrangements"]["Row"];
 export type RecurringFulfilment =
   Database["public"]["Tables"]["recurring_fulfilments"]["Row"];
 export type MonthClose = Database["public"]["Tables"]["month_closes"]["Row"];

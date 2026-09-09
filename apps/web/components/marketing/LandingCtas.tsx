@@ -68,7 +68,7 @@ export function LandingCtas({
     return (
       <div className={cn("flex flex-wrap items-center gap-3", className)}>
         <Link
-          href="/dashboard"
+          href="/bearing"
           className={cn(base, sizes[size], solid, size === "lg" && solidGlow)}
         >
           {layout === "solo" ? copy.cta.openApp : copy.cta.goToDashboard}

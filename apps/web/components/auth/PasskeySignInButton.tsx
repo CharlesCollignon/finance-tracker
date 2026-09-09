@@ -41,7 +41,7 @@ export function PasskeySignInButton({
       await seedCategoriesForCurrentUser();
     }
 
-    router.push("/dashboard");
+    router.push("/bearing");
     router.refresh();
   }
 

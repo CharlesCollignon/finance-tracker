@@ -24,6 +24,7 @@ function revalidatePhase4(): void {
   revalidatePath("/investments");
   revalidatePath("/transactions");
   revalidatePath("/dashboard");
+  revalidatePath("/bearing");
   revalidateRecurringDependents();
 }
 

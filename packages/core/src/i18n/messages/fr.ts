@@ -23,6 +23,7 @@ import type { Messages } from "./en";
  */
 export const fr: Messages = {
   nav: {
+    bearing: "Cap",
     month: "Mois",
     ledger: "Journal",
     charges: "Charges",
@@ -748,6 +749,7 @@ export const fr: Messages = {
     thousands: "{value} k",
     perYear: "{rate} par an",
     percent: "{value} %",
+    months: "{value} mois",
   },
 
   recurrence: {
@@ -867,6 +869,60 @@ export const fr: Messages = {
     investedValue: "Valeur investie",
     inboxPending: "Écritures encore sans catégorie",
     chargesUnconfirmed: "Charges récurrentes pas encore confirmées",
+  },
+
+  bearingFacts: {
+    netPosition: "Tout, additionné",
+    netPositionNote:
+      "comptes et investissements uniquement ; cette application n'enregistre aucune dette",
+    onHand: "Sur les comptes",
+    invested: "Investi",
+    investedShare: "Part investie",
+    free: "À dépenser ce mois-ci",
+    committed: "Reste à partir ce mois-ci",
+    arriving: "Reste à arriver ce mois-ci",
+    savingsRate: "Taux d'épargne ce mois-ci",
+    expensesVsPrevious: "Sorties par rapport à {month}",
+    expensesVsPreviousNote:
+      "la même portion des deux mois, pas un mois entier contre une partie",
+    unrecordedSoFar: "Dépenses non enregistrées à ce jour",
+    unrecordedSoFarNote:
+      "mesurées, et non définitives tant que le mois n'est pas clôturé",
+    unrecordedAllowance: "Enveloppe non enregistrée",
+    unrecordedAllowanceNote:
+      "un plafond établi à partir de l'historique de cette personne",
+    unrecordedOver: "Dépenses non enregistrées au-delà de l'enveloppe",
+    unrecordedBaseline: "Dépenses non enregistrées habituelles",
+    unrecordedBaselineNote:
+      "la médiane des mois clôturés, pour qu'un seul voyage ne la déplace pas",
+    streak: "Mois d'affilée dans l'enveloppe",
+    bestStreak: "Meilleure série à ce jour",
+    monthlyNetAverage: "Ce qu'un mois garde habituellement, sur {count} mois",
+    projectedBalance: "Où le compte arrive d'ici {month}",
+    projectedBalanceNote:
+      "un calcul sur des charges déjà programmées ; aucune dépense libre n'est supposée",
+    projectedMonthlyNet: "Ce que chaque mois ajoute, si rien ne change",
+    committedMonthly: "Un mois de charges engagées",
+    runwayMonths: "Mois que la réserve couvrirait",
+    walletCost: "Versé dans les portefeuilles",
+    walletGain: "Gain sur ce qui a été versé",
+    walletReturn: "Rendement par an",
+    walletReturnNote:
+      "pondéré par les flux, la date de chaque achat compte donc",
+    walletDrag: "Ce que la détention coûte par an",
+    walletDragNote:
+      "prélevé à l'intérieur des fonds, cela n'apparaît donc jamais comme une transaction",
+    walletDragPartial: {
+      one: "partiel — {count} ligne sans frais renseignés",
+      other: "partiel — {count} lignes sans frais renseignés",
+    },
+    walletDrift: "Portefeuille le plus éloigné de sa cible",
+    walletDriftNote: "en points de pourcentage, quel que soit le sens de l'écart",
+    walletConcentration: "{name}, part des portefeuilles",
+    walletConcentrationNote:
+      "la plus grosse ligne, pesée contre ce qui est investi plutôt que contre les liquidités",
+    contributionPace: "Versé chaque mois dans les portefeuilles",
+    inboxPending: "Écritures encore sans catégorie",
   },
 
   pulse: {
@@ -1026,6 +1082,47 @@ export const fr: Messages = {
       headlineHadFigure: "Le titre contenait un chiffre de son invention",
       headlineTooLong: "Le titre dépassait une ligne",
       everythingDropped: "Toutes les observations ont dû être écartées",
+    },
+  },
+
+  bearing: {
+    title: "Cap",
+    asOf: "Au {date}",
+    arrange: "Réagencer",
+    arranging: "Agencement…",
+    arrangeHint:
+      "Un modèle choisit les chiffres de tête. Déplacez une tuile pour le contredire.",
+    arrangementsLeft: {
+      one: "{count} restant ce mois-ci",
+      other: "{count} restants ce mois-ci",
+    },
+    ownOrder: "Dans l'ordre de l'application",
+    pinned: "Déplacée par vous",
+    reorder: "Déplacer {label}",
+    resetPins: "Effacer mon ordre",
+    orderNotSaved: "Votre ordre n'a pas pu être enregistré.",
+    moved: {
+      one: "{count} chiffre a bougé depuis cet agencement, {age}.",
+      other: "{count} chiffres ont bougé depuis cet agencement, {age}.",
+    },
+    empty:
+      "Dès qu'un mois sera enregistré, il y aura de quoi faire le point.",
+    noWriter: "Aucun rédacteur n'est configuré.",
+    noAnswer: "Le rédacteur n'a pas répondu à l'instant.",
+    unusable: "La réponse du rédacteur n'a pas pu être utilisée.",
+    threwAway:
+      "Le rédacteur a cité un chiffre que l'application ne lui avait pas donné, l'agencement a donc été écarté. ({detail})",
+    allowanceSpent:
+      "Vous avez utilisé les {allowance} agencements de ce mois-ci.",
+    coolingDown: "Un agencement vient d'être fait — réessayez dans {seconds} s.",
+    inFlight: "Un agencement est déjà en cours.",
+    nothingToSay: "Il n'y a pas encore assez d'enregistré pour faire le point.",
+    untracked: "Les agencements ne sont pas encore en place (migration 029).",
+    refusal: {
+      wrongShape: "Pas la forme demandée",
+      unknownTile: 'Il a nommé "{id}", qui ne fait pas partie des chiffres',
+      unknownDatum: 'Une légende a cité "{id}", qui ne lui a jamais été envoyé',
+      nothingLeft: "Aucune tuile utilisable ne restait",
     },
   },
 

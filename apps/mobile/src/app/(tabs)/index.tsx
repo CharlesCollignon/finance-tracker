@@ -1,779 +1,279 @@
-import { useState } from "react";
-import { Pressable, RefreshControl, ScrollView, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
+import { Pressable, RefreshControl, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import ReorderableList, { reorderItems } from "react-native-reorderable-list";
 
 import {
-  formatMonthLabel,
-  getCurrentMonth,
-  parseMonthParams,
-  savingsRatePercent,
-  todayIsoLocal,
-  type BudgetViewMode,
-} from "@finance/core/constants";
-import { buildBudgetProgress } from "@finance/core/budget-limits";
-import { buildStillToCome } from "@finance/core/still-to-come";
-import { buildMonthComparison } from "@finance/core/month-comparison";
-import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
-import { buildMonthPulse } from "@finance/core/month-pulse";
-import { previousMonthKey } from "@finance/core/month-close";
-import { buildRunway } from "@finance/core/projection";
-import {
-  applyRecurringPlanCounts,
-  type ApplyRecurringPlan,
-} from "@finance/core/apply-recurring";
-import type { MonthlySummary } from "@finance/core/types/database";
-import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
+  renderArrangement,
+  type RenderedTile,
+} from "@finance/core/bearing-read";
+import { slotSpan, type TileId, type TilePins } from "@finance/core/bearing-tiles";
+import { formatShortDate } from "@finance/core/constants";
 
 import {
-  getMonthRead,
-  monthFactsFromScreen,
-  monthReadWritable,
-  type MonthReadView,
-} from "@/lib/month-read";
-import type { MonthFacts } from "@finance/core/month-facts";
+  arrangeBearing,
+  bearingOrder,
+  bearingWritable,
+  gatherBearingFacts,
+  getBearingArrangement,
+  getBearingPins,
+  saveBearingPins,
+} from "@/lib/bearing";
 
-import { ApplyRecurringSheet } from "@/components/ApplyRecurringSheet";
-import { ArrivedCharges } from "@/components/ArrivedCharges";
-import {
-  MonthAttention,
-  type AttentionItem,
-} from "@/components/MonthAttention";
-import { MonthCloseSheet } from "@/components/MonthCloseSheet";
-import { MonthClosedRecap } from "@/components/MonthClosedRecap";
-import { MonthFirstRun } from "@/components/MonthFirstRun";
-import { LocaleSuggestion } from "@/components/LocaleSuggestion";
-import { MonthPicker } from "@/components/MonthPicker";
-import { MoneyOnHand } from "@/components/MoneyOnHand";
-import { MonthRead } from "@/components/MonthRead";
-import { MonthScore } from "@/components/MonthScore";
-import { RecentOnAccount } from "@/components/RecentOnAccount";
-import { StillToCome } from "@/components/StillToCome";
-import { MonthWallets } from "@/components/MonthWallets";
-import { ProgressRing, SpendStrip } from "@/components/charts";
-import {
-  TrendCard,
-  TREND_RANGE_MONTHS,
-  type TrendRange,
-} from "@/components/TrendCard";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Disclosure } from "@/components/ui/Disclosure";
+import { BearingTile } from "@/components/bearing/BearingTile";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
-import {
-  applyRecurringForMonth,
-  previewApplyRecurringForMonth,
-} from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
+import { useFormatCurrency } from "@/providers/CurrencyProvider";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { hapticSuccess } from "@/lib/haptics";
-import { useChartSeries } from "@/theme/chart-series";
-import { useThemeColors } from "@/theme/useThemeColors";
-import { ICON } from "@/theme/tokens";
+import { useDataVersion } from "@/lib/data-version";
+import { ICON, TYPE } from "@/theme/tokens";
 import { useTabBarClearance } from "@/theme/chrome";
-import { useLocale, useT } from "@/providers/LocaleProvider";
-import { resolveMessage } from "@finance/core/i18n/t";
-import {
-  getBudgets,
-  getCategories,
-  getMonthCloseOverview,
-  getMonthlySummary,
-  getMonthlyTrend,
-  countPendingFeedItems,
-  getFulfilledKeys,
-  getFulfilmentReport,
-  type FulfilmentReport,
-  getRecentBankMovements,
-  getRecordedCashFlows,
-  getRecurringTemplates,
-  getSavingsGoals,
-  getSkippedOccurrences,
-  getTransactions,
-  getWalletPortfolio,
-  readCashBalance,
-  type BankMovement,
-  type MonthCloseOverview,
-  type MonthlyTrendPoint,
-} from "@/lib/queries";
+import { useThemeColors } from "@/theme/useThemeColors";
 
 /**
- * A card that both links onward and shows the thing it links to.
+ * Where the whole of it stands, on one day.
  *
- * Home is a summary screen; every block on it is a preview of a surface that
- * holds the full version, and saying so in the heading is cheaper than making
- * someone find out by tapping.
+ * The phone's first tab, and the app's landing surface on both clients. Every
+ * figure here is one some other screen already renders, so a tile is a link
+ * to the place its number is explained — Month, the Ledger, Plan, Wallets.
+ *
+ * A model chooses which figures lead and may write a few words beside one. It
+ * never computes anything: it names figures by id and the values are
+ * substituted here, on the device, which is what keeps the currency toggle
+ * and the privacy blur working on a caption.
+ *
+ * Nothing on this screen calls a model. The stored arrangement renders for
+ * free; only the button spends, and it is absent on a build with no web app
+ * to reach — in which case the app's own ordering is what shows, which is a
+ * working Bearing rather than a degraded one.
  */
-function SummaryCard({
-  title,
-  linkLabel,
-  onPress,
-  children,
-}: {
-  title: string;
-  linkLabel: string;
-  onPress: () => void;
-  children: React.ReactNode;
-}) {
-  const colors = useThemeColors();
-
-  return (
-    <Card bezel innerClassName="gap-4 p-5">
-      <View className="flex-row items-center justify-between gap-3">
-        <Text className="text-sm font-medium">{title}</Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={linkLabel}
-          onPress={onPress}
-          hitSlop={8}
-          className="flex-row items-center gap-1"
-        >
-          <Text className="text-sm text-primary-ink">{linkLabel}</Text>
-          <Ionicons
-            name="arrow-forward"
-            size={ICON.sm}
-            color={colors.primaryInk}
-          />
-        </Pressable>
-      </View>
-      {children}
-    </Card>
-  );
-}
-
-export default function MonthScreen() {
+export default function BearingScreen() {
+  const { user } = useAuth();
   const t = useT();
   const locale = useLocale();
-  const tabBarClearance = useTabBarClearance();
-  const { user } = useAuth();
-  const router = useRouter();
+  const colors = useThemeColors();
+  const formatEuro = useFormatCurrency();
   const { toast } = useToast();
-  // The third chart series, matching the web app's goal rings. Read here
-  // rather than in the map below, where it would be a hook inside a loop.
-  const goalColor = useChartSeries()[2];
-  const now = parseMonthParams();
-  const [year, setYear] = useState(now.year);
-  const [month, setMonth] = useState(now.month);
-  const [view, setView] = useState<BudgetViewMode>("current");
-  const [trendRange, setTrendRange] = useState<TrendRange>("6M");
-  const [applyOpen, setApplyOpen] = useState(false);
-  const [applyPending, setApplyPending] = useState(false);
-  const [closeOpen, setCloseOpen] = useState(false);
-
+  const bottom = useTabBarClearance();
   const dataVersion = useDataVersion();
-  const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
-    useRefreshable(async () => {
+
+  /**
+   * What the user has dragged, since the last load.
+   *
+   * Null until they drag something, and reset the moment fresh data arrives.
+   * Holding the order in state and seeding it from an effect was the obvious
+   * shape and the wrong one: it derives state from props, which costs a
+   * second render on every load and leaves a window where the list is empty.
+   * This is the reset-during-render pattern instead — the order is derived,
+   * and a drag is the only thing that overrides it.
+   */
+  const [dragged, setDragged] = useState<{
+    order: TileId[];
+    pins: TilePins;
+  } | null>(null);
+  const [arranging, setArranging] = useState(false);
+
+  const { data, loading, refreshing, onRefreshAll, onRefresh } = useRefreshable(
+    async () => {
       if (!user) {
-        return {
-          summary: null as MonthlySummary | null,
-          portfolio: null as InvestmentPortfolioSummary | null,
-          comparison: null as ReturnType<typeof buildMonthComparison> | null,
-          plan: null as ApplyRecurringPlan | null,
-          budgetProgress: [] as ReturnType<typeof buildBudgetProgress>,
-          goalProgress: [] as ReturnType<typeof buildSavingsGoalProgress>,
-          trend: [] as MonthlyTrendPoint[],
-          closes: null as MonthCloseOverview | null,
-          templateCount: 0,
-          upcoming: null as ReturnType<typeof buildStillToCome> | null,
-          monthlyCommitted: 0,
-          pulse: null as ReturnType<typeof buildMonthPulse> | null,
-          unreadable: [] as string[],
-          movements: [] as BankMovement[],
-          arrived: { proposals: [], misses: [] } as FulfilmentReport,
-          readView: null as MonthReadView | null,
-          readFacts: null as MonthFacts | null,
-          readOwnFacts: null as MonthFacts | null,
-          readWritesLeft: 0,
-        };
+        return null;
       }
-      const [previousYear, previousMonth] =
-        month === 1 ? [year - 1, 12] : [year, month - 1];
 
-      const today = todayIsoLocal();
-      const nowMonth = getCurrentMonth();
-      const viewingCurrent = year === nowMonth.year && month === nowMonth.month;
-
-      const [
-        summary,
-        portfolio,
-        budgets,
-        goals,
-        categories,
-        trend,
-        currentTx,
-        previousTx,
-        preview,
-        templates,
-        closes,
-        skipped,
-        // What the accounts hold now, and what the month has recorded against
-        // it. Only for the month in progress: the balance is today's, and
-        // presenting it beside March's totals would invite arithmetic across
-        // two different moments.
-        cash,
-        flows,
-        movements,
-        fulfilledKeys,
-        inboxPending,
-      ] = await Promise.all([
-        getMonthlySummary(user.id, year, month, view),
-        getWalletPortfolio(user.id, { includeHistory: false }),
-        getBudgets(user.id),
-        getSavingsGoals(user.id),
-        getCategories(user.id),
-        getMonthlyTrend(user.id, TREND_RANGE_MONTHS[trendRange]),
-        getTransactions(user.id, year, month),
-        getTransactions(user.id, previousYear, previousMonth),
-        // Quoting share-priced templates can fail; the month must still
-        // render, so a failed preview simply means no row.
-        previewApplyRecurringForMonth(year, month),
-        getRecurringTemplates(user.id),
-        getMonthCloseOverview(user.id, today),
-        getSkippedOccurrences(user.id, year, month),
-        viewingCurrent ? readCashBalance(user.id, today) : null,
-        viewingCurrent ? getRecordedCashFlows(user.id, year, month) : null,
-        getRecentBankMovements(user.id),
-        getFulfilledKeys(user.id),
-        countPendingFeedItems(user.id),
+      const facts = await gatherBearingFacts(user.id, locale);
+      const [stored, savedPins] = await Promise.all([
+        getBearingArrangement(user.id, facts),
+        getBearingPins(user.id),
       ]);
-      const categoryNames = new Map(
-        categories.map((c) => [c.id, c.name] as const),
-      );
 
-      // Asked after the batch, because it needs the templates and categories
-      // the batch fetched. A failure is not worth losing the month over: the
-      // block simply does not appear.
-      //
-      // The report rather than the proposals alone, because the misses are the
-      // only place a charge that never arrived is mentioned — the Ledger's
-      // dots can mark a row as confirmed or waiting, but an occurrence with no
-      // movement behind it has no row to mark.
-      let arrived: FulfilmentReport = { proposals: [], misses: [] };
-      try {
-        arrived = await getFulfilmentReport(
-          user.id,
-          templates,
-          categories,
-          year,
-          month,
-        );
-      } catch {
-        arrived = { proposals: [], misses: [] };
+      return { facts, stored, pins: savedPins };
+    },
+    [user?.id, locale, dataVersion],
+  );
+
+  const [snapshot, setSnapshot] = useState(data);
+  if (snapshot !== data) {
+    setSnapshot(data);
+    setDragged(null);
+  }
+
+  // The reconciliation the whole app agrees on: the arrangement with the
+  // user's pins applied. A drag overrides it until the next load, which then
+  // agrees anyway, because the drag wrote those pins.
+  const settled = useMemo(
+    () =>
+      data
+        ? bearingOrder(data.stored.arrangement, data.pins, data.facts)
+        : [],
+    [data],
+  );
+
+  const order = dragged?.order ?? settled;
+  // Memoised because the `?? {}` fallback is a fresh object every render,
+  // which would re-create the reorder callback on each one.
+  const pins = useMemo(
+    () => dragged?.pins ?? data?.pins ?? {},
+    [dragged, data],
+  );
+
+  const onReorder = useCallback(
+    ({ from, to }: { from: number; to: number }) => {
+      const next = reorderItems(order, from, to);
+
+      // Everything the user has ever placed, re-read off the list they can
+      // actually see. Pinning only the tile just moved would let the ones it
+      // pushed past drift back on the next arrangement.
+      const moved = order[from];
+      const nowPinned = new Set(Object.keys(pins));
+      if (moved) {
+        nowPinned.add(moved);
       }
 
-      const upcoming = buildStillToCome(
-        currentTx,
-        templates,
-        year,
-        month,
-        today,
-        new Set(
-          skipped.map((entry) => `${entry.templateId}:${entry.occurredOn}`),
-        ),
-        // Without this, every recurring charge the bank delivers is forecast
-        // on top of the movement that already paid it.
-        fulfilledKeys,
+      const nextPins: TilePins = Object.fromEntries(
+        next.flatMap((id, index) => (nowPinned.has(id) ? [[id, index]] : [])),
       );
+      setDragged({ order: next, pins: nextPins });
+      // Fire and forget: the tile has already moved under the finger, and the
+      // cost of losing the position is dragging it again.
+      void saveBearingPins(nextPins);
+    },
+    [order, pins],
+  );
 
-      // Only the close of the month immediately before counts. A user who has
-      // fallen behind has a newest close two or three months back, and
-      // measuring this month's flows against that balance would compare a
-      // balance against transactions from a different window — a figure that
-      // looks authoritative and is nonsense.
-      const latestClose = closes.history[0];
-      const wantedKey = previousMonthKey(
-        `${year}-${String(month).padStart(2, "0")}`,
-      );
-      const openingBalance =
-        latestClose && latestClose.monthKey === wantedKey
-          ? latestClose.closingBalance
-          : null;
-
-      // Mapped from what this batch already fetched rather than gathered
-      // again, so the figures the read refers to are literally the ones
-      // rendered above it.
-      const factsInput = {
-        year,
-        month,
-        locale,
-        isCurrentMonth: viewingCurrent,
-        summary,
-        comparison: buildMonthComparison({
-          current: currentTx,
-          previous: previousTx,
-          year,
-          month,
-          today,
-        }),
-        closes,
-        pulse: viewingCurrent
-          ? buildMonthPulse({
-              onHand: cash?.ok ? cash.total : null,
-              committed: upcoming.leaving,
-              arriving: upcoming.arriving,
-              flows: flows ?? {
-                income: 0,
-                expenses: 0,
-                savings: 0,
-                transfers: 0,
-              },
-              openingBalance,
-              cap: closes.settings.unrecordedCap,
-            })
-          : null,
-        budgets: buildBudgetProgress(
-          budgets,
-          summary.expenseBreakdown,
-          summary.expenses,
-          categoryNames,
-          locale,
-        ),
-        goals: buildSavingsGoalProgress(
-          goals,
-          summary.savingsBreakdown,
-          summary.savings,
-        ),
-        investedValue: portfolio.totalMarketValue,
-        inboxPending,
-        chargesUnconfirmed: arrived.proposals.length,
-      };
-      const readFacts = monthFactsFromScreen(factsInput);
-
-      // The row itself, read straight out of Supabase — select-own under row
-      // level security, so no server of ours is involved in looking at it.
-      let stored = {
-        view: null as MonthReadView | null,
-        writesLeft: 0,
-        tracked: false,
-      };
-      try {
-        stored = await getMonthRead(user.id, year, month, readFacts);
-      } catch {
-        // A missing read is not a reason to lose the month.
+  async function arrange() {
+    setArranging(true);
+    try {
+      const outcome = await arrangeBearing();
+      if (outcome.message) {
+        toast(outcome.message, outcome.arranged ? "success" : "error");
       }
-
-      // A read stays in the language it was written in, so its figures have
-      // to be labelled in that language too. Built only when the two have
-      // actually come apart, which is rare and only after a switch.
-      const storedLocale = stored.view?.locale ?? locale;
-      const readOwnFacts =
-        storedLocale === locale
-          ? readFacts
-          : monthFactsFromScreen({ ...factsInput, locale: storedLocale });
-
-      return {
-        summary,
-        portfolio,
-        trend,
-        plan: preview.plan ?? null,
-        movements,
-        arrived,
-        // Fetched for the month read's fact pack, and now also the reason a
-        // Needs you row appears. One read, two uses.
-        inboxPending,
-        readFacts,
-        readOwnFacts,
-        readView: stored.view,
-        readWritesLeft: stored.writesLeft,
-        // A reading that failed comes back with `ok: false`, and its total is
-        // short by whatever the unreadable accounts hold — so it is not a
-        // balance and must not be presented as one.
-        pulse: buildMonthPulse({
-          onHand: cash?.ok ? cash.total : null,
-          committed: upcoming.leaving,
-          arriving: upcoming.arriving,
-          flows: flows ?? {
-            income: 0,
-            expenses: 0,
-            savings: 0,
-            transfers: 0,
-          },
-          openingBalance,
-          cap: closes.settings.unrecordedCap,
-        }),
-        unreadable: (cash?.missing ?? []).map((entry) => entry.label),
-        // Actuals only: comparing two projections would move whenever a
-        // template changed, which is not a claim worth making.
-        comparison: buildMonthComparison({
-          current: currentTx,
-          previous: previousTx,
-          year,
-          month,
-          today,
-        }),
-        budgetProgress: buildBudgetProgress(
-          budgets,
-          summary.expenseBreakdown,
-          summary.expenses,
-          categoryNames,
-          locale,
-        ),
-        goalProgress: buildSavingsGoalProgress(
-          goals,
-          summary.savingsBreakdown,
-          summary.savings,
-        ),
-        closes,
-        templateCount: templates.length,
-        upcoming,
-        // Committed outgoings, for turning a month's saving into days of
-        // runway. Always the month in progress: closing an older month does
-        // not change what this one costs to live through.
-        monthlyCommitted: buildRunway(0, templates, year, month)
-          .monthlyCommitted,
-      };
-    }, [user?.id, year, month, view, trendRange, dataVersion]);
-
-  const summary = data?.summary;
-  const portfolio = data?.portfolio;
-  const trend = data?.trend ?? [];
-  const comparison = data?.comparison ?? null;
-  const plan = data?.plan ?? null;
-  const budgetProgress = data?.budgetProgress ?? [];
-  const goalProgress = data?.goalProgress ?? [];
-  const closes = data?.closes ?? null;
-  const upcoming = data?.upcoming ?? null;
-  const pulse = data?.pulse ?? null;
-  const movements = data?.movements ?? [];
-  const arrived = data?.arrived ?? { proposals: [], misses: [] };
-  const readFacts = data?.readFacts ?? null;
-  const inboxPending = data?.inboxPending ?? 0;
-  const monthLabel = formatMonthLabel(year, month);
-
-  // Nothing set up and nothing recorded: the standing card would report "0 €
-  // left" over two more zeros, which is a correct answer to a question nobody
-  // asked. Show the way in instead.
-  const firstRun =
-    (data?.templateCount ?? 0) === 0 &&
-    budgetProgress.length === 0 &&
-    goalProgress.length === 0 &&
-    (summary?.income ?? 0) === 0 &&
-    (summary?.expenses ?? 0) === 0;
-
-  const savingsRate = summary
-    ? savingsRatePercent(
-        summary.savings,
-        summary.investments,
-        summary.investmentDeployments,
-        summary.income,
-      )
-    : null;
-
-  // Only a month in progress has an "of it gone" to report.
-  const current = getCurrentMonth();
-  const isCurrentMonth = year === current.year && month === current.month;
-  const elapsed = isCurrentMonth
-    ? Number(todayIsoLocal().slice(8, 10)) / new Date(year, month, 0).getDate()
-    : null;
-
-  const planCounts = plan ? applyRecurringPlanCounts(plan) : null;
-  const attention: AttentionItem[] = [];
-
-  // First, and not on this screen at all until now. The count was already
-  // being fetched — it feeds the month read's fact pack — but it went no
-  // further, so a bank feed the cron had filled overnight was invisible here
-  // while every figure below was short by whatever those entries hold.
-  //
-  // Led with because it is the only errand that makes the rest of the screen
-  // wrong: applying and closing are things left to do, whereas an entry with
-  // no category is money that moved and is not counted.
-  if (inboxPending > 0) {
-    attention.push({
-      id: "inbox",
-      text: `${inboxPending} ${
-        inboxPending === 1 ? "entry needs" : "entries need"
-      } a category`,
-      action: t("month.actionReview"),
-      // The review, not the Ledger it lives on. The sheet is there rather
-      // than here because one screen should own the queue, and the Ledger is
-      // where the rows land.
-      onPress: () =>
-        router.push({
-          pathname: "/transactions",
-          params: { review: "inbox" },
-        }),
-    });
-  }
-
-  if (planCounts && planCounts.creates > 0) {
-    attention.push({
-      id: "apply",
-      text: `${planCounts.creates} recurring ${
-        planCounts.creates === 1 ? "item is" : "items are"
-      } ready to add`,
-      action: t("month.actionApply"),
-      onPress: () => setApplyOpen(true),
-    });
-  }
-
-  if (closes?.next) {
-    attention.push({
-      id: "close",
-      text: closes.next.isBaseline
-        ? t("month.startingBalanceHint")
-        : `${closes.next.label} is ready to close`,
-      action: t("month.actionClose"),
-      onPress: () => setCloseOpen(true),
-    });
-  }
-
-  async function confirmApply(includeUpdates: boolean, keys: Set<string>) {
-    setApplyPending(true);
-    const result = await applyRecurringForMonth(
-      year,
-      month,
-      includeUpdates,
-      keys,
-    );
-    setApplyPending(false);
-
-    if (result.error) {
-      toast(result.error, "error");
-      return;
+      if (outcome.arranged) {
+        hapticSuccess();
+        onRefresh();
+      }
+    } finally {
+      setArranging(false);
     }
-
-    void hapticSuccess();
-    setApplyOpen(false);
-    toast(
-      result.created
-        ? `${result.created} added to ${monthLabel}`
-        : t("month.nothingToApply"),
-      "success",
-    );
-    notifyDataChanged();
-    void onRefresh();
   }
+
+  if (loading || !data) {
+    return (
+      <Screen title={t("nav.bearing")}>
+        <ScreenSkeleton />
+      </Screen>
+    );
+  }
+
+  const { facts, stored } = data;
+
+  if (facts.thin) {
+    return (
+      <Screen title={t("nav.bearing")}>
+        <EmptyState
+          title={t("bearing.title")}
+          description={t("bearing.empty")}
+        />
+      </Screen>
+    );
+  }
+
+  // Rendered here rather than upstream, because the display currency lives on
+  // this device and no server knows it. Spans come from the position, so the
+  // first tile is the hero whatever it happens to be.
+  const tiles = renderArrangement(
+    order,
+    stored.arrangement,
+    facts,
+    formatEuro,
+    stored.locale,
+  );
+
+  const canArrange = bearingWritable() && stored.tracked;
 
   return (
-    <Screen title={t("nav.month")}>
-      <MonthPicker
-        year={year}
-        month={month}
-        onChange={(y, m) => {
-          setYear(y);
-          setMonth(m);
-        }}
-      />
-
-      {loading && !summary ? (
-        <ScreenSkeleton rows={3} />
-      ) : error ? (
-        <Text className="mt-6 text-destructive">
-          {resolveMessage(t, error)}
-        </Text>
-      ) : !summary ? (
-        <EmptyState
-          className="mt-6"
-          title={t("month.setUpTitle")}
-          description={t("month.setUpBody")}
-        >
-          <Button
-            label={t("month.setUpCharges")}
-            variant="pill"
-            icon="arrow-forward"
-            onPress={() => router.push("/recurring")}
+    <Screen title={t("nav.bearing")} className="px-4 py-0">
+      <ReorderableList
+        data={tiles}
+        keyExtractor={(tile: RenderedTile) => tile.id}
+        renderItem={({ item, index }) => (
+          <BearingTile
+            tile={{ ...item, span: slotSpan(index) }}
+            pinned={item.id in pins}
+            draggable={stored.tracked}
           />
-        </EmptyState>
-      ) : (
-        <ScrollView
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
-          }
-          contentContainerClassName="gap-4 pt-4"
-          contentContainerStyle={{ paddingBottom: tabBarClearance }}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Above everything, on the first screen the app opens on. The web
-              app puts the same question in a bar under the header; a phone has
-              no such bar, and the Month tab is the equivalent first thing
-              anybody sees. */}
-          <LocaleSuggestion />
-          <MonthAttention
-            items={attention}
-            slot={
-              arrived.proposals.length > 0 || arrived.misses.length > 0 ? (
-                <ArrivedCharges
-                  proposals={arrived.proposals}
-                  misses={arrived.misses}
-                  onDecided={() => {
-                    notifyDataChanged();
-                    void onRefresh();
+        )}
+        onReorder={onReorder}
+        dragEnabled={stored.tracked}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: bottom }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefreshAll}
+            tintColor={colors.mutedForeground}
+          />
+        }
+        ListHeaderComponent={
+          <View className="mb-3 gap-2">
+            <Text className="text-muted-foreground" style={TYPE.micro}>
+              {t("bearing.asOf", { date: formatShortDate(facts.asOf, locale) })}
+              {" · "}
+              {stored.arrangement
+                ? t("bearing.arrangeHint")
+                : t("bearing.ownOrder")}
+            </Text>
+
+            {canArrange ? (
+              <View className="flex-row items-center gap-3">
+                <Pressable
+                  onPress={arrange}
+                  disabled={arranging || stored.arrangementsLeft <= 0}
+                  className="flex-row items-center gap-1.5 self-start rounded-full border border-border px-3 py-1.5"
+                  style={{
+                    opacity:
+                      arranging || stored.arrangementsLeft <= 0 ? 0.5 : 1,
                   }}
-                />
-              ) : undefined
-            }
-          />
-
-          {firstRun ? (
-            <MonthFirstRun />
-          ) : pulse ? (
-            <MoneyOnHand
-              pulse={pulse}
-              monthLabel={monthLabel}
-              year={year}
-              month={month}
-              onBudgetViewChange={setView}
-              income={summary.income}
-              expenses={summary.expenses}
-              remaining={summary.remaining}
-              budgetView={view}
-              elapsed={elapsed}
-              trend={trend.map((point) => point.net)}
-              comparison={comparison}
-              savingsRate={savingsRate}
-              unreadable={data?.unreadable ?? []}
-            />
-          ) : null}
-
-          {summary.expenses > 0 ? (
-            <SummaryCard
-              title={t("month.whereItWent")}
-              linkLabel="Ledger"
-              onPress={() => router.push("/transactions")}
-            >
-              <SpendStrip
-                rows={summary.expenseBreakdown}
-                total={summary.expenses}
-              />
-            </SummaryCard>
-          ) : null}
-
-          {budgetProgress.length > 0 || goalProgress.length > 0 ? (
-            <SummaryCard
-              title={t("month.capsAndGoals")}
-              linkLabel="Plan"
-              onPress={() => router.push("/planning")}
-            >
-              <View className="flex-row flex-wrap items-start gap-4">
-                {budgetProgress.slice(0, 2).map((row) => (
-                  <ProgressRing
-                    key={row.budgetId}
-                    ratio={row.ratio}
-                    label={row.label}
-                    detail={`${Math.round(row.ratio * 100)}% of cap`}
-                    over={row.over}
-                    meaning="limit"
+                  accessibilityRole="button"
+                >
+                  <Ionicons
+                    name="sparkles-outline"
+                    size={ICON.sm}
+                    color={colors.primaryRim}
                   />
-                ))}
-                {goalProgress.slice(0, 2).map((row) => (
-                  <ProgressRing
-                    key={row.goal.id}
-                    ratio={row.ratio}
-                    label={row.goal.name}
-                    detail={
-                      row.complete
-                        ? "reached"
-                        : `${Math.round(row.ratio * 100)}% saved`
-                    }
-                    // A goal is a target, not a limit: filling it is the point.
-                    meaning="target"
-                    color={goalColor}
-                  />
-                ))}
+                  <Text className="text-sm">
+                    {arranging ? t("bearing.arranging") : t("bearing.arrange")}
+                  </Text>
+                </Pressable>
+                <Text className="text-muted-foreground" style={TYPE.micro}>
+                  {t("bearing.arrangementsLeft", {
+                    count: stored.arrangementsLeft,
+                  })}
+                </Text>
               </View>
-            </SummaryCard>
-          ) : null}
-
-          <TrendCard
-            points={trend}
-            range={trendRange}
-            onRangeChange={setTrendRange}
-          />
-
-          {/* Everything that elaborates on the figures above rather than
-              stating them. Closed by default: the point of this screen is
-              the answer, not the whole file on the month. */}
-          <Disclosure label={t("month.moreThisMonth")}>
-            {/* After the figures, never before them: the read interprets what
-                is above it. */}
-            {!firstRun && readFacts ? (
-              <MonthRead
-                year={year}
-                month={month}
-                monthLabel={monthLabel}
-                read={data?.readView?.read ?? null}
-                freshness={data?.readView?.freshness ?? null}
-                facts={readFacts}
-                readFacts={data?.readOwnFacts ?? readFacts}
-                readLocale={data?.readView?.locale ?? locale}
-                writesLeft={data?.readWritesLeft ?? 0}
-                writable={monthReadWritable()}
-                onWritten={() => {
-                  notifyDataChanged();
-                  void onRefresh();
-                }}
-              />
             ) : null}
-
-            {/* Only in the as-of-today view: the month-end view has already
-                counted these into the headline, so listing them again would
-                invite the reader to subtract them twice. */}
-            {!firstRun && view === "current" && upcoming ? (
-              <StillToCome
-                outgoing={upcoming.outgoing}
-                leaving={upcoming.leaving}
-                incoming={upcoming.incoming}
-                arriving={upcoming.arriving}
-              />
-            ) : null}
-
-            {/* Only for the month in progress. A finished month's unrecorded
-                spending is a settled figure and belongs to its close, which the
-                recap above reports. */}
-            {!firstRun && isCurrentMonth && pulse && closes ? (
-              <MonthScore
-                pulse={pulse}
-                streak={closes.summary.streak}
-                bestStreak={closes.summary.bestStreak}
-                baseline={closes.summary.baseline}
-              />
-            ) : null}
-
-            <RecentOnAccount movements={movements} />
-
-            {portfolio ? <MonthWallets portfolio={portfolio} /> : null}
-
-            {closes?.history[0] ? (
-              <MonthClosedRecap
-                row={closes.history[0]}
-                streak={closes.summary.streak}
-                cap={closes.settings.unrecordedCap}
-              />
-            ) : null}
-          </Disclosure>
-        </ScrollView>
-      )}
-
-      <ApplyRecurringSheet
-        open={applyOpen}
-        onOpenChange={setApplyOpen}
-        plan={plan}
-        pending={applyPending}
-        onConfirm={confirmApply}
+          </View>
+        }
+        ListFooterComponent={
+          /* Only when the figures the choice rests on have actually moved. A
+             staleness line that is always on is one nobody reads. */
+          stored.freshness?.standing === "moved" ? (
+            <Text
+              className="mt-1 text-muted-foreground"
+              style={TYPE.micro}
+            >
+              {t("bearing.moved", {
+                count: stored.freshness.moved.length,
+                age: stored.freshness.age,
+              })}
+            </Text>
+          ) : null
+        }
       />
-
-      {closes?.next ? (
-        <MonthCloseSheet
-          open={closeOpen}
-          onOpenChange={setCloseOpen}
-          year={closes.next.year}
-          month={closes.next.month}
-          monthLabel={closes.next.label}
-          observeOn={closes.next.observeOn}
-          isBaseline={closes.next.isBaseline}
-          monthlyCommitted={data?.monthlyCommitted ?? 0}
-          unrecordedCap={closes.settings.unrecordedCap}
-          baseline={closes.summary.baseline}
-          onClosed={() => {
-            notifyDataChanged();
-            void onRefresh();
-          }}
-        />
-      ) : null}
     </Screen>
   );
 }

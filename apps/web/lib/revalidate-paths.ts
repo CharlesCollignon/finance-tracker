@@ -2,6 +2,10 @@ import { revalidatePath } from "next/cache";
 
 /** Pages that depend on recurring templates or derived transactions. */
 export function revalidateRecurringDependents(): void {
+  // First, because it is the landing page and every one of its figures moves
+  // when a template does — the projection and the runway are computed from
+  // nothing else.
+  revalidatePath("/bearing");
   revalidatePath("/recurring");
   revalidatePath("/transactions");
   revalidatePath("/calendar");
@@ -30,6 +34,7 @@ export function revalidateRecurringDependents(): void {
  * `(app)` belongs here the day it is added.
  */
 export function revalidateEverySurface(): void {
+  revalidatePath("/bearing");
   revalidatePath("/dashboard");
   revalidatePath("/transactions");
   revalidatePath("/calendar");

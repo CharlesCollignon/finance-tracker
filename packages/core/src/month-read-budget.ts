@@ -20,7 +20,12 @@ import { translator } from "./i18n/t";
  */
 
 import { describePullAge } from "./bank-pull";
-import { factsDigest, findFact, type MonthFacts } from "./month-facts";
+import {
+  factsDigest,
+  findFact,
+  type FactPack,
+  type MonthFacts,
+} from "./month-facts";
 
 /**
  * One for the month closing, four for "I changed something, write it again".
@@ -71,7 +76,15 @@ function secondsBetween(fromIso: string, toIso: string): number {
 
 export interface WriteQuestion {
   tally: MonthReadTally | null;
-  facts: MonthFacts;
+  /**
+   * Only `thin` is read, and the type says so.
+   *
+   * The Bearing's pack has a different envelope around the same datums and
+   * the same "nothing worth spending a call on" flag. Naming the one field
+   * this decision actually uses is what lets both surfaces share one tested
+   * ceiling rather than each growing their own.
+   */
+  facts: { thin: boolean };
   /** The instant being asked about, ISO. */
   now: string;
   /**
@@ -210,15 +223,19 @@ export interface FreshnessQuestion {
   now: string;
 }
 
-export function describeReadFreshness({
-  storedFacts,
-  currentFacts,
-  footing,
-  writtenAt,
-  now,
-}: FreshnessQuestion): ReadFreshness {
-  const writtenAge = describePullAge(writtenAt, now);
-
+/**
+ * Which of the cited figures have actually moved.
+ *
+ * Split out because the Bearing asks the same question of a different pack.
+ * The tolerances are per unit and deliberately not one number: a cent is
+ * rounding on a money figure, a tenth of a point is rounding on a percentage,
+ * and a count that has changed at all has changed.
+ */
+export function movedFacts(
+  storedFacts: FactPack,
+  currentFacts: FactPack,
+  footing: readonly string[],
+): FactMove[] {
   const moved: FactMove[] = [];
   for (const id of footing) {
     const before = findFact(storedFacts, id);
@@ -227,7 +244,7 @@ export function describeReadFreshness({
       continue;
     }
     const tolerance =
-      after.unit === "percent"
+      after.unit === "percent" || after.unit === "months"
         ? PERCENT_TOLERANCE
         : after.unit === "count"
           ? 0
@@ -241,6 +258,18 @@ export function describeReadFreshness({
       });
     }
   }
+  return moved;
+}
+
+export function describeReadFreshness({
+  storedFacts,
+  currentFacts,
+  footing,
+  writtenAt,
+  now,
+}: FreshnessQuestion): ReadFreshness {
+  const writtenAge = describePullAge(writtenAt, now);
+  const moved = movedFacts(storedFacts, currentFacts, footing);
 
   // A month in progress is never reported as stale, however much has moved.
   //
