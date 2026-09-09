@@ -1,7 +1,7 @@
 import type { TextStyle } from "react-native";
 
 /**
- * Pluclair design tokens, drawn from the logo's orb and ground.
+ * Pluclair design tokens, drawn from the orb and the ground it sits on.
  * Kept as plain JS for React Navigation / inline styles.
  */
 

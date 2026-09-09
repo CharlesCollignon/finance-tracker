@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { Orb } from "@/components/brand/Orb";
 import {
   featureHref,
   landingCopyFor,
@@ -22,15 +22,7 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
               className="inline-flex items-center gap-2.5 font-logo text-2xl leading-none text-white"
               aria-label="Pluclair"
             >
-              <Image
-                src="/logo-mark.png"
-                alt=""
-                aria-hidden
-                width={26}
-                height={26}
-                className="shrink-0"
-                style={{ width: 26, height: 26 }}
-              />
+              <Orb size="26px" tone="mark" className="shrink-0" />
               Pluclair
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/40">

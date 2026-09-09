@@ -518,63 +518,83 @@ html:has(.marketing-shell) {
 
 /* --- the sphere ---------------------------------------------------------- */
 
-/* The orb is drawn, not photographed.
-   `logo-mark.png` was the hero until now: a still render of the mark. A still
-   cannot move light around inside itself, so the sphere only ever floated —
-   the surface never lived. This is the same object in CSS: a lit gold body
-   here, and above it a layer that walks light across it.
+/* The orb is drawn, not photographed — and it is glass, not metal.
+
+   Two earlier versions were solid: first a still render (`logo-mark.png`),
+   then an opaque gold ball whose surface light moved but which nothing could
+   be seen through. This one is a blown-glass shell. The ground behind it
+   shows through, blurred, and the colour lives *inside* as slow clouds
+   rather than sitting on the outside as a shine.
 
    Sizing is the caller's business — the hero's orb is `min(58vw,352px)` and
    so has no fixed pixel size to compute a blur radius from. `container-type`
-   makes the orb its own query container, which lets the blur be a `cqw`: a
-   percentage of whatever width it ends up at, correct at every size, with no
-   JS measuring anything. */
-.siri-orb {
+   makes the orb its own query container, which lets every blur and inset be
+   a `cqw`: a percentage of whatever width it ends up at, correct at every
+   size, with no JS measuring anything. */
+.pc-orb {
   container-type: inline-size;
   display: grid;
   grid-template-areas: "stack";
   overflow: hidden;
   border-radius: 50%;
   position: relative;
-  /* Overridable per instance. c1 is the light the surface catches, c2 the
+  /* Overridable per instance. c1 is the light caught in the glass, c2 the
      body gold, c3 the gold it falls to in shadow — all three inside the
-     mark's own family, which is what keeps the moving light reading as gold
-     rather than as a second colour crossing the sphere. */
-  --orb-c1: #fdf0cb;
-  --orb-c2: #e9cd8b;
-  --orb-c3: #5c4415;
+     mark's own family, which is what keeps the drifting light reading as
+     gold rather than as a second colour crossing the sphere. */
+  --orb-c1: 255 240 189;
+  --orb-c2: 242 201 106;
+  --orb-c3: 92 62 16;
+  /* One churn of the interior and one turn of the shell. The interior walks
+     `--angle` through five conic sweeps; the shell carries the whole cloud
+     layer round bodily. Deliberately not multiples of each other, so the two
+     motions do not come back into phase where the eye can catch the loop. */
   --orb-duration: 22s;
-  --orb-blur: 7.5cqw;
-  /* The satin body, lit from the upper right exactly where the render's
-     highlight sits, deepening through gold to a dark rim. On its own this is
-     already the sphere the mark has always been; everything above it only
-     moves light around on the surface. */
+  --orb-spin: 45s;
+  --orb-blur: 9cqw;
+  /* How much glass. 1 is the hero's near-clear shell. The small marks push
+     this up, because a clear ball 22px across over a busy header band reads
+     as a smudge rather than as the brand. Every alpha in the orb is
+     multiplied by it, so one number moves the whole thing between
+     near-transparent and near-solid. */
+  --orb-glass: 1;
+  /* The tint in the glass, not a body: a wash of gold that thickens towards
+     the rim the way a shell does when you look through its edge. What makes
+     this read as a sphere rather than as a tinted hole is the blurred ground
+     behind it plus the optics in ::after. */
   background: radial-gradient(
     circle at 62% 27%,
-    #f4dfa4 0%,
-    #ebcb80 22%,
-    #ddb865 46%,
-    #bf9546 72%,
-    #96702c 92%,
-    #79591f 100%
+    rgb(var(--orb-c1) / calc(0.1 * var(--orb-glass))) 0%,
+    rgb(var(--orb-c2) / calc(0.08 * var(--orb-glass))) 38%,
+    rgb(var(--orb-c2) / calc(0.13 * var(--orb-glass))) 70%,
+    rgb(var(--orb-c3) / calc(0.24 * var(--orb-glass))) 92%,
+    rgb(var(--orb-c3) / calc(0.36 * var(--orb-glass))) 100%
   );
+  /* The frost. `backdrop-filter` is the whole reason this reads as glass and
+     not as a decal: it is the only thing here that touches the pixels behind
+     the element. The `px` floor matters at mark sizes, where 5cqw is under a
+     pixel and the blur would round away to nothing. */
+  backdrop-filter: blur(calc(5cqw + 1px)) saturate(1.4);
+  -webkit-backdrop-filter: blur(calc(5cqw + 1px)) saturate(1.4);
 }
 
-/* The living surface: five conic gradients pinned at different points inside
-   the disc, each turning at its own multiple of `--angle` and two of them
-   backwards, blurred into each other until the seams are gone. Nothing is
-   random, but because the multipliers do not divide into one another the
-   pattern takes minutes to come back round, so the eye never finds the loop.
+/* The clouds: three soft masses and five conic sweeps in one layer, blurred
+   until no seam survives, turning together inside the shell.
 
-   The blend mode is what makes this light rather than paint. Composited
-   normally the gradients are amber blobs lying on top of the sphere, and the
-   whole thing reads as a fried egg. Through `overlay` they can only modulate
-   what is already there: anything above mid lightness brightens the gold
-   under it, anything below darkens it. Which is also why c3 is a dark gold —
-   it is the only one of the three that can cast a shadow — and why c1 stops
-   short of white: `overlay` lightens hard, and from a white c1 the hot patch
-   left the gold family altogether for a third of the cycle. */
-.siri-orb::before {
+   The conics each turn at their own multiple of `--angle`, two of them
+   backwards. Nothing is random, but because the multipliers do not divide
+   into one another the pattern takes minutes to come back round. On top of
+   that the whole layer rotates once per `--orb-spin`, which is what makes
+   the masses drift past each other rather than churn in place.
+
+   Composited normally, unlike the opaque version this replaces. That one
+   needed `overlay` because its gradients were amber blobs lying on a solid
+   gold ball — through `overlay` they could only modulate light already
+   there. There is no solid ball here to lie on: the layer *is* the colour of
+   the orb, so it wants plain alpha, which is also the only way a dark wisp
+   can be dark. `overlay` against a near-transparent shell reads every empty
+   pixel as black and drags the whole sphere towards mud. */
+.pc-orb::before {
   content: "";
   display: block;
   grid-area: stack;
@@ -582,55 +602,76 @@ html:has(.marketing-shell) {
   height: 100%;
   border-radius: 50%;
   background:
+    radial-gradient(
+      ellipse 58% 44% at 33% 32%,
+      rgb(var(--orb-c1) / calc(0.16 * var(--orb-glass))) 0%,
+      transparent 64%
+    ),
+    radial-gradient(
+      ellipse 46% 62% at 71% 57%,
+      rgb(var(--orb-c2) / calc(0.32 * var(--orb-glass))) 0%,
+      transparent 68%
+    ),
+    radial-gradient(
+      ellipse 72% 40% at 50% 80%,
+      rgb(var(--orb-c3) / calc(0.12 * var(--orb-glass))) 0%,
+      transparent 72%
+    ),
     conic-gradient(
       from calc(var(--angle) * 1.2) at 30% 65%,
-      var(--orb-c3) 0deg,
+      rgb(var(--orb-c3) / calc(0.2 * var(--orb-glass))) 0deg,
       transparent 45deg 315deg,
-      var(--orb-c3) 360deg
+      rgb(var(--orb-c3) / calc(0.2 * var(--orb-glass))) 360deg
     ),
     conic-gradient(
       from calc(var(--angle) * 0.8) at 70% 35%,
-      var(--orb-c2) 0deg,
+      rgb(var(--orb-c2) / calc(0.22 * var(--orb-glass))) 0deg,
       transparent 60deg 300deg,
-      var(--orb-c2) 360deg
+      rgb(var(--orb-c2) / calc(0.22 * var(--orb-glass))) 360deg
     ),
     conic-gradient(
       from calc(var(--angle) * -1.5) at 65% 75%,
-      var(--orb-c1) 0deg,
+      rgb(var(--orb-c1) / calc(0.2 * var(--orb-glass))) 0deg,
       transparent 90deg 270deg,
-      var(--orb-c1) 360deg
+      rgb(var(--orb-c1) / calc(0.2 * var(--orb-glass))) 360deg
     ),
     conic-gradient(
       from calc(var(--angle) * 2.1) at 25% 25%,
-      var(--orb-c2) 0deg,
+      rgb(var(--orb-c2) / calc(0.16 * var(--orb-glass))) 0deg,
       transparent 30deg 330deg,
-      var(--orb-c2) 360deg
+      rgb(var(--orb-c2) / calc(0.16 * var(--orb-glass))) 360deg
     ),
     conic-gradient(
       from calc(var(--angle) * -0.7) at 80% 80%,
-      var(--orb-c1) 0deg,
+      rgb(var(--orb-c1) / calc(0.16 * var(--orb-glass))) 0deg,
       transparent 45deg 315deg,
-      var(--orb-c1) 360deg
-    ),
-    radial-gradient(
-      ellipse 120% 80% at 40% 60%,
-      var(--orb-c3) 0%,
-      transparent 50%
+      rgb(var(--orb-c1) / calc(0.16 * var(--orb-glass))) 360deg
     );
-  filter: blur(var(--orb-blur)) contrast(1.18) saturate(1.05);
+  filter: blur(var(--orb-blur)) saturate(1.7);
   /* Scaled past its box because the blur feathers inward from the edge: at
-     100% the outer 8% of the disc is washed out and the sphere ends in a grey
-     ring instead of on a lit rim. */
+     100% the outer 8% of the disc is washed out and the sphere ends in a
+     dead ring instead of on a lit rim. */
   transform: scale(1.14);
-  mix-blend-mode: overlay;
-  animation: orb-turn var(--orb-duration) linear infinite;
+  /* `rotate` rather than folding the turn into `transform`, so the scale
+     above stays a constant and the two do not have to be restated together
+     in every keyframe. */
+  animation:
+    orb-turn var(--orb-duration) linear infinite,
+    orb-spin var(--orb-spin) linear infinite;
+  will-change: rotate;
 }
 
-/* The optics, which do not move: the specular where the render's is, the
-   terminator where the surface turns away from its light, and — the detail
-   that sells a sphere over a lit disc — a rim of bounce along the bottom,
-   light the ground throws back up at it. */
-.siri-orb::after {
+/* The optics, which do not turn — this is the layer that has to stay still.
+   A specular is a reflection of the room, so it belongs to the room and not
+   to the ball: rotate it and it orbits the surface, which reads as a
+   rendering fault rather than as a shine. The mobile orb learned the same
+   thing the hard way when it span a baked highlight.
+
+   Four things here: the hard specular where the light is, a smaller second
+   one glass always shows, the shell's own thickness catching light around
+   the rim, and a bounce along the bottom where the ground throws light back
+   up at it. */
+.pc-orb::after {
   content: "";
   display: block;
   grid-area: stack;
@@ -639,20 +680,40 @@ html:has(.marketing-shell) {
   border-radius: 50%;
   background:
     radial-gradient(
-      circle at 63% 24%,
-      rgba(255, 252, 242, 0.42) 0%,
-      rgba(255, 248, 228, 0.1) 18%,
-      transparent 36%
+      ellipse 22% 16% at 63% 22%,
+      rgb(255 253 246 / calc(0.72 * var(--orb-glass))) 0%,
+      rgb(255 250 235 / calc(0.16 * var(--orb-glass))) 46%,
+      transparent 72%
+    ),
+    radial-gradient(
+      circle at 38% 72%,
+      rgb(255 250 232 / calc(0.2 * var(--orb-glass))) 0%,
+      transparent 22%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      transparent 74%,
+      rgb(var(--orb-c1) / calc(0.16 * var(--orb-glass))) 90%,
+      transparent 100%
     ),
     radial-gradient(
       circle at 58% 33%,
-      transparent 38%,
-      rgba(72, 49, 13, 0.26) 72%,
-      rgba(22, 14, 4, 0.58) 100%
+      transparent 52%,
+      rgb(30 20 6 / calc(0.14 * var(--orb-glass))) 84%,
+      rgb(22 14 4 / calc(0.16 * var(--orb-glass))) 100%
     );
   box-shadow:
-    inset 0 0 0 1px rgba(255, 244, 214, 0.2),
-    inset 0 -7cqw 11cqw -5cqw rgba(255, 237, 194, 0.22);
+    inset 0 0 0 1px rgb(255 244 214 / calc(0.34 * var(--orb-glass))),
+    inset 0 -7cqw 11cqw -5cqw rgb(255 237 194 / calc(0.24 * var(--orb-glass)));
+}
+
+/* Denser glass for the marks. At 22–26px the shell is a few pixels of tint
+   over whatever scrolls behind it, and the sphere stops being legible as an
+   object; this is the same orb with its alphas pushed up and its interior
+   blur tightened so the clouds still have somewhere to be. */
+.pc-orb-mark {
+  --orb-glass: 2.6;
+  --orb-blur: 12cqw;
 }
 
 @keyframes orb-turn {
@@ -661,6 +722,15 @@ html:has(.marketing-shell) {
   }
   to {
     --angle: 360deg;
+  }
+}
+
+@keyframes orb-spin {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: 360deg;
   }
 }
 
@@ -686,7 +756,7 @@ html:has(.marketing-shell) {
 @media (prefers-reduced-motion: reduce) {
   .marketing-orb,
   .marketing-bloom-breathe,
-  .siri-orb::before {
+  .pc-orb::before {
     animation: none;
   }
 }
