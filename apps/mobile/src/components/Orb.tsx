@@ -317,6 +317,12 @@ export function Orb({
  * hard specular where the light is, the smaller second one glass always
  * shows, and the bounce along the bottom where the ground throws light back
  * up at the sphere.
+ *
+ * Nothing traces the edge. A stroke used to run all the way round, and at
+ * 26px it read as a drawn outline on a ball that is meant to be blown
+ * glass. What keeps the sphere round without it is the shell gradient's own
+ * fall to `C3` at the rim — shading rather than an edge. The web orb lost
+ * the same ring, and its softer twin with it.
  */
 function OrbOptics({
   box,
@@ -362,19 +368,6 @@ function OrbOptics({
       <Ellipse cx="42" cy="86" rx="30" ry="14" fill={`url(#${id}-bounce)`} />
       <Ellipse cx="63" cy="22" rx="17" ry="12" fill={`url(#${id}-spec)`} />
       <Ellipse cx="37" cy="71" rx="7" ry="6" fill={`url(#${id}-spec2)`} />
-      {/* The shell's own edge, catching light all the way round. A stroke
-          rather than another gradient: at 26px the rim is one pixel wide and
-          a gradient that thin resolves to nothing. */}
-      <Ellipse
-        cx="50"
-        cy="50"
-        rx="49.4"
-        ry="49.4"
-        fill="none"
-        stroke="#fff4d6"
-        strokeOpacity={a(0.34, glass)}
-        strokeWidth={1.2}
-      />
     </Svg>
   );
 }

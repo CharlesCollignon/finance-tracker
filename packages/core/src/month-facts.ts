@@ -88,7 +88,14 @@ export type MissingReason =
   /** Nothing is held, so there is no portfolio to say it about. */
   | "nothing-invested"
   /** Held too briefly for a rate to be anything but noise. */
-  | "too-short";
+  | "too-short"
+  /**
+   * No charge brings money in, so every figure about the months ahead is
+   * arithmetic on outflow alone. Withheld rather than stated: a model handed
+   * "−£18,000 by July" for somebody who simply never wrote their salary down
+   * will write something actively harmful about it.
+   */
+  | "no-income";
 
 export interface MissingFact {
   id: string;

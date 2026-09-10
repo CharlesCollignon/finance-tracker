@@ -48,6 +48,7 @@ export const BEARING_TILE_IDS = [
   "best-streak",
   "monthly-net-average",
   "projected-balance",
+  "projected-kept",
   "projected-monthly-net",
   "committed-monthly",
   "runway-months",
@@ -107,6 +108,7 @@ export const BEARING_TILES: Record<TileId, TileMeta> = {
   "best-streak": { href: "/budgets" },
   "monthly-net-average": { href: "/history", series: "trend" },
   "projected-balance": { href: "/budgets", series: "projection" },
+  "projected-kept": { href: "/budgets", series: "projection" },
   "projected-monthly-net": { href: "/budgets" },
   "committed-monthly": { href: "/recurring" },
   "runway-months": { href: "/budgets" },
@@ -154,7 +156,7 @@ export function slotSpan(index: number): TileSpan {
  * How many tiles the surface shows.
  *
  * A limit rather than everything available, because the point of this screen
- * is the answer and a wall of twenty-eight figures is the file on someone's
+ * is the answer and a wall of twenty-nine figures is the file on someone's
  * money, not a bearing. Twelve fills the head plus two full repeats.
  */
 export const MAX_TILES = 12;
@@ -177,7 +179,7 @@ const PRIORITY: readonly TileId[] = [
   "wallet-drift",
   "net-position",
   "free",
-  "projected-balance",
+  "projected-kept",
   "invested",
   "wallet-return",
 ];

@@ -200,6 +200,38 @@ function appliedRecurringKeys(
   );
 }
 
+/**
+ * The dates one template calls for inside one month, up to a given day.
+ *
+ * Its schedule, its start and end bounds, and the month's own edges, in one
+ * place. Extracted because the projection has to know *which* charges feed a
+ * month in order to say so on screen, and working that out by eye beside this
+ * engine is how the two would come to disagree.
+ */
+export function templateOccurrenceDates(
+  template: RecurringTemplateWithCategory,
+  year: number,
+  month: number,
+  asOfDate: string,
+): string[] {
+  const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
+
+  return filterDatesBySchedule(
+    getRecurringOccurrenceDates(
+      {
+        recurrence: template.recurrence ?? "monthly",
+        day_of_month: template.day_of_month,
+        day_of_week: template.day_of_week,
+        month_of_year: template.month_of_year,
+      },
+      year,
+      month,
+    ),
+    template.starts_on,
+    template.ends_on,
+  ).filter((date) => date.startsWith(monthPrefix) && date <= asOfDate);
+}
+
 function addProjectedOccurrences(
   totals: Omit<MonthlyBudgetTotals, "outflow" | "net">,
   recurringTemplates: RecurringTemplateWithCategory[],
@@ -209,27 +241,12 @@ function addProjectedOccurrences(
   applied: Set<string>,
   skippedKeys: Set<string> = new Set(),
 ): void {
-  const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
-
   for (const template of recurringTemplates) {
     if (!template.active || isYearlyExpenseTemplate(template)) {
       continue;
     }
 
-    const dates = filterDatesBySchedule(
-      getRecurringOccurrenceDates(
-        {
-          recurrence: template.recurrence ?? "monthly",
-          day_of_month: template.day_of_month,
-          day_of_week: template.day_of_week,
-          month_of_year: template.month_of_year,
-        },
-        year,
-        month,
-      ),
-      template.starts_on,
-      template.ends_on,
-    ).filter((date) => date.startsWith(monthPrefix) && date <= asOfDate);
+    const dates = templateOccurrenceDates(template, year, month, asOfDate);
 
     for (const date of dates) {
       const key = `${template.id}:${date}`;
@@ -292,6 +309,44 @@ export function computeMonthlyBudgetWithProjection(
     outflow,
     net: base.income - outflow,
   };
+}
+
+/**
+ * What the schedule has already called for this month, as of a given day.
+ *
+ * The forward projection is the only caller and the only thing that needs it:
+ * a balance read today already contains the rent and the salary this month
+ * has seen, so a projection seeded with that balance and then given a whole
+ * first month counts both of them twice.
+ *
+ * Deliberately not `computeMonthlyBudgetWithProjection(…, "current")`, which
+ * resolves its date by reading the clock and would make the projection
+ * impure. The day is the caller's to supply.
+ *
+ * The amortised twelfth of a yearly expense is left out, because a twelfth is
+ * an accounting convention rather than a payment: there is no day in the
+ * month by which part of it has already happened.
+ */
+export function computeScheduledSoFar(
+  templates: RecurringTemplateWithCategory[],
+  year: number,
+  month: number,
+  asOfDate: string,
+): MonthlyBudgetTotals {
+  const totals = {
+    income: 0,
+    expense: 0,
+    savings: 0,
+    investment: 0,
+    deployed: 0,
+  };
+
+  addProjectedOccurrences(totals, templates, year, month, asOfDate, new Set());
+
+  const outflow =
+    totals.expense + totals.savings + totals.investment + totals.deployed;
+
+  return { ...totals, outflow, net: totals.income - outflow };
 }
 
 function addBreakdownAmount(

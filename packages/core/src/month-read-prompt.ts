@@ -155,9 +155,9 @@ export function factLines(
  *
  * A reason with no clause renders as `undefined` on a prompt line, which is
  * both a worse instruction than saying nothing and invisible until someone
- * reads a raw prompt. The Bearing's pack introduced three more reasons; these
+ * reads a raw prompt. The Bearing's pack introduced four more reasons; these
  * two maps cover every one of them even though a month never emits the last
- * three, because the alternative is a map that is correct only by accident.
+ * four, because the alternative is a map that is correct only by accident.
  */
 const MISSING_WORDS_EN: Record<MissingReason, string> = {
   "no-bank": "no bank is connected, so this cannot be known",
@@ -168,6 +168,9 @@ const MISSING_WORDS_EN: Record<MissingReason, string> = {
   "no-target": "no target allocation has been set",
   "nothing-invested": "nothing is held, so there is no portfolio to say it of",
   "too-short": "it has been held too briefly for a rate to mean anything",
+  "no-income":
+    "no charge brings money in, so nothing can honestly be said about the " +
+    "months ahead",
 };
 
 /** The same, for the figures that are not there and why. */
@@ -259,7 +262,11 @@ const MISSING_WORDS_FR: Record<MissingReason, string> = {
   "no-target": "aucune répartition cible n'a été fixée",
   "nothing-invested":
     "rien n'est détenu, il n'y a donc pas de portefeuille dont le dire",
-  "too-short": "c'est détenu depuis trop peu de temps pour qu'un taux ait un sens",
+  "too-short":
+    "c'est détenu depuis trop peu de temps pour qu'un taux ait un sens",
+  "no-income":
+    "aucune charge n'apporte de revenu, rien ne peut donc être dit " +
+    "honnêtement des mois à venir",
 };
 
 /**

@@ -39,8 +39,9 @@ _Avoid_: report, overview, stats
 
 **Budget view**:
 Which occurrences a month's figures count: `current` counts only up to today,
-`month_end` counts everything the month will contain.
-_Avoid_: mode, projection, forecast
+`month_end` counts everything the month will contain. Never call one a
+projection: that word now names the forward window.
+_Avoid_: mode, forecast
 
 ### Standing instructions
 
@@ -107,7 +108,10 @@ _Avoid_: reconciliation, month end, settle
 What a closing balance proves left the account that no transaction accounts
 for — the restaurants, the rounds, the things bought on the way home. Measured
 rather than remembered, and never negative: a balance higher than the records
-allow means something is missing, not that spending was.
+allow means something is missing, not that spending was. Once two months are
+closed, the median across them is what the forward projection subtracts from
+every month ahead — the one figure there the user did not schedule, and the
+reason it is allowed in is that it was measured and not guessed.
 _Avoid_: leak, untracked, missing
 
 **Kept**:
@@ -120,6 +124,32 @@ _Avoid_: saved, surplus, profit
 A cap on unrecorded spending for a month, set from the user's own history.
 Coming in under it is what a run of months is counted on.
 _Avoid_: budget, target, limit
+
+### Where the months lead
+
+**Forward projection**:
+What the standing instructions and the user's own measured unrecorded
+spending lead to over the months ahead. Arithmetic on instructions already
+given rather than a prediction, which is why nothing in it is stated without
+the charges that produce it, and why no market value appears anywhere in it.
+_Avoid_: forecast, prediction, estimate, outlook, trajectory
+
+**Track**:
+One of the projection's two lines. *In the accounts* is what the spending
+accounts hold; *everything kept* is that plus every euro set aside along the
+way. There are two because one was a lie: a single line counting money moved
+into savings as money gone had a diligent saver watching their position sink.
+The gap between the tracks is exactly what has been put by.
+_Avoid_: series, scenario, curve
+
+**Ingredient**:
+One of the things a projection is made of — income from charges, committed
+costs, what is set aside, what a normal month costs unseen — each with how
+many charges back it and a way to go and change it. Present because a figure
+nobody can take apart is a figure nobody believes, and because someone whose
+pay is not a charge has to be able to see that from the card rather than
+guess it.
+_Avoid_: breakdown, component, driver
 
 ### Caps and targets
 
@@ -192,8 +222,8 @@ _Avoid_: metric, stat, data point
 Where the whole of someone's money stands on one day, and where it is
 heading: what is on hand, what is committed to the months ahead, what is
 invested, and what a year of unchanged habits leads to. Distinct from a
-monthly summary, which is one month's flows, and from a projection, which is
-only the forward half. Every figure on it is one another surface already
+monthly summary, which is one month's flows, and from a forward projection,
+which is only the forward half. Every figure on it is one another surface already
 shows, which is what makes it checkable rather than a second source of truth.
 _Avoid_: dashboard, overview, home, net worth
 

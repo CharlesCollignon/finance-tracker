@@ -184,6 +184,8 @@ export const fr: Messages = {
   },
 
   plan: {
+    runwayLead: "Tout ce que vous avez enregistré comme épargne couvre",
+    runwayRate: "à {amount} par mois.",
     capsHeading: "Plafonds de dépense",
     addCap: "Ajouter un plafond",
     addCapSubmit: "Ajouter le plafond",
@@ -898,10 +900,26 @@ export const fr: Messages = {
     streak: "Mois d'affilée dans l'enveloppe",
     bestStreak: "Meilleure série à ce jour",
     monthlyNetAverage: "Ce qu'un mois garde habituellement, sur {count} mois",
-    projectedBalance: "Où le compte arrive d'ici {month}",
+    projectedBalance: "Où les comptes arrivent d'ici {month}",
     projectedBalanceNote:
-      "un calcul sur des charges déjà programmées ; aucune dépense libre n'est supposée",
-    projectedMonthlyNet: "Ce que chaque mois ajoute, si rien ne change",
+      "un calcul sur des charges déjà programmées, moins ce que les mois clôturés mesurent qu'un mois normal coûte sans le voir",
+    projectedBalanceNoteUnmeasured:
+      "un calcul sur des charges déjà programmées ; les dépenses courantes ne sont pas encore mesurées",
+    projectedAdded: {
+      one: "Ce que le mois prochain ajoute aux comptes",
+      other: "Ce que les {count} prochains mois ajoutent aux comptes",
+    },
+    projectedBalanceBare: "Où les comptes arrivent",
+    projectedKept: "Tout ce qui est gardé, d'ici {month}",
+    projectedKeptAdded: {
+      one: "Ce que le mois prochain garde en tout",
+      other: "Ce que les {count} prochains mois gardent en tout",
+    },
+    projectedKeptBare: "Tout ce qui est gardé",
+    projectedKeptNote:
+      "les comptes plus tout ce qui est mis de côté, compté à ce qui y a été versé et non à ce que cela pourrait devenir",
+    projectedMonthlyNet:
+      "Ce que chaque mois ajoute aux comptes, si rien ne change",
     committedMonthly: "Un mois de charges engagées",
     runwayMonths: "Mois que la réserve couvrirait",
     walletCost: "Versé dans les portefeuilles",
@@ -936,6 +954,52 @@ export const fr: Messages = {
     includingArriving: "Y compris ce qui doit encore arriver.",
     afterBoth:
       "Après ce qui doit encore partir, et ce qui doit encore arriver.",
+  },
+
+  projection: {
+    heading: "Si rien ne change",
+    window: {
+      one: "Le mois prochain",
+      other: "Les {count} prochains mois",
+    },
+
+    inAccounts: "Sur les comptes",
+    kept: "Tout ce qui est gardé",
+    by: "d'ici {month}",
+    added: {
+      one: "ajouté sur {count} mois",
+      other: "ajouté sur {count} mois",
+    },
+    noOpeningBalance:
+      "Aucun solde de compte comme point de départ : ce sont donc les montants que les mois ajoutent, et non là où ils vous laissent.",
+
+    perMonth: "{amount} par mois en moyenne",
+    shrinking: "Il sort plus qu'il n'entre, mois après mois.",
+    accountsFalling:
+      "Les comptes baissent parce que {amount} par mois partent en épargne et en portefeuille. Cet argent reste le vôtre — il est sur l'autre courbe.",
+
+    madeOf: "Ce qui compose ce chiffre",
+    income: "Revenus",
+    committed: "Charges engagées",
+    setAside: "Mis de côté",
+    deployed: "Investi depuis un portefeuille",
+    unrecorded: "Dépenses courantes",
+    charges: {
+      one: "{count} charge",
+      other: "{count} charges",
+    },
+    noCharges: "rien de programmé",
+    setAsideNote: "Sort du compte, reste à vous.",
+    deployedNote: "Déjà dans un portefeuille : aucune des deux courbes ne bouge.",
+    unrecordedMeasured: {
+      one: "la médiane de {count} mois clôturé",
+      other: "la médiane de {count} mois clôturés",
+    },
+    unrecordedNotYet:
+      "Pas encore compté — clôturez deux mois et ce sera le cas.",
+    noIncomeCharge:
+      "Aucune charge n'apporte de revenu : votre salaire n'entre dans aucun de ces chiffres. Ajoutez-le dans Charges et tout change ici.",
+    noIncomeCta: "Ajouter une charge",
   },
 
   runway: {

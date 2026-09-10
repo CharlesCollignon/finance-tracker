@@ -224,6 +224,8 @@ export const en = {
 
   /** The Plan surface: spending caps, savings goals and tags. */
   plan: {
+    runwayLead: "Everything you have logged as savings covers",
+    runwayRate: "at {amount} a month.",
     capsHeading: "Spending caps",
     addCap: "Add a cap",
     addCapSubmit: "Add cap",
@@ -1044,10 +1046,25 @@ export const en = {
     streak: "Months in a row inside the allowance",
     bestStreak: "Best run so far",
     monthlyNetAverage: "What a month has typically kept, over {count} months",
-    projectedBalance: "Where the account lands by {month}",
+    projectedBalance: "Where the accounts land by {month}",
     projectedBalanceNote:
-      "arithmetic on charges already scheduled; no discretionary spending is assumed",
-    projectedMonthlyNet: "What each month adds, if nothing changes",
+      "arithmetic on charges already scheduled, less what closed months measure a normal one costs unseen",
+    projectedBalanceNoteUnmeasured:
+      "arithmetic on charges already scheduled; everyday spending is not measured yet",
+    projectedAdded: {
+      one: "What the next month adds to the accounts",
+      other: "What the next {count} months add to the accounts",
+    },
+    projectedBalanceBare: "Where the accounts land",
+    projectedKept: "Everything kept, by {month}",
+    projectedKeptAdded: {
+      one: "What the next month keeps altogether",
+      other: "What the next {count} months keep altogether",
+    },
+    projectedKeptBare: "Everything kept",
+    projectedKeptNote:
+      "the accounts plus everything set aside, counted at what was put in rather than at what it might grow to",
+    projectedMonthlyNet: "What each month adds to the accounts, if nothing changes",
     committedMonthly: "One month of committed costs",
     runwayMonths: "Months the set-aside would cover",
     walletCost: "Put into the wallets",
@@ -1080,6 +1097,64 @@ export const en = {
     afterLeaving: "After everything still due to leave.",
     includingArriving: "Including what is still due to arrive.",
     afterBoth: "After what is still due to leave, and what is still to arrive.",
+  },
+
+  /**
+   * The Plan card that walks the standing charges forward.
+   *
+   * Two tracks and the ingredients behind them. The card used to state one
+   * number and one caveat, and its whole failure mode was that somebody
+   * whose pay was not a charge had no way to see that from it — hence
+   * `madeOf` and `noIncomeCharge`, which are the point of the group rather
+   * than trimming round the edge of it.
+   *
+   * "Sur les comptes" / "Tout ce qui est gardé" are borrowed from
+   * `bearingFacts` on purpose. The same arithmetic must not go by two names
+   * on two surfaces.
+   */
+  projection: {
+    heading: "If nothing changes",
+    window: {
+      one: "Next month",
+      other: "Next {count} months",
+    },
+
+    inAccounts: "In the accounts",
+    kept: "Everything kept",
+    by: "by {month}",
+    added: {
+      one: "added over {count} month",
+      other: "added over {count} months",
+    },
+    noOpeningBalance:
+      "No account balance to start from, so these are what the months add rather than where they leave you.",
+
+    perMonth: "{amount} a month on average",
+    shrinking: "More leaves than arrives, month after month.",
+    accountsFalling:
+      "The accounts fall because {amount} a month goes into savings and wallets. That money is still yours — it is on the other line.",
+
+    madeOf: "What this is made of",
+    income: "Income",
+    committed: "Committed costs",
+    setAside: "Set aside",
+    deployed: "Put to work inside a wallet",
+    unrecorded: "Everyday spending",
+    charges: {
+      one: "{count} charge",
+      other: "{count} charges",
+    },
+    noCharges: "nothing scheduled",
+    setAsideNote: "Leaves the account, stays yours.",
+    deployedNote: "Already inside a wallet, so neither line moves.",
+    unrecordedMeasured: {
+      one: "the median of {count} closed month",
+      other: "the median of {count} closed months",
+    },
+    unrecordedNotYet: "Not counted yet — close two months and it will be.",
+    noIncomeCharge:
+      "No charge brings money in, so your pay is in none of this. Add it under Charges and every figure here changes.",
+    noIncomeCta: "Add a charge",
   },
 
   /** How long the reserve covers the committed costs. */
