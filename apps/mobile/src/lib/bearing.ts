@@ -21,11 +21,7 @@ import { buildWalletFundingNeeds } from "@finance/core/investment-upcoming";
 import { buildMonthComparison } from "@finance/core/month-comparison";
 import { buildMonthPulse } from "@finance/core/month-pulse";
 import { previousMonthKey } from "@finance/core/month-close";
-import {
-  buildForwardProjection,
-  buildRunway,
-  summarizeProjection,
-} from "@finance/core/projection";
+import { buildForwardProjection, buildRunway } from "@finance/core/projection";
 import { buildStillToCome } from "@finance/core/still-to-come";
 import type { BearingArrangementRow } from "@finance/core/types/database";
 import {
@@ -190,9 +186,18 @@ export async function gatherBearingFacts(
     }),
     closeSummary: closes.summary,
     unrecordedCap: closes.settings.unrecordedCap,
-    projection: summarizeProjection(
-      buildForwardProjection(templates, year, month, { months: 12 }),
-    ),
+    projection: buildForwardProjection({
+      templates,
+      year,
+      month,
+      today,
+      months: 12,
+      // Never a partial sum: a reading missing an account is short by
+      // whatever that account holds, so it is not a balance.
+      onHand: cash?.ok ? cash.total : null,
+      closes: closes.summary,
+      locale,
+    }),
     runway: buildRunway(reserve, templates, year, month),
     trend: trend.map((point) => point.net),
     returns: buildInvestmentReturns(investmentTransactions, portfolio, today),

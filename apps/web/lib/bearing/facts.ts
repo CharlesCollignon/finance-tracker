@@ -11,11 +11,7 @@ import { buildInvestmentReturns } from "@finance/core/investment-returns";
 import { buildWalletFundingNeeds } from "@finance/core/investment-upcoming";
 import { buildMonthPulse } from "@finance/core/month-pulse";
 import { previousMonthKey } from "@finance/core/month-close";
-import {
-  buildForwardProjection,
-  buildRunway,
-  summarizeProjection,
-} from "@finance/core/projection";
+import { buildForwardProjection, buildRunway } from "@finance/core/projection";
 import { buildStillToCome } from "@finance/core/still-to-come";
 import type { Database } from "@finance/core/types/database";
 import type { Locale } from "@finance/core/i18n/locale";
@@ -153,9 +149,22 @@ export async function gatherBearingFacts(
     ),
   });
 
-  const projection = summarizeProjection(
-    buildForwardProjection(templates, year, month, { months: 12 }),
-  );
+  // Hoisted above the projection, which labels its months with it. The
+  // Bearing used to read "Où le compte arrive d'ici July 2027" in French.
+  const locale = localeOverride ?? (await getLocale());
+
+  const projection = buildForwardProjection({
+    templates,
+    year,
+    month,
+    today,
+    months: 12,
+    // Never a partial sum: a reading missing an account is short by whatever
+    // that account holds, so it is not a balance and cannot open one.
+    onHand: cash?.ok ? cash.total : null,
+    closes: closes.summary,
+    locale,
+  });
 
   const planByWallet = new Map(plans.map((plan) => [plan.wallet, plan]));
   const allocation = buildAllocation(
@@ -196,7 +205,6 @@ export async function gatherBearingFacts(
   // is a partially known position. Which merchants they are is not its
   // business — and unlike a month read, this pack never sees a category name
   // at all.
-  const locale = localeOverride ?? (await getLocale());
   const pending = bankFed ? await getPendingFeedItems(userId, locale) : [];
 
   return buildBearingFacts({

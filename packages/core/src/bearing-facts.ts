@@ -37,7 +37,7 @@ import type {
   MonthFact,
 } from "./month-facts";
 import type { MonthPulse } from "./month-pulse";
-import type { ProjectionSummary, Runway } from "./projection";
+import type { ForwardProjection, Runway } from "./projection";
 import type { MonthlySummary } from "./types/database";
 
 /**
@@ -89,8 +89,8 @@ export interface BuildBearingFactsInput {
   closeSummary: CloseHistorySummary | null;
   /** The user's cap on unrecorded spending, when they have set one. */
   unrecordedCap: number | null;
-  /** Twelve months of standing instructions, summarised. */
-  projection: ProjectionSummary | null;
+  /** Twelve months of standing instructions, and what they are made of. */
+  projection: ForwardProjection | null;
   runway: Runway | null;
   /**
    * What recent months actually netted, newest last.
@@ -354,25 +354,65 @@ export function buildBearingFacts(
 
   /* ------------------------------------------------------ where it leads */
 
-  if (projection) {
+  const ahead = projection?.summary ?? null;
+
+  if (ahead && projection && !projection.makeup.noIncomeScheduled) {
+    // The word matters. `projection.ts` refuses to call this a forecast
+    // because it is arithmetic on instructions the user already gave, and the
+    // note is what stops a model reaching for the other word. Which note
+    // depends on whether a normal month's unseen spending was measurable —
+    // claiming it was taken off when it was not is the one thing worse than
+    // not taking it off.
+    const aheadNote = ahead.unrecordedCounted
+      ? t("bearingFacts.projectedBalanceNote")
+      : t("bearingFacts.projectedBalanceNoteUnmeasured");
+
     money(
       "ahead",
       "projected-balance",
-      t("bearingFacts.projectedBalance", { month: projection.endLabel }),
-      projection.endingBalance,
+      ahead.grounded
+        ? t("bearingFacts.projectedBalance", { month: ahead.endLabel })
+        : t("bearingFacts.projectedAdded", { count: projection.points.length }),
+      ahead.grounded ? ahead.endingOnHand : ahead.addedToAccounts,
       "up-is-good",
-      // The word matters. `projection.ts` refuses to call this a forecast
-      // because it is arithmetic on instructions the user already gave, and
-      // the note is what stops a model reaching for the other word.
-      t("bearingFacts.projectedBalanceNote"),
+      aheadNote,
     );
+
+    // The one the accounts line cannot say. Money moved into savings or a
+    // wallet leaves the account and stays the user's; a figure that counts
+    // only the account has a diligent saver going backwards.
+    money(
+      "ahead",
+      "projected-kept",
+      ahead.grounded
+        ? t("bearingFacts.projectedKept", { month: ahead.endLabel })
+        : t("bearingFacts.projectedKeptAdded", {
+            count: projection.points.length,
+          }),
+      ahead.grounded ? ahead.endingKept : ahead.addedAltogether,
+      "up-is-good",
+      t("bearingFacts.projectedKeptNote"),
+    );
+
     money(
       "ahead",
       "projected-monthly-net",
       t("bearingFacts.projectedMonthlyNet"),
-      projection.monthlyAverage,
+      ahead.monthlyToAccounts,
       "up-is-good",
     );
+  } else if (projection) {
+    /* Withheld rather than stated. Without an income charge every one of
+       these is arithmetic on outflow alone, and a model handed the result
+       writes a warning about a catastrophe that is really a missing
+       template. */
+    for (const [id, label] of [
+      ["projected-balance", t("bearingFacts.projectedBalanceBare")],
+      ["projected-kept", t("bearingFacts.projectedKeptBare")],
+      ["projected-monthly-net", t("bearingFacts.projectedMonthlyNet")],
+    ] as const) {
+      absent(id, label, "no-income");
+    }
   }
 
   if (runway) {

@@ -2,7 +2,7 @@
  * An arrangement: chosen by a model, computed by the app.
  *
  * The Bearing asks a language model a narrower question than a month read
- * does. Not "describe this" but "of these twenty-eight figures, which eight
+ * does. Not "describe this" but "of these twenty-nine figures, which eight
  * matter most today, in what order, and can you put four words beside each".
  * That is a ranking problem with a caption attached, and it suits a model far
  * better than prose does: the judgement is the valuable part and the sentence
@@ -194,7 +194,7 @@ export type ArrangementVerdict =
  * than the month read draws for a claim. The reason is that the catalogue is
  * *closed* and was handed over in full: a month read can cite
  * `top-expense:c4` and be wrong about one category, but a model naming a tile
- * that does not exist has ignored a list of twenty-eight strings it was just
+ * that does not exist has ignored a list of twenty-nine strings it was just
  * given, and nothing else in that answer is worth more trust than that.
  *
  * A caption is the forgiving half. It is dropped and its tile kept, because

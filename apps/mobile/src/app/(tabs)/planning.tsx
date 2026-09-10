@@ -5,7 +5,7 @@ import { buildBudgetProgress } from "@finance/core/budget-limits";
 import {
   buildForwardProjection,
   buildRunway,
-  type ProjectionPoint,
+  type ForwardProjection,
   type Runway,
 } from "@finance/core/projection";
 import {
@@ -51,6 +51,7 @@ import {
   getSavingsGoals,
   getSavingsReserve,
   getTags,
+  readCashBalance,
   type MonthCloseOverview,
 } from "@/lib/queries";
 import {
@@ -122,11 +123,13 @@ export default function PlanningScreen() {
           categories: [] as Category[],
           budgetProgress: [] as ReturnType<typeof buildBudgetProgress>,
           goalProgress: [] as ReturnType<typeof buildSavingsGoalProgress>,
-          projection: [] as ProjectionPoint[],
+          projection: null as ForwardProjection | null,
           runway: null as Runway | null,
           closes: null as MonthCloseOverview | null,
         };
       }
+
+      const today = todayIsoLocal();
 
       const [
         budgets,
@@ -137,6 +140,10 @@ export default function PlanningScreen() {
         templates,
         reserve,
         closes,
+        // What the projection starts from. Two indexed reads and no network:
+        // it reads the stored statement, which is why the phone can answer
+        // at all. Null when no account is ticked, which is ordinary.
+        cash,
       ] = await Promise.all([
         getBudgets(user.id),
         getSavingsGoals(user.id),
@@ -145,7 +152,8 @@ export default function PlanningScreen() {
         getMonthlySummary(user.id, current.year, current.month),
         getRecurringTemplates(user.id),
         getSavingsReserve(user.id),
-        getMonthCloseOverview(user.id, todayIsoLocal()),
+        getMonthCloseOverview(user.id, today),
+        readCashBalance(user.id, today),
       ]);
 
       const categoryNames = new Map(
@@ -169,12 +177,18 @@ export default function PlanningScreen() {
           summary.savingsBreakdown,
           summary.savings,
         ),
-        projection: buildForwardProjection(
+        projection: buildForwardProjection({
           templates,
-          current.year,
-          current.month,
-          { months: 12 },
-        ),
+          year: current.year,
+          month: current.month,
+          today,
+          months: 12,
+          // Never a partial sum: a reading missing an account is short by
+          // whatever that account holds, so it is not a balance.
+          onHand: cash?.ok ? cash.total : null,
+          closes: closes.summary,
+          locale,
+        }),
         runway: buildRunway(reserve, templates, current.year, current.month),
         closes,
       };
@@ -257,7 +271,7 @@ export default function PlanningScreen() {
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
           <ProjectionCard
-            points={data?.projection ?? []}
+            projection={data?.projection ?? null}
             runway={data?.runway ?? null}
           />
 

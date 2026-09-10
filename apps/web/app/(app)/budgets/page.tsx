@@ -21,7 +21,7 @@ import { CashAccountsCard } from "@/components/finance/CashAccountsCard";
 import { MonthCloseCard } from "@/components/finance/MonthCloseCard";
 import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
 import { getMonthCloseOverview } from "@/lib/queries/month-close";
-import { getBankAccounts } from "@/lib/queries/bank-balance";
+import { getBankAccounts, readCashBalance } from "@/lib/queries/bank-balance";
 import { bankFeedConfigured } from "@/lib/bank/client";
 import { BudgetsView } from "./BudgetsView";
 import { ICON } from "@/lib/icon-scale";
@@ -35,17 +35,33 @@ export default async function BudgetsPage() {
   }
 
   const current = getCurrentMonth();
+  const today = todayIsoLocal();
 
-  const [budgets, categories, tags, goals, summary, templates, reserve] =
-    await Promise.all([
-      getBudgets(user.id),
-      getCategories(user.id),
-      getTags(user.id),
-      getSavingsGoals(user.id),
-      getMonthlySummary(user.id, current.year, current.month),
-      getRecurringTemplates(user.id),
-      getSavingsReserve(user.id),
-    ]);
+  const [
+    budgets,
+    categories,
+    tags,
+    goals,
+    summary,
+    templates,
+    reserve,
+    // The projection needs both: a balance to start from, and the closed
+    // months whose median says what a normal one costs unseen. `closes` used
+    // to be awaited on its own after this batch, which cost a round trip for
+    // nothing.
+    cash,
+    closes,
+  ] = await Promise.all([
+    getBudgets(user.id),
+    getCategories(user.id),
+    getTags(user.id),
+    getSavingsGoals(user.id),
+    getMonthlySummary(user.id, current.year, current.month),
+    getRecurringTemplates(user.id),
+    getSavingsReserve(user.id),
+    bankFeedConfigured() ? readCashBalance(user.id, today) : null,
+    getMonthCloseOverview(user.id, today),
+  ]);
 
   const categoryNames = new Map(categories.map((c) => [c.id, c.name] as const));
 
@@ -71,14 +87,19 @@ export default async function BudgetsPage() {
     pacing: computeGoalPacing(row),
   }));
 
-  const projection = buildForwardProjection(
+  const projection = buildForwardProjection({
     templates,
-    current.year,
-    current.month,
-    { months: 12 },
-  );
+    year: current.year,
+    month: current.month,
+    today,
+    months: 12,
+    // Never a partial sum: a reading missing an account is short by whatever
+    // that account holds, so it is not a balance and cannot open one.
+    onHand: cash?.ok ? cash.total : null,
+    closes: closes.summary,
+    locale: await getLocale(),
+  });
   const runway = buildRunway(reserve, templates, current.year, current.month);
-  const closes = await getMonthCloseOverview(user.id, todayIsoLocal());
   // Only asked of people who have connected a bank; on a deployment that has
   // never seen one this costs nothing and shows nothing.
   const bankAccounts = bankFeedConfigured()
@@ -120,7 +141,7 @@ export default async function BudgetsPage() {
             />
           ) : null}
 
-          <ProjectionCard points={projection} runway={runway} />
+          <ProjectionCard projection={projection} runway={runway} />
 
           <div className="grid gap-3 sm:grid-cols-2">
             {[

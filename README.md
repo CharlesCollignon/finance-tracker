@@ -329,6 +329,29 @@ way Calendar and History sit under the Ledger. The bar holds five surfaces;
 that ceiling is why the Bearing took Month's place rather than being added
 beside it.
 
+### Where the months lead
+
+Plan's projection walks the standing charges forward on **two tracks**: what
+the spending accounts will hold, and everything kept — that plus every euro
+set aside along the way. One line used to do the job and counted money moved
+into savings or a wallet as money gone, so anyone putting half their pay by
+watched their position sink while it grew.
+
+It is arithmetic on instructions already given, not a prediction, so no
+market value appears in it: what is already invested is the Bearing's net
+position to state and Wallets' to value. The one figure in it nobody
+scheduled is a normal month's unrecorded spending, and **that is what the
+second close buys you** — with two closed months the median across them is
+subtracted from every month ahead, and until then the card says plainly that
+it is not counted yet.
+
+The card lists what the figure is made of, charge by charge, and each row
+links to where it is edited. That is not trim: without an income charge every
+number there is arithmetic on outflow alone, so the card says so above the
+figures and the Bearing withholds them from the model entirely rather than
+letting it write a warning about a catastrophe that is really a missing
+template.
+
 **A model chooses which figures lead, and never computes one.** It is handed
 the same kind of fact pack the month read uses — every figure it may name,
 each with a stable id — and answers with an ordered list of ids and, at most,
@@ -341,7 +364,7 @@ number of its own — the same two severities the month read uses, and for the
 same reason.
 
 The catalogue is closed and handed over in full, which is the one thing this
-prompt has that a month read's does not: there are twenty-eight possible
+prompt has that a month read's does not: there are twenty-nine possible
 figures and the model is given all of them, so naming something else is a
 refusal rather than a trim.
 
