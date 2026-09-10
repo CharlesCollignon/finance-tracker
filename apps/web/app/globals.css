@@ -667,10 +667,17 @@ html:has(.marketing-shell) {
    rendering fault rather than as a shine. The mobile orb learned the same
    thing the hard way when it span a baked highlight.
 
-   Four things here: the hard specular where the light is, a smaller second
-   one glass always shows, the shell's own thickness catching light around
-   the rim, and a bounce along the bottom where the ground throws light back
-   up at it. */
+   Three things here: the hard specular where the light is, a smaller second
+   one glass always shows, and a bounce along the bottom where the ground
+   throws light back up at it.
+
+   Nothing traces the edge any more. There used to be two rings — a hard 1px
+   inset highlight and, under it, a soft band of light where the shell's own
+   thickness catches it — and at 22–26px they were the loudest thing about
+   the mark: a drawn outline around a ball that is meant to be blown glass.
+   What keeps it round without them is the terminator below, which is
+   shading rather than an edge. If a mark ever stops reading as a sphere,
+   the knob is `--orb-glass`, not a ring. */
 .pc-orb::after {
   content: "";
   display: block;
@@ -691,20 +698,15 @@ html:has(.marketing-shell) {
       transparent 22%
     ),
     radial-gradient(
-      circle at 50% 50%,
-      transparent 74%,
-      rgb(var(--orb-c1) / calc(0.16 * var(--orb-glass))) 90%,
-      transparent 100%
-    ),
-    radial-gradient(
       circle at 58% 33%,
       transparent 52%,
       rgb(30 20 6 / calc(0.14 * var(--orb-glass))) 84%,
       rgb(22 14 4 / calc(0.16 * var(--orb-glass))) 100%
     );
-  box-shadow:
-    inset 0 0 0 1px rgb(255 244 214 / calc(0.34 * var(--orb-glass))),
-    inset 0 -7cqw 11cqw -5cqw rgb(255 237 194 / calc(0.24 * var(--orb-glass)));
+  /* The bounce alone. The 1px inset ring that used to sit above it was the
+     border the mark is better off without. */
+  box-shadow: inset 0 -7cqw 11cqw -5cqw
+    rgb(255 237 194 / calc(0.24 * var(--orb-glass)));
 }
 
 /* Denser glass for the marks. At 22–26px the shell is a few pixels of tint

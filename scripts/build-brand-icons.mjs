@@ -55,6 +55,11 @@ const C3 = "#5c4415";
  * a bloom behind them and can afford to be nearly clear; this one has a flat
  * plate behind it, so a clear shell would read as a smudge on the plate
  * rather than as a ball on it.
+ *
+ * Nothing traces the edge, here or on either live orb. A stroke used to run
+ * all the way round and it read as a drawn outline on a ball that is meant
+ * to be blown glass; the shell gradient's fall to `C3` at the rim is what
+ * keeps it round, and that is shading rather than an edge.
  */
 function orbSvg({ size, diameter = 1, plate = false }) {
   const d = 100 * diameter;
@@ -93,7 +98,6 @@ function orbSvg({ size, diameter = 1, plate = false }) {
     <ellipse cx="${o + 63 * diameter}" cy="${o + 22 * diameter}" rx="${14 * diameter}" ry="${10 * diameter}" fill="url(#spec)"/>
     <ellipse cx="${o + 37 * diameter}" cy="${o + 71 * diameter}" rx="${7 * diameter}" ry="${6 * diameter}" fill="url(#spec2)"/>
   </g>
-  <circle cx="50" cy="50" r="${d / 2 - 0.6 * diameter}" fill="none" stroke="#fff4d6" stroke-opacity="0.3" stroke-width="${1.2 * diameter}"/>
 </svg>`;
 }
 
@@ -107,12 +111,23 @@ function monochromeSvg({ size, diameter }) {
 /**
  * The targets.
  *
- * `opaque` flattens the alpha onto the plate — the square icons keep the
- * three channels they shipped with, and iOS rejects an icon with alpha
- * outright. The two that stay transparent are the ones drawn over a ground
- * something else already chose: the splash, whose colour is set in `app.json`,
- * and the Android adaptive foreground, which is composited over its own
- * background layer.
+ * `opaque` flattens the alpha onto the plate. Two kinds of target need that
+ * and cannot be argued out of it: the iOS icons, because iOS rejects an icon
+ * with an alpha channel outright, and the maskable one, because a maskable
+ * icon is cropped to a shape the platform picks and has to have paint under
+ * every pixel of it.
+ *
+ * Everything else is transparent, and that is the point of it. A tab icon or
+ * a launcher icon on its own plate is a picture of a tile; the mark is the
+ * ball, so what ships is the ball. The splash and the Android adaptive
+ * foreground were always transparent for a different reason — something else
+ * already chose their ground (`app.json` in both cases) — and they keep it.
+ *
+ * `diameter` is how much of the square the ball fills. The plated icons hold
+ * it well in, because there a margin is visible and part of the design; the
+ * transparent ones run close to the edge, because there is no plate for the
+ * margin to be a margin *of* and every spare pixel is size the icon does not
+ * have to lose.
  */
 const TARGETS = [
   // The mobile app.
@@ -121,16 +136,14 @@ const TARGETS = [
     size: 1024,
     opaque: true,
     svg: orbSvg,
-    diameter: 0.86,
+    diameter: 0.6,
     plate: true,
   },
   {
     path: "apps/mobile/assets/images/favicon.png",
     size: 64,
-    opaque: true,
     svg: orbSvg,
-    diameter: 0.9,
-    plate: true,
+    diameter: 1,
   },
   {
     path: "apps/mobile/assets/images/splash-icon.png",
@@ -146,46 +159,40 @@ const TARGETS = [
     path: "apps/mobile/assets/images/android-icon-foreground.png",
     size: 1024,
     svg: orbSvg,
-    diameter: 0.62,
+    diameter: 0.4,
   },
   {
     path: "apps/mobile/assets/images/android-icon-monochrome.png",
     size: 432,
     svg: monochromeSvg,
-    diameter: 0.62,
+    diameter: 0.4,
   },
   // The web app: tab icon, iOS home screen, and the manifest's pair.
   {
     path: "apps/web/app/icon.png",
     size: 512,
-    opaque: true,
     svg: orbSvg,
-    diameter: 0.88,
-    plate: true,
+    diameter: 1,
   },
   {
     path: "apps/web/app/apple-icon.png",
     size: 180,
     opaque: true,
     svg: orbSvg,
-    diameter: 0.88,
+    diameter: 0.6,
     plate: true,
   },
   {
     path: "apps/web/public/icon-192.png",
     size: 192,
-    opaque: true,
     svg: orbSvg,
-    diameter: 0.88,
-    plate: true,
+    diameter: 0.92,
   },
   {
     path: "apps/web/public/icon-512.png",
     size: 512,
-    opaque: true,
     svg: orbSvg,
-    diameter: 0.88,
-    plate: true,
+    diameter: 0.92,
   },
   // Maskable is its own file rather than the 512 doing both jobs. A maskable
   // icon is cropped to whatever shape the platform likes, so it has to hold
