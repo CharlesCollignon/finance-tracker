@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, RefreshControl, View } from "react-native";
+import { Platform, Pressable, RefreshControl, View } from "react-native";
+import { Gesture } from "react-native-gesture-handler";
+import { runOnJS } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import ReorderableList, { reorderItems } from "react-native-reorderable-list";
 
@@ -79,6 +81,25 @@ export default function BearingScreen() {
   } | null>(null);
   const [arranging, setArranging] = useState(false);
 
+  /**
+   * The drag gesture, held back until the handle's long press has fired.
+   *
+   * Without this the screen cannot be scrolled at all. `ReorderableList`
+   * composes `Gesture.Simultaneous(Gesture.Native(), pan)` around a pan that
+   * starts tracking the instant a finger lands, and a `RefreshControl` above
+   * it wants the same vertical drag — the library's own troubleshooting notes
+   * name that pair as the one that leaves both dead. Holding the pan back
+   * means an ordinary swipe reaches the scroll view untouched.
+   *
+   * 220ms because `BearingTile`'s handle calls `drag()` from an `onLongPress`
+   * at 180: the pan has to be asleep right up to the moment a drag actually
+   * begins, and awake immediately after. The two numbers move together.
+   */
+  const dragGesture = useMemo(
+    () => Gesture.Pan().activateAfterLongPress(220),
+    [],
+  );
+
   const { data, loading, refreshing, onRefreshAll, onRefresh } = useRefreshable(
     async () => {
       if (!user) {
@@ -95,6 +116,30 @@ export default function BearingScreen() {
     },
     [user?.id, locale, dataVersion],
   );
+
+  /*
+   * Android draws the refresh spinner from a SwipeRefreshLayout wrapping the
+   * list, so a tile dragged upwards pulls it open mid-reorder. Switching it
+   * off for the duration of a drag is the library's remedy. Not while a
+   * refresh is already running — taking the control away then would snatch
+   * back a spinner the user is watching — and not on iOS, which composites
+   * the two without argument.
+   */
+  const [refreshEnabled, setRefreshEnabled] = useState(true);
+
+  const onDragStart = useCallback(() => {
+    "worklet";
+    if (Platform.OS === "android" && !refreshing) {
+      runOnJS(setRefreshEnabled)(false);
+    }
+  }, [refreshing]);
+
+  const onDragEnd = useCallback(() => {
+    "worklet";
+    if (Platform.OS === "android") {
+      runOnJS(setRefreshEnabled)(true);
+    }
+  }, []);
 
   const [snapshot, setSnapshot] = useState(data);
   if (snapshot !== data) {
@@ -208,6 +253,9 @@ export default function BearingScreen() {
           />
         )}
         onReorder={onReorder}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        panGesture={dragGesture}
         dragEnabled={stored.tracked}
         contentContainerStyle={{ paddingTop: 16, paddingBottom: bottom }}
         showsVerticalScrollIndicator={false}
@@ -215,6 +263,7 @@ export default function BearingScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefreshAll}
+            enabled={refreshEnabled}
             tintColor={colors.mutedForeground}
           />
         }
