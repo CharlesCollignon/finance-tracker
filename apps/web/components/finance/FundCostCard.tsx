@@ -11,6 +11,7 @@ import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
 import { Card } from "@/components/retroui/Card";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { useT } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 
 /** Long enough to make the drag visible, short enough to stay believable. */
@@ -33,6 +34,7 @@ interface FundCostCardProps {
  * claiming what a fair charge is.
  */
 export function FundCostCard({ portfolio }: FundCostCardProps) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
 
   const summary = useMemo(
@@ -61,19 +63,18 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
   return (
     <Card.Bezel className="w-full" innerClassName="p-5 md:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="font-head text-base">What holding this costs</h2>
+        <h2 className="font-head text-base">{t("fundCost.title")}</h2>
         {summary.weightedAverage !== null ? (
           <p className="text-sm text-muted-foreground">
-            {formatCharge(summary.weightedAverage)} a year, weighted
+            {formatCharge(summary.weightedAverage)}{" "}
+            {t("fundCost.weightedSuffix")}
           </p>
         ) : null}
       </div>
 
       {priced.length === 0 ? (
         <p className="mt-3 max-w-prose text-sm text-muted-foreground">
-          Add each holding&apos;s ongoing charge — the yearly fee on its KID —
-          and this becomes a figure in euros. It is the biggest cost most
-          portfolios have and the only one that never shows up on a statement.
+          {t("fundCost.emptyBody")}
         </p>
       ) : (
         <>
@@ -83,12 +84,12 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
             </span>
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            a year on{" "}
+            {t("fundCost.aYearOn")}{" "}
             <span className="privacy-amount tabular-nums">
               {formatEuro(summary.coveredValue)}
             </span>{" "}
             · {formatEuro(costOverYears(summary.totalAnnualCost, HORIZON_YEARS))}{" "}
-            over {HORIZON_YEARS} years at this balance
+            {t("fundCost.overYears", { years: HORIZON_YEARS })}
           </p>
 
           <ul className="mt-4 flex flex-col divide-y divide-border border-t border-border">
@@ -115,22 +116,23 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
 
           {saving !== null && summary.cheapest ? (
             <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
-              Your cheapest holding is{" "}
+              {t("fundCost.cheapestPrefix")}{" "}
               <span className="text-foreground">{summary.cheapest.name}</span>{" "}
-              at {formatCharge(summary.cheapest.ongoingCharge)}. At that rate
-              the same{" "}
+              {t("fundCost.cheapestAt", {
+                charge: formatCharge(summary.cheapest.ongoingCharge),
+              })}{" "}
               <span className="tabular-nums">
                 {formatEuro(summary.coveredValue)}
               </span>{" "}
-              would cost{" "}
+              {t("fundCost.wouldCost")}{" "}
               <span className="tabular-nums text-foreground">
                 {formatEuro(summary.costAtCheapest ?? 0)}
               </span>{" "}
-              — a difference of{" "}
+              {t("fundCost.differenceOf")}{" "}
               <span className="font-medium tabular-nums text-foreground">
                 {formatEuro(saving)}
               </span>{" "}
-              a year.
+              {t("fundCost.aYear")}
             </p>
           ) : null}
         </>
@@ -143,9 +145,7 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
             priced.length === 0 ? "mt-4" : "mt-4 border-t border-border pt-4",
           )}
         >
-          {summary.missingCount}{" "}
-          {summary.missingCount === 1 ? "holding has" : "holdings have"} no
-          charge recorded
+          {t("fundCost.missingCharge", { count: summary.missingCount })}
           {summary.uncoveredValue > 0 ? (
             <>
               {" "}
@@ -156,7 +156,7 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
               )
             </>
           ) : null}
-          , so this total is partial.
+          {t("fundCost.partialSuffix")}
         </p>
       ) : null}
     </Card.Bezel>

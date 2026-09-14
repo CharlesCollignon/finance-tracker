@@ -66,6 +66,25 @@ cp apps/web/.env.local.example apps/web/.env.local
 | `SUPABASE_SERVICE_ROLE_KEY`     | optional | “Delete account” on web, and the daily cron jobs                     |
 | `APPLE_TEAM_ID`                 | optional | Passkeys on iOS — Apple Team ID for AASA                             |
 | `ANDROID_SHA256_FINGERPRINTS`   | optional | Passkeys on Android — colon-hex SHA-256 fingerprints                 |
+| `MISTRAL_API_KEY`               | optional | Every model call: the month read, the Bearing's arrangement, and the  |
+|                                 |          | look-through's read and instrument readings                           |
+
+One key and one model for all four. `MISTRAL_MODEL` overrides the model
+everywhere; there is no per-feature override, on the grounds that a
+deployment wanting two models has a problem this file cannot fix.
+
+Every one of these is server-side. None is `NEXT_PUBLIC_`, none is read in a
+browser, and each feature exposes only a boolean — `monthReadConfigured()`,
+`arrangerConfigured()`, `walletReadConfigured()` — to anything that renders,
+so a missing key shows up as a surface without a button rather than a button
+that fails.
+
+The look-through needs the **web search connector**, which is a Mistral plan
+entitlement rather than a separate key. Without it, reading an instrument
+answers 4xx, the attempt is refunded, and the geography and sector sections
+say "not yet read" — which is the truth. Overlap by index, weighted charges,
+wrapper eligibility and the target allocation are computed without any model
+and are unaffected.
 
 Google OAuth is configured in the **Supabase dashboard**, not in env files.
 
@@ -130,7 +149,7 @@ then point Namecheap DNS at the records Vercel shows (usually A `@` →
 
 ### Background jobs (Vercel cron)
 
-Five daily jobs are declared in `apps/web/vercel.json`, four of them pointed
+Six daily jobs are declared in `apps/web/vercel.json`, four of them pointed
 at the same refresh route. All run under the service role, so all need
 `SUPABASE_SERVICE_ROLE_KEY`, and all refuse to run without `CRON_SECRET` —
 Vercel sends it as `Authorization: Bearer <secret>`.
@@ -140,6 +159,7 @@ Vercel sends it as `Authorization: Bearer <secret>`.
 | `/api/cron/refresh` | 07:00               | Reprices not-yet-due occurrences, then pulls and syncs the bank |
 | `/api/cron/notify`  | 08:00               | Sends the day's web push digest                                 |
 | `/api/cron/refresh` | 12:00, 17:00, 21:00 | Pulls and syncs the bank only                                   |
+| `/api/cron/read-instruments` | 04:00      | Re-reads one aging instrument reading, for a few users           |
 
 **Refreshing** is everything that brings the ledger up to date from outside
 it. Hobby allows a hundred cron jobs per project but insists each runs at most
@@ -154,6 +174,16 @@ header and gets the full job.
 The two halves fail independently: an unreachable bank does not stop quotes
 refreshing, and a rate-limited quote source does not stop the statement being
 read.
+
+**Reading instruments** has its own entry rather than a step inside the
+refresh, for the same reason: a search-backed reading takes tens of seconds,
+and bolting one onto a run that already reprices every user's templates and
+reads a bank statement would be the thing that runs the function out of time
+— taking the statement down with it. It needs `MISTRAL_API_KEY` on top of
+the two above, and answers `{ "skipped": ... }` rather than failing when
+either is absent. One instrument per user, a few users per run: a portfolio's
+readings arrive over a few days, and nothing about it is urgent because a
+reading one day staler is a reading still being used.
 
 _Repricing_ brings occurrences that are applied but still dated ahead back in
 line with their instrument's quote, and refreshes each template's stored

@@ -44,8 +44,14 @@ export async function saveInvestmentPosition(
     initialBalance: formData.get("initialBalance"),
     currentValue: formData.get("currentValue") ?? "",
     shareCount: formData.get("shareCount") ?? "",
+    // Omitted until now, which meant `optionalCharge` saw `undefined`, turned
+    // it into null, and every save from the web wiped a charge only the phone
+    // could write. The form has always submitted the field.
+    ongoingCharge: formData.get("ongoingCharge") ?? "",
     instrumentSymbol: formData.get("instrumentSymbol") ?? "",
     instrumentName: formData.get("instrumentName") ?? "",
+    isin: formData.get("isin") ?? "",
+    valuePinned: formData.get("valuePinned") ?? "",
   });
 
   if (!parsed.success) {
@@ -97,6 +103,8 @@ export async function saveInvestmentPosition(
       instrumentSymbol,
       instrumentName,
       ongoingCharge: parsed.data.ongoingCharge,
+      isin: parsed.data.isin,
+      valuePinned: parsed.data.valuePinned,
     });
   } catch (error) {
     return {
@@ -141,11 +149,24 @@ export async function removeInvestmentPosition(
  * Upserted per wallet rather than as a set, so setting a PEA's opening date
  * does not require the user to have decided on target weights first.
  */
+/**
+ * One wallet's intent, changed a field at a time.
+ *
+ * Only the fields the caller actually sent are written. That is not a
+ * micro-optimisation: `walletPlanSchema` turns an absent field into `null`,
+ * and the upsert used to write every column — so saving a PEA's opening date
+ * silently cleared its target weight, and the drift figure with it. Three
+ * editors share this row and each of them touches one field.
+ *
+ * `wallet` is read from the raw input rather than the parsed output because
+ * the parsed output cannot say whether a null was sent or merely absent.
+ */
 export async function saveWalletPlan(input: {
   wallet: string;
   targetWeight?: string | number;
   openedOn?: string;
   contributionCeiling?: string | number;
+  wrapperFee?: string | number;
 }): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
@@ -157,18 +178,28 @@ export async function saveWalletPlan(input: {
     return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
+  const row: Record<string, unknown> = {
+    user_id: user.id,
+    wallet: parsed.data.wallet,
+    updated_at: new Date().toISOString(),
+  };
+  if ("targetWeight" in input) {
+    row.target_weight = parsed.data.targetWeight;
+  }
+  if ("openedOn" in input) {
+    row.opened_on = parsed.data.openedOn;
+  }
+  if ("contributionCeiling" in input) {
+    row.contribution_ceiling = parsed.data.contributionCeiling;
+  }
+  if ("wrapperFee" in input) {
+    row.wrapper_fee = parsed.data.wrapperFee;
+  }
+
   const supabase = await createClient();
-  const { error } = await supabase.from("wallet_plans").upsert(
-    {
-      user_id: user.id,
-      wallet: parsed.data.wallet,
-      target_weight: parsed.data.targetWeight,
-      opened_on: parsed.data.openedOn,
-      contribution_ceiling: parsed.data.contributionCeiling,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,wallet" },
-  );
+  const { error } = await supabase
+    .from("wallet_plans")
+    .upsert(row as never, { onConflict: "user_id,wallet" });
 
   if (error) {
     return { error: error.message };

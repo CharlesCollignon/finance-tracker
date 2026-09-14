@@ -9,6 +9,7 @@ import {
   parseChargeInput,
   savingAtCheapest,
   type PositionCostInput,
+  type WrapperFees,
 } from "./fund-costs";
 
 function position(
@@ -23,6 +24,13 @@ function position(
     marketValue,
     ongoingCharge,
   };
+}
+
+function inWallet(
+  base: PositionCostInput,
+  walletId: PositionCostInput["walletId"],
+): PositionCostInput {
+  return { ...base, walletId };
 }
 
 describe("buildFundCosts", () => {
@@ -217,5 +225,99 @@ describe("chargeLookupUrl", () => {
 
   it("returns nothing when there is nothing to look up", () => {
     expect(chargeLookupUrl(null, null)).toBeNull();
+  });
+});
+
+/**
+ * The envelope's own fee.
+ *
+ * An assurance-vie charges on the whole contract, so the same fund costs more
+ * there than in a PEA. These assert that the two layers stay separable — the
+ * fund-only figures are what someone compares between funds, the all-in
+ * figures are what actually leaves the account.
+ */
+describe("buildFundCosts with envelope fees", () => {
+  const AV_FEES: WrapperFees = { av: 0.006 };
+
+  it("leaves the fund figures alone when no envelope charges", () => {
+    const withoutFees = buildFundCosts([position("World", 20000, 0.002)]);
+    const withFees = buildFundCosts([position("World", 20000, 0.002)], AV_FEES);
+
+    // The position is in a PEA, which takes nothing.
+    expect(withFees.totalAnnualCost).toBe(withoutFees.totalAnnualCost);
+    expect(withFees.weightedAverage).toBe(withoutFees.weightedAverage);
+    expect(withFees.envelopeAnnualCost).toBe(0);
+    expect(withFees.allInAnnualCost).toBe(withoutFees.totalAnnualCost);
+  });
+
+  it("stacks the envelope fee on top of the fund charge", () => {
+    const summary = buildFundCosts(
+      [inWallet(position("Unit", 10000, 0.002), "av")],
+      AV_FEES,
+    );
+
+    expect(summary.rows[0]!.ongoingCharge).toBe(0.002);
+    expect(summary.rows[0]!.wrapperFee).toBe(0.006);
+    expect(summary.rows[0]!.effectiveCharge).toBeCloseTo(0.008, 6);
+
+    expect(summary.rows[0]!.annualCost).toBe(20);
+    expect(summary.rows[0]!.wrapperCost).toBe(60);
+    expect(summary.rows[0]!.allInCost).toBe(80);
+
+    // The comparison that matters: four times the fund's own charge.
+    expect(summary.weightedAverage).toBeCloseTo(0.002, 6);
+    expect(summary.weightedAllIn).toBeCloseTo(0.008, 6);
+    expect(summary.allInAnnualCost).toBe(80);
+  });
+
+  /**
+   * The envelope fee is known from the wallet, so it applies to value whose
+   * own ongoing charge was never entered. Its base is therefore wider than
+   * the fund figures' base, and conflating the two would understate the cost
+   * of exactly the portfolio that needs the warning most.
+   */
+  it("charges the envelope on value whose fund charge is unknown", () => {
+    const summary = buildFundCosts(
+      [
+        inWallet(position("Known", 10000, 0.002), "av"),
+        inWallet(position("Unknown", 10000, null), "av"),
+      ],
+      AV_FEES,
+    );
+
+    expect(summary.coveredValue).toBe(10000);
+    expect(summary.uncoveredValue).toBe(10000);
+    expect(summary.missingCount).toBe(1);
+
+    // Both positions pay the envelope, only one has a fund charge on record.
+    expect(summary.envelopeCoveredValue).toBe(20000);
+    expect(summary.envelopeAnnualCost).toBe(120);
+    expect(summary.totalAnnualCost).toBe(20);
+    expect(summary.allInAnnualCost).toBe(140);
+  });
+
+  it("weights the envelope fee across wallets that charge differently", () => {
+    const summary = buildFundCosts(
+      [
+        inWallet(position("Contract", 30000, 0.002), "av"),
+        position("PEA fund", 10000, 0.002),
+      ],
+      AV_FEES,
+    );
+
+    expect(summary.envelopeCoveredValue).toBe(30000);
+    expect(summary.weightedEnvelopeFee).toBeCloseTo(0.006, 6);
+    // All-in is weighted over held value, so the PEA fund dilutes it.
+    expect(summary.weightedAllIn).toBeCloseTo(0.0065, 6);
+  });
+
+  it("ignores an envelope fee on a position worth nothing", () => {
+    const summary = buildFundCosts(
+      [inWallet(position("Empty", 0, 0.002), "av")],
+      AV_FEES,
+    );
+    expect(summary.envelopeCoveredValue).toBe(0);
+    expect(summary.envelopeAnnualCost).toBe(0);
+    expect(summary.weightedEnvelopeFee).toBeNull();
   });
 });

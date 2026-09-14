@@ -22,6 +22,14 @@ export interface CostedPosition {
   ongoingCharge: number | null;
   /** marketValue × ongoingCharge, or null when the charge is unknown. */
   annualCost: number | null;
+  /** The envelope's own fee, as a fraction. Null when the wrapper takes none. */
+  wrapperFee: number | null;
+  /** marketValue × wrapperFee. Known even when the fund's own charge is not. */
+  wrapperCost: number | null;
+  /** ongoingCharge + wrapperFee, or null when the fund's charge is unknown. */
+  effectiveCharge: number | null;
+  /** What this position really costs a year, both layers together. */
+  allInCost: number | null;
 }
 
 export interface PositionCostInput {
@@ -31,6 +39,16 @@ export interface PositionCostInput {
   marketValue: number;
   ongoingCharge: number | null;
 }
+
+/**
+ * What each envelope charges on top of the funds inside it.
+ *
+ * An assurance-vie levies an annual fee on the whole contract, so a unit held
+ * there costs its own ongoing charge *plus* this. A PEA, a CTO and crypto take
+ * nothing, so their entries are absent or null — the common case is an empty
+ * object and no behaviour change at all.
+ */
+export type WrapperFees = Partial<Record<InvestmentWalletId, number | null>>;
 
 export interface FundCostSummary {
   rows: CostedPosition[];
@@ -42,6 +60,28 @@ export interface FundCostSummary {
   uncoveredValue: number;
   /** Value-weighted average charge over the covered value, as a fraction. */
   weightedAverage: number | null;
+  /**
+   * What the envelopes take, across every position they hold.
+   *
+   * Kept apart from the fund figures rather than folded into them, and on a
+   * wider base: an envelope's fee is known from the wallet, so it applies to
+   * held value whose own ongoing charge was never entered. Reporting one
+   * blended number would hide the comparison that matters most — the same
+   * fund at 0.20% inside a 0.60% assurance-vie costs four times what it
+   * costs in a PEA, and that is a fact about the envelope, not the fund.
+   */
+  envelopeAnnualCost: number;
+  /** Held value sitting in an envelope that charges a fee. */
+  envelopeCoveredValue: number;
+  /** Value-weighted envelope fee over `envelopeCoveredValue`. */
+  weightedEnvelopeFee: number | null;
+  /** Fund charges plus envelope fees — what holding all of it really costs. */
+  allInAnnualCost: number;
+  /**
+   * Value-weighted all-in charge, over the value where *both* layers are
+   * known. Null until at least one position has an ongoing charge recorded.
+   */
+  weightedAllIn: number | null;
   /** The cheapest holding that has a charge and some value behind it. */
   cheapest: { name: string; ongoingCharge: number } | null;
   /**
@@ -59,18 +99,35 @@ function round(value: number): number {
 
 export function buildFundCosts(
   positions: PositionCostInput[],
+  envelopeFees: WrapperFees = {},
 ): FundCostSummary {
-  const rows: CostedPosition[] = positions.map((position) => ({
-    positionId: position.positionId,
-    name: position.name,
-    walletId: position.walletId,
-    marketValue: position.marketValue,
-    ongoingCharge: position.ongoingCharge,
-    annualCost:
+  const rows: CostedPosition[] = positions.map((position) => {
+    const wrapperFee = envelopeFees[position.walletId] ?? null;
+    const annualCost =
       position.ongoingCharge === null
         ? null
-        : round(position.marketValue * position.ongoingCharge),
-  }));
+        : round(position.marketValue * position.ongoingCharge);
+    const wrapperCost =
+      wrapperFee === null ? null : round(position.marketValue * wrapperFee);
+    const effectiveCharge =
+      position.ongoingCharge === null
+        ? null
+        : position.ongoingCharge + (wrapperFee ?? 0);
+
+    return {
+      positionId: position.positionId,
+      name: position.name,
+      walletId: position.walletId,
+      marketValue: position.marketValue,
+      ongoingCharge: position.ongoingCharge,
+      annualCost,
+      wrapperFee,
+      wrapperCost,
+      effectiveCharge,
+      allInCost:
+        annualCost === null ? null : round(annualCost + (wrapperCost ?? 0)),
+    };
+  });
 
   // A position worth nothing costs nothing, and would drag a weighted average
   // towards a rate no money is actually paying.
@@ -95,6 +152,34 @@ export function buildFundCosts(
         ) / coveredValue
       : null;
 
+  // The envelope's own base: every position it holds that is worth something,
+  // whether or not the fund's charge was ever entered.
+  const enveloped = rows.filter(
+    (row) => row.wrapperFee !== null && row.wrapperFee > 0 && row.marketValue > 0,
+  );
+  const envelopeCoveredValue = enveloped.reduce(
+    (sum, row) => sum + row.marketValue,
+    0,
+  );
+  const envelopeAnnualCost = round(
+    enveloped.reduce((sum, row) => sum + (row.wrapperCost ?? 0), 0),
+  );
+  const weightedEnvelopeFee =
+    envelopeCoveredValue > 0
+      ? enveloped.reduce(
+          (sum, row) => sum + row.wrapperFee! * row.marketValue,
+          0,
+        ) / envelopeCoveredValue
+      : null;
+
+  const weightedAllIn =
+    coveredValue > 0
+      ? priced.reduce(
+          (sum, row) => sum + row.effectiveCharge! * row.marketValue,
+          0,
+        ) / coveredValue
+      : null;
+
   const cheapestRow = priced.reduce<CostedPosition | null>(
     (best, row) =>
       best === null || row.ongoingCharge! < best.ongoingCharge! ? row : best,
@@ -107,6 +192,11 @@ export function buildFundCosts(
     coveredValue,
     uncoveredValue,
     weightedAverage,
+    envelopeAnnualCost,
+    envelopeCoveredValue,
+    weightedEnvelopeFee,
+    allInAnnualCost: round(totalAnnualCost + envelopeAnnualCost),
+    weightedAllIn,
     cheapest: cheapestRow
       ? { name: cheapestRow.name, ongoingCharge: cheapestRow.ongoingCharge! }
       : null,

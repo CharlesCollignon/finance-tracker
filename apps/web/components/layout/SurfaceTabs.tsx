@@ -67,3 +67,17 @@ export const LEDGER_TABS: SurfaceTab[] = [
   { href: "/calendar", labelKey: "nav.ledgerCalendar" },
   { href: "/history", labelKey: "nav.ledgerByCategory" },
 ];
+
+/**
+ * Wallets' views: where the value sits, and what it is made of.
+ *
+ * The positions list answers "what do I hold and what is it worth". The
+ * look-through answers "what is it actually made of" — the same holdings
+ * resolved to their constituents. Two views of one body of data, so they are
+ * tabs on the surface rather than a second entry in a nav bar that is already
+ * at its ceiling of five.
+ */
+export const WALLET_TABS: SurfaceTab[] = [
+  { href: "/investments", labelKey: "nav.walletsPositions" },
+  { href: "/investments/look-through", labelKey: "nav.walletsLookThrough" },
+];

@@ -7,6 +7,7 @@
  * for why that is safe for the ordinary errors sharing the same field.
  */
 import { z } from "zod";
+import { walletIdSchema } from "./investments";
 
 export const budgetSchema = z.object({
   id: z.string().uuid().optional(),
@@ -16,7 +17,7 @@ export const budgetSchema = z.object({
 
 export const walletTransferSchema = z.object({
   id: z.string().uuid().optional(),
-  toWallet: z.enum(["pea", "cto", "crypto"]),
+  toWallet: walletIdSchema,
   amount: z.coerce.number().positive("errors.amountPositive"),
   occurredOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "errors.invalidDate"),
   note: z.string().max(500).optional(),

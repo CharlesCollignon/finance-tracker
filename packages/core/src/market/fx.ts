@@ -1,7 +1,18 @@
 import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "../i18n/locale";
-import { createEurRates } from "./eur-rates";
+import {
+  applyMonthlyRates,
+  buildPriceSeries,
+  emptyPriceSeries,
+  type InstrumentPriceSeries,
+} from "../instrument-price-series";
+import { createEurRates, fxSymbolForCurrency } from "./eur-rates";
 import { createYahooQuoteSource } from "./quote-source";
-import { fetchMonthlyCloses, type MonthlyClosePoint } from "./yahoo";
+import {
+  fetchDatedCloses,
+  fetchInstrumentPriceHistory,
+  fetchMonthlyCloses,
+  type MonthlyClosePoint,
+} from "./yahoo";
 
 /**
  * Convenience layer for callers that have no seam yet: the investment read
@@ -16,6 +27,19 @@ const historyCache = new Map<
   { points: MonthlyClosePoint[]; fetchedAt: number }
 >();
 const HISTORY_CACHE_TTL_MS = 60 * 60 * 1000;
+
+const fxHistoryCache = new Map<
+  string,
+  { rates: Record<string, number>; fetchedAt: number }
+>();
+/** A month's closing exchange rate is settled history; only the last one moves. */
+const FX_HISTORY_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+const priceSeriesCache = new Map<
+  string,
+  { series: InstrumentPriceSeries; fetchedAt: number }
+>();
+const PRICE_SERIES_CACHE_TTL_MS = 60 * 60 * 1000;
 
 export async function convertToEur(
   amount: number,
@@ -61,6 +85,66 @@ export function formatMoney(
   }).format(amount);
 }
 
+/**
+ * What one euro bought, month by month, for a currency.
+ *
+ * An exchange rate is an ordinary Yahoo symbol, so this is the same monthly
+ * close fetch the instruments use, read through the pairing convention in
+ * `./eur-rates`. An empty map is a valid answer — the caller falls back to
+ * today's rate, which is wrong but not absent.
+ */
+export async function fetchMonthlyFxToEur(
+  currency: string,
+): Promise<Record<string, number>> {
+  const normalized = currency.toUpperCase();
+  if (normalized === "EUR") {
+    return {};
+  }
+
+  const cached = fxHistoryCache.get(normalized);
+  if (cached && Date.now() - cached.fetchedAt < FX_HISTORY_CACHE_TTL_MS) {
+    return cached.rates;
+  }
+
+  const { symbol, inverted } = fxSymbolForCurrency(normalized);
+  // `max`, not the two years `fetchMonthlyCloses` asks for: the 5Y and ALL
+  // ranges reach back further than that, and a point with no rate of its own
+  // falls back to today's — which is the very thing this exists to avoid.
+  const { points } = await fetchDatedCloses(symbol, {
+    range: "max",
+    interval: "1mo",
+  });
+
+  const rates: Record<string, number> = {};
+  for (const point of points) {
+    if (point.close > 0) {
+      rates[point.date.slice(0, 7)] = inverted ? 1 / point.close : point.close;
+    }
+  }
+
+  fxHistoryCache.set(normalized, { rates, fetchedAt: Date.now() });
+  return rates;
+}
+
+/**
+ * The rates to convert a foreign series with, and what to do without them.
+ *
+ * `multiplier` is today's rate. It is the fallback rather than the answer:
+ * applied to the whole series it would scale every close by the same number,
+ * which leaves the shape intact and the percentage measured in the
+ * instrument's own currency — a euro label over a dollar fact.
+ */
+async function eurRatesFor(
+  currency: string,
+): Promise<{ rates: Record<string, number>; fallback: number }> {
+  const [rates, fallback] = await Promise.all([
+    fetchMonthlyFxToEur(currency).catch(() => ({}) as Record<string, number>),
+    defaultRates.multiplier(currency),
+  ]);
+
+  return { rates, fallback };
+}
+
 /** Monthly closes converted to EUR, keyed by YYYY-MM. */
 export async function fetchMonthlyClosesInEur(
   symbol: string,
@@ -74,15 +158,63 @@ export async function fetchMonthlyClosesInEur(
   }
 
   const { currency, points } = await fetchMonthlyCloses(symbol);
-  const converted: MonthlyClosePoint[] = [];
+  let converted: MonthlyClosePoint[];
 
-  for (const point of points) {
-    const closeEur = await defaultRates.toEur(point.close, currency);
-    converted.push({ month: point.month, close: closeEur });
+  if (currency.toUpperCase() === "EUR") {
+    converted = points;
+  } else {
+    const { rates, fallback } = await eurRatesFor(currency);
+    // `applyMonthlyRates` works on dated points; a monthly close is the first
+    // of its month as far as the rate lookup is concerned.
+    const dated = applyMonthlyRates(
+      points.map((point) => ({ date: `${point.month}-01`, close: point.close })),
+      rates,
+      fallback,
+    );
+    converted = dated.map((point, index) => ({
+      month: points[index]!.month,
+      close: point.close,
+    }));
   }
 
   historyCache.set(key, { points: converted, fetchedAt: Date.now() });
   return Object.fromEntries(
     converted.map((point) => [point.month, point.close]),
   );
+}
+
+/**
+ * An instrument's own price over the four ranges, in euro.
+ *
+ * One Yahoo request per symbol, sliced four ways here rather than fetched four
+ * times. A symbol that cannot be read comes back empty rather than throwing:
+ * one delisted ticker should cost its own row a line, not the page.
+ */
+export async function fetchPriceSeriesInEur(
+  symbol: string,
+  today: string,
+): Promise<InstrumentPriceSeries> {
+  const key = `${symbol.trim().toUpperCase()}|${today}`;
+  const cached = priceSeriesCache.get(key);
+  if (cached && Date.now() - cached.fetchedAt < PRICE_SERIES_CACHE_TTL_MS) {
+    return cached.series;
+  }
+
+  const { currency, daily, monthly } = await fetchInstrumentPriceHistory(symbol);
+
+  if (daily.length === 0 && monthly.length === 0) {
+    return emptyPriceSeries();
+  }
+
+  const history =
+    currency.toUpperCase() === "EUR"
+      ? { daily, monthly }
+      : await eurRatesFor(currency).then(({ rates, fallback }) => ({
+          daily: applyMonthlyRates(daily, rates, fallback),
+          monthly: applyMonthlyRates(monthly, rates, fallback),
+        }));
+
+  const series = buildPriceSeries(history, today);
+  priceSeriesCache.set(key, { series, fetchedAt: Date.now() });
+  return series;
 }

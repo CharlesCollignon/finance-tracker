@@ -15,6 +15,7 @@ import {
   type InvestmentReturns,
 } from "@finance/core/investment-returns";
 import { buildPeaStatus, peaMaturityHint } from "@finance/core/pea";
+import { chargeToInput, formatCharge } from "@finance/core/fund-costs";
 import { todayIsoLocal } from "@finance/core/constants";
 import { formatAnnualRate } from "@finance/core/xirr";
 import type { WalletPlan } from "@finance/core/types/database";
@@ -119,7 +120,7 @@ export function WalletPlanPanel({
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-muted-foreground">
-              Money-weighted return
+              {t("position.moneyWeightedReturn")}
             </p>
             <p
               className={cn(
@@ -139,17 +140,15 @@ export function WalletPlanPanel({
             <span className="privacy-amount tabular-nums text-foreground">
               {formatEuro(returns.total.invested)}
             </span>{" "}
-            in ·{" "}
+            {t("position.amountIn")} ·{" "}
             <span className="privacy-amount tabular-nums text-foreground">
               {formatEuro(returns.total.currentValue)}
             </span>{" "}
-            now
+            {t("position.amountNow")}
           </p>
         </div>
         <p className="mt-3 max-w-prose text-sm text-muted-foreground">
-          Annualised across every dated contribution, so paying in monthly is
-          measured fairly against a lump sum. Absolute gain alone would flatter
-          whichever had money in longest.
+          {t("position.returnExplainer")}
         </p>
       </Card.Bezel>
 
@@ -205,23 +204,13 @@ export function WalletPlanPanel({
                     </span>
                   </div>
 
-                  <div
-                    className="h-2 w-full overflow-hidden rounded-full bg-muted"
-                    role="presentation"
-                  >
-                    <div
-                      className="h-full rounded-full bg-primary"
-                      style={{
-                        width: `${Math.round(row.currentWeight * 100)}%`,
-                      }}
-                    />
-                  </div>
-
                   <div className="flex flex-wrap items-center justify-between gap-x-3 text-xs text-muted-foreground">
                     <span>
                       {formatWeight(row.currentWeight)}
                       {row.targetWeight !== null
-                        ? ` of ${formatWeight(row.targetWeight)} target`
+                        ? ` ${t("position.ofTarget", {
+                            target: formatWeight(row.targetWeight),
+                          })}`
                         : ""}
                       {rate ? ` · ${rate}` : ""}
                     </span>
@@ -247,29 +236,33 @@ export function WalletPlanPanel({
         {!editing && allocation.needsRebalance && split.length > 0 ? (
           <p className="mt-4 border-t border-border pt-4 text-sm">
             <span className="text-muted-foreground">
-              Your next {formatEuro(monthlyContribution)} would close the gap
-              fastest as{" "}
+              {t("position.splitLeadPrefix")}{" "}
+              <span className="privacy-amount tabular-nums">
+                {formatEuro(monthlyContribution)}
+              </span>{" "}
+              {t("position.splitLeadSuffix")}{" "}
             </span>
             {split.map((row, index) => (
               <span key={row.walletId}>
                 {index > 0 ? ", " : ""}
-                <span className="font-medium tabular-nums">
+                <span className="privacy-amount font-medium tabular-nums">
                   {formatEuro(row.amount)}
                 </span>{" "}
-                to {INVESTMENT_WALLET_LABELS[row.walletId]}
+                {t("position.splitItemTo", {
+                  wallet: INVESTMENT_WALLET_LABELS[row.walletId],
+                })}
               </span>
             ))}
             <span className="text-muted-foreground">
               {" "}
-              — rebalancing by contribution rather than by selling.
+              {t("position.splitTail")}
             </span>
           </p>
         ) : null}
 
         {!editing && allocation.targetCoverage === 0 ? (
           <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
-            Set a target split to see how far the portfolio has drifted, and
-            where the next contribution should go.
+            {t("position.noTargetHint")}
           </p>
         ) : null}
       </Card.Bezel>
@@ -281,11 +274,17 @@ export function WalletPlanPanel({
 
           <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2 text-sm">
             <span className="text-muted-foreground">
-              Paid in{" "}
+              {t("position.peaPaidIn")}{" "}
               <span className="privacy-amount tabular-nums text-foreground">
                 {formatEuro(peaStatus.contributed)}
               </span>{" "}
-              of {formatEuro(peaStatus.ceiling)}
+              {t("position.peaOfCeiling", {
+                ceiling: formatEuro(peaStatus.ceiling),
+              })}{" "}
+              —{" "}
+              <span className="privacy-amount tabular-nums">
+                {formatWeight(peaStatus.ratio)}
+              </span>
             </span>
             <span
               className={cn(
@@ -295,24 +294,15 @@ export function WalletPlanPanel({
                   : "text-muted-foreground",
               )}
             >
-              {formatEuro(peaStatus.headroom)} of room left
+              <span className="privacy-amount">
+                {formatEuro(peaStatus.headroom)}
+              </span>{" "}
+              {t("position.peaRoomLeft")}
             </span>
           </div>
 
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className={cn(
-                "h-full rounded-full",
-                peaStatus.nearCeiling ? "bg-destructive" : "bg-primary",
-              )}
-              style={{
-                width: `${Math.min(100, Math.round(peaStatus.ratio * 100))}%`,
-              }}
-            />
-          </div>
-
           <p className="mt-3 text-sm text-muted-foreground">
-            Only cash paid in counts against the ceiling — growth does not.
+            {t("position.peaCashOnly")}
           </p>
 
           <PeaOpenedField
@@ -321,6 +311,109 @@ export function WalletPlanPanel({
           />
         </Card.Bezel>
       ) : null}
+
+      {/* One card per wrapper that charges a fee of its own. */}
+      {(["av", "per"] as const)
+        .filter((wallet) =>
+          portfolio.columns.some(
+            (column) =>
+              column.walletId === wallet && column.totalMarketValue > 0,
+          ),
+        )
+        .map((wallet) => (
+          <Card.Bezel
+            key={wallet}
+            className="w-full"
+            innerClassName="p-5 md:p-6"
+          >
+            <EnvelopeFeeField
+              wallet={wallet}
+              fee={
+                plans.find((plan) => plan.wallet === wallet)?.wrapper_fee ??
+                null
+              }
+            />
+          </Card.Bezel>
+        ))}
+    </div>
+  );
+}
+
+/**
+ * What the envelope itself charges, a year.
+ *
+ * An assurance-vie takes a fee on the whole contract, on top of every unit's
+ * own ongoing charge — which is why the same fund can cost four times as much
+ * there as in a PEA. Nothing can compute that comparison without this number,
+ * and no free source publishes it per contract, so it is typed in the way a
+ * fund's charge is.
+ *
+ * Typed as a percentage and stored as a fraction, the same convention as
+ * `ongoing_charge`, so the look-through can add the two together without
+ * either side remembering which unit it is in.
+ */
+function EnvelopeFeeField({
+  wallet,
+  fee,
+}: {
+  wallet: "av" | "per";
+  fee: number | null;
+}) {
+  const t = useT();
+  const { toast } = useToast();
+  const [value, setValue] = useState(chargeToInput(fee));
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label
+        htmlFor={`envelope-fee-${wallet}`}
+        className="text-sm font-medium"
+      >
+        {INVESTMENT_WALLET_LABELS[wallet]} · {t("lookThrough.envelopeFee")}
+      </label>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1">
+          <input
+            id={`envelope-fee-${wallet}`}
+            type="text"
+            inputMode="decimal"
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            placeholder="0,75"
+            className="h-10 w-24 rounded border border-border bg-background px-3 text-base"
+          />
+          <span className="text-sm text-muted-foreground">%</span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={pending || value === chargeToInput(fee)}
+          onClick={() =>
+            startTransition(async () => {
+              const result = await saveWalletPlan({
+                wallet,
+                wrapperFee: value,
+              });
+              if (result.error) {
+                toast(result.error, "error");
+                return;
+              }
+              toast(t("position.saved"), "success");
+            })
+          }
+        >
+          {pending ? t("position.saving") : t("position.save")}
+        </Button>
+        {fee !== null ? (
+          <span className="text-sm text-muted-foreground">
+            {formatCharge(fee)}
+          </span>
+        ) : null}
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {t("lookThrough.envelopeFeeHint")}
+      </p>
     </div>
   );
 }
@@ -417,7 +510,7 @@ function PeaOpenedField({
   return (
     <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
       <label htmlFor="pea-opened" className="text-sm font-medium">
-        Opened on
+        {t("position.openedOn")}
       </label>
       <div className="flex flex-wrap items-center gap-2">
         <input

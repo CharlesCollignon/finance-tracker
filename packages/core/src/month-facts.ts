@@ -90,6 +90,15 @@ export type MissingReason =
   /** Held too briefly for a rate to be anything but noise. */
   | "too-short"
   /**
+   * The instrument has not been read, so what it holds is unknown.
+   *
+   * Distinct from "nothing-invested": there *is* money here, the app simply
+   * cannot see through to what it is made of. Saying so is the whole point —
+   * a look-through that reported 0% Japan for a portfolio it had never read
+   * would be stating an absence it has no basis for.
+   */
+  | "no-reading"
+  /**
    * No charge brings money in, so every figure about the months ahead is
    * arithmetic on outflow alone. Withheld rather than stated: a model handed
    * "−£18,000 by July" for somebody who simply never wrote their salary down

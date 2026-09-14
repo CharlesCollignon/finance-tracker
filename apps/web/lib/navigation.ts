@@ -87,7 +87,13 @@ export const APP_NAV_ITEMS = [
     href: "/investments",
     labelKey: "nav.wallets" satisfies Key,
     icon: ChartLine,
-    children: [] as NavChild[],
+    children: [
+      { href: "/investments", labelKey: "nav.walletsPositions" },
+      {
+        href: "/investments/look-through",
+        labelKey: "nav.walletsLookThrough",
+      },
+    ] as NavChild[],
   },
 ] as const;
 

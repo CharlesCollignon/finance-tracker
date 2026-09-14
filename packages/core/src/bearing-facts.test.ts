@@ -64,6 +64,13 @@ function costs(partial: Partial<FundCostSummary> = {}): FundCostSummary {
     coveredValue: 12000,
     uncoveredValue: 0,
     weightedAverage: 0.008,
+    // No envelope fee: this fixture's portfolio sits in wrappers that take
+    // nothing, so all-in and fund-only agree.
+    envelopeAnnualCost: 0,
+    envelopeCoveredValue: 0,
+    weightedEnvelopeFee: null,
+    allInAnnualCost: 96,
+    weightedAllIn: 0.008,
     cheapest: null,
     costAtCheapest: null,
     missingCount: 0,

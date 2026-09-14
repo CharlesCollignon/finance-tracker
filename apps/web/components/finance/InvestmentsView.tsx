@@ -6,13 +6,22 @@ import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
+import { RefreshQuotesButton } from "@/components/finance/RefreshQuotesButton";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { InstrumentLogo } from "@/components/finance/InstrumentLogo";
-import { InvestmentItemChart } from "@/components/finance/lazy-charts";
+import { Sparkline } from "@/components/finance/charts";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { InvestmentPositionSheet } from "@/components/finance/InvestmentPositionSheet";
 import { StatHero } from "@/components/finance/StatHero";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { formatBtcAmount, isCryptoWallet } from "@finance/core/crypto-holdings";
+import {
+  formatSignedPercent,
+  PRICE_RANGES,
+  type InstrumentPriceSeries,
+  type PriceRange,
+} from "@finance/core/instrument-price-series";
 import type { WalletFundingNeed } from "@finance/core/investment-upcoming";
 import {
   INVESTMENT_WALLET_LABELS,
@@ -36,6 +45,8 @@ interface InvestmentsViewProps {
   portfolio: InvestmentPortfolioSummary;
   recurringTemplates: RecurringTemplateWithCategory[];
   fundingNeeds: WalletFundingNeed[];
+  /** What each held instrument's price did, keyed by symbol. */
+  priceSeries: Record<string, InstrumentPriceSeries>;
 }
 
 /** Module-level (not a hook), so it takes the caller's already-bound formatter. */
@@ -69,6 +80,7 @@ export function InvestmentsView({
   portfolio,
   recurringTemplates,
   fundingNeeds,
+  priceSeries,
 }: InvestmentsViewProps) {
   const t = useT();
   const formatEuro = useFormatCurrency();
@@ -115,6 +127,14 @@ export function InvestmentsView({
       <PageHeader titleKey="nav.wallets" />
 
       <PageContainer>
+        {/* The tab strip belongs on both views, not just the new one — without
+            it the look-through was reachable only from the sidebar, which is
+            hidden on a phone. */}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <SurfaceTabs tabs={WALLET_TABS} />
+          <RefreshQuotesButton />
+        </div>
+
         <Stagger
           className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
           stagger={0.05}
@@ -128,8 +148,9 @@ export function InvestmentsView({
               subtitle={
                 <p>
                   <span className="privacy-amount">
-                    {formatEuro(portfolio.totalInvested)} invested
-                  </span>
+                    {formatEuro(portfolio.totalInvested)}
+                  </span>{" "}
+                  {t("wallets.investedSuffix")}
                   {showPl ? (
                     <>
                       {" · "}
@@ -151,16 +172,27 @@ export function InvestmentsView({
           </StaggerItem>
 
           {visibleFunding.length > 0 ? (
-            <StaggerItem className="w-full space-y-1 text-center text-sm text-muted-foreground">
-              {visibleFunding.map((need) => (
-                <p key={need.walletId}>
-                  Send to {INVESTMENT_WALLET_LABELS[need.walletId]}{" "}
-                  <span className="privacy-amount font-mono font-medium text-foreground tabular-nums">
-                    {formatEuro(need.monthlyTotal)}
-                  </span>
-                  <span> / month</span>
-                </p>
-              ))}
+            <StaggerItem className="w-full">
+              {/* One row of tags rather than one sentence per wallet: three
+                  lines of "Send to X €Y / month" is three lines of height for
+                  three numbers, and the wallet name is label enough. */}
+              <ul
+                aria-label={t("wallets.fundingLabel")}
+                className="flex flex-wrap items-center justify-center gap-2"
+              >
+                {visibleFunding.map((need) => (
+                  <li
+                    key={need.walletId}
+                    className="flex items-baseline gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground sm:text-sm"
+                  >
+                    <span>{INVESTMENT_WALLET_LABELS[need.walletId]}</span>
+                    <span className="privacy-amount font-mono font-medium text-foreground tabular-nums">
+                      {formatEuro(need.monthlyTotal)}
+                    </span>
+                    <span>{t("wallets.perMonth")}</span>
+                  </li>
+                ))}
+              </ul>
             </StaggerItem>
           ) : null}
 
@@ -175,7 +207,7 @@ export function InvestmentsView({
 
           <StaggerItem className="w-full min-w-0">
             <div
-              className="flex w-full min-w-0 justify-center gap-2"
+              className="flex w-full min-w-0 flex-wrap justify-center gap-2"
               role="tablist"
               aria-label={t("wallets.walletPicker")}
             >
@@ -207,6 +239,7 @@ export function InvestmentsView({
           <StaggerItem className="w-full min-w-0">
             <WalletPanel
               column={activeColumn}
+              priceSeries={priceSeries}
               onEdit={setEditingItem}
               onAdd={() => setAddingWallet(activeWallet)}
             />
@@ -244,14 +277,47 @@ function emptyColumn(walletId: InvestmentWalletId): InvestmentColumnSummary {
 
 interface WalletPanelProps {
   column: InvestmentColumnSummary;
+  priceSeries: Record<string, InstrumentPriceSeries>;
   onEdit: (item: InvestmentPositionItem) => void;
   onAdd: () => void;
 }
 
-function WalletPanel({ column, onEdit, onAdd }: WalletPanelProps) {
+/** "1M", "1Y", "5Y" read the same in both languages; only "All" is a word. */
+function rangeLabel(range: PriceRange, allLabel: string): string {
+  return range === "ALL" ? allLabel : range;
+}
+
+function WalletPanel({
+  column,
+  priceSeries,
+  onEdit,
+  onAdd,
+}: WalletPanelProps) {
   const t = useT();
   const formatEuro = useFormatCurrency();
   const showPl = column.hasMarketSnapshot && column.totalGainLoss !== 0;
+  const [range, setRange] = useState<PriceRange>("1Y");
+
+  // One switch for the whole wallet, so the rows are comparable: reading two
+  // holdings over different windows and calling it a comparison is the thing
+  // a per-row control would quietly invite.
+  const rangeSegments = useMemo(() => {
+    const drawable = (candidate: PriceRange) =>
+      column.items.some((item) => {
+        const series = item.instrumentSymbol
+          ? priceSeries[item.instrumentSymbol]
+          : undefined;
+        return (series?.[candidate].values.length ?? 0) > 1;
+      });
+
+    return PRICE_RANGES.map((candidate) => ({
+      value: candidate,
+      label: rangeLabel(candidate, t("wallets.rangeAll")),
+      disabled: !drawable(candidate),
+    }));
+  }, [column.items, priceSeries, t]);
+
+  const anyDrawable = rangeSegments.some((segment) => !segment.disabled);
 
   return (
     <Card.Bezel
@@ -286,33 +352,30 @@ function WalletPanel({ column, onEdit, onAdd }: WalletPanelProps) {
         </div>
       </div>
 
-      {column.chartPoints.length > 0 ? (
-        <InvestmentItemChart
-          points={column.chartPoints}
-          gainLoss={column.totalGainLoss}
-          interactive
-          size="lg"
-        />
-      ) : (
-        <p className="text-center text-sm text-muted-foreground">
-          No chart yet — add a position or link market data.
-        </p>
-      )}
-
       <div className="min-w-0">
         <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
           <h3 className="text-sm font-medium text-muted-foreground">
-            Positions
+            {t("wallets.positions")}
           </h3>
           <Button size="sm" variant="link" onClick={onAdd}>
             <Plus size={ICON.md} weight="light" className="mr-1" />
-            Add item
+            {t("position.addItem")}
           </Button>
         </div>
 
+        {anyDrawable ? (
+          <SegmentedControl
+            segments={rangeSegments}
+            value={range}
+            onChange={setRange}
+            label={t("common.chartRange")}
+            className="mb-3 ml-auto w-full max-w-[15rem]"
+          />
+        ) : null}
+
         {column.items.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No items yet in this wallet.
+            {t("wallets.noItems")}
           </p>
         ) : (
           <ul className="flex min-w-0 flex-col divide-y divide-border">
@@ -320,6 +383,12 @@ function WalletPanel({ column, onEdit, onAdd }: WalletPanelProps) {
               <li key={item.id} className="min-w-0">
                 <InvestmentPositionRow
                   item={item}
+                  series={
+                    item.instrumentSymbol
+                      ? priceSeries[item.instrumentSymbol]
+                      : undefined
+                  }
+                  range={range}
                   onEdit={() => onEdit(item)}
                 />
               </li>
@@ -333,20 +402,44 @@ function WalletPanel({ column, onEdit, onAdd }: WalletPanelProps) {
 
 interface InvestmentPositionRowProps {
   item: InvestmentPositionItem;
+  /** Absent for a holding with no linked instrument — it simply has no line. */
+  series: InstrumentPriceSeries | undefined;
+  range: PriceRange;
   onEdit: () => void;
 }
 
-function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
+function InvestmentPositionRow({
+  item,
+  series,
+  range,
+  onEdit,
+}: InvestmentPositionRowProps) {
   const t = useT();
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
-  const [chartOpen, setChartOpen] = useState(false);
   const isCrypto = isCryptoWallet(item.walletId);
   const valueLabel =
     item.hasManualValue || item.hasMarketQuote
       ? t("wallets.market")
       : t("wallets.invested");
-  const hasChart = item.chartPoints.length > 0;
+
+  const priceLine = series?.[range];
+  const hasPriceLine = (priceLine?.values.length ?? 0) > 1;
+  const changePct = priceLine?.changePct ?? null;
+
+  // What the holding returned, beside what it returned in euro. Distinct from
+  // the price move on the right: this one counts every contribution, so a
+  // holding bought into all year rarely matches its instrument's line.
+  const returnPct =
+    item.totalInvested > 0
+      ? Math.round((item.gainLoss / item.totalInvested) * 10000) / 100
+      : null;
+  const priceTone =
+    changePct === null || changePct === 0
+      ? "neutral"
+      : changePct > 0
+        ? "positive"
+        : "negative";
 
   return (
     <div className="min-w-0 max-w-full py-4">
@@ -387,52 +480,120 @@ function InvestmentPositionRow({ item, onEdit }: InvestmentPositionRowProps) {
           type="button"
           onClick={onEdit}
           className="flex min-h-11 min-w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-          aria-label={`Edit ${item.name}`}
+          aria-label={t("wallets.editPosition", { name: item.name })}
         >
           <PencilSimple size={ICON.md} weight="light" />
         </button>
       </div>
 
-      <div className="mt-3 grid min-w-0 grid-cols-3 gap-2 text-xs sm:text-sm">
-        <Metric label={valueLabel} value={formatEuro(item.marketValue)} />
-        <Metric
-          label={t("wallets.invested")}
-          value={formatEuro(item.totalInvested)}
-        />
-        <Metric
-          label={t("wallets.profitLoss")}
-          value={formatSignedEuro(item.gainLoss, formatEuro)}
-          tone={
-            item.gainLoss > 0
-              ? "positive"
-              : item.gainLoss < 0
-                ? "negative"
-                : "neutral"
-          }
-        />
+      {/* The figures and the line share one row. Stacked, they were three
+          bands of height per holding; side by side a wallet of a dozen fits
+          on one screen. */}
+      <div className="mt-2 flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 text-xs sm:text-sm">
+          <InlineMetric label={valueLabel} value={formatEuro(item.marketValue)} />
+          <InlineMetric
+            label={t("wallets.invested")}
+            value={formatEuro(item.totalInvested)}
+          />
+          <InlineMetric
+            label={t("wallets.profitLoss")}
+            value={formatSignedEuro(item.gainLoss, formatEuro)}
+            suffix={
+              returnPct === null ? undefined : formatSignedPercent(returnPct, locale)
+            }
+            tone={
+              item.gainLoss > 0
+                ? "positive"
+                : item.gainLoss < 0
+                  ? "negative"
+                  : "neutral"
+            }
+          />
+        </div>
+
+        {hasPriceLine ? (
+          <div className="flex shrink-0 items-center gap-2">
+            <Sparkline
+              values={priceLine!.values}
+              width={110}
+              height={26}
+              colorVar={PRICE_TONE_VARS[priceTone]}
+            />
+            <span
+              className={cn(
+                "font-mono text-xs tabular-nums",
+                priceTone === "positive" && "text-success",
+                priceTone === "negative" && "text-destructive",
+                priceTone === "neutral" && "text-muted-foreground",
+              )}
+            >
+              {formatSignedPercent(changePct, locale)}
+            </span>
+          </div>
+        ) : null}
       </div>
-
-      {hasChart ? (
-        <button
-          type="button"
-          onClick={() => setChartOpen((open) => !open)}
-          className="mt-2 min-h-11 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          {chartOpen ? t("wallets.hideChart") : t("wallets.showChart")}
-        </button>
-      ) : null}
-
-      {chartOpen ? (
-        <InvestmentItemChart
-          points={item.chartPoints}
-          gainLoss={item.gainLoss}
-          interactive
-          className="mt-3"
-        />
-      ) : null}
     </div>
   );
 }
+
+interface InlineMetricProps {
+  label: string;
+  value: string;
+  /** A second figure that restates the first — the return beside the euros. */
+  suffix?: string;
+  tone?: "positive" | "negative" | "neutral";
+}
+
+/**
+ * A label and its figure on one baseline.
+ *
+ * The stacked `Metric` is right for the wallet totals, where three figures get
+ * a column each and the eye compares down. In a list of holdings it spends two
+ * lines on what reads perfectly well as one.
+ */
+function InlineMetric({
+  label,
+  value,
+  suffix,
+  tone = "neutral",
+}: InlineMetricProps) {
+  return (
+    <span className="inline-flex min-w-0 items-baseline gap-1">
+      <span className="text-muted-foreground">{label}</span>
+      <span
+        className={cn(
+          "privacy-amount font-mono font-medium tabular-nums",
+          tone === "positive" && "text-success",
+          tone === "negative" && "text-destructive",
+        )}
+      >
+        {value}
+      </span>
+      {suffix ? (
+        <span
+          className={cn(
+            "privacy-amount font-mono tabular-nums",
+            tone === "positive" && "text-success",
+            tone === "negative" && "text-destructive",
+            tone === "neutral" && "text-muted-foreground",
+          )}
+        >
+          {suffix}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+const PRICE_TONE_VARS: Record<
+  "positive" | "negative" | "neutral",
+  string
+> = {
+  positive: "--success",
+  negative: "--destructive",
+  neutral: "--muted-foreground",
+};
 
 interface MetricProps {
   label: string;

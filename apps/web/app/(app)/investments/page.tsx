@@ -3,6 +3,7 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { getRecurringTemplates } from "@/lib/queries/finance";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { getWalletPlans } from "@/lib/queries/investments";
+import { getCachedPriceSeries } from "@/lib/queries/market-quotes";
 import { getInvestmentTransactions } from "@/lib/queries/finance";
 import { InvestmentsView } from "@/components/finance/InvestmentsView";
 import { WalletPlanPanel } from "@/components/finance/WalletPlanPanel";
@@ -20,13 +21,28 @@ export default async function InvestmentsPage() {
   }
 
   const current = getCurrentMonth();
+  const today = todayIsoLocal();
   const [portfolio, recurringTemplates, plans, investmentTransactions] =
     await Promise.all([
-      getWalletPortfolio(user.id),
+      // No position-value history: this page plots instrument prices now, and
+      // the monthly closes behind `chartPoints` are a Yahoo round trip per
+      // symbol that nothing here would draw.
+      getWalletPortfolio(user.id, { includeHistory: false }),
       getRecurringTemplates(user.id),
       getWalletPlans(user.id),
       getInvestmentTransactions(user.id),
     ]);
+
+  const heldSymbols = Array.from(
+    new Set(
+      portfolio.columns.flatMap((column) =>
+        column.items
+          .map((item) => item.instrumentSymbol)
+          .filter((symbol): symbol is string => Boolean(symbol)),
+      ),
+    ),
+  );
+  const priceSeries = await getCachedPriceSeries(heldSymbols, today);
 
   const investmentTemplates = recurringTemplates.filter(
     (template) => template.categories.type === "investment",
@@ -40,7 +56,7 @@ export default async function InvestmentsPage() {
   const returns = buildInvestmentReturns(
     investmentTransactions,
     portfolio,
-    todayIsoLocal(),
+    today,
   );
 
   // What a typical month puts in, so the split suggestion is in real money
@@ -56,6 +72,7 @@ export default async function InvestmentsPage() {
         portfolio={portfolio}
         recurringTemplates={investmentTemplates}
         fundingNeeds={fundingNeeds}
+        priceSeries={priceSeries}
       />
 
       <PageContainer className="pt-0">

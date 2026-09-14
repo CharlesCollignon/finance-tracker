@@ -62,6 +62,7 @@ import type {
 
 import { quoteSource } from "@/lib/quote-source";
 import { supabase } from "@/lib/supabase";
+import type { WalletId } from "@finance/core/types/database";
 
 type ActionResult = {
   error?: string;
@@ -1174,7 +1175,7 @@ export async function deleteBudget(id: string): Promise<ActionResult> {
 }
 
 export async function upsertWalletTransfer(input: {
-  toWallet: "pea" | "cto" | "crypto";
+  toWallet: WalletId;
   amount: number;
   occurredOn: string;
   note?: string;
@@ -1311,7 +1312,7 @@ export function validateAuthInput(email: string, password: string) {
  * does not require having decided on target weights first.
  */
 export async function saveWalletPlan(input: {
-  wallet: "pea" | "cto" | "crypto";
+  wallet: WalletId;
   targetWeight?: string | number;
   openedOn?: string;
   contributionCeiling?: string | number;
@@ -1351,7 +1352,7 @@ export async function saveWalletPlan(input: {
  * UI edits them as a set and this writes them as one.
  */
 export async function saveWalletTargets(
-  targets: { wallet: "pea" | "cto" | "crypto"; targetWeight: number }[],
+  targets: { wallet: WalletId; targetWeight: number }[],
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {

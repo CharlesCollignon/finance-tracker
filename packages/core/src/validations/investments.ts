@@ -11,10 +11,31 @@ import { parseShareCountInput } from "../share-count";
 import { isCryptoWallet } from "../crypto-holdings";
 import { parseChargeInput } from "../fund-costs";
 
-const optionalNumber = z
+/**
+ * The closed set of wallets, in one place.
+ *
+ * It was written out four times — three here and once in `phase4.ts` — and
+ * adding two wrappers in `030` meant finding all four. A named schema means
+ * the next wrapper is one edit, and a missed site is a type error rather than
+ * a form that silently rejects a valid wallet.
+ */
+export const walletIdSchema = z.enum(["pea", "cto", "av", "per", "crypto"]);
+
+/**
+ * A broker's figure for a holding, or nothing.
+ *
+ * Zero counts as nothing. The field is optional and labelled "usually leave
+ * empty", so somebody typing 0 means "I have no override" — and taking that
+ * literally valued the holding at zero euros, which is how a real position
+ * disappeared from the dashboard. A holding genuinely worth nothing is a
+ * holding to delete, so the literal reading has no legitimate use to protect.
+ */
+const optionalValue = z
   .union([z.coerce.number().min(0, "errors.zeroOrMore"), z.literal("")])
   .optional()
-  .transform((value) => (value === "" || value === undefined ? null : value));
+  .transform((value) =>
+    value === "" || value === undefined || value === 0 ? null : value,
+  );
 
 const optionalShareCount = z
   .union([z.string(), z.coerce.number(), z.literal("")])
@@ -81,6 +102,35 @@ const optionalCharge = z
     return parsed;
   });
 
+/**
+ * An ISIN, or nothing.
+ *
+ * Upper-cased and shape-checked; the check digit is deliberately not
+ * verified. A wrong one is something to explain to whoever typed it, and this
+ * value almost always arrives from the instrument search rather than from a
+ * person — so the useful behaviour is to normalise what is offered and refuse
+ * only what cannot be an identifier at all.
+ */
+const optionalIsin = z
+  .string()
+  .max(20)
+  .optional()
+  .transform((value, ctx) => {
+    const trimmed = value?.trim().toUpperCase();
+    if (!trimmed) {
+      return null;
+    }
+    if (!/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/.test(trimmed)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "errors.notAnIsin",
+        path: [],
+      });
+      return z.NEVER;
+    }
+    return trimmed;
+  });
+
 const optionalSymbol = z
   .string()
   .max(32)
@@ -93,18 +143,24 @@ const optionalSymbol = z
 export const investmentPositionSchema = z
   .object({
     positionId: z.string().uuid().optional(),
-    wallet: z.enum(["pea", "cto", "crypto"]),
+    wallet: walletIdSchema,
     sourceType: z.enum(["recurring", "custom"]),
     recurringTemplateId: z.string().uuid().optional().or(z.literal("")),
     name: z.string().max(120).optional(),
     categoryId: z.string().uuid().optional().or(z.literal("")),
     initialBalance: z.coerce.number().min(0, "errors.zeroOrMore"),
-    currentValue: optionalNumber,
+    currentValue: optionalValue,
     shareCount: optionalShareCount,
     /** Ongoing charge typed as a percentage ('0.20'), stored as a fraction. */
     ongoingCharge: optionalCharge,
     instrumentSymbol: optionalSymbol,
     instrumentName: optionalText,
+    isin: optionalIsin,
+    /** Checkbox: absent means unchecked, which means the market wins. */
+    valuePinned: z
+      .union([z.boolean(), z.literal("on"), z.literal("true"), z.literal("")])
+      .optional()
+      .transform((value) => value === true || value === "on" || value === "true"),
   })
   .superRefine((data, ctx) => {
     if (data.sourceType === "recurring") {
@@ -157,6 +213,10 @@ export const investmentPositionSchema = z
     ongoingCharge: data.ongoingCharge,
     instrumentSymbol: data.instrumentSymbol,
     instrumentName: data.instrumentName,
+    isin: data.isin,
+    // Pinning nothing is meaningless, so a pin without a figure is dropped
+    // rather than stored as a flag that can never take effect.
+    valuePinned: data.currentValue === null ? false : data.valuePinned,
   }));
 
 export type InvestmentPositionInput = z.infer<typeof investmentPositionSchema>;
@@ -166,7 +226,7 @@ export type InvestmentPositionInput = z.infer<typeof investmentPositionSchema>;
  * and when the wrapper was opened (which starts a PEA's five-year clock).
  */
 export const walletPlanSchema = z.object({
-  wallet: z.enum(["pea", "cto", "crypto"]),
+  wallet: walletIdSchema,
   /** Fraction of the portfolio, 0–1. Empty clears the target. */
   targetWeight: z
     .union([z.literal(""), z.coerce.number().min(0).max(1)])
@@ -183,6 +243,12 @@ export const walletPlanSchema = z.object({
     .union([z.literal(""), z.coerce.number().positive()])
     .optional()
     .transform((value) => (value === "" || value === undefined ? null : value)),
+  /**
+   * The envelope's own annual fee, typed as a percentage ('0.75') and stored
+   * as the fraction 0.0075 — the same shape as a position's ongoing charge,
+   * because the look-through adds the two together.
+   */
+  wrapperFee: optionalCharge,
 });
 
 /** Targets are set together, so they can be checked as a set. */
@@ -190,9 +256,9 @@ export const walletTargetsSchema = z.object({
   targets: z
     .array(
       z.object({
-        wallet: z.enum(["pea", "cto", "crypto"]),
+        wallet: walletIdSchema,
         targetWeight: z.coerce.number().min(0).max(1),
       }),
     )
-    .max(3),
+    .max(5),
 });

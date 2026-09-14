@@ -44,6 +44,8 @@ export const en = {
     ledgerList: "List",
     ledgerCalendar: "Calendar",
     ledgerByCategory: "By category",
+    walletsPositions: "Positions",
+    walletsLookThrough: "Look-through",
   },
 
   /**
@@ -464,14 +466,32 @@ export const en = {
 
   /** Wallets: what is invested, and what it is worth now. */
   wallets: {
+    /** The quotes, and taking fresh ones. */
+    refreshQuotes: "Refresh prices",
+    refreshingQuotes: "Refreshing…",
+    quotesRefreshed: "Prices refreshed",
     marketValue: "Market value",
     value: "Value",
     invested: "Invested",
     market: "Market",
     profitLoss: "P/L",
     walletPicker: "Investment wallet",
-    showChart: "Show chart",
-    hideChart: "Hide chart",
+    /** The widest range of the price line. The others need no translation. */
+    rangeAll: "All",
+    positions: "Positions",
+    noItems: "No items yet in this wallet.",
+    editPosition: "Edit {name}",
+    /**
+     * Fragments, not sentences, wherever a figure sits inside one.
+     *
+     * `.privacy-amount` is a blur filter, so an amount has to keep its own
+     * element. Folding it into an interpolated sentence would blur the words
+     * around it too. Both languages put the figure in the same place in each
+     * of these, which is what makes the split safe.
+     */
+    investedSuffix: "invested",
+    fundingLabel: "Monthly contributions",
+    perMonth: "/mo",
     emptyTitle: "No investments tracked yet",
     emptyBody:
       "Add items in each wallet to track what you already invested and your current market value.",
@@ -486,6 +506,26 @@ export const en = {
     deleteTransferTitle: "Delete this transfer?",
     deleteTransferBody:
       "The transfer record is removed; your transactions are not affected.",
+  },
+
+  /** The ongoing-charge card at the foot of the investments page. */
+  fundCost: {
+    title: "What holding this costs",
+    weightedSuffix: "a year, weighted",
+    emptyBody:
+      "Add each holding's ongoing charge — the yearly fee on its KID — and this becomes a figure in euros. It is the biggest cost most portfolios have and the only one that never shows up on a statement.",
+    aYearOn: "a year on",
+    overYears: "over {years} years at this balance",
+    cheapestPrefix: "Your cheapest holding is",
+    cheapestAt: "at {charge}. At that rate the same",
+    wouldCost: "would cost",
+    differenceOf: "— a difference of",
+    aYear: "a year.",
+    missingCharge: {
+      one: "{count} holding has no charge recorded",
+      other: "{count} holdings have no charge recorded",
+    },
+    partialSuffix: ", so this total is partial.",
   },
 
   /** Closing a month: reading the balance, and what follows from it. */
@@ -647,6 +687,50 @@ export const en = {
 
   /** Wallet detail: the position sheet, the targets and the performance card. */
   position: {
+    /* The sheet's own fields. */
+    fromRecurring: "From recurring",
+    customHolding: "Custom holding",
+    noRecurringAvailable:
+      "No recurring items available for this column. Add one on the Recurring page or use a custom holding.",
+    nameLabel: "Name",
+    namePlaceholder: "e.g. MSCI World ETF",
+    costBasis: "Total invested (cost basis)",
+    costBasisHint:
+      "Your broker's total invested amount for this position. Used for P/L — not updated from recurring transactions.",
+    changeFundPrefix: "Change the fund on the",
+    changeFundLink: "Recurring",
+    changeFundSuffix: " page.",
+    chargePlaceholder: "e.g. 0,20",
+    /**
+     * The ISIN, typed rather than found.
+     *
+     * Yahoo's search answers with a symbol and a name and never an ISIN, so
+     * the only way one ever reached a position was to paste the ISIN into the
+     * search box itself. That is not a thing anyone discovers, and without an
+     * ISIN the look-through cannot read what a fund holds — hence a field.
+     */
+    isinLabel: "ISIN (optional)",
+    isinHint:
+      "Twelve characters, on the fund's KID or factsheet. The look-through needs it to read what the fund holds; equities and Bitcoin can be left empty.",
+
+    /* The plan panel: the return, the split, and the PEA ceiling. */
+    moneyWeightedReturn: "Money-weighted return",
+    amountIn: "in",
+    amountNow: "now",
+    returnExplainer:
+      "Annualised across every dated contribution, so paying in monthly is measured fairly against a lump sum. Absolute gain alone would flatter whichever had money in longest.",
+    ofTarget: "of {target} target",
+    splitLeadPrefix: "Your next",
+    splitLeadSuffix: "would close the gap fastest as",
+    splitItemTo: "to {wallet}",
+    splitTail: "— rebalancing by contribution rather than by selling.",
+    noTargetHint:
+      "Set a target split to see how far the portfolio has drifted, and where the next contribution should go.",
+    peaPaidIn: "Paid in",
+    peaOfCeiling: "of {ceiling}",
+    peaRoomLeft: "of room left",
+    peaCashOnly:
+      "Only cash paid in counts against the ceiling — growth does not.",
     addItem: "Add item",
     addCryptoItem: "Add crypto item",
     itemAdded: "Item added",
@@ -669,6 +753,22 @@ export const en = {
       "From your broker — fractional shares OK (use comma or dot, e.g. 1,1465).",
     manualValuePlaceholder: "Total portfolio value from your broker",
     marketValuePlaceholder: "Leave empty to use market",
+    /** The broker override, and the pin that makes it win. */
+    brokerValue: "Your broker's total (optional)",
+    brokerValueHint:
+      "Leave this empty — or type 0 — and the value is computed live from your shares and the market price. Fill it in only when your broker shows a different total, then pin it below to make it stick.",
+    pinValue: "Use this figure instead of the market price",
+    pinValueHint:
+      "Unpinned, your figure is only a fallback for when no price can be fetched.",
+    valuedLive: "Valued from the market",
+    valuedPinned: "Valued from your figure",
+    valuedManual: "Valued from your figure — no market price available",
+    valuedCost: "Valued at what it cost — add shares to follow the market",
+    /** The fund's own charge, which is not the broker's. */
+    ongoingChargeLabel: "The fund's ongoing charge (optional)",
+    ongoingChargeHint:
+      "The fund's own yearly fee as a percentage — 0.20 for 0.20%. It is on the KID and never appears on a statement, because it comes out of the fund's value. This is not your broker's commission, which the app does not track.",
+    perYear: "% a year",
     lookUpCharge: "Look up the charge on justETF",
     saving: "Saving…",
     saveItem: "Save item",
@@ -1361,6 +1461,161 @@ export const en = {
   },
 
   /**
+   * The look-through: what the wallets are made of, and the read over it.
+   *
+   * Two registers here. The labels describe arithmetic the app did and are
+   * plain to the point of dullness, because they sit beside figures that are
+   * the actual content. The caveats are the opposite — they are the whole
+   * reason this surface can be trusted, so they are written out in full
+   * rather than abbreviated into a tooltip nobody opens.
+   */
+  lookThrough: {
+    title: "Look-through",
+    subtitle: "What your wallets are actually made of",
+
+    /* The sections, in the order they appear. */
+    geography: "Where the money is",
+    sectors: "What it is in",
+    charges: "What it costs",
+    doublingUp: "Where you are doubling up",
+    wrappers: "Where things sit",
+    target: "A target to aim at",
+
+    /* Geography. */
+    countryShare: "{country}",
+    franceShare: "France",
+    europeShare: "Europe",
+    usShare: "United States",
+    marketWeight: "Market weighs it {weight}",
+    timesMarket: "{factor}× the market's weight",
+    inLineWithMarket: "In line with the market",
+
+    /* Charges. */
+    fundCharges: "The funds' own charges",
+    envelopeFeeHint:
+      "On your contract's annual statement, as a percentage — typically 0.5 to 0.8. It is charged on top of each fund's own ongoing charge.",
+    envelopeFee: "The envelope's fee",
+    chargesNote:
+      "These are the funds' and the envelope's charges. Your broker's commission and transaction costs are not tracked.",
+    allIn: "All in",
+    perYear: "{amount} a year",
+    overYears: "{amount} over {years} years",
+    noChargeRecorded: "No charge recorded",
+
+    /* Doubling up. */
+    sameIndex: "Both track {index}",
+    nestedIndex: "{outer} contains {inner}",
+    sharedCompanies: "Shares {count} of its largest holdings with {other}",
+    overlapAtLeast: "At least {share} the same companies",
+
+    /* Wrappers. */
+    cannotSitHere: "{name} cannot be held in a {wallet}",
+    couldSitIn: "It could go in a {wallets}",
+
+    /* The target. */
+    targetWeight: "{weight}",
+    currentWeight: "now {weight}",
+    buy: "Buy {amount}",
+    sell: "Sell {amount}",
+    noMoveNeeded: "Already where it should be",
+    rebalanceNote:
+      "These are moves between holdings, not new money. Redirecting a monthly transfer gets to the same place without selling, which inside a PEA is usually the better answer.",
+
+    /* What the app could not see. */
+    readCoverage: "{share} of your value has been read",
+    notRead: "Not yet read",
+    notReadBody:
+      "{count} holdings have not been read, so what they contain is unknown rather than empty. The shares above are worked out over the rest.",
+    readOne: "Read this one",
+    readingOne: "Reading…",
+    readAll: "Read the rest",
+    lastRead: "Read {when}",
+
+    /* The caveats, said plainly. */
+    caveats: {
+      /** The three reasons a holding has not been read, each with its own fix. */
+      noIsin: "Not identified yet",
+      noIsinBody:
+        "{count} of your holdings have no ISIN, so there is nothing to look up. Open each one on Positions and choose its instrument from the search — that is what records the ISIN.",
+      goToPositions: "Open Positions",
+      neverRead: "Not read yet",
+      neverReadBody:
+        "{count} instruments have an ISIN but have not been read. Reading one looks up what it holds — its charge, its countries, its sectors.",
+      readNothingUseful: "Read, but incomplete",
+      readNothingUsefulBody:
+        "{count} readings found a charge but no breakdown. Reading them again may find more.",
+      needsAReading:
+        "Read at least one instrument first — there is nothing to review yet.",
+      unclassified:
+        "{share} of your invested value sits in instruments that have not been read. Every share on this page is worked out over the part that has.",
+      overlapIsAFloor:
+        "Overlap is a floor, not a measurement. Only each fund's published largest holdings were compared, so two funds shown as sharing a little may in truth be largely the same companies — the index they track is the more reliable signal.",
+      staleReadings:
+        "{count} readings are more than six months old. They are still used, because last year's composition is a better answer than none.",
+      noMarketValue: "Nothing is held yet, so there is nothing to look through.",
+      partialAxis:
+        "These figures cover {coverage} of what was read — a factsheet does not always publish the full breakdown. The shares are what was published, not a share of what was found, so they do not add up to everything.",
+      geographyIsNotCurrency:
+        "Geography here means where the companies are, not what currency you are paid in. A fund can hold American companies and be priced in euro.",
+    },
+  },
+
+  /**
+   * The wallet read: what a model made of the look-through.
+   *
+   * The refusals reach a reader, unlike the ones on a month read, because
+   * this button is on a page that is perfectly usable without it — so
+   * "nothing happened and here is why" is an ordinary outcome rather than an
+   * apology for an empty screen.
+   */
+  walletRead: {
+    /** The button that spends a call, and what it says while spending. */
+    review: "Review",
+    reviewing: "Reading…",
+    reviewHint:
+      "Reads the figures on this page and says what it makes of them. {remaining} left this month.",
+    /** The stored read. */
+    readAt: "Read {when}",
+    stale: "Your positions have moved since this was written",
+    writtenInOtherLanguage: "Written in {language}.",
+    empty: "Nothing has been read yet.",
+    emptyBody:
+      "The figures above stand on their own. A read adds what someone might make of them.",
+
+    /* Why a press came back with nothing. */
+    allowanceSpent: "You have used all {allowance} reads this month.",
+    coolingDown: "One was just written — try again in {seconds}s.",
+    inFlight: "A read is already being written.",
+    nothingToSay:
+      "Not enough has been read yet to say anything about the whole portfolio.",
+    unchanged: "Nothing has moved since the last read.",
+    untracked: "Wallet reads are not set up yet (migration 033).",
+    noWriter: "No writer is configured.",
+    noAnswer: "The writer did not answer just now.",
+    unusable: "The writer's answer could not be used.",
+    threwAway:
+      "The writer's answer was thrown away. ({detail})",
+
+    /** Why an answer was thrown away. Short and plain; these are shown. */
+    refusal: {
+      wrongShape: "Not the shape asked for",
+      unknownDatum: 'It referred to "{id}", which was never sent',
+      unknownInstrument:
+        'It proposed "{isin}", which is not an instrument this app knows',
+      headlineHadFigure: "The headline contained a figure of its own",
+      headlineTooLong: "The headline was longer than one line",
+      everythingDropped: "Every observation had to be dropped",
+    },
+
+    footing: {
+      notAdvice:
+        "This is information about your own holdings, not investment advice. Every figure is the app's own arithmetic.",
+      partiallyRead:
+        "Some holdings have not been read, so this is a verdict on the part of your portfolio the app can see.",
+    },
+  },
+
+  /**
    * The Bearing: the whole position, and the model that arranges it.
    *
    * Deliberately sparse. This is the app's most figure-dense screen and every
@@ -1449,6 +1704,7 @@ export const en = {
     positiveNumber: "Enter a positive number (comma or dot for decimals)",
     chargeAsPercent: "Enter the charge as a percentage, e.g. 0.20",
     chargeTooHigh: "That looks too high — enter 0.20 for 0.20%, not 20",
+    notAnIsin: "That does not look like an ISIN, e.g. IE00B4L5Y983",
     notABalance: "That does not look like a balance",
     notACap: "That does not look like a cap",
     nothingToImport: "Nothing to import",

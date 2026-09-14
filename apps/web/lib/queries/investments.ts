@@ -3,7 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import {
   fetchInstrumentQuoteInEur,
   fetchMonthlyClosesInEur,
+  fetchPriceSeriesInEur,
 } from "@finance/core/market/fx";
+import {
+  emptyPriceSeries,
+  type InstrumentPriceSeries,
+} from "@finance/core/instrument-price-series";
 import type {
   InvestmentPosition,
   WalletPlan,
@@ -24,6 +29,11 @@ function mapRow(row: InvestmentPosition): InvestmentPositionRow {
     share_count: row.share_count,
     instrument_symbol: row.instrument_symbol,
     instrument_name: row.instrument_name,
+    // Dropping this was not only a blank on the look-through: the position
+    // sheet seeds its field from the mapped row and posts it back, so every
+    // save wrote an empty ISIN over a good one.
+    isin: row.isin ?? null,
+    value_pinned: row.value_pinned ?? false,
     ongoing_charge:
       row.ongoing_charge === null ? null : Number(row.ongoing_charge),
   };
@@ -62,6 +72,8 @@ export async function upsertInvestmentPosition(
     instrumentSymbol: string | null;
     instrumentName: string | null;
     ongoingCharge: number | null;
+    isin: string | null;
+    valuePinned: boolean;
   },
 ): Promise<void> {
   const supabase = await createClient();
@@ -77,6 +89,8 @@ export async function upsertInvestmentPosition(
     instrument_symbol: payload.instrumentSymbol,
     instrument_name: payload.instrumentName,
     ongoing_charge: payload.ongoingCharge,
+    isin: payload.isin,
+    value_pinned: payload.valuePinned,
     updated_at: new Date().toISOString(),
   };
 
@@ -155,6 +169,33 @@ export async function fetchHistoricalQuotes(
   );
 
   return history;
+}
+
+/**
+ * The price line behind every position row, keyed by symbol.
+ *
+ * One failed symbol yields an empty series rather than a rejected promise: a
+ * delisted ticker costs its own row a line, and the rest of the page is
+ * unaffected.
+ */
+export async function fetchPriceSeries(
+  symbols: string[],
+  today: string,
+): Promise<Record<string, InstrumentPriceSeries>> {
+  const unique = Array.from(new Set(symbols.filter(Boolean)));
+  const series: Record<string, InstrumentPriceSeries> = {};
+
+  await Promise.all(
+    unique.map(async (symbol) => {
+      try {
+        series[symbol] = await fetchPriceSeriesInEur(symbol, today);
+      } catch {
+        series[symbol] = emptyPriceSeries();
+      }
+    }),
+  );
+
+  return series;
 }
 
 /**

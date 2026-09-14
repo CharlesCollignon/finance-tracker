@@ -7,7 +7,7 @@ export type Recurrence = "monthly" | "weekly" | "yearly";
 
 export type PricingType = "fixed" | "shares";
 
-export type WalletId = "pea" | "cto" | "crypto";
+export type WalletId = "pea" | "cto" | "av" | "per" | "crypto";
 
 export type Json =
   | string
@@ -26,6 +26,64 @@ export type Json =
  * and repeating fourteen fields four times is how the month-read functions
  * drifted from their table before.
  */
+/**
+ * The columns of `instrument_readings`, written out once.
+ *
+ * Hoisted for the same reason as `BearingArrangementColumns` below: pointing
+ * a function's `Returns` at the table's own `Row` is circular.
+ *
+ * A `type` and not an `interface`, and the difference is load-bearing. These
+ * three are used in `Row:` positions, and Supabase's schema constraint wants
+ * `Record<string, unknown>` there. A type alias of an object literal gets an
+ * implicit index signature and satisfies it; an `interface` does not. Declare
+ * one of these as an interface and every table in the schema silently
+ * resolves to `never` — the failure surfaces as dozens of errors in unrelated
+ * files that never mention this one. `BearingArrangementColumns` below is an
+ * interface only because it is used in `Returns:`, where the constraint is
+ * merely `unknown`.
+ */
+type InstrumentReadingColumns = {
+  user_id: string;
+  isin: string;
+  ongoing_charge: number | null;
+  currency: string | null;
+  country_weights: Json;
+  sector_weights: Json;
+  top_constituents: Json;
+  constituents_coverage: number | null;
+  sources: Json;
+  sourced_at: string;
+  model: string | null;
+  version: number;
+};
+
+/** The columns of `instrument_reading_tallies`, written out once. */
+type InstrumentReadingTallyColumns = {
+  user_id: string;
+  tally_month: string;
+  reads: number;
+  last_read_at: string | null;
+  pending_since: string | null;
+};
+
+/** The columns of `wallet_reads`, written out once. */
+type WalletReadColumns = {
+  user_id: string;
+  tally_month: string;
+  writes: number;
+  refused: number;
+  last_written_at: string | null;
+  pending_since: string | null;
+  read: Json | null;
+  facts: Json | null;
+  facts_digest: string | null;
+  dropped: number;
+  model: string | null;
+  prompt_version: number | null;
+  locale: Locale | null;
+  read_at: string | null;
+};
+
 interface BearingArrangementColumns {
   user_id: string;
   tally_month: string;
@@ -219,6 +277,8 @@ export interface Database {
           instrument_symbol: string | null;
           instrument_name: string | null;
           ongoing_charge: number | null;
+          isin: string | null;
+          value_pinned: boolean;
           updated_at: string;
         };
         Insert: {
@@ -234,6 +294,8 @@ export interface Database {
           instrument_symbol?: string | null;
           instrument_name?: string | null;
           ongoing_charge?: number | null;
+          isin?: string | null;
+          value_pinned?: boolean;
           updated_at?: string;
         };
         Update: {
@@ -249,6 +311,8 @@ export interface Database {
           instrument_symbol?: string | null;
           instrument_name?: string | null;
           ongoing_charge?: number | null;
+          isin?: string | null;
+          value_pinned?: boolean;
           updated_at?: string;
         };
         Relationships: [
@@ -932,6 +996,7 @@ export interface Database {
           target_weight: number | null;
           opened_on: string | null;
           contribution_ceiling: number | null;
+          wrapper_fee: number | null;
           updated_at: string;
         };
         Insert: {
@@ -940,6 +1005,7 @@ export interface Database {
           target_weight?: number | null;
           opened_on?: string | null;
           contribution_ceiling?: number | null;
+          wrapper_fee?: number | null;
           updated_at?: string;
         };
         Update: {
@@ -948,7 +1014,94 @@ export interface Database {
           target_weight?: number | null;
           opened_on?: string | null;
           contribution_ceiling?: number | null;
+          wrapper_fee?: number | null;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      instrument_readings: {
+        Row: InstrumentReadingColumns;
+        Insert: {
+          user_id: string;
+          isin: string;
+          ongoing_charge?: number | null;
+          currency?: string | null;
+          country_weights?: Json;
+          sector_weights?: Json;
+          top_constituents?: Json;
+          constituents_coverage?: number | null;
+          sources?: Json;
+          sourced_at?: string;
+          model?: string | null;
+          version?: number;
+        };
+        Update: {
+          user_id?: string;
+          isin?: string;
+          ongoing_charge?: number | null;
+          currency?: string | null;
+          country_weights?: Json;
+          sector_weights?: Json;
+          top_constituents?: Json;
+          constituents_coverage?: number | null;
+          sources?: Json;
+          sourced_at?: string;
+          model?: string | null;
+          version?: number;
+        };
+        Relationships: [];
+      };
+      instrument_reading_tallies: {
+        Row: InstrumentReadingTallyColumns;
+        Insert: {
+          user_id: string;
+          tally_month: string;
+          reads?: number;
+          last_read_at?: string | null;
+          pending_since?: string | null;
+        };
+        Update: {
+          user_id?: string;
+          tally_month?: string;
+          reads?: number;
+          last_read_at?: string | null;
+          pending_since?: string | null;
+        };
+        Relationships: [];
+      };
+      wallet_reads: {
+        Row: WalletReadColumns;
+        Insert: {
+          user_id: string;
+          tally_month: string;
+          writes?: number;
+          refused?: number;
+          last_written_at?: string | null;
+          pending_since?: string | null;
+          read?: Json | null;
+          facts?: Json | null;
+          facts_digest?: string | null;
+          dropped?: number;
+          model?: string | null;
+          prompt_version?: number | null;
+          locale?: Locale | null;
+          read_at?: string | null;
+        };
+        Update: {
+          user_id?: string;
+          tally_month?: string;
+          writes?: number;
+          refused?: number;
+          last_written_at?: string | null;
+          pending_since?: string | null;
+          read?: Json | null;
+          facts?: Json | null;
+          facts_digest?: string | null;
+          dropped?: number;
+          model?: string | null;
+          prompt_version?: number | null;
+          locale?: Locale | null;
+          read_at?: string | null;
         };
         Relationships: [];
       };
@@ -1095,6 +1248,76 @@ export interface Database {
           last_pulled_at: string;
         };
       };
+      /** Take one attempt at reading an instrument the caller actually holds. */
+      reserve_instrument_reading: {
+        Args: {
+          target_user: string;
+          target_isin: string;
+          this_month: string;
+          allowance: number;
+          cooldown_seconds: number;
+          reservation_seconds: number;
+        };
+        Returns: InstrumentReadingTallyColumns;
+      };
+      /** Land a reading and release the meter in one statement. */
+      store_instrument_reading: {
+        Args: {
+          target_user: string;
+          target_isin: string;
+          new_charge: number | null;
+          new_currency: string | null;
+          new_country_weights: Json;
+          new_sector_weights: Json;
+          new_constituents: Json;
+          new_coverage: number | null;
+          new_sources: Json;
+          new_model: string | null;
+          new_version: number;
+        };
+        Returns: InstrumentReadingColumns;
+      };
+      /** Hand back a reading attempt that never reached the provider. */
+      refund_instrument_reading: {
+        Args: { target_user: string };
+        Returns: InstrumentReadingTallyColumns;
+      };
+      /** Clear a reservation while keeping the attempt spent. */
+      release_instrument_reading: {
+        Args: { target_user: string };
+        Returns: InstrumentReadingTallyColumns;
+      };
+      /** Take one attempt at writing a wallet read, if the allowance permits. */
+      reserve_wallet_read: {
+        Args: {
+          target_user: string;
+          this_month: string;
+          allowance: number;
+          cooldown_seconds: number;
+          reservation_seconds: number;
+        };
+        Returns: WalletReadColumns;
+      };
+      /** Land a finished attempt, whether or not a read survived it. */
+      store_wallet_read: {
+        Args: {
+          target_user: string;
+          new_read: Json | null;
+          new_facts: Json | null;
+          new_digest: string | null;
+          new_dropped: number | null;
+          new_model: string | null;
+          new_prompt_version: number | null;
+          new_locale: string | null;
+          refused_delta: number | null;
+        };
+        Returns: WalletReadColumns;
+      };
+      /** Hand back a read attempt that never reached the provider. */
+      refund_wallet_read: {
+        Args: { target_user: string };
+        Returns: WalletReadColumns;
+      };
     };
     Enums: {
       category_type: CategoryType;
@@ -1129,6 +1352,11 @@ export type BankFeedItem =
 export type BankAccount = Database["public"]["Tables"]["bank_accounts"]["Row"];
 export type BankPullRow = Database["public"]["Tables"]["bank_pulls"]["Row"];
 export type MonthReadRow = Database["public"]["Tables"]["month_reads"]["Row"];
+export type InstrumentReadingRow =
+  Database["public"]["Tables"]["instrument_readings"]["Row"];
+export type InstrumentReadingTallyRow =
+  Database["public"]["Tables"]["instrument_reading_tallies"]["Row"];
+export type WalletReadRow = Database["public"]["Tables"]["wallet_reads"]["Row"];
 export type BearingArrangementRow =
   Database["public"]["Tables"]["bearing_arrangements"]["Row"];
 export type RecurringFulfilment =

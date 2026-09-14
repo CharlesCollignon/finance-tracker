@@ -50,7 +50,7 @@ const ALLOWED_QUOTE_TYPES = new Set(["ETF", "EQUITY", "MUTUALFUND"]);
 
 const REQUEST_TIMEOUT_MS = 8000;
 
-const ISIN_REGEX = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
+export const ISIN_REGEX = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
 const SYMBOL_REGEX = /^[A-Za-z0-9][A-Za-z0-9._^=-]{0,31}$/;
 
 export function isValidInstrumentSymbol(symbol: string): boolean {
@@ -65,7 +65,20 @@ export function isIsinQuery(query: string): boolean {
   return ISIN_REGEX.test(normalizeInstrumentQuery(query));
 }
 
-/** Whether a search should run for the current input. */
+/**
+ * Whether a query is worth sending.
+ *
+ * The rule that matters is the half-typed ISIN: `IE00B4L5` on its way to
+ * `IE00B4L5Y983` matches nothing and wastes a request against an endpoint that
+ * rate-limits by IP. But the test for it used to be "two letters then
+ * alphanumerics, under twelve characters", which is also the shape of every
+ * short name anyone would search — NVIDIA, Intel, Alphabet all came back empty
+ * with no explanation. A partial ISIN has a digit in it; a company name does
+ * not, and that is enough to tell them apart.
+ *
+ * Length is measured on the raw query rather than the space-stripped one, so a
+ * fund's full name is not refused for being wordy.
+ */
 export function canSearchInstruments(query: string): boolean {
   const normalized = normalizeInstrumentQuery(query);
 
@@ -73,11 +86,15 @@ export function canSearchInstruments(query: string): boolean {
     return true;
   }
 
-  if (/^[A-Z]{2}[A-Z0-9]+$/.test(normalized) && normalized.length < 12) {
+  const looksLikePartialIsin =
+    /^[A-Z]{2}[A-Z0-9]*[0-9][A-Z0-9]*$/.test(normalized) &&
+    normalized.length < 12;
+  if (looksLikePartialIsin) {
     return false;
   }
 
-  return normalized.length >= 2 && normalized.length <= 32;
+  const trimmed = query.trim();
+  return trimmed.length >= 2 && trimmed.length <= 120;
 }
 
 function rankSearchResults(
@@ -170,7 +187,11 @@ export async function searchInstruments(
   const isinSearch = isIsinQuery(normalized);
 
   const params = new URLSearchParams({
-    q: normalized,
+    // An ISIN goes up normalised — uppercase, no spaces, which is the only
+    // form it matches in. A name goes up as typed: stripping the spaces out
+    // of "iShares Core MSCI World" leaves one long token that Yahoo has no
+    // reason to match, and the words are what the match is made of.
+    q: isinSearch ? normalized : query.trim(),
     quotesCount: "12",
     newsCount: "0",
     enableFuzzyQuery: isinSearch ? "false" : "true",
@@ -277,4 +298,117 @@ export async function fetchMonthlyCloses(
     .map(([month, close]) => ({ month, close }));
 
   return { currency, points };
+}
+
+export interface DatedClosePoint {
+  /** YYYY-MM-DD, UTC. */
+  date: string;
+  close: number;
+}
+
+export interface DatedCloseOptions {
+  /** Yahoo `range`: 1mo, 1y, 5y, max… */
+  range?: string;
+  /** Yahoo `interval`: 1d, 1wk, 1mo… */
+  interval?: string;
+}
+
+function dateKeyFromUnix(seconds: number): string {
+  const date = new Date(seconds * 1000);
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Closes with their day kept, oldest first.
+ *
+ * The sibling of `fetchMonthlyCloses`, which buckets by month because the
+ * position charts are monthly. A price line asked for over one month needs the
+ * days, so this one keeps them and lets the caller decide what to thin out.
+ */
+export async function fetchDatedCloses(
+  symbol: string,
+  options: DatedCloseOptions = {},
+): Promise<{ currency: string; points: DatedClosePoint[] }> {
+  if (!isValidInstrumentSymbol(symbol)) {
+    throw new Error("Invalid instrument symbol");
+  }
+  const encoded = encodeURIComponent(symbol.trim());
+  const params = new URLSearchParams({
+    interval: options.interval ?? "1d",
+    range: options.range ?? "max",
+  });
+
+  const data = await fetchJson<YahooChartResponse>(
+    `${CHART_URL}/${encoded}?${params.toString()}`,
+  );
+
+  const result = data.chart?.result?.[0];
+  const timestamps = result?.timestamp ?? [];
+  const closes = result?.indicators?.quote?.[0]?.close ?? [];
+  const currency = result?.meta?.currency ?? "EUR";
+
+  const byDate = new Map<string, number>();
+  for (let index = 0; index < timestamps.length; index += 1) {
+    const close = closes[index];
+    const ts = timestamps[index];
+    if (
+      ts === undefined ||
+      close === null ||
+      close === undefined ||
+      close <= 0
+    ) {
+      continue;
+    }
+    byDate.set(dateKeyFromUnix(ts), close);
+  }
+
+  const points = Array.from(byDate.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, close]) => ({ date, close }));
+
+  return { currency, points };
+}
+
+export interface InstrumentPriceHistory {
+  currency: string;
+  /** Daily closes over the last year. Empty if the listing gives none. */
+  daily: DatedClosePoint[];
+  /** Monthly closes over the instrument's whole life. */
+  monthly: DatedClosePoint[];
+}
+
+/**
+ * An instrument's price at two grains, because one will not do.
+ *
+ * Asking for `range=max&interval=1d` looks like it should answer everything at
+ * once. Yahoo accepts it and quietly answers monthly — a world tracker listed
+ * in 2009 comes back as 208 points, which is one a month, and a "last 30 days"
+ * slice of that is two points and a straight line between them. The daily grain
+ * only survives over a short range.
+ *
+ * So: a year of days for the near ranges, and a lifetime of months for the far
+ * ones, fetched together. Two requests per symbol, which is what the page spent
+ * on position history before it stopped drawing it — and Yahoo rate-limits by
+ * IP hard enough that `quote-source.ts` carries a circuit breaker, so the
+ * budget is worth keeping flat.
+ */
+export async function fetchInstrumentPriceHistory(
+  symbol: string,
+): Promise<InstrumentPriceHistory> {
+  const [daily, monthly] = await Promise.all([
+    fetchDatedCloses(symbol, { range: "1y", interval: "1d" }).catch(() => ({
+      currency: "",
+      points: [] as DatedClosePoint[],
+    })),
+    fetchDatedCloses(symbol, { range: "max", interval: "1mo" }),
+  ]);
+
+  return {
+    currency: monthly.currency || daily.currency || "EUR",
+    daily: daily.points,
+    monthly: monthly.points,
+  };
 }

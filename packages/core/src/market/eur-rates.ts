@@ -22,6 +22,28 @@ const INVERTED_PAIRS: Record<string, string> = {
   CHF: "EURCHF=X",
 };
 
+export interface FxSymbol {
+  symbol: string;
+  /** Whether the quote is EUR→currency, so the rate is its reciprocal. */
+  inverted: boolean;
+}
+
+/**
+ * Which Yahoo symbol prices one currency in euro, and which way round.
+ *
+ * Exported because the historical series in `./fx` needs the same convention
+ * over months that `multiplier` needs for today, and two copies of it would
+ * drift the first time a currency is added.
+ */
+export function fxSymbolForCurrency(currency: string): FxSymbol {
+  const normalized = currency.toUpperCase();
+  const inverted = INVERTED_PAIRS[normalized];
+
+  return inverted
+    ? { symbol: inverted, inverted: true }
+    : { symbol: `${normalized}EUR=X`, inverted: false };
+}
+
 export function createEurRates(options: EurRatesOptions = {}): EurRates {
   const ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
   const now = options.now ?? Date.now;
@@ -38,16 +60,9 @@ export function createEurRates(options: EurRatesOptions = {}): EurRates {
       return cached.rate;
     }
 
-    const inverted = INVERTED_PAIRS[normalized];
-    let rate: number;
-
-    if (inverted) {
-      const { price } = await fetchInstrumentQuote(inverted);
-      rate = 1 / price;
-    } else {
-      const { price } = await fetchInstrumentQuote(`${normalized}EUR=X`);
-      rate = price;
-    }
+    const { symbol, inverted } = fxSymbolForCurrency(normalized);
+    const { price } = await fetchInstrumentQuote(symbol);
+    const rate = inverted ? 1 / price : price;
 
     cache.set(normalized, { rate, fetchedAt: now() });
     return rate;

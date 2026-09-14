@@ -1,5 +1,5 @@
 /**
- * The chart vocabulary: five marks, and only one of them costs a runtime.
+ * The chart vocabulary: four marks, and not one of them costs a runtime.
  *
  * The app had drifted to five ways of drawing a chart — a charting library on
  * two screens, a hand-written donut on a third, CSS bars on a fourth, a
@@ -10,15 +10,17 @@
  *   SpendStrip    a whole split as one bar plain elements
  *   ProgressRing  progress toward a limit  inline SVG
  *   Sparkline     the shape of a run       inline SVG
- *   line          a dense time series      ECharts, on Wallets alone
  *
- * The first four render on the server and weigh nothing. The fifth earns its
- * weight: hovering a holding's price over two years is a real interaction
- * that hand-drawn marks cannot give.
+ * There was a fifth: an ECharts line on Wallets, plotting a position's value
+ * against what had been put into it. It went when the question changed. What
+ * the holder wanted to know was what the *instrument* did, and that is a shape
+ * and a percentage — a Sparkline on each row, with one range switch above
+ * them. A charting library's weight buys hover, and hover was not the thing
+ * missing.
  *
- * Sparkline is deliberately not one of the four marks in the sense the others
- * are — it carries no scale and answers no question on its own. It exists to
- * sit beside a figure that does.
+ * Sparkline is deliberately not one of the marks in the sense the others are —
+ * it carries no scale and answers no question on its own. It exists to sit
+ * beside a figure that does.
  */
 
 export { BarSeries, type BarPoint } from "./BarSeries";

@@ -62,11 +62,10 @@ function addWalletTotals(
 function walletLeavesFromSummary(
   summary: MonthlySummary,
 ): { id: string; name: string; total: number }[] {
-  const totals: Record<InvestmentWalletId, number> = {
-    pea: 0,
-    cto: 0,
-    crypto: 0,
-  };
+  const totals = {} as Record<InvestmentWalletId, number>;
+  for (const walletId of INVESTMENT_WALLET_IDS) {
+    totals[walletId] = 0;
+  }
 
   addWalletTotals(totals, summary.investmentDeploymentBreakdown, false);
   addWalletTotals(totals, summary.investmentBreakdown, true);

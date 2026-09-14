@@ -165,8 +165,9 @@ _Avoid_: target, pot, sinking fund
 ### Investing
 
 **Wallet**:
-Where invested value sits: `pea`, `cto` or `crypto`. A wallet is an
-account-shaped home for positions, not a category.
+Where invested value sits: `pea`, `cto`, `av`, `per` or `crypto`. A wallet is
+an account-shaped home for positions, not a category. There is one of each at
+most, so two assurance-vie contracts are one wallet.
 _Avoid_: account, portfolio, broker
 
 **Investment position**:
@@ -198,6 +199,29 @@ _Avoid_: DCA, variable template
 The most recent instrument quote stored on a template, used to price an
 occurrence when the quote source has no price to give.
 _Avoid_: cached price, fallback price
+
+**Instrument reading**:
+What an instrument is made of, read from the market and dated: its ongoing
+charge, the countries and sectors its money sits in, and its largest
+constituents. Never guessed and never taken from a source file — an instrument
+that has not been read has an unknown composition, which is not the same as an
+empty one.
+_Avoid_: profile, metadata, fundamentals, factsheet
+
+**Look-through**:
+The exposure arrived at by resolving positions through their readings, so a
+portfolio is described by what it holds rather than by where it sits. Computed
+from the positions every time, over the value that could be resolved, with the
+rest reported as unread.
+_Avoid_: allocation, breakdown, exposure, x-ray, drill-down
+
+**Wallet read**:
+A dated account of the whole of what is invested, asked for rather than
+generated: what it observes about the look-through, what it suggests, and the
+target allocation those suggestions imply. Names instruments only from a closed
+catalogue and writes no figure of its own — it chooses a role and a size for
+each suggestion, and the app turns those into percentages.
+_Avoid_: portfolio review, analysis, advice, recommendation
 
 ### Words about a month
 

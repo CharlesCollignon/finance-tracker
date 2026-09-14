@@ -33,6 +33,7 @@ import type { RecurringTemplateWithCategory } from "@finance/core/types/database
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
+import type { Key } from "@finance/core/i18n/t";
 
 interface InvestmentPositionSheetProps {
   item: InvestmentPositionItem | null;
@@ -99,6 +100,28 @@ function InvestmentPositionForm({
   );
   const [instrumentName, setInstrumentName] = useState(
     item?.instrumentName ?? "",
+  );
+  /**
+   * The ISIN behind the symbol.
+   *
+   * The search has always returned it and always dropped it here, which left
+   * positions identified only by one vendor's ticker — enough to price them,
+   * not enough to look up what they hold. The look-through joins a reading to
+   * a position on this and nothing else.
+   */
+  const [isin, setIsin] = useState(item?.isin ?? "");
+  /**
+   * Whether the broker figure should outrank the market.
+   *
+   * Separate from the figure itself, because the two are separate decisions —
+   * see migration `034`. Unpinned is the default, so a value typed once stops
+   * quietly winning forever.
+   */
+  const [valuePinned, setValuePinned] = useState(item?.valuePinned ?? false);
+  const [brokerValue, setBrokerValue] = useState(
+    item?.currentValue === null || item?.currentValue === undefined
+      ? ""
+      : String(item.currentValue),
   );
   const [shareCount, setShareCount] = useState(
     item?.shareCount ? String(item.shareCount) : "",
@@ -202,14 +225,14 @@ function InvestmentPositionForm({
                 variant={sourceType === "recurring" ? "default" : "outline"}
                 onClick={() => setSourceType("recurring")}
               >
-                From recurring
+                {t("position.fromRecurring")}
               </Button>
               <Button
                 type="button"
                 variant={sourceType === "custom" ? "default" : "outline"}
                 onClick={() => setSourceType("custom")}
               >
-                Custom holding
+                {t("position.customHolding")}
               </Button>
             </div>
           </div>
@@ -238,8 +261,7 @@ function InvestmentPositionForm({
               </select>
             ) : (
               <Text className="text-sm text-muted-foreground">
-                No recurring items available for this column. Add one on the
-                Recurring page or use a custom holding.
+                {t("position.noRecurringAvailable")}
               </Text>
             )}
           </div>
@@ -264,7 +286,7 @@ function InvestmentPositionForm({
         {(!isEdit && sourceType === "custom") ||
         (isEdit && !item.recurringTemplateId) ? (
           <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="name">Name</FormLabel>
+            <FormLabel htmlFor="name">{t("position.nameLabel")}</FormLabel>
             <Input
               id="name"
               name="name"
@@ -272,7 +294,7 @@ function InvestmentPositionForm({
               className="text-base"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. MSCI World ETF"
+              placeholder={t("position.namePlaceholder")}
             />
           </div>
         ) : (
@@ -281,11 +303,10 @@ function InvestmentPositionForm({
 
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="initialBalance">
-            Total invested (cost basis)
+            {t("position.costBasis")}
           </FormLabel>
           <Text className="text-xs text-muted-foreground">
-            Your broker&apos;s total invested amount for this position. Used for
-            P/L — not updated from recurring transactions.
+            {t("position.costBasisHint")}
           </Text>
           <Input
             id="initialBalance"
@@ -311,11 +332,14 @@ function InvestmentPositionForm({
             </p>
             {!isCrypto && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Change the fund on the{" "}
+                {t("position.changeFundPrefix")}{" "}
                 <Link href="/recurring" className="font-medium underline">
-                  Recurring
-                </Link>{" "}
-                page.
+                  {t("position.changeFundLink")}
+                </Link>
+                {/* The suffix carries its own leading space when it needs
+                    one: English continues with " page.", French has already
+                    said "page" before the link and only needs the stop. */}
+                {t("position.changeFundSuffix")}
               </p>
             )}
             <input
@@ -364,10 +388,15 @@ function InvestmentPositionForm({
               onSelect={(instrument) => {
                 setInstrumentSymbol(instrument.symbol);
                 setInstrumentName(instrument.name);
+                // Kept when the search did not return one rather than
+                // cleared: a symbol changing does not make a known ISIN
+                // wrong, and an ISIN search is how most of these are found.
+                setIsin(instrument.isin ?? isin);
               }}
               onClear={() => {
                 setInstrumentSymbol("");
                 setInstrumentName("");
+                setIsin("");
               }}
             />
             <input
@@ -377,6 +406,40 @@ function InvestmentPositionForm({
             />
             <input type="hidden" name="instrumentName" value={instrumentName} />
           </>
+        )}
+
+        {/* Outside the branches above, so it survives every shape the form
+            takes — including the recurring-linked one, where the instrument
+            fields are rendered read-only further up.
+
+            Typed, not hidden. The instrument search fills it only when the
+            query was itself an ISIN, because Yahoo's search returns a symbol
+            and a name and never an identifier — so for everything found by
+            name this field is the only way one is ever set, and the
+            look-through is blind without it. Bitcoin has no ISIN to give, so
+            the crypto shape keeps the hidden input and says nothing. */}
+        {isCrypto ? (
+          <input type="hidden" name="isin" value={isin} />
+        ) : (
+          <div className="flex flex-col gap-2">
+            <FormLabel htmlFor="isin">{t("position.isinLabel")}</FormLabel>
+            <Input
+              id="isin"
+              name="isin"
+              type="text"
+              className="text-base font-mono"
+              value={isin}
+              onChange={(event) => setIsin(event.target.value.toUpperCase())}
+              placeholder="IE00B4L5Y983"
+              maxLength={12}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+            <Text className="text-xs text-muted-foreground">
+              {t("position.isinHint")}
+            </Text>
+          </div>
         )}
 
         <div className="flex flex-col gap-2">
@@ -406,12 +469,10 @@ function InvestmentPositionForm({
 
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="ongoingCharge">
-            Ongoing charge (optional)
+            {t("position.ongoingChargeLabel")}
           </FormLabel>
           <Text className="text-xs text-muted-foreground">
-            The yearly fee as a percentage — 0.20 for 0.20%. It is on the
-            fund&apos;s KID and never appears on a statement, because it is
-            taken out of the fund&apos;s value.
+            {t("position.ongoingChargeHint")}
           </Text>
           <div className="flex items-center gap-2">
             <Input
@@ -422,9 +483,11 @@ function InvestmentPositionForm({
               className="text-base"
               value={ongoingCharge}
               onChange={(event) => setOngoingCharge(event.target.value)}
-              placeholder="e.g. 0,20"
+              placeholder={t("position.chargePlaceholder")}
             />
-            <span className="text-sm text-muted-foreground">% a year</span>
+            <span className="text-sm text-muted-foreground">
+              {t("position.perYear")}
+            </span>
           </div>
           {chargeLookupUrl(instrumentSymbol, instrumentName) ? (
             <a
@@ -433,7 +496,7 @@ function InvestmentPositionForm({
               rel="noreferrer noopener"
               className="self-start text-xs text-primary-ink underline underline-offset-4"
             >
-              Look it up on justETF
+              {t("position.lookUpCharge")}
             </a>
           ) : null}
         </div>
@@ -465,12 +528,10 @@ function InvestmentPositionForm({
 
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="currentValue">
-            Broker value override (optional)
+            {t("position.brokerValue")}
           </FormLabel>
           <Text className="text-xs text-muted-foreground">
-            Usually leave empty — market value is computed from shares × live
-            price. Use this only if your broker shows a different total than the
-            live quote (e.g. delayed price, fees, or cash drag).
+            {t("position.brokerValueHint")}
           </Text>
           <Input
             id="currentValue"
@@ -479,9 +540,43 @@ function InvestmentPositionForm({
             step="0.01"
             min="0"
             className="text-base"
-            defaultValue={item?.currentValue ?? ""}
+            value={brokerValue}
+            onChange={(event) => setBrokerValue(event.target.value)}
             placeholder={t("position.manualValuePlaceholder")}
           />
+
+          {/* Pinning nothing is meaningless, so the control only exists once
+              there is a figure to pin. */}
+          {brokerValue.trim() !== "" && Number(brokerValue) > 0 ? (
+            <label className="mt-1 flex cursor-pointer items-start gap-2">
+              <input
+                type="checkbox"
+                name="valuePinned"
+                checked={valuePinned}
+                onChange={(event) => setValuePinned(event.target.checked)}
+                className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
+              />
+              <span className="flex flex-col gap-0.5">
+                <span className="text-sm">{t("position.pinValue")}</span>
+                <span className="text-xs text-muted-foreground">
+                  {t("position.pinValueHint")}
+                </span>
+              </span>
+            </label>
+          ) : null}
+
+          {/* Where the figure on the dashboard will actually come from. */}
+          {item ? (
+            <Text className="text-xs text-muted-foreground">
+              {t(
+                valuationNote(
+                  brokerValue,
+                  valuePinned,
+                  item.hasMarketQuote,
+                ),
+              )}
+            </Text>
+          ) : null}
         </div>
 
         {state.error && (
@@ -526,4 +621,31 @@ function InvestmentPositionForm({
       </form>
     </MobileSheet>
   );
+}
+
+/**
+ * Which of the four valuations this position will get, in words.
+ *
+ * Mirrors the precedence in `buildPositionItem` so the sheet can say where
+ * the number comes from while it is being edited, rather than the reader
+ * discovering it on the dashboard afterwards. Computed from the form's
+ * current state, not from the saved item, so it updates as you type.
+ */
+function valuationNote(
+  brokerValue: string,
+  pinned: boolean,
+  hasMarketQuote: boolean,
+): Key {
+  const hasFigure = brokerValue.trim() !== "" && Number(brokerValue) > 0;
+
+  if (hasFigure && pinned) {
+    return "position.valuedPinned";
+  }
+  if (hasMarketQuote) {
+    return "position.valuedLive";
+  }
+  if (hasFigure) {
+    return "position.valuedManual";
+  }
+  return "position.valuedCost";
 }

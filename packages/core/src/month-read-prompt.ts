@@ -168,6 +168,9 @@ const MISSING_WORDS_EN: Record<MissingReason, string> = {
   "no-target": "no target allocation has been set",
   "nothing-invested": "nothing is held, so there is no portfolio to say it of",
   "too-short": "it has been held too briefly for a rate to mean anything",
+  "no-reading":
+    "what this instrument holds has not been read yet, so its composition " +
+    "is unknown rather than empty",
   "no-income":
     "no charge brings money in, so nothing can honestly be said about the " +
     "months ahead",
@@ -264,6 +267,9 @@ const MISSING_WORDS_FR: Record<MissingReason, string> = {
     "rien n'est détenu, il n'y a donc pas de portefeuille dont le dire",
   "too-short":
     "c'est détenu depuis trop peu de temps pour qu'un taux ait un sens",
+  "no-reading":
+    "la composition de cet instrument n'a pas encore été lue : elle est " +
+    "donc inconnue, et non vide",
   "no-income":
     "aucune charge n'apporte de revenu, rien ne peut donc être dit " +
     "honnêtement des mois à venir",

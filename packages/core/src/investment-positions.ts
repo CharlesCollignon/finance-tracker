@@ -26,6 +26,16 @@ export interface InvestmentPositionRow {
   instrument_name: string | null;
   /** Annual ongoing charge as a fraction: 0.002 = 0.20%. */
   ongoing_charge: number | null;
+  /**
+   * ISO 6166 identifier, when known.
+   *
+   * Optional on the row rather than required, because the mobile app's own
+   * queries select a narrower column list and a required field here would
+   * break them at a distance.
+   */
+  isin?: string | null;
+  /** Whether `current_value` should outrank a live quote. See `034`. */
+  value_pinned?: boolean | null;
 }
 
 export interface PositionChartPoint {
@@ -73,6 +83,15 @@ export function sliceChartPointsByRange(
   );
 }
 
+/**
+ * Which of the four answers `marketValue` is.
+ *
+ * In precedence order: a figure the user pinned, the market, a figure they
+ * typed that no quote could replace, and — when none of those is available —
+ * what the holding cost, which is the only honest remaining answer.
+ */
+export type ValuationSource = "pinned" | "live" | "manual" | "cost-basis";
+
 export interface InvestmentPositionItem {
   id: string;
   walletId: InvestmentWalletId;
@@ -87,6 +106,18 @@ export interface InvestmentPositionItem {
   instrumentName: string | null;
   /** Annual ongoing charge as a fraction: 0.002 = 0.20%. */
   ongoingCharge: number | null;
+  /** What the look-through joins a reading to. Null until known. */
+  isin: string | null;
+  /** Whether the stored figure is preferred over the market. */
+  valuePinned: boolean;
+  /**
+   * Where `marketValue` came from.
+   *
+   * Carried so a surface can say which it is rather than leaving a reader to
+   * work out whether a number is a live valuation, a figure they typed months
+   * ago, or just what the holding cost.
+   */
+  valuationSource: ValuationSource;
   totalInvested: number;
   marketValue: number;
   gainLoss: number;
@@ -377,8 +408,22 @@ function buildPositionItem(
     : (row.instrument_name ?? template?.instrument_name ?? null);
   const shareCount = resolveSharesHeld(row, template, transactions, asOfDate);
   const totalInvested = row.initial_balance;
+  /*
+   * A stored zero is not a valuation.
+   *
+   * The web form now maps 0 to null before it is saved, but this is the guard
+   * that matters: the phone writes `current_value` straight through, and rows
+   * saved before that fix still hold zeros. Treating a zero as "no override"
+   * here means neither client can make a holding worth nothing by typing the
+   * most natural thing into a field labelled "usually leave empty".
+   *
+   * A holding genuinely worth zero is a holding to delete, so nothing
+   * legitimate is being refused.
+   */
   const hasManualValue =
-    row.current_value !== null && row.current_value !== undefined;
+    row.current_value !== null &&
+    row.current_value !== undefined &&
+    Number(row.current_value) > 0;
   const quotedPrice = instrumentSymbol
     ? liveQuotes[instrumentSymbol]
     : undefined;
@@ -387,12 +432,41 @@ function buildPositionItem(
   const autoMarketValue = hasMarketQuote
     ? Math.round(shareCount! * quotedPrice! * 100) / 100
     : null;
-  const marketValue = hasManualValue
-    ? Number(row.current_value)
-    : (autoMarketValue ?? totalInvested);
+  const valuePinned = row.value_pinned === true;
+
+  /*
+   * Live first, and a typed figure only where it is either pinned or the last
+   * thing available.
+   *
+   * The old order put `current_value` unconditionally first, which meant one
+   * figure taken off a broker statement outranked the market forever — and
+   * made `0` mean "worth nothing" rather than "no override". `034` split the
+   * figure from the decision so this can read in the order a person would
+   * expect: what I pinned, else what the market says, else what I typed, else
+   * what it cost.
+   */
+  const valuationSource: ValuationSource =
+    valuePinned && hasManualValue
+      ? "pinned"
+      : autoMarketValue !== null
+        ? "live"
+        : hasManualValue
+          ? "manual"
+          : "cost-basis";
+
+  const marketValue =
+    valuationSource === "pinned" || valuationSource === "manual"
+      ? Number(row.current_value)
+      : valuationSource === "live"
+        ? autoMarketValue!
+        : totalInvested;
+
   const gainLoss = marketValue - totalInvested;
+  // A pinned position does not need a share count: its figure is the answer.
+  // One with a symbol, no quote and no pin is the case the Positions tab
+  // already prompts about.
   const needsShareCount =
-    instrumentSymbol !== null && !hasManualValue && !hasMarketQuote;
+    instrumentSymbol !== null && !hasMarketQuote && !valuePinned;
 
   return {
     id: row.id,
@@ -406,6 +480,9 @@ function buildPositionItem(
     shareCount,
     instrumentSymbol,
     instrumentName,
+    isin: row.isin ?? null,
+    valuePinned,
+    valuationSource,
     ongoingCharge:
       row.ongoing_charge === null || row.ongoing_charge === undefined
         ? null

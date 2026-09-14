@@ -10,6 +10,7 @@ export function revalidateRecurringDependents(): void {
   revalidatePath("/transactions");
   revalidatePath("/calendar");
   revalidatePath("/investments");
+  revalidatePath("/investments/look-through");
   revalidatePath("/dashboard");
 }
 
@@ -42,6 +43,7 @@ export function revalidateEverySurface(): void {
   revalidatePath("/recurring");
   revalidatePath("/budgets");
   revalidatePath("/investments");
+  revalidatePath("/investments/look-through");
   revalidatePath("/categories");
   revalidatePath("/import");
   revalidatePath("/profile");

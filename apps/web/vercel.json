@@ -20,6 +20,10 @@
     {
       "path": "/api/cron/refresh",
       "schedule": "0 21 * * *"
+    },
+    {
+      "path": "/api/cron/read-instruments",
+      "schedule": "0 4 * * *"
     }
   ]
 }

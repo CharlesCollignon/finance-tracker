@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { INVESTMENT_WALLET_IDS } from "./investments";
 import {
   buildAllocation,
   defaultTargets,
@@ -80,7 +81,7 @@ describe("buildAllocation", () => {
       [{ walletId: "pea", value: 100 }],
       BALANCED,
     );
-    expect(summary.rows).toHaveLength(3);
+    expect(summary.rows).toHaveLength(INVESTMENT_WALLET_IDS.length);
     expect(
       summary.rows.find((row) => row.walletId === "crypto")!.value,
     ).toBe(0);
@@ -151,8 +152,40 @@ describe("suggestContributionSplit", () => {
 describe("defaultTargets", () => {
   it("offers an even split across every wallet", () => {
     const targets = defaultTargets();
-    expect(targets).toHaveLength(3);
-    expect(targets.every((target) => target.targetWeight === 0.33)).toBe(true);
+    expect(targets).toHaveLength(INVESTMENT_WALLET_IDS.length);
+
+    const [first] = targets;
+    expect(
+      targets.every((target) => target.targetWeight === first.targetWeight),
+    ).toBe(true);
+  });
+
+  /**
+   * The split has to add up, or the default the app offers is a default the
+   * app then refuses to measure.
+   *
+   * `buildAllocation` reports no drift at all unless the targets cover
+   * roughly the whole portfolio, and `defaultTargets` rounds to whole
+   * percentages — so an even split only works when the wallet count divides
+   * 100 cleanly. Three wallets gave 0.33 each, summed to 0.99, and fell
+   * outside the band: every row came back "no-target" from the very set the
+   * user had just been offered. Five divides cleanly and it works again,
+   * which is luck rather than design, so the invariant is asserted here
+   * rather than left to be rediscovered by whoever adds the sixth.
+   */
+  it("offers targets buildAllocation will actually measure against", () => {
+    const targets = defaultTargets();
+    const coverage = targets.reduce(
+      (sum, target) => sum + (target.targetWeight ?? 0),
+      0,
+    );
+    expect(coverage).toBeCloseTo(1, 6);
+
+    const summary = buildAllocation(
+      INVESTMENT_WALLET_IDS.map((walletId) => ({ walletId, value: 100 })),
+      targets,
+    );
+    expect(summary.rows.every((row) => row.status !== "no-target")).toBe(true);
   });
 });
 

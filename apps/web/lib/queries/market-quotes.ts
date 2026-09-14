@@ -2,7 +2,9 @@ import { unstable_cache } from "next/cache";
 import {
   fetchHistoricalQuotes,
   fetchLiveQuotes,
+  fetchPriceSeries,
 } from "@/lib/queries/investments";
+import type { InstrumentPriceSeries } from "@finance/core/instrument-price-series";
 
 function symbolsCacheKey(symbols: string[]): string {
   return [...new Set(symbols.filter(Boolean))].sort().join(",");
@@ -36,6 +38,29 @@ export async function getCachedHistoricalQuotes(
   return unstable_cache(
     async () => fetchHistoricalQuotes(key.split(",")),
     ["market-historical-quotes", key],
+    { revalidate: 3600, tags: ["market-quotes"] },
+  )();
+}
+
+/**
+ * Instrument price lines cached ~1 hour.
+ *
+ * `today` is part of the key so the ranges roll over at midnight rather than
+ * holding yesterday's window until the entry expires. Tagged like its
+ * neighbours, so `refreshQuotesAction` already clears it.
+ */
+export async function getCachedPriceSeries(
+  symbols: string[],
+  today: string,
+): Promise<Record<string, InstrumentPriceSeries>> {
+  const key = symbolsCacheKey(symbols);
+  if (!key) {
+    return {};
+  }
+
+  return unstable_cache(
+    async () => fetchPriceSeries(key.split(","), today),
+    ["market-price-series", key, today],
     { revalidate: 3600, tags: ["market-quotes"] },
   )();
 }

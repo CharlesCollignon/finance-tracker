@@ -33,6 +33,8 @@ export const fr: Messages = {
     ledgerList: "Liste",
     ledgerCalendar: "Calendrier",
     ledgerByCategory: "Par catégorie",
+    walletsPositions: "Positions",
+    walletsLookThrough: "Transparence",
   },
 
   pages: {
@@ -412,14 +414,22 @@ export const fr: Messages = {
   },
 
   wallets: {
+    refreshQuotes: "Actualiser les cours",
+    refreshingQuotes: "Actualisation…",
+    quotesRefreshed: "Cours actualisés",
     marketValue: "Valeur de marché",
     value: "Valeur",
     invested: "Investi",
     market: "Marché",
     profitLoss: "+/-",
     walletPicker: "Portefeuille d'investissement",
-    showChart: "Afficher le graphique",
-    hideChart: "Masquer le graphique",
+    rangeAll: "Tout",
+    positions: "Positions",
+    noItems: "Aucune ligne dans ce portefeuille pour l'instant.",
+    editPosition: "Modifier {name}",
+    investedSuffix: "investi",
+    fundingLabel: "Versements mensuels",
+    perMonth: "/mois",
     emptyTitle: "Aucun investissement suivi pour l'instant",
     emptyBody:
       "Ajoutez des lignes dans chaque portefeuille pour suivre ce que vous avez investi et sa valeur actuelle.",
@@ -436,6 +446,25 @@ export const fr: Messages = {
     deleteTransferTitle: "Supprimer ce virement\u00A0?",
     deleteTransferBody:
       "L'enregistrement du virement est retiré\u00A0; vos transactions ne sont pas touchées.",
+  },
+
+  fundCost: {
+    title: "Ce que coûte la détention",
+    weightedSuffix: "par an, pondéré",
+    emptyBody:
+      "Renseignez les frais courants de chaque ligne — la commission annuelle indiquée sur son DIC — et ceci devient un montant en euros. C'est le premier poste de coût de la plupart des portefeuilles, et le seul qui n'apparaît sur aucun relevé.",
+    aYearOn: "par an sur",
+    overYears: "sur {years} ans à ce montant",
+    cheapestPrefix: "Votre ligne la moins chère est",
+    cheapestAt: "à {charge}. À ce taux, les mêmes",
+    wouldCost: "coûteraient",
+    differenceOf: "— soit",
+    aYear: "de différence par an.",
+    missingCharge: {
+      one: "{count} ligne sans frais renseignés",
+      other: "{count} lignes sans frais renseignés",
+    },
+    partialSuffix: ", ce total est donc partiel.",
   },
 
   monthClose: {
@@ -578,6 +607,40 @@ export const fr: Messages = {
   },
 
   position: {
+    fromRecurring: "Depuis un récurrent",
+    customHolding: "Ligne personnalisée",
+    noRecurringAvailable:
+      "Aucun récurrent disponible pour ce portefeuille. Créez-en un sur la page Récurrents, ou utilisez une ligne personnalisée.",
+    nameLabel: "Nom",
+    namePlaceholder: "ex. ETF MSCI World",
+    costBasis: "Total investi (prix de revient)",
+    costBasisHint:
+      "Le total investi indiqué par votre courtier pour cette ligne. Sert au calcul du +/- ; il n'est pas mis à jour par les transactions récurrentes.",
+    changeFundPrefix: "Changez le fonds sur la page",
+    changeFundLink: "Récurrents",
+    changeFundSuffix: ".",
+    chargePlaceholder: "ex. 0,20",
+    isinLabel: "ISIN (facultatif)",
+    isinHint:
+      "Douze caractères, sur le DIC ou la fiche du fonds. La transparence en a besoin pour lire la composition ; les actions et le Bitcoin peuvent rester vides.",
+    moneyWeightedReturn: "Rendement pondéré par les flux",
+    amountIn: "versés",
+    amountNow: "aujourd'hui",
+    returnExplainer:
+      "Annualisé sur chaque versement daté, pour qu'un versement mensuel soit comparé équitablement à un apport unique. Le gain absolu seul avantagerait celui dont l'argent est resté investi le plus longtemps.",
+    ofTarget: "sur {target} visé",
+    splitLeadPrefix: "Vos prochains",
+    splitLeadSuffix: "combleraient l'écart le plus vite ainsi :",
+    splitItemTo: "vers {wallet}",
+    splitTail:
+      " — rééquilibrer par les versements plutôt qu'en vendant.",
+    noTargetHint:
+      "Définissez une répartition cible pour voir la dérive du portefeuille et savoir où doit aller le prochain versement.",
+    peaPaidIn: "Versé",
+    peaOfCeiling: "sur {ceiling}",
+    peaRoomLeft: "de marge restante",
+    peaCashOnly:
+      "Seuls les versements comptent dans le plafond ; la performance, non.",
     addItem: "Ajouter une ligne",
     addCryptoItem: "Ajouter une ligne crypto",
     itemAdded: "Ligne ajoutée",
@@ -601,6 +664,20 @@ export const fr: Messages = {
       "Depuis votre courtier — les fractions de parts sont acceptées (virgule ou point, ex. 1,1465).",
     manualValuePlaceholder: "Valeur totale du portefeuille chez votre courtier",
     marketValuePlaceholder: "Laisser vide pour utiliser le marché",
+    brokerValue: "Le total de votre courtier (optionnel)",
+    brokerValueHint:
+      "Laissez vide — ou tapez 0 — et la valeur est calculée en direct depuis vos parts et le cours du marché. Ne le remplissez que si votre courtier affiche un total différent, puis épinglez-le ci-dessous pour qu'il soit retenu.",
+    pinValue: "Utiliser ce chiffre plutôt que le cours du marché",
+    pinValueHint:
+      "Non épinglé, votre chiffre ne sert que de repli quand aucun cours ne peut être récupéré.",
+    valuedLive: "Valorisé au marché",
+    valuedPinned: "Valorisé sur votre chiffre",
+    valuedManual: "Valorisé sur votre chiffre — aucun cours disponible",
+    valuedCost: "Valorisé au prix de revient — ajoutez les parts pour suivre le marché",
+    ongoingChargeLabel: "Frais courants du fonds (optionnel)",
+    ongoingChargeHint:
+      "Les frais annuels du fonds lui-même, en pourcentage — 0,20 pour 0,20 %. Ils figurent sur le DIC et n'apparaissent jamais sur un relevé, car ils sont prélevés sur la valeur du fonds. Ce ne sont pas les frais de votre courtier, que l'app ne suit pas.",
+    perYear: "% par an",
     lookUpCharge: "Chercher les frais sur justETF",
     saving: "Enregistrement…",
     saveItem: "Enregistrer la ligne",
@@ -1149,6 +1226,132 @@ export const fr: Messages = {
     },
   },
 
+  /** La transparence : de quoi les portefeuilles sont faits. */
+  lookThrough: {
+    title: "Transparence",
+    subtitle: "De quoi vos portefeuilles sont réellement faits",
+
+    geography: "Où est l'argent",
+    sectors: "Dans quoi il est",
+    charges: "Ce que cela coûte",
+    doublingUp: "Où vous faites doublon",
+    wrappers: "Où les choses sont placées",
+    target: "Une cible à viser",
+
+    countryShare: "{country}",
+    franceShare: "France",
+    europeShare: "Europe",
+    usShare: "États-Unis",
+    marketWeight: "Le marché lui donne {weight}",
+    timesMarket: "{factor}× le poids du marché",
+    inLineWithMarket: "Conforme au marché",
+
+    fundCharges: "Les frais propres aux fonds",
+    envelopeFeeHint:
+      "Sur le relevé annuel de votre contrat, en pourcentage — généralement 0,5 à 0,8. Ils s'ajoutent aux frais courants de chaque support.",
+    envelopeFee: "Les frais de l'enveloppe",
+    chargesNote:
+      "Ce sont les frais des fonds et de l'enveloppe. Les commissions de votre courtier et les frais de transaction ne sont pas suivis.",
+    allIn: "Tout compris",
+    perYear: "{amount} par an",
+    overYears: "{amount} sur {years} ans",
+    noChargeRecorded: "Aucuns frais renseignés",
+
+    sameIndex: "Les deux suivent {index}",
+    nestedIndex: "{outer} contient {inner}",
+    sharedCompanies: "Partage {count} de ses plus grosses lignes avec {other}",
+    overlapAtLeast: "Au moins {share} des mêmes sociétés",
+
+    cannotSitHere: "{name} ne peut pas être détenu dans un {wallet}",
+    couldSitIn: "Il pourrait aller dans un {wallets}",
+
+    targetWeight: "{weight}",
+    currentWeight: "actuellement {weight}",
+    buy: "Acheter {amount}",
+    sell: "Vendre {amount}",
+    noMoveNeeded: "Déjà à sa place",
+    rebalanceNote:
+      "Ce sont des mouvements entre lignes, pas de l'argent frais. Réorienter un virement mensuel arrive au même endroit sans vendre, ce qui dans un PEA est généralement la meilleure réponse.",
+
+    readCoverage: "{share} de votre encours a été lu",
+    notRead: "Pas encore lu",
+    notReadBody:
+      "{count} lignes n'ont pas été lues : leur composition est donc inconnue, et non vide. Les parts ci-dessus sont calculées sur le reste.",
+    readOne: "Lire celle-ci",
+    readingOne: "Lecture…",
+    readAll: "Lire le reste",
+    lastRead: "Lu {when}",
+
+    caveats: {
+      noIsin: "Pas encore identifié",
+      noIsinBody:
+        "{count} de vos lignes n'ont pas d'ISIN : il n'y a donc rien à rechercher. Ouvrez chacune depuis Positions et choisissez son instrument dans la recherche — c'est ce qui enregistre l'ISIN.",
+      goToPositions: "Ouvrir Positions",
+      neverRead: "Pas encore lu",
+      neverReadBody:
+        "{count} instruments ont un ISIN mais n'ont pas été lus. Lire un instrument va chercher ce qu'il contient — ses frais, ses pays, ses secteurs.",
+      readNothingUseful: "Lu, mais incomplet",
+      readNothingUsefulBody:
+        "{count} lectures ont trouvé des frais mais aucune répartition. Les relire peut en trouver davantage.",
+      needsAReading:
+        "Lisez d'abord au moins un instrument — il n'y a encore rien à passer en revue.",
+      unclassified:
+        "{share} de votre encours investi se trouve dans des instruments qui n'ont pas été lus. Toutes les parts de cette page sont calculées sur la partie qui l'a été.",
+      overlapIsAFloor:
+        "Le chevauchement est un plancher, pas une mesure. Seules les plus grosses lignes publiées de chaque fonds ont été comparées : deux fonds présentés comme partageant peu peuvent en réalité être largement les mêmes sociétés — l'indice suivi est le signal le plus fiable.",
+      staleReadings:
+        "{count} lectures ont plus de six mois. Elles servent quand même : la composition de l'an dernier vaut mieux que rien.",
+      noMarketValue: "Rien n'est détenu pour l'instant, il n'y a donc rien à examiner.",
+      partialAxis:
+        "Ces chiffres couvrent {coverage} de ce qui a été lu — une fiche ne publie pas toujours la répartition complète. Les parts sont celles publiées, pas une part de ce qui a été trouvé : elles ne totalisent donc pas l'ensemble.",
+      geographyIsNotCurrency:
+        "La géographie désigne ici où sont les sociétés, pas la devise dans laquelle vous êtes payé. Un fonds peut détenir des sociétés américaines et être libellé en euro.",
+    },
+  },
+
+  /** La revue des portefeuilles : ce qu'un modèle tire de la transparence. */
+  walletRead: {
+    review: "Passer en revue",
+    reviewing: "Lecture…",
+    reviewHint:
+      "Lit les chiffres de cette page et dit ce qu'il en pense. {remaining} restantes ce mois-ci.",
+    readAt: "Lu {when}",
+    stale: "Vos positions ont bougé depuis cette lecture",
+    writtenInOtherLanguage: "Rédigé en {language}.",
+    empty: "Rien n'a encore été lu.",
+    emptyBody:
+      "Les chiffres ci-dessus se suffisent à eux-mêmes. Une revue ajoute ce qu'on peut en tirer.",
+
+    allowanceSpent: "Vous avez utilisé vos {allowance} revues du mois.",
+    coolingDown: "Une vient d'être écrite — réessayez dans {seconds} s.",
+    inFlight: "Une revue est déjà en cours d'écriture.",
+    nothingToSay:
+      "Trop peu a été lu pour dire quoi que ce soit de l'ensemble du portefeuille.",
+    unchanged: "Rien n'a bougé depuis la dernière revue.",
+    untracked: "Les revues de portefeuille ne sont pas encore en place (migration 033).",
+    noWriter: "Aucun rédacteur n'est configuré.",
+    noAnswer: "Le rédacteur n'a pas répondu à l'instant.",
+    unusable: "La réponse du rédacteur n'a pas pu être utilisée.",
+    threwAway: "La réponse du rédacteur a été écartée. ({detail})",
+
+    refusal: {
+      wrongShape: "Pas la forme demandée",
+      unknownDatum: "Elle citait « {id} », qui n'a jamais été transmis",
+      unknownInstrument:
+        "Elle proposait « {isin} », qui n'est pas un instrument connu de l'app",
+      headlineHadFigure: "Le titre contenait un chiffre de son cru",
+      headlineTooLong: "Le titre dépassait une ligne",
+      everythingDropped: "Toutes les observations ont dû être écartées",
+    },
+
+    footing: {
+      notAdvice:
+        "Ce sont des informations sur vos propres avoirs, pas un conseil en investissement. Chaque chiffre est le calcul de l'app.",
+      partiallyRead:
+        "Certaines lignes n'ont pas été lues : ceci porte donc sur la partie du portefeuille que l'app peut voir.",
+    },
+  },
+
   bearing: {
     title: "Cap",
     asOf: "Au {date}",
@@ -1215,6 +1418,7 @@ export const fr: Messages = {
     chargeAsPercent: "Saisissez les frais en pourcentage, par exemple 0,20",
     chargeTooHigh:
       "Cela semble trop élevé — saisissez 0,20 pour 0,20 %, pas 20",
+    notAnIsin: "Cela ne ressemble pas à un ISIN, par exemple IE00B4L5Y983",
     notABalance: "Cela ne ressemble pas à un solde",
     notACap: "Cela ne ressemble pas à un plafond",
     nothingToImport: "Rien à importer",

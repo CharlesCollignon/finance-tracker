@@ -315,6 +315,9 @@ const PLACEHOLDER = /\{\{fact:([^}]+)\}\}/g;
  */
 const SCALE_WORDS = [
   "half",
+  // "halves" is not "halfs", so the plural has to be spelled out; the rest
+  // are handled by the optional `s` in the pattern below.
+  "halves",
   "third",
   "quarter",
   "double",
@@ -360,7 +363,14 @@ const SMALL_INTEGERS = [
 
 const UNIT_WORDS = ["percent", "per cent", "euro", "euros", "cent", "cents"];
 
-const SCALE_PATTERN = new RegExp(`\\b(${SCALE_WORDS.join("|")})\\b`, "i");
+// The optional plural matters more than it looks. `\b(third)\b` does not
+// match "thirds", so "nearly two thirds of it" sailed past a check whose
+// entire purpose is to catch exactly that sentence — the singular forms were
+// the ones tried by hand, and the plural is the one a model actually writes.
+const SCALE_PATTERN = new RegExp(
+  `\\b(${SCALE_WORDS.join("|")})s?\\b`,
+  "i",
+);
 
 const INTEGER_WITH_UNIT_PATTERN = new RegExp(
   `\\b(${SMALL_INTEGERS.join("|")})\\s+(${UNIT_WORDS.join("|")})\\b`,
