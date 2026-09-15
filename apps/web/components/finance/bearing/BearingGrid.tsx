@@ -36,6 +36,7 @@ import { saveBearingPinsAction } from "@/lib/actions/bearing";
 import { useToast } from "@/components/layout/ToastProvider";
 import { useT } from "@/lib/locale-context";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
+import { useGridColumns } from "@/lib/use-grid-columns";
 import { Tile } from "@/components/finance/bearing/Tile";
 import { Panel } from "@/components/finance/bearing/Panel";
 import { cn } from "@/lib/utils";
@@ -63,11 +64,13 @@ import { cn } from "@/lib/utils";
  * A pressed tile opens a panel under its own row rather than navigating away
  * — `openTile` holds which one, at most one at a time. The panel is a plain
  * grid child at `grid-column: 1 / -1`, so where it lands matters: `rowEndIndex`
- * (`@finance/core/bearing-grid`) finds the seam between two whole rows, and
- * two seams are computed, not one, because the grid is a different width on
- * a phone (`grid-cols-2 md:grid-cols-4` below) and a seam correct for four
- * columns is not generally correct for two. Starting a drag closes whatever
- * is open, so the two gestures never have to fight over the same row.
+ * (`@finance/core/bearing-grid`) finds the seam between two whole rows, given
+ * how many columns the grid actually has right now. That count is not a
+ * constant — the grid is `grid-cols-2 md:grid-cols-4` below — so
+ * `useGridColumns` reads the same breakpoint in JS that the markup uses in
+ * CSS, and exactly one panel is rendered, at the seam for whichever count is
+ * currently true. Starting a drag closes whatever is open, so the two
+ * gestures never have to fight over the same row.
  */
 
 interface BearingGridProps {
@@ -109,6 +112,7 @@ export function BearingGrid({
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
   const reducedMotion = usePrefersReducedMotion();
+  const columns = useGridColumns();
   const [, startTransition] = useTransition();
 
   const [order, setOrder] = useState<TileId[]>(initialOrder);
@@ -199,17 +203,9 @@ export function BearingGrid({
     : -1;
   const openRenderedTile = openIndex >= 0 ? laid[openIndex]! : null;
 
-  // Two answers, not one. The grid is two different widths depending on the
-  // viewport — `grid-cols-2 md:grid-cols-4` below — and a panel computed for
-  // four columns would open under the wrong row on a phone, which is the one
-  // case `rowEndIndex` exists to get right (see `bearing-grid.ts`). Both rows
-  // are rendered below, each hidden at the breakpoint it does not belong to
-  // by a plain Tailwind `hidden`/`md:hidden` pair: a hidden element takes no
-  // part in grid placement, so the one that does not apply is absent from
-  // the layout rather than merely invisible, and cannot leave a hole.
-  const panelRowDesktop =
-    openIndex >= 0 ? rowEndIndex(laid, openIndex, 4) : -1;
-  const panelRowPhone = openIndex >= 0 ? rowEndIndex(laid, openIndex, 2) : -1;
+  // The seam for whichever column count is actually in effect right now —
+  // see `useGridColumns` for why this can't be a constant.
+  const panelRow = openIndex >= 0 ? rowEndIndex(laid, openIndex, columns) : -1;
 
   const panelTransition = reducedMotion
     ? undefined
@@ -237,19 +233,10 @@ export function BearingGrid({
             open={tile.id === openTile}
             onOpen={() => toggleTile(tile.id)}
           />
-          {index === panelRowDesktop && openRenderedTile ? (
+          {index === panelRow && openRenderedTile ? (
             <div
               data-panel-row
-              className="col-span-full hidden overflow-hidden md:block"
-              style={{ transition: panelTransition }}
-            >
-              <Panel tile={openRenderedTile} />
-            </div>
-          ) : null}
-          {index === panelRowPhone && openRenderedTile ? (
-            <div
-              data-panel-row
-              className="col-span-full overflow-hidden md:hidden"
+              className="col-span-full overflow-hidden"
               style={{ transition: panelTransition }}
             >
               <Panel tile={openRenderedTile} />
