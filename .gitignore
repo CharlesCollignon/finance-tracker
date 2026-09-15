@@ -59,3 +59,6 @@ next-env.d.ts
 
 # package-lock.json
 package-lock.json
+
+# Visual brainstorming scratch — see docs/superpowers/specs for the output
+.superpowers/
