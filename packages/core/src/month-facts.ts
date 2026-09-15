@@ -527,7 +527,10 @@ export function factIds(pack: FactPack): Set<string> {
   return new Set(pack.facts.map((fact) => fact.id));
 }
 
-export function findFact(pack: FactPack, id: string): MonthFact | null {
+export function findFact<T extends MonthFact = MonthFact>(
+  pack: { facts: readonly T[] },
+  id: string,
+): T | null {
   return pack.facts.find((fact) => fact.id === id) ?? null;
 }
 
