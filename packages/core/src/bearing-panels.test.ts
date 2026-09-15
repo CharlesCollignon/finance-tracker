@@ -1,18 +1,36 @@
 import { describe, expect, it } from "vitest";
 
-import { BEARING_TILE_IDS, type TileId } from "./bearing-tiles";
+import { BEARING_TILE_IDS } from "./bearing-tiles";
 import type { FactFamily } from "./bearing-facts";
-import { panelFor } from "./bearing-panels";
+import { panelFor, type PanelBlock } from "./bearing-panels";
 
-const FAMILY_OF: Record<string, FactFamily> = {
-  free: "month",
-  "savings-rate": "month",
-  "inbox-pending": "now",
-  "on-hand": "now",
-  streak: "run",
-  "projected-kept": "ahead",
-  "wallet-return": "wallet",
-};
+const FAMILIES: readonly FactFamily[] = [
+  "now",
+  "month",
+  "run",
+  "ahead",
+  "wallet",
+];
+
+const BLOCKS: ReadonlySet<string> = new Set<PanelBlock>([
+  "money-on-hand",
+  "cash-accounts",
+  "recent-on-account",
+  "review-inbox",
+  "spend-strip",
+  "still-to-come",
+  "month-read",
+  "month-comparison",
+  "budget-progress",
+  "close-shelf",
+  "month-score",
+  "trend",
+  "projection",
+  "ingredients",
+  "wallets",
+  "weight-bars",
+  "fund-cost",
+]);
 
 describe("panelFor", () => {
   it("gives a month tile the scope chrome, because it is the only family that needs it", () => {
@@ -47,11 +65,29 @@ describe("panelFor", () => {
     );
     expect(panelFor("net-position", "now").href).toBeNull();
   });
+});
 
-  it("answers for every tile the Bearing can show", () => {
+describe("totality", () => {
+  it("answers for every tile in every family, with blocks it actually declares", () => {
     for (const id of BEARING_TILE_IDS) {
-      const spec = panelFor(id as TileId, FAMILY_OF[id] ?? "now");
-      expect(spec.blocks.length).toBeGreaterThan(0);
+      for (const family of FAMILIES) {
+        const spec = panelFor(id, family);
+
+        expect(spec.blocks.length).toBeGreaterThan(0);
+        for (const block of spec.blocks) {
+          expect(BLOCKS.has(block)).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("takes its chrome from the family, never from the tile", () => {
+    for (const id of BEARING_TILE_IDS) {
+      expect(panelFor(id, "month").chrome).toBe("month-scope");
+      expect(panelFor(id, "run").chrome).toBe("streak");
+      expect(panelFor(id, "ahead").chrome).toBe("horizon");
+      expect(panelFor(id, "now").chrome).toBe("none");
+      expect(panelFor(id, "wallet").chrome).toBe("none");
     }
   });
 });
