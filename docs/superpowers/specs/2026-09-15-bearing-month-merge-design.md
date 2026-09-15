@@ -324,11 +324,21 @@ that keeps the app shippable at every point:
 
 ## Risks
 
-**The mobile accordion inside `ReorderableList`.** The open tile's row grows
-taller with the panel inside it; `react-native-reorderable-list` supports
-variable item heights. Opening a panel cancels drag mode so the two gestures
-never compete. This is the highest-risk piece of the build and should be
-proven early.
+**The accordion is a web risk, not a mobile one.** `BearingTile.tsx` records
+that the phone is deliberately a single column and not a bento — "drag-
+reordering a grid of mixed spans on a 375px screen is a great deal of
+complexity for a layout nobody was asking for". A single column with variable
+row heights makes the panel trivial there: the open tile's row simply grows
+with the panel inside it, and `react-native-reorderable-list` already supports
+variable heights. Opening a panel cancels drag mode so the two gestures never
+compete.
+
+The web bento is the harder half, because a full-width panel has to be
+inserted into a four-column grid without leaving the holes that `HEAD` and
+`REPEAT` were chosen to avoid. The panel therefore takes its own grid row
+(`grid-column: 1 / -1`) immediately after the row containing the open tile,
+rather than being nested inside the tile. Prove this before building the
+panels themselves.
 
 **Next.js 16 streaming.** `AGENTS.md` is explicit that this is not the Next.js
 in training data. The exact mechanism for streaming panel detail is to be
