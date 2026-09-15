@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { Fragment, useCallback, useMemo, useState, useTransition } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -27,6 +27,8 @@ import {
   type Arrangement,
 } from "@finance/core/bearing-read";
 import { slotSpan, type TileId, type TilePins } from "@finance/core/bearing-tiles";
+import { rowEndIndex } from "@finance/core/bearing-grid";
+import { cssEasing, DURATION } from "@finance/core/motion";
 import type { Locale } from "@finance/core/i18n/locale";
 import type { RenderedTile } from "@finance/core/bearing-read";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -35,6 +37,7 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { useT } from "@/lib/locale-context";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { Tile } from "@/components/finance/bearing/Tile";
+import { Panel } from "@/components/finance/bearing/Panel";
 import { cn } from "@/lib/utils";
 
 /**
@@ -56,6 +59,15 @@ import { cn } from "@/lib/utils";
  * dragging a card that snaps back and then jumps. The write is fire-and-
  * forget with a toast on failure, because the cost of losing a tile position
  * is that you drag it again.
+ *
+ * A pressed tile opens a panel under its own row rather than navigating away
+ * — `openTile` holds which one, at most one at a time. The panel is a plain
+ * grid child at `grid-column: 1 / -1`, so where it lands matters: `rowEndIndex`
+ * (`@finance/core/bearing-grid`) finds the seam between two whole rows, and
+ * two seams are computed, not one, because the grid is a different width on
+ * a phone (`grid-cols-2 md:grid-cols-4` below) and a seam correct for four
+ * columns is not generally correct for two. Starting a drag closes whatever
+ * is open, so the two gestures never have to fight over the same row.
  */
 
 interface BearingGridProps {
@@ -104,6 +116,14 @@ export function BearingGrid({
     () => new Set(Object.keys(pins)),
   );
   const [dragging, setDragging] = useState<TileId | null>(null);
+  const [openTile, setOpenTile] = useState<TileId | null>(null);
+
+  // One at a time. A second open panel doubles the height of an already tall
+  // screen and means two detail fetches in flight for a figure the reader is
+  // no longer looking at.
+  const toggleTile = useCallback((id: TileId) => {
+    setOpenTile((current) => (current === id ? null : id));
+  }, []);
 
   // Spans come from the position, so the bento keeps its shape whatever the
   // order — a tile does not carry its size around with it.
@@ -167,8 +187,33 @@ export function BearingGrid({
   );
 
   const onDragStart = useCallback((event: DragStartEvent) => {
+    // Closes any open panel first, so the two gestures never compete: a
+    // panel resizing the row it lives in while a drag is trying to reflow
+    // the same grid is a fight neither side needs to have.
+    setOpenTile(null);
     setDragging(event.active.id as TileId);
   }, []);
+
+  const openIndex = openTile
+    ? laid.findIndex((tile) => tile.id === openTile)
+    : -1;
+  const openRenderedTile = openIndex >= 0 ? laid[openIndex]! : null;
+
+  // Two answers, not one. The grid is two different widths depending on the
+  // viewport — `grid-cols-2 md:grid-cols-4` below — and a panel computed for
+  // four columns would open under the wrong row on a phone, which is the one
+  // case `rowEndIndex` exists to get right (see `bearing-grid.ts`). Both rows
+  // are rendered below, each hidden at the breakpoint it does not belong to
+  // by a plain Tailwind `hidden`/`md:hidden` pair: a hidden element takes no
+  // part in grid placement, so the one that does not apply is absent from
+  // the layout rather than merely invisible, and cannot leave a hole.
+  const panelRowDesktop =
+    openIndex >= 0 ? rowEndIndex(laid, openIndex, 4) : -1;
+  const panelRowPhone = openIndex >= 0 ? rowEndIndex(laid, openIndex, 2) : -1;
+
+  const panelTransition = reducedMotion
+    ? undefined
+    : `grid-template-rows ${DURATION.panel}ms ${cssEasing()}`;
 
   const grid = (
     <div
@@ -180,16 +225,37 @@ export function BearingGrid({
         "[grid-auto-flow:row_dense]",
       )}
     >
-      {laid.map((tile) => (
-        <SortableTile
-          key={tile.id}
-          tile={tile}
-          trend={trend}
-          pinned={pinned.has(tile.id)}
-          draggable={draggable}
-          reducedMotion={reducedMotion}
-          handleLabel={t("bearing.reorder", { label: tile.label })}
-        />
+      {laid.map((tile, index) => (
+        <Fragment key={tile.id}>
+          <SortableTile
+            tile={tile}
+            trend={trend}
+            pinned={pinned.has(tile.id)}
+            draggable={draggable}
+            reducedMotion={reducedMotion}
+            handleLabel={t("bearing.reorder", { label: tile.label })}
+            open={tile.id === openTile}
+            onOpen={() => toggleTile(tile.id)}
+          />
+          {index === panelRowDesktop && openRenderedTile ? (
+            <div
+              data-panel-row
+              className="col-span-full hidden overflow-hidden md:block"
+              style={{ transition: panelTransition }}
+            >
+              <Panel tile={openRenderedTile} />
+            </div>
+          ) : null}
+          {index === panelRowPhone && openRenderedTile ? (
+            <div
+              data-panel-row
+              className="col-span-full overflow-hidden md:hidden"
+              style={{ transition: panelTransition }}
+            >
+              <Panel tile={openRenderedTile} />
+            </div>
+          ) : null}
+        </Fragment>
       ))}
     </div>
   );
@@ -246,6 +312,8 @@ function SortableTile({
   draggable,
   reducedMotion,
   handleLabel,
+  open,
+  onOpen,
 }: {
   tile: RenderedTile;
   trend: number[];
@@ -253,6 +321,8 @@ function SortableTile({
   draggable: boolean;
   reducedMotion: boolean;
   handleLabel: string;
+  open: boolean;
+  onOpen: () => void;
 }) {
   const {
     attributes,
@@ -285,6 +355,8 @@ function SortableTile({
         handleLabel={handleLabel}
         handleRef={draggable ? setActivatorNodeRef : undefined}
         handleProps={draggable ? { ...attributes, ...listeners } : undefined}
+        open={open}
+        onOpen={onOpen}
       />
     </div>
   );

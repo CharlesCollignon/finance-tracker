@@ -1,13 +1,13 @@
 "use client";
 
 import type { HTMLAttributes } from "react";
-import Link from "next/link";
 import { ArrowUpRight, DotsSixVertical } from "@phosphor-icons/react";
 import type { RenderedTile } from "@finance/core/bearing-read";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { Sparkline } from "@/components/finance/charts";
 import { GLASS_CARD } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 import { FIGURE, FIGURE_HERO, MICRO } from "@/lib/type-scale";
 import { cn } from "@/lib/utils";
 
@@ -24,12 +24,16 @@ import { cn } from "@/lib/utils";
  * is rare", and a grid where the first tile glinted would spend the whole
  * effect on a slot whose occupant changes every time somebody rearranges.
  *
- * The link is an overlay rather than a wrapper, and that is what makes the
- * drag handle work. A handle nested inside an anchor is a button inside a
- * link — invalid, and worse, a drag that ends where it started fires the
- * navigation. Stretching the anchor across the card behind everything else
- * keeps the whole tile pressable while leaving the handle a plain sibling
- * that the pointer reaches first.
+ * The press is a stretched button, overlaid rather than wrapped, and that is
+ * still what makes the drag handle work — the reason just changed hands. A
+ * handle nested inside a button is a button inside a button, invalid the
+ * same way a button inside a link was; stretching the button across the card
+ * behind everything else keeps the whole tile pressable while leaving the
+ * handle a plain sibling the pointer reaches first. Pressing it no longer
+ * navigates: it expands the tile's own panel in place, which is why it
+ * carries `aria-expanded` — a screen reader has to be told the row under
+ * this card just opened, the same way it would for any other disclosure
+ * control. `tile.href` moves to the panel's own footer link instead.
  */
 
 interface TileProps {
@@ -45,6 +49,10 @@ interface TileProps {
   handleRef?: (element: HTMLElement | null) => void;
   /** What the handle is for, in the reader's language. */
   handleLabel?: string;
+  /** True while this tile's panel is open. Absent (and false) for the drag ghost. */
+  open?: boolean;
+  /** Called on press. Absent for the drag ghost, which nothing can press. */
+  onOpen?: () => void;
 }
 
 /** The colour a figure takes from which way it has gone. */
@@ -67,8 +75,18 @@ export function Tile({
   handleProps,
   handleRef,
   handleLabel,
+  open = false,
+  onOpen,
 }: TileProps) {
+  const t = useT();
   const hero = tile.span === "hero";
+  // The catalog's own wording, not tile.label alone: a screen reader landing
+  // on one of a dozen otherwise-identical buttons needs to hear which figure
+  // it presses as well as what pressing it does, and what pressing it does
+  // depends on whether it is already open.
+  const panelLabel = `${tile.label}. ${
+    open ? t("bearing.panel.close") : t("bearing.panel.open")
+  }`;
 
   return (
     <div
@@ -83,17 +101,16 @@ export function Tile({
         pinned && "ring-1 ring-inset ring-foreground/15",
       )}
     >
-      {tile.href ? (
-        <Link
-          href={tile.href}
-          // Behind the content, over the card. `-z-10` with `isolate` on the
-          // parent keeps it out of the way of the handle without escaping the
-          // tile's own stacking context.
-          className="absolute inset-0 -z-10 rounded-3xl focus-visible:ring-2 focus-visible:ring-foreground/40"
-        >
-          <span className="sr-only">{tile.label}</span>
-        </Link>
-      ) : null}
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-expanded={open}
+        aria-label={panelLabel}
+        // Behind the content, over the card. `-z-10` with `isolate` on the
+        // parent keeps it out of the way of the handle without escaping the
+        // tile's own stacking context.
+        className="absolute inset-0 -z-10 rounded-3xl focus-visible:ring-2 focus-visible:ring-foreground/40"
+      />
 
       <div className="flex items-start justify-between gap-2">
         <p
