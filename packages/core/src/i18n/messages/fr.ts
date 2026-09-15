@@ -1391,6 +1391,14 @@ export const fr: Messages = {
       unknownDatum: 'Une légende a cité "{id}", qui ne lui a jamais été envoyé',
       nothingLeft: "Aucune tuile utilisable ne restait",
     },
+    panel: {
+      close: "Fermer",
+      open: "Voir ce qui compose ce chiffre",
+      loading: "Lecture…",
+      footer: "Voir la surface complète",
+      streakHeading: "Votre série",
+      horizon: "Jusqu'où",
+    },
   },
 
   errors: {

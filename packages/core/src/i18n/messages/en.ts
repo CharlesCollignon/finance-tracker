@@ -1665,6 +1665,14 @@ export const en = {
       unknownDatum: 'A caption referred to "{id}", which was never sent',
       nothingLeft: "No usable tile was left",
     },
+    panel: {
+      close: "Close",
+      open: "Show what this is made of",
+      loading: "Reading…",
+      footer: "See the full surface",
+      streakHeading: "Your run",
+      horizon: "How far ahead",
+    },
   },
 
   /**
