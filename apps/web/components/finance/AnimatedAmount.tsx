@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { DURATION, easeOutCubic } from "@finance/core/motion";
+
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { usePrivacyOn } from "@/lib/use-privacy";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
@@ -12,13 +14,6 @@ interface AnimatedAmountProps {
   className?: string;
   /** What this figure is, on hover. Forwarded to PrivateAmount. */
   title?: string;
-}
-
-const DURATION_MS = 650;
-
-/** Ease-out cubic — fast start, settles gently on the final figure. */
-function easeOut(t: number): number {
-  return 1 - Math.pow(1 - t, 3);
 }
 
 /**
@@ -63,8 +58,8 @@ export function AnimatedAmount({
     const start = performance.now();
 
     const tick = (now: number) => {
-      const progress = Math.min(1, (now - start) / DURATION_MS);
-      setDisplay(from + (value - from) * easeOut(progress));
+      const progress = Math.min(1, (now - start) / DURATION.count);
+      setDisplay(from + (value - from) * easeOutCubic(progress));
       if (progress < 1) {
         frame = requestAnimationFrame(tick);
       } else {

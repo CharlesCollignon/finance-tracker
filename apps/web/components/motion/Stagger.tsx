@@ -10,6 +10,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
+import { STAGGER_STEP_MS } from "@finance/core/motion";
 import { cn } from "@/lib/utils";
 
 interface StaggerProps {
@@ -45,7 +46,11 @@ function flattenElements(children: ReactNode): ReactElement<StyledProps>[] {
 }
 
 /** CSS stagger enter — plays once, then locks so re-renders don't replay. */
-export function Stagger({ children, className, stagger = 0.04 }: StaggerProps) {
+export function Stagger({
+  children,
+  className,
+  stagger = STAGGER_STEP_MS / 1000,
+}: StaggerProps) {
   const items = flattenElements(children);
 
   return (

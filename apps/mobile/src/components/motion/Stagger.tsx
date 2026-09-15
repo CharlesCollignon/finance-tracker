@@ -1,12 +1,8 @@
 import type { ReactNode } from "react";
 
+import { staggerDelay } from "@finance/core/motion";
+
 import { FadeIn } from "@/components/motion/FadeIn";
-
-/** Matches the web Stagger's 40ms cadence. */
-const STAGGER_MS = 40;
-
-/** Caps the delay so long lists don't leave later rows visibly late. */
-const MAX_STEPS = 8;
 
 interface StaggerItemProps {
   index: number;
@@ -21,10 +17,7 @@ interface StaggerItemProps {
  */
 export function StaggerItem({ index, children, className }: StaggerItemProps) {
   return (
-    <FadeIn
-      delayMs={Math.min(index, MAX_STEPS) * STAGGER_MS}
-      className={className}
-    >
+    <FadeIn delayMs={staggerDelay(index)} className={className}>
       {children}
     </FadeIn>
   );

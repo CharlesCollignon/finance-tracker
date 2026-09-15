@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { StyleProp, TextStyle } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 
+import { DURATION, easeOutCubic } from "@finance/core/motion";
+
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { usePrivacy } from "@/providers/PrivacyProvider";
 
@@ -11,13 +13,6 @@ interface AnimatedAmountProps {
   className?: string;
   /** For the display sizes, which carry no text-* class. See TYPE in tokens. */
   style?: StyleProp<TextStyle>;
-}
-
-const DURATION_MS = 650;
-
-/** Ease-out cubic — fast start, settles gently on the final figure. */
-function easeOut(t: number): number {
-  return 1 - Math.pow(1 - t, 3);
 }
 
 /**
@@ -56,8 +51,8 @@ export function AnimatedAmount({
     const start = Date.now();
 
     const tick = () => {
-      const progress = Math.min(1, (Date.now() - start) / DURATION_MS);
-      setDisplay(from + (value - from) * easeOut(progress));
+      const progress = Math.min(1, (Date.now() - start) / DURATION.count);
+      setDisplay(from + (value - from) * easeOutCubic(progress));
       if (progress < 1) {
         frame = requestAnimationFrame(tick);
       } else {

@@ -5,6 +5,8 @@ import Animated, {
   useReducedMotion,
 } from "react-native-reanimated";
 
+import { DURATION, EASE_STANDARD } from "@finance/core/motion";
+
 import { cn } from "@/lib/cn";
 
 interface FadeInProps {
@@ -13,7 +15,7 @@ interface FadeInProps {
   className?: string;
 }
 
-const NOCTURNE_EASING = Easing.bezier(0.32, 0.72, 0, 1);
+const NOCTURNE_EASING = Easing.bezier(...EASE_STANDARD);
 
 /** Soft enter: opacity + slight rise, 500ms ledger-style ease. */
 export function FadeIn({ children, delayMs = 0, className }: FadeInProps) {
@@ -25,7 +27,9 @@ export function FadeIn({ children, delayMs = 0, className }: FadeInProps) {
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(500).easing(NOCTURNE_EASING).delay(delayMs)}
+      entering={FadeInDown.duration(DURATION.enter)
+        .easing(NOCTURNE_EASING)
+        .delay(delayMs)}
       className={cn(className)}
     >
       {children}
