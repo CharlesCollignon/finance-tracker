@@ -28,7 +28,7 @@ import { z } from "zod";
 
 import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
-import type { BearingFacts } from "./bearing-facts";
+import type { BearingFacts, FactFamily } from "./bearing-facts";
 import {
   BEARING_TILES,
   isTileId,
@@ -318,6 +318,15 @@ function bareId(entry: string): string {
 
 export interface RenderedTile {
   id: TileId;
+  /**
+   * Which horizon this figure belongs to.
+   *
+   * Copied from the datum rather than looked up from the id, for the reason
+   * `bearing-facts.ts` gives for carrying it there: two apps deriving the
+   * same grouping from a naming convention is two places for that convention
+   * to rot. The panel system groups by this.
+   */
+  family: FactFamily;
   /** The datum's own label, in the reader's language. */
   label: string;
   /** The app's formatted value — never the model's. */
@@ -370,6 +379,7 @@ export function renderArrangement(
 
     rendered.push({
       id,
+      family: fact.family,
       label: fact.label,
       display: formatFact(fact, formatMoney, locale),
       value: fact.value,

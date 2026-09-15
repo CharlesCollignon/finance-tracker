@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { BearingFact, BearingFacts } from "./bearing-facts";
+import type { BearingFact, BearingFacts, FactFamily } from "./bearing-facts";
 import {
   arrangementFooting,
   MAX_CAPTION_LENGTH,
@@ -20,6 +20,40 @@ function fact(id: string, partial: Partial<BearingFact> = {}): BearingFact {
     value: 1234,
     sense: "neutral",
     ...partial,
+  };
+}
+
+const FAMILIES: Record<string, FactFamily> = {
+  "net-position": "now",
+  "on-hand": "now",
+  invested: "now",
+  "inbox-pending": "now",
+  free: "month",
+  "unrecorded-over": "month",
+  "savings-rate": "month",
+  "projected-balance": "ahead",
+  "runway-months": "ahead",
+  streak: "run",
+  "wallet-return": "wallet",
+  "wallet-drift": "wallet",
+  "wallet-drag": "wallet",
+};
+
+function pack(ids: string[]): BearingFacts {
+  return {
+    asOf: "2026-09-09",
+    facts: ids.map(
+      (id): BearingFact => ({
+        id,
+        family: FAMILIES[id] ?? "now",
+        label: id,
+        unit: "money",
+        value: 1,
+        sense: "neutral",
+      }),
+    ),
+    missing: [],
+    thin: false,
   };
 }
 
@@ -320,6 +354,18 @@ describe("renderArrangement", () => {
 
     expect(rendered).toHaveLength(2);
     expect(rendered.every((tile) => tile.caption === null)).toBe(true);
+  });
+
+  it("carries each datum's family onto the tile it renders", () => {
+    const facts = pack(["free", "streak"]);
+    const tiles = renderArrangement(
+      ["free", "streak"],
+      null,
+      facts,
+      (n) => `${n}`,
+    );
+
+    expect(tiles.map((tile) => tile.family)).toEqual(["month", "run"]);
   });
 });
 
