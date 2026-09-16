@@ -1689,6 +1689,17 @@ export const en = {
       /** When the detail could not be fetched. The figure above is still true. */
       failed: "The detail could not be read just now.",
       retry: "Try again",
+      /**
+       * The phone's `cash-accounts` block. No web equivalent needs these:
+       * `CashAccountsCard` carries its own English there, pre-existing and
+       * out of scope — this is new code on the phone, so it goes through the
+       * catalogue like everything else new.
+       */
+      cashAccountsHeading: "Which accounts hold your cash",
+      cashAccountsBody:
+        "Closing a month compares what these held at the start and the end against what the ledger says happened.",
+      cashAccountsLapsed: "Consent has lapsed — nothing can be read from it",
+      cashAccountsLastRead: "Read {when}",
     },
   },
 

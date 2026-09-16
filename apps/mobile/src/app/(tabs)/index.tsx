@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform, Pressable, RefreshControl, View } from "react-native";
 import { Gesture } from "react-native-gesture-handler";
 import { runOnJS } from "react-native-reanimated";
@@ -21,6 +21,7 @@ import {
   getBearingPins,
   saveBearingPins,
 } from "@/lib/bearing";
+import { clearPanelCache } from "@/lib/bearing-panel";
 
 import { BearingTile } from "@/components/bearing/BearingTile";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -81,6 +82,18 @@ export default function BearingScreen() {
   } | null>(null);
   const [arranging, setArranging] = useState(false);
 
+  /** Which tile's panel is open, if any. One at a time. */
+  const [openTile, setOpenTile] = useState<TileId | null>(null);
+
+  // A write anywhere in the app should not leave a panel showing what a
+  // figure used to be. `clearPanelCache` only clears the cache — an open
+  // panel refetches on its own next effect run because its own `onChanged`
+  // bumps its `attempt`, but a panel that is not open yet must not hand the
+  // stale detail back the next time it opens.
+  useEffect(() => {
+    clearPanelCache();
+  }, [dataVersion]);
+
   /**
    * The drag gesture, held back until the handle's long press has fired.
    *
@@ -129,6 +142,11 @@ export default function BearingScreen() {
 
   const onDragStart = useCallback(() => {
     "worklet";
+    // Dragging and an open panel are two ways of interacting with the same
+    // tile, and starting one should not leave the other running underneath
+    // it — see `BearingTile`'s own doc comment on why the press and the
+    // handle are kept from competing.
+    runOnJS(setOpenTile)(null);
     if (Platform.OS === "android" && !refreshing) {
       runOnJS(setRefreshEnabled)(false);
     }
@@ -250,6 +268,10 @@ export default function BearingScreen() {
             tile={{ ...item, span: slotSpan(index) }}
             pinned={item.id in pins}
             draggable={stored.tracked}
+            open={item.id === openTile}
+            onToggle={() =>
+              setOpenTile((current) => (current === item.id ? null : item.id))
+            }
           />
         )}
         onReorder={onReorder}

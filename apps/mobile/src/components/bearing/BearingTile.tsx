@@ -1,11 +1,17 @@
 import { Pressable, View } from "react-native";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useReorderableDrag } from "react-native-reorderable-list";
+import Animated, {
+  Easing,
+  LinearTransition,
+  useReducedMotion,
+} from "react-native-reanimated";
 
 import type { RenderedTile } from "@finance/core/bearing-read";
 import type { ReadSegment } from "@finance/core/month-read";
+import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 
+import { Panel } from "@/components/bearing/Panel";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -28,19 +34,38 @@ import { useThemeColors } from "@/theme/useThemeColors";
  * hero, and it gets the large figure. That is the one piece of the web's
  * rhythm worth keeping, because "the thing to look at first" should look like
  * it.
+ *
+ * Pressing a tile no longer navigates. It opens `Panel` in the row beneath
+ * it — the same disclosure the web app's `Tile.tsx` switched to, and for the
+ * same reason: `tile.href` used to be what a press did, and it is now only
+ * the way out to the full surface, from the panel's own footer link. The row
+ * growing to fit the panel is `Animated.View`'s own `layout` transition
+ * rather than a measured height, which is what lets it work for content
+ * whose height nobody knows in advance — the panel's blocks stream in one at
+ * a time as their detail arrives.
  */
 
 interface BearingTileProps {
   tile: RenderedTile;
   pinned: boolean;
   draggable: boolean;
+  /** True while this tile's panel is open. */
+  open: boolean;
+  /** Opens this tile's panel, or closes it if it is already open. */
+  onToggle: () => void;
 }
 
-export function BearingTile({ tile, pinned, draggable }: BearingTileProps) {
-  const router = useRouter();
+export function BearingTile({
+  tile,
+  pinned,
+  draggable,
+  open,
+  onToggle,
+}: BearingTileProps) {
   const t = useT();
   const colors = useThemeColors();
   const drag = useReorderableDrag();
+  const reduceMotion = useReducedMotion();
 
   const hero = tile.span === "hero";
 
@@ -59,73 +84,86 @@ export function BearingTile({ tile, pinned, draggable }: BearingTileProps) {
       className={cn("mb-3", pinned && "border-foreground/25")}
       style={{ paddingVertical: hero ? 20 : 14 }}
     >
-      <View className="flex-row items-start justify-between gap-3">
-        <Pressable
-          className="min-w-0 flex-1"
-          disabled={!tile.href}
-          onPress={() => {
-            if (tile.href) {
-              router.push(tile.href as never);
-            }
-          }}
-          // Named for what it is rather than what it does: the label and the
-          // value together are the announcement, and "button" on its own
-          // tells a screen reader nothing about the figure.
-          accessibilityRole={tile.href ? "link" : "text"}
-          accessibilityLabel={`${tile.label}: ${tile.display}`}
-        >
-          <Text className="text-sm text-muted-foreground">{tile.label}</Text>
-
-          <PrivateAmount
-            style={[hero ? TYPE.hero : TYPE.figure, { color: tone }]}
-            className="mt-1"
-          >
-            {tile.display}
-          </PrivateAmount>
-
-          {tile.caption ? (
-            <View className="mt-1 flex-row flex-wrap items-baseline">
-              <Caption segments={tile.caption} />
-            </View>
-          ) : null}
-
-          {/* Only on the hero, and only when the pack put one there. A caveat
-              repeated on every tile is a caveat nobody reads. */}
-          {hero && tile.note ? (
-            <Text
-              className="mt-1 text-muted-foreground"
-              style={TYPE.micro}
-            >
-              {tile.note}
-            </Text>
-          ) : null}
-        </Pressable>
-
-        {draggable ? (
+      <Animated.View
+        layout={
+          reduceMotion
+            ? undefined
+            : LinearTransition.duration(DURATION.panel).easing(
+                Easing.bezier(...EASE_STANDARD),
+              )
+        }
+      >
+        <View className="flex-row items-start justify-between gap-3">
           <Pressable
-            // The handle starts the drag; nothing else does. Long-pressing
-            // the whole card would make every press a gamble on how long the
-            // finger stayed down, on a card whose main job is to be a link.
-            onLongPress={drag}
-            delayLongPress={180}
-            hitSlop={12}
+            className="min-w-0 flex-1"
+            onPress={onToggle}
             accessibilityRole="button"
-            accessibilityLabel={t("bearing.reorder", { label: tile.label })}
+            accessibilityState={{ expanded: open }}
+            // The catalogue's own wording, not the label alone: a screen
+            // reader landing on one of a dozen otherwise-identical tiles
+            // needs to hear which figure it presses as well as what pressing
+            // it does, and what pressing it does depends on whether it is
+            // already open.
+            accessibilityLabel={`${tile.label}: ${tile.display}. ${
+              open ? t("bearing.panel.close") : t("bearing.panel.open")
+            }`}
           >
+            <Text className="text-sm text-muted-foreground">{tile.label}</Text>
+
+            <PrivateAmount
+              style={[hero ? TYPE.hero : TYPE.figure, { color: tone }]}
+              className="mt-1"
+            >
+              {tile.display}
+            </PrivateAmount>
+
+            {tile.caption ? (
+              <View className="mt-1 flex-row flex-wrap items-baseline">
+                <Caption segments={tile.caption} />
+              </View>
+            ) : null}
+
+            {/* Only on the hero, and only when the pack put one there. A caveat
+                repeated on every tile is a caveat nobody reads. */}
+            {hero && tile.note ? (
+              <Text
+                className="mt-1 text-muted-foreground"
+                style={TYPE.micro}
+              >
+                {tile.note}
+              </Text>
+            ) : null}
+          </Pressable>
+
+          {draggable ? (
+            <Pressable
+              // The handle starts the drag; nothing else does. Long-pressing
+              // the whole card would make every press a gamble on how long the
+              // finger stayed down, on a card whose main job is to open its
+              // panel.
+              onLongPress={drag}
+              delayLongPress={180}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={t("bearing.reorder", { label: tile.label })}
+            >
+              <Ionicons
+                name="reorder-two-outline"
+                size={ICON.lg}
+                color={colors.mutedForeground}
+              />
+            </Pressable>
+          ) : tile.href ? (
             <Ionicons
-              name="reorder-two-outline"
-              size={ICON.lg}
+              name="chevron-forward"
+              size={ICON.sm}
               color={colors.mutedForeground}
             />
-          </Pressable>
-        ) : tile.href ? (
-          <Ionicons
-            name="chevron-forward"
-            size={ICON.sm}
-            color={colors.mutedForeground}
-          />
-        ) : null}
-      </View>
+          ) : null}
+        </View>
+
+        {open ? <Panel tile={tile} /> : null}
+      </Animated.View>
     </Card>
   );
 }

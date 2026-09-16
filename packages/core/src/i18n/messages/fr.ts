@@ -1412,6 +1412,11 @@ export const fr: Messages = {
       moreHoldings: "{count} de plus",
       failed: "Le détail n'a pas pu être lu pour le moment.",
       retry: "Réessayer",
+      cashAccountsHeading: "Quels comptes détiennent vos liquidités",
+      cashAccountsBody:
+        "Clôturer un mois compare ce que ces comptes détenaient au début et à la fin avec ce que le grand livre indique.",
+      cashAccountsLapsed: "Le consentement a expiré — rien ne peut en être lu",
+      cashAccountsLastRead: "Lu {when}",
     },
   },
 
