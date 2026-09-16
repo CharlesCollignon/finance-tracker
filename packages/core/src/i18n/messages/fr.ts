@@ -1073,6 +1073,7 @@ export const fr: Messages = {
     notYetMeasured:
       "Clôturez un mois par rapport au solde de votre banque et ceci se remplit : l'application calcule ce qui a quitté le compte sans qu'aucune écriture ne l'explique.",
     findMissingEntry: "Trouver l'écriture manquante",
+    setUpCta: "Configurer",
   },
 
   cashAccounts: {

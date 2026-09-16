@@ -196,7 +196,7 @@ export function MonthScore({
           ? t("monthScore.findMissingEntry")
           : hasStreak
             ? t("common.everyMonthClosed")
-            : t("common.setUp")}
+            : t("monthScore.setUpCta")}
         <ArrowRight size={ICON.sm} />
       </Link>
     </section>

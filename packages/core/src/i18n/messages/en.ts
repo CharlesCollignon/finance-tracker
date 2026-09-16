@@ -1268,6 +1268,13 @@ export const en = {
     notYetMeasured:
       "Close a month against your bank balance and this fills in: the app works out what left the account that no entry explains.",
     findMissingEntry: "Find the missing entry",
+    /**
+     * The footer link's third state, offered when there is nothing yet to
+     * measure. Its own key rather than `common.setUp` (a title, "Set up",
+     * used on the onboarding screen) because this is a CTA link and reads in
+     * a different register — a link says "Set this up", a heading doesn't.
+     */
+    setUpCta: "Set this up",
   },
 
   /**
