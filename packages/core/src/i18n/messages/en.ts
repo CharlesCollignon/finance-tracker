@@ -1672,6 +1672,23 @@ export const en = {
       footer: "See the full surface",
       streakHeading: "Your run",
       horizon: "How far ahead",
+      /** The month stepper above a month panel, for a screen reader. */
+      monthScope: "Which month this panel shows",
+      /** The run, in the streak chrome. */
+      streakMonths: {
+        one: "{count} month inside the allowance",
+        other: "{count} months inside the allowance",
+      },
+      streakNone: "No run yet — close a month inside the allowance to start one.",
+      bestRun: "Best so far: {count}",
+      /** Block headings. The blocks themselves state figures, not what they are. */
+      comparisonHeading: "Against last month",
+      trendHeading: "Month by month",
+      holdingsHeading: "Biggest holdings",
+      moreHoldings: "{count} more",
+      /** When the detail could not be fetched. The figure above is still true. */
+      failed: "The detail could not be read just now.",
+      retry: "Try again",
     },
   },
 

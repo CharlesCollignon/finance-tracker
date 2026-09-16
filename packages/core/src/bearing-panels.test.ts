@@ -43,9 +43,20 @@ describe("panelFor", () => {
     const free = panelFor("free", "month").blocks;
     const rate = panelFor("savings-rate", "month").blocks;
 
-    expect(free).toEqual(["spend-strip", "still-to-come"]);
+    expect(free).toEqual(["spend-strip", "still-to-come", "month-read"]);
     expect(rate).toEqual(["month-comparison", "spend-strip"]);
     expect(free).not.toEqual(rate);
+  });
+
+  it("names the month read on one tile, not on the month family", () => {
+    // The read costs a dozen reads to gather, so the tile that shows it is
+    // the tile that pays for it. If this ever becomes a family default,
+    // `gatherPanelDetail` starts charging every month panel for it.
+    const withRead = BEARING_TILE_IDS.filter((id) =>
+      panelFor(id, "month").blocks.includes("month-read"),
+    );
+
+    expect(withRead).toEqual(["free"]);
   });
 
   it("falls back to the family's own blocks for a tile with no mapping", () => {

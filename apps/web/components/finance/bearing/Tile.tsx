@@ -1,14 +1,16 @@
 "use client";
 
 import type { HTMLAttributes } from "react";
-import { ArrowUpRight, DotsSixVertical } from "@phosphor-icons/react";
+import { CaretDown, DotsSixVertical } from "@phosphor-icons/react";
 import type { RenderedTile } from "@finance/core/bearing-read";
+import { cssEasing, DURATION } from "@finance/core/motion";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { Sparkline } from "@/components/finance/charts";
 import { GLASS_CARD } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import { FIGURE, FIGURE_HERO, MICRO } from "@/lib/type-scale";
+import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
 /**
@@ -34,6 +36,20 @@ import { cn } from "@/lib/utils";
  * carries `aria-expanded` — a screen reader has to be told the row under
  * this card just opened, the same way it would for any other disclosure
  * control. `tile.href` moves to the panel's own footer link instead.
+ *
+ * Which is also why the corner mark is a caret and not an arrow. It was an
+ * up-and-right arrow shown only on tiles that had an `href`, because that is
+ * what an arrow means — you are about to leave. Both halves were wrong once
+ * the press became a disclosure: every tile expands, `net-position` with no
+ * link included, and none of them takes you anywhere. A caret that turns
+ * over when the panel is open is the mark this control has always had,
+ * everywhere else in the app and outside it.
+ *
+ * And it sits beside the drag handle rather than instead of it. The arrow
+ * was the handle's alternative, which meant the one hint that a tile does
+ * anything at all vanished on exactly the grids where it does the most —
+ * every signed-in grid is draggable. They are both small and both quiet;
+ * there is room.
  */
 
 interface TileProps {
@@ -79,6 +95,7 @@ export function Tile({
   onOpen,
 }: TileProps) {
   const t = useT();
+  const reducedMotion = usePrefersReducedMotion();
   const hero = tile.span === "hero";
   // The catalog's own wording, not tile.label alone: a screen reader landing
   // on one of a dozen otherwise-identical buttons needs to hear which figure
@@ -94,7 +111,9 @@ export function Tile({
         "group relative isolate flex h-full min-h-[7.5rem] flex-col gap-1 rounded-3xl p-4 md:p-5",
         GLASS_CARD,
         hero && "min-h-[11rem] md:p-6",
-        tile.href && "transition-colors hover:border-foreground/25",
+        // Every tile responds now. The hover used to be gated on `href`,
+        // from when only a tile with somewhere to go did anything on press.
+        "transition-colors hover:border-foreground/25",
         dragging && "opacity-40",
         // Said quietly. A pinned tile is not an error state; the ring is
         // there so somebody who dragged three tiles can see which three.
@@ -122,27 +141,43 @@ export function Tile({
           {tile.label}
         </p>
 
-        {handleProps ? (
-          <span
-            ref={handleRef}
-            {...handleProps}
-            role="button"
-            tabIndex={0}
-            aria-label={handleLabel}
-            // `touch-none` so a drag on a touch screen is a drag rather than
-            // a scroll — without it the browser claims the gesture first and
-            // the tile never moves.
-            className="-m-1 shrink-0 cursor-grab touch-none rounded p-1 text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:text-foreground active:cursor-grabbing"
-          >
-            <DotsSixVertical size={ICON.sm} weight="bold" />
-          </span>
-        ) : tile.href ? (
-          <ArrowUpRight
+        <span className="flex shrink-0 items-center gap-1">
+          <CaretDown
             size={ICON.sm}
-            className="shrink-0 opacity-0 transition-opacity group-hover:opacity-40"
+            weight="bold"
+            // Faint until wanted, and plain once the panel is open — an open
+            // disclosure's mark is state, not a hint. Never announced: the
+            // stretched button behind it already carries `aria-expanded`,
+            // and a second voice for the same fact is one too many.
+            className={cn(
+              open
+                ? "rotate-180 opacity-40"
+                : "opacity-0 group-hover:opacity-40",
+            )}
+            style={{
+              transition: reducedMotion
+                ? undefined
+                : `transform ${DURATION.panel}ms ${cssEasing()}, opacity ${DURATION.panel}ms ${cssEasing()}`,
+            }}
             aria-hidden
           />
-        ) : null}
+
+          {handleProps ? (
+            <span
+              ref={handleRef}
+              {...handleProps}
+              role="button"
+              tabIndex={0}
+              aria-label={handleLabel}
+              // `touch-none` so a drag on a touch screen is a drag rather
+              // than a scroll — without it the browser claims the gesture
+              // first and the tile never moves.
+              className="-m-1 shrink-0 cursor-grab touch-none rounded p-1 text-muted-foreground/50 transition-colors hover:text-foreground focus-visible:text-foreground active:cursor-grabbing"
+            >
+              <DotsSixVertical size={ICON.sm} weight="bold" />
+            </span>
+          ) : null}
+        </span>
       </div>
 
       <div className="mt-auto flex flex-wrap items-end justify-between gap-x-3 gap-y-1">

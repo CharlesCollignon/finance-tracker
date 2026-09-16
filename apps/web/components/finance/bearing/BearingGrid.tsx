@@ -28,7 +28,6 @@ import {
 } from "@finance/core/bearing-read";
 import { slotSpan, type TileId, type TilePins } from "@finance/core/bearing-tiles";
 import { rowEndIndex } from "@finance/core/bearing-grid";
-import { cssEasing, DURATION } from "@finance/core/motion";
 import type { Locale } from "@finance/core/i18n/locale";
 import type { RenderedTile } from "@finance/core/bearing-read";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -71,6 +70,12 @@ import { cn } from "@/lib/utils";
  * CSS, and exactly one panel is rendered, at the seam for whichever count is
  * currently true. Starting a drag closes whatever is open, so the two
  * gestures never have to fight over the same row.
+ *
+ * The opening itself is `Panel`'s. This file places the row; the panel knows
+ * when its own content exists to unfold against, and holding a closed one
+ * mounted here so it could shrink on the way out would leave a zero-height
+ * child with the grid's gap on either side of it — a seam that outlives the
+ * panel.
  */
 
 interface BearingGridProps {
@@ -207,10 +212,6 @@ export function BearingGrid({
   // see `useGridColumns` for why this can't be a constant.
   const panelRow = openIndex >= 0 ? rowEndIndex(laid, openIndex, columns) : -1;
 
-  const panelTransition = reducedMotion
-    ? undefined
-    : `grid-template-rows ${DURATION.panel}ms ${cssEasing()}`;
-
   const grid = (
     <div
       className={cn(
@@ -233,12 +234,11 @@ export function BearingGrid({
             open={tile.id === openTile}
             onOpen={() => toggleTile(tile.id)}
           />
+          {/* The seam, and nothing else. The unfolding belongs to `Panel`,
+              which is the only thing that knows when its own content is
+              ready to be measured against. */}
           {index === panelRow && openRenderedTile ? (
-            <div
-              data-panel-row
-              className="col-span-full overflow-hidden"
-              style={{ transition: panelTransition }}
-            >
+            <div data-panel-row className="col-span-full">
               <Panel tile={openRenderedTile} />
             </div>
           ) : null}

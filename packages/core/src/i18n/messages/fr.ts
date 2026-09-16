@@ -1398,6 +1398,20 @@ export const fr: Messages = {
       footer: "Voir la surface complète",
       streakHeading: "Votre série",
       horizon: "Jusqu'où",
+      monthScope: "Le mois affiché par ce panneau",
+      streakMonths: {
+        one: "{count} mois dans l'enveloppe",
+        other: "{count} mois dans l'enveloppe",
+      },
+      streakNone:
+        "Pas encore de série — clôturez un mois dans l'enveloppe pour la commencer.",
+      bestRun: "Record : {count}",
+      comparisonHeading: "Par rapport au mois dernier",
+      trendHeading: "Mois par mois",
+      holdingsHeading: "Principales positions",
+      moreHoldings: "{count} de plus",
+      failed: "Le détail n'a pas pu être lu pour le moment.",
+      retry: "Réessayer",
     },
   },
 
