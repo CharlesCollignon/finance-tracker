@@ -1215,13 +1215,12 @@ export const en = {
    */
   moneyOnHand: {
     /**
-     * The phone's own term label, lower-cased where the web's equivalent
-     * (`month.inTheAccount`, "In the account") is capitalised. Pre-existing
-     * on the phone and left as it renders — the task sweeping this file is
-     * string extraction, not a rewrite — but it is worth a bug report: the
-     * two clients say the same figure with different capitalisation.
+     * The other two terms in the same row. "In the account" is
+     * `month.inTheAccount`, shared with this one rather than repeated here
+     * — the phone used to carry its own lower-cased copy of that label,
+     * which was the bug: two keys saying the same figure two different
+     * ways, not the casing itself.
      */
-    inTheAccount: "in the account",
     stillToLeave: "still to leave",
     stillToArrive: "still to arrive",
     pastMonthBanner: "Looking at {month} — a month that has ended",

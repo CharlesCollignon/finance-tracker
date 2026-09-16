@@ -123,7 +123,7 @@ export function MoneyOnHand({
       {banked ? (
         <View className="-mt-3 flex-row flex-wrap items-baseline gap-x-1.5 gap-y-1">
           <Term
-            label={t("moneyOnHand.inTheAccount")}
+            label={t("month.inTheAccount")}
             amount={formatEuro(pulse.onHand!)}
           />
           {pulse.committed > 0 ? (
@@ -234,15 +234,16 @@ function BudgetViewControl({
   onChange: (next: BudgetViewMode) => void;
 }) {
   const t = useT();
+  const locale = useLocale();
   const colors = useThemeColors();
   const next: BudgetViewMode = view === "current" ? "month_end" : "current";
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={budgetViewOptionLabel(view, year, month)}
+      accessibilityLabel={budgetViewOptionLabel(view, year, month, locale)}
       accessibilityHint={t("moneyOnHand.switchesTo", {
-        option: budgetViewOptionLabel(next, year, month),
+        option: budgetViewOptionLabel(next, year, month, locale),
       })}
       hitSlop={8}
       onPress={() => {

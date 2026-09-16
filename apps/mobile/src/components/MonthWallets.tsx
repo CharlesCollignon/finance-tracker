@@ -2,7 +2,10 @@ import { Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-import { INVESTMENT_WALLET_IDS } from "@finance/core/investments";
+import {
+  INVESTMENT_WALLET_IDS,
+  INVESTMENT_WALLET_LABELS,
+} from "@finance/core/investments";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
 import type { CategoryBreakdown } from "@finance/core/types/database";
 
@@ -19,12 +22,6 @@ import { useT } from "@/providers/LocaleProvider";
 interface MonthWalletsProps {
   portfolio: InvestmentPortfolioSummary;
 }
-
-const WALLET_LABELS: Record<string, string> = {
-  pea: "PEA",
-  cto: "CTO",
-  crypto: "Crypto",
-};
 
 /**
  * What is invested, in one line and one bar.
@@ -45,7 +42,7 @@ export function MonthWallets({ portfolio }: MonthWalletsProps) {
     const column = portfolio.columns.find((c) => c.walletId === walletId);
     return {
       categoryId: walletId,
-      name: WALLET_LABELS[walletId] ?? walletId,
+      name: INVESTMENT_WALLET_LABELS[walletId],
       type: "investment" as const,
       icon: null,
       // Market value where the wallet has been priced, otherwise what went in

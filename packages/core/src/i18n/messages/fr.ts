@@ -1037,7 +1037,6 @@ export const fr: Messages = {
   },
 
   moneyOnHand: {
-    inTheAccount: "sur le compte",
     stillToLeave: "encore à sortir",
     stillToArrive: "encore à arriver",
     pastMonthBanner: "Vous regardez {month} — un mois déjà terminé",

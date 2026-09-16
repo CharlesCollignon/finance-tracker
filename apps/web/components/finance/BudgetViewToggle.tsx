@@ -10,7 +10,7 @@ import {
   type BudgetViewMode,
 } from "@finance/core/constants";
 import { cn } from "@/lib/utils";
-import { useT } from "@/lib/locale-context";
+import { useLocale, useT } from "@/lib/locale-context";
 
 interface BudgetViewToggleProps {
   basePath: string;
@@ -24,6 +24,7 @@ export function BudgetViewToggle({
   className,
 }: BudgetViewToggleProps) {
   const t = useT();
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const { year, month } = parseMonthParams(
     searchParams.get("y") ?? undefined,
@@ -42,7 +43,7 @@ export function BudgetViewToggle({
     >
       {OPTIONS.map((value) => {
         const active = view === value;
-        const label = budgetViewOptionLabel(value, year, month);
+        const label = budgetViewOptionLabel(value, year, month, locale);
 
         return (
           <Link
