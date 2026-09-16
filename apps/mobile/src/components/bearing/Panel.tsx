@@ -91,6 +91,32 @@ export function Panel({ tile }: { tile: RenderedTile }) {
   // below.
   const [attempt, setAttempt] = useState(0);
 
+  /**
+   * The figures belong to the scope they were fetched for, so a scope the
+   * reader has moved on from must not keep rendering.
+   *
+   * `scope` is plain state and updates on the next frame; `detail` only
+   * updates when the fetch resolves. Without this, stepping the month puts
+   * the new month in the picker above the outgoing month's figures until the
+   * round trip lands — a header and a body disagreeing about which month
+   * they describe. Seeded from the cache exactly the way the first render is,
+   * so a month already visited this session comes back instantly and only an
+   * unvisited one falls back to the block skeletons.
+   *
+   * Reset during render rather than in an effect, which is React's own
+   * remedy for state that has to follow a change — the Bearing screen uses
+   * the same pattern for a dragged order. An effect would paint the
+   * mismatched frame first and then correct it.
+   */
+  const [shownScope, setShownScope] = useState(scope);
+  if (shownScope !== scope) {
+    setShownScope(scope);
+    setDetail(
+      user ? peekPanelDetail(user.id, tile.family, scope, spec.blocks) : null,
+    );
+    setFailed(false);
+  }
+
   // `spec.blocks` is safe in the dependency list: `panelFor` hands back one
   // of the module-level arrays in `bearing-panels.ts` rather than building a
   // new one, so its identity is stable for as long as the tile is.

@@ -75,6 +75,32 @@ export function Panel({ tile }: { tile: RenderedTile }) {
   const [attempt, setAttempt] = useState(0);
   const [, startTransition] = useTransition();
 
+  /**
+   * The figures belong to the scope they were fetched for, so a scope the
+   * reader has moved on from must not keep rendering.
+   *
+   * `scope` is plain state and updates on the next paint; `detail` only
+   * updates when the server function resolves. Without this, stepping the
+   * month puts the new month's name in the chrome above the outgoing month's
+   * spend strip, still-to-come and budget rings, for as long as the round
+   * trip takes — a header and a body that disagree about which month they
+   * are describing, which is the failure this module's own doc comment warns
+   * about elsewhere. Skeletons instead, exactly as on first open: the same
+   * "never a wrong number stated confidently" rule that keeps a spinner off
+   * the headline.
+   *
+   * Reset during render rather than in an effect, which is React's own
+   * remedy for state that has to follow a change — the Bearing screen on the
+   * phone uses the same pattern for a dragged order. An effect would paint
+   * the mismatched frame first and then correct it.
+   */
+  const [shownScope, setShownScope] = useState(scope);
+  if (shownScope !== scope) {
+    setShownScope(scope);
+    setDetail(null);
+    setFailed(false);
+  }
+
   // Refetched when the chrome moves, because that is what the chrome is for.
   // `stale` rather than an abort: a server function has no signal to cancel
   // with, and the only harm an overtaken answer can do is land after a newer
