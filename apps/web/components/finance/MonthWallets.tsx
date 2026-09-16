@@ -14,6 +14,7 @@ import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 import type { CategoryBreakdown } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface MonthWalletsProps {
   portfolio: InvestmentPortfolioSummary;
@@ -30,6 +31,7 @@ interface MonthWalletsProps {
  */
 export function MonthWallets({ portfolio }: MonthWalletsProps) {
   const formatMoney = useFormatCurrency();
+  const t = useT();
 
   const rows: CategoryBreakdown[] = INVESTMENT_WALLET_IDS.map((walletId) => {
     const column = portfolio.columns.find((c) => c.walletId === walletId);
@@ -57,12 +59,12 @@ export function MonthWallets({ portfolio }: MonthWalletsProps) {
   return (
     <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-sm font-medium">Invested</h2>
+        <h2 className="text-sm font-medium">{t("month.invested")}</h2>
         <Link
           href="/investments"
           className="flex items-center gap-1 text-sm text-primary-ink"
         >
-          Wallets
+          {t("nav.wallets")}
           <ArrowRight size={ICON.sm} />
         </Link>
       </div>

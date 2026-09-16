@@ -855,6 +855,16 @@ export const en = {
       one: "{count} charge looks like it repeats",
       other: "{count} charges look like they repeat",
     },
+    /** What is invested, on the Month screen's own strip. */
+    invested: "Invested",
+    /**
+     * A closing streak, badged beside `MonthScore` and `MonthCloseHistory`'s
+     * own headings. Not a plural message: the noun these describe ("in a
+     * row", "best") never changes shape with the count, only the numeral
+     * does, so a `{ one, other }` split would carry two identical forms.
+     */
+    streakInARow: "{count} in a row",
+    bestStreak: "best {count}",
   },
 
   /**
@@ -1200,6 +1210,128 @@ export const en = {
   },
 
   /**
+   * `MoneyOnHand`'s own words, on both clients — the hero card the Month
+   * screen leads with, now also drawn inside a Bearing panel.
+   */
+  moneyOnHand: {
+    /**
+     * The phone's own term label, lower-cased where the web's equivalent
+     * (`month.inTheAccount`, "In the account") is capitalised. Pre-existing
+     * on the phone and left as it renders — the task sweeping this file is
+     * string extraction, not a rewrite — but it is worth a bug report: the
+     * two clients say the same figure with different capitalisation.
+     */
+    inTheAccount: "in the account",
+    stillToLeave: "still to leave",
+    stillToArrive: "still to arrive",
+    pastMonthBanner: "Looking at {month} — a month that has ended",
+    /** Trails a figure already stated by `month.overIn` / `month.leftIn`. */
+    countingAhead: "counting what is still to come",
+    /** The progress bar's own accessible name; the line under it is separate. */
+    elapsedLabel: "{percent}% of the month elapsed",
+    elapsedGone: "{percent}% of {month} gone",
+    unreadableAccounts: {
+      one: "Could not read {accounts} — its balance is not counted above.",
+      other: "Could not read {accounts} — their balances are not counted above.",
+    },
+    fixLink: "Fix",
+    spendingDownTitle:
+      "Spending down {percent}% against the same days of {month}",
+    spendingUpTitle: "Spending up {percent}% against the same days of {month}",
+    /** The phone's today/month-end toggle, its accessible hint. */
+    switchesTo: "Switches to {option}",
+  },
+
+  /**
+   * `MonthScore`'s own words, on both clients: how the month is going
+   * against the unrecorded-spending target.
+   */
+  monthScore: {
+    heading: "Unrecorded spending, so far",
+    overRecorded:
+      "Your account holds more than the ledger allows — income is missing, or something is recorded twice. Nothing to measure until that is sorted.",
+    /**
+     * The line above the meter reads "<prefix> <amount>[ <suffix>]" with the
+     * amount its own element so privacy mode can blur it — which is why this
+     * is two fragments either side of a figure rather than one template.
+     */
+    capPrefixChosen: "of your",
+    capSuffixChosen: "cap",
+    capPrefixUnchosen: "against a usual",
+    /** The meter bar's own accessible name. */
+    meterLabel: "{spent} of {target}",
+    noNormalYet:
+      "Close two months and the app will know what normal looks like for you.",
+    pastCap: "{amount} past it, with the month still running.",
+    roomLeft: "{amount} of room left this month.",
+    measuredNote:
+      "Measured against your last close, not remembered — so it moves when the bank does, and it is not final until the month is closed.",
+    notYetMeasured:
+      "Close a month against your bank balance and this fills in: the app works out what left the account that no entry explains.",
+    findMissingEntry: "Find the missing entry",
+  },
+
+  /**
+   * `CashAccountsCard`'s own words — the web-only, editable list of which
+   * accounts count as cash. The phone draws the same list read-only inside a
+   * Bearing panel, under `bearing.panel.cashAccounts*`; the heading and the
+   * lapsed-consent line say the same thing there and share those keys, and
+   * only the words unique to being editable live here.
+   */
+  cashAccounts: {
+    tickHint: "Tick the ones you spend from.",
+    lastRead: "Last read {when}",
+    noneTicked: "Nothing is ticked, so months are still closed by hand.",
+    autoCloses:
+      "Months close on their own once the statement covers the day they are read on. A month whose ticked accounts cannot all be read waits instead of guessing.",
+  },
+
+  /** `RecentOnAccount`'s own words, on both clients. */
+  recentOnAccount: {
+    title: "Last on your account",
+    toReview: "{count} to review",
+    waitingCategory: "waiting for a category",
+    leftOut: "left out",
+    inYourLedger: "in your ledger",
+  },
+
+  /** `StillToCome`'s own words, on both clients. */
+  stillToCome: {
+    title: "Still to come",
+    arrivingNamed: "still to arrive, {name} on {when}",
+  },
+
+  /** `MonthCloseHistory` / `MonthCloseHistoryCard`'s own words. */
+  monthCloseHistory: {
+    title: "Closed months",
+    normalMonthCost: "A normal month costs you about {amount} the app never sees.",
+    oneMoreForBaseline:
+      "One more close and there will be a normal month to compare against.",
+    /** The web says which surface; the nav word keeps the two from drifting. */
+    closeFromSurface: "Close a month from {surface} and it will appear here.",
+    /**
+     * The phone's own version of the empty-history line, naming a surface
+     * called "Home" that is not one of this app's five — `nav.*` has no such
+     * word. Pre-existing and left as it renders; worth a bug report rather
+     * than a silent fix here.
+     */
+    closeFromHomeMobile: "Close a month from Home and it will appear here.",
+    allowanceHint:
+      "What you are willing to spend without recording it. Coming in under it is what keeps a run alive.",
+    useSuggested: "Use {amount}",
+    needMoreForSuggestion:
+      "Close one more month and the app can suggest a figure from your own spending.",
+    readingDayHeading: "Reading day",
+    readingDayHint:
+      "Which day of the following month you read the balance on. Later is safer with a deferred-debit card, because the month’s card spending has to have landed. What matters most is that it is always the same day.",
+    startingPoint: "Starting point",
+    needsLook: "Needs a look — more in the account than the records allow",
+    neverRecordedAmount: "{amount} never recorded",
+    keptPercent: "{rate}% kept",
+    saved: "Saved",
+  },
+
+  /**
    * The Plan card that walks the standing charges forward.
    *
    * Two tracks and the ingredients behind them. The card used to state one
@@ -1255,6 +1387,11 @@ export const en = {
     noIncomeCharge:
       "No charge brings money in, so your pay is in none of this. Add it under Charges and every figure here changes.",
     noIncomeCta: "Add a charge",
+    /** The web sparkline's own accessible name; the phone draws no equivalent. */
+    sparklineLabel: {
+      one: "Projected accounts and total kept over {count} month",
+      other: "Projected accounts and total kept over {count} months",
+    },
   },
 
   /** How long the reserve covers the committed costs. */
@@ -1458,6 +1595,43 @@ export const en = {
       headlineTooLong: "The headline was longer than one line",
       everythingDropped: "Every observation had to be dropped",
     },
+
+    /**
+     * The `MonthRead` card itself: heading, empty state, and the write
+     * button's own states. "On this page" and "on this screen" are two keys
+     * rather than one because they are the one word each client's own
+     * component already said differently before this sweep.
+     */
+    title: "The read",
+    subtitleWeb:
+      "Written by a model, from the figures on this page. It cannot see your accounts.",
+    subtitleMobile:
+      "Written by a model, from the figures on this screen. It cannot see your accounts.",
+    empty: "Nothing has been written about {month} yet.",
+    suggestionsHeading: "What to change",
+    writing: "Writing…",
+    noReadsLeft: "No reads left for {month}",
+    noReadsLeftGeneric: "No reads left this month",
+    writeAgain: "Write it again ({left} left)",
+    writeOne: "Write one ({left} left)",
+    writtenToast: "Written for {month}",
+    /** The phone's write button, read by a screen reader without the count. */
+    writeAgainLabel: "Write the read again",
+    writeLabel: "Write the read",
+    /**
+     * How well the read still stands. `moved` is not a `bearing.panel.moved`
+     * duplicate: that one is a trailing clause ("… since this was arranged,
+     * {age}."), this one has the count as its subject ("{count} figures this
+     * rests on have moved…") — different sentences, not the same one twice.
+     */
+    standingMoved: {
+      one: "One figure this rests on has moved since it was written, {age}.",
+      other:
+        "{count} figures this rests on have moved since it was written, {age}.",
+    },
+    standingProvisional:
+      "Written {age}, from the figures as they stood then.",
+    standingWritten: "Written {age}.",
   },
 
   /**
@@ -1668,7 +1842,6 @@ export const en = {
     panel: {
       close: "Close",
       open: "Show what this is made of",
-      loading: "Reading…",
       footer: "See the full surface",
       streakHeading: "Your run",
       horizon: "How far ahead",
@@ -1690,10 +1863,12 @@ export const en = {
       failed: "The detail could not be read just now.",
       retry: "Try again",
       /**
-       * The phone's `cash-accounts` block. No web equivalent needs these:
-       * `CashAccountsCard` carries its own English there, pre-existing and
-       * out of scope — this is new code on the phone, so it goes through the
-       * catalogue like everything else new.
+       * The phone's `cash-accounts` block. Shared with the web's
+       * `CashAccountsCard`, which said the same two lines in its own
+       * pre-existing English until this key replaced them; its body goes on
+       * to explain the tick box the phone's read-only list does not have,
+       * which is why the body's continuation and the "last read" line live
+       * under `cashAccounts.*` instead of here.
        */
       cashAccountsHeading: "Which accounts hold your cash",
       cashAccountsBody:

@@ -62,7 +62,7 @@ export function StillToCome({
   return (
     <Card bezel innerClassName="gap-4 p-5">
       <View className="flex-row items-center justify-between gap-3">
-        <Text className="text-sm font-medium">Still to come</Text>
+        <Text className="text-sm font-medium">{t("stillToCome.title")}</Text>
         <PrivateAmount>{formatEuro(leaving)}</PrivateAmount>
       </View>
 
@@ -95,7 +95,7 @@ export function StillToCome({
         {rest.length > 0 ? (
           <View className="flex-row items-center justify-between gap-3 border-t border-border py-2">
             <Text variant="muted" className="text-sm">
-              {`${rest.length} more`}
+              {t("bearing.panel.moreHoldings", { count: rest.length })}
             </Text>
             <PrivateAmount className="text-sm text-muted-foreground">
               {formatEuro(restTotal)}
@@ -112,9 +112,16 @@ export function StillToCome({
           <PrivateAmount className="text-sm text-success">
             {`+${formatEuro(arriving)}`}
           </PrivateAmount>
+          {" "}
           {incoming.length === 1 && incoming[0]
-            ? ` still to arrive, ${incoming[0].name} on ${relativeDayLabel(incoming[0].occurredOn, formatShortDate)}`
-            : " still to arrive"}
+            ? t("stillToCome.arrivingNamed", {
+                name: incoming[0].name,
+                when: relativeDayLabel(
+                  incoming[0].occurredOn,
+                  formatShortDate,
+                ),
+              })
+            : t("moneyOnHand.stillToArrive")}
         </Text>
       ) : null}
 
@@ -129,7 +136,7 @@ export function StillToCome({
         className="flex-row items-center gap-1 self-start"
       >
         <Text className="text-sm text-primary-ink">
-          See the month on a calendar
+          {t("common.seeOnCalendar")}
         </Text>
         <Ionicons
           name="arrow-forward"

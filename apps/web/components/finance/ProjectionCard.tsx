@@ -293,6 +293,7 @@ function Ingredient({ ingredient }: { ingredient: ProjectionIngredient }) {
  */
 function ProjectionSparkline({ points }: { points: ProjectionPoint[] }) {
   const gradientId = useId();
+  const t = useT();
 
   if (points.length < 2) {
     return null;
@@ -328,7 +329,7 @@ function ProjectionSparkline({ points }: { points: ProjectionPoint[] }) {
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="none"
       role="img"
-      aria-label={`Projected accounts and total kept over ${points.length} months`}
+      aria-label={t("projection.sparklineLabel", { count: points.length })}
       className="mt-4 h-16 w-full text-primary"
     >
       <defs>

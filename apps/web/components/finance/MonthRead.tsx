@@ -106,7 +106,7 @@ export function MonthRead({
       const outcome = await writeMonthReadAction(year, month);
       setLeft(outcome.writesLeft);
       toast(
-        outcome.message ?? `Written for ${monthLabel}`,
+        outcome.message ?? t("monthRead.writtenToast", { month: monthLabel }),
         outcome.written ? "success" : "error",
       );
     });
@@ -117,11 +117,10 @@ export function MonthRead({
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="flex items-center gap-1.5 text-sm font-medium">
           <Sparkle size={ICON.sm} className="text-primary-rim" />
-          The read
+          {t("monthRead.title")}
         </h2>
         <p className="text-xs text-muted-foreground">
-          Written by a model, from the figures on this page. It cannot see your
-          accounts.
+          {t("monthRead.subtitleWeb")}
         </p>
       </div>
 
@@ -158,7 +157,7 @@ export function MonthRead({
           {rendered.suggestions.length > 0 ? (
             <div className="flex flex-col gap-2 border-t border-foreground/10 pt-3">
               <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                What to change
+                {t("monthRead.suggestionsHeading")}
               </h3>
               <ul className="flex flex-col gap-2">
                 {rendered.suggestions.map((row, index) => (
@@ -178,7 +177,7 @@ export function MonthRead({
         </>
       ) : (
         <p className="text-sm text-muted-foreground">
-          {`Nothing has been written about ${monthLabel} yet.`}
+          {t("monthRead.empty", { month: monthLabel })}
         </p>
       )}
 
@@ -211,12 +210,12 @@ export function MonthRead({
           >
             <PencilSimple size={ICON.sm} />
             {pending
-              ? "Writing…"
+              ? t("monthRead.writing")
               : left <= 0
-                ? `No reads left for ${monthLabel}`
+                ? t("monthRead.noReadsLeft", { month: monthLabel })
                 : rendered
-                  ? `Write it again (${left} left)`
-                  : `Write one (${left} left)`}
+                  ? t("monthRead.writeAgain", { left })
+                  : t("monthRead.writeOne", { left })}
           </button>
         ) : null}
       </div>
@@ -232,25 +231,29 @@ export function MonthRead({
  * permanently and a warning that is always on is one nobody reads.
  */
 function Standing({ freshness }: { freshness: ReadFreshness }) {
+  const t = useT();
+
   if (freshness.standing === "moved") {
-    const count = freshness.moved.length;
     return (
       <span className="flex items-center gap-1.5 text-primary-ink">
         <WarningCircle size={ICON.sm} />
-        {`${count === 1 ? "One figure" : `${count} figures`} this rests on ${
-          count === 1 ? "has" : "have"
-        } moved since it was written, ${freshness.writtenAge}.`}
+        {t("monthRead.standingMoved", {
+          count: freshness.moved.length,
+          age: freshness.writtenAge,
+        })}
       </span>
     );
   }
 
   if (freshness.standing === "provisional") {
     return (
-      <>{`Written ${freshness.writtenAge}, from the figures as they stood then.`}</>
+      <>
+        {t("monthRead.standingProvisional", { age: freshness.writtenAge })}
+      </>
     );
   }
 
-  return <>{`Written ${freshness.writtenAge}.`}</>;
+  return <>{t("monthRead.standingWritten", { age: freshness.writtenAge })}</>;
 }
 
 /**

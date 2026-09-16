@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface MonthScoreProps {
   pulse: MonthPulse;
@@ -53,6 +54,7 @@ export function MonthScore({
   baseline,
 }: MonthScoreProps) {
   const formatMoney = useFormatCurrency();
+  const t = useT();
 
   const hasMeter = pulse.unrecordedSoFar !== null;
   const hasStreak = streak > 0 || bestStreak > 0;
@@ -70,22 +72,24 @@ export function MonthScore({
   const ratio =
     target !== null && target > 0 ? Math.min(1.5, spent / target) : null;
   const over = target !== null && spent > target;
+  // Empty in French, which folds the cap noun into the prefix instead.
+  const capSuffix = chosen ? t("monthScore.capSuffixChosen") : "";
 
   return (
     <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-medium">Unrecorded spending, so far</h2>
+        <h2 className="text-sm font-medium">{t("monthScore.heading")}</h2>
         <div className="flex shrink-0 items-center gap-2">
           {streak > 1 ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
               <Flame size={ICON.xs} weight="fill" />
-              {`${streak} in a row`}
+              {t("month.streakInARow", { count: streak })}
             </span>
           ) : null}
           {bestStreak > streak && bestStreak > 1 ? (
             <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
               <Trophy size={ICON.xs} />
-              {`best ${bestStreak}`}
+              {t("month.bestStreak", { count: bestStreak })}
             </span>
           ) : null}
         </div>
@@ -97,8 +101,7 @@ export function MonthScore({
             size={ICON.sm}
             className="mt-0.5 shrink-0 text-destructive"
           />
-          Your account holds more than the ledger allows — income is missing, or
-          something is recorded twice. Nothing to measure until that is sorted.
+          {t("monthScore.overRecorded")}
         </p>
       ) : hasMeter ? (
         <div className="flex flex-col gap-2">
@@ -113,11 +116,15 @@ export function MonthScore({
             </PrivateAmount>
             {target !== null ? (
               <span className="text-sm text-muted-foreground">
-                {chosen ? "of your " : "against a usual "}
+                {t(
+                  chosen
+                    ? "monthScore.capPrefixChosen"
+                    : "monthScore.capPrefixUnchosen",
+                )}{" "}
                 <PrivateAmount className="tabular-nums">
                   {formatMoney(target)}
                 </PrivateAmount>
-                {chosen ? " cap" : ""}
+                {capSuffix ? ` ${capSuffix}` : ""}
               </span>
             ) : null}
           </div>
@@ -126,7 +133,10 @@ export function MonthScore({
             <div
               className="h-2 w-full overflow-hidden rounded-full bg-foreground/10"
               role="img"
-              aria-label={`${formatMoney(spent)} of ${formatMoney(target!)}`}
+              aria-label={t("monthScore.meterLabel", {
+                spent: formatMoney(spent),
+                target: formatMoney(target!),
+              })}
             >
               <div
                 className={cn(
@@ -151,21 +161,23 @@ export function MonthScore({
               <Check size={ICON.sm} weight="bold" className="mt-0.5 shrink-0" />
             )}
             {target === null
-              ? "Close two months and the app will know what normal looks like for you."
+              ? t("monthScore.noNormalYet")
               : over
-                ? `${formatMoney(spent - target)} past it, with the month still running.`
-                : `${formatMoney(target - spent)} of room left this month.`}
+                ? t("monthScore.pastCap", {
+                    amount: formatMoney(spent - target),
+                  })
+                : t("monthScore.roomLeft", {
+                    amount: formatMoney(target - spent),
+                  })}
           </p>
 
           <p className="text-xs text-muted-foreground">
-            Measured against your last close, not remembered — so it moves when
-            the bank does, and it is not final until the month is closed.
+            {t("monthScore.measuredNote")}
           </p>
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Close a month against your bank balance and this fills in: the app
-          works out what left the account that no entry explains.
+          {t("monthScore.notYetMeasured")}
         </p>
       )}
 
@@ -181,10 +193,10 @@ export function MonthScore({
         className="flex w-fit items-center gap-1 text-sm text-primary-ink"
       >
         {pulse.overRecorded
-          ? "Find the missing entry"
+          ? t("monthScore.findMissingEntry")
           : hasStreak
-            ? "Every month you have closed"
-            : "Set this up"}
+            ? t("common.everyMonthClosed")
+            : t("common.setUp")}
         <ArrowRight size={ICON.sm} />
       </Link>
     </section>

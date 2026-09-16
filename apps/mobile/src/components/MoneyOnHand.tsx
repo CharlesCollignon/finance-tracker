@@ -122,12 +122,15 @@ export function MoneyOnHand({
           that line is gone rather than repeating this in words. */}
       {banked ? (
         <View className="-mt-3 flex-row flex-wrap items-baseline gap-x-1.5 gap-y-1">
-          <Term label="in the account" amount={formatEuro(pulse.onHand!)} />
+          <Term
+            label={t("moneyOnHand.inTheAccount")}
+            amount={formatEuro(pulse.onHand!)}
+          />
           {pulse.committed > 0 ? (
             <>
               <Text className="text-sm text-muted-foreground">−</Text>
               <Term
-                label="still to leave"
+                label={t("moneyOnHand.stillToLeave")}
                 amount={formatEuro(pulse.committed)}
                 tone="out"
               />
@@ -137,7 +140,7 @@ export function MoneyOnHand({
             <>
               <Text className="text-sm text-muted-foreground">+</Text>
               <Term
-                label="still to arrive"
+                label={t("moneyOnHand.stillToArrive")}
                 amount={formatEuro(pulse.arriving)}
                 tone="in"
               />
@@ -154,7 +157,9 @@ export function MoneyOnHand({
         <View className="gap-1.5">
           <View
             accessibilityRole="image"
-            accessibilityLabel={`${Math.round(elapsed * 100)}% of the month elapsed`}
+            accessibilityLabel={t("moneyOnHand.elapsedLabel", {
+              percent: Math.round(elapsed * 100),
+            })}
             className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/10"
           >
             <View
@@ -163,7 +168,10 @@ export function MoneyOnHand({
             />
           </View>
           <Text variant="micro">
-            {`${Math.round(elapsed * 100)}% of ${monthLabel} gone`}
+            {t("moneyOnHand.elapsedGone", {
+              percent: Math.round(elapsed * 100),
+              month: monthLabel,
+            })}
           </Text>
         </View>
       ) : null}
@@ -197,9 +205,10 @@ export function MoneyOnHand({
           above would simply be short by whatever that account holds. */}
       {unreadable.length > 0 ? (
         <Text className="text-sm text-destructive">
-          {`Could not read ${unreadable.join(", ")} — ${
-            unreadable.length === 1 ? "its balance is" : "their balances are"
-          } not counted above.`}
+          {t("moneyOnHand.unreadableAccounts", {
+            count: unreadable.length,
+            accounts: unreadable.join(", "),
+          })}
         </Text>
       ) : null}
     </Card>
@@ -232,7 +241,9 @@ function BudgetViewControl({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={budgetViewOptionLabel(view, year, month)}
-      accessibilityHint={`Switches to ${budgetViewOptionLabel(next, year, month)}`}
+      accessibilityHint={t("moneyOnHand.switchesTo", {
+        option: budgetViewOptionLabel(next, year, month),
+      })}
       hitSlop={8}
       onPress={() => {
         void hapticSelection();

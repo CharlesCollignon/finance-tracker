@@ -9,6 +9,7 @@ import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface CashAccountsCardProps {
   accounts: BankAccount[];
@@ -29,6 +30,7 @@ interface CashAccountsCardProps {
 export function CashAccountsCard({ accounts }: CashAccountsCardProps) {
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
+  const t = useT();
   const [pending, startTransition] = useTransition();
 
   if (accounts.length === 0) {
@@ -52,10 +54,11 @@ export function CashAccountsCard({ accounts }: CashAccountsCardProps) {
   return (
     <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
       <div className="flex flex-col gap-1">
-        <h2 className="text-sm font-medium">Which accounts hold your cash</h2>
+        <h2 className="text-sm font-medium">
+          {t("bearing.panel.cashAccountsHeading")}
+        </h2>
         <p className="text-sm text-muted-foreground">
-          Closing a month compares what these held at the start and the end
-          against what the ledger says happened. Tick the ones you spend from.
+          {t("bearing.panel.cashAccountsBody")} {t("cashAccounts.tickHint")}
         </p>
       </div>
 
@@ -87,11 +90,11 @@ export function CashAccountsCard({ accounts }: CashAccountsCardProps) {
                   {unreadable ? (
                     <span className="flex items-center gap-1 text-xs text-destructive">
                       <Warning size={ICON.xs} weight="fill" />
-                      Consent has lapsed — nothing can be read from it
+                      {t("bearing.panel.cashAccountsLapsed")}
                     </span>
                   ) : account.reported_on ? (
                     <span className="block text-xs text-muted-foreground">
-                      {`Last read ${account.reported_on}`}
+                      {t("cashAccounts.lastRead", { when: account.reported_on })}
                     </span>
                   ) : null}
                 </span>
@@ -109,8 +112,8 @@ export function CashAccountsCard({ accounts }: CashAccountsCardProps) {
       <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
         <ArrowClockwise size={ICON.sm} className="mt-0.5 shrink-0" />
         {counted === 0
-          ? "Nothing is ticked, so months are still closed by hand."
-          : "Months close on their own once the statement covers the day they are read on. A month whose ticked accounts cannot all be read waits instead of guessing."}
+          ? t("cashAccounts.noneTicked")
+          : t("cashAccounts.autoCloses")}
       </p>
     </section>
   );

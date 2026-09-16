@@ -67,7 +67,7 @@ export function MonthWallets({ portfolio }: MonthWalletsProps) {
   return (
     <Card bezel innerClassName="gap-4 p-5">
       <View className="flex-row items-center justify-between gap-3">
-        <Text className="text-sm font-medium">Invested</Text>
+        <Text className="text-sm font-medium">{t("month.invested")}</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t("common.openWallets")}
@@ -75,7 +75,7 @@ export function MonthWallets({ portfolio }: MonthWalletsProps) {
           hitSlop={8}
           className="flex-row items-center gap-1"
         >
-          <Text className="text-sm text-primary-ink">Wallets</Text>
+          <Text className="text-sm text-primary-ink">{t("nav.wallets")}</Text>
           <Ionicons
             name="arrow-forward"
             size={ICON.sm}

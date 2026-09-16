@@ -105,7 +105,7 @@ export function MonthRead({
       }
       if (outcome.message || outcome.written) {
         toast(
-          outcome.message ?? `Written for ${monthLabel}`,
+          outcome.message ?? t("monthRead.writtenToast", { month: monthLabel }),
           outcome.written ? "success" : "error",
         );
       }
@@ -121,11 +121,10 @@ export function MonthRead({
             size={ICON.sm}
             color={colors.primary}
           />
-          <Text className="text-sm font-medium">The read</Text>
+          <Text className="text-sm font-medium">{t("monthRead.title")}</Text>
         </View>
         <Text className="text-xs text-muted-foreground">
-          Written by a model, from the figures on this screen. It cannot see
-          your accounts.
+          {t("monthRead.subtitleMobile")}
         </Text>
       </View>
 
@@ -161,7 +160,7 @@ export function MonthRead({
           {rendered.suggestions.length > 0 ? (
             <View className="gap-2 border-t border-border pt-3">
               <Text className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                What to change
+                {t("monthRead.suggestionsHeading")}
               </Text>
               {rendered.suggestions.map((row, index) => (
                 <View key={index} className="flex-row items-start gap-2">
@@ -176,7 +175,7 @@ export function MonthRead({
         </>
       ) : (
         <Text className="text-sm text-muted-foreground">
-          {`Nothing has been written about ${monthLabel} yet.`}
+          {t("monthRead.empty", { month: monthLabel })}
         </Text>
       )}
 
@@ -194,7 +193,9 @@ export function MonthRead({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={
-              rendered ? "Write the read again" : "Write the read"
+              rendered
+                ? t("monthRead.writeAgainLabel")
+                : t("monthRead.writeLabel")
             }
             accessibilityState={{ disabled: pending || left <= 0 }}
             disabled={pending || left <= 0}
@@ -222,12 +223,12 @@ export function MonthRead({
               )}
             >
               {pending
-                ? "Writing…"
+                ? t("monthRead.writing")
                 : left <= 0
-                  ? "No reads left this month"
+                  ? t("monthRead.noReadsLeftGeneric")
                   : rendered
-                    ? `Write it again (${left} left)`
-                    : `Write one (${left} left)`}
+                    ? t("monthRead.writeAgain", { left })
+                    : t("monthRead.writeOne", { left })}
             </Text>
           </Pressable>
         ) : null}
@@ -244,13 +245,15 @@ export function MonthRead({
  * on is one nobody reads.
  */
 function Standing({ freshness }: { freshness: ReadFreshness }) {
+  const t = useT();
+
   if (freshness.standing === "moved") {
-    const count = freshness.moved.length;
     return (
       <Text className="text-xs text-primary-ink">
-        {`${count === 1 ? "One figure" : `${count} figures`} this rests on ${
-          count === 1 ? "has" : "have"
-        } moved since it was written, ${freshness.writtenAge}.`}
+        {t("monthRead.standingMoved", {
+          count: freshness.moved.length,
+          age: freshness.writtenAge,
+        })}
       </Text>
     );
   }
@@ -258,8 +261,8 @@ function Standing({ freshness }: { freshness: ReadFreshness }) {
   return (
     <Text className="text-xs text-muted-foreground">
       {freshness.standing === "provisional"
-        ? `Written ${freshness.writtenAge}, from the figures as they stood then.`
-        : `Written ${freshness.writtenAge}.`}
+        ? t("monthRead.standingProvisional", { age: freshness.writtenAge })
+        : t("monthRead.standingWritten", { age: freshness.writtenAge })}
     </Text>
   );
 }

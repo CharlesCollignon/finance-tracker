@@ -10,6 +10,7 @@ import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 interface MonthScoreProps {
   pulse: MonthPulse;
@@ -39,6 +40,7 @@ export function MonthScore({
 }: MonthScoreProps) {
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
+  const t = useT();
 
   const hasMeter = pulse.unrecordedSoFar !== null;
   const hasStreak = streak > 0 || bestStreak > 0;
@@ -56,17 +58,19 @@ export function MonthScore({
   const ratio =
     target !== null && target > 0 ? Math.min(1.5, spent / target) : null;
   const over = target !== null && spent > target;
+  // Empty in French, which folds the cap noun into the prefix instead.
+  const capSuffix = chosen ? t("monthScore.capSuffixChosen") : "";
 
   return (
     <Card bezel innerClassName="gap-4 p-5">
       <View className="flex-row flex-wrap items-center justify-between gap-2">
-        <Text className="text-sm font-medium">Unrecorded spending, so far</Text>
+        <Text className="text-sm font-medium">{t("monthScore.heading")}</Text>
         <View className="flex-row items-center gap-2">
           {streak > 1 ? (
             <View className="flex-row items-center gap-1 rounded-full bg-accent px-2 py-0.5">
               <Ionicons name="flame" size={ICON.xs} color={colors.primaryInk} />
               <Text className="text-xs font-medium text-accent-foreground">
-                {`${streak} in a row`}
+                {t("month.streakInARow", { count: streak })}
               </Text>
             </View>
           ) : null}
@@ -78,7 +82,7 @@ export function MonthScore({
                 color={colors.mutedForeground}
               />
               <Text className="text-xs text-muted-foreground">
-                {`best ${bestStreak}`}
+                {t("month.bestStreak", { count: bestStreak })}
               </Text>
             </View>
           ) : null}
@@ -87,8 +91,7 @@ export function MonthScore({
 
       {pulse.overRecorded ? (
         <Text className="text-sm text-muted-foreground">
-          Your account holds more than the ledger allows — income is missing, or
-          something is recorded twice. Nothing to measure until that is sorted.
+          {t("monthScore.overRecorded")}
         </Text>
       ) : hasMeter ? (
         <View className="gap-2">
@@ -103,9 +106,11 @@ export function MonthScore({
             </PrivateAmount>
             {target !== null ? (
               <Text className="text-sm text-muted-foreground">
-                {`${chosen ? "of your " : "against a usual "}${formatEuro(
-                  target,
-                )}${chosen ? " cap" : ""}`}
+                {`${t(
+                  chosen
+                    ? "monthScore.capPrefixChosen"
+                    : "monthScore.capPrefixUnchosen",
+                )} ${formatEuro(target)}${capSuffix ? ` ${capSuffix}` : ""}`}
               </Text>
             ) : null}
           </View>
@@ -113,7 +118,10 @@ export function MonthScore({
           {ratio !== null ? (
             <View
               accessibilityRole="image"
-              accessibilityLabel={`${formatEuro(spent)} of ${formatEuro(target!)}`}
+              accessibilityLabel={t("monthScore.meterLabel", {
+                spent: formatEuro(spent),
+                target: formatEuro(target!),
+              })}
               className="h-2 w-full overflow-hidden rounded-full bg-foreground/10"
             >
               <View
@@ -136,21 +144,23 @@ export function MonthScore({
             )}
           >
             {target === null
-              ? "Close two months and the app will know what normal looks like for you."
+              ? t("monthScore.noNormalYet")
               : over
-                ? `${formatEuro(spent - target)} past it, with the month still running.`
-                : `${formatEuro(target - spent)} of room left this month.`}
+                ? t("monthScore.pastCap", {
+                    amount: formatEuro(spent - target),
+                  })
+                : t("monthScore.roomLeft", {
+                    amount: formatEuro(target - spent),
+                  })}
           </Text>
 
           <Text className="text-xs text-muted-foreground">
-            Measured against your last close, not remembered — so it moves when
-            the bank does, and it is not final until the month is closed.
+            {t("monthScore.measuredNote")}
           </Text>
         </View>
       ) : (
         <Text className="text-sm text-muted-foreground">
-          Close a month against your bank balance and this fills in: the app
-          works out what left the account that no entry explains.
+          {t("monthScore.notYetMeasured")}
         </Text>
       )}
     </Card>

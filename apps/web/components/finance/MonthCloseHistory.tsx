@@ -58,7 +58,7 @@ export function MonthCloseHistory({
         return;
       }
       setCapDraft(value === null ? "" : String(value));
-      toast(response.message ?? "Saved", "success");
+      toast(response.message ?? t("monthCloseHistory.saved"), "success");
     });
   }
 
@@ -69,7 +69,7 @@ export function MonthCloseHistory({
         toast(response.error, "error");
         return;
       }
-      toast(response.message ?? "Saved", "success");
+      toast(response.message ?? t("monthCloseHistory.saved"), "success");
     });
   }
 
@@ -80,32 +80,37 @@ export function MonthCloseHistory({
     <Card className="block w-full">
       <Card.Header>
         <div className="flex items-center justify-between gap-3">
-          <Card.Title>Closed months</Card.Title>
+          <Card.Title>{t("monthCloseHistory.title")}</Card.Title>
           {summary.streak > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-accent-foreground">
               <Flame size={ICON.sm} weight="fill" />
-              {summary.streak} in a row
+              {t("month.streakInARow", { count: summary.streak })}
               {summary.bestStreak > summary.streak &&
-                ` · best ${summary.bestStreak}`}
+                ` · ${t("month.bestStreak", { count: summary.bestStreak })}`}
             </span>
           )}
         </div>
         <Card.Description>
           {summary.baseline !== null
-            ? `A normal month costs you about ${formatMoney(summary.baseline)} the app never sees.`
+            ? t("monthCloseHistory.normalMonthCost", {
+                amount: formatMoney(summary.baseline),
+              })
             : history.length > 0
-              ? "One more close and there will be a normal month to compare against."
-              : "Close a month from Month and it will appear here."}
+              ? t("monthCloseHistory.oneMoreForBaseline")
+              : t("monthCloseHistory.closeFromSurface", {
+                  surface: t("nav.month"),
+                })}
         </Card.Description>
       </Card.Header>
 
       <Card.Content className="flex flex-col gap-4">
         {(history.length > 0 || unrecordedCap !== null) && (
           <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
-            <p className="text-sm font-medium">Unrecorded allowance</p>
+            <p className="text-sm font-medium">
+              {t("common.unrecordedAllowance")}
+            </p>
             <Text className="text-xs text-muted-foreground">
-              What you are willing to spend without recording it. Coming in
-              under it is what keeps a run alive.
+              {t("monthCloseHistory.allowanceHint")}
             </Text>
             <div className="flex flex-wrap items-center gap-2">
               <Input
@@ -123,7 +128,7 @@ export function MonthCloseHistory({
                 disabled={pending || !capIsUsable}
                 onClick={() => saveCap(parsedCap)}
               >
-                Save
+                {t("common.save")}
               </Button>
               {suggested !== null && suggested !== unrecordedCap && (
                 <Button
@@ -133,7 +138,9 @@ export function MonthCloseHistory({
                   disabled={pending}
                   onClick={() => saveCap(suggested)}
                 >
-                  Use {formatMoney(suggested)}
+                  {t("monthCloseHistory.useSuggested", {
+                    amount: formatMoney(suggested),
+                  })}
                 </Button>
               )}
               {unrecordedCap !== null && (
@@ -144,26 +151,24 @@ export function MonthCloseHistory({
                   disabled={pending}
                   onClick={() => saveCap(null)}
                 >
-                  Remove
+                  {t("common.remove")}
                 </Button>
               )}
             </div>
             {suggested === null && summary.sample < MIN_CLOSES_FOR_CAP && (
               <Text className="text-xs text-muted-foreground">
-                Close one more month and the app can suggest a figure from your
-                own spending.
+                {t("monthCloseHistory.needMoreForSuggestion")}
               </Text>
             )}
           </div>
         )}
 
         <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
-          <p className="text-sm font-medium">Reading day</p>
+          <p className="text-sm font-medium">
+            {t("monthCloseHistory.readingDayHeading")}
+          </p>
           <Text className="text-xs text-muted-foreground">
-            Which day of the following month you read the balance on. Later is
-            safer with a deferred-debit card, because the month’s card spending
-            has to have landed. What matters most is that it is always the same
-            day.
+            {t("monthCloseHistory.readingDayHint")}
           </Text>
           <div className="flex flex-wrap items-center gap-1.5">
             {[1, 3, 5, 10, 15].map((day) => (
@@ -194,10 +199,12 @@ export function MonthCloseHistory({
                     <p className="truncate text-sm font-medium">{row.label}</p>
                     <p className="text-xs text-muted-foreground">
                       {row.status === "baseline"
-                        ? "Starting point"
+                        ? t("monthCloseHistory.startingPoint")
                         : row.status === "over-recorded"
-                          ? "Needs a look — more in the account than the records allow"
-                          : `${formatMoney(row.unrecorded ?? 0)} never recorded`}
+                          ? t("monthCloseHistory.needsLook")
+                          : t("monthCloseHistory.neverRecordedAmount", {
+                              amount: formatMoney(row.unrecorded ?? 0),
+                            })}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
@@ -214,7 +221,9 @@ export function MonthCloseHistory({
                     )}
                     {row.keptRate !== null && (
                       <p className="text-xs text-muted-foreground">
-                        {row.keptRate}% kept
+                        {t("monthCloseHistory.keptPercent", {
+                          rate: row.keptRate,
+                        })}
                       </p>
                     )}
                   </div>

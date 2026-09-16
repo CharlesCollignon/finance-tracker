@@ -761,6 +761,9 @@ export const fr: Messages = {
       one: "{count} charge a l'air de revenir",
       other: "{count} charges ont l'air de revenir",
     },
+    invested: "Investi",
+    streakInARow: "{count} d'affilée",
+    bestStreak: "record {count}",
   },
 
   common: {
@@ -1033,6 +1036,90 @@ export const fr: Messages = {
       "Après ce qui doit encore partir, et ce qui doit encore arriver.",
   },
 
+  moneyOnHand: {
+    inTheAccount: "sur le compte",
+    stillToLeave: "encore à sortir",
+    stillToArrive: "encore à arriver",
+    pastMonthBanner: "Vous regardez {month} — un mois déjà terminé",
+    countingAhead: "en comptant ce qui reste à venir",
+    elapsedLabel: "{percent} % du mois écoulé",
+    elapsedGone: "En {month}, {percent} % du mois est écoulé",
+    unreadableAccounts: {
+      one: "Impossible de lire {accounts} — son solde n'est pas compté ci-dessus.",
+      other:
+        "Impossible de lire {accounts} — leurs soldes ne sont pas comptés ci-dessus.",
+    },
+    fixLink: "Corriger",
+    spendingDownTitle:
+      "Dépenses en baisse de {percent} % par rapport aux mêmes jours en {month}",
+    spendingUpTitle:
+      "Dépenses en hausse de {percent} % par rapport aux mêmes jours en {month}",
+    switchesTo: "Passer à {option}",
+  },
+
+  monthScore: {
+    heading: "Dépenses non enregistrées, jusqu'ici",
+    overRecorded:
+      "Votre compte contient plus que ce que le journal permet — un revenu manque, ou quelque chose est enregistré deux fois. Rien à mesurer tant que ce n'est pas réglé.",
+    capPrefixChosen: "de votre plafond de",
+    capSuffixChosen: "",
+    capPrefixUnchosen: "par rapport à un montant habituel de",
+    meterLabel: "{spent} sur {target}",
+    noNormalYet:
+      "Clôturez deux mois et l'application saura à quoi ressemble une normale pour vous.",
+    pastCap: "{amount} au-delà, alors que le mois est encore en cours.",
+    roomLeft: "Il reste {amount} de marge ce mois-ci.",
+    measuredNote:
+      "Mesuré par rapport à votre dernière clôture, pas mémorisé — cela bouge donc avec la banque, et ce n'est définitif qu'une fois le mois clôturé.",
+    notYetMeasured:
+      "Clôturez un mois par rapport au solde de votre banque et ceci se remplit : l'application calcule ce qui a quitté le compte sans qu'aucune écriture ne l'explique.",
+    findMissingEntry: "Trouver l'écriture manquante",
+  },
+
+  cashAccounts: {
+    tickHint: "Cochez celles que vous utilisez pour dépenser.",
+    lastRead: "Dernière lecture {when}",
+    noneTicked: "Rien n'est coché, les mois se clôturent donc encore à la main.",
+    autoCloses:
+      "Les mois se clôturent d'eux-mêmes une fois que le relevé couvre le jour où ils sont lus. Un mois dont les comptes cochés ne peuvent pas tous être lus attend, plutôt que de deviner.",
+  },
+
+  recentOnAccount: {
+    title: "Dernier sur votre compte",
+    toReview: "{count} à vérifier",
+    waitingCategory: "en attente d'une catégorie",
+    leftOut: "écarté",
+    inYourLedger: "dans votre journal",
+  },
+
+  stillToCome: {
+    title: "Encore à venir",
+    arrivingNamed: "encore à arriver, {name} le {when}",
+  },
+
+  monthCloseHistory: {
+    title: "Mois clôturés",
+    normalMonthCost:
+      "Un mois normal vous coûte environ {amount} que l'application ne voit jamais.",
+    oneMoreForBaseline:
+      "Encore une clôture, et il y aura un mois normal auquel vous comparer.",
+    closeFromSurface: "Clôturez un mois depuis {surface} et il apparaîtra ici.",
+    closeFromHomeMobile: "Clôturez un mois depuis Accueil et il apparaîtra ici.",
+    allowanceHint:
+      "Ce que vous acceptez de dépenser sans l'enregistrer. Rester en dessous, c'est ce qui garde une série vivante.",
+    useSuggested: "Utiliser {amount}",
+    needMoreForSuggestion:
+      "Clôturez un mois de plus, et l'application pourra suggérer un montant à partir de vos propres dépenses.",
+    readingDayHeading: "Jour de lecture",
+    readingDayHint:
+      "Le jour du mois suivant où vous relevez le solde. Plus tard est plus sûr avec une carte à débit différé, car les dépenses par carte du mois doivent avoir été prélevées. Le plus important est que ce soit toujours le même jour.",
+    startingPoint: "Point de départ",
+    needsLook: "À vérifier — plus sur le compte que ce que les écritures permettent",
+    neverRecordedAmount: "{amount} jamais enregistré",
+    keptPercent: "{rate} % gardé",
+    saved: "Enregistré",
+  },
+
   projection: {
     heading: "Si rien ne change",
     window: {
@@ -1077,6 +1164,10 @@ export const fr: Messages = {
     noIncomeCharge:
       "Aucune charge n'apporte de revenu : votre salaire n'entre dans aucun de ces chiffres. Ajoutez-le dans Charges et tout change ici.",
     noIncomeCta: "Ajouter une charge",
+    sparklineLabel: {
+      one: "Comptes projetés et total gardé sur {count} mois",
+      other: "Comptes projetés et total gardé sur {count} mois",
+    },
   },
 
   runway: {
@@ -1224,6 +1315,30 @@ export const fr: Messages = {
       headlineTooLong: "Le titre dépassait une ligne",
       everythingDropped: "Toutes les observations ont dû être écartées",
     },
+
+    title: "La lecture",
+    subtitleWeb:
+      "Écrit par un modèle, à partir des chiffres de cette page. Il ne voit pas vos comptes.",
+    subtitleMobile:
+      "Écrit par un modèle, à partir des chiffres de cet écran. Il ne voit pas vos comptes.",
+    empty: "Rien n'a encore été écrit sur {month}.",
+    suggestionsHeading: "Ce qu'il faut changer",
+    writing: "Écriture…",
+    noReadsLeft: "Plus de lecture pour {month}",
+    noReadsLeftGeneric: "Plus de lecture ce mois-ci",
+    writeAgain: "Réécrire ({left} restantes)",
+    writeOne: "Écrire une lecture ({left} restantes)",
+    writtenToast: "Écrit pour {month}",
+    writeAgainLabel: "Réécrire la lecture",
+    writeLabel: "Écrire la lecture",
+    standingMoved: {
+      one: "Un chiffre sur lequel elle s'appuie a bougé depuis qu'elle a été écrite, {age}.",
+      other:
+        "{count} chiffres sur lesquels elle s'appuie ont bougé depuis qu'elle a été écrite, {age}.",
+    },
+    standingProvisional:
+      "Écrit {age}, à partir des chiffres tels qu'ils étaient alors.",
+    standingWritten: "Écrit {age}.",
   },
 
   /** La transparence : de quoi les portefeuilles sont faits. */
@@ -1394,7 +1509,6 @@ export const fr: Messages = {
     panel: {
       close: "Fermer",
       open: "Voir ce qui compose ce chiffre",
-      loading: "Lecture…",
       footer: "Voir la surface complète",
       streakHeading: "Votre série",
       horizon: "Jusqu'où",

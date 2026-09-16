@@ -67,7 +67,7 @@ export function MonthCloseHistoryCard({
       return;
     }
     setCapDraft(value === null ? "" : String(value));
-    toast(response.message ?? "Saved", "success");
+    toast(response.message ?? t("monthCloseHistory.saved"), "success");
     onChanged();
   }
 
@@ -79,7 +79,7 @@ export function MonthCloseHistoryCard({
       toast(response.error, "error");
       return;
     }
-    toast(response.message ?? "Saved", "success");
+    toast(response.message ?? t("monthCloseHistory.saved"), "success");
     onChanged();
   }
 
@@ -88,7 +88,7 @@ export function MonthCloseHistoryCard({
       <View>
         <View className="flex-row items-center justify-between gap-3">
           <Text className="font-semibold" style={{ fontSize: 16 }}>
-            Closed months
+            {t("monthCloseHistory.title")}
           </Text>
           {summary.streak > 0 ? (
             <View className="flex-row items-center gap-1 rounded-full bg-accent px-2.5 py-1">
@@ -99,28 +99,32 @@ export function MonthCloseHistoryCard({
               />
               <Text className="text-xs font-medium">
                 {summary.bestStreak > summary.streak
-                  ? `${summary.streak} in a row · best ${summary.bestStreak}`
-                  : `${summary.streak} in a row`}
+                  ? `${t("month.streakInARow", { count: summary.streak })} · ${t(
+                      "month.bestStreak",
+                      { count: summary.bestStreak },
+                    )}`
+                  : t("month.streakInARow", { count: summary.streak })}
               </Text>
             </View>
           ) : null}
         </View>
         <Text variant="muted" className="mt-1 text-sm">
           {summary.baseline !== null
-            ? `A normal month costs you about ${formatEuro(summary.baseline)} the app never sees.`
+            ? t("monthCloseHistory.normalMonthCost", {
+                amount: formatEuro(summary.baseline),
+              })
             : history.length > 0
-              ? "One more close and there will be a normal month to compare against."
-              : "Close a month from Home and it will appear here."}
+              ? t("monthCloseHistory.oneMoreForBaseline")
+              : t("monthCloseHistory.closeFromHomeMobile")}
         </Text>
       </View>
 
       <View className="gap-2 rounded-lg border border-border p-3">
-        <Text className="text-sm font-medium">Reading day</Text>
+        <Text className="text-sm font-medium">
+          {t("monthCloseHistory.readingDayHeading")}
+        </Text>
         <Text variant="muted" className="text-xs">
-          Which day of the following month you read the balance on. Later is
-          safer with a deferred-debit card, because the month’s card spending
-          has to have landed. What matters most is that it is always the same
-          day.
+          {t("monthCloseHistory.readingDayHint")}
         </Text>
         <View className="flex-row flex-wrap items-center gap-1.5">
           {READING_DAYS.map((day) => (
@@ -138,10 +142,11 @@ export function MonthCloseHistoryCard({
 
       {history.length > 0 || unrecordedCap !== null ? (
         <View className="gap-2 rounded-lg border border-border p-3">
-          <Text className="text-sm font-medium">Unrecorded allowance</Text>
+          <Text className="text-sm font-medium">
+            {t("common.unrecordedAllowance")}
+          </Text>
           <Text variant="muted" className="text-xs">
-            What you are willing to spend without recording it. Coming in under
-            it is what keeps a run alive.
+            {t("monthCloseHistory.allowanceHint")}
           </Text>
           <Input
             keyboardType="decimal-pad"
@@ -159,7 +164,9 @@ export function MonthCloseHistoryCard({
             />
             {suggested !== null && suggested !== unrecordedCap ? (
               <Button
-                label={`Use ${formatEuro(suggested)}`}
+                label={t("monthCloseHistory.useSuggested", {
+                  amount: formatEuro(suggested),
+                })}
                 size="sm"
                 variant="outline"
                 disabled={pending}
@@ -178,8 +185,7 @@ export function MonthCloseHistoryCard({
           </View>
           {suggested === null && summary.sample < MIN_CLOSES_FOR_CAP ? (
             <Text variant="muted" className="text-xs">
-              Close one more month and the app can suggest a figure from your
-              own spending.
+              {t("monthCloseHistory.needMoreForSuggestion")}
             </Text>
           ) : null}
         </View>
@@ -198,10 +204,12 @@ export function MonthCloseHistoryCard({
                   <Text className="text-sm font-medium">{row.label}</Text>
                   <Text variant="muted" className="text-xs">
                     {row.status === "baseline"
-                      ? "Starting point"
+                      ? t("monthCloseHistory.startingPoint")
                       : row.status === "over-recorded"
-                        ? "Needs a look — more in the account than the records allow"
-                        : `${formatEuro(row.unrecorded ?? 0)} never recorded`}
+                        ? t("monthCloseHistory.needsLook")
+                        : t("monthCloseHistory.neverRecordedAmount", {
+                            amount: formatEuro(row.unrecorded ?? 0),
+                          })}
                   </Text>
                 </View>
                 <View className="shrink-0 items-end">
@@ -218,7 +226,9 @@ export function MonthCloseHistoryCard({
                   ) : null}
                   {row.keptRate !== null ? (
                     <Text variant="muted" className="text-xs">
-                      {`${row.keptRate}% kept`}
+                      {t("monthCloseHistory.keptPercent", {
+                        rate: row.keptRate,
+                      })}
                     </Text>
                   ) : null}
                 </View>

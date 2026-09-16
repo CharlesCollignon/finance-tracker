@@ -12,6 +12,7 @@ import type { BankMovement } from "@/lib/queries";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
+import { useT } from "@/providers/LocaleProvider";
 
 interface RecentOnAccountProps {
   movements: BankMovement[];
@@ -33,6 +34,7 @@ export function RecentOnAccount({ movements }: RecentOnAccountProps) {
   const formatEuro = useFormatCurrency();
   const router = useRouter();
   const colors = useThemeColors();
+  const t = useT();
 
   if (movements.length === 0) {
     return null;
@@ -43,14 +45,20 @@ export function RecentOnAccount({ movements }: RecentOnAccountProps) {
   return (
     <Card bezel innerClassName="gap-4 p-5">
       <View className="flex-row items-center justify-between gap-3">
-        <Text className="text-sm font-medium">Last on your account</Text>
+        <Text className="text-sm font-medium">
+          {t("recentOnAccount.title")}
+        </Text>
         {/* A link that says "6 to review" has to land on the review. Left
             pointing at the bare Ledger it promised a decision and delivered a
             list — and on the phone the Ledger had nothing to say about the
             bank at all, so the promise could not be kept anywhere. */}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={pending > 0 ? `${pending} to review` : "Ledger"}
+          accessibilityLabel={
+            pending > 0
+              ? t("recentOnAccount.toReview", { count: pending })
+              : t("nav.ledger")
+          }
           onPress={() =>
             router.push(
               pending > 0
@@ -62,7 +70,9 @@ export function RecentOnAccount({ movements }: RecentOnAccountProps) {
           className="flex-row items-center gap-1"
         >
           <Text className="text-sm text-primary-ink">
-            {pending > 0 ? `${pending} to review` : "Ledger"}
+            {pending > 0
+              ? t("recentOnAccount.toReview", { count: pending })
+              : t("nav.ledger")}
           </Text>
           <Ionicons
             name="arrow-forward"
@@ -97,10 +107,11 @@ export function RecentOnAccount({ movements }: RecentOnAccountProps) {
                   className="text-xs text-muted-foreground"
                 >
                   {movement.pending
-                    ? "waiting for a category"
+                    ? t("recentOnAccount.waitingCategory")
                     : movement.ignored
-                      ? "left out"
-                      : (movement.categoryName ?? "in your ledger")}
+                      ? t("recentOnAccount.leftOut")
+                      : (movement.categoryName ??
+                        t("recentOnAccount.inYourLedger"))}
                 </Text>
               </View>
             </View>

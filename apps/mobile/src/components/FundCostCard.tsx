@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/Card";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Text } from "@/components/ui/Text";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
+import { useT } from "@/providers/LocaleProvider";
 
 /** Long enough to make the drag visible, short enough to stay believable. */
 const HORIZON_YEARS = 10;
@@ -33,6 +34,7 @@ interface FundCostCardProps {
  */
 export function FundCostCard({ portfolio }: FundCostCardProps) {
   const formatEuro = useFormatCurrency();
+  const t = useT();
 
   const summary = useMemo(
     () =>
@@ -60,19 +62,19 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
   return (
     <Card bezel innerClassName="gap-2 p-5">
       <View className="flex-row flex-wrap items-baseline justify-between gap-2">
-        <Text className="font-bold">What holding this costs</Text>
+        <Text className="font-bold">{t("fundCost.title")}</Text>
         {summary.weightedAverage !== null ? (
           <Text variant="muted" className="text-xs">
-            {`${formatCharge(summary.weightedAverage)} a year, weighted`}
+            {`${formatCharge(summary.weightedAverage)} ${t(
+              "fundCost.weightedSuffix",
+            )}`}
           </Text>
         ) : null}
       </View>
 
       {priced.length === 0 ? (
         <Text variant="muted" className="text-sm">
-          Add each holding&apos;s ongoing charge — the yearly fee on its KID —
-          and this becomes a figure in euros. It is the biggest cost most
-          portfolios have and the only one that never shows up on a statement.
+          {t("fundCost.emptyBody")}
         </Text>
       ) : (
         <>
@@ -83,9 +85,9 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
             {formatEuro(summary.totalAnnualCost)}
           </PrivateAmount>
           <Text variant="muted" className="text-sm">
-            {`a year on ${formatEuro(summary.coveredValue)} · ${formatEuro(
+            {`${t("fundCost.aYearOn")} ${formatEuro(summary.coveredValue)} · ${formatEuro(
               costOverYears(summary.totalAnnualCost, HORIZON_YEARS),
-            )} over ${HORIZON_YEARS} years at this balance`}
+            )} ${t("fundCost.overYears", { years: HORIZON_YEARS })}`}
           </Text>
 
           <View className="mt-1 border-t border-border">
@@ -109,13 +111,16 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
 
           {saving !== null && summary.cheapest ? (
             <Text variant="muted" className="mt-1 text-sm">
-              {`Your cheapest holding is ${summary.cheapest.name} at ${formatCharge(
-                summary.cheapest.ongoingCharge,
-              )}. At that rate the same ${formatEuro(
-                summary.coveredValue,
-              )} would cost ${formatEuro(summary.costAtCheapest ?? 0)} — a difference of `}
+              {`${t("fundCost.cheapestPrefix")} ${summary.cheapest.name} ${t(
+                "fundCost.cheapestAt",
+                { charge: formatCharge(summary.cheapest.ongoingCharge) },
+              )} ${formatEuro(summary.coveredValue)} ${t(
+                "fundCost.wouldCost",
+              )} ${formatEuro(summary.costAtCheapest ?? 0)} ${t(
+                "fundCost.differenceOf",
+              )} `}
               <Text className="font-medium text-foreground">
-                {`${formatEuro(saving)} a year.`}
+                {`${formatEuro(saving)} ${t("fundCost.aYear")}`}
               </Text>
             </Text>
           ) : null}
@@ -127,13 +132,11 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
           variant="muted"
           className="mt-1 border-t border-border pt-2 text-xs"
         >
-          {`${summary.missingCount} ${
-            summary.missingCount === 1 ? "holding has" : "holdings have"
-          } no charge recorded${
+          {`${t("fundCost.missingCharge", { count: summary.missingCount })}${
             summary.uncoveredValue > 0
               ? ` (${formatEuro(summary.uncoveredValue)})`
               : ""
-          }, so this total is partial.`}
+          }${t("fundCost.partialSuffix")}`}
         </Text>
       ) : null}
     </Card>

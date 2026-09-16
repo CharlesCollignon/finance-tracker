@@ -116,7 +116,7 @@ export function MoneyOnHand({
         {noBalanceReason === "past-month" ? (
           <p className="flex w-fit items-center gap-1.5 rounded-full bg-foreground/10 px-3 py-1 text-xs font-medium">
             <ClockCounterClockwise size={ICON.sm} />
-            {`Looking at ${monthLabel} — a month that has ended`}
+            {t("moneyOnHand.pastMonthBanner", { month: monthLabel })}
           </p>
         ) : null}
 
@@ -126,7 +126,7 @@ export function MoneyOnHand({
               ? pulseHeadline(pulse, locale)
               : `${t(short ? "month.overIn" : "month.leftIn", { month: monthLabel })}${
                   budgetView === "month_end"
-                    ? ", counting what is still to come"
+                    ? `, ${t("moneyOnHand.countingAhead")}`
                     : ""
                 }`}
           </p>
@@ -177,7 +177,7 @@ export function MoneyOnHand({
               <>
                 <Operator>−</Operator>
                 <Term
-                  label="still to leave"
+                  label={t("moneyOnHand.stillToLeave")}
                   amount={formatMoney(pulse.committed)}
                   tone="out"
                 />
@@ -187,7 +187,7 @@ export function MoneyOnHand({
               <>
                 <Operator>+</Operator>
                 <Term
-                  label="still to arrive"
+                  label={t("moneyOnHand.stillToArrive")}
                   amount={formatMoney(pulse.arriving)}
                   tone="in"
                 />
@@ -201,7 +201,9 @@ export function MoneyOnHand({
             <div
               className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/10"
               role="img"
-              aria-label={`${Math.round(elapsed * 100)}% of the month elapsed`}
+              aria-label={t("moneyOnHand.elapsedLabel", {
+                percent: Math.round(elapsed * 100),
+              })}
             >
               <div
                 className="h-full rounded-full bg-gradient-to-r from-primary-rim to-primary"
@@ -209,7 +211,10 @@ export function MoneyOnHand({
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              {`${Math.round(elapsed * 100)}% of ${monthLabel} gone`}
+              {t("moneyOnHand.elapsedGone", {
+                percent: Math.round(elapsed * 100),
+                month: monthLabel,
+              })}
             </p>
           </div>
         ) : null}
@@ -246,14 +251,15 @@ export function MoneyOnHand({
             whatever that account holds. */}
         {unreadable.length > 0 ? (
           <p className="text-sm text-destructive">
-            {`Could not read ${unreadable.join(", ")} — ${
-              unreadable.length === 1 ? "its balance is" : "their balances are"
-            } not counted above.`}
+            {t("moneyOnHand.unreadableAccounts", {
+              count: unreadable.length,
+              accounts: unreadable.join(", "),
+            })}
             <Link
               href="/budgets"
               className="ml-1 inline-flex items-center gap-1 text-primary-ink"
             >
-              Fix
+              {t("moneyOnHand.fixLink")}
               <ArrowRight size={ICON.xs} />
             </Link>
           </p>
@@ -276,6 +282,8 @@ export function MoneyOnHand({
  * transactions in it would be technically true and useless.
  */
 function SpendDelta({ comparison }: { comparison: MonthComparison | null }) {
+  const t = useT();
+
   if (
     !comparison ||
     !comparison.comparable ||
@@ -297,7 +305,10 @@ function SpendDelta({ comparison }: { comparison: MonthComparison | null }) {
           ? "bg-success/15 text-success"
           : "bg-primary/20 text-primary-ink dark:text-primary",
       )}
-      title={`Spending ${down ? "down" : "up"} ${percent}% against the same days of ${comparison.previousLabel}`}
+      title={t(down ? "moneyOnHand.spendingDownTitle" : "moneyOnHand.spendingUpTitle", {
+        percent,
+        month: comparison.previousLabel,
+      })}
     >
       {down ? (
         <TrendDown size={ICON.xs} weight="bold" />

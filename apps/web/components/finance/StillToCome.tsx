@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface StillToComeProps {
   /** What is still due to leave, soonest first. */
@@ -42,6 +43,7 @@ export function StillToCome({
   rows = 6,
 }: StillToComeProps) {
   const formatMoney = useFormatCurrency();
+  const t = useT();
 
   if (outgoing.length === 0 && incoming.length === 0) {
     return null;
@@ -54,7 +56,7 @@ export function StillToCome({
   return (
     <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-sm font-medium">Still to come</h2>
+        <h2 className="text-sm font-medium">{t("stillToCome.title")}</h2>
         <PrivateAmount className="tabular-nums">
           {formatMoney(leaving)}
         </PrivateAmount>
@@ -91,7 +93,9 @@ export function StillToCome({
         ))}
         {rest.length > 0 ? (
           <li className="flex items-baseline justify-between gap-3 py-2 text-sm text-muted-foreground">
-            <span>{`${rest.length} more`}</span>
+            <span>
+              {t("bearing.panel.moreHoldings", { count: rest.length })}
+            </span>
             <PrivateAmount className="tabular-nums">
               {formatMoney(restTotal)}
             </PrivateAmount>
@@ -106,11 +110,16 @@ export function StillToCome({
         <p className="text-sm text-muted-foreground">
           <PrivateAmount className="tabular-nums text-success">
             {`+${formatMoney(arriving)}`}
-          </PrivateAmount>
-          {" still to arrive"}
+          </PrivateAmount>{" "}
           {incoming.length === 1 && incoming[0]
-            ? `, ${incoming[0].name} on ${relativeDayLabel(incoming[0].occurredOn, formatShortDate)}`
-            : ""}
+            ? t("stillToCome.arrivingNamed", {
+                name: incoming[0].name,
+                when: relativeDayLabel(
+                  incoming[0].occurredOn,
+                  formatShortDate,
+                ),
+              })
+            : t("moneyOnHand.stillToArrive")}
         </p>
       ) : null}
 
@@ -118,7 +127,7 @@ export function StillToCome({
         href="/calendar"
         className="flex w-fit items-center gap-1 text-sm text-primary-ink"
       >
-        See the month on a calendar
+        {t("common.seeOnCalendar")}
         <ArrowRight size={ICON.sm} />
       </Link>
     </section>

@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface RecentOnAccountProps {
   movements: BankMovement[];
@@ -36,6 +37,7 @@ interface RecentOnAccountProps {
  */
 export function RecentOnAccount({ movements, pending }: RecentOnAccountProps) {
   const formatMoney = useFormatCurrency();
+  const t = useT();
 
   if (movements.length === 0) {
     return null;
@@ -44,7 +46,9 @@ export function RecentOnAccount({ movements, pending }: RecentOnAccountProps) {
   return (
     <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-sm font-medium">Last on your account</h2>
+        <h2 className="text-sm font-medium">
+          {t("recentOnAccount.title")}
+        </h2>
         {/* A link that says "6 to review" has to land on the review. Left
             pointing at the bare Ledger, it promised a decision and delivered
             a list. */}
@@ -52,7 +56,9 @@ export function RecentOnAccount({ movements, pending }: RecentOnAccountProps) {
           href={pending > 0 ? "/transactions?review=inbox" : "/transactions"}
           className="flex shrink-0 items-center gap-1 text-sm text-primary-ink"
         >
-          {pending > 0 ? `${pending} to review` : "Ledger"}
+          {pending > 0
+            ? t("recentOnAccount.toReview", { count: pending })
+            : t("nav.ledger")}
           <ArrowRight size={ICON.sm} />
         </Link>
       </div>
@@ -74,10 +80,11 @@ export function RecentOnAccount({ movements, pending }: RecentOnAccountProps) {
                 <span className="block truncate">{movement.label}</span>
                 <span className="block truncate text-xs text-muted-foreground">
                   {movement.pending
-                    ? "waiting for a category"
+                    ? t("recentOnAccount.waitingCategory")
                     : movement.ignored
-                      ? "left out"
-                      : (movement.categoryName ?? "in your ledger")}
+                      ? t("recentOnAccount.leftOut")
+                      : (movement.categoryName ??
+                        t("recentOnAccount.inYourLedger"))}
                 </span>
               </span>
             </span>
