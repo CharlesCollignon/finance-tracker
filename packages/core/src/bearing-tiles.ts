@@ -128,11 +128,19 @@ export type TileSpan = "hero" | "wide" | "unit";
 /**
  * The opening of the grid, and the figure that gets the room.
  *
- * A hero, two units beside it and a wide beneath them fills a four-column
- * grid exactly — no gaps, whatever lands where. `tall` was tried and dropped:
- * a two-row span mixed with single-row ones leaves auto-placement holes at
- * some counts, and a bento with a gap in it looks like a bug rather than a
- * layout.
+ * `hero` is two columns *and two rows* — `col-span-2 row-span-2` in
+ * `BearingGrid` — so these four spans fill two whole four-column rows
+ * exactly: hero with the two units beside it on the first, hero with the wide
+ * beneath them on the second. No gaps, whatever lands where. At two columns
+ * the hero simply takes two rows of its own and the rest follow in pairs,
+ * which is equally exact.
+ *
+ * An earlier version of this comment claimed the opposite — that a two-row
+ * span "was tried and dropped" because it "leaves auto-placement holes". It
+ * does not, and it is what ships; the claim outlived the experiment and then
+ * misled `bearing-grid.ts`, which modelled rows as sums of column spans and
+ * so put every `wide` tile's panel a row too low. Anything reasoning about
+ * where a row ends has to account for this tile being two rows tall.
  */
 const HEAD: readonly TileSpan[] = ["hero", "unit", "unit", "wide"];
 
