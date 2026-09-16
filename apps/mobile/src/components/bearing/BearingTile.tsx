@@ -141,11 +141,33 @@ export function BearingTile({
               // the whole card would make every press a gamble on how long the
               // finger stayed down, on a card whose main job is to open its
               // panel.
-              onLongPress={drag}
+              //
+              // Inert rather than merely dimmed while this tile's own panel
+              // is open — not styled-disabled, actually unable to start a
+              // drag. `react-native-reorderable-list`'s `startDrag` sizes the
+              // drop indicator and the neighbours' shift distance from
+              // `itemSize` synchronously, *before* it calls `onDragStart`
+              // (its own source comment: "run animation before onDragStart
+              // to avoid potentially waiting for it"). Closing the panel from
+              // `onDragStart` — which is how `index.tsx` closes every
+              // *other* open panel when a drag begins elsewhere — is a JS
+              // state update that lands a render late for the tile actually
+              // being dragged: the list would size the whole gesture to the
+              // panel-open height while the tile shrank underneath it.
+              // Never wiring `drag` at all for this tile while its own panel
+              // is open removes that race instead of losing it: `dragHandler`
+              // is this cell's only path into `startDrag`, so an `onLongPress`
+              // that is never bound here means `startDrag` is never called
+              // for this index while the panel is up, whatever the gesture
+              // does.
+              onLongPress={open ? undefined : drag}
               delayLongPress={180}
+              disabled={open}
               hitSlop={12}
               accessibilityRole="button"
+              accessibilityState={{ disabled: open }}
               accessibilityLabel={t("bearing.reorder", { label: tile.label })}
+              className={cn(open && "opacity-50")}
             >
               <Ionicons
                 name="reorder-two-outline"
