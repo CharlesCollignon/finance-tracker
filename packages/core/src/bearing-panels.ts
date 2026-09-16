@@ -35,8 +35,12 @@ export type PanelBlock =
   | "close-shelf"
   | "month-score"
   | "trend"
+  // No "ingredients". It was a separate block until somebody tried to draw
+  // it: both clients' `ProjectionCard` already lists what the projection is
+  // made of — the phone's says "the ingredients are the point, not trim" and
+  // mirrors the web's line for line — so a block beside "projection" could
+  // only ever render the same list twice or nothing at all.
   | "projection"
-  | "ingredients"
   | "wallets"
   | "weight-bars"
   | "fund-cost";
@@ -64,7 +68,7 @@ const FAMILY_BLOCKS: Record<FactFamily, readonly PanelBlock[]> = {
   now: ["money-on-hand", "recent-on-account"],
   month: ["spend-strip", "still-to-come"],
   run: ["close-shelf", "month-score"],
-  ahead: ["projection", "ingredients"],
+  ahead: ["projection"],
   wallet: ["wallets", "weight-bars"],
 };
 
@@ -97,8 +101,8 @@ const TILE_BLOCKS: Partial<Record<TileId, readonly PanelBlock[]>> = {
   streak: ["close-shelf"],
   "best-streak": ["close-shelf"],
   "monthly-net-average": ["trend"],
-  "projected-balance": ["projection", "ingredients"],
-  "projected-kept": ["projection", "ingredients"],
+  "projected-balance": ["projection"],
+  "projected-kept": ["projection"],
   "wallet-cost": ["wallets", "fund-cost"],
   "wallet-drag": ["wallets", "weight-bars"],
 };

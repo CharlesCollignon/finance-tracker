@@ -12,25 +12,36 @@ const FAMILIES: readonly FactFamily[] = [
   "wallet",
 ];
 
-const BLOCKS: ReadonlySet<string> = new Set<PanelBlock>([
-  "money-on-hand",
-  "cash-accounts",
-  "recent-on-account",
-  "review-inbox",
-  "spend-strip",
-  "still-to-come",
-  "month-read",
-  "month-comparison",
-  "budget-progress",
-  "close-shelf",
-  "month-score",
-  "trend",
-  "projection",
-  "ingredients",
-  "wallets",
-  "weight-bars",
-  "fund-cost",
-]);
+/**
+ * The union, written out by hand so the test and the type have to agree.
+ *
+ * A `Record` rather than a `Set`, which is the difference between catching
+ * one direction and catching both. A member dropped from `PanelBlock` stops
+ * type-checking here; a member *added* to it leaves this record missing a key,
+ * which also stops type-checking. A `Set<PanelBlock>` only caught the first,
+ * and that gap is how `"ingredients"` survived from Task 3 to Task 5 — in the
+ * union, in two block lists, drawn by neither client.
+ */
+const EVERY_BLOCK: Record<PanelBlock, true> = {
+  "money-on-hand": true,
+  "cash-accounts": true,
+  "recent-on-account": true,
+  "review-inbox": true,
+  "spend-strip": true,
+  "still-to-come": true,
+  "month-read": true,
+  "month-comparison": true,
+  "budget-progress": true,
+  "close-shelf": true,
+  "month-score": true,
+  trend: true,
+  projection: true,
+  wallets: true,
+  "weight-bars": true,
+  "fund-cost": true,
+};
+
+const BLOCKS: ReadonlySet<string> = new Set(Object.keys(EVERY_BLOCK));
 
 describe("panelFor", () => {
   it("gives a month tile the scope chrome, because it is the only family that needs it", () => {
@@ -90,6 +101,24 @@ describe("totality", () => {
         }
       }
     }
+  });
+
+  it("declares no block that no panel draws", () => {
+    // The other direction, and the one nothing checked. `"ingredients"` sat
+    // in the union and in two block lists for two tasks, and every client
+    // that reached it had to decide what to render for a block whose content
+    // its projection card already drew. A union member no panel reaches is a
+    // question every renderer has to answer and nobody asked.
+    const drawn = new Set<string>();
+    for (const id of BEARING_TILE_IDS) {
+      for (const family of FAMILIES) {
+        for (const block of panelFor(id, family).blocks) {
+          drawn.add(block);
+        }
+      }
+    }
+
+    expect([...BLOCKS].filter((block) => !drawn.has(block))).toEqual([]);
   });
 
   it("takes its chrome from the family, never from the tile", () => {

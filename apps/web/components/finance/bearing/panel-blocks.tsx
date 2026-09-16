@@ -151,15 +151,6 @@ export function PanelBlockView({
         <ProjectionCard projection={detail.projection} runway={detail.runway} />
       ) : null;
 
-    case "ingredients":
-      // Nothing, deliberately. `ProjectionCard` above already lists what the
-      // projection is made of — the card's own doc calls the ingredients the
-      // answer to its original failure — so drawing them again here would be
-      // the same list twice under one heading. The arm stays because the
-      // block is real on the phone, whose projection card is a different
-      // component and does not carry them.
-      return null;
-
     case "wallets":
       return detail.family === "wallet" ? (
         <MonthWallets portfolio={detail.portfolio} />
@@ -198,23 +189,18 @@ export function PanelBlockView({
  * pixel would have to be remeasured every time a card changed.
  */
 export function PanelBlockSkeleton({ block }: { block: PanelBlock }) {
-  const height = SKELETON_HEIGHT[block];
-
-  // Null for a block this client draws nothing for, so the panel does not
-  // reserve a gap for something that is never going to arrive.
-  if (!height) {
-    return null;
-  }
-
   return (
     <div
       aria-hidden
-      className={cn("animate-pulse rounded-3xl bg-muted/40", height)}
+      className={cn(
+        "animate-pulse rounded-3xl bg-muted/40",
+        SKELETON_HEIGHT[block],
+      )}
     />
   );
 }
 
-const SKELETON_HEIGHT: Record<PanelBlock, string | null> = {
+const SKELETON_HEIGHT: Record<PanelBlock, string> = {
   "money-on-hand": "h-64",
   "cash-accounts": "h-40",
   "recent-on-account": "h-56",
@@ -228,8 +214,6 @@ const SKELETON_HEIGHT: Record<PanelBlock, string | null> = {
   "month-score": "h-44",
   trend: "h-36",
   projection: "h-72",
-  // Drawn inside `ProjectionCard` on this client. See the arm above.
-  ingredients: null,
   wallets: "h-32",
   "weight-bars": "h-40",
   "fund-cost": "h-48",
