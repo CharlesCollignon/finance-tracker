@@ -207,9 +207,20 @@ interface MonthFigures {
   pulse: MonthPulse;
   trend: Trend;
   hero: HeroFigures;
-  budgets: Budgets;
   /** Handed to `gatherRead` too, so it does not ask Supabase for them again. */
   templates: RecurringTemplateWithCategory[];
+}
+
+/**
+ * What the month read renders against: the shared figures plus the two things
+ * only the `month` family gathers.
+ *
+ * They travel together rather than as four more parameters because they are
+ * one month's worth of state, and a caller that passed the budgets of one
+ * month beside the summary of another would compile.
+ */
+interface ReadInput extends MonthFigures {
+  budgets: Budgets;
   categories: Category[];
 }
 
@@ -243,6 +254,11 @@ function openingBalanceFor(
  * it. Keeping three copies of this arithmetic in step by hand is the failure
  * this prevents — a pulse built from a different opening balance than the
  * score it feeds is a figure that looks authoritative and is nonsense.
+ *
+ * Only the slice all three want, though. The budget rings used to be built
+ * here too, which cost `now` and `run` two queries and a build for a field
+ * neither of their `PanelDetail` variants even has — and the phone has no
+ * request cache to absorb that. `gatherMonth` asks for them itself now.
  */
 async function monthFigures(
   userId: string,
@@ -264,8 +280,6 @@ async function monthFigures(
     previousTx,
     skipped,
     fulfilledKeys,
-    budgetRows,
-    categories,
     trend,
     // Only for the month in progress: a past month's balance is a figure
     // from a moment that has gone.
@@ -279,16 +293,12 @@ async function monthFigures(
     getTransactions(userId, previousYear, previousMonthNumber),
     getSkippedOccurrences(userId, year, month),
     getFulfilledKeys(userId),
-    getBudgets(userId),
-    getCategories(userId),
     getMonthlyTrend(userId),
     isCurrentMonth ? readCashBalance(userId, today) : Promise.resolve(null),
     isCurrentMonth
       ? getRecordedCashFlows(userId, year, month)
       : Promise.resolve(null),
   ]);
-
-  const categoryNames = new Map(categories.map((c) => [c.id, c.name] as const));
 
   const upcoming = buildStillToCome(
     currentTx,
@@ -347,24 +357,7 @@ async function monthFigures(
     trend: trend.map((point) => point.net),
   };
 
-  return {
-    summary,
-    comparison,
-    closes,
-    upcoming,
-    pulse,
-    trend,
-    hero,
-    budgets: buildBudgetProgress(
-      budgetRows,
-      summary.expenseBreakdown,
-      summary.expenses,
-      categoryNames,
-      locale,
-    ),
-    templates,
-    categories,
-  };
+  return { summary, comparison, closes, upcoming, pulse, trend, hero, templates };
 }
 
 /* ------------------------------------------------------------------ now */
@@ -425,10 +418,29 @@ async function gatherMonth(
   const { year, month } = scope;
   const view = scope.view ?? "current";
 
-  const figures = await monthFigures(userId, year, month, view, locale);
+  // The budget rings are this family's alone — `now` and `run` have no
+  // `budgets` field to put them in — so they are fetched here rather than
+  // inside the shared `monthFigures`, which used to build them for all three.
+  const [figures, budgetRows, categories] = await Promise.all([
+    monthFigures(userId, year, month, view, locale),
+    getBudgets(userId),
+    getCategories(userId),
+  ]);
+
+  const budgets = buildBudgetProgress(
+    budgetRows,
+    figures.summary.expenseBreakdown,
+    figures.summary.expenses,
+    new Map(categories.map((category) => [category.id, category.name])),
+    locale,
+  );
 
   const read = blocks.includes("month-read")
-    ? await gatherRead(userId, year, month, locale, figures)
+    ? await gatherRead(userId, year, month, locale, {
+        ...figures,
+        budgets,
+        categories,
+      })
     : null;
 
   return {
@@ -439,7 +451,7 @@ async function gatherMonth(
     summary: figures.summary,
     comparison: figures.comparison,
     upcoming: figures.upcoming,
-    budgets: figures.budgets,
+    budgets,
     pulse: figures.pulse,
     closes: figures.closes,
     trend: figures.trend,
@@ -454,15 +466,16 @@ async function gatherMonth(
  * twin: the web app's reads are cached per request, so asking for the
  * templates twice costs one query. The phone has no such cache, so asking
  * `monthFigures` a second time would be a second round trip for the same
- * rows — this is why `MonthFigures` carries `templates` and `categories`
- * through to here instead.
+ * rows — this is why `MonthFigures` carries `templates` through to here, and
+ * why `gatherMonth` hands over the categories and budget rings it has just
+ * fetched rather than letting this ask for them again.
  */
 async function gatherRead(
   userId: string,
   year: number,
   month: number,
   locale: Locale,
-  figures: MonthFigures,
+  figures: ReadInput,
 ): Promise<MonthReadDetail> {
   const current = getCurrentMonth();
   const isCurrentMonth = year === current.year && month === current.month;
@@ -561,16 +574,16 @@ async function chargesUnconfirmedCount(
 async function gatherRun(userId: string, scope: PanelScope): Promise<PanelDetail> {
   // The run is measured in closed months, so the shelf and the streak are
   // the whole history rather than the scoped month's slice of it.
-  const [figures, trend] = await Promise.all([
-    monthFigures(userId, scope.year, scope.month, "current"),
-    getMonthlyTrend(userId),
-  ]);
+  // `monthFigures` already fetches the trend, so asking for it again here was
+  // the same query twice on the same path — and the phone has no request
+  // cache to collapse the two.
+  const figures = await monthFigures(userId, scope.year, scope.month, "current");
 
   return {
     family: "run",
     closes: figures.closes,
     pulse: figures.pulse,
-    trend,
+    trend: figures.trend,
   };
 }
 
