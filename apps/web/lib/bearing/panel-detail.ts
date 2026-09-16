@@ -291,8 +291,13 @@ async function gatherMonth(
   const { year, month } = scope;
   const view = scope.view ?? "current";
 
-  const [figures, read] = await Promise.all([
+  // The budget rings are this family's alone — `now` and `run` have no
+  // `budgets` field to put them in — so they are fetched here rather than
+  // inside the shared `monthFigures`, which used to build them for all three.
+  const [figures, budgetRows, categories, read] = await Promise.all([
     monthFigures(userId, year, month, view, locale),
+    getBudgets(userId),
+    getCategories(userId),
     blocks.includes("month-read")
       ? gatherRead(userId, year, month, locale)
       : null,
@@ -302,11 +307,17 @@ async function gatherMonth(
     family: "month",
     year,
     month,
-    monthLabel: formatMonthLabel(year, month),
+    monthLabel: formatMonthLabel(year, month, locale),
     summary: figures.summary,
     comparison: figures.comparison,
     upcoming: figures.upcoming,
-    budgets: figures.budgets,
+    budgets: buildBudgetProgress(
+      budgetRows,
+      figures.summary.expenseBreakdown,
+      figures.summary.expenses,
+      new Map(categories.map((category) => [category.id, category.name])),
+      locale,
+    ),
     pulse: figures.pulse,
     closes: figures.closes,
     trend: figures.trend,
@@ -360,16 +371,15 @@ async function gatherRun(
   // The run is measured in closed months, so the shelf and the streak are the
   // whole history rather than the scoped month's slice of it. The pulse is
   // still the scoped month's, because that is what the score plays against.
-  const [figures, trend] = await Promise.all([
-    monthFigures(userId, scope.year, scope.month, "current"),
-    getMonthlyTrend(userId),
-  ]);
+  // `monthFigures` already fetches the trend, so asking for it again here was
+  // the same query twice on the same path.
+  const figures = await monthFigures(userId, scope.year, scope.month, "current");
 
   return {
     family: "run",
     closes: figures.closes,
     pulse: figures.pulse,
-    trend,
+    trend: figures.trend,
   };
 }
 
@@ -447,6 +457,11 @@ async function gatherWallet(userId: string): Promise<PanelDetail> {
  * this arithmetic in step by hand is the failure it exists to prevent — a
  * pulse built from a different opening balance than the score it feeds is a
  * figure that looks authoritative and is nonsense.
+ *
+ * Only what all three share, though. The budget rings used to be built here
+ * as well, which charged `now` and `run` two queries and a build for a field
+ * neither of their `PanelDetail` variants even has; `gatherMonth` asks for
+ * them itself now.
  */
 async function monthFigures(
   userId: string,
@@ -467,8 +482,6 @@ async function monthFigures(
     transactions,
     skippedKeys,
     fulfilledKeys,
-    budgetRows,
-    categories,
     trend,
     // What the accounts hold now, and what the month has actually moved.
     // Only for the month in progress: a past month's balance is a figure
@@ -483,8 +496,6 @@ async function monthFigures(
     getTransactions(userId, year, month),
     getRecurringSkipKeys(userId, year, month),
     getFulfilledKeys(userId),
-    getBudgets(userId),
-    getCategories(userId),
     getMonthlyTrend(userId),
     isCurrentMonth ? readCashBalance(userId, today) : null,
     isCurrentMonth ? getRecordedCashFlows(userId, year, month) : null,
@@ -523,7 +534,10 @@ async function monthFigures(
 
   const hero: HeroFigures = {
     pulse,
-    monthLabel: formatMonthLabel(year, month),
+    // The reader's language, not the default one. This label is stitched into
+    // a sentence — `t("month.leftIn", { month })` — so an English month name
+    // inside otherwise French prose is the whole of the defect.
+    monthLabel: formatMonthLabel(year, month, locale),
     income: summary.income,
     expenses: summary.expenses,
     remaining: summary.remaining,
@@ -550,22 +564,7 @@ async function monthFigures(
       : "past-month",
   };
 
-  return {
-    summary,
-    comparison,
-    closes,
-    upcoming,
-    pulse,
-    trend,
-    hero,
-    budgets: buildBudgetProgress(
-      budgetRows,
-      summary.expenseBreakdown,
-      summary.expenses,
-      new Map(categories.map((category) => [category.id, category.name])),
-      locale,
-    ),
-  };
+  return { summary, comparison, closes, upcoming, pulse, trend, hero };
 }
 
 /**
