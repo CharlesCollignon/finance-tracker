@@ -236,9 +236,22 @@ export function BearingGrid({
           />
           {/* The seam, and nothing else. The unfolding belongs to `Panel`,
               which is the only thing that knows when its own content is
-              ready to be measured against. */}
+              ready to be measured against.
+
+              Keyed by the open tile, not by the row it sits under: pressing a
+              second tile in the same row moves `openTile` straight from one
+              to the other without passing through null, and the panel would
+              land at the same position in the same Fragment both times. React
+              would reuse the mounted `Panel`, which initialises its month,
+              view and horizon once — so the new tile's panel would open on
+              the month the reader had stepped the previous one to, and its
+              open animation, also a once-per-mount effect, would not play. */}
           {index === panelRow && openRenderedTile ? (
-            <div data-panel-row className="col-span-full">
+            <div
+              key={openRenderedTile.id}
+              data-panel-row
+              className="col-span-full"
+            >
               <Panel tile={openRenderedTile} />
             </div>
           ) : null}
