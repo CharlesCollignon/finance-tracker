@@ -115,7 +115,9 @@ export function MonthCloseHistoryCard({
               })
             : history.length > 0
               ? t("monthCloseHistory.oneMoreForBaseline")
-              : t("monthCloseHistory.closeFromHomeMobile")}
+              : t("monthCloseHistory.closeFromSurface", {
+                  surface: t("nav.plan"),
+                })}
         </Text>
       </View>
 

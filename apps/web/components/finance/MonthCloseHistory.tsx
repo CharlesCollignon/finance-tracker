@@ -98,7 +98,7 @@ export function MonthCloseHistory({
             : history.length > 0
               ? t("monthCloseHistory.oneMoreForBaseline")
               : t("monthCloseHistory.closeFromSurface", {
-                  surface: t("nav.month"),
+                  surface: t("nav.plan"),
                 })}
         </Card.Description>
       </Card.Header>

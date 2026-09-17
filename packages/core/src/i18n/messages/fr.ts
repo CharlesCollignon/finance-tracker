@@ -1104,7 +1104,6 @@ export const fr: Messages = {
     oneMoreForBaseline:
       "Encore une clôture, et il y aura un mois normal auquel vous comparer.",
     closeFromSurface: "Clôturez un mois depuis {surface} et il apparaîtra ici.",
-    closeFromHomeMobile: "Clôturez un mois depuis Accueil et il apparaîtra ici.",
     allowanceHint:
       "Ce que vous acceptez de dépenser sans l'enregistrer. Rester en dessous, c'est ce qui garde une série vivante.",
     useSuggested: "Utiliser {amount}",

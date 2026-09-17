@@ -1313,15 +1313,22 @@ export const en = {
     normalMonthCost: "A normal month costs you about {amount} the app never sees.",
     oneMoreForBaseline:
       "One more close and there will be a normal month to compare against.",
-    /** The web says which surface; the nav word keeps the two from drifting. */
-    closeFromSurface: "Close a month from {surface} and it will appear here.",
     /**
-     * The phone's own version of the empty-history line, naming a surface
-     * called "Home" that is not one of this app's five — `nav.*` has no such
-     * word. Pre-existing and left as it renders; worth a bug report rather
-     * than a silent fix here.
+     * Both clients say which surface, with the same `nav.*` word, so the
+     * two cannot drift the way this once did: `MonthCloseHistoryCard` used
+     * to hardcode "Home", a surface this app has never had, and the web
+     * named Month after Month was retired.
+     *
+     * `nav.plan` because that is `navigation.ts`'s own `labelKey` for
+     * `/budgets`, which is where web's `MonthCloseCard` opens the close
+     * sheet, and which the phone answers from `planning.tsx` — the route
+     * `PHONE_PATHS["/budgets"]` and the Bearing spine both already point at
+     * for the close. The word is therefore right on both. The phone's
+     * `MonthCloseSheet` is not yet mounted on that screen — it lost its only
+     * caller when the Month tab was deleted — which is a gap in the screen
+     * rather than in the word.
      */
-    closeFromHomeMobile: "Close a month from Home and it will appear here.",
+    closeFromSurface: "Close a month from {surface} and it will appear here.",
     allowanceHint:
       "What you are willing to spend without recording it. Coming in under it is what keeps a run alive.",
     useSuggested: "Use {amount}",
