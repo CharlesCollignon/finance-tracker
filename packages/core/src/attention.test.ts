@@ -27,11 +27,13 @@ describe("buildAttention", () => {
 
   it("carries keys and params, never rendered text", () => {
     const [item] = buildAttention({ ...none, pendingInbox: 4 });
-    expect(item).toMatchObject({
+    expect(item).toEqual({
       id: "inbox",
+      tone: "waiting",
       messageKey: "month.attentionInbox",
       params: { count: 4 },
       href: "/transactions?review=inbox",
+      actionKey: "month.actionReview",
     });
     expect(item).not.toHaveProperty("text");
   });
@@ -50,6 +52,29 @@ describe("buildAttention", () => {
       "inbox",
       "apply",
       "proposals",
+    ]);
+    expect(items.map((item) => item.actionKey)).toEqual([
+      "month.actionReopen",
+      "month.actionClose",
+      "month.actionReview",
+      "month.actionApply",
+      "month.actionReview",
+    ]);
+  });
+
+  it("uses the baseline message and action when nothing has closed yet", () => {
+    const items = buildAttention({
+      ...none,
+      readyToClose: { monthLabel: "August", isBaseline: true },
+    });
+    expect(items).toEqual([
+      {
+        id: "close",
+        tone: "waiting",
+        messageKey: "month.attentionBaseline",
+        href: "/budgets",
+        actionKey: "month.actionStart",
+      },
     ]);
   });
 });
