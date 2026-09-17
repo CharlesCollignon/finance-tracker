@@ -485,6 +485,34 @@ git commit -m "Say the surfaces this app actually has"
 
 ---
 
+## Task 10: Account for everything the deleted screens were holding up
+
+**This is the third task added mid-plan, and the second caused by the same root defect.** Retiring Month deleted two screens. Components those screens were the only caller of did not disappear — they were orphaned. An orphaned component type-checks perfectly, passes lint, and is referenced by nothing, so no gate in this plan can see it.
+
+It has already cost one Critical regression: `MonthCloseSheet` was orphaned, and the phone silently lost the ability to close a month at all (repaired in Task 8). A copy sweep then stumbled onto a second: `ArrivedCharges` — the "Did this arrive?" confirmation — is orphaned on **both** clients, imported by `dashboard/page.tsx:72` and `month.tsx:37` before they were deleted.
+
+A crude scan then found at least four orphaned on web alone: `ArrivedCharges`, `Disclosure`, `MonthClosedRecap`, `MonthFirstRun`. Nobody has audited mobile.
+
+**Stop finding these one at a time.**
+
+- [ ] **Step 1: Enumerate every component the deleted screens imported**, on both clients. `git show 45962d9^:"apps/web/app/(app)/dashboard/page.tsx"` and `git show 45962d9^:"apps/mobile/src/app/(tabs)/month.tsx"` give you the import lists. Do the same for the two deleted `MonthAttention` components.
+
+- [ ] **Step 2: For each, determine whether anything still imports it**, anywhere in either app. Beware partial-name matches: a scan for `GLASS` matching `GLASS_CARD` is a false positive, and a component used under an alias is a false negative.
+
+- [ ] **Step 3: For each genuine orphan, decide and record which it is.** There are only two answers and the distinction is the whole task:
+  - **A capability the app lost.** Something a reader could do and now cannot. It must be re-homed on a surface that still exists. `ArrivedCharges` is known to be one: confirming an expected charge arrived is a thing people did, and the spec lists fulfilment as *out of scope* — meaning unchanged, not removed.
+  - **Chrome that belonged to the deleted screen.** Something that only ever existed to dress Month. It should be **deleted**, not re-homed — carrying it forward leaves dead code that the next person mistakes for a feature. `MonthFirstRun` and `MonthClosedRecap` are candidates; check whether the panel system already covers what they did before concluding either way, since the `run` family panel already has a `ClosedRecap` block.
+
+- [ ] **Step 4: Re-home the capabilities.** For `ArrivedCharges`, note that the spec describes it precisely: it was the slot in the attention list for "rows that ask a question rather than send you somewhere … which needs buttons and therefore a client component — so it arrives as a slot rather than as an item." The attention list is now the spine's action row. Judge whether the spine is the right home or whether a panel serves it better, and say why.
+
+- [ ] **Step 5: Delete the chrome**, with a one-line note in the commit body for each saying what it used to dress.
+
+- [ ] **Step 6: Report the full inventory** — every component, its verdict, and the evidence. This table is what makes the class closed rather than sampled.
+
+- [ ] **Step 7: Gates and commit.**
+
+---
+
 ## Task 7: Prove it, and write down what no command can check
 
 - [ ] **Step 1: Run all six gates and record each against the baseline**
