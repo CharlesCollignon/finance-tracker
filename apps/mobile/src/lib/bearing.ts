@@ -19,11 +19,14 @@ import { buildFundCosts } from "@finance/core/fund-costs";
 import { buildInvestmentReturns } from "@finance/core/investment-returns";
 import { buildWalletFundingNeeds } from "@finance/core/investment-upcoming";
 import { buildMonthComparison } from "@finance/core/month-comparison";
-import { buildMonthPulse } from "@finance/core/month-pulse";
+import { buildMonthPulse, type MonthPulse } from "@finance/core/month-pulse";
 import { previousMonthKey } from "@finance/core/month-close";
 import { buildForwardProjection, buildRunway } from "@finance/core/projection";
 import { buildStillToCome } from "@finance/core/still-to-come";
-import type { BearingArrangementRow } from "@finance/core/types/database";
+import type {
+  BearingArrangementRow,
+  MonthlySummary,
+} from "@finance/core/types/database";
 import {
   DEFAULT_LOCALE,
   parseLocale,
@@ -34,11 +37,13 @@ import { WEB_APP_URL } from "@/lib/env";
 import { supabase } from "@/lib/supabase";
 import {
   countPendingFeedItems,
+  countSwallowedFeedItems,
   getFulfilledKeys,
   getInvestmentTransactions,
   getMonthCloseOverview,
   getMonthlySummary,
   getMonthlyTrend,
+  getRecurringProposals,
   getRecurringTemplates,
   getSavingsReserve,
   getSkippedOccurrences,
@@ -47,7 +52,9 @@ import {
   getWalletPortfolio,
   hasBankFeed,
   readCashBalance,
+  type MonthCloseOverview,
 } from "@/lib/queries";
+import { previewApplyRecurringForMonth } from "@/lib/mutations";
 
 /**
  * The Bearing on the phone.
@@ -82,10 +89,34 @@ function isMissingSchema(error: { code?: string } | null): boolean {
   );
 }
 
+/**
+ * `BearingFacts`, widened with the raw figures the spine and its action row
+ * need but a fact pack has no id for.
+ *
+ * The web twin in `apps/web/lib/bearing/facts.ts` widens `GatheredBearingFacts`
+ * the same way and for the same reason: `pulse`, `summary` and `closes` were
+ * already computed here and fed into `buildBearingFacts` before being thrown
+ * away. `swallowed`, `proposals` and `recurringToApply` are the three new
+ * reads — see the gate below for why each is necessary.
+ */
+export interface GatheredBearingFacts extends BearingFacts {
+  pulse: MonthPulse;
+  summary: MonthlySummary;
+  closes: MonthCloseOverview;
+  /** Bank rows still waiting for a category — already read, just exposed. */
+  pendingInbox: number;
+  /** Bank rows an earlier sync merged away rather than left for review. */
+  swallowed: number;
+  /** Standing charges the statement implies but no template covers. */
+  proposals: number;
+  /** Recurring items this month's plan is ready to write as rows. */
+  recurringToApply: number;
+}
+
 export async function gatherBearingFacts(
   userId: string,
   locale: Locale,
-): Promise<BearingFacts> {
+): Promise<GatheredBearingFacts> {
   const today = todayIsoLocal();
   const { year, month } = getCurrentMonth();
   const [previousYear, previousMonthNumber] = previousMonthOf(year, month);
@@ -120,9 +151,19 @@ export async function gatherBearingFacts(
     hasBankFeed(userId),
   ]);
 
-  const [cash, pending] = await Promise.all([
+  // `swallowed` and `proposals` only mean anything with a bank feeding the
+  // ledger: a CSV-only user has no feed rows to swallow and no statement to
+  // detect a standing charge from, which is why both stay behind the same
+  // `bankFed` gate `pending` already used. `previewApplyRecurringForMonth`
+  // gates itself the same way for the opposite reason — with a feed,
+  // templates never write, so it always hands back an empty plan rather than
+  // being asked not to run.
+  const [cash, pending, swallowed, proposals, applyPlan] = await Promise.all([
     readCashBalance(userId, today),
     bankFed ? countPendingFeedItems(userId) : Promise.resolve(0),
+    bankFed ? countSwallowedFeedItems(userId) : Promise.resolve(0),
+    bankFed ? getRecurringProposals(userId, today) : Promise.resolve([]),
+    previewApplyRecurringForMonth(year, month),
   ]);
 
   const monthKey = `${year}-${String(month).padStart(2, "0")}`;
@@ -163,7 +204,7 @@ export async function gatherBearingFacts(
 
   const planByWallet = new Map(plans.map((plan) => [plan.wallet, plan]));
 
-  return buildBearingFacts({
+  const packed = buildBearingFacts({
     asOf: today,
     bearing: buildBearing({
       onHand,
@@ -234,6 +275,17 @@ export async function gatherBearingFacts(
     inboxPending: pending,
     locale,
   });
+
+  return {
+    ...packed,
+    pulse,
+    summary,
+    closes,
+    pendingInbox: pending,
+    swallowed,
+    proposals: proposals.length,
+    recurringToApply: applyPlan.plan?.toCreate.length ?? 0,
+  };
 }
 
 function previousMonthOf(year: number, month: number): [number, number] {

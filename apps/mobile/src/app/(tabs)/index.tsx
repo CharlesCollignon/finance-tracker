@@ -5,6 +5,8 @@ import { runOnJS } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import ReorderableList, { reorderItems } from "react-native-reorderable-list";
 
+import { buildAttention } from "@finance/core/attention";
+import { resolveSpine } from "@finance/core/spine";
 import {
   renderArrangement,
   type RenderedTile,
@@ -24,6 +26,7 @@ import {
 import { clearPanelCache } from "@/lib/bearing-panel";
 
 import { BearingTile } from "@/components/bearing/BearingTile";
+import { Spine } from "@/components/bearing/Spine";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
@@ -263,9 +266,58 @@ export default function BearingScreen() {
 
   const canArrange = bearingWritable() && stored.tracked;
 
+  // The spine's ladder and the action row's priority list, both pure
+  // functions of figures `gatherBearingFacts` already widened its return
+  // with — see that function's own doc comment for which three reads were
+  // added to reach `swallowed`, `proposals` and `recurringToApply`.
+  //
+  // `everClosed` and `closes` answer two different questions, per
+  // `spine.ts`'s own doc comment on `SpineInput`, and per the identical
+  // reasoning the web `BearingPage` already carries: `everClosed` is "has
+  // any close happened, a baseline included" — `history` carries a baseline
+  // close, so its length is the right signal, not `summary.sample` (which
+  // only counts *reconciled* closes and stays 0 for the whole month between
+  // a baseline close and the first one after it). `closes` is only "is
+  // there a streak worth a flame", which a baseline genuinely has none of
+  // yet, so it stays null exactly when `sample` is 0.
+  const spineState = resolveSpine({
+    pulse: facts.pulse,
+    everClosed: facts.closes.history.length > 0,
+    closes:
+      facts.closes.summary.sample > 0
+        ? {
+            streak: facts.closes.summary.streak,
+            bestStreak: facts.closes.summary.bestStreak,
+          }
+        : null,
+    remaining: facts.summary.remaining,
+  });
+
+  const attention = buildAttention({
+    swallowed: facts.swallowed,
+    pendingInbox: facts.pendingInbox,
+    recurringToApply: facts.recurringToApply,
+    readyToClose: facts.closes.next
+      ? {
+          monthLabel: facts.closes.next.label,
+          isBaseline: facts.closes.next.isBaseline,
+        }
+      : null,
+    proposals: facts.proposals,
+  });
+
   return (
     <Screen title={t("nav.bearing")} className="px-4 py-0">
+      {/* Fixed above the tiles, not a thirteenth one: outside
+          `ReorderableList` entirely, so opening a panel cannot move it and
+          nothing dragged can displace it. Screen's own `px-4` already
+          insets this horizontally, same as the list below. */}
+      <View className="pt-4">
+        <Spine state={spineState} attention={attention} />
+      </View>
+
       <ReorderableList
+        style={{ flex: 1 }}
         data={tiles}
         keyExtractor={(tile: RenderedTile) => tile.id}
         renderItem={({ item, index }) => (
@@ -284,7 +336,7 @@ export default function BearingScreen() {
         onDragEnd={onDragEnd}
         panGesture={dragGesture}
         dragEnabled={stored.tracked}
-        contentContainerStyle={{ paddingTop: 16, paddingBottom: bottom }}
+        contentContainerStyle={{ paddingTop: 12, paddingBottom: bottom }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

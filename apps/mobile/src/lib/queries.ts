@@ -11,6 +11,12 @@ import {
 
 import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
+import { bankMerchantKey } from "@finance/core/bank-merchant";
+import {
+  detectRecurring,
+  filterLiveProposals,
+  type RecurringProposal,
+} from "@finance/core/recurring-detection";
 export type { MonthlyTrendPoint };
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import {
@@ -65,6 +71,7 @@ import type {
   BankAccount,
   BankFeedItem,
   Category,
+  CategoryType,
   MonthClose,
   MonthlySummary,
   RecurringTemplateWithCategory,
@@ -1526,4 +1533,99 @@ export async function hasBankFeed(userId: string): Promise<boolean> {
     .eq("user_id", userId);
 
   return (count ?? 0) > 0;
+}
+
+/** How many bank rows an earlier sync merged away without asking. */
+export async function countSwallowedFeedItems(
+  userId: string,
+): Promise<number> {
+  const { count, error } = await supabase
+    .from("bank_feed_items")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("decided_by", "match:recurring");
+
+  if (error) {
+    if (isMissingSchema(error)) {
+      return 0;
+    }
+    throw error;
+  }
+
+  return count ?? 0;
+}
+
+/**
+ * Standing charges the statement implies but no template covers.
+ *
+ * The phone's twin of the web's `getRecurringProposals` in
+ * `apps/web/lib/queries/bank.ts` — read from transactions rather than the raw
+ * feed, so it works the same whether the rows came from a bank or a CSV, and
+ * guarded with `isMissingSchema` like every other bank-feed-adjacent read
+ * here, since `recurring_proposal_dismissals` ships in the same migration.
+ */
+export async function getRecurringProposals(
+  userId: string,
+  today: string,
+): Promise<RecurringProposal[]> {
+  const [txResult, templatesResult, dismissalsResult] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select(
+        "occurred_on, amount, note, category_id, categories!inner(name, type)",
+      )
+      .eq("user_id", userId)
+      .order("occurred_on", { ascending: false })
+      .limit(3000),
+    supabase
+      .from("recurring_templates")
+      .select("description, instrument_name")
+      .eq("user_id", userId),
+    supabase
+      .from("recurring_proposal_dismissals")
+      .select("merchant_key")
+      .eq("user_id", userId),
+  ]);
+
+  for (const { error } of [txResult, templatesResult, dismissalsResult]) {
+    if (error) {
+      if (isMissingSchema(error)) {
+        return [];
+      }
+      throw error;
+    }
+  }
+
+  // Covered either by a template that already exists, or by the user having
+  // looked at the suggestion and said no. A refusal that does not stick is
+  // not a refusal.
+  const covered = new Set([
+    ...(templatesResult.data ?? []).flatMap((row) =>
+      [row.description, row.instrument_name]
+        .map((value) => bankMerchantKey(value as string | null))
+        .filter((key) => key !== ""),
+    ),
+    ...(dismissalsResult.data ?? []).map(
+      (row) => row.merchant_key as string,
+    ),
+  ]);
+
+  const proposals = detectRecurring(
+    (txResult.data ?? []).map((row) => {
+      const category = row.categories as unknown as {
+        name: string;
+        type: CategoryType;
+      };
+      return {
+        occurredOn: row.occurred_on as string,
+        amount: Number(row.amount),
+        note: row.note as string | null,
+        categoryId: row.category_id as string,
+        categoryName: category.name,
+        categoryType: category.type,
+      };
+    }),
+  );
+
+  return filterLiveProposals(proposals, today, covered);
 }
