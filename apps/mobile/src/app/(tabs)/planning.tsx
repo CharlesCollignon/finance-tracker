@@ -96,6 +96,18 @@ function pacingHint(
   }
 }
 
+/**
+ * One close, and every figure the sheet reads while it is open. Assembled
+ * from live data to render the trigger, and frozen into state the moment the
+ * trigger is pressed — see `closing` below for why the freeze matters.
+ */
+interface ClosePrompt {
+  month: CloseableMonth;
+  monthlyCommitted: number;
+  unrecordedCap: number | null;
+  baseline: number | null;
+}
+
 export default function PlanningScreen() {
   const t = useT();
   const locale = useLocale();
@@ -117,18 +129,22 @@ export default function PlanningScreen() {
   const [tagName, setTagName] = useState("");
   const [pending, setPending] = useState(false);
   /**
-   * The month the sheet is working on, held rather than read live.
+   * Everything the sheet is working from, held rather than read live.
    *
-   * Recording a close is the one write on this screen that changes the answer
-   * to "what is there left to close" — usually to nothing, because the next
-   * month's reading day has not arrived. Driving the mounted sheet off
-   * `closes.next` would therefore tear it off the screen the instant the
-   * refresh lands, taking the reveal and its undo with it, and the reveal is
-   * the entire reason the sheet asks before it commits. Web does not have to
-   * think about this: its page is server-rendered and its `closes.next` does
-   * not move under the open sheet.
+   * Recording a close rewrites the very figures the sheet is still showing.
+   * `closes.next` usually empties, because the following month's reading day
+   * has not arrived — driving the mounted sheet off it would tear the sheet
+   * away the instant the refresh landed, taking the reveal and its undo with
+   * it, and the reveal is the entire reason the sheet asks before it commits.
+   * `summary.baseline` moves too: it is the median of the reconciled closes,
+   * so the close just written is one of the numbers it is a median of, and
+   * the sentence under the figures would swap wording mid-read.
+   *
+   * So all four travel together. Web does not have to think about any of
+   * this: its page is server-rendered and none of it moves under an open
+   * sheet.
    */
-  const [closing, setClosing] = useState<CloseableMonth | null>(null);
+  const [closing, setClosing] = useState<ClosePrompt | null>(null);
 
   const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
@@ -275,17 +291,39 @@ export default function PlanningScreen() {
   }
 
   const closes = data?.closes ?? null;
-  // The month the app is currently asking about, if any. Null once the latest
-  // one is closed and the next one's reading day has not arrived.
-  const next = closes?.next ?? null;
-  const invitation =
-    closes && next
-      ? closeInvitation({
-          isBaseline: next.isBaseline,
+  // What the app is currently asking about, if anything. Null once the latest
+  // month is closed and the next one's reading day has not arrived.
+  const prompt: ClosePrompt | null =
+    closes && closes.next
+      ? {
+          month: closes.next,
+          // Committed outgoings for the month in progress, which is what
+          // turns a month's saving into days of runway. `buildRunway` derives
+          // it from the templates alone, so the reserve this screen passes it
+          // does not touch the figure.
+          monthlyCommitted: data?.runway?.monthlyCommitted ?? 0,
           unrecordedCap: closes.settings.unrecordedCap,
           baseline: closes.summary.baseline,
-        })
+        }
       : null;
+
+  /**
+   * The snapshot once one has been taken, the live prompt before that.
+   *
+   * Reading the live one while nothing is open is what lets the sheet be
+   * mounted hidden and then toggled, the way the deleted Month screen had it,
+   * rather than appearing already open on the frame it first exists. The two
+   * are identical at the moment of the tap, so nothing moves across it.
+   */
+  const sheet = closing ?? prompt;
+
+  const invitation = prompt
+    ? closeInvitation({
+        isBaseline: prompt.month.isBaseline,
+        unrecordedCap: prompt.unrecordedCap,
+        baseline: prompt.baseline,
+      })
+    : null;
 
   function inviteDetail(): string | null {
     if (invitation === null) {
@@ -299,7 +337,7 @@ export default function PlanningScreen() {
           cap: formatEuro(invitation.cap),
         });
       case "normal":
-        return t("monthClose.normalMonth", {
+        return t("monthClose.inviteNormal", {
           amount: formatEuro(invitation.baseline),
         });
       case "bare":
@@ -333,21 +371,25 @@ export default function PlanningScreen() {
               above the first is derived from closes. Bearing's own "ready to
               close" row sends people here, and `monthCloseHistory`'s empty
               state names this surface by the same `nav.plan` word. */}
-          {next ? (
+          {prompt ? (
             <Card bezel innerClassName="gap-4 p-5">
               <View>
                 <Text className="font-semibold" style={{ fontSize: 16 }}>
-                  {next.isBaseline
+                  {prompt.month.isBaseline
                     ? t("monthClose.setStartingBalance")
-                    : t("month.attentionReadyToClose", { month: next.label })}
+                    : t("month.attentionReadyToClose", {
+                        month: prompt.month.label,
+                      })}
                 </Text>
                 <Text variant="muted" className="mt-1 text-sm">
                   {inviteDetail()}
                 </Text>
               </View>
               <Button
-                label={t("monthClose.closeMonth", { month: next.label })}
-                onPress={() => setClosing(next)}
+                label={t("monthClose.closeMonth", {
+                  month: prompt.month.label,
+                })}
+                onPress={() => setClosing(prompt)}
               />
             </Card>
           ) : null}
@@ -524,26 +566,22 @@ export default function PlanningScreen() {
         </ScrollView>
       )}
 
-      {closing ? (
+      {sheet ? (
         <MonthCloseSheet
-          open
+          open={closing !== null}
           onOpenChange={(value) => {
             if (!value) {
               setClosing(null);
             }
           }}
-          year={closing.year}
-          month={closing.month}
-          monthLabel={closing.label}
-          observeOn={closing.observeOn}
-          isBaseline={closing.isBaseline}
-          // Committed outgoings for the month in progress, which is what turns
-          // a month's saving into days of runway. `buildRunway` derives it
-          // from the templates alone, so the reserve this screen passes it
-          // does not touch the figure.
-          monthlyCommitted={data?.runway?.monthlyCommitted ?? 0}
-          unrecordedCap={closes?.settings.unrecordedCap ?? null}
-          baseline={closes?.summary.baseline ?? null}
+          year={sheet.month.year}
+          month={sheet.month.month}
+          monthLabel={sheet.month.label}
+          observeOn={sheet.month.observeOn}
+          isBaseline={sheet.month.isBaseline}
+          monthlyCommitted={sheet.monthlyCommitted}
+          unrecordedCap={sheet.unrecordedCap}
+          baseline={sheet.baseline}
           onClosed={() => {
             notifyDataChanged();
             void onRefresh();

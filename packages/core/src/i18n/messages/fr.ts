@@ -525,6 +525,8 @@ export const fr: Messages = {
       "Saisissez ce que votre compte contient réellement aujourd'hui. Dès le mois prochain, l'application pourra le comparer à ce qu'elle a enregistré et vous dire ce qu'elle n'a jamais vu — des espèces, un paiement oublié, une carte que vous ne suivez pas.",
     inviteAllowance:
       "Restez sous {cap} de dépenses non enregistrées pour garder la série en vie.",
+    inviteNormal:
+      "Un mois normal chez vous tourne autour de {amount} que l'application ne voit jamais.",
     inviteBare:
       "Un seul solde, et l'application peut calculer ce qu'elle n'a jamais vu.",
     reopened: "{month} réouvert",

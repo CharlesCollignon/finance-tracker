@@ -589,15 +589,22 @@ export const en = {
     },
     /**
      * The card that offers the close, before the sheet opens. Which of the
-     * three `invite*` lines is shown is decided by `closeInvitation` in
-     * `../../month-close`, not at the call site — the fourth case reuses
-     * `normalMonth` above rather than growing a second wording of it.
+     * four `invite*` lines is shown is decided by `closeInvitation` in
+     * `../../month-close`, not at the call site.
+     *
+     * `inviteNormal` is deliberately not `normalMonth` above, which says the
+     * same figure in six fewer words. On the sheet that wording sits directly
+     * under a "Never recorded" total and the reader can see what the number
+     * is; on this card there is no other figure at all, so the short version
+     * reads as what a month costs to live, which it is not.
      */
     setStartingBalance: "Set your starting balance",
     inviteBaseline:
       "Type in what your account actually holds today. From next month the app can compare that against what it recorded, and tell you what it never saw — cash, a forgotten tap, a card you do not track.",
     inviteAllowance:
       "Stay under {cap} of unrecorded spending to keep the run going.",
+    inviteNormal:
+      "A normal month for you is around {amount} the app never sees.",
     inviteBare: "One balance, and the app can work out what it never saw.",
     reopened: "{month} reopened",
     baselineSet:
