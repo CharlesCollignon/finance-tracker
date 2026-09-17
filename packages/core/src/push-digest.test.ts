@@ -47,7 +47,7 @@ describe("buildDueNotifications", () => {
     const due = build({ today: "2026-09-01" });
     expect(due).toHaveLength(1);
     expect(due[0]!.key).toBe("month-open:2026-09");
-    expect(due[0]!.url).toBe("/dashboard");
+    expect(due[0]!.url).toBe("/bearing");
   });
 
   it("counts the waiting recurring items when it knows them", () => {

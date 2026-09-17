@@ -12,11 +12,13 @@ import { getSupabaseEnv } from "@/lib/supabase/env";
 /**
  * The surfaces whose figures are about one month.
  *
- * Exactly the three that read `y` and `m`. `/history` is not among them: it
+ * Exactly the two that read `y` and `m`. `/history` is not among them: it
  * looks across months by category, so a month in its address would be a
- * parameter it ignores.
+ * parameter it ignores. `/dashboard` was the third until Month retired —
+ * `next.config.ts` now redirects it to `/bearing` before any request reaches
+ * this proxy, so it has nothing to restore a month into any more.
  */
-const MONTH_SCOPED = ["/dashboard", "/transactions", "/calendar"];
+const MONTH_SCOPED = ["/transactions", "/calendar"];
 
 /**
  * Where to send a month-scoped request that names no month, when one is
@@ -115,7 +117,6 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/login") || pathname.startsWith("/signup");
   const isProtected =
     pathname.startsWith("/bearing") ||
-    pathname.startsWith("/dashboard") ||
     pathname.startsWith("/transactions") ||
     pathname.startsWith("/recurring") ||
     pathname.startsWith("/calendar") ||

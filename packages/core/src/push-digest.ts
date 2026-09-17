@@ -88,7 +88,7 @@ export function buildDueNotifications({
           pendingRecurring > 0
             ? t("push.monthOpen.pending", { count: pendingRecurring })
             : t("push.monthOpen.idle"),
-        url: "/dashboard",
+        url: "/bearing",
       });
     }
   }
@@ -104,7 +104,7 @@ export function buildDueNotifications({
         key,
         title: t("push.arrived.title", { count: arrivedCharges }),
         body: t("push.arrived.body", { count: arrivedCharges }),
-        url: "/dashboard",
+        url: "/bearing",
       });
     }
   }

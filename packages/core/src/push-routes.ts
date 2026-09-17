@@ -4,9 +4,9 @@
  * `push-digest` decides what is worth saying and writes one message for every
  * device, which means one `url` for every device — and it writes it in web
  * paths, because that is the app the daily job runs in. The two apps do not
- * agree on their addresses: Month is `/dashboard` on the web and `/` on the
- * phone, and caps and goals are `/budgets` there and `/planning` here. So the
- * phone translates rather than follows.
+ * agree on every address: the Bearing is `/bearing` on the web and `/` on
+ * the phone, and caps and goals are `/budgets` there and `/planning` here. So
+ * the phone translates rather than follows.
  *
  * Both halves of that contract live here, next to the digest that writes the
  * paths, so a route renamed on one side and not the other is a failing test
@@ -34,20 +34,21 @@ const MOBILE_ROUTES = [
 
 /** Web path → the phone's name for the same surface. */
 const RENAMED: Record<string, string> = {
-  "/dashboard": "/",
+  "/bearing": "/",
   "/budgets": "/planning",
 };
 
 /**
  * Where the phone should go, or null when it cannot tell.
  *
- * Null rather than a default, even though every caller defaults to Month. The
- * first version returned Month for a url it could not place, which reads
- * fine and cannot be tested: Month is also a real destination — it is where
- * `/dashboard` goes — so "the answer is Month" and "there was no answer" were
- * the same value, and a test that the digest writes nothing unplaceable could
- * not be written. Answering the question asked, and leaving the fallback to
- * the caller, makes the two distinguishable.
+ * Null rather than a default, even though every caller defaults to the
+ * Bearing. An earlier version returned the Bearing for a url it could not
+ * place, which reads fine and cannot be tested: the Bearing is also a real
+ * destination — it is where `/bearing` goes — so "the answer is the Bearing"
+ * and "there was no answer" were the same value, and a test that the digest
+ * writes nothing unplaceable could not be written. Answering the question
+ * asked, and leaving the fallback to the caller, makes the two
+ * distinguishable.
  */
 export function mobileRouteForPushUrl(url: unknown): MobileRoute | null {
   if (typeof url !== "string" || !url.startsWith("/")) {

@@ -18,7 +18,6 @@ const uuid = z.string().uuid();
 
 function revalidateFeedDependents(): void {
   revalidatePath("/transactions");
-  revalidatePath("/dashboard");
   revalidatePath("/bearing");
   revalidatePath("/calendar");
   revalidatePath("/budgets");
@@ -572,7 +571,6 @@ export async function setAccountCountsAsCash(
   }
 
   revalidatePath("/budgets");
-  revalidatePath("/dashboard");
   revalidatePath("/bearing");
   return { success: true };
 }

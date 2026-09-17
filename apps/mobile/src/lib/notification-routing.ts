@@ -35,8 +35,8 @@ export function useNotificationRouting(ready: boolean): void {
     const { url } = response.notification.request.content.data ?? {};
     const route = mobileRouteForPushUrl(url);
 
-    // Month when the path cannot be placed — a web-only surface such as
-    // /history, or a payload from a build older than the route it names.
+    // The Bearing when the path cannot be placed — a web-only surface such
+    // as /history, or a payload from a build older than the route it names.
     // Opening the app somewhere plausible is a small failure; pushing a route
     // the navigator has never heard of is a crash.
     router.push(

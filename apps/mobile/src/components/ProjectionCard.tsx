@@ -38,7 +38,9 @@ const INGREDIENT_ROUTE: Record<ProjectionIngredient["kind"], string> = {
   committed: "/(tabs)/recurring",
   "set-aside": "/(tabs)/recurring",
   deployed: "/(tabs)/investments",
-  unrecorded: "/(tabs)/month",
+  // Unrecorded spending is measured against the close, and Plan is where the
+  // close — and the allowance it is measured against — lives on the phone.
+  unrecorded: "/(tabs)/planning",
 };
 
 /**

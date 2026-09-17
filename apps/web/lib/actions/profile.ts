@@ -73,7 +73,6 @@ export async function deleteAllData(
     return { error: message };
   }
 
-  revalidatePath("/dashboard");
   revalidatePath("/bearing");
   revalidatePath("/transactions");
   revalidatePath("/recurring");

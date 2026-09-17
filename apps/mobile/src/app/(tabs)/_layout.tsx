@@ -35,11 +35,12 @@ type TabConfig = {
  * place for the app's most frequent destination. Profile lives in the header
  * account menu.
  *
- * Month is the newest one to leave the bar, and it left because the bar holds
- * five. The Bearing answers "where do I stand" across all of them, and every
- * one of its tiles links to the surface that explains its figure — so Month is
- * one press from the tile that states this month's, rather than a sixth
- * label squeezed into a row that already truncates on a small phone.
+ * Month left the bar for the same reason, then left the app entirely. It went
+ * first because the bar holds five: the Bearing answers "where do I stand"
+ * across all of them, and every one of its tiles was one press from the
+ * surface that explained its figure. That surface is retired now — the press
+ * opens a panel in place, on this tab, rather than navigating to a sixth
+ * screen — so there is no `month` route left here to hide from the bar.
  */
 const TABS: TabConfig[] = [
   {
@@ -132,8 +133,8 @@ export default function TabsLayout() {
                 // Both of the Ledger's open questions: charges the bank
                 // looks to have already paid, and bank rows still waiting for
                 // a category. A dot rather than a count: the bar is five
-                // targets across a phone, and the numbers are on the Month
-                // screen, one Needs you row each.
+                // targets across a phone, and the numbers are on the Bearing,
+                // one panel each.
                 ...(name === "transactions" && waiting > 0
                   ? {
                       tabBarBadge: "",
@@ -150,8 +151,6 @@ export default function TabsLayout() {
               }}
             />
           ))}
-          {/* Reached from a Bearing tile, not the bar — see TABS above. */}
-          <Tabs.Screen name="month" options={{ href: null }} />
           {/* A view of the Ledger, not a destination of its own. */}
           <Tabs.Screen name="calendar" options={{ href: null }} />
           {/* Reachable from the header account menu, not the tab bar. */}

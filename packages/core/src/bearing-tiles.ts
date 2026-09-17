@@ -86,19 +86,24 @@ export interface TileMeta {
  * Where each figure is explained.
  *
  * Paths are the app's existing ones — `navigation.ts` records why they were
- * never renamed — so the Month page is `/dashboard` even though it is no
- * longer the app's front door.
+ * never renamed.
+ *
+ * `on-hand`, `free` and `savings-rate` used to lead to the Month page at
+ * `/dashboard`. That page is gone: everything it said about those three
+ * figures is now said by the panel that opens under the tile itself
+ * (`bearing-panels.ts`'s `TILE_BLOCKS`), so — like `net-position` — there is
+ * no further surface to send a press to.
  */
 export const BEARING_TILES: Record<TileId, TileMeta> = {
   "net-position": { href: null, series: "trend" },
-  "on-hand": { href: "/dashboard" },
+  "on-hand": { href: null },
   invested: { href: "/investments" },
   "invested-share": { href: "/investments" },
   "inbox-pending": { href: "/transactions?review=inbox" },
-  free: { href: "/dashboard" },
+  free: { href: null },
   committed: { href: "/recurring" },
   arriving: { href: "/recurring" },
-  "savings-rate": { href: "/dashboard" },
+  "savings-rate": { href: null },
   "expenses-vs-previous": { href: "/history" },
   "unrecorded-so-far": { href: "/budgets" },
   "unrecorded-allowance": { href: "/budgets" },
@@ -122,7 +127,8 @@ export const BEARING_TILES: Record<TileId, TileMeta> = {
 };
 
 /**
- * The phone's answer to the three paths above that only the web app has.
+ * The phone's answer to the web-only paths above, or null for a footer link
+ * that should not exist at all.
  *
  * `BEARING_TILES` is written against the web router, as its own comment
  * says, and the phone used to forward those strings to `router.push`
@@ -130,36 +136,45 @@ export const BEARING_TILES: Record<TileId, TileMeta> = {
  * pointed at a screen Expo Router has never had: there is no `/dashboard`,
  * no `/budgets` and no `/history` anywhere under `apps/mobile/src/app`.
  *
- * Nearest real screen by content rather than a new one, because a panel
- * footer is a way out to a fuller surface and inventing a surface to satisfy
- * a link is the wrong way round:
+ * `/budgets` still becomes Plan, which is where the phone keeps budget caps,
+ * goal pacing, projections, runway and the close history: the whole of what
+ * the tiles sent there are about.
  *
- * - `/dashboard` is the Month page — `navigation.ts` records why the web path
- *   was never renamed — and `month.tsx` is its phone counterpart. The tab
- *   layout already says Month is reached "from a Bearing tile, not the bar".
- * - `/budgets` becomes Plan, which is where the phone keeps budget caps,
- *   goal pacing, projections, runway and the close history: the whole of what
- *   the ten tiles sent there are about.
- * - `/history` is the Ledger's by-category view, and the phone's Ledger has
- *   only the list and the calendar. Month is the nearest thing that answers
- *   what those two tiles ask — it draws the month-against-previous comparison
- *   and the net-per-month trend that those tiles *are*.
+ * `/dashboard` and `/history` map to null rather than to a screen, and both
+ * for the same reason. `/dashboard` was the Month page; Month is retired, and
+ * no `BEARING_TILES` entry points at it any more — `on-hand`, `free` and
+ * `savings-rate` lead nowhere now, same as `net-position`, because their
+ * panel says what Month used to. `/history` is the Ledger's by-category
+ * view, which the phone's Ledger has never had either, and the screen that
+ * used to stand in for it — Month, again, for its month-against-previous
+ * comparison and its net-per-month trend — is the same retired page. Neither
+ * entry is reached through a live `BEARING_TILES` href any more; both stay
+ * here, mapped honestly to "no link", rather than being deleted and quietly
+ * falling through `phoneHref`'s no-mapping branch to a web-only path if some
+ * future tile ever points at either again.
  *
  * Exported, read-only, because `/budgets` → `/planning` is one fact about
  * this app's route topology and `apps/mobile/src/components/bearing/Spine.tsx`
  * needs that same fact for the attention row's own, separately-verified
  * redirect — see that file's `attentionHref` for why it reads this table
- * rather than retyping the string. If this table's `/budgets` entry ever
+ * rather than retyping the string. `/budgets` is the one entry `attentionHref`
+ * relies on being a real path rather than null, which is why it is typed as
+ * a required `string` below rather than folded into the general
+ * `string | null` index signature. If this table's `/budgets` entry ever
  * moves, that is the other place to check.
  */
-export const PHONE_PATHS: Readonly<Record<string, string>> = {
-  "/dashboard": "/month",
+export const PHONE_PATHS: {
+  readonly [path: string]: string | null;
+  readonly "/budgets": string;
+} = {
+  "/dashboard": null,
   "/budgets": "/planning",
-  "/history": "/month",
+  "/history": null,
 };
 
 /**
- * Where a tile's figure is explained on the phone.
+ * Where a tile's figure is explained on the phone, or null for no footer
+ * link at all.
  *
  * A translation of `BEARING_TILES`'s web path rather than a second table, so
  * a tile added to the catalogue cannot be forgotten here: anything without a
@@ -167,6 +182,13 @@ export const PHONE_PATHS: Readonly<Record<string, string>> = {
  * (`/investments`, `/recurring`, `/transactions`). The query string rides
  * along untouched, which is what keeps `inbox-pending` landing on the Ledger
  * with its review filter already applied.
+ *
+ * `PHONE_PATHS` can answer a lookup three ways, and only two of them mean the
+ * same thing here: `undefined` (the path is not in the table at all) and a
+ * `string` (a real phone path) both pass `href` through or translate it as
+ * before. `null` is the third and means the table itself says this web path
+ * has no phone screen to link to — distinct from "not in the table", and the
+ * reason `phoneHref` cannot collapse the two checks below into one.
  */
 export function phoneHref(href: string | null): string | null {
   if (href === null) {
@@ -179,6 +201,9 @@ export function phoneHref(href: string | null): string | null {
   const phone = PHONE_PATHS[path];
   if (phone === undefined) {
     return href;
+  }
+  if (phone === null) {
+    return null;
   }
 
   return query < 0 ? phone : `${phone}${href.slice(query)}`;

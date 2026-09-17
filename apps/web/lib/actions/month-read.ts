@@ -37,7 +37,7 @@ export async function writeMonthReadAction(
   );
 
   if (outcome.written) {
-    revalidatePath("/dashboard");
+    revalidatePath("/bearing");
   }
 
   return outcome;

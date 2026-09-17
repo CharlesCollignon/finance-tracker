@@ -11,7 +11,6 @@ export function revalidateRecurringDependents(): void {
   revalidatePath("/calendar");
   revalidatePath("/investments");
   revalidatePath("/investments/look-through");
-  revalidatePath("/dashboard");
 }
 
 /**
@@ -36,7 +35,6 @@ export function revalidateRecurringDependents(): void {
  */
 export function revalidateEverySurface(): void {
   revalidatePath("/bearing");
-  revalidatePath("/dashboard");
   revalidatePath("/transactions");
   revalidatePath("/calendar");
   revalidatePath("/history");

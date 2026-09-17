@@ -23,7 +23,6 @@ function revalidatePhase4(): void {
   revalidatePath("/budgets");
   revalidatePath("/investments");
   revalidatePath("/transactions");
-  revalidatePath("/dashboard");
   revalidatePath("/bearing");
   revalidateRecurringDependents();
 }

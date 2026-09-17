@@ -13,7 +13,7 @@ describe("mobileRouteForPushUrl", () => {
   });
 
   it("renames the surfaces the two apps disagree about", () => {
-    expect(mobileRouteForPushUrl("/dashboard")).toEqual({
+    expect(mobileRouteForPushUrl("/bearing")).toEqual({
       pathname: "/",
       params: {},
     });
@@ -59,10 +59,10 @@ describe("mobileRouteForPushUrl", () => {
     }
   });
 
-  it("distinguishes Month-the-destination from having no answer", () => {
+  it("distinguishes a real destination from having no answer", () => {
     // The whole reason this returns null. Both used to be `{pathname: "/"}`,
     // which made the contract test below unwritable.
-    expect(mobileRouteForPushUrl("/dashboard")).not.toBeNull();
+    expect(mobileRouteForPushUrl("/bearing")).not.toBeNull();
     expect(mobileRouteForPushUrl("/history")).toBeNull();
   });
 

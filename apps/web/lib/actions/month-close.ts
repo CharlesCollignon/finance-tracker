@@ -22,7 +22,6 @@ import {
 type ActionResult = { error?: string; success?: boolean; message?: string };
 
 function revalidateCloseDependents(): void {
-  revalidatePath("/dashboard");
   revalidatePath("/bearing");
   revalidatePath("/budgets");
 }

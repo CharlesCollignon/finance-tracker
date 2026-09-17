@@ -31,13 +31,14 @@ export interface NavChild {
  * and it is still five — that ceiling is why the Bearing took Month's place
  * rather than being added beside it.
  *
- * Month is now a view under the Bearing, the way Calendar and History sit
- * under the Ledger. That is a demotion of position and not of importance: the
- * Bearing answers "where do I stand" and every one of its tiles is a figure
- * some other surface explains, so the screen that explains this month is one
- * press from the tile that states it. What the swap fixes is that the app's
- * front door used to be a single month, which is the right question on the
- * 28th and the wrong one on the 2nd.
+ * Month is gone rather than demoted. It spent one release as a view under
+ * the Bearing — reached from a child link here, the way Calendar and History
+ * sit under the Ledger — while the Bearing's panels proved they could carry
+ * everything it said. They did, so the screen itself was retired: every one
+ * of the Bearing's tiles is a figure some other surface explains, or now,
+ * for what used to be Month's, a figure a panel under that same tile
+ * explains in place. The Bearing has no child surface any more, which is why
+ * its `children` is empty like Charges' and Plan's.
  *
  * Charges spent a while as a view inside Plan, on the reasoning that a
  * standing charge is part of the plan. That is true about the data and wrong
@@ -46,17 +47,18 @@ export interface NavChild {
  * thing to reach. Plan is now caps, goals, the projection and the month
  * close — the things you read — and Charges is the thing you write.
  *
- * The paths are the old ones. Renaming them would have touched twenty-five
+ * The paths are the old ones. Renaming them would have touched two dozen
  * revalidation calls and the manifest to change strings nobody reads in an
- * installed app — which is also why Month kept `/dashboard` when it stopped
- * being the dashboard.
+ * installed app. `/dashboard` itself outlived being the dashboard by one
+ * release and is now a redirect to `/bearing` in `next.config.ts`, kept for
+ * the bookmarks and already-delivered push notifications that still name it.
  */
 export const APP_NAV_ITEMS = [
   {
     href: "/bearing",
     labelKey: "nav.bearing" satisfies Key,
     icon: Compass,
-    children: [{ href: "/dashboard", labelKey: "nav.month" }] as NavChild[],
+    children: [] as NavChild[],
   },
   {
     href: "/transactions",

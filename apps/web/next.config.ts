@@ -17,6 +17,23 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react"],
   },
+  async redirects() {
+    return [
+      // Month is retired. Its content moved into the Bearing's own panels
+      // rather than to a page, so there is nothing at `/dashboard` to render
+      // — but bookmarks and already-delivered push notifications still name
+      // it, and a bare 404 for either is worse than one redirect entry.
+      // Handled here rather than with a page-level `redirect()` because
+      // `next.config.js` redirects run before the filesystem router and
+      // before `proxy`, so `/dashboard` never has to be threaded through
+      // `MONTH_SCOPED` or the auth check in `lib/supabase/middleware.ts`.
+      {
+        source: "/dashboard",
+        destination: "/bearing",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     const wellKnownJson = [
       { key: "Content-Type", value: "application/json" },

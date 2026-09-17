@@ -243,10 +243,10 @@ describe("mergeArrangement", () => {
 /**
  * Every screen the phone's router actually has, transcribed from
  * `apps/mobile/src/app`: the tab group (`index`, `calendar`, `investments`,
- * `month`, `planning`, `profile`, `recurring`, `transactions`) plus the
- * root-level routes beside it. Hand-written because core cannot see the app,
- * and worth keeping in step: a footer link to a path missing from this list
- * is a press that lands nowhere.
+ * `planning`, `profile`, `recurring`, `transactions`) plus the root-level
+ * routes beside it. Hand-written because core cannot see the app, and worth
+ * keeping in step: a footer link to a path missing from this list is a press
+ * that lands nowhere.
  */
 const PHONE_ROUTES = new Set([
   "/",
@@ -254,7 +254,6 @@ const PHONE_ROUTES = new Set([
   "/categories",
   "/import",
   "/investments",
-  "/month",
   "/onboarding",
   "/planning",
   "/profile",
@@ -274,14 +273,13 @@ describe("phoneHref", () => {
     }
   });
 
-  it("redirects the three paths only the web app has", () => {
-    // The Month page, under the name the web router never renamed.
-    expect(phoneHref("/dashboard")).toBe("/month");
+  it("redirects the one path only the web app has, and drops the rest", () => {
     // Budget caps, goal pacing, projections, runway, close history.
     expect(phoneHref("/budgets")).toBe("/planning");
-    // No by-category Ledger view on the phone; Month draws the comparison
-    // and the trend those two tiles are about.
-    expect(phoneHref("/history")).toBe("/month");
+    // The Month page these both used to reach is retired; no tile points at
+    // either any more, and the table says so rather than staying silent.
+    expect(phoneHref("/dashboard")).toBeNull();
+    expect(phoneHref("/history")).toBeNull();
   });
 
   it("leaves the paths both clients share alone", () => {
