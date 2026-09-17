@@ -1541,7 +1541,7 @@ export const fr: Messages = {
       ringTight: "{percent} % de votre enveloppe utilisés, ça se resserre",
       ringShort:
         "{percent} % de votre enveloppe utilisés, le mois est déjà dans le rouge",
-      ringOver: "{percent} % de votre enveloppe, déjà dépassée",
+      ringOver: "déjà au-delà de votre enveloppe",
       moreWaiting: {
         one: "+{count} en attente",
         other: "+{count} en attente",

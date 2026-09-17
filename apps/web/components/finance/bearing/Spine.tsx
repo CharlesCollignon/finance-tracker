@@ -274,9 +274,21 @@ function SpineRing({ ring }: { ring: SpineState["ring"] }) {
 
   const clamped = Math.min(1, Math.max(0, ring.ratio));
   const percent = Math.round(clamped * 100);
+  // Two separate spec rows, two separate signals: `Ring colour` reads off
+  // `tone` alone, always — an over-cap month is not redrawn in a different
+  // colour depending on how the month otherwise stands, which is exactly
+  // the collapse that would make a `clear`-but-over month indistinguishable
+  // from a genuinely `short` one. `Ring` (the fill) is `over`'s channel:
+  // `clamped` already caps an over-100% ratio at a full ring, which is what
+  // "fills it" means without needing a second colour to say so again.
+  const toneSentence = t(toneKey(ring.tone), { percent });
+  // Both facts said, not one substituted for the other — a screen-reader
+  // user should hear the standing *and* that this month is over its cap,
+  // the same two things a sighted reader gets from the fill and the colour
+  // together.
   const label = ring.over
-    ? t("bearing.spine.ringOver", { percent })
-    : t(toneKey(ring.tone), { percent });
+    ? `${toneSentence} · ${t("bearing.spine.ringOver")}`
+    : toneSentence;
 
   return (
     <svg
@@ -300,7 +312,7 @@ function SpineRing({ ring }: { ring: SpineState["ring"] }) {
         cy={SIZE / 2}
         r={RADIUS}
         fill="none"
-        stroke={ring.over ? "var(--destructive)" : toneStroke(ring.tone)}
+        stroke={toneStroke(ring.tone)}
         strokeWidth={STROKE}
         strokeLinecap="round"
         strokeDasharray={CIRCUMFERENCE}

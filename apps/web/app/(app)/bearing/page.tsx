@@ -102,17 +102,23 @@ export default async function BearingPage() {
   // `closes` come from, and its own doc comment for which three reads were
   // added to reach `swallowed`, `proposals` and `recurringToApply`.
   //
-  // `closes` is null — "nothing has ever closed" — until at least one month
-  // has actually been reconciled against a balance; a lone baseline close
-  // has nothing measured behind it yet for the ring or the flame to show.
+  // `everClosed` and `closes` answer two different questions, per
+  // `spine.ts`'s own doc comment on `SpineInput`. `everClosed` is "has any
+  // close happened, a baseline included" — `history` carries a baseline
+  // close (it sets `openingBalance`, which is what makes `unrecordedSoFar`
+  // measurable), so its length is the right signal, not `summary.sample`
+  // (which only counts *reconciled* closes and stays 0 for the whole month
+  // between a baseline close and the first one after it). `closes` is only
+  // "is there a streak worth a flame", which a baseline genuinely has none
+  // of yet, so it stays null exactly when `sample` is 0.
   const spineState = resolveSpine({
     pulse: facts.pulse,
+    everClosed: facts.closes.history.length > 0,
     closes:
       facts.closes.summary.sample > 0
         ? {
             streak: facts.closes.summary.streak,
             bestStreak: facts.closes.summary.bestStreak,
-            sample: facts.closes.summary.sample,
           }
         : null,
     remaining: facts.summary.remaining,

@@ -44,13 +44,22 @@ export type SpineRing =
 export interface SpineInput {
   pulse: MonthPulse;
   /**
-   * The three figures a close history contributes to the spine, or null
-   * before anything has ever closed. Mirrors `summarizeCloseHistory`'s
-   * `streak`, `bestStreak` and `sample` rather than taking the whole
-   * summary, so this module cannot reach for a field the spine has no rung
-   * for.
+   * Whether any close has ever happened, a baseline included.
+   *
+   * This, and only this, is the rung 2 → 3 boundary the ladder's doc comment
+   * names: a baseline close is what sets `openingBalance`, which is what
+   * lets `pulse.unrecordedSoFar` exist at all, which is what "measuring" is
+   * about. It is deliberately not inferred from `closes` below — a baseline
+   * close measures nothing, so it contributes nothing to a streak, and the
+   * month between a user's first close and their second would otherwise be
+   * indistinguishable from a user who has never closed anything.
    */
-  closes: { streak: number; bestStreak: number; sample: number } | null;
+  everClosed: boolean;
+  /**
+   * The current and best streak, for the flame — null once nothing has ever
+   * closed. No longer doubles as the dark/arc boundary; see `everClosed`.
+   */
+  closes: { streak: number; bestStreak: number } | null;
   /** The plain-ledger "left this month" figure, for when there is no balance to read at all. */
   remaining: number;
 }
@@ -71,12 +80,12 @@ export interface SpineState {
  * rung once a balance is readable.
  */
 export function resolveSpine(input: SpineInput): SpineState {
-  const { pulse, closes, remaining } = input;
+  const { pulse, closes, everClosed, remaining } = input;
 
   const flame =
     closes === null ? null : { streak: closes.streak, best: closes.bestStreak };
 
-  const { step, headline, ring } = ladderStep(pulse, closes, remaining);
+  const { step, headline, ring } = ladderStep(pulse, everClosed, remaining);
 
   return {
     step,
@@ -88,7 +97,7 @@ export function resolveSpine(input: SpineInput): SpineState {
 
 function ladderStep(
   pulse: MonthPulse,
-  closes: SpineInput["closes"],
+  everClosed: boolean,
   remaining: number,
 ): Pick<SpineState, "step" | "headline" | "ring"> {
   if (pulse.free === null) {
@@ -104,7 +113,7 @@ function ladderStep(
     value: pulse.free,
   };
 
-  if (closes === null) {
+  if (!everClosed) {
     return { step: "no-close", headline, ring: { kind: "dark" } };
   }
 

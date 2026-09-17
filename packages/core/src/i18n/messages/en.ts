@@ -1900,8 +1900,13 @@ export const en = {
       ringClear: "{percent}% of your allowance used, comfortably clear",
       ringTight: "{percent}% of your allowance used, getting tight",
       ringShort: "{percent}% of your allowance used, already short this month",
-      /** Takes over the sentence above when `over` is true, whatever the tone. */
-      ringOver: "{percent}% of your allowance, already over",
+      /**
+       * Joined onto the tone sentence above with " · " when `over` is true,
+       * never in place of it — `Ring` and `Ring colour` are separate rows in
+       * the spec, and this is the fill's row, said in words for a screen
+       * reader rather than substituted for the colour's.
+       */
+      ringOver: "already over your allowance",
       /** The rest of the attention list, folded behind the one row shown. */
       moreWaiting: {
         one: "+{count} more waiting",
