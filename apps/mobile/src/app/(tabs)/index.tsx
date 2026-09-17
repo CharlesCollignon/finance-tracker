@@ -86,10 +86,15 @@ export default function BearingScreen() {
   const [openTile, setOpenTile] = useState<TileId | null>(null);
 
   // A write anywhere in the app should not leave a panel showing what a
-  // figure used to be. `clearPanelCache` only clears the cache — an open
-  // panel refetches on its own next effect run because its own `onChanged`
-  // bumps its `attempt`, but a panel that is not open yet must not hand the
-  // stale detail back the next time it opens.
+  // figure used to be. This covers the writes made from outside a panel —
+  // the quick-add sheet, another screen — so that a panel not open yet is
+  // not handed stale detail the next time it opens.
+  //
+  // It is not what rescues the panel a write was made *in*. That one clears
+  // the cache itself before asking again, because this effect runs after its
+  // refetch rather than before it: passive effects flush child-first, and
+  // `Panel` sits several levels below this screen. See `handleChanged` in
+  // `components/bearing/Panel.tsx`.
   useEffect(() => {
     clearPanelCache();
   }, [dataVersion]);

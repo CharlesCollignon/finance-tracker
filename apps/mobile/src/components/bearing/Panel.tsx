@@ -17,6 +17,7 @@ import {
 } from "@finance/core/constants";
 
 import {
+  clearPanelCache,
   getPanelDetail,
   peekPanelDetail,
   type PanelDetail,
@@ -147,9 +148,18 @@ export function Panel({ tile }: { tile: RenderedTile }) {
   }, [user, tile.family, scope, spec.blocks, locale, attempt]);
 
   function handleChanged() {
-    // Clears every other panel's cache and tells the rest of the app — the
-    // Bearing's own tiles included — that a write happened. This panel also
-    // asks again immediately, rather than waiting to be reopened.
+    // Clear first, and from here rather than from the screen's own
+    // `dataVersion` effect. Both state changes below land in one commit, and
+    // React flushes passive effects child-first — this component is several
+    // levels below `BearingScreen`, so the refetch `attempt` triggers runs
+    // before the screen's `clearPanelCache` does. `getPanelDetail` reads the
+    // cache synchronously before its first await, so it would hand back the
+    // entry written before the very change being reported, and the bump would
+    // be a no-op on the one panel the reader is looking at.
+    clearPanelCache();
+    // And tell the rest of the app — the Bearing's own tiles included — that
+    // a write happened. This panel also asks again immediately, rather than
+    // waiting to be reopened.
     notifyDataChanged();
     setAttempt((count) => count + 1);
   }
