@@ -367,7 +367,7 @@ git commit -m "Stand the same spine on the phone"
 
 - [ ] **Step 1: Make `/dashboard` redirect to `/bearing`**
 
-Bookmarks and already-delivered push notifications point there. The spec requires the redirect, so the route directory does not simply vanish. Read `node_modules/next/dist/docs/` for this version's redirect mechanism before writing it.
+Bookmarks and already-delivered push notifications point there, so `/dashboard` must resolve rather than 404. That is a requirement about the URL, not about the route files: prefer a config-level redirect in `next.config.ts`, which runs before the filesystem router and before `proxy` (Next 16's renamed `middleware.ts`), so `page.tsx` and `loading.tsx` can be deleted outright rather than left as a stub. Read `node_modules/next/dist/docs/` for this version's mechanism before writing it.
 
 - [ ] **Step 2: Update the fourteen references, then prove none remain**
 
