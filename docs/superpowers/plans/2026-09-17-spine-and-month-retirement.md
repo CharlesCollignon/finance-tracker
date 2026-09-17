@@ -410,13 +410,46 @@ Fixing one alone implies the surface is right when it is not: (a) the panel's re
 
 - [ ] **Step 4: Remove the dead dependencies**
 
-`three`, `ogl` and `@types/three` have zero imports in `apps/web` — verified at `aa5a162`. Remove all three from `apps/web/package.json` and run `pnpm install`. **Keep `motion`**: it is also unimported today, but the spec's close sequence (Plan 3) is committed to using it, and the spec says keep it.
+**Only `three` and `@types/three` are unimported.** Remove those two from `apps/web/package.json` and run `pnpm install`.
+
+**Do NOT remove `ogl`.** The spec claims it has zero imports and that claim is false: `apps/web/components/DarkVeil.tsx:4` does `import { Renderer, Program, Mesh, Triangle, Vec2 } from 'ogl'` — single-quoted, which is why a double-quote-only grep misses it — and the chain `app/(app)/layout.tsx` → `AppShell` → `AppBackdrop` → `DarkVeil` puts that shader behind every signed-in page. Removing it breaks the build.
+
+**Keep `motion` too**: it is genuinely unimported today, but the spec's close sequence (Plan 3) is committed to using it.
 
 - [ ] **Step 5: Gates, then commit**
 
 ```bash
 git add -A
 git commit -m "Pay the small debts in the code this plan already had open"
+```
+
+---
+
+## Task 8: Give the phone back its close
+
+**This task exists because Task 5 caused a regression that its own review did not catch.**
+
+`apps/mobile/src/components/MonthCloseSheet.tsx` is complete and working, and has **zero callers**. Its only caller was `apps/mobile/src/app/(tabs)/month.tsx:760`, deleted in `45962d9`. So a phone reader can no longer close a month at all — and closing a month is the ritual this entire app is built around: the streak, the cap, the unrecorded allowance and every ignition rung above the first all derive from closes. A phone-only user is now locked out of the loop.
+
+It is invisible to every check this plan ran. The sheet still exists, still compiles, and is still referenced by nothing — an orphaned component is exactly what a grep for the *deleted* file cannot find, which is why Task 5's review answered "did anything silently stop working?" with no.
+
+Task 6 also made it user-visible: the empty-history copy now reads "Close a month from Plan", which is an instruction a phone reader cannot follow.
+
+**Files:**
+- Modify: `apps/mobile/src/app/(tabs)/planning.tsx` — give it the entry point
+- Reference: `apps/web/components/finance/MonthCloseCard.tsx` — the web twin that opens the sheet
+
+- [ ] **Step 1: Read how web does it.** `MonthCloseCard` renders the trigger and owns the open state; `budgets/page.tsx:131` mounts it. The phone needs the same shape on the surface its own copy now names.
+
+- [ ] **Step 2: Mount the existing sheet behind a trigger on `planning.tsx`.** Do not rewrite the sheet — it is complete and was working until its caller was deleted. Match the phone's own card idiom rather than porting web's markup.
+
+- [ ] **Step 3: Verify a close can actually be completed end to end on the phone** — the trigger opens the sheet, the sheet submits, and the history card afterwards shows the close it just recorded.
+
+- [ ] **Step 4: Gates and commit.**
+
+```bash
+git add apps/mobile
+git commit -m "Give the phone back the one thing Month did"
 ```
 
 ---
