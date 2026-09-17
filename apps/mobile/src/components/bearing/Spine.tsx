@@ -12,6 +12,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import type { AttentionItem } from "@finance/core/attention";
+import { PHONE_PATHS } from "@finance/core/bearing-tiles";
 import type { Key } from "@finance/core/i18n/t";
 import type { MonthStanding } from "@finance/core/month-pulse";
 import type { SpineState } from "@finance/core/spine";
@@ -120,17 +121,27 @@ export function Spine({ state, attention }: SpineProps) {
  * `buildAttention`'s `href`s are a web route from a fixed, closed set of
  * five (`/transactions`, `/transactions?review=inbox`, `/budgets` twice,
  * `/recurring`) — a different vocabulary from a bearing tile's, and NOT
- * covered by `phoneHref` from `@finance/core/bearing-tiles`, which is
- * documented as a translation of that catalogue's own paths, not a general
- * web-to-phone router. So this checks the attention set by hand against
- * `apps/mobile/src/app/(tabs)/`: `transactions.tsx` and `recurring.tsx` are
- * real tabs and answer `/transactions`, `/transactions?review=inbox` and
- * `/recurring` unchanged; there is no `budgets` route at all, and its
- * answer — the caps, the close and the ready-to-close prompt this item is
- * about — lives on `planning.tsx`, so `/budgets` alone is redirected there.
+ * covered by `phoneHref` from `@finance/core/bearing-tiles`: that function
+ * falls through to the raw href for anything not in its own table, which is
+ * the exact silent pass-through that shipped 15 dead phone links on the
+ * predecessor plan, and its table is documented as a translation of the
+ * *tile* catalogue's own paths, not a general web-to-phone router. So this
+ * checks the attention set by hand against `apps/mobile/src/app/(tabs)/`:
+ * `transactions.tsx` and `recurring.tsx` are real tabs and answer
+ * `/transactions`, `/transactions?review=inbox` and `/recurring` unchanged;
+ * there is no `budgets` route at all, and its answer — the caps, the close
+ * and the ready-to-close prompt this item is about — lives on
+ * `planning.tsx`.
+ *
+ * *Which* hrefs get redirected is this function's own, separately-verified
+ * judgement — the four-way check above. *Where* `/budgets` redirects to is
+ * not: that is one fact about this app's route topology, already owned by
+ * `PHONE_PATHS["/budgets"]` in `bearing-tiles.ts`, so this reads it from
+ * there rather than retyping `"/planning"` as a second literal that table's
+ * own future edits would have no way to reach.
  */
 function attentionHref(href: string): string {
-  return href === "/budgets" ? "/planning" : href;
+  return href === "/budgets" ? PHONE_PATHS["/budgets"] : href;
 }
 
 /** Mirrors `pulseHeadline` in `month-pulse.ts` off the fields `resolveSpine` already reduced it to. */

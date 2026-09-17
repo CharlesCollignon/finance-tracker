@@ -144,8 +144,15 @@ export const BEARING_TILES: Record<TileId, TileMeta> = {
  *   only the list and the calendar. Month is the nearest thing that answers
  *   what those two tiles ask — it draws the month-against-previous comparison
  *   and the net-per-month trend that those tiles *are*.
+ *
+ * Exported, read-only, because `/budgets` → `/planning` is one fact about
+ * this app's route topology and `apps/mobile/src/components/bearing/Spine.tsx`
+ * needs that same fact for the attention row's own, separately-verified
+ * redirect — see that file's `attentionHref` for why it reads this table
+ * rather than retyping the string. If this table's `/budgets` entry ever
+ * moves, that is the other place to check.
  */
-const PHONE_PATHS: Record<string, string> = {
+export const PHONE_PATHS: Readonly<Record<string, string>> = {
   "/dashboard": "/month",
   "/budgets": "/planning",
   "/history": "/month",
