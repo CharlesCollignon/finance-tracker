@@ -22,7 +22,8 @@
 - Before writing any Next.js code, read the relevant guide under `node_modules/next/dist/docs/` — per `AGENTS.md`, this version differs from training data. Heed deprecation notices.
 - Tests run with `pnpm test` (vitest in `@finance/core`).
 - **Verification baseline**, established at `aa5a162`. Any deviation is a regression except where you fixed something: `pnpm test` → 1 failed (`still-to-come.test.ts`, pre-existing) / 1207 passed; `@finance/core` tsc → one pre-existing error in `push-routes.test.ts(89,15)`; web tsc → empty; mobile tsc → empty; `pnpm --filter web lint` → 9 errors / 2 warnings; `pnpm --filter mobile lint` → 42 problems (11 errors, 31 warnings).
-- The spine costs **no new query**. `BuildBearingFactsInput` already takes `pulse`, `closeSummary`, `unrecordedCap`, `projection`, `runway`, `allocation` and `returns`. If you find yourself adding a query for the spine, stop — you have missed a figure the pack already holds.
+- **The headline, ring and flame cost no new query.** Each client's gatherer already computes `pulse`, `summary` and `closes.summary` and passes them into `buildBearingFacts` (`apps/web/lib/bearing/facts.ts:210-216`, `apps/mobile/src/lib/bearing.ts:150-187`) — but `BearingFacts`, the pack's *output*, returns only `{asOf, facts, missing, thin}`, so they are computed and then discarded. Widen each gatherer's return to carry them. Do not re-derive them on the page, and do not add a query for them.
+- **The action row is the exception, and it is allowed one.** Its inputs (swallowed entries, recurring to apply, proposals) are gathered today by the Month screen, not by the Bearing pack. Moving them is not adding them: once Task 5 deletes Month, those queries run on one screen instead of the other. Scoping the action row down to what the pack happens to hold would silently drop conditions a reader sees today, which is worse than one honest fetch.
 
 ---
 
