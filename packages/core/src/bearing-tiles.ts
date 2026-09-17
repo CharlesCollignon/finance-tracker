@@ -121,6 +121,62 @@ export const BEARING_TILES: Record<TileId, TileMeta> = {
   "contribution-pace": { href: "/investments" },
 };
 
+/**
+ * The phone's answer to the three paths above that only the web app has.
+ *
+ * `BEARING_TILES` is written against the web router, as its own comment
+ * says, and the phone used to forward those strings to `router.push`
+ * unchanged. Fifteen of the twenty-six tiles with a footer link therefore
+ * pointed at a screen Expo Router has never had: there is no `/dashboard`,
+ * no `/budgets` and no `/history` anywhere under `apps/mobile/src/app`.
+ *
+ * Nearest real screen by content rather than a new one, because a panel
+ * footer is a way out to a fuller surface and inventing a surface to satisfy
+ * a link is the wrong way round:
+ *
+ * - `/dashboard` is the Month page — `navigation.ts` records why the web path
+ *   was never renamed — and `month.tsx` is its phone counterpart. The tab
+ *   layout already says Month is reached "from a Bearing tile, not the bar".
+ * - `/budgets` becomes Plan, which is where the phone keeps budget caps,
+ *   goal pacing, projections, runway and the close history: the whole of what
+ *   the ten tiles sent there are about.
+ * - `/history` is the Ledger's by-category view, and the phone's Ledger has
+ *   only the list and the calendar. Month is the nearest thing that answers
+ *   what those two tiles ask — it draws the month-against-previous comparison
+ *   and the net-per-month trend that those tiles *are*.
+ */
+const PHONE_PATHS: Record<string, string> = {
+  "/dashboard": "/month",
+  "/budgets": "/planning",
+  "/history": "/month",
+};
+
+/**
+ * Where a tile's figure is explained on the phone.
+ *
+ * A translation of `BEARING_TILES`'s web path rather than a second table, so
+ * a tile added to the catalogue cannot be forgotten here: anything without a
+ * phone-specific answer keeps the path it already had, and those all resolve
+ * (`/investments`, `/recurring`, `/transactions`). The query string rides
+ * along untouched, which is what keeps `inbox-pending` landing on the Ledger
+ * with its review filter already applied.
+ */
+export function phoneHref(href: string | null): string | null {
+  if (href === null) {
+    return null;
+  }
+
+  const query = href.indexOf("?");
+  const path = query < 0 ? href : href.slice(0, query);
+
+  const phone = PHONE_PATHS[path];
+  if (phone === undefined) {
+    return href;
+  }
+
+  return query < 0 ? phone : `${phone}${href.slice(query)}`;
+}
+
 /* ------------------------------------------------------------ the bento */
 
 export type TileSpan = "hero" | "wide" | "unit";

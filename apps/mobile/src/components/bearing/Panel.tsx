@@ -5,11 +5,12 @@ import {
   type SetStateAction,
 } from "react";
 import { Pressable, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { panelFor, type PanelSpec } from "@finance/core/bearing-panels";
 import type { RenderedTile } from "@finance/core/bearing-read";
+import { phoneHref } from "@finance/core/bearing-tiles";
 import {
   budgetViewOptionLabel,
   getCurrentMonth,
@@ -73,6 +74,10 @@ export function Panel({ tile }: { tile: RenderedTile }) {
   const colors = useThemeColors();
 
   const spec = panelFor(tile.id, tile.family);
+  // `spec.href` is the web app's path — see `bearing-tiles.ts`, which says so
+  // itself. Three of them name screens this router has never had, so the
+  // phone's own answer is what the footer links to.
+  const href = phoneHref(spec.href);
 
   const current = getCurrentMonth();
   const [scope, setScope] = useState<Required<PanelScope>>({
@@ -206,9 +211,9 @@ export function Panel({ tile }: { tile: RenderedTile }) {
         </View>
       ) : null}
 
-      {spec.href ? (
+      {href ? (
         <Pressable
-          onPress={() => router.push(spec.href as never)}
+          onPress={() => router.push(href as Href)}
           accessibilityRole="link"
           className="flex-row items-center gap-1 self-start"
           hitSlop={8}
