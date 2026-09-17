@@ -454,6 +454,37 @@ git commit -m "Give the phone back the one thing Month did"
 
 ---
 
+## Task 9: Sweep the copy properly, by value and not by key
+
+**This task exists because the same defect has now been found three times, by three different methods, each invisible to the one before.**
+
+Month was deleted. Copy that names it did not go with it:
+
+1. `MonthCloseHistory.tsx` passed `t("nav.month")` as a parameter — found by grepping for the **key**.
+2. `MonthCloseHistoryCard.tsx` hardcoded `"Home"`, a surface this app has never had — found only by **reading** the file.
+3. `apps/web/app/(app)/budgets/BudgetsView.tsx:216` renders the bare JSX literal `Month shows how close you are to each.` — found only because an unrelated task happened to open that file. It is not merely stale, it never passed through `t()` at all.
+
+A key grep cannot find a literal. A literal grep cannot find a key reference. Neither finds a paraphrase. Sweep by **meaning**, over both the catalogues' values and the clients' JSX.
+
+**Files:** whatever the sweep finds. Start from `packages/core/src/i18n/messages/en.ts` and `fr.ts`, then `apps/web` and `apps/mobile` for bare literals.
+
+- [ ] **Step 1: Sweep the catalogue values**, not the keys. Read `en.ts` for any string whose *text* names a surface, screen or tab — "Month", "Home", "the dashboard", "the month screen". Check each against the app's five real surfaces in `apps/web/lib/navigation.ts`. A doc comment naming a retired screen (e.g. `en.ts:890`, "the Month screen's own strip") is not user-facing but is still wrong; fix it in passing.
+
+- [ ] **Step 2: Sweep the clients for bare user-facing literals** that name a surface. `BudgetsView.tsx:216` is one and is known; find the rest. Anything user-facing goes through `en.ts`/`fr.ts` per the standing rule, so a literal found here is two defects, not one.
+
+- [ ] **Step 3: Fix each one**, naming a surface that exists. Where the sentence pointed at Month for something now on the home screen or in a panel, say the true thing rather than the nearest word.
+
+- [ ] **Step 4: Report the full list** — every instance, how it was worded before, what it says now, and which of the three mechanisms would have caught it. That table is the evidence the class is actually closed.
+
+- [ ] **Step 5: Gates and commit.**
+
+```bash
+git add -A
+git commit -m "Say the surfaces this app actually has"
+```
+
+---
+
 ## Task 7: Prove it, and write down what no command can check
 
 - [ ] **Step 1: Run all six gates and record each against the baseline**
