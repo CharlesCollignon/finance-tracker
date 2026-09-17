@@ -138,7 +138,7 @@ export function MonthCloseSheet({
       toast(response.error, "error");
       return;
     }
-    toast(`${monthLabel} reopened`, "success");
+    toast(t("monthClose.reopened", { month: monthLabel }), "success");
     onClosed();
     dismiss();
   }
@@ -225,17 +225,22 @@ export function MonthCloseSheet({
                           ? t("monthClose.youKept", {
                               amount: formatEuro(result.kept),
                             })
-                          : `${monthLabel} cost more than it brought in`}
+                          : t("monthClose.costMoreThanItBrought", {
+                              month: monthLabel,
+                            })}
                   </Text>
                   <Text variant="muted" className="mt-1 text-sm">
                     {result.status === "baseline"
-                      ? `${formatEuro(result.closingBalance)} on ${formatShortDate(observeOn)}. Close next month and the app can start telling you what it never saw.`
+                      ? t("monthClose.baselineSet", {
+                          amount: formatEuro(result.closingBalance),
+                          date: formatShortDate(observeOn, locale),
+                        })
                       : result.status === "over-recorded"
                         ? t("monthClose.unexplainedCredit", {
                             amount: formatEuro(result.unexplainedCredit ?? 0),
                           })
                         : result.keptRate !== null
-                          ? `${result.keptRate}% of what came in, counting what you set aside.`
+                          ? t("monthClose.keptRate", { rate: result.keptRate })
                           : t("monthClose.keptRateUnknown")}
                   </Text>
                   {days !== null ? (
@@ -288,7 +293,9 @@ export function MonthCloseSheet({
                             ),
                           })
                       : baseline !== null
-                        ? `A normal month for you is around ${formatEuro(baseline)}.`
+                        ? t("monthClose.normalMonth", {
+                            amount: formatEuro(baseline),
+                          })
                         : t("monthClose.unrecordedBlurb")}
                   </Text>
                 ) : null}

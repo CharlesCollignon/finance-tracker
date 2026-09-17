@@ -218,6 +218,17 @@ export const fr: Messages = {
     goalReached: "Objectif atteint\u00A0!",
     goalOverdue: "Date cible dépassée — {amount} encore à épargner.",
     goalOnSchedule: "Épargnez {amount}/mois pour y arriver avant {month}.",
+    globalMonthlyLimit: "Plafond mensuel global",
+    goalTargetDateOptional: "Date cible (facultative)",
+    capsBlurb:
+      "Un plafond est un maximum mensuel — sur une catégorie, ou sur tout. Ajoutez-en un et vous verrez où vous en êtes.",
+    goalsBlurb:
+      "Un objectif est un montant à atteindre — un apport, un voyage, une réserve. Mettez de l'argent de côté dans une catégorie d'épargne et il se remplit.",
+    capOn: "Plafond sur {label}",
+    capRemoveHint: "Appui long pour supprimer ce plafond",
+    goalNamed: "Objectif {name}",
+    goalRemoveHint: "Appui long pour supprimer cet objectif",
+    amountOfTotal: "{amount} sur {total}",
   },
 
   recurring: {
@@ -509,6 +520,16 @@ export const fr: Messages = {
       one: "Cela fait {count} jour d'autonomie gagné.",
       other: "Cela fait {count} jours d'autonomie gagnés.",
     },
+    setStartingBalance: "Fixez votre solde de départ",
+    inviteBaseline:
+      "Saisissez ce que votre compte contient réellement aujourd'hui. Dès le mois prochain, l'application pourra le comparer à ce qu'elle a enregistré et vous dire ce qu'elle n'a jamais vu — des espèces, un paiement oublié, une carte que vous ne suivez pas.",
+    inviteAllowance:
+      "Restez sous {cap} de dépenses non enregistrées pour garder la série en vie.",
+    inviteBare:
+      "Un seul solde, et l'application peut calculer ce qu'elle n'a jamais vu.",
+    reopened: "{month} réouvert",
+    baselineSet:
+      "{amount} au {date}. Clôturez le mois prochain et l'application pourra commencer à vous dire ce qu'elle n'a jamais vu.",
   },
 
   inbox: {

@@ -3,6 +3,10 @@ import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 
 import { buildBudgetProgress } from "@finance/core/budget-limits";
 import {
+  closeInvitation,
+  type CloseableMonth,
+} from "@finance/core/month-close";
+import {
   buildForwardProjection,
   buildRunway,
   type ForwardProjection,
@@ -33,6 +37,7 @@ import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { ProjectionCard } from "@/components/ProjectionCard";
 import { MonthCloseHistoryCard } from "@/components/MonthCloseHistoryCard";
+import { MonthCloseSheet } from "@/components/MonthCloseSheet";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
@@ -111,6 +116,19 @@ export default function PlanningScreen() {
   const [goalTargetDate, setGoalTargetDate] = useState("");
   const [tagName, setTagName] = useState("");
   const [pending, setPending] = useState(false);
+  /**
+   * The month the sheet is working on, held rather than read live.
+   *
+   * Recording a close is the one write on this screen that changes the answer
+   * to "what is there left to close" — usually to nothing, because the next
+   * month's reading day has not arrived. Driving the mounted sheet off
+   * `closes.next` would therefore tear it off the screen the instant the
+   * refresh lands, taking the reveal and its undo with it, and the reveal is
+   * the entire reason the sheet asks before it commits. Web does not have to
+   * think about this: its page is server-rendered and its `closes.next` does
+   * not move under the open sheet.
+   */
+  const [closing, setClosing] = useState<CloseableMonth | null>(null);
 
   const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
@@ -256,6 +274,39 @@ export default function PlanningScreen() {
     await onRefresh();
   }
 
+  const closes = data?.closes ?? null;
+  // The month the app is currently asking about, if any. Null once the latest
+  // one is closed and the next one's reading day has not arrived.
+  const next = closes?.next ?? null;
+  const invitation =
+    closes && next
+      ? closeInvitation({
+          isBaseline: next.isBaseline,
+          unrecordedCap: closes.settings.unrecordedCap,
+          baseline: closes.summary.baseline,
+        })
+      : null;
+
+  function inviteDetail(): string | null {
+    if (invitation === null) {
+      return null;
+    }
+    switch (invitation.kind) {
+      case "baseline":
+        return t("monthClose.inviteBaseline");
+      case "allowance":
+        return t("monthClose.inviteAllowance", {
+          cap: formatEuro(invitation.cap),
+        });
+      case "normal":
+        return t("monthClose.normalMonth", {
+          amount: formatEuro(invitation.baseline),
+        });
+      case "bare":
+        return t("monthClose.inviteBare");
+    }
+  }
+
   return (
     <Screen title={t("nav.plan")}>
       {loading && !data ? (
@@ -275,12 +326,38 @@ export default function PlanningScreen() {
             runway={data?.runway ?? null}
           />
 
-          {data?.closes ? (
+          {/* The close itself, directly above the history it writes into.
+              The phone lost this when the Month tab was deleted: the sheet
+              below survived with no caller at all, so a phone-only reader
+              could not close a month — and every rung of Bearing's ladder
+              above the first is derived from closes. Bearing's own "ready to
+              close" row sends people here, and `monthCloseHistory`'s empty
+              state names this surface by the same `nav.plan` word. */}
+          {next ? (
+            <Card bezel innerClassName="gap-4 p-5">
+              <View>
+                <Text className="font-semibold" style={{ fontSize: 16 }}>
+                  {next.isBaseline
+                    ? t("monthClose.setStartingBalance")
+                    : t("month.attentionReadyToClose", { month: next.label })}
+                </Text>
+                <Text variant="muted" className="mt-1 text-sm">
+                  {inviteDetail()}
+                </Text>
+              </View>
+              <Button
+                label={t("monthClose.closeMonth", { month: next.label })}
+                onPress={() => setClosing(next)}
+              />
+            </Card>
+          ) : null}
+
+          {closes ? (
             <MonthCloseHistoryCard
-              history={data.closes.history}
-              summary={data.closes.summary}
-              unrecordedCap={data.closes.settings.unrecordedCap}
-              closeDay={data.closes.settings.closeDay}
+              history={closes.history}
+              summary={closes.summary}
+              unrecordedCap={closes.settings.unrecordedCap}
+              closeDay={closes.settings.closeDay}
               onChanged={() => {
                 notifyDataChanged();
                 void onRefresh();
@@ -298,8 +375,8 @@ export default function PlanningScreen() {
                     hitSlop={8}
                     key={row.budgetId}
                     accessibilityRole="button"
-                    accessibilityLabel={`Cap on ${row.label}`}
-                    accessibilityHint="Long press to remove this cap"
+                    accessibilityLabel={t("plan.capOn", { label: row.label })}
+                    accessibilityHint={t("plan.capRemoveHint")}
                     onLongPress={() =>
                       setConfirming({ kind: "budget", id: row.budgetId })
                     }
@@ -308,7 +385,10 @@ export default function PlanningScreen() {
                     <ProgressRing
                       ratio={row.ratio}
                       label={row.label}
-                      detail={`${formatEuro(row.spent)} of ${formatEuro(row.limit)}`}
+                      detail={t("plan.amountOfTotal", {
+                        amount: formatEuro(row.spent),
+                        total: formatEuro(row.limit),
+                      })}
                       over={row.over}
                       meaning="limit"
                     />
@@ -317,13 +397,12 @@ export default function PlanningScreen() {
               </View>
             ) : (
               <Text variant="muted" className="text-sm">
-                A cap is a monthly ceiling — on one category, or on everything.
-                Month shows how close you are to each.
+                {t("plan.capsBlurb")}
               </Text>
             )}
 
             <View className="gap-2 border-t border-border pt-4">
-              <Text variant="label">Global monthly limit (€)</Text>
+              <Text variant="label">{t("plan.globalMonthlyLimit")}</Text>
               <Input
                 value={budgetAmount}
                 onChangeText={setBudgetAmount}
@@ -355,8 +434,10 @@ export default function PlanningScreen() {
                       hitSlop={8}
                       key={row.goal.id}
                       accessibilityRole="button"
-                      accessibilityLabel={`Goal ${row.goal.name}`}
-                      accessibilityHint="Long press to remove this goal"
+                      accessibilityLabel={t("plan.goalNamed", {
+                        name: row.goal.name,
+                      })}
+                      accessibilityHint={t("plan.goalRemoveHint")}
                       onLongPress={() =>
                         setConfirming({ kind: "goal", id: row.goal.id })
                       }
@@ -365,7 +446,10 @@ export default function PlanningScreen() {
                       <ProgressRing
                         ratio={row.ratio}
                         label={row.goal.name}
-                        detail={`${formatEuro(row.saved)} of ${formatEuro(Number(row.goal.target_amount))}`}
+                        detail={t("plan.amountOfTotal", {
+                          amount: formatEuro(row.saved),
+                          total: formatEuro(Number(row.goal.target_amount)),
+                        })}
                         // A goal is a target, not a limit: filling it is the
                         // point, and a full ring in red says the opposite.
                         meaning="target"
@@ -385,21 +469,20 @@ export default function PlanningScreen() {
               </View>
             ) : (
               <Text variant="muted" className="text-sm">
-                A goal is an amount to reach — a deposit, a trip, a buffer. Set
-                aside money in a savings category and it fills.
+                {t("plan.goalsBlurb")}
               </Text>
             )}
 
             <View className="gap-2 border-t border-border pt-4">
               <Text variant="label">{t("plan.goalName")}</Text>
               <Input value={goalName} onChangeText={setGoalName} />
-              <Text variant="label">Target (€)</Text>
+              <Text variant="label">{t("plan.goalTarget")}</Text>
               <Input
                 value={goalTarget}
                 onChangeText={setGoalTarget}
                 keyboardType="decimal-pad"
               />
-              <Text variant="label">Target date (optional)</Text>
+              <Text variant="label">{t("plan.goalTargetDateOptional")}</Text>
               <DateField
                 value={goalTargetDate}
                 onChange={setGoalTargetDate}
@@ -415,7 +498,9 @@ export default function PlanningScreen() {
           </Card>
 
           <Card bezel>
-            <Text className="text-base font-semibold">Tags</Text>
+            <Text className="text-base font-semibold">
+              {t("plan.tagsHeading")}
+            </Text>
             <View className="mt-3 flex-row flex-wrap gap-2">
               {(data?.tags ?? []).map((t) => (
                 <View
@@ -427,7 +512,7 @@ export default function PlanningScreen() {
               ))}
             </View>
             <Text variant="label" className="mb-2 mt-4">
-              New tag
+              {t("plan.newTag")}
             </Text>
             <Input value={tagName} onChangeText={setTagName} className="mb-3" />
             <Button
@@ -438,6 +523,33 @@ export default function PlanningScreen() {
           </Card>
         </ScrollView>
       )}
+
+      {closing ? (
+        <MonthCloseSheet
+          open
+          onOpenChange={(value) => {
+            if (!value) {
+              setClosing(null);
+            }
+          }}
+          year={closing.year}
+          month={closing.month}
+          monthLabel={closing.label}
+          observeOn={closing.observeOn}
+          isBaseline={closing.isBaseline}
+          // Committed outgoings for the month in progress, which is what turns
+          // a month's saving into days of runway. `buildRunway` derives it
+          // from the templates alone, so the reserve this screen passes it
+          // does not touch the figure.
+          monthlyCommitted={data?.runway?.monthlyCommitted ?? 0}
+          unrecordedCap={closes?.settings.unrecordedCap ?? null}
+          baseline={closes?.summary.baseline ?? null}
+          onClosed={() => {
+            notifyDataChanged();
+            void onRefresh();
+          }}
+        />
+      ) : null}
 
       <ConfirmSheet
         open={confirming !== null}

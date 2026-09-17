@@ -4,6 +4,7 @@ import {
   buildMonthClose,
   buildRecordedCashFlows,
   closableMonth,
+  closeInvitation,
   MIN_CLOSES_FOR_CAP,
   monthColumnValue,
   monthWasWon,
@@ -472,5 +473,61 @@ describe("a transfer out of savings", () => {
 
     expect(close.status).toBe("over-recorded");
     expect(close.unexplainedCredit).toBe(500);
+  });
+});
+
+describe("closeInvitation", () => {
+  it("says nothing about figures on the very first close", () => {
+    // There is no previous balance, so both a cap and a baseline would be
+    // promises the app cannot yet keep.
+    expect(
+      closeInvitation({
+        isBaseline: true,
+        unrecordedCap: 180,
+        baseline: 140,
+      }),
+    ).toEqual({ kind: "baseline" });
+  });
+
+  it("prefers the allowance the reader set to the one the app measured", () => {
+    expect(
+      closeInvitation({
+        isBaseline: false,
+        unrecordedCap: 180,
+        baseline: 140,
+      }),
+    ).toEqual({ kind: "allowance", cap: 180 });
+  });
+
+  it("falls back to what a normal month has actually cost", () => {
+    expect(
+      closeInvitation({
+        isBaseline: false,
+        unrecordedCap: null,
+        baseline: 140,
+      }),
+    ).toEqual({ kind: "normal", baseline: 140 });
+  });
+
+  it("has only the general case with neither figure yet", () => {
+    expect(
+      closeInvitation({
+        isBaseline: false,
+        unrecordedCap: null,
+        baseline: null,
+      }),
+    ).toEqual({ kind: "bare" });
+  });
+
+  it("treats a zero allowance as a set allowance, not an absent one", () => {
+    // Nought is a real answer to "what will you spend unrecorded" and must not
+    // fall through to the measured baseline the way `null` does.
+    expect(
+      closeInvitation({
+        isBaseline: false,
+        unrecordedCap: 0,
+        baseline: 140,
+      }),
+    ).toEqual({ kind: "allowance", cap: 0 });
   });
 });

@@ -481,6 +481,52 @@ export function closableMonth(
   return describeCloseable(candidate, closeDay, false);
 }
 
+/**
+ * What the card that offers a close should say underneath its heading.
+ *
+ * Which sentence is true depends on how much of the reader's own history the
+ * app holds, and the order below is the order in which the app earns the
+ * right to say each one. An allowance is a promise the reader made and is the
+ * only line that gives them something to aim at, so it wins whenever it
+ * exists. A baseline is the app's own observation and comes next. With
+ * neither, there is nothing to say but what one balance is for — and on the
+ * very first close there is not even a previous month to compare against, so
+ * that one is its own case and comes before all of them.
+ *
+ * Judgement, not layout, which is why it is here: the phone and the web are
+ * two renderings of one decision, and the web's `MonthCloseCard` currently
+ * makes the same choice inline, which is exactly how the two drift.
+ *
+ * Amounts come back raw. Only the client knows what currency the reader
+ * counts in, so formatting them here would be an answer given in the wrong
+ * place.
+ */
+export type CloseInvitation =
+  | { kind: "baseline" }
+  | { kind: "allowance"; cap: number }
+  | { kind: "normal"; baseline: number }
+  | { kind: "bare" };
+
+export function closeInvitation(input: {
+  /** True when this close only drops the anchor and measures nothing. */
+  isBaseline: boolean;
+  /** What the reader said they are willing to spend unrecorded, if anything. */
+  unrecordedCap: number | null;
+  /** What a normal month has actually cost them unrecorded, if known yet. */
+  baseline: number | null;
+}): CloseInvitation {
+  if (input.isBaseline) {
+    return { kind: "baseline" };
+  }
+  if (input.unrecordedCap !== null) {
+    return { kind: "allowance", cap: input.unrecordedCap };
+  }
+  if (input.baseline !== null) {
+    return { kind: "normal", baseline: input.baseline };
+  }
+  return { kind: "bare" };
+}
+
 /** YYYY-MM for a stored close's `month` date. */
 export function monthKeyOfClose(monthDate: string): string {
   return monthDate.slice(0, 7);

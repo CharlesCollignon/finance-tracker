@@ -258,6 +258,23 @@ export const en = {
     goalReached: "Goal reached!",
     goalOverdue: "Target date passed — {amount} still to save.",
     goalOnSchedule: "Save {amount}/month to reach this by {month}.",
+    globalMonthlyLimit: "Global monthly limit",
+    goalTargetDateOptional: "Target date (optional)",
+    /**
+     * Said only when there is nothing to show yet, which is why neither
+     * blurb points at the rings: on the screen that renders them, this
+     * sentence is what stands in their place.
+     */
+    capsBlurb:
+      "A cap is a monthly ceiling — on one category, or on everything. Add one and you will see how close you are to it.",
+    goalsBlurb:
+      "A goal is an amount to reach — a deposit, a trip, a buffer. Set aside money in a savings category and it fills.",
+    /** Screen-reader labels for the rings, which are drawings otherwise. */
+    capOn: "Cap on {label}",
+    capRemoveHint: "Long press to remove this cap",
+    goalNamed: "Goal {name}",
+    goalRemoveHint: "Long press to remove this goal",
+    amountOfTotal: "{amount} of {total}",
   },
 
   /**
@@ -570,6 +587,21 @@ export const en = {
       one: "That is {count} day of runway bought.",
       other: "That is {count} days of runway bought.",
     },
+    /**
+     * The card that offers the close, before the sheet opens. Which of the
+     * three `invite*` lines is shown is decided by `closeInvitation` in
+     * `../../month-close`, not at the call site — the fourth case reuses
+     * `normalMonth` above rather than growing a second wording of it.
+     */
+    setStartingBalance: "Set your starting balance",
+    inviteBaseline:
+      "Type in what your account actually holds today. From next month the app can compare that against what it recorded, and tell you what it never saw — cash, a forgotten tap, a card you do not track.",
+    inviteAllowance:
+      "Stay under {cap} of unrecorded spending to keep the run going.",
+    inviteBare: "One balance, and the app can work out what it never saw.",
+    reopened: "{month} reopened",
+    baselineSet:
+      "{amount} on {date}. Close next month and the app can start telling you what it never saw.",
   },
 
   /**
@@ -1323,10 +1355,10 @@ export const en = {
      * `/budgets`, which is where web's `MonthCloseCard` opens the close
      * sheet, and which the phone answers from `planning.tsx` — the route
      * `PHONE_PATHS["/budgets"]` and the Bearing spine both already point at
-     * for the close. The word is therefore right on both. The phone's
-     * `MonthCloseSheet` is not yet mounted on that screen — it lost its only
-     * caller when the Month tab was deleted — which is a gap in the screen
-     * rather than in the word.
+     * for the close. The word is therefore right on both, and the phone's
+     * `MonthCloseSheet` is now mounted there too — it had lost its only
+     * caller when the Month tab was deleted, which made this sentence an
+     * instruction a phone reader could not follow.
      */
     closeFromSurface: "Close a month from {surface} and it will appear here.",
     allowanceHint:
