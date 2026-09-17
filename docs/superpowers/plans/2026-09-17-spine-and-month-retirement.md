@@ -331,7 +331,9 @@ git commit -m "Stand the spine at the top of the web home"
 
 The spine sits **above** the `ReorderableList`, outside it — not as a list header that scrolls into the reorder surface. Opening a panel must not move it, and dragging a tile must not be able to displace it.
 
-Footer and action-row links go through `phoneHref` from `@finance/core/bearing-tiles` (added by Plan 1 for exactly this reason — 15 of 26 web routes do not exist on the phone). An attention item's `href` is a **web** route; do not navigate to it raw.
+Panel **footer** links go through `phoneHref` from `@finance/core/bearing-tiles`, added by Plan 1 for exactly this reason — 15 of 26 web routes do not exist on the phone.
+
+**Attention-row links are a different set and `phoneHref` does not cover them.** It translates bearing *tile* paths and is documented as such. An attention item's `href` is a web route: check each one against the real phone route tree under `apps/mobile/src/app/` and map the ones that do not resolve. An href you cannot resolve to a real phone screen is a blocking finding to report, not something to pass through raw or to invent a screen for.
 
 - [ ] **Step 1: Build the component**
 - [ ] **Step 2: Mount it above the list**
