@@ -56,7 +56,7 @@ export function BottomNav({
               <Icon size={ICON.xl} weight={active ? "fill" : "light"} />
               {/* A dot rather than a count down here. The bar is six targets
                   across a phone; a numeral beside a 10px label is unreadable
-                  and the number is on the Month screen anyway. */}
+                  and the number is on the Bearing anyway. */}
               {href === "/transactions" && ledgerBadge > 0 ? (
                 <span
                   aria-label={`${ledgerBadge} waiting`}

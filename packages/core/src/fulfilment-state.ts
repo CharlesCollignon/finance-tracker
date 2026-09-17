@@ -88,7 +88,7 @@ export const FULFILMENT_DOT_CLASS: Record<FulfilmentState, string> = {
  * "To confirm" rather than "Waiting on you" for the proposed state: it is
  * shorter, it fits a row's subtitle beside a note, and it names the state the
  * row is in rather than issuing an instruction the row cannot carry out — the
- * press that resolves it lives on the Month screen.
+ * row states it, some other surface changes it.
  */
 export const FULFILMENT_STATE_KEY: Record<FulfilmentState, Key> = {
   confirmed: "fulfilment.state.confirmed",

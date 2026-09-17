@@ -212,8 +212,7 @@ export function BudgetsView({
             </div>
           ) : budgetFormOpen ? null : (
             <p className="text-sm text-muted-foreground">
-              A cap is a monthly ceiling — on one category, or on everything.
-              Month shows how close you are to each.
+              {t("plan.capsBlurb")}
             </p>
           )}
 

@@ -407,12 +407,12 @@ export const en = {
       "Saved on this device — it will sync when you are back online",
   },
 
-  /** First run: the two minutes that put real numbers on the dashboard. */
+  /** First run: the two minutes that put real numbers on the Bearing. */
   onboarding: {
     progress: "Setup progress",
     welcomeTitle: "Welcome to Pluclair",
     welcomeBody:
-      "Two minutes now and your dashboard will have real numbers in it instead of zeros.",
+      "Two minutes now and the Bearing will have real numbers in it instead of zeros.",
     currencyTitle: "Which currency do you think in?",
     currencyBody:
       "Every amount in the app is shown this way. You can change it later in Profile.",
@@ -424,7 +424,7 @@ export const en = {
       "Rent, subscriptions, bills — the charges you already know are coming. These are what make the forecast useful.",
     capTitle: "What would you rather not overspend?",
     capBody:
-      "Pick one category and a monthly cap. Month will show a ring that fills as you spend against it. You can add more under Plan.",
+      "Pick one category and a monthly cap. A panel on the Bearing will show a ring that fills as you spend against it. You can add more under Plan.",
     monthlyAmount: "Monthly amount",
     dayOfMonth: "Day of the month",
     monthlyCap: "Monthly cap",
@@ -840,7 +840,7 @@ export const en = {
   },
 
   /**
-   * The Month surface: the headline figure and the attention list.
+   * Figures for the Bearing's hero card and its attention list.
    *
    * Five of these were `count === 1 ? "entry was" : "entries were"` — a noun
    * and its verb agreed by ternary, which is the shape that cannot cross a
@@ -894,7 +894,7 @@ export const en = {
       one: "{count} charge looks like it repeats",
       other: "{count} charges look like they repeat",
     },
-    /** What is invested, on the Month screen's own strip. */
+    /** What is invested, on the Wallets tile's own strip in a Bearing panel. */
     invested: "Invested",
     /**
      * A closing streak, badged beside `MonthScore` and `MonthCloseHistory`'s
@@ -1162,12 +1162,12 @@ export const en = {
    * The figures the Bearing may show, and a model may name.
    *
    * A separate family from `facts` above even where a label is nearly the
-   * same, because the two packs are read in different company. On the Month
-   * page "Still to leave" sits under that month's heading and needs no
+   * same, because the two packs are read in different company. In a month
+   * read "Still to leave" sits under that month's heading and needs no
    * qualifier; on the Bearing it sits beside a twelve-month projection and a
    * portfolio, so it has to say which month it means. Merging them would
    * force one wording to serve two contexts, and the loser is always the
-   * screen with less surrounding text — which here is the one made of
+   * one with less surrounding text — which here is the one made of
    * nothing but figures.
    */
   bearingFacts: {
@@ -1236,7 +1236,7 @@ export const en = {
     inboxPending: "Entries still waiting for a category",
   },
 
-  /** The Month page's headline figure, and the line under it. */
+  /** The Bearing spine's headline figure, and the line under it. */
   pulse: {
     headlineLeft: "Left this month",
     headlineShort: "Short by",
@@ -1249,8 +1249,8 @@ export const en = {
   },
 
   /**
-   * `MoneyOnHand`'s own words, on both clients — the hero card the Month
-   * screen leads with, now also drawn inside a Bearing panel.
+   * `MoneyOnHand`'s own words, on both clients — the hero card the retired
+   * Month screen used to lead with, now drawn inside a Bearing panel.
    */
   moneyOnHand: {
     /**
@@ -1559,8 +1559,8 @@ export const en = {
      * What a ledger row says about itself.
      *
      * Short enough to sit in a row's subtitle beside the note, and worded as
-     * the state rather than the action: the press that changes it lives on the
-     * Month screen, not on the row.
+     * the state rather than the action: the row states it, some other surface
+     * changes it.
      */
     state: {
       confirmed: "Confirmed",
@@ -1933,8 +1933,8 @@ export const en = {
      * see `resolveSpine`'s doc comment in `packages/core/src/spine.ts` for
      * the ladder these read out. The headline itself borrows `pulse.headline*`
      * rather than repeating them, and the streak borrows `month.streakInARow`
-     * and `month.bestStreak` for the same reason: it is the same figure Month
-     * already names, read from a different screen.
+     * and `month.bestStreak` for the same reason: it is the same figure
+     * `MonthScore` already names, read from a different panel.
      */
     spine: {
       regionLabel: "Where you stand",

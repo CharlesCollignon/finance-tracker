@@ -356,7 +356,7 @@ export const fr: Messages = {
     progress: "Progression de la configuration",
     welcomeTitle: "Bienvenue sur Pluclair",
     welcomeBody:
-      "Deux minutes maintenant, et votre tableau de bord affichera de vrais chiffres au lieu de zéros.",
+      "Deux minutes maintenant, et Cap affichera de vrais chiffres au lieu de zéros.",
     currencyTitle: "Dans quelle devise pensez-vous\u00A0?",
     currencyBody:
       "Tous les montants de l'application sont affichés ainsi. Vous pourrez changer plus tard dans Profil.",
@@ -368,7 +368,7 @@ export const fr: Messages = {
       "Loyer, abonnements, factures — les charges que vous savez déjà à venir. C'est ce qui rend la projection utile.",
     capTitle: "Sur quoi préférez-vous ne pas déraper\u00A0?",
     capBody:
-      "Choisissez une catégorie et un plafond mensuel. Mois affichera un anneau qui se remplit à mesure que vous dépensez. Vous pourrez en ajouter d'autres dans Plan.",
+      "Choisissez une catégorie et un plafond mensuel. Un panneau sur Cap affichera un anneau qui se remplit à mesure que vous dépensez. Vous pourrez en ajouter d'autres dans Plan.",
     monthlyAmount: "Montant mensuel",
     dayOfMonth: "Jour du mois",
     monthlyCap: "Plafond mensuel",
