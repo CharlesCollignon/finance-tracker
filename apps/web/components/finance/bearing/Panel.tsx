@@ -57,6 +57,7 @@ import { cn } from "@/lib/utils";
  */
 export function Panel({ tile }: { tile: RenderedTile }) {
   const t = useT();
+  const locale = useLocale();
   const reducedMotion = usePrefersReducedMotion();
   const spec = panelFor(tile.id, tile.family);
 
@@ -93,10 +94,14 @@ export function Panel({ tile }: { tile: RenderedTile }) {
    * remedy for state that has to follow a change — the Bearing screen on the
    * phone uses the same pattern for a dragged order. An effect would paint
    * the mismatched frame first and then correct it.
+   *
+   * Locale rides along with scope here: a language switch changes the month
+   * label the same detail carries, so a scope the reader has not moved from
+   * still needs a reset the moment the language underneath it changes.
    */
-  const [shownScope, setShownScope] = useState(scope);
-  if (shownScope !== scope) {
-    setShownScope(scope);
+  const [shown, setShown] = useState({ scope, locale });
+  if (shown.scope !== scope || shown.locale !== locale) {
+    setShown({ scope, locale });
     setDetail(null);
     setFailed(false);
   }
@@ -128,7 +133,7 @@ export function Panel({ tile }: { tile: RenderedTile }) {
     return () => {
       stale = true;
     };
-  }, [tile.family, scope, spec.blocks, attempt]);
+  }, [tile.family, scope, spec.blocks, attempt, locale]);
 
   return (
     <Expand reducedMotion={reducedMotion}>

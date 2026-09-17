@@ -106,7 +106,13 @@ export function SegmentedControl<T extends string>({
             accessibilityLabel={segment.label}
             accessibilityState={{ selected, disabled: segment.disabled }}
             disabled={segment.disabled}
+            // Pressing the segment already in force is not a change, so it
+            // does not report one — the same guard the web twin has. The
+            // haptic is inside the guard rather than above it: a tap that
+            // changes nothing should not feel like a selection, which is
+            // what the platform's own segmented control does.
             onPress={() => {
+              if (selected) return;
               void hapticSelection();
               onChange(segment.value);
             }}

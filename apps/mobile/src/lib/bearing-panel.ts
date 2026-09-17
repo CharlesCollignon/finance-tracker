@@ -706,14 +706,19 @@ const cache = new Map<string, PanelDetail>();
  * `unrecorded-*` tiles all ask for `["budget-progress","month-score"]` — are
  * meant to share one fetch, which is the same argument `gatherPanelDetail`
  * makes for branching on family rather than on tile.
+ *
+ * Includes `locale` too: the detail carries month names and other rendered
+ * words, not just numbers, so what was fetched in French is wrong to hand
+ * back after the reader switches to English.
  */
 function keyOf(
   userId: string,
   family: FactFamily,
   scope: PanelScope,
   blocks: readonly PanelBlock[],
+  locale: Locale,
 ): string {
-  return `${userId}:${family}:${scope.year}-${scope.month}:${scope.view ?? "current"}:${scope.horizon ?? ""}:${blocks.join(",")}`;
+  return `${userId}:${family}:${scope.year}-${scope.month}:${scope.view ?? "current"}:${scope.horizon ?? ""}:${blocks.join(",")}:${locale}`;
 }
 
 /**
@@ -736,7 +741,7 @@ export async function getPanelDetail(
   blocks: readonly PanelBlock[],
   locale: Locale,
 ): Promise<PanelDetail | null> {
-  const key = keyOf(userId, family, scope, blocks);
+  const key = keyOf(userId, family, scope, blocks, locale);
   const hit = cache.get(key);
   if (hit) {
     return hit;
@@ -764,8 +769,9 @@ export function peekPanelDetail(
   family: FactFamily,
   scope: PanelScope,
   blocks: readonly PanelBlock[],
+  locale: Locale,
 ): PanelDetail | null {
-  return cache.get(keyOf(userId, family, scope, blocks)) ?? null;
+  return cache.get(keyOf(userId, family, scope, blocks, locale)) ?? null;
 }
 
 /** Called by `notifyDataChanged` consumers, so a write is not read stale. */

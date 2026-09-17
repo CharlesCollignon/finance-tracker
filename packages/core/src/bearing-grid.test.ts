@@ -287,4 +287,48 @@ describe("rowEndIndex", () => {
       }
     });
   });
+
+  describe("a second multi-row span, which slotSpan never produces", () => {
+    // `spans(n)` only ever puts `hero` at index 0 — HEAD/REPEAT's real shape
+    // — so every case above passes even if the suffix check used a tile's
+    // *last* row instead of its *first* to decide whether it "begins below"
+    // a candidate seam. The two only disagree once a second multi-row tile
+    // sits somewhere a plain end-row comparison can mistake for already
+    // being past the seam while it has, in fact, only started:
+    //
+    //   row 0 |  h0   h0   u1   u2
+    //   row 1 |  h0   h0   h3   h3    <- h3 starts here and ends in row 2
+    //   row 2 |  u4   u5   h3   h3
+    //   row 3 |  w6   w6   w7   w7
+    //
+    // Open u1 and the panel wants the first clean seam at or after row 0.
+    // Row 0 is not one: h0 straddles it. Row 1 looks clean to an end-row
+    // check — every tile after u2 *ends* in row 2 or later — so that check
+    // answers "after tile 2" and puts the panel through the middle of h3,
+    // which occupies rows 1 and 2. A start-row check sees h3 begin at row 1
+    // and keeps walking to the real seam, row 2, after tile 5.
+    const tiles: { span: TileSpan }[] = [
+      { span: "hero" },
+      { span: "unit" },
+      { span: "unit" },
+      { span: "hero" },
+      { span: "unit" },
+      { span: "unit" },
+      { span: "wide" },
+      { span: "wide" },
+    ];
+
+    it("does not cut through the second hero's straddled row", () => {
+      expect(rowEndIndex(tiles, 1, 4)).toBe(5);
+      expect(rowEndIndex(tiles, 2, 4)).toBe(5);
+    });
+
+    it("agrees with the dense-placement oracle", () => {
+      for (let open = 0; open < tiles.length; open += 1) {
+        expect(rowEndIndex(tiles, open, 4), `opened at ${open}`).toBe(
+          seamFor(tiles, open, 4),
+        );
+      }
+    });
+  });
 });

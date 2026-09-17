@@ -55,8 +55,15 @@ export const SPAN_ROWS: Record<TileSpan, number> = {
   unit: 1,
 };
 
+/** The first and last row a tile occupies, zero-based, as CSS would place it. */
+interface RowSpan {
+  first: number;
+  last: number;
+}
+
 /**
- * The last row each tile occupies, zero-based, as CSS would place them.
+ * The first and last row each tile occupies, zero-based, as CSS would place
+ * them.
  *
  * A cell occupancy walk rather than a sum, because dense auto-placement is
  * about cells: each tile takes the first row-then-column position whose
@@ -65,13 +72,19 @@ export const SPAN_ROWS: Record<TileSpan, number> = {
  * that faithfully, and "cheaper but only correct for the spans we happen to
  * ship today" is how the previous version of this file went wrong.
  *
+ * Both ends of each tile are kept, not just the last: a seam has to check
+ * that everything above it has *finished* (its last row) and that everything
+ * below it hasn't *started* (its first row) — the same two-sided test the
+ * test file's own `seamFor` oracle makes, and collapsing to one row number
+ * is what let `rowEndIndex` answer a straddling tile wrong below.
+ *
  * A span wider than the grid is clamped to the grid, which is what CSS does
  * with `grid-column: span 2` in a one-column grid.
  */
 function placeRows(
   tiles: readonly { span: TileSpan }[],
   columns: number,
-): number[] {
+): RowSpan[] {
   const grid: boolean[][] = [];
 
   const cellsIn = (row: number): boolean[] => {
@@ -115,7 +128,7 @@ function placeRows(
             cells[c] = true;
           }
         }
-        return row + rowSpan - 1;
+        return { first: row, last: row + rowSpan - 1 };
       }
     }
   });
@@ -154,18 +167,24 @@ export function rowEndIndex(
     return last;
   }
 
-  const rows = placeRows(tiles, columns);
+  const placed = placeRows(tiles, columns);
 
-  for (let seam = rows[openIndex]!; ; seam += 1) {
-    const firstBelow = rows.findIndex((row) => row > seam);
+  for (let seam = placed[openIndex]!.last; ; seam += 1) {
+    const firstBelow = placed.findIndex((tile) => tile.last > seam);
     if (firstBelow < 0) {
       return last;
     }
-    // Everything after the candidate has to be below the seam too: dense
-    // packing is free to drop a later `unit` into a hole an earlier row still
-    // has, and a tile that backfills above the panel would be drawn before a
-    // panel it comes after.
-    if (firstBelow > 0 && rows.slice(firstBelow).every((row) => row > seam)) {
+    // Everything after the candidate has to *begin* below the seam, not
+    // merely end below it — checking `last` here too would call a tile
+    // that starts at or above the seam and only finishes below it "below",
+    // when a panel at this seam would cut straight through it. Dense
+    // packing is free to drop a later `unit` into a hole an earlier row
+    // still has, and a tile that backfills above the panel would be drawn
+    // before a panel it comes after.
+    if (
+      firstBelow > 0 &&
+      placed.slice(firstBelow).every((tile) => tile.first > seam)
+    ) {
       return firstBelow - 1;
     }
   }

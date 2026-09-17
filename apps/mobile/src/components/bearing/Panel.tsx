@@ -88,7 +88,9 @@ export function Panel({ tile }: { tile: RenderedTile }) {
   });
 
   const [detail, setDetail] = useState<PanelDetail | null>(() =>
-    user ? peekPanelDetail(user.id, tile.family, scope, spec.blocks) : null,
+    user
+      ? peekPanelDetail(user.id, tile.family, scope, spec.blocks, locale)
+      : null,
   );
   const [failed, setFailed] = useState(false);
   // Bumped by the retry link and by any write a block makes (a decided bank
@@ -113,12 +115,22 @@ export function Panel({ tile }: { tile: RenderedTile }) {
    * remedy for state that has to follow a change — the Bearing screen uses
    * the same pattern for a dragged order. An effect would paint the
    * mismatched frame first and then correct it.
+   *
+   * Locale rides along with scope, for the same reason and with one the web
+   * does not have: the detail carries month names and other rendered words,
+   * so a language change leaves the chrome above it speaking the new
+   * language and the body below it the old one. On the phone that change
+   * does not even need the reader — `LocaleProvider` settles the language in
+   * three asynchronous steps, so the stored and the account choice can both
+   * land after a panel is already open.
    */
-  const [shownScope, setShownScope] = useState(scope);
-  if (shownScope !== scope) {
-    setShownScope(scope);
+  const [shown, setShown] = useState({ scope, locale });
+  if (shown.scope !== scope || shown.locale !== locale) {
+    setShown({ scope, locale });
     setDetail(
-      user ? peekPanelDetail(user.id, tile.family, scope, spec.blocks) : null,
+      user
+        ? peekPanelDetail(user.id, tile.family, scope, spec.blocks, locale)
+        : null,
     );
     setFailed(false);
   }

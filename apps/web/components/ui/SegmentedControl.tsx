@@ -79,7 +79,14 @@ export function SegmentedControl<T extends string>({
             role="radio"
             aria-checked={active}
             disabled={segment.disabled}
-            onClick={() => onChange(segment.value)}
+            // Pressing the segment already in force is not a change, so it
+            // does not report one. Unguarded, the setter still fires and
+            // anything downstream that resets on the chrome moving — the
+            // Bearing panel does — blanks to skeletons and re-resolves the
+            // figures it is already showing correctly.
+            onClick={() => {
+              if (!active) onChange(segment.value);
+            }}
             className={cn(
               "rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap",
               "transition-colors duration-200 sm:text-sm",
