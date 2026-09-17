@@ -10,6 +10,8 @@ import {
 import { arrangementFooting } from "@finance/core/bearing-read";
 import { mergeArrangement } from "@finance/core/bearing-tiles";
 import { formatShortDate } from "@finance/core/constants";
+import { buildAttention } from "@finance/core/attention";
+import { resolveSpine } from "@finance/core/spine";
 import { getMonthlyTrend } from "@/lib/queries/finance";
 import { getLocale, getT } from "@/lib/locale";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -17,6 +19,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { ArrangeButton } from "@/components/finance/bearing/ArrangeButton";
 import { BearingGrid } from "@/components/finance/bearing/BearingGrid";
+import { Spine } from "@/components/finance/bearing/Spine";
 import { MICRO } from "@/lib/type-scale";
 import { cn } from "@/lib/utils";
 
@@ -93,6 +96,41 @@ export default async function BearingPage() {
     facts,
   );
 
+  // The spine's ladder and the action row's priority list, both pure
+  // functions of figures this page already gathered — see
+  // `gatherBearingFacts`'s widened return for where `pulse`, `summary` and
+  // `closes` come from, and its own doc comment for which three reads were
+  // added to reach `swallowed`, `proposals` and `recurringToApply`.
+  //
+  // `closes` is null — "nothing has ever closed" — until at least one month
+  // has actually been reconciled against a balance; a lone baseline close
+  // has nothing measured behind it yet for the ring or the flame to show.
+  const spineState = resolveSpine({
+    pulse: facts.pulse,
+    closes:
+      facts.closes.summary.sample > 0
+        ? {
+            streak: facts.closes.summary.streak,
+            bestStreak: facts.closes.summary.bestStreak,
+            sample: facts.closes.summary.sample,
+          }
+        : null,
+    remaining: facts.summary.remaining,
+  });
+
+  const attention = buildAttention({
+    swallowed: facts.swallowed,
+    pendingInbox: facts.pendingInbox,
+    recurringToApply: facts.recurringToApply,
+    readyToClose: facts.closes.next
+      ? {
+          monthLabel: facts.closes.next.label,
+          isBaseline: facts.closes.next.isBaseline,
+        }
+      : null,
+    proposals: facts.proposals,
+  });
+
   const freshness =
     arrangement && stored?.facts && stored.arrangedAt
       ? describeArrangementFreshness({
@@ -111,6 +149,10 @@ export default async function BearingPage() {
       <PageHeader titleKey="nav.bearing" />
 
       <PageContainer className="flex flex-col gap-4">
+        {/* Fixed above the bento, not a thirteenth tile: outside
+            `BearingGrid`'s `order`, so nothing dragged can displace it. */}
+        <Spine state={spineState} attention={attention} />
+
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <p className={cn(MICRO, "text-muted-foreground")}>
             {t("bearing.asOf", { date: formatShortDate(facts.asOf, locale) })}

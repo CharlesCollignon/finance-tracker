@@ -1882,6 +1882,32 @@ export const en = {
       cashAccountsLapsed: "Consent has lapsed — nothing can be read from it",
       cashAccountsLastRead: "Read {when}",
     },
+    /**
+     * The spine: one figure, one ring and one flame, fixed above the bento —
+     * see `resolveSpine`'s doc comment in `packages/core/src/spine.ts` for
+     * the ladder these read out. The headline itself borrows `pulse.headline*`
+     * rather than repeating them, and the streak borrows `month.streakInARow`
+     * and `month.bestStreak` for the same reason: it is the same figure Month
+     * already names, read from a different screen.
+     */
+    spine: {
+      regionLabel: "Where you stand",
+      /** The ring's `dark` state: something could be measured, nothing has. */
+      ringUnmeasured: "Not measured yet — no month has closed",
+      /** The ring's `arc` state: measuring has started, there is no cap. */
+      ringMeasuring: "Measuring your first month — no allowance set yet",
+      /** The ring's `proportion` state, toned by how the month stands. */
+      ringClear: "{percent}% of your allowance used, comfortably clear",
+      ringTight: "{percent}% of your allowance used, getting tight",
+      ringShort: "{percent}% of your allowance used, already short this month",
+      /** Takes over the sentence above when `over` is true, whatever the tone. */
+      ringOver: "{percent}% of your allowance, already over",
+      /** The rest of the attention list, folded behind the one row shown. */
+      moreWaiting: {
+        one: "+{count} more waiting",
+        other: "+{count} more waiting",
+      },
+    },
   },
 
   /**

@@ -1532,6 +1532,21 @@ export const fr: Messages = {
       cashAccountsLapsed: "Le consentement a expiré — rien ne peut en être lu",
       cashAccountsLastRead: "Lu {when}",
     },
+    spine: {
+      regionLabel: "Où vous en êtes",
+      ringUnmeasured: "Pas encore mesuré — aucun mois n'a été clôturé",
+      ringMeasuring:
+        "Mesure de votre premier mois — aucune enveloppe définie pour l'instant",
+      ringClear: "{percent} % de votre enveloppe utilisés, largement dans les clous",
+      ringTight: "{percent} % de votre enveloppe utilisés, ça se resserre",
+      ringShort:
+        "{percent} % de votre enveloppe utilisés, le mois est déjà dans le rouge",
+      ringOver: "{percent} % de votre enveloppe, déjà dépassée",
+      moreWaiting: {
+        one: "+{count} en attente",
+        other: "+{count} en attente",
+      },
+    },
   },
 
   errors: {

@@ -9,11 +9,11 @@ import {
 import { buildFundCosts } from "@finance/core/fund-costs";
 import { buildInvestmentReturns } from "@finance/core/investment-returns";
 import { buildWalletFundingNeeds } from "@finance/core/investment-upcoming";
-import { buildMonthPulse } from "@finance/core/month-pulse";
+import { buildMonthPulse, type MonthPulse } from "@finance/core/month-pulse";
 import { previousMonthKey } from "@finance/core/month-close";
 import { buildForwardProjection, buildRunway } from "@finance/core/projection";
 import { buildStillToCome } from "@finance/core/still-to-come";
-import type { Database } from "@finance/core/types/database";
+import type { Database, MonthlySummary } from "@finance/core/types/database";
 import type { Locale } from "@finance/core/i18n/locale";
 import {
   getInvestmentTransactions,
@@ -26,14 +26,54 @@ import {
   getTransactions,
 } from "@/lib/queries/finance";
 import { getWalletPlans } from "@/lib/queries/investments";
-import { getMonthCloseOverview } from "@/lib/queries/month-close";
+import {
+  getMonthCloseOverview,
+  type MonthCloseOverview,
+} from "@/lib/queries/month-close";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { readCashBalance } from "@/lib/queries/bank-balance";
-import { getPendingFeedItems, hasBankFeed } from "@/lib/queries/bank";
+import {
+  countSwallowedFeedItems,
+  getPendingFeedItems,
+  getRecurringProposals,
+  hasBankFeed,
+  type PendingFeedRow,
+} from "@/lib/queries/bank";
 import { getFulfilledKeys } from "@/lib/queries/fulfilment";
+import { previewApplyRecurringForMonth } from "@/lib/actions/finance";
+import type { RecurringProposal } from "@finance/core/recurring-detection";
 import { getLocale } from "@/lib/locale";
 
 type Client = SupabaseClient<Database>;
+
+/**
+ * `BearingFacts`, widened with the raw figures the spine and its action row
+ * need but a fact pack has no id for.
+ *
+ * `pulse`, `summary` and `closeSummary` were already computed here and fed
+ * into `buildBearingFacts` before being thrown away — the spine needs them
+ * as values, not as formatted-and-labelled facts, so they are carried
+ * alongside the pack rather than re-derived by calling `buildMonthPulse`
+ * again on the page. `closes` is the same overview already read for
+ * `closeSummary`, kept whole because its `.next` is what tells the action
+ * row a month is ready to close.
+ *
+ * `swallowed`, `proposals` and `recurringToApply` are new reads — see
+ * `gatherBearingFacts` for why each one is necessary rather than optional.
+ */
+export interface GatheredBearingFacts extends BearingFacts {
+  pulse: MonthPulse;
+  summary: MonthlySummary;
+  closes: MonthCloseOverview;
+  /** Bank rows still waiting for a category — already read, just exposed. */
+  pendingInbox: number;
+  /** Bank rows an earlier sync merged away rather than left for review. */
+  swallowed: number;
+  /** Standing charges the statement implies but no template covers. */
+  proposals: number;
+  /** Recurring items this month's plan is ready to write as rows. */
+  recurringToApply: number;
+}
 
 /**
  * Everything the Bearing may show, gathered from what the app already
@@ -64,7 +104,7 @@ export async function gatherBearingFacts(
    * look stale.
    */
   localeOverride?: Locale,
-): Promise<BearingFacts> {
+): Promise<GatheredBearingFacts> {
   const today = todayIsoLocal();
   const { year, month } = getCurrentMonth();
 
@@ -205,9 +245,34 @@ export async function gatherBearingFacts(
   // is a partially known position. Which merchants they are is not its
   // business — and unlike a month read, this pack never sees a category name
   // at all.
-  const pending = bankFed ? await getPendingFeedItems(userId, locale) : [];
+  //
+  // Alongside it, the three reads the spine's action row needs and nothing
+  // here held yet — moved from the Month page's own `AttentionSlot`, not
+  // added new. `swallowed` and `proposals` only mean anything with a bank
+  // feeding the ledger: a CSV-only user has no feed rows to swallow and no
+  // statement to detect a standing charge from, which is why both stay
+  // behind the same `bankFed` gate `pending` always used.
+  // `previewApplyRecurringForMonth` gates itself the same way for the
+  // opposite reason — with a feed, templates never write, so it always hands
+  // back an empty plan rather than being asked not to run.
+  const pendingPromise: Promise<PendingFeedRow[]> = bankFed
+    ? getPendingFeedItems(userId, locale)
+    : Promise.resolve([]);
+  const swallowedPromise: Promise<number> = bankFed
+    ? countSwallowedFeedItems(userId)
+    : Promise.resolve(0);
+  const proposalsPromise: Promise<RecurringProposal[]> = bankFed
+    ? getRecurringProposals(userId, today)
+    : Promise.resolve([]);
 
-  return buildBearingFacts({
+  const [pending, swallowed, proposals, applyPlan] = await Promise.all([
+    pendingPromise,
+    swallowedPromise,
+    proposalsPromise,
+    previewApplyRecurringForMonth(year, month),
+  ]);
+
+  const packed = buildBearingFacts({
     asOf: today,
     bearing,
     pulse,
@@ -228,4 +293,15 @@ export async function gatherBearingFacts(
     // in.
     locale,
   });
+
+  return {
+    ...packed,
+    pulse,
+    summary,
+    closes,
+    pendingInbox: pending.length,
+    swallowed,
+    proposals: proposals.length,
+    recurringToApply: applyPlan.plan?.toCreate.length ?? 0,
+  };
 }
