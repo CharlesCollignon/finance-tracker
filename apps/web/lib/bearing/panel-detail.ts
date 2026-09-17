@@ -373,7 +373,12 @@ async function gatherRun(
   // still the scoped month's, because that is what the score plays against.
   // `monthFigures` already fetches the trend, so asking for it again here was
   // the same query twice on the same path.
-  const figures = await monthFigures(userId, scope.year, scope.month, "current");
+  const figures = await monthFigures(
+    userId,
+    scope.year,
+    scope.month,
+    "current",
+  );
 
   return {
     family: "run",

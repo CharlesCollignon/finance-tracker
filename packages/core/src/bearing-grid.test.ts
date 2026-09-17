@@ -37,7 +37,12 @@ interface Placement {
   cells: boolean[][];
 }
 
-/** How many columns and rows each span asks for, restated rather than imported. */
+/**
+ * How many columns and rows each span asks for.
+ *
+ * Restated rather than imported, so a wrong map inside the module under test
+ * cannot also make itself right here.
+ */
 const COLUMNS_OF: Record<TileSpan, number> = { hero: 2, wide: 2, unit: 1 };
 const ROWS_OF: Record<TileSpan, number> = { hero: 2, wide: 1, unit: 1 };
 

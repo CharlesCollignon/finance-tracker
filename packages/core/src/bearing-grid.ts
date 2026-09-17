@@ -165,10 +165,7 @@ export function rowEndIndex(
     // packing is free to drop a later `unit` into a hole an earlier row still
     // has, and a tile that backfills above the panel would be drawn before a
     // panel it comes after.
-    if (
-      firstBelow > 0 &&
-      rows.slice(firstBelow).every((row) => row > seam)
-    ) {
+    if (firstBelow > 0 && rows.slice(firstBelow).every((row) => row > seam)) {
       return firstBelow - 1;
     }
   }

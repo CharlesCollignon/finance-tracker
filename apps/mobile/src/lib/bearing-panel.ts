@@ -357,7 +357,16 @@ async function monthFigures(
     trend: trend.map((point) => point.net),
   };
 
-  return { summary, comparison, closes, upcoming, pulse, trend, hero, templates };
+  return {
+    summary,
+    comparison,
+    closes,
+    upcoming,
+    pulse,
+    trend,
+    hero,
+    templates,
+  };
 }
 
 /* ------------------------------------------------------------------ now */
@@ -577,7 +586,12 @@ async function gatherRun(userId: string, scope: PanelScope): Promise<PanelDetail
   // `monthFigures` already fetches the trend, so asking for it again here was
   // the same query twice on the same path — and the phone has no request
   // cache to collapse the two.
-  const figures = await monthFigures(userId, scope.year, scope.month, "current");
+  const figures = await monthFigures(
+    userId,
+    scope.year,
+    scope.month,
+    "current",
+  );
 
   return {
     family: "run",
