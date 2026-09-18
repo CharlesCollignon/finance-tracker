@@ -112,20 +112,23 @@ export function AccountMenu({
                 )}
               >
                 <p id={titleId} className="sr-only">
-                  Account
+                  {t("common.account")}
                 </p>
+                {/* The label comes off the nav item the href comes off, so
+                    the row cannot name a surface the sidebar does not. It
+                    said "Settings", which is not one of this app's screens. */}
                 <Link
                   href={PROFILE_NAV_ITEM.href}
                   className={rowClass}
                   onClick={() => setOpen(false)}
                 >
                   <Gear size={ICON.lg} />
-                  Settings
+                  {t(PROFILE_NAV_ITEM.labelKey)}
                 </Link>
                 <form action={signOut}>
                   <button type="submit" className={rowClass}>
                     <SignOut size={ICON.lg} />
-                    Sign out
+                    {t("common.signOut")}
                   </button>
                 </form>
               </div>

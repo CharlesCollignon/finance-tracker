@@ -337,14 +337,14 @@ export function RecurringView({
 
         {applyPending ? (
           <p className="rounded-lg border border-dashed border-primary-rim/50 px-4 py-3 text-sm text-muted-foreground">
-            These charges have changed since this month was written.{" "}
+            {t("charges.applyPendingBefore")}{" "}
             <Link
               href={transactionsHref}
               className="font-medium text-foreground underline underline-offset-4"
             >
-              Open the Ledger
+              {t("charges.applyPendingLink")}
             </Link>{" "}
-            and apply them.
+            {t("charges.applyPendingAfter")}
           </p>
         ) : null}
 

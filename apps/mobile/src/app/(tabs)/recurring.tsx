@@ -197,8 +197,7 @@ export default function RecurringScreen() {
           className="mb-3 rounded-lg border border-dashed border-primary-rim/50 px-4 py-3"
         >
           <Text variant="muted" className="text-sm">
-            These charges have changed since this month was written. Open the
-            Ledger and apply them.
+            {`${t("charges.applyPendingBefore")} ${t("charges.applyPendingLink")} ${t("charges.applyPendingAfter")}`}
           </Text>
         </Pressable>
       ) : null}

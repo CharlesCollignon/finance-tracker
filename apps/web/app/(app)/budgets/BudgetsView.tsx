@@ -369,8 +369,7 @@ export function BudgetsView({
             </div>
           ) : goalFormOpen ? null : (
             <p className="text-sm text-muted-foreground">
-              A goal is an amount to reach — a deposit, a trip, a buffer. Set
-              aside money in a savings category and it fills.
+              {t("plan.goalsBlurb")}
             </p>
           )}
 

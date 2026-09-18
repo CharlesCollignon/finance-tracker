@@ -103,10 +103,7 @@ export function RecurringFormModal({
       setError(result.error);
       return;
     }
-    toast(
-      "Saved — apply recurring in the Ledger to see the change.",
-      "success",
-    );
+    toast(t("recurring.savedHint"), "success");
     onSaved();
     onClose();
   }

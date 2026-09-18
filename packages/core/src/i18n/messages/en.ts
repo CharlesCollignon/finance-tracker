@@ -377,6 +377,19 @@ export const en = {
     emptyTitleMobile: "What repeats each month?",
     emptyBodyMobile: "Rent, salary, subscriptions, DCA.",
     openLedgerToApply: "Open the Ledger to apply these charges",
+    /**
+     * The banner above the list when this month was written before these
+     * charges changed.
+     *
+     * Split in three because web draws the link through the middle clause
+     * only, while the phone makes the whole banner one target and joins the
+     * three back into a sentence. `openLedgerToApply` above is that target's
+     * accessible name, which is why it is a whole sentence and these are not.
+     */
+    applyPendingBefore:
+      "These charges have changed since this month was written.",
+    applyPendingLink: "Open the Ledger",
+    applyPendingAfter: "and apply them.",
     remindTitle: "Want a nudge before these post?",
     remindBody:
       "One reminder the evening before each item is due, so nothing lands unnoticed. Entirely on your device.",
@@ -730,14 +743,19 @@ export const en = {
     fromRecurring: "From recurring",
     customHolding: "Custom holding",
     noRecurringAvailable:
-      "No recurring items available for this column. Add one on the Recurring page or use a custom holding.",
+      "No recurring items available for this column. Add one on the Charges page or use a custom holding.",
     nameLabel: "Name",
     namePlaceholder: "e.g. MSCI World ETF",
     costBasis: "Total invested (cost basis)",
     costBasisHint:
       "Your broker's total invested amount for this position. Used for P/L — not updated from recurring transactions.",
+    /**
+     * The link is the surface's own name, not the route's: the path is still
+     * `/recurring` but the tab has been called Charges for two releases, and
+     * this said "Recurring" — a page nobody can find in the nav.
+     */
     changeFundPrefix: "Change the fund on the",
-    changeFundLink: "Recurring",
+    changeFundLink: "Charges",
     changeFundSuffix: " page.",
     chargePlaceholder: "e.g. 0,20",
     /**
@@ -1236,7 +1254,18 @@ export const en = {
     inboxPending: "Entries still waiting for a category",
   },
 
-  /** The Bearing spine's headline figure, and the line under it. */
+  /**
+   * What the `MoneyOnHand` hero's headline figure is called, and the line
+   * under it — the hero itself being drawn inside a Bearing panel on both
+   * clients, which is the only place it renders.
+   *
+   * The Bearing spine borrows the three `headline*` labels for its own
+   * headline, so those three are read in two places rather than one. The
+   * five explanation lines are the phone's alone: web's hero dropped
+   * `pulseExplanation` in favour of the terms it spells out in figures, and
+   * says `month.connectBankNote` / `month.finishedMonthNote` in the one case
+   * where there is no figure to explain.
+   */
   pulse: {
     headlineLeft: "Left this month",
     headlineShort: "Short by",

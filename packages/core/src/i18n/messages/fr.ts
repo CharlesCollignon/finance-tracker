@@ -323,6 +323,9 @@ export const fr: Messages = {
     emptyTitleMobile: "Qu'est-ce qui revient chaque mois\u00A0?",
     emptyBodyMobile: "Loyer, salaire, abonnements, DCA.",
     openLedgerToApply: "Ouvrir le Journal pour appliquer ces charges",
+    applyPendingBefore: "Ces charges ont changé depuis l'écriture de ce mois.",
+    applyPendingLink: "Ouvrez le Journal",
+    applyPendingAfter: "et appliquez-les.",
     remindTitle: "Un rappel avant qu'elles ne passent\u00A0?",
     remindBody:
       "Un rappel la veille de chaque échéance, pour que rien ne passe inaperçu. Entièrement sur votre appareil.",
@@ -633,14 +636,14 @@ export const fr: Messages = {
     fromRecurring: "Depuis un récurrent",
     customHolding: "Ligne personnalisée",
     noRecurringAvailable:
-      "Aucun récurrent disponible pour ce portefeuille. Créez-en un sur la page Récurrents, ou utilisez une ligne personnalisée.",
+      "Aucun récurrent disponible pour ce portefeuille. Créez-en un sur la page Charges, ou utilisez une ligne personnalisée.",
     nameLabel: "Nom",
     namePlaceholder: "ex. ETF MSCI World",
     costBasis: "Total investi (prix de revient)",
     costBasisHint:
       "Le total investi indiqué par votre courtier pour cette ligne. Sert au calcul du +/- ; il n'est pas mis à jour par les transactions récurrentes.",
     changeFundPrefix: "Changez le fonds sur la page",
-    changeFundLink: "Récurrents",
+    changeFundLink: "Charges",
     changeFundSuffix: ".",
     chargePlaceholder: "ex. 0,20",
     isinLabel: "ISIN (facultatif)",

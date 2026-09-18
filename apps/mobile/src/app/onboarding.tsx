@@ -188,7 +188,6 @@ export default function OnboardingScreen() {
               </Text>
               <Text variant="muted" className="text-center">
                 {t("onboarding.welcomeBody")}
-                instead of zeros.
               </Text>
             </View>
 
@@ -197,8 +196,7 @@ export default function OnboardingScreen() {
                 {t("onboarding.currencyTitle")}
               </Text>
               <Text variant="muted" className="text-sm">
-                Every amount in the app is shown this way. You can change it
-                later in Profile.
+                {t("onboarding.currencyBody")}
               </Text>
               <View className="mt-1 flex-row gap-2">
                 {CURRENCIES.map((code) => {

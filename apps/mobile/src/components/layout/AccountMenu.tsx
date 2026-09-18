@@ -90,7 +90,12 @@ export function AccountMenu() {
                       size={ICON.lg}
                       color={colors.foreground}
                     />
-                    <Text className="text-sm font-medium">Settings</Text>
+                    {/* The row goes to /profile, so it says what that surface
+                        is called. "Settings" was a screen this app does not
+                        have. */}
+                    <Text className="text-sm font-medium">
+                      {t("nav.profile")}
+                    </Text>
                   </Pressable>
 
                   <Pressable
@@ -106,7 +111,9 @@ export function AccountMenu() {
                       size={ICON.lg}
                       color={colors.foreground}
                     />
-                    <Text className="text-sm font-medium">Sign out</Text>
+                    <Text className="text-sm font-medium">
+                      {t("common.signOut")}
+                    </Text>
                   </Pressable>
                 </View>
               </View>
