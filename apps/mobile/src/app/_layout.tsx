@@ -11,8 +11,12 @@ import {
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LocaleSuggestion } from "@/components/LocaleSuggestion";
@@ -38,6 +42,11 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
   const segments = useSegments();
   const pathname = usePathname();
   const router = useRouter();
+  // The banner below is an in-flow sibling above `<Stack>`, not inside any
+  // one screen's own `SafeAreaView` — so it has to ask for the top inset
+  // itself, or its content sits under the status bar the way a screen's
+  // content never does.
+  const insets = useSafeAreaInsets();
 
   // Only once there is a session to land in. Following a tapped notification
   // to the Ledger while signed out would be immediately bounced to /login by
@@ -94,8 +103,15 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
           page rather than on one screen — it used to live only on the
           now-retired Month screen here, which meant nobody who skipped that
           screen, or who signed in straight to another one, was ever asked.
-          Self-gating: it renders nothing on almost every launch. */}
-      <LocaleSuggestion />
+          Self-gating: it renders nothing on almost every launch.
+          `paddingTop: insets.top` rather than a bare mount, because web's
+          body scrolls and can afford to ignore the notch; this sits above a
+          `Stack` whose own screens already apply the full inset themselves,
+          so the banner has to clear the notch on its own rather than
+          borrowing space no screen below it is giving up. */}
+      <View style={{ paddingTop: insets.top }}>
+        <LocaleSuggestion />
+      </View>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
