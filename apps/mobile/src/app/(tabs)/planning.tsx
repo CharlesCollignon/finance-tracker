@@ -145,6 +145,21 @@ export default function PlanningScreen() {
    * sheet.
    */
   const [closing, setClosing] = useState<ClosePrompt | null>(null);
+  /**
+   * Whether the sheet is showing, kept apart from *what* it is showing.
+   *
+   * These used to be one thing: `closing` was both the frozen figures and
+   * the open flag, so dismissing cleared it, which left `sheet` falling back
+   * to `prompt` — and after a successful close `prompt` is null, because the
+   * month it was about is now closed. The sheet therefore unmounted on the
+   * frame the reader tapped Done, with no slide-out at all. Cancelling never
+   * showed it, because cancelling leaves `prompt` standing.
+   *
+   * Split, `closing` keeps holding the month that was just closed while the
+   * modal animates away, and only the flag moves. What stays mounted
+   * afterwards is hidden and is replaced wholesale by the next tap.
+   */
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
@@ -389,7 +404,10 @@ export default function PlanningScreen() {
                 label={t("monthClose.closeMonth", {
                   month: prompt.month.label,
                 })}
-                onPress={() => setClosing(prompt)}
+                onPress={() => {
+                  setClosing(prompt);
+                  setSheetOpen(true);
+                }}
               />
             </Card>
           ) : null}
@@ -568,10 +586,10 @@ export default function PlanningScreen() {
 
       {sheet ? (
         <MonthCloseSheet
-          open={closing !== null}
+          open={sheetOpen}
           onOpenChange={(value) => {
             if (!value) {
-              setClosing(null);
+              setSheetOpen(false);
             }
           }}
           year={sheet.month.year}

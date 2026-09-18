@@ -51,6 +51,9 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
     initTheme();
   }, []);
 
+  const inOnboarding = pathname.startsWith("/onboarding");
+  const inAuthGroup = segments[0] === "(auth)";
+
   useEffect(() => {
     if (initializing || !fontsReady) {
       return;
@@ -58,7 +61,6 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
 
     SplashScreen.hideAsync();
 
-    const inOnboarding = pathname.startsWith("/onboarding");
     // Send a signed-in user who has not finished setup there once, and only
     // once we actually know the flag.
     if (session && onboarded === false && !inOnboarding) {
@@ -69,7 +71,6 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
       return;
     }
 
-    const inAuthGroup = segments[0] === "(auth)";
     // The OAuth redirect lands on /auth/callback before the session exists.
     // Bouncing it to /login here would cancel the sign-in it is completing.
     const inAuthCallback = pathname.startsWith("/auth/callback");
@@ -83,22 +84,14 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
     initializing,
     fontsReady,
     onboarded,
-    segments,
+    inAuthGroup,
+    inOnboarding,
     pathname,
     router,
   ]);
 
   return (
     <>
-      {/* The web twin mounts its equivalent at the same level, above every
-          page rather than on one screen — it used to live only on the
-          now-retired Month screen here, which meant nobody who skipped that
-          screen, or who signed in straight to another one, was ever asked.
-          Self-gating: it renders nothing on almost every launch, and its own
-          root view carries the top-inset margin rather than a wrapper here —
-          a wrapper's padding would reserve `insets.top` of height even when
-          the component underneath renders null. */}
-      <LocaleSuggestion />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
@@ -107,6 +100,32 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="import" />
         <Stack.Screen name="onboarding" />
       </Stack>
+      {/* The web twin mounts its equivalent at the same level, above every
+          page rather than on one screen — it used to live only on the
+          now-retired Month screen here, which meant nobody who skipped that
+          screen, or who signed in straight to another one, was ever asked.
+
+          After `<Stack>`, not before it, and absolutely positioned: it is an
+          overlay rather than a row, so it can neither displace a screen nor
+          double its top inset — see the component's own comment for the
+          three separate times this mount point has been wrong.
+
+          Asked only of somebody who is signed in and past setup. Signed out
+          means `(auth)`, where the reader is typing a password and the whole
+          question is noise; mid-onboarding means the walkthrough is already
+          asking them about a currency and a cap, and a fourth card over the
+          top of it is not a question, it is an interruption. `onboarded ===
+          true` rather than `!== false`, because null means the flag has not
+          been read yet and an unanswered question is not a "yes". */}
+      <LocaleSuggestion
+        enabled={
+          Boolean(session) &&
+          !initializing &&
+          onboarded === true &&
+          !inOnboarding &&
+          !inAuthGroup
+        }
+      />
       {/* Light glyphs, always: the ground behind them is near-black. */}
       <StatusBar style="light" />
     </>

@@ -45,9 +45,12 @@ import { cn } from "@/lib/utils";
 export function PanelBlockView({
   block,
   detail,
+  onChanged,
 }: {
   block: PanelBlock;
   detail: PanelDetail;
+  /** Ask the panel to fetch its detail again, after a block wrote something. */
+  onChanged: () => void;
 }): ReactNode {
   switch (block) {
     case "money-on-hand":
@@ -93,6 +96,7 @@ export function PanelBlockView({
           <ArrivedCharges
             proposals={detail.arrived.proposals}
             misses={detail.arrived.misses}
+            onDecided={onChanged}
           />
         </div>
       ) : null;

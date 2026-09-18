@@ -76,8 +76,9 @@ export function Panel({ tile }: { tile: RenderedTile }) {
 
   const [detail, setDetail] = useState<PanelDetail | null>(null);
   const [failed, setFailed] = useState(false);
-  // Bumped by the retry, which is the only way to ask for the same scope
-  // twice. Nothing reads it but the effect below.
+  // Bumped by the retry and by any block that has just written something —
+  // the two ways to ask for the same scope twice. Nothing reads it but the
+  // effect below.
   const [attempt, setAttempt] = useState(0);
   const [, startTransition] = useTransition();
 
@@ -150,7 +151,16 @@ export function Panel({ tile }: { tile: RenderedTile }) {
 
         {detail
           ? spec.blocks.map((block) => (
-              <PanelBlockView key={block} block={block} detail={detail} />
+              <PanelBlockView
+                key={block}
+                block={block}
+                detail={detail}
+                // The same counter the retry bumps: a block that wrote
+                // something has made every other block in the panel stale,
+                // and "fetch this scope again" is exactly what `attempt` is
+                // for.
+                onChanged={() => setAttempt((count) => count + 1)}
+              />
             ))
           : failed
             ? null

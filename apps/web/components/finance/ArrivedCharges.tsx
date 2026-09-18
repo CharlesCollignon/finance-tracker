@@ -29,6 +29,19 @@ interface ArrivedChargesProps {
    * narrow matcher that says nothing is indistinguishable from a broken one.
    */
   misses?: FulfilmentMiss[];
+  /**
+   * Called once a decision has actually stuck on the server.
+   *
+   * The row leaves optimistically, but everything *around* it is stale the
+   * moment a proposal is confirmed: a fulfilment rewrites what is still to
+   * come, the spend strip and the month in words, all of which are blocks
+   * of the same panel this renders in. The panel caches its detail in
+   * client state, so a `revalidatePath` on the server does not reach it —
+   * whoever mounts this has to ask for the detail again. The phone's twin
+   * has taken an `onDecided` since it was written; this is the web catching
+   * up.
+   */
+  onDecided?: () => void;
 }
 
 /**
@@ -54,6 +67,7 @@ interface ArrivedChargesProps {
 export function ArrivedCharges({
   proposals,
   misses = [],
+  onDecided,
 }: ArrivedChargesProps) {
   const t = useT();
   const { toast } = useToast();
@@ -94,6 +108,7 @@ export function ArrivedCharges({
         return;
       }
       toast(result.message ?? t("fulfilment.done"), "success");
+      onDecided?.();
     });
   }
 

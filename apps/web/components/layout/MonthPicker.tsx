@@ -10,7 +10,6 @@ import {
   formatMonthLabel,
   getCurrentMonth,
   monthSearchParams,
-  parseBudgetViewMode,
   parseMonthParams,
   shiftMonth,
 } from "@finance/core/constants";
@@ -39,6 +38,12 @@ interface MonthPickerProps {
  * The arrows stay. Stepping to the month either side is the commonest move by
  * a wide margin, and making that a two-tap popover to save a control would be
  * a poor trade.
+ *
+ * It no longer carries a `view` through. `BudgetViewToggle` was the only
+ * thing that ever wrote `?view=month_end`, and it is gone — the current /
+ * month-end choice is a Bearing panel's own local chrome now, deliberately
+ * not in the address bar. So reading the param back was a branch nothing
+ * could take, and passing it on was a claim that something still might.
  */
 export function MonthPicker({ basePath, className }: MonthPickerProps) {
   const t = useT();
@@ -47,8 +52,6 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
     searchParams.get("y") ?? undefined,
     searchParams.get("m") ?? undefined,
   );
-  const view = parseBudgetViewMode(searchParams.get("view"));
-
   const prev = shiftMonth(year, month, -1);
   const next = shiftMonth(year, month, 1);
 
@@ -60,7 +63,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
       className={cn("relative flex items-center gap-0.5 sm:gap-1", className)}
     >
       <Link
-        href={`${basePath}${monthSearchParams(prev.year, prev.month, view)}`}
+        href={`${basePath}${monthSearchParams(prev.year, prev.month)}`}
         onClick={() => rememberMonth(prev.year, prev.month)}
         className={cn(
           // Narrower, never shorter: the 44px touch height is kept, and only
@@ -101,7 +104,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
       </button>
 
       <Link
-        href={`${basePath}${monthSearchParams(next.year, next.month, view)}`}
+        href={`${basePath}${monthSearchParams(next.year, next.month)}`}
         onClick={() => rememberMonth(next.year, next.month)}
         className={cn(
           "flex h-11 w-8 shrink-0 items-center justify-center rounded sm:w-11",
@@ -118,7 +121,6 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
           basePath={basePath}
           year={year}
           month={month}
-          view={view}
           onClose={() => setOpen(false)}
         />
       ) : null}
@@ -139,14 +141,12 @@ function MonthGrid({
   basePath,
   year,
   month,
-  view,
   onClose,
 }: {
   id: string;
   basePath: string;
   year: number;
   month: number;
-  view: "current" | "month_end";
   onClose: () => void;
 }) {
   const t = useT();
@@ -207,9 +207,7 @@ function MonthGrid({
   function go(targetYear: number, targetMonth: number) {
     rememberMonth(targetYear, targetMonth);
     onClose();
-    router.push(
-      `${basePath}${monthSearchParams(targetYear, targetMonth, view)}`,
-    );
+    router.push(`${basePath}${monthSearchParams(targetYear, targetMonth)}`);
   }
 
   return (
