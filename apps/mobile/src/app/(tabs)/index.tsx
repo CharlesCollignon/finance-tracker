@@ -25,6 +25,7 @@ import {
 } from "@/lib/bearing";
 import { clearPanelCache } from "@/lib/bearing-panel";
 
+import { AttentionRow } from "@/components/bearing/AttentionRow";
 import { BearingTile } from "@/components/bearing/BearingTile";
 import { Spine } from "@/components/bearing/Spine";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -242,13 +243,40 @@ export default function BearingScreen() {
 
   const { facts, stored } = data;
 
+  // Built above the thin branch on purpose. `thin` is not "nobody has done
+  // anything" — it is "no position has been taken yet", which is exactly
+  // what a reader who has just finished onboarding looks like: templates
+  // saved, not one row written, so `recurringToApply` is already non-zero
+  // and this list already has an item in it. It used to be built below the
+  // branch and thrown away for them.
+  const attention = buildAttention({
+    swallowed: facts.swallowed,
+    pendingInbox: facts.pendingInbox,
+    recurringToApply: facts.recurringToApply,
+    readyToClose: facts.closes.next
+      ? {
+          monthLabel: facts.closes.next.label,
+          isBaseline: facts.closes.next.isBaseline,
+        }
+      : null,
+    proposals: facts.proposals,
+  });
+
   if (facts.thin) {
     return (
       <Screen title={t("nav.bearing")}>
         <EmptyState
           title={t("bearing.title")}
           description={t("bearing.empty")}
-        />
+        >
+          {/* The row, and deliberately not the spine: a hero-sized zero
+              beside a dark ring would be two statements about a position
+              nobody has taken yet, where this states no figure at all and
+              only names the thing worth doing. */}
+          {attention.length > 0 ? (
+            <AttentionRow attention={attention} />
+          ) : undefined}
+        </EmptyState>
       </Screen>
     );
   }
@@ -266,10 +294,10 @@ export default function BearingScreen() {
 
   const canArrange = bearingWritable() && stored.tracked;
 
-  // The spine's ladder and the action row's priority list, both pure
-  // functions of figures `gatherBearingFacts` already widened its return
-  // with — see that function's own doc comment for which three reads were
-  // added to reach `swallowed`, `proposals` and `recurringToApply`.
+  // The spine's ladder, a pure function of figures `gatherBearingFacts`
+  // already widened its return with — see that function's own doc comment
+  // for where `swallowed`, `proposals` and `recurringToApply` come from.
+  // The action row's own list is built above, before the thin branch.
   //
   // `everClosed` and `closes` answer two different questions, per
   // `spine.ts`'s own doc comment on `SpineInput`, and per the identical
@@ -291,19 +319,6 @@ export default function BearingScreen() {
           }
         : null,
     remaining: facts.summary.remaining,
-  });
-
-  const attention = buildAttention({
-    swallowed: facts.swallowed,
-    pendingInbox: facts.pendingInbox,
-    recurringToApply: facts.recurringToApply,
-    readyToClose: facts.closes.next
-      ? {
-          monthLabel: facts.closes.next.label,
-          isBaseline: facts.closes.next.isBaseline,
-        }
-      : null,
-    proposals: facts.proposals,
   });
 
   return (

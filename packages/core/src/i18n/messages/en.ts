@@ -483,6 +483,18 @@ export const en = {
       one: "{count} added — add another or finish below.",
       other: "{count} added — add another or finish below.",
     },
+    /**
+     * The account menu's way back here.
+     *
+     * Web reached `/welcome` from exactly one place — a `router.push` the
+     * instant a sign-up succeeded — so a reader who skipped it, or who
+     * signed in later on another device, had no route back. The phone has
+     * never had that problem: its onboarding gate is checked on every
+     * launch. This is the web's equivalent, and it is worded as somewhere
+     * to go rather than as something owed, because most readers who open it
+     * have already finished.
+     */
+    reopen: "Set-up walkthrough",
   },
 
   /** Categories: the labels the user files transactions under. */

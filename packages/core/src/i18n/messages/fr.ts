@@ -388,6 +388,7 @@ export const fr: Messages = {
       one: "{count} ajoutée — ajoutez-en une autre ou terminez ci-dessous.",
       other: "{count} ajoutées — ajoutez-en une autre ou terminez ci-dessous.",
     },
+    reopen: "Prise en main",
   },
 
   categories: {

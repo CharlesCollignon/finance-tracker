@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { arrangerConfigured } from "@/lib/bearing/client";
@@ -18,6 +19,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { ArrangeButton } from "@/components/finance/bearing/ArrangeButton";
+import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
 import { BearingGrid } from "@/components/finance/bearing/BearingGrid";
 import { Spine } from "@/components/finance/bearing/Spine";
 import { MICRO } from "@/lib/type-scale";
@@ -65,15 +67,56 @@ export default async function BearingPage() {
     getMonthlyTrend(user.id),
   ]);
 
+  // Hoisted above the thin branch on purpose. `thin` is not "nobody has
+  // done anything" — it is "no position has been taken yet", which is
+  // exactly what a reader who has just finished `/welcome` looks like:
+  // recurring templates saved, not one row written, so `recurringToApply`
+  // is already non-zero and this list already has something in it. It used
+  // to be computed below the branch and thrown away for them.
+  const attention = buildAttention({
+    swallowed: facts.swallowed,
+    pendingInbox: facts.pendingInbox,
+    recurringToApply: facts.recurringToApply,
+    readyToClose: facts.closes.next
+      ? {
+          monthLabel: facts.closes.next.label,
+          isBaseline: facts.closes.next.isBaseline,
+        }
+      : null,
+    proposals: facts.proposals,
+  });
+
   if (facts.thin) {
     return (
       <>
         <PageHeader titleKey="nav.bearing" />
-        <PageContainer>
+        <PageContainer className="flex flex-col gap-4">
           <EmptyState
             title={t("bearing.title")}
             description={t("bearing.empty")}
-          />
+          >
+            {/* The row, and deliberately not the spine. The spine's headline
+                over an empty account is the month's plain arithmetic —
+                a hero-sized zero — beside a dark ring: two statements about
+                a position nobody has taken yet. The row states nothing
+                about the account. It names the one thing worth doing and
+                links to where it is done, which is all this reader is
+                short of. */}
+            {attention.length > 0 ? (
+              <AttentionRow attention={attention} className="w-full" />
+            ) : undefined}
+          </EmptyState>
+          {/* And the walkthrough, because a reader who skipped it entirely
+              has no templates, so `attention` above is empty and this
+              screen is otherwise one sentence with nothing on it. The
+              always-available route back to `/welcome` is `AccountMenu`'s;
+              this is the one place worth saying it out loud. */}
+          <Link
+            href="/welcome"
+            className="self-start text-sm font-medium text-primary-ink underline underline-offset-2"
+          >
+            {t("onboarding.reopen")}
+          </Link>
         </PageContainer>
       </>
     );
@@ -96,11 +139,11 @@ export default async function BearingPage() {
     facts,
   );
 
-  // The spine's ladder and the action row's priority list, both pure
-  // functions of figures this page already gathered — see
-  // `gatherBearingFacts`'s widened return for where `pulse`, `summary` and
-  // `closes` come from, and its own doc comment for which three reads were
-  // added to reach `swallowed`, `proposals` and `recurringToApply`.
+  // The spine's ladder, a pure function of figures this page already
+  // gathered — see `gatherBearingFacts`'s widened return for where `pulse`,
+  // `summary` and `closes` come from, and its own doc comment for where
+  // `swallowed`, `proposals` and `recurringToApply` come from. The action
+  // row's own list is built above, before the thin branch.
   //
   // `everClosed` and `closes` answer two different questions, per
   // `spine.ts`'s own doc comment on `SpineInput`. `everClosed` is "has any
@@ -122,19 +165,6 @@ export default async function BearingPage() {
           }
         : null,
     remaining: facts.summary.remaining,
-  });
-
-  const attention = buildAttention({
-    swallowed: facts.swallowed,
-    pendingInbox: facts.pendingInbox,
-    recurringToApply: facts.recurringToApply,
-    readyToClose: facts.closes.next
-      ? {
-          monthLabel: facts.closes.next.label,
-          isBaseline: facts.closes.next.isBaseline,
-        }
-      : null,
-    proposals: facts.proposals,
   });
 
   const freshness =

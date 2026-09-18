@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gear, SignOut } from "@phosphor-icons/react";
+import { Compass, Gear, SignOut } from "@phosphor-icons/react";
 import { UserInitial } from "@/components/layout/UserInitial";
 import { signOut } from "@/lib/actions/finance";
 import { PROFILE_NAV_ITEM } from "@/lib/navigation";
@@ -124,6 +124,25 @@ export function AccountMenu({
                 >
                   <Gear size={ICON.lg} />
                   {t(PROFILE_NAV_ITEM.labelKey)}
+                </Link>
+                {/* The only re-findable route to `/welcome` on web.
+                    `MonthFirstRun` carried it and went with the screen it
+                    described; what was left was a single `router.push` the
+                    instant a sign-up succeeded, so a reader who skipped the
+                    walkthrough — or who signed in later on another device,
+                    where that push never fired — could not get back to it.
+                    The phone has no equivalent gap: its onboarding flag is
+                    checked on every launch in `_layout.tsx`. Here rather
+                    than on any one screen for the same reason: this menu is
+                    on every screen, and a route that only exists while an
+                    account is empty is not re-findable. */}
+                <Link
+                  href="/welcome"
+                  className={rowClass}
+                  onClick={() => setOpen(false)}
+                >
+                  <Compass size={ICON.lg} />
+                  {t("onboarding.reopen")}
                 </Link>
                 <form action={signOut}>
                   <button type="submit" className={rowClass}>
