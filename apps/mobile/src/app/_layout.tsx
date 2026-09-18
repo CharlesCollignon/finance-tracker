@@ -15,6 +15,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { LocaleSuggestion } from "@/components/LocaleSuggestion";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { BiometricLockProvider } from "@/providers/BiometricLockProvider";
 import { CurrencyProvider } from "@/providers/CurrencyProvider";
@@ -89,6 +90,12 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
 
   return (
     <>
+      {/* The web twin mounts its equivalent at the same level, above every
+          page rather than on one screen — it used to live only on the
+          now-retired Month screen here, which meant nobody who skipped that
+          screen, or who signed in straight to another one, was ever asked.
+          Self-gating: it renders nothing on almost every launch. */}
+      <LocaleSuggestion />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
