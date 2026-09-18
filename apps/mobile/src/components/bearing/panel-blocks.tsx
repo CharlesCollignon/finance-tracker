@@ -5,6 +5,7 @@ import type { PanelBlock } from "@finance/core/bearing-panels";
 import type { Key } from "@finance/core/i18n/t";
 import { getCurrentMonth, type BudgetViewMode } from "@finance/core/constants";
 import { formatMonthComparison } from "@finance/core/month-comparison";
+import { presentTrend } from "@finance/core/monthly-trend";
 
 import type { PanelDetail } from "@/lib/bearing-panel";
 import { ArrivedCharges } from "@/components/ArrivedCharges";
@@ -23,6 +24,7 @@ import { BarSeries, ProgressRing, SpendStrip } from "@/components/charts";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
+import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 
@@ -291,13 +293,53 @@ function ComparisonLine({
 }
 
 /** Where the months have actually landed, net. */
+/**
+ * `presentTrend` (core) is what tells a real flat month apart from a month
+ * before the account existed — both are a zero in `points`, and a chart
+ * cannot draw that difference. Below three real months it lists them
+ * instead of plotting two bars as though they were a shape.
+ */
 function Trend({
   points,
 }: {
   points: Extract<PanelDetail, { family: "month" }>["trend"];
 }) {
-  if (points.length === 0) {
+  const t = useT();
+  const formatEuro = useFormatCurrency();
+  const presentation = presentTrend(points);
+
+  if (presentation.kind === "empty") {
     return null;
+  }
+
+  if (presentation.kind === "thin") {
+    return (
+      <Framed headingKey="bearing.panel.trendHeading">
+        <Text variant="muted" className="text-sm">
+          {t("bearing.panel.trendThin", { count: presentation.points.length })}
+        </Text>
+        <View className="gap-1">
+          {presentation.points.map((point) => (
+            <View
+              key={point.monthKey}
+              className="flex-row items-baseline justify-between gap-3"
+            >
+              <Text variant="muted" className="text-sm">
+                {point.label}
+              </Text>
+              <PrivateAmount
+                className={cn(
+                  "text-sm",
+                  point.net < 0 && "text-destructive",
+                )}
+              >
+                {formatEuro(point.net)}
+              </PrivateAmount>
+            </View>
+          ))}
+        </View>
+      </Framed>
+    );
   }
 
   return (
@@ -306,7 +348,7 @@ function Trend({
         // Signed, because a net month genuinely goes below the line and a
         // series clipped at zero would report every bad month as a quiet one.
         signed
-        points={points.map((point) => ({
+        points={presentation.points.map((point) => ({
           key: point.monthKey,
           label: point.label,
           value: point.net,

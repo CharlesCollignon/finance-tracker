@@ -1549,6 +1549,8 @@ export const fr: Messages = {
       bestRun: "Record : {count}",
       comparisonHeading: "Par rapport au mois dernier",
       trendHeading: "Mois par mois",
+      trendThin:
+        "Pas encore assez de mois pour parler de tendance — {count} jusqu'ici.",
       holdingsHeading: "Principales positions",
       moreHoldings: "{count} de plus",
       failed: "Le détail n'a pas pu être lu pour le moment.",

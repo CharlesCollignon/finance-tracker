@@ -1996,6 +1996,11 @@ export const en = {
       /** Block headings. The blocks themselves state figures, not what they are. */
       comparisonHeading: "Against last month",
       trendHeading: "Month by month",
+      /**
+       * Below `MIN_MONTHS_FOR_TREND` months with any activity, drawn as a
+       * list instead of bars — see `Trend` in `panel-blocks.tsx` for why.
+       */
+      trendThin: "Not enough months yet to call it a trend — {count} so far.",
       holdingsHeading: "Biggest holdings",
       moreHoldings: "{count} more",
       /** When the detail could not be fetched. The figure above is still true. */

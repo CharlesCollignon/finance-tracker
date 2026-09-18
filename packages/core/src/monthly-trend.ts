@@ -96,3 +96,51 @@ export function bucketMonthlyTrend(
       };
     });
 }
+
+/** Below this many months with any activity, a chart would draw noise as a shape. */
+export const MIN_MONTHS_FOR_TREND = 3;
+
+export type TrendPresentation =
+  | { kind: "empty" }
+  /** Too little real history for a shape — worth listing, not plotting. */
+  | { kind: "thin"; points: MonthlyTrendPoint[] }
+  | { kind: "chart"; points: MonthlyTrendPoint[] };
+
+/**
+ * Whether a trend has enough real history to draw as a shape, a handful of
+ * numbers worth listing instead, or nothing at all.
+ *
+ * `bucketMonthlyTrend` deliberately keeps a quiet month as a real zero — see
+ * its own doc comment — and that is right for an account that already
+ * existed and simply had a flat month. It is wrong for a month before the
+ * account existed at all: `getMonthlyTrend`'s default window is six months
+ * regardless of how long the reader has been using the app, so a brand-new
+ * account gets five zeros it never lived through and one real month. A
+ * chart cannot tell those two kinds of zero apart; filtering to months with
+ * any income or outflow can. This is the one piece of judgement the
+ * deleted mobile `TrendCard` carried that its replacement panel block did
+ * not, moved here so both clients' block asks the same question rather than
+ * each answering it by hand.
+ *
+ * Inherited tension, not a new one: the same filter also drops a genuinely
+ * quiet month that falls between two active ones, which is exactly the
+ * "gap is information" case `bucketMonthlyTrend` argues for keeping. This
+ * function does not resolve that — it restores `TrendCard`'s own answer
+ * unchanged, which chose "cannot tell a pre-signup zero from a real one, so
+ * treat both alike" over drawing the flat month back in.
+ */
+export function presentTrend(
+  points: readonly MonthlyTrendPoint[],
+): TrendPresentation {
+  const active = points.filter(
+    (point) => point.income !== 0 || point.outflow !== 0,
+  );
+
+  if (active.length === 0) {
+    return { kind: "empty" };
+  }
+  if (active.length < MIN_MONTHS_FOR_TREND) {
+    return { kind: "thin", points: active };
+  }
+  return { kind: "chart", points: active };
+}

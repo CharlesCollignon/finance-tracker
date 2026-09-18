@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   bucketMonthlyTrend,
   monthlyTrendStart,
+  presentTrend,
+  type MonthlyTrendPoint,
   type MonthlyTrendRow,
 } from "./monthly-trend";
 
@@ -126,5 +128,84 @@ describe("bucketMonthlyTrend", () => {
       "February 2026",
       "March 2026",
     ]);
+  });
+});
+
+function point(monthKey: string, income: number, outflow: number): MonthlyTrendPoint {
+  return {
+    monthKey,
+    label: monthKey,
+    income,
+    outflow,
+    net: income - outflow,
+  };
+}
+
+describe("presentTrend", () => {
+  it("reports empty when nothing in the window has any activity", () => {
+    const points = [point("2026-01", 0, 0), point("2026-02", 0, 0)];
+
+    expect(presentTrend(points)).toEqual({ kind: "empty" });
+  });
+
+  it("drops months before the account existed rather than counting them as flat", () => {
+    // A brand-new account asking for a six-month window: five zeros it
+    // never lived through, one real month. Naively counting all six would
+    // never trip the thin-data guard.
+    const points = [
+      point("2025-10", 0, 0),
+      point("2025-11", 0, 0),
+      point("2025-12", 0, 0),
+      point("2026-01", 0, 0),
+      point("2026-02", 0, 0),
+      point("2026-03", 3000, 2000),
+    ];
+
+    expect(presentTrend(points)).toEqual({
+      kind: "thin",
+      points: [point("2026-03", 3000, 2000)],
+    });
+  });
+
+  it("drops a genuinely quiet month too, even between two real ones", () => {
+    // The filter cannot distinguish "before the account existed" from "a
+    // real flat month" — both are a zero — so a flat month is excluded from
+    // the count and the plotted points the same way a pre-signup one is.
+    // Inherited from the deleted `TrendCard` rather than a new decision: see
+    // `presentTrend`'s doc comment for the tension this leaves with
+    // `bucketMonthlyTrend`'s own "a flat month is data too".
+    const points = [
+      point("2026-01", 3000, 2000),
+      point("2026-02", 0, 0),
+      point("2026-03", 3000, 2000),
+    ];
+
+    expect(presentTrend(points)).toEqual({
+      kind: "thin",
+      points: [point("2026-01", 3000, 2000), point("2026-03", 3000, 2000)],
+    });
+  });
+
+  it("draws a chart once there are enough active months", () => {
+    const points = [
+      point("2026-01", 3000, 2000),
+      point("2026-02", 3000, 2500),
+      point("2026-03", 3000, 1800),
+    ];
+
+    expect(presentTrend(points)).toEqual({ kind: "chart", points });
+  });
+
+  it("treats income-only or outflow-only as active, not just a nonzero net", () => {
+    // A month that took in 1000 and spent exactly 1000 nets to zero but did
+    // happen — the account existed and moved money, which "no activity"
+    // must not say.
+    const points = [
+      point("2026-01", 1000, 1000),
+      point("2026-02", 1000, 1000),
+      point("2026-03", 1000, 1000),
+    ];
+
+    expect(presentTrend(points)).toEqual({ kind: "chart", points });
   });
 });
