@@ -645,6 +645,9 @@ export const fr: Messages = {
     changeFundPrefix: "Changez le fonds sur la page",
     changeFundLink: "Charges",
     changeFundSuffix: ".",
+    linkEtfPrefix: "Liez d'abord votre ETF depuis",
+    linkEtfLink: "Charges → {name}",
+    linkEtfSuffix: ", puis saisissez le nombre total de parts ci-dessous.",
     chargePlaceholder: "ex. 0,20",
     isinLabel: "ISIN (facultatif)",
     isinHint:

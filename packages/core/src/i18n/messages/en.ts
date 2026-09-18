@@ -32,6 +32,35 @@ export const en = {
    * Two of these are the same word in French. "Charges" already means a
    * recurring cost, and "Plan" a plan; leaving them is the translation, not
    * the absence of one.
+   *
+   * **Before renaming a surface, read the rest of this comment.** Copy that
+   * names a screen outlives the screen, and it is never found by grepping
+   * for the key — the sentence spells the old name out, in prose, in two
+   * languages, in a file nobody associates with navigation. Three separate
+   * sweeps have now each found instances the one before it could not see,
+   * and the reason is always the same: the sweeper knew the name being
+   * retired *this week* and not the ones retired before it.
+   *
+   * So the list, read out of the history of this file's two sources
+   * (`apps/web/lib/navigation.ts` and `apps/mobile/src/app/(tabs)/_layout.tsx`).
+   * Every name either has carried and no longer does:
+   *
+   * - **Dashboard** → Home → Month → (retired; `/bearing` answers it now)
+   * - **Home** → Month → (retired). Web's `/dashboard` label until `e49abd7`,
+   *   the phone's tab title from `9c67bfe` until `7dea42d`.
+   * - **Month** → (retired). The one this plan deleted.
+   * - **Money**, **Transactions**, **Transaction** → Ledger
+   * - **Recurring** → Charges. The route is still `/recurring`, which is why
+   *   this one hides so well.
+   * - **Planning** → Plan
+   * - **History**, **Calendar** → views inside the Ledger, not destinations
+   * - **Settings** — never in either nav, and hardcoded in both clients'
+   *   account menus anyway. A name the app never had is as findable as one
+   *   it used to have, and only by reading.
+   *
+   * The paths are not the list: `/dashboard`, `/recurring`, `/budgets`,
+   * `/transactions` and `/investments` all outlived the words above, so
+   * matching on the route finds nothing.
    */
   nav: {
     bearing: "Bearing",
@@ -757,6 +786,19 @@ export const en = {
     changeFundPrefix: "Change the fund on the",
     changeFundLink: "Charges",
     changeFundSuffix: " page.",
+    /**
+     * The other branch of the same sheet, pointing at the same page — which
+     * is why it is split the same way rather than interpolated. It said
+     * "Recurring" while the branch above said "Charges", so one sheet named
+     * one page twice, differently, and both links went to `/recurring`.
+     *
+     * Split rather than one string with a `{name}` because the two languages
+     * put "first" in different places: English trails it after the link,
+     * French wants "d'abord" before it.
+     */
+    linkEtfPrefix: "Link your ETF under",
+    linkEtfLink: "Charges → {name}",
+    linkEtfSuffix: " first, then enter total shares below.",
     chargePlaceholder: "e.g. 0,20",
     /**
      * The ISIN, typed rather than found.
@@ -1259,9 +1301,16 @@ export const en = {
    * under it — the hero itself being drawn inside a Bearing panel on both
    * clients, which is the only place it renders.
    *
-   * The Bearing spine borrows the three `headline*` labels for its own
-   * headline, so those three are read in two places rather than one. The
-   * five explanation lines are the phone's alone: web's hero dropped
+   * The Bearing spine borrows these labels for its own headline, but it does
+   * not borrow all of them evenly: `headlineShort` and `headlineFree` are
+   * read on the spine and in both heroes, while **`headlineLeft` renders on
+   * the spine alone**. `pulseHeadline` returns it only when `onHand` is
+   * null, and both heroes call `pulseHeadline` only when it is not — so the
+   * hero can never reach the one label that says a figure is the month's
+   * arithmetic rather than money in an account. Changing its wording changes
+   * one surface, not three.
+   *
+   * The five explanation lines are the phone's alone: web's hero dropped
    * `pulseExplanation` in favour of the terms it spells out in figures, and
    * says `month.connectBankNote` / `month.finishedMonthNote` in the one case
    * where there is no figure to explain.
@@ -1384,8 +1433,17 @@ export const en = {
     /**
      * Both clients say which surface, with the same `nav.*` word, so the
      * two cannot drift the way this once did: `MonthCloseHistoryCard` used
-     * to hardcode "Home", a surface this app has never had, and the web
-     * named Month after Month was retired.
+     * to hardcode "Home" and the web named Month after Month was retired.
+     *
+     * "Home" was not a surface this app never had — an earlier note here
+     * said so, and it was wrong. It was *this* surface's own name: web's
+     * `/dashboard` was labelled "Home" until `e49abd7` renamed it Month, and
+     * the phone's first tab was "Dashboard", then "Home" (`9c67bfe`), then
+     * "Month" (`7dea42d`), before the screen was retired altogether. The
+     * string was two renames stale rather than invented, which is precisely
+     * why it survived: it had been correct, so nobody reading it heard
+     * anything wrong. See `nav`'s comment above for the whole list of names
+     * this app has used and dropped.
      *
      * `nav.plan` because that is `navigation.ts`'s own `labelKey` for
      * `/budgets`, which is where web's `MonthCloseCard` opens the close

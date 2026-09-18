@@ -355,11 +355,11 @@ function InvestmentPositionForm({
           </div>
         ) : isRecurringLinked && !isCrypto ? (
           <Text className="text-sm text-muted-foreground">
-            Link your ETF under{" "}
+            {t("position.linkEtfPrefix")}{" "}
             <Link href="/recurring" className="font-medium underline">
-              Recurring → {item.name}
-            </Link>{" "}
-            first, then enter total shares below.
+              {t("position.linkEtfLink", { name: item.name })}
+            </Link>
+            {t("position.linkEtfSuffix")}
           </Text>
         ) : isCrypto ? (
           <>
