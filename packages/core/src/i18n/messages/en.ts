@@ -1012,9 +1012,7 @@ export const en = {
     setUp: "Set up",
     everyMonthClosed: "Every month you have closed",
     openWallets: "Open wallets",
-    trendRange: "Trend range",
     usePassword: "Use password",
-    walkMeThrough: "Walk me through the setup",
     addTransaction: "Add transaction",
     capsAndNewMonths: "Caps and new months",
     browserNotifications: "Browser notifications",
@@ -1642,6 +1640,8 @@ export const en = {
     askTitle: { one: "Did this arrive?", other: "Did these arrive?" },
     thatsIt: "That's it",
     notIt: "Not it",
+    /** Fallback for a decision whose server action returned no message of its own. */
+    done: "Done",
     /**
      * What a ledger row says about itself.
      *

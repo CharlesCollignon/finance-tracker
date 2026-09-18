@@ -107,7 +107,7 @@ export function ArrivedCharges({
       if (good) {
         void hapticSuccess();
       }
-      toast(result.message ?? "Done", "success");
+      toast(result.message ?? t("fulfilment.done"), "success");
       onDecided();
     })();
   }

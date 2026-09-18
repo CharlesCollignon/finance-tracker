@@ -833,9 +833,7 @@ export const fr: Messages = {
     setUp: "Configuration",
     everyMonthClosed: "Tous les mois que vous avez clôturés",
     openWallets: "Ouvrir les portefeuilles",
-    trendRange: "Période de la tendance",
     usePassword: "Utiliser le mot de passe",
-    walkMeThrough: "Guidez-moi dans la configuration",
     addTransaction: "Ajouter une transaction",
     capsAndNewMonths: "Plafonds et nouveaux mois",
     browserNotifications: "Notifications du navigateur",
@@ -1284,6 +1282,7 @@ export const fr: Messages = {
     },
     thatsIt: "C'est ça",
     notIt: "Ce n'est pas ça",
+    done: "Terminé",
     state: {
       confirmed: "Confirmé",
       toConfirm: "À confirmer",

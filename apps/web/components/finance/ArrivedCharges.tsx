@@ -93,7 +93,7 @@ export function ArrivedCharges({
         toast(result.error, "error");
         return;
       }
-      toast(result.message ?? "Done", "success");
+      toast(result.message ?? t("fulfilment.done"), "success");
     });
   }
 
@@ -161,7 +161,7 @@ export function ArrivedCharges({
                   )}
                 >
                   <Check size={ICON.sm} weight="bold" />
-                  That&apos;s it
+                  {t("fulfilment.thatsIt")}
                 </button>
                 <button
                   type="button"
@@ -182,7 +182,7 @@ export function ArrivedCharges({
                   )}
                 >
                   <X size={ICON.sm} />
-                  Not it
+                  {t("fulfilment.notIt")}
                 </button>
               </div>
             </li>
