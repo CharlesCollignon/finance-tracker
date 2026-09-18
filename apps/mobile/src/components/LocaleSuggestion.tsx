@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LOCALE_LABELS, type Locale } from "@finance/core/i18n/locale";
 import { suggestLocale } from "@finance/core/i18n/locale-suggestion";
@@ -26,6 +27,12 @@ const ASKED_KEY = "locale.asked";
 export function LocaleSuggestion() {
   const { locale, setLocale } = useLocaleContext();
   const [asked, setAsked] = useState<boolean | null>(null);
+  // Read unconditionally, ahead of the early return below, so the mount
+  // point in `_layout.tsx` — above `<Stack>`, not inside any screen's own
+  // `SafeAreaView` — can stay a bare `<LocaleSuggestion />` rather than a
+  // wrapper that would reserve `insets.top` of height even on the launches
+  // where this returns null.
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     void AsyncStorage.getItem(ASKED_KEY)
@@ -59,7 +66,10 @@ export function LocaleSuggestion() {
   const current = translator(locale);
 
   return (
-    <View className="mx-4 gap-3 rounded-3xl border border-border bg-card/70 p-4">
+    <View
+      style={{ marginTop: insets.top }}
+      className="mx-4 gap-3 rounded-3xl border border-border bg-card/70 p-4"
+    >
       <View className="gap-1">
         <Text variant="head">{offer("locale.suggest.title")}</Text>
         <Text variant="muted">{offer("locale.suggest.body")}</Text>
