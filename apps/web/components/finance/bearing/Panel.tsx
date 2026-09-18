@@ -40,16 +40,19 @@ import { cn } from "@/lib/utils";
  * Which blocks appear is `panelFor`'s judgement, not this component's. A
  * panel explains *its tile*, not its whole family, which is what makes this a
  * dissolution of the Month screen rather than a hiding of it — `free` gets
- * the spend strip, what is still to come, and the month in words; the eight
- * other month tiles get whatever explains them and nothing else.
+ * the fulfilment question, the spend strip, what is still to come, and the
+ * month in words; the eight other month tiles get whatever explains them and
+ * nothing else.
  *
  * The scope lives here rather than in the address bar, which is the one place
- * this departs from how the rest of the app does months. `MonthPicker` and
- * `BudgetViewToggle` navigate: on the Bearing that would re-render a page
- * whose tiles do not depend on the month at all, and scroll the reader back
- * to the top of the grid away from the panel they were reading. So the chrome
- * here is local state feeding the server function's `scope`, and the tiles
- * above are untouched by it.
+ * this departs from how the rest of the app does months. `MonthPicker`
+ * navigates: on the Bearing that would re-render a page whose tiles do not
+ * depend on the month at all, and scroll the reader back to the top of the
+ * grid away from the panel they were reading. The retired `BudgetViewToggle`
+ * navigated for the same reason, which is why its choice — current or
+ * month-end — is redrawn below as this panel's own chrome instead. So the
+ * chrome here is local state feeding the server function's `scope`, and the
+ * tiles above are untouched by it.
  *
  * The signature is unchanged from the stub it replaces: `{ tile }` is
  * everything a panel needs to look itself up, so `BearingGrid` did not have

@@ -320,8 +320,9 @@ function Chrome({
               setScope((current) => ({ ...current, horizon: Number(value) }))
             }
             // "6M" and "1Y" read the same in both languages, which is why
-            // `TrendCard`'s own range switch writes them out too rather than
-            // asking the catalogue for a two-character string.
+            // these are written out directly rather than asked of the
+            // catalogue for a two-character string — the same reasoning the
+            // retired `TrendCard`'s own range switch used.
             segments={[
               { value: "6", label: "6M" },
               { value: "12", label: "1Y" },
