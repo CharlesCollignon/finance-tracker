@@ -320,7 +320,8 @@ async function gatherMonth(
     // this month — the question Month's "Needs you" slot used to put
     // directly in front of the reader. Not cheap (transactions, fulfilments
     // and refusals, on top of the occurrences themselves), so only asked for
-    // when `free`'s panel is the one open.
+    // when `free`'s or `arriving`'s panel is the one open — see
+    // `bearing-panels.ts` for why it is on both.
     blocks.includes("arrived-charges")
       ? getFulfilmentReport(userId, templates, categories, year, month)
       : null,

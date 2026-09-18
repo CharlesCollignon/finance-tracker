@@ -97,6 +97,12 @@ const TILE_BLOCKS: Partial<Record<TileId, readonly PanelBlock[]>> = {
   // tile for blocks most of them do not show. `gatherPanelDetail` fetches
   // either only when a panel's blocks say so.
   free: ["arrived-charges", "spend-strip", "still-to-come", "month-read"],
+  // The question has to find the reader, not wait for them to go looking —
+  // `free` alone was not enough, because `free` is itself conditional on
+  // `pulse.free !== null` and a reader has no way to know which tile to open
+  // to see it. `arriving` is literally the tile about charges due, in the
+  // same family, so it carries the same block rather than a copy of it.
+  arriving: ["arrived-charges", "spend-strip", "still-to-come"],
   "savings-rate": ["month-comparison", "spend-strip"],
   "expenses-vs-previous": ["month-comparison", "trend"],
   "on-hand": ["money-on-hand", "cash-accounts"],

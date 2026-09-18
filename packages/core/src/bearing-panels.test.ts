@@ -65,16 +65,21 @@ describe("panelFor", () => {
     expect(free).not.toEqual(rate);
   });
 
-  it("puts the fulfilment question on the tile that greets the reader, and first", () => {
+  it("puts the fulfilment question on both tiles that could greet the reader, and first on each", () => {
     // Retired Month rendered its "Needs you" slot above everything else, on
     // the reasoning that a question in front of the reader outranks the
-    // figures beneath it. `free` is where that reasoning now lives.
+    // figures beneath it — and it did so unconditionally, on a screen opened
+    // daily. `free` alone is not that: it is itself absent whenever
+    // `pulse.free` is null, so a reader with nothing "left" to see would
+    // have no tile telling them a charge is waiting. `arriving` — literally
+    // the tile about charges due — carries the same block for that reason.
     const withArrivedCharges = BEARING_TILE_IDS.filter((id) =>
       panelFor(id, "month").blocks.includes("arrived-charges"),
     );
 
-    expect(withArrivedCharges).toEqual(["free"]);
+    expect(withArrivedCharges).toEqual(["free", "arriving"]);
     expect(panelFor("free", "month").blocks[0]).toBe("arrived-charges");
+    expect(panelFor("arriving", "month").blocks[0]).toBe("arrived-charges");
   });
 
   it("names the month read on one tile, not on the month family", () => {

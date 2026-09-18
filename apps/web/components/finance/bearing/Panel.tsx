@@ -41,8 +41,10 @@ import { cn } from "@/lib/utils";
  * panel explains *its tile*, not its whole family, which is what makes this a
  * dissolution of the Month screen rather than a hiding of it — `free` gets
  * the fulfilment question, the spend strip, what is still to come, and the
- * month in words; the eight other month tiles get whatever explains them and
- * nothing else.
+ * month in words; `arriving` carries the same fulfilment question, because a
+ * reader with nothing "left" to see has no other month tile telling them a
+ * charge is waiting; the other seven month tiles get whatever explains them
+ * and nothing else.
  *
  * The scope lives here rather than in the address bar, which is the one place
  * this departs from how the rest of the app does months. `MonthPicker`
