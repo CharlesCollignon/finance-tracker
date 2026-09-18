@@ -517,7 +517,7 @@ A crude scan then found at least four orphaned on web alone: `ArrivedCharges`, `
 
 - [ ] **Step 1: Run all six gates and record each against the baseline**
 - [ ] **Step 2: Sweep for motion literals** in every file this plan touched — no duration, easing or delay literal in `apps/`.
-- [ ] **Step 3: Confirm no new query** was added for the spine: `git diff` the two client page files and check for added data fetching.
+- [ ] **Step 3: Confirm the spine's data cost.** The headline, ring and flame must cost no new query — each client's gatherer was widened to return figures it already computed. The action row is allowed exactly three new fetches per client, because those move off the deleted Month screen rather than being added. Diff the **gatherers** (`apps/web/lib/bearing/facts.ts`, `apps/mobile/src/lib/bearing.ts`), not the page files — that is where the fetching lives — and confirm neither page re-derives `pulse` for itself.
 - [ ] **Step 4: Write the human checklist**
 
 To `docs/superpowers/plans/2026-09-17-spine-and-month-retirement-human-checks.md`, in the voice of its predecessor: background, what to do, what you should see, what it would mean otherwise. It must cover, at minimum: all four ignition states and how to reach each; the ring being **absent** rather than dark when over-recorded; the flame against a best streak; the action row's first item and its `+N`; `/dashboard` redirecting rather than 404ing; every phone attention link landing on a real screen; and both languages on the whole spine.
