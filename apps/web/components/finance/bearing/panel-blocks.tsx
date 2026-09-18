@@ -5,6 +5,7 @@ import type { PanelBlock } from "@finance/core/bearing-panels";
 import type { Key } from "@finance/core/i18n/t";
 import { formatMonthComparison } from "@finance/core/month-comparison";
 import type { PanelDetail } from "@/lib/bearing/panel-detail";
+import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
 import { BankInbox } from "@/components/finance/BankInbox";
 import { CashAccountsCard } from "@/components/finance/CashAccountsCard";
 import { FundCostCard } from "@/components/finance/FundCostCard";
@@ -79,6 +80,19 @@ export function PanelBlockView({
           // surface is a different request from the one they made.
           openOnArrival={false}
         />
+      ) : null;
+
+    case "arrived-charges":
+      return detail.family === "month" &&
+        detail.arrived &&
+        (detail.arrived.proposals.length > 0 ||
+          detail.arrived.misses.length > 0) ? (
+        <div className={cn("overflow-hidden rounded-3xl", GLASS_CARD)}>
+          <ArrivedCharges
+            proposals={detail.arrived.proposals}
+            misses={detail.arrived.misses}
+          />
+        </div>
       ) : null;
 
     case "spend-strip":
@@ -205,6 +219,7 @@ const SKELETON_HEIGHT: Record<PanelBlock, string> = {
   "cash-accounts": "h-40",
   "recent-on-account": "h-56",
   "review-inbox": "h-48",
+  "arrived-charges": "h-48",
   "spend-strip": "h-28",
   "still-to-come": "h-56",
   "month-read": "h-48",

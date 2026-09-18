@@ -27,6 +27,7 @@ const EVERY_BLOCK: Record<PanelBlock, true> = {
   "cash-accounts": true,
   "recent-on-account": true,
   "review-inbox": true,
+  "arrived-charges": true,
   "spend-strip": true,
   "still-to-come": true,
   "month-read": true,
@@ -54,9 +55,26 @@ describe("panelFor", () => {
     const free = panelFor("free", "month").blocks;
     const rate = panelFor("savings-rate", "month").blocks;
 
-    expect(free).toEqual(["spend-strip", "still-to-come", "month-read"]);
+    expect(free).toEqual([
+      "arrived-charges",
+      "spend-strip",
+      "still-to-come",
+      "month-read",
+    ]);
     expect(rate).toEqual(["month-comparison", "spend-strip"]);
     expect(free).not.toEqual(rate);
+  });
+
+  it("puts the fulfilment question on the tile that greets the reader, and first", () => {
+    // Retired Month rendered its "Needs you" slot above everything else, on
+    // the reasoning that a question in front of the reader outranks the
+    // figures beneath it. `free` is where that reasoning now lives.
+    const withArrivedCharges = BEARING_TILE_IDS.filter((id) =>
+      panelFor(id, "month").blocks.includes("arrived-charges"),
+    );
+
+    expect(withArrivedCharges).toEqual(["free"]);
+    expect(panelFor("free", "month").blocks[0]).toBe("arrived-charges");
   });
 
   it("names the month read on one tile, not on the month family", () => {

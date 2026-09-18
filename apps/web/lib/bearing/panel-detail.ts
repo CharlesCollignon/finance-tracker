@@ -42,7 +42,11 @@ import {
   getTransactions,
 } from "@/lib/queries/finance";
 import { getBudgets } from "@/lib/queries/phase4";
-import { getFulfilledKeys } from "@/lib/queries/fulfilment";
+import {
+  getFulfilledKeys,
+  getFulfilmentReport,
+  type FulfilmentReport,
+} from "@/lib/queries/fulfilment";
 import {
   countFeedItems,
   getDecidedFeedItems,
@@ -173,6 +177,8 @@ export type PanelDetail =
       trend: Trend;
       /** Null unless the panel's blocks asked for it — it is not cheap. */
       read: MonthReadDetail | null;
+      /** Null unless the panel's blocks asked for it — a fulfilment read. */
+      arrived: FulfilmentReport | null;
     }
   | { family: "run"; closes: Closes; pulse: MonthPulse; trend: Trend }
   | {
@@ -294,12 +300,29 @@ async function gatherMonth(
   // The budget rings are this family's alone — `now` and `run` have no
   // `budgets` field to put them in — so they are fetched here rather than
   // inside the shared `monthFigures`, which used to build them for all three.
-  const [figures, budgetRows, categories, read] = await Promise.all([
+  //
+  // `templates` is fetched unconditionally alongside them: `monthFigures`
+  // already asks for the same rows to build `upcoming`, and the reads
+  // underneath are request-cached, so asking again here costs nothing extra
+  // and lets `arrived-charges` reuse it below without re-deriving `blocks`.
+  const [figures, budgetRows, categories, templates] = await Promise.all([
     monthFigures(userId, year, month, view, locale),
     getBudgets(userId),
     getCategories(userId),
+    getRecurringTemplates(userId),
+  ]);
+
+  const [read, arrived] = await Promise.all([
     blocks.includes("month-read")
       ? gatherRead(userId, year, month, locale)
+      : null,
+    // Whether the bank's own rows already settle what a template called for
+    // this month — the question Month's "Needs you" slot used to put
+    // directly in front of the reader. Not cheap (transactions, fulfilments
+    // and refusals, on top of the occurrences themselves), so only asked for
+    // when `free`'s panel is the one open.
+    blocks.includes("arrived-charges")
+      ? getFulfilmentReport(userId, templates, categories, year, month)
       : null,
   ]);
 
@@ -322,6 +345,7 @@ async function gatherMonth(
     closes: figures.closes,
     trend: figures.trend,
     read,
+    arrived,
   };
 }
 

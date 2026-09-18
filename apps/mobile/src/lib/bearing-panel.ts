@@ -42,6 +42,7 @@ import {
   getCategories,
   getFulfilledKeys,
   getFulfilmentProposals,
+  getFulfilmentReport,
   getMonthCloseOverview,
   getMonthlySummary,
   getMonthlyTrend,
@@ -55,6 +56,7 @@ import {
   getTransactions,
   getWalletPortfolio,
   readCashBalance,
+  type FulfilmentReport,
   type MonthCloseOverview,
 } from "@/lib/queries";
 import {
@@ -187,6 +189,8 @@ export type PanelDetail =
       trend: Trend;
       /** Null unless the panel's blocks asked for it — it is not cheap. */
       read: MonthReadDetail | null;
+      /** Null unless the panel's blocks asked for it — a fulfilment read. */
+      arrived: FulfilmentReport | null;
     }
   | { family: "run"; closes: MonthCloseOverview; pulse: MonthPulse; trend: Trend }
   | {
@@ -444,13 +448,23 @@ async function gatherMonth(
     locale,
   );
 
-  const read = blocks.includes("month-read")
-    ? await gatherRead(userId, year, month, locale, {
-        ...figures,
-        budgets,
-        categories,
-      })
-    : null;
+  const [read, arrived] = await Promise.all([
+    blocks.includes("month-read")
+      ? gatherRead(userId, year, month, locale, {
+          ...figures,
+          budgets,
+          categories,
+        })
+      : Promise.resolve(null),
+    // Whether the bank's own rows already settle what a template called for
+    // this month — the question Month's "Needs you" slot used to put
+    // directly in front of the reader. `figures.templates` rather than a
+    // fresh read: the phone has no request cache, so asking Supabase for the
+    // same templates twice would be a second round trip for the same rows.
+    blocks.includes("arrived-charges")
+      ? getFulfilmentReport(userId, figures.templates, categories, year, month)
+      : Promise.resolve(null),
+  ]);
 
   return {
     family: "month",
@@ -465,6 +479,7 @@ async function gatherMonth(
     closes: figures.closes,
     trend: figures.trend,
     read,
+    arrived,
   };
 }
 

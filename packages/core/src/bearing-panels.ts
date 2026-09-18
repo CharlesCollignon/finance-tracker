@@ -27,6 +27,7 @@ export type PanelBlock =
   | "cash-accounts"
   | "recent-on-account"
   | "review-inbox"
+  | "arrived-charges"
   | "spend-strip"
   | "still-to-come"
   | "month-read"
@@ -84,12 +85,18 @@ const TILE_BLOCKS: Partial<Record<TileId, readonly PanelBlock[]>> = {
   // headline — what is left of it — and the read is a paragraph about
   // exactly that, so this is where dissolving the Month screen puts it.
   //
-  // Only here, and that is the point of naming it on a tile rather than on
-  // the family: the read is the most expensive thing any panel can ask for,
-  // and a family-wide entry would charge every month tile for a block eight
-  // of them do not show. `gatherPanelDetail` fetches it only when a panel's
-  // blocks say so.
-  free: ["spend-strip", "still-to-come", "month-read"],
+  // `arrived-charges` lands here too, first, for the same reason Month's own
+  // "Needs you" slot rendered above its links: a question in front of the
+  // reader outranks the figures beneath it. `free` is where a reader lands to
+  // see how the month is going, which is exactly when "did this arrive?" is
+  // worth asking.
+  //
+  // Both blocks are the point of naming things on a tile rather than on the
+  // family: the read and the fulfilment report are the most expensive things
+  // any panel can ask for, and a family-wide entry would charge every month
+  // tile for blocks most of them do not show. `gatherPanelDetail` fetches
+  // either only when a panel's blocks say so.
+  free: ["arrived-charges", "spend-strip", "still-to-come", "month-read"],
   "savings-rate": ["month-comparison", "spend-strip"],
   "expenses-vs-previous": ["month-comparison", "trend"],
   "on-hand": ["money-on-hand", "cash-accounts"],

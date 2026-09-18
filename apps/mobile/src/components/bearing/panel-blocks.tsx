@@ -7,6 +7,7 @@ import { getCurrentMonth, type BudgetViewMode } from "@finance/core/constants";
 import { formatMonthComparison } from "@finance/core/month-comparison";
 
 import type { PanelDetail } from "@/lib/bearing-panel";
+import { ArrivedCharges } from "@/components/ArrivedCharges";
 import { BankInboxSheet } from "@/components/BankInboxSheet";
 import { FundCostCard } from "@/components/FundCostCard";
 import { MoneyOnHand } from "@/components/MoneyOnHand";
@@ -87,6 +88,20 @@ export function PanelBlockView({
     case "review-inbox":
       return detail.family === "now" && detail.inbox ? (
         <ReviewInbox inbox={detail.inbox} onChanged={onChanged} />
+      ) : null;
+
+    case "arrived-charges":
+      return detail.family === "month" &&
+        detail.arrived &&
+        (detail.arrived.proposals.length > 0 ||
+          detail.arrived.misses.length > 0) ? (
+        <Card bezel innerClassName="p-0">
+          <ArrivedCharges
+            proposals={detail.arrived.proposals}
+            misses={detail.arrived.misses}
+            onDecided={onChanged}
+          />
+        </Card>
       ) : null;
 
     case "spend-strip":
@@ -210,6 +225,7 @@ const SKELETON_HEIGHT: Record<PanelBlock, number> = {
   "cash-accounts": 160,
   "recent-on-account": 220,
   "review-inbox": 64,
+  "arrived-charges": 190,
   "spend-strip": 96,
   "still-to-come": 220,
   "month-read": 190,
@@ -472,9 +488,13 @@ function CashAccounts({
  * `BankInboxSheet` already is the phone's review flow — the Ledger opens the
  * same sheet from the same count. Embedding its whole one-card-at-a-time
  * flow inline in an accordion row would fight the row it sits in; a summary
- * that opens the existing sheet as a modal does not, and it is the same
- * "count, then a full flow elsewhere" shape `MonthAttention`'s "Needs you"
- * row already uses on this screen's neighbour.
+ * that opens the existing sheet as a modal does not.
+ *
+ * `arrived-charges`, below, does not follow this shape even though it is the
+ * same "a decision, not a destination" idea: its rows are a handful at most
+ * and each is answered with two taps rather than a swipe through a stack, so
+ * the list itself fits the row it sits in and a summary-plus-sheet would only
+ * add a tap in front of it.
  */
 function ReviewInbox({
   inbox,
