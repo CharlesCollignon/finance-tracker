@@ -1566,11 +1566,12 @@ export const fr: Messages = {
       ringUnmeasured: "Pas encore mesuré — aucun mois n'a été clôturé",
       ringMeasuring:
         "Mesure de votre premier mois — aucune enveloppe définie pour l'instant",
-      ringClear: "{percent} % de votre enveloppe utilisés, largement dans les clous",
-      ringTight: "{percent} % de votre enveloppe utilisés, ça se resserre",
-      ringShort:
-        "{percent} % de votre enveloppe utilisés, le mois est déjà dans le rouge",
-      ringOver: "déjà au-delà de votre enveloppe",
+      ringUsed: "{percent} % de votre enveloppe utilisés",
+      ringUsedOver: "{percent} % de votre enveloppe utilisés, déjà au-delà",
+      ringStandingClear:
+        "ce qu'il vous reste à dépenser couvre encore une enveloppe entière",
+      ringStandingTight: "il vous reste moins d'une enveloppe à dépenser",
+      ringStandingShort: "le mois est parti pour finir dans le rouge",
       moreWaiting: {
         one: "+{count} en attente",
         other: "+{count} en attente",

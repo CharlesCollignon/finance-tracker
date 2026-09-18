@@ -1,6 +1,5 @@
 import { useEffect } from "react";
-import { Pressable, View } from "react-native";
-import { useRouter, type Href } from "expo-router";
+import { View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import Animated, {
@@ -12,15 +11,14 @@ import Animated, {
 } from "react-native-reanimated";
 
 import type { AttentionItem } from "@finance/core/attention";
-import { PHONE_PATHS } from "@finance/core/bearing-tiles";
 import type { Key } from "@finance/core/i18n/t";
 import type { MonthStanding } from "@finance/core/month-pulse";
-import type { SpineState } from "@finance/core/spine";
+import { drawSpineRing, type SpineState } from "@finance/core/spine";
 import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 
 import { AnimatedAmount } from "@/components/AnimatedAmount";
+import { AttentionRow } from "@/components/bearing/AttentionRow";
 import { Text } from "@/components/ui/Text";
-import { cn } from "@/lib/cn";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useT } from "@/providers/LocaleProvider";
 import { ICON, TYPE } from "@/theme/tokens";
@@ -48,15 +46,15 @@ interface SpineProps {
  *
  * Mounted above `ReorderableList`, outside it, in `(tabs)/index.tsx` — see
  * that file's own comment for why.
+ *
+ * The action row is `AttentionRow`'s, not this component's: the reader who
+ * needs it most is served the `thin` empty state instead of this, so the row
+ * has to be mountable without the ring and the headline that go with it.
  */
 export function Spine({ state, attention }: SpineProps) {
   const t = useT();
-  const router = useRouter();
   const colors = useThemeColors();
   const formatMoney = useFormatCurrency();
-
-  const top = attention[0];
-  const rest = attention.length - 1;
 
   const negative = state.headline.figure === "free" && state.headline.value < 0;
 
@@ -81,67 +79,9 @@ export function Spine({ state, attention }: SpineProps) {
         {state.flame ? <FlameBadge flame={state.flame} /> : null}
       </View>
 
-      {top ? (
-        <Pressable
-          onPress={() => router.push(attentionHref(top.href) as Href)}
-          accessibilityRole="button"
-          accessibilityLabel={`${t(top.messageKey, top.params)}. ${t(top.actionKey)}`}
-          className="flex-row items-center gap-3 py-1"
-          hitSlop={8}
-        >
-          <View
-            className={cn(
-              "h-2 w-2 shrink-0 rounded-full",
-              top.tone === "wrong" ? "bg-destructive" : "bg-primary",
-            )}
-          />
-          <Text numberOfLines={1} className="flex-1 text-sm">
-            {t(top.messageKey, top.params)}
-          </Text>
-          {rest > 0 ? (
-            <Text style={TYPE.micro} className="shrink-0 text-muted-foreground">
-              {t("bearing.spine.moreWaiting", { count: rest })}
-            </Text>
-          ) : null}
-          <View className="shrink-0 flex-row items-center gap-1">
-            <Text className="text-sm font-medium text-primary-ink">
-              {t(top.actionKey)}
-            </Text>
-            <Ionicons name="arrow-forward" size={ICON.sm} color={colors.primaryInk} />
-          </View>
-        </Pressable>
-      ) : null}
+      <AttentionRow attention={attention} />
     </View>
   );
-}
-
-/**
- * Where an attention row's action leads, on the phone.
- *
- * `buildAttention`'s `href`s are a web route from a fixed, closed set of
- * five (`/transactions`, `/transactions?review=inbox`, `/budgets` twice,
- * `/recurring`) — a different vocabulary from a bearing tile's, and NOT
- * covered by `phoneHref` from `@finance/core/bearing-tiles`: that function
- * falls through to the raw href for anything not in its own table, which is
- * the exact silent pass-through that shipped 15 dead phone links on the
- * predecessor plan, and its table is documented as a translation of the
- * *tile* catalogue's own paths, not a general web-to-phone router. So this
- * checks the attention set by hand against `apps/mobile/src/app/(tabs)/`:
- * `transactions.tsx` and `recurring.tsx` are real tabs and answer
- * `/transactions`, `/transactions?review=inbox` and `/recurring` unchanged;
- * there is no `budgets` route at all, and its answer — the caps, the close
- * and the ready-to-close prompt this item is about — lives on
- * `planning.tsx`.
- *
- * *Which* hrefs get redirected is this function's own, separately-verified
- * judgement — the four-way check above. *Where* `/budgets` redirects to is
- * not: that is one fact about this app's route topology, already owned by
- * `PHONE_PATHS["/budgets"]` in `bearing-tiles.ts`, so this reads it from
- * there rather than retyping `"/planning"` as a second literal that table's
- * own future edits would have no way to reach.
- */
-function attentionHref(href: string): string {
-  return href === "/budgets" ? PHONE_PATHS["/budgets"] : href;
 }
 
 /** Mirrors `pulseHeadline` in `month-pulse.ts` off the fields `resolveSpine` already reduced it to. */
@@ -205,17 +145,17 @@ function toneStroke(tone: MonthStanding, colors: ThemeColors): string {
   }
 }
 
-/** The sentence a `proportion` ring's tone reads out, once `over` is ruled out. */
-function toneKey(tone: MonthStanding): Key {
+/** The clause a `proportion` ring's *colour* reads out — the standing, alone. */
+function standingKey(tone: MonthStanding): Key {
   switch (tone) {
     case "short":
-      return "bearing.spine.ringShort";
+      return "bearing.spine.ringStandingShort";
     case "tight":
-      return "bearing.spine.ringTight";
+      return "bearing.spine.ringStandingTight";
     case "clear":
-      return "bearing.spine.ringClear";
+      return "bearing.spine.ringStandingClear";
     case "unknown":
-      return "bearing.spine.ringClear";
+      return "bearing.spine.ringStandingClear";
   }
 }
 
@@ -224,6 +164,16 @@ const STROKE = 5;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const ROTATE = [{ rotate: "-90deg" }];
+
+/**
+ * The overshoot lap: thinner, and inside the ring it has gone past. Same
+ * geometry as the web twin, for the same reasons — the ring already reaches
+ * the edge of its box, so an outer lap would need a bigger one and would
+ * move the headline beside it.
+ */
+const OVER_STROKE = 3;
+const OVER_RADIUS = RADIUS - STROKE / 2 - OVER_STROKE / 2 - 1.5;
+const OVER_CIRCUMFERENCE = 2 * Math.PI * OVER_RADIUS;
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -266,22 +216,30 @@ function Ring({ ring }: { ring: SpineState["ring"] }) {
     );
   }
 
-  const clamped = Math.min(1, Math.max(0, ring.ratio));
-  const percent = Math.round(clamped * 100);
-  // Two separate spec rows, two separate signals: the stroke colour reads
-  // off `tone` alone, always, and the fill (how much of the ring is drawn)
-  // is `over`'s channel — `clamped` already caps an over-100% ratio at a
-  // full ring, which is what "fills it" means without a second colour to
-  // say so again. For the label both facts are said, joined, never one
-  // substituted for the other.
-  const toneSentence = t(toneKey(ring.tone), { percent });
-  const label = ring.over
-    ? `${toneSentence} · ${t("bearing.spine.ringOver")}`
-    : toneSentence;
+  // Three signals, three channels, none of them re-derived here — see the
+  // web twin's `SpineRing` for the full argument. In short: the stroke
+  // colour is `tone`'s and stays `tone`'s, and `over` no longer rides on
+  // the fill, because a clamped ratio of 2.50 draws the same complete
+  // circle as a ratio of exactly 1.00 and a reader has to be able to tell
+  // those apart. It gets the inner lap instead.
+  const { fill, overshoot, percent } = drawSpineRing(ring);
+  // Two clauses, each stating its own basis — see `en.ts` on these keys for
+  // the contradiction the single sentence could produce.
+  const label = [
+    t(overshoot > 0 ? "bearing.spine.ringUsedOver" : "bearing.spine.ringUsed", {
+      percent,
+    }),
+    t(standingKey(ring.tone)),
+  ].join(" · ");
 
   return (
     <View accessible accessibilityRole="image" accessibilityLabel={label}>
-      <ProportionRing clamped={clamped} stroke={toneStroke(ring.tone, colors)} colors={colors} />
+      <ProportionRing
+        fill={fill}
+        overshoot={overshoot}
+        stroke={toneStroke(ring.tone, colors)}
+        colors={colors}
+      />
     </View>
   );
 }
@@ -335,32 +293,53 @@ function ArcRing({ colors }: { colors: ThemeColors }) {
   );
 }
 
-/** The `proportion` ring, filled to `clamped` and re-animating whenever it changes, not only on mount. */
+/**
+ * The `proportion` ring, filled to `fill` and re-animating whenever it
+ * changes, not only on mount — plus the overshoot lap inside it when the
+ * cap has been passed.
+ *
+ * Both laps animate off their own shared value and both settle immediately
+ * under reduced motion, which matters more for the lap than for the ring:
+ * the lap is the only thing on screen saying "past the cap", so a reader who
+ * has asked for less motion must still be handed it drawn, not pending.
+ */
 function ProportionRing({
-  clamped,
+  fill,
+  overshoot,
   stroke,
   colors,
 }: {
-  clamped: number;
+  fill: number;
+  overshoot: number;
   stroke: string;
   colors: ThemeColors;
 }) {
   const reduceMotion = useReducedMotion();
-  const progress = useSharedValue(reduceMotion ? clamped : 0);
+  const progress = useSharedValue(reduceMotion ? fill : 0);
+  const spill = useSharedValue(reduceMotion ? overshoot : 0);
 
   useEffect(() => {
     if (reduceMotion) {
-      progress.value = clamped;
+      progress.value = fill;
+      spill.value = overshoot;
       return;
     }
-    progress.value = withTiming(clamped, {
+    progress.value = withTiming(fill, {
       duration: DURATION.enter,
       easing: Easing.bezier(...EASE_STANDARD),
     });
-  }, [clamped, reduceMotion, progress]);
+    spill.value = withTiming(overshoot, {
+      duration: DURATION.enter,
+      easing: Easing.bezier(...EASE_STANDARD),
+    });
+  }, [fill, overshoot, reduceMotion, progress, spill]);
 
   const animatedProps = useAnimatedProps(() => ({
     strokeDashoffset: CIRCUMFERENCE * (1 - progress.value),
+  }));
+
+  const spillProps = useAnimatedProps(() => ({
+    strokeDashoffset: OVER_CIRCUMFERENCE * (1 - spill.value),
   }));
 
   return (
@@ -384,6 +363,21 @@ function ProportionRing({
         strokeDasharray={`${CIRCUMFERENCE} ${CIRCUMFERENCE}`}
         animatedProps={animatedProps}
       />
+      {overshoot > 0 ? (
+        <AnimatedCircle
+          cx={SIZE / 2}
+          cy={SIZE / 2}
+          r={OVER_RADIUS}
+          // The tone's colour, not a colour of its own: `over` is a second
+          // signal about the same month, not a second verdict on it.
+          stroke={stroke}
+          strokeWidth={OVER_STROKE}
+          strokeLinecap="round"
+          fill="none"
+          strokeDasharray={`${OVER_CIRCUMFERENCE} ${OVER_CIRCUMFERENCE}`}
+          animatedProps={spillProps}
+        />
+      ) : null}
     </Svg>
   );
 }

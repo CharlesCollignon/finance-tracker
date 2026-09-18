@@ -1,19 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowRight, Flame, Trophy } from "@phosphor-icons/react";
+import { Flame, Trophy } from "@phosphor-icons/react";
 import type { AttentionItem } from "@finance/core/attention";
 import type { Key } from "@finance/core/i18n/t";
 import type { MonthStanding } from "@finance/core/month-pulse";
-import type { SpineState } from "@finance/core/spine";
+import { drawSpineRing, type SpineState } from "@finance/core/spine";
 import { cssEasing, DURATION } from "@finance/core/motion";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
+import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { useT } from "@/lib/locale-context";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { ICON } from "@/lib/icon-scale";
-import { FIGURE_HERO, MICRO } from "@/lib/type-scale";
+import { FIGURE_HERO } from "@/lib/type-scale";
 import { cn } from "@/lib/utils";
 
 interface SpineProps {
@@ -35,14 +35,17 @@ interface SpineProps {
  * component does not re-derive the ladder, it only draws whichever rung
  * `resolveSpine` already settled on. `absent` renders no ring markup at all,
  * matching the core module's own point that a measurement with no target
- * must never be drawn as though it were one.
+ * must never be drawn as though it were one. The `proportion` rung can
+ * carry a second, inner lap — see `drawSpineRing` for what it says and why
+ * the ring's own fill cannot say it.
+ *
+ * The action row is `AttentionRow`'s, not this component's, because the
+ * reader who needs it most never reaches this component at all — see that
+ * file.
  */
 export function Spine({ state, attention }: SpineProps) {
   const t = useT();
   const formatMoney = useFormatCurrency();
-
-  const top = attention[0];
-  const rest = attention.length - 1;
 
   return (
     <section
@@ -73,35 +76,7 @@ export function Spine({ state, attention }: SpineProps) {
         {state.flame ? <FlameBadge flame={state.flame} /> : null}
       </div>
 
-      {top ? (
-        <Link
-          href={top.href}
-          className="group -mx-1 flex items-center gap-3 rounded-2xl px-1 py-1.5 transition-colors hover:bg-muted/40"
-        >
-          <span
-            aria-hidden
-            className={cn(
-              "size-2 shrink-0 rounded-full",
-              top.tone === "wrong" ? "bg-destructive" : "bg-primary",
-            )}
-          />
-          <span className="min-w-0 flex-1 truncate text-sm">
-            {t(top.messageKey, top.params)}
-          </span>
-          {rest > 0 ? (
-            <span className={cn(MICRO, "shrink-0 text-muted-foreground")}>
-              {t("bearing.spine.moreWaiting", { count: rest })}
-            </span>
-          ) : null}
-          <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary-ink">
-            {t(top.actionKey)}
-            <ArrowRight
-              size={ICON.sm}
-              className="transition-transform group-hover:translate-x-0.5"
-            />
-          </span>
-        </Link>
-      ) : null}
+      <AttentionRow attention={attention} />
     </section>
   );
 }
@@ -168,17 +143,17 @@ function toneStroke(tone: MonthStanding): string {
   }
 }
 
-/** The sentence a `proportion` ring's tone reads out, once `over` is ruled out. */
-function toneKey(tone: MonthStanding): Key {
+/** The clause a `proportion` ring's *colour* reads out — the standing, alone. */
+function standingKey(tone: MonthStanding): Key {
   switch (tone) {
     case "short":
-      return "bearing.spine.ringShort";
+      return "bearing.spine.ringStandingShort";
     case "tight":
-      return "bearing.spine.ringTight";
+      return "bearing.spine.ringStandingTight";
     case "clear":
-      return "bearing.spine.ringClear";
+      return "bearing.spine.ringStandingClear";
     case "unknown":
-      return "bearing.spine.ringClear";
+      return "bearing.spine.ringStandingClear";
   }
 }
 
@@ -186,6 +161,19 @@ const SIZE = 52;
 const STROKE = 5;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+/**
+ * The overshoot lap: thinner, and inside the ring it has gone past.
+ *
+ * Inside rather than outside because the ring already reaches the edge of
+ * its own box — an outer lap would need a bigger box, which would move the
+ * headline beside it. Thinner so the two can never be mistaken for one
+ * stroke at a glance, and one gap (`STROKE / 2`) of dark between them so the
+ * inner one reads as a second pass rather than as a thick edge.
+ */
+const OVER_STROKE = 3;
+const OVER_RADIUS = RADIUS - STROKE / 2 - OVER_STROKE / 2 - 1.5;
+const OVER_CIRCUMFERENCE = 2 * Math.PI * OVER_RADIUS;
 
 function SpineRing({ ring }: { ring: SpineState["ring"] }) {
   const t = useT();
@@ -272,23 +260,30 @@ function SpineRing({ ring }: { ring: SpineState["ring"] }) {
     );
   }
 
-  const clamped = Math.min(1, Math.max(0, ring.ratio));
-  const percent = Math.round(clamped * 100);
-  // Two separate spec rows, two separate signals: `Ring colour` reads off
-  // `tone` alone, always — an over-cap month is not redrawn in a different
-  // colour depending on how the month otherwise stands, which is exactly
-  // the collapse that would make a `clear`-but-over month indistinguishable
-  // from a genuinely `short` one. `Ring` (the fill) is `over`'s channel:
-  // `clamped` already caps an over-100% ratio at a full ring, which is what
-  // "fills it" means without needing a second colour to say so again.
-  const toneSentence = t(toneKey(ring.tone), { percent });
-  // Both facts said, not one substituted for the other — a screen-reader
-  // user should hear the standing *and* that this month is over its cap,
-  // the same two things a sighted reader gets from the fill and the colour
-  // together.
-  const label = ring.over
-    ? `${toneSentence} · ${t("bearing.spine.ringOver")}`
-    : toneSentence;
+  // Three signals, three channels, none of them re-derived here: `fill`,
+  // `overshoot` and `percent` all come from `drawSpineRing`.
+  //
+  // `Ring colour` reads off `tone` alone, always — an over-cap month is not
+  // redrawn in a different colour depending on how the month otherwise
+  // stands, which is the collapse that would make a `clear`-but-over month
+  // indistinguishable from a genuinely `short` one.
+  //
+  // `over` no longer rides on the fill. It used to, on the reasoning that a
+  // clamped ratio already draws a complete circle — but a complete circle is
+  // also exactly what 100% looks like, so a month that had spent half its
+  // allowance again over drew as a full green ring, pixel for pixel
+  // identical to one that had only just reached it. `over` gets the inner
+  // lap instead: a second, thinner stroke that exists at all only once the
+  // cap has been passed, and grows with how far past it is.
+  const { fill, overshoot, percent } = drawSpineRing(ring);
+  // Two clauses, each stating its own basis — see `en.ts`'s note on these
+  // keys for the contradiction the single sentence could produce.
+  const label = [
+    t(overshoot > 0 ? "bearing.spine.ringUsedOver" : "bearing.spine.ringUsed", {
+      percent,
+    }),
+    t(standingKey(ring.tone)),
+  ].join(" · ");
 
   return (
     <svg
@@ -316,11 +311,29 @@ function SpineRing({ ring }: { ring: SpineState["ring"] }) {
         strokeWidth={STROKE}
         strokeLinecap="round"
         strokeDasharray={CIRCUMFERENCE}
-        strokeDashoffset={
-          entered ? CIRCUMFERENCE * (1 - clamped) : CIRCUMFERENCE
-        }
+        strokeDashoffset={entered ? CIRCUMFERENCE * (1 - fill) : CIRCUMFERENCE}
         style={{ transition }}
       />
+      {overshoot > 0 ? (
+        <circle
+          cx={SIZE / 2}
+          cy={SIZE / 2}
+          r={OVER_RADIUS}
+          fill="none"
+          // The tone's colour, not a colour of its own: `over` is a second
+          // signal about the same month, not a second verdict on it.
+          stroke={toneStroke(ring.tone)}
+          strokeWidth={OVER_STROKE}
+          strokeLinecap="round"
+          strokeDasharray={OVER_CIRCUMFERENCE}
+          strokeDashoffset={
+            entered
+              ? OVER_CIRCUMFERENCE * (1 - overshoot)
+              : OVER_CIRCUMFERENCE
+          }
+          style={{ transition }}
+        />
+      ) : null}
     </svg>
   );
 }

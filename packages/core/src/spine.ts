@@ -39,7 +39,17 @@ export type SpineRing =
   | { kind: "absent" }
   | { kind: "dark" }
   | { kind: "arc" }
-  | { kind: "proportion"; ratio: number; tone: MonthStanding; over: boolean };
+  | {
+      kind: "proportion";
+      ratio: number;
+      tone: MonthStanding;
+      /**
+       * Past the cap, which is not the same claim as `ratio >= 1` and not
+       * the same claim as `tone`. See `drawSpineRing` for the channel it is
+       * drawn in and why the ring's own fill cannot be that channel.
+       */
+      over: boolean;
+    };
 
 export interface SpineInput {
   pulse: MonthPulse;
@@ -92,6 +102,61 @@ export function resolveSpine(input: SpineInput): SpineState {
     headline,
     ring: pulse.overRecorded ? { kind: "absent" } : ring,
     flame,
+  };
+}
+
+/**
+ * The shortest overshoot lap still worth drawing.
+ *
+ * `overCap` is true from a hundredth of a euro past the cap, and `capRatio`
+ * is rounded to two places, so a genuinely-over month can arrive here with
+ * `ratio - 1` equal to zero. A zero-length arc draws nothing, which would
+ * put the two states this field exists to separate back on the same pixels.
+ * So the lap has a floor: its *presence* says "past the cap", its *length*
+ * says how far past.
+ */
+const MIN_OVERSHOOT = 0.06;
+
+export interface SpineRingDraw {
+  /** How much of the ring itself is drawn, 0–1. */
+  fill: number;
+  /**
+   * How much of the second, inner lap is drawn, 0–1, and 0 exactly when the
+   * cap has not been passed.
+   *
+   * This is `over`'s own channel. The ring's colour is `tone`'s and stays
+   * `tone`'s — they are separate rows in the spec and separate findings —
+   * but the fill alone cannot carry `over`, because a clamped ratio of 2.50
+   * draws the same complete circle as a ratio of exactly 1.00. A reader has
+   * to be able to tell a month that has just reached its allowance from one
+   * that has spent half as much again, and one full circle cannot say both.
+   */
+  overshoot: number;
+  /**
+   * The percentage the ring's sentence states.
+   *
+   * Off the true ratio, not the clamped one: a screen reader hearing "100%
+   * of your allowance used" for a month at 250% is being told the fill's
+   * limitation as though it were the measurement.
+   */
+  percent: number;
+}
+
+/**
+ * What a `proportion` ring draws, decided once for both clients.
+ *
+ * Neither client re-derives any of this. They were each clamping the ratio
+ * and rounding their own percentage, which is judgement — where the ring
+ * stops, what the sentence claims — living twice in two languages.
+ */
+export function drawSpineRing(
+  ring: Extract<SpineRing, { kind: "proportion" }>,
+): SpineRingDraw {
+  const ratio = Number.isFinite(ring.ratio) ? ring.ratio : 0;
+  return {
+    fill: Math.min(1, Math.max(0, ratio)),
+    percent: Math.max(0, Math.round(ratio * 100)),
+    overshoot: ring.over ? Math.min(1, Math.max(MIN_OVERSHOOT, ratio - 1)) : 0,
   };
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveSpine } from "./spine";
+import { drawSpineRing, resolveSpine } from "./spine";
 import type { MonthPulse } from "./month-pulse";
 
 const pulse = (over: Partial<MonthPulse> = {}): MonthPulse =>
@@ -107,5 +107,59 @@ describe("resolveSpine", () => {
       remaining: 250,
     });
     expect(state.ring).not.toHaveProperty("tone");
+  });
+});
+
+describe("drawSpineRing", () => {
+  const proportion = (ratio: number, over: boolean) =>
+    ({ kind: "proportion", ratio, tone: "clear", over }) as const;
+
+  it("fills the ring in proportion and states the percentage it filled to", () => {
+    expect(drawSpineRing(proportion(0.95, false))).toEqual({
+      fill: 0.95,
+      percent: 95,
+      overshoot: 0,
+    });
+  });
+
+  it("draws no overshoot lap at exactly the cap", () => {
+    expect(drawSpineRing(proportion(1, false)).overshoot).toBe(0);
+  });
+
+  // The whole point of the second channel: at the cap and past it must not
+  // resolve to the same drawing, and a clamped fill of 1 is all they would
+  // otherwise share.
+  it("separates at the cap from over it, which the fill alone cannot", () => {
+    const atCap = drawSpineRing(proportion(1, false));
+    const over = drawSpineRing(proportion(1.4, true));
+    expect(over.fill).toBe(atCap.fill);
+    expect(over.overshoot).toBeGreaterThan(atCap.overshoot);
+  });
+
+  it("grows the overshoot lap with how far past the cap the month is", () => {
+    expect(drawSpineRing(proportion(1.4, true)).overshoot).toBeCloseTo(0.4);
+    expect(drawSpineRing(proportion(1.75, true)).overshoot).toBeCloseTo(0.75);
+  });
+
+  it("keeps the lap visible when rounding leaves nothing to draw", () => {
+    // `capRatio` is rounded to two places, so a month a hundredth over its
+    // cap arrives here as exactly 1. The lap must still appear.
+    expect(drawSpineRing(proportion(1, true)).overshoot).toBeGreaterThan(0);
+  });
+
+  it("caps the lap at one turn, so 250% does not wrap round unreadably", () => {
+    expect(drawSpineRing(proportion(2.5, true)).overshoot).toBe(1);
+  });
+
+  it("states the true percentage rather than the one the fill stopped at", () => {
+    expect(drawSpineRing(proportion(2.5, true)).percent).toBe(250);
+  });
+
+  it("never states a negative percentage or fills backwards", () => {
+    expect(drawSpineRing(proportion(-0.2, false))).toEqual({
+      fill: 0,
+      percent: 0,
+      overshoot: 0,
+    });
   });
 });

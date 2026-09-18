@@ -2034,17 +2034,28 @@ export const en = {
       ringUnmeasured: "Not measured yet — no month has closed",
       /** The ring's `arc` state: measuring has started, there is no cap. */
       ringMeasuring: "Measuring your first month — no allowance set yet",
-      /** The ring's `proportion` state, toned by how the month stands. */
-      ringClear: "{percent}% of your allowance used, comfortably clear",
-      ringTight: "{percent}% of your allowance used, getting tight",
-      ringShort: "{percent}% of your allowance used, already short this month",
       /**
-       * Joined onto the tone sentence above with " · " when `over` is true,
-       * never in place of it — `Ring` and `Ring colour` are separate rows in
-       * the spec, and this is the fill's row, said in words for a screen
-       * reader rather than substituted for the colour's.
+       * The ring's `proportion` state, said as two clauses joined by " · ".
+       *
+       * They were one sentence and could contradict itself. The percentage
+       * comes off `capRatio` — unrecorded spending against the cap — while
+       * the tone comes off `standing`, which compares what is left to spend
+       * against that same cap. Those are near-orthogonal, so the single
+       * sentence "100% of your allowance used, comfortably clear" was a
+       * routine output: a screen-reader user heard a verdict no sighted
+       * reader was shown, welded onto a figure it was not about.
+       *
+       * Now each clause states its own basis and neither qualifies the
+       * other. `ringUsed*` is the ring's fill and the overshoot lap; the
+       * `ringStanding*` line is the colour. Same two signals, same two spec
+       * rows, said separately because they measure separately.
        */
-      ringOver: "already over your allowance",
+      ringUsed: "{percent}% of your allowance used",
+      /** The overshoot lap, in words. `{percent}` is the true ratio, not the fill's. */
+      ringUsedOver: "{percent}% of your allowance used, already past it",
+      ringStandingClear: "what is left to spend still covers a full allowance",
+      ringStandingTight: "less than a full allowance left to spend",
+      ringStandingShort: "the month is set to end short",
       /** The rest of the attention list, folded behind the one row shown. */
       moreWaiting: {
         one: "+{count} more waiting",
