@@ -93,6 +93,88 @@ export interface ApplyRecurringDeps {
 }
 
 /**
+ * Every occurrence a month's templates call for, once skips are taken out.
+ *
+ * Shared by the plan below and by `countRecurringToApply`, so that "which
+ * occurrences exist this month" is decided in one place. The count and the
+ * plan disagreeing would be worse than either being wrong on its own: the
+ * badge would promise a number of rows the apply sheet then did not offer.
+ */
+function* monthOccurrences(
+  templates: readonly RecurringTemplateWithCategory[],
+  year: number,
+  month: number,
+  skippedKeys: ReadonlySet<string>,
+): Generator<{
+  template: RecurringTemplateWithCategory;
+  occurredOn: string;
+  key: string;
+}> {
+  for (const template of templates) {
+    if (!template.active) {
+      continue;
+    }
+
+    const occurrenceDates = filterDatesBySchedule(
+      getRecurringOccurrenceDates(
+        {
+          recurrence: template.recurrence ?? "monthly",
+          day_of_month: template.day_of_month,
+          day_of_week: template.day_of_week,
+          month_of_year: template.month_of_year,
+        },
+        year,
+        month,
+      ),
+      template.starts_on,
+      template.ends_on,
+    );
+
+    for (const occurredOn of occurrenceDates) {
+      const key = recurringOccurrenceKey(template.id, occurredOn);
+      if (skippedKeys.has(key)) {
+        continue;
+      }
+      yield { template, occurredOn, key };
+    }
+  }
+}
+
+/**
+ * How many rows a month's templates are waiting to write — without pricing
+ * a single one of them.
+ *
+ * The home screen's action row needs a count, not a plan. Asking
+ * `buildApplyRecurringPlan` for one costs a live market quote per priced
+ * occurrence, on the landing page, every load — and the answer it gives back
+ * is *worse*: a quote that cannot be fetched makes that occurrence vanish
+ * from `toCreate` entirely, so a reader with a broken network is told fewer
+ * charges are waiting than actually are. Nothing about whether a template
+ * has written its row this month depends on what the row would say.
+ *
+ * Deliberately only `toCreate`'s count. `toUpdate` is a genuine comparison
+ * of amounts and notes against what is already recorded, which cannot be
+ * answered without resolving those amounts; it is also not what the action
+ * row claims. See `applyRecurringPlanCounts` for the badge that does count
+ * both, from a plan that has already been built for other reasons.
+ */
+export function countRecurringToApply(
+  templates: readonly RecurringTemplateWithCategory[],
+  existingKeys: ReadonlySet<string>,
+  year: number,
+  month: number,
+  skippedKeys: ReadonlySet<string> = new Set<string>(),
+): number {
+  let waiting = 0;
+  for (const { key } of monthOccurrences(templates, year, month, skippedKeys)) {
+    if (!existingKeys.has(key)) {
+      waiting += 1;
+    }
+  }
+  return waiting;
+}
+
+/**
  * What a month's templates call for, sorted by who owes a decision.
  *
  * A quote-priced occurrence differs from a freshly built plan almost always —
@@ -123,109 +205,88 @@ export async function buildApplyRecurringPlan(
   const toUpdate: RecurringOccurrenceUpdate[] = [];
   const toReprice: RecurringOccurrenceUpdate[] = [];
 
-  for (const template of templates) {
-    if (!template.active) {
-      continue;
-    }
-
-    const occurrenceDates = filterDatesBySchedule(
-      getRecurringOccurrenceDates(
-        {
-          recurrence: template.recurrence ?? "monthly",
-          day_of_month: template.day_of_month,
-          day_of_week: template.day_of_week,
-          month_of_year: template.month_of_year,
-        },
-        year,
-        month,
-      ),
-      template.starts_on,
-      template.ends_on,
-    );
-
+  for (const { template, occurredOn, key } of monthOccurrences(
+    templates,
+    year,
+    month,
+    skippedKeys,
+  )) {
     const pricedFromQuote = isQuotePriced({
       pricing_type: template.pricing_type ?? "fixed",
       share_count: template.share_count,
       instrument_symbol: template.instrument_symbol,
     });
 
-    for (const occurredOn of occurrenceDates) {
-      const key = recurringOccurrenceKey(template.id, occurredOn);
-      if (skippedKeys.has(key)) {
-        continue;
-      }
+    let amount = Number(template.amount);
+    let note = template.description?.trim() || null;
 
-      let amount = Number(template.amount);
-      let note = template.description?.trim() || null;
+    try {
+      const resolved = await resolveRecurringAmount(
+        {
+          pricing_type: template.pricing_type ?? "fixed",
+          amount: Number(template.amount),
+          share_count: template.share_count,
+          instrument_symbol: template.instrument_symbol,
+          instrument_name: template.instrument_name,
+          description: template.description,
+          last_quote_price: template.last_quote_price,
+        },
+        quotes,
+      );
+      amount = resolved.amount;
+      note = resolved.note;
+    } catch {
+      continue;
+    }
 
-      try {
-        const resolved = await resolveRecurringAmount(
-          {
-            pricing_type: template.pricing_type ?? "fixed",
-            amount: Number(template.amount),
-            share_count: template.share_count,
-            instrument_symbol: template.instrument_symbol,
-            instrument_name: template.instrument_name,
-            description: template.description,
-            last_quote_price: template.last_quote_price,
-          },
-          quotes,
-        );
-        amount = resolved.amount;
-        note = resolved.note;
-      } catch {
-        continue;
-      }
+    const plan: RecurringOccurrencePlan = {
+      templateId: template.id,
+      name: displayNameForRecurringTemplate(template),
+      dateLabel: formatShortDate(occurredOn),
+      occurredOn,
+      amount,
+      note,
+      categoryId: template.category_id,
+      pricedFromQuote,
+    };
 
-      const plan: RecurringOccurrencePlan = {
-        templateId: template.id,
-        name: displayNameForRecurringTemplate(template),
-        dateLabel: formatShortDate(occurredOn),
-        occurredOn,
-        amount,
-        note,
-        categoryId: template.category_id,
-        pricedFromQuote,
-      };
+    const existing = existingByKey.get(key);
 
-      const existing = existingByKey.get(key);
+    if (!existing) {
+      toCreate.push(plan);
+      continue;
+    }
 
-      if (!existing) {
-        toCreate.push(plan);
-        continue;
-      }
+    if (!transactionDiffers(existing, plan)) {
+      continue;
+    }
 
-      if (!transactionDiffers(existing, plan)) {
-        continue;
-      }
+    const update: RecurringOccurrenceUpdate = {
+      ...plan,
+      transactionId: existing.id,
+      previousAmount: Number(existing.amount),
+      previousNote: existing.note,
+      previousCategoryId: existing.category_id,
+    };
 
-      const update: RecurringOccurrenceUpdate = {
-        ...plan,
-        transactionId: existing.id,
-        previousAmount: Number(existing.amount),
-        previousNote: existing.note,
-        previousCategoryId: existing.category_id,
-      };
+    if (!plan.pricedFromQuote) {
+      toUpdate.push(update);
+      continue;
+    }
 
-      if (!plan.pricedFromQuote) {
-        toUpdate.push(update);
-        continue;
-      }
+    if (occurredOn >= today) {
+      toReprice.push(update);
+      continue;
+    }
 
-      if (occurredOn >= today) {
-        toReprice.push(update);
-        continue;
-      }
-
-      // Settled. The price it was bought at stands; only a move to another
-      // category is still worth applying, and it leaves the figure alone.
-      if (existing.category_id !== plan.categoryId) {
-        toUpdate.push({
-          ...update,
-          amount: Number(existing.amount),
-          note: existing.note,
-        });
-      }
+    // Settled. The price it was bought at stands; only a move to another
+    // category is still worth applying, and it leaves the figure alone.
+    if (existing.category_id !== plan.categoryId) {
+      toUpdate.push({
+        ...update,
+        amount: Number(existing.amount),
+        note: existing.note,
+      });
     }
   }
 

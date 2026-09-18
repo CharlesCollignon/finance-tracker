@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildApplyRecurringPlan,
+  countRecurringToApply,
   recurringOccurrenceKey,
 } from "./apply-recurring";
 import { createFakeQuoteSource } from "./market/quote-source";
@@ -430,5 +431,70 @@ describe("buildApplyRecurringPlan", () => {
     expect(settled.toReprice).toEqual([]);
     expect(ahead.toUpdate).toHaveLength(1);
     expect(ahead.toReprice).toEqual([]);
+  });
+});
+
+describe("countRecurringToApply", () => {
+  it("counts a monthly template's one unwritten occurrence", () => {
+    expect(countRecurringToApply([template()], new Set(), 2026, 1)).toBe(1);
+  });
+
+  it("does not count an occurrence already written", () => {
+    const written = new Set([recurringOccurrenceKey("tpl-1", "2026-01-15")]);
+    expect(countRecurringToApply([template()], written, 2026, 1)).toBe(0);
+  });
+
+  it("does not count a skipped occurrence", () => {
+    const skipped = new Set([recurringOccurrenceKey("tpl-1", "2026-01-15")]);
+    expect(
+      countRecurringToApply([template()], new Set(), 2026, 1, skipped),
+    ).toBe(0);
+  });
+
+  it("ignores an inactive template", () => {
+    expect(
+      countRecurringToApply([template({ active: false })], new Set(), 2026, 1),
+    ).toBe(0);
+  });
+
+  it("respects the template's own start and end dates", () => {
+    expect(
+      countRecurringToApply(
+        [template({ starts_on: "2026-02-01" })],
+        new Set(),
+        2026,
+        1,
+      ),
+    ).toBe(0);
+  });
+
+  // The whole reason this exists: the same answer as the plan, for none of
+  // the network. A quote source that cannot answer is the case the plan gets
+  // *wrong* — it drops the occurrence — so the two are compared against a
+  // source that can.
+  it("agrees with the plan it saves a round trip to build", async () => {
+    const templates = [
+      template(),
+      sharesTemplate({ id: "tpl-2", day_of_month: 25 }),
+    ];
+    const plan = await buildApplyRecurringPlan(templates, new Map(), 2026, 1, {
+      quotes: createFakeQuoteSource({ CW8: 120 }),
+      today: TODAY,
+    });
+    expect(countRecurringToApply(templates, new Set(), 2026, 1)).toBe(
+      plan.toCreate.length,
+    );
+  });
+
+  it("still counts a priced occurrence the market could not answer for", async () => {
+    const templates = [sharesTemplate({ day_of_month: 25 })];
+    const plan = await buildApplyRecurringPlan(templates, new Map(), 2026, 1, {
+      quotes: noQuotes(),
+      today: TODAY,
+    });
+    // The plan swallows it; the count does not. A charge is waiting whether
+    // or not anyone can price it today.
+    expect(plan.toCreate).toHaveLength(0);
+    expect(countRecurringToApply(templates, new Set(), 2026, 1)).toBe(1);
   });
 });

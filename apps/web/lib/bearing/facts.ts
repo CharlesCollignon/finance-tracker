@@ -40,7 +40,10 @@ import {
   type PendingFeedRow,
 } from "@/lib/queries/bank";
 import { getFulfilledKeys } from "@/lib/queries/fulfilment";
-import { previewApplyRecurringForMonth } from "@/lib/actions/finance";
+import {
+  countRecurringToApply,
+  recurringOccurrenceKey,
+} from "@finance/core/apply-recurring";
 import type { RecurringProposal } from "@finance/core/recurring-detection";
 import { getLocale } from "@/lib/locale";
 
@@ -58,8 +61,10 @@ type Client = SupabaseClient<Database>;
  * `closeSummary`, kept whole because its `.next` is what tells the action
  * row a month is ready to close.
  *
- * `swallowed`, `proposals` and `recurringToApply` are new reads — see
- * `gatherBearingFacts` for why each one is necessary rather than optional.
+ * `swallowed` and `proposals` are new reads — see `gatherBearingFacts` for
+ * why each one is necessary rather than optional, and for why
+ * `recurringToApply` is counted out of rows already in hand rather than read
+ * at all.
  */
 export interface GatheredBearingFacts extends BearingFacts {
   pulse: MonthPulse;
@@ -246,15 +251,14 @@ export async function gatherBearingFacts(
   // business — and unlike a month read, this pack never sees a category name
   // at all.
   //
-  // Alongside it, the three reads the spine's action row needs and nothing
-  // here held yet — moved from the Month page's own `AttentionSlot`, not
-  // added new. `swallowed` and `proposals` only mean anything with a bank
-  // feeding the ledger: a CSV-only user has no feed rows to swallow and no
-  // statement to detect a standing charge from, which is why both stay
-  // behind the same `bankFed` gate `pending` always used.
-  // `previewApplyRecurringForMonth` gates itself the same way for the
-  // opposite reason — with a feed, templates never write, so it always hands
-  // back an empty plan rather than being asked not to run.
+  // Alongside it, the two further reads the spine's action row needs and
+  // nothing here held yet — moved from the Month page's own
+  // `AttentionSlot`, not added new. `swallowed` and `proposals` only mean
+  // anything with a bank feeding the ledger: a CSV-only user has no feed
+  // rows to swallow and no statement to detect a standing charge from,
+  // which is why both stay behind the same `bankFed` gate `pending` always
+  // used. The row's fourth figure, `recurringToApply`, is not a read at all
+  // — see below.
   const pendingPromise: Promise<PendingFeedRow[]> = bankFed
     ? getPendingFeedItems(userId, locale)
     : Promise.resolve([]);
@@ -265,12 +269,53 @@ export async function gatherBearingFacts(
     ? getRecurringProposals(userId, today)
     : Promise.resolve([]);
 
-  const [pending, swallowed, proposals, applyPlan] = await Promise.all([
+  const [pending, swallowed, proposals] = await Promise.all([
     pendingPromise,
     swallowedPromise,
     proposalsPromise,
-    previewApplyRecurringForMonth(year, month),
   ]);
+
+  /**
+   * How many recurring charges are waiting to be written — counted, not
+   * priced, and out of rows this function already had.
+   *
+   * This used to be `previewApplyRecurringForMonth(year, month)`, which
+   * builds a whole plan: three more queries, and one live market quote per
+   * quote-priced occurrence, on the landing page, on every load. Paid twice
+   * when a stored arrangement's language differs from the request's and the
+   * pack is gathered again, and a third time by `arrangeBearing`, which
+   * reads none of it.
+   *
+   * The action row asks "how many", not "for how much". `templates`,
+   * `monthTransactions` and `skippedKeys` are all already in hand above, so
+   * the answer costs nothing beyond the loop — and it is a *better* answer:
+   * a plan drops any occurrence whose quote could not be fetched, so the
+   * old count fell silently when the market was unreachable.
+   *
+   * The `bankFed` gate is the one `previewApplyRecurringForMonth` applied
+   * internally, restated here beside the other three that share it: with a
+   * bank feeding the ledger, templates forecast and never write.
+   */
+  const recurringToApply = bankFed
+    ? 0
+    : countRecurringToApply(
+        templates,
+        new Set(
+          monthTransactions.flatMap((tx) =>
+            tx.recurring_template_id
+              ? [
+                  recurringOccurrenceKey(
+                    tx.recurring_template_id,
+                    tx.occurred_on,
+                  ),
+                ]
+              : [],
+          ),
+        ),
+        year,
+        month,
+        skippedKeys,
+      );
 
   const packed = buildBearingFacts({
     asOf: today,
@@ -302,6 +347,6 @@ export async function gatherBearingFacts(
     pendingInbox: pending.length,
     swallowed,
     proposals: proposals.length,
-    recurringToApply: applyPlan.plan?.toCreate.length ?? 0,
+    recurringToApply,
   };
 }
