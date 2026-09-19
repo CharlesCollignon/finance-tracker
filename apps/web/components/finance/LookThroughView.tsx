@@ -12,7 +12,11 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 
-import { SECTOR_LABELS } from "@finance/core/instrument-reading";
+import {
+  SECTOR_LABELS,
+  drainStep,
+  type DrainHalt,
+} from "@finance/core/instrument-reading";
 import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
 import { formatCharge } from "@finance/core/fund-costs";
 import { AXIS_COVERAGE_FLOOR } from "@finance/core/look-through";
@@ -23,6 +27,7 @@ import type {
 } from "@finance/core/look-through-target";
 import type { RenderedWalletRead } from "@finance/core/wallet-read";
 import type { ReadSegment } from "@finance/core/month-read";
+import type { Key } from "@finance/core/i18n/t";
 
 import { Badge } from "@/components/retroui/Badge";
 import { Button, buttonVariants } from "@/components/retroui/Button";
@@ -42,6 +47,23 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { ICON } from "@/lib/icon-scale";
 import { MICRO } from "@/lib/type-scale";
 import { cn } from "@/lib/utils";
+
+/**
+ * What to say when a walk stops early.
+ *
+ * A total map rather than a switch, so adding a halt to `DrainHalt` without
+ * giving it words is a type error rather than a silent blank toast. `done` is
+ * absent on purpose: an emptied queue is the walk succeeding, and has nothing
+ * to report.
+ */
+const HALT_MESSAGES: Record<Exclude<DrainHalt, "done">, Key> = {
+  cooling: "lookThrough.halt.cooling",
+  allowance: "lookThrough.halt.allowance",
+  "not-yours": "lookThrough.halt.notYours",
+  "no-reader": "lookThrough.halt.noReader",
+  unavailable: "lookThrough.halt.unavailable",
+  "signed-out": "lookThrough.halt.signedOut",
+};
 
 export interface LookThroughViewProps {
   lookThrough: LookThrough;
@@ -142,6 +164,15 @@ export function LookThroughView({
    * would be killed by the platform with the allowance already spent — and
    * one at a time is also what lets the count go down in front of the reader
    * instead of a spinner sitting there for two minutes.
+   *
+   * What to do with each answer is `drainStep`'s decision, not this
+   * function's. The rule is subtle enough to have been got wrong here: only
+   * an instrument that actually left the queue may be walked past, because
+   * every other answer leaves it at the head of the queue and carrying on
+   * would ask about it again. The walk used to stop after a single instrument
+   * for a different reason entirely — a two-second cooldown keyed on the user
+   * rather than the instrument, reported as a spent allowance — which is
+   * fixed on the server side in `read.ts`.
    */
   async function onReadAll() {
     setReading(true);
@@ -149,21 +180,21 @@ export function LookThroughView({
       let left = remaining;
       while (left > 0) {
         const outcome = await readNextInstrument();
-        if (
-          outcome.status === "allowance-spent" ||
-          outcome.status === "no-reader" ||
-          outcome.status === "unavailable" ||
-          outcome.status === "not-authenticated"
-        ) {
-          toast(t("walletRead.noAnswer"));
-          break;
+        const step = drainStep(outcome.status, outcome.remaining);
+
+        // The server's count is the truthful one either way, including the
+        // zero that says the queue is empty. Dropping it on a halt is what
+        // used to leave this button sitting over nothing.
+        setRemaining(outcome.remaining);
+
+        if (!step.go) {
+          if (step.halt !== "done") {
+            toast(t(HALT_MESSAGES[step.halt]), "error");
+          }
+          return;
         }
-        if (outcome.status === "nothing-to-read") {
-          left = 0;
-          break;
-        }
-        left = outcome.remaining;
-        setRemaining(left);
+
+        left = step.remaining;
       }
     } finally {
       setReading(false);
@@ -335,9 +366,7 @@ export function LookThroughView({
             >
               {read === null ? (
                 <div className="flex flex-col gap-2">
-                  <p className="text-sm font-medium">
-                    {t("walletRead.empty")}
-                  </p>
+                  <p className="text-sm font-medium">{t("walletRead.empty")}</p>
                   <p className="text-sm text-muted-foreground">
                     {canSayAnything
                       ? t("walletRead.emptyBody")
@@ -638,10 +667,7 @@ export function LookThroughView({
                         <span className="min-w-0">
                           <span className="truncate text-sm">{row.name}</span>
                           <span
-                            className={cn(
-                              MICRO,
-                              "ml-2 text-muted-foreground",
-                            )}
+                            className={cn(MICRO, "ml-2 text-muted-foreground")}
                           >
                             {INVESTMENT_WALLET_LABELS[row.wallet]}
                           </span>
@@ -695,13 +721,7 @@ export function LookThroughView({
  * earlier version normalised the gap away and turned that same fund into a
  * reported 69% technology; this is the sentence that replaced it.
  */
-function PartialAxis({
-  coverage,
-  rows,
-}: {
-  coverage: number;
-  rows: number;
-}) {
+function PartialAxis({ coverage, rows }: { coverage: number; rows: number }) {
   const t = useT();
 
   if (rows === 0 || coverage >= AXIS_COVERAGE_FLOOR) {

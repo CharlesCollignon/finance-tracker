@@ -99,7 +99,9 @@ function toReading(row: {
 async function findCandidates(supabase: Client): Promise<Candidate[]> {
   const { data: positions, error } = await supabase
     .from("investment_positions")
-    .select("user_id, isin, name, instrument_symbol, current_value, share_count")
+    .select(
+      "user_id, isin, name, instrument_symbol, current_value, share_count",
+    )
     .not("isin", "is", null);
 
   if (error) {
@@ -178,12 +180,15 @@ export async function readInstrumentsForEveryUser(
 
   for (const candidate of candidates) {
     try {
+      // The house cooldown is left in place. It cannot bite here: the
+      // candidates are one instrument per user, and the tally this cools is
+      // per user. Raising `READINGS_PER_USER` above one would change that.
       const result = await readInstrument(
         candidate.userId,
         candidate.isin,
         candidate.name,
         candidate.symbol,
-        supabase,
+        { client: supabase },
       );
       if (result.status === "read") {
         outcome.read += 1;

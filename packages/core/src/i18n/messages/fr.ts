@@ -721,8 +721,7 @@ export const fr: Messages = {
     splitLeadPrefix: "Vos prochains",
     splitLeadSuffix: "combleraient l'écart le plus vite ainsi :",
     splitItemTo: "vers {wallet}",
-    splitTail:
-      " — rééquilibrer par les versements plutôt qu'en vendant.",
+    splitTail: " — rééquilibrer par les versements plutôt qu'en vendant.",
     noTargetHint:
       "Définissez une répartition cible pour voir la dérive du portefeuille et savoir où doit aller le prochain versement.",
     peaPaidIn: "Versé",
@@ -762,7 +761,8 @@ export const fr: Messages = {
     valuedLive: "Valorisé au marché",
     valuedPinned: "Valorisé sur votre chiffre",
     valuedManual: "Valorisé sur votre chiffre — aucun cours disponible",
-    valuedCost: "Valorisé au prix de revient — ajoutez les parts pour suivre le marché",
+    valuedCost:
+      "Valorisé au prix de revient — ajoutez les parts pour suivre le marché",
     ongoingChargeLabel: "Frais courants du fonds (optionnel)",
     ongoingChargeHint:
       "Les frais annuels du fonds lui-même, en pourcentage — 0,20 pour 0,20 %. Ils figurent sur le DIC et n'apparaissent jamais sur un relevé, car ils sont prélevés sur la valeur du fonds. Ce ne sont pas les frais de votre courtier, que l'app ne suit pas.",
@@ -1102,7 +1102,8 @@ export const fr: Messages = {
       other: "partiel — {count} lignes sans frais renseignés",
     },
     walletDrift: "Portefeuille le plus éloigné de sa cible",
-    walletDriftNote: "en points de pourcentage, quel que soit le sens de l'écart",
+    walletDriftNote:
+      "en points de pourcentage, quel que soit le sens de l'écart",
     walletConcentration: "{name}, part des portefeuilles",
     walletConcentrationNote:
       "la plus grosse ligne, pesée contre ce qui est investi plutôt que contre les liquidités",
@@ -1178,7 +1179,8 @@ export const fr: Messages = {
   cashAccounts: {
     tickHint: "Cochez celles que vous utilisez pour dépenser.",
     lastRead: "Dernière lecture {when}",
-    noneTicked: "Rien n'est coché, les mois se clôturent donc encore à la main.",
+    noneTicked:
+      "Rien n'est coché, les mois se clôturent donc encore à la main.",
     autoCloses:
       "Les mois se clôturent d'eux-mêmes une fois que le relevé couvre le jour où ils sont lus. Un mois dont les comptes cochés ne peuvent pas tous être lus attend, plutôt que de deviner.",
   },
@@ -1212,7 +1214,8 @@ export const fr: Messages = {
     readingDayHint:
       "Le jour du mois suivant où vous relevez le solde. Plus tard est plus sûr avec une carte à débit différé, car les dépenses par carte du mois doivent avoir été prélevées. Le plus important est que ce soit toujours le même jour.",
     startingPoint: "Point de départ",
-    needsLook: "À vérifier — plus sur le compte que ce que les écritures permettent",
+    needsLook:
+      "À vérifier — plus sur le compte que ce que les écritures permettent",
     neverRecordedAmount: "{amount} jamais enregistré",
     keptPercent: "{rate} % gardé",
     saved: "Enregistré",
@@ -1252,7 +1255,8 @@ export const fr: Messages = {
     },
     noCharges: "rien de programmé",
     setAsideNote: "Sort du compte, reste à vous.",
-    deployedNote: "Déjà dans un portefeuille : aucune des deux courbes ne bouge.",
+    deployedNote:
+      "Déjà dans un portefeuille : aucune des deux courbes ne bouge.",
     unrecordedMeasured: {
       one: "la médiane de {count} mois clôturé",
       other: "la médiane de {count} mois clôturés",
@@ -1517,6 +1521,15 @@ export const fr: Messages = {
     readAll: "Lire le reste",
     lastRead: "Lu {when}",
 
+    halt: {
+      cooling: "La précédente se termine — réessayez dans un instant.",
+      allowance: "Le quota de lectures de ce mois est épuisé.",
+      notYours: "Cet instrument ne fait plus partie de vos positions.",
+      noReader: "Aucun lecteur n'est configuré.",
+      unavailable: "Cet instrument n'a pas pu être lu à l'instant.",
+      signedOut: "Vous avez été déconnecté.",
+    },
+
     caveats: {
       noIsin: "Pas encore identifié",
       noIsinBody:
@@ -1536,7 +1549,8 @@ export const fr: Messages = {
         "Le chevauchement est un plancher, pas une mesure. Seules les plus grosses lignes publiées de chaque fonds ont été comparées : deux fonds présentés comme partageant peu peuvent en réalité être largement les mêmes sociétés — l'indice suivi est le signal le plus fiable.",
       staleReadings:
         "{count} lectures ont plus de six mois. Elles servent quand même : la composition de l'an dernier vaut mieux que rien.",
-      noMarketValue: "Rien n'est détenu pour l'instant, il n'y a donc rien à examiner.",
+      noMarketValue:
+        "Rien n'est détenu pour l'instant, il n'y a donc rien à examiner.",
       partialAxis:
         "Ces chiffres couvrent {coverage} de ce qui a été lu — une fiche ne publie pas toujours la répartition complète. Les parts sont celles publiées, pas une part de ce qui a été trouvé : elles ne totalisent donc pas l'ensemble.",
       geographyIsNotCurrency:
@@ -1563,7 +1577,8 @@ export const fr: Messages = {
     nothingToSay:
       "Trop peu a été lu pour dire quoi que ce soit de l'ensemble du portefeuille.",
     unchanged: "Rien n'a bougé depuis la dernière revue.",
-    untracked: "Les revues de portefeuille ne sont pas encore en place (migration 033).",
+    untracked:
+      "Les revues de portefeuille ne sont pas encore en place (migration 033).",
     noWriter: "Aucun rédacteur n'est configuré.",
     noAnswer: "Le rédacteur n'a pas répondu à l'instant.",
     unusable: "La réponse du rédacteur n'a pas pu être utilisée.",
@@ -1607,8 +1622,7 @@ export const fr: Messages = {
       one: "{count} chiffre a bougé depuis cet agencement, {age}.",
       other: "{count} chiffres ont bougé depuis cet agencement, {age}.",
     },
-    empty:
-      "Dès qu'un mois sera enregistré, il y aura de quoi faire le point.",
+    empty: "Dès qu'un mois sera enregistré, il y aura de quoi faire le point.",
     noWriter: "Aucun rédacteur n'est configuré.",
     noAnswer: "Le rédacteur n'a pas répondu à l'instant.",
     unusable: "La réponse du rédacteur n'a pas pu être utilisée.",
@@ -1616,7 +1630,8 @@ export const fr: Messages = {
       "Le rédacteur a cité un chiffre que l'application ne lui avait pas donné, l'agencement a donc été écarté. ({detail})",
     allowanceSpent:
       "Vous avez utilisé les {allowance} agencements de ce mois-ci.",
-    coolingDown: "Un agencement vient d'être fait — réessayez dans {seconds} s.",
+    coolingDown:
+      "Un agencement vient d'être fait — réessayez dans {seconds} s.",
     inFlight: "Un agencement est déjà en cours.",
     nothingToSay: "Il n'y a pas encore assez d'enregistré pour faire le point.",
     untracked: "Les agencements ne sont pas encore en place (migration 029).",

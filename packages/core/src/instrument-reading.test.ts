@@ -10,6 +10,8 @@ import {
   readingCompleteness,
   readingIsStale,
   readingQueue,
+  drainStep,
+  haltIsRetryable,
   verifyInstrumentReading,
   type InstrumentReading,
   type InstrumentReadingRequest,
@@ -207,7 +209,7 @@ describe("verifyInstrumentReading", () => {
     );
     expect(verdict.ok).toBe(true);
     if (!verdict.ok) return;
-    expect(Object.keys(verdict.reading.countryWeights)) .toEqual(["US"]);
+    expect(Object.keys(verdict.reading.countryWeights)).toEqual(["US"]);
   });
 
   it("normalises and merges country codes given in mixed case", () => {
@@ -338,11 +340,7 @@ describe("readingCompleteness", () => {
 describe("readingQueue", () => {
   it("asks about an instrument never read before anything else", () => {
     const readings = new Map([["IE00B4L5Y983", reading()]]);
-    const queue = readingQueue(
-      ["IE00B4L5Y983", "FR0013412285"],
-      readings,
-      NOW,
-    );
+    const queue = readingQueue(["IE00B4L5Y983", "FR0013412285"], readings, NOW);
     expect(queue[0]).toBe("FR0013412285");
   });
 
@@ -391,5 +389,65 @@ describe("createFakeInstrumentReadingSource", () => {
   it("answers null for anything not in the script", async () => {
     const source = createFakeInstrumentReadingSource({});
     expect(await source.read(asked())).toBeNull();
+  });
+});
+
+describe("drainStep", () => {
+  it("keeps walking while readings land and the queue still holds something", () => {
+    expect(drainStep("read", 3)).toEqual({ go: true, remaining: 3 });
+  });
+
+  it("keeps walking past an instrument that was already fresh", () => {
+    // Nothing was bought, so nothing was spent — and the queue moved on.
+    expect(drainStep("already-fresh", 2)).toEqual({ go: true, remaining: 2 });
+  });
+
+  it("stops, done, when the last instrument leaves the queue empty", () => {
+    expect(drainStep("read", 0)).toEqual({ go: false, halt: "done" });
+  });
+
+  it("stops, done, when the queue was already empty", () => {
+    expect(drainStep("nothing-to-read", 0)).toEqual({
+      go: false,
+      halt: "done",
+    });
+  });
+
+  /**
+   * The bug this function exists for.
+   *
+   * A reading that has just landed sets `last_read_at`, and the tally is
+   * keyed on the user rather than the instrument — so the very next call in
+   * the walk, arriving milliseconds later, is inside the cooldown. That is a
+   * refusal to answer *yet*, not a refusal to answer, and reporting it as a
+   * spent allowance is what made the walk stop after one instrument and
+   * blame the writer for it.
+   */
+  it("tells cooling apart from a spent allowance, and calls it retryable", () => {
+    expect(drainStep("cooling", 4)).toEqual({ go: false, halt: "cooling" });
+    expect(drainStep("allowance-spent", 4)).toEqual({
+      go: false,
+      halt: "allowance",
+    });
+    expect(haltIsRetryable("cooling")).toBe(true);
+    expect(haltIsRetryable("allowance")).toBe(false);
+  });
+
+  /**
+   * Every one of these leaves the instrument at the head of the queue, so
+   * carrying on would ask the same question again and again for as long as
+   * the queue had something in it.
+   */
+  it("stops rather than re-asking about the instrument that just refused", () => {
+    expect(drainStep("not-yours", 5)).toEqual({ go: false, halt: "not-yours" });
+    expect(drainStep("unavailable", 5)).toEqual({
+      go: false,
+      halt: "unavailable",
+    });
+    expect(drainStep("no-reader", 5)).toEqual({ go: false, halt: "no-reader" });
+    expect(drainStep("not-authenticated", 5)).toEqual({
+      go: false,
+      halt: "signed-out",
+    });
   });
 });

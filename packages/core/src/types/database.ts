@@ -58,7 +58,7 @@ type InstrumentReadingColumns = {
 };
 
 /** The columns of `instrument_reading_tallies`, written out once. */
-type InstrumentReadingTallyColumns = {
+export type InstrumentReadingTallyColumns = {
   user_id: string;
   tally_month: string;
   reads: number;

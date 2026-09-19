@@ -1342,8 +1342,7 @@ export const en = {
    */
   bearingFacts: {
     netPosition: "Everything, added up",
-    netPositionNote:
-      "accounts and investments only; this app records no debts",
+    netPositionNote: "accounts and investments only; this app records no debts",
     onHand: "In the accounts",
     invested: "Invested",
     investedShare: "Share of it invested",
@@ -1383,7 +1382,8 @@ export const en = {
     projectedKeptBare: "Everything kept",
     projectedKeptNote:
       "the accounts plus everything set aside, counted at what was put in rather than at what it might grow to",
-    projectedMonthlyNet: "What each month adds to the accounts, if nothing changes",
+    projectedMonthlyNet:
+      "What each month adds to the accounts, if nothing changes",
     committedMonthly: "One month of committed costs",
     runwayMonths: "Months the set-aside would cover",
     walletCost: "Put into the wallets",
@@ -1495,7 +1495,8 @@ export const en = {
     elapsedGone: "{percent}% of {month} gone",
     unreadableAccounts: {
       one: "Could not read {accounts} — its balance is not counted above.",
-      other: "Could not read {accounts} — their balances are not counted above.",
+      other:
+        "Could not read {accounts} — their balances are not counted above.",
     },
     fixLink: "Fix",
     spendingDownTitle:
@@ -1574,7 +1575,8 @@ export const en = {
   /** `MonthCloseHistory` / `MonthCloseHistoryCard`'s own words. */
   monthCloseHistory: {
     title: "Closed months",
-    normalMonthCost: "A normal month costs you about {amount} the app never sees.",
+    normalMonthCost:
+      "A normal month costs you about {amount} the app never sees.",
     oneMoreForBaseline:
       "One more close and there will be a normal month to compare against.",
     /**
@@ -1917,8 +1919,7 @@ export const en = {
       other:
         "{count} figures this rests on have moved since it was written, {age}.",
     },
-    standingProvisional:
-      "Written {age}, from the figures as they stood then.",
+    standingProvisional: "Written {age}, from the figures as they stood then.",
     standingWritten: "Written {age}.",
   },
 
@@ -2041,6 +2042,23 @@ export const en = {
     readAll: "Read the rest",
     lastRead: "Read {when}",
 
+    /**
+     * Why a walk down the queue stopped before the queue was empty.
+     *
+     * Its own words rather than `walletRead`'s. That namespace is about the
+     * writer — the model that turns these figures into prose — and borrowing
+     * "the writer did not answer" for a reading that was merely refused *yet*
+     * is how a two-second cooldown came to look like a broken feature.
+     */
+    halt: {
+      cooling: "Still finishing the last one — try again in a moment.",
+      allowance: "This month's reading allowance is used up.",
+      notYours: "That instrument is no longer one of your holdings.",
+      noReader: "No reader is configured.",
+      unavailable: "That instrument could not be read just now.",
+      signedOut: "You have been signed out.",
+    },
+
     /* The caveats, said plainly. */
     caveats: {
       /** The three reasons a holding has not been read, each with its own fix. */
@@ -2062,7 +2080,8 @@ export const en = {
         "Overlap is a floor, not a measurement. Only each fund's published largest holdings were compared, so two funds shown as sharing a little may in truth be largely the same companies — the index they track is the more reliable signal.",
       staleReadings:
         "{count} readings are more than six months old. They are still used, because last year's composition is a better answer than none.",
-      noMarketValue: "Nothing is held yet, so there is nothing to look through.",
+      noMarketValue:
+        "Nothing is held yet, so there is nothing to look through.",
       partialAxis:
         "These figures cover {coverage} of what was read — a factsheet does not always publish the full breakdown. The shares are what was published, not a share of what was found, so they do not add up to everything.",
       geographyIsNotCurrency:
@@ -2103,8 +2122,7 @@ export const en = {
     noWriter: "No writer is configured.",
     noAnswer: "The writer did not answer just now.",
     unusable: "The writer's answer could not be used.",
-    threwAway:
-      "The writer's answer was thrown away. ({detail})",
+    threwAway: "The writer's answer was thrown away. ({detail})",
 
     /** Why an answer was thrown away. Short and plain; these are shown. */
     refusal: {
@@ -2188,7 +2206,8 @@ export const en = {
         one: "{count} month inside the allowance",
         other: "{count} months inside the allowance",
       },
-      streakNone: "No run yet — close a month inside the allowance to start one.",
+      streakNone:
+        "No run yet — close a month inside the allowance to start one.",
       bestRun: "Best so far: {count}",
       /** Block headings. The blocks themselves state figures, not what they are. */
       comparisonHeading: "Against last month",

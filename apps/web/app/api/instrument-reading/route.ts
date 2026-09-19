@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { readInstrument } from "@/lib/instrument-reading/read";
+import {
+  DRAIN_COOLDOWN_SECONDS,
+  readInstrument,
+} from "@/lib/instrument-reading/read";
 import { gatherLookThrough } from "@/lib/wallet-read/facts";
 import { sessionFromBearer } from "@/lib/supabase/bearer";
 
@@ -62,7 +65,10 @@ export async function POST(request: Request) {
       isin,
       item?.name ?? isin,
       item?.instrumentSymbol ?? null,
-      session.supabase,
+      // No quiet period, for the same reason the web action passes none: the
+      // phone walks its queue a request at a time and would otherwise be
+      // refused on every request after the first.
+      { client: session.supabase, cooldownSeconds: DRAIN_COOLDOWN_SECONDS },
     );
 
     return Response.json({

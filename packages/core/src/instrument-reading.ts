@@ -401,10 +401,7 @@ export function readingAgeDays(reading: InstrumentReading, now: Date): number {
  * daily job should put this instrument back in the queue, and the surface
  * should say how old the figures are.
  */
-export function readingIsStale(
-  reading: InstrumentReading,
-  now: Date,
-): boolean {
+export function readingIsStale(reading: InstrumentReading, now: Date): boolean {
   return (
     reading.version < READING_VERSION ||
     readingAgeDays(reading, now) > READING_FRESH_DAYS
@@ -443,7 +440,11 @@ export function readingQueue(
       const leftReading = readings.get(left);
       const rightReading = readings.get(right);
       if (leftReading === undefined || rightReading === undefined) {
-        return leftReading === undefined ? (rightReading === undefined ? 0 : -1) : 1;
+        return leftReading === undefined
+          ? rightReading === undefined
+            ? 0
+            : -1
+          : 1;
       }
       const byCompleteness =
         readingCompleteness(leftReading) - readingCompleteness(rightReading);
@@ -481,4 +482,95 @@ export function createFakeInstrumentReadingSource(
       return answers[request.isin.trim().toUpperCase()] ?? null;
     },
   };
+}
+
+/**
+ * Every answer a request to read one instrument can come back with.
+ *
+ * Held here rather than beside the caller because three places need to agree
+ * on it: the adapter in `apps/web` that talks to the tally, the server action
+ * that wraps it, and the queue walk below that decides what to do next. It
+ * used to be written out separately in each, and the drift between two of
+ * those spellings is what this module's `drainStep` was added to end.
+ */
+export const INSTRUMENT_READ_STATUSES = [
+  "read",
+  "already-fresh",
+  "nothing-to-read",
+  "cooling",
+  "allowance-spent",
+  "not-yours",
+  "no-reader",
+  "unavailable",
+  "not-authenticated",
+] as const;
+
+export type InstrumentReadStatus = (typeof INSTRUMENT_READ_STATUSES)[number];
+
+/** Why a walk down the queue stopped. */
+export type DrainHalt =
+  | "done"
+  | "cooling"
+  | "allowance"
+  | "not-yours"
+  | "no-reader"
+  | "unavailable"
+  | "signed-out";
+
+export type DrainStep =
+  { go: true; remaining: number } | { go: false; halt: DrainHalt };
+
+/**
+ * What the queue walk should do with one instrument's answer.
+ *
+ * Pure, and here rather than inside the button, because the rule it encodes
+ * is not obvious and was got wrong: the walk carries on only when the queue
+ * actually moved. A reading that landed moved it, and so did one that turned
+ * out to be fresh already — nothing was bought, but the instrument is behind
+ * us either way. Every other answer leaves the instrument exactly where it
+ * was, at the head of the queue, so carrying on would ask the same question
+ * about the same instrument for as long as the queue had anything in it.
+ *
+ * `cooling` is the one halt that is worth offering to retry. The tally is
+ * keyed on the user rather than the instrument, so a reading that has just
+ * landed puts the *next* instrument inside the cooldown — a refusal to answer
+ * yet, not a refusal to answer. Reporting that as a spent allowance is what
+ * made this walk stop after a single instrument and blame the writer for it.
+ */
+export function drainStep(
+  status: InstrumentReadStatus,
+  remaining: number,
+): DrainStep {
+  switch (status) {
+    case "read":
+    case "already-fresh":
+      return remaining > 0
+        ? { go: true, remaining }
+        : { go: false, halt: "done" };
+    case "nothing-to-read":
+      return { go: false, halt: "done" };
+    case "cooling":
+      return { go: false, halt: "cooling" };
+    case "allowance-spent":
+      return { go: false, halt: "allowance" };
+    case "not-yours":
+      return { go: false, halt: "not-yours" };
+    case "no-reader":
+      return { go: false, halt: "no-reader" };
+    case "unavailable":
+      return { go: false, halt: "unavailable" };
+    case "not-authenticated":
+      return { go: false, halt: "signed-out" };
+  }
+}
+
+/**
+ * Whether pressing the same button again could get further.
+ *
+ * Only the cooldown: it clears by itself within seconds. A spent allowance
+ * waits for the month to turn, an unread instrument needs a working reader,
+ * and the other three are not about time at all.
+ */
+export function haltIsRetryable(halt: DrainHalt): boolean {
+  return halt === "cooling";
 }

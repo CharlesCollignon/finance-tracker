@@ -4,8 +4,12 @@ import {
   READING_VERSION,
   readingIsStale,
   verifyInstrumentReading,
+  type InstrumentReadStatus,
 } from "@finance/core/instrument-reading";
-import type { Database } from "@finance/core/types/database";
+import type {
+  Database,
+  InstrumentReadingTallyColumns,
+} from "@finance/core/types/database";
 import { instrumentReadingConfigured } from "@/lib/instrument-reading/client";
 import { instrumentReadingSource } from "@/lib/instrument-reading/source";
 import {
@@ -43,19 +47,74 @@ type Client = SupabaseClient<Database>;
  */
 export const READINGS_PER_MONTH = 40;
 
-/** A second press on the same button is one call. */
+/**
+ * How long the tally must have been quiet before a press may reserve.
+ *
+ * A second press on the same button is one call. Note what this is keyed on:
+ * `instrument_reading_tallies` has one row per *user*, so this is a quiet
+ * period across the whole portfolio and not across one instrument. That is
+ * the right shape for a person pressing a button twice and the wrong shape
+ * for a walk down the queue, which asks about a different instrument each
+ * time and asks immediately — see `DRAIN_COOLDOWN_SECONDS`.
+ */
 const COOLDOWN_SECONDS = 2;
+
+/**
+ * No quiet period at all, for a caller walking the queue.
+ *
+ * A reading that lands sets `last_read_at`, so the next instrument in a walk
+ * arrives milliseconds inside the cooldown and is refused — which the caller
+ * could only read as a spent allowance, so it stopped and said the writer had
+ * not answered. One instrument per press, and a misleading toast with it.
+ *
+ * Dropping the quiet period for a walk is safe because it was never the thing
+ * bounding this. `pending_since` still allows exactly one call in flight per
+ * user, `READINGS_PER_MONTH` still caps the month, and the reservation
+ * function still refuses any ISIN the caller does not hold. The cooldown only
+ * ever added a window *after* a call returned, which a genuine double-press
+ * never lands in — the call takes tens of seconds, so the second press of a
+ * double-press lands during it, on `pending_since`.
+ */
+export const DRAIN_COOLDOWN_SECONDS = 0;
 
 /** Longer than any read takes, short enough not to strand a retry. */
 const RESERVATION_SECONDS = 120;
 
-export type ReadInstrumentOutcome =
-  | { status: "read" }
-  | { status: "already-fresh" }
-  | { status: "not-yours" }
-  | { status: "allowance-spent" }
-  | { status: "no-reader" }
-  | { status: "unavailable" };
+/**
+ * What one attempt came back with.
+ *
+ * The statuses themselves live in `@finance/core/instrument-reading`, because
+ * the queue walk that reacts to them is there too and the two drifting apart
+ * is what this function's caller used to get wrong. Narrowed here to the ones
+ * a single attempt can actually produce: `nothing-to-read` is a fact about a
+ * queue rather than an instrument, and `not-authenticated` is decided before
+ * anything reaches this module.
+ */
+export type ReadInstrumentOutcome = {
+  status: Extract<
+    InstrumentReadStatus,
+    | "read"
+    | "already-fresh"
+    | "not-yours"
+    | "cooling"
+    | "allowance-spent"
+    | "no-reader"
+    | "unavailable"
+  >;
+};
+
+export interface ReadInstrumentOptions {
+  client?: Client;
+  now?: Date;
+  /**
+   * The quiet period this attempt must respect, in seconds.
+   *
+   * Stated by the caller rather than defaulted silently, so that the one
+   * caller for which the house default is wrong — the queue walk — has to say
+   * so in its own code instead of inheriting a refusal it cannot explain.
+   */
+  cooldownSeconds?: number;
+}
 
 function thisMonthColumn(): string {
   const { year, month } = getCurrentMonth();
@@ -76,9 +135,14 @@ export async function readInstrument(
   isin: string,
   name: string,
   symbol: string | null,
-  client?: Client,
-  now: Date = new Date(),
+  options: ReadInstrumentOptions = {},
 ): Promise<ReadInstrumentOutcome> {
+  const {
+    client,
+    now = new Date(),
+    cooldownSeconds = COOLDOWN_SECONDS,
+  } = options;
+
   if (!instrumentReadingConfigured()) {
     return { status: "no-reader" };
   }
@@ -112,7 +176,7 @@ export async function readInstrument(
       target_isin: normalised,
       this_month: thisMonthColumn(),
       allowance: READINGS_PER_MONTH,
-      cooldown_seconds: COOLDOWN_SECONDS,
+      cooldown_seconds: cooldownSeconds,
       reservation_seconds: RESERVATION_SECONDS,
     },
   );
@@ -131,7 +195,7 @@ export async function readInstrument(
   }
 
   if (!reserved || reserved.reads <= before.reads) {
-    return { status: "allowance-spent" };
+    return { status: whyDeclined(reserved, cooldownSeconds, now) };
   }
 
   const answer = await instrumentReadingSource.read({
@@ -182,6 +246,52 @@ export async function readInstrument(
   }
 
   return { status: "read" };
+}
+
+/**
+ * Why a reservation was declined.
+ *
+ * `reserve_instrument_reading` hands the tally row back unchanged when its
+ * conflict clause refuses, so the reason has to be read off the row rather
+ * than returned by it. Three are possible and they mean very different things
+ * to a caller: a cooldown clears in seconds, a reservation in flight clears
+ * within two minutes, and a spent allowance waits for the month to turn.
+ *
+ * Told apart here rather than at the call site because the thresholds are
+ * this module's — a caller would have to be handed both of them to ask the
+ * same question. Every one of them used to answer `allowance-spent`, which is
+ * the least true of the three and the only one that sounds final.
+ */
+function whyDeclined(
+  row: InstrumentReadingTallyColumns | null,
+  cooldownSeconds: number,
+  now: Date,
+): Extract<
+  InstrumentReadStatus,
+  "cooling" | "allowance-spent" | "unavailable"
+> {
+  if (row === null) {
+    return "unavailable";
+  }
+
+  const elapsed = (stamp: string | null): number | null =>
+    stamp === null ? null : now.getTime() - Date.parse(stamp);
+
+  // Another call is still out. It will clear on its own, either by landing or
+  // by ageing past the reservation window.
+  const inFlight = elapsed(row.pending_since);
+  if (inFlight !== null && inFlight < RESERVATION_SECONDS * 1000) {
+    return "cooling";
+  }
+
+  // A reading landed a moment ago. With `cooldownSeconds` at zero this can
+  // never be the reason, which is the whole point of letting a walk pass zero.
+  const settled = elapsed(row.last_read_at);
+  if (settled !== null && settled < cooldownSeconds * 1000) {
+    return "cooling";
+  }
+
+  return row.reads >= READINGS_PER_MONTH ? "allowance-spent" : "unavailable";
 }
 
 /** Hand the attempt back. Never fatal — see `refundWalletRead`. */
