@@ -1,0 +1,174 @@
+/**
+ * What a category's run of months has been doing.
+ *
+ * `category-history.ts` draws the series; this reads it. They are different
+ * jobs: a screen that states twelve figures and draws no conclusion leaves
+ * the reader to do the one thing a computer is better at, which is noticing
+ * that a number has been going the same way for five months.
+ *
+ * Carries no rendered text, only a key and its parameters — the precedent is
+ * `attention.ts`, and the reason is the same: a client handed a key cannot
+ * introduce a fourth wording, because there is no string here to improvise
+ * from.
+ *
+ * Pure. Testable without a database, a network or a model.
+ */
+
+import type { CategoryHistory, CategoryMonthPoint } from "./category-history";
+import type { Key, Vars } from "./i18n/t";
+import type { CategoryType } from "./types/database";
+
+export type FindingKind = "drift" | "odd-month" | "gone-quiet" | "every-year";
+
+export interface CategoryFinding {
+  /** Stable across a render, and what the model names when it re-ranks. */
+  id: string;
+  kind: FindingKind;
+  categoryId: string;
+  categoryName: string;
+  type: CategoryType;
+  /**
+   * What it is worth, in currency units a month. Always positive: which way
+   * it went is `direction`, and whether that is good news depends on the
+   * category type, which is the client's business.
+   */
+  severity: number;
+  direction: "up" | "down";
+  /** The months it points at, as `YYYY-MM`, oldest first. */
+  months: string[];
+  messageKey: Key;
+  params: Vars;
+}
+
+/**
+ * How many months back a normal is taken over.
+ *
+ * Twelve, not the whole read window. A category that genuinely stepped up a
+ * year ago has settled at its new level, and a normal dragged back towards
+ * the old one would report a drift that finished twelve months ago as though
+ * it were news. The deeper history is for `every-year` and nothing else.
+ */
+export const NORMAL_WINDOW = 12;
+
+/** The recent side of a drift, and the side it is measured against. */
+export const DRIFT_RECENT = 3;
+export const DRIFT_BASELINE = 6;
+
+/**
+ * Both floors, and why there are two.
+ *
+ * A relative floor alone lets a four-euro category shout. An absolute floor
+ * alone lets a category with a large normal hide a real change inside it.
+ */
+export const DRIFT_RELATIVE_FLOOR = 0.15;
+export const DRIFT_ABSOLUTE_FLOOR = 25;
+
+function median(values: readonly number[]): number {
+  if (values.length === 0) {
+    return 0;
+  }
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[middle - 1]! + sorted[middle]!) / 2
+    : sorted[middle]!;
+}
+
+function round(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/**
+ * What a category costs in an ordinary month, and how much it usually varies.
+ *
+ * The spread is the median absolute deviation rather than a standard
+ * deviation, for the same reason the centre is a median: one monstrous month
+ * inflates a standard deviation enough to hide itself inside it.
+ */
+export function categoryNormal(
+  points: readonly CategoryMonthPoint[],
+  window: number = NORMAL_WINDOW,
+): { normal: number; spread: number } {
+  const recent = points.slice(-window).filter((point) => !point.empty);
+  const totals = recent.map((point) => point.total);
+  const normal = median(totals);
+  const spread = median(totals.map((total) => Math.abs(total - normal)));
+  return { normal: round(normal), spread: round(spread) };
+}
+
+/** Non-empty totals from a slice, for a median that ignores holes. */
+function activeTotals(points: readonly CategoryMonthPoint[]): number[] {
+  return points.filter((point) => !point.empty).map((point) => point.total);
+}
+
+function driftFinding(history: CategoryHistory): CategoryFinding | null {
+  const points = history.points;
+  const recent = points.slice(-DRIFT_RECENT);
+  const baseline = points.slice(
+    -(DRIFT_RECENT + DRIFT_BASELINE),
+    -DRIFT_RECENT,
+  );
+
+  const recentTotals = activeTotals(recent);
+  const baselineTotals = activeTotals(baseline);
+
+  // "Normal" needs something to be normal against. Three months either side
+  // is the least that can distinguish a run from two coincidences.
+  if (recentTotals.length < 3 || baselineTotals.length < 3) {
+    return null;
+  }
+
+  const before = median(baselineTotals);
+  const after = median(recentTotals);
+  const gap = after - before;
+  const size = Math.abs(gap);
+
+  if (before <= 0) {
+    return null;
+  }
+  if (size < DRIFT_ABSOLUTE_FLOOR || size / before < DRIFT_RELATIVE_FLOOR) {
+    return null;
+  }
+
+  const direction = gap > 0 ? "up" : "down";
+  const months = recent.map((point) => point.monthKey);
+
+  return {
+    id: `drift:${history.categoryId}`,
+    kind: "drift",
+    categoryId: history.categoryId,
+    categoryName: history.name,
+    type: history.type,
+    severity: round(size),
+    direction,
+    months,
+    messageKey:
+      direction === "up"
+        ? "categoryFindings.driftUp"
+        : "categoryFindings.driftDown",
+    params: { months: DRIFT_RECENT },
+  };
+}
+
+/**
+ * Every finding across every category, heaviest first.
+ *
+ * Heaviest in currency units a month, never as a percentage and never as a
+ * composite score. Currency units are comparable between categories and
+ * percentages are not, and this is the ordering the screen falls back to when
+ * no model answers — so it has to stand on its own rather than be a stopgap.
+ */
+export function buildCategoryFindings(
+  histories: readonly CategoryHistory[],
+): CategoryFinding[] {
+  const findings: CategoryFinding[] = [];
+
+  for (const history of histories) {
+    const drift = driftFinding(history);
+    if (drift) {
+      findings.push(drift);
+    }
+  }
+
+  return findings.sort((a, b) => b.severity - a.severity);
+}

@@ -24,6 +24,7 @@
     "./budget-limits": "./src/budget-limits.ts",
     "./calendar": "./src/calendar.ts",
     "./categories": "./src/categories.ts",
+    "./category-findings": "./src/category-findings.ts",
     "./category-history": "./src/category-history.ts",
     "./category-styles": "./src/category-styles.ts",
     "./constants": "./src/constants.ts",
