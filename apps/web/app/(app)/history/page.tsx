@@ -269,7 +269,19 @@ export default async function HistoryPage() {
    * at all.
    */
   const readMonthLabel = formatMonthLabel(current.year, current.month, locale);
-  const readConfigured = categoryReadConfigured();
+  /**
+   * Whether the panel may offer a read at all — both halves, as the band's
+   * re-rank has below, and for the same two failures.
+   *
+   * No model key and the button would do nothing, so there is none. Migration
+   * 035 unapplied and the attempt could not be counted, and a call that
+   * cannot be counted is a call that is not capped — so there is none there
+   * either. Without the second half the panel showed a disabled button
+   * reading "No reads left this month" on a deployment where the allowance is
+   * untouched and the table it would be counted in does not exist, which is
+   * both a refusal nobody earned and a sentence that is not true.
+   */
+  const readConfigured = categoryReadConfigured() && tally.tracked;
   const readWritesLeft = tally.tracked
     ? writesRemaining(
         { writes: tally.writes, refused: 0, lastWrittenAt: null, pendingSince: null },
