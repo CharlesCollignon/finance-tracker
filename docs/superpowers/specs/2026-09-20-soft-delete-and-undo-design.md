@@ -56,10 +56,13 @@ Both hold a slot that a soft-deleted row would keep occupying.
 
 - `categories`: `unique (user_id, name, type)` — a deleted "Groceries"
   expense would block creating a new one under the same name.
-- `transactions`: `transactions_recurring_month_uidx` on
-  `(user_id, recurring_template_id, month)` — a deleted recurring charge
-  would block re-applying that template for that month, which is exactly what
-  someone does after deleting one by mistake.
+- `transactions`: `transactions_recurring_date_uidx` on
+  `(user_id, recurring_template_id, occurred_on)` — a deleted recurring
+  charge would block re-applying that template for that date, which is
+  exactly what someone does after deleting one by mistake. (Note the name:
+  `001` created a month-based `transactions_recurring_month_uidx` and `002`
+  dropped it for this date-based one. Targeting the dead name would have
+  left the live constraint untouched and the partial index uncreated.)
 
 Both become partial: `where deleted_at is null`.
 
