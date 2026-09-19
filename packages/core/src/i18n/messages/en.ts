@@ -616,6 +616,26 @@ export const en = {
   },
 
   /** Wallets: what is invested, and what it is worth now. */
+  /**
+   * The one-bar breakdown, wherever it is drawn.
+   *
+   * Three screens show `SpendStrip` — the month's wallets, a Bearing panel
+   * and the findings band — so its two strings live at the top level rather
+   * than under any one of them.
+   */
+  spendStrip: {
+    /** The pooled tail, under the bands that got a colour of their own. */
+    more: {
+      one: "{count} more",
+      other: "{count} more",
+    },
+    /** What a screen reader is told about the bar itself. */
+    label: {
+      one: "Spending split across {count} category",
+      other: "Spending split across {count} categories",
+    },
+  },
+
   wallets: {
     /** The quotes, and taking fresh ones. */
     refreshQuotes: "Refresh prices",

@@ -476,6 +476,17 @@ export const fr: Messages = {
     months: "{count} derniers mois",
   },
 
+  spendStrip: {
+    more: {
+      one: "{count} autre",
+      other: "{count} autres",
+    },
+    label: {
+      one: "Dépenses réparties sur {count} catégorie",
+      other: "Dépenses réparties sur {count} catégories",
+    },
+  },
+
   wallets: {
     refreshQuotes: "Actualiser les cours",
     refreshingQuotes: "Actualisation…",

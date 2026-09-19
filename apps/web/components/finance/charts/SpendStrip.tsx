@@ -1,6 +1,8 @@
 "use client";
 
 import { useFormatCurrency } from "@/lib/use-currency";
+import { useT } from "@/lib/locale-context";
+import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import type { CategoryBreakdown } from "@finance/core/types/database";
 
 interface SpendStripProps {
@@ -30,9 +32,17 @@ const SERIES = [
  *
  * Five bands and a remainder, because a band thinner than a couple of percent
  * is a colour nobody can match to a legend.
+ *
+ * Every word here is a key and every amount sits in a `PrivateAmount`,
+ * including the pooled tail's label and the bar's own description for a
+ * screen reader. Those were English in the source and legible through privacy
+ * mode until this commit; the rule on this project is that a surface we touch
+ * goes through the catalogues and the wrapper whole, and a chart drawn on
+ * three screens is three surfaces.
  */
 export function SpendStrip({ rows, total, bands = 5 }: SpendStripProps) {
   const formatMoney = useFormatCurrency();
+  const t = useT();
 
   if (total <= 0 || rows.length === 0) {
     return null;
@@ -54,7 +64,7 @@ export function SpendStrip({ rows, total, bands = 5 }: SpendStripProps) {
       ? [
           {
             key: "rest",
-            name: `${rest.length} more`,
+            name: t("spendStrip.more", { count: rest.length }),
             amount: restTotal,
             color: "var(--muted-foreground)",
           },
@@ -67,7 +77,7 @@ export function SpendStrip({ rows, total, bands = 5 }: SpendStripProps) {
       <div
         className="flex h-2.5 w-full overflow-hidden rounded-full"
         role="img"
-        aria-label={`Spending split across ${segments.length} categories`}
+        aria-label={t("spendStrip.label", { count: segments.length })}
       >
         {segments.map((segment) => (
           <div
@@ -96,9 +106,9 @@ export function SpendStrip({ rows, total, bands = 5 }: SpendStripProps) {
                 {segment.name}
               </span>
             </span>
-            <span className="shrink-0 tabular-nums">
+            <PrivateAmount className="shrink-0">
               {formatMoney(segment.amount)}
-            </span>
+            </PrivateAmount>
           </li>
         ))}
       </ul>
