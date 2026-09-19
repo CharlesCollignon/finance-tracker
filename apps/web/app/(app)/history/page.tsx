@@ -61,12 +61,33 @@ export default async function HistoryPage() {
     findings: findings.filter((f) => f.categoryId === history.categoryId),
   }));
 
+  /** This month's expense composition, for the strip. `SpendStrip` sorts. */
+  const latestKey = `${current.year}-${String(current.month).padStart(2, "0")}`;
+  const breakdown = histories
+    .filter((history) => history.type === "expense")
+    .map((history) => ({
+      categoryId: history.categoryId,
+      name: history.name,
+      type: "expense" as const,
+      icon: null,
+      total:
+        history.points.find((point) => point.monthKey === latestKey)?.total ??
+        0,
+    }))
+    .filter((row) => row.total > 0);
+  const breakdownTotal = breakdown.reduce((sum, row) => sum + row.total, 0);
+
   return (
     <>
       <PageHeader titleKey="nav.ledger" />
       <PageContainer>
         <SurfaceTabs tabs={LEDGER_TABS} className="mb-4" />
-        <CategoryHistoryView cards={cards} findings={findings} />
+        <CategoryHistoryView
+          cards={cards}
+          findings={findings}
+          breakdown={breakdown}
+          breakdownTotal={breakdownTotal}
+        />
       </PageContainer>
     </>
   );

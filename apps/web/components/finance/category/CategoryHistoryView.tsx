@@ -2,14 +2,18 @@
 
 import { useState } from "react";
 import type { CategoryFinding } from "@finance/core/category-findings";
+import type { CategoryBreakdown } from "@finance/core/types/database";
 import { Card } from "@/components/retroui/Card";
 import { useT } from "@/lib/locale-context";
 import { CategoryGrid } from "./CategoryGrid";
+import { FindingBand } from "./FindingBand";
 import type { CategoryCard } from "./CategoryTile";
 
 interface CategoryHistoryViewProps {
   cards: CategoryCard[];
   findings: CategoryFinding[];
+  breakdown: CategoryBreakdown[];
+  breakdownTotal: number;
 }
 
 const PANEL_ID = "category-panel";
@@ -24,6 +28,8 @@ const PANEL_ID = "category-panel";
 export function CategoryHistoryView({
   cards,
   findings,
+  breakdown,
+  breakdownTotal,
 }: CategoryHistoryViewProps) {
   const t = useT();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -39,12 +45,23 @@ export function CategoryHistoryView({
     );
   }
 
+  const toggle = (id: string) =>
+    setOpenId((current) => (current === id ? null : id));
+
   return (
     <div className="flex flex-col gap-6">
+      <FindingBand
+        findings={findings}
+        breakdown={breakdown}
+        breakdownTotal={breakdownTotal}
+        openId={openId}
+        onOpen={toggle}
+        panelId={PANEL_ID}
+      />
       <CategoryGrid
         cards={cards}
         openId={openId}
-        onOpen={(id) => setOpenId((current) => (current === id ? null : id))}
+        onOpen={toggle}
         panel={null}
         panelId={PANEL_ID}
       />
