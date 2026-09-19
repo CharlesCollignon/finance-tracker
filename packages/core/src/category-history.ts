@@ -11,6 +11,11 @@ import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
  * One category at a time, deliberately. A chart of every category at once
  * shows the total and hides the thing you came to find out, which is whether
  * groceries have crept up since spring.
+ *
+ * A `trend` field lived here and has been removed. It compared the latest
+ * month to the mean of the ones before it, which is the same question
+ * `category-findings.ts` now answers off a median and two floors. Two answers
+ * to one question on one screen is how a reader learns to trust neither.
  */
 
 import { formatMonthLabel, shiftMonth } from "./constants";
@@ -39,12 +44,6 @@ export interface CategoryHistory {
   /** The largest month, which is what the bars are drawn against. */
   peak: number;
   total: number;
-  /**
-   * The most recent month against the average of the ones before it, as a
-   * fraction: 0.2 means a fifth above normal. Null until there is enough
-   * history for "normal" to mean anything.
-   */
-  trend: number | null;
   /**
    * True when payments were counted against the period they belong to rather
    * than the calendar month they cleared in — see pay-period.ts. A month in
@@ -172,15 +171,6 @@ export function buildCategoryHistory(
     const average = active.length > 0 ? total / active.length : 0;
     const peak = points.reduce((max, point) => Math.max(max, point.total), 0);
 
-    const latest = points[points.length - 1];
-    const earlier = active.filter(
-      (point) => point.monthKey !== latest?.monthKey,
-    );
-    const baseline =
-      earlier.length >= 2
-        ? earlier.reduce((sum, point) => sum + point.total, 0) / earlier.length
-        : null;
-
     histories.push({
       categoryId,
       name: entry.name,
@@ -189,10 +179,6 @@ export function buildCategoryHistory(
       average: Math.round(average * 100) / 100,
       peak,
       total: Math.round(total * 100) / 100,
-      trend:
-        baseline !== null && baseline > 0 && latest && !latest.empty
-          ? Math.round(((latest.total - baseline) / baseline) * 100) / 100
-          : null,
       periodShifted: entry.shifted,
     });
   }

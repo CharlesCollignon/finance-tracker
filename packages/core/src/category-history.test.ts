@@ -64,34 +64,6 @@ describe("buildCategoryHistory", () => {
     expect(history!.peak).toBe(100);
   });
 
-  it("reads the latest month against the ones before it", () => {
-    const [history] = buildCategoryHistory(
-      [
-        tx("2026-06-04", 100),
-        tx("2026-07-04", 100),
-        tx("2026-08-04", 100),
-        tx("2026-09-04", 150),
-      ],
-      2026,
-      9,
-      { months: 4 },
-    );
-
-    // Half again over a 100 baseline.
-    expect(history!.trend).toBe(0.5);
-  });
-
-  it("says nothing about a trend it cannot support", () => {
-    const [history] = buildCategoryHistory(
-      [tx("2026-08-04", 100), tx("2026-09-04", 150)],
-      2026,
-      9,
-      { months: 3 },
-    );
-
-    expect(history!.trend).toBeNull();
-  });
-
   it("counts a withdrawal against what was set aside", () => {
     // Moving money back out should not read as a month of heavy saving.
     const [history] = buildCategoryHistory(
