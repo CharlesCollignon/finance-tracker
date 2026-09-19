@@ -29,10 +29,15 @@ jobs:
         with:
           # Pinned to 20 to match local development: local Node is v20.20.2
           # and there is no .nvmrc. NOTE: @supabase/supabase-js emits a
-          # deprecation warning on Node 20 and wants Node 22. Flagging this
-          # only - changing the CI/runtime Node version is the owner's call,
-          # not something to fold into a CI-workflow commit.
-          node-version: "20"
+          # Node 22, because pnpm@11.7.0 requires it: it imports
+          # `node:sqlite`, which does not exist before Node 22.13, and the
+          # runner installs the exact pnpm named in `packageManager`. The
+          # first CI run pinned 20 to match local dev and died here with
+          # ERR_UNKNOWN_BUILTIN_MODULE before reaching a single gate.
+          # `@supabase/supabase-js` also warns on Node 20 and wants 22, so
+          # this satisfies both. Local dev is still on v20.20.2 - if a gate
+          # ever passes on one and fails on the other, that gap is why.
+          node-version: "22"
           cache: pnpm
 
       - name: Install dependencies
