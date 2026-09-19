@@ -198,6 +198,7 @@ as $$
 declare
   this_month date := date_trunc('month', now())::date;
   result category_reads;
+  blocked boolean;
 begin
   if not acting_for(target_user) then
     raise exception 'reserve_category_read: not permitted for that user';
@@ -226,17 +227,57 @@ begin
       target_category;
   end if;
 
+  -- Still cooling, or an attempt already in flight: nothing to reserve, and
+  -- so nothing to spend.
+  --
+  -- This test lived only inside the `on conflict do update` clause below, and
+  -- that clause is not reached on the first press of a calendar month: with
+  -- no tally row yet the INSERT takes the plain branch and succeeds
+  -- unconditionally. The read's own row then declined, as it should, and the
+  -- month was left a write poorer with nothing reserved for it — which is
+  -- precisely what the clause below was written to prevent, missing on the
+  -- one press it could not see. Asked here, it covers both branches.
+  select exists (
+    select 1
+      from category_reads blocking
+     where blocking.user_id = target_user
+       and blocking.category_id = target_category
+       and (
+         (
+           blocking.last_written_at is not null
+           and blocking.last_written_at
+                 >= now() - make_interval(secs => cooldown_seconds)
+         )
+         or (
+           blocking.pending_since is not null
+           and blocking.pending_since
+                 >= now() - make_interval(secs => reservation_seconds)
+         )
+       )
+  ) into blocked;
+
+  if blocked then
+    -- Hand back the row as it stands, exactly as the bottom of this function
+    -- does: the caller learns the reservation was declined by comparing
+    -- `writes` with what it held before, and this path leaves it unmoved.
+    select * into result from category_reads
+      where user_id = target_user and category_id = target_category;
+    return result;
+  end if;
+
   with spent as (
     insert into category_read_tallies (user_id, month, writes)
     values (target_user, this_month, 1)
     on conflict (user_id, month) do update
       set writes = category_read_tallies.writes + 1
       where category_read_tallies.writes < allowance
-        -- The cooldown is tested here as well as under the read's own row
-        -- lock below, and it is not belt and braces. Without it, a press
-        -- refused for being too soon would still have spent a write: somebody
-        -- leaning on the button would burn the month's allowance without a
-        -- single call ever being made.
+        -- The same test again, and still not belt and braces. The one above
+        -- runs in its own statement and so on its own snapshot; a press that
+        -- committed in between would be invisible to it and visible here.
+        -- What it leaves uncovered is only the case the note above this
+        -- function already names: presses arriving in the same instant, none
+        -- of which can see the others' reservations, which overspend the
+        -- user's own remaining writes and never the ceiling.
         and not exists (
           select 1
             from category_reads blocking
