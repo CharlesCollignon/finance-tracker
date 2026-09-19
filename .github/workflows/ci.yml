@@ -46,6 +46,19 @@ jobs:
       - name: Typecheck web
         run: pnpm --filter web exec tsc --noEmit
 
+      # apps/mobile/expo-env.d.ts supplies the ambient module declarations
+      # (e.g. for the `@/global.css` side-effect import) that the mobile
+      # typecheck needs, but Expo's own convention is for that file to be
+      # gitignored (apps/mobile/.gitignore) and machine-generated, so a
+      # fresh checkout never has it. Regenerate it the same way `expo
+      # start` would, non-interactively, via the CLI's documented
+      # `customize` command (`npx expo customize --help`: "Generate static
+      # project files"). This is a no-op against already-correct
+      # tsconfig.json/.gitignore content; it only (re)writes
+      # expo-env.d.ts and the also-gitignored .expo/types/router.d.ts.
+      - name: Generate mobile's expo-env.d.ts
+        run: pnpm --filter mobile exec expo customize tsconfig.json
+
       - name: Typecheck mobile
         run: pnpm --filter mobile exec tsc --noEmit
 
