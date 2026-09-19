@@ -16,6 +16,15 @@ import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
  * month to the mean of the ones before it, which is the same question
  * `category-findings.ts` now answers off a median and two floors. Two answers
  * to one question on one screen is how a reader learns to trust neither.
+ *
+ * `average` went with it, one wave later: it was the mean `trend` was
+ * computed from, and with `trend` gone nothing read it. A mean sitting on
+ * this interface beside a median is an invitation to the same confusion —
+ * `CONTEXT.md`'s entry for a normal lists "average" under _Avoid_ — and it
+ * was being taken over thirty-six months, where it meant even less. `peak`
+ * went for the plainer reason: the tile computes its own, over the twelve
+ * months it actually draws. Neither was reachable, and `knip` cannot see an
+ * interface field, which is why nothing caught them.
  */
 
 import { formatMonthLabel, shiftMonth } from "./constants";
@@ -41,10 +50,6 @@ export interface CategoryHistory {
   name: string;
   type: CategoryType;
   points: CategoryMonthPoint[];
-  /** Mean across the months that had anything in them. */
-  average: number;
-  /** The largest month, which is what the bars are drawn against. */
-  peak: number;
   total: number;
   /**
    * True when payments were counted against the period they belong to rather
@@ -183,16 +188,12 @@ export function buildCategoryHistory(
 
     const active = points.filter((point) => !point.empty);
     const total = active.reduce((sum, point) => sum + point.total, 0);
-    const average = active.length > 0 ? total / active.length : 0;
-    const peak = points.reduce((max, point) => Math.max(max, point.total), 0);
 
     histories.push({
       categoryId,
       name: entry.name,
       type: entry.type,
       points,
-      average: Math.round(average * 100) / 100,
-      peak,
       total: Math.round(total * 100) / 100,
       periodShifted: entry.shifted,
     });

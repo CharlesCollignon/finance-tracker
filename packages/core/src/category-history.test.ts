@@ -50,8 +50,7 @@ describe("buildCategoryHistory", () => {
     expect(history!.points[0]!.total).toBe(100);
   });
 
-  it("averages over the months that had something in them", () => {
-    // Two months of 100, one empty: the average is 100, not 66.67.
+  it("totals the months that had something in them", () => {
     const [history] = buildCategoryHistory(
       [tx("2026-08-04", 100), tx("2026-09-04", 100)],
       2026,
@@ -59,9 +58,7 @@ describe("buildCategoryHistory", () => {
       { months: 3 },
     );
 
-    expect(history!.average).toBe(100);
     expect(history!.total).toBe(200);
-    expect(history!.peak).toBe(100);
   });
 
   it("counts a withdrawal against what was set aside", () => {
