@@ -279,6 +279,69 @@ function goneQuietFinding(history: CategoryHistory): CategoryFinding | null {
 }
 
 /**
+ * How many years the same calendar month has to behave the same way.
+ *
+ * Two, which is the least that can be a pattern rather than a coincidence,
+ * and the reason the read window is thirty-six months rather than twelve.
+ */
+export const SEASON_YEARS = 2;
+
+/**
+ * The calendar months this category reliably runs away from its normal in.
+ *
+ * Returned as the set of `YYYY-MM` keys inside the window that belong to
+ * those calendar months, because that is the form the demotion needs.
+ */
+function seasonalMonths(history: CategoryHistory): {
+  keys: Set<string>;
+  latest: CategoryMonthPoint | null;
+  direction: "up" | "down";
+} {
+  const { normal, spread } = categoryNormal(history.points);
+  const bar = Math.max(spread * ODD_MONTH_SPREADS, ODD_MONTH_ABSOLUTE_FLOOR);
+  const keys = new Set<string>();
+  let latest: CategoryMonthPoint | null = null;
+  let direction: "up" | "down" = "up";
+
+  if (normal <= 0) {
+    return { keys, latest, direction };
+  }
+
+  const byCalendarMonth = new Map<string, CategoryMonthPoint[]>();
+  for (const point of history.points) {
+    if (point.empty) {
+      continue;
+    }
+    const calendar = point.monthKey.slice(5);
+    byCalendarMonth.set(calendar, [
+      ...(byCalendarMonth.get(calendar) ?? []),
+      point,
+    ]);
+  }
+
+  for (const [, points] of byCalendarMonth) {
+    if (points.length < SEASON_YEARS) {
+      continue;
+    }
+    const up = points.every((point) => point.total - normal >= bar);
+    const down = points.every((point) => normal - point.total >= bar);
+    if (!up && !down) {
+      continue;
+    }
+    for (const point of points) {
+      keys.add(point.monthKey);
+    }
+    const last = points[points.length - 1]!;
+    if (!latest || last.monthKey > latest.monthKey) {
+      latest = last;
+      direction = up ? "up" : "down";
+    }
+  }
+
+  return { keys, latest, direction };
+}
+
+/**
  * Every finding across every category, heaviest first.
  *
  * Heaviest in currency units a month, never as a percentage and never as a
@@ -292,18 +355,48 @@ export function buildCategoryFindings(
   const findings: CategoryFinding[] = [];
 
   for (const history of histories) {
-    const drift = driftFinding(history);
-    if (drift) {
-      findings.push(drift);
+    const season = seasonalMonths(history);
+
+    // A finding every one of whose months is a month this category always
+    // behaves this way in is not news. Demoted rather than listed — see the
+    // design note: a screen that cries wolf on schedule is one nobody reads.
+    const survives = (finding: CategoryFinding | null) =>
+      finding && !finding.months.every((key) => season.keys.has(key))
+        ? finding
+        : null;
+
+    const kept = [
+      survives(driftFinding(history)),
+      survives(oddMonthFinding(history)),
+      survives(goneQuietFinding(history)),
+    ].filter((finding): finding is CategoryFinding => finding !== null);
+
+    // The seasonal note appears only when it silenced everything else, and
+    // only about the month on screen now. Said on its own it answers the
+    // question the demotion raises: why is this high month not a finding?
+    const currentIsSeasonal =
+      season.latest !== null &&
+      season.latest.monthKey ===
+        history.points[history.points.length - 1]?.monthKey;
+
+    if (kept.length === 0 && currentIsSeasonal && season.latest) {
+      const { normal } = categoryNormal(history.points);
+      findings.push({
+        id: `every-year:${history.categoryId}:${season.latest.monthKey}`,
+        kind: "every-year",
+        categoryId: history.categoryId,
+        categoryName: history.name,
+        type: history.type,
+        severity: round(Math.abs(season.latest.total - normal)),
+        direction: season.direction,
+        months: [season.latest.monthKey],
+        messageKey: "categoryFindings.everyYear",
+        params: { month: season.latest.label },
+      });
+      continue;
     }
-    const odd = oddMonthFinding(history);
-    if (odd) {
-      findings.push(odd);
-    }
-    const quiet = goneQuietFinding(history);
-    if (quiet) {
-      findings.push(quiet);
-    }
+
+    findings.push(...kept);
   }
 
   return findings.sort((a, b) => b.severity - a.severity);

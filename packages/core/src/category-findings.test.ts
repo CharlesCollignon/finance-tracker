@@ -279,3 +279,65 @@ describe("buildCategoryFindings, gone quiet", () => {
     expect(quiet!.severity).toBeGreaterThan(0);
   });
 });
+
+describe("buildCategoryFindings, every year", () => {
+  /** Thirty-six months, with `high` added every December and September. */
+  function seasonal(base: number, high: number): TransactionWithCategory[] {
+    const out: TransactionWithCategory[] = [];
+    for (let back = 35; back >= 0; back -= 1) {
+      const date = new Date(Date.UTC(2026, 8 - back, 4));
+      const month = date.getUTCMonth() + 1;
+      const amount = month === 12 || month === 9 ? high : base;
+      out.push(
+        tx(
+          date.toISOString().slice(0, 10),
+          amount,
+          "cat-energy",
+          "Energy",
+          "expense",
+        ),
+      );
+    }
+    return out;
+  }
+
+  it("does not call a September that is high every year a drift", () => {
+    const findings = findingsFor(seasonal(100, 400));
+
+    expect(findings.filter((f) => f.kind === "drift")).toEqual([]);
+    expect(findings.filter((f) => f.kind === "odd-month")).toEqual([]);
+  });
+
+  it("says instead that this month runs high every year", () => {
+    const findings = findingsFor(seasonal(100, 400));
+
+    const season = findings.find((f) => f.kind === "every-year");
+    expect(season).toBeDefined();
+    expect(season!.months).toEqual(["2026-09"]);
+    expect(season!.messageKey).toBe("categoryFindings.everyYear");
+  });
+
+  it("still reports a spike in a month that is not seasonal", () => {
+    const transactions = seasonal(100, 400).filter(
+      (entry) => !entry.occurred_on.startsWith("2026-07"),
+    );
+    transactions.push(tx("2026-07-04", 900, "cat-energy", "Energy"));
+
+    const findings = buildCategoryFindings(
+      buildCategoryHistory(transactions, 2026, 9, { months: 36 }),
+    );
+
+    const odd = findings.find((f) => f.kind === "odd-month");
+    expect(odd!.months).toEqual(["2026-07"]);
+  });
+
+  it("will not call one year's September a pattern", () => {
+    // Twelve months: this September is high, and there is no earlier one to
+    // say it is high every year. One occurrence is a month, not a pattern.
+    const findings = buildCategoryFindings(
+      buildCategoryHistory(seasonal(100, 400), 2026, 9, { months: 12 }),
+    );
+
+    expect(findings.some((f) => f.kind === "every-year")).toBe(false);
+  });
+});
