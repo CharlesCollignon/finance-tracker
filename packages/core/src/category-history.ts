@@ -19,8 +19,10 @@ import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
  */
 
 import { formatMonthLabel, shiftMonth } from "./constants";
-import { groupByPayPeriod } from "./pay-period";
+import { groupByPayPeriod, type PayPeriodGrouping } from "./pay-period";
 import type { CategoryType, TransactionWithCategory } from "./types/database";
+
+export type { PayPeriodGrouping };
 
 export interface CategoryMonthPoint {
   /** YYYY-MM. */
@@ -78,6 +80,34 @@ export interface BuildCategoryHistoryOptions {
 }
 
 /**
+ * Which bucket each category's payments fall in, by its own rhythm.
+ *
+ * A fact about a category, not about a window: the grouping has to be worked
+ * out before any totalling, from every payment a category has, because a
+ * rhythm needs half a year of payments to be visible at all and a windowed
+ * read would cut it off. `buildCategoryHistory` is the one caller inside this
+ * package; `page.tsx` on the by-category screen is the other, needing the
+ * same bucket a transaction landed in to show what is actually behind a
+ * month the chart drew from a shifted period — see pay-period.ts for why a
+ * calendar prefix cannot answer that.
+ */
+export function categoryBucketing(
+  transactions: readonly TransactionWithCategory[],
+): Map<string, PayPeriodGrouping> {
+  const datesByCategory = new Map<string, string[]>();
+  for (const tx of transactions) {
+    const dates = datesByCategory.get(tx.category_id) ?? [];
+    dates.push(tx.occurred_on);
+    datesByCategory.set(tx.category_id, dates);
+  }
+  return new Map(
+    [...datesByCategory].map(
+      ([categoryId, dates]) => [categoryId, groupByPayPeriod(dates)] as const,
+    ),
+  );
+}
+
+/**
  * A series per category, over the window ending at (year, month).
  *
  * Every month in the window appears even where nothing was recorded, because
@@ -103,22 +133,7 @@ export function buildCategoryHistory(
     }
   >();
 
-  // Which bucket a payment falls in is a fact about its own category's
-  // rhythm, so the grouping has to be worked out per category before any
-  // totalling. A wider slice than the window is read for it: a rhythm needs
-  // half a year of payments to be visible at all, and the window's first
-  // month has neighbours outside it that decide where its payments land.
-  const datesByCategory = new Map<string, string[]>();
-  for (const tx of transactions) {
-    const dates = datesByCategory.get(tx.category_id) ?? [];
-    dates.push(tx.occurred_on);
-    datesByCategory.set(tx.category_id, dates);
-  }
-  const groupingByCategory = new Map(
-    [...datesByCategory].map(
-      ([categoryId, dates]) => [categoryId, groupByPayPeriod(dates)] as const,
-    ),
-  );
+  const groupingByCategory = categoryBucketing(transactions);
 
   for (const tx of transactions) {
     const grouping = groupingByCategory.get(tx.category_id);

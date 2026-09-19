@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
-import { buildCategoryHistory } from "@finance/core/category-history";
+import {
+  buildCategoryHistory,
+  categoryBucketing,
+} from "@finance/core/category-history";
 import {
   buildCategoryFindings,
   categoryNormal,
@@ -83,6 +86,12 @@ export default async function HistoryPage() {
     .filter((row) => row.total > 0);
   const breakdownTotal = breakdown.reduce((sum, row) => sum + row.total, 0);
 
+  // The same bucketing `buildCategoryHistory` used to build `points`, so a
+  // period-shifted category's "behind this month" list is drawn from the
+  // same buckets its chart is — not from a calendar prefix that can disagree
+  // with them. See `categoryBucketing`'s doc comment.
+  const bucketing = categoryBucketing(rows);
+
   /** The month a category's panel explains, and the entries inside it. */
   const behind = new Map<string, TransactionWithCategory[]>();
   /** Same target months as `behind`, as `YYYY-MM` and as a label. */
@@ -95,13 +104,16 @@ export default async function HistoryPage() {
     if (!target) {
       continue;
     }
+    const grouping = bucketing.get(card.history.categoryId);
     behind.set(
       card.history.categoryId,
       rows
         .filter(
           (row) =>
             row.category_id === card.history.categoryId &&
-            row.occurred_on.startsWith(target),
+            (grouping
+              ? grouping.keyOf(row.occurred_on) === target
+              : row.occurred_on.startsWith(target)),
         )
         .sort((a, b) => Number(b.amount) - Number(a.amount))
         .slice(0, 5),

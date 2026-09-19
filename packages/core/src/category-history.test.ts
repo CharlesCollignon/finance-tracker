@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCategoryHistory } from "./category-history";
+import { buildCategoryHistory, categoryBucketing } from "./category-history";
 import type { CategoryType, TransactionWithCategory } from "./types/database";
 
 function tx(
@@ -172,6 +172,47 @@ describe("buildCategoryHistory, when payments straddle a month boundary", () => 
     expect(new Set(active.map((point) => point.total))).toEqual(
       new Set([4500]),
     );
+  });
+
+  /**
+   * The by-category panel (Task 9) lists the transactions "behind" a bucket
+   * by calling `categoryBucketing` a second time and testing `keyOf(...)`
+   * against the bucket's key — it cannot filter on a calendar prefix, because
+   * for a period-shifted category like this one that prefix disagrees with
+   * the bucket `buildCategoryHistory` actually drew the chart from. This
+   * pins the invariant that makes that safe: for every bucket in the built
+   * series, the transactions `categoryBucketing` assigns to that bucket sum
+   * to exactly its `total`.
+   */
+  it("makes every bucket's total equal to the sum of the transactions categoryBucketing assigns to it", () => {
+    const dates = [
+      "2025-10-31",
+      "2025-12-01",
+      "2025-12-31",
+      "2026-02-01",
+      "2026-02-28",
+      "2026-03-31",
+      "2026-05-01",
+      "2026-05-31",
+      "2026-06-30",
+      "2026-07-31",
+      "2026-08-31",
+      "2026-10-01",
+    ];
+    const transactions = dates.map((date, index) =>
+      salary(`t${index}`, date),
+    );
+    const [history] = buildCategoryHistory(transactions, 2026, 9, {
+      months: 12,
+    });
+    const keyOf = categoryBucketing(transactions).get("pay")!.keyOf;
+
+    for (const point of history!.points) {
+      const sum = transactions
+        .filter((tx) => keyOf(tx.occurred_on) === point.monthKey)
+        .reduce((total, tx) => total + Number(tx.amount), 0);
+      expect(Math.round(sum * 100) / 100).toBe(point.total);
+    }
   });
 
   it("leaves ordinary spending on the calendar", () => {
