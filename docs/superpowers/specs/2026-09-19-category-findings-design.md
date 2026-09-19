@@ -319,7 +319,14 @@ later.
 | Table | Key | Holds |
 | --- | --- | --- |
 | `category_reads` | (user, category) | the read, the facts, the instant, the model, the prompt version, the refused count, the locale |
+| `category_read_tallies` | (user, month) | how many reads have been written this month, across every category |
 | `category_selections` | user | the selection, its digest, and the month's tally |
+
+Three tables rather than two, and the third is what the allowance forces. One
+allowance for all the reads on this screen cannot be counted in a table keyed
+by category — a per-category counter with a cap of ten is a cap of ten times
+however many categories exist, which is not a cap. So the reads stay keyed by
+(user, category) and the counting moves to a table of its own.
 
 `locale` is there from the first migration, because `028_month_read_locale`
 already paid for leaving it out once.
