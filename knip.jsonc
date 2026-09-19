@@ -153,20 +153,19 @@
         // ---------------------------------------------------------------
         // DEBT — orphaned files. Nothing imports any of these.
         //
-        // The first two are what the hand audit found. The other four this
+        // The first is what the hand audit found. The other four this
         // gate found on its first run, which is the argument for having it.
         //
-        // Read `MonthReadyCard.tsx` before deciding what to do with this
-        // list: it is "the month's opening moment", the card that applies the
-        // month's recurring templates, and it is unreachable from any screen.
-        // If that behaviour has no other home it is loss number six, already
-        // shipped, and it is the reason this file exists.
+        // `MonthReadyCard.tsx` — "the month's opening moment", the card that
+        // applied a month's recurring templates — used to be on this list.
+        // It had no other home, so it was deleted rather than re-homed; its
+        // only surviving importer-facing pieces (ApplyRecurringSheet,
+        // applyRecurringForMonth, etc.) are also used elsewhere and stayed.
         //
         // Each line is either a deletion or a restoration waiting for an
         // owner's decision. None of them is a permanent exemption.
         // ---------------------------------------------------------------
         "components/finance/CategoryTypeBadge.tsx",
-        "components/finance/MonthReadyCard.tsx",
         "components/retroui/Dialog.tsx",
         "components/retroui/Label.tsx",
         "components/retroui/Select.tsx",

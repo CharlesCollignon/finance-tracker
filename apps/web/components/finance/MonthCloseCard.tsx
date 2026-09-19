@@ -23,12 +23,10 @@ interface MonthCloseCardProps {
 /**
  * The month's closing moment.
  *
- * Its opposite number, MonthReadyCard, opens a month by filling it in from
- * the standing instructions. This one shuts it, and is the only place the app
- * asks for something it cannot work out for itself. One number, once a month,
- * in exchange for the only honest answer to "did I actually save anything" —
- * so it is worth a card rather than a setting buried on a screen nobody
- * visits.
+ * It shuts a month, and is the only place the app asks for something it
+ * cannot work out for itself. One number, once a month, in exchange for the
+ * only honest answer to "did I actually save anything" — so it is worth a
+ * card rather than a setting buried on a screen nobody visits.
  */
 export function MonthCloseCard({
   year,
