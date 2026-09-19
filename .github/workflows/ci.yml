@@ -62,6 +62,9 @@ jobs:
       - name: Typecheck mobile
         run: pnpm --filter mobile exec tsc --noEmit
 
+      - name: Typecheck core
+        run: pnpm --filter @finance/core exec tsc --noEmit
+
       - name: Reachability check
         run: pnpm check:reachability
 
@@ -89,24 +92,17 @@ jobs:
 # ---------------------------------------------------------------------
 # Gates NOT run by this workflow, and why, as measured on 2026-09-19:
 #
-# 1. `pnpm --filter @finance/core exec tsc --noEmit`
-#    Fails with exactly one error:
-#      src/push-routes.test.ts(89,15): TS2353 - 'share' does not exist in
-#      type 'BudgetProgress'.
-#    Pre-existing. Fix the type mismatch (or the test), then add this
-#    step back.
-#
-# 2. `pnpm --filter web lint`
+# 1. `pnpm --filter web lint`
 #    Fails with 9 errors, 2 warnings, all react-hooks/set-state-in-effect
 #    and react-hooks/refs findings in files unrelated to recent work.
 #    Fix (or explicitly suppress) those findings, then add this step back.
 #
-# 3. `pnpm --filter mobile lint`
+# 2. `pnpm --filter mobile lint`
 #    Fails with 42 problems (11 errors, 31 warnings) of a similar
 #    character to the web lint failures.
 #    Fix (or explicitly suppress) those findings, then add this step back.
 #
-# 4. The one excluded test file, see the comment above the test step:
+# 3. The one excluded test file, see the comment above the test step:
 #    packages/core/src/still-to-come.test.ts (1 failing assertion out of
 #    12 tests in that file). Fix the assertion, then drop the --exclude.
 #
