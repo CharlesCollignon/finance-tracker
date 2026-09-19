@@ -63,6 +63,18 @@ export const DRIFT_BASELINE = 6;
 export const DRIFT_RELATIVE_FLOOR = 0.15;
 export const DRIFT_ABSOLUTE_FLOOR = 25;
 
+/**
+ * How many spreads from the normal a month has to be before it is worth a
+ * sentence, and how many currency units at the least.
+ *
+ * Three spreads is not an appeal to statistical convention — with a median
+ * absolute deviation over twelve points it is simply the width at which the
+ * months a person would call unusual start being caught and the ones they
+ * would not, stop.
+ */
+export const ODD_MONTH_SPREADS = 3;
+export const ODD_MONTH_ABSOLUTE_FLOOR = 40;
+
 function median(values: readonly number[]): number {
   if (values.length === 0) {
     return 0;
@@ -150,6 +162,54 @@ function driftFinding(history: CategoryHistory): CategoryFinding | null {
   };
 }
 
+function oddMonthFinding(history: CategoryHistory): CategoryFinding | null {
+  const { normal, spread } = categoryNormal(history.points);
+  if (normal <= 0) {
+    return null;
+  }
+
+  const window = history.points.slice(-NORMAL_WINDOW).filter((p) => !p.empty);
+  if (window.length < 6) {
+    return null;
+  }
+
+  // A spread of zero means a perfectly flat run, where any departure at all
+  // is the odd month. The absolute floor is what keeps that honest.
+  const bar = Math.max(spread * ODD_MONTH_SPREADS, ODD_MONTH_ABSOLUTE_FLOOR);
+
+  let worst: CategoryMonthPoint | null = null;
+  let worstDistance = 0;
+  for (const point of window) {
+    const distance = Math.abs(point.total - normal);
+    if (distance >= bar && distance > worstDistance) {
+      worst = point;
+      worstDistance = distance;
+    }
+  }
+
+  if (!worst) {
+    return null;
+  }
+
+  const direction = worst.total > normal ? "up" : "down";
+
+  return {
+    id: `odd-month:${history.categoryId}:${worst.monthKey}`,
+    kind: "odd-month",
+    categoryId: history.categoryId,
+    categoryName: history.name,
+    type: history.type,
+    severity: round(worstDistance),
+    direction,
+    months: [worst.monthKey],
+    messageKey:
+      direction === "up"
+        ? "categoryFindings.oddMonthHigh"
+        : "categoryFindings.oddMonthLow",
+    params: { month: worst.label },
+  };
+}
+
 /**
  * Every finding across every category, heaviest first.
  *
@@ -167,6 +227,10 @@ export function buildCategoryFindings(
     const drift = driftFinding(history);
     if (drift) {
       findings.push(drift);
+    }
+    const odd = oddMonthFinding(history);
+    if (odd) {
+      findings.push(odd);
     }
   }
 

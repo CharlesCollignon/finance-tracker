@@ -141,3 +141,56 @@ describe("buildCategoryFindings, drift", () => {
     expect(findings[0]!.categoryId).toBe("cat-rent");
   });
 });
+
+describe("buildCategoryFindings, odd month", () => {
+  it("names the one month that stands apart", () => {
+    const findings = findingsFor(
+      run([200, 210, 195, 205, 200, 190, 205, 195, 900]),
+    );
+
+    const odd = findings.find((f) => f.kind === "odd-month");
+    expect(odd).toBeDefined();
+    expect(odd!.months).toEqual(["2026-09"]);
+    expect(odd!.direction).toBe("up");
+    expect(odd!.messageKey).toBe("categoryFindings.oddMonthHigh");
+    // 900 against a normal of 200.
+    expect(odd!.severity).toBe(700);
+  });
+
+  it("is not fooled into hiding the spike inside its own spread", () => {
+    // A standard deviation over this run is large enough to swallow the
+    // 900. A median absolute deviation is not.
+    const findings = findingsFor(
+      run([200, 200, 200, 200, 200, 200, 200, 200, 900]),
+    );
+
+    expect(findings.some((f) => f.kind === "odd-month")).toBe(true);
+  });
+
+  it("says nothing about a small category having a slightly odd month", () => {
+    const findings = findingsFor(run([8, 9, 8, 9, 8, 9, 8, 9, 30]));
+
+    expect(findings.filter((f) => f.kind === "odd-month")).toEqual([]);
+  });
+
+  it("reports a month well below the normal too", () => {
+    const findings = findingsFor(
+      run([400, 410, 395, 405, 400, 390, 405, 395, 40]),
+    );
+
+    const odd = findings.find((f) => f.kind === "odd-month");
+    expect(odd!.direction).toBe("down");
+    expect(odd!.messageKey).toBe("categoryFindings.oddMonthLow");
+  });
+
+  it("reports at most the oddest month, not every month above normal", () => {
+    const findings = findingsFor(
+      run([200, 200, 200, 200, 200, 200, 800, 200, 900]),
+    );
+
+    expect(findings.filter((f) => f.kind === "odd-month")).toHaveLength(1);
+    expect(findings.find((f) => f.kind === "odd-month")!.months).toEqual([
+      "2026-09",
+    ]);
+  });
+});
