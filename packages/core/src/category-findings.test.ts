@@ -438,6 +438,38 @@ describe("buildCategoryFindings, every year", () => {
     expect(season).toBeDefined();
     expect(season!.months).toEqual(["2026-09"]);
   });
+
+  it("says a month that runs low every year runs low, not high", () => {
+    // The mirror of every test above it, and the one the single string could
+    // not tell: a commuter pass nobody buys in September sits reliably far
+    // *below* this category's normal, every year. The demotion works the same
+    // way — the odd month it would otherwise report is seasonal — and what is
+    // left has to say "low", because "runs high here every year" about the
+    // cheapest month of the year is simply false.
+    const out: TransactionWithCategory[] = [];
+    for (let back = 35; back >= 0; back -= 1) {
+      const date = new Date(Date.UTC(2026, 8 - back, 4));
+      const month = date.getUTCMonth() + 1;
+      out.push(
+        tx(
+          date.toISOString().slice(0, 10),
+          month === 9 ? 100 : 400,
+          "cat-commute",
+          "Commute",
+          "expense",
+        ),
+      );
+    }
+
+    const findings = findingsFor(out);
+
+    expect(findings.filter((f) => f.kind === "odd-month")).toEqual([]);
+    const season = findings.find((f) => f.kind === "every-year");
+    expect(season).toBeDefined();
+    expect(season!.direction).toBe("down");
+    expect(season!.months).toEqual(["2026-09"]);
+    expect(season!.messageKey).toBe("categoryFindings.everyYearLow");
+  });
 });
 
 describe("findingIsGoodNews", () => {

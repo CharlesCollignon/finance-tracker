@@ -444,7 +444,10 @@ export const fr: Messages = {
       other: "rien enregistré depuis {months} mois, après une série régulière",
     },
     appeared: "nouveau depuis {month}, et régulier depuis",
-    everyYear: "{month} est cher ici toutes les années",
+    // Ni "cher" ni "toutes les années" : la première disait d'un salaire ou
+    // d'une épargne qu'ils coûtaient, la seconde n'est pas ce qu'on dit.
+    everyYear: "{month} sort au-dessus d'un mois normal ici chaque année",
+    everyYearLow: "{month} sort en dessous d'un mois normal ici chaque année",
     weightPerMonth: "{amount} par mois",
     weightOnce: "{amount}",
     bandTitle: "Ce qui a bougé",

@@ -563,7 +563,16 @@ export const en = {
       other: "nothing recorded for {months} months, after a steady run",
     },
     appeared: "new since {month}, and steady since",
+    /**
+     * Both directions, because the pattern has both.
+     *
+     * A calendar month can be reliably *below* its category's normal year
+     * after year as easily as above it — a commuter pass nobody buys in
+     * August — and `seasonalMonths` reports that case. One sentence saying
+     * "runs high" would describe it exactly backwards.
+     */
     everyYear: "{month} runs high here every year",
+    everyYearLow: "{month} runs low here every year",
     weightPerMonth: "{amount} a month",
     weightOnce: "{amount}",
     bandTitle: "What moved",

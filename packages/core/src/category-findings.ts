@@ -420,7 +420,14 @@ export function buildCategoryFindings(
         severity: round(Math.abs(season.latest.total - normal)),
         direction: season.direction,
         months: [season.latest.monthKey],
-        messageKey: "categoryFindings.everyYear",
+        // Two sentences, because the pattern has two shapes. `seasonalMonths`
+        // reports a calendar month that sits reliably *below* its normal as
+        // readily as one above it — a season ticket nobody buys in August —
+        // and one string saying "runs high" would describe that backwards.
+        messageKey:
+          season.direction === "up"
+            ? "categoryFindings.everyYear"
+            : "categoryFindings.everyYearLow",
         params: { month: season.latest.label },
       });
       continue;
