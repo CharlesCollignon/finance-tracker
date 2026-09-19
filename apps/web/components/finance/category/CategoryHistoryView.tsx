@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import type { CategoryFacts } from "@finance/core/category-facts";
+import type { CategoryRead as CategoryReadValue } from "@finance/core/category-read";
 import type { CategoryFinding } from "@finance/core/category-findings";
+import type { Locale } from "@finance/core/i18n/locale";
 import type { CategoryBreakdown } from "@finance/core/types/database";
 import { Card } from "@/components/retroui/Card";
 import { useT } from "@/lib/locale-context";
@@ -21,6 +24,16 @@ interface CategoryHistoryViewProps {
   behindMonth: Record<string, string>;
   /** Same target month as `behind`, as a label. */
   behindMonthLabel: Record<string, string>;
+  /** A category read, per category id. Null where nothing has been written. */
+  reads: Record<string, CategoryReadValue | null>;
+  /** The current figures behind each read, labelled in its own language. */
+  readFacts: Record<string, CategoryFacts | null>;
+  readLocale: Record<string, Locale>;
+  /** Too little recorded to be worth a read; the writer is not offered. */
+  readThin: Record<string, boolean>;
+  /** The shared, cross-category allowance — the same number everywhere. */
+  readWritesLeft: number;
+  readConfigured: boolean;
 }
 
 const PANEL_ID = "category-panel";
@@ -40,6 +53,12 @@ export function CategoryHistoryView({
   behind,
   behindMonth,
   behindMonthLabel,
+  reads,
+  readFacts,
+  readLocale,
+  readThin,
+  readWritesLeft,
+  readConfigured,
 }: CategoryHistoryViewProps) {
   const t = useT();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -85,6 +104,12 @@ export function CategoryHistoryView({
                 behindMonthLabel[openCard.history.categoryId] ?? ""
               }
               onClose={() => setOpenId(null)}
+              read={reads[openCard.history.categoryId] ?? null}
+              readFacts={readFacts[openCard.history.categoryId] ?? null}
+              readLocale={readLocale[openCard.history.categoryId] ?? "en"}
+              readThin={readThin[openCard.history.categoryId] ?? true}
+              readWritesLeft={readWritesLeft}
+              readConfigured={readConfigured}
             />
           ) : null
         }

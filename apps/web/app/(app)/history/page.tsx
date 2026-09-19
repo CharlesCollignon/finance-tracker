@@ -14,12 +14,27 @@ import {
   getCurrentMonth,
   shiftMonth,
 } from "@finance/core/constants";
+import {
+  CATEGORY_READ_WRITES_PER_MONTH,
+  type CategoryRead as CategoryReadValue,
+} from "@finance/core/category-read";
+import type { CategoryFacts } from "@finance/core/category-facts";
+import { writesRemaining } from "@finance/core/month-read-budget";
+import type { Locale } from "@finance/core/i18n/locale";
 import type { TransactionWithCategory } from "@finance/core/types/database";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { CategoryHistoryView } from "@/components/finance/category/CategoryHistoryView";
 import { getLocale } from "@/lib/locale";
+import { categoryReadConfigured } from "@/lib/category-read/client";
+import { currentCategoryFacts } from "@/lib/category-read/facts";
+import {
+  listStoredCategoryReads,
+  readCategoryReadTally,
+} from "@/lib/category-read/store";
+import { getMonthlySummary } from "@/lib/queries/finance";
+import { getBudgets } from "@/lib/queries/phase4";
 
 /**
  * How far back the page reads, and how far back it draws.
@@ -143,6 +158,69 @@ export default async function HistoryPage() {
     ]),
   );
 
+  /**
+   * The category read, per card, drawn up front rather than behind a second
+   * round trip per panel opened — every card on this page is already built
+   * this way, findings and all.
+   *
+   * `currentCategoryFacts` does no querying of its own; the only new fetches
+   * here are `getMonthlySummary` and `getBudgets`, once each, for the
+   * `share-of-month` and `cap` datums every card's pack may carry.
+   */
+  const [{ byCategory: storedReads }, tally, summary, budgets] =
+    await Promise.all([
+      listStoredCategoryReads(user.id, supabase),
+      readCategoryReadTally(user.id, supabase),
+      getMonthlySummary(user.id, current.year, current.month, "current"),
+      getBudgets(user.id),
+    ]);
+
+  const capByCategory = new Map(
+    budgets
+      .filter((row) => row.category_id !== null)
+      .map((row) => [row.category_id as string, Number(row.amount)] as const),
+  );
+
+  const readMonthLabel = formatMonthLabel(current.year, current.month, locale);
+  const readConfigured = categoryReadConfigured();
+  const readWritesLeft = tally.tracked
+    ? writesRemaining(
+        { writes: tally.writes, refused: 0, lastWrittenAt: null, pendingSince: null },
+        CATEGORY_READ_WRITES_PER_MONTH,
+      )
+    : 0;
+
+  const readsByCategory: Record<string, CategoryReadValue | null> = {};
+  const readFactsByCategory: Record<string, CategoryFacts | null> = {};
+  const readLocaleByCategory: Record<string, Locale> = {};
+  const readThinByCategory: Record<string, boolean> = {};
+
+  for (const card of cards) {
+    const categoryId = card.history.categoryId;
+    const stored = storedReads.get(categoryId) ?? null;
+    const readLocale = stored?.locale ?? locale;
+
+    const facts = currentCategoryFacts({
+      categoryId,
+      categoryName: card.history.name,
+      type: card.history.type,
+      history: card.history,
+      findings: card.findings,
+      monthExpenses: summary.expenses,
+      cap: capByCategory.get(categoryId) ?? null,
+      monthLabel: readMonthLabel,
+      locale: readLocale,
+    });
+
+    readsByCategory[categoryId] = stored?.read ?? null;
+    readLocaleByCategory[categoryId] = readLocale;
+    readThinByCategory[categoryId] = facts.thin;
+    // Only built when there is a read to render against it — a pack nobody
+    // reads is a pack that is never wrong, but also never worth computing
+    // twice over.
+    readFactsByCategory[categoryId] = stored?.read ? facts : null;
+  }
+
   return (
     <>
       <PageHeader titleKey="nav.ledger" />
@@ -156,6 +234,12 @@ export default async function HistoryPage() {
           behind={behindByCategory}
           behindMonth={behindMonthByCategory}
           behindMonthLabel={behindMonthLabelByCategory}
+          reads={readsByCategory}
+          readFacts={readFactsByCategory}
+          readLocale={readLocaleByCategory}
+          readThin={readThinByCategory}
+          readWritesLeft={readWritesLeft}
+          readConfigured={readConfigured}
         />
       </PageContainer>
     </>

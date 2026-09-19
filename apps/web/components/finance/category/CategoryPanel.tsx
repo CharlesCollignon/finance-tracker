@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { X } from "@phosphor-icons/react";
+import type { CategoryFacts } from "@finance/core/category-facts";
+import type { CategoryRead as CategoryReadValue } from "@finance/core/category-read";
+import type { Locale } from "@finance/core/i18n/locale";
 import { BarSeries } from "@/components/finance/charts";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -10,6 +13,7 @@ import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { ICON } from "@/lib/icon-scale";
 import { cn } from "@/lib/utils";
 import { TONE, type CategoryCard } from "./CategoryTile";
+import { CategoryRead } from "./CategoryRead";
 
 export interface PanelTransaction {
   id: string;
@@ -26,6 +30,15 @@ interface CategoryPanelProps {
   behindMonthKey: string;
   onClose: () => void;
   id: string;
+  /** Null when nothing has been written for this category. */
+  read: CategoryReadValue | null;
+  /** The category's current figures, labelled in `readLocale`. Null iff `read` is. */
+  readFacts: CategoryFacts | null;
+  readLocale: Locale;
+  /** Too little recorded to be worth a read; the writer is not offered. */
+  readThin: boolean;
+  readWritesLeft: number;
+  readConfigured: boolean;
 }
 
 /**
@@ -41,6 +54,12 @@ export function CategoryPanel({
   behindMonthKey,
   onClose,
   id,
+  read,
+  readFacts,
+  readLocale,
+  readThin,
+  readWritesLeft,
+  readConfigured,
 }: CategoryPanelProps) {
   const t = useT();
   const formatMoney = useFormatCurrency();
@@ -145,6 +164,17 @@ export function CategoryPanel({
       >
         {t("categoryScreen.seeInLedger")}
       </Link>
+
+      <CategoryRead
+        categoryId={history.categoryId}
+        categoryName={history.name}
+        read={read}
+        readFacts={readFacts}
+        readLocale={readLocale}
+        thin={readThin}
+        writesLeft={readWritesLeft}
+        configured={readConfigured}
+      />
     </section>
   );
 }

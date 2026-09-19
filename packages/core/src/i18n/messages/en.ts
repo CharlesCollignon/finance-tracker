@@ -1894,6 +1894,38 @@ export const en = {
     refusal: {
       claimHadFigure: "It wrote a figure of its own",
     },
+
+    /** No writer configured on this deployment; the panel's write button is absent. */
+    noWriter: "No writer is configured.",
+    /**
+     * The category named no longer belongs to the caller — deleted, most
+     * likely, in the moments between the panel opening and the button being
+     * pressed. Rare enough that it earns one honest sentence rather than
+     * being folded into `noWriter`, which would say something untrue.
+     */
+    gone: "This category is no longer available.",
+
+    /**
+     * Shown when a stored read is in a language the reader has since
+     * switched away from. Mirrors `monthRead.writtenInOtherLanguage`.
+     */
+    writtenInOtherLanguage: "Written in {language}.",
+
+    /**
+     * The panel card itself: heading, empty state, and the write button's
+     * own states — the by-category screen's equivalents of `monthRead`'s.
+     * Kept as separate keys rather than reused, because the surface they
+     * sit on is a panel under a chart, not a page of its own.
+     */
+    title: "The read",
+    subtitle:
+      "Written by a model, from the figures on this panel. It cannot see your accounts.",
+    empty: "Nothing has been written about this category yet.",
+    writing: "Writing…",
+    noReadsLeft: "No reads left this month",
+    writeAgain: "Write it again ({left} left)",
+    writeOne: "Write one ({left} left)",
+    writtenToast: "Written for {category}",
   },
 
   /**

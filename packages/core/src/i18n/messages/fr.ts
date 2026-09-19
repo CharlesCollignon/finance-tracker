@@ -1430,6 +1430,21 @@ export const fr: Messages = {
     refusal: {
       claimHadFigure: "Elle a écrit un chiffre de son invention",
     },
+
+    noWriter: "Aucun rédacteur n'est configuré.",
+    gone: "Cette catégorie n'est plus disponible.",
+
+    writtenInOtherLanguage: "Écrit en {language}.",
+
+    title: "La lecture",
+    subtitle:
+      "Écrit par un modèle, à partir des chiffres de ce panneau. Il ne voit pas vos comptes.",
+    empty: "Rien n'a encore été écrit sur cette catégorie.",
+    writing: "Écriture…",
+    noReadsLeft: "Plus de lecture ce mois-ci",
+    writeAgain: "Réécrire ({left} restantes)",
+    writeOne: "Écrire une lecture ({left} restantes)",
+    writtenToast: "Écrit pour {category}",
   },
 
   /** La transparence : de quoi les portefeuilles sont faits. */
