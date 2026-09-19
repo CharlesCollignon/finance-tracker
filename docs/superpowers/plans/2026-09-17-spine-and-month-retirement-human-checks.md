@@ -58,7 +58,57 @@ forecast because they never opened `free`.
 
 ---
 
-## 2. All four ignition rungs, and whether you can tell which one you're on
+## 2. A brand-new account, and one that has just finished setup
+
+**Background:** the spine mounts below the Bearing's "there is nothing here
+yet" branch, so for a while the one reader who most needed the action row
+never saw it. `thin` — the condition that branch tests — is not "nobody has
+done anything": it is "no position has been taken yet", which is exactly what
+somebody who has just walked through `/welcome` looks like. They have saved
+an income and a couple of charges and recorded nothing, so the app already
+knows several recurring charges are waiting to be written, and was computing
+that list and throwing it away. The action row is now rendered on that branch
+too, on both clients — the row alone, not the whole spine, because a
+hero-sized zero beside a dark ring would be two statements about a position
+nobody has taken yet.
+
+Separately, web had lost every re-findable route to `/welcome`. The component
+that carried the link lived on the retired Month screen and went with it,
+leaving a single redirect fired the instant a sign-up succeeds. Anyone who
+skipped the walkthrough, or who signed in later on a second device where that
+redirect never fired, could not get back to it. The account menu now carries
+it, on every screen.
+
+**What to do:** three passes.
+
+1. Sign up for a new account and go through `/welcome`, adding an income and
+   at least one monthly charge. Land on the Bearing.
+2. Sign up for a second account and **skip** the walkthrough entirely (or
+   sign in to the first account in a different browser, where the post-signup
+   redirect never fires).
+3. Repeat pass 1 on the phone.
+
+**What you should see:**
+
+- After pass 1, the Bearing is not a lone sentence. The empty-state card
+  carries a row naming the recurring charges waiting to be applied, with a
+  link to where they are applied, and the same row appears on the phone.
+- After pass 2, open the account menu (the avatar — bottom bar at phone
+  width, bottom of the sidebar on a desktop) and there is a **Set-up
+  walkthrough** row. It opens `/welcome`, and `/welcome` still works: it is
+  not a one-shot that redirects you away. The thin Bearing also offers the
+  walkthrough directly, which is the only useful thing on that screen for
+  somebody with no templates at all.
+- Both in French as well as English.
+
+**What it would mean otherwise:** a reader who has just told the app their
+salary and their rent, shown one sentence with nothing to press, is the exact
+case this branch was most at risk of producing — and it is the case nobody
+would report, because it only happens on day one.
+
+---
+
+## 3. All four ignition rungs, and whether you can tell which one you're on
 
 **Background:** the spine has four rungs it can be standing on, and each one
 can show strictly less than the one above it — never something misleading.
@@ -72,11 +122,40 @@ month is standing). The ladder itself is unit tested rigorously
 (`packages/core/src/spine.test.ts`); what no test covers is whether a reader
 looking at the screen can actually tell which of the four they're looking at.
 
-**What to do:** if you can arrange it, look at the spine in each of the four
-states — a fresh account with no bank connected, one with a bank but no
-closes yet, one with exactly one close and no cap, and a fully set-up
-account. If you can't reach all four, at least compare two adjacent ones side
-by side (screenshots are fine).
+**How to reach each one.** They are a ladder, so the cheapest route is one
+account walked up it — each step below is a single change, and you can
+screenshot the spine before making the next one.
+
+1. **`no-balance`** — an account with no bank connected (a CSV import, or a
+   fresh account with a few rows typed in). The condition in the code is
+   `pulse.free === null`, which happens exactly when there is no readable
+   balance: no bank, consent lapsed, or a reading that came back short of an
+   account. Nothing else is required.
+2. **`no-close`** — connect a bank to that same account and reload, changing
+   nothing else. A readable balance plus an empty close history
+   (`closes.history.length === 0`) is this rung. If you cannot connect a real
+   bank, this is the one rung you may have to skip; say so rather than
+   reporting it as unreachable.
+3. **`measuring`** — with the bank connected, close one month, and make sure
+   **no unrecorded allowance is set** in Plan. The first close is a baseline
+   (it asks for a starting balance rather than confirming a period) and it
+   counts: `everClosed` is true from a baseline. `pulse.capRatio` is null
+   whenever the allowance is unset or zero, and a null cap ratio is this
+   rung.
+4. **`lit`** — now set an unrecorded allowance in Plan, above zero, and
+   reload. `capRatio` needs three things at once: a readable balance, a close
+   of the month *immediately* before this one (that is what supplies the
+   opening balance the unrecorded figure is measured from), and an allowance
+   above zero. If you set an allowance and still see the blue arc, the most
+   likely reason is the third: the close you made is not last month's.
+
+One rung is deliberately unreachable this way: if the account holds *more*
+than the ledger says it should, the ring is withdrawn entirely whatever rung
+you are on. That is item 4.
+
+**What to do:** look at the spine at each step above, on both clients if you
+can. If you can't reach all four, at least compare two adjacent ones side by
+side (screenshots are fine), and note which ones you reached.
 
 **What you should see:** each rung should read as visibly different from its
 neighbors — not just "the ring looks slightly different" but "I can tell
@@ -91,7 +170,7 @@ of both rungs side by side.
 
 ---
 
-## 3. Over-recorded months show NO ring — not a dark one
+## 4. Over-recorded months show NO ring — not a dark one
 
 **Background:** when the account holds more money than the ledger says it
 should (a records gap — a deposit or transaction that was never entered),
@@ -114,7 +193,7 @@ never look like a verdict about spending.
 
 ---
 
-## 4. A capless month's arc must never read as a verdict
+## 5. A capless month's arc must never read as a verdict
 
 **Background:** the `measuring` rung's ring is blue and deliberately
 unproportioned — it carries no `tone` at all (the type itself has no field
@@ -137,30 +216,57 @@ raising even though nothing is technically wrong.
 
 ---
 
-## 5. `tone` colours the ring; `over` fills it — and the two must stay distinguishable
+## 6. At the cap, and 40% over it — can you tell them apart?
 
-**Background:** once a cap exists, the ring's colour comes from `tone`
-(`MonthStanding` — roughly "on track" vs. "short") and whether it's over cap
-comes from a separate `over` flag. A `clear` month that's over its cap must
-not look identical to a `short` month that's over its cap — this was wrong
-once during the plan and was fixed (see commit `1274853`, "Fix the spine's
-dark/arc boundary and stop its ring colour eating the over-cap signal").
+**Background:** once a cap exists, two separate things are true of the ring.
+Its **colour** comes from `tone` (`MonthStanding`: how the month is standing
+overall — roughly "on track", "getting tight", "short"). Whether the
+allowance has actually been passed comes from a separate **`over`** flag.
+They are near-orthogonal — `standingOf` in `month-pulse.ts` returns `clear`
+for nearly every solvent month, including one that has blown its allowance —
+so neither can stand in for the other.
 
-**What to do:** if you can, get one account into "clear but over cap" and
-another into "short and over cap," and compare the rings.
+Until this fix `over` had no channel of its own. The reasoning was that an
+over-cap ratio already fills the ring completely, so the fill *was* the
+signal. That was wrong in a specific way: a complete circle is also exactly
+what 100% looks like. A month at 250% of its allowance drew as a full green
+ring, pixel for pixel identical to one that had just reached it, and the
+only place `over` appeared at all was the screen-reader label.
 
-**What you should see:** the over-cap fill/marker should be visually
-distinguishable in both cases, and the underlying tone colour should still
-be readable through it — the over-cap signal shouldn't erase the standing
-signal or vice versa.
+`over` now has its own channel on both clients: a **second, thinner arc
+drawn inside the ring**, in the same colour as the ring, which exists only
+when the cap has been passed and grows with how far past it is. The colour
+is still `tone`'s alone, so the two signals stack rather than replace each
+other.
 
-**What it would mean otherwise:** if the two look the same, the fix
-described in the commit above may have regressed, or covers only some
-combinations. Worth a screenshot of both.
+**What to do:** put one account at **95% of its allowance** and another
+**40% over it**, both otherwise healthy, and look at the two rings side by
+side. Then, if you can, compare a `clear`-and-over account against a
+`short`-and-over one. Do it on both clients, and once more with "reduce
+motion" turned on.
+
+**What you should see:**
+
+- At 95%: a nearly-closed ring with a visible gap, and **nothing inside it**.
+- At 140%: a closed ring with a **second, shorter arc inside it**. You should
+  be able to say which of the two you are looking at without thinking about
+  it.
+- `clear`-over against `short`-over: the inner arc is present on both, and
+  the colour differs. The over signal must not erase the standing signal, nor
+  the other way round.
+- With reduced motion on: the inner arc is already drawn when the screen
+  appears. It must never be the thing that is still animating in, because it
+  is the only mark on the screen saying "past the cap".
+
+**What it would mean otherwise:** if 140% and 100% look the same, this fix
+has not taken effect on that client — report it with both screenshots. If the
+inner arc is there but you did not notice it until it was pointed out, that
+is worth saying too: it is a judgement about whether the channel is loud
+enough, and it is the whole reason this item exists.
 
 ---
 
-## 6. The flame against a best streak
+## 7. The flame against a best streak
 
 **Background:** the flame badge shows the current streak (a filled flame
 icon) and, separately, a trophy badge for the best streak ever reached — but
@@ -186,7 +292,7 @@ intends — worth reporting with both numbers as you saw them.
 
 ---
 
-## 7. `/dashboard` redirects rather than 404s
+## 8. `/dashboard` redirects rather than 404s
 
 **Background:** Month used to live at `/dashboard`. Bookmarks and
 already-delivered push notifications point there, and they were written
@@ -206,7 +312,47 @@ redirect exists to prevent.
 
 ---
 
-## 8. Every phone attention link lands on a real screen — **unverified by tap**
+## 9. Home-screen latency, and the count that used to depend on the market
+
+**Background:** the Bearing built a full recurring-apply plan on every load
+purely to find out *how many* charges were waiting. Building that plan
+resolves a live market quote for every share-priced recurring occurrence — on
+the landing page, on every load. It was paid twice when a stored
+arrangement's language differed from the reader's, and a third time by every
+press of Rearrange, which used none of it. Worse, a quote that could not be
+fetched made its occurrence vanish from the plan, so the number shown fell
+silently when the market was unreachable.
+
+The count is now taken from rows the page had already read, with no network
+at all, and it no longer drops occurrences it cannot price.
+
+**What to do:** on a CSV-only account (no bank feed) with at least one
+**share-priced** recurring template — a monthly ETF purchase — due this month
+and not yet applied:
+
+1. Open the web Bearing and note how long it takes to render. Reload a few
+   times.
+2. Compare the action row's count against the number of rows the Ledger's
+   apply sheet actually offers.
+3. Do it again with the machine's network cut *at the server* — if you are
+   running locally, that is the same machine, so pull the network or point
+   the quote host at nothing.
+
+**What you should see:** the Bearing renders at the same speed whether or not
+the market is reachable, and the action row's count is the same number both
+times. With the network up, the count and the apply sheet agree.
+
+**What it would mean otherwise:** a Bearing that is visibly slower than the
+other surfaces, or a count that changes when the network goes, means the
+cheap path is not the one being taken. One legitimate disagreement: with the
+network down, the apply sheet may offer *fewer* rows than the spine counted,
+because pricing is what it cannot do. The spine's number is the honest one
+there; the sheet's shortfall is pre-existing behaviour and not this item's
+concern.
+
+---
+
+## 10. Every phone attention link lands on a real screen — **unverified by tap**
 
 **Background:** the spine's action row can point at one of five
 destinations on the phone: `/transactions` (a swallowed entry), `/budgets`
@@ -230,30 +376,36 @@ exactly which of the five conditions you were testing.
 
 ---
 
-## 9. Three phone panel footers now render NO link — confirm that reads as deliberate
+## 11. Three panel footers now render NO link — on **both** clients
 
-**Background:** on the phone, three tiles — `on-hand`, `free`, and
-`savings-rate` — used to have a footer link to the Month page. Month is
-gone, and everything those three figures used to explain on Month is now
-said inside the panel that opens under the tile itself, so their footer
-link was removed rather than repointed (`bearing-tiles.ts`'s own comment:
-"there is no further surface to send a press to").
+**Background:** three tiles — `on-hand`, `free`, and `savings-rate` — used to
+have a footer link to the Month page. Month is gone, and everything those
+three figures used to explain on Month is now said inside the panel that
+opens under the tile itself, so their footer link was removed rather than
+repointed. This is not a phone-only change: `BEARING_TILES` in
+`packages/core/src/bearing-tiles.ts` sets `href: null` for all three, and
+both clients draw their panel footer off that same map, so web's `on-hand`,
+`free` and `savings-rate` panels lost the link too. Its own comment: "there
+is no further surface to send a press to."
 
-**What to do:** on the phone, open the panel for `on-hand`, `free`, and
-`savings-rate` in turn, and look at the bottom of each panel.
+**What to do:** open the panel for `on-hand`, `free`, and `savings-rate` in
+turn — **on the phone and again on web** — and look at the bottom of each
+panel.
 
-**What you should see:** no footer link on any of the three — the panel
-should feel complete on its own, not like something is missing where a link
-used to be.
+**What you should see:** no footer link on any of the three, on either
+client. The panel should feel complete on its own, not like something is
+missing where a link used to be.
 
 **What it would mean otherwise:** if the panel's bottom looks like it's
 missing something (an empty row, odd spacing where a link would have been),
 that's a layout residue worth reporting even though the absence of a link
-itself is correct.
+itself is correct. A link that is absent on one client and present on the
+other would be a different and worse finding — the map is shared, so they
+cannot legitimately disagree.
 
 ---
 
-## 10. A phone reader can complete a close end to end — **unverified, traced by reading only**
+## 12. A phone reader can complete a close end to end — **unverified, traced by reading only**
 
 **Background:** this plan restored the ability to close a month directly
 from the phone (it had been lost along with Month). Two reviewers traced the
@@ -275,7 +427,7 @@ card's refresh.
 
 ---
 
-## 11. The slide-out artifact on cancelling a close
+## 13. The slide-out artifact on cancelling a close
 
 **Background:** restoring the phone's close sheet as a slide-in modal (it
 had previously just unmounted) brought back a small cosmetic cost:
@@ -300,9 +452,55 @@ is whether it reads as sloppy enough to fix. If it bothers you, the
 suggested fix (already known, not yet done) is to reset the form on the
 *open* transition instead of inside `dismiss()`.
 
+**While you are here**, check the other end of the same flow, which *was* a
+bug and is fixed: complete a close for real and dismiss the sheet. It should
+slide out exactly as the cancel path does. It used to vanish on the frame you
+tapped, because recording a close empties the very prompt the sheet was
+being driven from.
+
 ---
 
-## 12. Device-only claims, never run — modal presentation, keyboard, haptics, real round trip
+## 14. The phone's language suggestion, and the layout above every screen
+
+**Background:** this is the one change on the branch that sits above *every*
+phone screen, and nothing in the automated suite renders React Native layout.
+The language suggestion — "Lire Pluclair en français ?" — used to live only on
+the Month screen and was orphaned when that screen went. It is now mounted
+once in the root layout, and it has been mounted wrongly twice since: first
+through a wrapper that reserved a status bar's height on every launch, then
+in the layout flow, where it left a status-bar-height dead band between the
+card and the header, because a `SafeAreaView` applies the window's insets
+wherever it happens to sit and cannot be told from JavaScript that something
+above it has already consumed them.
+
+It is now an absolutely positioned overlay: out of the layout entirely, so it
+cannot displace, compress or double-inset anything whatever it renders. It is
+also gated — only a signed-in reader who is past onboarding is asked.
+
+**What to do:** on a phone whose device region suggests a language other than
+the one the app is in (device region France, app in English, or the reverse),
+clear the app's storage or reinstall so the "already asked" flag is unset,
+then launch and sign in.
+
+**What you should see:**
+
+- The card floats over the top of the first screen, clear of the status bar,
+  with the screen's own header below it. Nothing is pushed down, and there is
+  **no band of empty background** between the card and the header.
+- Answer it either way and it goes for good. Relaunch: it must not come back,
+  and the screen underneath must look exactly as it does on a launch where it
+  never appeared — same header position, same first row.
+- Sign out and relaunch: nothing on the login screen.
+- Start a fresh account so you land in onboarding: nothing there either.
+
+**What it would mean otherwise:** any shift in the screen below it, any gap
+between the card and the header, or the card appearing over the login or
+onboarding screens. All four are the same class of bug this mount point has
+already produced three times, and no gate in this repo can see any of them.
+
+---
+
+## 15. Device-only claims, never run — modal presentation, keyboard, haptics, real round trip
 
 **Background:** several claims about the phone's close sheet and related UI
 were traced by reading the code and were never exercised on an actual
@@ -333,7 +531,7 @@ succeeds the way the code assumes.
 
 ---
 
-## 13. Both languages, on the whole spine
+## 16. Both languages, on the whole spine
 
 **Background:** the spine is new UI drawn on both clients, all of it routed
 through the i18n catalogues (`packages/core/src/i18n/messages/en.ts` /
@@ -361,7 +559,7 @@ accessibility string isn't concatenating correctly.
 
 ---
 
-## 14. The phone's attention rows in French
+## 17. The phone's attention rows in French
 
 **Background:** before this plan, the phone's version of these attention
 messages was untranslated English — a bug that lived on Month's own
@@ -385,7 +583,7 @@ shared data).
 
 ---
 
-## 15. Both clients, reduced motion on
+## 18. Both clients, reduced motion on
 
 **Background:** both the web and phone spines wire explicit reduced-motion
 handling for the ring's fill animation (`usePrefersReducedMotion` on web,
@@ -408,7 +606,7 @@ elsewhere).
 
 ---
 
-## 16. The action row's first item, and its `+N`
+## 19. The action row's first item, and its `+N`
 
 **Background:** before this plan, web and phone disagreed about what
 deserves attention — web checked five conditions, phone checked three. They
@@ -434,7 +632,7 @@ worth recording your reaction either way.
 
 ---
 
-## 17. Does the spine read as fixed chrome, or as a thirteenth tile?
+## 20. Does the spine read as fixed chrome, or as a thirteenth tile?
 
 **Background:** the spine sits above twelve tiles of varying size, and was
 deliberately built without any of the visual language the tiles use — no
@@ -452,7 +650,7 @@ whole design bet rests on the former reading being obvious.
 
 ---
 
-## 18. Pressing an already-selected segment is now silent
+## 21. Pressing an already-selected segment is now silent
 
 **Background:** both clients' `SegmentedControl` now guard against
 re-firing `onChange` when you tap the segment that's already selected — and
@@ -472,7 +670,7 @@ decide if it's the right one.
 
 ---
 
-## 19. `TrendCard`'s range switch and "best month" badge are gone — do you miss them?
+## 22. `TrendCard`'s range switch and "best month" badge are gone — do you miss them?
 
 **Background:** the standalone `TrendCard` used to let you switch between
 6-month, 1-year, and 2-year windows and called out a "best month" badge.
@@ -493,7 +691,7 @@ revert to the old component — worth recording whether it's worth that work.
 
 ---
 
-## 20. A quiet month between two busy ones — vanish, or show flat?
+## 23. A quiet month between two busy ones — vanish, or show flat?
 
 **Background:** the restored inactive-month filter (`presentTrend` in
 `packages/core/src/monthly-trend.ts`) drops any month with no income and no
@@ -521,7 +719,7 @@ land, it settles a real disagreement recorded in the code's own comments.
 
 ---
 
-## 21. Four web MonthScore tiles carry two links — clutter, or two different destinations?
+## 24. Four web MonthScore tiles carry two links — clutter, or two different destinations?
 
 **Background:** on web, opening `unrecorded-so-far` (or `-allowance`,
 `-over`, `-baseline`) shows two links: the panel's own footer link (always
@@ -542,7 +740,7 @@ worth writing down since the decision to keep both can be revisited.
 
 ---
 
-## 22. The web `now` panel has no budget-view toggle — confirm it doesn't feel missing
+## 25. The web `now` panel has no budget-view toggle — confirm it doesn't feel missing
 
 **Background:** the phone's `on-hand` panel has a control that flips the
 figures between "as of today" and "as of month end." The web app's
@@ -581,5 +779,5 @@ by `tsc`, lint, or `vitest`:
 Keep that in mind reading this whole document: a clean `pnpm test`, clean
 `tsc --noEmit` on all three packages, and the lint counts matching baseline
 are all true right now, and none of them are evidence for anything in items
-1–21 above. They prove the code is internally consistent; they do not prove
+1–25 above. They prove the code is internally consistent; they do not prove
 a human looking at a screen sees what the plan intended.
