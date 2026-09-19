@@ -68,8 +68,35 @@ function isGoneCategory(error: { message?: string } | null): boolean {
   );
 }
 
+/**
+ * Postgres refusing to run two statements that met on the same rows.
+ *
+ * `reserve_category_read` takes the tally's row lock and then the read's;
+ * `refund_category_read` takes them the other way about. A reserve and a
+ * refund arriving together on one category can therefore deadlock, and
+ * Postgres resolves it by raising `40P01` in one of them. The refund side
+ * never inspects its own error and so fails safe already; the reserve side
+ * rethrows anything it does not recognise, which let a deadlock out through
+ * `writeCategoryRead`, whose doc comment promises that nothing there throws.
+ *
+ * `40001` is the same class of answer under a stricter isolation level, and
+ * is here so that raising one later does not reopen this.
+ *
+ * Tolerated, not fixed: locking the two tables in one order in both functions
+ * is the real repair and it belongs in the migration, not in this file. The
+ * failure mode of tolerating it is mild — the press comes back as "already in
+ * flight", and any reservation that was taken ages out on its own — while the
+ * failure mode of letting it through is a 500 on a button whose worst honest
+ * outcome is "not this time".
+ */
+function isLockContention(error: { code?: string } | null): boolean {
+  return error?.code === "40P01" || error?.code === "40001";
+}
+
 function toleratedRpcFailure(error: { code?: string; message?: string } | null): boolean {
-  return isMissingSchema(error) || isGoneCategory(error);
+  return (
+    isMissingSchema(error) || isGoneCategory(error) || isLockContention(error)
+  );
 }
 
 export interface StoredCategoryRead {
