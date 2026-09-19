@@ -229,31 +229,54 @@
     // ------------------------------------------------------ packages/core --
     // The library. Its public surface is whatever the two apps import.
     //
-    // `includeEntryExports` is the load-bearing line in this file, and it is
-    // worth knowing why. `packages/core/package.json` declares
-    // `"exports": { "./*": "./src/*.ts" }`, and knip expands a wildcard
-    // subpath export into `src/**/*.ts` and treats every matching file as an
-    // entry point — which is correct for a published package and catastrophic
-    // here. Without this flag knip reports *nothing at all* for this
-    // workspace: a brand-new file in `src/` that nothing imports is silently
-    // "an entry point", and so is every export in it. Verified by dropping an
-    // unreferenced `src/zzz-probe.ts` into the tree: with the flag off the
-    // gate stayed green.
+    // `packages/core/package.json` used to declare `"exports": { "./*":
+    // "./src/*.ts" }`, and knip expanded that wildcard subpath export into
+    // `src/**/*.ts`, treating every file in the package as an entry point —
+    // correct for a published package, catastrophic here. Without a
+    // workaround it reported *nothing at all* for this workspace: a
+    // brand-new file in `src/` that nothing imported was silently "an entry
+    // point", and so was every export in it. `exports` is now an explicit map
+    // of the 84 subpaths the two apps actually import, so a file that isn't
+    // reachable through it is an ordinary project file again — `rules.files`
+    // catches it directly, the way it does for the apps.
     //
-    // With it on, an orphaned module in core surfaces as every one of its
-    // exports being unused — one finding per export rather than one per file,
-    // but the file cannot hide. That is why `rules.exports` is an error and
-    // not a warning: for this workspace it is the *only* signal there is.
+    // `includeEntryExports` is still load-bearing, for a narrower reason: by
+    // default knip assumes an entry file's exports are intentionally public
+    // and does not check whether anything uses them, which is right for a
+    // package published to npm strangers but wrong here — this package's
+    // only consumers are the two apps in this repo, so an export in one of
+    // the 84 entry files that neither app calls is exactly as dead as one in
+    // any other file. This flag is what makes that comparison happen. That
+    // is also why `rules.exports` is an error and not a warning: for this
+    // workspace it is the signal that catches dead exports hiding behind a
+    // reachable file.
     "packages/core": {
       "includeEntryExports": true,
+      "ignore": [
+        // ---------------------------------------------------------------
+        // DEBT — orphaned file. Nothing imports it, not even another core
+        // module by relative path.
+        //
+        // Surfaced only now: under the old wildcard export every file in
+        // `src/` was an entry point, so a file nothing imported still read
+        // as reachable and could only be caught export-by-export (it was
+        // "src/income-sankey.ts": ["exports"] here). The explicit map drops
+        // it from the entry list — correctly, no app imports
+        // `@finance/core/income-sankey` — which lets `rules.files` see the
+        // whole module as unreachable, the same way it already does for the
+        // apps. Same debt as before, sharper signal.
+        // ---------------------------------------------------------------
+        "src/income-sankey.ts",
+      ],
       "ignoreIssues": {
         // ---------------------------------------------------------------
         // DEBT — core exports neither app calls, and no test covers.
         //
         // These are the real thing this gate is for, caught after the fact:
         // builders, constants and one whole fetch layer that no screen
-        // reaches. `income-sankey.ts` and `market/fx.ts` are wholly
-        // unreferenced modules; `investments.ts` has seven unused builders.
+        // reaches. `market/fx.ts` is a wholly unreferenced module (its file
+        // is still reachable — it's imported for its other exports);
+        // `investments.ts` has seven unused builders.
         //
         // Debt, to be cleaned — not permanent exemptions. Deleting the export
         // (or wiring it back to a screen) should be followed by deleting its
@@ -265,7 +288,6 @@
         "src/budget.ts": ["exports"],
         "src/category-styles.ts": ["exports"],
         "src/constants.ts": ["exports"],
-        "src/income-sankey.ts": ["exports"],
         "src/instrument-reading.ts": ["types"],
         "src/investment-positions.ts": ["exports"],
         "src/investments.ts": ["exports"],
