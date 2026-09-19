@@ -26,7 +26,11 @@ export async function writeCategoryReadAction(
 
   const parsed = parseUuid(categoryId);
   if (!parsed) {
-    return { written: false, message: "Invalid category", writesLeft: 0 };
+    // The same fallback `upsertCategory` and its siblings use for malformed
+    // input: a key, not a sentence, so a French reader is not shown English
+    // — the toast resolves it the same way it resolves `errors.notAuthenticated`
+    // just above.
+    return { written: false, message: "errors.invalidInput", writesLeft: 0 };
   }
 
   const outcome = await writeCategoryRead(user.id, parsed);

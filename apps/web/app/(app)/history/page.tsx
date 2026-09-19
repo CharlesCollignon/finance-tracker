@@ -28,7 +28,7 @@ import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { CategoryHistoryView } from "@/components/finance/category/CategoryHistoryView";
 import { getLocale } from "@/lib/locale";
 import { categoryReadConfigured } from "@/lib/category-read/client";
-import { currentCategoryFacts } from "@/lib/category-read/facts";
+import { categoryReadIsThin, currentCategoryFacts } from "@/lib/category-read/facts";
 import {
   listStoredCategoryReads,
   readCategoryReadTally,
@@ -59,12 +59,20 @@ export default async function HistoryPage() {
   const from = `${oldest.year}-${String(oldest.month).padStart(2, "0")}-01`;
 
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("transactions")
-    .select("*, categories(name, type, icon, counts_toward_summary)")
-    .eq("user_id", user.id)
-    .gte("occurred_on", from)
-    .order("occurred_on", { ascending: false });
+
+  // Three independent reads, one round-trip stage: the category read's own
+  // state depends on nothing the transactions query produces, so it is
+  // fetched alongside it rather than after it.
+  const [{ data }, { byCategory: storedReads }, tally] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select("*, categories(name, type, icon, counts_toward_summary)")
+      .eq("user_id", user.id)
+      .gte("occurred_on", from)
+      .order("occurred_on", { ascending: false }),
+    listStoredCategoryReads(user.id, supabase),
+    readCategoryReadTally(user.id, supabase),
+  ]);
 
   // Bound once: Task 9 reads the same rows to find what is behind a month.
   const rows = (data ?? []) as TransactionWithCategory[];
@@ -163,24 +171,14 @@ export default async function HistoryPage() {
    * round trip per panel opened — every card on this page is already built
    * this way, findings and all.
    *
-   * `currentCategoryFacts` does no querying of its own; the only new fetches
-   * here are `getMonthlySummary` and `getBudgets`, once each, for the
-   * `share-of-month` and `cap` datums every card's pack may carry.
+   * `thin` needs nothing beyond `history`, so it is computed for every card
+   * from data already in hand. `getMonthlySummary` and `getBudgets` feed only
+   * `share-of-month` and `cap`, and those reach a screen only inside a
+   * rendered read — so they are fetched, as one further round-trip stage,
+   * only when there is at least one stored read for them to feed. On every
+   * load before anyone has ever pressed the button, that stage does not run
+   * at all.
    */
-  const [{ byCategory: storedReads }, tally, summary, budgets] =
-    await Promise.all([
-      listStoredCategoryReads(user.id, supabase),
-      readCategoryReadTally(user.id, supabase),
-      getMonthlySummary(user.id, current.year, current.month, "current"),
-      getBudgets(user.id),
-    ]);
-
-  const capByCategory = new Map(
-    budgets
-      .filter((row) => row.category_id !== null)
-      .map((row) => [row.category_id as string, Number(row.amount)] as const),
-  );
-
   const readMonthLabel = formatMonthLabel(current.year, current.month, locale);
   const readConfigured = categoryReadConfigured();
   const readWritesLeft = tally.tracked
@@ -189,6 +187,20 @@ export default async function HistoryPage() {
         CATEGORY_READ_WRITES_PER_MONTH,
       )
     : 0;
+
+  const hasStoredRead = [...storedReads.values()].some((row) => row.read !== null);
+  const [summary, budgets] = hasStoredRead
+    ? await Promise.all([
+        getMonthlySummary(user.id, current.year, current.month, "current"),
+        getBudgets(user.id),
+      ])
+    : [null, []];
+
+  const capByCategory = new Map(
+    budgets
+      .filter((row) => row.category_id !== null)
+      .map((row) => [row.category_id as string, Number(row.amount)] as const),
+  );
 
   const readsByCategory: Record<string, CategoryReadValue | null> = {};
   const readFactsByCategory: Record<string, CategoryFacts | null> = {};
@@ -200,25 +212,25 @@ export default async function HistoryPage() {
     const stored = storedReads.get(categoryId) ?? null;
     const readLocale = stored?.locale ?? locale;
 
-    const facts = currentCategoryFacts({
-      categoryId,
-      categoryName: card.history.name,
-      type: card.history.type,
-      history: card.history,
-      findings: card.findings,
-      monthExpenses: summary.expenses,
-      cap: capByCategory.get(categoryId) ?? null,
-      monthLabel: readMonthLabel,
-      locale: readLocale,
-    });
-
     readsByCategory[categoryId] = stored?.read ?? null;
     readLocaleByCategory[categoryId] = readLocale;
-    readThinByCategory[categoryId] = facts.thin;
-    // Only built when there is a read to render against it — a pack nobody
-    // reads is a pack that is never wrong, but also never worth computing
-    // twice over.
-    readFactsByCategory[categoryId] = stored?.read ? facts : null;
+    readThinByCategory[categoryId] = categoryReadIsThin(card.history);
+    // Only built when there is a read to render against it, and `summary` is
+    // only non-null when that is true of at least one card.
+    readFactsByCategory[categoryId] =
+      stored?.read && summary
+        ? currentCategoryFacts({
+            categoryId,
+            categoryName: card.history.name,
+            type: card.history.type,
+            history: card.history,
+            findings: card.findings,
+            monthExpenses: summary.expenses,
+            cap: capByCategory.get(categoryId) ?? null,
+            monthLabel: readMonthLabel,
+            locale: readLocale,
+          })
+        : null;
   }
 
   return (

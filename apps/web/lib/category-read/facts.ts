@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatMonthLabel, getCurrentMonth, shiftMonth } from "@finance/core/constants";
-import { buildCategoryFacts, type CategoryFacts } from "@finance/core/category-facts";
+import {
+  buildCategoryFacts,
+  MIN_MONTHS_FOR_CATEGORY_READ,
+  type CategoryFacts,
+} from "@finance/core/category-facts";
 import {
   buildCategoryFindings,
   categoryNormal,
@@ -73,6 +77,25 @@ function signedSeverity(
   return finding.direction === "up" ? finding.severity : -finding.severity;
 }
 
+/** Non-empty months inside the window `normal` is taken over. */
+function monthsActiveCount(history: CategoryHistory | undefined): number {
+  const points = history?.points ?? [];
+  return points.slice(-NORMAL_WINDOW).filter((point) => !point.empty).length;
+}
+
+/**
+ * Whether a category has too little history to be worth a read — the one
+ * thing every card on the by-category screen needs, whether or not it has a
+ * stored read to render. Split out from `currentCategoryFacts` because it
+ * needs neither `monthExpenses` nor `cap`: those feed `share-of-month` and
+ * `cap-left`/`cap-over`, datums a reader only ever sees inside a rendered
+ * read, so a screen with nothing yet written for any category has no reason
+ * to have fetched either.
+ */
+export function categoryReadIsThin(history: CategoryHistory | undefined): boolean {
+  return monthsActiveCount(history) < MIN_MONTHS_FOR_CATEGORY_READ;
+}
+
 /**
  * Build the pack from figures already in hand — no query of its own.
  *
@@ -86,7 +109,6 @@ function signedSeverity(
 export function currentCategoryFacts(input: CurrentCategoryFactsInput): CategoryFacts {
   const points = input.history?.points ?? [];
   const { normal } = categoryNormal(points);
-  const active = points.slice(-NORMAL_WINDOW).filter((point) => !point.empty);
   const last = points[points.length - 1];
   const latest = last && !last.empty ? last.total : null;
 
@@ -101,7 +123,7 @@ export function currentCategoryFacts(input: CurrentCategoryFactsInput): Category
     type: input.type,
     normal,
     latest,
-    monthsActive: active.length,
+    monthsActive: monthsActiveCount(input.history),
     monthLabel: input.monthLabel,
     drift: signedSeverity(input.findings, "drift"),
     oddMonth: signedSeverity(input.findings, "odd-month"),
