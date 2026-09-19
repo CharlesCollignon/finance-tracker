@@ -79,6 +79,75 @@ describe("verifyCategoryRead", () => {
     expect(verdict.ok === false && verdict.reason).toBe("unknown-datum");
   });
 
+  /**
+   * The two that cost a reader something, rather than the two that classify.
+   *
+   * The module stakes its central design on where the fatal line falls, and a
+   * verdict is only half of what that decides — the other half is what lands
+   * on the panel. Both cases below have a surviving observation in them, so a
+   * line drawn one notch either way changes what a person sees.
+   */
+  it("throws away good observations when one of them writes a figure", () => {
+    const verdict = verifyCategoryRead(
+      answer({
+        observations: [
+          {
+            text: "An ordinary month costs you {{fact:normal}}.",
+            basis: ["normal"],
+            tone: "neutral",
+          },
+          {
+            text: "Groceries have climbed to 486 euros.",
+            basis: ["latest"],
+            tone: "watch",
+          },
+        ],
+      }),
+      facts,
+    );
+
+    expect(verdict.ok).toBe(false);
+    expect(verdict.ok === false && verdict.reason).toBe("invented-figure");
+  });
+
+  it("keeps the observations and drops only a suggestion that writes one", () => {
+    const verdict = verifyCategoryRead(
+      answer({
+        observations: [
+          {
+            text: "An ordinary month costs you {{fact:normal}}.",
+            basis: ["normal"],
+            tone: "neutral",
+          },
+          {
+            text: "It has been climbing, to {{fact:latest}}.",
+            basis: ["latest"],
+            tone: "watch",
+          },
+        ],
+        suggestions: [
+          {
+            text: "Set a cap of 400 euros.",
+            basis: ["normal"],
+            effort: "this-month",
+          },
+        ],
+      }),
+      facts,
+    );
+
+    expect(verdict.ok).toBe(true);
+    expect(verdict.ok === true && verdict.read.observations).toHaveLength(2);
+    expect(verdict.ok === true && verdict.read.suggestions).toHaveLength(0);
+    expect(verdict.ok === true && verdict.trimmed).toEqual([
+      {
+        kind: "suggestion",
+        text: "Set a cap of 400 euros.",
+        why: "figure",
+      },
+    ]);
+  });
+
   it("trims an over-long claim rather than refusing the read", () => {
     const verdict = verifyCategoryRead(
       answer({
@@ -191,14 +260,56 @@ describe("buildCategoryFacts", () => {
     expect(buildCategoryFacts(input({ monthsActive: 3 })).thin).toBe(false);
   });
 
+  // The share is a share of the month's *spending*, so the type decides
+  // whether it exists — not whether a number happened to arrive. Handing one
+  // in is the case that matters: gated on the value alone, an income category
+  // would get a figure labelled for money going out and marked "up-is-bad".
   it("offers a share of the month only where there is spending to share", () => {
-    const savings = buildCategoryFacts(
-      input({ type: "savings", shareOfMonth: null }),
-    );
+    for (const type of ["income", "savings", "investment"] as const) {
+      const pack = buildCategoryFacts(input({ type, shareOfMonth: 0.19 }));
 
-    expect(ids(savings)).not.toContain("share-of-month");
-    expect(savings.missing.map((row) => row.id)).not.toContain(
+      expect(ids(pack)).not.toContain("share-of-month");
+      expect(pack.missing.map((row) => row.id)).not.toContain("share-of-month");
+    }
+
+    expect(ids(buildCategoryFacts(input({ shareOfMonth: 0.19 })))).toContain(
       "share-of-month",
+    );
+  });
+
+  it("works out what is left of a cap, and by how much it was passed", () => {
+    const under = buildCategoryFacts(input({ cap: 500, latest: 486 }));
+    const over = buildCategoryFacts(input({ cap: 450, latest: 486 }));
+
+    expect(under.facts.find((fact) => fact.id === "cap-left")).toMatchObject({
+      value: 14,
+      sense: "up-is-good",
+    });
+    expect(ids(under)).not.toContain("cap-over");
+
+    // Unclamped, so the breach is visible in "left" as well — a model reading
+    // it as a floor of zero would miss it entirely.
+    expect(over.facts.find((fact) => fact.id === "cap-left")?.value).toBe(-36);
+    expect(over.facts.find((fact) => fact.id === "cap-over")).toMatchObject({
+      value: 36,
+      sense: "up-is-bad",
+    });
+  });
+
+  it("says once that there is no cap, rather than three times", () => {
+    const pack = buildCategoryFacts(input({ cap: null }));
+
+    expect(pack.missing.filter((row) => row.why === "no-cap")).toHaveLength(1);
+    expect(pack.missing.map((row) => row.id)).not.toContain("cap-left");
+  });
+
+  it("cannot say what is left of a cap nothing was recorded against", () => {
+    const pack = buildCategoryFacts(input({ cap: 500, latest: null }));
+
+    expect(ids(pack)).toContain("cap");
+    expect(ids(pack)).not.toContain("cap-left");
+    expect(pack.missing.find((row) => row.id === "cap-left")?.why).toBe(
+      "not-recorded",
     );
   });
 });
@@ -298,5 +409,28 @@ describe("buildCategoryReadPrompt", () => {
     expect(user).toContain(
       "  odd-month | How far that month sat from a normal one | this was looked for and there is none",
     );
+  });
+
+  /**
+   * The contradiction this prompt walked into once, in French only.
+   *
+   * `no-cap` is shared with the month read, where it meant the unrecorded
+   * allowance, so its French clause said "aucune enveloppe n'a été fixée" —
+   * printed in the absences block two paragraphs under the vocabulary line
+   * forbidding exactly that word for a category's cap. Nothing but this test
+   * stops it drifting back: the clause lives in another module, and the
+   * glossary that forbids the word lives here.
+   */
+  it("does not name a category's cap with the word it forbids, in French", () => {
+    const french = buildCategoryReadPrompt(
+      buildCategoryFacts({ ...input(), locale: "fr" }),
+      { money, locale: "fr" },
+    );
+
+    expect(french.system).toContain('ni une "enveloppe"');
+    expect(french.user).toContain(
+      "  cap | Le plafond de cette catégorie | aucun plafond n'a été fixé",
+    );
+    expect(french.user).not.toContain("enveloppe");
   });
 });

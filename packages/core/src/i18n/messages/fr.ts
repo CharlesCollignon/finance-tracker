@@ -1104,6 +1104,8 @@ export const fr: Messages = {
     monthsActive: "Mois où quelque chose est enregistré",
     shareOfMonth: "Part de tout ce qui est sorti ce mois-là",
     cap: "Le plafond de cette catégorie",
+    capLeft: "Le plafond, restant ce mois-là",
+    capOver: "Le plafond, dépassé de",
   },
 
   pulse: {

@@ -25,14 +25,23 @@
  * name and its normal, so a headline would be a second title six millimetres
  * under the first.
  *
- * **A figure in a claim is fatal, not trimmed.** Over there an observation
- * that wrote a number of its own is dropped and the read survives, because
- * three others survive with it. Here there are at most two, so dropping one
- * either leaves a read that is half of what was written with nothing to say
- * so, or leaves nothing at all and reports the cause as "nothing-left" — a
- * verdict that names the symptom and hides the fault. Refusing outright says
- * the true thing: the model did arithmetic, and a model doing arithmetic has
- * told us what the rest of its sentences are worth.
+ * **A figure in an observation is fatal, not trimmed.** Over there an
+ * observation that wrote a number of its own is dropped and the read
+ * survives, because three others survive with it. Here there are at most two,
+ * so dropping one either leaves a read that is half of what was written with
+ * nothing to say so, or leaves nothing at all and reports the cause as
+ * "nothing-left" — a verdict that names the symptom and hides the fault.
+ * Refusing outright says the true thing: the model did arithmetic, and a
+ * model doing arithmetic has told us what the rest of its sentences are
+ * worth.
+ *
+ * A suggestion is not promoted with it, and the distinction is inherited
+ * rather than invented. `month-read.ts` draws its two severities around
+ * exactly this: "a wording slip in the third suggestion and a fabricated
+ * headline are not the same event". A suggestion is that sentence's own
+ * example of the trim class, and the observations above it are still worth
+ * showing. Refusing the read would spend one of ten monthly writes to show
+ * nothing, over a stray digit in the line a reader would miss least.
  */
 
 import { z } from "zod";
@@ -277,9 +286,11 @@ function normalise(answer: CategoryReadAnswer): CategoryReadAnswer {
  * Three fatal outcomes, and each is a case where nothing the model wrote can
  * be trusted: a shape that is not the schema; a reference to a datum that was
  * never sent, which is a model working from something other than our data;
- * and a figure written in the model's own hand, which is a model doing
- * arithmetic nobody can check. What is merely trimmed is a claim that points
- * at a figure it did not declare, and a claim too long for the panel.
+ * and a figure written in the model's own hand *in an observation*, which is
+ * a model doing arithmetic nobody can check in the only lines the panel
+ * cannot do without. What is trimmed is a figure in a suggestion, a claim
+ * that points at a figure it did not declare, and a claim too long for the
+ * panel.
  */
 export function verifyCategoryRead(
   raw: unknown,
@@ -315,8 +326,9 @@ export function verifyCategoryRead(
     };
   }
 
-  const invented = claims.find((row) => writesAFigure(row.text));
-  if (invented !== undefined) {
+  // Observations only. A suggestion that wrote a figure is dropped below with
+  // the rest of the trims — see the split argued at the top of this file.
+  if (answer.observations.some((row) => writesAFigure(row.text))) {
     return {
       ok: false,
       reason: "invented-figure",
@@ -330,6 +342,12 @@ export function verifyCategoryRead(
     row: T,
     kind: "observation" | "suggestion",
   ): boolean {
+    // Only ever reached by a suggestion: an observation that wrote a figure
+    // refused the whole read above.
+    if (writesAFigure(row.text)) {
+      trimmed.push({ kind, text: row.text, why: "figure" });
+      return false;
+    }
     // The model's own declaration of what it rests on must match what it
     // points at. A placeholder outside the basis is a claim whose footing we
     // cannot check, which makes staleness undetectable for it later.

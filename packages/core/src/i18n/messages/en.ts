@@ -1391,6 +1391,14 @@ export const en = {
     monthsActive: "Months with something recorded",
     shareOfMonth: "Share of everything that went out that month",
     cap: "The cap on this category",
+    /**
+     * The two the cap is useless without, worded as `facts.budgetLeft` and
+     * `facts.budgetOver` are. "Left" is unclamped and goes negative when the
+     * cap is breached; "gone over by" is the same breach as a positive
+     * figure, which is the one a read actually wants to quote.
+     */
+    capLeft: "The cap, left that month",
+    capOver: "The cap, gone over by",
   },
 
   /**
