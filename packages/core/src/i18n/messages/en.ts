@@ -615,7 +615,6 @@ export const en = {
     months: "Last {count} months",
   },
 
-  /** Wallets: what is invested, and what it is worth now. */
   /**
    * The one-bar breakdown, wherever it is drawn.
    *
@@ -636,6 +635,7 @@ export const en = {
     },
   },
 
+  /** Wallets: what is invested, and what it is worth now. */
   wallets: {
     /** The quotes, and taking fresh ones. */
     refreshQuotes: "Refresh prices",
