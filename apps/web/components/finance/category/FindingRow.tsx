@@ -21,8 +21,9 @@ interface FindingRowProps {
  * `month-facts.ts` makes for placeholders — so the weight sits beside it in
  * an element of its own.
  *
- * `gone-quiet` and `every-year` are stated as a rate only when a rate is what
- * they mean; a one-off odd month is worth its distance from normal, once.
+ * Whether the weight is stated as a rate follows how `severity` was computed,
+ * not the label: a rate is only honest for a species whose severity is
+ * itself a sustained monthly figure.
  */
 export function FindingRow({
   finding,
@@ -32,7 +33,14 @@ export function FindingRow({
 }: FindingRowProps) {
   const formatMoney = useFormatCurrency();
   const t = useT();
-  const perMonth = finding.kind !== "odd-month";
+  // Only these two compute `severity` as a monthly rate:
+  //   drift       — the size of a shift sustained across three months.
+  //   gone-quiet  — the median of what used to (or now does) arrive monthly.
+  // `odd-month` and `every-year` both compute `severity` as one month's
+  // distance from normal — a one-off, worth its size once, not "a month".
+  // Listed positively so a future species has to be placed deliberately
+  // rather than inheriting "rate" by default.
+  const perMonth = finding.kind === "drift" || finding.kind === "gone-quiet";
 
   return (
     <button
