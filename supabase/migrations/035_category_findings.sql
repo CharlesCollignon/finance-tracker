@@ -171,12 +171,18 @@ create policy "category_selections_select_own"
 -- and any number of concurrent presses on different categories would all see
 -- the same stale count and all spend.
 --
--- Bumping first has one cost, and it is the cheap direction. Two simultaneous
--- presses on the *same* category both pass the cooldown test below, because
--- neither can see the other's reservation yet; both bump the tally, and then
--- one of them loses the read's row lock and reserves nothing. So a genuine
--- double-press can spend two of the month's ten for one call. Counting more
--- than was spent never exceeds the bill; counting less does.
+-- Bumping first has one cost, and it is the cheap direction. Simultaneous
+-- presses on the *same* category all pass the cooldown test below, because
+-- none can see the others' reservations yet; they all bump the tally, and then
+-- all but one lose the read's row lock and reserve nothing. So a genuine
+-- multi-press can spend several of the month's ten for one call.
+--
+-- What bounds it is not the number of pressers but the allowance itself: the
+-- test is `writes < allowance` against the *locked* tally row, so the count
+-- can never pass the ceiling however many arrive at once. The overspend
+-- therefore only ever eats into the user's own remaining writes, and never
+-- into the bill. Counting more than was spent is safe in a way that counting
+-- less is not.
 create or replace function reserve_category_read(
   target_user uuid,
   target_category uuid,
@@ -195,6 +201,29 @@ declare
 begin
   if not acting_for(target_user) then
     raise exception 'reserve_category_read: not permitted for that user';
+  end if;
+
+  -- `acting_for` settles who the caller is. This settles what they may name.
+  --
+  -- The category id is the one argument here that points at a row the caller
+  -- did not have to own, and the foreign key below only proves such a row
+  -- exists — it never consults `categories.user_id`. Without this test a
+  -- client calling the RPC directly could name somebody else's category: the
+  -- read would still be stored under the caller's own user_id and cost only
+  -- the caller's own allowance, so nothing leaks, but a real id would be
+  -- accepted where an absent one raised a foreign-key violation, and that
+  -- difference is an existence oracle for category ids.
+  --
+  -- `reserve_instrument_reading` in `032` makes the same test for the same
+  -- reason, and `024` needed none because a month is not a row that belongs
+  -- to anybody. Both failures answer identically now: not yours.
+  if not exists (
+    select 1 from categories
+     where categories.id = target_category
+       and categories.user_id = target_user
+  ) then
+    raise exception 'reserve_category_read: % is not a category of that user',
+      target_category;
   end if;
 
   with spent as (
@@ -295,6 +324,17 @@ begin
     raise exception 'store_category_read: not permitted for that user';
   end if;
 
+  -- The same test as the reserve, for the same reason: the category id names
+  -- a row the caller did not have to own.
+  if not exists (
+    select 1 from categories
+     where categories.id = target_category
+       and categories.user_id = target_user
+  ) then
+    raise exception 'store_category_read: % is not a category of that user',
+      target_category;
+  end if;
+
   update category_reads
      set pending_since = null,
          last_written_at = now(),
@@ -355,6 +395,17 @@ declare
 begin
   if not acting_for(target_user) then
     raise exception 'refund_category_read: not permitted for that user';
+  end if;
+
+  -- The same test as the reserve, for the same reason: the category id names
+  -- a row the caller did not have to own.
+  if not exists (
+    select 1 from categories
+     where categories.id = target_category
+       and categories.user_id = target_user
+  ) then
+    raise exception 'refund_category_read: % is not a category of that user',
+      target_category;
   end if;
 
   with outstanding as (
@@ -514,6 +565,52 @@ begin
 end;
 $$;
 
+-- Hand back an attempt that never reached the provider.
+--
+-- The pair to the read's refund, and `029` ships the same function beside its
+-- own reserve for the same case: the provider was unreachable, the call never
+-- landed, and nothing should have been charged for it. Without it an outage
+-- permanently costs one of an allowance that is already small, and the only
+-- way to clear `pending_since` before `reservation_seconds` elapses would be
+-- to store a null selection — which also starts the cooldown, so a failure
+-- nobody caused would lock the band twice over.
+--
+-- Guarded on there being an outstanding reservation, which is what makes it
+-- unabusable: at most one is ever outstanding, so a client can only ever
+-- return the attempt it just took, and calling it twice returns nothing the
+-- second time. An answer that arrived and was rejected is not refunded — it
+-- cost money.
+--
+-- No tally to give back separately, unlike the read's refund: the count lives
+-- on this same row, so decrementing it *is* the refund.
+create or replace function refund_category_selection(target_user uuid)
+returns category_selections
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  result category_selections;
+begin
+  if not acting_for(target_user) then
+    raise exception 'refund_category_selection: not permitted for that user';
+  end if;
+
+  update category_selections
+     set writes = greatest(0, category_selections.writes - 1),
+         pending_since = null
+   where user_id = target_user
+     and category_selections.pending_since is not null
+  returning * into result;
+
+  if result is null then
+    select * into result from category_selections where user_id = target_user;
+  end if;
+
+  return result;
+end;
+$$;
+
 /* ------------------------------------------------------------ the grants */
 
 -- Revoked from PUBLIC in the same migration that creates them, rather than in
@@ -533,6 +630,7 @@ revoke execute on function reserve_category_selection(uuid, smallint, int, int)
 revoke execute on function store_category_selection(
   uuid, jsonb, text, text, smallint, smallint
 ) from public, anon;
+revoke execute on function refund_category_selection(uuid) from public, anon;
 
 grant execute on function reserve_category_read(uuid, uuid, smallint, int, int)
   to authenticated, service_role;
@@ -546,3 +644,5 @@ grant execute on function reserve_category_selection(uuid, smallint, int, int)
 grant execute on function store_category_selection(
   uuid, jsonb, text, text, smallint, smallint
 ) to authenticated, service_role;
+grant execute on function refund_category_selection(uuid)
+  to authenticated, service_role;

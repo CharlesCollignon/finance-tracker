@@ -1502,6 +1502,11 @@ export interface Database {
         };
         Returns: CategorySelectionColumns;
       };
+      /** Hand back an attempt that never reached the provider. */
+      refund_category_selection: {
+        Args: { target_user: string };
+        Returns: CategorySelectionColumns;
+      };
     };
     Enums: {
       category_type: CategoryType;
