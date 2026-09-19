@@ -104,7 +104,21 @@ export type MissingReason =
    * "−£18,000 by July" for somebody who simply never wrote their salary down
    * will write something actively harmful about it.
    */
-  | "no-income";
+  | "no-income"
+  /**
+   * The app looked and there was nothing of the kind to report.
+   *
+   * The odd one out, and worth saying why it exists. Every other reason here
+   * is an absence of *input* — no bank, no close, nothing recorded. This one
+   * is an absence of *finding*: `category-findings.ts` measured a drift and
+   * it did not clear the floor, so there is no drift figure to hand over.
+   *
+   * Zero would be a lie about precision — the drift is under a threshold,
+   * not exactly nothing — and silence invites the worse failure, which is a
+   * model inferring a drift from a normal and a latest that differ. Saying
+   * "we looked, there is none" is the only one of the three that is true.
+   */
+  | "nothing-found";
 
 export interface MissingFact {
   id: string;

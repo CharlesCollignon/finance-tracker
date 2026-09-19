@@ -1096,6 +1096,16 @@ export const fr: Messages = {
     inboxPending: "Écritures encore sans catégorie",
   },
 
+  categoryFacts: {
+    normal: "Un mois normal",
+    latest: "En {month}",
+    drift: "Ce que la dérive vaut sur un mois",
+    oddMonth: "De combien ce mois s'écarte d'un mois normal",
+    monthsActive: "Mois où quelque chose est enregistré",
+    shareOfMonth: "Part de tout ce qui est sorti ce mois-là",
+    cap: "Le plafond de cette catégorie",
+  },
+
   pulse: {
     headlineLeft: "Reste ce mois-ci",
     headlineShort: "Il manque",
@@ -1412,6 +1422,12 @@ export const fr: Messages = {
     standingProvisional:
       "Écrit {age}, à partir des chiffres tels qu'ils étaient alors.",
     standingWritten: "Écrit {age}.",
+  },
+
+  categoryRead: {
+    refusal: {
+      claimHadFigure: "Elle a écrit un chiffre de son invention",
+    },
   },
 
   /** La transparence : de quoi les portefeuilles sont faits. */

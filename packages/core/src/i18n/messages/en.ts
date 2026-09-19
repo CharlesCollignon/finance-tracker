@@ -1365,6 +1365,35 @@ export const en = {
   },
 
   /**
+   * The figures a read of one category may name.
+   *
+   * A third family beside `facts` and `bearingFacts`, and separate for the
+   * same reason those two are separate from each other: these labels are read
+   * with nothing around them but one category's name. "A normal month" needs
+   * no qualifier here because the panel above already says whose normal it
+   * is; on the Bearing the same words would have to say which category, and
+   * in a month read they would have to say which month.
+   *
+   * These reach the model as well as the screen — `category-read-prompt.ts`
+   * lists each one as "id | label | value" — so the label is also the name
+   * the prose is told to use for the figure.
+   */
+  categoryFacts: {
+    normal: "A normal month",
+    latest: "In {month}",
+    /**
+     * A rate, and worded as one. The finding's own weight line says
+     * "{amount} a month" for the same number, and a label that dropped the
+     * "a month" would invite a read calling a monthly drift a total.
+     */
+    drift: "What the drift is worth in a month",
+    oddMonth: "How far that month sat from a normal one",
+    monthsActive: "Months with something recorded",
+    shareOfMonth: "Share of everything that went out that month",
+    cap: "The cap on this category",
+  },
+
+  /**
    * What the `MoneyOnHand` hero's headline figure is called, and the line
    * under it — the hero itself being drawn inside a Bearing panel on both
    * clients, which is the only place it renders.
@@ -1841,6 +1870,22 @@ export const en = {
     standingProvisional:
       "Written {age}, from the figures as they stood then.",
     standingWritten: "Written {age}.",
+  },
+
+  /**
+   * The read of one category, which borrows most of its words.
+   *
+   * `monthRead.refusal.wrongShape`, `.unknownDatum` and `.everythingDropped`
+   * say nothing about a month, so a category read uses those rather than
+   * repeating them here. Only the one refusal a month read cannot produce is
+   * its own: over there a figure inside an observation costs that
+   * observation, because three others survive it; here there are at most two,
+   * so it costs the read.
+   */
+  categoryRead: {
+    refusal: {
+      claimHadFigure: "It wrote a figure of its own",
+    },
   },
 
   /**

@@ -90,7 +90,7 @@ describe("buildMonthReadPrompt", () => {
     });
 
     expect(user).toContain("Not known, and why");
-    expect(user).toContain("no allowance has been set");
+    expect(user).toContain("no cap has been set");
   });
 
   it("leaves the absences section out when nothing is missing", () => {
