@@ -2,16 +2,28 @@ import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { buildCategoryHistory } from "@finance/core/category-history";
+import {
+  buildCategoryFindings,
+  categoryNormal,
+} from "@finance/core/category-findings";
 import { getCurrentMonth, shiftMonth } from "@finance/core/constants";
 import type { TransactionWithCategory } from "@finance/core/types/database";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
-import { CategoryHistoryView } from "@/components/finance/CategoryHistoryView";
+import { CategoryHistoryView } from "@/components/finance/category/CategoryHistoryView";
 import { getLocale } from "@/lib/locale";
 
-/** How far back the page looks. A year is one of every seasonal thing. */
-const MONTHS = 12;
+/**
+ * How far back the page reads, and how far back it draws.
+ *
+ * Seasonality cannot be measured inside a twelve-month window — the same
+ * calendar month has to appear at least twice — so the query widens and the
+ * screen does not. Twenty-four bars in a tile the width of a phone column are
+ * a texture rather than a chart.
+ */
+const MONTHS_READ = 36;
+const MONTHS_DRAWN = 12;
 
 export default async function HistoryPage() {
   const user = await getAuthUser();
@@ -21,7 +33,7 @@ export default async function HistoryPage() {
   }
 
   const current = getCurrentMonth();
-  const oldest = shiftMonth(current.year, current.month, -(MONTHS - 1));
+  const oldest = shiftMonth(current.year, current.month, -(MONTHS_READ - 1));
   const from = `${oldest.year}-${String(oldest.month).padStart(2, "0")}-01`;
 
   const supabase = await createClient();
@@ -32,19 +44,29 @@ export default async function HistoryPage() {
     .gte("occurred_on", from)
     .order("occurred_on", { ascending: false });
 
-  const histories = buildCategoryHistory(
-    (data ?? []) as TransactionWithCategory[],
-    current.year,
-    current.month,
-    { months: MONTHS, locale: await getLocale() },
-  );
+  // Bound once: Task 9 reads the same rows to find what is behind a month.
+  const rows = (data ?? []) as TransactionWithCategory[];
+
+  const histories = buildCategoryHistory(rows, current.year, current.month, {
+    months: MONTHS_READ,
+    locale: await getLocale(),
+  });
+
+  const findings = buildCategoryFindings(histories);
+
+  const cards = histories.map((history) => ({
+    history,
+    normal: categoryNormal(history.points).normal,
+    drawn: history.points.slice(-MONTHS_DRAWN),
+    findings: findings.filter((f) => f.categoryId === history.categoryId),
+  }));
 
   return (
     <>
       <PageHeader titleKey="nav.ledger" />
       <PageContainer>
         <SurfaceTabs tabs={LEDGER_TABS} className="mb-4" />
-        <CategoryHistoryView histories={histories} months={MONTHS} />
+        <CategoryHistoryView cards={cards} findings={findings} />
       </PageContainer>
     </>
   );
