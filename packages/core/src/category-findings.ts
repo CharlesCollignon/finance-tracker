@@ -75,6 +75,17 @@ export const DRIFT_ABSOLUTE_FLOOR = 25;
 export const ODD_MONTH_SPREADS = 3;
 export const ODD_MONTH_ABSOLUTE_FLOOR = 40;
 
+/**
+ * What counts as a run, and what counts as a silence.
+ *
+ * Four of the six preceding months rather than all six, because a genuinely
+ * monthly charge still misses one when a bank holiday moves it. Three silent
+ * months rather than one, because a charge that lands on the 2nd has not
+ * stopped on the 1st.
+ */
+export const QUIET_ACTIVE_OF_SIX = 4;
+export const QUIET_SILENT_MONTHS = 3;
+
 function median(values: readonly number[]): number {
   if (values.length === 0) {
     return 0;
@@ -210,6 +221,59 @@ function oddMonthFinding(history: CategoryHistory): CategoryFinding | null {
   };
 }
 
+function goneQuietFinding(history: CategoryHistory): CategoryFinding | null {
+  const points = history.points;
+  const recent = points.slice(-QUIET_SILENT_MONTHS);
+  const before = points.slice(
+    -(QUIET_SILENT_MONTHS + 6),
+    -QUIET_SILENT_MONTHS,
+  );
+
+  const recentActive = recent.filter((point) => !point.empty);
+  const beforeActive = before.filter((point) => !point.empty);
+
+  // Stopped: a run, then nothing.
+  if (
+    recentActive.length === 0 &&
+    beforeActive.length >= QUIET_ACTIVE_OF_SIX
+  ) {
+    return {
+      id: `gone-quiet:${history.categoryId}`,
+      kind: "gone-quiet",
+      categoryId: history.categoryId,
+      categoryName: history.name,
+      type: history.type,
+      severity: round(median(beforeActive.map((point) => point.total))),
+      direction: "down",
+      months: recent.map((point) => point.monthKey),
+      messageKey: "categoryFindings.goneQuiet",
+      params: { months: QUIET_SILENT_MONTHS },
+    };
+  }
+
+  // Appeared: nothing, then a run. The same shape read backwards.
+  if (
+    beforeActive.length === 0 &&
+    recentActive.length === QUIET_SILENT_MONTHS
+  ) {
+    const first = recent[0]!;
+    return {
+      id: `gone-quiet:${history.categoryId}`,
+      kind: "gone-quiet",
+      categoryId: history.categoryId,
+      categoryName: history.name,
+      type: history.type,
+      severity: round(median(recentActive.map((point) => point.total))),
+      direction: "up",
+      months: recent.map((point) => point.monthKey),
+      messageKey: "categoryFindings.appeared",
+      params: { month: first.label },
+    };
+  }
+
+  return null;
+}
+
 /**
  * Every finding across every category, heaviest first.
  *
@@ -231,6 +295,10 @@ export function buildCategoryFindings(
     const odd = oddMonthFinding(history);
     if (odd) {
       findings.push(odd);
+    }
+    const quiet = goneQuietFinding(history);
+    if (quiet) {
+      findings.push(quiet);
     }
   }
 

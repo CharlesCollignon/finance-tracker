@@ -194,3 +194,65 @@ describe("buildCategoryFindings, odd month", () => {
     ]);
   });
 });
+
+describe("buildCategoryFindings, gone quiet", () => {
+  it("reports a steady charge that stopped", () => {
+    const findings = findingsFor(
+      run([34, 34, 34, 34, 34, 34, null, null, null]),
+    );
+
+    const quiet = findings.find((f) => f.kind === "gone-quiet");
+    expect(quiet).toBeDefined();
+    expect(quiet!.direction).toBe("down");
+    expect(quiet!.messageKey).toBe("categoryFindings.goneQuiet");
+    expect(quiet!.severity).toBe(34);
+  });
+
+  it("says nothing about a category that was never steady", () => {
+    const findings = findingsFor(
+      run([80, null, null, 90, null, null, null, null, null]),
+    );
+
+    expect(findings.filter((f) => f.kind === "gone-quiet")).toEqual([]);
+  });
+
+  it("reports a category that has just appeared", () => {
+    const findings = findingsFor(
+      run([null, null, null, null, null, null, 120, 118, 122]),
+    );
+
+    const quiet = findings.find((f) => f.kind === "gone-quiet");
+    expect(quiet!.direction).toBe("up");
+    expect(quiet!.messageKey).toBe("categoryFindings.appeared");
+  });
+
+  it("does not read a salary straddling a month end as a silence", () => {
+    // Every one of these periods holds exactly one payment; on a calendar
+    // they look like doubles and holes. buildCategoryHistory regroups them.
+    const dates = [
+      "2025-10-31",
+      "2025-12-01",
+      "2025-12-31",
+      "2026-02-01",
+      "2026-02-28",
+      "2026-03-31",
+      "2026-05-01",
+      "2026-05-31",
+      "2026-06-30",
+      "2026-07-31",
+      "2026-08-31",
+      "2026-10-01",
+    ];
+    const findings = buildCategoryFindings(
+      buildCategoryHistory(
+        dates.map((date) => tx(date, 4500, "pay", "Salary", "income")),
+        2026,
+        9,
+        { months: 36 },
+      ),
+    );
+
+    expect(findings.filter((f) => f.kind === "gone-quiet")).toEqual([]);
+    expect(findings.filter((f) => f.kind === "odd-month")).toEqual([]);
+  });
+});
