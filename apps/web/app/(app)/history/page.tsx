@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   buildCategoryHistory,
   categoryBucketing,
+  type CategoryMonthPoint,
 } from "@finance/core/category-history";
 import {
   buildCategoryFindings,
@@ -109,12 +110,32 @@ export default async function HistoryPage() {
 
   const findings = buildCategoryFindings(histories);
 
-  const cards = histories.map((history) => ({
-    history,
-    normal: categoryNormal(history.points).normal,
-    drawn: history.points.slice(-MONTHS_DRAWN),
-    findings: findings.filter((f) => f.categoryId === history.categoryId),
-  }));
+  /**
+   * Biggest first — over the months a tile actually draws.
+   *
+   * `buildCategoryHistory` orders by its own `total`, the sum over the window
+   * it was asked to read, and this page asks for thirty-six. Left at that, a
+   * category that was heavy two years ago and has been quiet since would sit
+   * above one that is heavy now, beside a tile showing nothing but the quiet
+   * twelve. The design says order inside a group is "biggest first, as today",
+   * and today meant over the months on screen.
+   *
+   * Sorted here rather than in the builder because the drawn window is this
+   * page's own — the builder is never told it — and because a second total
+   * carried on `CategoryHistory` for one caller's benefit is the same unread
+   * field this wave has just deleted two of.
+   */
+  const drawnTotal = (points: CategoryMonthPoint[]) =>
+    points.reduce((sum, point) => sum + point.total, 0);
+
+  const cards = histories
+    .map((history) => ({
+      history,
+      normal: categoryNormal(history.points).normal,
+      drawn: history.points.slice(-MONTHS_DRAWN),
+      findings: findings.filter((f) => f.categoryId === history.categoryId),
+    }))
+    .sort((left, right) => drawnTotal(right.drawn) - drawnTotal(left.drawn));
 
   /**
    * The band's order, which is the app's until somebody asks for another.

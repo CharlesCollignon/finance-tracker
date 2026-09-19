@@ -200,5 +200,8 @@ export function buildCategoryHistory(
   }
 
   // Busiest first: the category you want is almost never the alphabetical one.
+  // Busiest over the window it was asked to read, which is the only one it
+  // knows about — a caller that reads more months than it draws has to order
+  // by what it draws, and `/history` does exactly that.
   return histories.sort((left, right) => right.total - left.total);
 }
