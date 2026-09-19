@@ -1020,18 +1020,14 @@ describe("buildCategoryFindings, every year", () => {
     expect(odd!.months).toEqual(["2026-07"]);
   });
 
-  it("needs two years before it will call anything seasonal", () => {
-    // Eighteen months: September appears twice, but 2024-09 is outside.
-    const transactions = seasonal(100, 400).filter(
-      (entry) => entry.occurred_on >= "2025-04-01",
-    );
+  it("will not call one year's September a pattern", () => {
+    // Twelve months: this September is high, and there is no earlier one to
+    // say it is high every year. One occurrence is a month, not a pattern.
     const findings = buildCategoryFindings(
-      buildCategoryHistory(transactions, 2026, 9, { months: 18 }),
+      buildCategoryHistory(seasonal(100, 400), 2026, 9, { months: 12 }),
     );
 
-    // One earlier September plus this one is two, which is the floor, so the
-    // pattern holds. A single year would not.
-    expect(findings.some((f) => f.kind === "every-year")).toBe(true);
+    expect(findings.some((f) => f.kind === "every-year")).toBe(false);
   });
 });
 ```
@@ -1181,6 +1177,8 @@ git commit -m "Let a yearly pattern silence the findings it explains"
 
 ### Task 6: A variable window, and the end of `trend`
 
+**Run this task after Task 7, not before it.** `trend`'s only reader is the old `CategoryHistoryView.tsx`, which Task 7 deletes. Deleting the field first would leave the web app failing typecheck for the length of one task, against this plan's promise that every task ends somewhere the screen still works.
+
 **Files:**
 - Modify: `packages/core/src/category-history.ts`
 - Modify: `packages/core/src/category-history.test.ts`
@@ -1300,12 +1298,13 @@ export default async function HistoryPage() {
     .gte("occurred_on", from)
     .order("occurred_on", { ascending: false });
 
-  const histories = buildCategoryHistory(
-    (data ?? []) as TransactionWithCategory[],
-    current.year,
-    current.month,
-    { months: MONTHS_READ, locale: await getLocale() },
-  );
+  // Bound once: Task 9 reads the same rows to find what is behind a month.
+  const rows = (data ?? []) as TransactionWithCategory[];
+
+  const histories = buildCategoryHistory(rows, current.year, current.month, {
+    months: MONTHS_READ,
+    locale: await getLocale(),
+  });
 
   const findings = buildCategoryFindings(histories);
 
@@ -1321,11 +1320,7 @@ export default async function HistoryPage() {
       <PageHeader titleKey="nav.ledger" />
       <PageContainer>
         <SurfaceTabs tabs={LEDGER_TABS} className="mb-4" />
-        <CategoryHistoryView
-          cards={cards}
-          findings={findings}
-          monthsDrawn={MONTHS_DRAWN}
-        />
+        <CategoryHistoryView cards={cards} findings={findings} />
       </PageContainer>
     </>
   );
@@ -1447,6 +1442,7 @@ export function CategoryTile({
 ```tsx
 "use client";
 
+import { Fragment } from "react";
 import type { CategoryType } from "@finance/core/types/database";
 import type { Key } from "@finance/core/i18n/t";
 import { CategoryTile, type CategoryCard } from "./CategoryTile";
@@ -1508,23 +1504,17 @@ export function CategoryGrid({
             </h3>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {group.map((card) => (
-                <>
+                <Fragment key={card.history.categoryId}>
                   <CategoryTile
-                    key={card.history.categoryId}
                     card={card}
                     open={card.history.categoryId === openId}
                     onOpen={onOpen}
                     panelId={panelId}
                   />
                   {card.history.categoryId === openId ? (
-                    <div
-                      key={`${card.history.categoryId}-panel`}
-                      className="col-span-full"
-                    >
-                      {panel}
-                    </div>
+                    <div className="col-span-full">{panel}</div>
                   ) : null}
-                </>
+                </Fragment>
               ))}
             </div>
           </section>
@@ -1534,8 +1524,6 @@ export function CategoryGrid({
   );
 }
 ```
-
-Note: React requires the `key` on the outermost element of a map. Replace the `<>` with `<Fragment key={card.history.categoryId}>` imported from `react`, and drop the inner `key` props.
 
 - [ ] **Step 4: Write the orchestrating `CategoryHistoryView.tsx`**
 
@@ -1552,7 +1540,6 @@ import type { CategoryCard } from "./CategoryTile";
 interface CategoryHistoryViewProps {
   cards: CategoryCard[];
   findings: CategoryFinding[];
-  monthsDrawn: number;
 }
 
 const PANEL_ID = "category-panel";
@@ -1567,7 +1554,6 @@ const PANEL_ID = "category-panel";
 export function CategoryHistoryView({
   cards,
   findings,
-  monthsDrawn,
 }: CategoryHistoryViewProps) {
   const t = useT();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -1597,7 +1583,7 @@ export function CategoryHistoryView({
 }
 ```
 
-`findings` and `monthsDrawn` are unused in this task and wired in Tasks 8 and 9. Prefix them with `_` only if the linter objects; otherwise leave them, because the next task fills them in.
+`findings` is unused in this task and wired in Task 8. Prefix it with `_` only if the linter objects; otherwise leave it, because the next task fills it in.
 
 - [ ] **Step 5: Delete the old view**
 
@@ -1608,7 +1594,7 @@ git rm apps/web/components/finance/CategoryHistoryView.tsx
 - [ ] **Step 6: Typecheck and look at the screen**
 
 Run: `pnpm --filter web exec tsc --noEmit`
-Expected: PASS — this is where the `trend` removal from Task 6 lands.
+Expected: PASS. `CategoryHistory.trend` still exists at this point and is simply unused; Task 6 removes it next, once this task has deleted its only reader.
 
 Run: `pnpm dev:web` and open `/history`. Remember this box is WSL: bind and open by LAN address, not `localhost`.
 Expected: every category visible as a tile, grouped, with a badge on the ones that have a finding. Clicking a tile highlights it and opens an empty row.
@@ -1969,6 +1955,10 @@ export function CategoryPanel({
           {t("categoryScreen.periodShifted")}
         </p>
       ) : null}
+
+      <p className="text-xs text-muted-foreground">
+        {t("categoryScreen.months", { count: drawn.length })}
+      </p>
 
       <BarSeries
         color={TONE[history.type] ?? "var(--chart-1)"}
