@@ -84,6 +84,39 @@ type WalletReadColumns = {
   read_at: string | null;
 };
 
+/** The columns of `category_reads`, written out once. */
+type CategoryReadColumns = {
+  user_id: string;
+  category_id: string;
+  writes: number;
+  refused: number;
+  last_written_at: string | null;
+  pending_since: string | null;
+  read: Json | null;
+  facts: Json | null;
+  facts_digest: string | null;
+  trimmed: number;
+  model: string | null;
+  prompt_version: number | null;
+  written_at: string | null;
+  locale: Locale | null;
+};
+
+/** The columns of `category_selections`, written out once. */
+type CategorySelectionColumns = {
+  user_id: string;
+  selection: Json | null;
+  findings_digest: string | null;
+  tally_month: string | null;
+  writes: number;
+  refused: number;
+  last_written_at: string | null;
+  pending_since: string | null;
+  model: string | null;
+  prompt_version: number | null;
+  written_at: string | null;
+};
+
 interface BearingArrangementColumns {
   user_id: string;
   tally_month: string;
@@ -1105,6 +1138,95 @@ export interface Database {
         };
         Relationships: [];
       };
+      category_reads: {
+        Row: CategoryReadColumns;
+        Insert: {
+          user_id: string;
+          category_id: string;
+          writes?: number;
+          refused?: number;
+          last_written_at?: string | null;
+          pending_since?: string | null;
+          read?: Json | null;
+          facts?: Json | null;
+          facts_digest?: string | null;
+          trimmed?: number;
+          model?: string | null;
+          prompt_version?: number | null;
+          written_at?: string | null;
+          locale?: Locale | null;
+        };
+        Update: {
+          user_id?: string;
+          category_id?: string;
+          writes?: number;
+          refused?: number;
+          last_written_at?: string | null;
+          pending_since?: string | null;
+          read?: Json | null;
+          facts?: Json | null;
+          facts_digest?: string | null;
+          trimmed?: number;
+          model?: string | null;
+          prompt_version?: number | null;
+          written_at?: string | null;
+          locale?: Locale | null;
+        };
+        Relationships: [];
+      };
+      category_read_tallies: {
+        Row: {
+          user_id: string;
+          /**
+           * First of the month. The allowance for category reads is one for
+           * the whole screen, so what it is counted against is this row
+           * rather than any one category's.
+           */
+          month: string;
+          writes: number;
+        };
+        Insert: {
+          user_id: string;
+          month: string;
+          writes?: number;
+        };
+        Update: {
+          user_id?: string;
+          month?: string;
+          writes?: number;
+        };
+        Relationships: [];
+      };
+      category_selections: {
+        Row: CategorySelectionColumns;
+        Insert: {
+          user_id: string;
+          selection?: Json | null;
+          findings_digest?: string | null;
+          tally_month?: string | null;
+          writes?: number;
+          refused?: number;
+          last_written_at?: string | null;
+          pending_since?: string | null;
+          model?: string | null;
+          prompt_version?: number | null;
+          written_at?: string | null;
+        };
+        Update: {
+          user_id?: string;
+          selection?: Json | null;
+          findings_digest?: string | null;
+          tally_month?: string | null;
+          writes?: number;
+          refused?: number;
+          last_written_at?: string | null;
+          pending_since?: string | null;
+          model?: string | null;
+          prompt_version?: number | null;
+          written_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1318,6 +1440,68 @@ export interface Database {
         Args: { target_user: string };
         Returns: WalletReadColumns;
       };
+      /**
+       * Take one attempt at reading a category, if the month permits.
+       *
+       * No month argument, deliberately: the allowance is counted against the
+       * server's own calendar month, so a caller cannot name a later one and
+       * refill it. The count lives in `category_read_tallies`; compare the
+       * returned `writes` before and after to learn whether the reservation
+       * was taken.
+       */
+      reserve_category_read: {
+        Args: {
+          target_user: string;
+          target_category: string;
+          allowance: number;
+          cooldown_seconds: number;
+          reservation_seconds: number;
+        };
+        Returns: CategoryReadColumns;
+      };
+      /** Land a finished attempt, whether or not a read survived it. */
+      store_category_read: {
+        Args: {
+          target_user: string;
+          target_category: string;
+          new_read: Json | null;
+          new_facts: Json | null;
+          new_digest: string | null;
+          new_trimmed: number | null;
+          new_model: string | null;
+          new_prompt_version: number | null;
+          new_locale: string | null;
+          refused_delta: number | null;
+        };
+        Returns: CategoryReadColumns;
+      };
+      /** Hand back an attempt that never reached the provider, tally and all. */
+      refund_category_read: {
+        Args: { target_user: string; target_category: string };
+        Returns: CategoryReadColumns;
+      };
+      /** Take one attempt at ordering the findings, if the month permits. */
+      reserve_category_selection: {
+        Args: {
+          target_user: string;
+          allowance: number;
+          cooldown_seconds: number;
+          reservation_seconds: number;
+        };
+        Returns: CategorySelectionColumns;
+      };
+      /** Land a finished attempt, whether or not an order survived it. */
+      store_category_selection: {
+        Args: {
+          target_user: string;
+          new_selection: Json | null;
+          new_digest: string | null;
+          new_model: string | null;
+          new_prompt_version: number | null;
+          refused_delta: number | null;
+        };
+        Returns: CategorySelectionColumns;
+      };
     };
     Enums: {
       category_type: CategoryType;
@@ -1359,6 +1543,12 @@ export type InstrumentReadingTallyRow =
 export type WalletReadRow = Database["public"]["Tables"]["wallet_reads"]["Row"];
 export type BearingArrangementRow =
   Database["public"]["Tables"]["bearing_arrangements"]["Row"];
+export type CategoryReadRow =
+  Database["public"]["Tables"]["category_reads"]["Row"];
+export type CategoryReadTallyRow =
+  Database["public"]["Tables"]["category_read_tallies"]["Row"];
+export type CategorySelectionRow =
+  Database["public"]["Tables"]["category_selections"]["Row"];
 export type RecurringFulfilment =
   Database["public"]["Tables"]["recurring_fulfilments"]["Row"];
 export type MonthClose = Database["public"]["Tables"]["month_closes"]["Row"];
