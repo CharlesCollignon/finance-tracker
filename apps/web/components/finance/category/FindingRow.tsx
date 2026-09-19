@@ -8,6 +8,15 @@ import { PrivateAmount } from "@/components/layout/PrivateAmount";
 
 interface FindingRowProps {
   finding: CategoryFinding;
+  /**
+   * A model's clause on why this one leads, when one was chosen and survived.
+   *
+   * It carries no figure — `verifyCategorySelection` drops any remark that
+   * writes one, for the same reason the sentence beside it carries none: a
+   * figure inside prose cannot be blurred by privacy mode and cannot follow
+   * the currency toggle.
+   */
+  remark?: string;
   open: boolean;
   onOpen: (categoryId: string) => void;
   panelId: string;
@@ -27,6 +36,7 @@ interface FindingRowProps {
  */
 export function FindingRow({
   finding,
+  remark,
   open,
   onOpen,
   panelId,
@@ -58,6 +68,11 @@ export function FindingRow({
       </span>
       <span className="min-w-0 flex-1 text-sm text-muted-foreground">
         {t(finding.messageKey, finding.params)}
+        {remark ? (
+          <span className="block text-xs italic text-muted-foreground/80">
+            {remark}
+          </span>
+        ) : null}
       </span>
       <span
         className={cn(

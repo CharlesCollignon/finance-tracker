@@ -15,7 +15,15 @@ import type { CategoryCard } from "./CategoryTile";
 
 interface CategoryHistoryViewProps {
   cards: CategoryCard[];
+  /** Already in the order the band should read, app's or model's. */
   findings: CategoryFinding[];
+  /** A model's remark per finding id, where one survived and applies. */
+  remarks: Record<string, string>;
+  /** Whose order the band is showing, and whether a stored one was refused. */
+  rerankState: "none" | "applied" | "stale";
+  /** False with no model key, or before migration 035: no button at all. */
+  rerankConfigured: boolean;
+  rerankWritesLeft: number;
   breakdown: CategoryBreakdown[];
   breakdownTotal: number;
   /** The transactions behind the month each category's findings point at. */
@@ -42,12 +50,16 @@ const PANEL_ID = "category-panel";
  * The by-category screen: what moved, every run at once, and one open panel.
  *
  * Holds one piece of layout state — which category is open — and nothing
- * else. The two buttons that ask a model keep their own pending state, as
- * `MonthRead` does.
+ * else. The buttons that ask a model — the panel's writer and the band's
+ * re-rank — keep their own pending state, as `MonthRead` does.
  */
 export function CategoryHistoryView({
   cards,
   findings,
+  remarks,
+  rerankState,
+  rerankConfigured,
+  rerankWritesLeft,
   breakdown,
   breakdownTotal,
   behind,
@@ -83,6 +95,10 @@ export function CategoryHistoryView({
     <div className="flex flex-col gap-6">
       <FindingBand
         findings={findings}
+        remarks={remarks}
+        rerankState={rerankState}
+        rerankConfigured={rerankConfigured}
+        rerankWritesLeft={rerankWritesLeft}
         breakdown={breakdown}
         breakdownTotal={breakdownTotal}
         openId={openId}

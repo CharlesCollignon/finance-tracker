@@ -40,8 +40,15 @@ type Client = SupabaseClient<Database>;
  * for the same reason `buildCategoryFacts`'s doc gives for `normal` and
  * `latest`: a model handed a shorter run than the panel drew would answer a
  * question about a chart the reader cannot see.
+ *
+ * Exported and imported by that page rather than restated there, because a
+ * third reader has since arrived: `category-selection/findings.ts` rebuilds
+ * the findings server-side and fingerprints them, and the page fingerprints
+ * its own. Two windows that disagreed by a month would produce two digests
+ * that never match, and the band would report every stored order as stale
+ * forever — a failure that looks like nothing at all going wrong.
  */
-const MONTHS_READ = 36;
+export const CATEGORY_MONTHS_READ = 36;
 
 /**
  * The month-independent half of the pack: everything that does not need a
@@ -163,7 +170,7 @@ export async function gatherCategoryFacts(
     return null;
   }
 
-  const oldest = shiftMonth(current.year, current.month, -(MONTHS_READ - 1));
+  const oldest = shiftMonth(current.year, current.month, -(CATEGORY_MONTHS_READ - 1));
   const from = `${oldest.year}-${String(oldest.month).padStart(2, "0")}-01`;
 
   const [{ data, error }, summary, budgets] = await Promise.all([
@@ -184,7 +191,7 @@ export async function gatherCategoryFacts(
 
   const rows = (data ?? []) as TransactionWithCategory[];
   const histories = buildCategoryHistory(rows, current.year, current.month, {
-    months: MONTHS_READ,
+    months: CATEGORY_MONTHS_READ,
     locale,
   });
   const history = histories.find((row) => row.categoryId === categoryId);

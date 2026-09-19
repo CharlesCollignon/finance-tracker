@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { parseUuid } from "@finance/core/validations/finance";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { writeCategoryRead } from "@/lib/category-read/write";
+import { rerankFindings } from "@/lib/category-selection/write";
 
 /**
  * Write a category read from the panel.
@@ -34,6 +35,38 @@ export async function writeCategoryReadAction(
   }
 
   const outcome = await writeCategoryRead(user.id, parsed);
+
+  if (outcome.written) {
+    revalidatePath("/history");
+  }
+
+  return outcome;
+}
+
+/**
+ * Ask a model which findings should lead.
+ *
+ * Takes nothing. The findings are rebuilt from the database inside — a
+ * catalogue the client supplied is a catalogue the client chose, and the
+ * closed-catalogue rule the whole call rests on would mean nothing. There is
+ * therefore no input to validate, which is why this has no `parseUuid`
+ * sibling to the action above.
+ */
+export async function rerankFindingsAction(): Promise<{
+  written: boolean;
+  message: string | null;
+  writesLeft: number;
+}> {
+  const user = await getAuthUser();
+  if (!user) {
+    return {
+      written: false,
+      message: "errors.notAuthenticated",
+      writesLeft: 0,
+    };
+  }
+
+  const outcome = await rerankFindings(user.id);
 
   if (outcome.written) {
     revalidatePath("/history");

@@ -10,6 +10,13 @@ import {
   categoryNormal,
 } from "@finance/core/category-findings";
 import {
+  applySelection,
+  CATEGORY_SELECTION_WRITES_PER_MONTH,
+  findingsDigest,
+  MIN_FINDINGS_TO_RANK,
+  selectionRemarks,
+} from "@finance/core/category-selection";
+import {
   formatMonthLabel,
   getCurrentMonth,
   shiftMonth,
@@ -28,11 +35,16 @@ import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { CategoryHistoryView } from "@/components/finance/category/CategoryHistoryView";
 import { getLocale } from "@/lib/locale";
 import { categoryReadConfigured } from "@/lib/category-read/client";
-import { categoryReadIsThin, currentCategoryFacts } from "@/lib/category-read/facts";
+import {
+  CATEGORY_MONTHS_READ,
+  categoryReadIsThin,
+  currentCategoryFacts,
+} from "@/lib/category-read/facts";
 import {
   listStoredCategoryReads,
   readCategoryReadTally,
 } from "@/lib/category-read/store";
+import { readCategorySelectionState } from "@/lib/category-selection/store";
 import { getMonthlySummary } from "@/lib/queries/finance";
 import { getBudgets } from "@/lib/queries/phase4";
 
@@ -43,8 +55,12 @@ import { getBudgets } from "@/lib/queries/phase4";
  * calendar month has to appear at least twice — so the query widens and the
  * screen does not. Twenty-four bars in a tile the width of a phone column are
  * a texture rather than a chart.
+ *
+ * The window itself is `CATEGORY_MONTHS_READ`, imported rather than restated:
+ * the write path behind the re-rank button rebuilds these same findings and
+ * fingerprints them, and two windows that disagreed would leave every stored
+ * order permanently stale. See that constant's own note.
  */
-const MONTHS_READ = 36;
 const MONTHS_DRAWN = 12;
 
 export default async function HistoryPage() {
@@ -55,24 +71,31 @@ export default async function HistoryPage() {
   }
 
   const current = getCurrentMonth();
-  const oldest = shiftMonth(current.year, current.month, -(MONTHS_READ - 1));
+  const oldest = shiftMonth(
+    current.year,
+    current.month,
+    -(CATEGORY_MONTHS_READ - 1),
+  );
   const from = `${oldest.year}-${String(oldest.month).padStart(2, "0")}-01`;
 
   const supabase = await createClient();
 
-  // Three independent reads, one round-trip stage: the category read's own
-  // state depends on nothing the transactions query produces, so it is
-  // fetched alongside it rather than after it.
-  const [{ data }, { byCategory: storedReads }, tally] = await Promise.all([
-    supabase
-      .from("transactions")
-      .select("*, categories(name, type, icon, counts_toward_summary)")
-      .eq("user_id", user.id)
-      .gte("occurred_on", from)
-      .order("occurred_on", { ascending: false }),
-    listStoredCategoryReads(user.id, supabase),
-    readCategoryReadTally(user.id, supabase),
-  ]);
+  // Four independent reads, one round-trip stage: neither the category
+  // read's state nor the band's stored order depends on anything the
+  // transactions query produces, so they are fetched alongside it rather
+  // than after it.
+  const [{ data }, { byCategory: storedReads }, tally, selectionState] =
+    await Promise.all([
+      supabase
+        .from("transactions")
+        .select("*, categories(name, type, icon, counts_toward_summary)")
+        .eq("user_id", user.id)
+        .gte("occurred_on", from)
+        .order("occurred_on", { ascending: false }),
+      listStoredCategoryReads(user.id, supabase),
+      readCategoryReadTally(user.id, supabase),
+      readCategorySelectionState(user.id, supabase),
+    ]);
 
   // Bound once: Task 9 reads the same rows to find what is behind a month.
   const rows = (data ?? []) as TransactionWithCategory[];
@@ -80,7 +103,7 @@ export default async function HistoryPage() {
   const locale = await getLocale();
 
   const histories = buildCategoryHistory(rows, current.year, current.month, {
-    months: MONTHS_READ,
+    months: CATEGORY_MONTHS_READ,
     locale,
   });
 
@@ -92,6 +115,51 @@ export default async function HistoryPage() {
     drawn: history.points.slice(-MONTHS_DRAWN),
     findings: findings.filter((f) => f.categoryId === history.categoryId),
   }));
+
+  /**
+   * The band's order, which is the app's until somebody asks for another.
+   *
+   * A stored order is kept beside the digest of the findings it was chosen
+   * from. When that digest no longer matches the one taken here, the order is
+   * not merely old: it is a ranking that claims to describe figures that have
+   * since moved. It is refused rather than applied, and the band says so.
+   *
+   * Only `bandFindings` is re-ordered. `cards` above — and so the month each
+   * panel explains, which is `card.findings[0]`'s — is built from the app's
+   * own order and stays exactly where it was, because which month a panel
+   * opens on is not a question anyone asked a model.
+   */
+  const storedSelection = selectionState.stored;
+  // The digest is only worth taking when there is something to compare it to.
+  const appliedSelection =
+    storedSelection && storedSelection.digest === findingsDigest(findings)
+      ? storedSelection
+      : null;
+  const selectionStale = storedSelection !== null && appliedSelection === null;
+
+  const bandFindings = appliedSelection
+    ? applySelection(findings, appliedSelection.selection)
+    : findings;
+
+  /**
+   * A remark is the model's own prose, in the language it was asked in.
+   *
+   * Shown only to a reader in that language. The order itself has no language
+   * and is applied either way — but a French clause under an English band is
+   * the same small wrongness `CategoryRead` states out loud, and here there
+   * is no card to state it on: a remark is a garnish on a row, and dropping
+   * one costs the reader nothing they were promised.
+   */
+  const bandRemarks =
+    appliedSelection && appliedSelection.locale === locale
+      ? selectionRemarks(appliedSelection.selection)
+      : {};
+
+  const rerankState = selectionStale
+    ? ("stale" as const)
+    : appliedSelection
+      ? ("applied" as const)
+      : ("none" as const);
 
   /** This month's expense composition, for the strip. `SpendStrip` sorts. */
   const latestKey = `${current.year}-${String(current.month).padStart(2, "0")}`;
@@ -188,6 +256,26 @@ export default async function HistoryPage() {
       )
     : 0;
 
+  /**
+   * Whether the band may offer a re-rank at all.
+   *
+   * Both halves matter, and for different failures. No model key on this
+   * deployment and the button would do nothing, so it is absent — the band
+   * is then byte-identical to what it showed before this feature existed.
+   * Migration 035 unapplied and the attempt could not be counted, and a call
+   * that cannot be counted is a call that is not capped, so the button is
+   * absent there too rather than present and refusing. Fewer findings than
+   * there are ways to order them and there is nothing to ask — the same test
+   * the write path makes, from the same constant.
+   */
+  const rerankConfigured =
+    categoryReadConfigured() &&
+    selectionState.tracked &&
+    findings.length >= MIN_FINDINGS_TO_RANK;
+  const rerankWritesLeft = selectionState.tracked
+    ? writesRemaining(selectionState.tally, CATEGORY_SELECTION_WRITES_PER_MONTH)
+    : 0;
+
   const hasStoredRead = [...storedReads.values()].some((row) => row.read !== null);
   const [summary, budgets] = hasStoredRead
     ? await Promise.all([
@@ -240,7 +328,11 @@ export default async function HistoryPage() {
         <SurfaceTabs tabs={LEDGER_TABS} className="mb-4" />
         <CategoryHistoryView
           cards={cards}
-          findings={findings}
+          findings={bandFindings}
+          remarks={bandRemarks}
+          rerankState={rerankState}
+          rerankConfigured={rerankConfigured}
+          rerankWritesLeft={rerankWritesLeft}
           breakdown={breakdown}
           breakdownTotal={breakdownTotal}
           behind={behindByCategory}

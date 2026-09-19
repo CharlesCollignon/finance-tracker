@@ -29,6 +29,8 @@
     "./category-history": "./src/category-history.ts",
     "./category-read": "./src/category-read.ts",
     "./category-read-prompt": "./src/category-read-prompt.ts",
+    "./category-selection": "./src/category-selection.ts",
+    "./category-selection-prompt": "./src/category-selection-prompt.ts",
     "./category-styles": "./src/category-styles.ts",
     "./constants": "./src/constants.ts",
     "./crypto-holdings": "./src/crypto-holdings.ts",

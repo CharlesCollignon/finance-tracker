@@ -451,24 +451,17 @@ export function renderCategoryRead(
   return { observations, suggestions };
 }
 
-/**
- * Every figure a read rests on: what it declared, plus what it pointed at.
+/*
+ * `categoryReadFooting` used to sit here: the union of what a read declared
+ * and what it pointed at, the shape `readFooting` has in `month-read.ts`,
+ * where `describeReadFreshness` consumes it on both clients.
  *
- * The union rather than either alone. `basis` is the model's declaration and
- * placeholders are what it actually used; verification keeps them consistent
- * for surviving claims, and the union is the honest footing either way. What
- * it is for is staleness: a stored read is compared against a fresh pack on
- * exactly these ids.
+ * Nothing ever consumed this one. The panel renders a category read from the
+ * *current* pack and deliberately shows no freshness badge — see
+ * `renderCategoryRead`'s own note on why a stored figure under a fresh chart
+ * is the contradiction worth avoiding — so there was no second side to the
+ * comparison it existed for. `knip` could not say so while
+ * `check:reachability` was red on the message catalogue; the moment that went
+ * green it did. Restoring it is `git show` away if a freshness badge is ever
+ * wanted here, and a live export is not the place to keep a spare part.
  */
-export function categoryReadFooting(read: CategoryRead): string[] {
-  const ids = new Set<string>();
-  for (const row of [...read.observations, ...read.suggestions]) {
-    for (const id of row.basis) {
-      ids.add(id);
-    }
-    for (const id of citedIds(row.text)) {
-      ids.add(id);
-    }
-  }
-  return [...ids].sort();
-}
