@@ -228,9 +228,16 @@ opened.
 The panel holds the title, the normal, **every finding for that category**
 rather than only the one that reached layer 1, the twelve months at full size
 through `BarSeries`, the transactions behind the month the findings point at —
-the latest month when they point at none — a link into the Ledger filtered to
-the category, and the category read. The opening
-animation goes through `usePrefersReducedMotion`.
+the latest month when they point at none — a link into the Ledger, and the
+category read. The opening animation goes through `usePrefersReducedMotion`.
+
+That link carries the month and not the category, and this paragraph originally
+promised otherwise. `/transactions` reads `y`, `m` and `review` and nothing
+else: there is no category filter to address. So the link lands the reader on
+the month the panel is explaining and leaves them to find the category in the
+list. Giving the Ledger a real category filter is worth doing and is its own
+piece of work — inventing a parameter that page ignores would have been worse
+than admitting the gap.
 
 ### Files
 
