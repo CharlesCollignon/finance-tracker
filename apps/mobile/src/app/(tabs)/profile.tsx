@@ -224,6 +224,17 @@ export default function ProfileScreen() {
             label={t("profile.signedInWith")}
             value={provider}
           />
+          {/* The phone's way back to `/onboarding`. Its launch-time gate
+              only ever pushes there once, while `onboarded === false`; once
+              that flag flips there is no other route to it. Unconditional,
+              not folded into the gate's guard, so it stays reachable after
+              setup is done — which is the point of it. Web's account menu
+              carries the same row with the same key. */}
+          <ListRow
+            icon="compass-outline"
+            label={t("onboarding.reopen")}
+            onPress={() => router.push("/onboarding" as Href)}
+          />
         </ListSection>
 
         <ListSection

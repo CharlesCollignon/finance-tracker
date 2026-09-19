@@ -484,15 +484,16 @@ export const en = {
       other: "{count} added — add another or finish below.",
     },
     /**
-     * The account menu's way back here.
+     * The way back here, from web's account menu and the phone's Profile
+     * screen alike.
      *
      * Web reached `/welcome` from exactly one place — a `router.push` the
      * instant a sign-up succeeded — so a reader who skipped it, or who
-     * signed in later on another device, had no route back. The phone has
-     * never had that problem: its onboarding gate is checked on every
-     * launch. This is the web's equivalent, and it is worded as somewhere
-     * to go rather than as something owed, because most readers who open it
-     * have already finished.
+     * signed in later on another device, had no route back. The phone's
+     * launch-time gate only pushes to `/onboarding` while `onboarded ===
+     * false`, so once that flag flips it has the identical gap. Both surfaces
+     * share this key, worded as somewhere to go rather than as something
+     * owed, because most readers who open it have already finished.
      */
     reopen: "Set-up walkthrough",
   },
