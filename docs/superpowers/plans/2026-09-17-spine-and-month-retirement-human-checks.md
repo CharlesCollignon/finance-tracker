@@ -485,8 +485,11 @@ then launch and sign in.
 **What you should see:**
 
 - The card floats over the top of the first screen, clear of the status bar,
-  with the screen's own header below it. Nothing is pushed down, and there is
-  **no band of empty background** between the card and the header.
+  **covering** the screen's own header while it shows — it is an overlay, so it
+  sits on top rather than pushing anything aside. The thing to check is what
+  does **not** happen: nothing below it moves. No content is pushed down, no
+  band of empty background opens up, and when the card is dismissed the screen
+  underneath is exactly where it was. Look at the screen before and after.
 - Answer it either way and it goes for good. Relaunch: it must not come back,
   and the screen underneath must look exactly as it does on a launch where it
   never appeared — same header position, same first row.
@@ -551,6 +554,15 @@ leftover English, no obviously machine-translated phrasing, nothing
 truncated or overflowing because the French ran longer than the English.
 The ring's accessibility label should mention both the standing and the
 over-cap fact when both apply, not just one.
+
+**Also check the label cannot contradict itself.** It used to join a
+percentage to a mood in one sentence — "100% of your allowance used,
+comfortably clear" was a routine thing for it to say, because the percentage
+and the mood measure different quantities. It is now two clauses, each
+stating its own basis. On an account well over its cap, confirm the
+percentage reads the **true** figure (250% should say 250%, not stop at 100%)
+and that the two halves do not disagree with each other. This is the one fix
+on this branch that nothing else in this checklist tests.
 
 **What it would mean otherwise:** any odd-reading string is a
 translation-catalogue bug — report it with the exact rung and the string you
