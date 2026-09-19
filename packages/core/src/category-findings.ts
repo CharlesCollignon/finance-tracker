@@ -14,6 +14,7 @@
  * Pure. Testable without a database, a network or a model.
  */
 
+import { categorySense } from "./category-facts";
 import type { CategoryHistory, CategoryMonthPoint } from "./category-history";
 import type { Key, Vars } from "./i18n/t";
 import type { CategoryType } from "./types/database";
@@ -30,7 +31,9 @@ export interface CategoryFinding {
   /**
    * What it is worth, in currency units a month. Always positive: which way
    * it went is `direction`, and whether that is good news depends on the
-   * category type, which is the client's business.
+   * category type — `findingIsGoodNews` below is the one place that decides,
+   * because a client reading `direction` on its own paints a salary that
+   * stopped arriving green.
    */
   severity: number;
   direction: "up" | "down";
@@ -38,6 +41,24 @@ export interface CategoryFinding {
   months: string[];
   messageKey: Key;
   params: Vars;
+}
+
+/**
+ * Whether a finding is welcome news, which its direction alone cannot say.
+ *
+ * A rise in income is not a rise in spending — the design says so, and
+ * `categorySense` is where that judgement already lives: it is what tells a
+ * model, through `category-selection-prompt.ts`, which way is good. Asked
+ * here on behalf of a screen so that the model and the reader are told the
+ * same thing, and so that two components colouring an arrow by hand cannot
+ * come to two answers.
+ */
+export function findingIsGoodNews(
+  finding: Pick<CategoryFinding, "type" | "direction">,
+): boolean {
+  return categorySense(finding.type) === "up-is-good"
+    ? finding.direction === "up"
+    : finding.direction === "down";
 }
 
 /**

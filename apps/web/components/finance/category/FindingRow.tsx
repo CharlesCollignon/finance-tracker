@@ -1,6 +1,9 @@
 "use client";
 
-import type { CategoryFinding } from "@finance/core/category-findings";
+import {
+  findingIsGoodNews,
+  type CategoryFinding,
+} from "@finance/core/category-findings";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { useT } from "@/lib/locale-context";
@@ -51,6 +54,10 @@ export function FindingRow({
   // Listed positively so a future species has to be placed deliberately
   // rather than inheriting "rate" by default.
   const perMonth = finding.kind === "drift" || finding.kind === "gone-quiet";
+  // Never off `direction` alone. A salary that has stopped arriving points
+  // down, and down is not good news on money coming in — see
+  // `findingIsGoodNews`, which is where the category type gets its say.
+  const good = findingIsGoodNews(finding);
 
   return (
     <button
@@ -77,7 +84,7 @@ export function FindingRow({
       <span
         className={cn(
           "shrink-0 text-sm font-semibold tabular-nums",
-          finding.direction === "up" ? "text-destructive" : "text-success",
+          good ? "text-success" : "text-destructive",
         )}
       >
         <PrivateAmount>

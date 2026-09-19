@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { buildCategoryHistory } from "./category-history";
-import { buildCategoryFindings, categoryNormal } from "./category-findings";
+import {
+  buildCategoryFindings,
+  categoryNormal,
+  findingIsGoodNews,
+} from "./category-findings";
 import type { CategoryType, TransactionWithCategory } from "./types/database";
 
 /** One transaction, with only the fields a history needs. */
@@ -433,5 +437,28 @@ describe("buildCategoryFindings, every year", () => {
     const season = findings.find((f) => f.kind === "every-year");
     expect(season).toBeDefined();
     expect(season!.months).toEqual(["2026-09"]);
+  });
+});
+
+describe("findingIsGoodNews", () => {
+  /** A finding of the shape the colouring reads, and nothing else. */
+  const finding = (type: CategoryType, direction: "up" | "down") => ({
+    type,
+    direction,
+  });
+
+  it("reads a rise as bad in spending and good in everything else", () => {
+    expect(findingIsGoodNews(finding("expense", "up"))).toBe(false);
+    expect(findingIsGoodNews(finding("income", "up"))).toBe(true);
+    expect(findingIsGoodNews(finding("savings", "up"))).toBe(true);
+    expect(findingIsGoodNews(finding("investment", "up"))).toBe(true);
+  });
+
+  it("reads a salary that stopped arriving as bad news", () => {
+    // The failure this exists to stop: a `gone-quiet` on an income category
+    // carries direction "down", and a screen colouring "down" green would
+    // congratulate somebody on not being paid.
+    expect(findingIsGoodNews(finding("income", "down"))).toBe(false);
+    expect(findingIsGoodNews(finding("expense", "down"))).toBe(true);
   });
 });

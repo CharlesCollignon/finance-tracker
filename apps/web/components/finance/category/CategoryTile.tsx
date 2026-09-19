@@ -1,6 +1,9 @@
 "use client";
 
-import type { CategoryFinding } from "@finance/core/category-findings";
+import {
+  findingIsGoodNews,
+  type CategoryFinding,
+} from "@finance/core/category-findings";
 import type {
   CategoryHistory,
   CategoryMonthPoint,
@@ -50,6 +53,9 @@ export function CategoryTile({
   const { history, normal, drawn, findings } = card;
   const peak = drawn.reduce((max, point) => Math.max(max, point.total), 0) || 1;
   const heaviest = findings[0] ?? null;
+  // The same rule the band's rows follow, from the same function: what the
+  // sign means comes from the category type, not from the sign.
+  const heaviestIsGood = heaviest ? findingIsGoodNews(heaviest) : false;
 
   return (
     <button
@@ -72,9 +78,9 @@ export function CategoryTile({
           <span
             className={cn(
               "shrink-0 rounded-full px-2 py-0.5 text-[0.65rem] font-semibold",
-              heaviest.direction === "up"
-                ? "bg-destructive/15 text-destructive"
-                : "bg-success/15 text-success",
+              heaviestIsGood
+                ? "bg-success/15 text-success"
+                : "bg-destructive/15 text-destructive",
             )}
           >
             <PrivateAmount>{formatMoney(heaviest.severity)}</PrivateAmount>
