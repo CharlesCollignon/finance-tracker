@@ -240,6 +240,24 @@ and whether going up is good, bad or neither. Their whole vocabulary of
 numbers, and the reason a claim resting on anything else is thrown away.
 _Avoid_: metric, stat, data point
 
+### What a category has been doing
+
+**Finding**:
+One thing the app noticed in a category's run of months that is worth saying
+out loud. Four species only, and each is a measurement rather than an
+impression: what has drifted, a month apart, a category gone quiet, and what
+happens every year. A finding carries an i18n key and its parameters, never a
+sentence — the wording belongs to the client drawing it, in the reader's
+language.
+_Avoid_: insight, alert, anomaly, signal
+
+**Normal**:
+What a category costs in an ordinary month: the median of its non-empty
+months, not their mean. A mean is dragged by exceptional months, which are
+exactly the ones a finding is looking for, and a threshold that moves with the
+anomaly it is meant to detect detects nothing.
+_Avoid_: average, baseline, typical
+
 ### Where it all stands
 
 **Bearing**:

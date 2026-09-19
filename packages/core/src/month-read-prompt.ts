@@ -162,7 +162,15 @@ export function factLines(
 const MISSING_WORDS_EN: Record<MissingReason, string> = {
   "no-bank": "no bank is connected, so this cannot be known",
   "no-close": "no month has been closed yet, so this cannot be measured",
-  "no-cap": "no allowance has been set",
+  // "no cap", not "no allowance". A clause describes the reason, not the
+  // surface that went looking — the same argument `month-facts.ts` makes for
+  // keeping the reasons themselves in one enum. `category-facts.ts` emits
+  // `no-cap` for a category's own cap, whose glossary forbids the word
+  // "allowance" precisely because the unrecorded allowance is a different
+  // feature; the French clause used to print that forbidden word two
+  // paragraphs under the line forbidding it. The label beside each line says
+  // which cap is meant, so nothing is lost here.
+  "no-cap": "no cap has been set",
   "month-unfinished": "the month is not over yet",
   "not-recorded": "nothing was recorded for it",
   "no-target": "no target allocation has been set",
@@ -174,6 +182,9 @@ const MISSING_WORDS_EN: Record<MissingReason, string> = {
   "no-income":
     "no charge brings money in, so nothing can honestly be said about the " +
     "months ahead",
+  "nothing-found":
+    "this was looked for and there is none — do not infer one from the other " +
+    "figures",
 };
 
 /** The same, for the figures that are not there and why. */
@@ -259,7 +270,7 @@ const MISSING_WORDS_FR: Record<MissingReason, string> = {
   "no-bank": "aucune banque n'est connectée, cela ne peut donc pas être su",
   "no-close":
     "aucun mois n'a encore été clôturé, cela ne peut donc pas être mesuré",
-  "no-cap": "aucune enveloppe n'a été fixée",
+  "no-cap": "aucun plafond n'a été fixé",
   "month-unfinished": "le mois n'est pas terminé",
   "not-recorded": "rien n'a été enregistré pour cela",
   "no-target": "aucune répartition cible n'a été fixée",
@@ -273,6 +284,9 @@ const MISSING_WORDS_FR: Record<MissingReason, string> = {
   "no-income":
     "aucune charge n'apporte de revenu, rien ne peut donc être dit " +
     "honnêtement des mois à venir",
+  "nothing-found":
+    "cela a été cherché et il n'y en a pas — ne le déduisez pas des autres " +
+    "chiffres",
 };
 
 /**

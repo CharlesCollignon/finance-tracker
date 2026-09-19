@@ -81,12 +81,13 @@ describe("mobileRouteForPushUrl", () => {
           budgetProgress: [
             {
               budgetId: "b1",
+              categoryId: "c1",
               label: "Groceries",
               spent: 420,
               limit: 300,
+              remaining: -120,
               ratio: 1.4,
               over: true,
-              share: 0.3,
             },
           ],
           alreadySent: new Set(),

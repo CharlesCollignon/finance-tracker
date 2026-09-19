@@ -3,6 +3,7 @@ import {
   type MonthReadRequest,
   type MonthReadSource,
 } from "@finance/core/month-read";
+import type { Locale } from "@finance/core/i18n/locale";
 
 /**
  * The writer, and the only place its key exists.
@@ -23,6 +24,16 @@ import {
  * now" as an ordinary outcome, never a throw, the network call injected so
  * failure handling is testable, and a cooldown after repeated failures
  * because hammering a rate-limited endpoint is what keeps it rate-limited.
+ *
+ * `createMistralReadSource` below is that adapter, generalised over what
+ * genuinely differs between a month read and a category read — the response
+ * schema, the token ceiling, and the log line's own name for itself. Nothing
+ * else does: same key, same model resolution, same endpoint, same cooldown
+ * and failure-threshold state machine, same envelope parsing. A second copy
+ * of that machinery is a second copy of its failure path to keep in step,
+ * and `apiKey()` staying the one place `MISTRAL_API_KEY` is read is the
+ * point of the file's own title — a second reader of it elsewhere would make
+ * that claim false.
  */
 
 const ENDPOINT = "https://api.mistral.ai/v1/chat/completions";
@@ -130,14 +141,31 @@ async function postToMistral(body: unknown, key: string): Promise<unknown> {
 }
 
 /**
- * What came back, or null.
+ * What genuinely differs between one caller of `createMistralReadSource` and
+ * another. Everything not listed here — the key, the endpoint, the model,
+ * the temperature, the timeout, the cooldown and failure-threshold state
+ * machine, the envelope parsing — is the same call made twice for two
+ * prompts, not two calls that happen to look alike.
+ */
+export interface MistralReadSourceConfig {
+  /** Built from the request's own language, as `response_format`. */
+  responseFormat: (locale: Locale) => unknown;
+  /** See each caller's own comment for how this was measured. */
+  maxTokens: number;
+  /** Names this adapter in its own warnings, so two failing at once read apart. */
+  logPrefix: string;
+}
+
+/**
+ * The adapter itself, parameterised over `MistralReadSourceConfig`.
  *
  * `null` covers every way of not getting an answer — no key, unreachable,
  * rate-limited, timed out, an answer that is not JSON — because the caller
  * does the same thing for all of them: leave the read that is already there
  * and say it could not be rewritten.
  */
-export function createMistralMonthReadSource(
+export function createMistralReadSource(
+  config: MistralReadSourceConfig,
   options: MistralSourceOptions = {},
 ): MonthReadSource {
   const fetchCompletion = options.fetchCompletion ?? postToMistral;
@@ -168,8 +196,8 @@ export function createMistralMonthReadSource(
           {
             model: monthReadModel(),
             temperature: TEMPERATURE,
-            max_tokens: MAX_TOKENS,
-            response_format: monthReadJsonSchema(request.locale),
+            max_tokens: config.maxTokens,
+            response_format: config.responseFormat(request.locale),
             messages: [
               { role: "system", content: request.system },
               { role: "user", content: request.user },
@@ -190,7 +218,7 @@ export function createMistralMonthReadSource(
         // the same sentence, and three separate diagnoses this week each
         // needed a hand-rolled probe to tell them apart.
         console.warn(
-          `[month-read] no answer from ${monthReadModel()}: ${
+          `[${config.logPrefix}] no answer from ${monthReadModel()}: ${
             error instanceof Error ? error.message : "unknown failure"
           }`,
         );
@@ -202,6 +230,20 @@ export function createMistralMonthReadSource(
       }
     },
   };
+}
+
+/** The month read's own adapter: `createMistralReadSource`, fixed to its schema and ceiling. */
+export function createMistralMonthReadSource(
+  options: MistralSourceOptions = {},
+): MonthReadSource {
+  return createMistralReadSource(
+    {
+      responseFormat: monthReadJsonSchema,
+      maxTokens: MAX_TOKENS,
+      logPrefix: "month-read",
+    },
+    options,
+  );
 }
 
 /**

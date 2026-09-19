@@ -428,6 +428,65 @@ export const fr: Messages = {
       "Décochez pour un DCA de portefeuille suivi hors budget (par exemple des achats financés par un virement chez le courtier).",
   },
 
+  categoryFindings: {
+    driftUp: {
+      one: "monte depuis {months} mois",
+      other: "monte depuis {months} mois d'affilée",
+    },
+    driftDown: {
+      one: "baisse depuis {months} mois",
+      other: "baisse depuis {months} mois d'affilée",
+    },
+    oddMonthHigh: "{month} sort nettement au-dessus d'un mois normal ici",
+    oddMonthLow: "{month} sort nettement en dessous d'un mois normal ici",
+    goneQuiet: {
+      one: "rien enregistré depuis {months} mois, après une série régulière",
+      other: "rien enregistré depuis {months} mois, après une série régulière",
+    },
+    appeared: "nouveau depuis {month}, et régulier depuis",
+    // Ni "cher" ni "toutes les années" : la première disait d'un salaire ou
+    // d'une épargne qu'ils coûtaient, la seconde n'est pas ce qu'on dit.
+    everyYear: "{month} sort au-dessus d'un mois normal ici chaque année",
+    everyYearLow: "{month} sort en dessous d'un mois normal ici chaque année",
+    weightPerMonth: "{amount} par mois",
+    weightOnce: "{amount}",
+    bandTitle: "Ce qui a bougé",
+    bandEmpty: "Rien n'a assez bougé pour mériter une phrase.",
+    rerank: "Faire classer par un modèle",
+    reranked: "Classé par un modèle",
+    rerankStale: "Les chiffres ont bougé depuis ce classement.",
+  },
+
+  categoryScreen: {
+    empty: "Rien à revoir pour l'instant",
+    emptyBody:
+      "Dès que quelques mois auront des transactions, la série de chaque catégorie apparaîtra ici.",
+    normal: "{amount} dans un mois normal",
+    normalShifted: "{amount} par période de paie",
+    periodShifted:
+      "Ces mouvements tombent de part et d'autre d'une fin de mois : chacun est compté dans la période à laquelle il appartient. Un mois ici peut différer du même mois dans le Ledger.",
+    groupExpense: "Ce qui sort",
+    groupIncome: "Ce qui entre",
+    groupSavings: "Mis de côté",
+    groupInvestment: "Investi",
+    open: "Ouvrir {name}",
+    close: "Fermer",
+    behindThisMonth: "Derrière {month}",
+    seeInLedger: "Tout voir dans le Ledger",
+    months: "{count} derniers mois",
+  },
+
+  spendStrip: {
+    more: {
+      one: "{count} autre",
+      other: "{count} autres",
+    },
+    label: {
+      one: "Dépenses réparties sur {count} catégorie",
+      other: "Dépenses réparties sur {count} catégories",
+    },
+  },
+
   wallets: {
     refreshQuotes: "Actualiser les cours",
     refreshingQuotes: "Actualisation…",
@@ -1051,6 +1110,18 @@ export const fr: Messages = {
     inboxPending: "Écritures encore sans catégorie",
   },
 
+  categoryFacts: {
+    normal: "Un mois normal",
+    latest: "En {month}",
+    drift: "Ce que la dérive vaut sur un mois",
+    oddMonth: "De combien ce mois s'écarte d'un mois normal",
+    monthsActive: "Mois où quelque chose est enregistré",
+    shareOfMonth: "Part de tout ce qui est sorti ce mois-là",
+    cap: "Le plafond de cette catégorie",
+    capLeft: "Le plafond, restant ce mois-là",
+    capOver: "Le plafond, dépassé de",
+  },
+
   pulse: {
     headlineLeft: "Reste ce mois-ci",
     headlineShort: "Il manque",
@@ -1367,6 +1438,27 @@ export const fr: Messages = {
     standingProvisional:
       "Écrit {age}, à partir des chiffres tels qu'ils étaient alors.",
     standingWritten: "Écrit {age}.",
+  },
+
+  categoryRead: {
+    refusal: {
+      claimHadFigure: "Elle a écrit un chiffre de son invention",
+    },
+
+    noWriter: "Aucun rédacteur n'est configuré.",
+    gone: "Cette catégorie n'est plus disponible.",
+
+    writtenInOtherLanguage: "Écrit en {language}.",
+
+    title: "La lecture",
+    subtitle:
+      "Écrit par un modèle, à partir des chiffres de ce panneau. Il ne voit pas vos comptes.",
+    empty: "Rien n'a encore été écrit sur cette catégorie.",
+    writing: "Écriture…",
+    noReadsLeft: "Plus de lecture ce mois-ci",
+    writeAgain: "Réécrire ({left} restantes)",
+    writeOne: "Écrire une lecture ({left} restantes)",
+    writtenToast: "Écrit pour {category}",
   },
 
   /** La transparence : de quoi les portefeuilles sont faits. */

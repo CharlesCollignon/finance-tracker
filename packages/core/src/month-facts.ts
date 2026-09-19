@@ -104,7 +104,21 @@ export type MissingReason =
    * "−£18,000 by July" for somebody who simply never wrote their salary down
    * will write something actively harmful about it.
    */
-  | "no-income";
+  | "no-income"
+  /**
+   * The app looked and there was nothing of the kind to report.
+   *
+   * The odd one out, and worth saying why it exists. Every other reason here
+   * is an absence of *input* — no bank, no close, nothing recorded. This one
+   * is an absence of *finding*: `category-findings.ts` measured a drift and
+   * it did not clear the floor, so there is no drift figure to hand over.
+   *
+   * Zero would be a lie about precision — the drift is under a threshold,
+   * not exactly nothing — and silence invites the worse failure, which is a
+   * model inferring a drift from a normal and a latest that differ. Saying
+   * "we looked, there is none" is the only one of the three that is true.
+   */
+  | "nothing-found";
 
 export interface MissingFact {
   id: string;
@@ -572,19 +586,20 @@ export function formatFact(
 }
 
 /**
- * A fingerprint of the figures, for noticing that they have moved.
+ * The hash itself, over an already-canonical string.
  *
  * FNV-1a rather than a hash from `node:crypto`, because this module runs
  * inside Hermes on the phone where that does not exist. Collision resistance
  * is irrelevant here: the question is "did these values change", and the
  * values themselves are stored alongside for the answer that matters.
+ *
+ * Exported so that a second fingerprint over a different kind of list —
+ * `findingsDigest` in `./category-selection`, over ids and weights rather
+ * than ids and values — is the same eight lines rather than a second copy of
+ * them. The `>>> 0` below is the reason that matters: it is a subtlety worth
+ * one comment in one place, not two comments that can fall out of step.
  */
-export function factsDigest(pack: FactPack): string {
-  const canonical = [...pack.facts]
-    .map((fact) => `${fact.id}:${fact.value.toFixed(2)}`)
-    .sort()
-    .join("|");
-
+export function fingerprint(canonical: string): string {
   let hash = 0x811c9dc5;
   for (let index = 0; index < canonical.length; index += 1) {
     hash ^= canonical.charCodeAt(index);
@@ -593,4 +608,19 @@ export function factsDigest(pack: FactPack): string {
     hash = (hash * 0x01000193) >>> 0;
   }
   return hash.toString(16).padStart(8, "0");
+}
+
+/**
+ * A fingerprint of the figures, for noticing that they have moved.
+ *
+ * Sorted before hashing, so the answer is about the values and not about the
+ * order a pack happened to be built in.
+ */
+export function factsDigest(pack: FactPack): string {
+  return fingerprint(
+    [...pack.facts]
+      .map((fact) => `${fact.id}:${fact.value.toFixed(2)}`)
+      .sort()
+      .join("|"),
+  );
 }

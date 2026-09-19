@@ -536,6 +536,105 @@ export const en = {
       "Untick for wallet DCA tracked outside the budget (e.g. buys funded by broker transfers).",
   },
 
+  /**
+   * What a finding says, in words.
+   *
+   * No amount appears in any of these. A figure inside a sentence cannot be
+   * blurred by privacy mode and cannot follow the currency toggle, which is
+   * the same reason `month-facts.ts` gives for placeholders. The euro weight
+   * is rendered beside the sentence, in its own element.
+   *
+   * `months` is a count and takes plural forms; French puts zero in the
+   * singular, so these cannot be ternaries at the call site.
+   */
+  categoryFindings: {
+    driftUp: {
+      one: "has climbed for {months} month running",
+      other: "has climbed for {months} months running",
+    },
+    driftDown: {
+      one: "has fallen for {months} month running",
+      other: "has fallen for {months} months running",
+    },
+    oddMonthHigh: "{month} stands well above a normal month here",
+    oddMonthLow: "{month} stands well below a normal month here",
+    goneQuiet: {
+      one: "nothing recorded for {months} month, after a steady run",
+      other: "nothing recorded for {months} months, after a steady run",
+    },
+    appeared: "new since {month}, and steady since",
+    /**
+     * Both directions, because the pattern has both.
+     *
+     * A calendar month can be reliably *below* its category's normal year
+     * after year as easily as above it — a commuter pass nobody buys in
+     * August — and `seasonalMonths` reports that case. One sentence saying
+     * "runs high" would describe it exactly backwards.
+     */
+    everyYear: "{month} runs high here every year",
+    everyYearLow: "{month} runs low here every year",
+    weightPerMonth: "{amount} a month",
+    weightOnce: "{amount}",
+    bandTitle: "What moved",
+    bandEmpty: "Nothing has moved enough to be worth a sentence.",
+    /**
+     * The band's own model call, and why none of these says "reading".
+     *
+     * A reading is the other feature on this screen — the prose a model
+     * writes about one category, in the panel, behind its own button. This
+     * one writes nothing at all: it re-orders findings the app has already
+     * found, and every figure beside them stays the app's. Naming both "a
+     * reading" offered one screen two different features under one word.
+     *
+     * So the three read as one family on the verb that says what actually
+     * happens: order, Ordered, order. French keeps the same discipline on
+     * classer, Classé, classement.
+     */
+    rerank: "Ask a model to order these",
+    reranked: "Ordered by a model",
+    rerankStale: "The figures have moved since this order was chosen.",
+  },
+
+  /** The by-category screen's own furniture. */
+  categoryScreen: {
+    empty: "Nothing to look back on yet",
+    emptyBody:
+      "Once a few months have transactions in them, each category's run shows up here.",
+    normal: "{amount} in a normal month",
+    normalShifted: "{amount} per pay period",
+    periodShifted:
+      "These land either side of a month end, so each is counted against the period it belongs to. A month here can differ from the same month in the Ledger.",
+    groupExpense: "Going out",
+    groupIncome: "Coming in",
+    groupSavings: "Set aside",
+    groupInvestment: "Invested",
+    open: "Open {name}",
+    close: "Close",
+    behindThisMonth: "Behind {month}",
+    seeInLedger: "See all in the Ledger",
+    months: "Last {count} months",
+  },
+
+  /**
+   * The one-bar breakdown, wherever it is drawn.
+   *
+   * Three screens show `SpendStrip` — the month's wallets, a Bearing panel
+   * and the findings band — so its two strings live at the top level rather
+   * than under any one of them.
+   */
+  spendStrip: {
+    /** The pooled tail, under the bands that got a colour of their own. */
+    more: {
+      one: "{count} more",
+      other: "{count} more",
+    },
+    /** What a screen reader is told about the bar itself. */
+    label: {
+      one: "Spending split across {count} category",
+      other: "Spending split across {count} categories",
+    },
+  },
+
   /** Wallets: what is invested, and what it is worth now. */
   wallets: {
     /** The quotes, and taking fresh ones. */
@@ -1308,6 +1407,43 @@ export const en = {
   },
 
   /**
+   * The figures a read of one category may name.
+   *
+   * A third family beside `facts` and `bearingFacts`, and separate for the
+   * same reason those two are separate from each other: these labels are read
+   * with nothing around them but one category's name. "A normal month" needs
+   * no qualifier here because the panel above already says whose normal it
+   * is; on the Bearing the same words would have to say which category, and
+   * in a month read they would have to say which month.
+   *
+   * These reach the model as well as the screen — `category-read-prompt.ts`
+   * lists each one as "id | label | value" — so the label is also the name
+   * the prose is told to use for the figure.
+   */
+  categoryFacts: {
+    normal: "A normal month",
+    latest: "In {month}",
+    /**
+     * A rate, and worded as one. The finding's own weight line says
+     * "{amount} a month" for the same number, and a label that dropped the
+     * "a month" would invite a read calling a monthly drift a total.
+     */
+    drift: "What the drift is worth in a month",
+    oddMonth: "How far that month sat from a normal one",
+    monthsActive: "Months with something recorded",
+    shareOfMonth: "Share of everything that went out that month",
+    cap: "The cap on this category",
+    /**
+     * The two the cap is useless without, worded as `facts.budgetLeft` and
+     * `facts.budgetOver` are. "Left" is unclamped and goes negative when the
+     * cap is breached; "gone over by" is the same breach as a positive
+     * figure, which is the one a read actually wants to quote.
+     */
+    capLeft: "The cap, left that month",
+    capOver: "The cap, gone over by",
+  },
+
+  /**
    * What the `MoneyOnHand` hero's headline figure is called, and the line
    * under it — the hero itself being drawn inside a Bearing panel on both
    * clients, which is the only place it renders.
@@ -1784,6 +1920,54 @@ export const en = {
     standingProvisional:
       "Written {age}, from the figures as they stood then.",
     standingWritten: "Written {age}.",
+  },
+
+  /**
+   * The read of one category, which borrows most of its words.
+   *
+   * `monthRead.refusal.wrongShape`, `.unknownDatum` and `.everythingDropped`
+   * say nothing about a month, so a category read uses those rather than
+   * repeating them here. Only the one refusal a month read cannot produce is
+   * its own: over there a figure inside an observation costs that
+   * observation, because three others survive it; here there are at most two,
+   * so it costs the read.
+   */
+  categoryRead: {
+    refusal: {
+      claimHadFigure: "It wrote a figure of its own",
+    },
+
+    /** No writer configured on this deployment; the panel's write button is absent. */
+    noWriter: "No writer is configured.",
+    /**
+     * The category named no longer belongs to the caller — deleted, most
+     * likely, in the moments between the panel opening and the button being
+     * pressed. Rare enough that it earns one honest sentence rather than
+     * being folded into `noWriter`, which would say something untrue.
+     */
+    gone: "This category is no longer available.",
+
+    /**
+     * Shown when a stored read is in a language the reader has since
+     * switched away from. Mirrors `monthRead.writtenInOtherLanguage`.
+     */
+    writtenInOtherLanguage: "Written in {language}.",
+
+    /**
+     * The panel card itself: heading, empty state, and the write button's
+     * own states — the by-category screen's equivalents of `monthRead`'s.
+     * Kept as separate keys rather than reused, because the surface they
+     * sit on is a panel under a chart, not a page of its own.
+     */
+    title: "The read",
+    subtitle:
+      "Written by a model, from the figures on this panel. It cannot see your accounts.",
+    empty: "Nothing has been written about this category yet.",
+    writing: "Writing…",
+    noReadsLeft: "No reads left this month",
+    writeAgain: "Write it again ({left} left)",
+    writeOne: "Write one ({left} left)",
+    writtenToast: "Written for {category}",
   },
 
   /**

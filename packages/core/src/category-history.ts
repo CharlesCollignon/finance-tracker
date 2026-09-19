@@ -11,11 +11,27 @@ import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
  * One category at a time, deliberately. A chart of every category at once
  * shows the total and hides the thing you came to find out, which is whether
  * groceries have crept up since spring.
+ *
+ * A `trend` field lived here and has been removed. It compared the latest
+ * month to the mean of the ones before it, which is the same question
+ * `category-findings.ts` now answers off a median and two floors. Two answers
+ * to one question on one screen is how a reader learns to trust neither.
+ *
+ * `average` went with it, one wave later: it was the mean `trend` was
+ * computed from, and with `trend` gone nothing read it. A mean sitting on
+ * this interface beside a median is an invitation to the same confusion —
+ * `CONTEXT.md`'s entry for a normal lists "average" under _Avoid_ — and it
+ * was being taken over thirty-six months, where it meant even less. `peak`
+ * went for the plainer reason: the tile computes its own, over the twelve
+ * months it actually draws. Neither was reachable, and `knip` cannot see an
+ * interface field, which is why nothing caught them.
  */
 
 import { formatMonthLabel, shiftMonth } from "./constants";
-import { groupByPayPeriod } from "./pay-period";
+import { groupByPayPeriod, type PayPeriodGrouping } from "./pay-period";
 import type { CategoryType, TransactionWithCategory } from "./types/database";
+
+export type { PayPeriodGrouping };
 
 export interface CategoryMonthPoint {
   /** YYYY-MM. */
@@ -34,17 +50,7 @@ export interface CategoryHistory {
   name: string;
   type: CategoryType;
   points: CategoryMonthPoint[];
-  /** Mean across the months that had anything in them. */
-  average: number;
-  /** The largest month, which is what the bars are drawn against. */
-  peak: number;
   total: number;
-  /**
-   * The most recent month against the average of the ones before it, as a
-   * fraction: 0.2 means a fifth above normal. Null until there is enough
-   * history for "normal" to mean anything.
-   */
-  trend: number | null;
   /**
    * True when payments were counted against the period they belong to rather
    * than the calendar month they cleared in — see pay-period.ts. A month in
@@ -79,6 +85,34 @@ export interface BuildCategoryHistoryOptions {
 }
 
 /**
+ * Which bucket each category's payments fall in, by its own rhythm.
+ *
+ * A fact about a category, not about a window: the grouping has to be worked
+ * out before any totalling, from every payment a category has, because a
+ * rhythm needs half a year of payments to be visible at all and a windowed
+ * read would cut it off. `buildCategoryHistory` is the one caller inside this
+ * package; `page.tsx` on the by-category screen is the other, needing the
+ * same bucket a transaction landed in to show what is actually behind a
+ * month the chart drew from a shifted period — see pay-period.ts for why a
+ * calendar prefix cannot answer that.
+ */
+export function categoryBucketing(
+  transactions: readonly TransactionWithCategory[],
+): Map<string, PayPeriodGrouping> {
+  const datesByCategory = new Map<string, string[]>();
+  for (const tx of transactions) {
+    const dates = datesByCategory.get(tx.category_id) ?? [];
+    dates.push(tx.occurred_on);
+    datesByCategory.set(tx.category_id, dates);
+  }
+  return new Map(
+    [...datesByCategory].map(
+      ([categoryId, dates]) => [categoryId, groupByPayPeriod(dates)] as const,
+    ),
+  );
+}
+
+/**
  * A series per category, over the window ending at (year, month).
  *
  * Every month in the window appears even where nothing was recorded, because
@@ -104,22 +138,7 @@ export function buildCategoryHistory(
     }
   >();
 
-  // Which bucket a payment falls in is a fact about its own category's
-  // rhythm, so the grouping has to be worked out per category before any
-  // totalling. A wider slice than the window is read for it: a rhythm needs
-  // half a year of payments to be visible at all, and the window's first
-  // month has neighbours outside it that decide where its payments land.
-  const datesByCategory = new Map<string, string[]>();
-  for (const tx of transactions) {
-    const dates = datesByCategory.get(tx.category_id) ?? [];
-    dates.push(tx.occurred_on);
-    datesByCategory.set(tx.category_id, dates);
-  }
-  const groupingByCategory = new Map(
-    [...datesByCategory].map(
-      ([categoryId, dates]) => [categoryId, groupByPayPeriod(dates)] as const,
-    ),
-  );
+  const groupingByCategory = categoryBucketing(transactions);
 
   for (const tx of transactions) {
     const grouping = groupingByCategory.get(tx.category_id);
@@ -169,34 +188,20 @@ export function buildCategoryHistory(
 
     const active = points.filter((point) => !point.empty);
     const total = active.reduce((sum, point) => sum + point.total, 0);
-    const average = active.length > 0 ? total / active.length : 0;
-    const peak = points.reduce((max, point) => Math.max(max, point.total), 0);
-
-    const latest = points[points.length - 1];
-    const earlier = active.filter(
-      (point) => point.monthKey !== latest?.monthKey,
-    );
-    const baseline =
-      earlier.length >= 2
-        ? earlier.reduce((sum, point) => sum + point.total, 0) / earlier.length
-        : null;
 
     histories.push({
       categoryId,
       name: entry.name,
       type: entry.type,
       points,
-      average: Math.round(average * 100) / 100,
-      peak,
       total: Math.round(total * 100) / 100,
-      trend:
-        baseline !== null && baseline > 0 && latest && !latest.empty
-          ? Math.round(((latest.total - baseline) / baseline) * 100) / 100
-          : null,
       periodShifted: entry.shifted,
     });
   }
 
   // Busiest first: the category you want is almost never the alphabetical one.
+  // Busiest over the window it was asked to read, which is the only one it
+  // knows about — a caller that reads more months than it draws has to order
+  // by what it draws, and `/history` does exactly that.
   return histories.sort((left, right) => right.total - left.total);
 }
