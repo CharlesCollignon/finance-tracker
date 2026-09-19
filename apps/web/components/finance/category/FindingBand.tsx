@@ -64,6 +64,26 @@ export function FindingBand({
   const [left, setLeft] = useState(rerankWritesLeft);
   const shown = findings.slice(0, MAX_FINDINGS_SHOWN);
 
+  /**
+   * What the footer says about the order, or nothing.
+   *
+   * Nothing whenever there is no row on the band, and not merely for tidiness:
+   * a stored order outlives the findings it was chosen from, so a reader whose
+   * findings have all gone would otherwise be told "nothing has moved enough
+   * to be worth a sentence" and, directly beneath it, that the figures have
+   * moved since this order was chosen. Two sentences contradicting each other
+   * about the same empty list. A note about an order is only true of an order
+   * somebody can see.
+   */
+  const note =
+    shown.length === 0
+      ? null
+      : rerankState === "applied"
+        ? t("categoryFindings.reranked")
+        : rerankState === "stale"
+          ? t("categoryFindings.rerankStale")
+          : null;
+
   function rerank() {
     startTransition(async () => {
       const outcome = await rerankFindingsAction();
@@ -105,15 +125,9 @@ export function FindingBand({
          * key and no stored order, nothing below the rows is rendered at all
          * — not an empty row, not a border.
          */}
-        {rerankState !== "none" || rerankConfigured ? (
+        {note !== null || rerankConfigured ? (
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2">
-            <p className="text-xs text-muted-foreground">
-              {rerankState === "applied"
-                ? t("categoryFindings.reranked")
-                : rerankState === "stale"
-                  ? t("categoryFindings.rerankStale")
-                  : null}
-            </p>
+            <p className="text-xs text-muted-foreground">{note}</p>
 
             {rerankConfigured ? (
               <button

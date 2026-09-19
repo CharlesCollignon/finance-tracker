@@ -449,7 +449,7 @@ export const fr: Messages = {
     weightOnce: "{amount}",
     bandTitle: "Ce qui a bougé",
     bandEmpty: "Rien n'a assez bougé pour mériter une phrase.",
-    rerank: "Demander une lecture",
+    rerank: "Faire classer par un modèle",
     reranked: "Classé par un modèle",
     rerankStale: "Les chiffres ont bougé depuis ce classement.",
   },

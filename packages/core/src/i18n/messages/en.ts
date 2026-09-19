@@ -568,7 +568,20 @@ export const en = {
     weightOnce: "{amount}",
     bandTitle: "What moved",
     bandEmpty: "Nothing has moved enough to be worth a sentence.",
-    rerank: "Ask for a reading",
+    /**
+     * The band's own model call, and why none of these says "reading".
+     *
+     * A reading is the other feature on this screen — the prose a model
+     * writes about one category, in the panel, behind its own button. This
+     * one writes nothing at all: it re-orders findings the app has already
+     * found, and every figure beside them stays the app's. Naming both "a
+     * reading" offered one screen two different features under one word.
+     *
+     * So the three read as one family on the verb that says what actually
+     * happens: order, Ordered, order. French keeps the same discipline on
+     * classer, Classé, classement.
+     */
+    rerank: "Ask a model to order these",
     reranked: "Ordered by a model",
     rerankStale: "The figures have moved since this order was chosen.",
   },
