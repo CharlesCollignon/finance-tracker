@@ -6,9 +6,11 @@
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:mobile": "pnpm --filter mobile start",
-    "test": "pnpm --filter @finance/core test"
+    "test": "pnpm --filter @finance/core test",
+    "check:reachability": "pnpm --filter @finance/core exec vitest run src/i18n/unused-keys.test.ts && knip"
   },
   "devDependencies": {
+    "knip": "^6.37.0",
     "prettier": "^3.9.6"
   }
 }

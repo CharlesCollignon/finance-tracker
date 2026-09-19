@@ -1,0 +1,286 @@
+{
+  // Reachability gate.
+  //
+  // Deleting the Month screen orphaned five working, type-checking, lint-clean
+  // capabilities — MonthCloseSheet, ArrivedCharges, LocaleSuggestion and the
+  // two MonthFirstRun routes — because their only importer went with it. None
+  // of the three gates the repo already had could see any of them: `tsc`
+  // type-checks a file whether or not anything reaches it, ESLint lints it,
+  // and vitest happily tests a component no screen renders. Reachability is
+  // the dimension none of them measures, and this file is the one that does.
+  //
+  // What that means in practice: a file that nothing imports, and a `packages/
+  // core` export that neither app calls, are both build failures. The
+  // enumerated exceptions below are debt, not exemptions — see the DEBT
+  // sections.
+  //
+  // Run with `pnpm check:reachability` from the repo root.
+
+  "$schema": "./node_modules/knip/schema.json",
+
+  // An export used only inside its own file is a missing `export` keyword, not
+  // an unreachable capability. Reporting those would add ~40 findings that say
+  // nothing about whether a screen can still be reached, and the first thing a
+  // noisy gate loses is the people who have to keep it green.
+  "ignoreExportsUsedInFile": true,
+
+  "rules": {
+    // The five losses were all of this shape. This is the rule that matters.
+    "files": "error",
+
+    // A `packages/core` builder nothing calls is the library-shaped version of
+    // the same failure, and the only shape knip can see there — see the
+    // packages/core workspace note.
+    "exports": "error",
+    "types": "error",
+    "nsExports": "error",
+    "nsTypes": "error",
+    "enumMembers": "error",
+    "namespaceMembers": "error",
+
+    // Dependency drift: a package nobody imports, or an import of a package
+    // nobody declared. Both are reachability questions about node_modules.
+    "dependencies": "error",
+    "devDependencies": "error",
+    "optionalPeerDependencies": "error",
+    "unlisted": "error",
+    "unresolved": "error",
+    "binaries": "error",
+
+    // Off, deliberately, and not as debt. `duplicates` fires on one symbol
+    // exported under two names — `export { APP_NAV_ITEMS as BOTTOM_NAV_ITEMS }`
+    // in `apps/web/lib/navigation.ts` is an intentional alias, both names are
+    // reached, and nothing about it is a lost capability. It is a style
+    // opinion, and this gate is not the place to hold one.
+    "duplicates": "off",
+
+    // Import cycles are a real smell but not a reachability failure: every
+    // file in a cycle is reached. Left off so the gate keeps one meaning.
+    "cycles": "off",
+  },
+
+  "workspaces": {
+    // ---------------------------------------------------------------- root --
+    ".": {
+      "entry": [
+        // Run by hand (`node scripts/build-brand-icons.mjs`) to regenerate the
+        // app icons. Nothing imports it and nothing ever will.
+        "scripts/*.mjs",
+
+        // Supabase Edge Functions. Deno, deployed by `supabase functions
+        // deploy`, reached over HTTPS — never imported by anything in this
+        // repo, so without this line the gate would call the account-deletion
+        // endpoint dead code.
+        "supabase/functions/*/index.ts",
+      ],
+      "ignoreDependencies": [
+        // The formatter. Invoked from editors and `pnpm exec prettier`, and
+        // the repo carries no `.prettierrc` for knip's prettier plugin to find,
+        // so there is nothing for it to hang a reference on.
+        "prettier",
+
+        // `scripts/build-brand-icons.mjs` imports sharp and the root manifest
+        // does not declare it — the script is run with `pnpm dlx`. DEBT: either
+        // declare sharp as a root devDependency or make the script's `pnpm dlx`
+        // invocation explicit in a package script, and delete this line.
+        "sharp",
+      ],
+    },
+
+    // ------------------------------------------------------------ apps/web --
+    // Next.js 16, App Router. Entry points are supplied by knip's `next`
+    // plugin, which is enabled by the `next` dependency and which globs
+    // `app/**/{page,layout,loading,error,not-found,template,default,route}.tsx`,
+    // `app/**/{manifest,sitemap,robots,icon,apple-icon,opengraph-image}.*`,
+    // `next.config.ts`, and — checked against knip 6.37, which knows this
+    // version's rename — `proxy.ts`, Next 16's replacement for `middleware.ts`.
+    // The framework reaches all of those by filesystem convention rather than
+    // by import, so every one of them would otherwise read as an orphan and
+    // take the whole component tree beneath it down as collateral.
+    //
+    // They are left to the plugin rather than restated here because restating
+    // them means two lists that can disagree, and the silent failure mode of
+    // the wrong one winning. If a knip upgrade ever loses `proxy.ts`, the
+    // gate fails loudly with ~200 unused files, which is a legible way to find
+    // out.
+    "apps/web": {
+      "entry": [
+        // The service worker. Registered by URL from
+        // `components/layout/ServiceWorkerRegistration.tsx` (`register("/sw.js")`)
+        // and served as a static asset, so no import ever points at it.
+        "public/sw.js",
+      ],
+      "ignoreDependencies": [
+        // `import "server-only"` in `lib/locale-cookies.ts`. The package ships
+        // inside Next's own dependency tree rather than being declared here.
+        // DEBT, mildly: declaring it would be more honest than this line.
+        "server-only",
+
+        // DEBT: nothing in the app imports `motion` any more. Delete the
+        // dependency and this line together.
+        "motion",
+      ],
+      "ignoreIssues": {
+        // ---------------------------------------------------------------
+        // DEBT — exports nothing imports, in files that are still reached.
+        //
+        // These are dead code, not lost capabilities: the file itself is
+        // reachable, so no screen went missing. The owner has not decided
+        // whether to delete them, so they are recorded rather than cleaned.
+        //
+        // This list is meant to shrink. Delete the dead export, delete its
+        // line. An entry here silences *all* unused-export reporting for that
+        // file, so a line that outlives the export it was written for is a
+        // blind spot — which is the reason to keep the list short.
+        // ---------------------------------------------------------------
+        "components/finance/ImportView.tsx": ["exports"],
+        "components/layout/MonthPicker.tsx": ["exports"],
+        "components/finance/charts/index.ts": ["types"],
+        "components/marketing/landing-copy.ts": ["types"],
+        "lib/actions/finance.ts": ["exports"],
+        "lib/actions/fulfilment.ts": ["exports"],
+        "lib/actions/market.ts": ["exports"],
+        "lib/actions/phase4.ts": ["exports"],
+        "lib/actions/push.ts": ["exports"],
+        "lib/mobile-app.ts": ["exports"],
+        "lib/queries/bank-balance.ts": ["exports"],
+        "lib/queries/month-read.ts": ["exports"],
+        "lib/queries/phase4.ts": ["exports"],
+        "lib/use-privacy.ts": ["exports"],
+        "lib/use-reduced-motion.ts": ["exports"],
+      },
+      "ignore": [
+        // ---------------------------------------------------------------
+        // DEBT — orphaned files. Nothing imports any of these.
+        //
+        // The first two are what the hand audit found. The other four this
+        // gate found on its first run, which is the argument for having it.
+        //
+        // Read `MonthReadyCard.tsx` before deciding what to do with this
+        // list: it is "the month's opening moment", the card that applies the
+        // month's recurring templates, and it is unreachable from any screen.
+        // If that behaviour has no other home it is loss number six, already
+        // shipped, and it is the reason this file exists.
+        //
+        // Each line is either a deletion or a restoration waiting for an
+        // owner's decision. None of them is a permanent exemption.
+        // ---------------------------------------------------------------
+        "components/finance/CategoryTypeBadge.tsx",
+        "components/finance/MonthReadyCard.tsx",
+        "components/retroui/Dialog.tsx",
+        "components/retroui/Label.tsx",
+        "components/retroui/Select.tsx",
+        "lib/css-var.ts",
+      ],
+    },
+
+    // --------------------------------------------------------- apps/mobile --
+    // Expo Router. Everything under `src/app/**` is filesystem-routed and
+    // reached by the router, never by an import; knip's `expo` plugin supplies
+    // that pattern because `"main": "expo-router/entry"` in the manifest says
+    // so, and it reads `app.json` for the config plugin list.
+    "apps/mobile": {
+      "entry": [
+        // Metro's config. Loaded by the bundler by name, not imported.
+        "metro.config.js",
+
+        // ESLint's config. Run through `expo lint`, so this workspace has no
+        // direct `eslint` dependency for knip's eslint plugin to latch onto,
+        // which leaves both the config file and `eslint-config-expo` looking
+        // unreferenced.
+        "eslint.config.js",
+      ],
+
+      // knip's metro plugin contributes the platform-suffix entry patterns
+      // (`src/**/*.{ios,android,native,web}.tsx`) that Metro resolves by
+      // filename. There are no such files today; the plugin stays on so that
+      // the day someone adds `Foo.ios.tsx` it is not reported as an orphan.
+      //
+      // Its config glob is narrowed to `package.json` because loading
+      // `metro.config.js` from the repo root throws: `withNativeWind` resolves
+      // `tailwind.config` relative to the process cwd, which is the root, not
+      // `apps/mobile`. The plugin's entry patterns do not depend on the file.
+      "metro": { "config": ["package.json"] },
+
+      "ignoreDependencies": [
+        // knip's expo plugin infers `expo-updates` from `app.json` whenever
+        // `updates.enabled` is not explicitly `false`. This app does not use
+        // EAS Update and does not install the package. A knip heuristic, not
+        // a finding.
+        "expo-updates",
+
+        // DEBT: nothing imports `expo-blur` — the blur in use comes from
+        // `@sbaiahmed1/react-native-blur`. Delete the dependency and this line
+        // together.
+        "expo-blur",
+      ],
+      "ignoreIssues": {
+        // DEBT — see the note on apps/web's list. Same shape, same intent,
+        // same instruction: shrink it.
+        "src/components/ui/Skeleton.tsx": ["exports"],
+        "src/components/charts/index.ts": ["types"],
+        "src/lib/haptics.ts": ["exports"],
+        "src/lib/mutations.ts": ["exports"],
+        "src/lib/queries.ts": ["exports"],
+        "src/theme/echarts.ts": ["exports"],
+        "src/theme/tokens.ts": ["exports"],
+      },
+    },
+
+    // ------------------------------------------------------ packages/core --
+    // The library. Its public surface is whatever the two apps import.
+    //
+    // `includeEntryExports` is the load-bearing line in this file, and it is
+    // worth knowing why. `packages/core/package.json` declares
+    // `"exports": { "./*": "./src/*.ts" }`, and knip expands a wildcard
+    // subpath export into `src/**/*.ts` and treats every matching file as an
+    // entry point — which is correct for a published package and catastrophic
+    // here. Without this flag knip reports *nothing at all* for this
+    // workspace: a brand-new file in `src/` that nothing imports is silently
+    // "an entry point", and so is every export in it. Verified by dropping an
+    // unreferenced `src/zzz-probe.ts` into the tree: with the flag off the
+    // gate stayed green.
+    //
+    // With it on, an orphaned module in core surfaces as every one of its
+    // exports being unused — one finding per export rather than one per file,
+    // but the file cannot hide. That is why `rules.exports` is an error and
+    // not a warning: for this workspace it is the *only* signal there is.
+    "packages/core": {
+      "includeEntryExports": true,
+      "ignoreIssues": {
+        // ---------------------------------------------------------------
+        // DEBT — core exports neither app calls, and no test covers.
+        //
+        // These are the real thing this gate is for, caught after the fact:
+        // builders, constants and one whole fetch layer that no screen
+        // reaches. `income-sankey.ts` and `market/fx.ts` are wholly
+        // unreferenced modules; `investments.ts` has seven unused builders.
+        //
+        // Debt, to be cleaned — not permanent exemptions. Deleting the export
+        // (or wiring it back to a screen) should be followed by deleting its
+        // line here. A file listed here reports no unused exports at all, so
+        // every line left standing is a hole in the gate.
+        // ---------------------------------------------------------------
+        "src/bank-feed.ts": ["exports"],
+        "src/bearing-read.ts": ["types"],
+        "src/budget.ts": ["exports"],
+        "src/category-styles.ts": ["exports"],
+        "src/constants.ts": ["exports"],
+        "src/income-sankey.ts": ["exports"],
+        "src/instrument-reading.ts": ["types"],
+        "src/investment-positions.ts": ["exports"],
+        "src/investments.ts": ["exports"],
+        "src/market/fx.ts": ["exports"],
+        "src/validations/finance.ts": ["types"],
+        "src/validations/investments.ts": ["types"],
+        "src/wallet-read.ts": ["exports", "types"],
+
+        // Not debt: generated. `src/types/database.ts` is the Supabase schema
+        // dumped by `supabase gen types`, so it necessarily describes tables
+        // no client has read yet. Regenerating it would put any deleted type
+        // straight back.
+        "src/types/database.ts": ["types"],
+      },
+    },
+  },
+}
