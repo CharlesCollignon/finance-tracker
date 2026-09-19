@@ -11,6 +11,7 @@ function tx(
   categoryId = "cat-groceries",
   name = "Groceries",
   type: CategoryType = "expense",
+  counts_toward_summary = true,
 ): TransactionWithCategory {
   return {
     id: `tx-${occurredOn}-${amount}-${categoryId}`,
@@ -21,7 +22,7 @@ function tx(
     amount,
     note: null,
     created_at: `${occurredOn}T00:00:00.000Z`,
-    categories: { name, type, icon: null, counts_toward_summary: true },
+    categories: { name, type, icon: null, counts_toward_summary },
   };
 }
 
@@ -34,6 +35,7 @@ function run(
   categoryId = "cat-groceries",
   name = "Groceries",
   type: CategoryType = "expense",
+  counts_toward_summary = true,
 ): TransactionWithCategory[] {
   const out: TransactionWithCategory[] = [];
   const count = amounts.length;
@@ -44,7 +46,7 @@ function run(
     const back = count - 1 - index;
     const date = new Date(Date.UTC(2026, 8 - back, 4));
     const iso = date.toISOString().slice(0, 10);
-    out.push(tx(iso, amount, categoryId, name, type));
+    out.push(tx(iso, amount, categoryId, name, type, counts_toward_summary));
   });
   return out;
 }
@@ -254,5 +256,26 @@ describe("buildCategoryFindings, gone quiet", () => {
 
     expect(findings.filter((f) => f.kind === "gone-quiet")).toEqual([]);
     expect(findings.filter((f) => f.kind === "odd-month")).toEqual([]);
+  });
+
+  it("carries positive severity even when a category has negative totals", () => {
+    // A savings category with counts_toward_summary: false gets negated by
+    // buildCategoryHistory. Severity must still be positive: it measures the
+    // magnitude of the run that stopped, not its sign.
+    const findings = findingsFor(
+      run(
+        [50, 50, 50, 50, 50, 50, null, null, null],
+        "cat-savings",
+        "Savings",
+        "savings",
+        false,
+      ),
+    );
+
+    const quiet = findings.find((f) => f.kind === "gone-quiet");
+    expect(quiet).toBeDefined();
+    expect(quiet!.direction).toBe("down");
+    expect(quiet!.severity).toBe(50);
+    expect(quiet!.severity).toBeGreaterThan(0);
   });
 });

@@ -243,7 +243,9 @@ function goneQuietFinding(history: CategoryHistory): CategoryFinding | null {
       categoryId: history.categoryId,
       categoryName: history.name,
       type: history.type,
-      severity: round(median(beforeActive.map((point) => point.total))),
+      severity: round(
+        Math.abs(median(beforeActive.map((point) => point.total))),
+      ),
       direction: "down",
       months: recent.map((point) => point.monthKey),
       messageKey: "categoryFindings.goneQuiet",
@@ -263,7 +265,9 @@ function goneQuietFinding(history: CategoryHistory): CategoryFinding | null {
       categoryId: history.categoryId,
       categoryName: history.name,
       type: history.type,
-      severity: round(median(recentActive.map((point) => point.total))),
+      severity: round(
+        Math.abs(median(recentActive.map((point) => point.total))),
+      ),
       direction: "up",
       months: recent.map((point) => point.monthKey),
       messageKey: "categoryFindings.appeared",
