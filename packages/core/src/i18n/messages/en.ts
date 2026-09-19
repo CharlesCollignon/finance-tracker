@@ -536,6 +536,63 @@ export const en = {
       "Untick for wallet DCA tracked outside the budget (e.g. buys funded by broker transfers).",
   },
 
+  /**
+   * What a finding says, in words.
+   *
+   * No amount appears in any of these. A figure inside a sentence cannot be
+   * blurred by privacy mode and cannot follow the currency toggle, which is
+   * the same reason `month-facts.ts` gives for placeholders. The euro weight
+   * is rendered beside the sentence, in its own element.
+   *
+   * `months` is a count and takes plural forms; French puts zero in the
+   * singular, so these cannot be ternaries at the call site.
+   */
+  categoryFindings: {
+    driftUp: {
+      one: "has climbed for {months} month running",
+      other: "has climbed for {months} months running",
+    },
+    driftDown: {
+      one: "has fallen for {months} month running",
+      other: "has fallen for {months} months running",
+    },
+    oddMonthHigh: "{month} stands well above a normal month here",
+    oddMonthLow: "{month} stands well below a normal month here",
+    goneQuiet: {
+      one: "nothing recorded for {months} month, after a steady run",
+      other: "nothing recorded for {months} months, after a steady run",
+    },
+    appeared: "new since {month}, and steady since",
+    everyYear: "{month} runs high here every year",
+    weightPerMonth: "{amount} a month",
+    weightOnce: "{amount}",
+    bandTitle: "What moved",
+    bandEmpty: "Nothing has moved enough to be worth a sentence.",
+    rerank: "Ask for a reading",
+    reranked: "Ordered by a model",
+    rerankStale: "The figures have moved since this order was chosen.",
+  },
+
+  /** The by-category screen's own furniture. */
+  categoryScreen: {
+    empty: "Nothing to look back on yet",
+    emptyBody:
+      "Once a few months have transactions in them, each category's run shows up here.",
+    normal: "{amount} in a normal month",
+    normalShifted: "{amount} per pay period",
+    periodShifted:
+      "These land either side of a month end, so each is counted against the period it belongs to. A month here can differ from the same month in the Ledger.",
+    groupExpense: "Going out",
+    groupIncome: "Coming in",
+    groupSavings: "Set aside",
+    groupInvestment: "Invested",
+    open: "Open {name}",
+    close: "Close",
+    behindThisMonth: "Behind {month}",
+    seeInLedger: "See all in the Ledger",
+    months: "Last {count} months",
+  },
+
   /** Wallets: what is invested, and what it is worth now. */
   wallets: {
     /** The quotes, and taking fresh ones. */
