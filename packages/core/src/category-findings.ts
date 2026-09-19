@@ -360,6 +360,15 @@ export function buildCategoryFindings(
     // A finding every one of whose months is a month this category always
     // behaves this way in is not news. Demoted rather than listed — see the
     // design note: a screen that cries wolf on schedule is one nobody reads.
+    //
+    // Routing goneQuietFinding through here is a no-op for its "stopped"
+    // half: those months are the empty ones, and seasonalMonths skips empty
+    // points, so a charge that goes quiet every summer will still be
+    // reported as gone quiet — that is within what the design asked for,
+    // since it named only drift and odd-month. Its "appeared" half is
+    // genuinely demotable: a category that appears every September has
+    // non-empty months to check against, and that is the case this earns
+    // its place for.
     const survives = (finding: CategoryFinding | null) =>
       finding && !finding.months.every((key) => season.keys.has(key))
         ? finding
@@ -371,8 +380,8 @@ export function buildCategoryFindings(
       survives(goneQuietFinding(history)),
     ].filter((finding): finding is CategoryFinding => finding !== null);
 
-    // The seasonal note appears only when it silenced everything else, and
-    // only about the month on screen now. Said on its own it answers the
+    // The seasonal note appears only when nothing else survived, and only
+    // about the month on screen now. Said on its own it answers the
     // question the demotion raises: why is this high month not a finding?
     const currentIsSeasonal =
       season.latest !== null &&

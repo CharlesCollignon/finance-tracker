@@ -340,4 +340,98 @@ describe("buildCategoryFindings, every year", () => {
 
     expect(findings.some((f) => f.kind === "every-year")).toBe(false);
   });
+
+  it("keeps a multi-month drift that only partly overlaps a seasonal month", () => {
+    // Every September runs high, every year — seasonal. Only this year's
+    // July and August also ran high: 2024 and 2025 did not, so July and
+    // August are not seasonal, only recently elevated. The drift's three
+    // months are July, August, September, and only one of them is seasonal,
+    // so the demotion — which requires every month to be seasonal — must
+    // not touch it.
+    const out: TransactionWithCategory[] = [];
+    for (let back = 35; back >= 0; back -= 1) {
+      const date = new Date(Date.UTC(2026, 8 - back, 4));
+      const key = date.toISOString().slice(0, 7);
+      const month = date.getUTCMonth() + 1;
+      const amount =
+        month === 9 ? 400 : key === "2026-07" || key === "2026-08" ? 300 : 100;
+      out.push(
+        tx(
+          date.toISOString().slice(0, 10),
+          amount,
+          "cat-energy",
+          "Energy",
+          "expense",
+        ),
+      );
+    }
+
+    const findings = findingsFor(out);
+
+    const drift = findings.find((f) => f.kind === "drift");
+    expect(drift).toBeDefined();
+    expect(drift!.direction).toBe("up");
+    expect(drift!.months).toEqual(["2026-07", "2026-08", "2026-09"]);
+  });
+
+  it("demotes a drift whose every month is itself seasonal", () => {
+    // Every July, August and September runs high, every year, this time —
+    // the same three months look like a fresh drift only because
+    // driftFinding never looks past the current year's own baseline. All
+    // three of the drift's months are seasonal here, so the demotion does
+    // apply and nothing is left to report.
+    const out: TransactionWithCategory[] = [];
+    for (let back = 35; back >= 0; back -= 1) {
+      const date = new Date(Date.UTC(2026, 8 - back, 4));
+      const month = date.getUTCMonth() + 1;
+      const amount =
+        month === 9 ? 400 : month === 7 || month === 8 ? 300 : 100;
+      out.push(
+        tx(
+          date.toISOString().slice(0, 10),
+          amount,
+          "cat-energy",
+          "Energy",
+          "expense",
+        ),
+      );
+    }
+
+    const findings = findingsFor(out);
+
+    expect(findings.filter((f) => f.kind === "drift")).toEqual([]);
+  });
+
+  it("treats two years of the same high month as seasonal, not only three", () => {
+    // Twenty-four months: every September in this window — there are only
+    // two, 2025 and 2026 — runs high. SEASON_YEARS = 2 is the claim that
+    // two occurrences already make a pattern. Paired with the twelve-month
+    // test above, which shows one occurrence does not, this pins the
+    // constant on both sides.
+    const out: TransactionWithCategory[] = [];
+    for (let back = 23; back >= 0; back -= 1) {
+      const date = new Date(Date.UTC(2026, 8 - back, 4));
+      const month = date.getUTCMonth() + 1;
+      const amount = month === 9 ? 400 : 100;
+      out.push(
+        tx(
+          date.toISOString().slice(0, 10),
+          amount,
+          "cat-energy",
+          "Energy",
+          "expense",
+        ),
+      );
+    }
+
+    const findings = buildCategoryFindings(
+      buildCategoryHistory(out, 2026, 9, { months: 24 }),
+    );
+
+    expect(findings.filter((f) => f.kind === "odd-month")).toEqual([]);
+    expect(findings.filter((f) => f.kind === "drift")).toEqual([]);
+    const season = findings.find((f) => f.kind === "every-year");
+    expect(season).toBeDefined();
+    expect(season!.months).toEqual(["2026-09"]);
+  });
 });
