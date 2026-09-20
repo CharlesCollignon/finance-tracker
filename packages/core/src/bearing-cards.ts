@@ -17,7 +17,7 @@ import type { Key } from "./i18n/t";
 import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
 import type { BearingFacts, FactFamily } from "./bearing-facts";
 import { formatFact } from "./month-facts";
-import { BEARING_TILES, type TileId } from "./bearing-tiles";
+import { BEARING_TILES, type TileId, type TileSeries } from "./bearing-tiles";
 import type { PanelBlock, PanelChrome } from "./bearing-panels";
 
 export type CardId = FactFamily;
@@ -89,6 +89,19 @@ export interface CardFigure {
   note: string | null;
   /** Null when this figure has nowhere honest to lead. */
   href: string | null;
+  /**
+   * The shape drawn behind this figure, or null when it draws none.
+   *
+   * Here for the same reason `href` is: it is a fact about the figure that
+   * both clients need in order to draw a row, and a card list that carries
+   * one but not the other is not actually the one place they agree. The web
+   * card list imported `BEARING_TILES` to look this up per figure, which is
+   * a reach past this module into the table it is built from — and the
+   * phone would have had to make the identical reach. Copied, not
+   * re-exported: a client asks a card what its figures are and gets the
+   * whole answer.
+   */
+  series: TileSeries | null;
 }
 
 export interface BearingCard {
@@ -147,6 +160,7 @@ export function buildBearingCards(
         sense: fact.sense,
         note: fact.note ?? null,
         href: meta.href,
+        series: meta.series ?? null,
       });
     }
 

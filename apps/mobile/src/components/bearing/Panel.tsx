@@ -1,21 +1,17 @@
-import {
-  useEffect,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-import { panelFor, type PanelSpec } from "@finance/core/bearing-panels";
-import type { RenderedTile } from "@finance/core/bearing-read";
+import type { BearingCard } from "@finance/core/bearing-cards";
+import type { PanelChrome } from "@finance/core/bearing-panels";
 import { phoneHref } from "@finance/core/bearing-tiles";
 import {
   budgetViewOptionLabel,
   getCurrentMonth,
   type BudgetViewMode,
 } from "@finance/core/constants";
+import type { Key } from "@finance/core/i18n/t";
 
 import {
   clearPanelCache,
@@ -42,42 +38,38 @@ import { ICON } from "@/theme/tokens";
 const HORIZONS = [6, 12, 24] as const;
 
 /**
- * What opens under a pressed tile, on the phone.
+ * What a card holds under its figures, on the phone.
  *
- * The web's `Panel.tsx` carries the argument this one shares: the figure is
- * already on screen and already correct, so nothing here may cover it. The
- * headline stays exactly where `BearingTile` drew it and this component only
- * fills the row `BearingTile`'s own `Animated.View` grows to make room for —
- * chrome and block skeletons appear the instant the row opens, and the real
+ * The web's `Panel.tsx` carries the argument this one shares: the figures are
+ * already on screen and already correct, so nothing here may cover them. The
+ * lead stays exactly where `BearingCards` drew it and this component only
+ * fills the space that card's own `Animated.View` grows to make room for —
+ * chrome and block skeletons appear the instant the card opens, and the real
  * detail streams into them underneath. There is no spinner anywhere in this
- * file, and that is deliberate: a spinner over a number the app already
- * knows teaches the reader to distrust the number.
+ * file, and that is deliberate: a spinner over a number the app already knows
+ * teaches the reader to distrust the number.
  *
- * Which blocks appear is `panelFor`'s judgement, not this component's — see
- * `bearing-panels.ts`. The scope (which month, which view, how far the
- * projection runs) lives here as local state rather than in the URL, because
- * the phone has no address bar for it to live in and because scoping it to
- * the open panel means the tile order above is untouched by it.
+ * Which blocks appear is `bearing-cards.ts`'s judgement, not this
+ * component's, and the card arrives carrying them. It used to look itself up
+ * through `panelFor(tile.id, tile.family)`, which was the right shape while
+ * twelve tiles each explained one figure; with one card per family the lookup
+ * and the card say the same thing, so the card says it.
+ *
+ * The scope (which month, which view, how far the projection runs) lives here
+ * as local state rather than in the URL, because the phone has no address bar
+ * for it to live in and because scoping it to the open card means the cards
+ * above are untouched by it.
  *
  * Detail is fetched through `getPanelDetail`, which reads Supabase directly
  * (see `bearing-panel.ts`) and caches per family-and-scope for the session.
  * The initial state is seeded from that cache synchronously
- * (`peekPanelDetail`) so reopening a tile already visited this session shows
- * its detail on the very first frame rather than flashing a skeleton for
- * one.
+ * (`peekPanelDetail`) so reopening a card already visited this session shows
+ * its detail on the very first frame rather than flashing a skeleton for one.
  */
-export function Panel({ tile }: { tile: RenderedTile }) {
+export function Panel({ card }: { card: BearingCard }) {
   const t = useT();
   const locale = useLocale();
   const { user } = useAuth();
-  const router = useRouter();
-  const colors = useThemeColors();
-
-  const spec = panelFor(tile.id, tile.family);
-  // `spec.href` is the web app's path — see `bearing-tiles.ts`, which says so
-  // itself. Three of them name screens this router has never had, so the
-  // phone's own answer is what the footer links to.
-  const href = phoneHref(spec.href);
 
   const current = getCurrentMonth();
   const [scope, setScope] = useState<Required<PanelScope>>({
@@ -88,9 +80,7 @@ export function Panel({ tile }: { tile: RenderedTile }) {
   });
 
   const [detail, setDetail] = useState<PanelDetail | null>(() =>
-    user
-      ? peekPanelDetail(user.id, tile.family, scope, spec.blocks, locale)
-      : null,
+    user ? peekPanelDetail(user.id, card.id, scope, card.blocks, locale) : null,
   );
   const [failed, setFailed] = useState(false);
   // Bumped by the retry link and by any write a block makes (a decided bank
@@ -129,15 +119,15 @@ export function Panel({ tile }: { tile: RenderedTile }) {
     setShown({ scope, locale });
     setDetail(
       user
-        ? peekPanelDetail(user.id, tile.family, scope, spec.blocks, locale)
+        ? peekPanelDetail(user.id, card.id, scope, card.blocks, locale)
         : null,
     );
     setFailed(false);
   }
 
-  // `spec.blocks` is safe in the dependency list: `panelFor` hands back one
-  // of the module-level arrays in `bearing-panels.ts` rather than building a
-  // new one, so its identity is stable for as long as the tile is.
+  // `card.blocks` is safe in the dependency list: `buildBearingCards` hands
+  // back one of the module-level arrays in `bearing-cards.ts` rather than
+  // building a new one, so its identity is stable for as long as the card is.
   useEffect(() => {
     if (!user) {
       return;
@@ -147,9 +137,9 @@ export function Panel({ tile }: { tile: RenderedTile }) {
     void (async () => {
       const next = await getPanelDetail(
         user.id,
-        tile.family,
+        card.id,
         scope,
-        spec.blocks,
+        card.blocks,
         locale,
       );
       if (stale) {
@@ -162,7 +152,7 @@ export function Panel({ tile }: { tile: RenderedTile }) {
     return () => {
       stale = true;
     };
-  }, [user, tile.family, scope, spec.blocks, locale, attempt]);
+  }, [user, card.id, scope, card.blocks, locale, attempt]);
 
   function handleChanged() {
     // Clear first, and from here rather than from the screen's own
@@ -174,7 +164,7 @@ export function Panel({ tile }: { tile: RenderedTile }) {
     // entry written before the very change being reported, and the bump would
     // be a no-op on the one panel the reader is looking at.
     clearPanelCache();
-    // And tell the rest of the app — the Bearing's own tiles included — that
+    // And tell the rest of the app — the Bearing's own cards included — that
     // a write happened. This panel also asks again immediately, rather than
     // waiting to be reopened.
     notifyDataChanged();
@@ -183,10 +173,15 @@ export function Panel({ tile }: { tile: RenderedTile }) {
 
   return (
     <View className="mt-3 gap-4 border-t border-border pt-3">
-      <Chrome spec={spec} scope={scope} setScope={setScope} detail={detail} />
+      <Chrome
+        chrome={card.chrome}
+        scope={scope}
+        setScope={setScope}
+        detail={detail}
+      />
 
       {detail
-        ? spec.blocks.map((block) => (
+        ? card.blocks.map((block) => (
             <PanelBlockView
               key={block}
               block={block}
@@ -199,7 +194,7 @@ export function Panel({ tile }: { tile: RenderedTile }) {
           ))
         : failed
           ? null
-          : spec.blocks.map((block) => (
+          : card.blocks.map((block) => (
               <PanelBlockSkeleton key={block} block={block} />
             ))}
 
@@ -223,27 +218,99 @@ export function Panel({ tile }: { tile: RenderedTile }) {
         </View>
       ) : null}
 
-      {href ? (
+      <Footer destinations={card.destinations} />
+    </View>
+  );
+}
+
+/* ---------------------------------------------------------------- footer */
+
+/**
+ * The ways out, and there is more than one of them.
+ *
+ * A tile had a single `href` and a footer that said "see the full surface". A
+ * card holds a whole family, and its figures are explained in two or three
+ * different places. Choosing one of them to be *the* destination would be the
+ * same invention `bearing-tiles.ts` refuses when it leaves a figure's href
+ * null, so every distinct destination the phone can actually reach is offered
+ * and each is named after the tab it goes to.
+ *
+ * `card.destinations` is the web router's vocabulary — `bearing-tiles.ts` says
+ * so itself — so each one goes through `phoneHref` first. That drops the two
+ * paths this app has no screen for and translates `/budgets` to Plan, and the
+ * translation can collapse two web destinations onto one tab, which is why
+ * the result is de-duplicated again here rather than trusting the card's own
+ * de-duplication to survive it.
+ */
+function Footer({ destinations }: { destinations: string[] }) {
+  const t = useT();
+  const router = useRouter();
+  const colors = useThemeColors();
+
+  const hrefs: string[] = [];
+  for (const destination of destinations) {
+    const href = phoneHref(destination);
+    if (href && !hrefs.includes(href)) {
+      hrefs.push(href);
+    }
+  }
+
+  if (hrefs.length === 0) {
+    return null;
+  }
+
+  return (
+    <View className="flex-row flex-wrap items-center gap-x-5 gap-y-2">
+      {hrefs.map((href) => (
         <Pressable
+          key={href}
           onPress={() => router.push(href as Href)}
           accessibilityRole="link"
-          className="flex-row items-center gap-1 self-start"
+          className="flex-row items-center gap-1"
           hitSlop={8}
         >
           <Text className="text-sm font-medium text-primary-ink">
-            {t("bearing.panel.footer")}
+            {t(surfaceKey(href) ?? "bearing.panel.footer")}
           </Text>
-          <Ionicons name="arrow-forward" size={ICON.sm} color={colors.primaryInk} />
+          <Ionicons
+            name="arrow-forward"
+            size={ICON.sm}
+            color={colors.primaryInk}
+          />
         </Pressable>
-      ) : null}
+      ))}
     </View>
   );
+}
+
+/**
+ * What to call a destination: the tab's own name, in the words the tab bar
+ * already uses for it.
+ *
+ * Written out rather than read off `(tabs)/_layout.tsx`'s `TABS`, which keys
+ * route names and not paths, and which Expo Router would have to grow a
+ * non-default export on to be readable from here. Four entries, because
+ * `phoneHref` can only ever hand this four paths — `/dashboard` and
+ * `/history` are already null by then, and `/budgets` has become `/planning`.
+ * Anything unmapped falls back to the old "see the full surface" wording
+ * rather than to a guess at a name.
+ */
+const SURFACE_KEYS: Record<string, Key> = {
+  "/transactions": "nav.ledger",
+  "/recurring": "nav.charges",
+  "/planning": "nav.plan",
+  "/investments": "nav.wallets",
+};
+
+function surfaceKey(href: string): Key | null {
+  const query = href.indexOf("?");
+  return SURFACE_KEYS[query < 0 ? href : href.slice(0, query)] ?? null;
 }
 
 /* ---------------------------------------------------------------- chrome */
 
 /**
- * What sits above a panel's blocks, per `spec.chrome`.
+ * What sits above a card's blocks, per `card.chrome`.
  *
  * Four cases and one of them is nothing, which is the point of the type: the
  * `now` and `wallet` families have no window to choose — "now" is today and
@@ -251,12 +318,12 @@ export function Panel({ tile }: { tile: RenderedTile }) {
  * offering a choice the figures cannot honour.
  */
 function Chrome({
-  spec,
+  chrome,
   scope,
   setScope,
   detail,
 }: {
-  spec: PanelSpec;
+  chrome: PanelChrome;
   scope: Required<PanelScope>;
   setScope: Dispatch<SetStateAction<Required<PanelScope>>>;
   detail: PanelDetail | null;
@@ -264,7 +331,7 @@ function Chrome({
   const t = useT();
   const locale = useLocale();
 
-  switch (spec.chrome) {
+  switch (chrome) {
     case "none":
       return null;
 
@@ -340,6 +407,12 @@ function Chrome({
  * Waits for the detail rather than guessing: the streak is the one piece of
  * chrome that is itself a figure, and a placeholder zero would be a wrong
  * number shown confidently for as long as the fetch takes.
+ *
+ * No heading of its own any more. `bearing.panel.streakHeading` was the words
+ * "Your run", which is also `bearing.cards.run` — on a tile it named a panel
+ * nothing else had named, and on a card it is the card's own title repeated
+ * one line under itself. The web dropped it when it moved to cards; this was
+ * the last thing in either app still saying it, so the key went with it.
  */
 function Streak({ detail }: { detail: PanelDetail | null }) {
   const t = useT();
@@ -347,7 +420,6 @@ function Streak({ detail }: { detail: PanelDetail | null }) {
 
   return (
     <View className="gap-0.5">
-      <Text variant="label">{t("bearing.panel.streakHeading")}</Text>
       {summary ? (
         <Text variant="muted" className="text-xs">
           {summary.streak > 0

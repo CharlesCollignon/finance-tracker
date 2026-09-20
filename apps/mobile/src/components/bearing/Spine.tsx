@@ -10,86 +10,54 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-import type { AttentionItem } from "@finance/core/attention";
 import type { Key } from "@finance/core/i18n/t";
 import type { MonthStanding } from "@finance/core/month-pulse";
 import { drawSpineRing, type SpineState } from "@finance/core/spine";
 import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 
-import { AnimatedAmount } from "@/components/AnimatedAmount";
-import { AttentionRow } from "@/components/bearing/AttentionRow";
 import { Text } from "@/components/ui/Text";
-import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useT } from "@/providers/LocaleProvider";
-import { ICON, TYPE } from "@/theme/tokens";
+import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 type ThemeColors = ReturnType<typeof useThemeColors>;
 
-interface SpineProps {
-  state: SpineState;
-  attention: AttentionItem[];
-}
-
 /**
- * The fixed spine above the bearing tiles, on the phone: one figure, one
- * ring, one flame, and — if anything is waiting — the one thing most worth
- * doing next.
+ * The ring and the flame, inside the card about your run.
+ *
+ * It was the fixed spine above the bearing tiles and it is neither fixed nor
+ * above anything now. Its headline went to `Headline`, which states the two
+ * figures the screen is opened for at the top of the tab; its action row went
+ * to `AttentionRow`, which the screen renders itself because the reader who
+ * needs it most — a brand-new account — is served the `thin` empty state and
+ * never reaches this component at all. What is left is the pair of marks that
+ * are genuinely about the run: how much of the month's allowance has gone,
+ * and how many months have closed inside it. They live in "Your run" because
+ * that is the card they describe.
+ *
+ * So it draws no surface and no edge of its own — the hairline it used to
+ * rule underneath itself would be the only divider inside a card that already
+ * has a border.
  *
  * The web twin (`apps/web/components/finance/bearing/Spine.tsx`) carries the
- * ladder's own reasoning in full; this component draws the same four ring
- * states for the same reason but in the phone's own idiom rather than its
- * markup — no `Card`, no bento chrome, a hairline border underneath is the
- * only edge it draws, and the streak chip reuses the exact shape
- * `MonthScore.tsx` already drew for the same figure rather than the web
- * Spine's own `FlameBadge`.
+ * ladder's own reasoning in full; this draws the same four ring states for
+ * the same reasons but in the phone's own idiom rather than its markup, and
+ * the streak chip reuses the exact shape `MonthScore.tsx` already drew for
+ * the same figure rather than the web Spine's own `FlameBadge`.
  *
- * Mounted above `ReorderableList`, outside it, in `(tabs)/index.tsx` — see
- * that file's own comment for why.
- *
- * The action row is `AttentionRow`'s, not this component's: the reader who
- * needs it most is served the `thin` empty state instead of this, so the row
- * has to be mountable without the ring and the headline that go with it.
+ * The flame is still drawn when it is handed one, and `BearingCards`
+ * deliberately hands none: `streak` and `best-streak` are figures in the pack,
+ * so the run card lists them as rows like every other figure on the surface
+ * rather than saying them a second time as a badge.
  */
-export function Spine({ state, attention }: SpineProps) {
-  const t = useT();
-  const colors = useThemeColors();
-  const formatMoney = useFormatCurrency();
-
-  const negative = state.headline.figure === "free" && state.headline.value < 0;
-
+export function Spine({ state }: { state: SpineState }) {
   return (
-    <View className="gap-3 border-b border-border pb-4">
-      <View className="flex-row flex-wrap items-end justify-between gap-3">
-        <View className="flex-row items-end gap-4">
-          <View className="gap-0.5">
-            <Text variant="muted" className="text-sm">
-              {t(headlineLabelKey(state.headline))}
-            </Text>
-            <AnimatedAmount
-              value={state.headline.value}
-              format={formatMoney}
-              style={[TYPE.hero, negative ? { color: colors.destructive } : null]}
-            />
-          </View>
+    <View className="flex-row flex-wrap items-center justify-between gap-3">
+      <Ring ring={state.ring} />
 
-          <Ring ring={state.ring} />
-        </View>
-
-        {state.flame ? <FlameBadge flame={state.flame} /> : null}
-      </View>
-
-      <AttentionRow attention={attention} />
+      {state.flame ? <FlameBadge flame={state.flame} /> : null}
     </View>
   );
-}
-
-/** Mirrors `pulseHeadline` in `month-pulse.ts` off the fields `resolveSpine` already reduced it to. */
-function headlineLabelKey(headline: SpineState["headline"]): Key {
-  if (headline.figure === "remaining") {
-    return "pulse.headlineLeft";
-  }
-  return headline.value < 0 ? "pulse.headlineShort" : "pulse.headlineFree";
 }
 
 /**
@@ -118,7 +86,11 @@ function FlameBadge({ flame }: { flame: NonNullable<SpineState["flame"]> }) {
       ) : null}
       {best > streak && best > 1 ? (
         <View className="flex-row items-center gap-1 rounded-full border border-border px-2 py-0.5">
-          <Ionicons name="trophy-outline" size={ICON.xs} color={colors.mutedForeground} />
+          <Ionicons
+            name="trophy-outline"
+            size={ICON.xs}
+            color={colors.mutedForeground}
+          />
           <Text className="text-xs text-muted-foreground">
             {t("month.bestStreak", { count: best })}
           </Text>
@@ -193,7 +165,11 @@ function Ring({ ring }: { ring: SpineState["ring"] }) {
 
   if (ring.kind === "dark") {
     return (
-      <View accessible accessibilityRole="image" accessibilityLabel={t("bearing.spine.ringUnmeasured")}>
+      <View
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel={t("bearing.spine.ringUnmeasured")}
+      >
         <Svg width={SIZE} height={SIZE}>
           <Circle
             cx={SIZE / 2}
@@ -210,7 +186,11 @@ function Ring({ ring }: { ring: SpineState["ring"] }) {
 
   if (ring.kind === "arc") {
     return (
-      <View accessible accessibilityRole="image" accessibilityLabel={t("bearing.spine.ringMeasuring")}>
+      <View
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel={t("bearing.spine.ringMeasuring")}
+      >
         <ArcRing colors={colors} />
       </View>
     );

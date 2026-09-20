@@ -2217,7 +2217,6 @@ export const en = {
       close: "Close",
       open: "Show what this is made of",
       footer: "See the full surface",
-      streakHeading: "Your run",
       horizon: "How far ahead",
       /** The month stepper above a month panel, for a screen reader. */
       monthScope: "Which month this panel shows",

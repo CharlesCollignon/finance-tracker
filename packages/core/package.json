@@ -84,7 +84,6 @@
     "./spine": "./src/spine.ts",
     "./still-to-come": "./src/still-to-come.ts",
     "./types/database": "./src/types/database.ts",
-    "./validations/bearing": "./src/validations/bearing.ts",
     "./validations/finance": "./src/validations/finance.ts",
     "./validations/investments": "./src/validations/investments.ts",
     "./validations/month-close": "./src/validations/month-close.ts",

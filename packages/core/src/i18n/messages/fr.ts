@@ -1657,7 +1657,6 @@ export const fr: Messages = {
       close: "Fermer",
       open: "Voir ce qui compose ce chiffre",
       footer: "Voir la surface complète",
-      streakHeading: "Votre série",
       horizon: "Jusqu'où",
       monthScope: "Le mois affiché par ce panneau",
       streakMonths: {

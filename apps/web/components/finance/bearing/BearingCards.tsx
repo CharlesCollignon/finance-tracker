@@ -10,7 +10,6 @@ import {
   type CardId,
 } from "@finance/core/bearing-cards";
 import type { BearingFacts } from "@finance/core/bearing-facts";
-import { BEARING_TILES } from "@finance/core/bearing-tiles";
 import { cssEasing, DURATION } from "@finance/core/motion";
 import type { SpineState } from "@finance/core/spine";
 import { Panel } from "@/components/finance/bearing/Panel";
@@ -354,7 +353,15 @@ function FigureRow({ figure, trend }: { figure: CardFigure; trend: number[] }) {
   );
 }
 
-/** The shape of the run, for the figures that draw one behind themselves. */
+/**
+ * The shape of the run, for the figures that draw one behind themselves.
+ *
+ * `figure.series` rather than `BEARING_TILES[figure.id].series`. This file
+ * used to reach past the card list into the table it is built from for that
+ * one field, which made the "one place both clients agree about what a card
+ * is" seam leak — the phone would have had to make the same reach. The
+ * series now rides on the figure, like the href.
+ */
 function Run({
   figure,
   trend,
@@ -364,7 +371,7 @@ function Run({
   trend: number[];
   className?: string;
 }) {
-  if (BEARING_TILES[figure.id].series !== "trend" || trend.length < 2) {
+  if (figure.series !== "trend" || trend.length < 2) {
     return null;
   }
   return (

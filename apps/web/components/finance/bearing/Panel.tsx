@@ -287,7 +287,10 @@ function Chrome({
             <Step
               label={t("common.previousMonth")}
               onPress={() =>
-                setScope({ ...scope, ...shiftMonth(scope.year, scope.month, -1) })
+                setScope({
+                  ...scope,
+                  ...shiftMonth(scope.year, scope.month, -1),
+                })
               }
             >
               <CaretLeft size={ICON.sm} weight="bold" />
@@ -298,7 +301,10 @@ function Chrome({
             <Step
               label={t("common.nextMonth")}
               onPress={() =>
-                setScope({ ...scope, ...shiftMonth(scope.year, scope.month, 1) })
+                setScope({
+                  ...scope,
+                  ...shiftMonth(scope.year, scope.month, 1),
+                })
               }
             >
               <CaretRight size={ICON.sm} weight="bold" />
@@ -343,9 +349,7 @@ function Chrome({
           <SegmentedControl
             label={t("bearing.panel.horizon")}
             value={String(scope.horizon)}
-            onChange={(value) =>
-              setScope({ ...scope, horizon: Number(value) })
-            }
+            onChange={(value) => setScope({ ...scope, horizon: Number(value) })}
             // "6M" and "1Y" read the same in both languages, which is why the
             // Wallets range switch writes them out too rather than asking the
             // catalogue for a two-character string.
@@ -367,11 +371,12 @@ function Chrome({
  * chrome that is itself a figure, and a placeholder zero would be a wrong
  * number shown confidently for as long as the fetch takes.
  *
- * No heading of its own any more. `bearing.panel.streakHeading` is the
+ * No heading of its own any more. `bearing.panel.streakHeading` was the
  * English words "Your run", which is also `bearing.cards.run` — on a tile it
  * named a panel nothing else had named, and on a card it is the card's own
- * title repeated one line under itself. The phone's panel still carries it,
- * because over there it is still the only thing saying it.
+ * title repeated one line under itself. The phone's panel carried it for one
+ * more task, because over there tiles were still the shape; it moved to cards
+ * too, and the key went with the last thing saying it.
  */
 function Streak({ detail }: { detail: PanelDetail | null }) {
   const t = useT();

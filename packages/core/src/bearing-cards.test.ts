@@ -85,6 +85,26 @@ describe("buildBearingCards", () => {
     expect(month.figures.find((f) => f.id === "free")!.href).toBeNull();
   });
 
+  /**
+   * The other half of what a client needs to draw a row. It lives on the
+   * figure for the same reason `href` does — see `CardFigure.series`.
+   */
+  it("carries each figure's series, and null for the figures that draw none", () => {
+    const cards = buildBearingCards(
+      pack([
+        fact("net-position", "now"), // series: trend
+        fact("on-hand", "now"), // no series
+      ]),
+      euro,
+    );
+    const now = cards.find((c) => c.id === "now")!;
+
+    expect(now.figures.find((f) => f.id === "net-position")!.series).toBe(
+      "trend",
+    );
+    expect(now.figures.find((f) => f.id === "on-hand")!.series).toBeNull();
+  });
+
   it("drops a card with no figures rather than drawing an empty one", () => {
     const cards = buildBearingCards(pack([fact("on-hand", "now")]), euro);
     expect(cards.map((c) => c.id)).toEqual(["now"]);

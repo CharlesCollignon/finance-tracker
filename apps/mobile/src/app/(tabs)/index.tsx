@@ -1,93 +1,57 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Platform, Pressable, RefreshControl, View } from "react-native";
-import { Gesture } from "react-native-gesture-handler";
-import { runOnJS } from "react-native-reanimated";
-import { Ionicons } from "@expo/vector-icons";
-import ReorderableList, { reorderItems } from "react-native-reorderable-list";
+import { useEffect } from "react";
+import { RefreshControl, ScrollView } from "react-native";
 
 import { buildAttention } from "@finance/core/attention";
 import { resolveSpine } from "@finance/core/spine";
-import {
-  renderArrangement,
-  type RenderedTile,
-} from "@finance/core/bearing-read";
-import { slotSpan, type TileId, type TilePins } from "@finance/core/bearing-tiles";
-import { formatShortDate } from "@finance/core/constants";
 
-import {
-  arrangeBearing,
-  bearingOrder,
-  bearingWritable,
-  gatherBearingFacts,
-  getBearingArrangement,
-  getBearingPins,
-  saveBearingPins,
-} from "@/lib/bearing";
+import { gatherBearingFacts } from "@/lib/bearing";
 import { clearPanelCache } from "@/lib/bearing-panel";
 
 import { AttentionRow } from "@/components/bearing/AttentionRow";
-import { BearingTile } from "@/components/bearing/BearingTile";
-import { Spine } from "@/components/bearing/Spine";
+import { BearingCards } from "@/components/bearing/BearingCards";
+import { Headline } from "@/components/bearing/Headline";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
-import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
-import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
-import { useToast } from "@/providers/ToastProvider";
-import { hapticSuccess } from "@/lib/haptics";
 import { useDataVersion } from "@/lib/data-version";
-import { ICON, TYPE } from "@/theme/tokens";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 /**
  * Where the whole of it stands, on one day.
  *
- * The phone's first tab, and the app's landing surface on both clients. Every
- * figure here is one some other screen already renders, so a tile is a link
- * to the place its number is explained — Month, the Ledger, Plan, Wallets.
+ * The phone's first tab, and the app's landing surface on both clients. Two
+ * figures and five cards, the same five the web draws and in the same order:
+ * every figure here is one some other screen already renders, so a card is a
+ * way in to the places its numbers are explained — the Ledger, Charges, Plan,
+ * Wallets.
  *
- * A model chooses which figures lead and may write a few words beside one. It
- * never computes anything: it names figures by id and the values are
- * substituted here, on the device, which is what keeps the currency toggle
- * and the privacy blur working on a caption.
+ * It was twelve draggable tiles whose order a model wrote and a reader could
+ * overrule, and the three mechanisms that produced that order — an
+ * arrangement, a set of pins, a slot template — were all answers to "which of
+ * these matters most?". A list of five, one per fact family, does not ask the
+ * question: nothing is ranked because nothing is hidden. The model, the pins,
+ * the drag handle and the arrange button are gone with it, and so is the
+ * staleness line that existed to say the model's choice had aged.
  *
- * Nothing on this screen calls a model. The stored arrangement renders for
- * free; only the button spends, and it is absent on a build with no web app
- * to reach — in which case the app's own ordering is what shows, which is a
- * working Bearing rather than a degraded one.
+ * Nothing on this screen calls a model, and nothing on it now reaches the web
+ * app at all: the fact pack comes straight out of Supabase like every other
+ * query, so the Bearing renders with no server of ours in the path.
+ *
+ * Everything visible comes from one fact pack, so there is no half of the
+ * screen that could arrive first. What a card holds *under* its figures is
+ * fetched on the press instead — see `Panel`.
  */
 export default function BearingScreen() {
   const { user } = useAuth();
   const t = useT();
   const locale = useLocale();
   const colors = useThemeColors();
-  const formatEuro = useFormatCurrency();
-  const { toast } = useToast();
   const bottom = useTabBarClearance();
   const dataVersion = useDataVersion();
-
-  /**
-   * What the user has dragged, since the last load.
-   *
-   * Null until they drag something, and reset the moment fresh data arrives.
-   * Holding the order in state and seeding it from an effect was the obvious
-   * shape and the wrong one: it derives state from props, which costs a
-   * second render on every load and leaves a window where the list is empty.
-   * This is the reset-during-render pattern instead — the order is derived,
-   * and a drag is the only thing that overrides it.
-   */
-  const [dragged, setDragged] = useState<{
-    order: TileId[];
-    pins: TilePins;
-  } | null>(null);
-  const [arranging, setArranging] = useState(false);
-
-  /** Which tile's panel is open, if any. One at a time. */
-  const [openTile, setOpenTile] = useState<TileId | null>(null);
 
   // A write anywhere in the app should not leave a panel showing what a
   // figure used to be. This covers the writes made from outside a panel —
@@ -103,135 +67,10 @@ export default function BearingScreen() {
     clearPanelCache();
   }, [dataVersion]);
 
-  /**
-   * The drag gesture, held back until the handle's long press has fired.
-   *
-   * Without this the screen cannot be scrolled at all. `ReorderableList`
-   * composes `Gesture.Simultaneous(Gesture.Native(), pan)` around a pan that
-   * starts tracking the instant a finger lands, and a `RefreshControl` above
-   * it wants the same vertical drag — the library's own troubleshooting notes
-   * name that pair as the one that leaves both dead. Holding the pan back
-   * means an ordinary swipe reaches the scroll view untouched.
-   *
-   * 220ms because `BearingTile`'s handle calls `drag()` from an `onLongPress`
-   * at 180: the pan has to be asleep right up to the moment a drag actually
-   * begins, and awake immediately after. The two numbers move together.
-   */
-  const dragGesture = useMemo(
-    () => Gesture.Pan().activateAfterLongPress(220),
-    [],
-  );
-
-  const { data, loading, refreshing, onRefreshAll, onRefresh } = useRefreshable(
-    async () => {
-      if (!user) {
-        return null;
-      }
-
-      const facts = await gatherBearingFacts(user.id, locale);
-      const [stored, savedPins] = await Promise.all([
-        getBearingArrangement(user.id, facts),
-        getBearingPins(user.id),
-      ]);
-
-      return { facts, stored, pins: savedPins };
-    },
+  const { data, loading, refreshing, onRefreshAll } = useRefreshable(
+    async () => (user ? await gatherBearingFacts(user.id, locale) : null),
     [user?.id, locale, dataVersion],
   );
-
-  /*
-   * Android draws the refresh spinner from a SwipeRefreshLayout wrapping the
-   * list, so a tile dragged upwards pulls it open mid-reorder. Switching it
-   * off for the duration of a drag is the library's remedy. Not while a
-   * refresh is already running — taking the control away then would snatch
-   * back a spinner the user is watching — and not on iOS, which composites
-   * the two without argument.
-   */
-  const [refreshEnabled, setRefreshEnabled] = useState(true);
-
-  const onDragStart = useCallback(() => {
-    "worklet";
-    // Dragging and an open panel are two ways of interacting with the same
-    // tile, and starting one should not leave the other running underneath
-    // it — see `BearingTile`'s own doc comment on why the press and the
-    // handle are kept from competing.
-    runOnJS(setOpenTile)(null);
-    if (Platform.OS === "android" && !refreshing) {
-      runOnJS(setRefreshEnabled)(false);
-    }
-  }, [refreshing]);
-
-  const onDragEnd = useCallback(() => {
-    "worklet";
-    if (Platform.OS === "android") {
-      runOnJS(setRefreshEnabled)(true);
-    }
-  }, []);
-
-  const [snapshot, setSnapshot] = useState(data);
-  if (snapshot !== data) {
-    setSnapshot(data);
-    setDragged(null);
-  }
-
-  // The reconciliation the whole app agrees on: the arrangement with the
-  // user's pins applied. A drag overrides it until the next load, which then
-  // agrees anyway, because the drag wrote those pins.
-  const settled = useMemo(
-    () =>
-      data
-        ? bearingOrder(data.stored.arrangement, data.pins, data.facts)
-        : [],
-    [data],
-  );
-
-  const order = dragged?.order ?? settled;
-  // Memoised because the `?? {}` fallback is a fresh object every render,
-  // which would re-create the reorder callback on each one.
-  const pins = useMemo(
-    () => dragged?.pins ?? data?.pins ?? {},
-    [dragged, data],
-  );
-
-  const onReorder = useCallback(
-    ({ from, to }: { from: number; to: number }) => {
-      const next = reorderItems(order, from, to);
-
-      // Everything the user has ever placed, re-read off the list they can
-      // actually see. Pinning only the tile just moved would let the ones it
-      // pushed past drift back on the next arrangement.
-      const moved = order[from];
-      const nowPinned = new Set(Object.keys(pins));
-      if (moved) {
-        nowPinned.add(moved);
-      }
-
-      const nextPins: TilePins = Object.fromEntries(
-        next.flatMap((id, index) => (nowPinned.has(id) ? [[id, index]] : [])),
-      );
-      setDragged({ order: next, pins: nextPins });
-      // Fire and forget: the tile has already moved under the finger, and the
-      // cost of losing the position is dragging it again.
-      void saveBearingPins(nextPins);
-    },
-    [order, pins],
-  );
-
-  async function arrange() {
-    setArranging(true);
-    try {
-      const outcome = await arrangeBearing();
-      if (outcome.message) {
-        toast(outcome.message, outcome.arranged ? "success" : "error");
-      }
-      if (outcome.arranged) {
-        hapticSuccess();
-        onRefresh();
-      }
-    } finally {
-      setArranging(false);
-    }
-  }
 
   if (loading || !data) {
     return (
@@ -241,7 +80,7 @@ export default function BearingScreen() {
     );
   }
 
-  const { facts, stored } = data;
+  const facts = data;
 
   // Built above the thin branch on purpose. `thin` is not "nobody has done
   // anything" — it is "no position has been taken yet", which is exactly
@@ -265,14 +104,12 @@ export default function BearingScreen() {
   if (facts.thin) {
     return (
       <Screen title={t("nav.bearing")}>
-        <EmptyState
-          title={t("bearing.title")}
-          description={t("bearing.empty")}
-        >
-          {/* The row, and deliberately not the spine: a hero-sized zero
-              beside a dark ring would be two statements about a position
-              nobody has taken yet, where this states no figure at all and
-              only names the thing worth doing. */}
+        <EmptyState title={t("bearing.title")} description={t("bearing.empty")}>
+          {/* The row, and deliberately not the headline: two hero-sized
+              figures over an empty account are two statements about a
+              position nobody has taken yet. The row states nothing about the
+              account. It names the one thing worth doing and links to where
+              it is done, which is all this reader is short of. */}
           {attention.length > 0 ? (
             <AttentionRow attention={attention} />
           ) : undefined}
@@ -280,19 +117,6 @@ export default function BearingScreen() {
       </Screen>
     );
   }
-
-  // Rendered here rather than upstream, because the display currency lives on
-  // this device and no server knows it. Spans come from the position, so the
-  // first tile is the hero whatever it happens to be.
-  const tiles = renderArrangement(
-    order,
-    stored.arrangement,
-    facts,
-    formatEuro,
-    stored.locale,
-  );
-
-  const canArrange = bearingWritable() && stored.tracked;
 
   // The spine's ladder, a pure function of figures `gatherBearingFacts`
   // already widened its return with — see that function's own doc comment
@@ -323,100 +147,31 @@ export default function BearingScreen() {
 
   return (
     <Screen title={t("nav.bearing")} className="px-4 py-0">
-      {/* Fixed above the tiles, not a thirteenth one: outside
-          `ReorderableList` entirely, so opening a panel cannot move it and
-          nothing dragged can displace it. Screen's own `px-4` already
-          insets this horizontally, same as the list below. */}
-      <View className="pt-4">
-        <Spine state={spineState} attention={attention} />
-      </View>
-
-      <ReorderableList
-        style={{ flex: 1 }}
-        data={tiles}
-        keyExtractor={(tile: RenderedTile) => tile.id}
-        renderItem={({ item, index }) => (
-          <BearingTile
-            tile={{ ...item, span: slotSpan(index) }}
-            pinned={item.id in pins}
-            draggable={stored.tracked}
-            open={item.id === openTile}
-            onToggle={() =>
-              setOpenTile((current) => (current === item.id ? null : item.id))
-            }
-          />
-        )}
-        onReorder={onReorder}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-        panGesture={dragGesture}
-        dragEnabled={stored.tracked}
-        contentContainerStyle={{ paddingTop: 12, paddingBottom: bottom }}
-        showsVerticalScrollIndicator={false}
+      <ScrollView
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefreshAll}
-            enabled={refreshEnabled}
             tintColor={colors.mutedForeground}
           />
         }
-        ListHeaderComponent={
-          <View className="mb-3 gap-2">
-            <Text className="text-muted-foreground" style={TYPE.micro}>
-              {t("bearing.asOf", { date: formatShortDate(facts.asOf, locale) })}
-              {" · "}
-              {stored.arrangement
-                ? t("bearing.arrangeHint")
-                : t("bearing.ownOrder")}
-            </Text>
+        contentContainerClassName="gap-6"
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: bottom }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* The two figures the screen is opened for, before anything that has
+            to be pressed to be read. */}
+        <Headline state={spineState} />
 
-            {canArrange ? (
-              <View className="flex-row items-center gap-3">
-                <Pressable
-                  onPress={arrange}
-                  disabled={arranging || stored.arrangementsLeft <= 0}
-                  className="flex-row items-center gap-1.5 self-start rounded-full border border-border px-3 py-1.5"
-                  style={{
-                    opacity:
-                      arranging || stored.arrangementsLeft <= 0 ? 0.5 : 1,
-                  }}
-                  accessibilityRole="button"
-                >
-                  <Ionicons
-                    name="sparkles-outline"
-                    size={ICON.sm}
-                    color={colors.primaryRim}
-                  />
-                  <Text className="text-sm">
-                    {arranging ? t("bearing.arranging") : t("bearing.arrange")}
-                  </Text>
-                </Pressable>
-                <Text className="text-muted-foreground" style={TYPE.micro}>
-                  {t("bearing.arrangementsLeft", {
-                    count: stored.arrangementsLeft,
-                  })}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-        }
-        ListFooterComponent={
-          /* Only when the figures the choice rests on have actually moved. A
-             staleness line that is always on is one nobody reads. */
-          stored.freshness?.standing === "moved" ? (
-            <Text
-              className="mt-1 text-muted-foreground"
-              style={TYPE.micro}
-            >
-              {t("bearing.moved", {
-                count: stored.freshness.moved.length,
-                age: stored.freshness.age,
-              })}
-            </Text>
-          ) : null
-        }
-      />
+        {attention.length > 0 ? <AttentionRow attention={attention} /> : null}
+
+        <BearingCards
+          facts={facts}
+          spine={spineState}
+          trend={facts.trend}
+          locale={locale}
+        />
+      </ScrollView>
     </Screen>
   );
 }

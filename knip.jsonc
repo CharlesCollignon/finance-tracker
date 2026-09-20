@@ -284,7 +284,6 @@
         // every line left standing is a hole in the gate.
         // ---------------------------------------------------------------
         "src/bank-feed.ts": ["exports"],
-        "src/bearing-read.ts": ["types"],
         "src/budget.ts": ["exports"],
         "src/category-styles.ts": ["exports"],
         "src/constants.ts": ["exports"],
@@ -295,6 +294,26 @@
         "src/validations/finance.ts": ["types"],
         "src/validations/investments.ts": ["types"],
         "src/wallet-read.ts": ["exports", "types"],
+
+        // ---------------------------------------------------------------
+        // DEBT with an owner and a date — the arranger, mid-demolition.
+        //
+        // These three modules are the AI arrangement of the Bearing: the
+        // prompt, the model's answer and the budget that rationed it. The
+        // Bearing is five fixed cards now, so nothing reaches any of them
+        // any more — the web route and the phone's caller were deleted in
+        // the same commit that added these lines. The modules themselves
+        // are not deleted here only because they are one task's worth of
+        // work on their own (the subpath exports, the tests, the trim of
+        // `bearing-tiles.ts` and `bearing-panels.ts` all go together), and
+        // a half-deleted library is worse than a whole one deleted late.
+        //
+        // So: delete these three lines by deleting the three files. Nothing
+        // else should ever be added under this heading.
+        // ---------------------------------------------------------------
+        "src/bearing-budget.ts": ["exports"],
+        "src/bearing-prompt.ts": ["exports"],
+        "src/bearing-read.ts": ["exports", "types"],
 
         // Not debt: generated. `src/types/database.ts` is the Supabase schema
         // dumped by `supabase gen types`, so it necessarily describes tables
