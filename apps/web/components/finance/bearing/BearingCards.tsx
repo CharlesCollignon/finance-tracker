@@ -89,6 +89,9 @@ export function BearingCards({
           // buckets. If that ever stops holding, the ring disappears with no
           // error anywhere — the card it lives on will simply not be there.
           spine={card.id === "run" ? spine : null}
+          // The headline states one of these figures itself, directly above
+          // the cards, under the same label the card would repeat.
+          restatesHeadline={card.lead?.id === spine.headline.figure}
           trend={trend}
         />
       ))}
@@ -113,12 +116,15 @@ function Card({
   open,
   onToggle,
   spine,
+  restatesHeadline,
   trend,
 }: {
   card: BearingCard;
   open: boolean;
   onToggle: () => void;
   spine: SpineState | null;
+  /** This card's lead figure is the one the headline already states. */
+  restatesHeadline: boolean;
   trend: number[];
 }) {
   const t = useT();
@@ -191,10 +197,20 @@ function Card({
             <span className="flex shrink-0 flex-col items-end gap-0.5">
               {/* Label above, figure below: a figure read before its label is
                   a number the eye has to hold while it finds out what it
-                  was. */}
-              <span className={cn(MICRO, "text-muted-foreground")}>
-                {card.lead.label}
-              </span>
+                  was.
+
+                  Dropped on the one card whose lead the headline has already
+                  stated. `free` is the first `month` fact, so "This month"
+                  led with "Yours to spend this month" under the identical
+                  words the headline uses a few pixels higher — the same
+                  figure said twice under one label reads as two figures that
+                  happen to agree. The card's own name still says which
+                  family it is, and the figure is still there. */}
+              {restatesHeadline ? null : (
+                <span className={cn(MICRO, "text-muted-foreground")}>
+                  {card.lead.label}
+                </span>
+              )}
               <span className="flex items-end gap-2">
                 <Run figure={card.lead} trend={trend} className="mb-1" />
                 <PrivateAmount className={cn(FIGURE, toneFor(card.lead))}>
