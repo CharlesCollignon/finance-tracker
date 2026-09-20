@@ -1546,8 +1546,6 @@ export type InstrumentReadingRow =
 export type InstrumentReadingTallyRow =
   Database["public"]["Tables"]["instrument_reading_tallies"]["Row"];
 export type WalletReadRow = Database["public"]["Tables"]["wallet_reads"]["Row"];
-export type BearingArrangementRow =
-  Database["public"]["Tables"]["bearing_arrangements"]["Row"];
 export type CategoryReadRow =
   Database["public"]["Tables"]["category_reads"]["Row"];
 export type CategoryReadTallyRow =
