@@ -7,7 +7,7 @@ import { LandingHeader } from "@/components/marketing/LandingHeader";
  *
  * `dark` is applied here rather than on <html>, which the app's theme toggle
  * owns: these pages are dark whatever the visitor has the app set to, because
- * the logo is a lit gold sphere and it only reads as one in a dark room. The
+ * the logo is a lit amber sphere and it only reads as one in a dark room. The
  * class also switches every `dark:` variant inside, which is what lets the
  * device frames and the mocks render their dark treatment here while the app
  * behind the login keeps whatever theme the visitor chose.

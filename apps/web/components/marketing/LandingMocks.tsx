@@ -1,19 +1,25 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Eye, Plus, Sparkle } from "@phosphor-icons/react";
+import { CaretDown, Eye, Plus, Sparkle } from "@phosphor-icons/react";
 import { formatEuro } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
-import { weekdayLabels } from "@finance/core/calendar";
+import { Orb } from "@/components/brand/Orb";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
-import { ProgressRing } from "@/components/finance/charts";
 import { Card } from "@/components/retroui/Card";
 import { Badge } from "@/components/retroui/Badge";
 import { APP_NAV_ITEMS, PROFILE_NAV_ITEM } from "@/lib/navigation";
+import {
+  branchPath,
+  childrenHeight,
+  INDENT,
+  reachPath,
+  ROW_HEIGHT,
+  trunkPath,
+} from "@/lib/nav-tree";
 import { progressTone } from "@/lib/progress-tone";
 import type { LandingPageId } from "@/components/marketing/landing-copy";
 import {
-  landingSample,
   landingSampleFor,
   type LocalisedLandingSample,
 } from "@/components/marketing/landing-sample";
@@ -56,8 +62,13 @@ type Variant = "web" | "mobile";
 // charting runtime on the marketing critical path, keyed to whatever theme the
 // *app* was set to rather than the dark one this shell scopes — so there was a
 // hand-drawn twin here to avoid it. The app's ring is plain SVG now, coloured
-// through CSS tokens, and carries no breakpoints, so the twin is gone and the
-// real component draws these.
+// through CSS tokens, and carries no breakpoints, so the twin is gone. Nothing
+// here draws a ring at the moment — Month did, and Month was retired — but the
+// rule stands: the app's own component, not a picture of it.
+//
+// The orb in both shells is the real `Orb` for the same reason. It used to be
+// a flat gold radial-gradient disc, which was a second mark nobody would have
+// remembered to recolour; when the sphere went warm, it did not.
 //
 // SpendStrip is still not reused, for a different reason: it picks its band
 // colours by sorted index, while sample assigns each category an
@@ -201,34 +212,38 @@ function MockCard({
  * rather than the words it renders: the nav below highlights by matching, and
  * matching on a key survives both a reword and a change of language, where
  * matching on "Month" survived neither. Calendar has no slot of its own — it
- * is the Ledger seen by date — and the month close is met on Month. */
+ * is the Ledger seen by date — and neither the close nor the read is a
+ * surface, so both borrow the one they are reached from. */
 const ACTIVE_NAV: Record<LandingPageId, Key> = {
-  home: "nav.month",
-  // The read lives on Month; it is a card on that surface, not a sixth one.
-  "month-read": "nav.month",
-  transactions: "nav.ledger",
-  recurring: "nav.charges",
-  calendar: "nav.ledger",
+  bearing: "nav.bearing",
+  ledger: "nav.ledger",
+  charges: "nav.charges",
+  plan: "nav.plan",
   wallets: "nav.wallets",
-  planning: "nav.plan",
-  "month-close": "nav.month",
+  // Neither of these is a surface. The close and the read are both met on
+  // Plan — the close card, its history and the projection live there — so
+  // that is the nav entry their chrome lights.
+  "month-close": "nav.plan",
+  "month-read": "nav.plan",
 };
 
 /** The real side nav's structure — logo band, primary action, then the same
- * APP_NAV_ITEMS the app renders, so the two can never drift apart. */
+ * APP_NAV_ITEMS the app renders, drawn as the tree `BranchedNav` draws, off
+ * the shared geometry in `lib/nav-tree`. All three are shared rather than
+ * copied, so the picture and the thing it is a picture of cannot drift. */
 function WebSideNav({ active }: { active: Key }) {
   const t = useT();
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="flex h-[52px] shrink-0 items-center justify-center gap-2 border-b border-border px-5">
-        <span className="h-6 w-6 shrink-0 rounded-full bg-[radial-gradient(circle_at_35%_30%,#fdefb4,#dcbb7c_52%,#b68c42)]" />
+        <Orb tone="mark" size="24px" className="shrink-0" />
         <span className="font-logo text-xl leading-none">Pluclair</span>
       </div>
 
       <div className="px-3 pt-3">
         <div className="flex min-h-10 items-center gap-3 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
           <Plus size={18} weight="bold" />
-          Add transaction
+          {t("ledger.addTransaction")}
           <span className="ml-auto rounded bg-black/15 px-1.5 py-0.5 text-[10px] font-normal">
             N
           </span>
@@ -236,21 +251,99 @@ function WebSideNav({ active }: { active: Key }) {
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 p-3">
-        {APP_NAV_ITEMS.map(({ labelKey, icon: Icon }) => {
+        {APP_NAV_ITEMS.map(({ labelKey, icon: Icon, children }) => {
           const isActive = labelKey === active;
+          // The real sidebar unfolds the surface you are in and leaves the
+          // others folded, so the mock shows one surface's views and no
+          // others. `BranchedNav` keeps that in state; here it is the
+          // active flag, which is the same rule with nothing to remember.
+          const showKids = isActive && children.length > 0;
           return (
-            <span
-              key={labelKey}
-              className={cn(
-                "flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm",
-                isActive
-                  ? "bg-accent font-medium text-accent-foreground"
-                  : "text-muted-foreground",
-              )}
-            >
-              <Icon size={18} weight={isActive ? "fill" : "regular"} />
-              {t(labelKey)}
-            </span>
+            <div key={labelKey} className="relative flex flex-col">
+              {isActive ? (
+                <span
+                  aria-hidden
+                  className="absolute -left-1.5 top-3 z-10 h-4 w-0.5 rounded-full bg-primary"
+                />
+              ) : null}
+              <div className="flex items-center gap-1">
+                <span
+                  className={cn(
+                    "flex min-h-10 flex-1 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+                    isActive
+                      ? "bg-primary/10 text-primary-ink"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  <Icon size={18} weight={isActive ? "fill" : "light"} />
+                  {t(labelKey)}
+                </span>
+                {children.length > 0 ? (
+                  <span className="shrink-0 p-1.5 text-muted-foreground">
+                    <CaretDown
+                      size={14}
+                      weight="bold"
+                      className={cn(!showKids && "-rotate-90")}
+                    />
+                  </span>
+                ) : null}
+              </div>
+
+              {showKids ? (
+                <div
+                  className="relative"
+                  style={{ height: childrenHeight(children.length) }}
+                >
+                  <svg
+                    width={INDENT}
+                    height={childrenHeight(children.length)}
+                    aria-hidden
+                    className="pointer-events-none absolute left-0 top-0 overflow-visible"
+                  >
+                    <path
+                      d={trunkPath(children.length)}
+                      className="fill-none stroke-hairline-strong"
+                      strokeWidth={1.5}
+                      strokeLinecap="round"
+                    />
+                    {children.map((kid, index) => (
+                      <path
+                        key={kid.href}
+                        d={branchPath(index)}
+                        className="fill-none stroke-hairline-strong"
+                        strokeWidth={1.5}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    ))}
+                    {/* The accent, traced to the view the mock is showing —
+                        always the first, because that is the view each of
+                        these screenshots is of. */}
+                    <path
+                      d={reachPath(0)}
+                      className="fill-none stroke-primary"
+                      strokeWidth={1.5}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  {children.map((kid, index) => (
+                    <span
+                      key={kid.href}
+                      style={{ height: ROW_HEIGHT, paddingLeft: INDENT }}
+                      className={cn(
+                        "flex items-center rounded-md pr-3 text-sm",
+                        index === 0
+                          ? "font-medium text-primary-ink"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {t(kid.labelKey)}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           );
         })}
       </nav>
@@ -362,7 +455,7 @@ function MobileShell({
     <div className="flex size-full flex-col">
       <header className="flex h-[52px] shrink-0 items-center justify-between gap-3 border-b border-border px-4">
         <div className="flex items-center gap-2">
-          <span className="h-[22px] w-[22px] shrink-0 rounded-full bg-[radial-gradient(circle_at_35%_30%,#fdefb4,#dcbb7c_52%,#b68c42)]" />
+          <Orb tone="mark" size="22px" className="shrink-0" />
           <h1 className="font-head text-lg leading-none">{t(active)}</h1>
         </div>
         <Eye size={18} className="text-muted-foreground" />
@@ -429,149 +522,223 @@ function SpendSplit({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function HomeMock({ variant = "web" }: { variant?: Variant }) {
+/**
+ * One of the Bearing's five cards.
+ *
+ * Collapsed it is its name on the left and its lead figure on the right, with
+ * the label above the figure — a figure read before its label is a number the
+ * eye has to hold while it finds out what it was. Passing `children` draws it
+ * open, which is how the mock shows one card explaining itself without
+ * needing the accordion's state.
+ *
+ * "This month" passes no label, exactly as `BearingCards` drops it there: the
+ * headline a few pixels above has already said those words, and one figure
+ * under one label twice reads as two figures that happen to agree.
+ */
+function BearingCard({
+  name,
+  label,
+  value,
+  valueClassName,
+  compact = false,
+  children,
+}: {
+  name: string;
+  label?: string;
+  value: string;
+  valueClassName?: string;
+  compact?: boolean;
+  children?: ReactNode;
+}) {
+  return (
+    <MockCard innerClassName={compact ? "px-4 py-3" : "px-5 py-4"}>
+      <div className="flex items-center gap-4">
+        <span
+          className={cn(
+            "min-w-0 flex-1 font-medium",
+            compact ? "text-sm" : "text-base",
+          )}
+        >
+          {name}
+        </span>
+        <span className="flex shrink-0 flex-col items-end gap-0.5">
+          {label ? (
+            <span className="text-[10px] leading-none text-muted-foreground">
+              {label}
+            </span>
+          ) : null}
+          <span
+            className={cn(
+              "privacy-amount font-mono font-semibold tabular-nums",
+              compact ? "text-sm" : "text-base",
+              valueClassName,
+            )}
+          >
+            {value}
+          </span>
+        </span>
+        <CaretDown
+          size={16}
+          weight="bold"
+          aria-hidden
+          className={cn(
+            "shrink-0",
+            children ? "rotate-180 opacity-60" : "opacity-30",
+          )}
+        />
+      </div>
+      {children ? (
+        <div className="mt-3 flex flex-col border-t border-border pt-3">
+          {children}
+        </div>
+      ) : null}
+    </MockCard>
+  );
+}
+
+/** One figure inside an open card. */
+function BearingRow({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: string;
+  value: string;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-1">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span
+        className={cn(
+          "privacy-amount font-mono text-xs tabular-nums",
+          valueClassName,
+        )}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * The Bearing: two figures, then five cards.
+ *
+ * Replaces the Month mock, which drew a screen the app no longer has. Every
+ * word in it comes out of the app's own catalogue — `bearing.headline.*`,
+ * `bearing.cards.*`, `bearingFacts.*` — rather than being written here, so
+ * the mock cannot describe the screen differently from the screen, and it is
+ * in the reader's language for free.
+ *
+ * Each card leads with the first figure of its family, which is what
+ * `bearing-facts.ts` puts there: net position for the accounts, the usual
+ * unrecorded spending for the run, where the accounts land for the year
+ * ahead, what went into the wallets for wallets.
+ */
+export function BearingMock({ variant = "web" }: { variant?: Variant }) {
   const sample = landingSampleFor(useLocale());
   const t = useT();
   const euro = useEuro();
-  const { remaining, income, spent, monthLabel, onBudgetLabel, budget, goal } =
-    sample;
-  const shortMonth = monthLabel.split(" ")[0];
+  const { bearing } = sample;
+  const compact = variant === "mobile";
+
+  const cards = (
+    <>
+      <BearingCard
+        compact={compact}
+        name={t("bearing.cards.month")}
+        value={euro(bearing.free)}
+        valueClassName="text-primary-ink"
+      >
+        <BearingRow
+          label={t("bearingFacts.committed")}
+          value={`−${euro(bearing.committed)}`}
+          valueClassName="text-destructive"
+        />
+        <BearingRow
+          label={t("bearingFacts.arriving")}
+          value={`+${euro(bearing.arriving)}`}
+          valueClassName="text-success"
+        />
+        <BearingRow
+          label={t("bearingFacts.savingsRate")}
+          value={`${bearing.savingsRate} %`}
+        />
+        {/* One of the blocks the month panel actually draws. Web only: the
+            phone frame is 360×800 and already carries two hero figures above
+            five cards, so the strip is what gives way rather than the
+            figures. */}
+        {compact ? null : (
+          <div className="mt-3 border-t border-border pt-3">
+            <p className="mb-3 text-xs font-medium text-muted-foreground">
+              {t("marketingMock.whereItWent")}
+            </p>
+            <SpendSplit compact />
+          </div>
+        )}
+      </BearingCard>
+      <BearingCard
+        compact={compact}
+        name={t("bearing.cards.now")}
+        label={t("bearingFacts.netPosition")}
+        value={euro(bearing.netPosition)}
+      />
+      <BearingCard
+        compact={compact}
+        name={t("bearing.cards.run")}
+        label={t("bearingFacts.unrecordedBaseline")}
+        value={euro(bearing.unrecordedBaseline)}
+      />
+      <BearingCard
+        compact={compact}
+        name={t("bearing.cards.ahead")}
+        label={t("bearingFacts.projectedBalanceBare")}
+        value={euro(bearing.projectedBalance)}
+      />
+      <BearingCard
+        compact={compact}
+        name={t("bearing.cards.wallet")}
+        label={t("bearingFacts.walletCost")}
+        value={euro(sample.portfolioInvested)}
+      />
+    </>
+  );
 
   if (variant === "mobile") {
     return (
-      <MobileShell active="nav.month">
-        <MockCard innerClassName="p-4">
+      <MobileShell active="nav.bearing">
+        {/* Stacked below md, side by side above it — the same rule
+            `bearing/Headline` follows. */}
+        <div className="flex flex-col gap-3 pb-1">
           <MobileHero
-            label={`Left in ${shortMonth}`}
-            amount={euro(remaining)}
-            amountClassName="text-primary-ink"
-            subtitle={
-              <p>
-                <span className="privacy-amount text-success tabular-nums">
-                  {euro(income)}
-                </span>
-                {" earned · "}
-                <span className="privacy-amount text-destructive tabular-nums">
-                  {euro(spent)}
-                </span>
-                {" spent"}
-              </p>
-            }
-            status={<span className="text-success">{onBudgetLabel}</span>}
+            label={t("bearing.headline.onHand")}
+            amount={euro(bearing.onHand)}
           />
-        </MockCard>
-        <MockCard innerClassName="p-4">
-          <div className="flex justify-around gap-2">
-            <ProgressRing
-              ratio={budget.spent / budget.limit}
-              label={budget.label}
-              detail={`${euro(budget.spent)} / ${euro(budget.limit)}`}
-              size={88}
-            />
-            <ProgressRing
-              ratio={goal.saved / goal.target}
-              label={goal.label}
-              detail={`${euro(goal.saved)} / ${euro(goal.target)}`}
-              colorVar="--info"
-              meaning="target"
-              size={88}
-            />
-          </div>
-        </MockCard>
-        <MockCard innerClassName="p-4">
-          <p className="text-sm font-semibold">
-            {t("marketingMock.whereItWent")}
-          </p>
-          <div className="mt-3">
-            <SpendSplit compact />
-          </div>
-        </MockCard>
+          <MobileHero
+            label={t("bearing.headline.free")}
+            amount={euro(bearing.free)}
+            amountClassName="text-primary-ink"
+          />
+        </div>
+        {cards}
       </MobileShell>
     );
   }
 
   return (
-    <WebShell active="nav.month" monthLabel={monthLabel}>
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-8">
-          <MockCard innerClassName="flex h-full flex-col items-center justify-center px-8 py-7">
-            <WebHero
-              label={`Left in ${monthLabel}`}
-              amount={euro(remaining)}
-              amountClassName="text-primary-ink"
-              subtitle={
-                <p>
-                  <span className="privacy-amount text-success tabular-nums">
-                    {euro(income)}
-                  </span>
-                  {" earned · "}
-                  <span className="privacy-amount text-destructive tabular-nums">
-                    {euro(spent)}
-                  </span>
-                  {" spent"}
-                </p>
-              }
-              status={<span className="text-success">{onBudgetLabel}</span>}
-            />
-            <div className="mt-6 flex w-full justify-center gap-10 border-t border-border pt-6">
-              {/* 108 rather than the component's own default: these are
-                  authored at the desktop mock's scale, not the app's. */}
-              <ProgressRing
-                ratio={budget.spent / budget.limit}
-                label={budget.label}
-                detail={`${euro(budget.spent)} / ${euro(budget.limit)}`}
-                size={108}
-              />
-              <ProgressRing
-                ratio={goal.saved / goal.target}
-                label={goal.label}
-                detail={`${euro(goal.saved)} / ${euro(goal.target)}`}
-                colorVar="--info"
-                meaning="target"
-                size={108}
-              />
-            </div>
-          </MockCard>
-        </div>
-        <div className="col-span-4 flex flex-col gap-4">
-          <MockCard innerClassName="flex flex-col gap-3 px-5 py-4">
-            <div className="flex items-baseline justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Wallets
-              </p>
-              <p className="font-mono text-lg font-semibold tabular-nums">
-                {euro(sample.portfolio)}
-              </p>
-            </div>
-            <ul className="flex flex-col gap-1.5">
-              {sample.wallets.map((wallet) => (
-                <li
-                  key={wallet.label}
-                  className="flex items-center justify-between gap-2 text-xs"
-                >
-                  <span className="flex items-center gap-2 text-muted-foreground">
-                    <span
-                      className="h-2 w-2 rounded-sm"
-                      style={{ backgroundColor: `var(${wallet.colorVar})` }}
-                      aria-hidden
-                    />
-                    {wallet.label}
-                  </span>
-                  <span className="font-mono tabular-nums">
-                    {euro(wallet.value)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </MockCard>
-          <MockCard innerClassName="flex flex-1 flex-col gap-3 px-5 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Where it went
-            </p>
-            <SpendSplit />
-          </MockCard>
-        </div>
+    <WebShell active="nav.bearing">
+      <div className="grid grid-cols-2 gap-6 pb-2">
+        <WebHero
+          label={t("bearing.headline.onHand")}
+          amount={euro(bearing.onHand)}
+        />
+        <WebHero
+          label={t("bearing.headline.free")}
+          amount={euro(bearing.free)}
+          amountClassName="text-primary-ink"
+        />
       </div>
+      <div className="flex flex-col gap-3">{cards}</div>
     </WebShell>
   );
 }
@@ -776,7 +943,7 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
                   {euro(Math.abs(template.amount))}
                 </span>
                 <span className="rounded-full border border-primary-rim bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                  On
+                  {t("recurring.on")}
                 </span>
               </div>
             </MockCard>
@@ -830,7 +997,7 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
                     {euro(Math.abs(template.amount))}
                   </span>
                   <Badge variant="surface" size="sm" className="rounded-full">
-                    On
+                    {t("recurring.on")}
                   </Badge>
                 </div>
               </div>
@@ -838,216 +1005,6 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
           </MockCard>
         </div>
       </div>
-    </WebShell>
-  );
-}
-
-/* ---------------------------------------------------------------- calendar */
-
-/** Monday-first weeks for the fixed sample month, with the leading and
- * trailing days of adjacent months dimmed — the real calendar's convention. */
-function buildSampleWeeks(): {
-  day: number;
-  inMonth: boolean;
-  isToday: boolean;
-}[][] {
-  // Three numbers, identical in both languages, so this reads the shared
-  // sample rather than a localised one and stays a plain function.
-  const { year, month, today } = landingSample;
-  const first = new Date(year, month - 1, 1);
-  const daysInMonth = new Date(year, month, 0).getDate();
-  const daysInPrev = new Date(year, month - 1, 0).getDate();
-  // getDay() is Sunday-first; the grid is Monday-first.
-  const lead = (first.getDay() + 6) % 7;
-
-  const cells: { day: number; inMonth: boolean; isToday: boolean }[] = [];
-  for (let index = lead; index > 0; index -= 1) {
-    cells.push({ day: daysInPrev - index + 1, inMonth: false, isToday: false });
-  }
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    cells.push({ day, inMonth: true, isToday: day === today });
-  }
-  let trailing = 1;
-  while (cells.length % 7 !== 0) {
-    cells.push({ day: trailing, inMonth: false, isToday: false });
-    trailing += 1;
-  }
-
-  const weeks: (typeof cells)[] = [];
-  for (let index = 0; index < cells.length; index += 7) {
-    weeks.push(cells.slice(index, index + 7));
-  }
-  return weeks;
-}
-
-export function CalendarMock({ variant = "web" }: { variant?: Variant }) {
-  const sample = landingSampleFor(useLocale());
-  const locale = useLocale();
-  const euro = useEuro();
-  const weeks = buildSampleWeeks();
-  // Annotated because sample is `as const`: inferred from the entries
-  // the key type would be the union of the sample's literal days, and the
-  // grid asks about days that are not in it.
-  const byDay = new Map<number, LocalisedLandingSample["transactions"][number]>(
-    sample.transactions.map((item) => [item.day, item]),
-  );
-  const totals = sample.transactions.reduce(
-    (acc, item) => {
-      if (item.amount > 0) acc.income += item.amount;
-      else acc.outflow += Math.abs(item.amount);
-      return acc;
-    },
-    { income: 0, outflow: 0 },
-  );
-  const net = totals.income - totals.outflow;
-
-  if (variant === "mobile") {
-    return (
-      <MobileShell active="nav.ledger">
-        <div className="flex gap-2">
-          <MockCard innerClassName="flex flex-col items-center p-2">
-            <p className="text-[11px] text-muted-foreground">In</p>
-            <p className="font-mono text-sm font-bold tabular-nums text-success">
-              +{euro(totals.income)}
-            </p>
-          </MockCard>
-          <MockCard innerClassName="flex flex-col items-center p-2">
-            <p className="text-[11px] text-muted-foreground">Out</p>
-            <p className="font-mono text-sm font-bold tabular-nums text-destructive">
-              −{euro(totals.outflow)}
-            </p>
-          </MockCard>
-          <MockCard innerClassName="flex flex-col items-center p-2">
-            <p className="text-[11px] text-muted-foreground">Net</p>
-            <p className="font-mono text-sm font-bold tabular-nums">
-              {euro(net)}
-            </p>
-          </MockCard>
-        </div>
-        <div className="grid grid-cols-7 gap-1">
-          {weekdayLabels().map((label) => (
-            <div
-              key={label}
-              className="pb-1 text-center text-[9px] font-semibold uppercase tracking-wide text-muted-foreground"
-            >
-              {label.charAt(0)}
-            </div>
-          ))}
-          {weeks.flat().map((cell, index) => {
-            const item = cell.inMonth ? byDay.get(cell.day) : undefined;
-            return (
-              <div
-                key={index}
-                className={cn(
-                  "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-2xl border",
-                  cell.isToday
-                    ? "border-primary bg-primary/10"
-                    : "border-border",
-                )}
-              >
-                <span
-                  className={cn(
-                    "text-xs font-semibold leading-none",
-                    !cell.inMonth && "text-muted-foreground/40",
-                  )}
-                >
-                  {cell.day}
-                </span>
-                {item ? (
-                  <span
-                    className={cn(
-                      "font-mono text-[8px] font-medium tabular-nums",
-                      item.amount > 0 ? "text-success" : "text-destructive",
-                    )}
-                  >
-                    {item.amount > 0 ? "+" : "−"}
-                    {Math.round(Math.abs(item.amount))}
-                  </span>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-      </MobileShell>
-    );
-  }
-
-  return (
-    <WebShell active="nav.ledger" monthLabel={sample.monthLabel}>
-      <div className="flex gap-4">
-        <MockCard innerClassName="flex flex-1 flex-col items-center px-5 py-3">
-          <p className="text-xs text-muted-foreground">In</p>
-          <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-success">
-            +{euro(totals.income)}
-          </p>
-        </MockCard>
-        <MockCard innerClassName="flex flex-1 flex-col items-center px-5 py-3">
-          <p className="text-xs text-muted-foreground">Out</p>
-          <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-destructive">
-            −{euro(totals.outflow)}
-          </p>
-        </MockCard>
-        <MockCard innerClassName="flex flex-1 flex-col items-center px-5 py-3">
-          <p className="text-xs text-muted-foreground">Net</p>
-          <p className="mt-1 font-mono text-xl font-semibold tabular-nums">
-            {euro(net)}
-          </p>
-        </MockCard>
-      </div>
-      <MockCard className="flex-1" innerClassName="flex h-full flex-col p-3">
-        <div className="grid grid-cols-7">
-          {weekdayLabels(locale).map((label) => (
-            <div
-              key={label}
-              className="pb-2 text-center text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-            >
-              {label}
-            </div>
-          ))}
-        </div>
-        <div className="flex min-h-0 flex-1 flex-col">
-          {weeks.map((week, weekIndex) => (
-            <div
-              key={weekIndex}
-              className="grid flex-1 grid-cols-7 border-t border-border/40"
-            >
-              {week.map((cell, cellIndex) => {
-                const item = cell.inMonth ? byDay.get(cell.day) : undefined;
-                return (
-                  <div
-                    key={cellIndex}
-                    className={cn(
-                      "flex flex-col items-stretch border-r border-border/40 p-1.5 last:border-r-0",
-                      cell.isToday && "bg-primary/5",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "text-sm font-semibold leading-none",
-                        !cell.inMonth && "text-muted-foreground/50",
-                        cell.isToday && "text-primary-ink",
-                      )}
-                    >
-                      {cell.day}
-                    </span>
-                    {item ? (
-                      <span
-                        className={cn(
-                          "mt-1 font-mono text-[10px] font-medium tabular-nums",
-                          item.amount > 0 ? "text-success" : "text-destructive",
-                        )}
-                      >
-                        {item.amount > 0 ? "+" : "−"}
-                        {euro(Math.abs(item.amount))}
-                      </span>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </MockCard>
     </WebShell>
   );
 }
@@ -1149,7 +1106,7 @@ export function WalletsMock({ variant = "web" }: { variant?: Variant }) {
         <div className="col-span-5">
           <MockCard innerClassName="flex h-full flex-col justify-center gap-4 px-6 py-6">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Allocation
+              {t("position.allocation")}
             </p>
             {allocationBar}
             {legend}
@@ -1233,8 +1190,10 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
             />
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            Save {euro(goal.monthlyPace)}/month to reach this by{" "}
-            {goal.targetLabel}.
+            {t("plan.goalOnSchedule", {
+              amount: euro(goal.monthlyPace),
+              month: goal.targetLabel,
+            })}
           </p>
         </MockCard>
       </MobileShell>
@@ -1278,8 +1237,10 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
             />
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Save {euro(goal.monthlyPace)}/month to reach this by{" "}
-            {goal.targetLabel}.
+            {t("plan.goalOnSchedule", {
+              amount: euro(goal.monthlyPace),
+              month: goal.targetLabel,
+            })}
           </p>
         </MockCard>
       </div>
@@ -1293,16 +1254,23 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
  * account did, then the two figures only a balance can produce. */
 function CloseLedger({ dense = false }: { dense?: boolean }) {
   const sample = landingSampleFor(useLocale());
+  const t = useT();
   const euro = useEuro();
   const { close } = sample;
   const rows = [
-    { label: "Opening balance", value: euro(close.openingBalance) },
-    { label: "Recorded in", value: `+${euro(sample.income)}` },
     {
-      label: "Recorded out",
+      label: t("marketingMock.openingBalance"),
+      value: euro(close.openingBalance),
+    },
+    { label: t("marketingMock.recordedIn"), value: `+${euro(sample.income)}` },
+    {
+      label: t("marketingMock.recordedOut"),
       value: `−${euro(sample.spent)}`,
     },
-    { label: "Closing balance", value: euro(close.closingBalance) },
+    {
+      label: t("marketingMock.closingBalance"),
+      value: euro(close.closingBalance),
+    },
   ];
 
   return (
@@ -1330,6 +1298,7 @@ function CloseLedger({ dense = false }: { dense?: boolean }) {
 }
 
 export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
+  const t = useT();
   const sample = landingSampleFor(useLocale());
   const euro = useEuro();
   const { close } = sample;
@@ -1396,7 +1365,7 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
           </p>
         </div>
         <span className="flex shrink-0 items-center gap-3 rounded-full border border-primary-rim bg-primary py-1.5 pl-5 pr-1.5 text-sm font-medium text-primary-foreground">
-          Close the month
+          {t("monthClose.closeMonth", { month: sample.close.monthLabel })}
           <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-black/10">
             →
           </span>
@@ -1436,7 +1405,7 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
         <div className="col-span-3">
           <MockCard innerClassName="flex h-full flex-col justify-center px-5 py-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              How it reconciled
+              {t("marketingMock.howItAddsUp")}
             </p>
             <div className="mt-2">
               <CloseLedger dense />
@@ -1460,6 +1429,7 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
  * sentence in red reads as an error, and "this went up" is not one.
  */
 function ReadCard({ compact = false }: { compact?: boolean }) {
+  const t = useT();
   const sample = landingSampleFor(useLocale());
   const { read } = sample;
   const dot = {
@@ -1473,7 +1443,7 @@ function ReadCard({ compact = false }: { compact?: boolean }) {
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="flex items-center gap-1.5 text-sm font-medium">
           <Sparkle size={14} className="text-primary-rim" />
-          Month read
+          {t("marketingMock.monthRead")}
         </h3>
         <span className="text-[11px] text-muted-foreground">
           {read.writtenOn}
@@ -1516,7 +1486,7 @@ function ReadCard({ compact = false }: { compact?: boolean }) {
 
       <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
         <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          Suggestions
+          {t("monthRead.suggestionsHeading")}
         </h4>
         {read.suggestions.map((suggestion) => (
           <div
@@ -1595,12 +1565,11 @@ export function MonthReadMock({ variant = "web" }: { variant?: Variant }) {
 }
 
 const PAGE_MOCKS: Record<LandingPageId, (variant: Variant) => ReactNode> = {
-  home: (variant) => <HomeMock variant={variant} />,
-  transactions: (variant) => <TransactionsMock variant={variant} />,
-  recurring: (variant) => <RecurringMock variant={variant} />,
-  calendar: (variant) => <CalendarMock variant={variant} />,
+  bearing: (variant) => <BearingMock variant={variant} />,
+  ledger: (variant) => <TransactionsMock variant={variant} />,
+  charges: (variant) => <RecurringMock variant={variant} />,
+  plan: (variant) => <PlanningMock variant={variant} />,
   wallets: (variant) => <WalletsMock variant={variant} />,
-  planning: (variant) => <PlanningMock variant={variant} />,
   "month-close": (variant) => <MonthCloseMock variant={variant} />,
   "month-read": (variant) => <MonthReadMock variant={variant} />,
 };

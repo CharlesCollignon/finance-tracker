@@ -32,7 +32,8 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[42rem]"
         aria-hidden
       >
-        <div className="absolute inset-0 bg-[radial-gradient(120%_70%_at_50%_-10%,rgba(120,130,170,0.1),transparent_60%)]" />
+        {/* The cool wash that used to sit here is `.marketing-ambient` now —
+            see the hero in `LandingPage`. */}
         <div className="marketing-sparks absolute inset-0 opacity-70" />
       </div>
       <LandingBloom className="left-1/2 top-[16rem] h-[36rem] w-[36rem] -translate-x-1/2 opacity-35" />

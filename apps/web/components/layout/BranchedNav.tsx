@@ -6,6 +6,15 @@ import { usePathname } from "next/navigation";
 import { CaretDown } from "@phosphor-icons/react";
 import { cssEasing, DURATION } from "@finance/core/motion";
 import { activeNavHref, APP_NAV_ITEMS } from "@/lib/navigation";
+import {
+  branchPath,
+  childrenHeight,
+  INDENT,
+  reachLength,
+  reachPath,
+  ROW_HEIGHT,
+  trunkPath,
+} from "@/lib/nav-tree";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { useT } from "@/lib/locale-context";
 import { ICON } from "@/lib/icon-scale";
@@ -38,59 +47,12 @@ import { cn } from "@/lib/utils";
  * Its colours arrive as hex props. These are the app's CSS variables, so the
  * tree follows the theme instead of pinning a second palette beside it.
  *
- * Its geometry is props too. Here it is the four constants below, because a
- * sidebar has one shape and the alternative is five numbers that can be set
- * to values that do not meet.
+ * Its geometry is props too. Here it is the constants in `lib/nav-tree`,
+ * because a sidebar has one shape and the alternative is five numbers that
+ * can be set to values that do not meet. They live in their own module
+ * rather than here so the marketing mock can draw the same tree instead of a
+ * flat list beside a screenshot of one.
  */
-
-/** Where the trunk sits: the centre of a parent row's icon, in pixels. */
-const TRUNK_X = 21;
-
-/** The curve where a branch leaves the trunk. */
-const RADIUS = 9;
-
-/** Where a child row's text starts. Past the parent's label, not under it. */
-const INDENT = 46;
-
-/** Where a branch stops, short of the text it points at. */
-const BRANCH_END = INDENT - 8;
-
-/** A child row's height, and the padding above the first and below the last. */
-const ROW_HEIGHT = 36;
-const PAD = 6;
-
-/** The vertical centre of child `index`, within the children block. */
-function rowY(index: number): number {
-  return PAD + index * ROW_HEIGHT + ROW_HEIGHT / 2;
-}
-
-/** The trunk, from the top of the block down to the last branch's curve. */
-function trunkPath(count: number): string {
-  return `M ${TRUNK_X} 0 V ${rowY(count - 1) - RADIUS}`;
-}
-
-/** One branch: out of the trunk, round the corner, along to the text. */
-function branchPath(index: number): string {
-  const y = rowY(index);
-  return `M ${TRUNK_X} ${y - RADIUS} A ${RADIUS} ${RADIUS} 0 0 0 ${
-    TRUNK_X + RADIUS
-  } ${y} H ${BRANCH_END}`;
-}
-
-/** The same branch, but traced from the very top — the line that draws in. */
-function reachPath(index: number): string {
-  const y = rowY(index);
-  return `M ${TRUNK_X} 0 V ${y - RADIUS} A ${RADIUS} ${RADIUS} 0 0 0 ${
-    TRUNK_X + RADIUS
-  } ${y} H ${BRANCH_END}`;
-}
-
-/** How long that traced path is, so it can be drawn with a dash offset. */
-function reachLength(index: number): number {
-  const straight = rowY(index) - RADIUS;
-  const corner = (Math.PI * RADIUS) / 2;
-  return straight + corner + (BRANCH_END - TRUNK_X - RADIUS);
-}
 
 /**
  * How many things are waiting behind a destination.
@@ -205,7 +167,7 @@ function Section({
   // which is what leaves the accent path undrawn.
   const current = kids.findIndex((kid) => kid.href === pathname);
 
-  const blockHeight = PAD * 2 + kids.length * ROW_HEIGHT;
+  const blockHeight = childrenHeight(kids.length);
   const label = t(item.labelKey);
 
   const branches = useMemo(

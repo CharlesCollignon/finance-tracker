@@ -236,6 +236,8 @@ export const fr: Messages = {
   },
 
   recurring: {
+    on: "Actif",
+    off: "Inactif",
     addTitle: "Ajouter un récurrent",
     editTitle: "Modifier le récurrent",
     addTitleMobile: "Ajouter un récurrent",
@@ -685,6 +687,12 @@ export const fr: Messages = {
   },
 
   marketingMock: {
+    openingBalance: "Solde d'ouverture",
+    recordedIn: "Entrées enregistrées",
+    recordedOut: "Sorties enregistrées",
+    closingBalance: "Solde de clôture",
+    howItAddsUp: "Comment on y arrive",
+    monthRead: "Lecture du mois",
     whereItWent: "Où c'est parti",
     whatsLeft: "Ce qu'il reste",
     expectedImpact: "Impact prévu",

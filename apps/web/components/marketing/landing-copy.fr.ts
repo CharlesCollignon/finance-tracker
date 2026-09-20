@@ -64,7 +64,7 @@ export const landingCopyFr: LandingCopySections & {
 
   devices: {
     heading: "Le même mois, quel que soit l'écran le plus proche",
-    body: "Un compte, un journal, trois clients qui s'accordent. Ajoutez une ligne sur le téléphone en rentrant et elle est sur Mois avant que vous ne soyez assis.",
+    body: "Un compte, un journal, trois clients qui s'accordent. Ajoutez une ligne sur le téléphone en rentrant et le Cap l'a avant que vous ne soyez assis.",
   },
 
   features: {
@@ -133,7 +133,7 @@ export const landingCopyFr: LandingCopySections & {
       },
       {
         title: "Ajoutez le reste au fil de l'eau",
-        body: "Tout le reste, vous le saisissez. Ce qu'il reste, le calendrier jour par jour et les anneaux de Mois lisent tous ce même journal.",
+        body: "Tout le reste, vous le saisissez. Ce qu'il reste, le calendrier jour par jour et chaque carte du Cap lisent tous ce même journal.",
       },
       {
         title: "Clôturez-le face à la banque",
@@ -159,123 +159,103 @@ export const landingCopyFr: LandingCopySections & {
   },
 
   pages: {
-    home: {
-      title: "Mois",
-      body: "Ce qu'il reste ce mois-ci, où les revenus sont partis, et si le plafond et l'objectif tiennent encore.",
+    bearing: {
+      title: "Cap",
+      body: "Où en est l'ensemble un jour donné, et vers quoi cela va.",
       utility:
-        "Un écran pour le mois : ce qu'il reste, où les revenus sont partis, et si le plafond et l'objectif d'épargne tiennent encore. Il répond à la question pour laquelle vous avez ouvert l'application avant que vous ayez fini de la poser.",
+        "Deux chiffres en haut, et cinq cartes en dessous qui décomposent le reste. Aucun chiffre n'est inventé ici : chacun est déjà montré par une autre surface, ce qui rend l'écran vérifiable au lieu d'en faire une seconde comptabilité.",
       steps: [
         {
-          title: "Ouvrez le mois",
-          body: "Mois est le mois où vous êtes. Revenus, dépenses et chaque charge arrivée apparaissent ici, sous la vue du budget que vous préférez — comptée jusqu'à aujourd'hui, ou comptée pour tout ce que le mois contiendra.",
+          title: "Lisez les deux chiffres",
+          body: "Ce qu'il y a actuellement sur votre compte courant, et à combien le mois finit une fois que tout ce qu'il sait déjà sera arrivé. Le second est une arithmétique sur des charges déjà saisies, pas une supposition sur ce que vous pourriez dépenser.",
         },
         {
-          title: "Lisez ce qu'il reste",
-          body: "Le chiffre en tête est ce qui reste. Dessous, ce qui est entré contre ce qui est sorti, pour que l'écart soit une forme plutôt qu'une soustraction à faire.",
+          title: "Ouvrez une carte là où vous voulez le détail",
+          body: "Ce mois-ci, Les comptes, Votre régularité, L'année à venir, Portefeuilles. Une carte n'est que son nom et un chiffre tant qu'elle est fermée ; ouvrez-la et elle liste les chiffres derrière celui-là et dessine ce qui les compose, sur place, sans quitter l'écran.",
         },
         {
-          title: "Regardez les anneaux",
-          body: "L'anneau du plafond et celui de l'objectif suivent ce que vous avez défini dans Plan. Rien ici n'est une projection : les deux lisent des lignes qui existent.",
+          title: "Suivez-la jusqu'à la surface qui la porte",
+          body: "Chaque carte se termine par les surfaces qui l'expliquent. Un chiffre qui mène quelque part est un lien ; un chiffre qui n'a nulle part d'honnête où mener n'est pas déguisé en lien.",
         },
       ],
     },
-    transactions: {
+    ledger: {
       title: "Journal",
-      body: "Un journal manuel qui vous appartient. Appliquez ce qui revient, puis changez tout.",
+      body: "Chaque mouvement — en liste, posé sur les jours, ou mois par mois et par catégorie.",
       utility:
-        "Le journal est la source de vérité de tous les autres écrans. Rien n'est importé, donc rien n'arrive mal classé, en double, ou avec trois jours de retard — vous saisissez les lignes, et ce qu'il reste en découle.",
+        "L'enregistrement dont tout le reste découle. Des lignes que vous avez saisies, des lignes qu'un modèle de charge a appliquées, et des lignes venues du relevé qu'une de vos propres habitudes a classées — un seul corps de données, regardé de trois façons.",
       steps: [
         {
-          title: "Appliquez ce qui revient",
-          body: "Salaire, factures et un achat mensuel peuvent remplir le mois en une passe, quand vous choisissez de les appliquer. Chacun devient ensuite une ligne ordinaire.",
+          title: "La liste, le calendrier, ou par catégorie",
+          body: "Les mêmes lignes partout. La liste sert à en retrouver une et à la modifier ; le calendrier les pose sur les jours, ce qui répond à quand le mois se tend plutôt qu'à ce que vous avez dépensé ; par catégorie donne à chacune ses douze mois, ce qu'elle coûte normalement, et ce qui s'en est écarté.",
         },
         {
-          title: "Ajoutez et modifiez librement",
-          body: "Changez une date, un montant ou une catégorie. Ajoutez un ponctuel. Supprimez une erreur. Étiquetez des lignes et filtrez par étiquette quand vous voulez une vue plus étroite qu'une catégorie.",
+          title: "Ce que la banque envoie vous attend",
+          body: "Une ligne de relevé se classe toute seule seulement là où vous avez mis ce commerçant au même endroit deux fois — le moment où c'est une habitude et non une coïncidence. Tout le reste attend dans la liste à vérifier, l'argent qui entre y compris. Y répondre apprend au classement, et c'est pourquoi la liste rétrécit au lieu de devenir une corvée permanente.",
         },
         {
-          title: "Tout le reste suit",
-          body: "Ce qu'il reste, la répartition des dépenses, le calendrier et la clôture lisent tous ici. Il n'existe pas de second endroit où un chiffre pourrait se contredire.",
+          title: "Ou apportez un CSV",
+          body: "Un export de votre banque, dont les colonnes se règlent une fois. Le même historique qui classe le flux propose une catégorie pour celles-ci, et rien n'est écrit avant que vous ayez lu la liste proposée.",
         },
       ],
     },
-    recurring: {
+    charges: {
       title: "Charges",
       body: "Salaire, loyer, abonnements, un achat mensuel. Appliqués quand vous le dites.",
       utility:
-        "Des modèles pour ce qui revient, chaque mois, chaque semaine ou chaque année, éventuellement bornés par un début et une fin. Ils ne se déclenchent pas tout seuls — et c'est le principe, parce qu'une instruction permanente qui part sans surveillance est la façon dont un journal s'éloigne de la vérité.",
+        "Des instructions permanentes pour ce qui se répète, chaque mois, chaque semaine ou chaque année, éventuellement bornées par un début et une fin. Elles ne s'exécutent pas toutes seules — et c'est le but, parce qu'une instruction qui part sans surveillance est la façon dont un journal s'éloigne de la vérité.",
       steps: [
         {
-          title: "Définissez un modèle",
-          body: "Un montant et un rythme. Un modèle en parts prend son montant du cours du moment plutôt que d'un chiffre fixe, pour qu'un achat mensuel vaille ce qu'il a coûté et non ce que vous aviez estimé.",
+          title: "Définissez ce qui se répète",
+          body: "Un montant et un rythme. Un modèle au cours prend son montant d'un nombre de parts multiplié par le cours actuel plutôt que d'un chiffre fixe, pour qu'un achat mensuel vaille ce qu'il a coûté et non ce que vous aviez estimé.",
         },
         {
-          title: "Appliquez, passez, ou laissez",
-          body: "Rien n'existe tant que vous n'appliquez pas. Passez un seul mois sans désactiver le modèle, ou désactivez-le et arrêtez-les tous.",
+          title: "Appliquez, sautez, ou dites que c'est déjà arrivé",
+          body: "Rien n'existe tant que vous n'appliquez pas, et appliquer écrit des lignes ordinaires que vous pouvez encore modifier. Sautez un mois sans désactiver le modèle. Et là où le relevé a rapporté le mouvement lui-même, dites que c'est bien celui que le modèle appelait, au lieu de laisser une seconde ligne à côté.",
         },
         {
-          title: "Tenu à jour du marché",
-          body: "Une occurrence appliquée dont la date est encore à venir est revalorisée quand son cours bouge, discrètement et sans rien demander — le marché qui bouge n'est la décision de personne. Une fois sa date passée, son montant est ce qui a réellement bougé et ne change plus.",
+          title: "Tenu à jour avec le marché",
+          body: "Une échéance appliquée mais encore datée dans le futur est revalorisée quand son cours bouge, discrètement et sans rien demander — que le marché bouge n'est la décision de personne. Une fois sa date passée, son montant est ce qui a réellement bougé et ne change plus.",
         },
       ],
     },
-    calendar: {
-      title: "Calendrier",
-      body: "Les mêmes lignes posées sur des jours, pour que le mois ait une forme.",
+    plan: {
+      title: "Plan",
+      body: "Des plafonds, des objectifs, les mois à venir, et le solde qui les vérifie.",
       utility:
-        "Le journal, rangé par jour. Utile pour la question à laquelle une liste répond mal : non pas ce que j'ai dépensé, mais quand ce mois devient tendu.",
+        "Ce que vous avez décidé au sujet de l'argent, et ce que ces décisions donnent mises bout à bout. Un plafond sur une catégorie, une somme à accumuler, les mois vers lesquels mènent vos charges, et le solde unique contre lequel un mois est clôturé. Rien ici n'impose quoi que ce soit ni ne déplace quoi que ce soit.",
       steps: [
         {
-          title: "Lisez le mois d'un coup",
-          body: "Chaque jour porte son net, entré et sorti. Les jours lourds ressortent sans que vous ouvriez quoi que ce soit.",
+          title: "Fixez un plafond, fixez un objectif",
+          body: "Une limite mensuelle sur une catégorie, et une somme à accumuler avec le rythme qu'il faudrait pour y arriver à la date que vous avez nommée. Les deux se remplissent à mesure que le journal court dessus, et les deux changent de teinte avant que vous les atteigniez, pas après.",
         },
         {
-          title: "Ouvrez un jour",
-          body: "Ce qui entre et ce qui sort ce jour-là sont côte à côte, pour que la trésorerie du jour se lise au lieu de se reconstituer en faisant défiler.",
+          title: "Voyez vers quoi mènent les mois, et décomposez-le",
+          body: "Deux courbes, pas une : ce que contiennent les comptes de dépense, et cela plus tout ce qui a été mis de côté en chemin. Il y en a deux parce qu'une seule était un mensonge — une courbe unique qui comptait l'argent viré en épargne comme de l'argent parti faisait voir à un épargnant appliqué sa position s'enfoncer. Les deux se décomposent : les revenus des charges, ce qui est engagé, ce qui est mis de côté, et ce qu'un mois normal coûte sans qu'on le voie, chacun avec les charges qui le portent et un moyen d'aller le changer.",
         },
         {
-          title: "Modifiez à un seul endroit",
-          body: "Le calendrier renvoie au journal pour modifier une ligne. Il ne garde aucun chiffre à lui, il ne peut donc jamais être l'écran qui n'est plus à jour.",
+          title: "Clôturez le mois contre la banque",
+          body: "Le jour de votre relevé, le seul solde que l'application ne peut pas déduire elle-même. Il mesure ce qu'aucune arithmétique sur les lignes ne pourrait trouver, et ce qu'il trouve a sa propre page.",
         },
       ],
     },
     wallets: {
       title: "Portefeuilles",
-      body: "PEA, CTO et crypto. Les cours rafraîchissent la valeur ; les positions restent les vôtres.",
+      body: "PEA, CTO, AV, PER et crypto — ce que vous détenez, et de quoi c'est vraiment fait.",
       utility:
-        "Là où se trouve la valeur investie, enregistrée par vous. Les cours mettent la valorisation à jour ; il n'y a aucune connexion au courtier et aucun ordre ne quitte jamais cette application.",
+        "Là où se trouve la valeur investie, enregistrée par vous. Les cours mettent la valorisation à jour ; il n'y a aucune connexion courtier, et aucun ordre ne sort jamais de cette application.",
       steps: [
         {
           title: "Enregistrez ce que vous détenez",
-          body: "Un portefeuille par enveloppe — PEA, CTO, crypto — et une position par instrument à l'intérieur, avec ce qui est entré et ce que cela vaut aujourd'hui.",
+          body: "Un portefeuille par enveloppe, et une position par instrument dedans, avec ce qui y est entré et ce que cela vaut maintenant. Les prix arrivent en euros quelle que soit la devise de cotation d'origine, et « pas de prix pour le moment » est une réponse ordinaire que le dernier cours connu couvre.",
         },
         {
-          title: "Les cours font la revalorisation",
-          body: "Les prix viennent d'une source de cotation en euro, quelle que soit la devise d'origine de l'instrument. « Pas de prix pour le moment » est une réponse ordinaire, et le dernier cours connu prend le relais.",
+          title: "Voyez à travers, jusqu'à ce que vous détenez vraiment",
+          body: "Deux fonds peuvent détenir la même entreprise, et aucun des deux ne le dit. La transparence résout vos positions à travers ce que chaque instrument a été lu comme contenant — pays, secteurs, plus grandes lignes en dessous — sur la valeur qu'elle a pu résoudre, et signale le reste comme non lu plutôt que de le laisser discrètement de côté.",
         },
         {
-          title: "Voyez la répartition",
-          body: "La répartition entre portefeuilles, et la plus-value face à ce que vous avez versé. Une lecture pour vous, pas un flux venu de quelqu'un.",
-        },
-      ],
-    },
-    planning: {
-      title: "Plan",
-      body: "Un plafond par catégorie, un objectif d'épargne par mois.",
-      utility:
-        "Des plafonds et des objectifs, et rien qui les impose. Un budget est un plafond sur ce qu'une catégorie peut dépenser dans un mois ; un objectif d'épargne est une somme que vous comptez accumuler. Les deux deviennent des anneaux sur Mois et aucun ne déplace d'argent.",
-      steps: [
-        {
-          title: "Fixez un plafond",
-          body: "Une limite mensuelle sur une catégorie. L'anneau se remplit à mesure que le journal dépense dessus et change de teinte avant que vous l'atteigniez, pas après.",
-        },
-        {
-          title: "Fixez un objectif",
-          body: "Une somme à accumuler, suivie sur vos lignes d'épargne, avec le rythme mensuel qu'il faudrait pour y arriver à la date que vous avez nommée.",
-        },
-        {
-          title: "Suivez-le sur Mois",
-          body: "Mois lit ces chiffres directement. Changez un plafond ou un objectif et les anneaux bougent avec.",
+          title: "Demandez une lecture de l'ensemble",
+          body: "Un état daté de ce qui est investi : ce qu'il observe, ce qu'il suggère, et l'allocation cible que ces suggestions impliquent. Il ne nomme des instruments que dans un catalogue fermé et n'écrit aucun chiffre de lui-même — il choisit un rôle et une taille, et l'application en fait des pourcentages.",
         },
       ],
     },
@@ -291,7 +271,7 @@ export const landingCopyFr: LandingCopySections & {
         },
         {
           title: "Saisissez un solde",
-          body: "Ce que contenait, ce jour-là, le compte d'où partent vraiment vos dépenses. La première clôture est une référence : elle fixe le point à partir duquel tout le reste est mesuré.",
+          body: "Ce que contenait, ce jour-là, le compte d'où partent vraiment vos dépenses. Avec une banque connectée, l'application le lit sur le relevé à votre place. La première clôture est une référence : elle fixe le point à partir duquel tout le reste est mesuré.",
         },
         {
           title: "Lisez ce qu'elle a trouvé",
@@ -303,7 +283,7 @@ export const landingCopyFr: LandingCopySections & {
       title: "Lecture du mois",
       body: "Quelques phrases sur le mois, où la prose est celle d'un modèle et chaque chiffre est celui de l'application.",
       utility:
-        "Tous les autres écrans vous tendent un chiffre ou une liste. Celui-ci les lit ensemble et dit ce qui ressort — sans avoir le droit d'inventer un nombre pour le dire. Utile les mois où les totaux ont l'air ordinaires et où quelque chose en dessous ne l'est pas.",
+        "Toutes les autres surfaces vous tendent un chiffre ou une liste. Celle-ci les lit ensemble et dit ce qui ressort — sans avoir le droit d'inventer un nombre pour le dire. Utile les mois où les totaux ont l'air ordinaires et où quelque chose en dessous ne l'est pas.",
       steps: [
         {
           title: "Demandez-la",
@@ -325,7 +305,7 @@ export const landingCopyFr: LandingCopySections & {
     getStarted: "Commencer",
     signIn: "Se connecter",
     openApp: "Ouvrir l'application",
-    goToDashboard: "Ouvrir le mois",
+    goToDashboard: "Voir où vous en êtes",
   },
   exampleLabel: "Données d'exemple",
 };

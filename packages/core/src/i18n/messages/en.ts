@@ -322,6 +322,16 @@ export const en = {
    * is only a translation while the enum happens to be English.
    */
   recurring: {
+    /**
+     * Whether a template is running.
+     *
+     * `RecurringView` spelled these two words in English in the JSX, so a
+     * French reader got "On"/"Off" in a row where everything else was
+     * translated. The marketing mock copied the same literals. One key, said
+     * in both places.
+     */
+    on: "On",
+    off: "Off",
     addTitle: "Add recurring",
     editTitle: "Edit recurring",
     addTitleMobile: "Add recurring item",
@@ -874,6 +884,20 @@ export const en = {
    */
   marketingMock: {
     whereItWent: "Where it went",
+    /**
+     * The close mock's four rows, and the heading over them.
+     *
+     * "How it adds up" rather than "How it reconciled": the close's own
+     * vocabulary rules out calling it a reconciliation, and a marketing mock
+     * is the last place that should be the one surface using the word.
+     */
+    openingBalance: "Opening balance",
+    recordedIn: "Recorded in",
+    recordedOut: "Recorded out",
+    closingBalance: "Closing balance",
+    howItAddsUp: "How it adds up",
+    /** The read's own card heading, which the app draws from its surface. */
+    monthRead: "Month read",
     whatsLeft: "What's left",
     expectedImpact: "Expected impact",
     expectedImpactPerMonth: "Expected impact per month",

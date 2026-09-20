@@ -56,7 +56,7 @@ export const landingCopy = {
 
   devices: {
     heading: "The same month, whichever screen is closest",
-    body: "One account, one ledger, three clients that agree. Add a row on the phone on the way home and it is on Month before you sit down.",
+    body: "One account, one ledger, three clients that agree. Add a row on the phone on the way home and the Bearing has it before you sit down.",
   },
 
   features: {
@@ -126,7 +126,7 @@ export const landingCopy = {
       },
       {
         title: "Add the rest as you go",
-        body: "Everything else you type in. What is left, the day-by-day calendar and the rings on Month all read from that one ledger.",
+        body: "Everything else you type in. What is left, the day-by-day calendar and every card on the Bearing all read from that one ledger.",
       },
       {
         title: "Close it against the bank",
@@ -153,61 +153,61 @@ export const landingCopy = {
 
   pages: [
     {
-      id: "home",
-      title: "Month",
-      body: "What is left this month, where the income went, and whether the budget and the goal still hold.",
+      id: "bearing",
+      title: "Bearing",
+      body: "Where the whole of it stands on one day, and where it is heading.",
       utility:
-        "One screen for the month: what is left, where income went, and whether the cap and the savings target still hold. It answers the question you opened the app to ask before you have finished asking it.",
+        "Two figures at the top, and five cards underneath that take the rest apart. Nothing on it is a figure invented here: every one is something another surface already shows, which is what makes it checkable rather than a second set of books.",
       steps: [
         {
-          title: "Open the month",
-          body: "Month is the month you are in. Income, spending and every charge that has landed appear here, under whichever budget view you prefer — counted up to today, or counted for everything the month will contain.",
+          title: "Read the two figures",
+          body: "What is currently in your current account, and what the month finishes at once everything it already knows about has happened. The second is arithmetic on charges you have already entered, not a guess about what you might spend.",
         },
         {
-          title: "Read what is left",
-          body: "The hero figure is what remains. Underneath it, earned against spent, so the gap is a shape rather than a subtraction you have to do.",
+          title: "Open a card where you want the detail",
+          body: "This month, The accounts, Your run, The year ahead, Wallets. A card is its name and one figure until you open it; open it and it lists the figures behind that one and draws what they are made of, in place, without leaving the screen.",
         },
         {
-          title: "Check the rings",
-          body: "The cap ring and the goal ring follow what you set under Plan. Nothing here is a projection: both read from rows that exist.",
+          title: "Follow it to the surface that owns it",
+          body: "Each card ends with the surfaces that explain it. A figure with somewhere to go is a link, and a figure with nowhere honest to lead is not dressed as though it were.",
         },
       ],
     },
     {
-      id: "transactions",
+      id: "ledger",
       title: "Ledger",
-      body: "A manual ledger you own. Apply what recurs, then change anything.",
+      body: "Every movement — as a list, laid on days, or a run of months per category.",
       utility:
-        "The ledger is the source of truth for every other screen. Nothing is imported, so nothing arrives miscategorised, duplicated, or three days late — you type the rows, and what is left follows them.",
+        "The record everything else reads from. Rows you typed, rows a template applied, and rows the statement brought that a habit of your own filed — one body of data, looked at three ways.",
       steps: [
         {
-          title: "Apply what recurs",
-          body: "Salary, bills and a monthly buy can fill the month in one pass, when you choose to apply them. Each becomes an ordinary row afterwards.",
+          title: "The list, the calendar, or by category",
+          body: "The same rows throughout. The list is for finding one and changing it; the calendar lays them on days, which answers when the month gets tight rather than what you spent; by category gives each one its own twelve months, what it normally costs, and what has drifted away from that.",
         },
         {
-          title: "Add and edit freely",
-          body: "Change a date, an amount or a category. Add a one-off. Delete a mistake. Tag rows and filter by tag when you want a narrower view than a category gives.",
+          title: "What the bank sends waits for you",
+          body: "A statement row files itself only where you have put that shop in the same place twice — the point at which it is a habit rather than a coincidence. Everything else waits in the review inbox, money arriving always among it. Answering one teaches the matcher, which is why the inbox shrinks instead of becoming a permanent chore.",
         },
         {
-          title: "Everything else follows",
-          body: "What is left, the spending split, the calendar and the close all read from here. There is no second place a number can disagree with itself.",
+          title: "Or bring a CSV",
+          body: "An export from your bank, with its columns mapped once. The same history that files the feed guesses at these, and nothing is written until you have read the list it proposes.",
         },
       ],
     },
     {
-      id: "recurring",
+      id: "charges",
       title: "Charges",
       body: "Salary, rent, subscriptions, a monthly buy. Applied when you say so.",
       utility:
-        "Templates for what repeats, monthly, weekly or yearly, optionally bounded by a start and an end. They do not run on their own — which is the point, because a standing instruction that fires unattended is how a ledger drifts away from the truth.",
+        "Standing instructions for what repeats, monthly, weekly or yearly, optionally bounded by a start and an end. They do not run on their own — which is the point, because an instruction that fires unattended is how a ledger drifts away from the truth.",
       steps: [
         {
-          title: "Define a template",
-          body: "An amount and a rhythm. A share-priced template takes its amount from the current quote instead of a fixed figure, so a monthly buy is worth what it cost rather than what you guessed.",
+          title: "Define what repeats",
+          body: "An amount and a rhythm. A share-priced template takes its amount from a share count times the current quote instead of a fixed figure, so a monthly buy is worth what it cost rather than what you guessed.",
         },
         {
-          title: "Apply, skip, or leave it",
-          body: "Nothing exists until you apply it. Skip a single month without deactivating the template, or deactivate it and stop all of them.",
+          title: "Apply it, skip it, or say it already happened",
+          body: "Nothing exists until you apply it, and applying writes ordinary rows you can still edit. Skip a single month without deactivating the template. And where the statement reported the movement itself, say that this is the one the template called for, instead of leaving a second row beside it.",
         },
         {
           title: "Kept in line with the market",
@@ -216,65 +216,44 @@ export const landingCopy = {
       ],
     },
     {
-      id: "calendar",
-      title: "Calendar",
-      body: "The same rows laid on days, so the month has a shape.",
+      id: "plan",
+      title: "Plan",
+      body: "Caps, targets, the months ahead, and the balance that checks them.",
       utility:
-        "The ledger, arranged by day. Useful for the question a list answers badly: not what did I spend, but when does this month get tight.",
+        "What you have decided about money, and what those decisions add up to. A cap on a category, an amount to accumulate, the months your standing charges lead to, and the one balance a month is closed against. Nothing here enforces anything or moves anything.",
       steps: [
         {
-          title: "Read the month at once",
-          body: "Every day carries its net, in and out. The heavy days stand out without you opening anything.",
+          title: "Set a cap, set a target",
+          body: "A monthly limit on a category, and an amount to accumulate with the pace it would take to arrive by the date you named. Both fill as the ledger runs against them, and both change tone before you reach them rather than after.",
         },
         {
-          title: "Open a day",
-          body: "In and out for that day sit together, so the day's cashflow is legible rather than reconstructed from a scroll.",
+          title: "See where the months lead, and take it apart",
+          body: "Two lines, not one: what the spending accounts hold, and that plus everything set aside along the way. There are two because one was a lie — a single line counting money moved into savings as money gone had a diligent saver watching their position sink. Both come apart into what they are made of: income from charges, what is committed, what is set aside, and what a normal month costs unseen, each with the charges backing it and a way to go and change it.",
         },
         {
-          title: "Change it in one place",
-          body: "The calendar points back to the ledger to edit a row. It keeps no numbers of its own, so it can never be the screen that is out of date.",
+          title: "Close the month against the bank",
+          body: "On your reading day, the one balance the app cannot work out for itself. It measures what no arithmetic over the rows could find, and what it finds has a page of its own.",
         },
       ],
     },
     {
       id: "wallets",
       title: "Wallets",
-      body: "PEA, CTO and crypto. Quotes refresh the value; the positions stay yours.",
+      body: "PEA, CTO, AV, PER and crypto — what you hold, and what it is really made of.",
       utility:
-        "Where invested value sits, recorded by you. Quotes bring the valuation up to date; there is no broker login and no order ever leaves this app.",
+        "Where invested value sits, recorded by you. Quotes bring the valuation up to date; there is no broker login, and no order ever leaves this app.",
       steps: [
         {
           title: "Record what you hold",
-          body: "A wallet per envelope — PEA, CTO, crypto — and a position per instrument inside it, with what went in and what it is worth now.",
+          body: 'A wallet per envelope, and a position per instrument inside it, with what went in and what it is worth now. Prices arrive in euro whatever the instrument was originally quoted in, and "no price right now" is an ordinary answer that the last known quote covers for.',
         },
         {
-          title: "Quotes do the revaluing",
-          body: 'Prices come from a quote source in euro, whatever the instrument was originally quoted in. "No price right now" is an ordinary answer, and the last known quote covers for it.',
+          title: "See through to what you actually own",
+          body: "Two funds can hold the same company, and neither says so. The look-through resolves your positions through what each instrument has been read to contain — countries, sectors, the largest holdings underneath — over the value it could resolve, and reports the rest as unread rather than quietly leaving it out.",
         },
         {
-          title: "See the split",
-          body: "Allocation across wallets, and gain against what you put in. A reading for you, not a feed from anyone.",
-        },
-      ],
-    },
-    {
-      id: "planning",
-      title: "Plan",
-      body: "A cap per category, a savings target per month.",
-      utility:
-        "Caps and targets, and nothing that enforces them. A budget is a cap on what one category may spend in a month; a savings goal is an amount you intend to accumulate. Both turn into rings on Month and neither moves money.",
-      steps: [
-        {
-          title: "Set a cap",
-          body: "A monthly limit on a category. The ring fills as the ledger spends against it and changes tone before you reach it, not after.",
-        },
-        {
-          title: "Set a target",
-          body: "An amount to accumulate, tracked against your savings rows, with the monthly pace it would take to arrive by the date you named.",
-        },
-        {
-          title: "Watch it on Month",
-          body: "Month reads these figures directly. Change a cap or a target and the rings move with it.",
+          title: "Ask for a read of the whole of it",
+          body: "A dated account of what is invested: what it observes, what it suggests, and the target allocation those suggestions imply. It names instruments only from a fixed catalogue and writes no figure of its own — it chooses a role and a size, and the app turns those into percentages.",
         },
       ],
     },
@@ -291,7 +270,7 @@ export const landingCopy = {
         },
         {
           title: "Enter one balance",
-          body: "What the account your spending actually leaves from held on that day. The first close is a baseline: it sets the point everything after is measured from.",
+          body: "What the account your spending actually leaves from held on that day. With a bank connected the app reads it off the statement instead. The first close is a baseline: it sets the point everything after is measured from.",
         },
         {
           title: "Read what it found",
@@ -304,7 +283,7 @@ export const landingCopy = {
       title: "Month read",
       body: "A few sentences about the month, where the prose is a model's and every figure is the app's.",
       utility:
-        "Every other screen hands you a figure or a list. This one reads them together and says what stands out — without being allowed to invent a number to say it with. Useful on the months where the totals look ordinary and something underneath them is not.",
+        "Every other surface hands you a figure or a list. This one reads them together and says what stands out — without being allowed to invent a number to say it with. Useful on the months where the totals look ordinary and something underneath them is not.",
       steps: [
         {
           title: "Ask for it",
@@ -326,7 +305,7 @@ export const landingCopy = {
     getStarted: "Get started",
     signIn: "Sign in",
     openApp: "Open app",
-    goToDashboard: "Open the month",
+    goToDashboard: "See where you stand",
   },
   exampleLabel: "Example data",
 } as const;
@@ -364,7 +343,7 @@ export type LandingCopySections = Widen<Omit<typeof landingCopy, "pages">>;
  * The ids live once, in the English array, and each language supplies only
  * the prose against them. That is what stops a translation from inventing a
  * route or dropping a page: `Record<LandingPageId, …>` will not compile
- * without all eight, and none of them can name a ninth.
+ * without all seven, and none of them can name an eighth.
  */
 export function landingCopyFor(locale: Locale) {
   if (locale === "en") {

@@ -9,12 +9,12 @@ import { cn } from "@/lib/utils";
  * same screen — so "web and mobile" is something the page demonstrates rather
  * than something the copy claims.
  *
- * On the dark ground the frames need help to sit *on* something: the gold
+ * On the dark ground the frames need help to sit *on* something: the warm
  * wash behind them is the same light the hero orb throws, and the fade at the
  * bottom keeps the window from ending in a hard edge across the page.
  */
 export function LandingDeviceStack({
-  pageId = "home",
+  pageId = "bearing",
   className,
 }: {
   pageId?: LandingPageId;

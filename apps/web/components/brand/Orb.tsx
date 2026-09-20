@@ -22,14 +22,21 @@ interface OrbProps {
 }
 
 /**
- * The Pluclair orb: a glass shell with gold clouds turning slowly inside it.
+ * The Pluclair orb: a glass shell with warm clouds turning slowly inside it.
  *
- * The whole thing is one empty div and a stylesheet, which is what keeps it a
- * server component — it can sit in the app header and the marketing footer
- * without either of them becoming client-rendered. The CSS lives in
- * globals.css rather than in a `<style jsx>` block, because styled-jsx in the
- * App Router needs a client component and a style registry: a steep price for
- * a decoration, and it would put every header behind a hydration wait.
+ * Two empty divs and a stylesheet, which is what keeps it a server component
+ * — it can sit in the app header and the marketing footer without either of
+ * them becoming client-rendered. The CSS lives in globals.css rather than in
+ * a `<style jsx>` block, because styled-jsx in the App Router needs a client
+ * component and a style registry: a steep price for a decoration, and it
+ * would put every header behind a hydration wait.
+ *
+ * The inner div is the second cloud layer, turning against the first and
+ * breathing on a period of its own. It is a real element because the outer
+ * div's two pseudo-elements are already spoken for — `::before` is the first
+ * cloud layer, `::after` the optics — and a third layer had nowhere else to
+ * live. At `tone="mark"` the stylesheet hides it and stops the interior's
+ * wander, because neither survives being 22px across.
  *
  * Always decorative. The wordmark beside it carries the accessible name, and
  * where the orb stands alone the caller labels its own container.
@@ -40,6 +47,8 @@ export function Orb({ size, className, tone = "hero" }: OrbProps) {
       className={cn("pc-orb", tone === "mark" && "pc-orb-mark", className)}
       style={{ width: size, height: size }}
       aria-hidden
-    />
+    >
+      <div className="pc-orb-clouds" />
+    </div>
   );
 }

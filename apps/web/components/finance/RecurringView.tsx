@@ -142,7 +142,7 @@ function RecurringItemRow({
             size="sm"
             className="rounded-full"
           >
-            {template.active ? "On" : "Off"}
+            {t(template.active ? "recurring.on" : "recurring.off")}
           </Badge>
         </button>
       </div>

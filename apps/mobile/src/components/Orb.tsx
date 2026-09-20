@@ -76,18 +76,47 @@ const DRIFT_PERIOD = 45_000;
 const COUNTER_DRIFT_PERIOD = 62_000;
 
 /**
- * The mark's own family: light caught in the glass, body gold, shadow gold.
+ * The wander, and the breath, in ms.
+ *
+ * Rotation alone carried each layer's masses round in formation, so the
+ * interior read as two discs being turned rather than as weather. These slide
+ * the layers across each other as they turn, on periods prime to the
+ * rotations and to one another, and thicken the far layer as it goes. The web
+ * orb does the same thing with three registered `--drift-*` properties; this
+ * is the same motion expressed the way Reanimated can drive it.
+ */
+const WANDER_PERIOD = 19_000;
+const COUNTER_WANDER_PERIOD = 27_000;
+const BREATHE_PERIOD = 29_000;
+
+/**
+ * How far a layer wanders, as a fraction of the box.
+ *
+ * A fraction rather than a pixel count, for the reason every blur in the web
+ * orb is a `cqw`: the same absolute travel that reads as weather at 320px is
+ * invisible at 26px and would still cost the same to compute.
+ */
+const WANDER = 0.055;
+
+/**
+ * The mark's own family: light caught in the glass, body amber, shadow amber.
  * Kept in step with `--orb-c1/2/3` in the web stylesheet — the two orbs are
  * the same object and a drift between them shows immediately on a landing
  * page that puts screenshots of the app beside the hero.
  *
  * More chroma than the flat mark these replaced. Those values were picked to
- * sit on an opaque gold ball; painted at low alpha over a near-black screen
- * the same gold comes out khaki.
+ * sit on an opaque ball; painted at low alpha over a near-black screen the
+ * same colour comes out khaki.
+ *
+ * Warmer than the gold they were: the body moved from 42° of hue to 36°, the
+ * light followed to 42°, and the shadow went to 28°, because a warm body
+ * darkens towards red rather than towards its own hue. `theme/tokens.ts`
+ * did not follow — `primary` is still #e0be7a and every accent in the app
+ * with it. This is the sphere alone, on both clients.
  */
-const C1 = "#fff0bd";
-const C2 = "#f2c96a";
-const C3 = "#5c3e10";
+const C1 = "#ffe7ae";
+const C2 = "#f0b45a";
+const C3 = "#5c3410";
 
 /** Alpha times glass, clamped — 2.6 × 0.72 would otherwise ask for 187%. */
 const a = (alpha: number, glass: number) => Math.min(1, alpha * glass);
@@ -183,7 +212,7 @@ function CloudLayer({
  * counter-turning cloud layers; and the optics on top.
  *
  * Rolling the whole ball survives for the loading indicator alone, where the
- * highlight is *meant* to travel — a gold ball rolling is the point, and the
+ * highlight is *meant* to travel — a lit ball rolling is the point, and the
  * logo is literally a ball that rolls.
  */
 export function Orb({
@@ -207,11 +236,21 @@ export function Orb({
   const drift = useSharedValue(0);
   const counterDrift = useSharedValue(0);
   const roll = useSharedValue(0);
+  /* The wander and the breath, each held at -1…1 and read as an offset from
+     the middle rather than as a position. That is what lets reduced motion
+     park all three at 0 and get the mid-state of every one of them, instead
+     of a corner of the cycle that happens to be where 0 falls. */
+  const wander = useSharedValue(0);
+  const counterWander = useSharedValue(0);
+  const breathe = useSharedValue(0);
 
   useEffect(() => {
     if (reduce) {
       drift.value = 0;
       counterDrift.value = 0;
+      wander.value = 0;
+      counterWander.value = 0;
+      breathe.value = 0;
       return;
     }
     const turn = (period: number, to: number) =>
@@ -220,11 +259,26 @@ export function Orb({
         -1,
         false,
       );
+    /* `true` is the reversing flag: a mass drifts out and comes back rather
+       than snapping home at the end of every cycle, which is the same reason
+       the web orb's drift keyframes run `alternate`. */
+    const sway = (period: number) =>
+      withRepeat(
+        withTiming(1, { duration: period, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true,
+      );
     drift.value = 0;
     drift.value = turn(DRIFT_PERIOD, 360);
     counterDrift.value = 0;
     counterDrift.value = turn(COUNTER_DRIFT_PERIOD, -360);
-  }, [reduce, drift, counterDrift]);
+    wander.value = -1;
+    wander.value = sway(WANDER_PERIOD);
+    counterWander.value = -1;
+    counterWander.value = sway(COUNTER_WANDER_PERIOD);
+    breathe.value = -1;
+    breathe.value = sway(BREATHE_PERIOD);
+  }, [reduce, drift, counterDrift, wander, counterWander, breathe]);
 
   useEffect(() => {
     if (!rolling) {
@@ -239,11 +293,29 @@ export function Orb({
     );
   }, [rolling, roll]);
 
+  /* Translate before rotate, so a layer sits at its offset and then turns
+     about its own centre. The other order rotates the frame first and the
+     offset swings round with it, which reads as the layer orbiting the shell
+     rather than drifting inside it. */
+  const amp = box * WANDER;
   const driftStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${drift.value}deg` }],
+    transform: [
+      { translateX: wander.value * amp },
+      { translateY: counterWander.value * amp * 0.8 },
+      { rotate: `${drift.value}deg` },
+    ],
   }));
+  /* The far layer takes the wander back the other way, and the breath: it
+     thickens and thins on a third period, so the interior has a slow weather
+     to it rather than a constant density being stirred. */
   const counterDriftStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${counterDrift.value}deg` }],
+    opacity: 0.86 + breathe.value * 0.14,
+    transform: [
+      { translateX: -counterWander.value * amp * 1.1 },
+      { translateY: wander.value * amp * 0.9 },
+      { rotate: `${counterDrift.value}deg` },
+      { scale: 1.03 + breathe.value * 0.03 },
+    ],
   }));
   const rollStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${roll.value}deg` }],

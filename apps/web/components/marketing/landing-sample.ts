@@ -123,6 +123,40 @@ export const landingSample = {
    * a baseline has nothing to show, and the whole point of the section it
    * feeds is the figure a baseline cannot produce yet.
    */
+  /**
+   * The Bearing's own figures, on the 19th of the sample month.
+   *
+   * They have to agree with the rest of this file or the mock states two
+   * different months at once: `netPosition` is `onHand` plus `portfolio`,
+   * and `free` is `onHand` less `committed` plus `arriving`, which is the
+   * arithmetic `month-pulse.ts` does. Change one and change the others.
+   *
+   * There is no `streak` here — `close.streak` already holds it, and the Run
+   * card states the same run the close history does.
+   */
+  bearing: {
+    onHand: 2410,
+    committed: 620,
+    arriving: 240,
+    free: 2030,
+    savingsRate: 18,
+    netPosition: 14890,
+    unrecordedBaseline: 232,
+    projectedBalance: 3640,
+  },
+  /**
+   * The forward projection's two tracks, over a year.
+   *
+   * `accountsEnd` is the same figure the Bearing's "year ahead" card leads
+   * with, and `keptEnd` is it plus twelve months of `setAsideMonthly` — the
+   * gap between the two lines is exactly what has been put by, which is the
+   * whole reason there are two of them.
+   */
+  projection: {
+    setAsideMonthly: 500,
+    accountsEnd: 3640,
+    keptEnd: 9640,
+  },
   close: {
     monthLabel: "February 2026",
     readingDay: "the 8th",

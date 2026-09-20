@@ -2,9 +2,8 @@ import { formatEuro } from "@finance/core/constants";
 import { getLocale, getT } from "@/lib/locale";
 import {
   ArrowsLeftRight,
-  CalendarBlank,
   ChartLine,
-  ChartPieSlice,
+  Compass,
   Repeat,
   ScalesIcon,
   Sparkle,
@@ -27,14 +26,17 @@ interface LandingPageProps {
 }
 
 /** One icon per feature card. Phosphor's /dist/ssr entry so a grid of static
- * glyphs does not make this whole page a client component. */
+ * glyphs does not make this whole page a client component.
+ *
+ * The first five are the glyphs `APP_NAV_ITEMS` gives those same surfaces, so
+ * a visitor meets each one's mark here and finds it again in the sidebar. The
+ * last two are not surfaces and have no nav entry to borrow from. */
 const FEATURE_ICONS: Record<LandingPageId, React.ReactNode> = {
-  home: <ChartPieSlice size={18} />,
-  transactions: <ArrowsLeftRight size={18} />,
-  recurring: <Repeat size={18} />,
-  calendar: <CalendarBlank size={18} />,
+  bearing: <Compass size={18} />,
+  ledger: <ArrowsLeftRight size={18} />,
+  charges: <Repeat size={18} />,
+  plan: <Target size={18} />,
   wallets: <ChartLine size={18} />,
-  planning: <Target size={18} />,
   "month-close": <ScalesIcon size={18} />,
   "month-read": <Sparkle size={18} />,
 };
@@ -101,9 +103,11 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
       {/* ------------------------------------------------------------ hero */}
       <section className="relative isolate flex min-h-dvh flex-col overflow-hidden px-6">
         <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-          {/* A cool wash from the top edge, so the gold below has something to
-              be warm against. */}
-          <div className="absolute inset-0 bg-[radial-gradient(130%_75%_at_50%_-15%,rgba(120,130,170,0.12),transparent_58%)]" />
+          {/* Only the sparks now. There used to be a cool wash from the top
+              edge here, put in so the warm sphere had something to be warm
+              against; `.marketing-ambient` is that wash since it took the
+              app's violet, and two of them stacked only greyed the violet
+              out. */}
           <div className="marketing-sparks absolute inset-x-0 top-0 h-[70%] opacity-80" />
         </div>
 
@@ -136,7 +140,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
           <LandingOrb className="absolute left-1/2 top-1 aspect-square w-[min(58vw,352px)] -translate-x-1/2" />
 
           <GlassStat
-            href={featureHref("home")}
+            href={featureHref("bearing")}
             label={hero.cards.remaining.label}
             value={euro(sample.remaining)}
             caption={hero.cards.remaining.caption}
@@ -200,7 +204,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             <SectionHeading heading={devices.heading} body={devices.body} />
           </Reveal>
           <Rise className="mt-16 md:mt-20">
-            <LandingDeviceStack pageId="home" />
+            <LandingDeviceStack pageId="bearing" />
           </Rise>
         </div>
       </section>
@@ -216,11 +220,15 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
               <Reveal
                 key={page.id}
                 delay={Math.min(index, 5) * 0.05}
-                // Seven cards over three columns would leave the last row
-                // holding one. The wide slot goes to the one screen no
-                // competitor has.
+                // Seven cards over three columns come out as two full rows
+                // and a last one holding a single card, so that last card is
+                // given the whole width rather than left sitting alone in a
+                // third of it. It falls to the month read, which is both the
+                // one the grid leaves over and the strangest thing here: a
+                // model that writes the sentences and is not allowed to write
+                // the numbers in them.
                 className={
-                  page.id === "month-close"
+                  page.id === "month-read"
                     ? "sm:col-span-2 lg:col-span-3"
                     : undefined
                 }

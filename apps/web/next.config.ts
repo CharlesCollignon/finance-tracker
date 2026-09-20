@@ -32,6 +32,25 @@ const nextConfig: NextConfig = {
         destination: "/bearing",
         permanent: true,
       },
+      // The feature pages were named after the app's routes rather than
+      // after its surfaces, so `/features/home` described the Bearing and
+      // `/features/planning` described Plan. These are public URLs people
+      // read and share, which is the difference from the app's own paths —
+      // those kept their old names on purpose, because nobody reads
+      // `/budgets` in an installed app. `/features/calendar` has no
+      // successor of its own: the calendar is a view of the Ledger now, and
+      // the Ledger's page is where it is described.
+      ...[
+        ["home", "bearing"],
+        ["transactions", "ledger"],
+        ["recurring", "charges"],
+        ["planning", "plan"],
+        ["calendar", "ledger"],
+      ].map(([from, to]) => ({
+        source: `/features/${from}`,
+        destination: `/features/${to}`,
+        permanent: true,
+      })),
     ];
   },
   async headers() {
