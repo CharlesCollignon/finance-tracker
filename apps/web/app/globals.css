@@ -217,6 +217,50 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
+  /* Radius by role rather than by size, so a caller names what a thing is and
+     not how round it wants it. The four below replace six size-named steps
+     that were being chosen by eye — as drawn, the app and the site put ten
+     distinct corner sizes on screen between them.
+
+     `card` and `shell` are the phone's numbers, and its config carries the
+     arithmetic: "26 outer − 6 of bezel padding leaves exactly the 20 the
+     inner surface uses." Marketing arrived at the same pair independently,
+     by hand, as rounded-[1.25rem] and rounded-[1.6rem]. Two good eyes twice
+     is a scale; this is where it stops being a coincidence.
+
+     Nothing spends these yet — that is phase 2. */
+  --radius-control: var(--radius);
+  --radius-card: 20px;
+  --radius-shell: 26px;
+
+  /* The inset a surface gives its contents. 20px is not a compromise between
+     the web's seven values: it is the phone's `p-5`, used in 36 of its 54
+     surface paddings, and already the web's commonest card inset too.
+
+     There is deliberately no token for a control's padding. That is what the
+     other 30-odd values in the app mostly are, and the answer to those is
+     that a button owns its own padding rather than each screen setting it. */
+  --spacing-card: 20px;
+  --spacing-row: 12px;
+
+  /* The web half of DURATION.press and DURATION.hover. The namespace is
+     `--transition-duration-*`, not `--duration-*`: v4 generates `duration-x`
+     from the former only. */
+  --transition-duration-press: 140ms;
+  --transition-duration-hover: 200ms;
+
+  /* Marketing's dimmed whites, which are ten alpha literals today — /30, /35,
+     /40, /45, /50, /55, /60, /70, /80 and /85 — doing three jobs. Three
+     rather than two because the site really does have three, and rather than
+     four because /45 and /60 say nothing /55 does not.
+
+     They stay marketing's own rather than folding into `muted-foreground`:
+     the app sits on paper, the site on near-black, and one token across both
+     would have to hold two values anyway. */
+  --color-marketing-ink: rgb(255 255 255 / 0.85);
+  --color-marketing-muted: rgb(255 255 255 / 0.55);
+  --color-marketing-faint: rgb(255 255 255 / 0.35);
+
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
   --shadow-sm: var(--shadow-sm);

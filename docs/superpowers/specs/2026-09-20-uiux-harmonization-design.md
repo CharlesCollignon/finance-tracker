@@ -1,7 +1,7 @@
 # One vocabulary for three surfaces
 
 **Date:** 2026-09-20
-**Status:** Design for review — audit agreed, spec not yet approved
+**Status:** Approved — phase 1 shipped, phases 2 to 6 outstanding
 
 ## What this changes
 

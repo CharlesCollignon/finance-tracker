@@ -80,7 +80,22 @@ module.exports = {
         // leaves exactly the 20 the inner surface uses.
         card: "20px",
         shell: "26px",
+        // The third role, so the size-named steps above stop being the only
+        // way to say "this is a thing you press". Same 10px `DEFAULT` and
+        // `md` already carry; naming it is what lets the call sites stop
+        // choosing between three spellings of one number.
+        control: "10px",
         none: "0px",
+      },
+
+      // The inset a surface gives its contents, matching the web's
+      // `--spacing-card` and `--spacing-row`. 20px is what this client had
+      // already converged on by itself — `p-5` in 36 of its 54 surface
+      // paddings — so this names the phone's own habit and asks the web to
+      // meet it, rather than the other way round.
+      spacing: {
+        card: "20px",
+        row: "12px",
       },
       fontFamily: {
         sans: ["InstrumentSans-Regular"],

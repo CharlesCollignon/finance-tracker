@@ -25,6 +25,24 @@
  */
 export const EASE_STANDARD = [0.32, 0.72, 0, 1] as const;
 
+/**
+ * The first three describe *arrival* — something appearing, counting, opening
+ * — and were the only kinds this module named for a long time. That left the
+ * commonest motion in the product, a surface answering the finger or pointer
+ * on it, with nowhere to come from: the phone's Button reached for 120 and
+ * 150, its QuickAddProvider for 110 and 140, and the web wrote 200 into 28
+ * separate class strings. None of them were wrong; there was simply no word
+ * for what they were all doing.
+ *
+ * `press` and `hover` are that word. Neither is a new opinion about how the
+ * product should feel — 200ms is exactly what the web already spends on every
+ * hover, and 140 sits between the two numbers the phone converged on — so
+ * spending them changes provenance and not timing.
+ *
+ * Deliberately not a token: the phone's 850ms skeleton shimmer. That is a
+ * loop, not an answer to anything, and a category with one member is worth
+ * less than the literal and its comment.
+ */
 export const DURATION = {
   /** A block arriving on screen. */
   enter: 500,
@@ -32,6 +50,10 @@ export const DURATION = {
   count: 650,
   /** A panel opening or closing. */
   panel: 420,
+  /** A surface answering a press. */
+  press: 140,
+  /** A surface answering a pointer arriving or leaving. */
+  hover: 200,
 } as const;
 
 /** The gap between consecutive items in a staggered enter. */
@@ -55,9 +77,7 @@ export function staggerDelay(index: number): number {
 }
 
 /** The curve as a CSS `cubic-bezier()` value. */
-export function cssEasing(
-  points: readonly number[] = EASE_STANDARD,
-): string {
+export function cssEasing(points: readonly number[] = EASE_STANDARD): string {
   return `cubic-bezier(${points.join(", ")})`;
 }
 
