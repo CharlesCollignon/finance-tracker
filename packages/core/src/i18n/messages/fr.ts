@@ -1609,6 +1609,7 @@ export const fr: Messages = {
   bearing: {
     title: "Cap",
     asOf: "Au {date}",
+    remaining: "Enregistré comme restant",
     cards: {
       month: "Ce mois-ci",
       now: "Les comptes",

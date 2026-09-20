@@ -7,14 +7,10 @@ import type { Key } from "@finance/core/i18n/t";
 import type { MonthStanding } from "@finance/core/month-pulse";
 import { drawSpineRing, type SpineState } from "@finance/core/spine";
 import { cssEasing, DURATION } from "@finance/core/motion";
-import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
 import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
-import { useFormatCurrency } from "@/lib/use-currency";
 import { useT } from "@/lib/locale-context";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { ICON } from "@/lib/icon-scale";
-import { FIGURE_HERO } from "@/lib/type-scale";
-import { cn } from "@/lib/utils";
 
 interface SpineProps {
   state: SpineState;
@@ -45,7 +41,6 @@ interface SpineProps {
  */
 export function Spine({ state, attention }: SpineProps) {
   const t = useT();
-  const formatMoney = useFormatCurrency();
 
   return (
     <section
@@ -53,25 +48,7 @@ export function Spine({ state, attention }: SpineProps) {
       className="flex flex-col gap-3 border-b border-foreground/10 pb-4"
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-end gap-4">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium text-muted-foreground">
-              {t(headlineLabelKey(state.headline))}
-            </span>
-            <AnimatedAmount
-              value={state.headline.value}
-              format={formatMoney}
-              className={cn(
-                FIGURE_HERO,
-                state.headline.figure === "free" &&
-                  state.headline.value < 0 &&
-                  "text-destructive",
-              )}
-            />
-          </div>
-
-          <SpineRing ring={state.ring} />
-        </div>
+        <SpineRing ring={state.ring} />
 
         {state.flame ? <FlameBadge flame={state.flame} /> : null}
       </div>
@@ -79,20 +56,6 @@ export function Spine({ state, attention }: SpineProps) {
       <AttentionRow attention={attention} />
     </section>
   );
-}
-
-/**
- * Which label the headline takes, mirroring `pulseHeadline` in
- * `month-pulse.ts` without needing the raw `MonthPulse` this component was
- * never handed: `figure` already carries the one thing that function reads
- * off `onHand`, and the sign of `value` already carries the one thing it
- * reads off `free`.
- */
-function headlineLabelKey(headline: SpineState["headline"]): Key {
-  if (headline.figure === "remaining") {
-    return "pulse.headlineLeft";
-  }
-  return headline.value < 0 ? "pulse.headlineShort" : "pulse.headlineFree";
 }
 
 function FlameBadge({

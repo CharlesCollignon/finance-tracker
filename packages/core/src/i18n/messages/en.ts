@@ -2160,6 +2160,12 @@ export const en = {
   bearing: {
     title: "Bearing",
     asOf: "As of {date}",
+    /**
+     * The headline's second figure, when no balance is readable to lead it —
+     * the ladder's fallback to what the ledger recorded rather than a
+     * confident zero. See `resolveSpine` in `packages/core/src/spine.ts`.
+     */
+    remaining: "Recorded as left",
     /** The five cards' names, in `CARD_ORDER`. */
     cards: {
       month: "This month",
