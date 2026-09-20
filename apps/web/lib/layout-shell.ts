@@ -8,9 +8,10 @@
  *
  * The `xl` step exists because the app had no desktop tier at all — `lg` was
  * the last word, so above 1024px of content the whole app sat in a 1024px
- * column with the backdrop showing on either side. 90rem is wide enough for
- * the Month surface's two columns and the Ledger's table without letting a
- * line of prose run past a readable measure.
+ * column with the backdrop showing on either side. It was 90rem, chosen for
+ * the Month surface's two columns; Month is retired and the width outlived
+ * its reason, so it is 72rem — wide enough for the Ledger's table and narrow
+ * enough that a line of prose stops short of a tiring measure.
  */
 
 export const SHELL_HEADER_BAND_CLASS =
@@ -19,7 +20,7 @@ export const SHELL_HEADER_BAND_CLASS =
 export const SHELL_HEADER_INNER_CLASS =
   "mx-auto flex h-[var(--shell-header-height)] w-full min-w-0 max-w-lg " +
   "items-center justify-between gap-2 px-4 " +
-  "sm:gap-3 md:max-w-3xl md:gap-4 md:px-6 lg:max-w-5xl xl:max-w-[90rem]";
+  "sm:gap-3 md:max-w-3xl md:gap-4 md:px-6 lg:max-w-5xl xl:max-w-6xl";
 
 export const SHELL_HEADER_ACTIONS_CLASS =
   "flex min-w-0 shrink items-center justify-end gap-2";
