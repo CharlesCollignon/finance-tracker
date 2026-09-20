@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
+import { cssEasing, DURATION } from "@finance/core/motion";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -74,9 +75,16 @@ export function BorderGlow({
     >
       <span
         aria-hidden="true"
+        // The house curve and the house duration, not Tailwind's. `duration-300`
+        // and a bare `transition-opacity` were a second easing and a second
+        // timing beside `motion.ts`'s — which exists to say that "a screen
+        // where different blocks decelerate differently reads as several
+        // screens", and it means the decorations too. `enter` is the one the
+        // spotlight layered over this already used.
+        style={{ transition: `opacity ${DURATION.enter}ms ${cssEasing()}` }}
         className={cn(
           "pointer-events-none absolute inset-0 -z-10 rounded-[inherit]",
-          "opacity-[var(--glow-on,0)] transition-opacity duration-300",
+          "opacity-[var(--glow-on,0)]",
           "[background:conic-gradient(from_var(--glow-angle,0deg),color-mix(in_srgb,var(--primary)_70%,transparent),transparent_25%,transparent_75%,color-mix(in_srgb,var(--primary)_70%,transparent))]",
           // Border-box only: the fill is the caller's surface, and painting
           // under it would wash the figures out.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
+import { cssEasing, DURATION } from "@finance/core/motion";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -55,9 +56,13 @@ export function SpotlightCard({
     >
       <span
         aria-hidden="true"
+        // The house curve, not Tailwind's default one — see `motion.ts`, and
+        // `BorderGlow`, which this is layered over and now shares a timing
+        // with. The 500ms is unchanged; only where it comes from is.
+        style={{ transition: `opacity ${DURATION.enter}ms ${cssEasing()}` }}
         className={cn(
           "pointer-events-none absolute inset-0 -z-10",
-          "opacity-[var(--spot-on,0)] transition-opacity duration-500",
+          "opacity-[var(--spot-on,0)]",
           "bg-[radial-gradient(circle_at_var(--spot-x,50%)_var(--spot-y,50%),color-mix(in_srgb,var(--primary)_18%,transparent),transparent_70%)]",
         )}
       />
