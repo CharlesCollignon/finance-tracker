@@ -215,51 +215,6 @@ export async function refundArrangement(
 /* ------------------------------------------------------------- the pins */
 
 /**
- * Where the user has put their tiles.
- *
- * An ordinary preference read, and an empty object for somebody who has never
- * dragged anything — the distinction between "no pins" and "no row" matters
- * to the database, which stores null, but not to the caller, for whom both
- * mean the arrangement leads.
- */
-export async function readPins(
-  userId: string,
-  client?: Client,
-): Promise<TilePins> {
-  const supabase = client ?? (await createClient());
-  const { data, error } = await supabase
-    .from("user_preferences")
-    .select("bearing_pins")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return {};
-    }
-    throw error;
-  }
-
-  const raw = data?.bearing_pins;
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
-    return {};
-  }
-
-  // Narrowed here rather than trusted from the column. The check constraint
-  // in 029 guarantees an object of numbers, and this guarantees it again for
-  // a row written before that constraint existed or by a hand at a psql
-  // prompt — `mergeArrangement` drops what it cannot use, but it should not
-  // have to defend itself against a string.
-  const pins: Record<string, number> = {};
-  for (const [id, slot] of Object.entries(raw as Record<string, unknown>)) {
-    if (typeof slot === "number" && Number.isInteger(slot) && slot >= 0) {
-      pins[id] = slot;
-    }
-  }
-  return pins;
-}
-
-/**
  * Remember where the user put their tiles.
  *
  * Upserted, because `user_preferences` rows are created lazily: somebody who
