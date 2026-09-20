@@ -12,6 +12,10 @@ const pulse = (over: Partial<MonthPulse> = {}): MonthPulse =>
     ...over,
   }) as MonthPulse;
 
+// Spreads over the same complete fixture `pulse` does, under the name the
+// second-figure tests below read most naturally.
+const pulseWith = (over: Partial<MonthPulse> = {}): MonthPulse => pulse(over);
+
 describe("resolveSpine", () => {
   it("falls back to remaining, and says so, when no balance is readable", () => {
     const state = resolveSpine({
@@ -161,5 +165,36 @@ describe("drawSpineRing", () => {
       percent: 0,
       overshoot: 0,
     });
+  });
+});
+
+describe("the headline's second figure", () => {
+  it("carries what the accounts hold when a balance is readable", () => {
+    const state = resolveSpine({
+      pulse: pulseWith({ onHand: 1240.5, free: 880.2 }),
+      everClosed: true,
+      closes: { streak: 3, bestStreak: 5 },
+      remaining: 400,
+    });
+
+    expect(state.onHand).toBe(1240.5);
+    expect(state.headline).toEqual({ figure: "free", value: 880.2 });
+  });
+
+  /**
+   * The ladder's whole argument: a reader with no bank must not be shown a
+   * figure that implies one. The headline falls back to the recorded
+   * remaining, and the second figure is simply absent rather than zero.
+   */
+  it("has no second figure without a readable balance", () => {
+    const state = resolveSpine({
+      pulse: pulseWith({ onHand: null, free: null }),
+      everClosed: false,
+      closes: null,
+      remaining: 400,
+    });
+
+    expect(state.onHand).toBeNull();
+    expect(state.headline.figure).toBe("remaining");
   });
 });

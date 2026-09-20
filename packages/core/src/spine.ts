@@ -77,6 +77,14 @@ export interface SpineInput {
 export interface SpineState {
   step: "no-balance" | "no-close" | "measuring" | "lit";
   headline: { figure: "free" | "remaining"; value: number };
+  /**
+   * What the accounts hold, for the headline's first line. Null exactly when
+   * no balance is readable — which is the same condition that sends
+   * `headline` to `remaining`, and is why this is a separate nullable field
+   * rather than a second entry in `headline`: one of the two figures can be
+   * absent while the other is not.
+   */
+  onHand: number | null;
   ring: SpineRing;
   flame: { streak: number; best: number } | null;
 }
@@ -100,6 +108,7 @@ export function resolveSpine(input: SpineInput): SpineState {
   return {
     step,
     headline,
+    onHand: pulse.onHand,
     ring: pulse.overRecorded ? { kind: "absent" } : ring,
     flame,
   };
