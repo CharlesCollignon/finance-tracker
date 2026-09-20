@@ -773,7 +773,7 @@ export default function TransactionsScreen() {
             void hapticLight();
             setInboxChoice(true);
           }}
-          className="mb-3 min-h-14 flex-row items-center gap-2.5 rounded-2xl border bg-primary/5 px-4 py-3"
+          className="mb-3 min-h-14 flex-row items-center gap-2.5 rounded-control border bg-primary/5 px-4 py-3"
           style={{ borderColor: colors.primaryRim }}
         >
           <View

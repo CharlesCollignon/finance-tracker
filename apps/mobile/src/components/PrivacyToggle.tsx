@@ -19,7 +19,7 @@ export function PrivacyToggle() {
         void hapticLight();
         toggle();
       }}
-      className="h-9 w-9 items-center justify-center rounded-md border border-border"
+      className="h-9 w-9 items-center justify-center rounded-control border border-border"
       style={{
         backgroundColor: hidden ? `${colors.primary}22` : colors.card,
         borderColor: colors.border,

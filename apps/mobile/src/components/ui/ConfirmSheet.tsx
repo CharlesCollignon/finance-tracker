@@ -48,7 +48,7 @@ export function ConfirmSheet({
           className="absolute inset-0"
           onPress={onCancel}
         />
-        <View className="w-full max-w-sm rounded-2xl border border-border bg-card p-5">
+        <View className="w-full max-w-sm rounded-card border border-border bg-card p-5">
           <Text className="font-semibold" style={{ fontSize: 17 }}>
             {title}
           </Text>

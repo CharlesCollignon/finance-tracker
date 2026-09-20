@@ -5,7 +5,7 @@ import { formatMonthLabel, shiftMonth } from "@finance/core/constants";
 import { Blur } from "@/components/ui/Blur";
 import { Text } from "@/components/ui/Text";
 import { useThemeColors } from "@/theme/useThemeColors";
-import { ICON } from "@/theme/tokens";
+import { ICON, RADIUS } from "@/theme/tokens";
 import { useT } from "@/providers/LocaleProvider";
 
 interface MonthPickerProps {
@@ -21,7 +21,7 @@ export function MonthPicker({ year, month, onChange }: MonthPickerProps) {
   return (
     <Blur
       style={{
-        borderRadius: 12,
+        borderRadius: RADIUS.control,
         overflow: "hidden",
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: colors.border,

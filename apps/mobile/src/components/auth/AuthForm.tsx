@@ -16,7 +16,7 @@ import { Blur } from "@/components/ui/Blur";
 import { Input } from "@/components/ui/Input";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
-import { ICON } from "@/theme/tokens";
+import { ICON, RADIUS } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { validateAuthInput } from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
@@ -116,7 +116,7 @@ export function AuthForm({
 
         <Blur
           style={{
-            borderRadius: 24,
+            borderRadius: RADIUS.card,
             overflow: "hidden",
             borderWidth: StyleSheet.hairlineWidth,
             borderColor: colors.border,
@@ -176,7 +176,7 @@ export function AuthForm({
                   accessibilityState={{ selected: reveal }}
                   hitSlop={8}
                   onPress={() => setReveal((value) => !value)}
-                  className="h-12 w-12 items-center justify-center rounded-md border border-border"
+                  className="h-12 w-12 items-center justify-center rounded-control border border-border"
                 >
                   <Ionicons
                     name={reveal ? "eye-off-outline" : "eye-outline"}

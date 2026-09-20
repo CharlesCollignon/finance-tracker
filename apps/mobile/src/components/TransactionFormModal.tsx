@@ -193,7 +193,7 @@ export function TransactionFormModal({
           accessibilityLabel={t("transaction.close")}
           onPress={onClose}
         />
-        <View className="max-h-[90%] rounded-t-3xl border border-border bg-card">
+        <View className="max-h-[90%] rounded-t-card border border-border bg-card">
           <View className="items-center pt-3">
             <SheetGrabber />
           </View>
@@ -286,7 +286,7 @@ export function TransactionFormModal({
                         accessibilityLabel={cat.name}
                         onPress={() => setCategoryId(cat.id)}
                         className={cn(
-                          "flex-row items-center gap-3 rounded-lg border px-3 py-2",
+                          "flex-row items-center gap-3 rounded-control border px-3 py-2",
                           selected
                             ? "border-primary bg-primary/15"
                             : "border-border bg-background",

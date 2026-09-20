@@ -164,7 +164,7 @@ export function MonthCloseSheet({
           className="flex-1"
           onPress={dismiss}
         />
-        <View className="max-h-[85%] rounded-t-3xl border border-border bg-card p-5">
+        <View className="max-h-[85%] rounded-t-card border border-border bg-card p-5">
           <SheetGrabber />
           <Text className="mb-2 font-semibold" style={{ fontSize: 18 }}>
             {stage === "closed"
@@ -250,7 +250,7 @@ export function MonthCloseSheet({
                   ) : null}
                 </View>
 
-                <View className="rounded-lg border border-border p-3">
+                <View className="rounded-control border border-border p-3">
                   <Figure
                     label={t("monthClose.cameIn")}
                     value={formatEuro(result.flows.income)}

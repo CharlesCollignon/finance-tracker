@@ -194,7 +194,7 @@ export default function RecurringScreen() {
           accessibilityRole="link"
           accessibilityLabel={t("charges.openLedgerToApply")}
           onPress={() => router.push("/(tabs)/transactions" as Href)}
-          className="mb-3 rounded-lg border border-dashed border-primary-rim/50 px-4 py-3"
+          className="mb-3 rounded-control border border-dashed border-primary-rim/50 px-4 py-3"
         >
           <Text variant="muted" className="text-sm">
             {`${t("charges.applyPendingBefore")} ${t("charges.applyPendingLink")} ${t("charges.applyPendingAfter")}`}

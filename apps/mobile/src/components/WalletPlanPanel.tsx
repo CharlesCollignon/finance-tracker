@@ -27,6 +27,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { RADIUS } from "@/theme/tokens";
 
 interface WalletPlanPanelProps {
   portfolio: InvestmentPortfolioSummary;
@@ -160,7 +161,7 @@ export function WalletPlanPanel({
                     <View
                       style={{
                         height: "100%",
-                        borderRadius: 999,
+                        borderRadius: RADIUS.pill,
                         backgroundColor: colors.primary,
                         width: `${Math.round(row.currentWeight * 100)}%`,
                       }}
@@ -253,7 +254,7 @@ export function WalletPlanPanel({
             <View
               style={{
                 height: "100%",
-                borderRadius: 999,
+                borderRadius: RADIUS.pill,
                 backgroundColor: peaStatus.nearCeiling
                   ? colors.destructive
                   : colors.primary,

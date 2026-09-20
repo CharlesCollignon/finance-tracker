@@ -94,7 +94,7 @@ export function DateField({
         accessibilityLabel={display ? `Date ${display}` : placeholder}
         onPress={() => setOpen(true)}
         className={cn(
-          "min-h-12 flex-row items-center justify-between gap-2 rounded-lg",
+          "min-h-12 flex-row items-center justify-between gap-2 rounded-control",
           "border border-border bg-background px-3",
         )}
       >

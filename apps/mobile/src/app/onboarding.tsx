@@ -211,7 +211,7 @@ export default function OnboardingScreen() {
                         setCurrency(code);
                       }}
                       className={cn(
-                        "flex-1 rounded-lg border px-4 py-3",
+                        "flex-1 rounded-control border px-4 py-3",
                         selected
                           ? "border-primary bg-primary/15"
                           : "border-border bg-background",

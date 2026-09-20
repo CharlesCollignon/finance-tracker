@@ -440,7 +440,7 @@ export default function PlanningScreen() {
                     onLongPress={() =>
                       setConfirming({ kind: "budget", id: row.budgetId })
                     }
-                    className="rounded-lg p-1"
+                    className="rounded-control p-1"
                   >
                     <ProgressRing
                       ratio={row.ratio}
@@ -501,7 +501,7 @@ export default function PlanningScreen() {
                       onLongPress={() =>
                         setConfirming({ kind: "goal", id: row.goal.id })
                       }
-                      className="items-center gap-1 rounded-lg p-1"
+                      className="items-center gap-1 rounded-control p-1"
                     >
                       <ProgressRing
                         ratio={row.ratio}

@@ -94,7 +94,7 @@ export default function CategoriesScreen() {
           accessibilityLabel={t("categories.back")}
           hitSlop={8}
           onPress={() => router.back()}
-          className="h-9 w-9 items-center justify-center rounded-md"
+          className="h-9 w-9 items-center justify-center rounded-control"
         >
           <Ionicons
             name="chevron-back"

@@ -37,7 +37,7 @@ export function AccountMenu() {
   const initial = initialFor(user?.email, displayName);
 
   const rowClass =
-    "min-h-11 w-full flex-row items-center gap-3 rounded-xl px-3";
+    "min-h-11 w-full flex-row items-center gap-3 rounded-control px-3";
 
   return (
     <>
@@ -49,7 +49,7 @@ export function AccountMenu() {
           void hapticLight();
           setOpen(true);
         }}
-        className="h-9 w-9 items-center justify-center rounded-md"
+        className="h-9 w-9 items-center justify-center rounded-control"
       >
         <UserInitial initial={initial} />
       </Pressable>
@@ -75,7 +75,7 @@ export function AccountMenu() {
             >
               {/* Solid surface: the frosted panel made the rows hard to
                   read against busy content behind it. */}
-              <View className="w-72 overflow-hidden rounded-3xl border border-border bg-card">
+              <View className="w-72 overflow-hidden rounded-card border border-border bg-card">
                 <View className="gap-1 p-2">
                   <Pressable
                     accessibilityRole="link"

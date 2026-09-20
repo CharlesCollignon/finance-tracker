@@ -385,7 +385,7 @@ export default function ImportScreen() {
                       setExpanded(expanded === row.line ? null : row.line);
                     }}
                     className={cn(
-                      "flex-row items-center justify-between rounded-lg border px-3 py-2",
+                      "flex-row items-center justify-between rounded-control border px-3 py-2",
                       needsCategory
                         ? "border-destructive"
                         : "border-border bg-background",
@@ -423,7 +423,7 @@ export default function ImportScreen() {
                               accessibilityRole="button"
                               accessibilityLabel={cat.name}
                               onPress={() => setRowCategory(row.line, cat)}
-                              className="flex-row items-center gap-3 rounded-lg border border-border bg-background px-3 py-2"
+                              className="flex-row items-center gap-3 rounded-control border border-border bg-background px-3 py-2"
                             >
                               <CategoryIcon icon={cat.icon} />
                               <Text className="text-sm">{cat.name}</Text>

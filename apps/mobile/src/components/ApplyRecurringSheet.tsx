@@ -35,7 +35,7 @@ function Checkbox({ checked }: { checked: boolean }) {
   return (
     <View
       className={cn(
-        "h-5 w-5 items-center justify-center rounded border",
+        "h-5 w-5 items-center justify-center rounded-control border",
         checked ? "border-primary bg-primary" : "border-border bg-background",
       )}
     >
@@ -68,7 +68,7 @@ function UpdateRow({
       accessibilityLabel={item.name}
       onPress={onToggle}
       className={cn(
-        "flex-row gap-3 rounded-lg border p-3",
+        "flex-row gap-3 rounded-control border p-3",
         selected ? "border-border" : "border-border opacity-50",
       )}
     >
@@ -181,7 +181,7 @@ export function ApplyRecurringSheet({
           className="flex-1"
           onPress={() => onOpenChange(false)}
         />
-        <View className="max-h-[85%] rounded-t-3xl border border-border bg-card p-5">
+        <View className="max-h-[85%] rounded-t-card border border-border bg-card p-5">
           <SheetGrabber />
           <Text className="mb-2 font-semibold" style={{ fontSize: 18 }}>
             Apply recurring
@@ -247,7 +247,7 @@ export function ApplyRecurringSheet({
                       accessibilityLabel={item.name}
                       onPress={() => toggle(key)}
                       className={cn(
-                        "flex-row items-center gap-3 rounded-lg border border-border px-3 py-2",
+                        "flex-row items-center gap-3 rounded-control border border-border px-3 py-2",
                         !selected && "opacity-50",
                       )}
                     >

@@ -81,7 +81,7 @@ export function RefreshButton() {
         void hapticLight();
         refresh.refresh();
       }}
-      className="h-9 w-9 items-center justify-center rounded-md border border-border"
+      className="h-9 w-9 items-center justify-center rounded-control border border-border"
       style={{ backgroundColor: colors.card, borderColor: colors.border }}
     >
       <Animated.View style={style}>

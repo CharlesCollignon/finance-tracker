@@ -79,7 +79,7 @@ export function CategoryFormSheet({
           accessibilityLabel={t("categories.close")}
           onPress={onClose}
         />
-        <View className="max-h-[90%] rounded-t-3xl border border-border bg-card">
+        <View className="max-h-[90%] rounded-t-card border border-border bg-card">
           <View className="items-center pt-3">
             <SheetGrabber />
           </View>
@@ -159,7 +159,7 @@ export function CategoryFormSheet({
                     accessibilityState={{ selected }}
                     onPress={() => setIcon(selected ? null : key)}
                     className={cn(
-                      "rounded-lg border",
+                      "rounded-control border",
                       selected ? "border-primary" : "border-transparent",
                     )}
                   >
@@ -173,11 +173,11 @@ export function CategoryFormSheet({
               accessibilityRole="checkbox"
               accessibilityState={{ checked: countsToward }}
               onPress={() => setCountsToward((value) => !value)}
-              className="mb-4 flex-row items-center gap-3 rounded-lg border border-border px-3 py-3"
+              className="mb-4 flex-row items-center gap-3 rounded-control border border-border px-3 py-3"
             >
               <View
                 className={cn(
-                  "h-5 w-5 rounded border",
+                  "h-5 w-5 rounded-control border",
                   countsToward
                     ? "border-primary bg-primary"
                     : "border-border bg-background",

@@ -231,7 +231,7 @@ function QuickAddFields({
   }
 
   return (
-    <View className="max-h-[92%] rounded-t-3xl border border-border bg-card">
+    <View className="max-h-[92%] rounded-t-card border border-border bg-card">
       <View className="items-center pt-3">
         <SheetGrabber />
       </View>
@@ -306,7 +306,7 @@ function QuickAddFields({
                     key === "backspace" ? () => setAmount("") : undefined
                   }
                   className={cn(
-                    "h-14 flex-1 items-center justify-center rounded-xl",
+                    "h-14 flex-1 items-center justify-center rounded-control",
                     "border border-border bg-background active:bg-muted",
                   )}
                 >
@@ -457,7 +457,7 @@ function QuickAddFields({
                         setQuery("");
                       }}
                       className={cn(
-                        "flex-row items-center gap-3 rounded-lg border px-3 py-2",
+                        "flex-row items-center gap-3 rounded-control border px-3 py-2",
                         active
                           ? "border-primary bg-primary/15"
                           : "border-border bg-background",
@@ -502,7 +502,7 @@ function QuickAddFields({
                 accessibilityRole="button"
                 accessibilityLabel={`Use ${rule.label}, ${rule.categoryName}`}
                 onPress={() => applyMerchant(rule)}
-                className="flex-row items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2"
+                className="flex-row items-center justify-between gap-3 rounded-control border border-border bg-background px-3 py-2"
               >
                 <Text className="flex-1 text-sm" numberOfLines={1}>
                   {rule.label}

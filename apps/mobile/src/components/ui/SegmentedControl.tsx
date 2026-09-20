@@ -10,6 +10,7 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticSelection } from "@/lib/haptics";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { RADIUS } from "@/theme/tokens";
 
 export interface Segment<T extends string> {
   value: T;
@@ -88,7 +89,7 @@ export function SegmentedControl<T extends string>({
               bottom: 4,
               left: 4,
               width: slot - 8,
-              borderRadius: 999,
+              borderRadius: RADIUS.pill,
               backgroundColor: colors.secondary,
             },
             pill,

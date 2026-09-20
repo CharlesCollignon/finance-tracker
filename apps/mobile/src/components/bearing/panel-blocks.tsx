@@ -219,7 +219,12 @@ export function PanelBlockView({
  * a card's own layout changed.
  */
 export function PanelBlockSkeleton({ block }: { block: PanelBlock }) {
-  return <Skeleton className="w-full rounded-3xl" style={{ height: SKELETON_HEIGHT[block] }} />;
+  return (
+    <Skeleton
+      className="w-full rounded-card"
+      style={{ height: SKELETON_HEIGHT[block] }}
+    />
+  );
 }
 
 const SKELETON_HEIGHT: Record<PanelBlock, number> = {
@@ -328,10 +333,7 @@ function Trend({
                 {point.label}
               </Text>
               <PrivateAmount
-                className={cn(
-                  "text-sm",
-                  point.net < 0 && "text-destructive",
-                )}
+                className={cn("text-sm", point.net < 0 && "text-destructive")}
               >
                 {formatEuro(point.net)}
               </PrivateAmount>
@@ -405,13 +407,22 @@ function Holdings({
   const head = sorted.slice(0, limit);
   const rest = sorted.slice(limit);
   const restWeight = rest.reduce((sum, row) => sum + row.weight, 0);
-  const largest = Math.max(...head.map((row) => row.weight), restWeight, 0.0001);
+  const largest = Math.max(
+    ...head.map((row) => row.weight),
+    restWeight,
+    0.0001,
+  );
 
   return (
     <Framed headingKey="bearing.panel.holdingsHeading">
       <View className="gap-2.5">
         {head.map((row) => (
-          <HoldingBar key={row.id} label={row.label} weight={row.weight} largest={largest} />
+          <HoldingBar
+            key={row.id}
+            label={row.label}
+            weight={row.weight}
+            largest={largest}
+          />
         ))}
         {restWeight > 0.001 ? (
           <HoldingBar

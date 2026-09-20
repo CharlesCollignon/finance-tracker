@@ -24,7 +24,7 @@ export function Input({ invalid, className, style, ...props }: InputProps) {
       aria-invalid={invalid}
       style={style}
       className={cn(
-        "min-h-12 w-full rounded-md border bg-background px-4 py-2.5 text-base text-foreground",
+        "min-h-12 w-full rounded-control border bg-background px-4 py-2.5 text-base text-foreground",
         invalid ? "border-destructive text-destructive" : "border-border",
         className,
       )}

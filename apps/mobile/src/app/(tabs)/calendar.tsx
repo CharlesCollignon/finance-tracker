@@ -306,7 +306,7 @@ export default function CalendarScreen() {
                       setSelectedDate(day.date);
                       setSelectionKey(monthKey);
                     }}
-                    className={`min-h-12 flex-1 items-center justify-center rounded-2xl border ${
+                    className={`min-h-12 flex-1 items-center justify-center rounded-control border ${
                       selected
                         ? "border-foreground bg-primary"
                         : "border-border bg-card"

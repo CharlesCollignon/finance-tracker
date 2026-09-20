@@ -101,7 +101,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             entering={FadeInUp.duration(220)}
             exiting={FadeOutUp.duration(180)}
             className={cn(
-              "w-full max-w-sm rounded-xl border border-border px-4 py-3",
+              "w-full max-w-sm rounded-card border border-border px-4 py-3",
               SURFACE[entry.variant],
             )}
           >

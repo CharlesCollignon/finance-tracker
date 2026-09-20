@@ -13,6 +13,7 @@ import { useThemeColors } from "@/theme/useThemeColors";
 import { useLedgerBadge } from "@/hooks/useLedgerBadge";
 import { useT } from "@/providers/LocaleProvider";
 import type { Key } from "@finance/core/i18n/t";
+import { RADIUS } from "@/theme/tokens";
 
 type IoniconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -143,7 +144,7 @@ export default function TabsLayout() {
                         minWidth: 8,
                         maxWidth: 8,
                         height: 8,
-                        borderRadius: 4,
+                        borderRadius: RADIUS.pill,
                         transform: [{ translateX: -2 }, { translateY: 2 }],
                       },
                     }

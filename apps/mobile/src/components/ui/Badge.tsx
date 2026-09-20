@@ -13,10 +13,10 @@ export interface BadgeProps extends ViewProps {
 }
 
 const CONTAINER: Record<Variant, string> = {
-  default: "bg-muted rounded-md",
-  outline: "border border-border bg-transparent rounded-md",
-  solid: "bg-foreground rounded-md",
-  surface: "bg-primary/15 rounded-md",
+  default: "bg-muted rounded-control",
+  outline: "border border-border bg-transparent rounded-control",
+  solid: "bg-foreground rounded-control",
+  surface: "bg-primary/15 rounded-control",
 };
 
 const LABEL: Record<Variant, string> = {

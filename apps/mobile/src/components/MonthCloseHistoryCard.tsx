@@ -121,7 +121,7 @@ export function MonthCloseHistoryCard({
         </Text>
       </View>
 
-      <View className="gap-2 rounded-lg border border-border p-3">
+      <View className="gap-2 rounded-control border border-border p-3">
         <Text className="text-sm font-medium">
           {t("monthCloseHistory.readingDayHeading")}
         </Text>
@@ -143,7 +143,7 @@ export function MonthCloseHistoryCard({
       </View>
 
       {history.length > 0 || unrecordedCap !== null ? (
-        <View className="gap-2 rounded-lg border border-border p-3">
+        <View className="gap-2 rounded-control border border-border p-3">
           <Text className="text-sm font-medium">
             {t("common.unrecordedAllowance")}
           </Text>

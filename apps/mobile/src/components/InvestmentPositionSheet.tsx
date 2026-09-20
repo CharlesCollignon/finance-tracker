@@ -120,7 +120,7 @@ export function InvestmentPositionSheet({
           accessibilityLabel={t("position.close")}
           onPress={onClose}
         />
-        <View className="max-h-[90%] rounded-t-3xl border border-border bg-card">
+        <View className="max-h-[90%] rounded-t-card border border-border bg-card">
           <View className="items-center pt-3">
             <SheetGrabber />
           </View>

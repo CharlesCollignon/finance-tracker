@@ -29,10 +29,10 @@ export interface ButtonProps extends PressableProps {
 // The rim on the gold variants is not decoration: a gold fill is 1.7:1
 // against the light ground, so without it the button's edge disappears.
 const CONTAINER: Record<Variant, string> = {
-  default: "bg-primary border border-primary-rim rounded-md",
-  secondary: "bg-secondary rounded-md",
-  outline: "bg-transparent border border-border rounded-md",
-  ghost: "bg-transparent rounded-md",
+  default: "bg-primary border border-primary-rim rounded-control",
+  secondary: "bg-secondary rounded-control",
+  outline: "bg-transparent border border-border rounded-control",
+  ghost: "bg-transparent rounded-control",
   pill: "bg-primary border border-primary-rim rounded-full",
 };
 

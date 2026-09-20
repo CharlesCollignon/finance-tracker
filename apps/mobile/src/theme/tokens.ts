@@ -132,6 +132,29 @@ export const TYPE: Record<"hero" | "figure" | "micro", TextStyle> = {
 /** Digits that hold their column. Spread onto any Text showing an amount. */
 export const TABULAR: TextStyle = { fontVariant: ["tabular-nums"] };
 
+/**
+ * The same four radius roles the classes carry, for the places a class cannot
+ * reach: a `StyleSheet` object, a `<Blur>`'s own style prop, an animated view.
+ *
+ * The counterpart is `borderRadius` in `apps/mobile/tailwind.config.js`, the
+ * way `TYPE` here and `lib/type-scale.ts` on the web are counterparts — the
+ * numbers are stated twice because one file is consumed by Tailwind and the
+ * other by React Native, and neither can import the other. They must agree.
+ *
+ * Before this, those call sites held 4, 12, 24, 28 and 999 as literals, which
+ * is how the phone ended up drawing a corner the classes had no word for.
+ */
+export const RADIUS = {
+  /** Buttons, inputs, chips, menu rows — anything you press. */
+  control: 10,
+  /** A surface holding content. */
+  card: 20,
+  /** A surface holding cards, concentric with `card`. */
+  shell: 26,
+  /** Fully round: a bar's fill, a dot, the quick-add button. */
+  pill: 999,
+} as const;
+
 export const ICON = {
   /** Inline with muted xs text — status dots, chevrons in dense rows. */
   xs: 12,

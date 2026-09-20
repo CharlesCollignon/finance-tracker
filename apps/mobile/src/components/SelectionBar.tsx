@@ -106,7 +106,7 @@ export function SelectionBar({
         accessibilityLabel={t("selectionBar.regionMobile", {
           count: summary.count,
         })}
-        className="gap-3 rounded-2xl border border-border bg-card p-3"
+        className="gap-3 rounded-card border border-border bg-card p-3"
         style={{
           shadowColor: "#000",
           shadowOpacity: 0.2,
@@ -149,7 +149,7 @@ export function SelectionBar({
 
             <ScrollView
               style={{ maxHeight: PICKER_MAX_HEIGHT }}
-              className="rounded-xl border border-border"
+              className="rounded-control border border-border"
               keyboardShouldPersistTaps="handled"
             >
               {groups.map((group) => (
@@ -293,7 +293,7 @@ export function RowCheckbox({
       hitSlop={8}
       onPress={onPress}
       className={cn(
-        "h-6 w-6 items-center justify-center rounded-md border",
+        "h-6 w-6 items-center justify-center rounded-control border",
         checked ? "border-primary bg-primary" : "border-border bg-background",
       )}
     >

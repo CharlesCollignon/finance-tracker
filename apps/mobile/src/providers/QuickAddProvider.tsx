@@ -23,7 +23,7 @@ import { getQuickEntryContext, type QuickEntryContext } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTabBarHeight } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
-import { ICON } from "@/theme/tokens";
+import { ICON, RADIUS } from "@/theme/tokens";
 import { useT } from "@/providers/LocaleProvider";
 
 const EMPTY: QuickEntryContext = {
@@ -148,7 +148,7 @@ function QuickAddFab() {
           {
             height: 56,
             width: 56,
-            borderRadius: 28,
+            borderRadius: RADIUS.pill,
             alignItems: "center",
             justifyContent: "center",
             backgroundColor: colors.primary,

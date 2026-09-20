@@ -37,7 +37,7 @@ export function Skeleton({ className, style, ...props }: SkeletonProps) {
   return (
     <Animated.View
       style={[animatedStyle, style]}
-      className={cn("rounded-lg bg-hairline-strong", className)}
+      className={cn("rounded-control bg-hairline-strong", className)}
       {...props}
     />
   );
@@ -60,10 +60,10 @@ export function LoadingOrb({ label }: { label?: string }) {
 export function ScreenSkeleton({ rows = 4 }: { rows?: number }) {
   return (
     <View className="gap-4">
-      <Skeleton className="h-32 w-full rounded-2xl" />
+      <Skeleton className="h-32 w-full rounded-card" />
       {Array.from({ length: rows }).map((_, index) => (
         <View key={index} className="flex-row items-center gap-3">
-          <Skeleton className="h-9 w-9 rounded-md" />
+          <Skeleton className="h-9 w-9 rounded-control" />
           <View className="flex-1 gap-2">
             <Skeleton className="h-3.5 w-1/2" />
             <Skeleton className="h-3 w-1/3" />

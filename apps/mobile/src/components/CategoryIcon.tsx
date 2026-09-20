@@ -41,7 +41,7 @@ export function CategoryIcon({ icon, className }: CategoryIconProps) {
   return (
     <View
       className={cn(
-        "h-9 w-9 items-center justify-center rounded-md border border-border bg-muted/30",
+        "h-9 w-9 items-center justify-center rounded-control border border-border bg-muted/30",
         className,
       )}
     >
