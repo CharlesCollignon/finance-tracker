@@ -28,7 +28,7 @@ function QuickAddButton() {
       className={cn(
         "flex min-h-10 w-full items-center gap-3 rounded-control px-3 py-2",
         "bg-primary text-sm font-medium text-primary-foreground",
-        "transition-colors duration-200 hover:bg-primary-hover",
+        "transition-colors duration-hover hover:bg-primary-hover",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       )}
     >

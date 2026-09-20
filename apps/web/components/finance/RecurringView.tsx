@@ -386,7 +386,7 @@ export function RecurringView({
                     onClick={() => setActiveTab(type)}
                     className={cn(
                       "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
-                      "transition-colors duration-200",
+                      "transition-colors duration-hover",
                       activeTab === type
                         ? "border-foreground bg-foreground text-background"
                         : "border-border text-muted-foreground hover:text-foreground",

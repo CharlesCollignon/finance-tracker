@@ -4,7 +4,7 @@ import React, { type ButtonHTMLAttributes } from "react";
 import { Button as BaseButton } from "@base-ui/react/button";
 
 export const buttonVariants = cva(
-  "font-medium rounded-control cursor-pointer duration-200 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] transition-all",
+  "font-medium rounded-control cursor-pointer duration-hover flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] transition-all",
   {
     variants: {
       variant: {
@@ -72,7 +72,7 @@ export const Button = ({
 /** Circular chip for a pill button's trailing icon — nests flush inside the button's end padding. */
 export function ButtonNub({ children }: { children: React.ReactNode }) {
   return (
-    <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-black/10 transition-transform duration-500 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
+    <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-black/10 transition-transform duration-hover [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
       {children}
     </span>
   );

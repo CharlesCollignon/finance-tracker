@@ -346,7 +346,7 @@ export function SwipeToast({
               type="button"
               className={cn(
                 "shrink-0 rounded-control border border-current/30 px-2 py-1",
-                "text-xs font-semibold transition-opacity duration-200",
+                "text-xs font-semibold transition-opacity duration-hover",
                 "hover:opacity-80 focus-visible:outline-none",
                 "focus-visible:ring-2 focus-visible:ring-current",
               )}
@@ -363,7 +363,7 @@ export function SwipeToast({
             <button
               type="button"
               aria-label="Close"
-              className="shrink-0 rounded-control opacity-60 transition-opacity duration-200 hover:opacity-100"
+              className="shrink-0 rounded-control opacity-60 transition-opacity duration-hover hover:opacity-100"
               onClick={() => close("close")}
             >
               <X size={ICON.sm} weight="bold" />

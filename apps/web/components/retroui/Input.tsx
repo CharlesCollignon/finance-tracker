@@ -18,7 +18,7 @@ export const Input: React.FC<InputProps> = ({
       className={cn(
         "w-full min-h-11 rounded-control border border-border px-3 py-2",
         "bg-input text-foreground text-sm",
-        "transition-colors duration-200",
+        "transition-colors duration-hover",
         "placeholder:text-muted-foreground",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         props["aria-invalid"] && "border-destructive text-destructive",

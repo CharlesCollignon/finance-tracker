@@ -20,7 +20,7 @@ import { useLocale } from "@/lib/locale-context";
 
 const base =
   "inline-flex items-center justify-center rounded-full font-medium " +
-  "transition-all duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] " +
+  "transition-all duration-hover [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
   "focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--marketing-ground)] " +
   "active:scale-[0.98]";

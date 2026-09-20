@@ -25,6 +25,9 @@ export function Skeleton({ className, style, ...props }: SkeletonProps) {
     if (reduce) {
       return;
     }
+    // Deliberately a literal and not a DURATION entry: this is a loop, not an
+    // answer to anything the reader did, and a category with one member is
+    // worth less than the number with a comment beside it.
     pulse.value = withRepeat(
       withTiming(1, { duration: 850, easing: Easing.inOut(Easing.quad) }),
       -1,

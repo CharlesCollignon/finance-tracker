@@ -223,7 +223,7 @@ export function InvestmentsView({
                     onClick={() => setActiveWallet(walletId)}
                     className={cn(
                       "shrink-0 rounded-full border px-4 py-2 text-sm font-semibold",
-                      "transition-colors duration-300",
+                      "transition-colors duration-hover",
                       active
                         ? "border-foreground bg-foreground text-background"
                         : "border-border text-muted-foreground hover:text-foreground",
@@ -287,12 +287,7 @@ function rangeLabel(range: PriceRange, allLabel: string): string {
   return range === "ALL" ? allLabel : range;
 }
 
-function WalletPanel({
-  column,
-  priceSeries,
-  onEdit,
-  onAdd,
-}: WalletPanelProps) {
+function WalletPanel({ column, priceSeries, onEdit, onAdd }: WalletPanelProps) {
   const t = useT();
   const formatEuro = useFormatCurrency();
   const showPl = column.hasMarketSnapshot && column.totalGainLoss !== 0;
@@ -491,7 +486,10 @@ function InvestmentPositionRow({
           on one screen. */}
       <div className="mt-2 flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 text-xs sm:text-sm">
-          <InlineMetric label={valueLabel} value={formatEuro(item.marketValue)} />
+          <InlineMetric
+            label={valueLabel}
+            value={formatEuro(item.marketValue)}
+          />
           <InlineMetric
             label={t("wallets.invested")}
             value={formatEuro(item.totalInvested)}
@@ -500,7 +498,9 @@ function InvestmentPositionRow({
             label={t("wallets.profitLoss")}
             value={formatSignedEuro(item.gainLoss, formatEuro)}
             suffix={
-              returnPct === null ? undefined : formatSignedPercent(returnPct, locale)
+              returnPct === null
+                ? undefined
+                : formatSignedPercent(returnPct, locale)
             }
             tone={
               item.gainLoss > 0
@@ -586,10 +586,7 @@ function InlineMetric({
   );
 }
 
-const PRICE_TONE_VARS: Record<
-  "positive" | "negative" | "neutral",
-  string
-> = {
+const PRICE_TONE_VARS: Record<"positive" | "negative" | "neutral", string> = {
   positive: "--success",
   negative: "--destructive",
   neutral: "--muted-foreground",

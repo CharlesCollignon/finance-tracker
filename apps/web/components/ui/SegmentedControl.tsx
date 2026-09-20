@@ -63,7 +63,7 @@ export function SegmentedControl<T extends string>({
         aria-hidden
         className={cn(
           "pointer-events-none absolute inset-y-1 left-1 -z-10 rounded-full bg-primary",
-          "transition-transform duration-200 ease-out",
+          "transition-transform duration-hover ease-out",
         )}
         style={{
           width: `calc((100% - 0.5rem) / ${segments.length})`,
@@ -89,7 +89,7 @@ export function SegmentedControl<T extends string>({
             }}
             className={cn(
               "rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap",
-              "transition-colors duration-200 sm:text-sm",
+              "transition-colors duration-hover sm:text-sm",
               "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
               active
                 ? "text-primary-foreground"

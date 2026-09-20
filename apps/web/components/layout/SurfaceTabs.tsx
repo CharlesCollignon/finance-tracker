@@ -47,7 +47,7 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
             aria-current={active ? "page" : undefined}
             className={cn(
               "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium",
-              "transition-colors duration-200",
+              "transition-colors duration-hover",
               active
                 ? "bg-foreground text-background"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",

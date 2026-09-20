@@ -194,7 +194,7 @@ function Section({
           aria-current={active ? "page" : undefined}
           className={cn(
             "flex min-h-10 flex-1 items-center gap-3 rounded-control px-3 py-2",
-            "text-sm font-medium transition-colors duration-200",
+            "text-sm font-medium transition-colors duration-hover",
             "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
             active
               ? "text-primary-ink bg-primary/10"
@@ -219,7 +219,7 @@ function Section({
             })}
             className={cn(
               "text-muted-foreground shrink-0 rounded-control p-1.5",
-              "hover:bg-muted hover:text-foreground transition-colors duration-200",
+              "hover:bg-muted hover:text-foreground transition-colors duration-hover",
               "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
             )}
           >
@@ -227,7 +227,7 @@ function Section({
               size={ICON.sm}
               weight="bold"
               className={cn(
-                "transition-transform duration-200",
+                "transition-transform duration-hover",
                 !open && "-rotate-90",
               )}
             />
@@ -256,7 +256,7 @@ function Section({
                 aria-hidden="true"
                 className={cn(
                   "pointer-events-none absolute top-0 left-0 overflow-visible",
-                  "transition-opacity duration-200",
+                  "transition-opacity duration-hover",
                   open ? "opacity-100" : "opacity-0",
                 )}
               >
@@ -310,7 +310,7 @@ function Section({
                     style={{ height: ROW_HEIGHT, paddingLeft: INDENT }}
                     className={cn(
                       "flex items-center rounded-control pr-3 text-sm",
-                      "transition-colors duration-200",
+                      "transition-colors duration-hover",
                       "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
                       on
                         ? "text-primary-ink font-medium"

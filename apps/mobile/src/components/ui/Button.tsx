@@ -11,6 +11,7 @@ import { hapticLight } from "@/lib/haptics";
 import { cn } from "@/lib/cn";
 import { ICON, type COLORS } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { DURATION } from "@finance/core/motion";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -101,10 +102,10 @@ export function Button({
         className,
       )}
       onPressIn={() => {
-        scale.value = withTiming(0.98, { duration: 120 });
+        scale.value = withTiming(0.98, { duration: DURATION.press });
       }}
       onPressOut={() => {
-        scale.value = withTiming(1, { duration: 150 });
+        scale.value = withTiming(1, { duration: DURATION.press });
       }}
       onPress={(event) => {
         void hapticLight();

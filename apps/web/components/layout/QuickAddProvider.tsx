@@ -158,7 +158,7 @@ function QuickAddFab() {
         "bottom-[calc(var(--shell-bottom-nav-height)+var(--shell-bottom-nav-inset)+env(safe-area-inset-bottom,0px)+1rem)]",
         "flex h-14 w-14 items-center justify-center rounded-full",
         "bg-primary text-primary-foreground shadow-lg",
-        "transition-transform duration-200 active:scale-95",
+        "transition-transform duration-hover active:scale-95",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       )}
     >

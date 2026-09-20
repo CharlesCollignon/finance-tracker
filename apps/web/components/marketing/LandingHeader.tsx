@@ -35,7 +35,7 @@ function Wordmark() {
 }
 
 const linkClass =
-  "text-sm text-white/60 transition-colors duration-200 hover:text-white";
+  "text-sm text-white/60 transition-colors duration-hover hover:text-white";
 
 /** The seven feature pages, behind one nav entry.
  *
@@ -80,7 +80,7 @@ function ProductMenu({ pathname }: { pathname: string }) {
       <button
         type="button"
         className={cn(
-          "flex items-center gap-1.5 text-sm transition-colors duration-200",
+          "flex items-center gap-1.5 text-sm transition-colors duration-hover",
           active || open ? "text-white" : "text-white/60 hover:text-white",
         )}
         aria-expanded={open}
@@ -92,7 +92,7 @@ function ProductMenu({ pathname }: { pathname: string }) {
           size={12}
           weight="bold"
           className={cn(
-            "transition-transform duration-200",
+            "transition-transform duration-hover",
             open && "rotate-180",
           )}
         />
@@ -112,7 +112,7 @@ function ProductMenu({ pathname }: { pathname: string }) {
                 role="menuitem"
                 onClick={() => setOpenForPath(null)}
                 className={cn(
-                  "flex flex-col gap-0.5 rounded-control px-3 py-2.5 transition-colors duration-200",
+                  "flex flex-col gap-0.5 rounded-control px-3 py-2.5 transition-colors duration-hover",
                   pathname === href ? "bg-white/10" : "hover:bg-white/[0.07]",
                 )}
               >

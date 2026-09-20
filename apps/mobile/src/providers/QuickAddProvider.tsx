@@ -25,6 +25,7 @@ import { useTabBarHeight } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON, RADIUS } from "@/theme/tokens";
 import { useT } from "@/providers/LocaleProvider";
+import { DURATION } from "@finance/core/motion";
 
 const EMPTY: QuickEntryContext = {
   categories: [],
@@ -135,10 +136,10 @@ function QuickAddFab() {
         accessibilityRole="button"
         accessibilityLabel={t("common.addTransaction")}
         onPressIn={() => {
-          scale.value = withTiming(0.92, { duration: 110 });
+          scale.value = withTiming(0.92, { duration: DURATION.press });
         }}
         onPressOut={() => {
-          scale.value = withTiming(1, { duration: 140 });
+          scale.value = withTiming(1, { duration: DURATION.press });
         }}
         onPress={() => {
           void hapticMedium();

@@ -11,6 +11,7 @@ import { cn } from "@/lib/cn";
 import { hapticSelection } from "@/lib/haptics";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { RADIUS } from "@/theme/tokens";
+import { DURATION } from "@finance/core/motion";
 
 export interface Segment<T extends string> {
   value: T;
@@ -59,7 +60,7 @@ export function SegmentedControl<T extends string>({
   // withTiming defaults to ReduceMotion.System, so the pill simply appears in
   // its new place when the user has asked for less motion.
   const offset = useDerivedValue(() =>
-    withTiming(index * slot, { duration: 200 }),
+    withTiming(index * slot, { duration: DURATION.press }),
   );
   const pill = useAnimatedStyle(() => ({
     transform: [{ translateX: offset.value }],

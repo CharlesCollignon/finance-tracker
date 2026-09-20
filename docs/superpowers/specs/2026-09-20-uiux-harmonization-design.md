@@ -1,7 +1,7 @@
 # One vocabulary for three surfaces
 
 **Date:** 2026-09-20
-**Status:** Approved — phases 1 to 3 shipped, phases 4 to 6 outstanding
+**Status:** Approved — phases 1 to 4 shipped, phases 5 and 6 outstanding
 
 ## What this changes
 
@@ -153,7 +153,21 @@ No arrival timing changes.
 
 The phone's `Skeleton` shimmer at 850ms is left alone. It is a loop, not a
 response, and a third category with one member is a worse answer than a
-literal with a comment.
+literal with a comment. It now carries that comment.
+
+**Two things this phase turned up, 2026-09-20.**
+
+A fourth number was arriving without anyone writing it: a `transition-colors`
+with no `duration-*` beside it falls back to Tailwind's own
+`--default-transition-duration`, 150ms, and 16 elements on the public pages
+were drawing it. Pointing that default at the hover token means a transition
+written without a duration is still on the scale.
+
+And the thing this section warns about — "forcing a hover onto `enter: 500`
+would be actively worse; a half-second hover feels broken" — already existed.
+`ButtonNub` ran its hover translate at `duration-500`. It is the one place in
+phase 4 where the timing genuinely changes, and it changes because 500ms was
+wrong, not because a token said so.
 
 ## Marketing's three greys
 

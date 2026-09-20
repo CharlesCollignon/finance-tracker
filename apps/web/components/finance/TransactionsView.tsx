@@ -602,7 +602,7 @@ export function TransactionsView({
                       onClick={() => setFilter(option.value)}
                       className={cn(
                         "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
-                        "transition-colors duration-200",
+                        "transition-colors duration-hover",
                         filter === option.value
                           ? "border-foreground bg-foreground text-background"
                           : "border-border text-muted-foreground hover:text-foreground",

@@ -25,7 +25,7 @@ import { getLocale, getT } from "@/lib/locale";
  */
 const footerLink =
   "flex min-h-11 items-center text-sm text-white/45 " +
-  "transition-colors duration-200 hover:text-white lg:min-h-0";
+  "transition-colors duration-hover hover:text-white lg:min-h-0";
 
 const footerList = "mt-2 flex flex-col lg:mt-4 lg:gap-3";
 

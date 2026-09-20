@@ -142,7 +142,7 @@ export function MonthScore({
             >
               <div
                 className={cn(
-                  "h-full rounded-full transition-[width] duration-500",
+                  "h-full rounded-full transition-[width] duration-enter",
                   over ? "bg-destructive" : "bg-success",
                 )}
                 // Capped at the full width: a bar drawn past its own track

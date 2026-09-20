@@ -171,7 +171,7 @@ export function AccountMenu({
             "relative flex min-w-[44px] flex-1 flex-col items-center",
             "justify-center gap-0.5 rounded-full mx-0.5 my-1 px-1 py-1",
             "text-[10px] font-medium sm:text-xs",
-            "transition-colors duration-200",
+            "transition-colors duration-hover",
             active
               ? "bg-primary/15 text-primary-ink"
               : "text-muted-foreground hover:text-foreground",
@@ -196,7 +196,7 @@ export function AccountMenu({
         onClick={() => setOpen((value) => !value)}
         className={cn(
           "flex w-full min-h-10 items-center gap-3 rounded-control px-3 py-2",
-          "text-sm font-medium transition-colors duration-200",
+          "text-sm font-medium transition-colors duration-hover",
           active
             ? "bg-primary/10 text-primary-ink"
             : "text-muted-foreground hover:bg-muted hover:text-foreground",

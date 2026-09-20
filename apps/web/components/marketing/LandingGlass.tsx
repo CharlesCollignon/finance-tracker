@@ -22,7 +22,7 @@ function ArrowNub({ className }: { className?: string }) {
       className={cn(
         "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
         "border border-white/15 bg-white/10 text-white/80",
-        "transition-all duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]",
+        "transition-all duration-hover [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]",
         "group-hover:border-white/25 group-hover:bg-white/20 group-hover:text-white",
         "group-hover:-translate-y-0.5 group-hover:translate-x-0.5",
         className,

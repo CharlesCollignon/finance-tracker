@@ -97,7 +97,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
           size={ICON.xs}
           weight="bold"
           className={cn(
-            "shrink-0 transition-transform duration-200",
+            "shrink-0 transition-transform duration-hover",
             open && "rotate-180",
           )}
         />

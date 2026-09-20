@@ -35,7 +35,7 @@ export function Switch({
       onClick={() => onChange(!checked)}
       className={cn(
         "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full",
-        "border border-border transition-colors duration-200",
+        "border border-border transition-colors duration-hover",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         checked ? "bg-primary" : "bg-muted",
         disabled && "cursor-not-allowed opacity-50",
@@ -44,7 +44,7 @@ export function Switch({
     >
       <span
         className={cn(
-          "pointer-events-none ml-0.5 size-4.5 rounded-full transition-transform duration-200",
+          "pointer-events-none ml-0.5 size-4.5 rounded-full transition-transform duration-hover",
           checked
             ? "translate-x-5 bg-primary-foreground"
             : "translate-x-0 bg-foreground/70",
