@@ -8,12 +8,13 @@ import { monthReadModel } from "@/lib/month-read/client";
 /**
  * Where a wallet read comes from.
  *
- * The same endpoint, key and model as the month read and the Bearing's
- * arrangement — `lib/month-read/client.ts` is the template and this is a
- * third instance of it rather than a new integration. One key, one model, as
- * `lib/bearing/client.ts` established.
+ * The same endpoint, key and model as the month read —
+ * `lib/month-read/client.ts` is the template and this is a second instance of
+ * it rather than a new integration. One key, one model; the Bearing's
+ * arrangement was a third instance of the same template until it was retired
+ * with the arranger.
  *
- * The house rules those two set are obeyed rather than restated: the adapter
+ * The house rules that file sets are obeyed rather than restated: the adapter
  * never throws, `null` means "no answer right now", an explicit
  * `AbortController` rather than `AbortSignal.timeout`, the provider's
  * response body is never logged because it can quote the prompt back, and
@@ -181,9 +182,8 @@ export function createMistralWalletReadSource(
  * envelope.
  */
 function parseAnswer(raw: unknown): unknown | null {
-  const content = (
-    raw as { choices?: { message?: { content?: unknown } }[] }
-  )?.choices?.[0]?.message?.content;
+  const content = (raw as { choices?: { message?: { content?: unknown } }[] })
+    ?.choices?.[0]?.message?.content;
 
   if (typeof content !== "string") {
     return null;

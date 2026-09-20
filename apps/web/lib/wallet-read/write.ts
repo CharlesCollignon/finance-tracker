@@ -30,7 +30,7 @@ type Client = SupabaseClient<Database>;
  *
  * One path, shared by the server action the surface presses and the route the
  * phone posts to, so there is one order of operations and one set of words
- * for every outcome. The shape is `lib/bearing/write.ts` exactly, because the
+ * for every outcome. The shape is `lib/month-read/write.ts` exactly, because the
  * sequence — decide, reserve, ask, verify, store or refund — is the part that
  * must not vary between features spending the same key.
  *

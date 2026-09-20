@@ -25,10 +25,10 @@ type Client = SupabaseClient<Database>;
  * Read straight through row level security, written only via the three
  * `security definer` functions in migration 033 — because a counter a client
  * may UPDATE is a counter a client may reset. The shape is
- * `lib/bearing/store.ts` exactly.
+ * `lib/month-read/store.ts` exactly.
  *
- * Tolerant of the migration not having run, for the same reason the other two
- * stores are: a missing optional table must not take down a surface whose
+ * Tolerant of the migration not having run, for the same reason the other
+ * store is: a missing optional table must not take down a surface whose
  * arithmetic works perfectly well without it. Somebody who has not applied
  * 033 still gets the whole look-through, with no Review button.
  */
