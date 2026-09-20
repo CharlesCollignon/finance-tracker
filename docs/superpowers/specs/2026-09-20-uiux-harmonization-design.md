@@ -1,7 +1,7 @@
 # One vocabulary for three surfaces
 
 **Date:** 2026-09-20
-**Status:** Approved — phases 1 to 5 shipped, phase 6 outstanding
+**Status:** Shipped — all six phases, 2026-09-20/21
 
 ## What this changes
 

@@ -541,7 +541,7 @@ export function TransactionsView({
                     placeholder={t("ledger.searchPlaceholder")}
                     aria-label={t("ledger.searchLabel")}
                     className={cn(
-                      "h-9 w-full rounded-full border border-border bg-background",
+                      "h-9 min-h-11 lg:min-h-0 w-full rounded-full border border-border bg-background",
                       "pl-9 pr-3 text-sm text-foreground outline-none",
                       "focus:border-foreground",
                     )}
@@ -553,7 +553,7 @@ export function TransactionsView({
                     onChange={(event) => setCategoryFilter(event.target.value)}
                     aria-label={t("ledger.filterByCategory")}
                     className={cn(
-                      "h-9 min-w-0 flex-1 rounded-full border border-border",
+                      "h-9 min-h-11 lg:min-h-0 min-w-0 flex-1 rounded-full border border-border",
                       "bg-background px-3.5 text-sm text-foreground outline-none",
                       "focus:border-foreground sm:w-44 sm:flex-none",
                     )}
@@ -571,7 +571,7 @@ export function TransactionsView({
                       onChange={(event) => setTagFilter(event.target.value)}
                       aria-label={t("ledger.filterByTag")}
                       className={cn(
-                        "h-9 min-w-0 flex-1 rounded-full border border-border",
+                        "h-9 min-h-11 lg:min-h-0 min-w-0 flex-1 rounded-full border border-border",
                         "bg-background px-3.5 text-sm text-foreground outline-none",
                         "focus:border-foreground sm:w-36 sm:flex-none",
                       )}

@@ -378,7 +378,7 @@ function EnvelopeFeeField({
             value={value}
             onChange={(event) => setValue(event.target.value)}
             placeholder="0,75"
-            className="h-10 w-24 rounded-control border border-border bg-background px-3 text-base"
+            className="h-10 min-h-11 lg:min-h-0 w-24 rounded-control border border-border bg-background px-3 text-base"
           />
           <span className="text-sm text-muted-foreground">%</span>
         </div>
@@ -458,7 +458,7 @@ function TargetEditor({
                   ),
                 )
               }
-              className="h-10 w-20 rounded-control border border-border bg-background px-2 text-right tabular-nums"
+              className="h-10 min-h-11 lg:min-h-0 w-20 rounded-control border border-border bg-background px-2 text-right tabular-nums"
             />
             <span className="text-muted-foreground">%</span>
           </span>
@@ -515,7 +515,7 @@ function PeaOpenedField({
           type="date"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          className="h-10 rounded-control border border-border bg-background px-3 text-base"
+          className="h-10 min-h-11 lg:min-h-0 rounded-control border border-border bg-background px-3 text-base"
         />
         <Button
           variant="outline"

@@ -248,7 +248,7 @@ function InvestmentPositionForm({
                 id="recurringTemplateId"
                 name="recurringTemplateId"
                 required
-                className="h-10 w-full rounded-control border border-border bg-input px-3 text-base"
+                className="h-10 min-h-11 lg:min-h-0 w-full rounded-control border border-border bg-input px-3 text-base"
                 value={recurringTemplateId}
                 onChange={(event) => setRecurringTemplateId(event.target.value)}
               >

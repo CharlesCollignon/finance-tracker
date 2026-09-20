@@ -79,8 +79,6 @@ export const en = {
     /** The count on a destination that has things waiting behind it. */
     waiting: "{count} waiting",
     /** The control that folds a surface's views away, and unfolds them. */
-    collapseViews: "Hide {surface} views",
-    expandViews: "Show {surface} views",
   },
 
   /**

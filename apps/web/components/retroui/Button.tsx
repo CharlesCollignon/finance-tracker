@@ -4,7 +4,7 @@ import React, { type ButtonHTMLAttributes } from "react";
 import { Button as BaseButton } from "@base-ui/react/button";
 
 export const buttonVariants = cva(
-  "font-medium rounded-control cursor-pointer duration-hover flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] transition-all",
+  "font-medium rounded-control cursor-pointer duration-hover flex justify-center items-center min-h-11 lg:min-h-0 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] transition-all",
   {
     variants: {
       variant: {

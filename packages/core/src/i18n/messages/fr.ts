@@ -37,8 +37,6 @@ export const fr: Messages = {
     walletsLookThrough: "Transparence",
 
     waiting: "{count} en attente",
-    collapseViews: "Masquer les vues de {surface}",
-    expandViews: "Afficher les vues de {surface}",
   },
 
   pages: {

@@ -419,7 +419,7 @@ function Step({
       type="button"
       onClick={onPress}
       aria-label={label}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-border hover:bg-accent"
+      className="flex h-9 w-9 min-h-11 min-w-11 lg:min-h-0 lg:min-w-0 shrink-0 items-center justify-center rounded-control border border-border hover:bg-accent"
     >
       {children}
     </button>

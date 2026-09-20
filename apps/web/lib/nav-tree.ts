@@ -47,19 +47,14 @@ export function branchPath(index: number): string {
   } ${y} H ${BRANCH_END}`;
 }
 
-/** The same branch, but traced from the very top — the line that draws in. */
+/** The same branch, traced from the very top: the accent on the view you
+ * are in. It used to draw itself in on a dash offset when a section
+ * unfolded; sections do not fold any more, so it is simply drawn. */
 export function reachPath(index: number): string {
   const y = rowY(index);
   return `M ${TRUNK_X} 0 V ${y - RADIUS} A ${RADIUS} ${RADIUS} 0 0 0 ${
     TRUNK_X + RADIUS
   } ${y} H ${BRANCH_END}`;
-}
-
-/** How long that traced path is, so it can be drawn with a dash offset. */
-export function reachLength(index: number): number {
-  const straight = rowY(index) - RADIUS;
-  const corner = (Math.PI * RADIUS) / 2;
-  return straight + corner + (BRANCH_END - TRUNK_X - RADIUS);
 }
 
 /** The block a surface's children occupy, in pixels. */
