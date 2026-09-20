@@ -14,7 +14,6 @@ import { previousMonthKey } from "@finance/core/month-close";
 import { buildForwardProjection, buildRunway } from "@finance/core/projection";
 import { buildStillToCome } from "@finance/core/still-to-come";
 import type { Database, MonthlySummary } from "@finance/core/types/database";
-import type { Locale } from "@finance/core/i18n/locale";
 import {
   getInvestmentTransactions,
   getMonthComparison,
@@ -87,28 +86,21 @@ export interface GatheredBearingFacts extends BearingFacts {
  * No new arithmetic. Every figure here comes out of an engine that some other
  * surface already renders — the pulse from Month, the projection and runway
  * from Plan, the returns, allocation and costs from Wallets — which is the
- * property that makes the whole screen checkable: a reader who doubts a tile
- * can go to the surface it links to and find the same number.
+ * property that makes the whole screen checkable: a reader who doubts a
+ * figure can go to the surface it links to and find the same number.
  *
- * Recomputed server-side on every arrangement, and deliberately not accepted
- * from the client. The page already holds all of this and passing it in would
- * be a real saving — and it would make every figure the model sees a figure
- * the client supplied, which is the exact opposite of the guarantee this
- * feature exists to make. This is the shortcut a later change will reach for;
- * it must not be taken.
+ * Gathered server-side on every load of the page, and deliberately never
+ * accepted from the browser. The client already holds most of these figures
+ * once, and posting them back up would be a real saving — and it would make
+ * every figure on the landing page one the client supplied, which is the
+ * exact opposite of the property above. The arranger that used to re-gather
+ * this pack for a model is gone; the rule outlived it, because it was never
+ * about the model. This is the shortcut a later change will reach for; it
+ * must not be taken.
  */
 export async function gatherBearingFacts(
   userId: string,
   client?: Client,
-  /**
-   * Build the pack in this language rather than the request's.
-   *
-   * Used to render stored captions in the language they were written in.
-   * Nothing about the figures changes — only the labels — so the digest is
-   * identical either way and a language switch never makes an arrangement
-   * look stale.
-   */
-  localeOverride?: Locale,
 ): Promise<GatheredBearingFacts> {
   const today = todayIsoLocal();
   const { year, month } = getCurrentMonth();
@@ -196,7 +188,7 @@ export async function gatherBearingFacts(
 
   // Hoisted above the projection, which labels its months with it. The
   // Bearing used to read "Où le compte arrive d'ici July 2027" in French.
-  const locale = localeOverride ?? (await getLocale());
+  const locale = await getLocale();
 
   const projection = buildForwardProjection({
     templates,
@@ -246,10 +238,10 @@ export async function gatherBearingFacts(
   ).reduce((sum, need) => sum + need.monthlyTotal, 0);
 
   // Counted rather than listed. How many entries are uncategorised is worth
-  // telling the arranger, because a position built on a partially filed month
-  // is a partially known position. Which merchants they are is not its
-  // business — and unlike a month read, this pack never sees a category name
-  // at all.
+  // stating, because a position built on a partially filed month is a
+  // partially known position. Which merchants they are is not this pack's
+  // business — and unlike a month read, it never sees a category name at
+  // all.
   //
   // Alongside it, the two further reads the spine's action row needs and
   // nothing here held yet — moved from the Month page's own
