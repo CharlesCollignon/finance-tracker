@@ -270,21 +270,27 @@ shows, which is what makes it checkable rather than a second source of truth.
 _Avoid_: dashboard, overview, home, net worth
 
 **Tile**:
-One datum on the bearing: a label, a value, and the surface that explains it.
-The unit the layout is made of, and the unit a model chooses between — which
-is why a tile is a figure rather than a component, and why choosing one is
-the same act as naming a datum.
-_Avoid_: card, widget, stat, KPI
+One datum on the bearing: a label, a value, and — where there is an honest
+one — the surface that explains it. A tile is a figure rather than a
+component, which is why naming one is the same act as naming a datum, and
+why a tile with nowhere to lead leads nowhere: inventing a destination would
+teach people that pressing tiles is a coin flip.
+_Avoid_: widget, stat, KPI
 
-**Arrangement**:
-Which tiles the bearing shows, in what order, and the few words that may sit
-beside one. Proposed by a model from the whole pack and stored; the app has
-its own ordering underneath, so a deployment with no model key still has a
-bearing rather than an empty screen.
-_Avoid_: dashboard config, personalisation, layout
+**Card**:
+One of the five groups the bearing is drawn as, named by the family its
+tiles already share: this month, the accounts, the run, the year ahead, the
+wallets. Collapsed it shows its family's first figure; opened it shows them
+all. There are five because every datum carries a family anyway, which is a
+grouping nobody has to choose and no model has to propose — an earlier
+bearing had a model ordering twelve of twenty-nine figures over a layout the
+reader could drag, and three mechanisms answering "which of these matters?"
+never answered the question the screen is opened for.
+_Avoid_: section, bento, widget, group
 
-**Pinned tile**:
-A tile someone has dragged into a slot themselves. A later arrangement fills
-only the slots that are not pinned, because a model reshuffling a choice
-somebody just made with their finger is the feature undoing its own point.
-_Avoid_: locked, favourite, sticky
+**Panel**:
+What a card draws under its figures when it is opened — the blocks that show
+where the figure came from, fetched only when someone asks for them. Distinct
+from the card, which is the name and the figure that are true whether or not
+anyone opens it.
+_Avoid_: drawer, expander, detail view
