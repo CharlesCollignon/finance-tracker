@@ -40,9 +40,12 @@ export const STAGGER_STEP_MS = 40;
 /**
  * Beyond this many steps the delay stops growing.
  *
- * A twelve-tile grid staggered without a cap leaves the last tile arriving
- * half a second after the first, which reads as the screen being slow rather
- * than as a flourish.
+ * A long list staggered without a cap leaves its last item arriving half a
+ * second after its first, which reads as the screen being slow rather than as
+ * a flourish. The cap was written for a twelve-tile grid that no longer
+ * exists; what still reaches it is the phone's `Stagger`, which fades in
+ * whatever list it is given and has no more idea how long that is than the
+ * grid did.
  */
 export const STAGGER_MAX_STEPS = 8;
 

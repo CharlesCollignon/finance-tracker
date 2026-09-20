@@ -350,8 +350,8 @@ The app's landing page is the **Bearing**: one screen of figures answering
 "where do I stand, and where is this heading". Everything on it is computed by
 an engine some other surface already renders — the pulse from Month, the
 projection and runway from Plan, the returns, allocation and fund costs from
-Wallets — so every figure links to the page where its number is explained and
-the whole screen is checkable rather than a second source of truth.
+Wallets — so a figure links to the page where its number is explained and the
+whole screen is checkable rather than a second source of truth.
 
 Month keeps its `/dashboard` URL and moves under the Bearing in the nav, the
 way Calendar and History sit under the Ledger. The bar holds five surfaces;

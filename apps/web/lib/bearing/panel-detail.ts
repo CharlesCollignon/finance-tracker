@@ -193,20 +193,20 @@ export type PanelDetail =
  * What sits under a figure, fetched only when somebody asks to see it.
  *
  * One branch per family, which is now also one branch per card. It was the
- * right shape before that too: two tiles in the same family wanted the same
- * underlying rows even when the old per-tile block table showed them
- * different blocks, so fetching per tile would have asked the database the
- * same question twice for `free` and `savings-rate`.
+ * right shape before that too: two figures in the same family wanted the same
+ * underlying rows even when the surface showed them different blocks, so
+ * fetching per figure would have asked the database the same question twice
+ * for `free` and `savings-rate`.
  *
- * `blocks` is the exception to that, and it is narrow on purpose: exactly two
- * things are fetched per panel rather than per family, and both are ones a
- * single tile in their family draws. The month read is a dozen reads and two
- * fact packs on the wire; the review queue is four more reads and the whole
- * category list. Charging the other eight month tiles and the other four
- * `now` tiles for them would be paying for a block nobody asked to see. The
- * list is a hint about work, never about access: every branch here reads only
- * this user's own rows, so a caller that lies about its blocks gets nothing
- * it was not already entitled to.
+ * `blocks` is the exception to that, and it is narrow on purpose: a few things
+ * are fetched per panel rather than per family, and each is one a single
+ * figure in its family draws. The month read is a dozen reads and two fact
+ * packs on the wire; the review queue is four more reads and the whole
+ * category list. Charging a whole card for them when nobody asked to see them
+ * would be paying for a block nobody is looking at. The list is a hint about
+ * work, never about access: every branch here reads only this user's own
+ * rows, so a caller that lies about its blocks gets nothing it was not
+ * already entitled to.
  *
  * Nothing here decides anything. Every derived figure comes out of an engine
  * in `packages/core` that another surface already renders from — which is the
@@ -250,8 +250,8 @@ async function gatherNow(
     monthFigures(userId, year, month, "current", locale),
     getRecentBankMovements(userId),
     getBankAccounts(userId),
-    // Four reads, and only one of this family's five tiles draws them. The
-    // review queue is `inbox-pending`'s panel and nobody else's.
+    // Four reads, and only one of this family's five figures draws them. The
+    // review queue is `inbox-pending`'s block and nobody else's.
     blocks.includes("review-inbox") ? gatherInbox(userId, locale) : null,
   ]);
 

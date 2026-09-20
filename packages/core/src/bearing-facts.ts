@@ -62,7 +62,7 @@ export interface BearingFacts {
    * Nothing worth spending a model call on.
    *
    * The same flag `MonthFacts` carries and for the same reason: a confident
-   * arrangement of an empty account is the single worst thing this feature
+   * paragraph about an empty account is the single worst thing a model call
    * could produce. Read by `decideMonthReadWrite`, which is shared.
    */
   thin: boolean;
@@ -554,7 +554,7 @@ export function buildBearingFacts(
     missing,
     // Thin is about the position, not the pack. A pack can carry half a dozen
     // datums that are all zero — a new account with a cap set and nothing in
-    // it — and arranging those is still an expensive way to show somebody
+    // it — and writing about those is still an expensive way to show somebody
     // nothing.
     thin:
       bearing.netPosition === null &&

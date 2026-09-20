@@ -1454,14 +1454,19 @@ export const en = {
    * under it — the hero itself being drawn inside a Bearing panel on both
    * clients, which is the only place it renders.
    *
-   * The Bearing spine borrows these labels for its own headline, but it does
-   * not borrow all of them evenly: `headlineShort` and `headlineFree` are
-   * read on the spine and in both heroes, while **`headlineLeft` renders on
-   * the spine alone**. `pulseHeadline` returns it only when `onHand` is
-   * null, and both heroes call `pulseHeadline` only when it is not — so the
-   * hero can never reach the one label that says a figure is the month's
-   * arithmetic rather than money in an account. Changing its wording changes
-   * one surface, not three.
+   * Three headline labels, and they are not evenly reachable. Both heroes
+   * call `pulseHeadline` only when the balance is readable, so the only two
+   * they can ever show are `headlineShort` and `headlineFree`. The Bearing's
+   * own headline reaches for `headlineShort` directly — the same negative
+   * `free`, said in the same words on both clients — and calls the other two
+   * cases by the fact pack's names rather than by these.
+   *
+   * That leaves **`headlineLeft` rendering nowhere today**: `pulseHeadline`
+   * returns it only when `onHand` is null, and nothing calls it in that
+   * state. It stays because the function's contract needs it — a pulse with
+   * no balance is an ordinary pulse, and its headline is the month's
+   * arithmetic rather than money in an account, which is precisely the
+   * distinction the other two labels must not be stretched over.
    *
    * The five explanation lines are the phone's alone: web's hero dropped
    * `pulseExplanation` in favour of the terms it spells out in figures, and
@@ -1915,10 +1920,12 @@ export const en = {
     writeAgainLabel: "Write the read again",
     writeLabel: "Write the read",
     /**
-     * How well the read still stands. `moved` is not a `bearing.panel.moved`
-     * duplicate: that one is a trailing clause ("… since this was arranged,
-     * {age}."), this one has the count as its subject ("{count} figures this
-     * rests on have moved…") — different sentences, not the same one twice.
+     * How well the read still stands, with the count as the sentence's
+     * subject: "{count} figures this rests on have moved…".
+     *
+     * What ages is the judgement and never the figures — those are rendered
+     * against what they are now, which is what `standingProvisional` says
+     * for a read that has nothing to flag yet.
      */
     standingMoved: {
       one: "One figure this rests on has moved since it was written, {age}.",
@@ -2233,10 +2240,11 @@ export const en = {
      * band is gone: the figure is the page's own headline, the ring lives
      * inside the "Your run" card, whose name already names it, and the flame
      * is not drawn there because `streak` and `best-streak` are figures the
-     * same card lists as rows. So only the ring's own wording is left here,
-     * and the streak still borrows `month.streakInARow` and
-     * `month.bestStreak` rather than repeating them: it is the same figure
-     * `MonthScore` already names, read from a different panel.
+     * same card lists as rows. So only the ring's own wording is left here.
+     * The flame badge was the one thing on this surface that borrowed
+     * `month.streakInARow` and `month.bestStreak`; both keys stay where they
+     * are and are still said by `MonthScore` and `MonthCloseHistory` on both
+     * clients, but nothing under `bearing.spine` reaches for them any more.
      */
     spine: {
       /** The ring's `dark` state: something could be measured, nothing has. */

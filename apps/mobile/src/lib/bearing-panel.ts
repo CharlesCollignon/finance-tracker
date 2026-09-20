@@ -392,8 +392,8 @@ async function gatherNow(
     monthFigures(userId, year, month, view, locale),
     getRecentBankMovements(userId),
     getBankAccounts(userId),
-    // Two reads, and only one of this family's tiles draws them: the review
-    // queue is `inbox-pending`'s panel and nobody else's.
+    // Two reads, and only one of this family's figures draws them: the review
+    // queue is `inbox-pending`'s block and nobody else's.
     blocks.includes("review-inbox")
       ? gatherInbox(userId, locale)
       : Promise.resolve(null),
@@ -714,13 +714,12 @@ export async function gatherPanelDetail(
 const cache = new Map<string, PanelDetail>();
 
 /**
- * Includes `blocks` because two tiles can share a family and a scope while
- * wanting different detail — `free` and `savings-rate` are both `month`, but
- * only `free`'s blocks ask for the read. Keying on the block list rather than
- * the tile id is deliberate: tiles that ask for the *same* blocks — the three
- * `unrecorded-*` tiles all ask for `["budget-progress","month-score"]` — are
- * meant to share one fetch, which is the same argument `gatherPanelDetail`
- * makes for branching on family rather than on tile.
+ * Includes `blocks` because two callers can share a family and a scope while
+ * wanting different detail: a card asks for its family's whole block list,
+ * and nothing stops a future caller asking for less. Keying on the block list
+ * rather than on the figure is deliberate — two callers asking for the *same*
+ * blocks are meant to share one fetch, which is the same argument
+ * `gatherPanelDetail` makes for branching on family.
  *
  * Includes `locale` too: the detail carries month names and other rendered
  * words, not just numbers, so what was fetched in French is wrong to hand
@@ -740,7 +739,7 @@ function keyOf(
  * The detail under a figure, fetched once per family per scope.
  *
  * Cached for the session because an accordion invites reopening: a reader
- * expands `free`, collapses it to check `streak`, and comes back. Asking
+ * opens "This month", closes it to check "Your run", and comes back. Asking
  * Supabase again for rows that cannot have changed in those four seconds
  * would make the second open slower than the first, which reads as the app
  * getting worse the more you use it.
@@ -775,7 +774,7 @@ export async function getPanelDetail(
  * The cached detail, if reopening this exact scope would be instant.
  *
  * Read synchronously so a panel can seed its first render from the cache
- * rather than from `null` — without this, reopening a tile still shows one
+ * rather than from `null` — without this, reopening a card still shows one
  * frame of skeleton before the effect below resolves the same value it could
  * have had immediately.
  */

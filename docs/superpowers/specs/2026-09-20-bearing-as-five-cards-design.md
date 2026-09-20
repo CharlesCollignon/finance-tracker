@@ -84,9 +84,17 @@ argument applies unchanged to two figures. `step` decides whether each
 figure appears; `headline` narrows from a choice between `free` and
 `remaining` to a pair.
 
-The ring and the streak flame are **not deleted**. They move into the Run
-card, which is the family they already belong to. `spine.ts`, its ring
-ladder and its tests survive intact; only where they are drawn changes.
+The ring moves into the Run card, which is the family it already belongs to:
+`spine.ts`, its ring ladder and its tests survive intact, and only where the
+ring is drawn changes. **The streak flame was dropped rather than moved** —
+this paragraph promised otherwise and the implementation was right to break
+that promise. `streak` and `best-streak` are figures in the pack, so the Run
+card already lists both as rows under the same labels the badge used; drawing
+the badge there too would have stated the same two numbers a third time on one
+card, which is how a reader stops trusting that two statements of a figure are
+the same figure. `SpineState.flame` is still computed and both clients hand
+`Spine` a `null` one, so the badge is a line of code away if a surface ever
+wants it.
 
 The attention row stays directly under the headline. It is the one thing on
 this screen that asks the reader to do something, and the thin/empty state
