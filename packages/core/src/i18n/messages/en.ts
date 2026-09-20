@@ -2174,11 +2174,31 @@ export const en = {
   bearing: {
     title: "Bearing",
     /**
-     * The headline's second figure, when no balance is readable to lead it —
-     * the ladder's fallback to what the ledger recorded rather than a
-     * confident zero. See `resolveSpine` in `packages/core/src/spine.ts`.
+     * The two figures at the top of the screen, and the fallback for the
+     * second of them.
+     *
+     * Deliberately lower-case fragments that lead into the number rather than
+     * naming it: the figure completes the phrase. That is also what retired
+     * the old negative-case swap. The headline used to switch to
+     * `pulse.headlineShort` ("Short by") when `free` went under, because
+     * "Yours to spend this month −412,00 €" read as an offer at the largest
+     * type in the app. "You'll finish the month at −412,00 €" does not, so
+     * one wording now serves both signs and the red carries the rest.
+     *
+     * Not `bearingFacts.onHand` / `bearingFacts.free`: those are the pack's
+     * labels and still name the same two figures on the cards below, where a
+     * noun phrase in a list is right and a sentence fragment would not be.
      */
-    remaining: "Recorded as left",
+    headline: {
+      onHand: "currently in your current account",
+      free: "you'll finish the month at",
+      /**
+       * When no balance is readable to lead it — the ladder's fallback to
+       * what the ledger recorded rather than a confident zero. See
+       * `resolveSpine` in `packages/core/src/spine.ts`.
+       */
+      remaining: "recorded as left",
+    },
     /** The five cards' names, in `CARD_ORDER`. */
     cards: {
       month: "This month",

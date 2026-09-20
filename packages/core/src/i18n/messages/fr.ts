@@ -1608,7 +1608,11 @@ export const fr: Messages = {
 
   bearing: {
     title: "Cap",
-    remaining: "Enregistré comme restant",
+    headline: {
+      onHand: "actuellement sur votre compte courant",
+      free: "vous finirez le mois à",
+      remaining: "enregistré comme restant",
+    },
     cards: {
       month: "Ce mois-ci",
       now: "Les comptes",
