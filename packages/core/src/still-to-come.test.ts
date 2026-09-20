@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildStillToCome } from "./still-to-come";
 import { buildMonthlySummary } from "./monthly-summary";
@@ -79,6 +79,26 @@ function template(
 }
 
 const TODAY = "2026-09-10";
+
+/**
+ * `buildStillToCome` is told what day it is; `buildMonthlySummary` reads the
+ * clock, through `resolveBudgetAsOfDate` → `todayIsoLocal`. Any test that
+ * compares the two has to fix both, or it is only half pinned and passes
+ * until the real date walks past one of its fixtures. This one did exactly
+ * that: it went red on 2026-09-15, when the real clock reached the savings
+ * template it had assumed was still in the future.
+ *
+ * Same helper as `budget.test.ts`, for the same reason.
+ */
+function freezeToday(iso: string) {
+  vi.useFakeTimers();
+  // Midday keeps the Europe/Paris date the same as the UTC date.
+  vi.setSystemTime(new Date(`${iso}T12:00:00.000Z`));
+}
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("buildStillToCome", () => {
   it("owes nothing when every occurrence is behind us", () => {
@@ -209,6 +229,8 @@ describe("buildStillToCome", () => {
    * and a list of charges that does not account for the gap in another.
    */
   it("totals exactly the gap between the current and month-end views", () => {
+    freezeToday(TODAY);
+
     const transactions = [
       tx("t1", "2026-09-02", 1500, "income", { templateId: "r0" }),
       tx("t2", "2026-09-03", 60, "expense"),
