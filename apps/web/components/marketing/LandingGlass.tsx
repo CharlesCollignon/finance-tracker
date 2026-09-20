@@ -21,7 +21,7 @@ function ArrowNub({ className }: { className?: string }) {
     <span
       className={cn(
         "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
-        "border border-white/15 bg-white/10 text-white/80",
+        "border border-white/15 bg-white/10 text-marketing-ink",
         "transition-all duration-hover [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]",
         "group-hover:border-white/25 group-hover:bg-white/20 group-hover:text-white",
         "group-hover:-translate-y-0.5 group-hover:translate-x-0.5",
@@ -103,7 +103,7 @@ export function GlassStat({
   const body = (
     <>
       <div className="flex items-start justify-between gap-8">
-        <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/55">
+        <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-marketing-muted">
           {label}
         </p>
         {href ? <ArrowNub /> : null}
@@ -111,7 +111,9 @@ export function GlassStat({
       <p className="mt-3 font-mono text-2xl font-medium tabular-nums text-white sm:text-[1.75rem]">
         {value}
       </p>
-      {caption ? <p className="mt-1 text-xs text-white/45">{caption}</p> : null}
+      {caption ? (
+        <p className="mt-1 text-xs text-marketing-muted">{caption}</p>
+      ) : null}
       {spark ? (
         <div className="mt-4">
           <Sparkbars values={spark} tone={sparkTone} />
@@ -177,7 +179,9 @@ export function GlassLink({
         <ArrowNub className="ml-auto" />
       </div>
       <h3 className="mt-4 font-head text-base text-white">{title}</h3>
-      <p className="mt-1.5 text-sm leading-relaxed text-white/50">{body}</p>
+      <p className="mt-1.5 text-sm leading-relaxed text-marketing-muted">
+        {body}
+      </p>
     </Link>
   );
 }

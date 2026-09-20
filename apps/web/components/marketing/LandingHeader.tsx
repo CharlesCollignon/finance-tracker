@@ -35,7 +35,7 @@ function Wordmark() {
 }
 
 const linkClass =
-  "text-sm text-white/60 transition-colors duration-hover hover:text-white";
+  "text-sm text-marketing-muted transition-colors duration-hover hover:text-white";
 
 /** The seven feature pages, behind one nav entry.
  *
@@ -81,7 +81,9 @@ function ProductMenu({ pathname }: { pathname: string }) {
         type="button"
         className={cn(
           "flex items-center gap-1.5 text-sm transition-colors duration-hover",
-          active || open ? "text-white" : "text-white/60 hover:text-white",
+          active || open
+            ? "text-white"
+            : "text-marketing-muted hover:text-white",
         )}
         aria-expanded={open}
         aria-haspopup="menu"
@@ -119,7 +121,7 @@ function ProductMenu({ pathname }: { pathname: string }) {
                 <span className="text-sm font-medium text-white">
                   {page.title}
                 </span>
-                <span className="text-xs leading-snug text-white/45">
+                <span className="text-xs leading-snug text-marketing-muted">
                   {page.body}
                 </span>
               </Link>
@@ -164,7 +166,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
           />
           <button
             type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-marketing-ink transition-colors hover:bg-white/10 hover:text-white lg:hidden"
             aria-expanded={open}
             aria-controls="marketing-nav"
             aria-label={open ? t("common.closeMenu") : t("common.openMenu")}
@@ -188,7 +190,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
               key={page.id}
               href={featureHref(page.id)}
               onClick={() => setOpenForPath(null)}
-              className="flex min-h-11 items-center rounded-control px-3 text-sm text-white/80 transition-colors hover:bg-white/[0.07] hover:text-white"
+              className="flex min-h-11 items-center rounded-control px-3 text-sm text-marketing-ink transition-colors hover:bg-white/[0.07] hover:text-white"
             >
               {page.title}
             </Link>
@@ -200,7 +202,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
               key={link.href}
               href={link.href}
               onClick={() => setOpenForPath(null)}
-              className="flex min-h-11 items-center rounded-control px-3 text-sm text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white"
+              className="flex min-h-11 items-center rounded-control px-3 text-sm text-marketing-muted transition-colors hover:bg-white/[0.07] hover:text-white"
             >
               {copy.nav[link.key]}
             </Link>
@@ -209,7 +211,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
             <Link
               href="/login"
               onClick={() => setOpenForPath(null)}
-              className="flex min-h-11 items-center rounded-control px-3 text-sm text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white sm:hidden"
+              className="flex min-h-11 items-center rounded-control px-3 text-sm text-marketing-muted transition-colors hover:bg-white/[0.07] hover:text-white sm:hidden"
             >
               {copy.cta.signIn}
             </Link>

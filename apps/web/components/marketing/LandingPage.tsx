@@ -66,11 +66,11 @@ function SectionHeading({
           : "flex max-w-xl flex-col items-start text-left"
       }
     >
-      <h2 className="marketing-display text-[clamp(1.75rem,4vw,2.75rem)]">
-        {heading}
-      </h2>
+      <h2 className="marketing-display text-display-sub">{heading}</h2>
       {body ? (
-        <p className="mt-4 text-base leading-relaxed text-white/50">{body}</p>
+        <p className="mt-4 text-base leading-relaxed text-marketing-muted">
+          {body}
+        </p>
       ) : null}
     </div>
   );
@@ -112,14 +112,14 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
         </div>
 
         <div className="page-enter relative z-20 mx-auto flex w-full max-w-3xl flex-col items-center pt-[calc(8rem+1vh)] text-center md:pt-[calc(8.5rem+2vh)]">
-          <h1 className="marketing-display text-[clamp(2.4rem,8vw,5rem)]">
+          <h1 className="marketing-display text-display-hero">
             {hero.titleLines.map((line) => (
               <span key={line} className="block">
                 {line}
               </span>
             ))}
           </h1>
-          <p className="mt-6 max-w-xl text-[0.975rem] leading-relaxed text-white/55 sm:text-lg">
+          <p className="mt-6 max-w-xl text-[0.975rem] leading-relaxed text-marketing-muted sm:text-lg">
             {hero.tagline}
           </p>
           <LandingCtas
@@ -175,7 +175,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             <div className="marketing-rule" />
           </Reveal>
           <Reveal className="mt-10">
-            <h2 className="text-center font-head text-sm font-medium uppercase tracking-[0.18em] text-white/40">
+            <h2 className="text-center font-head text-sm font-medium uppercase tracking-[0.18em] text-marketing-faint">
               {pillars.heading}
             </h2>
           </Reveal>
@@ -188,7 +188,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                 <h3 className="mt-3 font-head text-lg text-white">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/50">
+                <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
                   {item.body}
                 </p>
               </Reveal>
@@ -257,7 +257,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
               {monthClose.body.map((paragraph) => (
                 <p
                   key={paragraph.slice(0, 24)}
-                  className="text-base leading-relaxed text-white/50"
+                  className="text-base leading-relaxed text-marketing-muted"
                 >
                   {paragraph}
                 </p>
@@ -269,13 +269,13 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                   <dt className="w-32 shrink-0 font-mono text-xs uppercase tracking-[0.14em] text-primary/80">
                     {outcome.label}
                   </dt>
-                  <dd className="mt-1 text-sm leading-relaxed text-white/50 sm:mt-0">
+                  <dd className="mt-1 text-sm leading-relaxed text-marketing-muted sm:mt-0">
                     {outcome.body}
                   </dd>
                 </div>
               ))}
             </dl>
-            <p className="mt-8 max-w-xl text-sm leading-relaxed text-white/35">
+            <p className="mt-8 max-w-xl text-sm leading-relaxed text-marketing-faint">
               {monthClose.footnote}
             </p>
           </Reveal>
@@ -305,7 +305,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                 className="w-full"
               />
             </div>
-            <p className="px-1 text-xs text-white/30">
+            <p className="px-1 text-xs text-marketing-faint">
               {copy.exampleLabel}. Your first close sets the baseline; the
               figures start from the second.
             </p>
@@ -338,7 +338,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
               {monthRead.body.map((paragraph) => (
                 <p
                   key={paragraph.slice(0, 24)}
-                  className="text-base leading-relaxed text-white/50"
+                  className="text-base leading-relaxed text-marketing-muted"
                 >
                   {paragraph}
                 </p>
@@ -350,13 +350,13 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                   <dt className="w-32 shrink-0 font-mono text-xs uppercase tracking-[0.14em] text-primary/80">
                     {outcome.label}
                   </dt>
-                  <dd className="mt-1 text-sm leading-relaxed text-white/50 sm:mt-0">
+                  <dd className="mt-1 text-sm leading-relaxed text-marketing-muted sm:mt-0">
                     {outcome.body}
                   </dd>
                 </div>
               ))}
             </dl>
-            <p className="mt-8 max-w-xl text-sm leading-relaxed text-white/35">
+            <p className="mt-8 max-w-xl text-sm leading-relaxed text-marketing-faint">
               {monthRead.footnote}
             </p>
           </Reveal>
@@ -379,7 +379,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                   <h3 className="mt-3 font-head text-lg text-white">
                     {beat.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-white/50">
+                  <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
                     {beat.body}
                   </p>
                 </Reveal>
@@ -396,19 +396,19 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             <Reveal>
               <div className="grid gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:gap-16">
                 <div>
-                  <h2 className="marketing-display text-[clamp(1.6rem,3.4vw,2.35rem)]">
+                  <h2 className="marketing-display text-display-sub">
                     {privacy.heading}
                   </h2>
                 </div>
                 <div>
-                  <p className="text-sm leading-relaxed text-white/50">
+                  <p className="text-sm leading-relaxed text-marketing-muted">
                     {privacy.body}
                   </p>
                   <ul className="mt-6 flex flex-col gap-3">
                     {privacy.points.map((point) => (
                       <li
                         key={point}
-                        className="flex items-start gap-3 text-sm text-white/70"
+                        className="flex items-start gap-3 text-sm text-marketing-ink"
                       >
                         <span
                           className="mt-[0.4rem] h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
@@ -434,10 +434,10 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
         />
 
         <Reveal className="relative mx-auto flex max-w-2xl flex-col items-center text-center">
-          <h2 className="marketing-display text-[clamp(2rem,6vw,3.5rem)]">
+          <h2 className="marketing-display text-display-section">
             {finalCta.heading}
           </h2>
-          <p className="mt-5 max-w-md text-base leading-relaxed text-white/55">
+          <p className="mt-5 max-w-md text-base leading-relaxed text-marketing-muted">
             {finalCta.body}
           </p>
           <LandingCtas

@@ -24,7 +24,7 @@ import { getLocale, getT } from "@/lib/locale";
  * as easily as on its height.
  */
 const footerLink =
-  "flex min-h-11 items-center text-sm text-white/45 " +
+  "flex min-h-11 items-center text-sm text-marketing-muted " +
   "transition-colors duration-hover hover:text-white lg:min-h-0";
 
 const footerList = "mt-2 flex flex-col lg:mt-4 lg:gap-3";
@@ -45,13 +45,13 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
               <Orb size="26px" tone="mark" className="shrink-0" />
               Pluclair
             </Link>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/40">
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-marketing-faint">
               {copy.footer.tagline}
             </p>
           </div>
 
           <nav aria-label={t("common.product")}>
-            <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-white/30">
+            <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-marketing-faint">
               {t("common.product")}
             </h2>
             <ul className={footerList}>
@@ -66,7 +66,7 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
           </nav>
 
           <nav aria-label={t("common.account")}>
-            <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-white/30">
+            <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-marketing-faint">
               {t("common.account")}
             </h2>
             <ul className={footerList}>
@@ -101,7 +101,7 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
 
         <div className="marketing-rule" />
 
-        <div className="flex flex-col gap-2 text-sm text-white/30 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 text-sm text-marketing-faint sm:flex-row sm:items-center sm:justify-between">
           <p>{copy.footer.copyright}</p>
           <p>{copy.footer.disclaimer}</p>
         </div>

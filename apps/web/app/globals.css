@@ -259,6 +259,18 @@
      the scale. */
   --default-transition-duration: var(--transition-duration-hover);
 
+  /* Marketing's display sizes. The site was running five clamp ranges — the
+     two widest differing only in their floor, 2.1rem against 2rem — which is
+     how eight pages ended up with 28 distinct size/weight/family triples
+     between them. Three steps: the landing headline, a section's heading, and
+     the smaller heading a block inside a section takes.
+
+     These stay `clamp()` on purpose. A headline that does not scale with the
+     viewport is the wrong fix; five arbitrary ranges was the problem. */
+  --text-display-hero: clamp(2.4rem, 8vw, 5rem);
+  --text-display-section: clamp(2rem, 6vw, 3.5rem);
+  --text-display-sub: clamp(1.75rem, 4vw, 2.75rem);
+
   /* Marketing's dimmed whites, which are ten alpha literals today — /30, /35,
      /40, /45, /50, /55, /60, /70, /80 and /85 — doing three jobs. Three
      rather than two because the site really does have three, and rather than

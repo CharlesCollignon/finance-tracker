@@ -45,7 +45,7 @@ const solidGlow = "shadow-[0_8px_28px_-12px_rgba(224,190,122,0.45)]";
    sits over the orb's bloom, and the blur is what stops it reading as a hole
    punched in the light. */
 const quiet =
-  "border border-white/12 bg-white/[0.06] backdrop-blur-xl text-white/85 " +
+  "border border-white/12 bg-white/[0.06] backdrop-blur-xl text-marketing-ink " +
   "hover:border-white/25 hover:bg-white/[0.11] hover:text-white";
 
 interface LandingCtasProps {

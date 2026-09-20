@@ -182,12 +182,15 @@ export function Safari({
           </g>
 
           <g className="mix-blend-luminosity">
+            {/* The one label on the site that named its own family, and named
+                a font nothing else here uses. An SVG <text> inherits nothing,
+                so it fell all the way through to Arial. */}
             <text
               x="580"
               y="30"
               fill="#A3A3A3"
               fontSize="12"
-              fontFamily="Arial, sans-serif"
+              className="font-sans"
             >
               {url}
             </text>

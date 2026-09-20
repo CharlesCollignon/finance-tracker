@@ -40,10 +40,10 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
 
       <div className="relative mx-auto w-full max-w-6xl px-6 pb-20 pt-32 md:pb-28 md:pt-40">
         <Reveal className="mx-auto flex max-w-2xl flex-col items-center text-center">
-          <h1 className="marketing-display text-[clamp(2.1rem,6vw,3.5rem)]">
+          <h1 className="marketing-display text-display-section">
             {page.title}
           </h1>
-          <p className="mt-5 text-base leading-relaxed text-white/55 md:text-lg">
+          <p className="mt-5 text-base leading-relaxed text-marketing-muted md:text-lg">
             {page.utility}
           </p>
           <LandingCtas
@@ -68,7 +68,7 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
                 <h2 className="mt-3 font-head text-lg text-white">
                   {step.title}
                 </h2>
-                <p className="mt-2 text-sm leading-relaxed text-white/50">
+                <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
                   {step.body}
                 </p>
               </Reveal>
@@ -85,7 +85,7 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
               href={featureHref(prev.id)}
               className="glass-flat glass-flat-hover flex flex-1 flex-col items-start rounded-card px-5 py-4"
             >
-              <span className="text-xs uppercase tracking-[0.14em] text-white/35">
+              <span className="text-xs uppercase tracking-[0.14em] text-marketing-faint">
                 Previous
               </span>
               <span className="mt-1 text-sm font-medium text-white">
@@ -100,7 +100,7 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
               href={featureHref(next.id)}
               className="glass-flat glass-flat-hover flex flex-1 flex-col items-end rounded-card px-5 py-4 text-right"
             >
-              <span className="text-xs uppercase tracking-[0.14em] text-white/35">
+              <span className="text-xs uppercase tracking-[0.14em] text-marketing-faint">
                 Next
               </span>
               <span className="mt-1 text-sm font-medium text-white">
