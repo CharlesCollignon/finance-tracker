@@ -69,14 +69,14 @@ import type { MonthFacts } from "@finance/core/month-facts";
 import type { ReadFreshness } from "@finance/core/month-read-budget";
 
 /**
- * The detail under a Bearing tile's figure, gathered on the phone.
+ * The blocks under a Bearing card's figures, gathered on the phone.
  *
  * `bearing.ts` already says why the phone reads Supabase directly rather than
- * asking the web app: `bearing_arrangements` and `user_preferences` are
- * select-own under row level security, and so is every table a panel reads
- * from. That argument applies here with the same force — a panel is a read,
- * never a write, so there is no `MISTRAL_API_KEY` to keep off the phone and
- * nothing here needs a round trip through the web app.
+ * asking the web app: every table it touches is select-own under row level
+ * security, and so is every table a card's blocks read from. That argument
+ * applies here with the same force — opening a card is a read, never a write,
+ * so there is nothing to keep off the phone and no round trip through the web
+ * app to make.
  *
  * This module is the phone's own twin of `apps/web/lib/bearing/panel-detail.ts`
  * rather than a port of it: the two cannot share a type, because mobile
@@ -88,7 +88,7 @@ import type { ReadFreshness } from "@finance/core/month-read-budget";
  * same engines in `packages/core`. Nothing judged here is new: every derived
  * figure below comes out of an engine that is already tested, and this file
  * does only the gathering — which is exactly the work `bearing.ts` already
- * does for the tiles themselves.
+ * does for the figures on the cards themselves.
  */
 
 /** Which figures a panel is asking about. Mirrors the web's `PanelScope`. */
@@ -682,9 +682,9 @@ async function gatherWallet(userId: string): Promise<PanelDetail> {
 /**
  * What sits under a figure, fetched only when somebody asks to see it.
  *
- * One branch per family rather than one per tile, for the reason the web
- * twin gives: two tiles in the same family want the same underlying rows
- * even when `bearing-panels.ts` shows them different blocks. `blocks` is the
+ * One branch per family — which is now also one branch per card — for the
+ * reason the web twin gives: two figures in the same family want the same
+ * underlying rows even when they are shown different blocks. `blocks` is the
  * exception, and it is narrow on purpose — a hint about work, never about
  * access, since every branch reads only this user's own rows.
  */

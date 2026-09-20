@@ -1,7 +1,7 @@
 /**
  * What a wallet read costs, and when it has aged.
  *
- * Deliberately thin, for the reason `bearing-budget.ts` states about itself:
+ * Deliberately thin, and for a reason worth stating rather than borrowing:
  * the ceiling logic — reserve before the call, refuse while one is in flight,
  * forgive an abandoned reservation, cool down between presses — is already
  * written and tested in `month-read-budget.ts`, and a second copy of it would

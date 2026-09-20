@@ -11,9 +11,9 @@
  * Three things follow from that:
  *
  *   - A model cannot invent one. `verifyWalletRead` treats an ISIN outside
- *     this catalogue the way `bearing-read.ts` treats an unknown tile id:
- *     fatal, not skipped. A closed vocabulary handed over in full is the only
- *     kind that can be checked.
+ *     this catalogue the way `verifyMonthRead` treats a reference to a datum
+ *     that was never sent: fatal, not skipped. A closed vocabulary handed
+ *     over in full is the only kind that can be checked.
  *   - Nothing can poison it. There is no table to write to, no policy to get
  *     wrong, and a change shows up in a diff with a person's name on it.
  *   - It costs nothing to read, on either app. `packages/core` is consumed as

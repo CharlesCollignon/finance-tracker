@@ -209,12 +209,17 @@ function collectReferences(): References {
 /**
  * DEBT — dead copy this check found on its first run, left in place.
  *
- * Thirty keys in both languages that no screen asks for. They are recorded
- * rather than deleted because deleting product copy is the owner's call and
- * because two of them read like a screen that was planned and never built
- * rather than one that was retired — `month.setUp*` and the sixteen
+ * Twenty-nine keys in both languages that no screen asks for. They are
+ * recorded rather than deleted because deleting product copy is the owner's
+ * call and because two of them read like a screen that was planned and never
+ * built rather than one that was retired — `month.setUp*` and the sixteen
  * `lookThrough.*` entries, which describe a look-through view richer than the
  * one `LookThroughView.tsx` actually renders.
+ *
+ * It was thirty. `bearing.pinned` ("Moved by you", the label on a tile the
+ * reader had dragged) left with the arranger it belonged to, and its line
+ * here left in the same commit — which is exactly the shrinking this comment
+ * asks for.
  *
  * **This list is meant to shrink, and it cannot silently grow stale.** An
  * entry that no longer names an unused key fails the test below just as
@@ -235,7 +240,6 @@ const KNOWN_DEAD_KEYS: readonly string[] = [
   "common.chartMode",
   "common.unrealisedProfitLoss",
   "common.needsYou",
-  "bearing.pinned",
 
   // Copy for a look-through view with country/sector weights, target
   // comparison and reading freshness. `LookThroughView.tsx` uses the rest of

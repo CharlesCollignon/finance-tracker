@@ -31,13 +31,14 @@ const GROUPS: { type: CategoryType; labelKey: Key }[] = [
 /**
  * Every category at once, and the panel that opens inside it.
  *
- * Deliberately not `grid-auto-flow: dense`. The Bearing's grid needs dense
- * backfill because its tiles have different spans, and `bearing-grid.ts`
- * records what that cost: a full-width panel inserted mid-row made the tiles
- * after it flow into the gap, and the arithmetic written to avoid that
- * shipped wrong. These tiles are all one column, so ordinary flow puts the
- * panel on the next row by itself and nothing backfills. The gap left at the
- * end of the row above is honest: it shows where you opened.
+ * Deliberately not `grid-auto-flow: dense`. The Bearing's retired bento
+ * needed dense backfill because its tiles had different spans, and what that
+ * cost is worth keeping: a full-width panel inserted mid-row made the tiles
+ * after it flow into the gap, and the arithmetic written to work out which
+ * row a panel belonged on — a whole module of it — shipped wrong. These tiles
+ * are all one column, so ordinary flow puts the panel on the next row by
+ * itself and nothing backfills. The gap left at the end of the row above is
+ * honest: it shows where you opened.
  */
 export function CategoryGrid({
   cards,

@@ -1,27 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Flame, Trophy } from "@phosphor-icons/react";
 import type { Key } from "@finance/core/i18n/t";
 import type { MonthStanding } from "@finance/core/month-pulse";
 import { drawSpineRing, type SpineState } from "@finance/core/spine";
 import { cssEasing, DURATION } from "@finance/core/motion";
 import { useT } from "@/lib/locale-context";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
-import { ICON } from "@/lib/icon-scale";
 
 /**
- * The ring and the flame, inside the card about your run.
+ * The ring, inside the card about your run.
  *
  * It was the fixed spine above the bento and it is neither fixed nor above
  * anything now. Its headline went to `Headline`, which states the two
  * figures the screen is opened for at the top of the page; its action row
  * went to `AttentionRow`, which the page renders itself because the reader
  * who needs it most — a brand-new account — never reaches this component at
- * all. What is left is the pair of marks that are genuinely about the run:
- * how much of the month's allowance has gone, and how many months have
- * closed inside it. They live in "Your run" because that is the card they
- * describe.
+ * all. What is left is the one mark that is genuinely about the run: how much
+ * of the month's allowance has gone. It lives in "Your run" because that is
+ * the card it describes.
  *
  * So it draws no surface of its own: no `GLASS_CARD`, no rounded corners and
  * no hairline underneath. The card it sits in supplies all three, and a
@@ -32,10 +29,16 @@ import { ICON } from "@/lib/icon-scale";
  * the name is a worse name than the card's, and a landmark nested inside a
  * collapsed card is a landmark pointing at nothing.
  *
- * The flame is still drawn when it is handed one, and the card that holds
- * this one deliberately is not: the streak and the best streak are figures in
- * the pack, so that card lists them as rows like every other figure on the
- * surface rather than saying them a second time as a badge.
+ * It drew a `FlameBadge` beside the ring until nothing handed it one.
+ * `BearingCards` is this component's only caller on either client and it
+ * spreads `flame: null` deliberately — `streak` and `best-streak` are figures
+ * in the pack, so the run card lists them as rows like every other figure on
+ * the surface rather than saying them a second time as a badge. A branch
+ * whose condition is a literal `null` is not a capability held in reserve, it
+ * is unreachable markup that no gate in this repo can see: knip reads the
+ * import graph, not a dead `if`. So the badge went, and the two keys it drew
+ * stayed — `month.streakInARow` and `month.bestStreak` are `MonthScore`'s and
+ * `MonthCloseHistory`'s too.
  *
  * Four ring renderings, chosen by `state.ring.kind` and nothing else: this
  * component does not re-derive the ladder, it only draws whichever rung
@@ -46,41 +49,13 @@ import { ICON } from "@/lib/icon-scale";
  * the ring's own fill cannot say it.
  */
 export function Spine({ state }: { state: SpineState }) {
+  // A flex row for one child, which is not an oversight: an `<svg>` is inline
+  // by default and would otherwise sit on a text baseline with a descender's
+  // worth of space under it. `justify-between` went with the badge that used
+  // to be pushed to the far end.
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="flex items-center">
       <SpineRing ring={state.ring} />
-
-      {state.flame ? <FlameBadge flame={state.flame} /> : null}
-    </div>
-  );
-}
-
-function FlameBadge({
-  flame,
-}: {
-  flame: NonNullable<SpineState["flame"]>;
-}) {
-  const t = useT();
-  const { streak, best } = flame;
-
-  if (streak <= 1 && best <= 1) {
-    return null;
-  }
-
-  return (
-    <div className="flex shrink-0 items-center gap-2">
-      {streak > 1 ? (
-        <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-          <Flame size={ICON.xs} weight="fill" />
-          {t("month.streakInARow", { count: streak })}
-        </span>
-      ) : null}
-      {best > streak && best > 1 ? (
-        <span className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
-          <Trophy size={ICON.xs} />
-          {t("month.bestStreak", { count: best })}
-        </span>
-      ) : null}
     </div>
   );
 }

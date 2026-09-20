@@ -131,10 +131,15 @@ const SENSE_WORDS: Record<Locale, Record<MonthFact["sense"], string>> = {
 /**
  * The line format a model is taught to read figures in.
  *
- * Exported, and widened past `MonthFacts`, because `bearing-prompt.ts` hands
+ * Exported, and widened past `MonthFacts`, because four other prompts hand
  * over the same kind of list and the format is the part that must not differ.
  * Two prompts describing figures two ways is two sets of parsing habits to
  * get right in a model that only has one.
+ *
+ * The Bearing's arranger was the first of those four and is now gone; the
+ * wallet read, the category read and the category selection still take
+ * `FactPack`s that are not `MonthFacts`, so the widening is load-bearing
+ * rather than a leftover.
  */
 export function factLines(
   facts: FactPack,

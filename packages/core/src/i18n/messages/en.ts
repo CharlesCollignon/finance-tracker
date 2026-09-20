@@ -2150,16 +2150,22 @@ export const en = {
   },
 
   /**
-   * The Bearing: the whole position, and the model that arranges it.
+   * The Bearing: the whole position, on one screen.
    *
    * Deliberately sparse. This is the app's most figure-dense screen and every
    * sentence added to it is a sentence competing with the numbers it exists
-   * to frame — so the words here are labels, refusals and one explanation of
-   * what the arrange button does, and nothing else.
+   * to frame — so the words here are a title, five card names and the one
+   * line for a reader who has nothing recorded yet, and nothing else.
+   *
+   * It used to be twice this size. A model arranged the figures, the reader
+   * could overrule it by dragging, and that machinery needed a button, a
+   * hint, an allowance counter, a drag-handle label, a staleness clause and
+   * a whole family of refusals for when the model answered badly. Five fixed
+   * cards need none of it: nothing is ranked, so nothing has to explain its
+   * ranking or apologise for failing to produce one.
    */
   bearing: {
     title: "Bearing",
-    asOf: "As of {date}",
     /**
      * The headline's second figure, when no balance is readable to lead it —
      * the ladder's fallback to what the ledger recorded rather than a
@@ -2174,45 +2180,8 @@ export const en = {
       ahead: "The year ahead",
       wallet: "Wallets",
     },
-    /** The button that spends a call, and what it says while it is spending. */
-    arrange: "Rearrange",
-    arranging: "Arranging…",
-    arrangeHint:
-      "A model picks which figures lead. Drag any tile to overrule it.",
-    arrangementsLeft: {
-      one: "{count} left this month",
-      other: "{count} left this month",
-    },
-    /** Said when the app's own ordering is what is on screen. */
-    ownOrder: "In the app's own order",
-    pinned: "Moved by you",
-    /** The drag handle. Names the tile, because a screen reader reads it alone. */
-    reorder: "Reorder {label}",
-    resetPins: "Clear my order",
-    orderNotSaved: "Your order could not be saved.",
-    /** When figures the arrangement rests on have since moved. */
-    moved: {
-      one: "{count} figure has moved since this was arranged, {age}.",
-      other: "{count} figures have moved since this was arranged, {age}.",
-    },
     empty:
       "Once a month has been recorded there will be something to stand on.",
-    noWriter: "No writer is configured.",
-    noAnswer: "The writer did not answer just now.",
-    unusable: "The writer's answer could not be used.",
-    threwAway:
-      "The writer named a figure the app did not give it, so the arrangement was thrown away. ({detail})",
-    allowanceSpent: "You have used all {allowance} arrangements this month.",
-    coolingDown: "One was just arranged — try again in {seconds}s.",
-    inFlight: "An arrangement is already being written.",
-    nothingToSay: "There is not enough recorded yet to arrange.",
-    untracked: "Arrangements are not set up yet (migration 029).",
-    refusal: {
-      wrongShape: "Not the shape asked for",
-      unknownTile: 'It named "{id}", which is not one of the figures',
-      unknownDatum: 'A caption referred to "{id}", which was never sent',
-      nothingLeft: "No usable tile was left",
-    },
     panel: {
       close: "Close",
       open: "Show what this is made of",

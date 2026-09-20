@@ -70,12 +70,11 @@ export interface MonthFact {
 /**
  * Why a figure is not available. Said in words, never as a zero.
  *
- * The last three are the Bearing's, and they are here rather than in a second
- * enum because a reason is a property of an absent figure, not of the surface
- * that went looking for it. `month-read-prompt.ts` and `bearing-prompt.ts`
- * each map every one of these to a clause, exhaustively, so a reason added
- * without words is a compile error rather than an `undefined` on a prompt
- * line.
+ * The last three arrived with the Bearing, and they are here rather than in a
+ * second enum because a reason is a property of an absent figure, not of the
+ * surface that went looking for it. `month-read-prompt.ts` maps every one of
+ * these to a clause, exhaustively, so a reason added without words is a
+ * compile error rather than an `undefined` on a prompt line.
  */
 export type MissingReason =
   | "no-bank"

@@ -1,27 +1,25 @@
 /**
- * What opens under a tile, and why it is not twenty-nine designs.
+ * What a card can draw under its figures, and what sits above it.
  *
- * Pressing a tile used to navigate to the surface that explained its figure.
- * It now expands in place, which raised the obvious objection: twenty-nine
- * figures would need twenty-nine expansions. They do not, because
- * `bearing-facts.ts` already carries a `family` on every datum — put there,
- * in its own words, "because the surface groups by it". Five families means
- * five chromes.
+ * Two vocabularies and nothing else. The tables that chose between them used
+ * to live here — a per-family default with a partial per-tile override on top,
+ * reached through `panelFor(id, family)` — and they went when the Bearing
+ * became five cards: with one card per family the lookup and the card say the
+ * same thing, so `bearing-cards.ts` says it, in `CARD_FAMILY_BLOCKS`. The
+ * curation that per-tile table held was the point of it and did not go with
+ * it; that module's own comment records where it landed.
  *
- * The blocks are the second half, and the more important one. A panel shows
- * the blocks for *its tile*, not for its whole family. That distinction is
- * what makes this a dissolution of the Month screen rather than a hiding of
- * it: `month` is the fattest family, and a panel that rendered all of it
- * would be Month in an accordion. Each panel explains one figure.
+ * What stays is the alphabet both clients render against. It lives here
+ * rather than in `bearing-cards.ts` because a block is a thing a client knows
+ * how to draw, not a thing a card knows how to choose — `panel-blocks.tsx` on
+ * each client switches on this union, and so does each client's
+ * `gatherPanelDetail`, which decides what to read for a card that asks.
  *
  * Pure. Holds no labels — a block's words belong to the component that draws
  * it, in the reader's language.
  */
 
-import type { FactFamily } from "./bearing-facts";
-import { BEARING_TILES, type TileId } from "./bearing-tiles";
-
-/** One thing a panel can draw. */
+/** One thing a card can draw. */
 export type PanelBlock =
   | "money-on-hand"
   | "cash-accounts"
@@ -47,97 +45,11 @@ export type PanelBlock =
   | "fund-cost";
 
 /**
- * What sits above a panel's blocks.
+ * What sits above a card's blocks.
  *
- * `month-scope` is the month picker and the budget-view toggle. They are
- * currently page furniture above content that mostly ignores them; here they
- * scope exactly the figures they govern, which is the whole argument for
- * moving them.
+ * `month-scope` is the month picker and the budget-view toggle. They were
+ * page furniture above content that mostly ignored them; here they scope
+ * exactly the figures they govern, which is the whole argument for moving
+ * them.
  */
 export type PanelChrome = "none" | "month-scope" | "streak" | "horizon";
-
-const FAMILY_CHROME: Record<FactFamily, PanelChrome> = {
-  now: "none",
-  month: "month-scope",
-  run: "streak",
-  ahead: "horizon",
-  wallet: "none",
-};
-
-/** What a family's panel shows when its tile asks for nothing more specific. */
-const FAMILY_BLOCKS: Record<FactFamily, readonly PanelBlock[]> = {
-  now: ["money-on-hand", "recent-on-account"],
-  month: ["spend-strip", "still-to-come"],
-  run: ["close-shelf", "month-score"],
-  ahead: ["projection"],
-  wallet: ["wallets", "weight-bars"],
-};
-
-/**
- * Tiles whose panel explains their own figure rather than their family's.
- *
- * Deliberately partial. A tile with nothing here gets its family's blocks,
- * which is why adding a thirtieth figure to the Bearing does not oblige
- * anybody to design a thirtieth panel.
- */
-const TILE_BLOCKS: Partial<Record<TileId, readonly PanelBlock[]>> = {
-  // The one panel that carries the month in words. `free` is the month's
-  // headline — what is left of it — and the read is a paragraph about
-  // exactly that, so this is where dissolving the Month screen puts it.
-  //
-  // `arrived-charges` lands here too, first, for the same reason Month's own
-  // "Needs you" slot rendered above its links: a question in front of the
-  // reader outranks the figures beneath it. `free` is where a reader lands to
-  // see how the month is going, which is exactly when "did this arrive?" is
-  // worth asking.
-  //
-  // Both blocks are the point of naming things on a tile rather than on the
-  // family: the read and the fulfilment report are the most expensive things
-  // any panel can ask for, and a family-wide entry would charge every month
-  // tile for blocks most of them do not show. `gatherPanelDetail` fetches
-  // either only when a panel's blocks say so.
-  free: ["arrived-charges", "spend-strip", "still-to-come", "month-read"],
-  // The question has to find the reader, not wait for them to go looking —
-  // `free` alone was not enough, because `free` is itself conditional on
-  // `pulse.free !== null` and a reader has no way to know which tile to open
-  // to see it. `arriving` is literally the tile about charges due, in the
-  // same family, so it carries the same block rather than a copy of it.
-  arriving: ["arrived-charges", "spend-strip", "still-to-come"],
-  "savings-rate": ["month-comparison", "spend-strip"],
-  "expenses-vs-previous": ["month-comparison", "trend"],
-  "on-hand": ["money-on-hand", "cash-accounts"],
-  "inbox-pending": ["review-inbox"],
-  "unrecorded-so-far": ["budget-progress", "month-score"],
-  "unrecorded-allowance": ["budget-progress", "month-score"],
-  "unrecorded-over": ["budget-progress", "month-score"],
-  "unrecorded-baseline": ["close-shelf", "month-score"],
-  streak: ["close-shelf"],
-  "best-streak": ["close-shelf"],
-  "monthly-net-average": ["trend"],
-  "projected-balance": ["projection"],
-  "projected-kept": ["projection"],
-  "wallet-cost": ["wallets", "fund-cost"],
-  "wallet-drag": ["wallets", "weight-bars"],
-};
-
-export interface PanelSpec {
-  family: FactFamily;
-  chrome: PanelChrome;
-  blocks: readonly PanelBlock[];
-  /**
-   * Where the panel's footer link goes, or null.
-   *
-   * The tile's own `href`, demoted. It used to be what a press did; it is now
-   * the way out to the full surface, for the times a panel is not enough.
-   */
-  href: string | null;
-}
-
-export function panelFor(id: TileId, family: FactFamily): PanelSpec {
-  return {
-    family,
-    chrome: FAMILY_CHROME[family],
-    blocks: TILE_BLOCKS[id] ?? FAMILY_BLOCKS[family],
-    href: BEARING_TILES[id].href,
-  };
-}

@@ -270,3 +270,33 @@ feature with a prompt, a budget, a verifier and stored output. The reason to
 delete it is that five fixed cards give it nothing to decide — but if the
 card list ever grows back past what a reader can scan, the argument reverses
 and the code will have to be written again.
+
+## Debt left behind
+
+**Migration `029`'s `bearing_arrangements` table is unread, and stays.** It
+held the model's ordered list of tile ids plus the per-user monthly tally that
+rationed the calls; the pins beside it lived in `user_preferences`. Nothing
+reads either any more — the prompt, the budget, the verifier, both clients'
+callers and the web route are all deleted. Dropping the table is a migration,
+and this repo has no way to prove one here: there is no usable
+`supabase/config.toml`, no Docker to start a local stack against, and no
+database tests. So it is recorded rather than done: a `DROP TABLE` written
+blind and merged unrun is a worse artefact than an empty table nobody queries.
+
+The rest of `029` is the same debt and is listed here so a later migration can
+take the lot in one pass rather than discovering it piecemeal:
+
+- `bearing_arrangements`, the table, with its RLS policies and its
+  `tally_month` constraint.
+- `reserve_bearing_arrangement(...)`, the function that took the reservation
+  before the call and rolled the tally when the month turned. Nothing calls
+  it.
+- `user_preferences.bearing_pins`, a `jsonb` column, plus the
+  `user_preferences_bearing_pins_is_object` check constraint and the
+  `bearing_pins_valid(jsonb)` function behind it. A column, not a key inside a
+  blob, so dropping it is a migration too.
+
+None of it is reachable from either client. None of it costs anything while it
+sits there, which is the only reason leaving it is defensible: the cost of a
+`DROP` written blind and merged unrun is higher than the cost of an empty
+table nobody queries.

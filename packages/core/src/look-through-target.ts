@@ -25,7 +25,7 @@
  *     still has a bearing rather than an empty screen."
  *
  * So the model picks from two closed vocabularies — a role and a weight class
- * — both verified the way `bearing-read.ts` verifies a tile id: an unknown
+ * — both verified the way `verifyMonthRead` verifies a datum id: an unknown
  * one is fatal. Every percentage on the surface is then this module's
  * arithmetic, which makes it a `Datum` the prose can cite, and makes the
  * whole target testable against a fixture rather than eyeballed.

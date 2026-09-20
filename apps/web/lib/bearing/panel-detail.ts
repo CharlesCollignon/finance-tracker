@@ -192,10 +192,11 @@ export type PanelDetail =
 /**
  * What sits under a figure, fetched only when somebody asks to see it.
  *
- * One branch per family rather than one per tile: two tiles in the same
- * family want the same underlying rows even when `bearing-panels.ts` shows
- * them different blocks, so fetching per tile would ask the database the same
- * question twice for `free` and `savings-rate`.
+ * One branch per family, which is now also one branch per card. It was the
+ * right shape before that too: two tiles in the same family wanted the same
+ * underlying rows even when the old per-tile block table showed them
+ * different blocks, so fetching per tile would have asked the database the
+ * same question twice for `free` and `savings-rate`.
  *
  * `blocks` is the exception to that, and it is narrow on purpose: exactly two
  * things are fetched per panel rather than per family, and both are ones a
@@ -320,8 +321,8 @@ async function gatherMonth(
     // this month — the question Month's "Needs you" slot used to put
     // directly in front of the reader. Not cheap (transactions, fulfilments
     // and refusals, on top of the occurrences themselves), so only asked for
-    // when `free`'s or `arriving`'s panel is the one open — see
-    // `bearing-panels.ts` for why it is on both.
+    // when the month card is the one open — see `CARD_FAMILY_BLOCKS` in
+    // `bearing-cards.ts` for why exactly one card carries it.
     blocks.includes("arrived-charges")
       ? getFulfilmentReport(userId, templates, categories, year, month)
       : null,

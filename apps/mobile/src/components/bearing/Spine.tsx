@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import Animated, {
   Easing,
@@ -15,25 +14,22 @@ import type { MonthStanding } from "@finance/core/month-pulse";
 import { drawSpineRing, type SpineState } from "@finance/core/spine";
 import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 
-import { Text } from "@/components/ui/Text";
 import { useT } from "@/providers/LocaleProvider";
-import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 type ThemeColors = ReturnType<typeof useThemeColors>;
 
 /**
- * The ring and the flame, inside the card about your run.
+ * The ring, inside the card about your run.
  *
  * It was the fixed spine above the bearing tiles and it is neither fixed nor
  * above anything now. Its headline went to `Headline`, which states the two
  * figures the screen is opened for at the top of the tab; its action row went
  * to `AttentionRow`, which the screen renders itself because the reader who
  * needs it most — a brand-new account — is served the `thin` empty state and
- * never reaches this component at all. What is left is the pair of marks that
- * are genuinely about the run: how much of the month's allowance has gone,
- * and how many months have closed inside it. They live in "Your run" because
- * that is the card they describe.
+ * never reaches this component at all. What is left is the one mark that is
+ * genuinely about the run: how much of the month's allowance has gone. It
+ * lives in "Your run" because that is the card it describes.
  *
  * So it draws no surface and no edge of its own — the hairline it used to
  * rule underneath itself would be the only divider inside a card that already
@@ -41,61 +37,25 @@ type ThemeColors = ReturnType<typeof useThemeColors>;
  *
  * The web twin (`apps/web/components/finance/bearing/Spine.tsx`) carries the
  * ladder's own reasoning in full; this draws the same four ring states for
- * the same reasons but in the phone's own idiom rather than its markup, and
- * the streak chip reuses the exact shape `MonthScore.tsx` already drew for
- * the same figure rather than the web Spine's own `FlameBadge`.
+ * the same reasons but in the phone's own idiom rather than its markup.
  *
- * The flame is still drawn when it is handed one, and `BearingCards`
- * deliberately hands none: `streak` and `best-streak` are figures in the pack,
- * so the run card lists them as rows like every other figure on the surface
- * rather than saying them a second time as a badge.
+ * It drew a streak chip beside the ring — `MonthScore.tsx`'s own shape rather
+ * than a port of the web Spine's `FlameBadge` — until nothing handed it one.
+ * `BearingCards` is this component's only caller and it spreads `flame: null`
+ * deliberately: `streak` and `best-streak` are figures in the pack, so the run
+ * card lists them as rows like every other figure on the surface rather than
+ * saying them a second time as a badge. A branch whose condition is a literal
+ * `null` is unreachable markup no gate in this repo can see, so it went, on
+ * both clients, in the same commit. The words it drew stayed —
+ * `month.streakInARow` and `month.bestStreak` are still `MonthScore`'s and
+ * `MonthCloseHistoryCard`'s.
  */
 export function Spine({ state }: { state: SpineState }) {
+  // `justify-between` went with the chip that used to be pushed to the far
+  // end; the row is what keeps the ring from stretching to the card's width.
   return (
-    <View className="flex-row flex-wrap items-center justify-between gap-3">
+    <View className="flex-row items-center">
       <Ring ring={state.ring} />
-
-      {state.flame ? <FlameBadge flame={state.flame} /> : null}
-    </View>
-  );
-}
-
-/**
- * The streak chip, in the same shape `MonthScore.tsx` already drew for the
- * same two figures — the phone's own idiom for a streak, not a port of the
- * web Spine's `FlameBadge`.
- */
-function FlameBadge({ flame }: { flame: NonNullable<SpineState["flame"]> }) {
-  const t = useT();
-  const colors = useThemeColors();
-  const { streak, best } = flame;
-
-  if (streak <= 1 && best <= 1) {
-    return null;
-  }
-
-  return (
-    <View className="flex-row items-center gap-2">
-      {streak > 1 ? (
-        <View className="flex-row items-center gap-1 rounded-full bg-accent px-2 py-0.5">
-          <Ionicons name="flame" size={ICON.xs} color={colors.primaryInk} />
-          <Text className="text-xs font-medium text-accent-foreground">
-            {t("month.streakInARow", { count: streak })}
-          </Text>
-        </View>
-      ) : null}
-      {best > streak && best > 1 ? (
-        <View className="flex-row items-center gap-1 rounded-full border border-border px-2 py-0.5">
-          <Ionicons
-            name="trophy-outline"
-            size={ICON.xs}
-            color={colors.mutedForeground}
-          />
-          <Text className="text-xs text-muted-foreground">
-            {t("month.bestStreak", { count: best })}
-          </Text>
-        </View>
-      ) : null}
     </View>
   );
 }

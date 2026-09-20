@@ -20,7 +20,7 @@
  * closed and was handed over in full, so naming something outside it is not
  * a judgement error — it is a fabricated identifier, and a read that
  * fabricated one has told us what its other claims are worth. This is the
- * line `bearing-read.ts` draws for an unknown tile id, for the same reason.
+ * line `verifyMonthRead` draws for a datum never sent, for the same reason.
  *
  * A fund placed in a wrapper it cannot sit in only drops that suggestion. The
  * eligibility was in the prompt, so it is a mistake — but it is a mistake

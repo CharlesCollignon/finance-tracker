@@ -1608,7 +1608,6 @@ export const fr: Messages = {
 
   bearing: {
     title: "Cap",
-    asOf: "Au {date}",
     remaining: "Enregistré comme restant",
     cards: {
       month: "Ce mois-ci",
@@ -1617,42 +1616,7 @@ export const fr: Messages = {
       ahead: "L'année à venir",
       wallet: "Portefeuilles",
     },
-    arrange: "Réagencer",
-    arranging: "Agencement…",
-    arrangeHint:
-      "Un modèle choisit les chiffres de tête. Déplacez une tuile pour le contredire.",
-    arrangementsLeft: {
-      one: "{count} restant ce mois-ci",
-      other: "{count} restants ce mois-ci",
-    },
-    ownOrder: "Dans l'ordre de l'application",
-    pinned: "Déplacée par vous",
-    reorder: "Déplacer {label}",
-    resetPins: "Effacer mon ordre",
-    orderNotSaved: "Votre ordre n'a pas pu être enregistré.",
-    moved: {
-      one: "{count} chiffre a bougé depuis cet agencement, {age}.",
-      other: "{count} chiffres ont bougé depuis cet agencement, {age}.",
-    },
     empty: "Dès qu'un mois sera enregistré, il y aura de quoi faire le point.",
-    noWriter: "Aucun rédacteur n'est configuré.",
-    noAnswer: "Le rédacteur n'a pas répondu à l'instant.",
-    unusable: "La réponse du rédacteur n'a pas pu être utilisée.",
-    threwAway:
-      "Le rédacteur a cité un chiffre que l'application ne lui avait pas donné, l'agencement a donc été écarté. ({detail})",
-    allowanceSpent:
-      "Vous avez utilisé les {allowance} agencements de ce mois-ci.",
-    coolingDown:
-      "Un agencement vient d'être fait — réessayez dans {seconds} s.",
-    inFlight: "Un agencement est déjà en cours.",
-    nothingToSay: "Il n'y a pas encore assez d'enregistré pour faire le point.",
-    untracked: "Les agencements ne sont pas encore en place (migration 029).",
-    refusal: {
-      wrongShape: "Pas la forme demandée",
-      unknownTile: 'Il a nommé "{id}", qui ne fait pas partie des chiffres',
-      unknownDatum: 'Une légende a cité "{id}", qui ne lui a jamais été envoyé',
-      nothingLeft: "Aucune tuile utilisable ne restait",
-    },
     panel: {
       close: "Fermer",
       open: "Voir ce qui compose ce chiffre",
