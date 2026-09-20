@@ -397,7 +397,7 @@ function Streak({ detail }: { detail: PanelDetail | null }) {
       ) : (
         <div
           aria-hidden
-          className="h-3 w-48 max-w-full animate-pulse rounded bg-muted/40"
+          className="h-3 w-48 max-w-full animate-pulse rounded-control bg-muted/40"
         />
       )}
     </div>
@@ -419,7 +419,7 @@ function Step({
       type="button"
       onClick={onPress}
       aria-label={label}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded border border-border hover:bg-accent"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-border hover:bg-accent"
     >
       {children}
     </button>

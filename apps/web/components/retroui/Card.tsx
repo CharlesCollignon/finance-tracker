@@ -10,7 +10,7 @@ const Card = ({ className, ...props }: ICardProps) => {
   return (
     <div
       className={cn(
-        "inline-block rounded-lg border border-border bg-card",
+        "inline-block rounded-control border border-border bg-card",
         className,
       )}
       {...props}
@@ -32,14 +32,14 @@ const CardBezel = ({
   return (
     <div
       className={cn(
-        "rounded-[2rem] border border-border bg-foreground/[0.04] p-[0.4rem]",
+        "rounded-shell border border-border bg-foreground/[0.04] p-1.5",
         className,
       )}
       {...props}
     >
       <div
         className={cn(
-          "h-full rounded-[1.6rem] bg-card shadow-bezel-inset",
+          "h-full rounded-card bg-card shadow-bezel-inset",
           innerClassName,
         )}
       >

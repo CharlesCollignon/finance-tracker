@@ -524,7 +524,7 @@ export function TransactionsView({
             description={t("ledger.emptyBody")}
           />
         ) : (
-          <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 md:p-5">
+          <section className="flex flex-col gap-4 rounded-card border border-border bg-card p-4 md:p-5">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-2 sm:flex-row">
                 <div className="relative min-w-0 flex-1">
@@ -763,7 +763,7 @@ export function TransactionsView({
                             selectMode ? selected.has(tx.id) : undefined
                           }
                           className={cn(
-                            "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-lg px-2 py-2.5 text-left",
+                            "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-control px-2 py-2.5 text-left",
                             "transition-colors hover:bg-muted/40",
                             LEDGER_COLUMNS,
                             selectMode && selected.has(tx.id) && "bg-primary/5",
@@ -783,7 +783,7 @@ export function TransactionsView({
                             ) : null}
                             <CategoryIcon
                               icon={tx.categories.icon}
-                              className="size-9 shrink-0 rounded-[12px] border-0 bg-muted"
+                              className="size-9 shrink-0 rounded-control border-0 bg-muted"
                             />
                             <span className="min-w-0">
                               <span className="flex items-center gap-1.5">

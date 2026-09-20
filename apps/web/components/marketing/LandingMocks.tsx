@@ -241,10 +241,10 @@ function WebSideNav({ active }: { active: Key }) {
       </div>
 
       <div className="px-3 pt-3">
-        <div className="flex min-h-10 items-center gap-3 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
+        <div className="flex min-h-10 items-center gap-3 rounded-control bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
           <Plus size={18} weight="bold" />
           {t("ledger.addTransaction")}
-          <span className="ml-auto rounded bg-black/15 px-1.5 py-0.5 text-[10px] font-normal">
+          <span className="ml-auto rounded-control bg-black/15 px-1.5 py-0.5 text-[10px] font-normal">
             N
           </span>
         </div>
@@ -269,7 +269,7 @@ function WebSideNav({ active }: { active: Key }) {
               <div className="flex items-center gap-1">
                 <span
                   className={cn(
-                    "flex min-h-10 flex-1 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium",
+                    "flex min-h-10 flex-1 items-center gap-3 rounded-control px-3 py-2 text-sm font-medium",
                     isActive
                       ? "bg-primary/10 text-primary-ink"
                       : "text-muted-foreground",
@@ -332,7 +332,7 @@ function WebSideNav({ active }: { active: Key }) {
                       key={kid.href}
                       style={{ height: ROW_HEIGHT, paddingLeft: INDENT }}
                       className={cn(
-                        "flex items-center rounded-md pr-3 text-sm",
+                        "flex items-center rounded-control pr-3 text-sm",
                         index === 0
                           ? "font-medium text-primary-ink"
                           : "text-muted-foreground",
@@ -371,7 +371,7 @@ function WebHeaderBand({
       <h1 className="font-head text-xl leading-none">{title}</h1>
       <div className="flex items-center gap-3">
         {trailing}
-        <span className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground">
+        <span className="flex h-8 w-8 items-center justify-center rounded-control text-muted-foreground">
           <Eye size={18} />
         </span>
       </div>
@@ -756,7 +756,7 @@ function WebTransactionRow({
       <div className="flex min-w-0 items-center gap-3">
         <CategoryIcon
           icon={item.icon}
-          className="h-9 w-9 shrink-0 rounded-[11px] border-0 bg-muted"
+          className="h-9 w-9 shrink-0 rounded-control border-0 bg-muted"
         />
         <div className="min-w-0 text-left">
           <p className="truncate text-sm font-semibold">{item.name}</p>

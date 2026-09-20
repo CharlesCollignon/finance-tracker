@@ -33,7 +33,7 @@ export function LandingDeviceStack({
           Sized any larger it pokes out above the window and blankets the
           desktop mock's entire right-hand column. */}
       <div className="relative pb-[22%] md:pb-[14%]">
-        <div className="w-[80%] overflow-hidden rounded-xl ring-1 ring-white/10">
+        <div className="w-[80%] overflow-hidden rounded-card ring-1 ring-white/10">
           <Safari url="pluclair.com" className="w-full">
             <FeatureMock pageId={pageId} variant="web" />
           </Safari>

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 
 export const CATEGORY_SELECT_CLASS =
-  "h-11 w-full rounded border border-border bg-background px-3 text-base text-foreground";
+  "h-11 w-full rounded-control border border-border bg-background px-3 text-base text-foreground";
 
 interface CategorySelectProps {
   id: string;

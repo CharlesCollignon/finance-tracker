@@ -110,7 +110,7 @@ export function InstrumentSearch({
       {symbol ? (
         <div
           className={cn(
-            "flex items-start justify-between gap-3 rounded-xl",
+            "flex items-start justify-between gap-3 rounded-control",
             "border border-border bg-muted/20 p-3",
           )}
         >
@@ -167,7 +167,7 @@ export function InstrumentSearch({
               role="listbox"
               className={cn(
                 "absolute z-50 mt-1 max-h-56 w-full overflow-y-auto",
-                "rounded-xl border border-border bg-card p-1",
+                "rounded-card border border-border bg-card p-1",
               )}
             >
               {loading && (
@@ -203,7 +203,7 @@ export function InstrumentSearch({
                       aria-selected={false}
                       onClick={() => handleSelect(instrument)}
                       className={cn(
-                        "flex w-full items-center gap-2 rounded-lg",
+                        "flex w-full items-center gap-2 rounded-control",
                         "px-3 py-2 text-left hover:bg-accent",
                       )}
                     >

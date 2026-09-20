@@ -47,7 +47,7 @@ export function RefreshButton({
         title={label}
         className={cn(
           "relative inline-flex h-9 w-9 shrink-0 items-center justify-center",
-          "rounded-md border border-border bg-card text-muted-foreground",
+          "rounded-control border border-border bg-card text-muted-foreground",
           "transition-colors hover:bg-muted hover:text-foreground",
           "disabled:cursor-wait disabled:opacity-70",
           className,
@@ -77,7 +77,7 @@ export function RefreshButton({
       onClick={refresh.refresh}
       disabled={running}
       className={cn(
-        "flex min-h-10 w-full items-center gap-3 rounded-md px-3 py-2",
+        "flex min-h-10 w-full items-center gap-3 rounded-control px-3 py-2",
         "text-sm font-medium text-muted-foreground",
         "transition-colors hover:bg-muted hover:text-foreground",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",

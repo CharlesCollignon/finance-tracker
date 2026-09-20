@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 function Bone({ className }: { className?: string }) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-muted", className)}
+      className={cn("animate-pulse rounded-control bg-muted", className)}
       aria-hidden="true"
     />
   );
@@ -29,7 +29,7 @@ export default function LookThroughLoading() {
             <Bone className="h-8 w-24 rounded-full" />
             <Bone className="h-8 w-28 rounded-full" />
           </div>
-          <Bone className="h-8 w-36 rounded-md" />
+          <Bone className="h-8 w-36 rounded-control" />
         </div>
 
         <div className="flex w-full flex-col items-center gap-5">
@@ -42,7 +42,7 @@ export default function LookThroughLoading() {
           {[0, 1, 2].map((index) => (
             <div
               key={index}
-              className="w-full rounded-2xl border border-border p-5 md:p-6"
+              className="w-full rounded-card border border-border p-5 md:p-6"
             >
               <Bone className="h-4 w-32" />
               <div className="mt-4 flex flex-col gap-3">

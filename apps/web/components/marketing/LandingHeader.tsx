@@ -101,7 +101,7 @@ function ProductMenu({ pathname }: { pathname: string }) {
       {open ? (
         <div
           role="menu"
-          className="account-menu-panel glass-menu absolute left-1/2 top-full z-50 mt-3 w-[22rem] -translate-x-1/2 rounded-2xl p-2"
+          className="account-menu-panel glass-menu absolute left-1/2 top-full z-50 mt-3 w-[22rem] -translate-x-1/2 rounded-card p-2"
         >
           {copy.pages.map((page) => {
             const href = featureHref(page.id);
@@ -112,7 +112,7 @@ function ProductMenu({ pathname }: { pathname: string }) {
                 role="menuitem"
                 onClick={() => setOpenForPath(null)}
                 className={cn(
-                  "flex flex-col gap-0.5 rounded-xl px-3 py-2.5 transition-colors duration-200",
+                  "flex flex-col gap-0.5 rounded-control px-3 py-2.5 transition-colors duration-200",
                   pathname === href ? "bg-white/10" : "hover:bg-white/[0.07]",
                 )}
               >
@@ -178,7 +178,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
       <div
         id="marketing-nav"
         className={cn(
-          "glass-menu mx-auto mt-2 max-w-6xl rounded-3xl p-3 lg:hidden",
+          "glass-menu mx-auto mt-2 max-w-6xl rounded-card p-3 lg:hidden",
           open ? undefined : "hidden",
         )}
       >
@@ -188,7 +188,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
               key={page.id}
               href={featureHref(page.id)}
               onClick={() => setOpenForPath(null)}
-              className="flex min-h-11 items-center rounded-xl px-3 text-sm text-white/80 transition-colors hover:bg-white/[0.07] hover:text-white"
+              className="flex min-h-11 items-center rounded-control px-3 text-sm text-white/80 transition-colors hover:bg-white/[0.07] hover:text-white"
             >
               {page.title}
             </Link>
@@ -200,7 +200,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
               key={link.href}
               href={link.href}
               onClick={() => setOpenForPath(null)}
-              className="flex min-h-11 items-center rounded-xl px-3 text-sm text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white"
+              className="flex min-h-11 items-center rounded-control px-3 text-sm text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white"
             >
               {copy.nav[link.key]}
             </Link>
@@ -209,7 +209,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
             <Link
               href="/login"
               onClick={() => setOpenForPath(null)}
-              className="flex min-h-11 items-center rounded-xl px-3 text-sm text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white sm:hidden"
+              className="flex min-h-11 items-center rounded-control px-3 text-sm text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white sm:hidden"
             >
               {copy.cta.signIn}
             </Link>

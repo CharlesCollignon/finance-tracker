@@ -91,7 +91,7 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
   }
 
   return (
-    <div className="mb-3 flex flex-col gap-2 rounded-lg border border-dashed border-primary-rim/50 p-3">
+    <div className="mb-3 flex flex-col gap-2 rounded-control border border-dashed border-primary-rim/50 p-3">
       <p className="text-xs text-muted-foreground">
         {visible.length === 1
           ? "One charge in your statement looks like it repeats."
@@ -102,7 +102,7 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
         {visible.map((proposal) => (
           <li
             key={proposal.key}
-            className="flex flex-col gap-1.5 rounded-md border border-border/60 p-2"
+            className="flex flex-col gap-1.5 rounded-control border border-border/60 p-2"
           >
             <div className="flex items-baseline justify-between gap-2">
               <p

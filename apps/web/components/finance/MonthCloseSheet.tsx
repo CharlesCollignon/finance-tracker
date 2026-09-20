@@ -285,7 +285,7 @@ export function MonthCloseSheet({
               </div>
             )}
 
-            <div className="rounded-lg border border-border p-3">
+            <div className="rounded-control border border-border p-3">
               <Figure
                 label={t("monthClose.cameIn")}
                 value={formatMoney(result.flows.income)}

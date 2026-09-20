@@ -369,7 +369,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
           <Reveal>
             <SectionHeading heading={how.heading} />
           </Reveal>
-          <ol className="glass-grid mt-16 grid gap-px overflow-hidden rounded-2xl sm:grid-cols-2">
+          <ol className="glass-grid mt-16 grid gap-px overflow-hidden rounded-card sm:grid-cols-2">
             {how.beats.map((beat, index) => (
               <li key={beat.title} className="p-7 md:p-8">
                 <Reveal delay={index * 0.06}>
@@ -392,7 +392,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
       {/* --------------------------------------------------------- privacy */}
       <section id="privacy" className="relative px-6 pb-24 md:pb-32">
         <div className="mx-auto max-w-5xl">
-          <div className="glass-flat overflow-hidden rounded-3xl p-8 md:p-12">
+          <div className="glass-flat overflow-hidden rounded-card p-8 md:p-12">
             <Reveal>
               <div className="grid gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:gap-16">
                 <div>

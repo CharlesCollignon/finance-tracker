@@ -92,7 +92,7 @@ export function MoneyOnHand({
   return (
     <section
       className={cn(
-        "rounded-3xl p-5 md:p-7",
+        "rounded-card p-5 md:p-7",
         GLASS_CARD,
         GLASS_HERO,
         // The frame carries the verdict, so the number does not have to be
@@ -305,10 +305,13 @@ function SpendDelta({ comparison }: { comparison: MonthComparison | null }) {
           ? "bg-success/15 text-success"
           : "bg-primary/20 text-primary-ink dark:text-primary",
       )}
-      title={t(down ? "moneyOnHand.spendingDownTitle" : "moneyOnHand.spendingUpTitle", {
-        percent,
-        month: comparison.previousLabel,
-      })}
+      title={t(
+        down ? "moneyOnHand.spendingDownTitle" : "moneyOnHand.spendingUpTitle",
+        {
+          percent,
+          month: comparison.previousLabel,
+        },
+      )}
     >
       {down ? (
         <TrendDown size={ICON.xs} weight="bold" />

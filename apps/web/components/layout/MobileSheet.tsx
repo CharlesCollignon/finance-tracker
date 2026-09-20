@@ -126,8 +126,8 @@ export function MobileSheet({
           // there is a desktop to spend: a bank description is long, and the
           // whole job here is deciding what it is.
           wide ? "md:max-w-4xl" : "md:max-w-xl",
-          "rounded-t-lg border-b-0",
-          "md:rounded-lg md:border-b",
+          "rounded-t-card border-b-0",
+          "md:rounded-control md:border-b",
         )}
       >
         <header

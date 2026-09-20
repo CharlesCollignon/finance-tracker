@@ -58,7 +58,7 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
           <LandingDeviceStack pageId={pageId} />
         </Rise>
 
-        <ol className="glass-grid mt-16 grid gap-px overflow-hidden rounded-2xl md:mt-20 md:grid-cols-3">
+        <ol className="glass-grid mt-16 grid gap-px overflow-hidden rounded-card md:mt-20 md:grid-cols-3">
           {page.steps.map((step, index) => (
             <li key={step.title} className="p-7 md:p-8">
               <Reveal delay={index * 0.06}>
@@ -83,7 +83,7 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
           {prev ? (
             <Link
               href={featureHref(prev.id)}
-              className="glass-flat glass-flat-hover flex flex-1 flex-col items-start rounded-2xl px-5 py-4"
+              className="glass-flat glass-flat-hover flex flex-1 flex-col items-start rounded-card px-5 py-4"
             >
               <span className="text-xs uppercase tracking-[0.14em] text-white/35">
                 Previous
@@ -98,7 +98,7 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
           {next ? (
             <Link
               href={featureHref(next.id)}
-              className="glass-flat glass-flat-hover flex flex-1 flex-col items-end rounded-2xl px-5 py-4 text-right"
+              className="glass-flat glass-flat-hover flex flex-1 flex-col items-end rounded-card px-5 py-4 text-right"
             >
               <span className="text-xs uppercase tracking-[0.14em] text-white/35">
                 Next

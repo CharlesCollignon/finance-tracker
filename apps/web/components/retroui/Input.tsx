@@ -16,7 +16,7 @@ export const Input: React.FC<InputProps> = ({
       type={type}
       placeholder={placeholder}
       className={cn(
-        "w-full min-h-11 rounded-md border border-border px-3 py-2",
+        "w-full min-h-11 rounded-control border border-border px-3 py-2",
         "bg-input text-foreground text-sm",
         "transition-colors duration-200",
         "placeholder:text-muted-foreground",

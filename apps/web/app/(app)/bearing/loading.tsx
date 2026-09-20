@@ -4,7 +4,11 @@ import { GLASS_CARD } from "@/lib/glass";
 import { cn } from "@/lib/utils";
 
 function Bone({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded bg-muted/40", className)} />;
+  return (
+    <div
+      className={cn("animate-pulse rounded-control bg-muted/40", className)}
+    />
+  );
 }
 
 /**
@@ -57,7 +61,7 @@ export default function BearingLoading() {
               pointer. There is nothing to point at yet, so the skeleton
               borrows only `GLASS_CARD`, the surface between them. */}
           {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className={cn("rounded-3xl", GLASS_CARD)}>
+            <div key={index} className={cn("rounded-card", GLASS_CARD)}>
               <div className="flex items-center gap-4 p-4 md:p-5">
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                   <Bone className="h-4 w-28" />

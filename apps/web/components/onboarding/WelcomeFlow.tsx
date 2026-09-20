@@ -182,7 +182,7 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
                   aria-pressed={currency === code}
                   onClick={() => setCurrencyPreference(code)}
                   className={cn(
-                    "flex-1 rounded-lg border px-4 py-3 text-sm font-semibold",
+                    "flex-1 rounded-control border px-4 py-3 text-sm font-semibold",
                     currency === code
                       ? "border-primary bg-primary/10 text-primary-ink"
                       : "border-border hover:bg-muted",

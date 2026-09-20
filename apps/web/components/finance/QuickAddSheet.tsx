@@ -328,7 +328,7 @@ function QuickAddFields({
                 setQuery(event.target.value);
                 setShowAllCategories(true);
               }}
-              className="min-h-10 w-full rounded-md border border-border bg-background px-3 text-base"
+              className="min-h-10 w-full rounded-control border border-border bg-background px-3 text-base"
             />
           ) : null}
 
@@ -345,7 +345,7 @@ function QuickAddFields({
           {showAllCategories ||
           query.trim() ||
           recentCategories.length === 0 ? (
-            <div className="max-h-56 overflow-y-auto rounded-md border border-border">
+            <div className="max-h-56 overflow-y-auto rounded-control border border-border">
               {groups.length === 0 ? (
                 <p className="p-3 text-sm text-muted-foreground">
                   No category matches “{query.trim()}”.
@@ -408,10 +408,10 @@ function QuickAddFields({
             onChange={(event) => setNote(event.target.value)}
             onFocus={() => setNoteFocused(true)}
             onBlur={handleNoteBlur}
-            className="min-h-10 w-full rounded-md border border-border bg-background px-3 text-base"
+            className="min-h-10 w-full rounded-control border border-border bg-background px-3 text-base"
           />
           {noteSuggestions.length > 0 ? (
-            <ul className="absolute inset-x-0 top-full z-10 overflow-hidden rounded-md border border-border bg-background shadow-lg">
+            <ul className="absolute inset-x-0 top-full z-10 overflow-hidden rounded-control border border-border bg-background shadow-lg">
               {noteSuggestions.map((rule) => (
                 <li key={rule.key}>
                   <button

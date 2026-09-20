@@ -68,7 +68,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
         className={cn(
           // Narrower, never shorter: the 44px touch height is kept, and only
           // the horizontal padding gives way on a phone.
-          "flex h-11 w-8 shrink-0 items-center justify-center rounded sm:w-11",
+          "flex h-11 w-8 shrink-0 items-center justify-center rounded-control sm:w-11",
           "border border-border hover:bg-accent",
         )}
         aria-label={t("common.previousMonth")}
@@ -83,7 +83,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
         aria-haspopup="dialog"
         aria-controls={open ? panelId : undefined}
         className={cn(
-          "flex h-11 min-w-0 shrink items-center gap-1 rounded px-1.5 text-sm font-medium sm:px-2",
+          "flex h-11 min-w-0 shrink items-center gap-1 rounded-control px-1.5 text-sm font-medium sm:px-2",
           "hover:bg-accent",
         )}
       >
@@ -107,7 +107,7 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
         href={`${basePath}${monthSearchParams(next.year, next.month)}`}
         onClick={() => rememberMonth(next.year, next.month)}
         className={cn(
-          "flex h-11 w-8 shrink-0 items-center justify-center rounded sm:w-11",
+          "flex h-11 w-8 shrink-0 items-center justify-center rounded-control sm:w-11",
           "border border-border hover:bg-accent",
         )}
         aria-label={t("common.nextMonth")}
@@ -218,7 +218,7 @@ function MonthGrid({
       aria-label={t("common.pickAMonth")}
       className={cn(
         "absolute right-0 top-full z-50 mt-1 w-[min(17rem,calc(100vw-2rem))]",
-        "rounded-xl p-3",
+        "rounded-card p-3",
         SOLID_PANEL,
         "account-menu-panel",
       )}
@@ -228,7 +228,7 @@ function MonthGrid({
           type="button"
           onClick={() => setShownYear((current) => current - 1)}
           aria-label={`Show ${shownYear - 1}`}
-          className="flex size-8 items-center justify-center rounded hover:bg-muted"
+          className="flex size-8 items-center justify-center rounded-control hover:bg-muted"
         >
           <CaretLeft size={ICON.sm} weight="bold" />
         </button>
@@ -237,7 +237,7 @@ function MonthGrid({
           type="button"
           onClick={() => setShownYear((current) => current + 1)}
           aria-label={`Show ${shownYear + 1}`}
-          className="flex size-8 items-center justify-center rounded hover:bg-muted"
+          className="flex size-8 items-center justify-center rounded-control hover:bg-muted"
         >
           <CaretRight size={ICON.sm} weight="bold" />
         </button>
@@ -263,7 +263,7 @@ function MonthGrid({
               onClick={() => go(shownYear, value)}
               aria-current={selected ? "true" : undefined}
               className={cn(
-                "flex h-11 flex-col items-center justify-center gap-1 rounded-md",
+                "flex h-11 flex-col items-center justify-center gap-1 rounded-control",
                 "text-sm transition-colors",
                 selected
                   ? "bg-primary font-medium text-primary-foreground"
@@ -297,7 +297,7 @@ function MonthGrid({
         <button
           type="button"
           onClick={() => go(today.year, today.month)}
-          className="rounded px-2 py-1 text-sm text-primary-ink hover:bg-muted"
+          className="rounded-control px-2 py-1 text-sm text-primary-ink hover:bg-muted"
         >
           This month
         </button>

@@ -44,11 +44,9 @@ export function RecentOnAccount({ movements, pending }: RecentOnAccountProps) {
   }
 
   return (
-    <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
+    <section className={cn("flex flex-col gap-4 rounded-card p-5", GLASS_CARD)}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-sm font-medium">
-          {t("recentOnAccount.title")}
-        </h2>
+        <h2 className="text-sm font-medium">{t("recentOnAccount.title")}</h2>
         {/* A link that says "6 to review" has to land on the review. Left
             pointing at the bare Ledger, it promised a decision and delivered
             a list. */}

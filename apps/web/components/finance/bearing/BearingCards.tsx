@@ -165,8 +165,8 @@ function Card({
   const rest = card.lead ? card.figures.slice(1) : card.figures;
 
   return (
-    <BorderGlow className="rounded-3xl p-px">
-      <SpotlightCard className={cn("rounded-3xl", GLASS_CARD)}>
+    <BorderGlow className="rounded-card p-px">
+      <SpotlightCard className={cn("rounded-card", GLASS_CARD)}>
         <button
           type="button"
           onClick={onToggle}

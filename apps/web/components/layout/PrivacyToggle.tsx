@@ -51,7 +51,7 @@ export function PrivacyToggle({ className }: { className?: string }) {
       title={hidden ? "Show amounts" : "Hide amounts"}
       onClick={toggle}
       className={cn(
-        "inline-flex h-9 w-9 items-center justify-center rounded-md",
+        "inline-flex h-9 w-9 items-center justify-center rounded-control",
         "border border-border bg-card text-muted-foreground",
         "transition-colors hover:bg-muted hover:text-foreground",
         hidden && "bg-primary/10 text-primary-ink",

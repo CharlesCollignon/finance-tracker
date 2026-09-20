@@ -155,7 +155,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                     >
                       <CategoryIcon
                         icon={category.icon}
-                        className="h-10 w-10 rounded-[13px] border-0 bg-muted"
+                        className="h-10 w-10 rounded-control border-0 bg-muted"
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -351,7 +351,7 @@ function CategoryFormSheet({
             value={type}
             onChange={(event) => setType(event.target.value as CategoryType)}
             className={cn(
-              "h-11 w-full rounded border border-border bg-background",
+              "h-11 w-full rounded-control border border-border bg-background",
               "px-3 text-base text-foreground",
             )}
           >
@@ -401,7 +401,7 @@ function CategoryFormSheet({
                 aria-label={key}
                 onClick={() => setIcon(key)}
                 className={cn(
-                  "flex h-11 items-center justify-center rounded-xl border",
+                  "flex h-11 items-center justify-center rounded-control border",
                   icon === key
                     ? "border-foreground bg-primary text-primary-foreground"
                     : "border-border bg-background hover:bg-accent",

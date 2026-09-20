@@ -86,7 +86,7 @@ function RecurringItemRow({
   return (
     <li
       className={cn(
-        "flex items-stretch gap-3 rounded-lg py-3",
+        "flex items-stretch gap-3 rounded-control py-3",
         "transition-colors hover:bg-muted/30",
         !template.active && "opacity-60",
       )}
@@ -208,7 +208,7 @@ function GroupCard({
     .reduce((sum, t) => sum + estimateMonthlyAmount(t), 0);
 
   return (
-    <section className="flex min-w-0 flex-col gap-3 rounded-xl border border-border bg-card p-4 md:p-5">
+    <section className="flex min-w-0 flex-col gap-3 rounded-card border border-border bg-card p-4 md:p-5">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">{label}</h2>
         {monthly > 0 ? (
@@ -336,7 +336,7 @@ export function RecurringView({
         </div>
 
         {applyPending ? (
-          <p className="rounded-lg border border-dashed border-primary-rim/50 px-4 py-3 text-sm text-muted-foreground">
+          <p className="rounded-control border border-dashed border-primary-rim/50 px-4 py-3 text-sm text-muted-foreground">
             {t("charges.applyPendingBefore")}{" "}
             <Link
               href={transactionsHref}
@@ -350,7 +350,7 @@ export function RecurringView({
 
         {hasTemplates ? (
           <>
-            <section className="flex flex-col gap-1 rounded-xl border border-border bg-card p-5">
+            <section className="flex flex-col gap-1 rounded-card border border-border bg-card p-5">
               <p className="text-sm text-muted-foreground">
                 Committed every month
               </p>

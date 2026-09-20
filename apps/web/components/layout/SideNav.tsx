@@ -26,7 +26,7 @@ function QuickAddButton() {
       type="button"
       onClick={() => quickAdd.open()}
       className={cn(
-        "flex min-h-10 w-full items-center gap-3 rounded-md px-3 py-2",
+        "flex min-h-10 w-full items-center gap-3 rounded-control px-3 py-2",
         "bg-primary text-sm font-medium text-primary-foreground",
         "transition-colors duration-200 hover:bg-primary-hover",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -34,7 +34,7 @@ function QuickAddButton() {
     >
       <Plus size={ICON.lg} weight="bold" />
       {t("common.addTransaction")}
-      <kbd className="ml-auto rounded bg-black/15 px-1.5 py-0.5 text-[10px] font-normal">
+      <kbd className="ml-auto rounded-control bg-black/15 px-1.5 py-0.5 text-[10px] font-normal">
         N
       </kbd>
     </button>

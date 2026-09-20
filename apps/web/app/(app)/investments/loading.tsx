@@ -3,7 +3,11 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { cn } from "@/lib/utils";
 
 function Bone({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded bg-muted/40", className)} />;
+  return (
+    <div
+      className={cn("animate-pulse rounded-control bg-muted/40", className)}
+    />
+  );
 }
 
 export default function InvestmentsLoading() {
@@ -19,7 +23,7 @@ export default function InvestmentsLoading() {
             <Bone className="h-8 w-24 rounded-full" />
             <Bone className="h-8 w-28 rounded-full" />
           </div>
-          <Bone className="h-8 w-36 rounded-md" />
+          <Bone className="h-8 w-36 rounded-control" />
         </div>
         <div className="flex flex-col items-center gap-8 md:gap-10">
           <div className="flex w-full flex-col items-center gap-2">

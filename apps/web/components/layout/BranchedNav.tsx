@@ -193,7 +193,7 @@ function Section({
           href={item.href}
           aria-current={active ? "page" : undefined}
           className={cn(
-            "flex min-h-10 flex-1 items-center gap-3 rounded-md px-3 py-2",
+            "flex min-h-10 flex-1 items-center gap-3 rounded-control px-3 py-2",
             "text-sm font-medium transition-colors duration-200",
             "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
             active
@@ -218,7 +218,7 @@ function Section({
               surface: label,
             })}
             className={cn(
-              "text-muted-foreground shrink-0 rounded-md p-1.5",
+              "text-muted-foreground shrink-0 rounded-control p-1.5",
               "hover:bg-muted hover:text-foreground transition-colors duration-200",
               "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
             )}
@@ -309,7 +309,7 @@ function Section({
                     tabIndex={open ? undefined : -1}
                     style={{ height: ROW_HEIGHT, paddingLeft: INDENT }}
                     className={cn(
-                      "flex items-center rounded-md pr-3 text-sm",
+                      "flex items-center rounded-control pr-3 text-sm",
                       "transition-colors duration-200",
                       "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
                       on

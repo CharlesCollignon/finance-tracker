@@ -42,7 +42,7 @@ function ArrowNub({ className }: { className?: string }) {
   );
 }
 
-/** A row of rounded bars, each a 0–1 fraction of the row's height. */
+/** A row of rounded-control bars, each a 0–1 fraction of the row's height. */
 function Sparkbars({
   values,
   tone = "gold",
@@ -131,7 +131,7 @@ export function GlassStat({
   // Width is the caller's business: these are positioned over artwork, and
   // what fits differs at every one of those positions.
   const shell = cn(
-    "glass-panel group block rounded-[1.25rem] px-5 py-4 text-left",
+    "glass-panel group block rounded-card px-5 py-4 text-left",
     className,
   );
 
@@ -164,13 +164,13 @@ export function GlassLink({
     <Link
       href={href}
       className={cn(
-        "glass-flat glass-flat-hover group flex flex-col rounded-2xl p-5",
+        "glass-flat glass-flat-hover group flex flex-col rounded-card p-5",
         className,
       )}
     >
       <div className="flex items-start justify-between gap-4">
         {icon ? (
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-primary">
+          <span className="flex h-9 w-9 items-center justify-center rounded-control border border-white/10 bg-white/5 text-primary">
             {icon}
           </span>
         ) : null}

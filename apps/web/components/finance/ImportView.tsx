@@ -293,7 +293,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
               }}
               className={cn(
                 "mt-5 flex flex-col items-center justify-center gap-3",
-                "rounded-lg border border-dashed border-border p-10 text-center",
+                "rounded-control border border-dashed border-border p-10 text-center",
               )}
             >
               <UploadSimple
@@ -434,7 +434,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                         event.target.value as "negative" | "positive",
                       )
                     }
-                    className="h-11 rounded border border-border bg-background px-3 text-base"
+                    className="h-11 rounded-control border border-border bg-background px-3 text-base"
                   >
                     <option value="negative">Negative (−12.50)</option>
                     <option value="positive">Positive (12.50)</option>
@@ -577,7 +577,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                                 setRowCategory(row.line, event.target.value)
                               }
                               className={cn(
-                                "h-9 w-full min-w-[10rem] rounded border bg-background px-2 text-sm",
+                                "h-9 w-full min-w-[10rem] rounded-control border bg-background px-2 text-sm",
                                 row.categoryId === null &&
                                   row.status === "ready"
                                   ? "border-destructive"
@@ -654,7 +654,7 @@ function ColumnPicker({
             event.target.value === "" ? null : Number(event.target.value),
           )
         }
-        className="h-11 rounded border border-border bg-background px-3 text-base"
+        className="h-11 rounded-control border border-border bg-background px-3 text-base"
       >
         {allowNone ? (
           <option value="">{t("importer.notInThisFile")}</option>
@@ -687,7 +687,7 @@ function BulkAssign({
           onPick(event.target.value);
           event.target.value = "";
         }}
-        className="h-10 rounded border border-border bg-background px-2 text-sm"
+        className="h-10 rounded-control border border-border bg-background px-2 text-sm"
       >
         <option value="">Choose a category…</option>
         {groups.map((group) =>
@@ -715,7 +715,7 @@ function PreviewTable({
   }
 
   return (
-    <div className="mt-5 overflow-x-auto rounded border border-border">
+    <div className="mt-5 overflow-x-auto rounded-control border border-border">
       <table className="w-full text-xs">
         <thead>
           <tr className="border-b border-border bg-muted/40 text-left">

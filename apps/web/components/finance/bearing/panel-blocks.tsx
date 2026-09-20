@@ -92,7 +92,7 @@ export function PanelBlockView({
         detail.arrived &&
         (detail.arrived.proposals.length > 0 ||
           detail.arrived.misses.length > 0) ? (
-        <div className={cn("overflow-hidden rounded-3xl", GLASS_CARD)}>
+        <div className={cn("overflow-hidden rounded-card", GLASS_CARD)}>
           <ArrivedCharges
             proposals={detail.arrived.proposals}
             misses={detail.arrived.misses}
@@ -213,7 +213,7 @@ export function PanelBlockSkeleton({ block }: { block: PanelBlock }) {
     <div
       aria-hidden
       className={cn(
-        "animate-pulse rounded-3xl bg-muted/40",
+        "animate-pulse rounded-card bg-muted/40",
         SKELETON_HEIGHT[block],
       )}
     />
@@ -260,7 +260,7 @@ function Framed({
   const t = useT();
 
   return (
-    <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
+    <section className={cn("flex flex-col gap-4 rounded-card p-5", GLASS_CARD)}>
       <h2 className="text-sm font-medium">{t(headingKey)}</h2>
       {children}
     </section>

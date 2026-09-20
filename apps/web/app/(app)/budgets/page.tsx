@@ -159,7 +159,7 @@ export default async function BudgetsPage() {
               <Link
                 key={href}
                 href={href}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm transition-colors hover:border-primary-rim"
+                className="flex items-center justify-between gap-3 rounded-card border border-border bg-card px-4 py-3 text-sm transition-colors hover:border-primary-rim"
               >
                 <span>
                   <span className="font-medium">{title}</span>

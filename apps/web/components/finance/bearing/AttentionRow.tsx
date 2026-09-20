@@ -49,7 +49,7 @@ export function AttentionRow({
     <Link
       href={top.href}
       className={cn(
-        "group -mx-1 flex items-center gap-3 rounded-2xl px-1 py-1.5",
+        "group -mx-1 flex items-center gap-3 rounded-control px-1 py-1.5",
         "transition-colors hover:bg-muted/40",
         className,
       )}

@@ -52,7 +52,7 @@ export function CashAccountsCard({ accounts }: CashAccountsCardProps) {
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+    <section className="flex flex-col gap-4 rounded-card border border-border bg-card p-5">
       <div className="flex flex-col gap-1">
         <h2 className="text-sm font-medium">
           {t("bearing.panel.cashAccountsHeading")}
@@ -94,7 +94,9 @@ export function CashAccountsCard({ accounts }: CashAccountsCardProps) {
                     </span>
                   ) : account.reported_on ? (
                     <span className="block text-xs text-muted-foreground">
-                      {t("cashAccounts.lastRead", { when: account.reported_on })}
+                      {t("cashAccounts.lastRead", {
+                        when: account.reported_on,
+                      })}
                     </span>
                   ) : null}
                 </span>

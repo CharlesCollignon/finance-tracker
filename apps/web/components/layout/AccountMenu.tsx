@@ -74,7 +74,7 @@ export function AccountMenu({
   }, [open]);
 
   const rowClass =
-    "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm " +
+    "flex min-h-11 w-full items-center gap-3 rounded-control px-3 text-sm " +
     "font-medium text-foreground transition-colors hover:bg-foreground/5";
 
   const panel =
@@ -107,7 +107,7 @@ export function AccountMenu({
                 aria-labelledby={titleId}
                 className={cn(
                   "account-menu-panel flex w-full max-w-[18rem] flex-col gap-1 p-2",
-                  "rounded-3xl",
+                  "rounded-card",
                   GLASS_PANEL,
                 )}
               >
@@ -195,7 +195,7 @@ export function AccountMenu({
         aria-label={displayName}
         onClick={() => setOpen((value) => !value)}
         className={cn(
-          "flex w-full min-h-10 items-center gap-3 rounded-md px-3 py-2",
+          "flex w-full min-h-10 items-center gap-3 rounded-control px-3 py-2",
           "text-sm font-medium transition-colors duration-200",
           active
             ? "bg-primary/10 text-primary-ink"

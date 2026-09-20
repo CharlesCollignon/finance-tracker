@@ -20,7 +20,7 @@ import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
  * of the month's allowance has gone. It lives in "Your run" because that is
  * the card it describes.
  *
- * So it draws no surface of its own: no `GLASS_CARD`, no rounded corners and
+ * So it draws no surface of its own: no `GLASS_CARD`, no rounded-control corners and
  * no hairline underneath. The card it sits in supplies all three, and a
  * second edge inside that one would be the only divider on the screen. It
  * names nothing either — it used to be a landmark region called "Where you
@@ -262,9 +262,7 @@ function SpineRing({ ring }: { ring: SpineState["ring"] }) {
           strokeLinecap="round"
           strokeDasharray={OVER_CIRCUMFERENCE}
           strokeDashoffset={
-            entered
-              ? OVER_CIRCUMFERENCE * (1 - overshoot)
-              : OVER_CIRCUMFERENCE
+            entered ? OVER_CIRCUMFERENCE * (1 - overshoot) : OVER_CIRCUMFERENCE
           }
           style={{ transition }}
         />

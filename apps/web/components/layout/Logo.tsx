@@ -31,7 +31,7 @@ const markSize: Record<LogoSize, number> = {
  *
  * There used to be a choice of artwork here — the bare orb, or a full
  * composition of the orb and the P it drew, which shipped as a flat cream
- * plate and so had to be clipped to a rounded square to look deliberate.
+ * plate and so had to be clipped to a rounded-control square to look deliberate.
  * Both were PNGs. The orb is a component now, and a component can be
  * transparent, turn, and pick up whatever is behind it, none of which a
  * render can; the plate went with them, since a lockup that needs its own

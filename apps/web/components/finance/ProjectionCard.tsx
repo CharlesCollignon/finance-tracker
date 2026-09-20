@@ -79,7 +79,7 @@ export function ProjectionCard({ projection, runway }: ProjectionCardProps) {
           under a number nobody should be reading is a caveat that arrives
           too late. */}
       {makeup.noIncomeScheduled ? (
-        <p className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
+        <p className="mt-4 rounded-control border border-destructive/40 bg-destructive/10 p-3 text-sm">
           {t("projection.noIncomeCharge")}{" "}
           <Link
             href="/recurring"
@@ -254,7 +254,7 @@ function Ingredient({ ingredient }: { ingredient: ProjectionIngredient }) {
     <li>
       <Link
         href={INGREDIENT_HREF[ingredient.kind]}
-        className="-mx-2 flex items-baseline justify-between gap-3 rounded-md px-2 py-2 hover:bg-accent"
+        className="-mx-2 flex items-baseline justify-between gap-3 rounded-control px-2 py-2 hover:bg-accent"
       >
         <span className="min-w-0">
           <span className="text-sm">{label}</span>{" "}

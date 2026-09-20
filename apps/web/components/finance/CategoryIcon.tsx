@@ -53,7 +53,7 @@ export function CategoryIcon({ icon, className }: CategoryIconProps) {
     <span
       className={cn(
         "flex h-9 w-9 shrink-0 items-center justify-center",
-        "rounded-md border border-border bg-muted/30",
+        "rounded-control border border-border bg-muted/30",
         className,
       )}
       aria-hidden

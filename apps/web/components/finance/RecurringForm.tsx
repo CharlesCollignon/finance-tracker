@@ -300,7 +300,7 @@ function RecurringFormFields({
             </div>
             <div
               className={cn(
-                "rounded border border-border bg-muted/20 p-3 text-sm",
+                "rounded-control border border-border bg-muted/20 p-3 text-sm",
               )}
             >
               <p className="font-medium">{t("recurring.estimatedAmount")}</p>
@@ -342,7 +342,7 @@ function RecurringFormFields({
               />
             </div>
             {supportsShares && !isCryptoCategory && (
-              <div className="flex flex-col gap-2 rounded border border-border bg-muted/20 p-3">
+              <div className="flex flex-col gap-2 rounded-control border border-border bg-muted/20 p-3">
                 <FormLabel>Tracked ETF / fund</FormLabel>
                 <Text className="text-xs text-muted-foreground">
                   Fixed EUR DCA: pick the ETF you buy here. On Wallets, enter
@@ -374,7 +374,7 @@ function RecurringFormFields({
                   name="instrumentName"
                   value={BITCOIN_INSTRUMENT.name}
                 />
-                <div className="rounded border border-border bg-muted/20 p-3 text-sm">
+                <div className="rounded-control border border-border bg-muted/20 p-3 text-sm">
                   <p className="font-medium">Bitcoin DCA</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Each buy converts your EUR amount to BTC. Enter your total
@@ -449,7 +449,7 @@ function RecurringFormFields({
               id="dayOfWeek"
               name="dayOfWeek"
               required
-              className="h-11 w-full rounded border border-border bg-background px-3 text-base text-foreground "
+              className="h-11 w-full rounded-control border border-border bg-background px-3 text-base text-foreground "
               defaultValue={template?.day_of_week ?? 1}
             >
               {Object.entries(dayOfWeekLabels(locale)).map(([value, label]) => (
@@ -467,7 +467,7 @@ function RecurringFormFields({
                 id="monthOfYear"
                 name="monthOfYear"
                 required
-                className="h-11 w-full rounded border border-border bg-background px-3 text-base text-foreground "
+                className="h-11 w-full rounded-control border border-border bg-background px-3 text-base text-foreground "
                 defaultValue={template?.month_of_year ?? 10}
               >
                 {Object.entries(monthLabels(locale)).map(([value, label]) => (

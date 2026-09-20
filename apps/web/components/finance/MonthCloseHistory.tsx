@@ -105,7 +105,7 @@ export function MonthCloseHistory({
 
       <Card.Content className="flex flex-col gap-4">
         {(history.length > 0 || unrecordedCap !== null) && (
-          <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
+          <div className="flex flex-col gap-2 rounded-control border border-border p-3">
             <p className="text-sm font-medium">
               {t("common.unrecordedAllowance")}
             </p>
@@ -163,7 +163,7 @@ export function MonthCloseHistory({
           </div>
         )}
 
-        <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
+        <div className="flex flex-col gap-2 rounded-control border border-border p-3">
           <p className="text-sm font-medium">
             {t("monthCloseHistory.readingDayHeading")}
           </p>

@@ -57,7 +57,7 @@ export function MonthWallets({ portfolio }: MonthWalletsProps) {
   const showPl = portfolio.hasMarketSnapshot && pl !== 0;
 
   return (
-    <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
+    <section className={cn("flex flex-col gap-4 rounded-card p-5", GLASS_CARD)}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">{t("month.invested")}</h2>
         <Link

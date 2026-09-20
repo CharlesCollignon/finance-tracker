@@ -50,7 +50,7 @@ const DialogBackdrop = (
 };
 
 const dialogVariants = cva(
-  `fixed left-[50%] top-[50%] z-50 grid rounded-lg overflow-hidden w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-card duration-200
+  `fixed left-[50%] top-[50%] z-50 grid rounded-control overflow-hidden w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-card duration-200
  data-[open]:animate-in
  data-[open]:fade-in-0
  data-[open]:zoom-in-95

@@ -137,7 +137,7 @@ export function BankInbox({
   const bar = (
     <div
       className={cn(
-        "flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-2.5",
+        "flex flex-wrap items-center justify-between gap-3 rounded-control border px-4 py-2.5",
         waiting ? "border-primary-rim bg-primary/5" : "border-border bg-card",
       )}
     >
@@ -222,7 +222,7 @@ export function BankInbox({
               {items.map((item) => (
                 <li
                   key={item.id}
-                  className="flex flex-col gap-2 rounded-lg border border-border p-3"
+                  className="flex flex-col gap-2 rounded-control border border-border p-3"
                 >
                   <div className="flex items-baseline justify-between gap-3">
                     <div className="min-w-0">

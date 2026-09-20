@@ -158,7 +158,7 @@ export function BudgetsView({
       <PageHeader titleKey="nav.plan" />
 
       <PageContainer className="flex flex-col gap-4">
-        <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 md:p-5">
+        <section className="flex flex-col gap-4 rounded-card border border-border bg-card p-4 md:p-5">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-sm font-medium">{t("plan.capsHeading")}</h2>
             <Button
@@ -193,7 +193,7 @@ export function BudgetsView({
                     }}
                     aria-label={`Edit the cap on ${row.label}`}
                     className={cn(
-                      "rounded-lg p-2 transition-colors hover:bg-muted/40",
+                      "rounded-control p-2 transition-colors hover:bg-muted/40",
                       editingBudget?.id === row.budgetId && "bg-muted/60",
                     )}
                   >
@@ -232,7 +232,7 @@ export function BudgetsView({
                   name="categoryId"
                   defaultValue={editingBudget?.category_id ?? ""}
                   className={cn(
-                    "h-11 w-full rounded border border-border",
+                    "h-11 w-full rounded-control border border-border",
                     "bg-background px-3 text-base",
                   )}
                 >
@@ -304,7 +304,7 @@ export function BudgetsView({
           ) : null}
         </section>
 
-        <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 md:p-5">
+        <section className="flex flex-col gap-4 rounded-card border border-border bg-card p-4 md:p-5">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-sm font-medium">{t("plan.goalsHeading")}</h2>
             <Button
@@ -340,7 +340,7 @@ export function BudgetsView({
                     }}
                     aria-label={`Edit the goal ${row.name}`}
                     className={cn(
-                      "flex flex-col items-center gap-1 rounded-lg p-2",
+                      "flex flex-col items-center gap-1 rounded-control p-2",
                       "transition-colors hover:bg-muted/40",
                       editingGoal?.id === row.goalId && "bg-muted/60",
                     )}
@@ -430,7 +430,7 @@ export function BudgetsView({
                   name="categoryId"
                   defaultValue={editingGoal?.category_id ?? ""}
                   className={cn(
-                    "h-11 w-full rounded border border-border",
+                    "h-11 w-full rounded-control border border-border",
                     "bg-background px-3 text-base",
                   )}
                 >
@@ -484,7 +484,7 @@ export function BudgetsView({
           ) : null}
         </section>
 
-        <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 md:p-5">
+        <section className="flex flex-col gap-3 rounded-card border border-border bg-card p-4 md:p-5">
           <h2 className="text-sm font-medium">{t("plan.tagsHeading")}</h2>
           <p className="text-sm text-muted-foreground">{t("plan.tagsBlurb")}</p>
           {tags.length > 0 ? (

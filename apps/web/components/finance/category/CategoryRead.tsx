@@ -104,9 +104,7 @@ export function CategoryRead({
   }
 
   return (
-    <section
-      className={cn("flex flex-col gap-3 rounded-2xl p-4", GLASS_CARD)}
-    >
+    <section className={cn("flex flex-col gap-3 rounded-card p-4", GLASS_CARD)}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <Sparkle size={ICON.sm} className="text-primary-rim" />

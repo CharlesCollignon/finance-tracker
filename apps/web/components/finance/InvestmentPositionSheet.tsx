@@ -248,7 +248,7 @@ function InvestmentPositionForm({
                 id="recurringTemplateId"
                 name="recurringTemplateId"
                 required
-                className="h-10 w-full rounded-lg border border-border bg-input px-3 text-base"
+                className="h-10 w-full rounded-control border border-border bg-input px-3 text-base"
                 value={recurringTemplateId}
                 onChange={(event) => setRecurringTemplateId(event.target.value)}
               >
@@ -268,7 +268,7 @@ function InvestmentPositionForm({
         )}
 
         {isRecurringLinked ? (
-          <div className="flex items-center gap-3 rounded-xl border border-border p-3">
+          <div className="flex items-center gap-3 rounded-card border border-border p-3">
             <InstrumentLogo
               symbol={item.instrumentSymbol}
               name={item.name}
@@ -321,7 +321,7 @@ function InvestmentPositionForm({
         </div>
 
         {isRecurringLinked && instrumentFromRecurring ? (
-          <div className="rounded-xl border border-border bg-muted/20 p-3 text-sm">
+          <div className="rounded-card border border-border bg-muted/20 p-3 text-sm">
             <p className="font-medium">
               {isCrypto ? t("position.trackedAsset") : t("position.trackedEtf")}
             </p>
@@ -363,7 +363,7 @@ function InvestmentPositionForm({
           </Text>
         ) : isCrypto ? (
           <>
-            <div className="rounded-xl border border-border bg-muted/20 p-3 text-sm">
+            <div className="rounded-card border border-border bg-muted/20 p-3 text-sm">
               <p className="font-medium">{t("position.bitcoin")}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Market value uses BTC-EUR live price × your total BTC.
@@ -568,13 +568,7 @@ function InvestmentPositionForm({
           {/* Where the figure on the dashboard will actually come from. */}
           {item ? (
             <Text className="text-xs text-muted-foreground">
-              {t(
-                valuationNote(
-                  brokerValue,
-                  valuePinned,
-                  item.hasMarketQuote,
-                ),
-              )}
+              {t(valuationNote(brokerValue, valuePinned, item.hasMarketQuote))}
             </Text>
           ) : null}
         </div>

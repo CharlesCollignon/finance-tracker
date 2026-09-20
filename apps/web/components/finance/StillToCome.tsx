@@ -54,7 +54,7 @@ export function StillToCome({
   const restTotal = rest.reduce((sum, charge) => sum + charge.amount, 0);
 
   return (
-    <section className={cn("flex flex-col gap-4 rounded-3xl p-5", GLASS_CARD)}>
+    <section className={cn("flex flex-col gap-4 rounded-card p-5", GLASS_CARD)}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">{t("stillToCome.title")}</h2>
         <PrivateAmount className="tabular-nums">
@@ -114,10 +114,7 @@ export function StillToCome({
           {incoming.length === 1 && incoming[0]
             ? t("stillToCome.arrivingNamed", {
                 name: incoming[0].name,
-                when: relativeDayLabel(
-                  incoming[0].occurredOn,
-                  formatShortDate,
-                ),
+                when: relativeDayLabel(incoming[0].occurredOn, formatShortDate),
               })
             : t("moneyOnHand.stillToArrive")}
         </p>

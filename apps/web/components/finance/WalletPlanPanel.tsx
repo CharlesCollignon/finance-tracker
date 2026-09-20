@@ -366,10 +366,7 @@ function EnvelopeFeeField({
 
   return (
     <div className="flex flex-col gap-2">
-      <label
-        htmlFor={`envelope-fee-${wallet}`}
-        className="text-sm font-medium"
-      >
+      <label htmlFor={`envelope-fee-${wallet}`} className="text-sm font-medium">
         {INVESTMENT_WALLET_LABELS[wallet]} · {t("lookThrough.envelopeFee")}
       </label>
       <div className="flex flex-wrap items-center gap-2">
@@ -381,7 +378,7 @@ function EnvelopeFeeField({
             value={value}
             onChange={(event) => setValue(event.target.value)}
             placeholder="0,75"
-            className="h-10 w-24 rounded border border-border bg-background px-3 text-base"
+            className="h-10 w-24 rounded-control border border-border bg-background px-3 text-base"
           />
           <span className="text-sm text-muted-foreground">%</span>
         </div>
@@ -461,7 +458,7 @@ function TargetEditor({
                   ),
                 )
               }
-              className="h-10 w-20 rounded border border-border bg-background px-2 text-right tabular-nums"
+              className="h-10 w-20 rounded-control border border-border bg-background px-2 text-right tabular-nums"
             />
             <span className="text-muted-foreground">%</span>
           </span>
@@ -518,7 +515,7 @@ function PeaOpenedField({
           type="date"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          className="h-10 rounded border border-border bg-background px-3 text-base"
+          className="h-10 rounded-control border border-border bg-background px-3 text-base"
         />
         <Button
           variant="outline"

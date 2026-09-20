@@ -39,7 +39,7 @@ function UpdateRow({
   return (
     <li
       className={cn(
-        "rounded border border-border p-3 text-sm",
+        "rounded-control border border-border p-3 text-sm",
         !selected && "opacity-50",
       )}
     >
@@ -195,7 +195,7 @@ export function ApplyRecurringSheet({
                   <li
                     key={key}
                     className={cn(
-                      "rounded border border-border px-3 py-2 text-sm",
+                      "rounded-control border border-border px-3 py-2 text-sm",
                       !selected && "opacity-50",
                     )}
                   >
