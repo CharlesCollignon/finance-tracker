@@ -296,7 +296,7 @@
         "src/wallet-read.ts": ["exports", "types"],
 
         // ---------------------------------------------------------------
-        // DEBT with an owner and a date — the arranger, mid-demolition.
+        // DEBT — remove with the arranger (Task 9, 2026-09-20).
         //
         // These three modules are the AI arrangement of the Bearing: the
         // prompt, the model's answer and the budget that rationed it. The
@@ -308,8 +308,8 @@
         // `bearing-tiles.ts` and `bearing-panels.ts` all go together), and
         // a half-deleted library is worse than a whole one deleted late.
         //
-        // So: delete these three lines by deleting the three files. Nothing
-        // else should ever be added under this heading.
+        // So: Task 9 deletes these three lines by deleting the three files
+        // they name. Nothing else should ever be added under this heading.
         // ---------------------------------------------------------------
         "src/bearing-budget.ts": ["exports"],
         "src/bearing-prompt.ts": ["exports"],

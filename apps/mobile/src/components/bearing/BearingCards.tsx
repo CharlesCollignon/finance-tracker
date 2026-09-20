@@ -202,7 +202,14 @@ function CardView({
               </Text>
               <View className="flex-row items-end gap-2">
                 <Run figure={card.lead} trend={trend} className="mb-1" />
-                <LeadAmount figure={card.lead} />
+                <PrivateAmount
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  className={toneFor(card.lead)}
+                  style={TYPE.figure}
+                >
+                  {card.lead.display}
+                </PrivateAmount>
               </View>
             </View>
           ) : null}
@@ -266,10 +273,7 @@ function FigureRow({ figure, trend }: { figure: CardFigure; trend: number[] }) {
         {figure.label}
       </Text>
       <Run figure={figure} trend={trend} />
-      <PrivateAmount
-        className="text-base font-semibold"
-        style={{ color: toneFor(figure, colors) }}
-      >
+      <PrivateAmount className={cn("text-base font-semibold", toneFor(figure))}>
         {figure.display}
       </PrivateAmount>
       {/* Kept as an empty slot on a row that leads nowhere, rather than
@@ -306,21 +310,6 @@ function FigureRow({ figure, trend }: { figure: CardFigure; trend: number[] }) {
     >
       {body}
     </Pressable>
-  );
-}
-
-/** The lead figure, at the one size a card's own number is drawn in. */
-function LeadAmount({ figure }: { figure: CardFigure }) {
-  const colors = useThemeColors();
-
-  return (
-    <PrivateAmount
-      numberOfLines={1}
-      adjustsFontSizeToFit
-      style={[TYPE.figure, { color: toneFor(figure, colors) }]}
-    >
-      {figure.display}
-    </PrivateAmount>
   );
 }
 
@@ -377,18 +366,34 @@ function Caret({ open }: { open: boolean }) {
   );
 }
 
-/** The colour a figure takes from which way it has gone. */
-function toneFor(
-  figure: CardFigure,
-  colors: ReturnType<typeof useThemeColors>,
-): string {
+/**
+ * The colour a figure takes from which way it has gone, as a class.
+ *
+ * A class and not a `style` colour, which is how every other figure on this
+ * app is coloured — `ProjectionCard`, `WalletPerformance`,
+ * `InvestmentPositionRow` and `MoneyOnHand` all pick between
+ * `text-primary-ink`, `text-success` and `text-destructive` in their
+ * className. That is not only consistency: `PrivateAmount` adds
+ * `text-foreground` of its own whenever the className it is handed carries no
+ * colour, and `lib/text-class.ts` — which exists precisely to keep a caller's
+ * colour from losing to a component's own — reasons about className against
+ * className and says nothing about className against `style`. Colouring these
+ * two figures inline would have left the green and the red depending on a
+ * precedence nothing in this repo has written down.
+ *
+ * The same three tones the web's `toneFor` returns, in the phone's own
+ * tokens: the retired `BearingTile` used `colors.primaryInk` for a good move
+ * and `colors.destructive` for a bad one, and `text-primary-ink` /
+ * `text-destructive` are those two colours' classes.
+ */
+function toneFor(figure: CardFigure): string {
   if (figure.sense === "neutral" || figure.value === 0) {
-    return colors.foreground;
+    return "text-foreground";
   }
   // The datum says which way is good; the value says which way it went. A
   // rise in something marked "rising is bad" is the one combination worth
   // colouring, and its opposite is the one worth rewarding.
   const good =
     figure.sense === "up-is-good" ? figure.value > 0 : figure.value < 0;
-  return good ? colors.primaryInk : colors.destructive;
+  return good ? "text-primary-ink" : "text-destructive";
 }

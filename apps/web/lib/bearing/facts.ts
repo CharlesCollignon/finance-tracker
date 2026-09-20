@@ -281,10 +281,11 @@ export async function gatherBearingFacts(
    *
    * This used to be `previewApplyRecurringForMonth(year, month)`, which
    * builds a whole plan: three more queries, and one live market quote per
-   * quote-priced occurrence, on the landing page, on every load. Paid twice
-   * when a stored arrangement's language differs from the request's and the
-   * pack is gathered again, and a third time by `arrangeBearing`, which
-   * reads none of it.
+   * quote-priced occurrence, on the landing page, on every load. The
+   * arrangement used to make that bill worse — the pack was re-gathered when
+   * a stored arrangement's language differed from the request's, and paid for
+   * a third time by an arranger that read none of it — and both of those went
+   * with it, but the load on the page itself did not.
    *
    * The action row asks "how many", not "for how much". `templates`,
    * `monthTransactions` and `skippedKeys` are all already in hand above, so

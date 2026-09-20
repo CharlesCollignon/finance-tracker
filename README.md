@@ -66,18 +66,17 @@ cp apps/web/.env.local.example apps/web/.env.local
 | `SUPABASE_SERVICE_ROLE_KEY`     | optional | “Delete account” on web, and the daily cron jobs                     |
 | `APPLE_TEAM_ID`                 | optional | Passkeys on iOS — Apple Team ID for AASA                             |
 | `ANDROID_SHA256_FINGERPRINTS`   | optional | Passkeys on Android — colon-hex SHA-256 fingerprints                 |
-| `MISTRAL_API_KEY`               | optional | Every model call: the month read, the Bearing's arrangement, and the  |
-|                                 |          | look-through's read and instrument readings                           |
+| `MISTRAL_API_KEY`               | optional | Every model call: the month read, and the look-through's read and     |
+|                                 |          | instrument readings                                                   |
 
-One key and one model for all four. `MISTRAL_MODEL` overrides the model
+One key and one model for all three. `MISTRAL_MODEL` overrides the model
 everywhere; there is no per-feature override, on the grounds that a
 deployment wanting two models has a problem this file cannot fix.
 
 Every one of these is server-side. None is `NEXT_PUBLIC_`, none is read in a
-browser, and each feature exposes only a boolean — `monthReadConfigured()`,
-`arrangerConfigured()`, `walletReadConfigured()` — to anything that renders,
-so a missing key shows up as a surface without a button rather than a button
-that fails.
+browser, and each feature exposes only a boolean — `monthReadConfigured()` and
+`walletReadConfigured()` — to anything that renders, so a missing key shows up
+as a surface without a button rather than a button that fails.
 
 The look-through needs the **web search connector**, which is a Mistral plan
 entitlement rather than a separate key. Without it, reading an instrument
