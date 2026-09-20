@@ -276,7 +276,7 @@ export function BankInboxSheet({
           className="flex-1"
           onPress={close}
         />
-        <View className="max-h-[88%] rounded-t-card border border-border bg-card p-5">
+        <View className="max-h-[88%] rounded-t-card p-card border border-border bg-card">
           <SheetGrabber />
           {header}
 
@@ -286,7 +286,7 @@ export function BankInboxSheet({
                   statement card does, where the row is a receipt someone
                   already recognises; here the string *is* the decision, and
                   "PRELEVEMENT Navi…" answers nothing. */}
-              <View className="gap-1.5 rounded-card border border-primary-rim bg-primary/5 p-4">
+              <View className="gap-1.5 rounded-card p-card border border-primary-rim bg-primary/5">
                 <Text className="text-base font-medium">
                   {current.counterparty ?? current.note}
                 </Text>

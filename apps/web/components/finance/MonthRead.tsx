@@ -113,7 +113,9 @@ export function MonthRead({
   }
 
   return (
-    <section className={cn("flex flex-col gap-4 rounded-card p-5", GLASS_CARD)}>
+    <section
+      className={cn("flex flex-col gap-4 rounded-card p-card", GLASS_CARD)}
+    >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="flex items-center gap-1.5 text-sm font-medium">
           <Sparkle size={ICON.sm} className="text-primary-rim" />

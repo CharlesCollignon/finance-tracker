@@ -73,7 +73,7 @@ export function CategoryPanel({
     <section
       id={id}
       className={cn(
-        "mt-2 flex flex-col gap-4 rounded-card border border-primary-rim p-4",
+        "mt-2 flex flex-col gap-4 rounded-card p-card border border-primary-rim",
         !reducedMotion && "motion-safe:animate-in motion-safe:fade-in",
       )}
     >

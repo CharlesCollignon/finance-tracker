@@ -33,7 +33,7 @@ export function EmptyState({
   return (
     <View
       className={cn(
-        "gap-2 rounded-card border border-border bg-card/70 p-6",
+        "gap-2 rounded-card p-card border border-border bg-card/70",
         className,
       )}
     >

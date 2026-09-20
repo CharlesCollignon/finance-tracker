@@ -1,7 +1,7 @@
 # One vocabulary for three surfaces
 
 **Date:** 2026-09-20
-**Status:** Approved — phases 1 and 2 shipped, phases 3 to 6 outstanding
+**Status:** Approved — phases 1 to 3 shipped, phases 4 to 6 outstanding
 
 ## What this changes
 
@@ -100,11 +100,33 @@ at 35 uses.
 The reason the app shows 33 values and not five is the fourth role that should
 not exist. Counted across the route trees, `px-3`, `py-2`, `px-4`, `py-1.5`
 and `py-2.5` lead the table, and they are overwhelmingly the padding of
-_controls_ — buttons, inputs, pills, badges — set at the call site. Those
-belong to the component, not to the screen using it. So the rule is: a
-control's padding lives in the control, and a screen may set `card` or `row`
-and nothing else. That is what collapses the count; a fourth token would only
-have given the sprinkling a nicer name.
+_controls_ — buttons, inputs, pills, badges. Those belong to the component,
+not to the screen using it. So the rule is: a control's padding lives in the
+control, and a screen may set `card` or `row` and nothing else.
+
+**Corrected while implementing this, 2026-09-20.** Two claims above did not
+survive contact with the code, and the record is worth more than the tidy
+version:
+
+- _"set at the call site"_ is false. `Button` owns its padding in four size
+  variants and three compound ones, `Input` and `Select` own theirs, and of
+  117 `<Button>` usages **not one** passes a padding class. Only two raw
+  `<button>` elements in the whole app carry their own. The rule this section
+  proposes was already how the code worked.
+- _"33 values"_ conflated two different things. It counted every `px-*` and
+  `py-*` in a route's component tree, which includes the padding **inside**
+  those shared controls — legitimately theirs. The figure for what a screen
+  actually chooses, the inset on a card, was 13 spellings across 22 sites on
+  the web and 5 across 11 on the phone. That is the number this phase
+  collapsed, and it is a much smaller and less alarming problem than the audit
+  reported.
+
+What the two-step scale does **not** cover is a surface that is the only thing
+on its screen: `MoneyOnHand` at `p-5 md:p-7` and marketing's editorial block at
+`p-8 md:p-12`. Both were left as they are rather than shrunk to 20. Either they
+are exceptions worth naming as such, or the scale wants a third step around 28
+— a decision for whoever reads this, not one to take quietly inside a
+mechanical pass.
 
 ## The motion tokens
 

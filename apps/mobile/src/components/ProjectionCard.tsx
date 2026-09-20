@@ -95,7 +95,7 @@ export function ProjectionCard({ projection, runway }: ProjectionCardProps) {
       {makeup.noIncomeScheduled ? (
         <Pressable
           onPress={() => router.push("/(tabs)/recurring" as never)}
-          className="rounded-card border border-destructive/40 bg-destructive/10 p-3"
+          className="rounded-card p-row border border-destructive/40 bg-destructive/10"
           accessibilityRole="button"
           accessibilityLabel={t("projection.noIncomeCta")}
         >

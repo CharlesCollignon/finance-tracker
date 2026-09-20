@@ -52,7 +52,7 @@ export function CashAccountsCard({ accounts }: CashAccountsCardProps) {
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-card border border-border bg-card p-5">
+    <section className="flex flex-col gap-4 rounded-card p-card border border-border bg-card">
       <div className="flex flex-col gap-1">
         <h2 className="text-sm font-medium">
           {t("bearing.panel.cashAccountsHeading")}

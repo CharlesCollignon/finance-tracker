@@ -181,7 +181,7 @@ export function ApplyRecurringSheet({
           className="flex-1"
           onPress={() => onOpenChange(false)}
         />
-        <View className="max-h-[85%] rounded-t-card border border-border bg-card p-5">
+        <View className="max-h-[85%] rounded-t-card p-card border border-border bg-card">
           <SheetGrabber />
           <Text className="mb-2 font-semibold" style={{ fontSize: 18 }}>
             Apply recurring

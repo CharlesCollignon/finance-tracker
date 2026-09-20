@@ -218,7 +218,7 @@ function MonthGrid({
       aria-label={t("common.pickAMonth")}
       className={cn(
         "absolute right-0 top-full z-50 mt-1 w-[min(17rem,calc(100vw-2rem))]",
-        "rounded-card p-3",
+        "rounded-card p-row",
         SOLID_PANEL,
         "account-menu-panel",
       )}

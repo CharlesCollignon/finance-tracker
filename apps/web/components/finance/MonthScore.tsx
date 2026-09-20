@@ -76,7 +76,9 @@ export function MonthScore({
   const capSuffix = chosen ? t("monthScore.capSuffixChosen") : "";
 
   return (
-    <section className={cn("flex flex-col gap-4 rounded-card p-5", GLASS_CARD)}>
+    <section
+      className={cn("flex flex-col gap-4 rounded-card p-card", GLASS_CARD)}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-sm font-medium">{t("monthScore.heading")}</h2>
         <div className="flex shrink-0 items-center gap-2">

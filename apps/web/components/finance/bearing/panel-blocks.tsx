@@ -260,7 +260,9 @@ function Framed({
   const t = useT();
 
   return (
-    <section className={cn("flex flex-col gap-4 rounded-card p-5", GLASS_CARD)}>
+    <section
+      className={cn("flex flex-col gap-4 rounded-card p-card", GLASS_CARD)}
+    >
       <h2 className="text-sm font-medium">{t(headingKey)}</h2>
       {children}
     </section>

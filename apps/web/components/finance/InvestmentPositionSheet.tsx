@@ -268,7 +268,7 @@ function InvestmentPositionForm({
         )}
 
         {isRecurringLinked ? (
-          <div className="flex items-center gap-3 rounded-card border border-border p-3">
+          <div className="flex items-center gap-3 rounded-card p-row border border-border">
             <InstrumentLogo
               symbol={item.instrumentSymbol}
               name={item.name}
@@ -321,7 +321,7 @@ function InvestmentPositionForm({
         </div>
 
         {isRecurringLinked && instrumentFromRecurring ? (
-          <div className="rounded-card border border-border bg-muted/20 p-3 text-sm">
+          <div className="rounded-card p-row border border-border bg-muted/20 text-sm">
             <p className="font-medium">
               {isCrypto ? t("position.trackedAsset") : t("position.trackedEtf")}
             </p>
@@ -363,7 +363,7 @@ function InvestmentPositionForm({
           </Text>
         ) : isCrypto ? (
           <>
-            <div className="rounded-card border border-border bg-muted/20 p-3 text-sm">
+            <div className="rounded-card p-row border border-border bg-muted/20 text-sm">
               <p className="font-medium">{t("position.bitcoin")}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Market value uses BTC-EUR live price × your total BTC.

@@ -158,7 +158,7 @@ export function BudgetsView({
       <PageHeader titleKey="nav.plan" />
 
       <PageContainer className="flex flex-col gap-4">
-        <section className="flex flex-col gap-4 rounded-card border border-border bg-card p-4 md:p-5">
+        <section className="flex flex-col gap-4 rounded-card p-card border border-border bg-card">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-sm font-medium">{t("plan.capsHeading")}</h2>
             <Button
@@ -304,7 +304,7 @@ export function BudgetsView({
           ) : null}
         </section>
 
-        <section className="flex flex-col gap-4 rounded-card border border-border bg-card p-4 md:p-5">
+        <section className="flex flex-col gap-4 rounded-card p-card border border-border bg-card">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-sm font-medium">{t("plan.goalsHeading")}</h2>
             <Button
@@ -484,7 +484,7 @@ export function BudgetsView({
           ) : null}
         </section>
 
-        <section className="flex flex-col gap-3 rounded-card border border-border bg-card p-4 md:p-5">
+        <section className="flex flex-col gap-3 rounded-card p-card border border-border bg-card">
           <h2 className="text-sm font-medium">{t("plan.tagsHeading")}</h2>
           <p className="text-sm text-muted-foreground">{t("plan.tagsBlurb")}</p>
           {tags.length > 0 ? (

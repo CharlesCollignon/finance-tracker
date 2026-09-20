@@ -41,7 +41,7 @@ export function Card({
         )}
         {...props}
       >
-        <View className={cn("rounded-card bg-card/70 p-5", innerClassName)}>
+        <View className={cn("rounded-card p-card bg-card/70", innerClassName)}>
           {children}
         </View>
       </View>
@@ -52,7 +52,7 @@ export function Card({
     <View
       style={style}
       className={cn(
-        "rounded-card border border-border bg-card/70 p-5",
+        "rounded-card p-card border border-border bg-card/70",
         className,
       )}
       {...props}

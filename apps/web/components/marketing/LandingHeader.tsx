@@ -178,7 +178,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
       <div
         id="marketing-nav"
         className={cn(
-          "glass-menu mx-auto mt-2 max-w-6xl rounded-card p-3 lg:hidden",
+          "glass-menu mx-auto mt-2 max-w-6xl rounded-card p-row lg:hidden",
           open ? undefined : "hidden",
         )}
       >

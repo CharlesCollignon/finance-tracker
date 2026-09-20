@@ -164,7 +164,7 @@ export function GlassLink({
     <Link
       href={href}
       className={cn(
-        "glass-flat glass-flat-hover group flex flex-col rounded-card p-5",
+        "glass-flat glass-flat-hover group flex flex-col rounded-card p-card",
         className,
       )}
     >

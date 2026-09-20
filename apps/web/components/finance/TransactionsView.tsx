@@ -524,7 +524,7 @@ export function TransactionsView({
             description={t("ledger.emptyBody")}
           />
         ) : (
-          <section className="flex flex-col gap-4 rounded-card border border-border bg-card p-4 md:p-5">
+          <section className="flex flex-col gap-4 rounded-card p-card border border-border bg-card">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-2 sm:flex-row">
                 <div className="relative min-w-0 flex-1">

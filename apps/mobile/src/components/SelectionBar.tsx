@@ -106,7 +106,7 @@ export function SelectionBar({
         accessibilityLabel={t("selectionBar.regionMobile", {
           count: summary.count,
         })}
-        className="gap-3 rounded-card border border-border bg-card p-3"
+        className="gap-3 rounded-card p-row border border-border bg-card"
         style={{
           shadowColor: "#000",
           shadowOpacity: 0.2,

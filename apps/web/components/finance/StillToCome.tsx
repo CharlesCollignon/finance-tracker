@@ -54,7 +54,9 @@ export function StillToCome({
   const restTotal = rest.reduce((sum, charge) => sum + charge.amount, 0);
 
   return (
-    <section className={cn("flex flex-col gap-4 rounded-card p-5", GLASS_CARD)}>
+    <section
+      className={cn("flex flex-col gap-4 rounded-card p-card", GLASS_CARD)}
+    >
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">{t("stillToCome.title")}</h2>
         <PrivateAmount className="tabular-nums">

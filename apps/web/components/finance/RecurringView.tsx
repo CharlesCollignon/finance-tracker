@@ -208,7 +208,7 @@ function GroupCard({
     .reduce((sum, t) => sum + estimateMonthlyAmount(t), 0);
 
   return (
-    <section className="flex min-w-0 flex-col gap-3 rounded-card border border-border bg-card p-4 md:p-5">
+    <section className="flex min-w-0 flex-col gap-3 rounded-card p-card border border-border bg-card">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">{label}</h2>
         {monthly > 0 ? (
