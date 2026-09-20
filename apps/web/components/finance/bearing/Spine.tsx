@@ -2,30 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { Flame, Trophy } from "@phosphor-icons/react";
-import type { AttentionItem } from "@finance/core/attention";
 import type { Key } from "@finance/core/i18n/t";
 import type { MonthStanding } from "@finance/core/month-pulse";
 import { drawSpineRing, type SpineState } from "@finance/core/spine";
 import { cssEasing, DURATION } from "@finance/core/motion";
-import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
 import { useT } from "@/lib/locale-context";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { ICON } from "@/lib/icon-scale";
 
-interface SpineProps {
-  state: SpineState;
-  attention: AttentionItem[];
-}
-
 /**
- * The fixed spine above the bento: one figure, one ring, one flame, and — if
- * anything is waiting — the one thing most worth doing next.
+ * The ring and the flame, inside the card about your run.
  *
- * Deliberately not built like `Tile`. Twelve tiles are a set the arranger and
- * the reader both get to reorder; this is the thing they are arranged
- * beneath, so it carries no `GLASS_CARD`, no rounded card corners and no
- * drag handle — a hairline underneath is the only edge it draws, which is
- * what keeps it reading as chrome rather than as a thirteenth tile.
+ * It was the fixed spine above the bento and it is neither fixed nor above
+ * anything now. Its headline went to `Headline`, which states the two
+ * figures the screen is opened for at the top of the page; its action row
+ * went to `AttentionRow`, which the page renders itself because the reader
+ * who needs it most — a brand-new account — never reaches this component at
+ * all. What is left is the pair of marks that are genuinely about the run:
+ * how much of the month's allowance has gone, and how many months have
+ * closed inside it. They live in "Your run" because that is the card they
+ * describe.
+ *
+ * So it draws no surface of its own: no `GLASS_CARD`, no rounded corners and
+ * no hairline underneath. The card it sits in supplies all three, and a
+ * second edge inside that one would be the only divider on the screen.
  *
  * Four ring renderings, chosen by `state.ring.kind` and nothing else: this
  * component does not re-derive the ladder, it only draws whichever rung
@@ -34,26 +34,18 @@ interface SpineProps {
  * must never be drawn as though it were one. The `proportion` rung can
  * carry a second, inner lap — see `drawSpineRing` for what it says and why
  * the ring's own fill cannot say it.
- *
- * The action row is `AttentionRow`'s, not this component's, because the
- * reader who needs it most never reaches this component at all — see that
- * file.
  */
-export function Spine({ state, attention }: SpineProps) {
+export function Spine({ state }: { state: SpineState }) {
   const t = useT();
 
   return (
     <section
       aria-label={t("bearing.spine.regionLabel")}
-      className="flex flex-col gap-3 border-b border-foreground/10 pb-4"
+      className="flex flex-wrap items-center justify-between gap-4"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <SpineRing ring={state.ring} />
+      <SpineRing ring={state.ring} />
 
-        {state.flame ? <FlameBadge flame={state.flame} /> : null}
-      </div>
-
-      <AttentionRow attention={attention} />
+      {state.flame ? <FlameBadge flame={state.flame} /> : null}
     </section>
   );
 }
@@ -142,8 +134,8 @@ function SpineRing({ ring }: { ring: SpineState["ring"] }) {
   const t = useT();
   const reducedMotion = usePrefersReducedMotion();
   // Starts at "nothing drawn" and animates in on mount, unless the reader has
-  // asked for less motion — the same next-frame trick `Panel`'s `Expand` uses
-  // to give the browser a closed frame to animate away from.
+  // asked for less motion — a next frame, so the browser has painted the
+  // undrawn state there is something to animate away from.
   const [entered, setEntered] = useState(reducedMotion);
 
   useEffect(() => {

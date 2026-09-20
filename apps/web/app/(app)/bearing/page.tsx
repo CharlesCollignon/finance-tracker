@@ -1,29 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
-import { arrangerConfigured } from "@/lib/bearing/client";
 import { gatherBearingFacts } from "@/lib/bearing/facts";
-import { readBearingState, readPins } from "@/lib/bearing/store";
-import {
-  arrangementsRemaining,
-  describeArrangementFreshness,
-} from "@finance/core/bearing-budget";
-import { arrangementFooting } from "@finance/core/bearing-read";
-import { mergeArrangement } from "@finance/core/bearing-tiles";
-import { formatShortDate } from "@finance/core/constants";
 import { buildAttention } from "@finance/core/attention";
 import { resolveSpine } from "@finance/core/spine";
 import { getMonthlyTrend } from "@/lib/queries/finance";
-import { getLocale, getT } from "@/lib/locale";
+import { getT } from "@/lib/locale";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
-import { ArrangeButton } from "@/components/finance/bearing/ArrangeButton";
 import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
-import { BearingGrid } from "@/components/finance/bearing/BearingGrid";
-import { Spine } from "@/components/finance/bearing/Spine";
-import { MICRO } from "@/lib/type-scale";
-import { cn } from "@/lib/utils";
+import { BearingCards } from "@/components/finance/bearing/BearingCards";
+import { Headline } from "@/components/finance/bearing/Headline";
 
 /**
  * Where the whole of it stands, on one day.
@@ -31,24 +19,22 @@ import { cn } from "@/lib/utils";
  * The app's landing page, and the only screen that spans every surface: what
  * is on hand, what the month still owes, what is invested, what a year of
  * unchanged habits leads to. Everything on it is a figure some other surface
- * already renders, which is what makes it checkable — a tile links to the
- * page where its number is explained.
+ * already renders, which is what makes it checkable — a card links to the
+ * pages where its figures are explained.
  *
- * A model chooses which figures lead and writes at most a few words beside
- * one. It never computes anything: it names figures by id and the app
- * substitutes its own formatted values here, which is what keeps the currency
- * toggle and the privacy blur working and what stops a figure nobody computed
- * reaching the screen.
+ * Two figures and five cards. It was twelve tiles in a draggable bento whose
+ * order a model wrote and a reader could overrule, and the three mechanisms
+ * that produced that order — an arrangement, a set of pins, a slot template
+ * — were all answers to "which of these matters most?". A list of five, one
+ * per fact family, does not ask the question: nothing is ranked because
+ * nothing is hidden. The model, the pins and the arrange button are gone
+ * with it, and so is the staleness line that existed to say the model's
+ * choice had aged.
  *
- * Nothing on this page calls a model. The stored arrangement renders for
- * free; only a press spends. And with no arrangement — no key, no migration,
- * or simply nobody has pressed the button — the app's own ordering renders
- * instead, so the surface is never in a degraded state, only in an
- * uncurated one.
- *
- * Not streamed into Suspense slots the way Month is. Every tile comes out of
- * one fact pack, so there is no half of the screen that could arrive first;
- * splitting it would mean gathering the pack twice.
+ * Not streamed into Suspense slots the way Month was. Every figure comes out
+ * of one fact pack, so there is no half of the screen that could arrive
+ * first; splitting it would mean gathering the pack twice. What a card holds
+ * *under* its figures is fetched on the press instead — see `Panel`.
  */
 export default async function BearingPage() {
   const user = await getAuthUser();
@@ -58,12 +44,9 @@ export default async function BearingPage() {
   }
 
   const t = await getT();
-  const locale = await getLocale();
 
-  const [facts, { stored, tracked }, pins, trend] = await Promise.all([
+  const [facts, trend] = await Promise.all([
     gatherBearingFacts(user.id),
-    readBearingState(user.id),
-    readPins(user.id),
     getMonthlyTrend(user.id),
   ]);
 
@@ -95,13 +78,11 @@ export default async function BearingPage() {
             title={t("bearing.title")}
             description={t("bearing.empty")}
           >
-            {/* The row, and deliberately not the spine. The spine's headline
-                over an empty account is the month's plain arithmetic —
-                a hero-sized zero — beside a dark ring: two statements about
-                a position nobody has taken yet. The row states nothing
-                about the account. It names the one thing worth doing and
-                links to where it is done, which is all this reader is
-                short of. */}
+            {/* The row, and deliberately not the headline. Two hero-sized
+                figures over an empty account are two statements about a
+                position nobody has taken yet. The row states nothing about
+                the account. It names the one thing worth doing and links to
+                where it is done, which is all this reader is short of. */}
             {attention.length > 0 ? (
               <AttentionRow attention={attention} className="w-full" />
             ) : undefined}
@@ -121,23 +102,6 @@ export default async function BearingPage() {
       </>
     );
   }
-
-  const arrangement = stored?.arrangement ?? null;
-
-  // Captions stay in the language they were written in, so their figures have
-  // to be labelled in that language too — otherwise a French caption comes
-  // back with an English label spliced into it. Only built when the two
-  // actually differ, which is rare and only after somebody switches.
-  const captionFacts =
-    arrangement && stored && stored.locale !== locale
-      ? await gatherBearingFacts(user.id, undefined, stored.locale)
-      : facts;
-
-  const order = mergeArrangement(
-    arrangement?.tiles.map((tile) => tile.id) ?? [],
-    pins,
-    facts,
-  );
 
   // The spine's ladder, a pure function of figures this page already
   // gathered — see `gatherBearingFacts`'s widened return for where `pulse`,
@@ -167,73 +131,25 @@ export default async function BearingPage() {
     remaining: facts.summary.remaining,
   });
 
-  const freshness =
-    arrangement && stored?.facts && stored.arrangedAt
-      ? describeArrangementFreshness({
-          storedFacts: stored.facts,
-          currentFacts: facts,
-          footing: arrangementFooting(arrangement),
-          arrangedAt: stored.arrangedAt,
-          now: new Date().toISOString(),
-        })
-      : null;
-
-  const hasPins = Object.keys(pins).length > 0;
-
   return (
     <>
       <PageHeader titleKey="nav.bearing" />
 
-      <PageContainer className="flex flex-col gap-4">
-        {/* Fixed above the bento, not a thirteenth tile: outside
-            `BearingGrid`'s `order`, so nothing dragged can displace it. */}
-        <Spine state={spineState} attention={attention} />
+      <PageContainer className="flex flex-col gap-6">
+        {/* The two figures the screen is opened for, before anything that
+            has to be pressed to be read. */}
+        <Headline state={spineState} />
 
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <p className={cn(MICRO, "text-muted-foreground")}>
-            {t("bearing.asOf", { date: formatShortDate(facts.asOf, locale) })}
-            {" · "}
-            {arrangement ? t("bearing.arrangeHint") : t("bearing.ownOrder")}
-          </p>
-          <ArrangeButton
-            configured={arrangerConfigured()}
-            arrangementsLeft={arrangementsRemaining(stored?.tally ?? null)}
-            hasPins={hasPins}
-          />
-        </div>
+        {attention.length > 0 ? <AttentionRow attention={attention} /> : null}
 
-        <BearingGrid
-          order={order}
+        <BearingCards
           // Unrendered on purpose. The display currency is this browser's
-          // localStorage and no server can know it, so every figure — inside
-          // a caption as much as under a label — is formatted on the client.
-          facts={captionFacts}
-          arrangement={arrangement}
-          captionLocale={stored?.locale ?? locale}
-          pins={pins}
+          // localStorage and no server can know it, so every figure on this
+          // screen is formatted on the client.
+          facts={facts}
+          spine={spineState}
           trend={trend.map((point) => point.net)}
-          // Dragging writes to `user_preferences`, so it needs nothing from
-          // migration 029 — but an arrangement that cannot be stored is a
-          // surface with nothing to overrule, and a pin against the app's own
-          // fixed ordering would be a preference that never visibly does
-          // anything.
-          draggable={tracked}
         />
-
-        {/* Only when the figures the choice rests on have actually moved. A
-            staleness line that is always on is one nobody reads — which is
-            why a month read suppresses this for a running month. Here it is
-            worth saying: the choice of tiles is the product, and if what made
-            one worth leading with has changed, the ordering is an opinion
-            about a position that no longer exists. */}
-        {freshness?.standing === "moved" ? (
-          <p className={cn(MICRO, "text-muted-foreground")}>
-            {t("bearing.moved", {
-              count: freshness.moved.length,
-              age: freshness.age,
-            })}
-          </p>
-        ) : null}
       </PageContainer>
     </>
   );

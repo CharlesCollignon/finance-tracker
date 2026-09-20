@@ -3,9 +3,8 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { ArrowRight, CaretLeft, CaretRight } from "@phosphor-icons/react";
-import { panelFor } from "@finance/core/bearing-panels";
-import type { PanelSpec } from "@finance/core/bearing-panels";
-import type { RenderedTile } from "@finance/core/bearing-read";
+import type { BearingCard } from "@finance/core/bearing-cards";
+import type { PanelChrome } from "@finance/core/bearing-panels";
 import {
   budgetViewOptionLabel,
   formatMonthLabel,
@@ -13,7 +12,7 @@ import {
   shiftMonth,
   type BudgetViewMode,
 } from "@finance/core/constants";
-import { cssEasing, DURATION } from "@finance/core/motion";
+import type { Key } from "@finance/core/i18n/t";
 import { bearingPanelAction } from "@/lib/actions/bearing-panel";
 import type { PanelDetail, PanelScope } from "@/lib/bearing/panel-detail";
 import {
@@ -23,48 +22,48 @@ import {
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
+import { activeNavHref, APP_NAV_ITEMS } from "@/lib/navigation";
 import { MICRO } from "@/lib/type-scale";
-import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
 /**
- * What opens under a pressed tile.
+ * What a card holds under its figures.
  *
- * The argument the whole feature rests on: the figure is already on screen
- * and already correct, so nothing here may cover it. The panel opens on the
+ * The argument the whole feature rests on: the figures are already on screen
+ * and already correct, so nothing here may cover them. The card opens on the
  * press — chrome and block skeletons, immediately — and the detail streams
  * into it underneath. There is no spinner anywhere in this file, and that is
  * deliberate rather than an omission: a spinner over a number the app already
  * knows teaches the reader to distrust the number.
  *
- * Which blocks appear is `panelFor`'s judgement, not this component's. A
- * panel explains *its tile*, not its whole family, which is what makes this a
- * dissolution of the Month screen rather than a hiding of it — `free` gets
- * the fulfilment question, the spend strip, what is still to come, and the
- * month in words; `arriving` carries the same fulfilment question, because a
- * reader with nothing "left" to see has no other month tile telling them a
- * charge is waiting; the other seven month tiles get whatever explains them
- * and nothing else.
+ * Which blocks appear is `bearing-cards.ts`'s judgement, not this
+ * component's, and the card arrives carrying them. It used to look itself up
+ * through `panelFor(tile.id, tile.family)`, which was the right shape while
+ * twelve tiles each explained one figure; with one card per family the
+ * lookup and the card say the same thing, so the card says it. The curation
+ * that table held did not go with it — `month-read` and `arrived-charges`
+ * are the expensive blocks and `CARD_FAMILY_BLOCKS` still puts each on
+ * exactly one card, which is what stops two open cards paying twice for one
+ * answer.
  *
  * The scope lives here rather than in the address bar, which is the one place
  * this departs from how the rest of the app does months. `MonthPicker`
- * navigates: on the Bearing that would re-render a page whose tiles do not
+ * navigates: on the Bearing that would re-render a page whose cards do not
  * depend on the month at all, and scroll the reader back to the top of the
- * grid away from the panel they were reading. The retired `BudgetViewToggle`
+ * list away from the card they were reading. The retired `BudgetViewToggle`
  * navigated for the same reason, which is why its choice — current or
  * month-end — is redrawn below as this panel's own chrome instead. So the
  * chrome here is local state feeding the server function's `scope`, and the
- * tiles above are untouched by it.
+ * figures above are untouched by it.
  *
- * The signature is unchanged from the stub it replaces: `{ tile }` is
- * everything a panel needs to look itself up, so `BearingGrid` did not have
- * to change to call it.
+ * It no longer draws its own unfolding. `BearingCards` wraps the whole open
+ * region — figures, blocks and footer — in one `0fr`/`1fr` grid transition,
+ * and a second one nested inside it would ease the same content twice and
+ * arrive on a curve that is neither.
  */
-export function Panel({ tile }: { tile: RenderedTile }) {
+export function Panel({ card }: { card: BearingCard }) {
   const t = useT();
   const locale = useLocale();
-  const reducedMotion = usePrefersReducedMotion();
-  const spec = panelFor(tile.id, tile.family);
 
   const current = getCurrentMonth();
   const [scope, setScope] = useState<Required<PanelScope>>({
@@ -97,9 +96,9 @@ export function Panel({ tile }: { tile: RenderedTile }) {
    * the headline.
    *
    * Reset during render rather than in an effect, which is React's own
-   * remedy for state that has to follow a change — the Bearing screen on the
-   * phone uses the same pattern for a dragged order. An effect would paint
-   * the mismatched frame first and then correct it.
+   * remedy for state that has to follow a change — `BearingCards` uses the
+   * same pattern to mount a card's body on its first open. An effect would
+   * paint the mismatched frame first and then correct it.
    *
    * Locale rides along with scope here: a language switch changes the month
    * label the same detail carries, so a scope the reader has not moved from
@@ -116,18 +115,16 @@ export function Panel({ tile }: { tile: RenderedTile }) {
   // `stale` rather than an abort: a server function has no signal to cancel
   // with, and the only harm an overtaken answer can do is land after a newer
   // one — which this stops.
-  // `spec.blocks` is safe in the dependency list: `panelFor` hands back one of
-  // the module-level arrays in `bearing-panels.ts` rather than building a new
-  // one, so its identity is stable for as long as the tile is.
+  // `card.blocks` is safe in the dependency list: `buildBearingCards` hands
+  // back one of the module-level arrays in `bearing-cards.ts` rather than
+  // building a new one, so its identity is stable for as long as the card is.
   useEffect(() => {
     let stale = false;
 
     startTransition(async () => {
-      const next = await bearingPanelAction(
-        tile.family,
-        scope,
-        spec.blocks,
-      ).catch(() => null);
+      const next = await bearingPanelAction(card.id, scope, card.blocks).catch(
+        () => null,
+      );
 
       if (stale) {
         return;
@@ -139,124 +136,113 @@ export function Panel({ tile }: { tile: RenderedTile }) {
     return () => {
       stale = true;
     };
-  }, [tile.family, scope, spec.blocks, attempt, locale]);
+  }, [card.id, scope, card.blocks, attempt, locale]);
 
   return (
-    <Expand reducedMotion={reducedMotion}>
-      <div
-        data-panel-for={tile.id}
-        className="flex flex-col gap-4 pt-3 md:pt-4"
-      >
-        <Chrome spec={spec} scope={scope} setScope={setScope} detail={detail} />
+    <div data-panel-for={card.id} className="flex flex-col gap-4">
+      <Chrome
+        chrome={card.chrome}
+        scope={scope}
+        setScope={setScope}
+        detail={detail}
+      />
 
-        {detail
-          ? spec.blocks.map((block) => (
-              <PanelBlockView
-                key={block}
-                block={block}
-                detail={detail}
-                // The same counter the retry bumps: a block that wrote
-                // something has made every other block in the panel stale,
-                // and "fetch this scope again" is exactly what `attempt` is
-                // for.
-                onChanged={() => setAttempt((count) => count + 1)}
-              />
-            ))
-          : failed
-            ? null
-            : spec.blocks.map((block) => (
-                <PanelBlockSkeleton key={block} block={block} />
-              ))}
+      {detail
+        ? card.blocks.map((block) => (
+            <PanelBlockView
+              key={block}
+              block={block}
+              detail={detail}
+              // The same counter the retry bumps: a block that wrote
+              // something has made every other block in the panel stale,
+              // and "fetch this scope again" is exactly what `attempt` is
+              // for.
+              onChanged={() => setAttempt((count) => count + 1)}
+            />
+          ))
+        : failed
+          ? null
+          : card.blocks.map((block) => (
+              <PanelBlockSkeleton key={block} block={block} />
+            ))}
 
-        {/* Instead of the blocks that could not be drawn, never over them.
-            The figure above is still true — it came with the page — so this
-            is a note about the detail and not about the number. */}
-        {failed ? (
-          <p className="text-sm text-muted-foreground">
-            {t("bearing.panel.failed")}{" "}
-            <button
-              type="button"
-              onClick={() => setAttempt((count) => count + 1)}
-              className="font-medium text-primary-ink underline underline-offset-2"
-            >
-              {t("bearing.panel.retry")}
-            </button>
-          </p>
-        ) : null}
-
-        {spec.href ? (
-          <Link
-            href={spec.href}
-            className="flex items-center gap-1 self-start text-sm text-primary-ink"
+      {/* Instead of the blocks that could not be drawn, never over them.
+          The figures above are still true — they came with the page — so this
+          is a note about the detail and not about the numbers. */}
+      {failed ? (
+        <p className="text-sm text-muted-foreground">
+          {t("bearing.panel.failed")}{" "}
+          <button
+            type="button"
+            onClick={() => setAttempt((count) => count + 1)}
+            className="font-medium text-primary-ink underline underline-offset-2"
           >
-            {t("bearing.panel.footer")}
-            <ArrowRight size={ICON.sm} />
-          </Link>
-        ) : null}
-      </div>
-    </Expand>
+            {t("bearing.panel.retry")}
+          </button>
+        </p>
+      ) : null}
+
+      <Footer destinations={card.destinations} />
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------- footer */
+
+/**
+ * The ways out, and there is more than one of them.
+ *
+ * A tile had a single `href` and a footer that said "see the full surface".
+ * A card holds a whole family, and its figures are explained in two or three
+ * different places — "This month" alone reaches Charges, the Ledger and the
+ * Plan. Choosing one of them to be *the* destination would be the same
+ * invention `bearing-tiles.ts` refuses when it leaves a figure's href null,
+ * so every distinct destination is offered and each is named after the
+ * surface it goes to, in the words the sidebar already uses for it.
+ *
+ * `card.destinations` is de-duplicated and contains only hrefs the card's own
+ * figures carry, so a card whose figures all lead nowhere renders nothing
+ * here rather than a link to somewhere plausible.
+ */
+function Footer({ destinations }: { destinations: string[] }) {
+  const t = useT();
+
+  if (destinations.length === 0) {
+    return null;
+  }
+
+  return (
+    <nav
+      aria-label={t("bearing.panel.footer")}
+      className="flex flex-wrap items-center gap-x-5 gap-y-2"
+    >
+      {destinations.map((href) => (
+        <Link
+          key={href}
+          href={href}
+          className="flex items-center gap-1 text-sm font-medium text-primary-ink"
+        >
+          {t(surfaceKey(href) ?? "bearing.panel.footer")}
+          <ArrowRight size={ICON.sm} />
+        </Link>
+      ))}
+    </nav>
   );
 }
 
 /**
- * The opening itself.
+ * What to call a destination: the surface's own name, from `navigation.ts`.
  *
- * `grid-template-rows: 0fr → 1fr` over a child that hides its overflow, which
- * is the only way to transition to a height nobody has measured. The
- * alternative — measuring the content and animating a pixel height — has to
- * re-measure every time the detail lands and changes the height, and gets it
- * wrong on the frame in between.
- *
- * Suppressed outright rather than shortened when the reader has asked for
- * less motion: a row unfolding under the pointer is exactly the effect that
- * setting exists to turn off, and the panel is just as usable arriving at
- * full height.
- *
- * Only the opening animates. The close is `BearingGrid` unmounting this
- * component, and holding a closed panel mounted so it could shrink would
- * leave a zero-height grid child with the grid's own gap on either side of
- * it — a seam that stays in the bento after the panel has gone.
+ * Reuses `activeNavHref` rather than matching paths a second time, so a link
+ * is named by exactly the rule that decides which sidebar entry lights up for
+ * it — `/history` is the Ledger here because it is the Ledger there. The
+ * query string is cut first: `/transactions?review=inbox` is the Ledger, and
+ * `activeNavHref` is given pathnames.
  */
-function Expand({
-  reducedMotion,
-  children,
-}: {
-  reducedMotion: boolean;
-  children: React.ReactNode;
-}) {
-  // Already open when the reader has asked for less motion — the state starts
-  // there rather than being corrected in the effect, so there is no frame in
-  // which a reduced-motion panel is collapsed.
-  const [open, setOpen] = useState(reducedMotion);
-
-  useEffect(() => {
-    if (reducedMotion) {
-      return;
-    }
-    // Next frame, so the browser has painted the closed state to animate
-    // from. Setting it in the effect body alone can be coalesced into the
-    // first paint, and a transition between two values in the same frame is
-    // a jump cut.
-    const frame = requestAnimationFrame(() => setOpen(true));
-    return () => cancelAnimationFrame(frame);
-  }, [reducedMotion]);
-
-  return (
-    <div
-      className="grid"
-      style={{
-        gridTemplateRows: open ? "1fr" : "0fr",
-        transition: reducedMotion
-          ? undefined
-          : `grid-template-rows ${DURATION.panel}ms ${cssEasing()}`,
-      }}
-    >
-      {/* `min-h-0` because a grid item's default `min-height: auto` refuses
-          to shrink below its content, which would hold the row open at full
-          height and leave nothing for the transition to do. */}
-      <div className="min-h-0 overflow-hidden">{children}</div>
-    </div>
-  );
+function surfaceKey(href: string): Key | null {
+  const query = href.indexOf("?");
+  const surface = activeNavHref(query < 0 ? href : href.slice(0, query));
+  return APP_NAV_ITEMS.find((item) => item.href === surface)?.labelKey ?? null;
 }
 
 /* ---------------------------------------------------------------- chrome */
@@ -265,7 +251,7 @@ function Expand({
 const HORIZONS = [6, 12, 24] as const;
 
 /**
- * What sits above a panel's blocks, per `spec.chrome`.
+ * What sits above a card's blocks, per `card.chrome`.
  *
  * Four cases and one of them is nothing, which is the point of the type: the
  * `now` and `wallet` families have no window to choose — "now" is today and a
@@ -273,12 +259,12 @@ const HORIZONS = [6, 12, 24] as const;
  * offering a choice the figures cannot honour.
  */
 function Chrome({
-  spec,
+  chrome,
   scope,
   setScope,
   detail,
 }: {
-  spec: PanelSpec;
+  chrome: PanelChrome;
   scope: Required<PanelScope>;
   setScope: (next: Required<PanelScope>) => void;
   detail: PanelDetail | null;
@@ -286,7 +272,7 @@ function Chrome({
   const t = useT();
   const locale = useLocale();
 
-  switch (spec.chrome) {
+  switch (chrome) {
     case "none":
       return null;
 
