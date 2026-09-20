@@ -62,3 +62,6 @@ package-lock.json
 
 # Visual brainstorming scratch — see docs/superpowers/specs for the output
 .superpowers/
+
+# UI/UX audit evidence — screenshots of real account data, never committed
+.ux-audit/
