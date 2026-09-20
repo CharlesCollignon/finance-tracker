@@ -14,6 +14,7 @@
     "./bank-pull": "./src/bank-pull.ts",
     "./bearing": "./src/bearing.ts",
     "./bearing-budget": "./src/bearing-budget.ts",
+    "./bearing-cards": "./src/bearing-cards.ts",
     "./bearing-facts": "./src/bearing-facts.ts",
     "./bearing-grid": "./src/bearing-grid.ts",
     "./bearing-panels": "./src/bearing-panels.ts",

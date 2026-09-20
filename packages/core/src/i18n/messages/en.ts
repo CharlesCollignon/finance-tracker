@@ -2160,6 +2160,14 @@ export const en = {
   bearing: {
     title: "Bearing",
     asOf: "As of {date}",
+    /** The five cards' names, in `CARD_ORDER`. */
+    cards: {
+      month: "This month",
+      now: "The accounts",
+      run: "Your run",
+      ahead: "The year ahead",
+      wallet: "Wallets",
+    },
     /** The button that spends a call, and what it says while it is spending. */
     arrange: "Rearrange",
     arranging: "Arranging…",

@@ -1609,6 +1609,13 @@ export const fr: Messages = {
   bearing: {
     title: "Cap",
     asOf: "Au {date}",
+    cards: {
+      month: "Ce mois-ci",
+      now: "Les comptes",
+      run: "Votre régularité",
+      ahead: "L'année à venir",
+      wallet: "Portefeuilles",
+    },
     arrange: "Réagencer",
     arranging: "Agencement…",
     arrangeHint:
