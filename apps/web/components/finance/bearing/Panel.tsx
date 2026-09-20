@@ -366,6 +366,12 @@ function Chrome({
  * Waits for the detail rather than guessing: the streak is the one piece of
  * chrome that is itself a figure, and a placeholder zero would be a wrong
  * number shown confidently for as long as the fetch takes.
+ *
+ * No heading of its own any more. `bearing.panel.streakHeading` is the
+ * English words "Your run", which is also `bearing.cards.run` — on a tile it
+ * named a panel nothing else had named, and on a card it is the card's own
+ * title repeated one line under itself. The phone's panel still carries it,
+ * because over there it is still the only thing saying it.
  */
 function Streak({ detail }: { detail: PanelDetail | null }) {
   const t = useT();
@@ -374,7 +380,6 @@ function Streak({ detail }: { detail: PanelDetail | null }) {
 
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="text-sm font-medium">{t("bearing.panel.streakHeading")}</p>
       {summary ? (
         <p className={cn(MICRO, "text-muted-foreground")}>
           {summary.streak > 0

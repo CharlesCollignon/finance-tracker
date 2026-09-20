@@ -2257,15 +2257,20 @@ export const en = {
       cashAccountsLastRead: "Read {when}",
     },
     /**
-     * The spine: one figure, one ring and one flame, fixed above the bento —
-     * see `resolveSpine`'s doc comment in `packages/core/src/spine.ts` for
-     * the ladder these read out. The headline itself borrows `pulse.headline*`
-     * rather than repeating them, and the streak borrows `month.streakInARow`
-     * and `month.bestStreak` for the same reason: it is the same figure
+     * What the ring reads out — see `resolveSpine`'s doc comment in
+     * `packages/core/src/spine.ts` for the ladder behind it.
+     *
+     * The spine was one figure, one ring and one flame fixed above the bento,
+     * and it had a `regionLabel` ("Where you stand") naming that band. The
+     * band is gone: the figure is the page's own headline, the ring lives
+     * inside the "Your run" card, whose name already names it, and the flame
+     * is not drawn there because `streak` and `best-streak` are figures the
+     * same card lists as rows. So only the ring's own wording is left here,
+     * and the streak still borrows `month.streakInARow` and
+     * `month.bestStreak` rather than repeating them: it is the same figure
      * `MonthScore` already names, read from a different panel.
      */
     spine: {
-      regionLabel: "Where you stand",
       /** The ring's `dark` state: something could be measured, nothing has. */
       ringUnmeasured: "Not measured yet — no month has closed",
       /** The ring's `arc` state: measuring has started, there is no cap. */

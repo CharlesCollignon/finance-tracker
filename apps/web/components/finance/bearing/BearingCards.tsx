@@ -55,7 +55,7 @@ export function BearingCards({
   trend,
 }: {
   facts: BearingFacts;
-  /** The ring and the flame, drawn inside "Your run" — see `Spine`. */
+  /** The ring, drawn inside "Your run" — its flame is dropped, see below. */
   spine: SpineState;
   /** Recent months of net, for the figures that draw a run behind them. */
   trend: number[];
@@ -79,8 +79,16 @@ export function BearingCards({
           onToggle={() =>
             setOpen((current) => (current === card.id ? null : card.id))
           }
-          // The ring and the streak flame belong to the run, so they are that
-          // card's content rather than the page's chrome.
+          // The ring belongs to the run, so it is that card's content rather
+          // than the page's chrome.
+          //
+          // Load-bearing and worth saying out loud: the ring is drawn only if
+          // a `run` card exists, and `buildBearingCards` silently drops a
+          // family with no figures. The run family is non-empty today only
+          // because `monthly-net-average` is always in the pack, which is
+          // itself only true because `bucketMonthlyTrend` pre-seeds six month
+          // buckets. If that ever stops holding, the ring disappears with no
+          // error anywhere — the card it lives on will simply not be there.
           spine={card.id === "run" ? spine : null}
           trend={trend}
         />
@@ -256,7 +264,16 @@ function Card({
             >
               {mounted ? (
                 <>
-                  {spine ? <Spine state={spine} /> : null}
+                  {/* The ring, and deliberately not the flame. `Spine` still
+                      draws one when it is handed one; this card is handed
+                      `null` because `streak` and `best-streak` are figures in
+                      the pack and are already listed below as rows, in the
+                      same form every other figure on this surface takes. A
+                      badge saying the same two numbers a third time — the
+                      panel's own streak line says them twice — is the kind of
+                      repetition that makes a reader stop trusting that two
+                      statements of one figure are the same figure. */}
+                  {spine ? <Spine state={{ ...spine, flame: null }} /> : null}
 
                   {rest.length > 0 ? (
                     <ul className="flex flex-col">

@@ -25,7 +25,17 @@ import { ICON } from "@/lib/icon-scale";
  *
  * So it draws no surface of its own: no `GLASS_CARD`, no rounded corners and
  * no hairline underneath. The card it sits in supplies all three, and a
- * second edge inside that one would be the only divider on the screen.
+ * second edge inside that one would be the only divider on the screen. It
+ * names nothing either — it used to be a landmark region called "Where you
+ * stand", which was right for a band across the top of the page and is wrong
+ * for a ring inside a card that already says "Your run" above it, twice over:
+ * the name is a worse name than the card's, and a landmark nested inside a
+ * collapsed card is a landmark pointing at nothing.
+ *
+ * The flame is still drawn when it is handed one, and the card that holds
+ * this one deliberately is not: the streak and the best streak are figures in
+ * the pack, so that card lists them as rows like every other figure on the
+ * surface rather than saying them a second time as a badge.
  *
  * Four ring renderings, chosen by `state.ring.kind` and nothing else: this
  * component does not re-derive the ladder, it only draws whichever rung
@@ -36,17 +46,12 @@ import { ICON } from "@/lib/icon-scale";
  * the ring's own fill cannot say it.
  */
 export function Spine({ state }: { state: SpineState }) {
-  const t = useT();
-
   return (
-    <section
-      aria-label={t("bearing.spine.regionLabel")}
-      className="flex flex-wrap items-center justify-between gap-4"
-    >
+    <div className="flex flex-wrap items-center justify-between gap-4">
       <SpineRing ring={state.ring} />
 
       {state.flame ? <FlameBadge flame={state.flame} /> : null}
-    </section>
+    </div>
   );
 }
 

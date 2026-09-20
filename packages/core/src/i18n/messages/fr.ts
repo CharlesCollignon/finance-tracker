@@ -1682,7 +1682,6 @@ export const fr: Messages = {
       cashAccountsLastRead: "Lu {when}",
     },
     spine: {
-      regionLabel: "Où vous en êtes",
       ringUnmeasured: "Pas encore mesuré — aucun mois n'a été clôturé",
       ringMeasuring:
         "Mesure de votre premier mois — aucune enveloppe définie pour l'instant",
