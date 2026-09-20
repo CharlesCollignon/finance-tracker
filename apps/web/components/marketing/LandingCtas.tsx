@@ -25,8 +25,12 @@ const base =
   "focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--marketing-ground)] " +
   "active:scale-[0.98]";
 
+/* `md` is the nav pill and asks for its height rather than deriving one from
+   padding: at `py-2.5` it drew a 40px box, which is under the 44px a finger
+   needs and it is the primary action on every marketing page. `lg` already
+   clears the minimum on its padding alone. */
 const sizes = {
-  md: "px-5 py-2.5 text-sm",
+  md: "min-h-11 px-5 text-sm",
   lg: "px-7 py-3.5 text-[0.95rem]",
 } as const;
 

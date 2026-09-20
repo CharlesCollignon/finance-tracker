@@ -6,8 +6,28 @@ import {
 } from "@/components/marketing/landing-copy";
 import { getLocale, getT } from "@/lib/locale";
 
+/**
+ * A footer link is 14px of text, which draws an 18px box — less than half the
+ * 44px a finger needs, and this is the surface most visitors meet on a phone.
+ * `min-h-11` gives the link the height without changing the type, and the row
+ * gap goes with it: two 44px boxes touching are already further apart than
+ * two 18px boxes twelve pixels apart.
+ *
+ * It relaxes at `lg`, where a pointer is doing the aiming and the tighter
+ * column is the better-looking of the two. Not at `md`: a tablet is a touch
+ * device and 768px is squarely one. The relaxed rows are 20px, which clears
+ * WCAG 2.5.8 on the spacing exemption — 32px of pitch leaves each one its own
+ * 24px circle.
+ *
+ * `flex` rather than `inline-flex` so the box is the column and not the word:
+ * "Plan" is 27px of text, and a target can miss the minimum on its width just
+ * as easily as on its height.
+ */
 const footerLink =
-  "text-sm text-white/45 transition-colors duration-200 hover:text-white";
+  "flex min-h-11 items-center text-sm text-white/45 " +
+  "transition-colors duration-200 hover:text-white lg:min-h-0";
+
+const footerList = "mt-2 flex flex-col lg:mt-4 lg:gap-3";
 
 export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
   const t = await getT();
@@ -19,23 +39,22 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
           <div>
             <Link
               href="/"
-              className="inline-flex items-center gap-2.5 font-logo text-2xl leading-none text-white"
+              className="inline-flex min-h-11 items-center gap-2.5 font-logo text-2xl leading-none text-white"
               aria-label="Pluclair"
             >
               <Orb size="26px" tone="mark" className="shrink-0" />
               Pluclair
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/40">
-              One person&rsquo;s money: what came in, what went out, what is set
-              aside, and what is invested — reconciled month by month.
+              {copy.footer.tagline}
             </p>
           </div>
 
           <nav aria-label={t("common.product")}>
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-white/30">
-              Product
+              {t("common.product")}
             </h2>
-            <ul className="mt-4 flex flex-col gap-3">
+            <ul className={footerList}>
               {copy.pages.map((page) => (
                 <li key={page.id}>
                   <Link href={featureHref(page.id)} className={footerLink}>
@@ -48,9 +67,9 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
 
           <nav aria-label={t("common.account")}>
             <h2 className="text-xs font-medium uppercase tracking-[0.16em] text-white/30">
-              Account
+              {t("common.account")}
             </h2>
-            <ul className="mt-4 flex flex-col gap-3">
+            <ul className={footerList}>
               {isLoggedIn ? (
                 <li>
                   <Link href="/bearing" className={footerLink}>
@@ -73,7 +92,7 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
               )}
               <li>
                 <Link href="/#privacy" className={footerLink}>
-                  Privacy
+                  {copy.nav.privacy}
                 </Link>
               </li>
             </ul>
@@ -83,8 +102,8 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
         <div className="marketing-rule" />
 
         <div className="flex flex-col gap-2 text-sm text-white/30 sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 Pluclair</p>
-          <p>No bank connection. No aggregator. No advice.</p>
+          <p>{copy.footer.copyright}</p>
+          <p>{copy.footer.disclaimer}</p>
         </div>
       </div>
     </footer>

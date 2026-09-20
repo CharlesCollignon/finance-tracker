@@ -301,6 +301,23 @@ export const landingCopy = {
     },
   ],
 
+  /**
+   * The site's own navigation: two anchors in the header, repeated in the
+   * footer. Here rather than in the shared catalogue because they are marketing
+   * words — the app has no "how it works".
+   */
+  nav: {
+    howItWorks: "How it works",
+    privacy: "Privacy",
+  },
+
+  footer: {
+    tagline:
+      "One person’s money: what came in, what went out, what is set aside, and what is invested — reconciled month by month.",
+    copyright: "© 2026 Pluclair",
+    disclaimer: "No bank connection. No aggregator. No advice.",
+  },
+
   cta: {
     getStarted: "Get started",
     signIn: "Sign in",

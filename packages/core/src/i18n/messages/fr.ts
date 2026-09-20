@@ -873,6 +873,8 @@ export const fr: Messages = {
     pickAMonth: "Choisir un mois",
     close: "Fermer",
     closeSheet: "Fermer le panneau",
+    openMenu: "Ouvrir le menu",
+    closeMenu: "Fermer le menu",
     accountMenu: "Menu du compte",
     closeAccountMenu: "Fermer le menu du compte",
     view: "Vue",

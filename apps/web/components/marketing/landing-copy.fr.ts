@@ -301,6 +301,18 @@ export const landingCopyFr: LandingCopySections & {
     },
   },
 
+  nav: {
+    howItWorks: "Comment ça marche",
+    privacy: "Confidentialité",
+  },
+
+  footer: {
+    tagline:
+      "L’argent d’une personne : ce qui est entré, ce qui est sorti, ce qui est mis de côté et ce qui est investi — rapproché mois après mois.",
+    copyright: "© 2026 Pluclair",
+    disclaimer: "Aucune connexion bancaire. Aucun agrégateur. Aucun conseil.",
+  },
+
   cta: {
     getStarted: "Commencer",
     signIn: "Se connecter",

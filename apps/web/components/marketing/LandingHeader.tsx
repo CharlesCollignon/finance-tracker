@@ -14,17 +14,18 @@ import {
 import { useLocale, useT } from "@/lib/locale-context";
 
 /** Section anchors on the homepage. Written absolute so they also work from a
- * feature page, where the section itself is not on screen. */
+ * feature page, where the section itself is not on screen. The href is a
+ * route and lives here; the word is copy and lives with the rest of it. */
 const SECTION_LINKS = [
-  { href: "/#how", label: "How it works" },
-  { href: "/#privacy", label: "Privacy" },
+  { href: "/#how", key: "howItWorks" },
+  { href: "/#privacy", key: "privacy" },
 ] as const;
 
 function Wordmark() {
   return (
     <Link
       href="/"
-      className="inline-flex shrink-0 items-center gap-2.5 font-logo text-2xl leading-none text-white"
+      className="inline-flex min-h-11 shrink-0 items-center gap-2.5 font-logo text-2xl leading-none text-white"
       aria-label="Pluclair"
     >
       <Orb size="26px" tone="mark" className="shrink-0" />
@@ -42,6 +43,7 @@ const linkClass =
  * gave a marketing nav the density of an app sidebar. Grouping them is also
  * more honest about the shape of the product: one ledger, seven readings. */
 function ProductMenu({ pathname }: { pathname: string }) {
+  const t = useT();
   const copy = landingCopyFor(useLocale());
   // Keyed by path rather than a boolean synced in an effect: navigating to a
   // feature page changes `pathname`, which makes the menu closed by
@@ -85,7 +87,7 @@ function ProductMenu({ pathname }: { pathname: string }) {
         aria-haspopup="menu"
         onClick={() => setOpenForPath(open ? null : pathname)}
       >
-        Product
+        {t("common.product")}
         <CaretDown
           size={12}
           weight="bold"
@@ -149,7 +151,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
           <ProductMenu pathname={pathname} />
           {SECTION_LINKS.map((link) => (
             <Link key={link.href} href={link.href} className={linkClass}>
-              {link.label}
+              {copy.nav[link.key]}
             </Link>
           ))}
         </nav>
@@ -162,10 +164,10 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
           />
           <button
             type="button"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
             aria-expanded={open}
             aria-controls="marketing-nav"
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label={open ? t("common.closeMenu") : t("common.openMenu")}
             onClick={() => setOpenForPath(open ? null : pathname)}
           >
             {open ? <X size={18} /> : <List size={18} />}
@@ -186,7 +188,7 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
               key={page.id}
               href={featureHref(page.id)}
               onClick={() => setOpenForPath(null)}
-              className="rounded-xl px-3 py-2.5 text-sm text-white/80 transition-colors hover:bg-white/[0.07] hover:text-white"
+              className="flex min-h-11 items-center rounded-xl px-3 text-sm text-white/80 transition-colors hover:bg-white/[0.07] hover:text-white"
             >
               {page.title}
             </Link>
@@ -198,16 +200,16 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
               key={link.href}
               href={link.href}
               onClick={() => setOpenForPath(null)}
-              className="rounded-xl px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white"
+              className="flex min-h-11 items-center rounded-xl px-3 text-sm text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white"
             >
-              {link.label}
+              {copy.nav[link.key]}
             </Link>
           ))}
           {isLoggedIn ? null : (
             <Link
               href="/login"
               onClick={() => setOpenForPath(null)}
-              className="rounded-xl px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white sm:hidden"
+              className="flex min-h-11 items-center rounded-xl px-3 text-sm text-white/60 transition-colors hover:bg-white/[0.07] hover:text-white sm:hidden"
             >
               {copy.cta.signIn}
             </Link>

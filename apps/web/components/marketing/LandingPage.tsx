@@ -317,7 +317,16 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
       {/* After the close, because it is the close's figures it has the most to
           say about — and because the order on the page is the order in the
           app: measure first, then read what the measurement came to. */}
-      <section id="read" className="relative px-6 pb-24 md:pb-32">
+      {/* overflow-x-clip for the same reason `FeaturePage` gives: the device
+          stack's bloom reaches 48px past each of its edges, and on a phone
+          that is 24px of horizontal scroll across the whole document. The
+          devices section above already contains its copy of the same stack;
+          this one did not, which is why the landing page was the only
+          marketing page that scrolled sideways. */}
+      <section
+        id="read"
+        className="relative overflow-x-clip px-6 pb-24 md:pb-32"
+      >
         <div className="relative mx-auto grid max-w-6xl gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
           <Rise className="order-2 flex flex-col gap-4 lg:order-1 lg:pt-24">
             <LandingDeviceStack pageId="month-read" />

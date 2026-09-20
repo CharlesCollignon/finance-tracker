@@ -1121,6 +1121,8 @@ export const en = {
     pickAMonth: "Pick a month",
     close: "Close",
     closeSheet: "Close sheet",
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
     accountMenu: "Account menu",
     closeAccountMenu: "Close account menu",
     view: "View",
