@@ -73,6 +73,19 @@
         // endpoint dead code.
         "supabase/functions/*/index.ts",
       ],
+      "ignore": [
+        // Not debt, and not an exemption for project code: this is a vendored
+        // tool. `.agents/skills/**` is installed by `npx skills add` and its
+        // scripts are executed by the agent harness by path, never imported by
+        // anything in this repo — so the gate measuring reachability *through
+        // imports* has nothing true to say about them. Left unignored, five
+        // bundled browser helpers read as orphans and the whole check fails on
+        // files the repo does not own and cannot delete.
+        //
+        // Scoped to the skills directory rather than all of `.agents/`, so a
+        // file this repo does write there would still be measured.
+        ".agents/skills/**",
+      ],
       "ignoreDependencies": [
         // The formatter. Invoked from editors and `pnpm exec prettier`, and
         // the repo carries no `.prettierrc` for knip's prettier plugin to find,

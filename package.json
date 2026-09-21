@@ -6,7 +6,7 @@
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:mobile": "pnpm --filter mobile start",
-    "test": "pnpm --filter @finance/core test",
+    "test": "pnpm --filter @finance/core test && pnpm --filter web test",
     "check:reachability": "pnpm --filter @finance/core exec vitest run src/i18n/unused-keys.test.ts && knip"
   },
   "devDependencies": {
