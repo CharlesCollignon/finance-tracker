@@ -26,11 +26,19 @@ import { monthReadModel } from "@/lib/month-read/client";
  *
  * ## What can go wrong, and what happens
  *
- * `web_search` may not be entitled on a given plan, which comes back as a
- * 4xx. That is caught, recorded as a failure, and returned as `null` — which
- * the caller refunds, because nothing was spent. The look-through then simply
- * reports those instruments as unread, which is its ordinary state and is
- * rendered honestly rather than as zeroes.
+ * Every failure answers `null`, and says why in `lastFailure`, because the
+ * caller has to tell three very different situations apart. `web_search` may
+ * not be entitled on a given plan, which comes back as a 4xx and will come
+ * back as a 4xx for every instrument for ever — that is `no-search`, and a
+ * walk down the queue should stop on it. A timeout or a socket closing is
+ * `provider-down`, a bad minute worth retrying. A search that simply found
+ * nothing is `nothing-found`, which is about this one instrument and must not
+ * count towards the circuit breaker — three obscure funds in a row would
+ * otherwise put the whole feature to sleep.
+ *
+ * Nothing is spent in any of those cases, so the caller refunds the attempt.
+ * The look-through then reports those instruments as unread, which is its
+ * ordinary state and is rendered honestly rather than as zeroes.
  */
 
 const CONVERSATIONS_ENDPOINT = "https://api.mistral.ai/v1/conversations";
@@ -69,21 +77,57 @@ export function instrumentReadingConfigured(): boolean {
   return apiKey() !== null;
 }
 
+/**
+ * A fund *or* a single company, because a portfolio holds both.
+ *
+ * This asked about "one exchange-traded fund" and told the model to find a
+ * factsheet or KID. A directly held share has neither, so the honest answer
+ * to every question was "not applicable" — and the transcriber, correctly
+ * told to copy only what the notes state, wrote nulls and empty maps. That
+ * failed the verifier's "says something" test, and four holdings came back as
+ * unreadable when nothing was wrong with them but the question.
+ *
+ * A share is not a gap in the look-through. Holding Intel directly *is*
+ * holding 100% United States and 100% information technology, which is
+ * exactly the claim this surface exists to make — and it is a published fact
+ * about the company rather than an estimate, which is why asking for it does
+ * not loosen the rule against guessing.
+ */
 const SEARCH_INSTRUCTIONS =
-  "You look up published facts about one exchange-traded fund and report what " +
-  "the issuer's own documents say. Search for the fund's factsheet or KID by " +
-  "its ISIN. Prefer the issuer's own site, then a fund-data site such as " +
-  "justETF or Morningstar.\n\n" +
+  "You look up published facts about one instrument and report what its own " +
+  "documents say. The instrument is either a fund — an ETF, an ETC or a " +
+  "tracker — or a single listed company. Work out which from what you find, " +
+  "and answer accordingly.\n\n" +
+  "For a fund, search for its factsheet or KID by ISIN. Prefer the issuer's " +
+  "own site, then a fund-data site such as justETF or Morningstar. Report the " +
+  "ongoing charge, the currency, and the country and sector breakdowns the " +
+  "factsheet publishes.\n\n" +
+  "For a single company, there is no fund and no ongoing charge, and that is " +
+  "an ordinary answer rather than a gap — say so and move on. A directly held " +
+  "share is nonetheless entirely somewhere and entirely something: report the " +
+  "country it is domiciled or headquartered in at 100%, and its GICS sector " +
+  "at 100%, and give the company itself as its own sole holding at 100%. " +
+  "Report its trading currency.\n\n" +
   "Report only figures you actually found on a page, and say plainly when " +
-  "something could not be found — a missing ongoing charge is an ordinary " +
-  "answer and a guessed one is worse than none. Give the ISIN exactly as the " +
-  "page states it, and say so if it differs from the one asked about. Offer " +
-  "no opinion about the fund.";
+  "something could not be found — a guessed figure is worse than none. Give " +
+  "the ISIN exactly as the page states it, and say so if it differs from the " +
+  "one asked about. Offer no opinion about the instrument.";
 
 const TRANSCRIBE_INSTRUCTIONS =
-  "You turn notes about a fund into structured data. Copy only what the notes " +
-  "state. Where the notes do not give a figure, use null — never estimate, " +
-  "and never fill a gap from your own knowledge of the fund.\n\n" +
+  "You turn notes about one instrument into structured data. Copy only what " +
+  "the notes state. Where the notes do not give a figure, use null — never " +
+  "estimate, and never fill a gap from your own knowledge of the " +
+  "instrument.\n\n" +
+  // Said explicitly, because without it the rule above reads as forbidding
+  // the one answer a single company has: the notes say "United States" and
+  // "semiconductors" in prose, and turning that into `{ US: 1 }` is copying
+  // rather than estimating.
+  "The notes may describe a fund or a single listed company. For a single " +
+  "company the ongoing charge is null, and the notes stating its country and " +
+  "its sector means countryWeights and sectorWeights each carry that one " +
+  "entry at 1 — a share held directly is entirely in its own country and " +
+  "entirely in its own sector, which is a figure the notes give rather than " +
+  "one you are estimating.\n\n" +
   `Sector weights use exactly these ids: ${SECTOR_IDS.join(", ")}. Country ` +
   "weights are ISO 3166-1 alpha-2 codes. Every weight is a fraction between " +
   "0 and 1, not a percentage: 25% is 0.25. An ongoing charge of 0.20% is " +
@@ -243,17 +287,21 @@ async function defaultSearch(
           role: "user",
           content:
             `Find, for ${named}:\n` +
-            "- the annual ongoing charge (TER or OCF)\n" +
-            "- the fund's currency\n" +
-            "- its country breakdown by weight\n" +
+            "- whether it is a fund or a single listed company\n" +
+            "- the annual ongoing charge (TER or OCF), for a fund\n" +
+            "- its currency\n" +
+            "- its country breakdown by weight — for a single company, its " +
+            "own country at 100%\n" +
             // Asked for in full and by name, because a partial answer is
             // what actually came back: a first live run returned three of
             // eleven sectors. The reader downstream reports the shortfall
             // rather than hiding it, but a complete list is better than a
             // caveat about an incomplete one.
             "- its sector breakdown by weight, every sector the factsheet " +
-            "lists, not just the largest few\n" +
-            "- its largest holdings with weights\n\n" +
+            "lists, not just the largest few; for a single company, its own " +
+            "GICS sector at 100%\n" +
+            "- its largest holdings with weights — for a single company, " +
+            "itself at 100%\n\n" +
             "Give the figures and say which page each came from.",
         },
       ],

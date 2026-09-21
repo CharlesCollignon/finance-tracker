@@ -41,7 +41,13 @@ function namesFor(locale: Locale): Intl.DisplayNames | null {
 
   let built: Intl.DisplayNames | null = null;
   try {
-    built = new Intl.DisplayNames([INTL_LOCALES[locale]], { type: "region" });
+    built = new Intl.DisplayNames([INTL_LOCALES[locale]], {
+      type: "region",
+      // "none" rather than the default "code", so an unassigned code comes
+      // back as `undefined` instead of as itself. Both callers want to know
+      // the difference: one falls back to the code, the other draws nothing.
+      fallback: "none",
+    });
   } catch {
     // A runtime built without the region data. Every caller already handles
     // the code coming back unchanged, so there is nothing else to do.
@@ -50,6 +56,22 @@ function namesFor(locale: Locale): Intl.DisplayNames | null {
 
   displayNames.set(locale, built);
   return built;
+}
+
+/** Whether any country answers to this code. */
+function isACountry(code: string): boolean {
+  const names = namesFor(DEFAULT_LOCALE);
+  if (names === null) {
+    // No region data to check against. Assume it is a country: a flag that
+    // should not be there is a smaller fault than every flag missing.
+    return true;
+  }
+
+  try {
+    return names.of(code) !== undefined;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -77,8 +99,9 @@ export function countryName(
   }
 
   try {
-    // `of` returns the code itself for a region it does not know, which is
-    // already the answer this function wants.
+    // `undefined` for a code no country answers to, which is where the code
+    // itself is the honest label: the weight behind the row is real even
+    // when nothing can be named for it.
     return names.of(upper) ?? upper;
   } catch {
     return upper;
@@ -91,10 +114,16 @@ export function countryName(
  * Null rather than an empty string so a caller has to decide what an absent
  * flag looks like, instead of rendering a zero-width gap that quietly knocks
  * a column out of alignment.
+ *
+ * A two-letter code that names no country gets none either. A factsheet's
+ * "Other" bucket arrives as `OT` and looks exactly like a country code; the
+ * arithmetic below would happily turn it into 🇴🇹, which renders as two
+ * letters in a box and reads as a font problem rather than as "this part is
+ * not anywhere in particular".
  */
 export function countryFlag(code: string): string | null {
   const trimmed = code.trim();
-  if (!ALPHA_2.test(trimmed)) {
+  if (!ALPHA_2.test(trimmed) || !isACountry(trimmed.toUpperCase())) {
     return null;
   }
 
