@@ -178,7 +178,9 @@ function Card({
           aria-expanded={open}
           aria-controls={bodyId}
           className={cn(
-            "group flex w-full items-center gap-4 p-4 text-left md:p-5",
+            // No `group` any more: the caret was the only thing reading it,
+            // and it no longer changes under a hover.
+            "flex w-full items-center gap-4 p-4 text-left md:p-5",
             "transition-colors hover:bg-foreground/[0.03]",
             "focus-visible:ring-2 focus-visible:ring-foreground/40 focus-visible:ring-inset focus-visible:outline-none",
           )}
@@ -225,20 +227,31 @@ function Card({
             </span>
           ) : null}
 
+          {/* One opacity, in both states, and the rotation carries the
+              state on its own.
+
+              The caret used to rest at 30% and rise to 60 under the pointer.
+              Over the glass card — `--card` at 60% on `--background`, so
+              about `#0f0f1a` — 30% of `--foreground` measures 2.44:1, under
+              the 3:1 SC 1.4.11 asks of anything that identifies a control,
+              and the step that fixed it only existed for people with a
+              pointer. On a phone, where the Bearing is the screen the app
+              opens to, the affordance was simply below the floor. At 60% it
+              measures 6.28:1 resting — a shade quieter than the muted
+              foreground beside it (6.95:1), which is the weight chrome
+              should have — and it is the same at rest as it is on hover,
+              because a permanent affordance beats a revealed one. */}
           <CaretDown
             size={ICON.md}
             weight="bold"
             aria-hidden
-            className={cn(
-              "shrink-0",
-              open
-                ? "rotate-180 opacity-60"
-                : "opacity-30 group-hover:opacity-60",
-            )}
+            className={cn("shrink-0 opacity-60", open && "rotate-180")}
+            // Transform only now. The opacity half of this transition had
+            // nothing left to animate once the two states share one value.
             style={{
               transition: reducedMotion
                 ? undefined
-                : `transform ${DURATION.panel}ms ${cssEasing()}, opacity ${DURATION.panel}ms ${cssEasing()}`,
+                : `transform ${DURATION.panel}ms ${cssEasing()}`,
             }}
           />
 
@@ -349,10 +362,29 @@ function FigureRow({ figure, trend }: { figure: CardFigure; trend: number[] }) {
           affordance is worth. */}
       <span className="flex w-3 shrink-0 justify-end">
         {figure.href ? (
+          // Resting at 40%, which over the glass card is 3.42:1 — past the
+          // 3:1 SC 1.4.11 sets for a graphic that identifies a control. It
+          // was `opacity-0`, so on a touch device the arrow never appeared
+          // at all and the only way to find out whether a figure led
+          // anywhere was to press it. `bearing-tiles.ts` is explicit that a
+          // tile with nowhere honest to lead must lead nowhere, "because
+          // inventing a destination would teach people that pressing tiles
+          // is a coin flip" — an invisible arrow taught them the same thing
+          // from the other side.
+          //
+          // The rise to 60% is the enhancement, not the affordance, which is
+          // why it costs nothing on a phone: Tailwind v4 already compiles
+          // `group-hover` inside `@media (hover: hover)`, so a device with
+          // no pointer gets the resting state and never the reveal. Focus
+          // gets the same rise, so a keyboard walking the rows can see which
+          // one it is on without relying on the ring alone.
           <ArrowRight
             size={ICON.xs}
             aria-hidden
-            className="opacity-0 transition-opacity group-hover/row:opacity-60"
+            className={cn(
+              "opacity-40 transition-opacity",
+              "group-hover/row:opacity-60 group-focus-visible/row:opacity-60",
+            )}
           />
         ) : null}
       </span>
@@ -368,7 +400,18 @@ function FigureRow({ figure, trend }: { figure: CardFigure; trend: number[] }) {
   }
 
   return (
-    <Link href={figure.href} className={cn(shape, "group/row")}>
+    <Link
+      href={figure.href}
+      className={cn(
+        shape,
+        "group/row",
+        // The same ring the card's own button carries, so a keyboard moving
+        // from the card header into its rows does not change focus
+        // vocabulary halfway down. Inset, because the row is flush with the
+        // card's padding and an outset ring would be clipped.
+        "focus-visible:ring-2 focus-visible:ring-foreground/40 focus-visible:ring-inset focus-visible:outline-none",
+      )}
+    >
       {body}
     </Link>
   );

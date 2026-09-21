@@ -1,5 +1,11 @@
 import type { Locale } from "@finance/core/i18n/locale";
-import { landingSampleFr } from "@/components/marketing/landing-sample.fr";
+// Relative, where the rest of this tree writes `@/components/...`. The two
+// `@finance/core` imports above are erased as types, so this is the module's
+// only runtime edge, and keeping it a sibling path is what lets a test runner
+// load the file with no knowledge of the app's `@` alias. The French words
+// and the figures they belong to are one unit; a path that says so is not a
+// worse path.
+import { landingSampleFr } from "./landing-sample.fr";
 import type { CategoryType } from "@finance/core/types/database";
 
 /**
@@ -145,12 +151,6 @@ export const landingSample = {
   portfolioInvested: 11000,
   portfolioGain: 1480,
   /**
-   * The close of the month before this one — February, read on the reading
-   * day in March. Deliberately a reconciled close rather than a baseline:
-   * a baseline has nothing to show, and the whole point of the section it
-   * feeds is the figure a baseline cannot produce yet.
-   */
-  /**
    * The Bearing's own figures, on the 19th of the sample month.
    *
    * They have to agree with the rest of this file or the mock states two
@@ -184,15 +184,52 @@ export const landingSample = {
     accountsEnd: 3640,
     keptEnd: 9640,
   },
+  /**
+   * The close of the month before this one — February, read on the reading
+   * day in March. Deliberately a reconciled close rather than a baseline:
+   * a baseline has nothing to show, and the whole point of the section it
+   * feeds is the figure a baseline cannot produce yet.
+   *
+   * February's own flows, and that is the correction rather than a detail.
+   * The close panel used to draw its two middle rows from `income` and
+   * `spent` at the top of this file, which are March's and which March is
+   * nineteen days into: the panel headed "How it adds up" added up to
+   * €5,427 beside a closing balance of €4,906, under a headline claiming
+   * €218 of unrecorded spending. A panel that promises to show the
+   * arithmetic disproved the figure it was there to prove.
+   *
+   * The names below are the domain's. `recordedIn` is `flows.income`,
+   * `recordedOut` is what `recordedOutflow()` returns — expenses at face
+   * value, plus what was set aside, plus what left for a broker — and
+   * `setAside` is the savings-and-transfers part of that outflow, which is
+   * the part that stayed the reader's money and so the part `kept` adds
+   * back. Every derived figure follows from them by the arithmetic
+   * `buildMonthClose` does, and `landing-sample.test.ts` runs the real
+   * function over these inputs and asserts each one:
+   *
+   *   unrecorded = opening + in − out − closing = 4180 + 3200 − 2256 − 4906
+   *   kept       = (closing − opening) + setAside = 726 + 350
+   *   keptRate   = kept / in = 1076 / 3200
+   *
+   * `recordedIn` is 3,200 because the salary template pays that every month
+   * and is the only income there is — February's own figure, which happens
+   * to equal March's rather than being borrowed from it. `recordedOut` is a
+   * whole month where March's 1,953 is nineteen days of one, and `setAside`
+   * is 150 to the emergency fund plus four Friday DCAs of 50, which is what
+   * February held.
+   */
   close: {
     monthLabel: "February 2026",
     readingDay: "the 8th",
     openingBalance: 4180,
+    recordedIn: 3200,
+    recordedOut: 2256,
+    setAside: 350,
     closingBalance: 4906,
     unrecorded: 218,
     unrecordedCap: 260,
-    kept: 1142,
-    keptRate: 35.7,
+    kept: 1076,
+    keptRate: 33.6,
     streak: 4,
   },
   /**

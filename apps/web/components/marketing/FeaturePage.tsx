@@ -71,7 +71,11 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
           {page.steps.map((step, index) => (
             <li key={step.title} className="p-7 md:p-8">
               <Reveal delay={index * 0.06}>
-                <span className="font-mono text-xs text-primary/70">
+                {/* The quietest grey, matching the landing page's two other
+                    counters. It was `text-primary/70` — the accent spent on an
+                    ordinal, and spent as a tint where DESIGN.md asks for a
+                    weight. 5.17:1 inside a `.glass-grid` cell. */}
+                <span className="font-mono text-xs text-marketing-faint">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <h2 className="mt-3 font-head text-lg text-marketing-ink">

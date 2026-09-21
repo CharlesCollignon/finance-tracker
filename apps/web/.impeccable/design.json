@@ -148,7 +148,7 @@
       {
         "name": "bezel-inset",
         "value": "inset 0 1px 1px rgba(255, 246, 230, 0.08)",
-        "purpose": "The app's only depth cue. A warm highlight along a card's top inner edge inside its tray, reading as a machined recess rather than elevation."
+        "purpose": "The app's only surface depth cue. A warm highlight along a card's top inner edge inside its tray, reading as a machined recess rather than elevation."
       },
       {
         "name": "marketing-panel-glass",
@@ -159,6 +159,16 @@
         "name": "marketing-menu-glass",
         "value": "inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 30px 70px -20px rgba(0, 0, 0, 0.85)",
         "purpose": "Marketing only, on .glass-menu, under The Marketing Glass Rule. The same pair, longer and darker, because a dropdown opens over a 5rem headline and has the most to hold down. Never used in the app."
+      },
+      {
+        "name": "marketing-flat-glass",
+        "value": "inset 0 1px 0 rgba(255, 255, 255, 0.09)",
+        "purpose": "Marketing only, on .glass-flat and .glass-grid. The lit top edge alone, a shade under the panels'. These carry their own text instead of floating over the orb, so there is nothing for them to sit in front of and nothing to cast."
+      },
+      {
+        "name": "orb-bounce",
+        "value": "inset 0 -7cqw 11cqw -5cqw rgb(255 237 194 / calc(0.24 * var(--orb-glass)))",
+        "purpose": "On .pc-orb::after, on both surfaces. The light the ground throws back up into the underside of the sphere, sized in cqw so it scales with the mark rather than with the viewport. Interior modelling of a decoration, not a claim about where its box sits."
       },
       {
         "name": "none",
@@ -326,7 +336,7 @@
       },
       {
         "name": "The Marketing Glass Rule",
-        "body": "The marketing surface casts two shadows and lifts one card on hover, and those three declarations are the whole of the exception: .glass-panel at inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 24px 60px -20px rgba(0, 0, 0, 0.7); .glass-menu at inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 30px 70px -20px rgba(0, 0, 0, 0.85); and .glass-flat-hover:hover adding transform: translateY(-2px) to the border and background it was already changing. All three live in app/globals.css beside the other marketing glass and apply nowhere else — a gold glow under the hero button and a black pool under the phone mock were deleted, because neither was glass and the exception is the vocabulary, not the surface. Marketing glass sits over the orb, where a pane with nothing under it reads as a hole punched in the light, so the drop describes the material rather than a lift: long offset, soft blur, pulled back in by a negative spread, measuring the distance to the orb the way the inset measures the light on the top edge. The app side stays flat and is not waiting for the same thing — its depth is the lit ground, the glass weights, the surface value steps and the hairlines, which is already a complete answer, and a shadow there would be a second depth system arguing with the first. Nothing here licenses a drop shadow, a hover lift or an elevation scale under app/(app)/**, in components/finance/**, or in anything both surfaces share. This does leave The Flat-With-One-Exception Rule carrying a name that is now slightly wrong, and the name stays: tooling and this file both reference it, and a rule renamed to accommodate an exception is a rule being negotiated rather than kept.",
+        "body": "The marketing surface casts two shadows and lifts one card on hover, and those three declarations are the whole of what this rule licenses: .glass-panel casting 0 24px 60px -20px rgba(0, 0, 0, 0.7) under an inset 0 1px 0 rgba(255, 255, 255, 0.14); .glass-menu casting 0 30px 70px -20px rgba(0, 0, 0, 0.85) under an inset 0 1px 0 rgba(255, 255, 255, 0.1); and .glass-flat-hover:hover adding transform: translateY(-2px) to the border and background it was already changing. All three live in app/globals.css beside the other marketing glass and apply nowhere else — a gold glow under the hero button and a black pool under the phone mock were deleted, because neither was glass and the exception is the vocabulary, not the surface. Two is the count of what is cast, not of what is written: box-shadow appears at five places in app/globals.css, and the three this rule does not name cast nothing — .glass-flat and .glass-grid each take inset 0 1px 0 rgba(255, 255, 255, 0.09), and .pc-orb::after takes inset 0 -7cqw 11cqw -5cqw rgb(255 237 194 / calc(0.24 * var(--orb-glass))). The two cast declarations open with an inset of their own as well, so the file holds five inset highlights against two drops. An inset puts nothing in front of the element and moves nothing away from the page — it is light drawn on a surface, which is precisely what the bezel inset is and why the flatness rule can call a recess its one exception — so this rule is scoped to what is thrown, and an inset highlight is not a candidate for it, in marketing or anywhere else. The orb's is the one worth saying out loud: Orb is a brand component and its 22–26px mark sits in PageHeader and Logo on the app side, so the sphere's interior modelling travels with it across the line this rule draws; that is shading inside a decoration, not a box announcing how far off the page it sits. Marketing glass sits over the orb, where a pane with nothing under it reads as a hole punched in the light, so the drop describes the material rather than a lift: long offset, soft blur, pulled back in by a negative spread, measuring the distance to the orb the way the inset measures the light on the top edge. The app side stays flat and is not waiting for the same thing — its depth is the lit ground, the glass weights, the surface value steps and the hairlines, which is already a complete answer, and a shadow there would be a second depth system arguing with the first. Nothing here licenses a drop shadow, a hover lift or an elevation scale under app/(app)/**, in components/finance/**, or in anything both surfaces share. This does leave The Flat-With-One-Exception Rule carrying a name that is now slightly wrong, and the name stays: tooling and this file both reference it, and a rule renamed to accommodate an exception is a rule being negotiated rather than kept.",
         "section": "elevation"
       },
       {

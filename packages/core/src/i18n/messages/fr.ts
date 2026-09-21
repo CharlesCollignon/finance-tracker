@@ -24,7 +24,6 @@ import type { Messages } from "./en";
 export const fr: Messages = {
   nav: {
     bearing: "Cap",
-    month: "Mois",
     ledger: "Journal",
     charges: "Charges",
     plan: "Plan",
@@ -351,6 +350,7 @@ export const fr: Messages = {
 
   instrument: {
     label: "ETF ou fonds",
+    resultsLabel: "Instruments correspondants",
     searching: "Recherche…",
     isinKeepTyping: "Un ISIN fait 12 caractères — continuez…",
     noResults:

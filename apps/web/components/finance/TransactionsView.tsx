@@ -25,6 +25,7 @@ import { EmptyState } from "@/components/layout/EmptyState";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { useToast } from "@/components/layout/ToastProvider";
 import { TransactionForm } from "@/components/finance/TransactionForm";
+import { amountSign } from "@/components/finance/amount-sign";
 import {
   categoryTypeLabels,
   TYPE_AMOUNT_CLASS,
@@ -866,12 +867,21 @@ export function TransactionsView({
                               ))}
                           </span>
 
+                          {/* The sign is the second channel, and the row had
+                              only one. Amounts are stored positive, so
+                              `TYPE_AMOUNT_CLASS` alone had to say both what
+                              kind of money this is and which way it went —
+                              and colour cannot say two things, let alone to
+                              a reader who does not separate green from
+                              salmon. The day header above has carried `+`/`−`
+                              all along; the rows now agree with it. */}
                           <span
                             className={cn(
                               "privacy-amount shrink-0 whitespace-nowrap text-sm tabular-nums xl:text-right",
                               TYPE_AMOUNT_CLASS[tx.categories.type],
                             )}
                           >
+                            {amountSign(tx.categories.type)}
                             {formatEuro(Number(tx.amount))}
                           </span>
                         </button>

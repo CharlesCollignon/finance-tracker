@@ -25,6 +25,7 @@ import { StatHero } from "@/components/finance/StatHero";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { formatMonthLabel } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
+import { amountSign } from "@/components/finance/amount-sign";
 import {
   FULFILMENT_STATE_KEY,
   indexFulfilmentStates,
@@ -492,7 +493,7 @@ export function CalendarView({
                             TYPE_AMOUNT_CLASS[tx.categories.type],
                           )}
                         >
-                          {tx.categories.type === "income" ? "+" : "−"}
+                          {amountSign(tx.categories.type)}
                           {formatEuro(Number(tx.amount))}
                         </span>
                       </button>
