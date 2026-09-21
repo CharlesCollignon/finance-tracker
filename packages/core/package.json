@@ -72,6 +72,7 @@
     "./recurrence": "./src/recurrence.ts",
     "./recurring-detection": "./src/recurring-detection.ts",
     "./recurring-fulfilment": "./src/recurring-fulfilment.ts",
+    "./recurring-rollup": "./src/recurring-rollup.ts",
     "./recurring-shares": "./src/recurring-shares.ts",
     "./savings-goals": "./src/savings-goals.ts",
     "./seed-categories": "./src/seed-categories.ts",

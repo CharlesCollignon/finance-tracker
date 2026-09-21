@@ -25,6 +25,7 @@ import {
   estimateMonthlyAmount,
   formatRecurrenceSchedule,
 } from "@finance/core/recurrence";
+import { rollUpRecurring } from "@finance/core/recurring-rollup";
 import { formatSharesLabel } from "@finance/core/recurring-shares";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -289,13 +290,19 @@ export function RecurringView({
     void refreshApplyPending();
   }, [refreshApplyPending, templates]);
 
-  const budgetMonthly = templates
-    .filter((t) => t.active && t.categories.counts_toward_summary !== false)
-    .reduce((sum, t) => sum + estimateMonthlyAmount(t), 0);
-
-  const deploymentMonthly = templates
-    .filter((t) => t.active && t.categories.counts_toward_summary === false)
-    .reduce((sum, t) => sum + estimateMonthlyAmount(t), 0);
+  /*
+   * One rollup rather than two reducers, and split by what kind of money each
+   * template is rather than only by whether the summary counts it.
+   *
+   * This changes the middle figure. It used to sum every counting template —
+   * expenses, savings and investments together — under the word "committed".
+   * The rest of the product does not mean that: `buildRunway` says committed
+   * is recurring expenses only, because contributions are what a person under
+   * pressure stops before they stop paying rent, and the Bearing's committed
+   * fact reads that same figure. This page was the outlier. What falls out of
+   * the middle column is not lost, it is said beneath as what is set aside.
+   */
+  const rollup = rollUpRecurring(templates);
 
   const hasTemplates = templates.length > 0;
   const activeGroup = groups.find((group) => group.type === activeTab);
@@ -357,14 +364,62 @@ export function RecurringView({
 
         {hasTemplates ? (
           <>
-            <section className="flex flex-col gap-1 rounded-card border border-border bg-card p-5">
-              <p className="text-sm text-muted-foreground">
-                {t("charges.committedEveryMonth")}
-              </p>
-              <span className="privacy-amount font-head text-3xl leading-none tabular-nums md:text-4xl">
-                {formatEuro(budgetMonthly)}
-              </span>
-              {deploymentMonthly > 0 ? (
+            <section className="rounded-card border border-border bg-card p-5">
+              {/* Three figures across, stacking on a phone. One card rather
+                  than three, because they are one sentence: what comes in,
+                  what is already promised, and what that leaves. None of them
+                  is coloured — "what's left" being small is a circumstance,
+                  not a category, and the Semantic Amount Rule reserves colour
+                  for saying what kind of money a figure is. */}
+              <div className="grid gap-5 sm:grid-cols-3 sm:gap-4">
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm text-muted-foreground">
+                    {t("charges.incomeEveryMonth")}
+                  </p>
+                  {rollup.income > 0 ? (
+                    <span className="privacy-amount font-head text-3xl leading-none tabular-nums md:text-4xl">
+                      {formatEuro(rollup.income)}
+                    </span>
+                  ) : (
+                    // Not a zero. Nothing has been measured here, and a `0 €`
+                    // in the same type as the figures beside it would claim
+                    // otherwise.
+                    <p className="text-sm text-muted-foreground">
+                      {t("charges.noIncomeYet")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm text-muted-foreground">
+                    {t("charges.committedEveryMonth")}
+                  </p>
+                  <span className="privacy-amount font-head text-3xl leading-none tabular-nums md:text-4xl">
+                    {formatEuro(rollup.committed)}
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm text-muted-foreground">
+                    {t("charges.leftEveryMonth")}
+                  </p>
+                  <span className="privacy-amount font-head text-3xl leading-none tabular-nums md:text-4xl">
+                    {formatEuro(rollup.left)}
+                  </span>
+                </div>
+              </div>
+
+              {rollup.setAside > 0 ? (
+                <p className="mt-4 text-sm text-muted-foreground">
+                  {t("charges.plusSetAsideBefore")}{" "}
+                  <span className="privacy-amount tabular-nums text-foreground">
+                    {formatEuro(rollup.setAside)}
+                  </span>{" "}
+                  {t("charges.plusSetAsideAfter")}
+                </p>
+              ) : null}
+
+              {rollup.deployed > 0 ? (
                 // The figure is its own element so the blur can cover it
                 // without covering the sentence it sits in, which is why this
                 // is two fragments either side of an amount rather than one
@@ -372,7 +427,7 @@ export function RecurringView({
                 <p className="mt-1.5 text-sm text-muted-foreground">
                   {t("charges.plusMovedBefore")}{" "}
                   <span className="privacy-amount tabular-nums text-foreground">
-                    {formatEuro(deploymentMonthly)}
+                    {formatEuro(rollup.deployed)}
                   </span>{" "}
                   {t("charges.plusMovedAfter")}
                 </p>
