@@ -144,8 +144,8 @@ give it.
 
 **Key Characteristics:**
 
-- Dark-only and portrait-only, forced at the app level rather than followed
-  from the system
+- Dark-only and portrait-only — one palette stated once, not a dark half
+  chosen from the system
 - Translucent surfaces at 70% over a lit backdrop
 - Two numeric faces: a serif for figures that own a screen, a mono for amounts
   in a ledger
@@ -203,9 +203,13 @@ fell to 5.4.
 
 ### Named Rules
 
-**The One Palette Rule.** There is one palette and it is dark. The app forces
-`userInterfaceStyle: "dark"` rather than following the system scheme. Do not
-add a light variant or a scheme-conditional token.
+**The One Palette Rule.** There is one palette and it is dark, and
+`src/global.css` states it once on `:root` with no `prefers-color-scheme`
+branch to fall back to. The app separately pins the scheme —
+`userInterfaceStyle: "dark"` in app.json and `Appearance.setColorScheme("dark")`
+at boot — but that pinning governs how `dark:` variants resolve; it is no
+longer what keeps a second palette off screen. Do not reintroduce one, and do
+not add a scheme-conditional token.
 
 **The Shared Palette Rule.** Every colour here is stated identically in
 `apps/web/app/globals.css`. A change to one is a change to both, in the same
@@ -390,8 +394,9 @@ merely shortening.
 
 ### Don't:
 
-- **Don't** add a light palette or a scheme-conditional token. The app forces
-  dark.
+- **Don't** add a light palette or a scheme-conditional token. The stylesheet
+  states one palette unconditionally; a `prefers-color-scheme` branch is the
+  thing that was removed.
 - **Don't** set a line height on a display size; Android clips the tall glyphs.
 - **Don't** layer a second text-size utility over a `Text` variant.
 - **Don't** add an elevation scale or a second shadow. There is one, and it is

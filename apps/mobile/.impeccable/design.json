@@ -118,7 +118,7 @@
       "One shared palette with the web, stated in both and drifting in neither"
     ],
     "rules": [
-      { "name": "The One Palette Rule", "body": "There is one palette and it is dark. The app forces userInterfaceStyle: dark rather than following the system scheme. Do not add a light variant or a scheme-conditional token.", "section": "colors" },
+      { "name": "The One Palette Rule", "body": "There is one palette and it is dark, and src/global.css states it once on :root with no prefers-color-scheme branch to fall back to. The app separately pins the scheme, but that pinning governs how dark: variants resolve; it is no longer what keeps a second palette off screen.", "section": "colors" },
       { "name": "The Shared Palette Rule", "body": "Every colour here is stated identically in apps/web/app/globals.css. A change to one is a change to both, in the same commit.", "section": "colors" },
       { "name": "The Semantic Amount Rule", "body": "An amount's colour says what kind of money it is — income, expense, savings or investment — never whether it is positive or negative.", "section": "colors" },
       { "name": "The Registered Instance Rule", "body": "React Native takes the exact registered family name and does not synthesise a weight from fontWeight. A semibold face is asked for by name, never by weighting the regular one.", "section": "typography" },
@@ -140,7 +140,7 @@
       "Do use the six icon sizes and the four radius roles; both scales are closed."
     ],
     "donts": [
-      "Don't add a light palette or a scheme-conditional token. The app forces dark.",
+      "Don't add a light palette or a scheme-conditional token. The stylesheet states one palette unconditionally; a prefers-color-scheme branch is the thing that was removed.",
       "Don't set a line height on a display size; Android clips the tall glyphs.",
       "Don't layer a second text-size utility over a Text variant.",
       "Don't add an elevation scale or a second shadow. There is one, and it is soft.",
