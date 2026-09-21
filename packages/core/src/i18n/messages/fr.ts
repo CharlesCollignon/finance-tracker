@@ -433,16 +433,12 @@ export const fr: Messages = {
 
   charges: {
     blurb: "Ce que vous savez déjà devoir payer, chaque mois.",
-    committedEveryMonth: "Engagé chaque mois",
     tileIncome: "Revenus",
     tileCommitted: "Engagé",
     tileSetAside: "Mis de côté",
     tileLeft: "Reste",
     perMonth: "Par mois",
     noIncomeYet: "Aucun revenu récurrent — ajoutez-en un et ceci se remplira.",
-    plusSetAsideBefore: "Auxquels s'ajoutent",
-    plusSetAsideAfter:
-      "mis de côté chaque mois — épargne et investissements, pas des dépenses.",
     ofWhichMovedBefore: "dont",
     ofWhichMovedAfter: "déplacés chez le courtier — suivis, mais pas dépensés.",
     nothingHereYet: "Rien ici pour l'instant.",

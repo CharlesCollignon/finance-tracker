@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, View } from "react-native";
 import { type Href, useRouter } from "expo-router";
@@ -7,6 +8,7 @@ import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
 import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
 import { rollUpRecurring } from "@finance/core/recurring-rollup";
+import { TYPE } from "@/theme/tokens";
 import type {
   Category,
   CategoryType,
@@ -64,6 +66,16 @@ function groupLabels(t: Translate): Record<AllocType, string> {
     savings: t("allocation.savings"),
     investment: t("allocation.investments"),
   };
+}
+
+/** One scoreboard tile: a word, a figure, and nothing else. */
+function Tile({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Card className="flex-1 gap-2">
+      <Text variant="label">{label}</Text>
+      {children}
+    </Card>
+  );
 }
 
 export default function RecurringScreen() {
@@ -242,25 +254,63 @@ export default function RecurringScreen() {
       ) : null}
 
       {templates.length > 0 ? (
-        <Card bezel className="mb-4" innerClassName="gap-1 p-5">
-          {/* Was hardcoded English, on a screen a French reader reaches
-              from a French tab bar. */}
-          <Text variant="muted" className="text-sm">
-            {t("charges.committedEveryMonth")}
+        /* The same four figures the web draws, two by two because a phone's
+           column will not take four across. Every term of the sum is on
+           screen: income, less what is committed, less everything put by,
+           leaves what the month leaves in the account.
+
+           Two rows of two rather than a wrapping row — React Native has no
+           grid, and `flex-1` in a pair is the layout that does not depend on
+           guessing a percentage width against the gap. */
+        <View className="mb-4 gap-3">
+          <View className="flex-row gap-3">
+            <Tile label={t("charges.tileIncome")}>
+              {rollup.income > 0 ? (
+                <PrivateAmount style={TYPE.figure}>
+                  {formatEuro(rollup.income)}
+                </PrivateAmount>
+              ) : (
+                // Not a zero: nothing is measured here yet, and a figure in
+                // this face would say otherwise.
+                <Text variant="muted" className="text-sm">
+                  {t("charges.noIncomeYet")}
+                </Text>
+              )}
+            </Tile>
+            <Tile label={t("charges.tileCommitted")}>
+              <PrivateAmount style={TYPE.figure}>
+                {formatEuro(rollup.committed)}
+              </PrivateAmount>
+            </Tile>
+          </View>
+
+          <View className="flex-row gap-3">
+            <Tile label={t("charges.tileSetAside")}>
+              <PrivateAmount style={TYPE.figure}>
+                {formatEuro(rollup.setAside + rollup.deployed)}
+              </PrivateAmount>
+            </Tile>
+            <Tile label={t("charges.tileLeft")}>
+              <PrivateAmount style={TYPE.figure}>
+                {formatEuro(rollup.left)}
+              </PrivateAmount>
+            </Tile>
+          </View>
+
+          <Text variant="micro" className="px-1">
+            {t("charges.perMonth")}
+            {rollup.deployed > 0 ? (
+              <>
+                {" · "}
+                {t("charges.ofWhichMovedBefore")}{" "}
+                <PrivateAmount className="text-foreground">
+                  {formatEuro(rollup.deployed)}
+                </PrivateAmount>{" "}
+                {t("charges.ofWhichMovedAfter")}
+              </>
+            ) : null}
           </Text>
-          <PrivateAmount className="text-3xl font-semibold">
-            {formatEuro(rollup.committed)}
-          </PrivateAmount>
-          {rollup.setAside > 0 ? (
-            <Text variant="muted" className="mt-1.5 text-sm">
-              {t("charges.plusSetAsideBefore")}{" "}
-              <PrivateAmount className="text-foreground">
-                {formatEuro(rollup.setAside)}
-              </PrivateAmount>{" "}
-              {t("charges.plusSetAsideAfter")}
-            </Text>
-          ) : null}
-        </Card>
+        </View>
       ) : null}
 
       <Button
