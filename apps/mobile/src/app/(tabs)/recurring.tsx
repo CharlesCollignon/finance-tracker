@@ -5,10 +5,8 @@ import { type Href, useRouter } from "expo-router";
 import { parseMonthParams } from "@finance/core/constants";
 import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
 import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
-import {
-  estimateMonthlyAmount,
-  formatRecurrenceSchedule,
-} from "@finance/core/recurrence";
+import { formatRecurrenceSchedule } from "@finance/core/recurrence";
+import { rollUpRecurring } from "@finance/core/recurring-rollup";
 import type {
   Category,
   CategoryType,
@@ -115,13 +113,23 @@ export default function RecurringScreen() {
     void refreshApplyPending();
   }, [refreshApplyPending, templates]);
 
-  const budgetMonthly = useMemo(
-    () =>
-      templates
-        .filter((t) => t.active && t.categories.counts_toward_summary !== false)
-        .reduce((sum, t) => sum + estimateMonthlyAmount(t), 0),
-    [templates, t],
-  );
+  /*
+   * The same rollup the web uses, for the same reason: `estimateMonthlyAmount`
+   * knows a template's rhythm and its amount and nothing about its category,
+   * so this used to sum expenses, savings and investments together under the
+   * word "committed" — and would have started adding a salary to that figure
+   * the moment income templates became creatable.
+   *
+   * `committed` is expenses only now, which is what `buildRunway` and the
+   * Bearing have always meant by the word. What falls out is said below as
+   * what is set aside rather than disappearing off the card.
+   *
+   * The three-across header the web now draws is deliberately not copied
+   * here: three figures at this type size do not fit a phone's column, and
+   * the point of this change is that the two clients agree about the
+   * numbers, not that they agree about the layout.
+   */
+  const rollup = useMemo(() => rollUpRecurring(templates), [templates]);
 
   const groups = useMemo(
     () =>
@@ -235,12 +243,23 @@ export default function RecurringScreen() {
 
       {templates.length > 0 ? (
         <Card bezel className="mb-4" innerClassName="gap-1 p-5">
+          {/* Was hardcoded English, on a screen a French reader reaches
+              from a French tab bar. */}
           <Text variant="muted" className="text-sm">
-            Committed every month
+            {t("charges.committedEveryMonth")}
           </Text>
           <PrivateAmount className="text-3xl font-semibold">
-            {formatEuro(budgetMonthly)}
+            {formatEuro(rollup.committed)}
           </PrivateAmount>
+          {rollup.setAside > 0 ? (
+            <Text variant="muted" className="mt-1.5 text-sm">
+              {t("charges.plusSetAsideBefore")}{" "}
+              <PrivateAmount className="text-foreground">
+                {formatEuro(rollup.setAside)}
+              </PrivateAmount>{" "}
+              {t("charges.plusSetAsideAfter")}
+            </Text>
+          ) : null}
         </Card>
       ) : null}
 

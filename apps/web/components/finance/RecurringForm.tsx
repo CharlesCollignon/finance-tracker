@@ -133,14 +133,35 @@ function RecurringFormFields({
     });
   }
 
-  const allocCategories = categories.filter((c) => c.type !== "income");
-  const selectedCategory = allocCategories.find((cat) => cat.id === categoryId);
+  /*
+   * Every category, income included.
+   *
+   * This used to filter income out, which was how the app enforced "a charge
+   * is something going out". The projection never agreed — it counts income
+   * charges and its ingredient links here to have one added — so the form was
+   * refusing the thing the rest of the product asked for.
+   *
+   * The filter also made the flags below right for the wrong reason. They all
+   * read `selectedCategory`, and with income excluded, choosing an income
+   * category made that `undefined`: not a deployment, not crypto, not yearly,
+   * no shares — correct answers, arrived at through a failed lookup rather
+   * than through the type checks that are sitting right there. Each of them
+   * already narrows on `type`, so they give the same answers now by their own
+   * logic, and a flag added later cannot inherit the accident.
+   */
+  const selectedCategory = categories.find((cat) => cat.id === categoryId);
   const isDeploymentCategory =
     selectedCategory?.type === "investment" &&
     selectedCategory.counts_toward_summary === false;
   const isCryptoCategory = isCryptoCategoryName(selectedCategory?.name ?? "");
   const isYearlyExpense =
     recurrence === "yearly" && selectedCategory?.type === "expense";
+  /*
+   * Share pricing stays investment-only, which is also what keeps it away
+   * from an income template: an income that takes its amount from an
+   * instrument quote is not a thing `CONTEXT.md` describes. No extra gate is
+   * needed for that — the type check below is already the gate.
+   */
   const supportsShares =
     selectedCategory?.type === "investment" && !isCryptoCategory;
 
@@ -210,7 +231,6 @@ function RecurringFormFields({
           <CategorySelect
             id="recurring-category"
             categories={categories}
-            excludeTypes={["income"]}
             value={categoryId}
             onChange={(event) => setCategoryId(event.target.value)}
             required

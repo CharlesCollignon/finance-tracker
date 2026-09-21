@@ -592,7 +592,19 @@ export const en = {
   /** The Charges surface: the list of standing instructions. */
   charges: {
     blurb: "What you already know is coming, every month.",
+    incomeEveryMonth: "Income every month",
     committedEveryMonth: "Committed every month",
+    leftEveryMonth: "What's left",
+    /**
+     * Shown where the income figure would be, when no income charge exists.
+     * A `0 €` there would read as measured; this says the box is waiting.
+     */
+    noIncomeYet: "No income charge yet — add one and this fills in.",
+    /** What is set aside, either side of the figure. Same two-fragment shape
+     * as the broker line below, and for the same reason. */
+    plusSetAsideBefore: "Plus",
+    plusSetAsideAfter:
+      "set aside each month — savings and investments, not spending.",
     /**
      * What goes to the broker, either side of the figure.
      *
