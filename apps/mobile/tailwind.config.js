@@ -66,7 +66,10 @@ module.exports = {
         // 0.08 while the imperative token was 0.10, so a hairline drawn from
         // JS sat a shade darker than the one beside it drawn from a class.
         border: "rgb(var(--border) / 0.10)",
-        "hairline-strong": "rgb(var(--hairline-strong) / 0.14)",
+        // 0.16, matching COLORS.hairlineStrong in theme/tokens.ts. This had
+        // been 0.14 while the imperative token was 0.16 — the same class-vs-JS
+        // split the border above it already had to be fixed for.
+        "hairline-strong": "rgb(var(--hairline-strong) / 0.16)",
       },
       borderRadius: {
         DEFAULT: "10px",

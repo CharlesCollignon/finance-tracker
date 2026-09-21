@@ -277,8 +277,10 @@
      four because /45 and /60 say nothing /55 does not.
 
      They stay marketing's own rather than folding into `muted-foreground`:
-     the app sits on paper, the site on near-black, and one token across both
-     would have to hold two values anyway. */
+     these are translucent whites, so the site's grain and orb show through
+     them, over a ground a step deeper than the app's. `muted-foreground` is
+     one opaque value tuned for the app's page. One token across both would
+     have to hold two values anyway. */
   --color-marketing-ink: rgb(255 255 255 / 0.85);
   --color-marketing-muted: rgb(255 255 255 / 0.55);
   --color-marketing-faint: rgb(255 255 255 / 0.35);

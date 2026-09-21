@@ -15,7 +15,7 @@ colors:
   warning: "#fb923c"
   destructive: "#f87171"
   hairline: "rgba(236, 236, 241, 0.10)"
-  hairline-strong: "rgba(236, 236, 241, 0.14)"
+  hairline-strong: "rgba(236, 236, 241, 0.16)"
   chart-1: "#d8a041"
   chart-2: "#b05645"
   chart-3: "#9fd08b"
@@ -176,7 +176,7 @@ modifiers keep working, plus the mobile-only hairline weights.
 - **Foreground** (`#ececf1`) and **Muted Foreground** (`#9b9bad`): Primary and
   secondary text.
 - **Hairline** (`rgba(236, 236, 241, 0.10)`) and **Hairline Strong**
-  (`rgba(236, 236, 241, 0.14)`): Borders and dividers. The two weights are a
+  (`rgba(236, 236, 241, 0.16)`): Borders and dividers. The two weights are a
   default and an emphasis, not a light and a dark.
 
 ### Semantic Amount Colors

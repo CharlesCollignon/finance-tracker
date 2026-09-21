@@ -8,8 +8,11 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // The rim is not decoration: a gold fill is 1.7:1 against the page,
-        // so without it the button's edge disappears.
+        // The rim currently matches the fill, and that is correct rather
+        // than an oversight: the 1.7:1 this once guarded against was gold on
+        // the paper theme, and on today's ground the fill is ~11:1, so the
+        // edge holds on its own. It stays a token of its own so the edge can
+        // be given contrast again without touching a call site.
         default:
           "border border-primary-rim bg-primary text-primary-foreground hover:bg-primary-hover",
         secondary: "bg-secondary text-secondary-foreground hover:bg-muted",
