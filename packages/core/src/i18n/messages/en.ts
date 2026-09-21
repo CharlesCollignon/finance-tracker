@@ -1020,6 +1020,8 @@ export const en = {
      * French writes the decimal with a comma, so an English-shaped example
      * in the field teaches the wrong format to the reader who needs it most.
      */
+    balanceUnreadable:
+      "That does not look like an amount. Try something like {example}.",
     balancePlaceholder: "2400.50",
     reopened: "{month} reopened",
     baselineSet:

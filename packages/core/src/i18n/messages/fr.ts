@@ -743,6 +743,8 @@ export const fr: Messages = {
     },
     filledFromBank:
       "Rempli depuis votre banque. Modifiez-le si le jour de lecture n'est pas aujourd'hui.",
+    balanceUnreadable:
+      "Cela ne ressemble pas à un montant. Essayez plutôt {example}.",
     balancePlaceholder: "2400,50",
     reopened: "{month} réouvert",
     baselineSet:

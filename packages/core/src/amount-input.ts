@@ -165,3 +165,53 @@ export function formatAmountInput(
     empty: false,
   };
 }
+
+/**
+ * A number typed or pasted by a person, in whichever shape their bank prints.
+ *
+ * `Number(value.replace(",", "."))` was the old answer and it is wrong twice:
+ * `replace` with a string swaps the first match only, and neither group
+ * separator survives `Number`. So `1,234.56` became `1.234.56` and `1 234,56`
+ * kept its space, and both came back `NaN` — from a field whose own app prints
+ * `€1,234.56` in English and `1 234,56 €` in French. Every balance over a
+ * thousand was unreadable to the screen that asked for it.
+ *
+ * Rule: strip spaces (including the narrow no-break space `Intl` groups with)
+ * and anything that is not a digit, separator or sign. Then the last separator
+ * is a group separator when exactly three digits follow it, and a decimal
+ * point otherwise — because a group is always exactly three digits, so four
+ * after a separator can only be a fraction, and one or two can only be one
+ * too. `1.234` is the single ambiguous shape and it resolves to one thousand
+ * two hundred and thirty-four, on the grounds that nobody writes a balance to
+ * three decimal places.
+ *
+ * Returns `null` rather than `NaN` or `0`, so a caller has to decide what to
+ * say about it. An empty field and an unreadable one are different states and
+ * a form owes the reader different words for them.
+ */
+export function parseTypedAmount(value: string): number | null {
+  const cleaned = value.replace(/[\s   ]/g, "").replace(/[^\d.,-]/g, "");
+
+  if (cleaned === "" || cleaned === "-") {
+    return null;
+  }
+
+  const lastSeparator = Math.max(
+    cleaned.lastIndexOf(","),
+    cleaned.lastIndexOf("."),
+  );
+
+  let normalized: string;
+  if (lastSeparator === -1) {
+    normalized = cleaned;
+  } else {
+    const fraction = cleaned.slice(lastSeparator + 1);
+    const isGroup = fraction.length === 3;
+    normalized = isGroup
+      ? cleaned.replace(/[.,]/g, "")
+      : cleaned.slice(0, lastSeparator).replace(/[.,]/g, "") + "." + fraction;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
