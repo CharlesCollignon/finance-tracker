@@ -417,8 +417,17 @@ export function RecurringView({
                 <PrivateFigure>{formatEuro(rollup.committed)}</PrivateFigure>
               </Tile>
 
+              {/* Everything deliberately put by, including the broker
+                  transfers the monthly summary does not count as spending.
+                  `CONTEXT.md` splits Kept into "the cash it left in the
+                  account plus everything deliberately set aside" — this tile
+                  is the second half and `Left` is the first, so a transfer has
+                  to appear here or it would be subtracted from `Left` by a
+                  figure nobody can see. The breakdown is in the line below. */}
               <Tile label={t("charges.tileSetAside")}>
-                <PrivateFigure>{formatEuro(rollup.setAside)}</PrivateFigure>
+                <PrivateFigure>
+                  {formatEuro(rollup.setAside + rollup.deployed)}
+                </PrivateFigure>
               </Tile>
 
               <Tile label={t("charges.tileLeft")}>
@@ -431,11 +440,11 @@ export function RecurringView({
               {rollup.deployed > 0 ? (
                 <>
                   {" · "}
-                  {t("charges.plusMovedBefore")}{" "}
+                  {t("charges.ofWhichMovedBefore")}{" "}
                   <span className="privacy-amount tabular-nums text-foreground">
                     {formatEuro(rollup.deployed)}
                   </span>{" "}
-                  {t("charges.plusMovedAfter")}
+                  {t("charges.ofWhichMovedAfter")}
                 </>
               ) : null}
             </p>

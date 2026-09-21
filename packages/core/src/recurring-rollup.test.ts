@@ -61,8 +61,9 @@ describe("rollUpRecurring", () => {
     expect(rollup.left).toBe(1650);
   });
 
-  it("leaves a broker transfer out of what is left", () => {
-    // `deployed` never entered the account's flow, so it cannot leave it.
+  it("takes a broker transfer out of what is left", () => {
+    // It is not spending, and the monthly summary does not count it — but it
+    // does leave the account, which is what this figure is about.
     const rollup = rollUpRecurring([
       template({ id: "salary", amount: 3200, type: "income" }),
       template({ id: "rent", amount: 1150 }),
@@ -74,7 +75,28 @@ describe("rollUpRecurring", () => {
       }),
     ]);
 
-    expect(rollup.left).toBe(2050);
+    expect(rollup.left).toBe(1550);
+  });
+
+  it("leaves nothing out of the sum the header shows", () => {
+    // The four tiles are income, committed, everything put by, and what is
+    // left. This pins them together: if a fifth kind of outflow is ever added
+    // to the rollup and not to the header, this fails.
+    const rollup = rollUpRecurring([
+      template({ id: "salary", amount: 3200, type: "income" }),
+      template({ id: "rent", amount: 1150 }),
+      template({ id: "fund", amount: 400, type: "savings" }),
+      template({
+        id: "transfer",
+        amount: 500,
+        type: "investment",
+        counts: false,
+      }),
+    ]);
+
+    const putBy = rollup.setAside + rollup.deployed;
+    expect(rollup.income - rollup.committed - putBy).toBe(rollup.left);
+    expect(rollup.left).toBe(1150);
   });
 
   it("leaves what income does not commit", () => {

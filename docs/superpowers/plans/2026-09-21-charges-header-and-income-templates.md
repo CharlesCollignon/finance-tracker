@@ -538,3 +538,23 @@ because the figure it named now has a tile of its own.
 The phone keeps its single committed figure and its set-aside line. Four
 tiles do not fit its column, and it does not render `left`, so the arithmetic
 change does not reach it.
+
+
+### And again: `Left` is the account, not the free budget
+
+`left` is `income − committed − setAside − deployed`. Every outflow comes out,
+including the broker transfers the monthly summary deliberately does not count
+as spending.
+
+The earlier framing — "what can I still decide about" — was a different
+question from the one the tile's word answers. `CONTEXT.md` splits **Kept**
+into "the cash it left in the account plus everything deliberately set aside",
+and `Left` is the first half. A transfer into a broker is still the reader's
+money, and it is still not in the account.
+
+So the Set aside tile carries `setAside + deployed`, with the broker part
+named in the line beneath ("of which … moved into the broker"), because
+subtracting it while showing only part of it would have put a hidden term back
+into a header that exists to have none. A test now asserts
+`income − committed − (setAside + deployed) === left`, so a fifth kind of
+outflow cannot be added to the rollup without the header noticing.

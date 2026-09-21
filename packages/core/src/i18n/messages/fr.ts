@@ -443,8 +443,8 @@ export const fr: Messages = {
     plusSetAsideBefore: "Auxquels s'ajoutent",
     plusSetAsideAfter:
       "mis de côté chaque mois — épargne et investissements, pas des dépenses.",
-    plusMovedBefore: "Auxquels s'ajoutent",
-    plusMovedAfter: "déplacés chez le courtier — suivis, mais pas dépensés.",
+    ofWhichMovedBefore: "dont",
+    ofWhichMovedAfter: "déplacés chez le courtier — suivis, mais pas dépensés.",
     nothingHereYet: "Rien ici pour l'instant.",
     editNamed: "Modifier {name}",
     addCharge: "Ajouter une charge",
