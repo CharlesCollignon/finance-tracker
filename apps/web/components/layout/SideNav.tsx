@@ -50,8 +50,18 @@ function QuickAddButton() {
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       )}
     >
-      <Plus size={ICON.lg} weight="bold" />
-      {t("common.addTransaction")}
+      <Plus size={ICON.lg} weight="bold" className="shrink-0" />
+      {/* A flex item of its own rather than a bare text node, because a bare
+          one wraps: "Ajouter une transaction" is half again as long as "Add
+          transaction" and broke this button onto two lines in French, which
+          moved the rail's primary action out of line with every row under it.
+          `truncate` carries `whitespace-nowrap`, so the label stays on one
+          line in any language and ellipsises rather than wrapping if a longer
+          one ever arrives. `min-w-0` is what lets it shrink at all inside a
+          flex row. */}
+      <span className="min-w-0 flex-1 truncate text-left">
+        {t("common.addTransaction")}
+      </span>
       {/* The badge used to read `N`, and the binding behind it was removed
           because a bare letter opens this sheet over whatever a screen reader
           is in the middle of (WCAG 2.1 SC 2.1.4). The badge stayed, which left
@@ -59,7 +69,7 @@ function QuickAddButton() {
           It names the surviving shortcut instead, and reads the platform so a
           Windows or Linux reader is not told to press a key their keyboard
           does not have. */}
-      <kbd className="ml-auto rounded-control bg-black/15 px-1.5 py-0.5 text-xs font-normal">
+      <kbd className="shrink-0 rounded-control bg-black/15 px-1.5 py-0.5 text-xs font-normal">
         {isApplePlatform() ? "\u2318K" : "Ctrl K"}
       </kbd>
     </button>
