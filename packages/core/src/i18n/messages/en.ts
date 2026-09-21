@@ -917,6 +917,18 @@ export const en = {
     /** The widest range of the price line. The others need no translation. */
     rangeAll: "All",
     positions: "Positions",
+    /**
+     * How the holdings in a wallet are ordered.
+     *
+     * They came back in whatever order the query happened to return them,
+     * which is no order at all: a wallet with a dozen lines was a list you
+     * had to read all of to find one. Two orders and no direction toggle —
+     * names are looked up in, so they run A to Z; amounts are scanned for the
+     * big ones, so they run largest first.
+     */
+    orderBy: "Order",
+    orderByName: "Name",
+    orderByInvested: "Invested",
     noItems: "No items yet in this wallet.",
     editPosition: "Edit {name}",
     /**
@@ -2330,21 +2342,28 @@ export const en = {
      * component already said differently before this sweep.
      */
     title: "The read",
+    /**
+     * "A model" named nothing. Somebody deciding how much weight to give a
+     * paragraph needs to know what wrote it, and the app knows.
+     */
     subtitleWeb:
-      "Written by a model, from the figures on this page. It cannot see your accounts.",
+      "Written by {model}, from the figures on this page. It cannot see your accounts.",
     subtitleMobile:
-      "Written by a model, from the figures on this screen. It cannot see your accounts.",
+      "Written by {model}, from the figures on this screen. It cannot see your accounts.",
     empty: "Nothing has been written about {month} yet.",
     suggestionsHeading: "What to change",
     writing: "Writing…",
     noReadsLeft: "No reads left for {month}",
     noReadsLeftGeneric: "No reads left this month",
-    writeAgain: "Write it again ({left} left)",
-    writeOne: "Write one ({left} left)",
+    writeAgain: "Write it again with {model} ({left} left)",
+    writeOne: "Write with {model} ({left} left)",
     writtenToast: "Written for {month}",
     /** The phone's write button, read by a screen reader without the count. */
-    writeAgainLabel: "Write the read again",
-    writeLabel: "Write the read",
+    writeAgainLabel: "Write the read again with {model}",
+    writeLabel: "Write the read with {model}",
+    /** Who wrote the stored read, from the model recorded on it. */
+    writtenBy: "Written by {model}.",
+    writtenByUnknown: "Written by a model this app no longer records.",
     /**
      * How well the read still stands, with the count as the sentence's
      * subject: "{count} figures this rests on have moved…".
@@ -2401,13 +2420,16 @@ export const en = {
      */
     title: "The read",
     subtitle:
-      "Written by a model, from the figures on this panel. It cannot see your accounts.",
+      "Written by {model}, from the figures on this panel. It cannot see your accounts.",
     empty: "Nothing has been written about this category yet.",
     writing: "Writing…",
     noReadsLeft: "No reads left this month",
-    writeAgain: "Write it again ({left} left)",
-    writeOne: "Write one ({left} left)",
+    writeAgain: "Write it again with {model} ({left} left)",
+    writeOne: "Write with {model} ({left} left)",
     writtenToast: "Written for {category}",
+    /** Who wrote the stored read, from the model recorded on it. */
+    writtenBy: "Written by {model}.",
+    writtenByUnknown: "Written by a model this app no longer records.",
   },
 
   /**
@@ -2430,6 +2452,50 @@ export const en = {
     doublingUp: "Where you are doubling up",
     wrappers: "Where things sit",
     target: "A target to aim at",
+
+    /**
+     * The pooled row at the foot of a weighting, and what pressing it does.
+     *
+     * It was `${count} more`, written into both call sites in English, so a
+     * French reader got "6 more" under a list of countries named in French.
+     */
+    restCountries: {
+      one: "1 more country",
+      other: "{count} more countries",
+    },
+    restSectors: {
+      one: "1 more sector",
+      other: "{count} more sectors",
+    },
+    showRest: "Show them",
+    hideRest: "Hide them",
+
+    /** The charge, promoted to sit under the total it is charged on. */
+    costPerYear: "{amount} a year in charges",
+    costAllIn: "({rate} all in)",
+
+    /**
+     * The eleven sectors, named.
+     *
+     * These lived in `SECTOR_LABELS` in core as a plain English record, which
+     * meant a French reader got "Consumer discretionary" under a heading
+     * reading "Ce qu'il y a dedans". The ids stay in core, because they are a
+     * closed vocabulary a reading is verified against; the words belong here,
+     * with the rest of the app's voice.
+     */
+    sectorLabels: {
+      energy: "Energy",
+      materials: "Materials",
+      industrials: "Industrials",
+      "consumer-discretionary": "Consumer discretionary",
+      "consumer-staples": "Consumer staples",
+      "health-care": "Health care",
+      financials: "Financials",
+      "information-technology": "Information technology",
+      "communication-services": "Communication services",
+      utilities: "Utilities",
+      "real-estate": "Real estate",
+    },
 
     /* Geography. */
     countryShare: "{country}",
@@ -2494,8 +2560,37 @@ export const en = {
       allowance: "This month's reading allowance is used up.",
       notYours: "That instrument is no longer one of your holdings.",
       noReader: "No reader is configured.",
-      unavailable: "That instrument could not be read just now.",
+      /**
+       * The five that replaced one catch-all.
+       *
+       * Every one of these used to read "That instrument could not be read
+       * just now", which told a reader nothing and, worse, blamed the
+       * instrument for three problems that were the reader's.
+       */
+      notSetUp: "Instrument readings are not set up yet (migration 032).",
+      noSearch:
+        "{model} cannot search the web on this plan, so nothing can be looked up.",
+      providerDown: "{model} did not answer just now.",
+      nothingFound: "Nothing published could be found for {name}.",
+      wrongInstrument: "What came back for {name} was about something else.",
       signedOut: "You have been signed out.",
+    },
+
+    /** How a walk down the queue ended, once it has been all the way down. */
+    readRest: {
+      allRead: {
+        one: "One instrument read.",
+        other: "{count} instruments read.",
+      },
+      someSkipped: {
+        one: "{read} read. One could not be read and was left as it is.",
+        other:
+          "{read} read. {count} could not be read and were left as they are.",
+      },
+      noneRead: {
+        one: "One instrument could not be read.",
+        other: "None of the {count} instruments could be read.",
+      },
     },
 
     /* The caveats, said plainly. */
@@ -2523,6 +2618,19 @@ export const en = {
         "Nothing is held yet, so there is nothing to look through.",
       partialAxis:
         "These figures cover {coverage} of what was read — a factsheet does not always publish the full breakdown. The shares are what was published, not a share of what was found, so they do not add up to everything.",
+      /**
+       * Crypto is held, and there is nothing to look it up in.
+       *
+       * Deliberately not a call to action. The "no ISIN" block next to this
+       * one tells the reader to open Positions and record an instrument,
+       * which for a coin sends them hunting for an identifier that was never
+       * issued — the complaint that produced this sentence.
+       */
+      crypto: {
+        one: "Crypto has no issuer, no factsheet and no ISIN, so there is nothing to look through to. It is held, and counted in the total above, but the shares on this page cannot describe it.",
+        other:
+          "Crypto has no issuer, no factsheet and no ISIN, so there is nothing to look through to. These are held, and counted in the total above, but the shares on this page cannot describe them.",
+      },
       geographyIsNotCurrency:
         "Geography here means where the companies are, not what currency you are paid in. A fund can hold American companies and be priced in euro.",
     },
@@ -2537,11 +2645,27 @@ export const en = {
    * apology for an empty screen.
    */
   walletRead: {
-    /** The button that spends a call, and what it says while spending. */
-    review: "Review",
+    /**
+     * The button that spends a call, and what it says while spending.
+     *
+     * It said "Review". Which is a verb with no subject: a reader pressing it
+     * was told neither that a model would answer nor which one, and the
+     * small print underneath called it "a model" as though naming it were
+     * indiscreet. The maker's name goes on the control; the exact model goes
+     * in the footing under the read it wrote.
+     */
+    review: "Review with {model}",
     reviewing: "Reading…",
     reviewHint:
       "Reads the figures on this page and says what it makes of them. {remaining} left this month.",
+    /**
+     * Who wrote this one — the model recorded on the read itself, not the
+     * one configured today. A read written six weeks ago was written by
+     * whatever answered then, and saying otherwise would be a small lie told
+     * by the very sentence that exists to be exact.
+     */
+    writtenBy: "Written by {model}.",
+    writtenByUnknown: "Written by a model this app no longer records.",
     /** The stored read. */
     readAt: "Read {when}",
     stale: "Your positions have moved since this was written",

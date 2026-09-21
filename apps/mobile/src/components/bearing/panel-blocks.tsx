@@ -139,6 +139,8 @@ export function PanelBlockView({
           readLocale={detail.read.readLocale}
           writesLeft={detail.read.writesLeft}
           writable={detail.read.configured}
+          writerBrand={detail.read.writerBrand}
+          readModel={detail.read.readModel}
           onWritten={onChanged}
         />
       ) : null;

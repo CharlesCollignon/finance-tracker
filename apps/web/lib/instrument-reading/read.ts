@@ -99,7 +99,11 @@ export type ReadInstrumentOutcome = {
     | "cooling"
     | "allowance-spent"
     | "no-reader"
-    | "unavailable"
+    | "not-set-up"
+    | "no-search"
+    | "provider-down"
+    | "nothing-found"
+    | "wrong-instrument"
   >;
 };
 
@@ -155,7 +159,7 @@ export async function readInstrument(
   // read portfolio expensive.
   const existing = await getInstrumentReadings(userId, supabase);
   if (!existing.tracked) {
-    return { status: "unavailable" };
+    return { status: "not-set-up" };
   }
 
   const held = existing.byIsin.get(normalised);
@@ -183,7 +187,7 @@ export async function readInstrument(
 
   if (reserveError) {
     if (isMissingSchema(reserveError)) {
-      return { status: "unavailable" };
+      return { status: "not-set-up" };
     }
     // The function raises rather than returns for an ISIN the caller does not
     // hold, which is the one refusal worth distinguishing: it means the
@@ -191,7 +195,15 @@ export async function readInstrument(
     if (/not held by that user/.test(reserveError.message)) {
       return { status: "not-yours" };
     }
-    return { status: "unavailable" };
+    // Everything else the reservation can fail with is a fact about the
+    // database rather than about this instrument, and the message is the only
+    // thing that says which. Logged, because the alternative is what this
+    // whole change replaces: a reader looking at a sentence nobody can act on
+    // and a server that knew the answer and threw it away.
+    console.warn(
+      `[instrument-reading] ${normalised}: reservation failed — ${reserveError.message}`,
+    );
+    return { status: "provider-down" };
   }
 
   if (!reserved || reserved.reads <= before.reads) {
@@ -208,7 +220,18 @@ export async function readInstrument(
     // Never reached the provider, or came back unusable at the envelope
     // level. The one case that is refunded: nothing was spent.
     await refund(supabase, userId);
-    return { status: "unavailable" };
+    return {
+      // Told apart by the source, which knows whether the call was refused
+      // and why. A plan without the web search connector answers 4xx on every
+      // instrument for ever, so it must not read as "this one fund is
+      // awkward" — that is the sentence that had this button looking broken.
+      status:
+        instrumentReadingSource.lastFailure === "no-search"
+          ? "no-search"
+          : instrumentReadingSource.lastFailure === "nothing-found"
+            ? "nothing-found"
+            : "provider-down",
+    };
   }
 
   const verdict = verifyInstrumentReading(
@@ -223,7 +246,18 @@ export async function readInstrument(
     // the instrument stays in the queue and can be tried again — which is the
     // right outcome for a search that landed on the wrong share class.
     await release(supabase, userId);
-    return { status: "unavailable" };
+    console.warn(
+      `[instrument-reading] ${normalised}: answer refused — ${verdict.refusal.reason}`,
+    );
+    // Both are facts about this one instrument, so a walk down the queue
+    // leaves it behind and carries on rather than stopping the whole run on
+    // the first fund nobody has published a usable factsheet for.
+    return {
+      status:
+        verdict.refusal.reason === "wrong-instrument"
+          ? "wrong-instrument"
+          : "nothing-found",
+    };
   }
 
   const reading = verdict.reading;
@@ -268,10 +302,10 @@ function whyDeclined(
   now: Date,
 ): Extract<
   InstrumentReadStatus,
-  "cooling" | "allowance-spent" | "unavailable"
+  "cooling" | "allowance-spent" | "provider-down"
 > {
   if (row === null) {
-    return "unavailable";
+    return "provider-down";
   }
 
   const elapsed = (stamp: string | null): number | null =>
@@ -291,7 +325,7 @@ function whyDeclined(
     return "cooling";
   }
 
-  return row.reads >= READINGS_PER_MONTH ? "allowance-spent" : "unavailable";
+  return row.reads >= READINGS_PER_MONTH ? "allowance-spent" : "provider-down";
 }
 
 /** Hand the attempt back. Never fatal — see `refundWalletRead`. */

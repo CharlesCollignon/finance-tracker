@@ -100,6 +100,8 @@ export function monthFactsFromScreen(input: {
 export interface MonthReadView {
   read: MonthRead;
   writtenAt: string;
+  /** The model recorded on the read, or null on a row written before it was. */
+  model: string | null;
   /** The language the prose is in, which may not be the reader's. */
   locale: Locale;
   freshness: ReadFreshness;
@@ -162,6 +164,9 @@ export async function getMonthRead(
     view: {
       read,
       writtenAt: row.written_at,
+      // Which model wrote this one. Null on a row written before the column
+      // existed, which is a different thing from "no model wrote it".
+      model: row.model,
       // Null on a row written before migration 028, which means English: the
       // app was English-only when it was written.
       locale: parseLocale(row.locale) ?? DEFAULT_LOCALE,

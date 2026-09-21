@@ -607,3 +607,84 @@ describe("lookThroughIsThin", () => {
     expect(lookThroughIsThin(result)).toBe(false);
   });
 });
+
+describe("crypto holdings", () => {
+  const bitcoin = position({
+    positionId: "pos-btc",
+    name: "Bitcoin",
+    walletId: "crypto",
+    isin: null,
+    marketValue: 2400,
+  });
+
+  it("does not count a crypto holding as one waiting for an ISIN", () => {
+    const result = buildLookThrough({
+      positions: [position(), bitcoin],
+      readings: readings(reading("FR001400U5Q4")),
+      now: NOW,
+    });
+
+    // A share with no ISIN recorded is a gap the reader can close from the
+    // instrument search. A coin has no ISIN to find, so counting it here
+    // sends them looking for something that does not exist.
+    expect(result.unidentifiedCount).toBe(0);
+  });
+
+  it("still counts a non-crypto holding with no ISIN", () => {
+    const result = buildLookThrough({
+      positions: [position({ positionId: "pos-2", isin: null })],
+      readings: readings(),
+      now: NOW,
+    });
+
+    expect(result.unidentifiedCount).toBe(1);
+  });
+
+  it("names the crypto holdings and what they are worth", () => {
+    const result = buildLookThrough({
+      positions: [position(), bitcoin],
+      readings: readings(reading("FR001400U5Q4")),
+      now: NOW,
+    });
+
+    expect(result.cryptoPositions).toEqual([
+      { positionId: "pos-btc", name: "Bitcoin", value: 2400 },
+    ]);
+  });
+
+  it("says out loud that crypto has nothing to look through to", () => {
+    const result = buildLookThrough({
+      positions: [position(), bitcoin],
+      readings: readings(reading("FR001400U5Q4")),
+      now: NOW,
+    });
+
+    expect(result.caveats).toContainEqual({
+      kind: "crypto",
+      positionCount: 1,
+      value: 2400,
+    });
+  });
+
+  it("says nothing about crypto when none is held", () => {
+    const result = buildLookThrough({
+      positions: [position()],
+      readings: readings(reading("FR001400U5Q4")),
+      now: NOW,
+    });
+
+    expect(result.caveats.map((caveat) => caveat.kind)).not.toContain("crypto");
+    expect(result.cryptoPositions).toEqual([]);
+  });
+
+  it("leaves the read coverage alone, because a coin is still unread value", () => {
+    const result = buildLookThrough({
+      positions: [position(), bitcoin],
+      readings: readings(reading("FR001400U5Q4")),
+      now: NOW,
+    });
+
+    expect(result.classifiedValue).toBe(10000);
+    expect(result.unclassifiedValue).toBe(2400);
+  });
+});

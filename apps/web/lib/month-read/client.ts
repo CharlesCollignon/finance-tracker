@@ -1,3 +1,4 @@
+import { DEFAULT_WRITER_MODEL } from "@finance/core/model-name";
 import {
   monthReadJsonSchema,
   type MonthReadRequest,
@@ -60,7 +61,7 @@ const ENDPOINT = "https://api.mistral.ai/v1/chat/completions";
  * key to the open-weight ministral models only, and answers `429` or `403`
  * for these. On such a key set `ministral-14b-latest`.
  */
-const DEFAULT_MODEL = "mistral-medium-latest";
+const DEFAULT_MODEL = DEFAULT_WRITER_MODEL;
 
 /** Low, but not zero: pressing "write it again" should not return the same read. */
 const TEMPERATURE = 0.2;

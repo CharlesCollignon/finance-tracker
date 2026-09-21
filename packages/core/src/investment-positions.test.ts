@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildInvestmentPortfolio,
+  sortPositions,
   type InvestmentPositionItem,
   type InvestmentPositionRow,
 } from "./investment-positions";
@@ -296,5 +297,44 @@ describe("investmentPositionSchema and the broker figure", () => {
     if (!parsed.success) return;
     expect(parsed.data.currentValue).toBeNull();
     expect(parsed.data.valuePinned).toBe(false);
+  });
+});
+
+describe("sortPositions", () => {
+  const rows = [
+    { name: "NVIDIA", totalInvested: 2000 },
+    { name: "amundi msci world", totalInvested: 500 },
+    { name: "Élan Europe", totalInvested: 900 },
+    { name: "Bitcoin", totalInvested: 900 },
+  ];
+
+  it("orders by name, ignoring case and accents", () => {
+    expect(sortPositions(rows, "name").map((row) => row.name)).toEqual([
+      "amundi msci world",
+      "Bitcoin",
+      "Élan Europe",
+      "NVIDIA",
+    ]);
+  });
+
+  it("orders by what was put in, largest first", () => {
+    expect(
+      sortPositions(rows, "invested").map((row) => row.totalInvested),
+    ).toEqual([2000, 900, 900, 500]);
+  });
+
+  it("settles an equal amount by name, so the order never wobbles", () => {
+    expect(sortPositions(rows, "invested").map((row) => row.name)).toEqual([
+      "NVIDIA",
+      "Bitcoin",
+      "Élan Europe",
+      "amundi msci world",
+    ]);
+  });
+
+  it("leaves the caller's own array alone", () => {
+    const original = [...rows];
+    sortPositions(rows, "name");
+    expect(rows).toEqual(original);
   });
 });

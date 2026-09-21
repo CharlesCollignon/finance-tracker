@@ -268,9 +268,23 @@ export interface InstrumentReadingRequest {
  * timed out, or an answer that did not parse. Never a thrown error: a missing
  * reading is an ordinary state this app renders, not a failure.
  */
+/**
+ * Why the last attempt came back with nothing.
+ *
+ * `read` answering `null` is one signal standing for several very different
+ * situations, and the caller has to tell them apart to say anything useful:
+ * a plan without the web search connector will refuse every instrument for
+ * ever, while a fund nobody has published a factsheet for is one instrument
+ * to walk past. Reported alongside the answer rather than thrown, because a
+ * search that found nothing is an ordinary outcome and not an error.
+ */
+export type ReadingFailure = "no-search" | "provider-down" | "nothing-found";
+
 export interface InstrumentReadingSource {
   read(request: InstrumentReadingRequest): Promise<unknown | null>;
   readonly model: string;
+  /** Why the last `read` answered null, or null if the last one answered. */
+  readonly lastFailure: ReadingFailure | null;
 }
 
 export type ReadingRefusal =
@@ -473,13 +487,19 @@ export function createFakeInstrumentReadingSource(
   model = "fake",
 ): FakeInstrumentReadingSource {
   const calls: InstrumentReadingRequest[] = [];
+  let lastFailure: ReadingFailure | null = null;
 
   return {
     calls,
     model,
+    get lastFailure() {
+      return lastFailure;
+    },
     async read(request) {
       calls.push(request);
-      return answers[request.isin.trim().toUpperCase()] ?? null;
+      const answer = answers[request.isin.trim().toUpperCase()] ?? null;
+      lastFailure = answer === null ? "nothing-found" : null;
+      return answer;
     },
   };
 }
@@ -501,7 +521,27 @@ export const INSTRUMENT_READ_STATUSES = [
   "allowance-spent",
   "not-yours",
   "no-reader",
-  "unavailable",
+  /**
+   * The five that replaced `unavailable`.
+   *
+   * One status used to stand for all of them, and the surface had one
+   * sentence for all of them: "That instrument could not be read just now."
+   * A plan without the web search connector, a provider that is down, a
+   * migration that has not run and a fund nobody has published a factsheet
+   * for are four different problems with four different answers, and
+   * collapsing them left a reader with a button that looked broken and no
+   * way to find out why.
+   *
+   * The split also decides how far a walk down the queue gets. The first
+   * three are facts about the reader, so every instrument behind this one
+   * would fail the same way and the walk stops. The last two are facts about
+   * this one instrument, so the walk leaves it behind and carries on.
+   */
+  "not-set-up",
+  "no-search",
+  "provider-down",
+  "nothing-found",
+  "wrong-instrument",
   "not-authenticated",
 ] as const;
 
@@ -514,7 +554,11 @@ export type DrainHalt =
   | "allowance"
   | "not-yours"
   | "no-reader"
-  | "unavailable"
+  | "not-set-up"
+  | "no-search"
+  | "provider-down"
+  | "nothing-found"
+  | "wrong-instrument"
   | "signed-out";
 
 export type DrainStep =
@@ -557,8 +601,16 @@ export function drainStep(
       return { go: false, halt: "not-yours" };
     case "no-reader":
       return { go: false, halt: "no-reader" };
-    case "unavailable":
-      return { go: false, halt: "unavailable" };
+    case "not-set-up":
+      return { go: false, halt: "not-set-up" };
+    case "no-search":
+      return { go: false, halt: "no-search" };
+    case "provider-down":
+      return { go: false, halt: "provider-down" };
+    case "nothing-found":
+      return { go: false, halt: "nothing-found" };
+    case "wrong-instrument":
+      return { go: false, halt: "wrong-instrument" };
     case "not-authenticated":
       return { go: false, halt: "signed-out" };
   }
@@ -573,4 +625,24 @@ export function drainStep(
  */
 export function haltIsRetryable(halt: DrainHalt): boolean {
   return halt === "cooling";
+}
+
+/**
+ * Whether this halt is about the one instrument rather than the whole walk.
+ *
+ * The difference decides whether pressing "Read the rest" once gets through a
+ * portfolio. A failed read leaves its instrument at the head of the queue, so
+ * a walk that simply carried on would ask about the same one for ever — which
+ * is why every halt used to stop it dead. But that meant one fund nobody has
+ * published a factsheet for blocked every fund behind it, and no number of
+ * presses would ever get past it.
+ *
+ * So the two instrument-specific answers are handled differently: the caller
+ * remembers that ISIN, asks for the next instrument *excluding* it, and
+ * reports at the end how many it could not read. The rest are facts about the
+ * reader — no key, no search connector, no migration, no allowance left — and
+ * every instrument behind this one would fail in exactly the same way.
+ */
+export function haltIsInstrumentSpecific(halt: DrainHalt): boolean {
+  return halt === "nothing-found" || halt === "wrong-instrument";
 }

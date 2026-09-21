@@ -619,3 +619,52 @@ export function displayNameForRecurringTemplate(
 
   return template.categories.name;
 }
+
+/**
+ * The orders a wallet's positions may be read in.
+ *
+ * Two, and deliberately no direction toggle. Each order has one reading that
+ * is obviously the useful one — a list of names is looked *up* in, so it runs
+ * A to Z; a list of amounts is scanned for the big ones, so it runs largest
+ * first — and a reversed alphabet is a control nobody has ever wanted.
+ */
+export const POSITION_ORDERS = ["name", "invested"] as const;
+
+export type PositionOrder = (typeof POSITION_ORDERS)[number];
+
+/** What sorting needs from a position, so a test need not build a whole one. */
+export interface SortablePosition {
+  name: string;
+  totalInvested: number;
+}
+
+/**
+ * Positions in the order asked for, as a new array.
+ *
+ * `localeCompare` rather than `<`, because the holdings in a euro-zone
+ * portfolio are not ASCII: raw comparison files "Élan" after "Zurich" and
+ * every lower-case name after every upper-case one, which reads as no order
+ * at all. `sensitivity: "base"` folds both case and accent, so the list is
+ * alphabetical the way a person means it.
+ *
+ * Equal amounts fall back to the name. Without that, two holdings of the same
+ * size would sit in whatever order the query happened to return them in, and
+ * the list would appear to reshuffle itself between page loads for no reason
+ * the reader could see.
+ */
+export function sortPositions<T extends SortablePosition>(
+  items: readonly T[],
+  order: PositionOrder,
+): T[] {
+  const byName = (left: T, right: T) =>
+    left.name.localeCompare(right.name, undefined, { sensitivity: "base" });
+
+  return [...items].sort((left, right) => {
+    if (order === "name") {
+      return byName(left, right);
+    }
+
+    const byInvested = right.totalInvested - left.totalInvested;
+    return byInvested !== 0 ? byInvested : byName(left, right);
+  });
+}

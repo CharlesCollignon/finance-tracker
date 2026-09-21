@@ -36,6 +36,8 @@ import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { CategoryHistoryView } from "@/components/finance/category/CategoryHistoryView";
 import { getLocale } from "@/lib/locale";
 import { categoryReadConfigured } from "@/lib/category-read/client";
+import { monthReadModel } from "@/lib/month-read/client";
+import { describeModel } from "@finance/core/model-name";
 import {
   CATEGORY_MONTHS_READ,
   categoryReadIsThin,
@@ -327,6 +329,8 @@ export default async function HistoryPage() {
   const readFactsByCategory: Record<string, CategoryFacts | null> = {};
   const readLocaleByCategory: Record<string, Locale> = {};
   const readThinByCategory: Record<string, boolean> = {};
+  /** Which model wrote each stored read — not necessarily today's. */
+  const readModelsByCategory: Record<string, string | null> = {};
 
   for (const card of cards) {
     const categoryId = card.history.categoryId;
@@ -334,6 +338,7 @@ export default async function HistoryPage() {
     const readLocale = stored?.locale ?? locale;
 
     readsByCategory[categoryId] = stored?.read ?? null;
+    readModelsByCategory[categoryId] = stored?.read ? stored.model : null;
     readLocaleByCategory[categoryId] = readLocale;
     readThinByCategory[categoryId] = categoryReadIsThin(card.history);
     // Only built when there is a read to render against it, and `summary` is
@@ -377,6 +382,8 @@ export default async function HistoryPage() {
           readThin={readThinByCategory}
           readWritesLeft={readWritesLeft}
           readConfigured={readConfigured}
+          readWriterBrand={describeModel(monthReadModel()).brand}
+          readModels={readModelsByCategory}
         />
       </PageContainer>
     </>

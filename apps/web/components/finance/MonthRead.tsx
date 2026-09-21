@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { PencilSimple, Sparkle, WarningCircle } from "@phosphor-icons/react";
+import { Sparkle, WarningCircle } from "@phosphor-icons/react";
 import type { MonthFacts } from "@finance/core/month-facts";
 import {
   renderMonthRead,
@@ -19,6 +19,7 @@ import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
 import type { Locale } from "@finance/core/i18n/locale";
 import { LOCALE_LABELS } from "@finance/core/i18n/locale";
+import { describeModel } from "@finance/core/model-name";
 import { useLocale, useT } from "@/lib/locale-context";
 
 interface MonthReadProps {
@@ -43,6 +44,15 @@ interface MonthReadProps {
   writesLeft: number;
   /** Whether a writer exists on this deployment at all. */
   configured: boolean;
+  /**
+   * The maker, for the control that spends a call — "Write with Mistral".
+   *
+   * The button said "Write one", and the line beside it said "a model", which
+   * between them named neither what would happen nor what would do it.
+   */
+  writerBrand: string;
+  /** The model recorded on the stored read, when there is one. */
+  readModel: string | null;
 }
 
 /**
@@ -73,6 +83,8 @@ export function MonthRead({
   readLocale,
   writesLeft,
   configured,
+  writerBrand,
+  readModel,
 }: MonthReadProps) {
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
@@ -123,7 +135,7 @@ export function MonthRead({
           {t("monthRead.title")}
         </h2>
         <p className="text-xs text-muted-foreground">
-          {t("monthRead.subtitleWeb")}
+          {t("monthRead.subtitleWeb", { model: writerBrand })}
         </p>
       </div>
 
@@ -195,6 +207,17 @@ export function MonthRead({
               })}
             </>
           ) : null}
+          {/* Which model, exactly — read off the stored read rather than off
+              today's configuration, because they are not always the same
+              model and this is the sentence that exists to be exact. */}
+          {rendered ? (
+            <>
+              {" "}
+              {readModel === null
+                ? t("monthRead.writtenByUnknown")
+                : t("monthRead.writtenBy", { model: exactModel(readModel) })}
+            </>
+          ) : null}
         </p>
 
         {configured ? (
@@ -209,19 +232,34 @@ export function MonthRead({
               left <= 0 && "cursor-not-allowed text-muted-foreground",
             )}
           >
-            <PencilSimple size={ICON.sm} />
+            {/* The house mark for "a model did this", the same one on the
+                card's own heading and on the look-through's Review. */}
+            <Sparkle size={ICON.sm} weight="fill" aria-hidden="true" />
             {pending
               ? t("monthRead.writing")
               : left <= 0
                 ? t("monthRead.noReadsLeft", { month: monthLabel })
                 : rendered
-                  ? t("monthRead.writeAgain", { left })
-                  : t("monthRead.writeOne", { left })}
+                  ? t("monthRead.writeAgain", { left, model: writerBrand })
+                  : t("monthRead.writeOne", { left, model: writerBrand })}
           </Button>
         ) : null}
       </div>
     </section>
   );
+}
+
+/**
+ * "Mistral Large (mistral-large-latest)": the maker, the model and the build.
+ *
+ * The id is repeated in brackets because it is what someone would compare
+ * against a configuration, while the name is what they would recognise. An id
+ * this app cannot attribute is shown as it stands — an unfamiliar string
+ * beats naming the wrong writer.
+ */
+function exactModel(modelId: string): string {
+  const named = describeModel(modelId);
+  return named.full === named.id ? named.id : `${named.full} (${named.id})`;
 }
 
 /**

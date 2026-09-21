@@ -21,6 +21,7 @@ import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
 import { LOCALE_LABELS, type Locale } from "@finance/core/i18n/locale";
+import { describeModel } from "@finance/core/model-name";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 
 interface MonthReadProps {
@@ -38,7 +39,31 @@ interface MonthReadProps {
   writesLeft: number;
   /** Whether a read can be written from this build at all. */
   writable: boolean;
+  /**
+   * The maker, for the control that spends a call.
+   *
+   * A constant of this codebase rather than of the environment: the key is
+   * `MISTRAL_API_KEY` and the endpoint is Mistral's, so only the model's size
+   * can be configured, never its maker. Which exact model wrote a stored read
+   * is the separate question `readModel` answers, off the read itself.
+   */
+  writerBrand: string;
+  /** The model recorded on the stored read, when there is one. */
+  readModel: string | null;
   onWritten: () => void;
+}
+
+/**
+ * "Mistral Large (mistral-large-latest)": the maker, the model and the build.
+ *
+ * The web twin carries the same helper and the same reasoning — the id is
+ * what someone would compare against a configuration, the name is what they
+ * would recognise, and an id this app cannot attribute is shown as it stands
+ * rather than credited to the wrong maker.
+ */
+function exactModel(modelId: string): string {
+  const named = describeModel(modelId);
+  return named.full === named.id ? named.id : `${named.full} (${named.id})`;
 }
 
 /**
@@ -65,6 +90,8 @@ export function MonthRead({
   readLocale,
   writesLeft,
   writable,
+  writerBrand,
+  readModel,
   onWritten,
 }: MonthReadProps) {
   const { toast } = useToast();
@@ -124,7 +151,7 @@ export function MonthRead({
           <Text className="text-sm font-medium">{t("monthRead.title")}</Text>
         </View>
         <Text className="text-xs text-muted-foreground">
-          {t("monthRead.subtitleMobile")}
+          {t("monthRead.subtitleMobile", { model: writerBrand })}
         </Text>
       </View>
 
@@ -188,14 +215,24 @@ export function MonthRead({
             })}
           </Text>
         ) : null}
+        {rendered ? (
+          <Text variant="micro" className="text-muted-foreground">
+            {/* The model recorded on this read, not today's configuration:
+                a read written six weeks ago was written by whatever answered
+                then, and this is the line whose job is to be exact. */}
+            {readModel === null
+              ? t("monthRead.writtenByUnknown")
+              : t("monthRead.writtenBy", { model: exactModel(readModel) })}
+          </Text>
+        ) : null}
 
         {writable ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={
               rendered
-                ? t("monthRead.writeAgainLabel")
-                : t("monthRead.writeLabel")
+                ? t("monthRead.writeAgainLabel", { model: writerBrand })
+                : t("monthRead.writeLabel", { model: writerBrand })
             }
             accessibilityState={{ disabled: pending || left <= 0 }}
             disabled={pending || left <= 0}
@@ -210,7 +247,9 @@ export function MonthRead({
             )}
           >
             <Ionicons
-              name="create-outline"
+              // The same mark the card's own heading carries, and the same
+              // one the web twin puts on this button: "a model did this".
+              name="sparkles"
               size={ICON.md}
               color={
                 left > 0 ? colors.primaryForeground : colors.mutedForeground
@@ -227,8 +266,8 @@ export function MonthRead({
                 : left <= 0
                   ? t("monthRead.noReadsLeftGeneric")
                   : rendered
-                    ? t("monthRead.writeAgain", { left })
-                    : t("monthRead.writeOne", { left })}
+                    ? t("monthRead.writeAgain", { left, model: writerBrand })
+                    : t("monthRead.writeOne", { left, model: writerBrand })}
             </Text>
           </Pressable>
         ) : null}
