@@ -564,6 +564,10 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                         <td
                           className={cn(
                             "whitespace-nowrap p-3 text-right font-mono tabular-nums",
+                            // The amount column of the import preview is
+                            // still the user's money, even before it is
+                            // written.
+                            row.amount !== null && "privacy-amount",
                             row.type === "income"
                               ? "text-success"
                               : "text-foreground",

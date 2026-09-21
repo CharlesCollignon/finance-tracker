@@ -9,6 +9,7 @@ import { MonthCloseSheet } from "@/components/finance/MonthCloseSheet";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
+import { cn } from "@/lib/utils";
 
 interface MonthCloseCardProps {
   year: number;
@@ -62,6 +63,11 @@ export function MonthCloseCard({
               amount: formatMoney(invitation.baseline),
             })
           : t("monthClose.inviteBare");
+  // Two of the four invitations name a figure of the user's own — their
+  // allowance, or what a normal month has cost them. The other two only say
+  // what closing is for.
+  const detailHasAmount =
+    invitation.kind === "allowance" || invitation.kind === "normal";
 
   return (
     <>
@@ -84,7 +90,14 @@ export function MonthCloseCard({
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
+            <p
+              className={cn(
+                "mt-1 text-sm text-muted-foreground",
+                detailHasAmount && "privacy-sensitive",
+              )}
+            >
+              {detail}
+            </p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">

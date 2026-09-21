@@ -132,13 +132,18 @@ export function MonthScore({
           </div>
 
           {ratio !== null ? (
+            // Hidden from assistive technology rather than named. It was a
+            // `role="img"` carrying `monthScore.meterLabel` — "{spent} of
+            // {target}" — which is word for word the two figures sitting
+            // directly above it, both of them already inside `PrivateAmount`.
+            // So the bar said nothing new, and said it in the one place the
+            // privacy blur cannot reach: an accessible name is a string, not
+            // a painted pixel, so a user who had covered their figures still
+            // had them read out in full. The bar is a picture of the pair
+            // above it.
             <div
               className="h-2 w-full overflow-hidden rounded-full bg-foreground/10"
-              role="img"
-              aria-label={t("monthScore.meterLabel", {
-                spent: formatMoney(spent),
-                target: formatMoney(target!),
-              })}
+              aria-hidden
             >
               <div
                 className={cn(

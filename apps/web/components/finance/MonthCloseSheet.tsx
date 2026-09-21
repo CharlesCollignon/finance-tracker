@@ -8,6 +8,7 @@ import { Button } from "@/components/retroui/Button";
 import { Input } from "@/components/retroui/Input";
 import { Text } from "@/components/retroui/Text";
 import { MobileSheet } from "@/components/layout/MobileSheet";
+import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useToast } from "@/components/layout/ToastProvider";
 import { useFormatCurrency } from "@/lib/use-currency";
 import {
@@ -17,6 +18,7 @@ import {
 } from "@/lib/actions/month-close";
 import { getBankBalanceSuggestion } from "@/lib/actions/bank";
 import { useLocale, useT } from "@/lib/locale-context";
+import { cn } from "@/lib/utils";
 
 interface MonthCloseSheetProps {
   open: boolean;
@@ -48,17 +50,21 @@ function Figure({
   return (
     <div className="flex items-baseline justify-between gap-4 py-1.5">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span
+      {/* Every row of this block is money, so the marker belongs here rather
+          than on the four call sites — DESIGN.md's blur is a state of the
+          system and a surface that renders a figure without it is a hole in
+          the state. */}
+      <PrivateAmount
         className={
           tone === "good"
-            ? "tabular-nums font-semibold text-success"
+            ? "font-semibold text-success"
             : tone === "warn"
-              ? "tabular-nums font-semibold text-destructive"
-              : "tabular-nums font-semibold"
+              ? "font-semibold text-destructive"
+              : "font-semibold"
         }
       >
         {value}
-      </span>
+      </PrivateAmount>
     </div>
   );
 }
@@ -240,7 +246,10 @@ export function MonthCloseSheet({
                 <h3 className="font-head text-lg">
                   {t("monthClose.startingPointSet")}
                 </h3>
-                <Text className="mt-1 text-sm text-muted-foreground">
+                {/* `privacy-sensitive` rather than `privacy-amount`: the
+                    figure is inside the sentence, so the whole line is what
+                    has to go under the blur. Same everywhere below. */}
+                <Text className="privacy-sensitive mt-1 text-sm text-muted-foreground">
                   {t("monthClose.baselineSet", {
                     amount: formatMoney(result.closingBalance),
                     date: formatShortDate(observeOn, locale),
@@ -252,7 +261,7 @@ export function MonthCloseSheet({
                 <h3 className="font-head text-lg">
                   {t("monthClose.somethingMissing")}
                 </h3>
-                <Text className="mt-1 text-sm text-muted-foreground">
+                <Text className="privacy-sensitive mt-1 text-sm text-muted-foreground">
                   {t("monthClose.unexplainedCredit", {
                     amount: formatMoney(result.unexplainedCredit ?? 0),
                   })}
@@ -260,7 +269,18 @@ export function MonthCloseSheet({
               </div>
             ) : (
               <div>
-                <h3 className="font-head text-lg">
+                <h3
+                  className={cn(
+                    "font-head text-lg",
+                    // Only the kept-something heading names a figure; the
+                    // other says the month cost more than it brought and
+                    // names none, so blurring it would hide a sentence with
+                    // nothing in it to hide.
+                    result.kept !== null &&
+                      result.kept > 0 &&
+                      "privacy-sensitive",
+                  )}
+                >
                   {result.kept !== null && result.kept > 0
                     ? t("monthClose.youKept", {
                         amount: formatMoney(result.kept),
@@ -307,7 +327,16 @@ export function MonthCloseSheet({
             </div>
 
             {result.unrecorded !== null && (
-              <Text className="text-sm text-muted-foreground">
+              <Text
+                className={cn(
+                  "text-sm text-muted-foreground",
+                  // Three of the four sentences below name a figure; the
+                  // fourth explains what unrecorded spending is and names
+                  // none.
+                  (unrecordedCap !== null || baseline !== null) &&
+                    "privacy-sensitive",
+                )}
+              >
                 {unrecordedCap !== null
                   ? overCap
                     ? t("monthClose.overAllowance", {

@@ -105,7 +105,7 @@ export function InstrumentSearch({
 
   return (
     <div ref={containerRef} className="flex flex-col gap-2">
-      <FormLabel htmlFor="instrument-search">ETF / fund</FormLabel>
+      <FormLabel htmlFor="instrument-search">{t("instrument.label")}</FormLabel>
 
       {symbol ? (
         <div
@@ -172,7 +172,7 @@ export function InstrumentSearch({
             >
               {loading && (
                 <li className="px-3 py-2 text-sm text-muted-foreground">
-                  Searching…
+                  {t("instrument.searching")}
                 </li>
               )}
               {!loading &&
@@ -181,7 +181,7 @@ export function InstrumentSearch({
                   query.trim().replace(/\s+/g, ""),
                 ) && (
                   <li className="px-3 py-2 text-sm text-muted-foreground">
-                    ISIN is 12 characters — keep typing…
+                    {t("instrument.isinKeepTyping")}
                   </li>
                 )}
               {!loading && error && (
@@ -191,7 +191,7 @@ export function InstrumentSearch({
               )}
               {!loading && !error && results.length === 0 && (
                 <li className="px-3 py-2 text-sm text-muted-foreground">
-                  No instruments found. Try a name or a 12-character ISIN.
+                  {t("instrument.noResults")}
                 </li>
               )}
               {!loading &&

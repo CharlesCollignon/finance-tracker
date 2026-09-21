@@ -212,7 +212,7 @@ function TransactionFormFields({
           />
         </div>
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="occurredOn">Date</FormLabel>
+          <FormLabel htmlFor="occurredOn">{t("transaction.date")}</FormLabel>
           <Input
             id="occurredOn"
             name="occurredOn"
@@ -223,7 +223,7 @@ function TransactionFormFields({
           />
         </div>
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="note">Note (optional)</FormLabel>
+          <FormLabel htmlFor="note">{t("transaction.note")}</FormLabel>
           <Input
             id="note"
             name="note"
@@ -311,7 +311,7 @@ function TransactionFormFields({
                       disabled={skipPending}
                       onClick={() => setConfirmSkip(false)}
                     >
-                      Cancel
+                      {t("transaction.cancel")}
                     </Button>
                   </div>
                 </div>
@@ -334,8 +334,7 @@ function TransactionFormFields({
           {confirmDelete ? (
             <div className="flex flex-col gap-2">
               <p className="text-sm text-muted-foreground">
-                Delete this transaction permanently? (Apply may recreate it if
-                the recurring rule is still active.)
+                {t("transaction.deleteExplanation")}
               </p>
               <div className="flex gap-2">
                 <Button
@@ -356,7 +355,7 @@ function TransactionFormFields({
                   disabled={deletePending}
                   onClick={() => setConfirmDelete(false)}
                 >
-                  Cancel
+                  {t("transaction.cancel")}
                 </Button>
               </div>
             </div>

@@ -5,6 +5,15 @@ interface ProgressRingProps {
   ratio: number;
   label: string;
   detail: string;
+  /**
+   * Whether `detail` is an amount of the user's money, and so goes under the
+   * privacy blur.
+   *
+   * Off by default because the Bearing's rings give a percentage there, and a
+   * percentage of a cap the user set is not a figure worth covering. The Plan
+   * screen's rings give "1 240 € of 1 500 €", which is.
+   */
+  money?: boolean;
   /** Chart token to fill with, when the ring is not in a danger state. */
   colorVar?: string;
   /**
@@ -35,6 +44,7 @@ export function ProgressRing({
   ratio,
   label,
   detail,
+  money = false,
   colorVar = "--chart-1",
   meaning = "limit",
   over = false,
@@ -56,8 +66,16 @@ export function ProgressRing({
           height={size}
           viewBox={`0 0 ${size} ${size}`}
           className="-rotate-90"
-          role="img"
-          aria-label={`${label}: ${detail}`}
+          // Hidden from assistive technology rather than named. It carried
+          // `aria-label={`${label}: ${detail}`}`, which said nothing the three
+          // elements beside it do not already say in text — the percentage,
+          // the label and the detail are all in the DOM — so a screen reader
+          // heard every ring twice. Worse, when `detail` is money that second
+          // reading was the one place the figure escaped the privacy blur:
+          // CSS cannot reach into an accessible name, so a user who had
+          // covered their figures still had them read out in full. The arcs
+          // are a picture of the number under them.
+          aria-hidden
         >
           <circle
             cx={size / 2}
@@ -93,7 +111,12 @@ export function ProgressRing({
           says on the Plan screen; anything longer is a category name, and
           truncating those is the intent. */}
       <span className="max-w-36 truncate text-sm font-medium">{label}</span>
-      <span className="max-w-36 truncate text-xs text-muted-foreground">
+      <span
+        className={cn(
+          "max-w-36 truncate text-xs text-muted-foreground",
+          money && "privacy-amount",
+        )}
+      >
         {detail}
       </span>
     </div>

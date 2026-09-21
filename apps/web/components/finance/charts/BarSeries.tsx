@@ -64,7 +64,10 @@ export function BarSeries({
             key={point.key}
             className="group flex min-w-0 flex-1 flex-col items-center gap-1.5"
           >
-            <span className="text-[0.65rem] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+            {/* The bar's value on hover. Marked even though it is only
+                visible under the pointer: the blur is a state of the system,
+                and a figure that appears on hover is still a figure. */}
+            <span className="privacy-amount text-[0.65rem] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
               {point.empty ? "—" : formatMoney(point.value)}
             </span>
             <div className="h-32 w-full sm:h-40">

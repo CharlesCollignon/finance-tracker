@@ -179,7 +179,7 @@ export function SelectionBar({
               <p className="text-sm font-medium">
                 {t("selectionBar.countSelected", { count: summary.count })}
                 {summary.total > 0 ? (
-                  <span className="ml-2 font-mono text-xs text-muted-foreground tabular-nums">
+                  <span className="privacy-amount ml-2 font-mono text-xs text-muted-foreground tabular-nums">
                     {formatEuro(summary.total)}
                   </span>
                 ) : null}

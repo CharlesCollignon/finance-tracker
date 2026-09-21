@@ -1,6 +1,6 @@
 ---
 name: Pluclair Mobile
-description: The ledger on glass — the same dark system as the web, rebuilt as translucent surfaces over a lit ground.
+description: The ledger on glass — the same dark system and the same translucent material as the web, paying for its edges differently.
 colors:
   cool-near-black: "#0a0a10"
   card-surface: "#131320"
@@ -122,11 +122,12 @@ components:
 
 **Creative North Star: "The Quiet Ledger, on glass"**
 
-The phone runs the same ledger as the web with one material difference: its
-surfaces are translucent. Cards sit at 70% opacity over a lit ground rather
-than on an opaque page, so the app reads as panes of glass laid over something
-rather than as panels printed on something. Everything else — the calm, the
-exactness, the refusal to decorate a figure — carries over unchanged.
+The phone runs the same ledger as the web, on the same material. Both clients
+put translucent surfaces over a lit ground, so both read as panes of glass laid
+over something rather than as panels printed on something. If anything the
+phone is the more solid of the two: its cards sit at 70% where the web's glass
+card sits at 60%. Everything else — the calm, the exactness, the refusal to
+decorate a figure — carries over unchanged.
 
 The palette is shared deliberately, hex for hex, with `apps/web`. One amount
 should look like one amount whichever screen the user picked up, and that is a
@@ -137,16 +138,25 @@ Where this system departs from the web, it departs because the platform
 requires it, not because the phone wanted its own taste. Display type carries
 no line height because Tailwind's size utilities set one and Android clipped
 the font's taller glyphs. Font weights are asked for by their registered
-instance name because React Native does not synthesise a weight. There is a
-soft shadow here where the web is perfectly flat, because a translucent surface
-over a lit ground needs a hint of separation that a hairline alone does not
-give it.
+instance name because React Native does not synthesise a weight.
+
+The one difference worth stating carefully is where the blur lives, because it
+decides how each client pays for an edge. On the web the blur travels with the
+surface: every glass weight carries its own `backdrop-blur` and
+`backdrop-saturate`, so a card re-focuses what is behind it and a hairline is
+enough to finish the edge. Here the blur is a separate native component
+(`src/components/ui/Blur.tsx`) used on four chrome surfaces only — the orb, the
+month picker, the auth form and the tab bar — so an ordinary card is
+translucency with no blur at all. It has no re-focused edge to separate on, and
+buys one with the single soft shadow this system allows instead. That is the
+reason for the shadow; it is not that the web is flat and the phone is not.
 
 **Key Characteristics:**
 
 - Dark-only and portrait-only — one palette stated once, not a dark half
   chosen from the system
-- Translucent surfaces at 70% over a lit backdrop
+- Translucent surfaces at 70% over a lit backdrop — shared with the web, which
+  sits at 60%; the number is the one place the two genuinely differ
 - Two numeric faces: a serif for figures that own a screen, a mono for amounts
   in a ledger
 - Amounts coloured by what kind of money they are, not by sign

@@ -30,6 +30,7 @@ function UpdateRow({
   selected: boolean;
   onToggle: () => void;
 }) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
   const amountChanged = Math.abs(item.previousAmount - item.amount) > 0.009;
   const noteChanged =
@@ -57,8 +58,8 @@ function UpdateRow({
             {item.dateLabel}
           </p>
           {amountChanged && (
-            <p className="mt-2 tabular-nums">
-              Amount{" "}
+            <p className="privacy-sensitive mt-2 tabular-nums">
+              {t("transaction.amount")}{" "}
               <span className="text-muted-foreground line-through">
                 {formatEuro(item.previousAmount)}
               </span>
@@ -68,12 +69,12 @@ function UpdateRow({
           )}
           {noteChanged && (
             <p className="mt-1 text-xs text-muted-foreground">
-              Note updated to match recurring template
+              {t("applyRecurring.noteUpdated")}
             </p>
           )}
           {categoryChanged && (
             <p className="mt-1 text-xs text-muted-foreground">
-              Moved to the recurring template&rsquo;s category
+              {t("applyRecurring.movedToCategory")}
             </p>
           )}
         </span>
@@ -138,27 +139,26 @@ export function ApplyRecurringSheet({
     >
       <div className="flex flex-col gap-4">
         <Text className="text-sm text-muted-foreground">
-          Adds missing recurring transactions for this month. Existing entries
-          are left as-is unless you confirm updates below.
+          {t("applyRecurring.blurb")}
         </Text>
 
         {plan.toReprice.length > 0 && (
           <Text className="text-sm text-muted-foreground">
-            {plan.toReprice.length}{" "}
-            {plan.toReprice.length === 1 ? "entry is" : "entries are"} priced
-            from the market and still ahead of today. Those follow their
-            instrument on their own — nothing to confirm.
+            {t("applyRecurring.repriceNote", {
+              count: plan.toReprice.length,
+            })}
           </Text>
         )}
 
         {hasUpdates && (
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium">
-              Update existing ({plan.toUpdate.length})
+              {t("applyRecurring.updateExisting", {
+                count: plan.toUpdate.length,
+              })}
             </p>
             <Text className="text-xs text-muted-foreground">
-              These were already applied but the recurring template changed
-              (amount, note, or category).
+              {t("applyRecurring.updateExistingNote")}
             </Text>
             <ul className="flex max-h-48 flex-col gap-2 overflow-y-auto">
               {plan.toUpdate.map((item) => {
@@ -182,7 +182,7 @@ export function ApplyRecurringSheet({
         {hasCreates && (
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium">
-              Add new ({plan.toCreate.length})
+              {t("applyRecurring.addNew", { count: plan.toCreate.length })}
             </p>
             <ul className="flex max-h-48 flex-col gap-2 overflow-y-auto">
               {plan.toCreate.map((item) => {
@@ -213,7 +213,7 @@ export function ApplyRecurringSheet({
                           {item.dateLabel}
                         </p>
                       </div>
-                      <span className="shrink-0 tabular-nums font-semibold">
+                      <span className="privacy-amount shrink-0 tabular-nums font-semibold">
                         {formatEuro(item.amount)}
                       </span>
                     </label>
@@ -233,12 +233,16 @@ export function ApplyRecurringSheet({
             onClick={() => onConfirm(includeUpdates, selectedKeys)}
           >
             {pending
-              ? "Applying…"
+              ? t("applyRecurring.applying")
               : selectedKeys.length === 0
-                ? "Nothing selected"
+                ? t("applyRecurring.nothingSelected")
                 : hasUpdates
-                  ? `Apply ${selectedKeys.length} selected`
-                  : `Apply ${selectedKeys.length} new`}
+                  ? t("applyRecurring.applySelected", {
+                      count: selectedKeys.length,
+                    })
+                  : t("applyRecurring.applyNew", {
+                      count: selectedKeys.length,
+                    })}
           </Button>
           {hasUpdates && hasCreates && (
             <Button
@@ -249,7 +253,7 @@ export function ApplyRecurringSheet({
               disabled={pending}
               onClick={() => onConfirm(false, selectedKeys)}
             >
-              Add new only — skip updates
+              {t("common.addNewOnly")}
             </Button>
           )}
           <Button
@@ -260,7 +264,7 @@ export function ApplyRecurringSheet({
             disabled={pending}
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
         </div>
       </div>

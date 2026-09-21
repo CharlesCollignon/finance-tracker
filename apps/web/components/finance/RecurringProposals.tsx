@@ -4,11 +4,13 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/retroui/Button";
 import { useToast } from "@/components/layout/ToastProvider";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { useT } from "@/lib/locale-context";
 import {
   acceptRecurringProposal,
   dismissRecurringProposal,
 } from "@/lib/actions/bank";
 import type { RecurringProposal } from "@finance/core/recurring-detection";
+import type { Key } from "@finance/core/i18n/t";
 
 interface RecurringProposalsProps {
   proposals: RecurringProposal[];
@@ -31,10 +33,11 @@ function displayName(key: string): string {
     .join(" ");
 }
 
-const CADENCE: Record<string, string> = {
-  weekly: "every week",
-  monthly: "every month",
-  yearly: "every year",
+/** Which message names each cadence, keyed by the recurrence it describes. */
+const CADENCE: Record<string, Key> = {
+  weekly: "recurringProposals.everyWeek",
+  monthly: "recurringProposals.everyMonth",
+  yearly: "recurringProposals.everyYear",
 };
 
 /**
@@ -51,6 +54,7 @@ const CADENCE: Record<string, string> = {
  * nothing is pushed off the top of the screen.
  */
 export function RecurringProposals({ proposals }: RecurringProposalsProps) {
+  const t = useT();
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
   const [pending, startTransition] = useTransition();
@@ -73,7 +77,7 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
         return;
       }
       hide(key);
-      toast(result.message ?? "Added", "success");
+      toast(result.message ?? t("recurringProposals.added"), "success");
     });
   }
 
@@ -93,9 +97,7 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
   return (
     <div className="mb-3 flex flex-col gap-2 rounded-control border border-dashed border-primary-rim/50 p-3">
       <p className="text-xs text-muted-foreground">
-        {visible.length === 1
-          ? "One charge in your statement looks like it repeats."
-          : `${visible.length} charges in your statement look like they repeat.`}
+        {t("recurringProposals.lead", { count: visible.length })}
       </p>
 
       <ul className="flex flex-col gap-2">
@@ -111,12 +113,14 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
               >
                 {displayName(proposal.key)}
               </p>
-              <span className="shrink-0 tabular-nums text-sm font-semibold">
+              <span className="privacy-amount shrink-0 tabular-nums text-sm font-semibold">
                 {formatMoney(proposal.amount)}
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              {CADENCE[proposal.recurrence]} · seen {proposal.count} times
+              {t(CADENCE[proposal.recurrence])}
+              {" · "}
+              {t("recurringProposals.seenTimes", { count: proposal.count })}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -126,7 +130,7 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
                 disabled={pending}
                 onClick={() => accept(proposal.key)}
               >
-                Add
+                {t("recurringProposals.accept")}
               </Button>
               <Button
                 type="button"
@@ -135,7 +139,7 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
                 disabled={pending}
                 onClick={() => refuse(proposal.key)}
               >
-                Not this
+                {t("recurringProposals.refuse")}
               </Button>
             </div>
           </li>

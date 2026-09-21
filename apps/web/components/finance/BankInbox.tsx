@@ -66,7 +66,7 @@ function Amount({
   return (
     <span
       className={cn(
-        "shrink-0 tabular-nums",
+        "privacy-amount shrink-0 tabular-nums",
         direction === "in" ? "text-success" : "text-destructive",
         className,
       )}

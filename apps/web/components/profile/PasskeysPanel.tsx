@@ -73,7 +73,9 @@ export function PasskeysPanel({ initialPasskeys }: PasskeysPanelProps) {
   return (
     <div className="flex flex-col gap-3">
       {passkeys.length === 0 ? (
-        <p className={cn("text-muted-foreground", MICRO)}>No passkeys yet.</p>
+        <p className={cn("text-muted-foreground", MICRO)}>
+          {t("passkeys.none")}
+        </p>
       ) : (
         <ul className="flex flex-col divide-y divide-border">
           {passkeys.map((item) => (
@@ -83,10 +85,10 @@ export function PasskeysPanel({ initialPasskeys }: PasskeysPanelProps) {
             >
               <div className="min-w-0">
                 <p className="truncate text-sm">
-                  {item.friendly_name ?? "Passkey"}
+                  {item.friendly_name ?? t("passkeys.unnamed")}
                 </p>
                 <p className={cn("text-muted-foreground", MICRO)}>
-                  {`Added ${item.created_at.slice(0, 10)}`}
+                  {t("passkeys.added", { date: item.created_at.slice(0, 10) })}
                 </p>
               </div>
               <Button
@@ -96,7 +98,7 @@ export function PasskeysPanel({ initialPasskeys }: PasskeysPanelProps) {
                 disabled={pending}
                 onClick={() => void onDelete(item.id)}
               >
-                Remove
+                {t("common.remove")}
               </Button>
             </li>
           ))}
@@ -111,7 +113,7 @@ export function PasskeysPanel({ initialPasskeys }: PasskeysPanelProps) {
         disabled={pending}
         onClick={() => void onAdd()}
       >
-        {pending ? "Please wait…" : "Add passkey"}
+        {pending ? t("passkeys.working") : t("passkeys.add")}
       </Button>
 
       {message ? (

@@ -76,9 +76,12 @@ export function FindingRow({
       <span className="min-w-0 flex-1 text-sm text-muted-foreground">
         {t(finding.messageKey, finding.params)}
         {remark ? (
-          <span className="block text-xs italic text-muted-foreground/80">
-            {remark}
-          </span>
+          // Inherits the muted foreground of the sentence it hangs under. It
+          // carried `text-muted-foreground/80`, a further step down on top of
+          // that — an alpha literal where a token exists, and at 12px italic
+          // the one line here least able to afford it. The italic and the
+          // size are what make it an aside.
+          <span className="block text-xs italic">{remark}</span>
         ) : null}
       </span>
       <span

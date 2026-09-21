@@ -120,6 +120,24 @@ components:
     textColor: "{colors.foreground}"
     rounded: "{rounded.card}"
     padding: "16px"
+  glass-card:
+    backgroundColor: "rgba(19, 19, 32, 0.6)"
+    textColor: "{colors.foreground}"
+    rounded: "{rounded.card}"
+    padding: "{spacing.card}"
+    backdropFilter: "blur(24px) saturate(150%)"
+  glass-panel:
+    backgroundColor: "rgba(10, 10, 16, 0.8)"
+    textColor: "{colors.foreground}"
+    backdropFilter: "blur(40px) saturate(150%)"
+  glass-chrome:
+    backgroundColor: "rgba(10, 10, 16, 0.6)"
+    textColor: "{colors.foreground}"
+    backdropFilter: "blur(24px) saturate(150%)"
+  solid-panel:
+    backgroundColor: "{colors.card-surface}"
+    textColor: "{colors.foreground}"
+    rounded: "{rounded.card}"
   card-bezel:
     backgroundColor: "rgba(236, 236, 241, 0.04)"
     rounded: "{rounded.shell}"
@@ -157,10 +175,12 @@ bloom: a violet main light high and wide over the content column, a magenta
 second source off to the right as if out of frame, indigo down the left edge,
 a purple bounce along the bottom, and the brand gold low and faint. Over it
 sits a WebGL veil, blurred past the point of structure, so the whole ground
-drifts slowly enough that nobody catches it moving. The surfaces above stay
-opaque and quiet, and they are quiet *against* something — which is what makes
-the restraint read as a decision rather than as the whole of the design. The
-same cards on an unlit near-black would read as printing.
+drifts slowly enough that nobody catches it moving. The surfaces above are
+translucent and quiet — a card is drawn at 60% over that light and blurs what
+shows through — so they are quiet *against* something they admit rather than
+hide, which is what makes the restraint read as a decision rather than as the
+whole of the design. The same cards on an unlit near-black would read as
+printing.
 
 This is a dark system with no light counterpart, and that is settled rather
 than pending. A warm paper theme shipped alongside this one and was removed:
@@ -182,9 +202,11 @@ count is the point: adding a fourth grey or a sixth type step undoes the work.
 - Dark-only, on a cool near-black lit from behind by a violet bloom
 - A ground that drifts — a blurred shader over that bloom, slow enough never to
   be caught moving
+- Translucent surfaces over that ground — three glass weights between 60% and
+  80%, each blurring and saturating what shows through
 - One accent — a warm gold — against otherwise unsaturated surfaces
-- Flat by rule; depth comes from surface value steps and hairlines, read
-  against that lit ground
+- Flat by rule; depth comes from translucency, surface value steps and
+  hairlines, read against that lit ground
 - Serif numerals for money, sans for everything that is words
 - Controls that answer a press immediately and precisely, then stop
 
@@ -408,25 +430,100 @@ one-off `17px` is a mistake, not a step.
 `--shadow-2xl` — is set to `none`, deliberately and not by omission. Surfaces
 never lift off the page, and there is no hover elevation anywhere.
 
-Depth is built three ways instead. First, there is a ground for the surfaces to
+Depth is built four ways instead. First, there is a ground for the surfaces to
 be read against: the bloom described under Colors, fixed to the viewport by the
 shell so the light stays where it is while the page scrolls through it. Second,
-surfaces step in value: marketing ground `#06060a`, page `#0a0a10`, sidebar
-`#0d0d15`, card `#131320`, raised `#1c1c2b`. Third, hairline borders separate
-what value alone leaves ambiguous. The order is the reason it works: five
-near-blacks spanning so narrow a range separate far more legibly over a lit
-field than they would over a uniform void, so the ground is first and not an
-afterthought.
+the surfaces admit that ground rather than covering it — the glass weights
+below are drawn between 60% and 80% opacity and blur what shows through, so a
+surface separates by what it does to the light behind it instead of by casting
+anything in front. Third, surfaces step in value: marketing ground `#06060a`,
+page `#0a0a10`, sidebar `#0d0d15`, card `#131320`, raised `#1c1c2b`. Fourth,
+hairline borders separate what value alone leaves ambiguous. The order is the
+reason it works: five near-blacks spanning so narrow a range separate far more
+legibly over a lit field than they would over a uniform void, so the ground is
+first and not an afterthought.
 
 The bloom is a ground, not an elevation. It sits at `-z-10` behind everything,
 it belongs to no component, and nothing is nearer the viewer for sitting over a
-brighter part of it. This is also where the web and the phone diverge: the
-mobile system answers the same lit ground with translucency — surfaces at 70%
-opacity, and the soft shadow a translucent pane needs to separate — while the
-web keeps its surfaces opaque and lets the light show only around them. Same
-room, different material, and the web's flatness survives intact.
+brighter part of it.
 
-There is exactly one exception to that flatness, and it is a recess rather than
+The web and the phone are the same material, not two. Both answer that lit
+ground with translucency, and the phone is the *more* opaque of the pair: its
+cards are drawn at 70% (`rgba(19, 19, 32, 0.7)`) where the web's are at 60%.
+What differs is where the blur lives and what each pays for an edge. On the web
+the blur travels with the surface — every glass weight carries its own
+`backdrop-blur` and `backdrop-saturate-150`, so the surface refocuses and
+re-saturates the light it admits — and separation is finished with a hairline,
+which is how the web's flatness survives intact. On the phone the blur is a
+separate native component (`Blur`, `blurAmount` 24 over an
+`rgba(11, 9, 5, 0.35)` tint) used on four chrome surfaces only, so an ordinary
+card there is translucency with no blur at all, and it buys the edge that costs
+it with the one soft shadow (`0px 1px 2px rgba(0, 0, 0, 0.06)`) that system
+allows. Same room, same glass, cut differently.
+
+### Surface Weights
+
+`lib/glass.ts` holds the vocabulary, kept as class strings rather than
+components so they compose with `cn` at the call site — a wrapper component per
+weight would be three components that only forward children. Three weights,
+because there are three jobs, and all three carry `backdrop-saturate-150`:
+translucency alone drains the violet it admits, and the saturate step is what
+puts it back.
+
+- **Chrome** (`GLASS_CHROME` — `bg-background/60`, `backdrop-blur-xl` (24px),
+  `backdrop-saturate-150`, over `border-border`): Header bands and the side
+  rail. Structure, not content, and it has to stay legible over anything that
+  scrolls under it. Used by `PageHeader` and `SideNav`.
+- **Card** (`GLASS_CARD` — `bg-card/60`, `backdrop-blur-xl` (24px),
+  `backdrop-saturate-150`, over a `border-foreground/10` hairline): A content
+  card floating on the veil, and the most used of the three. `60` rather than a
+  lower number, because the figures on these cards are the point of the screen
+  and text over a moving gradient at high transparency is the single easiest
+  way to make an interface look cheap.
+- **Panel** (`GLASS_PANEL` — `bg-background/80`, `backdrop-blur-2xl` (40px),
+  `backdrop-saturate-150`, over the same hairline): Popovers, menus and sheets.
+  A panel floats above everything and has to be readable over content it did
+  not choose, so it is the most opaque of the three and blurs the hardest. Used
+  by `AccountMenu` and the phone-width `BottomNav`.
+
+`SOLID_PANEL` (`bg-popover` at full opacity, over the same hairline) is the
+deliberate exception, and it is not glass. `backdrop-filter` composites against
+what is already painted behind the element, and it does not nest: a blurred
+panel inside a blurred header gets the header's finished pixels as its backdrop
+and blurs nothing, so the content behind shows through sharp and the panel
+becomes unreadable. The month grid opens out of the header band, so
+`MonthPicker` cannot be glass — a control holding twelve small targets is one
+to see clearly, not through. The mobile app reached the same conclusion by a
+different route, its account sheet noting that a frosted panel made the rows
+hard to read against busy content behind it.
+
+`GLASS_HERO` gives one card a little more than the weight underneath it, and it
+is light rather than elevation: a hairline highlight along the card's top edge,
+drawn as a `before:` gradient from transparent through `foreground/25` and
+back, the way a pane of glass catches a reflection. It sits on the Month
+screen's headline card and nowhere else, because the effect is only expensive
+while it is rare. Being a pseudo-element gradient and not a `box-shadow`, it
+costs the flatness rule nothing.
+
+Glass is not the only surface in the app, and that is the state of things
+rather than a plan. The `Card` component in `components/retroui/Card.tsx`
+paints an opaque `bg-card`, and twenty files import it against ten that import
+`GLASS_CARD`: the glass weights are what the Operate-mode screens sitting
+directly over the backdrop use, and the opaque card is what everything else
+still uses. Two overlays — `SelectionBar` and `OutboxBanner` — hand-roll a
+further weight inline at `bg-background/95 backdrop-blur-xl` instead of
+importing one, which is drift to fold back in rather than to copy.
+
+A glass surface's alpha belongs to its weight, not to the palette. The colours
+are `--card` and `--background` exactly as Colors already states them, and
+`/60`, `/80` and `/95` are the only alphas they are ever spent at; a
+`card-surface-60` entry under Colors would invite a call site to reach for a
+tint instead of a weight, which is the failure the Three Greys Rule describes.
+The alphas are recorded in the frontmatter under `components:` as
+`glass-card`, `glass-panel` and `glass-chrome`, which is where the phone states
+its own `rgba(19, 19, 32, 0.7)` too.
+
+There is exactly one exception to the flatness, and it is a recess rather than
 a lift.
 
 ### Shadow Vocabulary
@@ -495,7 +592,11 @@ all; changing one alone breaks the frame.
 ### Cards / Containers
 
 - **Corner Style:** `20px`, or `26px` for the bezel tray around it.
-- **Background:** Card surface on the page ground.
+- **Background:** Two, and both ship. A card on an Operate-mode screen uses
+  `GLASS_CARD` — card surface at 60% with `backdrop-blur-xl` and
+  `backdrop-saturate-150` — so the bloom reads through it, while the `Card`
+  component paints card surface opaque. See Surface Weights under Elevation &
+  Depth for which belongs where.
 - **Shadow Strategy:** None. See Elevation & Depth; the bezel's inset highlight
   is the only depth cue.
 - **Border:** 1px hairline.
@@ -558,8 +659,12 @@ switched off entirely.
   `.privacy-sensitive` so the blur keeps covering the whole app.
 - **Do** colour amounts by category type through `@finance/core`, so a figure
   means the same thing here as it does on the phone.
-- **Do** build depth from the surface value steps and hairlines already
-  defined, in that order.
+- **Do** build depth from the lit ground, the glass weights, the surface value
+  steps and the hairlines already defined, in that order.
+- **Do** reach for one of the three weights in `lib/glass.ts` when a surface
+  sits over the lit ground, and for `SOLID_PANEL` when it opens out of another
+  blurred surface — `backdrop-filter` composites against finished pixels and
+  does not nest.
 - **Do** give touch targets at least 44px, and list rows at least 56px.
 - **Do** use the three duration tokens and the single easing curve; a
   transition with no duration inherits the hover token and is already correct.
@@ -572,6 +677,20 @@ switched off entirely.
   paper theme was removed on purpose.
 - **Don't** introduce a drop shadow or an elevation scale. Every `--shadow-*`
   is `none` by decision.
+- **Don't** read the `shadow-lg` and `shadow-xl` classes already in the tree as
+  permission — and don't leave them where they are either. Six surfaces ask for
+  a shadow against tokens that resolve to `none`: `SOLID_PANEL` in
+  `lib/glass.ts` (`shadow-xl shadow-black/40`), `SelectionBar`, `OutboxBanner`,
+  `QuickAddSheet`'s note-suggestion list, `QuickAddProvider`'s floating
+  quick-add button and `SwipeToast`, each with `shadow-lg`. All six state an
+  intent the system forbids and render nothing, so the classes are dead
+  declarations that read as approval to the next person. This is a known
+  contradiction and it is recorded here unresolved: resolving it means deciding
+  per surface whether it needs an edge it can actually have — a hairline, a
+  surface value step, or a heavier glass weight — and then deleting the dead
+  class. It does not mean giving `--shadow-lg` a value, which would undo The
+  Flat-With-One-Exception Rule that made these tokens `none` in the first
+  place. Until that pass happens, do not add a seventh.
 - **Don't** add a fourth marketing grey or a fourth display clamp. Both counts
   are the result of a deliberate reduction.
 - **Don't** reach for a second display typeface to signal importance; headings

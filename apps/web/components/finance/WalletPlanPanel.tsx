@@ -223,7 +223,9 @@ export function WalletPlanPanel({
                         }
                       >
                         {row.status === "over" ? "+" : ""}
-                        {Math.round(row.driftPoints ?? 0)} pts
+                        {t("units.points", {
+                          value: Math.round(row.driftPoints ?? 0),
+                        })}
                       </span>
                     ) : null}
                   </div>

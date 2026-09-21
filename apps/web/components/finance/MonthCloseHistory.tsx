@@ -12,12 +12,14 @@ import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { Input } from "@/components/retroui/Input";
 import { Text } from "@/components/retroui/Text";
+import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useToast } from "@/components/layout/ToastProvider";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { updateCloseDay, updateUnrecordedCap } from "@/lib/actions/month-close";
 import type { ClosedMonthRow } from "@/lib/queries/month-close";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
+import { cn } from "@/lib/utils";
 
 interface MonthCloseHistoryProps {
   history: ClosedMonthRow[];
@@ -90,7 +92,13 @@ export function MonthCloseHistory({
             </span>
           )}
         </div>
-        <Card.Description>
+        {/* Only the first of the three sentences names a figure, so only
+            that one goes under the blur. */}
+        <Card.Description
+          className={
+            summary.baseline !== null ? "privacy-sensitive" : undefined
+          }
+        >
           {summary.baseline !== null
             ? t("monthCloseHistory.normalMonthCost", {
                 amount: formatMoney(summary.baseline),
@@ -138,9 +146,14 @@ export function MonthCloseHistory({
                   disabled={pending}
                   onClick={() => saveCap(suggested)}
                 >
-                  {t("monthCloseHistory.useSuggested", {
-                    amount: formatMoney(suggested),
-                  })}
+                  {/* The suggested cap is a figure of the user's own, and it
+                      is the label of the button rather than a value beside
+                      it, so the marker goes on the phrase. */}
+                  <span className="privacy-sensitive">
+                    {t("monthCloseHistory.useSuggested", {
+                      amount: formatMoney(suggested),
+                    })}
+                  </span>
                 </Button>
               )}
               {unrecordedCap !== null && (
@@ -197,7 +210,16 @@ export function MonthCloseHistory({
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{row.label}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p
+                      className={cn(
+                        "text-xs text-muted-foreground",
+                        // Two of the three say what happened and name no
+                        // figure; the third is an amount inside a phrase.
+                        row.status !== "baseline" &&
+                          row.status !== "over-recorded" &&
+                          "privacy-sensitive",
+                      )}
+                    >
                       {row.status === "baseline"
                         ? t("monthCloseHistory.startingPoint")
                         : row.status === "over-recorded"
@@ -209,14 +231,15 @@ export function MonthCloseHistory({
                   </div>
                   <div className="shrink-0 text-right">
                     {row.kept !== null && (
-                      <p
-                        className={
-                          won
-                            ? "tabular-nums text-sm font-semibold text-success"
-                            : "tabular-nums text-sm font-semibold"
-                        }
-                      >
-                        {formatMoney(row.kept)}
+                      <p>
+                        <PrivateAmount
+                          className={cn(
+                            "text-sm font-semibold",
+                            won && "text-success",
+                          )}
+                        >
+                          {formatMoney(row.kept)}
+                        </PrivateAmount>
                       </p>
                     )}
                     {row.keptRate !== null && (

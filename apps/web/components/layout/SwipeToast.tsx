@@ -13,6 +13,7 @@ import { cssEasing, DURATION } from "@finance/core/motion";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { ICON } from "@/lib/icon-scale";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/locale-context";
 
 /**
  * A toast you can throw away.
@@ -86,6 +87,7 @@ export function SwipeToast({
   onClose,
   closeButton = false,
 }: SwipeToastProps) {
+  const t = useT();
   const reducedMotion = usePrefersReducedMotion();
   const cardRef = useRef<HTMLDivElement>(null);
   const fuseRef = useRef<HTMLSpanElement>(null);
@@ -362,7 +364,7 @@ export function SwipeToast({
           {closeButton ? (
             <button
               type="button"
-              aria-label="Close"
+              aria-label={t("common.close")}
               className="shrink-0 rounded-control opacity-60 transition-opacity duration-hover hover:opacity-100"
               onClick={() => close("close")}
             >

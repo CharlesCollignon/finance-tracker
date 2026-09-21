@@ -88,6 +88,14 @@ export const fr: Messages = {
       "La suppression du compte exige SUPABASE_SERVICE_ROLE_KEY sur le serveur (en local\u00A0: .env.local, en production\u00A0: les variables d'environnement Vercel).",
   },
 
+  passkeys: {
+    none: "Aucune clé d'accès pour l'instant.",
+    unnamed: "Clé d'accès",
+    added: "Ajoutée le {date}",
+    working: "Un instant…",
+    add: "Ajouter une clé d'accès",
+  },
+
   ledger: {
     applyPending: "Application…",
     applyRecurring: "Appliquer les récurrents",
@@ -268,6 +276,10 @@ export const fr: Messages = {
     goalNamed: "Objectif {name}",
     goalRemoveHint: "Appui long pour supprimer cet objectif",
     amountOfTotal: "{amount} sur {total}",
+    editCapOn: "Modifier le plafond sur {label}",
+    editGoalNamed: "Modifier l'objectif {name}",
+    capScope: "Portée",
+    trackCategoryOptional: "Catégorie suivie (facultative)",
   },
 
   recurring: {
@@ -299,9 +311,20 @@ export const fr: Messages = {
     shareCount: "Nombre de parts",
     wholeSharesOnly: "Saisissez un nombre entier de parts",
     estimatedAmount: "Montant estimé",
+    fetchingPrice: "Récupération du cours…",
+    perSharePrice: "@ {price} / part",
+    convertedFrom: "({amount} converti)",
+    descriptionOptional: "Libellé (facultatif)",
+    monthOfYear: "Mois",
+    activePeriod: "Période d'activité (facultative)",
+    activePeriodNote:
+      "Laissez les deux vides pour que ça tourne jusqu'à ce que vous l'arrêtiez. Renseignez les deux pour un échéancier fixe\u00A0: une taxe foncière étalée sur plusieurs mois, par exemple.",
     saving: "Enregistrement…",
     save: "Enregistrer",
     delete: "Supprimer",
+    deleteItem: "Supprimer le récurrent",
+    deleteExplanation:
+      "Supprimer ce modèle récurrent\u00A0? Les transactions passées restent dans votre journal.",
     deleting: "Suppression…",
     confirmDelete: "Confirmer la suppression",
     savedHint:
@@ -318,6 +341,60 @@ export const fr: Messages = {
       "Choisissez votre ETF et le nombre de parts. Cherchez par nom ou par ISIN (ex. LU1681043599). L'application récupère le cours en direct et calcule le montant en euros à l'enregistrement ou à l'application.",
     yearlyNote:
       "Compté comme une part mensuelle dans votre budget (annuel ÷ 12). Le paiement complet est enregistré une fois, le mois dû.",
+    trackedFund: "ETF ou fonds suivi",
+    trackedFundNote:
+      "Une charge à montant fixe en euros\u00A0: indiquez l'ETF qu'elle achète. Dans Portefeuilles, saisissez le nombre total de parts que vous détenez pour une valeur de marché en direct.",
+    bitcoinTitle: "Charge en bitcoin",
+    bitcoinNote:
+      "Chaque achat convertit votre montant en euros en BTC. Saisissez votre solde BTC total dans Portefeuilles pour une valeur en direct.",
+  },
+
+  instrument: {
+    label: "ETF ou fonds",
+    searching: "Recherche…",
+    isinKeepTyping: "Un ISIN fait 12 caractères — continuez…",
+    noResults:
+      "Aucun instrument trouvé. Essayez un nom ou un ISIN de 12 caractères.",
+  },
+
+  applyRecurring: {
+    blurb:
+      "Écrit les transactions que les charges de ce mois réclament. Ce que vous avez déjà enregistré n'est pas touché, sauf si vous confirmez les mises à jour ci-dessous.",
+    repriceNote: {
+      one: "{count} échéance est valorisée au marché et encore datée à venir. Elle suit son instrument toute seule — rien à confirmer.",
+      other:
+        "{count} échéances sont valorisées au marché et encore datées à venir. Elles suivent leurs instruments toutes seules — rien à confirmer.",
+    },
+    updateExisting: "Mettre à jour l'existant ({count})",
+    updateExistingNote:
+      "Elles ont déjà été appliquées, mais le modèle récurrent a changé depuis\u00A0: son montant, son libellé ou sa catégorie.",
+    addNew: "Ajouter les nouvelles ({count})",
+    noteUpdated: "Libellé aligné sur le modèle récurrent",
+    movedToCategory: "Déplacée vers la catégorie du modèle récurrent",
+    applying: "Application…",
+    nothingSelected: "Rien de sélectionné",
+    applySelected: {
+      one: "Appliquer la sélection ({count})",
+      other: "Appliquer la sélection ({count})",
+    },
+    applyNew: {
+      one: "Appliquer {count} nouvelle",
+      other: "Appliquer {count} nouvelles",
+    },
+  },
+
+  recurringProposals: {
+    lead: {
+      one: "{count} charge de votre relevé a l'air de se répéter.",
+      other: "{count} charges de votre relevé ont l'air de se répéter.",
+    },
+    everyWeek: "chaque semaine",
+    everyMonth: "chaque mois",
+    everyYear: "chaque année",
+    seenTimes: { one: "vue {count} fois", other: "vue {count} fois" },
+    accept: "Ajouter",
+    refuse: "Pas celle-ci",
+    added: "Ajoutée",
   },
 
   transaction: {
@@ -331,6 +408,7 @@ export const fr: Messages = {
     date: "Date",
     note: "Note (facultatif)",
     notePlaceholder: "Libellé",
+    selectCategory: "Choisir une catégorie",
     tags: "Étiquettes",
     saving: "Enregistrement…",
     saveTransaction: "Enregistrer la transaction",
@@ -348,10 +426,18 @@ export const fr: Messages = {
     skipped: "Cette date est passée — elle ne sera pas réappliquée",
     skipExplanation:
       "Passer cette date seulement\u00A0? La transaction sera retirée et Appliquer ne la recréera pas. Le modèle récurrent reste actif pour les mois suivants.",
+    deleteExplanation:
+      "Supprimer définitivement cette transaction\u00A0? Appliquer pourra la réécrire si le modèle récurrent la réclame toujours.",
     cancel: "Annuler",
   },
 
   charges: {
+    blurb: "Ce que vous savez déjà devoir payer, chaque mois.",
+    committedEveryMonth: "Engagé chaque mois",
+    plusMovedBefore: "Auxquels s'ajoutent",
+    plusMovedAfter: "déplacés chez le courtier — suivis, mais pas dépensés.",
+    nothingHereYet: "Rien ici pour l'instant.",
+    editNamed: "Modifier {name}",
     addCharge: "Ajouter une charge",
     kindOfCharge: "Type de charge",
     activate: "Activer",
@@ -427,6 +513,7 @@ export const fr: Messages = {
     monthlyCap: "Plafond mensuel",
     category: "Catégorie",
     continue: "Continuer",
+    back: "Retour",
     skipForNow: "Passer pour l'instant",
     saving: "Enregistrement…",
     addIncome: "Ajouter le revenu",
@@ -465,6 +552,9 @@ export const fr: Messages = {
     restoredToast: "Catégorie restaurée",
     archiveNamed: "Archiver {name}",
     restoreNamed: "Restaurer {name}",
+    editNamed: "Modifier {name}",
+    deleteNamed: "Supprimer {name}",
+    confirmDelete: "Supprimer",
     deleted: "Catégorie supprimée",
     deleteWarning:
       "Si elle est utilisée par des transactions ou des récurrents, archivez-la plutôt.",
@@ -477,6 +567,9 @@ export const fr: Messages = {
       "Décochez pour de l'argent qui ressort de l'épargne — un virement vers votre compte courant. Il est retiré de ce que vous avez mis de côté, et sort de la réserve derrière l'autonomie.",
     countsHintInvestment:
       "Décochez pour un achat de portefeuille suivi hors budget (par exemple des achats financés par un virement chez le courtier).",
+    notCountingInvestment: "Suivi",
+    notCountingSavings: "Retrait",
+    notCountingIncome: "Remboursement",
   },
 
   categoryFindings: {
@@ -719,6 +812,8 @@ export const fr: Messages = {
 
   calendarView: {
     monthlyCalendar: "Calendrier du mois",
+    dayLabel: "{day} — {entries}",
+    inAndOut: "{income} en entrée · {outflow} en sortie",
     selectedDay: "Détail du jour sélectionné",
     noTransactions: "Aucune transaction",
     emptyTitle: "Rien ce jour-là",
@@ -856,6 +951,9 @@ export const fr: Messages = {
     addCryptoItem: "Ajouter une ligne crypto",
     itemAdded: "Ligne ajoutée",
     itemUpdated: "{name} mis à jour",
+    itemRemoved: "{name} retiré",
+    pickRecurring: "Choisissez-en un…",
+    liveEstimate: "Estimation au cours du marché\u00A0:",
     itemType: "Type de ligne",
     recurringItem: "Récurrent associé",
     dcaBitcoin: "Montant fixe chaque mois · Bitcoin sur Bitstack",
@@ -982,6 +1080,10 @@ export const fr: Messages = {
     previousMonth: "Mois précédent",
     nextMonth: "Mois suivant",
     pickAMonth: "Choisir un mois",
+    showYear: "Afficher {year}",
+    thisMonth: "Ce mois-ci",
+    monthClosed: "clôturé",
+    monthRecords: "écritures",
     close: "Fermer",
     closeSheet: "Fermer le panneau",
     openMenu: "Ouvrir le menu",
@@ -1045,6 +1147,7 @@ export const fr: Messages = {
     thousands: "{value} k",
     perYear: "{rate} par an",
     percent: "{value} %",
+    points: "{value} pts",
     months: "{value} mois",
   },
 
@@ -1112,6 +1215,17 @@ export const fr: Messages = {
     possibleDuplicate: "Vous l'avez peut-être déjà saisi",
     unknownMerchant: "Première fois ici",
     waiting: "En attente",
+  },
+
+  swallowed: {
+    title: {
+      one: "{count} ligne bancaire a été fusionnée sans vous demander",
+      other: "{count} lignes bancaires ont été fusionnées sans vous demander",
+    },
+    body: "Une synchronisation plus ancienne a décidé que c'étaient des charges déjà écrites par vos modèles récurrents, sur la seule foi d'un montant identique à cinq jours près. Sur un relevé plein de petites sommes rondes, ça ne suffit pas\u00A0: la plupart sont probablement de vraies dépenses qui ne sont jamais arrivées dans votre journal. Les rouvrir les remet dans la boîte de revue, à vous de juger.",
+    reopenAll: "Toutes les rouvrir",
+    reopening: "Réouverture…",
+    reopened: "Rouvertes",
   },
 
   investmentReturn: {
@@ -1804,6 +1918,10 @@ export const fr: Messages = {
     askBank: "Demander à votre banque s'il y a du nouveau",
     refreshing: "Actualisation…",
     refresh: "Actualiser",
+  },
+
+  outbox: {
+    retry: "Réessayer",
   },
 
   errors: {

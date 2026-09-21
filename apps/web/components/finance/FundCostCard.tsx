@@ -88,7 +88,12 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
             <span className="privacy-amount tabular-nums">
               {formatEuro(summary.coveredValue)}
             </span>{" "}
-            · {formatEuro(costOverYears(summary.totalAnnualCost, HORIZON_YEARS))}{" "}
+            ·{" "}
+            <span className="privacy-amount tabular-nums">
+              {formatEuro(
+                costOverYears(summary.totalAnnualCost, HORIZON_YEARS),
+              )}
+            </span>{" "}
             {t("fundCost.overYears", { years: HORIZON_YEARS })}
           </p>
 
@@ -121,15 +126,15 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
               {t("fundCost.cheapestAt", {
                 charge: formatCharge(summary.cheapest.ongoingCharge),
               })}{" "}
-              <span className="tabular-nums">
+              <span className="privacy-amount tabular-nums">
                 {formatEuro(summary.coveredValue)}
               </span>{" "}
               {t("fundCost.wouldCost")}{" "}
-              <span className="tabular-nums text-foreground">
+              <span className="privacy-amount tabular-nums text-foreground">
                 {formatEuro(summary.costAtCheapest ?? 0)}
               </span>{" "}
               {t("fundCost.differenceOf")}{" "}
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="privacy-amount font-medium tabular-nums text-foreground">
                 {formatEuro(saving)}
               </span>{" "}
               {t("fundCost.aYear")}

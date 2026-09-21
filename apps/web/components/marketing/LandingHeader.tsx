@@ -29,7 +29,7 @@ function Wordmark() {
     <Link
       href="/"
       className={cn(
-        "inline-flex min-h-11 shrink-0 items-center gap-2.5 rounded-full font-logo text-2xl leading-none text-white",
+        "inline-flex min-h-11 shrink-0 items-center gap-2.5 rounded-full font-logo text-2xl leading-none text-marketing-ink",
         marketingFocus,
       )}
       aria-label="Pluclair"
@@ -66,7 +66,7 @@ function ProductMenu({ pathname }: { pathname: string }) {
           "flex items-center gap-1.5 rounded-control text-sm transition-colors duration-hover",
           marketingFocus,
           active || open
-            ? "text-white"
+            ? "text-marketing-ink"
             : "text-marketing-muted hover:text-white",
         )}
         aria-expanded={open}
@@ -103,7 +103,7 @@ function ProductMenu({ pathname }: { pathname: string }) {
                   pathname === href ? "bg-white/10" : "hover:bg-white/[0.07]",
                 )}
               >
-                <span className="text-sm font-medium text-white">
+                <span className="text-sm font-medium text-marketing-ink">
                   {page.title}
                 </span>
                 <span className="text-xs leading-snug text-marketing-muted">

@@ -7,7 +7,7 @@ import {
 } from "@finance/core/categories";
 import type { Category, CategoryType } from "@finance/core/types/database";
 import { cn } from "@/lib/utils";
-import { useLocale } from "@/lib/locale-context";
+import { useLocale, useT } from "@/lib/locale-context";
 
 export const CATEGORY_SELECT_CLASS =
   "h-11 w-full rounded-control border border-border bg-background px-3 text-base text-foreground";
@@ -21,6 +21,7 @@ interface CategorySelectProps {
   defaultValue?: string;
   required?: boolean;
   disabled?: boolean;
+  /** Overrides the default "Select category" prompt on the empty option. */
   placeholder?: string;
   className?: string;
   onChange?: (event: ChangeEvent<HTMLSelectElement>) => void;
@@ -35,11 +36,12 @@ export function CategorySelect({
   defaultValue,
   required,
   disabled,
-  placeholder = "Select category",
+  placeholder,
   className,
   onChange,
 }: CategorySelectProps) {
   const locale = useLocale();
+  const t = useT();
   const groups = groupCategoriesByType(categories, { excludeTypes });
 
   return (
@@ -54,7 +56,7 @@ export function CategorySelect({
       onChange={onChange}
     >
       <option value="" disabled>
-        {placeholder}
+        {placeholder ?? t("transaction.selectCategory")}
       </option>
       {groups.map((group) => (
         <optgroup key={group.type} label={group.label}>

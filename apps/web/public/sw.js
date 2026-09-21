@@ -14,7 +14,19 @@
  *     always hit the network or fail honestly so the outbox can hold them.
  */
 
-const VERSION = "pluclair-v1";
+/*
+ * Bump this whenever a precached file changes.
+ *
+ * A browser reinstalls a worker only when `sw.js` itself differs byte for
+ * byte, and `install` is the only place `PRECACHE` is written. So editing
+ * `offline.html` alone changes nothing for anyone who already has the app:
+ * they keep serving the copy sitting in the old cache, indefinitely. Bumping
+ * the name reruns `install` and lets the `activate` cleanup below drop every
+ * cache that is not this one.
+ *
+ * v2: offline.html was rewritten for the one dark palette and given French.
+ */
+const VERSION = "pluclair-v2";
 const OFFLINE_URL = "/offline.html";
 
 const PRECACHE = [OFFLINE_URL, "/icon-192.png", "/icon-512.png"];
@@ -33,7 +45,11 @@ self.addEventListener("activate", (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((key) => key !== VERSION).map((key) => caches.delete(key))),
+        Promise.all(
+          keys
+            .filter((key) => key !== VERSION)
+            .map((key) => caches.delete(key)),
+        ),
       )
       .then(() => self.clients.claim()),
   );
@@ -66,7 +82,9 @@ self.addEventListener("fetch", (event) => {
           fetch(request).then((response) => {
             if (response.ok) {
               const copy = response.clone();
-              void caches.open(VERSION).then((cache) => cache.put(request, copy));
+              void caches
+                .open(VERSION)
+                .then((cache) => cache.put(request, copy));
             }
             return response;
           }),

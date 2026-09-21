@@ -259,11 +259,18 @@ function QuickAddFields({
               }
             }}
           />
+          {/* The empty state here is a placeholder, and DESIGN.md holds
+              placeholders to the same 4.5:1 floor as body text. It was
+              `text-muted-foreground/40`, about 2.1:1 — the least readable
+              thing in the app, on the field the primary action opens on.
+              Full-strength muted foreground is the placeholder token the
+              inputs already use; the difference from a typed amount is that
+              one is muted and the other is the foreground. */}
           <div
             aria-hidden
             className={cn(
               "pointer-events-none flex items-baseline gap-1 font-mono tabular-nums",
-              display.empty ? "text-muted-foreground/40" : "text-foreground",
+              display.empty ? "text-muted-foreground" : "text-foreground",
             )}
           >
             <span className="text-2xl">{symbol}</span>
