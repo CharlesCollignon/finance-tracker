@@ -15,9 +15,7 @@ interface PasskeySignInButtonProps {
   label?: string;
 }
 
-export function PasskeySignInButton({
-  label = "Sign in with passkey",
-}: PasskeySignInButtonProps) {
+export function PasskeySignInButton({ label }: PasskeySignInButtonProps) {
   const t = useT();
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -58,7 +56,9 @@ export function PasskeySignInButton({
         disabled={pending}
       >
         <Fingerprint size={ICON.xl} weight="bold" />
-        {pending ? "Waiting for passkey…" : label}
+        {pending
+          ? t("auth.waitingForPasskey")
+          : (label ?? t("auth.withPasskey"))}
       </Button>
       {error && (
         <Text className="text-sm text-destructive">

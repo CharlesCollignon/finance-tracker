@@ -7,6 +7,7 @@ import { CaretDown, List, X } from "@phosphor-icons/react";
 import { Orb } from "@/components/brand/Orb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LocaleChoices, LocaleMenu } from "@/components/marketing/LocaleSwitch";
+import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { cn } from "@/lib/utils";
 import {
   featureHref,
@@ -27,7 +28,10 @@ function Wordmark() {
   return (
     <Link
       href="/"
-      className="inline-flex min-h-11 shrink-0 items-center gap-2.5 font-logo text-2xl leading-none text-white"
+      className={cn(
+        "inline-flex min-h-11 shrink-0 items-center gap-2.5 rounded-full font-logo text-2xl leading-none text-white",
+        marketingFocus,
+      )}
       aria-label="Pluclair"
     >
       <Orb size="26px" tone="mark" className="shrink-0" />
@@ -37,7 +41,8 @@ function Wordmark() {
 }
 
 const linkClass =
-  "text-sm text-marketing-muted transition-colors duration-hover hover:text-white";
+  "rounded-control text-sm text-marketing-muted transition-colors duration-hover " +
+  `hover:text-white ${marketingFocus}`;
 
 /** The seven feature pages, behind one nav entry.
  *
@@ -58,7 +63,8 @@ function ProductMenu({ pathname }: { pathname: string }) {
       <button
         type="button"
         className={cn(
-          "flex items-center gap-1.5 text-sm transition-colors duration-hover",
+          "flex items-center gap-1.5 rounded-control text-sm transition-colors duration-hover",
+          marketingFocus,
           active || open
             ? "text-white"
             : "text-marketing-muted hover:text-white",
@@ -93,6 +99,7 @@ function ProductMenu({ pathname }: { pathname: string }) {
                 onClick={close}
                 className={cn(
                   "flex flex-col gap-0.5 rounded-control px-3 py-2.5 transition-colors duration-hover",
+                  marketingFocus,
                   pathname === href ? "bg-white/10" : "hover:bg-white/[0.07]",
                 )}
               >
@@ -167,7 +174,10 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
             />
             <button
               type="button"
-              className="flex h-11 w-11 items-center justify-center rounded-full text-marketing-ink transition-colors hover:bg-white/10 hover:text-white lg:hidden"
+              className={cn(
+                "flex h-11 w-11 items-center justify-center rounded-full text-marketing-ink transition-colors hover:bg-white/10 hover:text-white lg:hidden",
+                marketingFocus,
+              )}
               aria-expanded={open}
               aria-controls="marketing-nav"
               aria-label={open ? t("common.closeMenu") : t("common.openMenu")}
@@ -192,7 +202,10 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
               key={page.id}
               href={featureHref(page.id)}
               onClick={() => setOpenForPath(null)}
-              className="flex min-h-11 items-center rounded-control px-3 text-sm text-marketing-ink transition-colors hover:bg-white/[0.07] hover:text-white"
+              className={cn(
+                "flex min-h-11 items-center rounded-control px-3 text-sm text-marketing-ink transition-colors hover:bg-white/[0.07] hover:text-white",
+                marketingFocus,
+              )}
             >
               {page.title}
             </Link>
@@ -204,7 +217,10 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
               key={link.href}
               href={link.href}
               onClick={() => setOpenForPath(null)}
-              className="flex min-h-11 items-center rounded-control px-3 text-sm text-marketing-muted transition-colors hover:bg-white/[0.07] hover:text-white"
+              className={cn(
+                "flex min-h-11 items-center rounded-control px-3 text-sm text-marketing-muted transition-colors hover:bg-white/[0.07] hover:text-white",
+                marketingFocus,
+              )}
             >
               {copy.nav[link.key]}
             </Link>
@@ -213,7 +229,10 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
             <Link
               href="/login"
               onClick={() => setOpenForPath(null)}
-              className="flex min-h-11 items-center rounded-control px-3 text-sm text-marketing-muted transition-colors hover:bg-white/[0.07] hover:text-white sm:hidden"
+              className={cn(
+                "flex min-h-11 items-center rounded-control px-3 text-sm text-marketing-muted transition-colors hover:bg-white/[0.07] hover:text-white sm:hidden",
+                marketingFocus,
+              )}
             >
               {copy.cta.signIn}
             </Link>

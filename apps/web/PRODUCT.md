@@ -21,8 +21,9 @@ target. Future work should treat France-only assumptions as things to
 generalise, not as the shape of the product.
 
 The situation is monthly and deliberate. The user sets what repeats, applies it
-to the month, types the rest as it happens, and on their reading day enters (or
-reads from a connected bank) the one closing balance the app cannot know.
+to the month, types the rest as it happens, and on their reading day enters the
+one closing balance the app cannot know — read off their bank and typed in, on
+every deployment there is today.
 
 ## Product Purpose
 
@@ -46,11 +47,23 @@ missed, because that requires asking the user for a balance and then being
 willing to publish the gap. Unrecorded spending is the output of that, and the
 forward projection is allowed to subtract it precisely because it was measured.
 
+The bank connection is **not shipped**, and the positioning above does not rest
+on it. `lib/bank/client.ts` states the shape plainly: two ways in exist and only
+the first is wired. `getBankConnection(userId)` returns `null` unless the id
+matches `OPEN_BANKING_OWNER_USER_ID`, `BankConnection.source` has exactly one
+variant — `"owner-credentials"` — and Partner Connect, the path by which an
+ordinary user would connect their own bank, "is a seam rather than an
+implementation" waiting on an approved partner application. So one person on a
+deployment can have a feed; nobody who signs up can. The month close therefore
+stands on a balance the user types, which is also why it is the positioning and
+not a feature of the feed.
+
 Three commitments stated on the marketing site and binding on all future work
 (`components/marketing/landing-copy.ts`):
 
-- **It does not move money.** Bank access is read-only and there is no version
-  of it that could initiate a payment.
+- **It does not move money.** Nothing in the app can reach an account: there is
+  no transfer, no payment and no standing order in it, and the connection being
+  built is read-only, with no version of it that could initiate a payment.
 - **It does not act on a rule the user did not write.** A statement row files
   itself only where the user has put that shop in the same place twice;
   everything else waits in the review inbox, and a recurring template is a
@@ -68,11 +81,14 @@ A monthly cycle, across three clients that agree because they share one ledger:
 this Next.js web app, an Expo mobile app in `apps/mobile`, and the domain
 modules in `packages/core`, over one Supabase backend.
 
-Money reaches the ledger three ways: typed by the user, applied from a
-recurring template, or brought in by an optional read-only bank connection or a
-mapped CSV export. Rows the app will not file on its own wait in the review
-inbox at `?review=inbox`, and answering one teaches the matcher, so the inbox
-shrinks rather than becoming a permanent chore.
+Money reaches the ledger three ways in practice: typed by the user, applied
+from a recurring template, or brought in from a mapped CSV export, where the
+same merchant history proposes a category for each row and nothing is written
+until the user has read the list. A fourth way is built and reachable by one
+account per deployment — the owner-credentials bank feed, whose rows wait in
+the review inbox at `?review=inbox` where answering one teaches the matcher.
+Anything written for a general audience describes the first three; the feed is
+not something a visitor or a new user can have.
 
 Surfaces in this app: the Bearing, the Ledger (list, calendar, by category),
 transactions, budgets, recurring, categories, investments and look-through,
@@ -83,8 +99,13 @@ pluclair.com with its own feature pages.
 
 - Euro-centric throughout. Instrument quotes carry both the euro value and the
   price and currency originally quoted in.
-- Bank access is read-only, optional, and revocable; rows it already filed stay
-  with the user afterwards. Credentials never reach a browser.
+- Bank access, where it exists at all, is read-only and server-side, and its
+  credentials never reach a browser. It exists for exactly one user id per
+  deployment today, so it is an operating fact about the owner's own account
+  and not a capability of the product. The per-user path is an unshipped seam:
+  until it lands, no surface may describe connecting a bank in the present
+  tense, and the marketing site says so in the future tense in one place only
+  (the month-close section of `landing-copy.ts`).
 - Every user-facing string goes through the `en` and `fr` catalogues in
   `packages/core/src/i18n/messages/`. Findings and other computed prose carry an
   i18n key and its parameters, never a sentence, so wording belongs to the

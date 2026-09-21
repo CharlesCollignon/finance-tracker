@@ -81,20 +81,25 @@ export const fr: Messages = {
     deleteAccount: "Supprimer le compte",
     deleteMyAccount: "Supprimer mon compte",
     saved: "Enregistré",
+    wipeBlurb:
+      "Transactions, modèles récurrents, positions et catégories. Votre compte reste.",
+    closeBlurb: "Définitif. Tout ce qui précède part avec.",
+    deleteNeedsServiceKey:
+      "La suppression du compte exige SUPABASE_SERVICE_ROLE_KEY sur le serveur (en local\u00A0: .env.local, en production\u00A0: les variables d'environnement Vercel).",
   },
 
   ledger: {
     applyPending: "Application…",
     applyRecurring: "Appliquer les récurrents",
     applyWaiting: "Des récurrents attendent d'être appliqués",
-    applyAllDone: "Tous les récurrents sont déjà appliqués",
+    applyAllDone: "Toutes les échéances récurrentes sont déjà appliquées",
     applyNothing: "Rien à appliquer",
     applyResult: "Récurrents appliqués\u00A0: {parts}",
     applyAdded: "{count} ajoutés",
     applyUpdated: "{count} mis à jour",
     emptyTitle: "Rien d'enregistré ce mois-ci",
     emptyBody:
-      "Ajoutez une écriture, ou appliquez les charges que vous savez déjà récurrentes.",
+      "Ajoutez une transaction, ou appliquez les charges que vous savez déjà récurrentes.",
     searchPlaceholder: "Chercher une catégorie ou une note…",
     searchLabel: "Chercher dans les transactions",
     filterByCategory: "Filtrer par catégorie",
@@ -106,12 +111,30 @@ export const fr: Messages = {
     select: "Sélectionner",
     clearAll: "Tout désélectionner",
     selectAll: "Tout sélectionner",
-    exportCsv: "Exporter ces écritures en CSV",
+    exportCsv: "Exporter ces transactions en CSV",
     importCsv: "Importer un relevé CSV",
     exportNothing: "Rien à exporter pour cette vue",
-    noMatchTitle: "Aucune écriture correspondante",
+    noMatchTitle: "Aucune transaction correspondante",
     noMatchBody: "Essayez une autre recherche ou un autre filtre.",
-    entryCount: { one: "{count} écriture", other: "{count} écritures" },
+    entryCount: {
+      one: "{count} transaction",
+      other: "{count} transactions",
+    },
+    shownOfTotal: {
+      one: "{count} transaction sur {total}",
+      other: "{count} transactions sur {total}",
+    },
+    exported: {
+      one: "{count} transaction exportée",
+      other: "{count} transactions exportées",
+    },
+    in: "Entré",
+    out: "Sorti",
+    leftAtMonthEnd: "Restant en fin de mois",
+    clearFilters: "Effacer les filtres",
+    selectRow: "Sélectionner {name}",
+    editRow: "Modifier {name}",
+    theNewCategory: "la nouvelle catégorie",
     deleted: {
       one: "{count} transaction supprimée",
       other: "{count} transactions supprimées",
@@ -131,12 +154,12 @@ export const fr: Messages = {
     selectHint: "Touchez pour sélectionner · Terminé pour quitter",
     editHint: "Touchez pour modifier · appui long pour sélectionner",
     needsCategory: {
-      one: "{count} écriture attend une catégorie",
-      other: "{count} écritures attendent une catégorie",
+      one: "{count} transaction attend une catégorie",
+      other: "{count} transactions attendent une catégorie",
     },
     needsCategoryAction: {
-      one: "{count} écriture attend une catégorie. Vérifier",
-      other: "{count} écritures attendent une catégorie. Vérifier",
+      one: "{count} transaction attend une catégorie. Vérifier",
+      other: "{count} transactions attendent une catégorie. Vérifier",
     },
     repeatTitle: "Répéter aujourd'hui ?",
     repeatBody: "Ajoute un autre {category} de {amount} daté d'aujourd'hui.",
@@ -185,6 +208,20 @@ export const fr: Messages = {
       one: "{count} transaction importée",
       other: "{count} transactions importées",
     },
+    intro:
+      "Exportez un CSV depuis votre banque et déposez-le ici. Le fichier est lu dans votre navigateur — rien n'est envoyé, et rien n'est enregistré tant que vous n'avez pas relu chaque ligne.",
+    dropFile: "Déposez un fichier .csv ici",
+    fileTooLarge: "Ce fichier dépasse 5\u00A0Mo — est-ce le bon export\u00A0?",
+    fileNoRows: "Ce fichier ne contient aucune ligne.",
+    noRowsRead: "Aucune ligne n'a pu être lue dans ce fichier.",
+    columnNumber: "Colonne {number}",
+    rowCount: { one: "{count} ligne", other: "{count} lignes" },
+    guesses: "Voici ce que l'application a deviné. Corrigez ce qui ne va pas.",
+    spendingIs: "Dans ce fichier, les dépenses sont",
+    signNegative: "Négatives (−12,50)",
+    signPositive: "Positives (12,50)",
+    categoryForLine: "Catégorie pour la ligne {line}",
+    choose: "Choisir…",
   },
 
   plan: {
@@ -209,7 +246,7 @@ export const fr: Messages = {
     allSavings: "Toute l'épargne",
     tagsHeading: "Étiquettes",
     tagsBlurb:
-      "Une deuxième façon de regrouper une écriture, en travers des catégories — des vacances, un colocataire, un projet à côté.",
+      "Une deuxième façon de regrouper une transaction, en travers des catégories — des vacances, un colocataire, un projet à côté.",
     newTag: "Nouvelle étiquette",
     addTag: "Ajouter l'étiquette",
     tagAdded: "Étiquette ajoutée",
@@ -243,7 +280,7 @@ export const fr: Messages = {
     close: "Fermer",
     category: "Catégorie",
     description: "Libellé",
-    descriptionPlaceholder: "ex. Netflix, salle de sport, DCA CTO",
+    descriptionPlaceholder: "ex. Netflix, salle de sport, achat d'ETF mensuel",
     schedule: "Échéance",
     monthly: "Mensuel",
     weekly: "Hebdomadaire",
@@ -274,7 +311,7 @@ export const fr: Messages = {
     deletedHint:
       "Supprimé — appliquez les récurrents dans le Journal pour voir le changement.",
     brokerDcaNote:
-      "Les DCA chez le courtier sont suivis pour information mais ne réduisent pas votre budget restant.",
+      "Les achats chez le courtier sont suivis pour information mais ne réduisent pas votre budget restant.",
     bitstackNote:
       "Achat hebdomadaire à montant fixe en EUR sur Bitstack. La valeur de marché dans Portefeuilles utilise votre total BTC × le cours BTC/EUR en direct.",
     sharesNote:
@@ -310,7 +347,7 @@ export const fr: Messages = {
     confirmSkip: "Oui, passer cette date",
     skipped: "Cette date est passée — elle ne sera pas réappliquée",
     skipExplanation:
-      "Passer cette date seulement\u00A0? L'écriture sera retirée et Appliquer ne la recréera pas. Le récurrent reste actif pour les mois suivants.",
+      "Passer cette date seulement\u00A0? La transaction sera retirée et Appliquer ne la recréera pas. Le modèle récurrent reste actif pour les mois suivants.",
     cancel: "Annuler",
   },
 
@@ -325,7 +362,7 @@ export const fr: Messages = {
     emptyBody:
       "Loyer, abonnements, un virement mensuel vers l'épargne — tout ce que vous savez déjà à venir.",
     emptyTitleMobile: "Qu'est-ce qui revient chaque mois\u00A0?",
-    emptyBodyMobile: "Loyer, salaire, abonnements, DCA.",
+    emptyBodyMobile: "Loyer, salaire, abonnements, un achat d'ETF mensuel.",
     openLedgerToApply: "Ouvrir le Journal pour appliquer ces charges",
     applyPendingBefore: "Ces charges ont changé depuis l'écriture de ce mois.",
     applyPendingLink: "Ouvrez le Journal",
@@ -357,6 +394,15 @@ export const fr: Messages = {
     saved: "Transaction enregistrée",
     savedOffline:
       "Enregistrée sur cet appareil — elle sera synchronisée dès le retour en ligne",
+    amount: "Montant",
+    note: "Note",
+    tags: "Étiquettes",
+    allCategories: "Toutes les catégories",
+    noCategoryMatch: "Aucune catégorie ne correspond à «\u00A0{query}\u00A0».",
+    savedKeepGoing: {
+      one: "{count} enregistrée — continuez.",
+      other: "{count} enregistrées — continuez.",
+    },
   },
 
   onboarding: {
@@ -393,6 +439,7 @@ export const fr: Messages = {
       other: "{count} ajoutées — ajoutez-en une autre ou terminez ci-dessous.",
     },
     reopen: "Prise en main",
+    templateAdded: "{name} ajouté",
   },
 
   categories: {
@@ -429,7 +476,7 @@ export const fr: Messages = {
     countsHintSavings:
       "Décochez pour de l'argent qui ressort de l'épargne — un virement vers votre compte courant. Il est retiré de ce que vous avez mis de côté, et sort de la réserve derrière l'autonomie.",
     countsHintInvestment:
-      "Décochez pour un DCA de portefeuille suivi hors budget (par exemple des achats financés par un virement chez le courtier).",
+      "Décochez pour un achat de portefeuille suivi hors budget (par exemple des achats financés par un virement chez le courtier).",
   },
 
   categoryFindings: {
@@ -596,6 +643,14 @@ export const fr: Messages = {
       "Un mois normal chez vous tourne autour de {amount} que l'application ne voit jamais.",
     inviteBare:
       "Un seul solde, et l'application peut calculer ce qu'elle n'a jamais vu.",
+    closeTheMonth: "Clôturer le mois",
+    monthsInARow: {
+      one: "{count} mois d'affilée",
+      other: "{count} mois d'affilée",
+    },
+    filledFromBank:
+      "Rempli depuis votre banque. Modifiez-le si le jour de lecture n'est pas aujourd'hui.",
+    balancePlaceholder: "2400,50",
     reopened: "{month} réouvert",
     baselineSet:
       "{amount} au {date}. Clôturez le mois prochain et l'application pourra commencer à vous dire ce qu'elle n'a jamais vu.",
@@ -624,6 +679,16 @@ export const fr: Messages = {
     },
     taughtIt:
       "Tout ce que l'application reconnaissait déjà est passé directement. Répondre à celles-ci le lui apprend pour la prochaine fois.",
+    nothingFromBank: "Rien en attente du côté de votre banque.",
+    leaveOut: "Laisser de côté",
+    recentlyDecided: "Décidé récemment",
+    putOneBack:
+      "Remettez-en une en attente si elle est partie au mauvais endroit.",
+    leftOut: "laissée de côté",
+    inYourLedger: "dans votre journal",
+    move: "Déplacer",
+    changeCategory: "Changer de catégorie",
+    undo: "Annuler",
   },
 
   selectionBar: {
@@ -646,6 +711,10 @@ export const fr: Messages = {
     confirmDelete: "Oui, supprimer",
     cancel: "Annuler",
     clear: "Vider la sélection",
+    fromRecurring: {
+      one: "{count} vient d'un modèle récurrent",
+      other: "{count} viennent de modèles récurrents",
+    },
   },
 
   calendarView: {
@@ -682,6 +751,21 @@ export const fr: Messages = {
     noAccount: "Pas de compte\u00A0?",
     noAccountYet: "Pas encore de compte\u00A0?",
     createOne: "En créer un",
+    or: "ou",
+    welcomeBack: "Content de vous revoir",
+    signUpHeading: "Commencez à suivre vos revenus et vos dépenses",
+    linkExpired: "Lien de connexion expiré ou invalide. Veuillez réessayer.",
+    redirecting: "Redirection…",
+    waitingForPasskey: "En attente de la clé d'accès…",
+    forgotPassword: "Mot de passe oublié\u00A0?",
+    resetHeading: "Réinitialiser votre mot de passe",
+    resetBody:
+      "Saisissez votre adresse e-mail et nous vous enverrons un lien pour revenir dans votre journal.",
+    sendResetLink: "Envoyer le lien",
+    sendingResetLink: "Envoi…",
+    resetSent:
+      "S'il existe un compte pour {email}, un lien vient de partir. Regardez votre boîte de réception, et vos indésirables.",
+    backToSignIn: "Retour à la connexion",
   },
 
   marketingMock: {
@@ -774,8 +858,8 @@ export const fr: Messages = {
     itemUpdated: "{name} mis à jour",
     itemType: "Type de ligne",
     recurringItem: "Récurrent associé",
-    dcaBitcoin: "DCA à montant fixe · Bitcoin sur Bitstack",
-    dcaEtf: "DCA à montant fixe · ETF défini dans Plan",
+    dcaBitcoin: "Montant fixe chaque mois · Bitcoin sur Bitstack",
+    dcaEtf: "Montant fixe chaque mois · ETF défini dans Plan",
     trackedAsset: "Actif suivi",
     trackedEtf: "ETF suivi",
     bitcoin: "Bitcoin",
@@ -870,13 +954,13 @@ export const fr: Messages = {
     actionClose: "Clôturer",
     actionStart: "Commencer",
     attentionSwallowed: {
-      one: "{count} écriture bancaire a été fusionnée par une synchronisation précédente",
+      one: "{count} transaction bancaire a été fusionnée par une synchronisation précédente",
       other:
-        "{count} écritures bancaires ont été fusionnées par une synchronisation précédente",
+        "{count} transactions bancaires ont été fusionnées par une synchronisation précédente",
     },
     attentionInbox: {
-      one: "{count} écriture attend une catégorie",
-      other: "{count} écritures attendent une catégorie",
+      one: "{count} transaction attend une catégorie",
+      other: "{count} transactions attendent une catégorie",
     },
     attentionApply: {
       one: "{count} récurrent est prêt à être ajouté",
@@ -940,6 +1024,8 @@ export const fr: Messages = {
     browserNotifications: "Notifications du navigateur",
     theRun: "La série",
     kept: "Gardé",
+    showAmounts: "Afficher les montants",
+    hideAmounts: "Masquer les montants",
   },
 
   locale: {
@@ -1008,9 +1094,9 @@ export const fr: Messages = {
     typeChangeSome:
       "{count} d'entre elles changent de type de catégorie, donc les totaux des mois passés et les dépenses non enregistrées vont bouger.",
     rulesLeftBehind: {
-      one: "{names} restera classé à l'ancienne, car une écriture plus récente n'est pas sélectionnée.",
+      one: "{names} restera classé à l'ancienne, car une transaction plus récente n'est pas sélectionnée.",
       other:
-        "{names} resteront classés à l'ancienne, car des écritures plus récentes ne sont pas sélectionnées.",
+        "{names} resteront classés à l'ancienne, car des transactions plus récentes ne sont pas sélectionnées.",
     },
     rulesRewritten: "Désormais {names} sera classé en {target}.",
     recurringKeepCategory:
@@ -1212,8 +1298,8 @@ export const fr: Messages = {
     measuredNote:
       "Mesuré par rapport à votre dernière clôture, pas mémorisé — cela bouge donc avec la banque, et ce n'est définitif qu'une fois le mois clôturé.",
     notYetMeasured:
-      "Clôturez un mois par rapport au solde de votre banque et ceci se remplit : l'application calcule ce qui a quitté le compte sans qu'aucune écriture ne l'explique.",
-    findMissingEntry: "Trouver l'écriture manquante",
+      "Clôturez un mois par rapport au solde de votre banque et ceci se remplit : l'application calcule ce qui a quitté le compte sans qu'aucune transaction ne l'explique.",
+    findMissingEntry: "Trouver la transaction manquante",
     setUpCta: "Configurer",
   },
 
@@ -1256,7 +1342,7 @@ export const fr: Messages = {
       "Le jour du mois suivant où vous relevez le solde. Plus tard est plus sûr avec une carte à débit différé, car les dépenses par carte du mois doivent avoir été prélevées. Le plus important est que ce soit toujours le même jour.",
     startingPoint: "Point de départ",
     needsLook:
-      "À vérifier — plus sur le compte que ce que les écritures permettent",
+      "À vérifier — plus sur le compte que ce que les transactions permettent",
     neverRecordedAmount: "{amount} jamais enregistré",
     keptPercent: "{rate} % gardé",
     saved: "Enregistré",
@@ -1355,9 +1441,9 @@ export const fr: Messages = {
     currentOption: "Actuel · {date}",
     monthEndOption: "Fin de mois · {date}",
     currentHint:
-      "Jusqu'à aujourd'hui seulement — dépenses et DCA à venir non comptés.",
+      "Jusqu'à aujourd'hui seulement — dépenses et achats de portefeuille à venir non comptés.",
     monthEndHint:
-      "Inclut tout le récurrent dû ce mois-ci, DCA des portefeuilles compris.",
+      "Inclut toutes les échéances dues ce mois-ci, achats de portefeuille compris.",
   },
 
   push: {
@@ -1700,6 +1786,24 @@ export const fr: Messages = {
         other: "+{count} en attente",
       },
     },
+  },
+
+  errorPage: {
+    title: "Quelque chose s'est mal passé",
+    body: "Cette page n'a pas pu être chargée. Vos données sont intactes — réessayez, et si le problème persiste, déconnectez-vous puis reconnectez-vous.",
+    tryAgain: "Réessayer",
+    notFoundTitle: "Page introuvable",
+    notFoundBody: "La page que vous cherchez n'existe pas ou a été déplacée.",
+    goHome: "Retour à l'accueil",
+  },
+
+  refresh: {
+    reloadEverything: "Tout recharger",
+    askingBank: "Interrogation de votre banque…",
+    lastChecked: "Actualiser — dernière vérification {age}",
+    askBank: "Demander à votre banque s'il y a du nouveau",
+    refreshing: "Actualisation…",
+    refresh: "Actualiser",
   },
 
   errors: {

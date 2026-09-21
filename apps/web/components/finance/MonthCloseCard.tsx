@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { ArrowRight, Flame } from "@phosphor-icons/react";
+import { closeInvitation } from "@finance/core/month-close";
 import { Button, ButtonNub } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { MonthCloseSheet } from "@/components/finance/MonthCloseSheet";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface MonthCloseCardProps {
   year: number;
@@ -27,6 +29,12 @@ interface MonthCloseCardProps {
  * cannot work out for itself. One number, once a month, in exchange for the
  * only honest answer to "did I actually save anything" — so it is worth a
  * card rather than a setting buried on a screen nobody visits.
+ *
+ * Which of the four invitations it opens with is `closeInvitation`'s decision
+ * and not this card's, the same way the phone's Plan tab asks. The three
+ * conditionals that used to be written out here chose between four English
+ * sentences built with template literals, so the card was the one surface in
+ * the app that could not be read in French at all.
  */
 export function MonthCloseCard({
   year,
@@ -39,16 +47,21 @@ export function MonthCloseCard({
   baseline,
   streak,
 }: MonthCloseCardProps) {
+  const t = useT();
   const formatMoney = useFormatCurrency();
   const [open, setOpen] = useState(false);
 
-  const detail = isBaseline
-    ? "Type in what your account actually holds today. From next month the app can compare that against what it recorded, and tell you what it never saw — cash, a forgotten tap, a card you do not track."
-    : unrecordedCap !== null
-      ? `Stay under ${formatMoney(unrecordedCap)} of unrecorded spending to keep the run going.`
-      : baseline !== null
-        ? `A normal month for you is around ${formatMoney(baseline)} the app never sees.`
-        : "One balance, and the app can work out what it never saw.";
+  const invitation = closeInvitation({ isBaseline, unrecordedCap, baseline });
+  const detail =
+    invitation.kind === "baseline"
+      ? t("monthClose.inviteBaseline")
+      : invitation.kind === "allowance"
+        ? t("monthClose.inviteAllowance", { cap: formatMoney(invitation.cap) })
+        : invitation.kind === "normal"
+          ? t("monthClose.inviteNormal", {
+              amount: formatMoney(invitation.baseline),
+            })
+          : t("monthClose.inviteBare");
 
   return (
     <>
@@ -58,13 +71,13 @@ export function MonthCloseCard({
             <div className="flex items-center gap-2">
               <h2 className="font-head text-lg">
                 {isBaseline
-                  ? "Set your starting balance"
-                  : `${monthLabel} is ready to close`}
+                  ? t("monthClose.setStartingBalance")
+                  : t("month.attentionReadyToClose", { month: monthLabel })}
               </h2>
               {streak > 1 && (
                 <span
                   className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground"
-                  title={`${streak} months in a row`}
+                  title={t("monthClose.monthsInARow", { count: streak })}
                 >
                   <Flame size={ICON.xs} weight="fill" />
                   {streak}
@@ -80,7 +93,7 @@ export function MonthCloseCard({
               className="gap-3"
               onClick={() => setOpen(true)}
             >
-              Close the month
+              {t("monthClose.closeTheMonth")}
               <ButtonNub>
                 <ArrowRight size={ICON.md} />
               </ButtonNub>

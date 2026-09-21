@@ -16,9 +16,12 @@ import type { LandingPageId } from "./landing-copy";
  *   register a translation drifts into when the English is doing something
  *   more specific.
  *
- *   Never promise what the app does not do. Read-only access, a row filed
- *   only by a rule the user wrote, and no advice — all three are as true in
- *   French and just as easy to write around.
+ *   Never promise what the app does not do. Nobody can connect a bank yet —
+ *   see the English header for why — so the French says the same thing the
+ *   English does: what a visitor will actually meet today, and the connection
+ *   in the future tense in exactly one place. "En cours de développement" is
+ *   the whole of it; a translation that turns one clause into a paragraph of
+ *   roadmap has re-promised what the English just stopped promising.
  *
  * The nouns come from the app, not from the dictionary: "Journal", "Gardé",
  * "Dépenses non enregistrées", "Clôture du mois". They are the words printed
@@ -31,7 +34,7 @@ export const landingCopyFr: LandingCopySections & {
   hero: {
     titleLines: ["Tout votre mois,", "sur un seul écran calme"],
     tagline:
-      "Revenus, factures, épargne et investissements — saisis par vous ou lus depuis votre banque, gardés en privé, et rapprochés de votre vrai solde à la fin de chaque mois.",
+      "Revenus, factures, épargne et investissements — saisis par vous, gardés en privé, et rapprochés de votre vrai solde à la fin de chaque mois.",
     cards: {
       remaining: {
         label: "Reste en mars",
@@ -49,11 +52,11 @@ export const landingCopyFr: LandingCopySections & {
     items: [
       {
         title: "Déplacer votre argent",
-        body: "La connexion bancaire lit, et rien d'autre. Elle voit ce qui est sorti du compte ; elle ne peut pas déclencher un paiement, et il n'existe aucune version d'elle qui le pourrait.",
+        body: "Rien ici n'atteint votre compte. Pas de virement, pas de paiement, aucun prélèvement dans l'application — ses lignes décrivent de l'argent déjà parti, et il n'existe aucune version d'elle qui pourrait en déplacer.",
       },
       {
         title: "Agir sur une règle que vous n'avez pas écrite",
-        body: "Une ligne de relevé ne se classe toute seule que là où vous avez déjà mis ce commerçant deux fois. Tout le reste attend dans une liste, et un récurrent n'est qu'un modèle tant que vous ne l'appliquez pas.",
+        body: "Une ligne importée ne se classe toute seule que là où vous avez déjà mis ce commerçant deux fois. Tout le reste attend dans une liste, et un récurrent n'est qu'un modèle tant que vous ne l'appliquez pas.",
       },
       {
         title: "Vous dire quoi faire",
@@ -69,14 +72,14 @@ export const landingCopyFr: LandingCopySections & {
 
   features: {
     heading: "Chaque écran est le même journal",
-    body: "Rien ici ne tient un second jeu de chiffres. Vos saisies et votre relevé arrivent au même endroit, et chaque écran en est une lecture différente.",
+    body: "Rien ici ne tient un second jeu de chiffres. Vos saisies et un export importé arrivent au même endroit, et chaque écran en est une lecture différente.",
   },
 
   monthClose: {
     heading: "Le chiffre qui vérifie tous les autres",
     body: [
-      "Chaque total de chaque autre écran est une somme de mouvements — certains que vous avez saisis, d'autres apportés par le relevé. C'est honnête, et c'est incomplet : des espèces retirées au distributeur, une carte que le flux ne couvre pas, un mois que la synchronisation a manqué. Aucun calcul sur les lignes ne peut trouver ce qui n'y est pas.",
-      "Le solde, si. Si le compte contenait un chiffre à la fin du mois dernier et un autre à la fin de celui-ci, et que les lignes n'expliquent qu'une partie de l'écart, le reste est une dépense que rien n'explique. Avec une banque connectée, l'application lit les deux chiffres sur le relevé lui-même, la vérification ne vous coûte donc rien ; sans banque, elle coûte un seul nombre par mois.",
+      "Chaque total de chaque autre écran est une somme de mouvements — certains que vous avez saisis, d'autres apportés par un export importé. C'est honnête, et c'est incomplet : des espèces retirées au distributeur, un paiement auquel vous n'avez jamais repensé, une semaine que vous n'avez pas pris le temps de saisir. Aucun calcul sur les lignes ne peut trouver ce qui n'y est pas.",
+      "Le solde, si. Si le compte contenait un chiffre à la fin du mois dernier et un autre à la fin de celui-ci, et que les lignes n'expliquent qu'une partie de l'écart, le reste est une dépense que rien n'explique. Aujourd'hui, cela vous coûte un nombre par mois, relevé chez votre banque et saisi le jour que vous avez choisi ; une connexion en lecture seule qui ira chercher ce chiffre pour vous est en cours de développement.",
     ],
     outcomes: [
       {
@@ -145,11 +148,11 @@ export const landingCopyFr: LandingCopySections & {
   },
 
   privacy: {
-    heading: "En lecture seule, côté serveur, et vous pouvez couper",
-    body: "Vos chiffres vivent dans des lignes derrière votre connexion, et chaque requête est limitée à votre compte — aucun autre compte ne peut les lire, parce qu'aucune requête ne le permettrait. Connecter une banque est facultatif ; là où vous le faites, l'accès est du genre qui ne peut que lire, les identifiants n'atteignent jamais un navigateur, et il n'y a rien à vendre parce qu'il n'y a personne à qui le vendre.",
+    heading: "Derrière votre connexion, côté serveur, et effaçable par vous",
+    body: "Vos chiffres vivent dans des lignes derrière votre connexion, et chaque requête est limitée à votre compte — aucun autre compte ne peut les lire, parce qu'aucune requête ne le permettrait. Tout ce que ces lignes contiennent, c'est vous qui l'avez saisi ou importé, rien ne part ailleurs, et il n'y a rien à vendre parce qu'il n'y a personne à qui le vendre.",
     points: [
-      "Un accès en lecture seule, qui voit ce qui a bougé et ne bouge jamais rien.",
-      "Révoquez la banque quand vous voulez ; les lignes déjà classées restent les vôtres.",
+      "Rien n'est lu chez votre banque : chaque ligne vient de vous, saisie ou apportée.",
+      "Un export importé n'écrit rien tant que vous n'avez pas lu la liste qu'il propose.",
       "Effacez toutes les lignes en gardant le compte, ou supprimez les deux.",
       "Floutez chaque chiffre à l'écran d'un geste, pour le train.",
     ],
@@ -185,19 +188,19 @@ export const landingCopyFr: LandingCopySections & {
       title: "Journal",
       body: "Chaque mouvement — en liste, posé sur les jours, ou mois par mois et par catégorie.",
       utility:
-        "L'enregistrement dont tout le reste découle. Des lignes que vous avez saisies, des lignes qu'un modèle de charge a appliquées, et des lignes venues du relevé qu'une de vos propres habitudes a classées — un seul corps de données, regardé de trois façons.",
+        "L'enregistrement dont tout le reste découle. Des lignes que vous avez saisies, des lignes qu'un modèle de charge a appliquées, et des lignes venues d'un export qu'une de vos propres habitudes a classées — un seul corps de données, regardé de trois façons.",
       steps: [
         {
           title: "La liste, le calendrier, ou par catégorie",
           body: "Les mêmes lignes partout. La liste sert à en retrouver une et à la modifier ; le calendrier les pose sur les jours, ce qui répond à quand le mois se tend plutôt qu'à ce que vous avez dépensé ; par catégorie donne à chacune ses douze mois, ce qu'elle coûte normalement, et ce qui s'en est écarté.",
         },
         {
-          title: "Ce que la banque envoie vous attend",
-          body: "Une ligne de relevé se classe toute seule seulement là où vous avez mis ce commerçant au même endroit deux fois — le moment où c'est une habitude et non une coïncidence. Tout le reste attend dans la liste à vérifier, l'argent qui entre y compris. Y répondre apprend au classement, et c'est pourquoi la liste rétrécit au lieu de devenir une corvée permanente.",
+          title: "Elle propose une catégorie ; vous décidez",
+          body: "Mettez un commerçant deux fois au même endroit — le moment où c'est une habitude et non une coïncidence — et l'application propose cet endroit la fois suivante, que vous saisissiez la ligne ou que vous parcouriez un export importé. Elle propose, vous confirmez, et chaque réponse lui apprend : les propositions s'affinent, le classement reste le vôtre.",
         },
         {
           title: "Ou apportez un CSV",
-          body: "Un export de votre banque, dont les colonnes se règlent une fois. Le même historique qui classe le flux propose une catégorie pour celles-ci, et rien n'est écrit avant que vous ayez lu la liste proposée.",
+          body: "Un export de votre banque, dont les colonnes se règlent une fois. Le même historique propose une catégorie pour celles-ci, et rien n'est écrit avant que vous ayez lu la liste proposée.",
         },
       ],
     },
@@ -213,7 +216,7 @@ export const landingCopyFr: LandingCopySections & {
         },
         {
           title: "Appliquez, sautez, ou dites que c'est déjà arrivé",
-          body: "Rien n'existe tant que vous n'appliquez pas, et appliquer écrit des lignes ordinaires que vous pouvez encore modifier. Sautez un mois sans désactiver le modèle. Et là où le relevé a rapporté le mouvement lui-même, dites que c'est bien celui que le modèle appelait, au lieu de laisser une seconde ligne à côté.",
+          body: "Rien n'existe tant que vous n'appliquez pas, et appliquer écrit des lignes ordinaires que vous pouvez encore modifier. Sautez un mois sans désactiver le modèle. Et là où un import a déjà apporté le mouvement, dites que c'est bien celui que le modèle appelait, au lieu de laisser une seconde ligne à côté.",
         },
         {
           title: "Tenu à jour avec le marché",
@@ -273,7 +276,7 @@ export const landingCopyFr: LandingCopySections & {
         },
         {
           title: "Saisissez un solde",
-          body: "Ce que contenait, ce jour-là, le compte d'où partent vraiment vos dépenses. Avec une banque connectée, l'application le lit sur le relevé à votre place. La première clôture est une référence : elle fixe le point à partir duquel tout le reste est mesuré.",
+          body: "Ce que contenait, ce jour-là, le compte d'où partent vraiment vos dépenses — un seul nombre, lu sur l'écran de votre banque et reporté ici. La première clôture est une référence : elle fixe le point à partir duquel tout le reste est mesuré.",
         },
         {
           title: "Lisez ce qu'elle a trouvé",
@@ -306,13 +309,16 @@ export const landingCopyFr: LandingCopySections & {
   nav: {
     howItWorks: "Comment ça marche",
     privacy: "Confidentialité",
+    previous: "Précédent",
+    next: "Suivant",
   },
 
   footer: {
     tagline:
       "L’argent d’une personne : ce qui est entré, ce qui est sorti, ce qui est mis de côté et ce qui est investi — rapproché mois après mois.",
     copyright: "© 2026 Pluclair",
-    disclaimer: "Aucune connexion bancaire. Aucun agrégateur. Aucun conseil.",
+    disclaimer:
+      "Aucun conseil. Aucun score. Il ne déplace jamais votre argent.",
   },
 
   cta: {

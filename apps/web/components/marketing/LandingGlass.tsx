@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { cn } from "@/lib/utils";
 
 /**
@@ -43,42 +44,11 @@ function ArrowNub({ className }: { className?: string }) {
 }
 
 /** A row of rounded-control bars, each a 0–1 fraction of the row's height. */
-function Sparkbars({
-  values,
-  tone = "gold",
-}: {
-  values: readonly number[];
-  tone?: "gold" | "neutral";
-}) {
-  return (
-    <div className="flex h-8 items-end gap-[3px]" aria-hidden>
-      {values.map((value, index) => (
-        <div
-          key={index}
-          className={cn(
-            // Fixed narrow width, not flex-1: stretched to fill a wide card
-            // each bar becomes a capsule and the rounding eats the very
-            // differences in height the row exists to show.
-            "w-1.5 shrink-0 rounded-full",
-            tone === "gold" ? "bg-primary/70" : "bg-white/25",
-            // The last bar is the month being read, so it is the lit one.
-            index === values.length - 1 &&
-              (tone === "gold" ? "bg-primary" : "bg-white/60"),
-          )}
-          style={{ height: `${Math.max(8, value * 100)}%` }}
-        />
-      ))}
-    </div>
-  );
-}
-
 interface GlassStatProps {
   label: string;
   value: string;
   caption?: string;
   /** Bar heights, 0–1, oldest first. The final bar reads as "now". */
-  spark?: readonly number[];
-  sparkTone?: "gold" | "neutral";
   /** A filled fraction, 0–1, for a single-track meter instead of bars. */
   meter?: number;
   href?: string;
@@ -90,12 +60,19 @@ interface GlassStatProps {
  * history. The arrow is what makes it read as a card you could open rather
  * than a decal, so it is present whether or not there is a link behind it.
  */
+/* There was a `spark` prop here that drew a row of bars from an array of
+   fractions. Both arrays it was ever given were invented trends — unrecorded
+   spending falling by two thirds over a year, what you keep more than
+   doubling — which `PRODUCT.md` forbids as an implied benchmark. The prop is
+   gone rather than left unused, because a component that renders a slope from
+   numbers nobody measured is an invitation to do it again. `meter` stays: it
+   takes a single ratio, and every caller passes one the sample month
+   actually contains. */
+
 export function GlassStat({
   label,
   value,
   caption,
-  spark,
-  sparkTone = "gold",
   meter,
   href,
   className,
@@ -113,11 +90,6 @@ export function GlassStat({
       </p>
       {caption ? (
         <p className="mt-1 text-xs text-marketing-muted">{caption}</p>
-      ) : null}
-      {spark ? (
-        <div className="mt-4">
-          <Sparkbars values={spark} tone={sparkTone} />
-        </div>
       ) : null}
       {meter !== undefined ? (
         <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-white/12">
@@ -138,8 +110,11 @@ export function GlassStat({
   );
 
   if (href) {
+    // The ring goes on the link and not on the shell: without an `href` this
+    // is a figure on a panel, which is not focusable and must not look as
+    // though it were.
     return (
-      <Link href={href} className={shell}>
+      <Link href={href} className={cn(shell, marketingFocus)}>
         {body}
       </Link>
     );
@@ -167,6 +142,7 @@ export function GlassLink({
       href={href}
       className={cn(
         "glass-flat glass-flat-hover group flex flex-col rounded-card p-card",
+        marketingFocus,
         className,
       )}
     >

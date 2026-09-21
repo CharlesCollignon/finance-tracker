@@ -69,17 +69,9 @@ import type {
   TransactionWithCategory,
 } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
-import { useT } from "@/lib/locale-context";
+import { useLocale, useT } from "@/lib/locale-context";
 
 type FilterType = "all" | CategoryType;
-
-const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "income", label: categoryTypeLabels().income },
-  { value: "expense", label: categoryTypeLabels().expense },
-  { value: "savings", label: categoryTypeLabels().savings },
-  { value: "investment", label: categoryTypeLabels().investment },
-];
 
 interface TransactionsViewProps {
   transactions: TransactionWithCategory[];
@@ -184,7 +176,28 @@ export function TransactionsView({
 }: TransactionsViewProps) {
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
+  const locale = useLocale();
   const t = useT();
+
+  /**
+   * The four type filters, plus "all".
+   *
+   * Built here rather than as a module constant. `categoryTypeLabels()`
+   * defaults to the default locale, so a list computed once when the module
+   * loaded said "Income / Expense / Savings / Investment" to a French reader
+   * whose every other word had been translated — and "All" was never a
+   * message at all.
+   */
+  const filterOptions = useMemo(() => {
+    const labels = categoryTypeLabels(locale);
+    return [
+      { value: "all" as FilterType, label: t("ledger.allTypes") },
+      { value: "income" as FilterType, label: labels.income },
+      { value: "expense" as FilterType, label: labels.expense },
+      { value: "savings" as FilterType, label: labels.savings },
+      { value: "investment" as FilterType, label: labels.investment },
+    ];
+  }, [locale, t]);
 
   /**
    * What each row can say about itself, by transaction id.
@@ -408,7 +421,7 @@ export function TransactionsView({
       }
       const name =
         categories.find((category) => category.id === categoryId)?.name ??
-        "the new category";
+        t("ledger.theNewCategory");
       toast(t("ledger.moved", { count: result.moved ?? 0, name }), "success");
       leaveSelectMode();
     });
@@ -422,7 +435,7 @@ export function TransactionsView({
 
     const monthKey = `${year}-${String(month).padStart(2, "0")}`;
     downloadCsv(`transactions-${monthKey}.csv`, buildTransactionsCsv(filtered));
-    toast(`Exported ${filtered.length} transactions`, "success");
+    toast(t("ledger.exported", { count: filtered.length }), "success");
   }
 
   // A ledger is read a day at a time, not as one unbroken column of two
@@ -507,7 +520,7 @@ export function TransactionsView({
               ) : null}
             </span>
             <Button variant="pill" size="sm" onClick={() => setFormOpen(true)}>
-              Add
+              {t("ledger.add")}
               <ButtonNub>
                 <Plus size={ICON.md} weight="bold" />
               </ButtonNub>
@@ -588,17 +601,24 @@ export function TransactionsView({
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-x-4">
+                {/* A group of toggles, not tabs. `role="tablist"` over
+                    `role="tab"` was a promise the markup did not keep: there
+                    is no tabpanel for any of these — they filter the list
+                    below rather than swapping a panel in — and there was no
+                    roving tabindex, so a screen reader announced a tab set
+                    whose arrow keys did nothing. `aria-pressed` on plain
+                    buttons says which filter is in force and claims no keys
+                    the control does not handle. */}
                 <div
+                  role="group"
                   className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto"
-                  role="tablist"
                   aria-label={t("ledger.filterTransactions")}
                 >
-                  {FILTER_OPTIONS.map((option) => (
+                  {filterOptions.map((option) => (
                     <button
                       key={option.value}
                       type="button"
-                      role="tab"
-                      aria-selected={filter === option.value}
+                      aria-pressed={filter === option.value}
                       onClick={() => setFilter(option.value)}
                       className={cn(
                         "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
@@ -672,24 +692,31 @@ export function TransactionsView({
               <p className="text-muted-foreground">
                 {filtered.length === transactions.length
                   ? t("ledger.entryCount", { count: transactions.length })
-                  : `${filtered.length} of ${transactions.length} entries`}
+                  : t("ledger.shownOfTotal", {
+                      count: filtered.length,
+                      total: transactions.length,
+                    })}
               </p>
               <p className="flex flex-wrap gap-x-5 gap-y-1">
                 <span>
-                  <span className="text-muted-foreground">In </span>
+                  <span className="text-muted-foreground">
+                    {t("ledger.in")}{" "}
+                  </span>
                   <span className="privacy-amount tabular-nums text-success">
                     {formatEuro(shown.income)}
                   </span>
                 </span>
                 <span>
-                  <span className="text-muted-foreground">Out </span>
+                  <span className="text-muted-foreground">
+                    {t("ledger.out")}{" "}
+                  </span>
                   <span className="privacy-amount tabular-nums text-destructive">
                     {formatEuro(shownOut)}
                   </span>
                 </span>
                 <span className="border-l border-border pl-5">
                   <span className="text-muted-foreground">
-                    Left at month end{" "}
+                    {t("ledger.leftAtMonthEnd")}{" "}
                   </span>
                   <span
                     className={cn(
@@ -719,7 +746,7 @@ export function TransactionsView({
                       setSearch("");
                     }}
                   >
-                    Clear filters
+                    {t("ledger.clearFilters")}
                   </Button>
                 ) : null}
               </EmptyState>
@@ -734,7 +761,7 @@ export function TransactionsView({
                       )}
                     >
                       <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {relativeDayLabel(day.date, formatShortDate)}
+                        {relativeDayLabel(day.date, formatShortDate, locale)}
                       </h3>
                       <span className="privacy-amount text-xs tabular-nums text-muted-foreground xl:col-start-4 xl:text-right">
                         {day.net >= 0 ? "+" : "−"}
@@ -756,8 +783,12 @@ export function TransactionsView({
                           }
                           aria-label={
                             selectMode
-                              ? `Select ${tx.categories.name}`
-                              : `Edit ${tx.categories.name}`
+                              ? t("ledger.selectRow", {
+                                  name: tx.categories.name,
+                                })
+                              : t("ledger.editRow", {
+                                  name: tx.categories.name,
+                                })
                           }
                           aria-pressed={
                             selectMode ? selected.has(tx.id) : undefined
@@ -773,7 +804,9 @@ export function TransactionsView({
                             {selectMode ? (
                               <RowCheckbox
                                 checked={selected.has(tx.id)}
-                                label={`Select ${tx.categories.name}`}
+                                label={t("ledger.selectRow", {
+                                  name: tx.categories.name,
+                                })}
                                 onChange={() =>
                                   setSelected((current) =>
                                     toggleSelected(current, tx.id),

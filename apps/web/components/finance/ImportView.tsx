@@ -104,7 +104,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
     setParseError(null);
 
     if (file.size > MAX_FILE_BYTES) {
-      setParseError("That file is larger than 5 MB — is it the right export?");
+      setParseError(t("importer.fileTooLarge"));
       return;
     }
 
@@ -112,7 +112,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
     const parsed = parseCsv(text, detectDelimiter(text));
 
     if (parsed.length === 0) {
-      setParseError("That file has no rows in it.");
+      setParseError(t("importer.fileNoRows"));
       return;
     }
 
@@ -125,7 +125,9 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
       guessColumnMapping(
         header
           ? parsed[0]!
-          : parsed[0]!.map((_, index) => `Column ${index + 1}`),
+          : parsed[0]!.map((_, index) =>
+              t("importer.columnNumber", { number: index + 1 }),
+            ),
       ),
     );
     setStep("map");
@@ -265,7 +267,11 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
           render={
             <Link href="/transactions">
               <ArrowLeft size={ICON.md} className="mr-1 inline" />
-              Transactions
+              {/* The surface's own name. This link said "Transactions", which
+                  is what the Ledger used to be called and what its route
+                  still is — see `nav`'s comment in the catalogue for the
+                  whole list of names this app has retired. */}
+              {t("nav.ledger")}
             </Link>
           }
         />
@@ -277,9 +283,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
           <Card.Bezel className="w-full" innerClassName="p-6">
             <h2 className="font-head text-lg">{t("importer.heading")}</h2>
             <p className="mt-2 max-w-prose text-sm text-muted-foreground">
-              Export a CSV from your bank and drop it here. The file is read in
-              your browser — nothing is uploaded, and nothing is saved until you
-              have reviewed every row.
+              {t("importer.intro")}
             </p>
 
             <div
@@ -301,7 +305,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                 className="text-muted-foreground"
               />
               <p className="text-sm text-muted-foreground">
-                Drop a .csv file here
+                {t("importer.dropFile")}
               </p>
               <input
                 ref={fileRef}
@@ -319,7 +323,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                 variant="outline"
                 onClick={() => fileRef.current?.click()}
               >
-                Choose a file
+                {t("importer.chooseFile")}
               </Button>
             </div>
 
@@ -337,11 +341,12 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                 {t("importer.checkColumns")}
               </h2>
               <p className="font-mono text-xs text-muted-foreground">
-                {fileName} · {dataRows.length} rows
+                {fileName} ·{" "}
+                {t("importer.rowCount", { count: dataRows.length })}
               </p>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              These are the app&apos;s guesses. Change any that are wrong.
+              {t("importer.guesses")}
             </p>
 
             <label className="mt-4 flex items-center gap-2 text-sm">
@@ -354,15 +359,15 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                     guessColumnMapping(
                       event.target.checked
                         ? (table[0] ?? [])
-                        : (table[0] ?? []).map(
-                            (_, index) => `Column ${index + 1}`,
+                        : (table[0] ?? []).map((_, index) =>
+                            t("importer.columnNumber", { number: index + 1 }),
                           ),
                     ),
                   );
                 }}
                 className="size-4 accent-[var(--primary)]"
               />
-              The first row is column names
+              {t("importer.firstRowIsHeader")}
             </label>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -425,7 +430,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
               ) : (
                 <div className="flex flex-col gap-2">
                   <span className="text-sm font-medium">
-                    In this file, spending is
+                    {t("importer.spendingIs")}
                   </span>
                   <select
                     value={expenseSign}
@@ -436,8 +441,12 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                     }
                     className="h-11 rounded-control border border-border bg-background px-3 text-base"
                   >
-                    <option value="negative">Negative (−12.50)</option>
-                    <option value="positive">Positive (12.50)</option>
+                    <option value="negative">
+                      {t("importer.signNegative")}
+                    </option>
+                    <option value="positive">
+                      {t("importer.signPositive")}
+                    </option>
                   </select>
                 </div>
               )}
@@ -447,7 +456,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
 
             <div className="mt-5 flex gap-2">
               <Button variant="outline" onClick={() => setStep("choose")}>
-                Back
+                {t("importer.back")}
               </Button>
               <Button onClick={buildReview} disabled={pending}>
                 {pending ? t("importer.reading") : t("importer.continue")}
@@ -571,7 +580,9 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                             </span>
                           ) : (
                             <select
-                              aria-label={`Category for line ${row.line}`}
+                              aria-label={t("importer.categoryForLine", {
+                                line: row.line,
+                              })}
                               value={row.categoryId ?? ""}
                               onChange={(event) =>
                                 setRowCategory(row.line, event.target.value)
@@ -584,7 +595,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                                   : "border-border",
                               )}
                             >
-                              <option value="">Choose…</option>
+                              <option value="">{t("importer.choose")}</option>
                               {categoryGroups
                                 .filter((group) =>
                                   row.type === "income"
@@ -661,7 +672,8 @@ function ColumnPicker({
         ) : null}
         {columns.map((_, index) => (
           <option key={index} value={index}>
-            {headers[index] ?? `Column ${index + 1}`}
+            {headers[index] ??
+              t("importer.columnNumber", { number: index + 1 })}
           </option>
         ))}
       </select>
@@ -678,6 +690,8 @@ function BulkAssign({
   groups: ReturnType<typeof groupCategoriesByType>;
   onPick: (categoryId: string) => void;
 }) {
+  const t = useT();
+
   return (
     <label className="flex flex-1 flex-col gap-2 text-sm">
       <span className="font-medium">{label}</span>
@@ -689,7 +703,7 @@ function BulkAssign({
         }}
         className="h-10 rounded-control border border-border bg-background px-2 text-sm"
       >
-        <option value="">Choose a category…</option>
+        <option value="">{t("importer.chooseCategory")}</option>
         {groups.map((group) =>
           group.categories.map((cat) => (
             <option key={cat.id} value={cat.id}>
@@ -710,6 +724,8 @@ function PreviewTable({
   rows: string[][];
   headers: string[];
 }) {
+  const t = useT();
+
   if (rows.length === 0) {
     return null;
   }
@@ -721,7 +737,8 @@ function PreviewTable({
           <tr className="border-b border-border bg-muted/40 text-left">
             {(headers.length > 0 ? headers : rows[0]!).map((_, index) => (
               <th key={index} className="whitespace-nowrap p-2 font-medium">
-                {headers[index] ?? `Column ${index + 1}`}
+                {headers[index] ??
+                  t("importer.columnNumber", { number: index + 1 })}
               </th>
             ))}
           </tr>
@@ -750,10 +767,12 @@ function PreviewTable({
 
 /** Shown when a file parses but yields nothing usable. */
 export function ImportEmptyHint() {
+  const t = useT();
+
   return (
     <p className="flex items-center gap-2 text-sm text-muted-foreground">
       <Warning size={ICON.md} />
-      No rows could be read from that file.
+      {t("importer.noRowsRead")}
     </p>
   );
 }

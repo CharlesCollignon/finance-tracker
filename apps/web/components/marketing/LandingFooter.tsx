@@ -5,6 +5,8 @@ import {
   featureHref,
   landingCopyFor,
 } from "@/components/marketing/landing-copy";
+import { marketingFocus } from "@/components/marketing/marketing-focus";
+import { cn } from "@/lib/utils";
 import { getLocale, getT } from "@/lib/locale";
 
 /**
@@ -25,8 +27,8 @@ import { getLocale, getT } from "@/lib/locale";
  * as easily as on its height.
  */
 const footerLink =
-  "flex min-h-11 items-center text-sm text-marketing-muted " +
-  "transition-colors duration-hover hover:text-white lg:min-h-0";
+  "flex min-h-11 items-center rounded-control text-sm text-marketing-muted " +
+  `transition-colors duration-hover hover:text-white lg:min-h-0 ${marketingFocus}`;
 
 const footerList = "mt-2 flex flex-col lg:mt-4 lg:gap-3";
 
@@ -40,7 +42,10 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
           <div>
             <Link
               href="/"
-              className="inline-flex min-h-11 items-center gap-2.5 font-logo text-2xl leading-none text-white"
+              className={cn(
+                "inline-flex min-h-11 items-center gap-2.5 rounded-full font-logo text-2xl leading-none text-white",
+                marketingFocus,
+              )}
               aria-label="Pluclair"
             >
               <Orb size="26px" tone="mark" className="shrink-0" />

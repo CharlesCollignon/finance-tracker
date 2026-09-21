@@ -8,8 +8,11 @@ import {
   adjacentLandingPages,
   featureHref,
   getLandingPage,
+  landingCopyFor,
   type LandingPageId,
 } from "@/components/marketing/landing-copy";
+import { marketingFocus } from "@/components/marketing/marketing-focus";
+import { cn } from "@/lib/utils";
 
 interface FeaturePageProps {
   pageId: LandingPageId;
@@ -21,6 +24,12 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
   const locale = await getLocale();
   const page = getLandingPage(pageId, locale);
   const { prev, next } = adjacentLandingPages(pageId, locale);
+  // "Previous" and "Next" were the two words on this surface still written in
+  // English in the source. They sit in the copy file with the other marketing
+  // words rather than in the shared catalogue, for the reason `nav` gives
+  // about itself: nothing behind the login walks a reader through seven pages
+  // in a fixed order, so there is no app string to borrow.
+  const { nav } = landingCopyFor(locale);
 
   return (
     // overflow-x-clip, not hidden: the bloom below is 36rem wide and centred,
@@ -83,10 +92,13 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
           {prev ? (
             <Link
               href={featureHref(prev.id)}
-              className="glass-flat glass-flat-hover flex flex-1 flex-col items-start rounded-card px-5 py-4"
+              className={cn(
+                "glass-flat glass-flat-hover flex flex-1 flex-col items-start rounded-card px-5 py-4",
+                marketingFocus,
+              )}
             >
               <span className="text-xs uppercase tracking-[0.14em] text-marketing-faint">
-                Previous
+                {nav.previous}
               </span>
               <span className="mt-1 text-sm font-medium text-white">
                 {prev.title}
@@ -98,10 +110,13 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
           {next ? (
             <Link
               href={featureHref(next.id)}
-              className="glass-flat glass-flat-hover flex flex-1 flex-col items-end rounded-card px-5 py-4 text-right"
+              className={cn(
+                "glass-flat glass-flat-hover flex flex-1 flex-col items-end rounded-card px-5 py-4 text-right",
+                marketingFocus,
+              )}
             >
               <span className="text-xs uppercase tracking-[0.14em] text-marketing-faint">
-                Next
+                {nav.next}
               </span>
               <span className="mt-1 text-sm font-medium text-white">
                 {next.title}

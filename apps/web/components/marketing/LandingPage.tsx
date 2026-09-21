@@ -41,12 +41,19 @@ const FEATURE_ICONS: Record<LandingPageId, React.ReactNode> = {
   "month-read": <Sparkle size={18} />,
 };
 
-/** Twelve months of unrecorded spending, as fractions of the worst one. The
- * shape is the point — it settles as the habit takes — not the values. */
-const UNRECORDED_TREND = [
-  0.95, 0.82, 0.88, 0.7, 0.74, 0.58, 0.62, 0.48, 0.52, 0.4, 0.44, 0.34,
-] as const;
-const KEPT_TREND = [0.3, 0.38, 0.34, 0.45, 0.52, 0.48, 0.6, 0.66] as const;
+/* The two sparklines that used to live here are gone rather than relocated.
+   Twelve bars falling 0.95 to 0.34 and eight rising 0.30 to 0.66 were not
+   illustrations of a mechanism, they were claims about an outcome — that a
+   year of this drives unrecorded spending down by two thirds and more than
+   doubles what you keep. Nothing has measured either, and `PRODUCT.md` says
+   no benchmark may be invented, implied, or dressed up as placeholder
+   content. Moving them next to the "Example data" note did not help: that
+   note labels the figures, and a slope is not a figure.
+
+   The meters that replaced them are ratios the sample month actually
+   contains — 218 against a 260 allowance, 35.7% of what came in. The Run
+   draws no meter at all, because `close.streak / 6` measured progress toward
+   a six-month target that exists nowhere in the product. */
 
 function SectionHeading({
   heading,
@@ -155,7 +162,6 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             label={hero.cards.unrecorded.label}
             value={euro(close.unrecorded)}
             caption={hero.cards.unrecorded.caption}
-            spark={UNRECORDED_TREND}
             className="absolute bottom-5 right-0 z-10 hidden w-[15.5rem] sm:block"
           />
 
@@ -168,6 +174,17 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             aria-hidden
           />
         </div>
+
+        {/* Two figures above the fold, neither of them anybody's. The same
+            sentence the close's sample figures carry further down, because
+            they are the same sample month and one wording is what keeps it
+            from reading as a legal hedge attached to each card. Below the
+            stage rather than inside it: the cards are pinned to the stage's
+            corners, and a caption placed among them lands under whichever
+            one the viewport puts there. */}
+        <p className="relative z-10 mx-auto max-w-sm pb-6 text-center text-xs leading-relaxed text-marketing-faint">
+          {monthClose.exampleNote}
+        </p>
       </section>
 
       {/* --------------------------------------------------------- pillars */}
@@ -292,7 +309,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
               caption={t("marketingStat.underAllowance", {
                 amount: euro(close.unrecordedCap),
               })}
-              spark={UNRECORDED_TREND}
+              meter={close.unrecorded / close.unrecordedCap}
               className="w-full"
             />
             <div className="grid gap-4 sm:grid-cols-2">
@@ -302,14 +319,13 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                 caption={t("marketingStat.ofWhatCameIn", {
                   percent: percent(close.keptRate),
                 })}
-                spark={KEPT_TREND}
+                meter={close.keptRate / 100}
                 className="w-full"
               />
               <GlassStat
                 label={t("common.theRun")}
                 value={t("marketingStat.monthsValue", { count: close.streak })}
                 caption={t("marketingStat.inARowInsideAllowance")}
-                meter={close.streak / 6}
                 className="w-full"
               />
             </div>
