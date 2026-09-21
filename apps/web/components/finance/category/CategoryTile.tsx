@@ -1,9 +1,11 @@
 "use client";
 
+import { ALLOCATION_COLORS } from "@finance/core/category-styles";
 import {
   findingIsGoodNews,
   type CategoryFinding,
 } from "@finance/core/category-findings";
+import type { CategoryType } from "@finance/core/types/database";
 import type {
   CategoryHistory,
   CategoryMonthPoint,
@@ -20,12 +22,36 @@ export interface CategoryCard {
   findings: CategoryFinding[];
 }
 
-/** Which chart token a category type is drawn in. */
-export const TONE: Record<string, string> = {
-  expense: "var(--chart-2)",
-  income: "var(--chart-3)",
-  savings: "var(--chart-4)",
-  investment: "var(--chart-1)",
+/**
+ * Which colour a category type is drawn in.
+ *
+ * Read off `ALLOCATION_COLORS` rather than stated a second time. This map
+ * used to point the four types at `--chart-2 / --chart-3 / --chart-4 /
+ * --chart-1`, which is the neutral series palette — so on the Categories
+ * screen a savings run was drawn in the chart cyan while every savings amount
+ * elsewhere in the app is gold, and DESIGN.md's "the same mapping drives
+ * allocation charts, so a slice and a row agree about what a category is" was
+ * false on the one screen that looks at a single category at a time.
+ *
+ * The keys have to be rewritten because `ALLOCATION_COLORS` names the flows
+ * of the allocation Sankey — `expenses`, `investments` — and this names the
+ * four `CategoryType` values. That rewrite is the whole of this map: no
+ * colour is chosen here, which is the point.
+ *
+ * Savings landing on `--primary` is the Rare Accent Rule's fourth home, not a
+ * fifth: gold is "systematically, a savings amount", and a bar whose height
+ * is a month of savings is that amount drawn rather than set. The Sankey has
+ * painted the savings flow gold from the same constant all along.
+ *
+ * The chart palette keeps the job it is good at — telling unlike things apart
+ * in one series, as the wallets and the look-through do. Four bands that each
+ * already *mean* income or expense are not that.
+ */
+export const TONE: Record<CategoryType, string> = {
+  income: ALLOCATION_COLORS.income,
+  expense: ALLOCATION_COLORS.expenses,
+  savings: ALLOCATION_COLORS.savings,
+  investment: ALLOCATION_COLORS.investments,
 };
 
 interface CategoryTileProps {
@@ -101,7 +127,7 @@ export function CategoryTile({
                 : `${Math.max((point.total / peak) * 100, 2)}%`,
               backgroundColor: point.empty
                 ? "var(--color-border)"
-                : (TONE[history.type] ?? "var(--chart-1)"),
+                : TONE[history.type],
             }}
           />
         ))}

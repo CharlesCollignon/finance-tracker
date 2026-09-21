@@ -347,8 +347,20 @@ export function SwipeToast({
         >
           <span className="flex min-w-0 flex-auto flex-col gap-0.5">
             <span className="break-words">{title}</span>
+            {/* 80%, not 70. The description is the line that says what
+                actually went wrong, and on the error variant — the one
+                surface here a reader must not scroll past — `--destructive-
+                foreground` at 70% over `--destructive` composites to 4.45:1,
+                which misses the 4.5:1 AA floor by the width of a rounding
+                error. At 80% it reads 5.45:1 against the error fill, and the
+                other two variants, which already passed, go from 8.36:1 to
+                10.76:1 (default) and 7.59:1 to 9.52:1 (success).
+
+                One step for all three rather than a per-variant opacity: the
+                description is one thing and should be one weight, and the
+                title still leads it on font weight rather than on colour. */}
             {description ? (
-              <span className="font-normal break-words opacity-70">
+              <span className="font-normal break-words opacity-80">
                 {description}
               </span>
             ) : null}

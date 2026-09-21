@@ -51,7 +51,7 @@ const FEATURE_ICONS: Record<LandingPageId, React.ReactNode> = {
    note labels the figures, and a slope is not a figure.
 
    The meters that replaced them are ratios the sample month actually
-   contains — 218 against a 260 allowance, 35.7% of what came in. The Run
+   contains — 218 against a 260 allowance, 33.6% of what came in. The Run
    draws no meter at all, because `close.streak / 6` measured progress toward
    a six-month target that exists nowhere in the product. */
 
@@ -148,13 +148,26 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
         <div className="relative z-10 mx-auto mt-4 min-h-[17.5rem] w-full max-w-3xl flex-1 sm:min-h-[19rem] md:min-h-[20.5rem]">
           <LandingOrb className="absolute left-1/2 top-1 aspect-square w-[min(58vw,352px)] -translate-x-1/2" />
 
+          {/* Which card survives the narrow viewport, and why it is this one.
+              Below 640px the stage is 327px wide and 280px tall, and two
+              cards of this height pinned to opposite corners overlap by about
+              thirty pixels down the middle — measured, not guessed — so one
+              of them goes. It used to be the unrecorded figure, which left
+              every phone showing "what's left this month" and nothing else:
+              the one number every budgeting app already prints, while the
+              number that is the entire reason this one exists was the one
+              hidden. The order is reversed now. What is left in March is the
+              figure a reader can get anywhere; what February's balance proved
+              was never recorded is the figure they cannot, so it is the one
+              that stays. The example-data note below the stage is one
+              sentence about the sample month and labels either card. */}
           <GlassStat
             href={featureHref("bearing")}
             label={hero.cards.remaining.label}
             value={euro(sample.remaining)}
             caption={hero.cards.remaining.caption}
             meter={sample.remaining / sample.income}
-            className="absolute left-0 top-5 z-10 w-[13.5rem] sm:top-6 sm:w-[15.5rem]"
+            className="absolute left-0 top-6 z-10 hidden w-[15.5rem] sm:block"
           />
 
           <GlassStat
@@ -162,7 +175,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             label={hero.cards.unrecorded.label}
             value={euro(close.unrecorded)}
             caption={hero.cards.unrecorded.caption}
-            className="absolute bottom-5 right-0 z-10 hidden w-[15.5rem] sm:block"
+            className="absolute left-0 top-5 z-10 w-[13.5rem] sm:bottom-5 sm:left-auto sm:right-0 sm:top-auto sm:w-[15.5rem]"
           />
 
           {/* Hands the sphere off to the next section instead of ending on a
@@ -175,13 +188,14 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
           />
         </div>
 
-        {/* Two figures above the fold, neither of them anybody's. The same
-            sentence the close's sample figures carry further down, because
-            they are the same sample month and one wording is what keeps it
-            from reading as a legal hedge attached to each card. Below the
-            stage rather than inside it: the cards are pinned to the stage's
-            corners, and a caption placed among them lands under whichever
-            one the viewport puts there. */}
+        {/* The figures above the fold — two of them on a tablet and up, one
+            on a phone — and neither of them anybody's. The same sentence the
+            close's sample figures carry further down, because they are the
+            same sample month and one wording is what keeps it from reading as
+            a legal hedge attached to each card. Below the stage rather than
+            inside it: the cards are pinned to the stage's corners, and a
+            caption placed among them lands under whichever one the viewport
+            puts there. */}
         <p className="relative z-10 mx-auto max-w-sm pb-6 text-center text-xs leading-relaxed text-marketing-faint">
           {monthClose.exampleNote}
         </p>
@@ -201,7 +215,13 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
           <div className="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
             {pillars.items.map((item, index) => (
               <Reveal key={item.title} delay={index * 0.08}>
-                <p className="font-mono text-xs text-primary/70">
+                {/* The ordinal is the quietest thing in the group, so it takes
+                    the quietest grey. It was `text-primary/70`, which spent
+                    Lamplit Gold on a counter and spent it as a tint — the two
+                    failures DESIGN.md names in the same breath, since a tint
+                    of the accent is a fourth marketing grey nobody declared.
+                    `marketing-faint` reads 5.31:1 on the marketing ground. */}
+                <p className="font-mono text-xs text-marketing-faint">
                   {String(index + 1).padStart(2, "0")}
                 </p>
                 <h3 className="mt-3 font-head text-lg text-marketing-ink">
@@ -285,7 +305,13 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             <dl className="mt-10 flex flex-col gap-6 border-t border-white/10 pt-8">
               {monthClose.outcomes.map((outcome) => (
                 <div key={outcome.label} className="sm:flex sm:gap-6">
-                  <dt className="w-32 shrink-0 font-mono text-xs uppercase tracking-[0.14em] text-primary/80">
+                  {/* The term of a definition list, brighter than the body
+                      beside it rather than differently coloured from it. It
+                      was `text-primary/80`: an accent the outcome does not
+                      earn, reached for at a tint because a weight was what the
+                      hierarchy actually wanted. Ink over muted is that weight,
+                      and 14.43:1 against the marketing ground. */}
+                  <dt className="w-32 shrink-0 font-mono text-xs uppercase tracking-[0.14em] text-marketing-ink">
                     {outcome.label}
                   </dt>
                   <dd className="mt-1 text-sm leading-relaxed text-marketing-muted sm:mt-0">
@@ -370,7 +396,13 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             <dl className="mt-10 flex flex-col gap-6 border-t border-white/10 pt-8">
               {monthRead.outcomes.map((outcome) => (
                 <div key={outcome.label} className="sm:flex sm:gap-6">
-                  <dt className="w-32 shrink-0 font-mono text-xs uppercase tracking-[0.14em] text-primary/80">
+                  {/* The term of a definition list, brighter than the body
+                      beside it rather than differently coloured from it. It
+                      was `text-primary/80`: an accent the outcome does not
+                      earn, reached for at a tint because a weight was what the
+                      hierarchy actually wanted. Ink over muted is that weight,
+                      and 14.43:1 against the marketing ground. */}
+                  <dt className="w-32 shrink-0 font-mono text-xs uppercase tracking-[0.14em] text-marketing-ink">
                     {outcome.label}
                   </dt>
                   <dd className="mt-1 text-sm leading-relaxed text-marketing-muted sm:mt-0">
@@ -396,7 +428,9 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             {how.beats.map((beat, index) => (
               <li key={beat.title} className="p-7 md:p-8">
                 <Reveal delay={index * 0.06}>
-                  <span className="font-mono text-xs text-primary/70">
+                  {/* As in the pillars above: faint, not a tint of the
+                      accent. 5.17:1 inside a `.glass-grid` cell. */}
+                  <span className="font-mono text-xs text-marketing-faint">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <h3 className="mt-3 font-head text-lg text-marketing-ink">
@@ -433,8 +467,13 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                         key={point}
                         className="flex items-start gap-3 text-sm text-marketing-ink"
                       >
+                        {/* A bullet, sitting a step under the line it marks —
+                            the same relation the read card's neutral dot has
+                            to its observation. Gold here was three unrelated
+                            golds on one page, which is the spend the Rare
+                            Accent Rule names. 6.06:1 on the panel. */}
                         <span
-                          className="mt-[0.4rem] h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                          className="mt-[0.4rem] h-1.5 w-1.5 shrink-0 rounded-full bg-marketing-muted"
                           aria-hidden
                         />
                         {point}

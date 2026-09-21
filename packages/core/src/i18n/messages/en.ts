@@ -64,7 +64,6 @@ export const en = {
    */
   nav: {
     bearing: "Bearing",
-    month: "Month",
     ledger: "Ledger",
     charges: "Charges",
     plan: "Plan",
@@ -496,6 +495,8 @@ export const en = {
    */
   instrument: {
     label: "ETF / fund",
+    /** Names the results list for a reader who arrives at it by keyboard. */
+    resultsLabel: "Matching instruments",
     searching: "Searching…",
     isinKeepTyping: "An ISIN is 12 characters — keep typing…",
     noResults: "No instruments found. Try a name or a 12-character ISIN.",
@@ -1020,6 +1021,8 @@ export const en = {
      * French writes the decimal with a comma, so an English-shaped example
      * in the field teaches the wrong format to the reader who needs it most.
      */
+    balanceUnreadable:
+      "That does not look like an amount. Try something like {example}.",
     balancePlaceholder: "2400.50",
     reopened: "{month} reopened",
     baselineSet:

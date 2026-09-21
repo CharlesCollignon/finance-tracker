@@ -5,6 +5,7 @@ import { ArrowRight } from "@phosphor-icons/react";
 import { formatShortDate, relativeDayLabel } from "@finance/core/constants";
 import type { UpcomingCharge } from "@finance/core/still-to-come";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
+import { amountSign } from "@/components/finance/amount-sign";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
@@ -83,12 +84,18 @@ export function StillToCome({
                 ) : null}
               </span>
             </span>
+            {/* Signed for the same reason the ledger's rows are: the type
+                colour says what kind of charge this is, and only the sign
+                says it is leaving. The arriving line below has always read
+                `+`, so without this the two halves of the same card spoke
+                different languages. */}
             <PrivateAmount
               className={cn(
                 "shrink-0 tabular-nums",
                 TYPE_AMOUNT_CLASS[charge.type],
               )}
             >
+              {amountSign(charge.type)}
               {formatMoney(charge.amount)}
             </PrivateAmount>
           </li>
@@ -98,8 +105,11 @@ export function StillToCome({
             <span>
               {t("bearing.panel.moreHoldings", { count: rest.length })}
             </span>
+            {/* Signed too, so the column reads as one column: six rows
+                carrying a direction and a seventh that does not would read
+                as a figure of a different kind. */}
             <PrivateAmount className="tabular-nums">
-              {formatMoney(restTotal)}
+              {`−${formatMoney(restTotal)}`}
             </PrivateAmount>
           </li>
         ) : null}

@@ -24,7 +24,6 @@ import type { Messages } from "./en";
 export const fr: Messages = {
   nav: {
     bearing: "Cap",
-    month: "Mois",
     ledger: "Journal",
     charges: "Charges",
     plan: "Plan",
@@ -351,6 +350,7 @@ export const fr: Messages = {
 
   instrument: {
     label: "ETF ou fonds",
+    resultsLabel: "Instruments correspondants",
     searching: "Recherche…",
     isinKeepTyping: "Un ISIN fait 12 caractères — continuez…",
     noResults:
@@ -743,6 +743,8 @@ export const fr: Messages = {
     },
     filledFromBank:
       "Rempli depuis votre banque. Modifiez-le si le jour de lecture n'est pas aujourd'hui.",
+    balanceUnreadable:
+      "Cela ne ressemble pas à un montant. Essayez plutôt {example}.",
     balancePlaceholder: "2400,50",
     reopened: "{month} réouvert",
     baselineSet:

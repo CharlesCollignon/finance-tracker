@@ -52,7 +52,19 @@ export function BorderGlow({
       ref={ref}
       onPointerMove={(event) => {
         const el = ref.current;
-        if (reducedMotion || !el) {
+        // Mouse only, and deliberately so. Pointer events fire for touch
+        // too, so a finger dragging the page past a card used to light its
+        // edge and — with no `pointerleave` guaranteed at the end of a touch
+        // sequence — sometimes leave it lit, which on the Bearing reads as
+        // "this card is the one that wants you". The same guard the toast
+        // uses to decide whether a pointer can hover at all.
+        //
+        // Nothing is lost by the glow never appearing on a phone: it is
+        // decoration, not an affordance. What used to make that untrue was
+        // the caret and the row arrow beside it also being pointer-only —
+        // both now rest at a visible opacity, so on touch the card says what
+        // it can do without needing the edge to light up and say it.
+        if (reducedMotion || !el || event.pointerType !== "mouse") {
           return;
         }
         const rect = el.getBoundingClientRect();

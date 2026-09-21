@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   amountInputToNumber,
+  parseTypedAmount,
   amountToInput,
   formatAmountInput,
   isAmountInputComplete,
@@ -153,5 +154,44 @@ describe("formatAmountInput", () => {
   it("uses the locale's decimal separator", () => {
     expect(formatAmountInput("12.5", "fr").fraction).toBe(",5");
     expect(formatAmountInput("12.5", "en").fraction).toBe(".5");
+  });
+});
+
+describe("parseTypedAmount", () => {
+  it("reads the shapes this app's own formatter prints", () => {
+    // `Intl` with an fr-FR locale groups with a narrow no-break space.
+    expect(parseTypedAmount("1 234,56")).toBe(1234.56);
+    expect(parseTypedAmount("1 234,56 €")).toBe(1234.56);
+    expect(parseTypedAmount("€1,234.56")).toBe(1234.56);
+  });
+
+  it("reads both decimal conventions", () => {
+    expect(parseTypedAmount("2400,50")).toBe(2400.5);
+    expect(parseTypedAmount("2400.50")).toBe(2400.5);
+    expect(parseTypedAmount("0,5")).toBe(0.5);
+  });
+
+  it("reads a lone group separator as grouping, not as a decimal point", () => {
+    // Three digits after the separator is always a group — nobody writes a
+    // balance to three decimal places.
+    expect(parseTypedAmount("1.234")).toBe(1234);
+    expect(parseTypedAmount("1,234")).toBe(1234);
+    expect(parseTypedAmount("1.234.567")).toBe(1234567);
+  });
+
+  it("keeps a fraction longer than a group", () => {
+    expect(parseTypedAmount("1.2345")).toBe(1.2345);
+  });
+
+  it("reads plain numbers and negatives", () => {
+    expect(parseTypedAmount("1234")).toBe(1234);
+    expect(parseTypedAmount("-40,20")).toBe(-40.2);
+  });
+
+  it("returns null for nothing to read, rather than NaN or zero", () => {
+    expect(parseTypedAmount("")).toBeNull();
+    expect(parseTypedAmount("   ")).toBeNull();
+    expect(parseTypedAmount("-")).toBeNull();
+    expect(parseTypedAmount("abc")).toBeNull();
   });
 });

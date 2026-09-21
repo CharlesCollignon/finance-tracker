@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useId, useState, useTransition } from "react";
 import type { MonthCloseResult } from "@finance/core/month-close";
 import { runwayDaysAdded } from "@finance/core/month-close";
 import { formatShortDate } from "@finance/core/constants";
@@ -17,6 +17,7 @@ import {
   recordMonthClose,
 } from "@/lib/actions/month-close";
 import { getBankBalanceSuggestion } from "@/lib/actions/bank";
+import { parseTypedAmount } from "@finance/core/amount-input";
 import { useLocale, useT } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 
@@ -144,11 +145,25 @@ export function MonthCloseSheet({
     window.setTimeout(reset, 250);
   }
 
-  const parsedBalance = Number(balance.replace(",", "."));
-  const balanceIsUsable =
-    balance.trim() !== "" && Number.isFinite(parsedBalance);
+  /*
+   * `Number(balance.replace(",", "."))` used to do this, and it rejected the
+   * shapes this app's own formatter prints: `€1,234.56` became `1.234.56` and
+   * `1 234,56` kept its space, so both came back `NaN` and the button below
+   * simply never enabled. Every balance over a thousand was unreadable to the
+   * screen that asked for it, in silence. `parseTypedAmount` reads either
+   * convention and returns null rather than NaN, which is what lets an
+   * unreadable entry say so instead of disabling the way out.
+   */
+  const balanceErrorId = useId();
+  const parsedBalance = parseTypedAmount(balance);
+  const balanceIsEmpty = balance.trim() === "";
+  const balanceIsUsable = parsedBalance !== null;
+  const balanceIsUnreadable = !balanceIsEmpty && !balanceIsUsable;
 
   function check() {
+    if (parsedBalance === null) {
+      return;
+    }
     startTransition(async () => {
       const response = await previewMonthCloseAction(
         year,
@@ -165,6 +180,9 @@ export function MonthCloseSheet({
   }
 
   function confirm() {
+    if (parsedBalance === null) {
+      return;
+    }
     startTransition(async () => {
       const response = await recordMonthClose(year, month, parsedBalance);
       if (response.error || !response.result) {
@@ -239,8 +257,25 @@ export function MonthCloseSheet({
                 placeholder={t("monthClose.balancePlaceholder")}
                 value={balance}
                 onChange={(event) => setBalance(event.target.value)}
-                aria-label={t("monthClose.balanceOn", { date: observeOn })}
+                aria-label={t("monthClose.balanceOn", {
+                  date: formatShortDate(observeOn, locale),
+                })}
+                aria-invalid={balanceIsUnreadable || undefined}
+                aria-describedby={
+                  balanceIsUnreadable ? balanceErrorId : undefined
+                }
               />
+              {balanceIsUnreadable ? (
+                <span
+                  id={balanceErrorId}
+                  role="alert"
+                  className="text-sm text-destructive"
+                >
+                  {t("monthClose.balanceUnreadable", {
+                    example: t("monthClose.balancePlaceholder"),
+                  })}
+                </span>
+              ) : null}
             </label>
 
             <Button

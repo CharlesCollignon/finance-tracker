@@ -65,7 +65,7 @@ export function BottomNav({
                   and the number is on the Bearing anyway. */}
               {href === "/transactions" && ledgerBadge > 0 ? (
                 <span
-                  aria-label={`${ledgerBadge} waiting`}
+                  aria-label={t("nav.waiting", { count: ledgerBadge })}
                   className="absolute right-1.5 top-1 size-1.5 rounded-full bg-foreground"
                 />
               ) : null}

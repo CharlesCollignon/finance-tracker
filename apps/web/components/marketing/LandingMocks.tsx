@@ -42,7 +42,7 @@ function useEuro(): (amount: number) => string {
 }
 
 /**
- * The same for a rate: "35.7%" in English, "35,7 %" in French.
+ * The same for a rate: "33.6%" in English, "33,6 %" in French.
  *
  * Both halves are the language's — the decimal separator and the space before
  * the sign — so neither is written into the sentences that quote a rate.
@@ -243,7 +243,23 @@ const ACTIVE_NAV: Record<LandingPageId, Key> = {
 /** The real side nav's structure — logo band, primary action, then the same
  * APP_NAV_ITEMS the app renders, drawn as the tree `BranchedNav` draws, off
  * the shared geometry in `lib/nav-tree`. All three are shared rather than
- * copied, so the picture and the thing it is a picture of cannot drift. */
+ * copied, so the picture and the thing it is a picture of cannot drift.
+ *
+ * The colours are not shared and that is the seam to watch. The drift-proofing
+ * above guards the structure axis only: when the app's active state moved off
+ * Lamplit Gold onto the foreground — a rail marker in `bg-foreground`, a row
+ * in `text-foreground` with no pill behind it, a reach path in
+ * `stroke-foreground` — this mock went on painting the gold version, because
+ * every one of those classes is hand-written here and hand-written there.
+ *
+ * So: **`components/layout/BranchedNav.tsx` and this component must move
+ * together**, and `components/layout/BottomNav.tsx` and `MobileTabBar` below
+ * are the same pair for the phone. Sharing the colour the way the geometry is
+ * shared means lifting the four class strings — marker, active row, idle row,
+ * reach stroke — into a module beside `lib/nav-tree`, which is a change to
+ * `components/layout/**` and `lib/**` rather than to the marketing surface,
+ * and is the right fix the day either of those files is open. Until then the
+ * four call sites below carry a note apiece. */
 function WebSideNav({ active }: { active: Key }) {
   const t = useT();
   return (
@@ -257,9 +273,17 @@ function WebSideNav({ active }: { active: Key }) {
         <div className="flex min-h-10 items-center gap-3 rounded-control bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
           <Plus size={18} weight="bold" />
           {t("ledger.addTransaction")}
-          <span className="ml-auto rounded-control bg-black/15 px-1.5 py-0.5 text-[10px] font-normal">
-            N
-          </span>
+          {/* The shortcut the app actually has. This said `N` until now, and
+              `SideNav`'s own comment says why that is wrong: the bare-letter
+              binding was removed because a single key opens the sheet over
+              whatever a screen reader is in the middle of (WCAG 2.1 SC 2.1.4),
+              which left the picture teaching a key that does nothing. The real
+              badge reads the platform and says `⌘K` or `Ctrl K`; a still
+              picture cannot ask, so it shows the one a visitor on a keyboard
+              with no Command key can still press. */}
+          <kbd className="ml-auto rounded-control bg-black/15 px-1.5 py-0.5 text-[10px] font-normal">
+            Ctrl K
+          </kbd>
         </div>
       </div>
 
@@ -273,19 +297,27 @@ function WebSideNav({ active }: { active: Key }) {
           const showKids = isActive && children.length > 0;
           return (
             <div key={labelKey} className="relative flex flex-col">
+              {/* `bg-foreground`, with `components/layout/BranchedNav.tsx`:
+                  against a rail that is otherwise a hairline, full-strength
+                  ink is already the brightest thing on it. */}
               {isActive ? (
                 <span
                   aria-hidden
-                  className="absolute -left-1.5 top-3 z-10 h-4 w-0.5 rounded-full bg-primary"
+                  className="absolute -left-1.5 top-3 z-10 h-4 w-0.5 rounded-full bg-foreground"
                 />
               ) : null}
               <div className="flex items-center gap-1">
+                {/* No pill behind the row you are in, with
+                    `components/layout/BranchedNav.tsx`: DESIGN.md's Navigation
+                    section puts the active state in the foreground colour, and
+                    the marker beside it and the icon's `fill` weight say the
+                    rest. What stood here was `bg-primary/10 text-primary-ink`
+                    — the accent spent twice on a state three other channels
+                    already make unmistakable. */}
                 <span
                   className={cn(
                     "flex min-h-10 flex-1 items-center gap-3 rounded-control px-3 py-2 text-sm font-medium",
-                    isActive
-                      ? "bg-primary/10 text-primary-ink"
-                      : "text-muted-foreground",
+                    isActive ? "text-foreground" : "text-muted-foreground",
                   )}
                 >
                   <Icon size={18} weight={isActive ? "fill" : "light"} />
@@ -329,12 +361,18 @@ function WebSideNav({ active }: { active: Key }) {
                         strokeLinejoin="round"
                       />
                     ))}
-                    {/* The accent, traced to the view the mock is showing —
+                    {/* The reach, traced to the view the mock is showing —
                         always the first, because that is the view each of
-                        these screenshots is of. */}
+                        these screenshots is of. `stroke-foreground` against
+                        the hairline the rest of the tree is drawn in, with
+                        `components/layout/BranchedNav.tsx`: two steps of the
+                        same ink, so the drawing and the words agree. It was
+                        `stroke-primary`, which made the tree the one place
+                        left on either surface where the accent marked a
+                        position. */}
                     <path
                       d={reachPath(0)}
-                      className="fill-none stroke-primary"
+                      className="fill-none stroke-foreground"
                       strokeWidth={1.5}
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -347,7 +385,7 @@ function WebSideNav({ active }: { active: Key }) {
                       className={cn(
                         "flex items-center rounded-control pr-3 text-sm",
                         index === 0
-                          ? "font-medium text-primary-ink"
+                          ? "font-medium text-foreground"
                           : "text-muted-foreground",
                       )}
                     >
@@ -442,10 +480,15 @@ function MobileTabBar({ active }: { active: Key }) {
             key={labelKey}
             className={cn(
               "flex flex-1 flex-col items-center justify-center gap-0.5",
-              isActive ? "text-primary" : "text-muted-foreground",
+              // Foreground and a filled glyph, with
+              // `components/layout/BottomNav.tsx`. `text-primary` here was the
+              // accent spent on a state the step up from muted foreground and
+              // the icon's weight already make unmistakable — the same reason
+              // the gold wash came off the real bar.
+              isActive ? "text-foreground" : "text-muted-foreground",
             )}
           >
-            <Icon size={19} weight={isActive ? "fill" : "regular"} />
+            <Icon size={19} weight={isActive ? "fill" : "light"} />
             <span className="text-[9px] font-medium leading-none">
               {t(labelKey)}
             </span>
@@ -912,7 +955,7 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
   const sample = landingSampleFor(useLocale());
   const t = useT();
   const euro = useEuro();
-  const { templates, monthLabel } = sample;
+  const { templates } = sample;
   const monthlyImpact = templates
     .filter((template) => template.amount < 0)
     .reduce(
@@ -965,7 +1008,12 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
   }
 
   return (
-    <WebShell active="nav.charges" monthLabel={monthLabel}>
+    // No month stepper: only the Ledger carries one. `TransactionsView` and
+    // `CalendarView` are the two `MonthPicker` call sites in the app, and
+    // Charges renders a bare `<PageHeader titleKey="nav.charges" />`. A
+    // template is not a month's row, which is the reason the real header has
+    // nothing to step through here.
+    <WebShell active="nav.charges">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-4">
           <MockCard innerClassName="flex h-full flex-col items-center justify-center px-6 py-6">
@@ -1268,7 +1316,23 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
 /* ------------------------------------------------------------- month close */
 
 /** The reconciliation, laid out the way the close sheet lays it out: what the
- * account did, then the two figures only a balance can produce. */
+ * account did, then the two figures only a balance can produce.
+ *
+ * The unrecorded row is the point of the panel and it used to be missing.
+ * Without it the four rows were an equation with a term taken out — they
+ * ran opening, in, out, closing, and the reader who added them up landed
+ * somewhere other than the closing balance and concluded the mock could not
+ * count. That row is the product: it is the line no ledger arithmetic can
+ * produce and only a typed balance can, so the panel that promises to show
+ * how it adds up has to show it.
+ *
+ * It is labelled with the close sheet's own word — `monthClose.neverRecorded`,
+ * the label the real sheet puts on this line — rather than a second wording
+ * invented for marketing.
+ *
+ * The middle two rows read `close.recordedIn` and `close.recordedOut`, which
+ * are February's. They used to read `sample.income` and `sample.spent`, which
+ * are March's and which March is nineteen days into. */
 function CloseLedger({ dense = false }: { dense?: boolean }) {
   const sample = landingSampleFor(useLocale());
   const t = useT();
@@ -1279,10 +1343,17 @@ function CloseLedger({ dense = false }: { dense?: boolean }) {
       label: t("marketingMock.openingBalance"),
       value: euro(close.openingBalance),
     },
-    { label: t("marketingMock.recordedIn"), value: `+${euro(sample.income)}` },
+    {
+      label: t("marketingMock.recordedIn"),
+      value: `+${euro(close.recordedIn)}`,
+    },
     {
       label: t("marketingMock.recordedOut"),
-      value: `−${euro(sample.spent)}`,
+      value: `−${euro(close.recordedOut)}`,
+    },
+    {
+      label: t("monthClose.neverRecorded"),
+      value: `−${euro(close.unrecorded)}`,
     },
     {
       label: t("marketingMock.closingBalance"),
@@ -1324,7 +1395,7 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
 
   if (variant === "mobile") {
     return (
-      <MobileShell active="nav.month">
+      <MobileShell active={ACTIVE_NAV["month-close"]}>
         <MockCard innerClassName="p-4">
           <MobileHero
             label={t("marketingStat.unrecordedIn", {
@@ -1375,13 +1446,26 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
     );
   }
 
+  /* The Plan surface, not a "Month" one. This shell used to title itself
+     after `nav.month`, a surface the app retired, so it named something that
+     does not exist and lit nothing in the rail. Taking it off here left that
+     key with no reader anywhere, and the catalogue's dead-key test said so,
+     so the word went too. The close card, its history and the projection all live on
+     Plan, which is where `ACTIVE_NAV` has said to put it all along.
+
+     No month stepper either. Only the Ledger carries one — `TransactionsView`
+     and `CalendarView` are the two `MonthPicker` call sites — and a stepper
+     reading March above a card offering to close February was the loudest
+     half of that collision. The card names its own month now, which is what
+     `MonthCloseCard` does: you close February from inside March, and the only
+     month worth printing here is the one being closed. */
   return (
-    <WebShell active="nav.month" monthLabel={sample.monthLabel}>
+    <WebShell active={ACTIVE_NAV["month-close"]}>
       <MockCard innerClassName="flex items-center justify-between gap-6 px-6 py-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-head text-lg">
-              {t("marketingStat.readyToClose", { month: sample.monthLabel })}
+              {t("marketingStat.readyToClose", { month: close.monthLabel })}
             </p>
             <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
               {t("marketingStat.inARow", { count: close.streak })}
@@ -1580,7 +1664,8 @@ export function MonthReadMock({ variant = "web" }: { variant?: Variant }) {
 
   return (
     <MockViewport width={WEB_WIDTH} height={WEB_HEIGHT}>
-      <WebShell active={ACTIVE_NAV["month-read"]} monthLabel={monthLabel}>
+      {/* Plan, and no stepper — see the Charges mock. */}
+      <WebShell active={ACTIVE_NAV["month-read"]}>
         {/* Seven and five, the same split the surface itself uses on a wide
             screen: the read sits under the figure it interprets, never
             beside it. */}

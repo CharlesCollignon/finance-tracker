@@ -537,9 +537,11 @@ The alphas are recorded in the frontmatter under `components:` as
 `glass-card`, `glass-panel` and `glass-chrome`, which is where the phone states
 its own `rgba(19, 19, 32, 0.7)` too.
 
-Inside the app there is exactly one exception to the flatness, and it is a
-recess rather than a lift. The marketing surface holds a second, cast by glass
-rather than by elevation and named below.
+Inside the app exactly one surface treatment breaks the flatness, and it is a
+recess rather than a lift. The marketing surface holds the system's only cast
+shadows, thrown by glass rather than by elevation. Both are named below, beside
+the inset highlights that are neither — including the orb's, the one
+`box-shadow` that crosses into the app without describing a surface at all.
 
 ### Shadow Vocabulary
 
@@ -553,6 +555,20 @@ rather than by elevation and named below.
 - **Marketing Menu Glass** (`box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 30px 70px -20px rgba(0, 0, 0, 0.85)`):
   `.glass-menu`, marketing only. The same pair, longer and darker, because a
   dropdown opens over a 5rem headline and has the most to hold down.
+- **Marketing Flat Glass** (`box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09)`):
+  `.glass-flat` and `.glass-grid`, marketing only. The lit top edge alone, a
+  shade under the panels'. These carry their own text instead of floating over
+  the orb, so there is nothing for them to sit in front of and nothing to cast.
+- **Orb Bounce** (`box-shadow: inset 0 -7cqw 11cqw -5cqw rgb(255 237 194 / calc(0.24 * var(--orb-glass)))`):
+  `.pc-orb::after`, on both surfaces. The light the ground throws back up into
+  the underside of the sphere, sized in `cqw` so it scales with the mark rather
+  than with the viewport. Interior modelling of a decoration, not a claim about
+  where its box sits.
+
+Five entries, and exactly two of them carry anything cast: the drop inside
+Marketing Panel Glass and the drop inside Marketing Menu Glass. Everything else
+here is an inset — light drawn on a surface, which is how a system that refuses
+elevation can hold this many and stay flat.
 
 ### Named Rules
 
@@ -562,22 +578,41 @@ recess. If something needs to feel separate, step its surface value or give it
 a hairline — do not reach for a drop shadow, and do not add an elevation scale.
 
 **The Marketing Glass Rule.** The marketing surface casts two shadows and
-lifts one card on hover, and those three declarations are the whole of it.
-`.glass-panel` carries `inset 0 1px 0 rgba(255, 255, 255, 0.14)` over
-`0 24px 60px -20px rgba(0, 0, 0, 0.7)`; `.glass-menu` carries
-`inset 0 1px 0 rgba(255, 255, 255, 0.1)` over
-`0 30px 70px -20px rgba(0, 0, 0, 0.85)`; and `.glass-flat-hover:hover` adds
+lifts one card on hover, and those three declarations are the whole of what
+this rule licenses. `.glass-panel` casts `0 24px 60px -20px rgba(0, 0, 0, 0.7)`
+under an `inset 0 1px 0 rgba(255, 255, 255, 0.14)`; `.glass-menu` casts
+`0 30px 70px -20px rgba(0, 0, 0, 0.85)` under an
+`inset 0 1px 0 rgba(255, 255, 255, 0.1)`; and `.glass-flat-hover:hover` adds
 `transform: translateY(-2px)` to the border and background it was already
 changing. All three live in `app/globals.css` beside the other marketing
 glass and apply nowhere else. Two more drops were deleted on the way to
 writing this down — a gold glow under the hero button and a black pool under
 the phone mock — because neither was glass, and the exception is the
-vocabulary, not the surface. Two hover transforms are outside it and are
-recorded here rather than blessed: `LandingCtas`' primary button rises
-`-translate-y-0.5` and `LandingGlass`' arrow nub slides the same step
-diagonally. Neither casts anything, so neither is elevation in the sense the
-rule above refuses, but neither has been decided on either — do not read them
-as room for a third.
+vocabulary, not the surface.
+
+Two is the count of what is cast, not of what is written. `box-shadow` appears
+at five places in `app/globals.css`, and the three this rule does not name cast
+nothing: `.glass-flat` and `.glass-grid` each take
+`inset 0 1px 0 rgba(255, 255, 255, 0.09)`, and `.pc-orb::after` takes
+`inset 0 -7cqw 11cqw -5cqw rgb(255 237 194 / calc(0.24 * var(--orb-glass)))`.
+The two cast declarations open with an inset of their own as well, so the file
+holds five inset highlights against two drops. An inset puts nothing in front
+of the element and moves nothing away from the page — it is light drawn on a
+surface, which is precisely what the bezel inset is and why the flatness rule
+can call a recess its one exception. So this rule is scoped to what is thrown,
+and an inset highlight is not a candidate for it, in marketing or anywhere
+else. The orb's is the one worth saying out loud: `Orb` is a brand component
+and its 22–26px mark sits in `PageHeader` and `Logo` on the app side, so the
+sphere's interior modelling travels with it across the line this rule draws.
+That is shading inside a decoration, not a box announcing how far off the page
+it sits, and how far off the page a surface sits is the only thing the flatness
+rule is about.
+
+Two hover transforms are outside it and are recorded here rather than blessed:
+`LandingCtas`' primary button rises `-translate-y-0.5` and `LandingGlass`'
+arrow nub slides the same step diagonally. Neither casts anything, so neither
+is elevation in the sense the rule above refuses, but neither has been decided
+on either — do not read them as room for a third.
 
 The marketing surface earns it because it is lit differently. Operate mode has
 a ground its surfaces admit: a card at 60% over the bloom separates by what it

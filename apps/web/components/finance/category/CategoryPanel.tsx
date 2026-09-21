@@ -120,7 +120,7 @@ export function CategoryPanel({
       </p>
 
       <BarSeries
-        color={TONE[history.type] ?? "var(--chart-1)"}
+        color={TONE[history.type]}
         points={drawn.map((point) => ({
           key: point.monthKey,
           label: point.shortLabel,

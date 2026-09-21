@@ -85,6 +85,27 @@ export function GlassStat({
         </p>
         {href ? <ArrowNub /> : null}
       </div>
+      {/* Ink, and deliberately not Lamplit Gold.
+          DESIGN.md reserves a third home for the accent — "a figure that
+          genuinely leads a screen" — and these are the only figures on the
+          public site, so the question is a fair one. Three things answer it.
+
+          The panels sit on the orb, on warm light. That is already why they
+          reach for warm white alpha instead of the app's cool `muted-
+          foreground`; gold ink on a warm-lit translucent pane separates from
+          its own background less than white does, so the accent would read as
+          a tint of the artwork rather than as the system's one emphasis.
+
+          "A figure that leads a screen" is singular, and there are five of
+          these — two in the hero, three beside the close. One component cannot
+          hold a distinction it has no way to defend, and a `lead` flag would
+          be set everywhere within a release. The app's own sweep left
+          `text-primary-ink` at exactly one call site, in `ProjectionCard`.
+
+          And the hero's gold is spoken for: `LandingCtas` is a gold fill
+          sitting a few rems above these cards. Two golds in one viewport, one
+          of them the primary action, costs the action. The figure that leads
+          this page is the display headline; the cards are its evidence. */}
       <p className="mt-3 font-mono text-2xl font-medium tabular-nums text-marketing-ink sm:text-[1.75rem]">
         {value}
       </p>
@@ -92,9 +113,14 @@ export function GlassStat({
         <p className="mt-1 text-xs text-marketing-muted">{caption}</p>
       ) : null}
       {meter !== undefined ? (
+        /* The fill is ink, not the accent. A meter is data — the app draws its
+           own in `bg-success`, `bg-destructive` or a chart colour over a
+           `foreground/10` track, and never in gold, because the gold on these
+           pages belongs to the button underneath them. 8.66:1 against the
+           track and 12.47:1 against the panel. */
         <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-white/12">
           <div
-            className="h-full rounded-full bg-primary"
+            className="h-full rounded-full bg-marketing-ink"
             style={{ width: `${Math.min(1, Math.max(0, meter)) * 100}%` }}
           />
         </div>
@@ -147,8 +173,13 @@ export function GlassLink({
       )}
     >
       <div className="flex items-start justify-between gap-4">
+        {/* Ink, not gold. Seven cards each carrying a gold glyph was the
+            single largest spend of the accent on this surface, and the seven
+            of them said nothing the card's title does not — the mark belongs
+            to the surface it names, not to an emphasis it was never given.
+            11.50:1 inside the chip, well past the 3:1 a glyph needs. */}
         {icon ? (
-          <span className="flex h-9 w-9 items-center justify-center rounded-control border border-white/10 bg-white/5 text-primary">
+          <span className="flex h-9 w-9 items-center justify-center rounded-control border border-white/10 bg-white/5 text-marketing-ink">
             {icon}
           </span>
         ) : null}
