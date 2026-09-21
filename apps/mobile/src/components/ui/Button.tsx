@@ -27,8 +27,11 @@ export interface ButtonProps extends PressableProps {
   icon?: ComponentProps<typeof Ionicons>["name"];
 }
 
-// The rim on the gold variants is not decoration: a gold fill is 1.7:1
-// against the light ground, so without it the button's edge disappears.
+// The rim on the gold variants matches the fill, and that is correct rather
+// than an oversight: the 1.7:1 this once guarded against was gold on the light
+// ground, which no longer exists. On today's ground the fill is ~11:1 and the
+// edge holds on its own. The token stays so the edge can be given contrast
+// again without touching a call site.
 const CONTAINER: Record<Variant, string> = {
   default: "bg-primary border border-primary-rim rounded-control",
   secondary: "bg-secondary rounded-control",
