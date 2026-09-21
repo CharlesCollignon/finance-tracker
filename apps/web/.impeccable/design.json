@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-21T00:00:00Z",
+  "title": "Design System: Pluclair",
+  "extensions": {
+    "colorMeta": {
+      "lamplit-gold": {
+        "role": "primary",
+        "displayName": "Lamplit Gold",
+        "canonical": "#e0be7a",
+        "tonalRamp": [
+          "#2a2113",
+          "#453620",
+          "#614d2e",
+          "#7f663d",
+          "#9d7f4d",
+          "#bc9a5e",
+          "#e0be7a",
+          "#f3ddb4"
+        ]
+      },
+      "cool-near-black": {
+        "role": "neutral",
+        "displayName": "Cool Near-Black",
+        "canonical": "#0a0a10",
+        "tonalRamp": [
+          "#06060a",
+          "#0a0a10",
+          "#0d0d15",
+          "#131320",
+          "#1c1c2b",
+          "#2b2b3d",
+          "#4a4a5e",
+          "#9b9bad"
+        ]
+      },
+      "card-surface": {
+        "role": "neutral",
+        "displayName": "Card Surface",
+        "canonical": "#131320",
+        "tonalRamp": [
+          "#06060a",
+          "#0a0a10",
+          "#0d0d15",
+          "#131320",
+          "#1c1c2b",
+          "#2b2b3d",
+          "#4a4a5e",
+          "#9b9bad"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Foreground",
+        "canonical": "#ececf1",
+        "tonalRamp": [
+          "#1c1c2b",
+          "#2b2b3d",
+          "#4a4a5e",
+          "#6b6b7d",
+          "#9b9bad",
+          "#c2c2cf",
+          "#ececf1",
+          "#ffffff"
+        ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Income Green",
+        "canonical": "#34d399"
+      },
+      "info": {
+        "role": "tertiary",
+        "displayName": "Investment Cyan",
+        "canonical": "#22d3ee"
+      },
+      "warning": {
+        "role": "tertiary",
+        "displayName": "Awaiting Orange",
+        "canonical": "#fb923c"
+      },
+      "destructive": {
+        "role": "tertiary",
+        "displayName": "Expense Salmon",
+        "canonical": "#f87171"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The landing headline. One per page."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "A marketing section's heading."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "The heading of a block inside a section."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Monetary values presented as the subject of a screen. Fraunces, always with tabular-nums. Never used for prose or headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose and row labels."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase section headers above lists and grouped rows."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Identifiers, symbols and anything compared character by character."
+      },
+      "logo": {
+        "displayName": "Logo",
+        "purpose": "The Pluclair wordmark only. Local Orbit face."
+      }
+    },
+    "shadows": [
+      {
+        "name": "bezel-inset",
+        "value": "inset 0 1px 1px rgba(255, 246, 230, 0.08)",
+        "purpose": "The only depth cue in the system. A warm highlight along a card's top inner edge inside its tray, reading as a machined recess rather than elevation."
+      },
+      {
+        "name": "none",
+        "value": "none",
+        "purpose": "Every --shadow-* token from 2xs to 2xl resolves to none, by decision rather than omission. Surfaces never lift."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.32, 0.72, 0, 1)",
+        "purpose": "The single easing curve across the system."
+      },
+      {
+        "name": "duration-press",
+        "value": "140ms",
+        "purpose": "Press feedback, and the privacy blur's transition."
+      },
+      {
+        "name": "duration-hover",
+        "value": "200ms",
+        "purpose": "Hover and colour transitions. Also the Tailwind default, so an undeclared duration is still on the scale."
+      },
+      {
+        "name": "duration-enter",
+        "value": "500ms",
+        "purpose": "Arrival of a block. Page and stagger entrances run 550ms."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "A global prefers-reduced-motion block collapses all animation and transition; the landing logo's float switches off entirely."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one gold control on a screen. Used for the single action that screen exists for.",
+      "html": "<button class=\"ds-btn-primary\">Close the month</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: #e0be7a; color: #0a0a10; border: 1px solid #e0be7a; border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-primary:hover { background: #eacb8f; } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #e0be7a; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "The ordinary control. Everything that is an action but not the action.",
+      "html": "<button class=\"ds-btn-secondary\">Skip this one</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: #1c1c2b; color: #ececf1; border: none; border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-secondary:hover { background: #262033; } .ds-btn-secondary:active { transform: scale(0.98); } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #e0be7a; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "A hairline-bounded control for a secondary path that still needs an edge.",
+      "html": "<button class=\"ds-btn-outline\">Review inbox</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: transparent; color: #ececf1; border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-outline:hover { background: #1c1c2b; } .ds-btn-outline:active { transform: scale(0.98); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #e0be7a; }"
+    },
+    {
+      "name": "Pill Button with Nub",
+      "kind": "button",
+      "refersTo": "button-pill",
+      "description": "The marketing call to action. A circular nub nests flush inside the end padding and drifts up-and-right on hover.",
+      "html": "<button class=\"ds-btn-pill\">Start with this month<span class=\"ds-btn-nub\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/><polyline points=\"12 5 19 12 12 19\"/></svg></span></button>",
+      "css": ".ds-btn-pill { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 6px 6px 20px; background: #e0be7a; color: #0a0a10; border: 1px solid #e0be7a; border-radius: 9999px; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-pill:hover { background: #eacb8f; } .ds-btn-pill:active { transform: scale(0.98); } .ds-btn-pill:focus-visible { outline: none; box-shadow: 0 0 0 2px #06060a, 0 0 0 4px #e0be7a; } .ds-btn-nub { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9999px; background: rgba(0, 0, 0, 0.1); transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-pill:hover .ds-btn-nub { transform: translate(2px, -2px); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Card-surface ground with a hairline. Focus draws a gold ring; the border itself does not move.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Closing balance\" />",
+      "css": ".ds-input { width: 100%; min-height: 44px; padding: 8px 12px; background: #131320; color: #ececf1; border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; letter-spacing: -0.01em; transition: border-color 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-input::placeholder { color: #9b9bad; } .ds-input:focus-visible { outline: none; box-shadow: 0 0 0 2px #e0be7a; }"
+    },
+    {
+      "name": "Card with Bezel",
+      "kind": "card",
+      "refersTo": "card-bezel",
+      "description": "The system's signature container: a tray at shell radius holding an inlay at card radius, with 6px of tray showing and the only inset highlight in the system.",
+      "html": "<div class=\"ds-bezel\"><div class=\"ds-bezel-inner\"><p class=\"ds-bezel-label\">The accounts</p><p class=\"ds-bezel-figure\">€3,204.18</p></div></div>",
+      "css": ".ds-bezel { padding: 6px; background: rgba(236, 236, 241, 0.04); border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 26px; } .ds-bezel-inner { padding: 20px; background: #131320; border-radius: 20px; box-shadow: inset 0 1px 1px rgba(255, 246, 230, 0.08); } .ds-bezel-label { margin: 0 0 4px; color: #9b9bad; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.015em; text-transform: uppercase; } .ds-bezel-figure { margin: 0; color: #ececf1; font-family: Fraunces, Georgia, serif; font-size: 2.25rem; font-weight: 600; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "List Row",
+      "kind": "custom",
+      "refersTo": "list-row",
+      "description": "The ledger's repeating unit. 56px minimum so it is a finger target before it is a rhythm, transparent at rest, washing on hover.",
+      "html": "<div class=\"ds-row\"><div class=\"ds-row-main\"><span class=\"ds-row-label\">Rent</span><span class=\"ds-row-sub\">Applied 3 March</span></div><span class=\"ds-row-value\">-€1,150.00</span></div>",
+      "css": ".ds-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 14px 20px; background: transparent; text-align: left; transition: background-color 200ms cubic-bezier(0.32, 0.72, 0, 1); cursor: pointer; } .ds-row:hover { background: rgba(236, 236, 241, 0.04); } .ds-row-main { display: flex; flex-direction: column; min-width: 0; flex: 1; } .ds-row-label { color: #ececf1; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 1rem; letter-spacing: -0.01em; } .ds-row-sub { color: #9b9bad; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; } .ds-row-value { color: #ececf1; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-variant-numeric: tabular-nums; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Ledger",
+    "overview": "Pluclair is a ledger that happens to be lit from behind. It carries the discipline of ruled paper — consistent rows, aligned figures, nothing decorative competing with a number — onto a cool near-black ground, and the inversion is the whole idea. Paper's restraint, none of paper's brightness. The system is calm, exact and unhurried: its job is to let a figure be read correctly, and everything that would interfere with that has already been taken out.\n\nThis is a dark system with no light counterpart, and that is settled rather than pending. A warm paper theme shipped alongside this one and was removed: it was the CSS default while every entry point sent users to dark, which meant two palettes to keep honest and only one anybody saw. Designing a light variant is not an improvement to this system; it is a reversal of a decision already made.\n\nRestraint here is specific, not general. There is one accent and it is used rarely. There are no shadows at all, with one deliberate exception. There are three marketing greys, because the site genuinely needs three and did not need the ten alpha literals it had. There are three display sizes, because five clamp ranges produced twenty-eight distinct size/weight/family triples across eight pages. Each of these is a reduction that was made on purpose, and the count is the point.",
+    "keyCharacteristics": [
+      "Dark-only, on a cool near-black with a faint violet cast",
+      "One accent — a warm gold — against an otherwise unsaturated field",
+      "Flat by rule; depth comes from surface value steps and hairlines",
+      "Serif numerals for money, sans for everything that is words",
+      "Controls that answer a press immediately and precisely, then stop"
+    ],
+    "rules": [
+      {
+        "name": "The One Palette Rule",
+        "body": "There is one palette and it is dark. Tokens are set on :root as well as .dark so nothing depends on the class being present. Do not introduce a light theme, a light-mode token pair, or a light: variant.",
+        "section": "colors"
+      },
+      {
+        "name": "The Rare Accent Rule",
+        "body": "Lamplit Gold earns attention by being scarce. Its places are the primary action, the focus ring, a figure that genuinely leads a screen, and — systematically — a savings amount. Outside those, a surface that reaches for it in three unrelated places has spent it.",
+        "section": "colors"
+      },
+      {
+        "name": "The Semantic Amount Rule",
+        "body": "An amount's colour says what kind of money it is — income, expense, savings or investment — never whether it is positive or negative. Do not colour an amount by sign, and do not invent a fifth category colour.",
+        "section": "colors"
+      },
+      {
+        "name": "The Three Greys Rule",
+        "body": "Marketing text uses exactly three opacities: 0.85, 0.55, 0.35. A fourth value is a decision nobody made — reach for an existing step instead of interpolating.",
+        "section": "colors"
+      },
+      {
+        "name": "The Serif Is For Money Rule",
+        "body": "Fraunces appears on figures and never on prose. Every use carries tabular-nums so digits hold their column as a value changes. A serif heading is not in this system.",
+        "section": "typography"
+      },
+      {
+        "name": "The Three Steps Rule",
+        "body": "Marketing display type has exactly three sizes, all clamp(). A headline that does not scale with the viewport is the wrong fix; five arbitrary ranges was the original problem, and a fourth step reopens it.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Typeface Rule",
+        "body": "Headings are the body sans at 600 with tight tracking. Reaching for a second display family to make something feel important is the move this system already rejected.",
+        "section": "typography"
+      },
+      {
+        "name": "The Named Step Rule",
+        "body": "When a spacing value recurs structurally, name it — row, card, the shell heights. When it does not, use the base scale. A one-off 17px is a mistake, not a step.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat-With-One-Exception Rule",
+        "body": "No element casts a shadow. The only depth cue in the system is the bezel's inset highlight, and it describes a recess. If something needs to feel separate, step its surface value or give it a hairline — do not reach for a drop shadow, and do not add an elevation scale.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Tray And Inlay Rule",
+        "body": "A bezel is shell radius outside, card radius inside, with 6px of tray showing. Those three values move together or not at all; changing one alone breaks the frame.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do keep every new surface dark. Tokens resolve identically on :root and .dark.",
+      "Do set monetary figures in Fraunces with tabular-nums when the figure is the subject of its screen, and in the sans when it is one value among many in a row.",
+      "Do colour amounts by category type through @finance/core, so a figure means the same thing here as it does on the phone.",
+      "Do mark every rendered amount with .privacy-amount or .privacy-sensitive so the blur keeps covering the whole app.",
+      "Do build depth from the surface value steps and hairlines already defined, in that order.",
+      "Do give touch targets at least 44px, and list rows at least 56px.",
+      "Do use the three duration tokens and the single easing curve; a transition with no duration inherits the hover token and is already correct.",
+      "Do honour prefers-reduced-motion in any new animation, following the landing logo's example of switching off rather than merely shortening."
+    ],
+    "donts": [
+      "Don't add a light theme, a light-mode token, or a light: variant. The paper theme was removed on purpose.",
+      "Don't introduce a drop shadow or an elevation scale. Every --shadow-* is none by decision.",
+      "Don't add a fourth marketing grey or a fourth display clamp. Both counts are the result of a deliberate reduction.",
+      "Don't reach for a second display typeface to signal importance; headings are the body sans at 600.",
+      "Don't colour an amount by whether it is positive or negative.",
+      "Don't spend Lamplit Gold on decoration; its semantic and emphatic uses are the whole of its job.",
+      "Don't hard-code a hex, an alpha literal, or a duration where a token exists — the ten alpha literals and the twenty-eight type triples are exactly what this system was consolidated out of.",
+      "Don't use Fraunces for headings or prose, and don't let a figure set in it lose tabular-nums."
+    ]
+  }
+}

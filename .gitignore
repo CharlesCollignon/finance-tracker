@@ -65,3 +65,8 @@ package-lock.json
 
 # UI/UX audit evidence — screenshots of real account data, never committed
 .ux-audit/
+
+# impeccable session state, not project source
+.impeccable/live/sessions/
+.impeccable/live/roots.json
+.impeccable/config.local.json

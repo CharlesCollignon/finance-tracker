@@ -7,67 +7,44 @@
  * palette. Values are space-separated RGB channels so Tailwind's alpha
  * modifiers (bg-primary/10) keep working.
  *
- * Defining each token once per color scheme is what makes `text-foreground`
- * correct in both themes. The previous setup hard-coded the light value and
- * required every call site to remember a `dark:` twin, which is how dark text
- * ended up on dark backgrounds.
+ * There is one palette and it is dark, so these sit on `:root` unconditionally
+ * rather than behind `prefers-color-scheme`. A warm paper set used to hold
+ * `:root` with the dark one in a media query, and three separate mechanisms
+ * were keeping it off screen: `userInterfaceStyle: "dark"` in app.json,
+ * `Appearance.setColorScheme("dark")` at boot, and the query itself. Any one
+ * of them lapsing would have flipped every classed surface to paper while
+ * everything drawing from `theme/tokens.ts` stayed dark — the same split that
+ * once put dark text on a dark background.
+ *
+ * `theme/tokens.ts` states these same values for the call sites a class cannot
+ * reach. The two must agree.
  */
 @layer base {
   :root {
-    --background: 247 245 242;
-    --foreground: 28 24 20;
-    --card: 255 255 255;
-    --card-foreground: 28 24 20;
-    --primary: 213 177 99;
-    --primary-hover: 194 158 79;
-    --primary-foreground: 28 24 20;
-    --primary-ink: 122 90 30;
-    --primary-rim: 168 129 44;
-    --secondary: 236 233 228;
-    --secondary-foreground: 28 24 20;
-    --muted: 236 233 228;
-    --muted-foreground: 107 98 89;
-    --accent: 245 233 206;
-    --accent-foreground: 28 24 20;
-    --success: 21 123 59;
-    --success-foreground: 255 255 255;
-    --info: 14 116 144;
-    --info-foreground: 255 255 255;
-    --destructive: 194 59 46;
-    --destructive-foreground: 255 255 255;
-    --warning: 180 83 9;
-    --warning-foreground: 255 255 255;
-    --border: 28 24 20;
-    --hairline-strong: 28 24 20;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --background: 10 10 16;
-      --foreground: 236 236 241;
-      --card: 19 19 32;
-      --card-foreground: 236 236 241;
-      --primary: 224 190 122;
-      --primary-hover: 234 203 143;
-      --primary-foreground: 10 10 16;
-      --primary-ink: 224 190 122;
-      --primary-rim: 224 190 122;
-      --secondary: 28 28 43;
-      --secondary-foreground: 236 236 241;
-      --muted: 28 28 43;
-      --muted-foreground: 155 155 173;
-      --accent: 38 32 21;
-      --accent-foreground: 236 236 241;
-      --success: 52 211 153;
-      --success-foreground: 10 10 16;
-      --info: 34 211 238;
-      --info-foreground: 10 10 16;
-      --destructive: 248 113 113;
-      --destructive-foreground: 10 10 16;
-      --warning: 251 146 60;
-      --warning-foreground: 10 10 16;
-      --border: 236 236 241;
-      --hairline-strong: 236 236 241;
-    }
+    --background: 10 10 16;
+    --foreground: 236 236 241;
+    --card: 19 19 32;
+    --card-foreground: 236 236 241;
+    --primary: 224 190 122;
+    --primary-hover: 234 203 143;
+    --primary-foreground: 10 10 16;
+    --primary-ink: 224 190 122;
+    --primary-rim: 224 190 122;
+    --secondary: 28 28 43;
+    --secondary-foreground: 236 236 241;
+    --muted: 28 28 43;
+    --muted-foreground: 155 155 173;
+    --accent: 38 32 21;
+    --accent-foreground: 236 236 241;
+    --success: 52 211 153;
+    --success-foreground: 10 10 16;
+    --info: 34 211 238;
+    --info-foreground: 10 10 16;
+    --destructive: 248 113 113;
+    --destructive-foreground: 10 10 16;
+    --warning: 251 146 60;
+    --warning-foreground: 10 10 16;
+    --border: 236 236 241;
+    --hairline-strong: 236 236 241;
   }
 }

@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-21T00:00:00Z",
+  "title": "Design System: Pluclair Mobile",
+  "extensions": {
+    "colorMeta": {
+      "lamplit-gold": {
+        "role": "primary",
+        "displayName": "Lamplit Gold",
+        "canonical": "#e0be7a",
+        "tonalRamp": ["#2a2113", "#453620", "#614d2e", "#7f663d", "#9d7f4d", "#bc9a5e", "#e0be7a", "#f3ddb4"]
+      },
+      "cool-near-black": {
+        "role": "neutral",
+        "displayName": "Cool Near-Black",
+        "canonical": "#0a0a10",
+        "tonalRamp": ["#06060a", "#0a0a10", "#0d0d15", "#131320", "#1c1c2b", "#2b2b3d", "#4a4a5e", "#9b9bad"]
+      },
+      "card-surface": {
+        "role": "neutral",
+        "displayName": "Card Surface",
+        "canonical": "#131320",
+        "tonalRamp": ["#06060a", "#0a0a10", "#0d0d15", "#131320", "#1c1c2b", "#2b2b3d", "#4a4a5e", "#9b9bad"]
+      },
+      "success": { "role": "tertiary", "displayName": "Income Green", "canonical": "#34d399" },
+      "destructive": { "role": "tertiary", "displayName": "Expense Salmon", "canonical": "#f87171" },
+      "info": { "role": "tertiary", "displayName": "Investment Cyan", "canonical": "#22d3ee" },
+      "warning": { "role": "tertiary", "displayName": "Awaiting Orange", "canonical": "#fb923c" }
+    },
+    "typographyMeta": {
+      "hero": { "displayName": "Hero", "purpose": "The one figure that owns a screen — money on hand, a portfolio total. Fraunces SemiBold at 56." },
+      "figure": { "displayName": "Figure", "purpose": "Card-level amounts, one step under the hero. Fraunces SemiBold at 32." },
+      "amount": { "displayName": "Amount", "purpose": "Every amount inside a ledger row. IBM Plex Mono at 16, so a column of them lines up." },
+      "title": { "displayName": "Title", "purpose": "A screen or sheet heading." },
+      "head": { "displayName": "Head", "purpose": "A block heading inside a screen." },
+      "body": { "displayName": "Body", "purpose": "Prose and row labels." },
+      "muted": { "displayName": "Muted", "purpose": "Secondary text and row subtitles." },
+      "label": { "displayName": "Label", "purpose": "Uppercase section headers." },
+      "micro": { "displayName": "Micro", "purpose": "Timestamps, units, the line under a figure." }
+    },
+    "shadows": [
+      { "name": "soft", "value": "0px 1px 2px 0px rgba(0, 0, 0, 0.06)", "purpose": "The only shadow in the system. A hint of separation for a translucent surface, explicitly not a brutalist offset shadow." }
+    ],
+    "motion": [
+      { "name": "haptics", "value": "expo-haptics on commit", "purpose": "Confirms a committed action rather than decorating a tap." },
+      { "name": "reduced-motion", "value": "AccessibilityInfo.isReduceMotionEnabled", "purpose": "Consulted in seventeen places; animations degrade to a cut or crossfade rather than merely shortening." }
+    ],
+    "breakpoints": [
+      { "name": "phone-portrait", "value": "single layout; the app is portrait only" }
+    ],
+    "iconScale": [
+      { "name": "xs", "value": "12px", "purpose": "Inline with muted xs text — status dots, chevrons in dense rows." },
+      { "name": "sm", "value": "14px", "purpose": "Inline with sm text — row affordances." },
+      { "name": "md", "value": "16px", "purpose": "Default: buttons, list leading icons." },
+      { "name": "lg", "value": "18px", "purpose": "Section headers, sheet handles." },
+      { "name": "xl", "value": "20px", "purpose": "Primary controls, tab bar." },
+      { "name": "hero", "value": "28px", "purpose": "Empty states and the one-off large mark." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The gold control, with a rim. 48dp minimum so the Android floor is met on both platforms.",
+      "html": "<button class=\"ds-m-btn\">Apply this month</button>",
+      "css": ".ds-m-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 10px 16px; background: #e0be7a; color: #0a0a10; border: 1px solid #e0be7a; border-radius: 10px; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 200ms ease; } .ds-m-btn:active { background: #eacb8f; transform: scale(0.98); } .ds-m-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #e0be7a; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "The ordinary control on the raised surface.",
+      "html": "<button class=\"ds-m-btn-sec\">Skip</button>",
+      "css": ".ds-m-btn-sec { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 10px 16px; background: #1c1c2b; color: #ececf1; border: none; border-radius: 10px; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 200ms ease; } .ds-m-btn-sec:active { background: #262033; transform: scale(0.98); }"
+    },
+    {
+      "name": "Translucent Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The mobile system's material difference from the web: a surface at 70% opacity over a lit ground, with the soft shadow as its only depth cue.",
+      "html": "<div class=\"ds-m-card\"><p class=\"ds-m-card-label\">Still to come</p><p class=\"ds-m-card-figure\">€1,284.00</p></div>",
+      "css": ".ds-m-card { padding: 20px; background: rgba(19, 19, 32, 0.7); border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 20px; box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.06); } .ds-m-card-label { margin: 0 0 4px; color: #9b9bad; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.015em; text-transform: uppercase; } .ds-m-card-figure { margin: 0; color: #ececf1; font-family: Fraunces, Georgia, serif; font-size: 32px; font-weight: 600; letter-spacing: -0.6px; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Bezelled Card",
+      "kind": "card",
+      "refersTo": "card-bezel",
+      "description": "Tray and inlay: 26 outer minus 6 of padding leaves exactly the 20 the inner surface uses.",
+      "html": "<div class=\"ds-m-bezel\"><div class=\"ds-m-bezel-inner\"><p class=\"ds-m-card-label\">The accounts</p><p class=\"ds-m-hero\">€3,204.18</p></div></div>",
+      "css": ".ds-m-bezel { padding: 6px; background: rgba(236, 236, 241, 0.06); border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 26px; } .ds-m-bezel-inner { padding: 20px; background: rgba(19, 19, 32, 0.7); border-radius: 20px; } .ds-m-hero { margin: 0; color: #ececf1; font-family: Fraunces, Georgia, serif; font-size: 56px; font-weight: 600; letter-spacing: -2px; font-variant-numeric: tabular-nums; line-height: 1; }"
+    },
+    {
+      "name": "Ledger Row",
+      "kind": "custom",
+      "refersTo": "list-row",
+      "description": "The repeating unit. The amount is mono, not serif — this is one row among many, and its digits line up with the rows above and below. Colour says what kind of money it is.",
+      "html": "<div class=\"ds-m-row\"><div class=\"ds-m-row-main\"><span class=\"ds-m-row-label\">Salary</span><span class=\"ds-m-row-sub\">Applied 1 March</span></div><span class=\"ds-m-row-amt\">+€3,200.00</span></div><div class=\"ds-m-divider\"></div><div class=\"ds-m-row\"><div class=\"ds-m-row-main\"><span class=\"ds-m-row-label\">PEA — monthly buy</span><span class=\"ds-m-row-sub\">Share-priced</span></div><span class=\"ds-m-row-amt ds-m-inv\">€250.00</span></div>",
+      "css": ".ds-m-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 14px 20px; } .ds-m-row-main { display: flex; flex-direction: column; min-width: 0; flex: 1; } .ds-m-row-label { color: #ececf1; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 16px; } .ds-m-row-sub { color: #9b9bad; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 14px; } .ds-m-row-amt { color: #34d399; font-family: 'IBM Plex Mono', 'SF Mono', monospace; font-size: 16px; font-variant-numeric: tabular-nums; } .ds-m-inv { color: #22d3ee; } .ds-m-divider { height: 1px; margin-left: 56px; background: rgba(236, 236, 241, 0.1); }"
+    },
+    {
+      "name": "Section Label",
+      "kind": "custom",
+      "refersTo": "label",
+      "description": "The uppercase header a group of rows sits under.",
+      "html": "<p class=\"ds-m-section\">This month</p>",
+      "css": ".ds-m-section { margin: 0; padding: 0 4px; color: #9b9bad; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.015em; text-transform: uppercase; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Ledger, on glass",
+    "overview": "The phone runs the same ledger as the web with one material difference: its surfaces are translucent. Cards sit at 70% opacity over a lit ground rather than on an opaque page, so the app reads as panes of glass laid over something rather than as panels printed on something. Everything else — the calm, the exactness, the refusal to decorate a figure — carries over unchanged.\n\nThe palette is shared deliberately, hex for hex, with apps/web. One amount should look like one amount whichever screen the user picked up, and that is a commitment rather than a coincidence.\n\nWhere this system departs from the web, it departs because the platform requires it, not because the phone wanted its own taste. Display type carries no line height because Tailwind's size utilities set one and Android clipped the font's taller glyphs. Font weights are asked for by their registered instance name because React Native does not synthesise a weight. There is a soft shadow here where the web is perfectly flat, because a translucent surface over a lit ground needs a hint of separation that a hairline alone does not give it.",
+    "keyCharacteristics": [
+      "Dark-only and portrait-only, forced at the app level rather than followed from the system",
+      "Translucent surfaces at 70% over a lit backdrop",
+      "Two numeric faces: a serif for figures that own a screen, a mono for amounts in a ledger",
+      "Amounts coloured by what kind of money they are, not by sign",
+      "One shared palette with the web, stated in both and drifting in neither"
+    ],
+    "rules": [
+      { "name": "The One Palette Rule", "body": "There is one palette and it is dark. The app forces userInterfaceStyle: dark rather than following the system scheme. Do not add a light variant or a scheme-conditional token.", "section": "colors" },
+      { "name": "The Shared Palette Rule", "body": "Every colour here is stated identically in apps/web/app/globals.css. A change to one is a change to both, in the same commit.", "section": "colors" },
+      { "name": "The Semantic Amount Rule", "body": "An amount's colour says what kind of money it is — income, expense, savings or investment — never whether it is positive or negative.", "section": "colors" },
+      { "name": "The Registered Instance Rule", "body": "React Native takes the exact registered family name and does not synthesise a weight from fontWeight. A semibold face is asked for by name, never by weighting the regular one.", "section": "typography" },
+      { "name": "The Unset Line Height Rule", "body": "Display sizes carry no text-* class and no line height. Tailwind's size utilities set lineHeight alongside fontSize, and on Android that clipped this font's taller glyphs.", "section": "typography" },
+      { "name": "The One Size Class Rule", "body": "Each Text variant sets exactly one text-size utility. Layering a second at a call site leaves font size and line height disagreeing with each other.", "section": "typography" },
+      { "name": "The Tabular Digits Rule", "body": "Every numeric style carries tabular-nums. Proportional digits change width as a figure animates, so a counting amount visibly jitters and a right-aligned column never settles.", "section": "typography" },
+      { "name": "The Closed Icon Scale Rule", "body": "Six sizes — 12, 14, 16, 18, 20, 28 — and no others. size={13} at a call site is exactly what this scale replaced.", "section": "layout" },
+      { "name": "The One Shadow Rule", "body": "There is a single soft shadow and no elevation scale. If something needs to read as separate, raise its surface, give it a hairline, or wrap it in a bezel before reaching for depth.", "section": "elevation" },
+      { "name": "The Tray And Inlay Rule", "body": "Shell is concentric with card: 26 outer, minus 6 of bezel padding, leaves exactly the 20 the inner surface uses. Change the three together or not at all.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do state a colour change in both this file's tokens and the web stylesheet, in the same commit.",
+      "Do set a screen-owning figure in Fraunces and a ledger-row amount in IBM Plex Mono, both with tabular digits.",
+      "Do colour amounts by category type through @finance/core.",
+      "Do ask for a font weight by its registered instance name.",
+      "Do keep every touch target at 48dp or more, and list rows at 56px.",
+      "Do lay out inside safe-area insets, and honour the system Back gesture on Android and the left-edge back gesture on iOS.",
+      "Do check reduced motion before animating, and degrade to a cut.",
+      "Do use the six icon sizes and the four radius roles; both scales are closed."
+    ],
+    "donts": [
+      "Don't add a light palette or a scheme-conditional token. The app forces dark.",
+      "Don't set a line height on a display size; Android clips the tall glyphs.",
+      "Don't layer a second text-size utility over a Text variant.",
+      "Don't add an elevation scale or a second shadow. There is one, and it is soft.",
+      "Don't colour an amount by whether it is positive or negative.",
+      "Don't reinvent a platform control — switches, pickers, date fields, action sheets and the system Back behaviour belong to the OS.",
+      "Don't let the two radius declarations drift; tokens.ts and tailwind.config.js state the same four numbers on purpose."
+    ]
+  }
+}
