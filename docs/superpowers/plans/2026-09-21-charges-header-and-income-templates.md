@@ -68,7 +68,7 @@ Unblocking income templates without fixing those reducers would add a salary *in
 - `deployed` — active templates with `counts_toward_summary === false`, whatever their type. This is the existing `deploymentMonthly`.
 - `left` — `income − committed`. Decision 2. Nothing else is subtracted.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -172,12 +172,12 @@ describe("rollUpRecurring", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test and watch it fail**
+- [x] **Step 2: Run the test and watch it fail**
 
 Run: `cd packages/core && npx vitest run src/recurring-rollup`
 Expected: FAIL — `Failed to resolve import "./recurring-rollup"`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 import { estimateMonthlyAmount } from "./recurrence";
@@ -250,17 +250,17 @@ export function rollUpRecurring(
 }
 ```
 
-- [ ] **Step 4: Run the test and watch it pass**
+- [x] **Step 4: Run the test and watch it pass**
 
 Run: `cd packages/core && npx vitest run src/recurring-rollup`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 5: Run the whole core suite, to be sure nothing else read these shapes**
+- [x] **Step 5: Run the whole core suite, to be sure nothing else read these shapes**
 
 Run: `cd packages/core && npx vitest run && npx tsc --noEmit`
 Expected: all green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/core/src/recurring-rollup.ts packages/core/src/recurring-rollup.test.ts
@@ -280,28 +280,28 @@ git commit -m "Split the monthly rollup by what kind of money it is"
 
 **Context for the implementer:** `apps/web/lib/bank/client.ts` is irrelevant here. The only thing standing between a user and an income template is these two lines. `projection.ts` has counted `incomeCharges` since before this plan, and `ProjectionCard`'s `INGREDIENT_HREF.income` already points at `/recurring`.
 
-- [ ] **Step 1: Read the surrounding code before editing**
+- [x] **Step 1: Read the surrounding code before editing**
 
 Read `apps/web/components/finance/RecurringForm.tsx:125-220`. Note that `allocCategories` at `:136` is used for the deployment-category check below it, and confirm whether that check needs the income entries present or absent. Write down the answer in the commit message.
 
-- [ ] **Step 2: Remove the exclusion from the picker**
+- [x] **Step 2: Remove the exclusion from the picker**
 
 At `:213`, delete the `excludeTypes={["income"]}` prop so the select offers every category type.
 
-- [ ] **Step 3: Decide `allocCategories` deliberately**
+- [x] **Step 3: Decide `allocCategories` deliberately**
 
 At `:136`, `const allocCategories = categories.filter((c) => c.type !== "income");` feeds `selectedCategory`, which drives `isDeploymentCategory`. An income category can never be a deployment category, so the filter is harmless — but it now means `selectedCategory` is `undefined` whenever an income category is chosen, which would silently disable any behaviour keyed off it. Change it to `categories` and let `isDeploymentCategory` narrow on `type === "investment"` as it already does. Leave a comment saying why the filter went.
 
-- [ ] **Step 4: Check the share-priced branch**
+- [x] **Step 4: Check the share-priced branch**
 
 A share-priced template takes its amount from an instrument quote. Confirm by reading whether that branch is reachable with an income category selected, and if it is, decide whether it should be. An income that tracks a share price is not a concept `CONTEXT.md` has. If it should not be reachable, gate it on the selected category's type rather than reinstating a picker-level exclusion, and say so in a comment.
 
-- [ ] **Step 5: Typecheck and lint**
+- [x] **Step 5: Typecheck and lint**
 
 Run: `cd apps/web && npx tsc --noEmit && npx eslint components/finance/RecurringForm.tsx`
 Expected: clean. Compare any lint output against a clean tree before assuming you introduced it.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/components/finance/RecurringForm.tsx
@@ -349,31 +349,31 @@ noIncomeYet: "Aucun revenu récurrent — ajoutez-en un et ceci se remplira.",
 
 Each cell is a label in `text-sm text-muted-foreground` over a figure in `privacy-amount font-head text-3xl leading-none tabular-nums md:text-4xl` — the treatment the current single figure already uses. **Keep `privacy-amount` on all three.** Do not colour any of them: the Semantic Amount Rule forbids colouring by good or bad, and "what's left" being small is not a category type. Where `rollup.income` is zero, show `t("charges.noIncomeYet")` in `text-sm text-muted-foreground` in place of the figure, not a `0 €` that looks measured.
 
-- [ ] **Step 1: Replace the two reducers with the rollup**
+- [x] **Step 1: Replace the two reducers with the rollup**
 
 Delete `budgetMonthly` and `deploymentMonthly` at `:292-298` and call `rollUpRecurring(templates)` once. Map `rollup.committed` to where `budgetMonthly` was used and `rollup.deployed` to where `deploymentMonthly` was.
 
 **Note the behaviour change and check it is wanted:** `budgetMonthly` previously summed expenses *and* savings *and* investments. `rollup.committed` is expenses only. If the existing figure was meant to include contributions, use `rollup.committed + rollup.setAside` and say so in a comment — but read `buildRunway`'s doc first, because the rest of the app draws the line at expenses.
 
-- [ ] **Step 2: Add the catalogue keys**
+- [x] **Step 2: Add the catalogue keys**
 
 Add the three keys above to both files, in the same position in each so a reader diffing them sees one shape.
 
-- [ ] **Step 3: Build the three-column header**
+- [x] **Step 3: Build the three-column header**
 
 Replace `:361-378`'s single label-and-figure with the grid. Keep the "plus moved into the broker" line below it unchanged, including its two-fragment structure — its comment explains that the figure is its own element so the blur covers the amount without covering the sentence.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `cd apps/web && npx tsc --noEmit && npx eslint components/finance/RecurringView.tsx`
 Run: `cd packages/core && npx tsc --noEmit && npx vitest run src/i18n`
 Expected: all clean; the i18n suite proves the French side is complete and that no key is orphaned.
 
-- [ ] **Step 5: Check it at 375px**
+- [x] **Step 5: Check it at 375px**
 
 The three columns stack below `sm`. Confirm no horizontal scroll and that the figures do not wrap mid-number. `md:text-4xl` on a stacked phone column is fine; on the three-up desktop row, check the widest plausible figure still fits its column at the narrowest desktop width.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/components/finance/RecurringView.tsx packages/core/src/i18n/messages/en.ts packages/core/src/i18n/messages/fr.ts
@@ -392,24 +392,24 @@ git commit -m "Say what comes in, what is committed, and what that leaves"
 
 **Why this is its own task:** the phone runs the same reducer against the same data. The moment Task 2 ships, a salary exists; if the phone still sums every counting template, its figure gains the salary and disagrees with the web's. `CONTEXT.md`'s whole premise is that the clients share one ledger — a figure that differs by client is the failure that premise exists to prevent.
 
-- [ ] **Step 1: Read what the phone currently renders**
+- [x] **Step 1: Read what the phone currently renders**
 
 Read `apps/mobile/src/app/(tabs)/recurring.tsx:110-140`. Establish which label sits above the figure and whether the phone shows a deployment line like the web's.
 
-- [ ] **Step 2: Replace the reducer with the rollup**
+- [x] **Step 2: Replace the reducer with the rollup**
 
 Swap the `estimateMonthlyAmount` reduce for `rollUpRecurring(templates)`, using `rollup.committed` where the old sum was used.
 
-- [ ] **Step 3: Decide whether the phone gets the three-part header too**
+- [x] **Step 3: Decide whether the phone gets the three-part header too**
 
 This plan does not require it. Decide deliberately and record the decision: matching the web is more consistent, but the phone's column is narrower and three figures across it may not fit at `text-3xl`. If you defer it, leave a comment naming this plan so the next reader knows it was a choice.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `cd apps/mobile && npx tsc --noEmit`
 Expected: clean.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/mobile/src/app/\(tabs\)/recurring.tsx
@@ -428,15 +428,15 @@ git commit -m "Give the phone the same split the web now draws"
 
 **Why:** `ProjectionCard` renders an income ingredient and links it to `/recurring`. Before Task 2 that link led to a form that would not let you comply. It does now, so read the current wording and check it still says the right thing — it may have been written to hedge around the fact that the destination did not work.
 
-- [ ] **Step 1: Find the copy**
+- [x] **Step 1: Find the copy**
 
 Read `apps/web/components/finance/ProjectionCard.tsx:220-260` and follow `t("projection.income")` and any zero-charges branch into the catalogues.
 
-- [ ] **Step 2: Correct it if it hedges**
+- [x] **Step 2: Correct it if it hedges**
 
 If the wording avoids telling the user to add an income template, make it say so plainly, in both languages. If it already does, change nothing and record that in the commit message.
 
-- [ ] **Step 3: Verify and commit**
+- [x] **Step 3: Verify and commit**
 
 Run: `cd packages/core && npx vitest run src/i18n && npx tsc --noEmit`
 
@@ -461,3 +461,53 @@ git commit -m "Say plainly where an income figure comes from"
 - Task 3 Step 1 flags a real behaviour change (`committed` narrowing to expenses) rather than hiding it, and points at `buildRunway`'s doc as the precedent.
 - Every string added is in both catalogues, in the same position.
 - No task adds a fifth home for the accent, and no figure is coloured by sign or by outcome.
+
+
+---
+
+## Execution record
+
+All five tasks executed 2026-09-21. Commits on `plan-income-header`:
+
+| Task | Commit | Note |
+|---|---|---|
+| 1 | `1572f5d` | `rollUpRecurring` + 5 tests. Landed before Task 2, as required. |
+| 2 | `5db9dee` | Income unblocked. Both flagged questions answered from the code — see below. |
+| 3 | `b6e3759` | Three-part header, plus a set-aside line the plan did not anticipate. |
+| 4 | `c4be70e` | Phone rollup, plus a hardcoded English label the plan did not know about. |
+| 5 | — | **No change needed.** See below. |
+
+### What the plan got wrong, and what it missed
+
+**Task 2's two open questions both resolved to "no new code".** `allocCategories`
+filtering income out only made `selectedCategory` come back `undefined`, so the
+four flags beneath it were right by accident rather than by their own type
+checks; removing the filter makes them right for their own reasons. And a
+share-priced income template was already unreachable, because `supportsShares`
+requires an investment category. The plan asked for a gate that turned out to
+already exist.
+
+**Task 3 needed a fourth figure the plan did not specify.** Narrowing
+`committed` to expenses is correct — it is what `buildRunway` and the Bearing
+already mean — but it drops savings and investment contributions out of the
+only figure that was carrying them, and the plan said nothing about where they
+go. They are now a set-aside line beneath the three, matching the broker line
+already there. Two catalogue keys were added for it that the plan did not list.
+
+**Task 4 found an i18n defect the plan did not know about.** The phone's card
+label was the hardcoded English string `Committed every month`, never routed
+through the catalogue — on a screen a French reader reaches from a French tab
+bar. Fixed while in the file.
+
+**Task 5 was already true.** `projection.noIncomeCharge` reads "No charge
+brings money in, so your pay is in none of this. Add it under Charges and
+every figure here changes." It never hedged around the broken destination; it
+was simply wrong, and Task 2 made it right. Changing it would have been
+churn.
+
+### Not done, deliberately
+
+- The three-across header is web-only. Three figures at the phone's type size
+  do not fit its column, and the goal was agreement about the numbers.
+- `packages/core` gained an exports entry for the new module. No other
+  packaging changed.
