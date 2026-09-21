@@ -28,12 +28,15 @@ const EDGE_SENSITIVITY = 0.55;
  * are gone: the surface belongs to the caller, and the edge is the app's own
  * accent, so a theme change moves this with it.
  *
- * Like `SpotlightCard`, the pointer writes custom properties rather than
- * state. The original called two `setState`s per `pointermove`; five of these
- * in a list, each wrapping an accordion, is the version of that which is
- * actually felt.
+ * The pointer writes custom properties rather than state. The original called
+ * two `setState`s per `pointermove`; five of these in a list, each wrapping an
+ * accordion, is the version of that which is actually felt.
  *
- * The two effects are not the same one twice. This lights the *edge* the
+ * This used to sit alongside a `SpotlightCard` that lit the interior from the
+ * same pointer. That one is gone — a card answering one hover four ways was
+ * restless with five of them on a screen — so what follows describes a
+ * distinction that no longer has a second side. It is kept because it is the
+ * reason this one survived: this lights the *edge* the
  * pointer is near; the spotlight follows it across the *interior*. Layering
  * them is the intended look.
  */

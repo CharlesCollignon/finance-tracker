@@ -89,6 +89,16 @@ jobs:
       - name: Test (packages/core, with still-to-come.test.ts excluded)
         run: pnpm --filter @finance/core exec vitest run --exclude '**/still-to-come.test.ts'
 
+      # apps/web has tests too, and until now nothing ran them. The
+      # marketing sample's arithmetic test passed locally only because
+      # pnpm's hoisted layout puts vitest on the path from anywhere — the
+      # workspace declared neither the dependency nor a script, so CI
+      # never executed it. An assertion that guards a figure on a public
+      # page and runs nowhere is worse than no assertion: it reads as
+      # cover.
+      - name: Test (apps/web)
+        run: pnpm --filter web test
+
 # ---------------------------------------------------------------------
 # Gates NOT run by this workflow, and why, as measured on 2026-09-19:
 #
