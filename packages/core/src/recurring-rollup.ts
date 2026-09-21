@@ -27,7 +27,22 @@ export interface RecurringRollup {
   setAside: number;
   /** Templates the summary does not count — a transfer into a broker. */
   deployed: number;
-  /** What income does not commit: `income - committed`. */
+  /**
+   * The cash the month leaves in the account:
+   * `income - committed - setAside - deployed`.
+   *
+   * Every outflow comes out, including the ones that are not spending.
+   * `CONTEXT.md` splits Kept into "the cash it left in the account plus
+   * everything deliberately set aside", and this is the first half — so a
+   * contribution to a fund and a transfer into a broker both reduce it, for
+   * the same reason a direct debit does. The money is still the reader's; it
+   * is simply no longer in the account this figure is about.
+   *
+   * Leaving them out would flatter a saver: someone contributing 400 a month
+   * and someone contributing nothing, on the same income with the same rent,
+   * would read as having different amounts left when the account says
+   * otherwise.
+   */
   left: number;
 }
 
@@ -73,5 +88,11 @@ export function rollUpRecurring(
     }
   }
 
-  return { income, committed, setAside, deployed, left: income - committed };
+  return {
+    income,
+    committed,
+    setAside,
+    deployed,
+    left: income - committed - setAside - deployed,
+  };
 }

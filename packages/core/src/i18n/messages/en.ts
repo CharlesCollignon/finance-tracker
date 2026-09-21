@@ -592,9 +592,22 @@ export const en = {
   /** The Charges surface: the list of standing instructions. */
   charges: {
     blurb: "What you already know is coming, every month.",
-    incomeEveryMonth: "Income every month",
     committedEveryMonth: "Committed every month",
-    leftEveryMonth: "What's left",
+    /**
+     * The four scoreboard tiles.
+     *
+     * One word each, because the tiles carry nothing else — a label that
+     * wraps to two lines in a narrow column stops being a label and starts
+     * being a sentence competing with the figure under it. `perMonth` sits
+     * once beneath the row rather than four times inside it; the period is
+     * the same for all four and repeating it is the chrome this header was
+     * asked to lose.
+     */
+    tileIncome: "Income",
+    tileCommitted: "Committed",
+    tileSetAside: "Set aside",
+    tileLeft: "Left",
+    perMonth: "Per month",
     /**
      * Shown where the income figure would be, when no income charge exists.
      * A `0 €` there would read as measured; this says the box is waiting.
@@ -612,8 +625,8 @@ export const en = {
      * element — that is what lets the privacy blur cover the figure without
      * covering the sentence around it.
      */
-    plusMovedBefore: "Plus",
-    plusMovedAfter: "moved into the broker — tracked, but not spent.",
+    ofWhichMovedBefore: "of which",
+    ofWhichMovedAfter: "moved into the broker — tracked, but not spent.",
     nothingHereYet: "Nothing here yet.",
     editNamed: "Edit {name}",
     addCharge: "Add charge",

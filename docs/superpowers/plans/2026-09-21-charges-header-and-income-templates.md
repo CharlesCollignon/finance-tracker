@@ -511,3 +511,50 @@ churn.
   do not fit its column, and the goal was agreement about the numbers.
 - `packages/core` gained an exports entry for the new module. No other
   packaging changed.
+
+
+---
+
+## Decision 2 reversed, same day
+
+**`left` is `income − committed − setAside`, not `income − committed`.**
+
+The plan chose the narrower arithmetic so the third figure would be checkable
+against the two beside it. That was the wrong trade. Contributions are not
+spending, but they are not free either, and leaving them out reports a saver
+as having more room than a spender on the same income with the same rent —
+when they have the same room and one of them has already used it.
+
+Making the figure honest made a hidden subtrahend, so the row grew a fourth
+tile: **Income · Committed · Set aside · Left**. Every term of the arithmetic
+is now on screen beside its result, which is what the plan was trying to buy
+with the narrower formula in the first place.
+
+The header is four bare tiles rather than one card in columns — a word and a
+figure each, at the type scale's documented card-level step, with nothing
+else in them. The set-aside sentence that used to sit beneath the row is gone,
+because the figure it named now has a tile of its own.
+
+The phone keeps its single committed figure and its set-aside line. Four
+tiles do not fit its column, and it does not render `left`, so the arithmetic
+change does not reach it.
+
+
+### And again: `Left` is the account, not the free budget
+
+`left` is `income − committed − setAside − deployed`. Every outflow comes out,
+including the broker transfers the monthly summary deliberately does not count
+as spending.
+
+The earlier framing — "what can I still decide about" — was a different
+question from the one the tile's word answers. `CONTEXT.md` splits **Kept**
+into "the cash it left in the account plus everything deliberately set aside",
+and `Left` is the first half. A transfer into a broker is still the reader's
+money, and it is still not in the account.
+
+So the Set aside tile carries `setAside + deployed`, with the broker part
+named in the line beneath ("of which … moved into the broker"), because
+subtracting it while showing only part of it would have put a hidden term back
+into a header that exists to have none. A test now asserts
+`income − committed − (setAside + deployed) === left`, so a fifth kind of
+outflow cannot be added to the rollup without the header noticing.

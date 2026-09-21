@@ -47,6 +47,58 @@ describe("rollUpRecurring", () => {
     expect(rollup.committed).toBe(1150);
   });
 
+  it("subtracts what is set aside as well as what is committed", () => {
+    // Money promised to a fund is not spending, but it is not free either.
+    // A saver and a spender on the same income with the same rent have the
+    // same room; leaving contributions out would report the saver as having
+    // more, when they have simply already used theirs.
+    const rollup = rollUpRecurring([
+      template({ id: "salary", amount: 3200, type: "income" }),
+      template({ id: "rent", amount: 1150 }),
+      template({ id: "fund", amount: 400, type: "savings" }),
+    ]);
+
+    expect(rollup.left).toBe(1650);
+  });
+
+  it("takes a broker transfer out of what is left", () => {
+    // It is not spending, and the monthly summary does not count it — but it
+    // does leave the account, which is what this figure is about.
+    const rollup = rollUpRecurring([
+      template({ id: "salary", amount: 3200, type: "income" }),
+      template({ id: "rent", amount: 1150 }),
+      template({
+        id: "transfer",
+        amount: 500,
+        type: "investment",
+        counts: false,
+      }),
+    ]);
+
+    expect(rollup.left).toBe(1550);
+  });
+
+  it("leaves nothing out of the sum the header shows", () => {
+    // The four tiles are income, committed, everything put by, and what is
+    // left. This pins them together: if a fifth kind of outflow is ever added
+    // to the rollup and not to the header, this fails.
+    const rollup = rollUpRecurring([
+      template({ id: "salary", amount: 3200, type: "income" }),
+      template({ id: "rent", amount: 1150 }),
+      template({ id: "fund", amount: 400, type: "savings" }),
+      template({
+        id: "transfer",
+        amount: 500,
+        type: "investment",
+        counts: false,
+      }),
+    ]);
+
+    const putBy = rollup.setAside + rollup.deployed;
+    expect(rollup.income - rollup.committed - putBy).toBe(rollup.left);
+    expect(rollup.left).toBe(1150);
+  });
+
   it("leaves what income does not commit", () => {
     const rollup = rollUpRecurring([
       template({ id: "salary", amount: 3200, type: "income" }),
