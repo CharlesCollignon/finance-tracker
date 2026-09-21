@@ -50,7 +50,7 @@ function UpdateRow({
           checked={selected}
           onChange={onToggle}
           aria-label={item.name}
-          className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
+          className="mt-0.5 size-4 shrink-0 accent-foreground"
         />
         <span className="min-w-0 flex-1">
           <p className="font-medium">{item.name}</p>
@@ -205,7 +205,7 @@ export function ApplyRecurringSheet({
                         checked={selected}
                         onChange={() => toggle(key)}
                         aria-label={item.name}
-                        className="size-4 shrink-0 accent-[var(--primary)]"
+                        className="size-4 shrink-0 accent-foreground"
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium">{item.name}</p>

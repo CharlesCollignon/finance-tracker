@@ -10,6 +10,7 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { rerankFindingsAction } from "@/lib/actions/category-read";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
+import { Button } from "@/components/retroui/Button";
 import { cn } from "@/lib/utils";
 import { FindingRow } from "./FindingRow";
 
@@ -130,17 +131,15 @@ export function FindingBand({
             <p className="text-xs text-muted-foreground">{note}</p>
 
             {rerankConfigured ? (
-              <button
+              <Button
                 type="button"
                 onClick={rerank}
                 disabled={pending || left <= 0}
+                variant={left > 0 ? "default" : "ghost"}
+                size="sm"
                 className={cn(
-                  "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3",
-                  "text-sm font-medium transition-colors",
-                  left > 0
-                    ? "bg-primary text-primary-foreground hover:bg-primary-hover"
-                    : "cursor-not-allowed text-muted-foreground",
-                  "disabled:opacity-60",
+                  "shrink-0 gap-1.5 rounded-full",
+                  left <= 0 && "cursor-not-allowed text-muted-foreground",
                 )}
               >
                 <PencilSimple size={ICON.sm} />
@@ -149,7 +148,7 @@ export function FindingBand({
                   : left <= 0
                     ? t("categoryRead.noReadsLeft")
                     : t("categoryFindings.rerank")}
-              </button>
+              </Button>
             ) : null}
           </div>
         ) : null}

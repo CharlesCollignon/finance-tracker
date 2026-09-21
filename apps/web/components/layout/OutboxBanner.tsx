@@ -56,7 +56,7 @@ export function OutboxBanner() {
       <button
         type="button"
         onClick={retry}
-        className="shrink-0 text-sm font-medium text-primary-ink underline underline-offset-4"
+        className="shrink-0 text-sm font-medium text-foreground underline underline-offset-4"
       >
         {t("outbox.retry")}
       </button>

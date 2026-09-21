@@ -70,7 +70,7 @@ export function ListRow({
               ? "text-muted-foreground"
               : destructive
                 ? "text-destructive"
-                : "text-primary-ink",
+                : "text-foreground",
           )}
         />
       ) : null}

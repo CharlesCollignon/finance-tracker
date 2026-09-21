@@ -94,7 +94,7 @@ export default async function BearingPage() {
               this is the one place worth saying it out loud. */}
           <Link
             href="/welcome"
-            className="self-start text-sm font-medium text-primary-ink underline underline-offset-2"
+            className="self-start text-sm font-medium text-foreground underline underline-offset-2"
           >
             {t("onboarding.reopen")}
           </Link>

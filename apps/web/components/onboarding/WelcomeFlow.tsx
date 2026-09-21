@@ -246,7 +246,9 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
             key={value}
             className={cn(
               "h-1 w-10 rounded-full",
-              index <= stepIndex ? "bg-primary" : "bg-border",
+              // Steps behind you in the foreground, steps ahead in the
+              // hairline. A progress meter is a measurement, not an emphasis.
+              index <= stepIndex ? "bg-foreground" : "bg-border",
             )}
           />
         ))}
@@ -299,7 +301,7 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
                   className={cn(
                     "flex-1 rounded-control border px-4 py-3 text-sm font-semibold",
                     currency === code
-                      ? "border-primary bg-primary/10 text-primary-ink"
+                      ? "border-foreground bg-secondary text-foreground"
                       : "border-border hover:bg-muted",
                   )}
                 >
@@ -532,7 +534,7 @@ function CategoryChips({
           className={cn(
             "flex min-h-10 items-center gap-2 rounded-full border px-3 text-sm",
             selected === category.id
-              ? "border-primary bg-primary/10 text-primary-ink"
+              ? "border-foreground bg-secondary font-medium text-foreground"
               : "border-border hover:bg-muted",
           )}
         >

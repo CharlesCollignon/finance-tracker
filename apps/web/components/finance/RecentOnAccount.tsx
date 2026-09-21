@@ -54,7 +54,7 @@ export function RecentOnAccount({ movements, pending }: RecentOnAccountProps) {
             a list. */}
         <Link
           href={pending > 0 ? "/transactions?review=inbox" : "/transactions"}
-          className="flex shrink-0 items-center gap-1 text-sm text-primary-ink"
+          className="flex shrink-0 items-center gap-1 text-sm text-foreground hover:underline hover:underline-offset-4"
         >
           {pending > 0
             ? t("recentOnAccount.toReview", { count: pending })

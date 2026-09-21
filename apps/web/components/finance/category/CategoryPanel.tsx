@@ -73,7 +73,7 @@ export function CategoryPanel({
     <section
       id={id}
       className={cn(
-        "mt-2 flex flex-col gap-4 rounded-card p-card border border-primary-rim",
+        "mt-2 flex flex-col gap-4 rounded-card p-card border border-hairline-strong",
         !reducedMotion && "motion-safe:animate-in motion-safe:fade-in",
       )}
     >
@@ -160,7 +160,7 @@ export function CategoryPanel({
        */}
       <Link
         href={`/transactions?y=${ledgerYear}&m=${ledgerMonth}`}
-        className="text-sm font-medium text-primary-ink hover:underline"
+        className="text-sm font-medium text-foreground hover:underline"
       >
         {t("categoryScreen.seeInLedger")}
       </Link>

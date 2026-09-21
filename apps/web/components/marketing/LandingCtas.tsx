@@ -34,12 +34,19 @@ const sizes = {
   lg: "px-7 py-3.5 text-[0.95rem]",
 } as const;
 
-/** The glow is a hero affordance. At nav size it reads as a lens flare
- * hanging off the pill, so only `lg` carries it. */
+/* No glow. The `lg` button cast `0 8px 28px -12px rgba(224, 190, 122, 0.45)`
+   under itself until DESIGN.md's Flat-With-One-Exception Rule was read as
+   written: the only shadows this site is licensed to cast are the two in the
+   glass vocabulary, under The Marketing Glass Rule, and a gold halo under a
+   button is neither glass nor a recess — it is a lens flare, which is what it
+   already looked like at nav size.
+
+   Nothing is lost by it. The fill is Lamplit Gold, `--primary` at #e0be7a,
+   which this file's note above measures at 11:1 on the near-black marketing
+   ground; the other button in the pair is a 6%-white pane behind a hairline.
+   Which of the two is the primary action was never the halo's work. */
 const solid =
   "bg-primary text-primary-foreground hover:bg-primary-hover hover:-translate-y-0.5";
-
-const solidGlow = "shadow-[0_8px_28px_-12px_rgba(224,190,122,0.45)]";
 
 /* Glass, like every other translucent surface on the site: on the hero it
    sits over the orb's bloom, and the blur is what stops it reading as a hole
@@ -71,10 +78,7 @@ export function LandingCtas({
   if (isLoggedIn) {
     return (
       <div className={cn("flex flex-wrap items-center gap-3", className)}>
-        <Link
-          href="/bearing"
-          className={cn(base, sizes[size], solid, size === "lg" && solidGlow)}
-        >
+        <Link href="/bearing" className={cn(base, sizes[size], solid)}>
           {layout === "solo" ? copy.cta.openApp : copy.cta.goToDashboard}
         </Link>
       </div>
@@ -83,10 +87,7 @@ export function LandingCtas({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
-      <Link
-        href="/signup"
-        className={cn(base, sizes[size], solid, size === "lg" && solidGlow)}
-      >
+      <Link href="/signup" className={cn(base, sizes[size], solid)}>
         {copy.cta.getStarted}
       </Link>
       {layout === "solo" ? null : (

@@ -85,7 +85,12 @@ export function BorderGlow({
         className={cn(
           "pointer-events-none absolute inset-0 -z-10 rounded-[inherit]",
           "opacity-[var(--glow-on,0)]",
-          "[background:conic-gradient(from_var(--glow-angle,0deg),color-mix(in_srgb,var(--primary)_70%,transparent),transparent_25%,transparent_75%,color-mix(in_srgb,var(--primary)_70%,transparent))]",
+          // Foreground, not the accent. The Rare Accent Rule gives Lamplit
+          // Gold four homes and a glow around every card is none of them —
+          // five cards on the screen the app opens to spent it five times
+          // before a figure had a chance to. The light is the effect; the
+          // colour it was borrowing was doing no work here.
+          "[background:conic-gradient(from_var(--glow-angle,0deg),color-mix(in_srgb,var(--foreground)_70%,transparent),transparent_25%,transparent_75%,color-mix(in_srgb,var(--foreground)_70%,transparent))]",
           // Border-box only: the fill is the caller's surface, and painting
           // under it would wash the figures out.
           "[mask:linear-gradient(#000_0_0)_padding-box,linear-gradient(#000_0_0)]",

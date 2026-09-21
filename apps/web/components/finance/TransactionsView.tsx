@@ -797,7 +797,10 @@ export function TransactionsView({
                             "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-control px-2 py-2.5 text-left",
                             "transition-colors hover:bg-muted/40",
                             LEDGER_COLUMNS,
-                            selectMode && selected.has(tx.id) && "bg-primary/5",
+                            // The checkbox says which rows are picked; the
+                            // wash only has to group them, which the raised
+                            // ground does without the accent.
+                            selectMode && selected.has(tx.id) && "bg-muted",
                           )}
                         >
                           <span className="flex min-w-0 items-center gap-3">

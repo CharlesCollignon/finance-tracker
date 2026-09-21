@@ -238,7 +238,7 @@ function RecurringFormFields({
                 className={cn(
                   "rounded-full border px-3 py-2 text-sm font-medium",
                   effectivePricingType === "fixed"
-                    ? "border-foreground bg-primary text-primary-foreground"
+                    ? "border-foreground bg-secondary text-foreground"
                     : "border-border hover:bg-accent",
                 )}
               >
@@ -250,7 +250,7 @@ function RecurringFormFields({
                 className={cn(
                   "rounded-full border px-3 py-2 text-sm font-medium",
                   effectivePricingType === "shares"
-                    ? "border-foreground bg-primary text-primary-foreground"
+                    ? "border-foreground bg-secondary text-foreground"
                     : "border-border hover:bg-accent",
                 )}
               >
@@ -415,7 +415,7 @@ function RecurringFormFields({
                 className={cn(
                   "rounded-full border px-3 py-2 text-sm font-medium",
                   recurrence === value
-                    ? "border-foreground bg-primary text-primary-foreground"
+                    ? "border-foreground bg-secondary text-foreground"
                     : "border-border hover:bg-accent",
                 )}
               >

@@ -38,7 +38,16 @@ export function LandingDeviceStack({
             <FeatureMock pageId={pageId} variant="web" />
           </Safari>
         </div>
-        <div className="absolute bottom-0 right-0 z-20 w-[28%] min-w-[7rem] max-w-[15rem] drop-shadow-[0_30px_60px_rgba(0,0,0,0.65)]">
+        {/* No drop shadow under the phone. It carried
+            `0 30px 60px rgba(0, 0, 0, 0.65)` until DESIGN.md's
+            Flat-With-One-Exception Rule was read as written — The Marketing
+            Glass Rule licenses the glass vocabulary's two and nothing else,
+            and a soft black pool under a device mock is the elevation scale
+            that rule exists to refuse. What holds the phone off the window is
+            what the system asks for instead: its own chassis is a step in
+            surface value, `#404040` against a `#06060a` ground, over a window
+            whose content is darker still. */}
+        <div className="absolute bottom-0 right-0 z-20 w-[28%] min-w-[7rem] max-w-[15rem]">
           <Android className="w-full">
             <FeatureMock pageId={pageId} variant="mobile" />
           </Android>

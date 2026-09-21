@@ -63,7 +63,12 @@ export function SpotlightCard({
         className={cn(
           "pointer-events-none absolute inset-0 -z-10",
           "opacity-[var(--spot-on,0)]",
-          "bg-[radial-gradient(circle_at_var(--spot-x,50%)_var(--spot-y,50%),color-mix(in_srgb,var(--primary)_18%,transparent),transparent_70%)]",
+          // Foreground, not the accent. The Rare Accent Rule gives Lamplit
+          // Gold four homes and a glow around every card is none of them —
+          // five cards on the screen the app opens to spent it five times
+          // before a figure had a chance to. The light is the effect; the
+          // colour it was borrowing was doing no work here.
+          "bg-[radial-gradient(circle_at_var(--spot-x,50%)_var(--spot-y,50%),color-mix(in_srgb,var(--foreground)_18%,transparent),transparent_70%)]",
         )}
       />
       {children}

@@ -70,7 +70,7 @@ export function RefreshButton({
         {stale && connected && !running ? (
           <span
             aria-hidden
-            className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-primary-rim"
+            className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-muted-foreground"
           />
         ) : null}
       </button>
@@ -106,7 +106,7 @@ export function RefreshButton({
         <span
           className={cn(
             "ml-auto truncate text-xs",
-            stale ? "text-primary-ink" : "text-muted-foreground",
+            stale ? "text-foreground" : "text-muted-foreground",
           )}
         >
           {age}

@@ -373,7 +373,7 @@ function CategoryFormSheet({
               type="checkbox"
               checked={countsTowardSummary}
               onChange={(event) => setCountsTowardSummary(event.target.checked)}
-              className="mt-0.5 h-4 w-4 accent-primary"
+              className="mt-0.5 h-4 w-4 accent-foreground"
             />
             <span>
               {t("categories.countsTowardBudget")}
@@ -413,8 +413,11 @@ function CategoryFormSheet({
                 onClick={() => setIcon(key)}
                 className={cn(
                   "flex h-11 items-center justify-center rounded-control border",
+                  // The full-strength rim was always doing the work here; the
+                  // gold fill under it was the accent repeated across a
+                  // thirty-six cell grid.
                   icon === key
-                    ? "border-foreground bg-primary text-primary-foreground"
+                    ? "border-foreground bg-secondary text-foreground"
                     : "border-border bg-background hover:bg-accent",
                 )}
               >

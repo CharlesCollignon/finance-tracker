@@ -494,7 +494,7 @@ function InvestmentPositionForm({
               href={chargeLookupUrl(instrumentSymbol, instrumentName)!}
               target="_blank"
               rel="noreferrer noopener"
-              className="self-start text-xs text-primary-ink underline underline-offset-4"
+              className="self-start text-xs text-foreground underline underline-offset-4"
             >
               {t("position.lookUpCharge")}
             </a>
@@ -554,7 +554,7 @@ function InvestmentPositionForm({
                 name="valuePinned"
                 checked={valuePinned}
                 onChange={(event) => setValuePinned(event.target.checked)}
-                className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
+                className="mt-0.5 size-4 shrink-0 accent-foreground"
               />
               <span className="flex flex-col gap-0.5">
                 <span className="text-sm">{t("position.pinValue")}</span>

@@ -343,7 +343,7 @@ export function RecurringView({
         </div>
 
         {applyPending ? (
-          <p className="rounded-control border border-dashed border-primary-rim/50 px-4 py-3 text-sm text-muted-foreground">
+          <p className="rounded-control border border-dashed border-hairline-strong px-4 py-3 text-sm text-muted-foreground">
             {t("charges.applyPendingBefore")}{" "}
             <Link
               href={transactionsHref}

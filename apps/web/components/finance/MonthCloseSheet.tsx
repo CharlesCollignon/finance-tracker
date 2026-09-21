@@ -38,14 +38,38 @@ interface MonthCloseSheetProps {
 
 type Stage = "entering" | "checked" | "closed";
 
+/**
+ * One row of the block: what the money did, and how much of it did that.
+ *
+ * The unrecorded row used to run green under the reader's allowance and red
+ * over it. The Bearing settled that first, for the same figure — `toneFor` in
+ * `bearing/BearingCards.tsx` is the working out, and this follows it.
+ * DESIGN.md's Semantic Amount Rule is that a colour names what kind of money a
+ * figure is — income, expense, savings, investment — and never whether it is
+ * good or bad. PRODUCT.md's third refusal is that the app does not tell the
+ * user what to do, and a block scored in colour is advice delivered in the one
+ * form the reader cannot answer back to. The green was the larger half of it: a
+ * figure painted with approval for being small is a mark awarded on somebody's
+ * month.
+ *
+ * So there is no good tone left to reach for, and Destructive survives on
+ * exactly the condition the Bearing kept as `unrecorded-over` — spending the
+ * ledger never accounted for has passed the allowance the reader set
+ * themselves. That is a line they drew, not a grade the app invented, and
+ * crossing it names something to go and do: find what left the account.
+ * Everything under it is the ordinary case in the ordinary colour, and the
+ * sentence below the block still says the month came in under the allowance,
+ * in words that can be read and disagreed with.
+ */
 function Figure({
   label,
   value,
-  tone = "plain",
+  overAllowance = false,
 }: {
   label: string;
   value: string;
-  tone?: "plain" | "good" | "warn";
+  /** Measured unrecorded spending has passed the reader's own allowance. */
+  overAllowance?: boolean;
 }) {
   return (
     <div className="flex items-baseline justify-between gap-4 py-1.5">
@@ -55,13 +79,7 @@ function Figure({
           system and a surface that renders a figure without it is a hole in
           the state. */}
       <PrivateAmount
-        className={
-          tone === "good"
-            ? "font-semibold text-success"
-            : tone === "warn"
-              ? "font-semibold text-destructive"
-              : "font-semibold"
-        }
+        className={cn("font-semibold", overAllowance && "text-destructive")}
       >
         {value}
       </PrivateAmount>
@@ -321,7 +339,7 @@ export function MonthCloseSheet({
                 <Figure
                   label={t("monthClose.neverRecorded")}
                   value={formatMoney(result.unrecorded)}
-                  tone={overCap ? "warn" : "good"}
+                  overAllowance={overCap}
                 />
               )}
             </div>

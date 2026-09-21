@@ -67,7 +67,11 @@ export function FindingRow({
       aria-controls={panelId}
       className={cn(
         "flex w-full items-baseline gap-3 border-b border-border py-2.5",
-        "text-left last:border-0 transition-colors hover:text-primary-ink",
+        // A wash rather than a colour on the words. The row's name is already
+        // set in the foreground, so tinting it gold was the only way the old
+        // hover showed at all — and the List Rows rule in DESIGN.md wants the
+        // wash anyway.
+        "text-left last:border-0 transition-colors hover:bg-muted/40",
       )}
     >
       <span className="shrink-0 text-sm font-medium">

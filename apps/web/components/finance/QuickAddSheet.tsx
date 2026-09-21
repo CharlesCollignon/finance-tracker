@@ -293,8 +293,11 @@ function QuickAddFields({
               onClick={() => setOccurredOn(option.value)}
               className={cn(
                 "min-h-9 rounded-full border px-3 text-sm transition-colors",
+                // Chosen is said with a full-strength rim, a raised ground
+                // and foreground ink against a hairline, a transparent
+                // ground and muted ink. Three steps, none of them the accent.
                 occurredOn === option.value
-                  ? "border-primary bg-primary/10 text-primary-ink"
+                  ? "border-foreground bg-secondary font-medium text-foreground"
                   : "border-border text-muted-foreground hover:bg-muted",
               )}
             >
@@ -326,7 +329,7 @@ function QuickAddFields({
                     "flex min-h-10 items-center gap-2 rounded-full border px-3 text-sm",
                     "transition-colors",
                     categoryId === cat.id
-                      ? "border-primary bg-primary/10 text-primary-ink"
+                      ? "border-foreground bg-secondary font-medium text-foreground"
                       : "border-border hover:bg-muted",
                   )}
                 >
@@ -389,9 +392,13 @@ function QuickAddFields({
                         }}
                         className={cn(
                           "flex min-h-10 w-full items-center gap-3 px-3 text-left text-sm",
+                          // A borderless row, so the chosen one is said with
+                          // the raised ground at full strength and medium
+                          // weight; hover takes the same ground at half, to
+                          // keep the two apart on a pointer.
                           categoryId === cat.id
-                            ? "bg-primary/10 text-primary-ink"
-                            : "hover:bg-muted",
+                            ? "bg-muted font-medium text-foreground"
+                            : "hover:bg-muted/50",
                         )}
                       >
                         <CategoryIcon icon={cat.icon} className="h-4 w-4" />
@@ -480,7 +487,7 @@ function QuickAddFields({
                     className={cn(
                       "min-h-9 rounded-full border px-3 text-sm transition-colors",
                       on
-                        ? "border-primary bg-primary/10 text-primary-ink"
+                        ? "border-foreground bg-secondary font-medium text-foreground"
                         : "border-border text-muted-foreground hover:bg-muted",
                     )}
                   >

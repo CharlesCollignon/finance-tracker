@@ -95,7 +95,7 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
   }
 
   return (
-    <div className="mb-3 flex flex-col gap-2 rounded-control border border-dashed border-primary-rim/50 p-3">
+    <div className="mb-3 flex flex-col gap-2 rounded-control border border-dashed border-hairline-strong p-3">
       <p className="text-xs text-muted-foreground">
         {t("recurringProposals.lead", { count: visible.length })}
       </p>

@@ -197,7 +197,7 @@ export function MonthScore({
           duplicate, which lives on the ledger. */}
       <Link
         href={pulse.overRecorded ? "/transactions" : "/budgets"}
-        className="flex w-fit items-center gap-1 text-sm text-primary-ink"
+        className="flex w-fit items-center gap-1 text-sm text-foreground hover:underline hover:underline-offset-4"
       >
         {pulse.overRecorded
           ? t("monthScore.findMissingEntry")

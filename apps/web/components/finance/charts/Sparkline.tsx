@@ -3,7 +3,7 @@ interface SparklineProps {
   values: number[];
   width?: number;
   height?: number;
-  /** Chart token to stroke with. */
+  /** Chart token to stroke with. Defaults to the first series colour. */
   colorVar?: string;
   className?: string;
 }
@@ -29,7 +29,10 @@ export function Sparkline({
   values,
   width = 72,
   height = 24,
-  colorVar = "--primary",
+  // `--chart-1` rather than `--primary`: this is a mark on a chart, and the
+  // chart ramp is the set of five tokens that exist for exactly that. The
+  // accent has four homes and a trend line beside a figure is not one.
+  colorVar = "--chart-1",
   className,
 }: SparklineProps) {
   if (values.length < 2) {

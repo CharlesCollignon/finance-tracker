@@ -190,12 +190,13 @@ is not an improvement to this system; it is a reversal of a decision already
 made.
 
 Restraint here is specific, not general. There is one accent and it is used
-rarely. There are no shadows at all, with one deliberate exception. There are
-three marketing greys, because the site genuinely needs three and did not need
-the ten alpha literals it had. There are three display sizes, because five
-clamp ranges produced twenty-eight distinct size/weight/family triples across
-eight pages. Each of these is a reduction that was made on purpose, and the
-count is the point: adding a fourth grey or a sixth type step undoes the work.
+rarely. The app casts no shadow at all, with one deliberate exception, and the
+marketing surface casts two, named and scoped to itself. There are three
+marketing greys, because the site genuinely needs three and did not need the
+ten alpha literals it had. There are three display sizes, because five clamp
+ranges produced twenty-eight distinct size/weight/family triples across eight
+pages. Each of these is a reduction that was made on purpose, and the count is
+the point: adding a fourth grey or a sixth type step undoes the work.
 
 **Key Characteristics:**
 
@@ -336,6 +337,17 @@ reaches for it in three unrelated places has spent it. The semantic use is not
 an exception to this rule so much as the proof of it: gold means something
 specific, which is why scattering it elsewhere costs so much.
 
+The count is now true rather than aspirational. An audit found the accent in
+roughly twenty-three roles across ninety-eight call sites — navigation pills,
+badges, avatars, switches, chips, calendar days, meters, toasts, chart swatches
+and inline links — and every one outside the four above was taken off. What
+replaced them is the token that already carried the meaning: foreground against
+muted for an active state, a hairline or a surface step for a selection, a chart
+colour for a chart. Two decorative glows that ringed every card on the Bearing
+went to foreground for the same reason. Read the four homes as a description of
+the code, not a wish about it, and add a fifth only by changing this paragraph
+first.
+
 **The Semantic Amount Rule.** An amount's colour says what kind of money it is —
 income, expense, savings or investment — never whether it is positive or
 negative. Do not colour an amount by sign, and do not invent a fifth category
@@ -428,7 +440,9 @@ one-off `17px` is a mistake, not a step.
 
 **This system is flat.** Every shadow token — `--shadow-2xs` through
 `--shadow-2xl` — is set to `none`, deliberately and not by omission. Surfaces
-never lift off the page, and there is no hover elevation anywhere.
+never lift off the page, and there is no hover elevation anywhere in the app.
+The marketing surface holds one named exception to both, at the end of this
+chapter.
 
 Depth is built four ways instead. First, there is a ground for the surfaces to
 be read against: the bloom described under Colors, fixed to the viewport by the
@@ -523,8 +537,9 @@ The alphas are recorded in the frontmatter under `components:` as
 `glass-card`, `glass-panel` and `glass-chrome`, which is where the phone states
 its own `rgba(19, 19, 32, 0.7)` too.
 
-There is exactly one exception to the flatness, and it is a recess rather than
-a lift.
+Inside the app there is exactly one exception to the flatness, and it is a
+recess rather than a lift. The marketing surface holds a second, cast by glass
+rather than by elevation and named below.
 
 ### Shadow Vocabulary
 
@@ -532,6 +547,12 @@ a lift.
   A single warm highlight along a card's top inner edge, inside the tray of
   `Card.Bezel`. It reads as machined material catching light, not as the card
   floating.
+- **Marketing Panel Glass** (`box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 24px 60px -20px rgba(0, 0, 0, 0.7)`):
+  `.glass-panel`, marketing only. The inset is the light along the pane's top
+  edge; the drop is how far the pane sits in front of the orb.
+- **Marketing Menu Glass** (`box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 30px 70px -20px rgba(0, 0, 0, 0.85)`):
+  `.glass-menu`, marketing only. The same pair, longer and darker, because a
+  dropdown opens over a 5rem headline and has the most to hold down.
 
 ### Named Rules
 
@@ -539,6 +560,46 @@ a lift.
 depth cue in the system is the bezel's inset highlight, and it describes a
 recess. If something needs to feel separate, step its surface value or give it
 a hairline — do not reach for a drop shadow, and do not add an elevation scale.
+
+**The Marketing Glass Rule.** The marketing surface casts two shadows and
+lifts one card on hover, and those three declarations are the whole of it.
+`.glass-panel` carries `inset 0 1px 0 rgba(255, 255, 255, 0.14)` over
+`0 24px 60px -20px rgba(0, 0, 0, 0.7)`; `.glass-menu` carries
+`inset 0 1px 0 rgba(255, 255, 255, 0.1)` over
+`0 30px 70px -20px rgba(0, 0, 0, 0.85)`; and `.glass-flat-hover:hover` adds
+`transform: translateY(-2px)` to the border and background it was already
+changing. All three live in `app/globals.css` beside the other marketing
+glass and apply nowhere else. Two more drops were deleted on the way to
+writing this down — a gold glow under the hero button and a black pool under
+the phone mock — because neither was glass, and the exception is the
+vocabulary, not the surface. Two hover transforms are outside it and are
+recorded here rather than blessed: `LandingCtas`' primary button rises
+`-translate-y-0.5` and `LandingGlass`' arrow nub slides the same step
+diagonally. Neither casts anything, so neither is elevation in the sense the
+rule above refuses, but neither has been decided on either — do not read them
+as room for a third.
+
+The marketing surface earns it because it is lit differently. Operate mode has
+a ground its surfaces admit: a card at 60% over the bloom separates by what it
+does to the light behind it, and a hairline finishes the job, so flatness costs
+that side nothing. The landing pages put glass over an orb, where admitting the
+light is not enough — a pane with nothing under it reads as a hole punched in
+the light rather than as something in front of it. The drop is therefore a
+description of the material and not a lift: long offset, soft blur, pulled back
+in by a negative spread, measuring the distance to the orb the way the inset
+highlight measures the light along the top edge. The app side is not waiting
+for the same thing. Its depth is the four-way build above — ground, glass,
+surface value steps, hairlines — and that is already a complete answer, so a
+shadow there would be a second depth system arguing with the first. Nothing
+here licenses a drop shadow, a hover lift or an elevation scale under
+`app/(app)/**`, in `components/finance/**`, or in anything both surfaces share.
+
+Which leaves the rule above carrying a name that is now slightly wrong: count
+this vocabulary and the system has more than one exception. The name stays.
+Tooling and `.impeccable/design.json` both reference it, and a rule renamed to
+accommodate an exception is a rule being negotiated rather than kept. Read its
+body — exact, and unchanged by this — and read this rule as the one named place
+standing beside it.
 
 **The One Backdrop Rule.** The lit ground is mounted once, in `AppShell`, and
 never per route. A WebGL context is expensive to create and browsers cap how

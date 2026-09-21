@@ -100,7 +100,7 @@ export function ProjectionCard({ projection, runway }: ProjectionCardProps) {
           )}
           period={period}
           tone={summary.shrinking ? "bad" : "good"}
-          swatch="bg-primary"
+          swatch="bg-chart-1"
           lead
         />
         <Figure
@@ -332,7 +332,11 @@ function ProjectionSparkline({ points }: { points: ProjectionPoint[] }) {
       preserveAspectRatio="none"
       role="img"
       aria-label={t("projection.sparklineLabel", { count: points.length })}
-      className="mt-4 h-16 w-full text-primary"
+      // The chart ramp rather than the accent: every stroke in here takes
+      // `currentColor`, so a series drawn in `--primary` was the accent spent
+      // on a whole graph. `--chart-1` is the token the first series is for,
+      // and it is what the kept figure's swatch above now carries.
+      className="mt-4 h-16 w-full text-chart-1"
     >
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">

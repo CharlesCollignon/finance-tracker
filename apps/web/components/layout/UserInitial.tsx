@@ -21,7 +21,9 @@ export function UserInitial({
       title={name}
       className={cn(
         "flex shrink-0 items-center justify-center rounded-full",
-        "bg-primary/20 font-head font-semibold text-primary-ink",
+        // A raised surface rather than a gold disc. An avatar is an identity
+        // marker, not an emphasis, and it sits in the chrome on every screen.
+        "bg-muted font-head font-semibold text-foreground",
         size === "sm" ? "size-6 text-[11px]" : "size-7 text-xs",
         className,
       )}

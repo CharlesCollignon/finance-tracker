@@ -58,7 +58,7 @@ export function AttentionRow({
         aria-hidden
         className={cn(
           "size-2 shrink-0 rounded-full",
-          top.tone === "wrong" ? "bg-destructive" : "bg-primary",
+          top.tone === "wrong" ? "bg-destructive" : "bg-foreground",
         )}
       />
       <span className="min-w-0 flex-1 truncate text-sm">
@@ -69,7 +69,7 @@ export function AttentionRow({
           {t("bearing.spine.moreWaiting", { count: rest })}
         </span>
       ) : null}
-      <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary-ink">
+      <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-foreground">
         {t(top.actionKey)}
         <ArrowRight
           size={ICON.sm}

@@ -249,7 +249,7 @@ export function RowCheckbox({
       aria-label={label}
       // Stops a click on the box from also opening the row's edit sheet.
       onClick={(event) => event.stopPropagation()}
-      className="size-5 shrink-0 accent-[var(--primary)]"
+      className="size-5 shrink-0 accent-foreground"
     />
   );
 }

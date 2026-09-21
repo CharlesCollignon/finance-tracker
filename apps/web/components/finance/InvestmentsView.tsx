@@ -464,7 +464,7 @@ function InvestmentPositionRow({
               </p>
             ) : null}
             {item.needsShareCount ? (
-              <p className="mt-1 text-xs font-medium text-primary-ink">
+              <p className="mt-1 text-xs font-medium text-foreground">
                 {isCrypto
                   ? t("wallets.addBtcForValue")
                   : t("wallets.addSharesForValue")}

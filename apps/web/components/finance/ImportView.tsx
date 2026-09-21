@@ -365,7 +365,7 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                     ),
                   );
                 }}
-                className="size-4 accent-[var(--primary)]"
+                className="size-4 accent-foreground"
               />
               {t("importer.firstRowIsHeader")}
             </label>

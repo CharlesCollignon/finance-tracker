@@ -13,6 +13,7 @@ import { LOCALE_LABELS } from "@finance/core/i18n/locale";
 import { writeCategoryReadAction } from "@/lib/actions/category-read";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useToast } from "@/components/layout/ToastProvider";
+import { Button } from "@/components/retroui/Button";
 import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -109,7 +110,7 @@ export function CategoryRead({
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <Sparkle size={ICON.sm} className="text-primary-rim" />
+          <Sparkle size={ICON.sm} className="text-muted-foreground" />
           {t("categoryRead.title")}
         </h4>
         <p className="text-xs text-muted-foreground">
@@ -150,7 +151,7 @@ export function CategoryRead({
             <li key={index} className="flex items-start gap-2 text-sm">
               <span
                 aria-hidden
-                className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary-rim"
+                className="mt-1.5 size-1.5 shrink-0 rounded-full bg-muted-foreground"
               />
               <span className="min-w-0">
                 <Segments segments={row.segments} />
@@ -170,17 +171,15 @@ export function CategoryRead({
         </p>
 
         {configured ? (
-          <button
+          <Button
             type="button"
             onClick={write}
             disabled={pending || left <= 0}
+            variant={left > 0 ? "default" : "ghost"}
+            size="sm"
             className={cn(
-              "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3",
-              "text-sm font-medium transition-colors",
-              left > 0
-                ? "bg-primary text-primary-foreground hover:bg-primary-hover"
-                : "cursor-not-allowed text-muted-foreground",
-              "disabled:opacity-60",
+              "shrink-0 gap-1.5 rounded-full",
+              left <= 0 && "cursor-not-allowed text-muted-foreground",
             )}
           >
             <PencilSimple size={ICON.sm} />
@@ -191,7 +190,7 @@ export function CategoryRead({
                 : rendered
                   ? t("categoryRead.writeAgain", { left })
                   : t("categoryRead.writeOne", { left })}
-          </button>
+          </Button>
         ) : null}
       </div>
     </section>

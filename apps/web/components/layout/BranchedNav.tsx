@@ -21,8 +21,8 @@ import { cn } from "@/lib/utils";
  *
  * Adapted from React Bits' BranchedMenu. What it contributes is the drawing:
  * a trunk down the left of a surface's views, a curved branch out to each
- * one, and — on the view you are actually in — the same path redrawn in the
- * accent colour and animated in with `stroke-dashoffset`. The app already
+ * one, and — on the view you are actually in — the same path redrawn at full
+ * foreground strength and animated in with `stroke-dashoffset`. The app already
  * draws that way; `bearing/Spine` animates a ring with the same property and
  * the same `cssEasing()` curve, which is why none of this needed a library.
  *
@@ -72,8 +72,11 @@ function NavBadge({ count }: { count: number }) {
       aria-label={t("nav.waiting", { count })}
       className={cn(
         "ml-auto inline-flex min-w-5 items-center justify-center rounded-full",
-        "bg-primary px-1.5 py-0.5 text-[10px] leading-none font-semibold",
-        "text-primary-foreground tabular-nums",
+        "bg-foreground px-1.5 py-0.5 text-[10px] leading-none font-semibold",
+        // The inverted neutral badge the design system already carries, as
+        // `Badge`'s `solid` variant. A count is information, not emphasis,
+        // and it does not need the accent to be the loudest thing in the rail.
+        "text-background tabular-nums",
       )}
     >
       {count > 9 ? "9+" : count}
@@ -144,12 +147,15 @@ function Section({
   return (
     <div className="relative flex flex-col">
       {/* The marker on the rail. Present only for the surface you are in, so
-          the rail says where you are before any of the words do. */}
+          the rail says where you are before any of the words do. Drawn in the
+          foreground rather than the accent: against a rail that is otherwise
+          a hairline gradient, full-strength ink is already the brightest
+          thing on it. */}
       {active ? (
         <span
           aria-hidden="true"
           className={cn(
-            "absolute top-3 -left-1.5 z-10 h-4 w-0.5 rounded-full bg-primary",
+            "absolute top-3 -left-1.5 z-10 h-4 w-0.5 rounded-full bg-foreground",
           )}
         />
       ) : null}
@@ -161,8 +167,11 @@ function Section({
           "flex min-h-11 items-center gap-3 rounded-control px-3 py-2",
           "text-sm font-medium transition-colors duration-hover",
           "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
+          // No pill behind the surface you are in: DESIGN.md's Navigation
+          // section puts the active state in the foreground colour, and the
+          // rail marker beside it and the icon's `fill` weight say the rest.
           active
-            ? "text-primary-ink bg-primary/10"
+            ? "text-foreground"
             : "text-muted-foreground hover:bg-muted hover:text-foreground",
         )}
       >
@@ -196,14 +205,16 @@ function Section({
               />
             ))}
 
-            {/* The accent, traced from the top of the trunk to the view
+            {/* The reach, traced from the top of the trunk to the view
                     you are in. One path, redrawn when the view changes, which
                     is what makes it travel between branches rather than blink
-                    from one to the next. */}
+                    from one to the next. Foreground against the hairline the
+                    rest of the tree is drawn in — the same two steps the rows
+                    use, so the drawing and the words agree. */}
             {current >= 0 ? (
               <path
                 d={reachPath(current)}
-                className="stroke-primary fill-none"
+                className="stroke-foreground fill-none"
                 strokeWidth={1.5}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -224,7 +235,7 @@ function Section({
                   "transition-colors duration-hover",
                   "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
                   on
-                    ? "text-primary-ink font-medium"
+                    ? "text-foreground font-medium"
                     : "hover:text-foreground text-muted-foreground",
                   // A branch you are not in used to be dimmed a further step,
                   // to `text-muted-foreground/60`. That is about 3.2:1 against
@@ -233,8 +244,8 @@ function Section({
                   // DESIGN.md rules out inventing an alpha where a token
                   // exists. The distinction it was making is carried by the
                   // branch drawing itself: the trunk and the reach path are
-                  // what say which surface you are in, and they are drawn in
-                  // the accent rather than in text colour.
+                  // what say which surface you are in, and they are drawn at
+                  // two different strengths rather than in one text colour.
                 )}
               >
                 {t(kid.labelKey)}

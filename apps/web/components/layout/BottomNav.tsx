@@ -48,8 +48,14 @@ export function BottomNav({
                 "justify-center gap-0.5 rounded-full mx-0.5 my-1 px-0.5 py-1",
                 "text-[10px] font-medium sm:text-xs",
                 "transition-colors duration-hover",
+                // Foreground colour and a filled glyph, not a pill. The
+                // Navigation section of DESIGN.md says the active state is
+                // carried by colour, and the gold wash behind it was the
+                // accent spent on a state that two other channels — the step
+                // up from muted foreground and the icon's `fill` weight —
+                // already make unmistakable.
                 active
-                  ? "bg-primary/15 text-primary-ink"
+                  ? "text-foreground"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -60,7 +66,7 @@ export function BottomNav({
               {href === "/transactions" && ledgerBadge > 0 ? (
                 <span
                   aria-label={`${ledgerBadge} waiting`}
-                  className="absolute right-1.5 top-1 size-1.5 rounded-full bg-primary"
+                  className="absolute right-1.5 top-1 size-1.5 rounded-full bg-foreground"
                 />
               ) : null}
               <span className="truncate">{t(labelKey)}</span>

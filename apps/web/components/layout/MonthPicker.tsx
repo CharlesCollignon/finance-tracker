@@ -266,8 +266,12 @@ function MonthGrid({
               className={cn(
                 "flex h-11 flex-col items-center justify-center gap-1 rounded-control",
                 "text-sm transition-colors",
+                // The month being read is the raised ground at full strength
+                // and semibold; hover takes the same ground at half. Two
+                // steps of one surface rather than the accent, which was
+                // being spent on a grid of twelve every time this opened.
                 selected
-                  ? "bg-primary font-medium text-primary-foreground"
+                  ? "bg-secondary font-semibold text-foreground"
                   : // A month ahead of today is dimmed, not disabled — it is
                     // pressable, and pressing it is how you look forward. It
                     // was set in `text-muted-foreground/50`, about 2.6:1 on
@@ -277,9 +281,11 @@ function MonthGrid({
                     // from the foreground the past months are drawn in is the
                     // whole of the distinction being made.
                     future
-                    ? "text-muted-foreground hover:bg-muted"
-                    : "hover:bg-muted",
-                isToday && !selected && "ring-1 ring-inset ring-primary-rim/60",
+                    ? "text-muted-foreground hover:bg-muted/50"
+                    : "hover:bg-muted/50",
+                isToday &&
+                  !selected &&
+                  "ring-1 ring-inset ring-hairline-strong",
               )}
             >
               {label}
@@ -306,7 +312,7 @@ function MonthGrid({
         <button
           type="button"
           onClick={() => go(today.year, today.month)}
-          className="rounded-control px-2 py-1 text-sm text-primary-ink hover:bg-muted"
+          className="rounded-control px-2 py-1 text-sm text-foreground hover:bg-muted"
         >
           {t("common.thisMonth")}
         </button>

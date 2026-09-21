@@ -274,8 +274,13 @@ export function CalendarView({
                             // month's own days carry is the distinction, and
                             // the missing hover wash says the rest.
                             !day.isCurrentMonth && "text-muted-foreground",
-                            day.isToday && "bg-primary/5",
-                            isSelected && "bg-primary/10",
+                            // Today is an inset hairline and the day you are
+                            // reading is a raised ground, so the two can be
+                            // true at once and neither spends the accent on a
+                            // grid that repeats it forty-two times.
+                            day.isToday &&
+                              "ring-1 ring-inset ring-hairline-strong",
+                            isSelected && "bg-muted",
                             day.isCurrentMonth &&
                               !isSelected &&
                               "hover:bg-muted/30",
@@ -291,12 +296,11 @@ export function CalendarView({
                           })}
                           aria-pressed={isSelected}
                         >
-                          <span
-                            className={cn(
-                              "text-sm font-semibold leading-none",
-                              day.isToday && "text-primary-ink",
-                            )}
-                          >
+                          {/* Today's numeral needs no colour of its own: the
+                              cell it sits in is the one carrying the inset
+                              hairline, and every day of this month is already
+                              set in the foreground. */}
+                          <span className="text-sm font-semibold leading-none">
                             {day.day}
                           </span>
 
@@ -435,7 +439,10 @@ export function CalendarView({
                         }
                         className={cn(
                           "flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30",
-                          selectMode && selected.has(tx.id) && "bg-primary/5",
+                          // The checkbox is what says a row is picked; the
+                          // wash behind it only has to separate the picked
+                          // rows from the rest, which the raised ground does.
+                          selectMode && selected.has(tx.id) && "bg-muted",
                         )}
                       >
                         {selectMode ? (
