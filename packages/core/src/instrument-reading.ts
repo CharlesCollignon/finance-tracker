@@ -82,15 +82,15 @@ export const READING_FRESH_DAYS = 180;
 /**
  * Bumped when the shape changes enough that old readings should be retaken.
  *
- * Still 1, and waiting on migration 037 rather than on anything in this file.
- * `assetKind` is read from the model and carried all the way here, but until
- * `instrument_readings.asset_kind` exists there is nowhere to put it — so
- * going to 2 now would send every reading back into the queue to be retaken
- * at a cost of one allowance each, and each retake would drop the one field
- * the retake was for. Raise this to 2 in the same change that applies 037,
- * and the whole portfolio is re-read exactly once, for keeps.
+ * 2 added `assetKind`, and waited for migration 037 to give it somewhere to
+ * live. A reading taken at 1 is still perfectly usable — its weights are its
+ * weights — but it cannot say whether the instrument has a composition at
+ * all, which is the one question deciding whether the surface keeps offering
+ * to read it again. Bumping this puts every existing reading back in the
+ * queue through `readingIsStale`, so one press re-reads the portfolio and the
+ * answer arrives for keeps. A portfolio's worth of re-reads is a few pence.
  */
-export const READING_VERSION = 1;
+export const READING_VERSION = 2;
 
 const weightsSchema = z
   .record(z.string(), z.number().min(0).max(1))
