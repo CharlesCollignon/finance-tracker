@@ -95,9 +95,9 @@ export function instrumentReadingConfigured(): boolean {
  */
 const SEARCH_INSTRUCTIONS =
   "You look up published facts about one instrument and report what its own " +
-  "documents say. The instrument is either a fund — an ETF, an ETC or a " +
-  "tracker — or a single listed company. Work out which from what you find, " +
-  "and answer accordingly.\n\n" +
+  "documents say. Say first what it holds — companies, bonds, a commodity " +
+  "such as gold, or crypto — because the rest of the answer depends on it. " +
+  "It may be a single listed company, or a fund holding any of those.\n\n" +
   "For a fund, search for its factsheet or KID by ISIN. Prefer the issuer's " +
   "own site, then a fund-data site such as justETF or Morningstar. Report the " +
   "ongoing charge, the currency, and the country and sector breakdowns the " +
@@ -108,6 +108,12 @@ const SEARCH_INSTRUCTIONS =
   "country it is domiciled or headquartered in at 100%, and its GICS sector " +
   "at 100%, and give the company itself as its own sole holding at 100%. " +
   "Report its trading currency.\n\n" +
+  "For a commodity or a crypto holding there are no countries and no sectors " +
+  "at all, and that is the answer rather than a shortcoming: a bar of gold " +
+  "sits in no country and is in no industry. Say which commodity or coin it " +
+  "tracks, report the ongoing charge if the issuer publishes one, and leave " +
+  "the country and sector breakdowns empty. Do not attribute it to the " +
+  "country of the vault, the issuer or the exchange.\n\n" +
   "Report only figures you actually found on a page, and say plainly when " +
   "something could not be found — a guessed figure is worse than none. Give " +
   "the ISIN exactly as the page states it, and say so if it differs from the " +
@@ -122,12 +128,19 @@ const TRANSCRIBE_INSTRUCTIONS =
   // the one answer a single company has: the notes say "United States" and
   // "semiconductors" in prose, and turning that into `{ US: 1 }` is copying
   // rather than estimating.
-  "The notes may describe a fund or a single listed company. For a single " +
-  "company the ongoing charge is null, and the notes stating its country and " +
-  "its sector means countryWeights and sectorWeights each carry that one " +
-  "entry at 1 — a share held directly is entirely in its own country and " +
-  "entirely in its own sector, which is a figure the notes give rather than " +
-  "one you are estimating.\n\n" +
+  "Set assetKind from what the notes say the instrument holds: 'companies' " +
+  "for a share or a fund of shares, 'bonds' for debt, 'commodity' for gold, " +
+  "silver or a basket of them, 'crypto' for a coin. Null only if the notes " +
+  "do not say.\n\n" +
+  "For a single company the ongoing charge is null, and the notes stating " +
+  "its country and its sector means countryWeights and sectorWeights each " +
+  "carry that one entry at 1 — a share held directly is entirely in its own " +
+  "country and entirely in its own sector, which is a figure the notes give " +
+  "rather than one you are estimating.\n\n" +
+  "For a commodity or crypto both maps are empty. Leave them empty: the " +
+  "vault, the issuer and the exchange are not where the holding is, and " +
+  "putting one of them in countryWeights would be the one guess this whole " +
+  "format exists to prevent.\n\n" +
   `Sector weights use exactly these ids: ${SECTOR_IDS.join(", ")}. Country ` +
   "weights are ISO 3166-1 alpha-2 codes. Every weight is a fraction between " +
   "0 and 1, not a percentage: 25% is 0.25. An ongoing charge of 0.20% is " +
@@ -287,11 +300,12 @@ async function defaultSearch(
           role: "user",
           content:
             `Find, for ${named}:\n` +
-            "- whether it is a fund or a single listed company\n" +
+            "- what it holds: companies, bonds, a commodity such as gold, or " +
+            "crypto — and whether it is a fund or a single listed company\n" +
             "- the annual ongoing charge (TER or OCF), for a fund\n" +
             "- its currency\n" +
             "- its country breakdown by weight — for a single company, its " +
-            "own country at 100%\n" +
+            "own country at 100%; for a commodity or crypto, none at all\n" +
             // Asked for in full and by name, because a partial answer is
             // what actually came back: a first live run returned three of
             // eleven sectors. The reader downstream reports the shortfall
@@ -299,7 +313,7 @@ async function defaultSearch(
             // caveat about an incomplete one.
             "- its sector breakdown by weight, every sector the factsheet " +
             "lists, not just the largest few; for a single company, its own " +
-            "GICS sector at 100%\n" +
+            "GICS sector at 100%; for a commodity or crypto, none at all\n" +
             "- its largest holdings with weights — for a single company, " +
             "itself at 100%\n\n" +
             "Give the figures and say which page each came from.",

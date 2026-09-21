@@ -2605,7 +2605,7 @@ export const en = {
        * itself as being about instruments waiting to be read.
        */
       notCovered: "What these shares do not cover",
-      cryptoHeading: "Crypto",
+      unresolvableHeading: "Nothing to look through to",
       /** The four reasons a holding is not covered, each with its own fix. */
       noIsin: "Not identified yet",
       noIsinBody:
@@ -2616,7 +2616,7 @@ export const en = {
         "{count} instruments have an ISIN but have not been read. Reading one looks up what it holds — its charge, its countries, its sectors.",
       readNothingUseful: "Read, but incomplete",
       readNothingUsefulBody:
-        "{count} readings found a charge but no countries and no sectors. Reading again may find more — though some instruments have neither to find: a gold ETC holds one metal and sits in no country.",
+        "{count} readings found a charge but no countries and no sectors, and the factsheet did not say why. Reading again may find more.",
       needsAReading:
         "Read at least one instrument first — there is nothing to review yet.",
       /**
@@ -2635,17 +2635,19 @@ export const en = {
       partialAxis:
         "These figures cover {coverage} of what was read — a factsheet does not always publish the full breakdown. The shares are what was published, not a share of what was found, so they do not add up to everything.",
       /**
-       * Crypto is held, and there is nothing to look it up in.
+       * Held, and there is nothing to look it up in — ever.
        *
-       * Deliberately not a call to action. The "no ISIN" block next to this
-       * one tells the reader to open Positions and record an instrument,
-       * which for a coin sends them hunting for an identifier that was never
-       * issued — the complaint that produced this sentence.
+       * Deliberately not a call to action, which is the whole point of the
+       * group. The block above it tells the reader to open Positions and
+       * record an instrument, and the one above that offers to read it again;
+       * for a coin the first sends them hunting for an identifier that was
+       * never issued, and for gold the second promises a breakdown that does
+       * not exist. Both complaints produced this sentence.
        */
-      crypto: {
-        one: "Crypto has no issuer, no factsheet and no ISIN, so there is nothing to look through to. It is held, and counted in the total above, but the shares on this page cannot describe it.",
+      unresolvable: {
+        one: "Gold and crypto have no countries and no sectors — not unpublished ones, none. It is held, and counted in the total above, but the shares on this page cannot describe it.",
         other:
-          "Crypto has no issuer, no factsheet and no ISIN, so there is nothing to look through to. These are held, and counted in the total above, but the shares on this page cannot describe them.",
+          "Gold and crypto have no countries and no sectors — not unpublished ones, none. These are held, and counted in the total above, but the shares on this page cannot describe them.",
       },
       geographyIsNotCurrency:
         "Geography here means where the companies are, not what currency you are paid in. A fund can hold American companies and be priced in euro.",

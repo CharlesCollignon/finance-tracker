@@ -273,6 +273,7 @@ export async function readInstrument(
     new_sources: reading.sources as never,
     new_model: reading.model,
     new_version: READING_VERSION,
+    new_asset_kind: reading.assetKind,
   });
 
   if (storeError && !isMissingSchema(storeError)) {

@@ -36,6 +36,7 @@ import { isCryptoWallet } from "./crypto-holdings";
 import {
   SECTOR_LABELS,
   readingIsStale,
+  resolvesToComposition,
   type InstrumentReading,
   type SectorId,
 } from "./instrument-reading";
@@ -170,16 +171,17 @@ export interface EligibilityIssue {
 export type LookThroughCaveat =
   | { kind: "unclassified"; share: number; positionCount: number }
   /**
-   * Crypto is held, and has no composition to resolve.
+   * Something is held that has no composition to resolve, and never will.
    *
    * Its own caveat rather than being folded into `unclassified`, because the
    * two ask different things of the reader. Unclassified value is a gap that
-   * closes when somebody reads the instrument; a coin has no countries, no
-   * sectors and no issuer's factsheet, so there is nothing to read and
-   * nothing to do. Telling a reader to go and record an ISIN for Bitcoin
-   * sends them looking for a number that was never issued.
+   * closes when somebody reads the instrument; gold and crypto have no
+   * countries and no sectors at all, so there is nothing to read and nothing
+   * to do. Telling a reader to record an ISIN for Bitcoin sends them looking
+   * for a number that was never issued, and offering to read a gold ETC again
+   * promises a breakdown that does not exist.
    */
-  | { kind: "crypto"; positionCount: number; value: number }
+  | { kind: "unresolvable"; positionCount: number; value: number }
   | { kind: "overlap-is-a-floor" }
   | { kind: "stale-readings"; positionCount: number; oldestDays: number }
   | { kind: "no-market-value" }
@@ -210,8 +212,25 @@ export interface LookThrough {
    * of these has a different answer, and one of them has no answer at all,
    * which is itself the thing worth saying.
    */
-  cryptoPositions: { positionId: string; name: string; value: number }[];
-  /** No ISIN recorded, and not crypto — the instrument search fixes these. */
+  /**
+   * Held, counted in the total, and with no composition to look through to.
+   *
+   * Crypto, which the wallet says; and anything a reading reports as a
+   * commodity or a coin, which only the reading can say. The shortlist in
+   * `etf-shortlist.ts` carries an asset class but is a hand-curated catalogue
+   * of the funds this app will name, and a portfolio holds whatever its owner
+   * bought — so a gold ETC that is not on it was read, published nothing, and
+   * was offered a second reading that could never have found anything.
+   */
+  unresolvablePositions: {
+    positionId: string;
+    name: string;
+    value: number;
+  }[];
+  /**
+   * No ISIN recorded, and it is not one of the above — the instrument search
+   * is what fixes these.
+   */
   unidentifiedPositions: {
     positionId: string;
     name: string;
@@ -645,8 +664,19 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
   // some of that arrives as an ETC with an ISIN and a factsheet. Saying "no
   // issuer and no ISIN" over one of those would be false, and listing it as
   // uncovered would be false twice, since it is covered.
-  const crypto = unclassified.filter((position) =>
-    isCryptoWallet(position.walletId),
+  const unresolvable = unclassified.filter(
+    (position) =>
+      isCryptoWallet(position.walletId) ||
+      !resolvesToComposition(
+        (position.isin ? readings.get(position.isin)?.assetKind : null) ?? null,
+      ),
+  );
+
+  // The other three groups describe gaps somebody could close. Anything with
+  // no composition to resolve is not a gap, so it is taken out first and the
+  // four groups stay disjoint.
+  const stillWorthFixing = unclassified.filter(
+    (position) => !unresolvable.includes(position),
   );
 
   const caveats: LookThroughCaveat[] = [];
@@ -660,11 +690,14 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
       positionCount: unclassified.length,
     });
   }
-  if (crypto.length > 0) {
+  if (unresolvable.length > 0) {
     caveats.push({
-      kind: "crypto",
-      positionCount: crypto.length,
-      value: crypto.reduce((sum, position) => sum + position.marketValue, 0),
+      kind: "unresolvable",
+      positionCount: unresolvable.length,
+      value: unresolvable.reduce(
+        (sum, position) => sum + position.marketValue,
+        0,
+      ),
     });
   }
   if (constituentOverlaps.length > 0) {
@@ -722,20 +755,17 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
     positionCount: held.length,
     classifiedPositionCount: classified.length,
     unclassifiedPositions: unclassified.map(listed),
-    cryptoPositions: crypto.map(listed),
-    unidentifiedPositions: unclassified
-      .filter(
-        (position) =>
-          position.isin === null && !isCryptoWallet(position.walletId),
-      )
+    unresolvablePositions: unresolvable.map(listed),
+    unidentifiedPositions: stillWorthFixing
+      .filter((position) => position.isin === null)
       .map(listed),
-    unreadPositions: unclassified
+    unreadPositions: stillWorthFixing
       .filter(
         (position) =>
           position.isin !== null && readings.get(position.isin) === undefined,
       )
       .map(listed),
-    readButUnclassifiedPositions: unclassified
+    readButUnclassifiedPositions: stillWorthFixing
       .filter(
         (position) =>
           position.isin !== null && readings.get(position.isin) !== undefined,

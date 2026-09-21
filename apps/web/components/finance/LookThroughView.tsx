@@ -6,9 +6,9 @@ import {
   ArrowsClockwise,
   Books,
   Coins,
-  CurrencyBtc,
   Eye,
   Globe,
+  Prohibit,
   Sparkle,
   Target,
   Warning,
@@ -418,19 +418,21 @@ export function LookThroughView({
                   formatEuro={formatEuro}
                 />
 
-                {/* Crypto, which is uncovered for a reason nobody can fix.
+                {/* Uncovered for a reason nobody can fix — gold and crypto.
                     The first group tells the reader to open Positions and
-                    choose an instrument, and for a coin that sends them
-                    hunting for an ISIN that was never issued — the complaint
-                    this group answers. */}
+                    choose an instrument, and the second offers to read the
+                    instrument again; for a coin the first sends them hunting
+                    for an ISIN that was never issued, and for a gold ETC the
+                    second promises a breakdown that does not exist. Both
+                    complaints land here. */}
                 <Uncovered
-                  when={lookThrough.cryptoPositions.length > 0}
-                  icon={<CurrencyBtc size={ICON.sm} weight="light" />}
-                  heading={t("lookThrough.caveats.cryptoHeading")}
-                  body={t("lookThrough.caveats.crypto", {
-                    count: lookThrough.cryptoPositions.length,
+                  when={lookThrough.unresolvablePositions.length > 0}
+                  icon={<Prohibit size={ICON.sm} weight="light" />}
+                  heading={t("lookThrough.caveats.unresolvableHeading")}
+                  body={t("lookThrough.caveats.unresolvable", {
+                    count: lookThrough.unresolvablePositions.length,
                   })}
-                  rows={lookThrough.cryptoPositions}
+                  rows={lookThrough.unresolvablePositions}
                   formatEuro={formatEuro}
                 />
               </Section>

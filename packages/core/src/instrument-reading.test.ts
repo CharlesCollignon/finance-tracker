@@ -10,6 +10,7 @@ import {
   readingCompleteness,
   readingIsStale,
   readingQueue,
+  resolvesToComposition,
   INSTRUMENT_READ_STATUSES,
   drainStep,
   haltIsInstrumentSpecific,
@@ -35,6 +36,7 @@ function asked(
 function answer(overrides: Record<string, unknown> = {}) {
   return {
     isin: "IE00B4L5Y983",
+    assetKind: "companies",
     ongoingCharge: 0.002,
     currency: "USD",
     countryWeights: { US: 0.71, JP: 0.06, GB: 0.04 },
@@ -51,6 +53,7 @@ function answer(overrides: Record<string, unknown> = {}) {
 function reading(partial: Partial<InstrumentReading> = {}): InstrumentReading {
   return {
     isin: "IE00B4L5Y983",
+    assetKind: "companies",
     ongoingCharge: 0.002,
     currency: "USD",
     countryWeights: { US: 0.71 },
@@ -523,5 +526,80 @@ describe("a source that says why it could not answer", () => {
     await source.read({ isin: "IE00B4L5Y983", name: "World", symbol: null });
     await source.read({ isin: "FR001400U5Q4", name: "Europe", symbol: null });
     expect(source.lastFailure).toBe(null);
+  });
+});
+
+describe("what an instrument is made of", () => {
+  it("knows which kinds have a composition to look through to", () => {
+    expect(resolvesToComposition("companies")).toBe(true);
+    expect(resolvesToComposition("bonds")).toBe(true);
+    expect(resolvesToComposition("commodity")).toBe(false);
+    expect(resolvesToComposition("crypto")).toBe(false);
+  });
+
+  /**
+   * A reading taken before the reader was asked this question. Treated as
+   * having a composition, because that is what every reading meant until now
+   * — assuming otherwise would silently reclassify a whole portfolio of funds
+   * as things that can never be described.
+   */
+  it("treats an unanswered kind as one that resolves", () => {
+    expect(resolvesToComposition(null)).toBe(true);
+  });
+
+  it("keeps the kind the reader reported", () => {
+    const verdict = verifyInstrumentReading(
+      asked(),
+      answer({ assetKind: "commodity" }),
+      NOW,
+      null,
+    );
+    expect(verdict.ok).toBe(true);
+    if (!verdict.ok) return;
+    expect(verdict.reading.assetKind).toBe("commodity");
+  });
+
+  it("accepts an answer whose only news is that there is nothing to find", () => {
+    // A gold ETC with no published charge still tells the app something worth
+    // storing: that it will never have a country or a sector, so the surface
+    // can stop offering to go and look for one.
+    const verdict = verifyInstrumentReading(
+      asked(),
+      answer({
+        assetKind: "commodity",
+        ongoingCharge: null,
+        countryWeights: {},
+        sectorWeights: {},
+        topConstituents: [],
+      }),
+      NOW,
+      null,
+    );
+    expect(verdict.ok).toBe(true);
+  });
+
+  it("still refuses an answer about a fund that says nothing at all", () => {
+    const verdict = verifyInstrumentReading(
+      asked(),
+      answer({
+        assetKind: "companies",
+        ongoingCharge: null,
+        countryWeights: {},
+        sectorWeights: {},
+        topConstituents: [],
+      }),
+      NOW,
+      null,
+    );
+    expect(verdict.ok).toBe(false);
+    if (verdict.ok) return;
+    expect(verdict.refusal.reason).toBe("nothing-useful");
+  });
+
+  it("refuses a kind that is not one of the four", () => {
+    expect(
+      instrumentReadingAnswerSchema.safeParse(answer({ assetKind: "property" }))
+        .success,
+    ).toBe(false);
   });
 });

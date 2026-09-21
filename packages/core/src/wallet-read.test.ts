@@ -34,6 +34,7 @@ function reading(
 ): InstrumentReading {
   return {
     isin,
+    assetKind: "companies",
     ongoingCharge: 0.002,
     currency: "EUR",
     countryWeights: { US: 0.65, FR: 0.05, JP: 0.06 },

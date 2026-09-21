@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { InstrumentReading, SectorId } from "@finance/core/instrument-reading";
+import {
+  ASSET_KINDS,
+  type AssetKind,
+  type InstrumentReading,
+  type SectorId,
+} from "@finance/core/instrument-reading";
 import type {
   Database,
   InstrumentReadingRow,
@@ -25,9 +30,19 @@ function isMissingSchema(error: { code?: string } | null): boolean {
   );
 }
 
+function isAssetKind(value: string | null): value is AssetKind {
+  return value !== null && (ASSET_KINDS as readonly string[]).includes(value);
+}
+
 function toReading(row: InstrumentReadingRow): InstrumentReading {
   return {
     isin: row.isin,
+    // Narrowed rather than cast: the column is plain text with a permissive
+    // check, because the vocabulary lives in core and a kind added to it
+    // should not need a migration. A value this build does not know reads as
+    // "not asked", which is the safe answer — it means the instrument keeps
+    // whatever composition it reported.
+    assetKind: isAssetKind(row.asset_kind) ? row.asset_kind : null,
     ongoingCharge:
       row.ongoing_charge === null ? null : Number(row.ongoing_charge),
     currency: row.currency,

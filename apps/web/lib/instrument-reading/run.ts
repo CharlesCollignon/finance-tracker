@@ -7,6 +7,7 @@ import {
 } from "@finance/core/instrument-reading";
 import type { Database } from "@finance/core/types/database";
 import { readInstrument } from "@/lib/instrument-reading/read";
+import { ASSET_KINDS, type AssetKind } from "@finance/core/instrument-reading";
 
 type Client = SupabaseClient<Database>;
 
@@ -63,9 +64,16 @@ function toReading(row: {
   sourced_at: string;
   model: string | null;
   version: number;
+  asset_kind?: string | null;
 }): InstrumentReading {
   return {
     isin: row.isin,
+    // The daily job only ever asks "is this stale", which does not depend on
+    // the kind, so an unrecognised one costs nothing here. Narrowed rather
+    // than cast all the same: a lie in this field would reach the surface.
+    assetKind: (ASSET_KINDS as readonly string[]).includes(row.asset_kind ?? "")
+      ? (row.asset_kind as AssetKind)
+      : null,
     ongoingCharge:
       row.ongoing_charge === null ? null : Number(row.ongoing_charge),
     currency: row.currency,

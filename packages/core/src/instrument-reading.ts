@@ -79,8 +79,17 @@ export const SECTOR_LABELS: Record<SectorId, string> = {
  */
 export const READING_FRESH_DAYS = 180;
 
-/** Bumped when the shape changes enough that old readings should be retaken. */
-export const READING_VERSION = 1;
+/**
+ * Bumped when the shape changes enough that old readings should be retaken.
+ *
+ * 2 added `assetKind`. A reading taken at 1 is still perfectly usable — its
+ * weights are its weights — but it cannot say whether the instrument has a
+ * composition at all, which is the one question that decides whether the
+ * surface keeps offering to read it again. A portfolio's worth of re-reads is
+ * a few pence and a press of the button, and `readingIsStale` puts them back
+ * in the queue on its own.
+ */
+export const READING_VERSION = 2;
 
 const weightsSchema = z
   .record(z.string(), z.number().min(0).max(1))
@@ -96,9 +105,54 @@ const weightsSchema = z
  * Strict, and re-validated even though a strict output format was requested —
  * a provider guarantee is an optimisation, never the contract.
  */
+/**
+ * What kind of thing an instrument holds.
+ *
+ * Asked of the reader because nothing else in the app can answer it. The
+ * shortlist in `etf-shortlist.ts` carries an asset class, but it is a
+ * hand-curated catalogue of the funds this app will *name*, and a portfolio
+ * holds whatever its owner bought — a gold ETC that is not on the list was
+ * read, published no countries and no sectors, and was filed under "read, but
+ * incomplete" with an offer to read it again. There was nothing to find. Gold
+ * sits in no country and is in no sector, and saying so is a fact about the
+ * instrument rather than a gap in the reading.
+ *
+ * Four, and the distinction that earns its keep is the last two against the
+ * first two. `bonds` is here so that a debt fund need not be called a fund of
+ * companies, which would be a small lie told for want of a word.
+ */
+export const ASSET_KINDS = [
+  "companies",
+  "bonds",
+  "commodity",
+  "crypto",
+] as const;
+
+export type AssetKind = (typeof ASSET_KINDS)[number];
+
+/**
+ * Whether this kind of instrument has countries and sectors to resolve to.
+ *
+ * `null` — a reading taken before the reader was ever asked — resolves, which
+ * is what every reading meant until now. Assuming the opposite would silently
+ * reclassify a whole portfolio of funds as things that can never be
+ * described, on no evidence at all.
+ */
+export function resolvesToComposition(kind: AssetKind | null): boolean {
+  return kind !== "commodity" && kind !== "crypto";
+}
+
 export const instrumentReadingAnswerSchema = z
   .object({
     isin: z.string().regex(ISIN_REGEX, "errors.notAnIsin"),
+    /**
+     * What the instrument holds, when the reader could tell.
+     *
+     * Nullable because the answer is worth having without it: a fund that
+     * reports its countries has plainly got a composition, and refusing that
+     * reading over a missing label would cost more than the label is worth.
+     */
+    assetKind: z.enum(ASSET_KINDS).nullable(),
     /** Annual ongoing charge as a fraction: 0.002 = 0.20%. */
     ongoingCharge: z.number().min(0).max(0.1).nullable(),
     currency: z.string().length(3).nullable(),
@@ -169,6 +223,7 @@ export function instrumentReadingJsonSchema() {
         additionalProperties: false,
         required: [
           "isin",
+          "assetKind",
           "ongoingCharge",
           "currency",
           "countryWeights",
@@ -181,6 +236,12 @@ export function instrumentReadingJsonSchema() {
             type: "string",
             description:
               "The ISIN these figures are for. Must match the one asked about.",
+          },
+          assetKind: {
+            type: ["string", "null"],
+            enum: [...ASSET_KINDS, null],
+            description:
+              "What the instrument holds: 'companies' for a share or a fund of shares, 'bonds' for debt, 'commodity' for a metal or a basket of them, 'crypto' for a coin. Null only if the notes do not say.",
           },
           ongoingCharge: {
             type: ["number", "null"],
@@ -234,6 +295,8 @@ export function instrumentReadingJsonSchema() {
 /** A stored reading: the answer, plus how and when it was taken. */
 export interface InstrumentReading {
   isin: string;
+  /** What it holds, or null on a reading taken before this was asked. */
+  assetKind: AssetKind | null;
   ongoingCharge: number | null;
   currency: string | null;
   countryWeights: Record<string, number>;
@@ -364,10 +427,17 @@ export function verifyInstrumentReading(
     (entry) => entry.weight > 0 && entry.name.trim() !== "",
   );
 
+  const assetKind = data.assetKind ?? null;
+
+  // "There is nothing here to find" is itself worth storing. A gold ETC that
+  // publishes no charge still tells the app that it will never have a country
+  // or a sector, which is what stops the surface offering to go and look for
+  // one for ever.
   const saysSomething =
     data.ongoingCharge !== null ||
     Object.keys(countryWeights).length > 0 ||
-    Object.keys(sectorWeights).length > 0;
+    Object.keys(sectorWeights).length > 0 ||
+    !resolvesToComposition(assetKind);
 
   if (!saysSomething) {
     return { ok: false, refusal: { reason: "nothing-useful" } };
@@ -377,6 +447,7 @@ export function verifyInstrumentReading(
     ok: true,
     reading: {
       isin: askedIsin,
+      assetKind,
       ongoingCharge: data.ongoingCharge,
       currency: data.currency?.trim().toUpperCase() ?? null,
       countryWeights,
