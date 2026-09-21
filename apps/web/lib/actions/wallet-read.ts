@@ -53,6 +53,13 @@ export interface ReadInstrumentActionResult {
   status: InstrumentReadStatus;
   /** What is left in the queue afterwards, so the client can pace itself. */
   remaining: number;
+  /**
+   * Which instrument this was about, so a caller walking the queue can leave
+   * it behind. Null when there was nothing to read.
+   */
+  isin: string | null;
+  /** Its name, for a sentence that says which one could not be read. */
+  name: string | null;
 }
 
 /**
@@ -63,17 +70,45 @@ export interface ReadInstrumentActionResult {
  * on in one place, and means a client cannot aim the call at an instrument
  * that does not need reading.
  */
-export async function readNextInstrument(): Promise<ReadInstrumentActionResult> {
+export async function readNextInstrument(
+  /**
+   * Instruments to leave out of the queue.
+   *
+   * A failed read leaves its instrument exactly where it was, at the head of
+   * the queue — so a walk that simply carried on would ask about the same one
+   * for ever, and a walk that stopped let one unreadable fund block every
+   * fund behind it. The caller remembers which ones answered badly and names
+   * them here, which is the smallest thing that lets one press get through a
+   * portfolio.
+   *
+   * Only ever narrows what may be read, so it needs no validation of its own:
+   * the reservation still refuses any ISIN the caller does not hold, and the
+   * allowance still bounds the month.
+   */
+  skip: readonly string[] = [],
+): Promise<ReadInstrumentActionResult> {
   const user = await getAuthUser();
   if (!user) {
-    return { status: "not-authenticated", remaining: 0 };
+    return {
+      status: "not-authenticated",
+      remaining: 0,
+      isin: null,
+      name: null,
+    };
   }
 
+  const leaveOut = new Set(skip.map((isin) => isin.trim().toUpperCase()));
   const bundle = await gatherLookThrough(user.id);
-  const next = bundle.queue[0];
+  // Counted as well as filtered: the count is what the button draws, and one
+  // that still included instruments this walk has given up on would leave the
+  // reader watching a number that never reaches zero.
+  const queue = bundle.queue.filter(
+    (isin) => !leaveOut.has(isin.toUpperCase()),
+  );
+  const next = queue[0];
 
   if (next === undefined) {
-    return { status: "nothing-to-read", remaining: 0 };
+    return { status: "nothing-to-read", remaining: 0, isin: null, name: null };
   }
 
   const position = bundle.positions.find(
@@ -100,6 +135,8 @@ export async function readNextInstrument(): Promise<ReadInstrumentActionResult> 
 
   return {
     status: outcome.status,
+    isin: next,
+    name: position?.name ?? next,
     // Only an instrument that actually left the queue may shrink the count.
     // A reading that landed left it, and so did one that turned out to be
     // fresh already; every other answer leaves it exactly where it was. The
@@ -108,7 +145,7 @@ export async function readNextInstrument(): Promise<ReadInstrumentActionResult> 
     // shorter than the one it had just failed to move.
     remaining:
       outcome.status === "read" || outcome.status === "already-fresh"
-        ? Math.max(0, bundle.queue.length - 1)
-        : bundle.queue.length,
+        ? Math.max(0, queue.length - 1)
+        : queue.length,
   };
 }

@@ -6,17 +6,23 @@ import {
   ArrowsClockwise,
   Books,
   Coins,
+  CurrencyBtc,
   Eye,
   Globe,
+  Sparkle,
   Target,
   Warning,
 } from "@phosphor-icons/react";
 
 import {
-  SECTOR_LABELS,
+  SECTOR_IDS,
   drainStep,
+  haltIsInstrumentSpecific,
   type DrainHalt,
+  type SectorId,
 } from "@finance/core/instrument-reading";
+import { countryFlag, countryName } from "@finance/core/country-names";
+import { describeModel } from "@finance/core/model-name";
 import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
 import { formatCharge } from "@finance/core/fund-costs";
 import { AXIS_COVERAGE_FLOOR } from "@finance/core/look-through";
@@ -43,7 +49,7 @@ import { RefreshQuotesButton } from "@/components/finance/RefreshQuotesButton";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { readNextInstrument, reviewWallets } from "@/lib/actions/wallet-read";
 import { useFormatCurrency } from "@/lib/use-currency";
-import { useT } from "@/lib/locale-context";
+import { useLocale, useT } from "@/lib/locale-context";
 import { useToast } from "@/components/layout/ToastProvider";
 import { ICON } from "@/lib/icon-scale";
 import { MICRO } from "@/lib/type-scale";
@@ -62,7 +68,11 @@ const HALT_MESSAGES: Record<Exclude<DrainHalt, "done">, Key> = {
   allowance: "lookThrough.halt.allowance",
   "not-yours": "lookThrough.halt.notYours",
   "no-reader": "lookThrough.halt.noReader",
-  unavailable: "lookThrough.halt.unavailable",
+  "not-set-up": "lookThrough.halt.notSetUp",
+  "no-search": "lookThrough.halt.noSearch",
+  "provider-down": "lookThrough.halt.providerDown",
+  "nothing-found": "lookThrough.halt.nothingFound",
+  "wrong-instrument": "lookThrough.halt.wrongInstrument",
   "signed-out": "lookThrough.halt.signedOut",
 };
 
@@ -78,6 +88,17 @@ export interface LookThroughViewProps {
   readsLeft: number;
   /** False when there is no key, or migration 033 has not run. */
   canReview: boolean;
+  /**
+   * What to call the writer on the controls that spend a call.
+   *
+   * The maker alone — "Mistral" — because a button has room for that and
+   * nothing more. Which exact model wrote a stored read is a different
+   * question, answered from `readModel` below, and deliberately so: a read
+   * written six weeks ago was written by whatever answered then.
+   */
+  writerBrand: string;
+  /** The model recorded on the stored read, when there is one. */
+  readModel: string | null;
   /** How many instruments are waiting to be read. */
   queueLength: number;
   /**
@@ -122,11 +143,14 @@ export function LookThroughView({
   stale,
   readsLeft,
   canReview,
+  writerBrand,
+  readModel,
   queueLength,
   unidentified,
   arbitrage,
 }: LookThroughViewProps) {
   const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
   const [reviewing, startReview] = useTransition();
@@ -136,6 +160,7 @@ export function LookThroughView({
   const unclassified = lookThrough.caveats.find(
     (caveat) => caveat.kind === "unclassified",
   );
+  const crypto = lookThrough.caveats.find((caveat) => caveat.kind === "crypto");
 
   /**
    * Whether a read could say anything at all.
@@ -177,25 +202,81 @@ export function LookThroughView({
    */
   async function onReadAll() {
     setReading(true);
+
+    // Instruments this walk has given up on. Held here rather than on the
+    // server because it is a fact about this press and not about the
+    // portfolio: a fund nobody could look up this afternoon is worth trying
+    // again tomorrow, and a queue that remembered its own failures would
+    // quietly shrink until nothing was ever retried.
+    const giveUpOn: string[] = [];
+    let readCount = 0;
+
     try {
       let left = remaining;
       while (left > 0) {
-        const outcome = await readNextInstrument();
+        const outcome = await readNextInstrument(giveUpOn);
         const step = drainStep(outcome.status, outcome.remaining);
+
+        if (outcome.status === "read" || outcome.status === "already-fresh") {
+          readCount += 1;
+        }
 
         // The server's count is the truthful one either way, including the
         // zero that says the queue is empty. Dropping it on a halt is what
         // used to leave this button sitting over nothing.
         setRemaining(outcome.remaining);
 
-        if (!step.go) {
-          if (step.halt !== "done") {
-            toast(t(HALT_MESSAGES[step.halt]), "error");
-          }
-          return;
+        if (step.go) {
+          left = step.remaining;
+          continue;
         }
 
-        left = step.remaining;
+        if (step.halt === "done") {
+          break;
+        }
+
+        // Two of the halts are about this one instrument rather than about
+        // the reader, and they are why this walk used to get nowhere: a
+        // failed read leaves its instrument at the head of the queue, so
+        // stopping was the only thing that stopped it being asked about for
+        // ever. Naming it as one to leave out is what lets the walk carry on
+        // to the funds behind it.
+        if (haltIsInstrumentSpecific(step.halt) && outcome.isin !== null) {
+          giveUpOn.push(outcome.isin);
+          left = outcome.remaining - 1;
+          continue;
+        }
+
+        toast(
+          t(HALT_MESSAGES[step.halt], {
+            model: writerBrand,
+            name: outcome.name ?? "",
+          }),
+          "error",
+        );
+        return;
+      }
+
+      // Said once, at the end, rather than per instrument: a walk down a
+      // portfolio is one action the reader took, and seven toasts for one
+      // press is seven things to dismiss.
+      if (giveUpOn.length === 0) {
+        toast(
+          t("lookThrough.readRest.allRead", { count: readCount }),
+          "success",
+        );
+      } else if (readCount === 0) {
+        toast(
+          t("lookThrough.readRest.noneRead", { count: giveUpOn.length }),
+          "error",
+        );
+      } else {
+        toast(
+          t("lookThrough.readRest.someSkipped", {
+            count: giveUpOn.length,
+            read: readCount,
+          }),
+        );
       }
     } finally {
       setReading(false);
@@ -234,11 +315,27 @@ export function LookThroughView({
               })}
               amount={formatEuro(lookThrough.totalValue)}
               subtitle={
-                lookThrough.charges.weightedAllIn !== null
-                  ? t("lookThrough.allIn") +
-                    " · " +
-                    formatCharge(lookThrough.charges.weightedAllIn)
-                  : undefined
+                /* What the charges come to in euro, directly under the value
+                   they are charged on. It used to be "All in · 0.22 %" here
+                   and the euro figure was four sections further down, which
+                   is the wrong way round: a ratio is the explanation and the
+                   amount is the thing. Red because it is money leaving, the
+                   same signal the rest of the app spends on an outflow — and
+                   never red alone, since the words say "in charges" too. */
+                lookThrough.charges.weightedAllIn !== null ? (
+                  <span className="flex flex-col items-center gap-0.5">
+                    <PrivateAmount className="font-medium text-[var(--destructive)]">
+                      {t("lookThrough.costPerYear", {
+                        amount: formatEuro(lookThrough.charges.allInAnnualCost),
+                      })}
+                    </PrivateAmount>
+                    <span className={cn(MICRO, "text-muted-foreground")}>
+                      {t("lookThrough.costAllIn", {
+                        rate: formatCharge(lookThrough.charges.weightedAllIn),
+                      })}
+                    </span>
+                  </span>
+                ) : undefined
               }
             />
           </StaggerItem>
@@ -326,6 +423,41 @@ export function LookThroughView({
                   </div>
                 ) : null}
 
+                {/* Crypto, which is unread for a reason nobody can fix. The
+                    block above tells the reader to open Positions and pick an
+                    instrument, and for a coin that sends them hunting for an
+                    ISIN that was never issued — the complaint this answers. */}
+                {crypto?.kind === "crypto" ? (
+                  <div className="mt-4 flex flex-col gap-2 border-t border-border pt-3">
+                    <p className="flex items-start gap-2 text-sm">
+                      <CurrencyBtc
+                        size={ICON.md}
+                        weight="light"
+                        aria-hidden="true"
+                        className="mt-0.5 shrink-0 text-muted-foreground"
+                      />
+                      <span className="min-w-0">
+                        {t("lookThrough.caveats.crypto", {
+                          count: crypto.positionCount,
+                        })}
+                      </span>
+                    </p>
+                    <ul className="flex flex-col gap-1">
+                      {lookThrough.cryptoPositions.map((row) => (
+                        <li
+                          key={row.positionId}
+                          className="flex items-baseline justify-between gap-3 text-sm text-muted-foreground"
+                        >
+                          <span className="min-w-0 truncate">{row.name}</span>
+                          <PrivateAmount className="shrink-0">
+                            {formatEuro(row.value)}
+                          </PrivateAmount>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
                 <ul className="mt-4 flex flex-col gap-1 border-t border-border pt-3">
                   {lookThrough.unclassifiedPositions.map((row) => (
                     <li
@@ -358,9 +490,15 @@ export function LookThroughView({
                     // that comes back as a toast explaining what it needed.
                     disabled={reviewing || !canSayAnything}
                   >
+                    <Sparkle
+                      size={ICON.sm}
+                      weight="fill"
+                      aria-hidden="true"
+                      className="mr-1.5 shrink-0"
+                    />
                     {reviewing
                       ? t("walletRead.reviewing")
-                      : t("walletRead.review")}
+                      : t("walletRead.review", { model: writerBrand })}
                   </Button>
                 ) : null
               }
@@ -382,6 +520,17 @@ export function LookThroughView({
                         {t("walletRead.readAt", { when: readAt })}
                       </span>
                     ) : null}
+                    {/* The model recorded on this read, not the one
+                        configured today — a read written six weeks ago was
+                        written by whatever answered then, and this is the one
+                        sentence on the page whose whole job is to be exact. */}
+                    <span className={cn(MICRO, "text-muted-foreground")}>
+                      {readModel === null
+                        ? t("walletRead.writtenByUnknown")
+                        : t("walletRead.writtenBy", {
+                            model: exactModel(readModel),
+                          })}
+                    </span>
                     {stale ? (
                       <Badge variant="outline" size="sm">
                         {t("walletRead.stale")}
@@ -462,10 +611,20 @@ export function LookThroughView({
                 <WeightBars
                   rows={lookThrough.countries.map((row) => ({
                     id: row.id,
-                    label: row.label,
+                    // The reading keys these on ISO codes, because that is
+                    // what a factsheet publishes. "NL" over a bar is a lookup
+                    // the reader has to do, and for a euro-zone portfolio the
+                    // codes worth recognising run well past the handful
+                    // anybody knows by sight.
+                    label: countryName(row.id, locale),
+                    mark: countryFlag(row.id),
                     weight: row.weight,
                   }))}
-                  restLabel={(count) => `${count} more`}
+                  restLabel={(count) =>
+                    t("lookThrough.restCountries", { count })
+                  }
+                  showRestLabel={t("lookThrough.showRest")}
+                  hideRestLabel={t("lookThrough.hideRest")}
                 />
                 <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-3">
                   <Bias
@@ -505,12 +664,12 @@ export function LookThroughView({
                 <WeightBars
                   rows={lookThrough.sectors.map((row) => ({
                     id: row.id,
-                    label:
-                      SECTOR_LABELS[row.id as keyof typeof SECTOR_LABELS] ??
-                      row.label,
+                    label: sectorLabel(t, row.id, row.label),
                     weight: row.weight,
                   }))}
-                  restLabel={(count) => `${count} more`}
+                  restLabel={(count) => t("lookThrough.restSectors", { count })}
+                  showRestLabel={t("lookThrough.showRest")}
+                  hideRestLabel={t("lookThrough.hideRest")}
                 />
                 <PartialAxis
                   coverage={lookThrough.sectorCoverage}
@@ -714,6 +873,41 @@ export function LookThroughView({
       </PageContainer>
     </>
   );
+}
+
+/**
+ * A sector's name in the reader's language.
+ *
+ * The ids are a closed vocabulary in core, because a reading is verified
+ * against them; the words are here, with the rest of the app's voice. They
+ * used to be an English-only record in core, which put "Consumer
+ * discretionary" under a heading reading "Ce qu'il y a dedans".
+ *
+ * A row whose id is not one of the eleven keeps whatever label the
+ * look-through gave it, rather than resolving to a key on screen.
+ */
+function sectorLabel(
+  t: ReturnType<typeof useT>,
+  id: string,
+  fallback: string,
+): string {
+  return (SECTOR_IDS as readonly string[]).includes(id)
+    ? t(`lookThrough.sectorLabels.${id as SectorId}`)
+    : fallback;
+}
+
+/**
+ * "Mistral Large (mistral-large-latest)" — the maker, the model and the
+ * build, for the one line that exists to be checkable.
+ *
+ * The id is repeated in brackets rather than shown alone because the id is
+ * what someone would compare against a configuration, and the name is what
+ * they would recognise. An id this app cannot attribute to a maker is shown
+ * as it stands: an unfamiliar string is better than naming the wrong writer.
+ */
+function exactModel(modelId: string): string {
+  const named = describeModel(modelId);
+  return named.full === named.id ? named.id : `${named.full} (${named.id})`;
 }
 
 /**

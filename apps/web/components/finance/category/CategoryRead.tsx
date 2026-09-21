@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { PencilSimple, Sparkle } from "@phosphor-icons/react";
+import { Sparkle } from "@phosphor-icons/react";
 import type { CategoryFacts } from "@finance/core/category-facts";
 import {
   renderCategoryRead,
@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
+import { describeModel } from "@finance/core/model-name";
 import { useLocale, useT } from "@/lib/locale-context";
 
 interface CategoryReadProps {
@@ -38,6 +39,23 @@ interface CategoryReadProps {
   writesLeft: number;
   /** Whether a writer exists on this deployment at all. */
   configured: boolean;
+  /** The maker, for the control that spends a call. */
+  writerBrand: string;
+  /** The model recorded on the stored read, when there is one. */
+  readModel: string | null;
+}
+
+/**
+ * "Mistral Large (mistral-large-latest)": the maker, the model and the build.
+ *
+ * `MonthRead` carries the same helper and the same reasoning — the id is what
+ * someone would compare against a configuration, the name is what they would
+ * recognise, and an id this app cannot attribute is shown as it stands rather
+ * than credited to the wrong maker.
+ */
+function exactModel(modelId: string): string {
+  const named = describeModel(modelId);
+  return named.full === named.id ? named.id : `${named.full} (${named.id})`;
 }
 
 /**
@@ -65,6 +83,8 @@ export function CategoryRead({
   thin,
   writesLeft,
   configured,
+  writerBrand,
+  readModel,
 }: CategoryReadProps) {
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
@@ -114,7 +134,7 @@ export function CategoryRead({
           {t("categoryRead.title")}
         </h4>
         <p className="text-xs text-muted-foreground">
-          {t("categoryRead.subtitle")}
+          {t("categoryRead.subtitle", { model: writerBrand })}
         </p>
       </div>
 
@@ -168,6 +188,16 @@ export function CategoryRead({
                 language: LOCALE_LABELS[readLocale],
               })
             : null}
+          {/* Which model, exactly — off this read rather than off today's
+              configuration, because they are not always the same one. */}
+          {rendered ? (
+            <>
+              {inAnotherLanguage ? " " : null}
+              {readModel === null
+                ? t("categoryRead.writtenByUnknown")
+                : t("categoryRead.writtenBy", { model: exactModel(readModel) })}
+            </>
+          ) : null}
         </p>
 
         {configured ? (
@@ -182,14 +212,16 @@ export function CategoryRead({
               left <= 0 && "cursor-not-allowed text-muted-foreground",
             )}
           >
-            <PencilSimple size={ICON.sm} />
+            {/* The house mark for "a model did this", the same one this
+                card's heading already carries. */}
+            <Sparkle size={ICON.sm} weight="fill" aria-hidden="true" />
             {pending
               ? t("categoryRead.writing")
               : left <= 0
                 ? t("categoryRead.noReadsLeft")
                 : rendered
-                  ? t("categoryRead.writeAgain", { left })
-                  : t("categoryRead.writeOne", { left })}
+                  ? t("categoryRead.writeAgain", { left, model: writerBrand })
+                  : t("categoryRead.writeOne", { left, model: writerBrand })}
           </Button>
         ) : null}
       </div>

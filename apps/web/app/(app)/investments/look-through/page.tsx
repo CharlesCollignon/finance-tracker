@@ -10,11 +10,13 @@ import {
 } from "@finance/core/wallet-read";
 import { buildArbitrage } from "@finance/core/look-through-target";
 import { walletReadsRemaining } from "@finance/core/wallet-read-budget";
+import { describeModel } from "@finance/core/model-name";
 
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getLocale } from "@/lib/locale";
 import { LookThroughView } from "@/components/finance/LookThroughView";
 import { walletReadConfigured } from "@/lib/wallet-read/client";
+import { monthReadModel } from "@/lib/month-read/client";
 import { gatherLookThrough } from "@/lib/wallet-read/facts";
 import { readWalletReadState } from "@/lib/wallet-read/store";
 
@@ -71,8 +73,7 @@ export default async function LookThroughPage() {
   // inlined: the optional chaining made it read as though a missing row
   // could be stale, which it cannot.
   const storedDigest = stored?.read ? stored.factsDigest : null;
-  const stale =
-    storedDigest !== null && storedDigest !== factsDigest(facts);
+  const stale = storedDigest !== null && storedDigest !== factsDigest(facts);
 
   const arbitrage = buildArbitrage(
     target,
@@ -99,6 +100,11 @@ export default async function LookThroughPage() {
       stale={stale}
       readsLeft={walletReadsRemaining(stored?.tally ?? null)}
       canReview={walletReadConfigured()}
+      // The maker, for the button, from what this deployment is configured
+      // with. The exact model that wrote a stored read is a different
+      // question and comes off the read itself, below.
+      writerBrand={describeModel(monthReadModel()).brand}
+      readModel={stored?.read ? stored.model : null}
       queueLength={bundle.queue.length}
       unidentified={bundle.unidentified}
       arbitrage={arbitrage}

@@ -29,8 +29,11 @@ import {
   type InvestmentWalletId,
 } from "@finance/core/investments";
 import {
+  POSITION_ORDERS,
   portfolioHasActivity,
   recurringTemplatesForWallet,
+  sortPositions,
+  type PositionOrder,
   type InvestmentColumnSummary,
   type InvestmentPortfolioSummary,
   type InvestmentPositionItem,
@@ -298,6 +301,10 @@ function WalletPanel({ column, priceSeries, onEdit, onAdd }: WalletPanelProps) {
   const formatEuro = useFormatCurrency();
   const showPl = column.hasMarketSnapshot && column.totalGainLoss !== 0;
   const [range, setRange] = useState<PriceRange>("1Y");
+  // Largest first by default. A wallet is opened to see where the money is
+  // before it is opened to find one holding by name, and the alphabet is one
+  // press away for the times it is the other way round.
+  const [order, setOrder] = useState<PositionOrder>("invested");
 
   // One switch for the whole wallet, so the rows are comparable: reading two
   // holdings over different windows and calling it a comparison is the thing
@@ -319,6 +326,19 @@ function WalletPanel({ column, priceSeries, onEdit, onAdd }: WalletPanelProps) {
   }, [column.items, priceSeries, t]);
 
   const anyDrawable = rangeSegments.some((segment) => !segment.disabled);
+
+  const orderSegments = POSITION_ORDERS.map((candidate) => ({
+    value: candidate,
+    label:
+      candidate === "name"
+        ? t("wallets.orderByName")
+        : t("wallets.orderByInvested"),
+  }));
+
+  const ordered = useMemo(
+    () => sortPositions(column.items, order),
+    [column.items, order],
+  );
 
   return (
     <Card.Bezel
@@ -364,15 +384,28 @@ function WalletPanel({ column, priceSeries, onEdit, onAdd }: WalletPanelProps) {
           </Button>
         </div>
 
-        {anyDrawable ? (
-          <SegmentedControl
-            segments={rangeSegments}
-            value={range}
-            onChange={setRange}
-            label={t("common.chartRange")}
-            className="mb-3 ml-auto w-full max-w-[15rem]"
-          />
-        ) : null}
+        <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+          {/* Only offered where it could change anything: one holding is
+              already in every order there is. */}
+          {column.items.length > 1 ? (
+            <SegmentedControl
+              segments={orderSegments}
+              value={order}
+              onChange={setOrder}
+              label={t("wallets.orderBy")}
+              className="w-full max-w-[13rem]"
+            />
+          ) : null}
+          {anyDrawable ? (
+            <SegmentedControl
+              segments={rangeSegments}
+              value={range}
+              onChange={setRange}
+              label={t("common.chartRange")}
+              className="w-full max-w-[15rem]"
+            />
+          ) : null}
+        </div>
 
         {column.items.length === 0 ? (
           <p className="text-sm text-muted-foreground">
@@ -380,7 +413,7 @@ function WalletPanel({ column, priceSeries, onEdit, onAdd }: WalletPanelProps) {
           </p>
         ) : (
           <ul className="flex min-w-0 flex-col divide-y divide-border">
-            {column.items.map((item) => (
+            {ordered.map((item) => (
               <li key={item.id} className="min-w-0">
                 <InvestmentPositionRow
                   item={item}

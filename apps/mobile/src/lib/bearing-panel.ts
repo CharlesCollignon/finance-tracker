@@ -1,4 +1,5 @@
 import type { FactFamily } from "@finance/core/bearing-facts";
+import { DEFAULT_WRITER_MODEL, describeModel } from "@finance/core/model-name";
 import type { PanelBlock } from "@finance/core/bearing-panels";
 import {
   formatMonthLabel,
@@ -146,6 +147,18 @@ export interface MonthReadDetail {
   writesLeft: number;
   /** Whether a read can be written from this build at all. */
   configured: boolean;
+  /**
+   * The maker, for the control that spends a call.
+   *
+   * A constant of the codebase rather than of this build: the phone posts to
+   * the web app's `/api/month-read` because the key lives there, and that key
+   * is `MISTRAL_API_KEY` against Mistral's endpoint. Only the model's size is
+   * configurable, and which one actually wrote a stored read is recorded on
+   * the read itself.
+   */
+  writerBrand: string;
+  /** The model recorded on the stored read, when there is one. */
+  readModel: string | null;
 }
 
 type Movements = Awaited<ReturnType<typeof getRecentBankMovements>>;
@@ -192,7 +205,12 @@ export type PanelDetail =
       /** Null unless the panel's blocks asked for it — a fulfilment read. */
       arrived: FulfilmentReport | null;
     }
-  | { family: "run"; closes: MonthCloseOverview; pulse: MonthPulse; trend: Trend }
+  | {
+      family: "run";
+      closes: MonthCloseOverview;
+      pulse: MonthPulse;
+      trend: Trend;
+    }
   | {
       family: "ahead";
       projection: ForwardProjection;
@@ -569,6 +587,8 @@ async function gatherRead(
     readLocale,
     writesLeft: stored.writesLeft,
     configured: monthReadWritable(),
+    writerBrand: describeModel(DEFAULT_WRITER_MODEL).brand,
+    readModel: stored.view?.model ?? null,
   };
 }
 
@@ -595,7 +615,10 @@ async function chargesUnconfirmedCount(
 
 /* ------------------------------------------------------------------ run */
 
-async function gatherRun(userId: string, scope: PanelScope): Promise<PanelDetail> {
+async function gatherRun(
+  userId: string,
+  scope: PanelScope,
+): Promise<PanelDetail> {
   // The run is measured in closed months, so the shelf and the streak are
   // the whole history rather than the scoped month's slice of it.
   // `monthFigures` already fetches the trend, so asking for it again here was
@@ -762,7 +785,13 @@ export async function getPanelDetail(
   }
 
   try {
-    const detail = await gatherPanelDetail(userId, family, scope, blocks, locale);
+    const detail = await gatherPanelDetail(
+      userId,
+      family,
+      scope,
+      blocks,
+      locale,
+    );
     cache.set(key, detail);
     return detail;
   } catch {

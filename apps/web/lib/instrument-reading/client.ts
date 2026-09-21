@@ -3,6 +3,7 @@ import {
   instrumentReadingJsonSchema,
   type InstrumentReadingRequest,
   type InstrumentReadingSource,
+  type ReadingFailure,
 } from "@finance/core/instrument-reading";
 import { monthReadModel } from "@/lib/month-read/client";
 
@@ -101,6 +102,24 @@ export interface InstrumentReadingSourceOptions {
   cooldownMs?: number;
 }
 
+/**
+ * A call the provider answered, with a refusal.
+ *
+ * Carries the status so the caller can tell a plan that does not include
+ * something from a provider having a bad minute. Everything else — a timeout,
+ * a socket closing, a body that will not parse — arrives as an ordinary Error
+ * and is treated as the provider being down.
+ */
+class ProviderRefused extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = "ProviderRefused";
+  }
+}
+
 async function post(
   endpoint: string,
   body: unknown,
@@ -123,10 +142,15 @@ async function post(
     });
 
     if (!response.ok) {
-      // The status, never the body. A 401 or 403 here most likely means the
-      // plan does not include the web search connector, which is worth being
-      // able to tell apart from the provider being down.
-      throw new Error(`Mistral ${label} answered ${response.status}`);
+      // The status, never the body. A 4xx on the conversations endpoint most
+      // likely means the plan does not include the web search connector —
+      // which is a permanent fact about this deployment rather than a bad
+      // moment, so it is carried out as its own thing and not merged into
+      // "the provider did not answer".
+      throw new ProviderRefused(
+        `Mistral ${label} answered ${response.status}`,
+        response.status,
+      );
     }
 
     return await response.json();
@@ -294,18 +318,27 @@ export function createMistralInstrumentReadingSource(
 
   let consecutiveFailures = 0;
   let cooldownUntil = 0;
+  let lastFailure: ReadingFailure | null = null;
 
   return {
     get model() {
       return instrumentReadingModel();
     },
 
+    get lastFailure() {
+      return lastFailure;
+    },
+
     async read(request: InstrumentReadingRequest) {
       const key = apiKey();
       if (!key) {
+        lastFailure = "provider-down";
         return null;
       }
       if (now() < cooldownUntil) {
+        // The breaker is open, so this is the provider's last three failures
+        // speaking rather than anything about this instrument.
+        lastFailure = "provider-down";
         return null;
       }
 
@@ -314,15 +347,18 @@ export function createMistralInstrumentReadingSource(
 
         // A search that found nothing is not a failure of the provider, and
         // must not count towards the breaker — otherwise three obscure funds
-        // in a row would put the whole feature to sleep.
+        // in a row would put the whole feature to sleep. It is also the one
+        // outcome a walk down the queue should step over rather than stop on.
         if (notes.trim() === "") {
           consecutiveFailures = 0;
+          lastFailure = "nothing-found";
           return null;
         }
 
         const answer = await transcribe(request, notes, key);
         consecutiveFailures = 0;
         cooldownUntil = 0;
+        lastFailure = null;
         return answer;
       } catch (error) {
         console.warn(
@@ -334,6 +370,16 @@ export function createMistralInstrumentReadingSource(
         if (consecutiveFailures >= failureThreshold) {
           cooldownUntil = now() + cooldownMs;
         }
+        // A 4xx from the search call is the connector refusing, and no number
+        // of retries against any instrument will change it. Anything else is
+        // treated as a bad moment, which is the safer of the two mistakes:
+        // it invites a retry rather than telling someone their plan is wrong.
+        lastFailure =
+          error instanceof ProviderRefused &&
+          error.status >= 400 &&
+          error.status < 500
+            ? "no-search"
+            : "provider-down";
         return null;
       }
     },

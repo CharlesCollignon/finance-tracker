@@ -42,6 +42,10 @@ interface CategoryHistoryViewProps {
   /** The shared, cross-category allowance — the same number everywhere. */
   readWritesLeft: number;
   readConfigured: boolean;
+  /** The maker, for the control that spends a call — the same everywhere. */
+  readWriterBrand: string;
+  /** The model recorded on each stored read, per category id. */
+  readModels: Record<string, string | null>;
 }
 
 const PANEL_ID = "category-panel";
@@ -71,6 +75,8 @@ export function CategoryHistoryView({
   readThin,
   readWritesLeft,
   readConfigured,
+  readWriterBrand,
+  readModels,
 }: CategoryHistoryViewProps) {
   const t = useT();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -126,6 +132,8 @@ export function CategoryHistoryView({
               readThin={readThin[openCard.history.categoryId] ?? true}
               readWritesLeft={readWritesLeft}
               readConfigured={readConfigured}
+              readWriterBrand={readWriterBrand}
+              readModel={readModels[openCard.history.categoryId] ?? null}
             />
           ) : null
         }

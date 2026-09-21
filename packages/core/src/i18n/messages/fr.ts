@@ -648,6 +648,9 @@ export const fr: Messages = {
     walletPicker: "Portefeuille d'investissement",
     rangeAll: "Tout",
     positions: "Positions",
+    orderBy: "Trier",
+    orderByName: "Nom",
+    orderByInvested: "Investi",
     noItems: "Aucune ligne dans ce portefeuille pour l'instant.",
     editPosition: "Modifier {name}",
     investedSuffix: "investi",
@@ -1669,19 +1672,21 @@ export const fr: Messages = {
 
     title: "La lecture",
     subtitleWeb:
-      "Écrit par un modèle, à partir des chiffres de cette page. Il ne voit pas vos comptes.",
+      "Écrit par {model}, à partir des chiffres de cette page. Il ne voit pas vos comptes.",
     subtitleMobile:
-      "Écrit par un modèle, à partir des chiffres de cet écran. Il ne voit pas vos comptes.",
+      "Écrit par {model}, à partir des chiffres de cet écran. Il ne voit pas vos comptes.",
     empty: "Rien n'a encore été écrit sur {month}.",
     suggestionsHeading: "Ce qu'il faut changer",
     writing: "Écriture…",
     noReadsLeft: "Plus de lecture pour {month}",
     noReadsLeftGeneric: "Plus de lecture ce mois-ci",
-    writeAgain: "Réécrire ({left} restantes)",
-    writeOne: "Écrire une lecture ({left} restantes)",
+    writeAgain: "Réécrire avec {model} ({left} restantes)",
+    writeOne: "Écrire avec {model} ({left} restantes)",
     writtenToast: "Écrit pour {month}",
-    writeAgainLabel: "Réécrire la lecture",
-    writeLabel: "Écrire la lecture",
+    writeAgainLabel: "Réécrire la lecture avec {model}",
+    writeLabel: "Écrire la lecture avec {model}",
+    writtenBy: "Écrit par {model}.",
+    writtenByUnknown: "Écrit par un modèle que l'app n'enregistre plus.",
     standingMoved: {
       one: "Un chiffre sur lequel elle s'appuie a bougé depuis qu'elle a été écrite, {age}.",
       other:
@@ -1704,13 +1709,15 @@ export const fr: Messages = {
 
     title: "La lecture",
     subtitle:
-      "Écrit par un modèle, à partir des chiffres de ce panneau. Il ne voit pas vos comptes.",
+      "Écrit par {model}, à partir des chiffres de ce panneau. Il ne voit pas vos comptes.",
     empty: "Rien n'a encore été écrit sur cette catégorie.",
     writing: "Écriture…",
     noReadsLeft: "Plus de lecture ce mois-ci",
-    writeAgain: "Réécrire ({left} restantes)",
-    writeOne: "Écrire une lecture ({left} restantes)",
+    writeAgain: "Réécrire avec {model} ({left} restantes)",
+    writeOne: "Écrire avec {model} ({left} restantes)",
     writtenToast: "Écrit pour {category}",
+    writtenBy: "Écrit par {model}.",
+    writtenByUnknown: "Écrit par un modèle que l'app n'enregistre plus.",
   },
 
   /** La transparence : de quoi les portefeuilles sont faits. */
@@ -1724,6 +1731,34 @@ export const fr: Messages = {
     doublingUp: "Où vous faites doublon",
     wrappers: "Où les choses sont placées",
     target: "Une cible à viser",
+
+    sectorLabels: {
+      energy: "Énergie",
+      materials: "Matériaux",
+      industrials: "Industrie",
+      "consumer-discretionary": "Consommation discrétionnaire",
+      "consumer-staples": "Consommation de base",
+      "health-care": "Santé",
+      financials: "Finance",
+      "information-technology": "Technologies de l'information",
+      "communication-services": "Services de communication",
+      utilities: "Services aux collectivités",
+      "real-estate": "Immobilier",
+    },
+
+    restCountries: {
+      one: "1 autre pays",
+      other: "{count} autres pays",
+    },
+    restSectors: {
+      one: "1 autre secteur",
+      other: "{count} autres secteurs",
+    },
+    showRest: "Les afficher",
+    hideRest: "Les masquer",
+
+    costPerYear: "{amount} de frais par an",
+    costAllIn: "({rate} tout compris)",
 
     countryShare: "{country}",
     franceShare: "France",
@@ -1774,8 +1809,31 @@ export const fr: Messages = {
       allowance: "Le quota de lectures de ce mois est épuisé.",
       notYours: "Cet instrument ne fait plus partie de vos positions.",
       noReader: "Aucun lecteur n'est configuré.",
-      unavailable: "Cet instrument n'a pas pu être lu à l'instant.",
+      notSetUp:
+        "Les lectures d'instruments ne sont pas encore en place (migration 032).",
+      noSearch:
+        "{model} ne peut pas chercher sur le web avec cette formule : rien ne peut être consulté.",
+      providerDown: "{model} n'a pas répondu à l'instant.",
+      nothingFound: "Rien de publié n'a été trouvé pour {name}.",
+      wrongInstrument: "Ce qui est revenu pour {name} concernait autre chose.",
       signedOut: "Vous avez été déconnecté.",
+    },
+
+    /** Comment s'est terminé un parcours de la file, une fois arrivé au bout. */
+    readRest: {
+      allRead: {
+        one: "Un instrument lu.",
+        other: "{count} instruments lus.",
+      },
+      someSkipped: {
+        one: "{read} lu. Un n'a pas pu être lu et reste en l'état.",
+        other:
+          "{read} lus. {count} n'ont pas pu être lus et restent en l'état.",
+      },
+      noneRead: {
+        one: "Un instrument n'a pas pu être lu.",
+        other: "Aucun des {count} instruments n'a pu être lu.",
+      },
     },
 
     caveats: {
@@ -1801,6 +1859,11 @@ export const fr: Messages = {
         "Rien n'est détenu pour l'instant, il n'y a donc rien à examiner.",
       partialAxis:
         "Ces chiffres couvrent {coverage} de ce qui a été lu — une fiche ne publie pas toujours la répartition complète. Les parts sont celles publiées, pas une part de ce qui a été trouvé : elles ne totalisent donc pas l'ensemble.",
+      crypto: {
+        one: "Les cryptos n'ont ni émetteur, ni document d'information, ni ISIN : il n'y a rien à consulter. Elles sont détenues, et comptées dans le total ci-dessus, mais les parts de cette page ne peuvent pas les décrire.",
+        other:
+          "Les cryptos n'ont ni émetteur, ni document d'information, ni ISIN : il n'y a rien à consulter. Elles sont détenues, et comptées dans le total ci-dessus, mais les parts de cette page ne peuvent pas les décrire.",
+      },
       geographyIsNotCurrency:
         "La géographie désigne ici où sont les sociétés, pas la devise dans laquelle vous êtes payé. Un fonds peut détenir des sociétés américaines et être libellé en euro.",
     },
@@ -1808,10 +1871,12 @@ export const fr: Messages = {
 
   /** La revue des portefeuilles : ce qu'un modèle tire de la transparence. */
   walletRead: {
-    review: "Passer en revue",
+    review: "Passer en revue avec {model}",
     reviewing: "Lecture…",
     reviewHint:
       "Lit les chiffres de cette page et dit ce qu'il en pense. {remaining} restantes ce mois-ci.",
+    writtenBy: "Écrit par {model}.",
+    writtenByUnknown: "Écrit par un modèle que l'app n'enregistre plus.",
     readAt: "Lu {when}",
     stale: "Vos positions ont bougé depuis cette lecture",
     writtenInOtherLanguage: "Rédigé en {language}.",

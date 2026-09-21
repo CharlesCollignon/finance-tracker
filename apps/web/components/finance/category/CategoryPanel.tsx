@@ -39,6 +39,10 @@ interface CategoryPanelProps {
   readThin: boolean;
   readWritesLeft: number;
   readConfigured: boolean;
+  /** The maker, for the control that spends a call. */
+  readWriterBrand: string;
+  /** The model recorded on the stored read, when there is one. */
+  readModel: string | null;
 }
 
 /**
@@ -60,6 +64,8 @@ export function CategoryPanel({
   readThin,
   readWritesLeft,
   readConfigured,
+  readWriterBrand,
+  readModel,
 }: CategoryPanelProps) {
   const t = useT();
   const formatMoney = useFormatCurrency();
@@ -174,6 +180,8 @@ export function CategoryPanel({
         thin={readThin}
         writesLeft={readWritesLeft}
         configured={readConfigured}
+        writerBrand={readWriterBrand}
+        readModel={readModel}
       />
     </section>
   );

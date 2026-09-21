@@ -10,7 +10,9 @@ import {
   readingCompleteness,
   readingIsStale,
   readingQueue,
+  INSTRUMENT_READ_STATUSES,
   drainStep,
+  haltIsInstrumentSpecific,
   haltIsRetryable,
   verifyInstrumentReading,
   type InstrumentReading,
@@ -435,19 +437,91 @@ describe("drainStep", () => {
 
   /**
    * Every one of these leaves the instrument at the head of the queue, so
-   * carrying on would ask the same question again and again for as long as
-   * the queue had something in it.
+   * carrying on without saying which one to leave out would ask the same
+   * question again and again for as long as the queue had something in it.
    */
   it("stops rather than re-asking about the instrument that just refused", () => {
     expect(drainStep("not-yours", 5)).toEqual({ go: false, halt: "not-yours" });
-    expect(drainStep("unavailable", 5)).toEqual({
+    expect(drainStep("provider-down", 5)).toEqual({
       go: false,
-      halt: "unavailable",
+      halt: "provider-down",
     });
     expect(drainStep("no-reader", 5)).toEqual({ go: false, halt: "no-reader" });
     expect(drainStep("not-authenticated", 5)).toEqual({
       go: false,
       halt: "signed-out",
     });
+  });
+});
+
+describe("telling one unreadable instrument from a broken reader", () => {
+  /**
+   * The defect these statuses replace.
+   *
+   * Five unrelated things used to come back as `unavailable`, and the surface
+   * had one sentence for all of them: "That instrument could not be read just
+   * now." A reader whose plan does not include web search, a reader whose
+   * provider is down, and a reader who simply asked about a fund nobody has
+   * published a factsheet for all saw the same words, and none of them could
+   * tell which it was or what to do about it.
+   */
+  it("carries on past an instrument that could not be read", () => {
+    expect(haltIsInstrumentSpecific("nothing-found")).toBe(true);
+    expect(haltIsInstrumentSpecific("wrong-instrument")).toBe(true);
+  });
+
+  it("stops the whole walk when the reader itself is the problem", () => {
+    expect(haltIsInstrumentSpecific("no-search")).toBe(false);
+    expect(haltIsInstrumentSpecific("provider-down")).toBe(false);
+    expect(haltIsInstrumentSpecific("not-set-up")).toBe(false);
+    expect(haltIsInstrumentSpecific("allowance")).toBe(false);
+    expect(haltIsInstrumentSpecific("no-reader")).toBe(false);
+  });
+
+  it("maps each reason to a halt of its own", () => {
+    expect(drainStep("nothing-found", 5)).toEqual({
+      go: false,
+      halt: "nothing-found",
+    });
+    expect(drainStep("wrong-instrument", 5)).toEqual({
+      go: false,
+      halt: "wrong-instrument",
+    });
+    expect(drainStep("no-search", 5)).toEqual({ go: false, halt: "no-search" });
+    expect(drainStep("provider-down", 5)).toEqual({
+      go: false,
+      halt: "provider-down",
+    });
+    expect(drainStep("not-set-up", 5)).toEqual({
+      go: false,
+      halt: "not-set-up",
+    });
+  });
+
+  it("has retired the catch-all", () => {
+    expect(INSTRUMENT_READ_STATUSES).not.toContain("unavailable");
+  });
+});
+
+describe("a source that says why it could not answer", () => {
+  it("has nothing to report before it has been asked anything", () => {
+    const source = createFakeInstrumentReadingSource({});
+    expect(source.lastFailure).toBe(null);
+  });
+
+  it("reports nothing-found when the search came back empty", async () => {
+    const source = createFakeInstrumentReadingSource({ IE00B4L5Y983: null });
+    await source.read({ isin: "IE00B4L5Y983", name: "World", symbol: null });
+    expect(source.lastFailure).toBe("nothing-found");
+  });
+
+  it("forgets the last failure once something answers", async () => {
+    const source = createFakeInstrumentReadingSource({
+      IE00B4L5Y983: null,
+      FR001400U5Q4: { isin: "FR001400U5Q4" },
+    });
+    await source.read({ isin: "IE00B4L5Y983", name: "World", symbol: null });
+    await source.read({ isin: "FR001400U5Q4", name: "Europe", symbol: null });
+    expect(source.lastFailure).toBe(null);
   });
 });

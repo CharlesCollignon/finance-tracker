@@ -32,6 +32,7 @@
 import { shortlistEntry, indexesOverlap, type AssetClass } from "./etf-shortlist";
 import { buildFundCosts, type FundCostSummary, type WrapperFees } from "./fund-costs";
 import type { InvestmentWalletId } from "./investments";
+import { isCryptoWallet } from "./crypto-holdings";
 import {
   SECTOR_LABELS,
   readingIsStale,
@@ -168,6 +169,17 @@ export interface EligibilityIssue {
 /** Something the reader must know to read the rest correctly. */
 export type LookThroughCaveat =
   | { kind: "unclassified"; share: number; positionCount: number }
+  /**
+   * Crypto is held, and has no composition to resolve.
+   *
+   * Its own caveat rather than being folded into `unclassified`, because the
+   * two ask different things of the reader. Unclassified value is a gap that
+   * closes when somebody reads the instrument; a coin has no countries, no
+   * sectors and no issuer's factsheet, so there is nothing to read and
+   * nothing to do. Telling a reader to go and record an ISIN for Bitcoin
+   * sends them looking for a number that was never issued.
+   */
+  | { kind: "crypto"; positionCount: number; value: number }
   | { kind: "overlap-is-a-floor" }
   | { kind: "stale-readings"; positionCount: number; oldestDays: number }
   | { kind: "no-market-value" }
@@ -187,6 +199,8 @@ export interface LookThrough {
   /** Of those, how many resolved through to a composition. */
   classifiedPositionCount: number;
   unclassifiedPositions: { positionId: string; name: string; value: number }[];
+  /** Crypto held, which has no composition to look through to. */
+  cryptoPositions: { positionId: string; name: string; value: number }[];
 
   countries: WeightRow[];
   sectors: WeightRow[];
@@ -231,14 +245,35 @@ export interface LookThrough {
   staleReadingCount: number;
   /** Positions with an ISIN but no reading at all. */
   unreadCount: number;
-  /** Positions with no ISIN, so nothing can be read. */
+  /**
+   * Positions with no ISIN recorded, so nothing can be read.
+   *
+   * Crypto is excluded: a coin has no ISIN to record, so it is not waiting
+   * for one and counting it here would describe a gap nobody can close.
+   */
   unidentifiedCount: number;
 }
 
 const COMPANY_SUFFIXES = [
-  "incorporated", "inc", "corporation", "corp", "company", "co",
-  "limited", "ltd", "plc", "nv", "sa", "se", "ag", "spa", "as",
-  "holdings", "holding", "group", "the",
+  "incorporated",
+  "inc",
+  "corporation",
+  "corp",
+  "company",
+  "co",
+  "limited",
+  "ltd",
+  "plc",
+  "nv",
+  "sa",
+  "se",
+  "ag",
+  "spa",
+  "as",
+  "holdings",
+  "holding",
+  "group",
+  "the",
 ];
 
 /**
@@ -412,7 +447,9 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
   const regions = {
     france: shareOf((code) => code === "FR"),
     eurozone: shareOf((code) => EUROZONE.has(code)),
-    europe: shareOf((code) => EUROZONE.has(code) || EUROPE_NON_EUROZONE.has(code)),
+    europe: shareOf(
+      (code) => EUROZONE.has(code) || EUROPE_NON_EUROZONE.has(code),
+    ),
     unitedStates: shareOf((code) => code === "US"),
   };
 
@@ -437,7 +474,7 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
     held.map((position) => {
       const reading = position.isin ? readings.get(position.isin) : undefined;
       const hinted = position.isin
-        ? shortlistEntry(position.isin)?.terHint?.charge ?? null
+        ? (shortlistEntry(position.isin)?.terHint?.charge ?? null)
         : null;
       return {
         positionId: position.positionId,
@@ -554,6 +591,12 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
     (position) => readings.get(position.isin!) === undefined,
   );
 
+  // Held in the crypto wallet, so there is no issuer, no factsheet and no
+  // ISIN to go and find. Its value still sits outside the classified share —
+  // the weights above genuinely do not describe it — but it is outside for a
+  // reason the reader cannot act on, which is a different sentence.
+  const crypto = held.filter((position) => isCryptoWallet(position.walletId));
+
   const caveats: LookThroughCaveat[] = [];
   if (totalValue <= 0) {
     caveats.push({ kind: "no-market-value" });
@@ -563,6 +606,13 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
       kind: "unclassified",
       share: unclassifiedValue / totalValue,
       positionCount: unclassified.length,
+    });
+  }
+  if (crypto.length > 0) {
+    caveats.push({
+      kind: "crypto",
+      positionCount: crypto.length,
+      value: crypto.reduce((sum, position) => sum + position.marketValue, 0),
     });
   }
   if (constituentOverlaps.length > 0) {
@@ -624,10 +674,16 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
       name: position.name,
       value: position.marketValue,
     })),
+    cryptoPositions: crypto.map((position) => ({
+      positionId: position.positionId,
+      name: position.name,
+      value: position.marketValue,
+    })),
     countries: countryRows,
     sectors: sectorRows,
     assetClasses: assetClassRows,
-    countryCoverage: classifiedValue > 0 ? countryReported / classifiedValue : 0,
+    countryCoverage:
+      classifiedValue > 0 ? countryReported / classifiedValue : 0,
     sectorCoverage: classifiedValue > 0 ? sectorReported / classifiedValue : 0,
     regions,
     regionBias,
@@ -638,7 +694,10 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
     caveats,
     staleReadingCount: staleReadings.length,
     unreadCount: unread.length,
-    unidentifiedCount: held.length - withIsin.length,
+    unidentifiedCount: held.filter(
+      (position) =>
+        position.isin === null && !isCryptoWallet(position.walletId),
+    ).length,
   };
 }
 

@@ -28,7 +28,8 @@ import type { MonthFacts } from "@finance/core/month-facts";
 import type { MonthRead as MonthReadValue } from "@finance/core/month-read";
 import type { Locale } from "@finance/core/i18n/locale";
 import { bankFeedConfigured } from "@/lib/bank/client";
-import { monthReadConfigured } from "@/lib/month-read/client";
+import { monthReadConfigured, monthReadModel } from "@/lib/month-read/client";
+import { describeModel } from "@finance/core/model-name";
 import { gatherMonthFacts } from "@/lib/month-read/facts";
 import { readMonthReadState } from "@/lib/month-read/store";
 import { getCategories } from "@/lib/queries/categories";
@@ -125,6 +126,10 @@ export interface MonthReadDetail {
   readLocale: Locale;
   writesLeft: number;
   configured: boolean;
+  /** The maker, for the control that spends a call. */
+  writerBrand: string;
+  /** The model recorded on the stored read, when there is one. */
+  readModel: string | null;
 }
 
 type Movements = Awaited<ReturnType<typeof getRecentBankMovements>>;
@@ -385,6 +390,8 @@ async function gatherRead(
     readLocale: view?.locale ?? locale,
     writesLeft: writesRemaining(stored?.tally ?? null),
     configured: monthReadConfigured(),
+    writerBrand: describeModel(monthReadModel()).brand,
+    readModel: stored?.read ? stored.model : null,
   };
 }
 
