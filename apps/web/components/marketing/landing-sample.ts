@@ -2,6 +2,15 @@ import type { Locale } from "@finance/core/i18n/locale";
 import { landingSampleFr } from "@/components/marketing/landing-sample.fr";
 import type { CategoryType } from "@finance/core/types/database";
 
+/**
+ * How often a recurring template fires, as something the code can branch on.
+ *
+ * Deliberately not the word printed on screen: that word is translated, and a
+ * comparison against a translated word is a comparison that stops being true
+ * as soon as somebody reads the page in French.
+ */
+export type Cadence = "monthly" | "weekly";
+
 /** A realistic month of made-up data, reused consistently across every
  * feature mock so the numbers agree with each other (the calendar's dots
  * are the same rows as the transaction list, etc). Year/month are fixed so
@@ -83,28 +92,46 @@ export const landingSample = {
     },
   ],
   today: 19,
+  /**
+   * `id` and `cadence` are the language-neutral halves of a template; `name`
+   * and `schedule` are the words. The split is not decoration: the mock
+   * weights a weekly template by 4.33 to reach a monthly figure, and it used
+   * to do that by comparing the displayed frequency to `"Weekly"` — which is
+   * false in every language but English, so the French expected-impact figure
+   * was quietly wrong. Anything the mock branches on lives in `id` or
+   * `cadence`; anything it prints lives in `name` or `schedule` and has a
+   * French counterpart in `./landing-sample.fr`.
+   */
   templates: [
     {
+      id: "salary",
       name: "Salary",
-      frequency: "Monthly",
+      schedule: "Monthly · day 3",
+      cadence: "monthly" as Cadence,
       amount: 3200,
       type: "income" as CategoryType,
     },
     {
+      id: "rent",
       name: "Rent",
-      frequency: "Monthly",
+      schedule: "Monthly · day 5",
+      cadence: "monthly" as Cadence,
       amount: -850,
       type: "expense" as CategoryType,
     },
     {
+      id: "pea-dca",
       name: "PEA DCA",
-      frequency: "Weekly",
+      schedule: "Weekly · Friday",
+      cadence: "weekly" as Cadence,
       amount: -50,
       type: "investment" as CategoryType,
     },
     {
+      id: "netflix",
       name: "Netflix",
-      frequency: "Monthly",
+      schedule: "Monthly · day 15",
+      cadence: "monthly" as Cadence,
       amount: -15,
       type: "expense" as CategoryType,
     },

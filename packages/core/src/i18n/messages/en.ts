@@ -904,6 +904,54 @@ export const en = {
     savingsGoals: "Savings goals",
     sampleHousing: "Housing",
     sampleEverythingElse: "Everything else",
+    /** The Charges mock's share-priced template, which the other three are
+     * not: its amount is a quote times a quantity rather than a figure
+     * anybody typed. */
+    oneShare: "1 share",
+    oneShareAtQuote: "1 share at the current quote",
+    sharePriced: "Share-priced",
+    templatesAllApplied: {
+      one: "{count} template, applied",
+      other: "{count} templates, all applied",
+    },
+  },
+
+  /**
+   * Sentences the sample month is written into.
+   *
+   * Their own group rather than more of `marketingMock` because they are not
+   * only a mock's: the landing page prints the same three figures in glass
+   * panels beside the device frames, in the same words. One home means the
+   * page and the screenshot of the app cannot drift apart, which is the whole
+   * claim the section is making.
+   *
+   * Every one of them carries a figure, which is why they are here and not in
+   * `landing-copy`: a translated sentence with a `{placeholder}` is the thing
+   * the catalogue exists to hold, and the marketing copy files are prose that
+   * takes no arguments.
+   */
+  marketingStat: {
+    unrecordedIn: "Unrecorded in {month}",
+    underAllowance: "under your {amount} allowance",
+    /** `{percent}` arrives already carrying its sign, from `units.percent`:
+     * English closes it up, French wants a space before it. */
+    ofWhatCameIn: "{percent} of what came in",
+    monthsValue: {
+      one: "{count} month",
+      other: "{count} months",
+    },
+    monthsInARow: {
+      one: "{count} month in a row",
+      other: "{count} months in a row",
+    },
+    inARow: "{count} in a row",
+    inARowInsideAllowance: "in a row inside the allowance",
+    readyToClose: "{month} is ready to close",
+    keepTheRun:
+      "Stay under {amount} of unrecorded spending to keep the run going.",
+    keptIn: "Kept in {month}",
+    leftIn: "Left in {month}",
+    ofEarned: "of {amount} earned",
   },
 
   /** Wallet detail: the position sheet, the targets and the performance card. */

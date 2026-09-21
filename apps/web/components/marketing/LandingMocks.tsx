@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { CaretDown, Eye, Plus, Sparkle } from "@phosphor-icons/react";
-import { formatEuro } from "@finance/core/constants";
+import { formatEuro, formatPercent } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { Orb } from "@/components/brand/Orb";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
@@ -39,6 +39,19 @@ import type { Key } from "@finance/core/i18n/t";
 function useEuro(): (amount: number) => string {
   const locale = useLocale();
   return (amount: number) => formatEuro(amount, locale);
+}
+
+/**
+ * The same for a rate: "35.7%" in English, "35,7 %" in French.
+ *
+ * Both halves are the language's — the decimal separator and the space before
+ * the sign — so neither is written into the sentences that quote a rate.
+ */
+function usePercent(): (value: number) => string {
+  const locale = useLocale();
+  const t = useT();
+  return (value: number) =>
+    t("units.percent", { value: formatPercent(value, locale) });
 }
 
 type Variant = "web" | "mobile";
@@ -885,18 +898,15 @@ export function TransactionsMock({ variant = "web" }: { variant?: Variant }) {
 
 /* --------------------------------------------------------------- recurring */
 
-/** "Monthly · day 5" / "Weekly · Friday" — the shape formatRecurrenceSchedule
- * produces, without importing the DB-shaped template type into a mock. */
-const SCHEDULE_LABEL: Record<string, string> = {
-  Salary: "Monthly · day 3",
-  Rent: "Monthly · day 5",
-  "PEA DCA": "Weekly · Friday",
-  Netflix: "Monthly · day 15",
-};
-
 /** The share-priced template is the one worth pointing at: its amount comes
- * from a quote rather than a figure anyone typed. */
-const SHARE_PRICED = "PEA DCA";
+ * from a quote rather than a figure anyone typed.
+ *
+ * Matched on the id rather than the name. The name is translated — "PEA DCA"
+ * is "DCA PEA" in French — so a name comparison silently stopped finding this
+ * template, and the badge it controls simply never appeared for a French
+ * reader. The schedule line moved out for the same reason and now lives in
+ * the sample beside the rest of the words. */
+const SHARE_PRICED = "pea-dca";
 
 export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
   const sample = landingSampleFor(useLocale());
@@ -908,8 +918,7 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
     .reduce(
       (sum, template) =>
         sum +
-        Math.abs(template.amount) *
-          (template.frequency === "Weekly" ? 4.33 : 1),
+        Math.abs(template.amount) * (template.cadence === "weekly" ? 4.33 : 1),
       0,
     );
 
@@ -929,8 +938,10 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
             <MockCard key={template.name} innerClassName="p-3">
               <p className="text-sm font-semibold">{template.name}</p>
               <p className="text-xs text-muted-foreground">
-                {SCHEDULE_LABEL[template.name]}
-                {template.name === SHARE_PRICED ? " · 1 share" : null}
+                {template.schedule}
+                {template.id === SHARE_PRICED
+                  ? ` · ${t("marketingMock.oneShare")}`
+                  : null}
               </p>
               <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
                 <span
@@ -961,7 +972,13 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
             <WebHero
               label={t("marketingMock.expectedImpactPerMonth")}
               amount={euro(monthlyImpact)}
-              subtitle={<p>{templates.length} templates, all applied</p>}
+              subtitle={
+                <p>
+                  {t("marketingMock.templatesAllApplied", {
+                    count: templates.length,
+                  })}
+                </p>
+              }
             />
           </MockCard>
         </div>
@@ -975,16 +992,16 @@ export function RecurringMock({ variant = "web" }: { variant?: Variant }) {
                 <div className="text-left">
                   <p className="text-sm font-semibold">{template.name}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {SCHEDULE_LABEL[template.name]}
-                    {template.name === SHARE_PRICED
-                      ? " · 1 share at the current quote"
+                    {template.schedule}
+                    {template.id === SHARE_PRICED
+                      ? ` · ${t("marketingMock.oneShareAtQuote")}`
                       : null}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {template.name === SHARE_PRICED ? (
+                  {template.id === SHARE_PRICED ? (
                     <Badge variant="outline" size="sm" className="rounded-full">
-                      Share-priced
+                      {t("marketingMock.sharePriced")}
                     </Badge>
                   ) : null}
                   <span
@@ -1301,6 +1318,7 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
   const t = useT();
   const sample = landingSampleFor(useLocale());
   const euro = useEuro();
+  const percent = usePercent();
   const { close } = sample;
   const capRatio = close.unrecorded / close.unrecordedCap;
 
@@ -1309,13 +1327,21 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
       <MobileShell active="nav.month">
         <MockCard innerClassName="p-4">
           <MobileHero
-            label={`Unrecorded in ${close.monthLabel.split(" ")[0]}`}
+            label={t("marketingStat.unrecordedIn", {
+              month: close.monthLabel.split(" ")[0]!,
+            })}
             amount={euro(close.unrecorded)}
             amountClassName="text-primary-ink"
-            subtitle={<p>under your {euro(close.unrecordedCap)} allowance</p>}
+            subtitle={
+              <p>
+                {t("marketingStat.underAllowance", {
+                  amount: euro(close.unrecordedCap),
+                })}
+              </p>
+            }
             status={
               <span className="text-success">
-                {close.streak} months in a row
+                {t("marketingStat.monthsInARow", { count: close.streak })}
               </span>
             }
           />
@@ -1328,13 +1354,15 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
         </MockCard>
         <MockCard innerClassName="p-4">
           <div className="flex items-baseline justify-between gap-2">
-            <p className="text-sm font-semibold">Kept</p>
+            <p className="text-sm font-semibold">{t("common.kept")}</p>
             <p className="font-mono text-lg font-bold tabular-nums text-success">
               {euro(close.kept)}
             </p>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            {close.keptRate}% of what came in
+            {t("marketingStat.ofWhatCameIn", {
+              percent: percent(close.keptRate),
+            })}
           </p>
         </MockCard>
         <MockCard innerClassName="p-4">
@@ -1353,15 +1381,16 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-head text-lg">
-              {sample.monthLabel} is ready to close
+              {t("marketingStat.readyToClose", { month: sample.monthLabel })}
             </p>
             <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-              {close.streak} in a row
+              {t("marketingStat.inARow", { count: close.streak })}
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Stay under {euro(close.unrecordedCap)} of unrecorded spending to
-            keep the run going.
+            {t("marketingStat.keepTheRun", {
+              amount: euro(close.unrecordedCap),
+            })}
           </p>
         </div>
         <span className="flex shrink-0 items-center gap-3 rounded-full border border-primary-rim bg-primary py-1.5 pl-5 pr-1.5 text-sm font-medium text-primary-foreground">
@@ -1376,10 +1405,18 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
         <div className="col-span-5">
           <MockCard innerClassName="flex h-full flex-col justify-center px-7 py-6">
             <WebHero
-              label={`Unrecorded in ${close.monthLabel}`}
+              label={t("marketingStat.unrecordedIn", {
+                month: close.monthLabel,
+              })}
               amount={euro(close.unrecorded)}
               amountClassName="text-primary-ink"
-              subtitle={<p>under your {euro(close.unrecordedCap)} allowance</p>}
+              subtitle={
+                <p>
+                  {t("marketingStat.underAllowance", {
+                    amount: euro(close.unrecordedCap),
+                  })}
+                </p>
+              }
             />
             <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--hairline-strong)]">
               <div
@@ -1392,13 +1429,17 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
         <div className="col-span-4">
           <MockCard innerClassName="flex h-full flex-col justify-center gap-1 px-6 py-6 text-center">
             <p className="text-sm font-medium text-muted-foreground">
-              Kept in {close.monthLabel.split(" ")[0]}
+              {t("marketingStat.keptIn", {
+                month: close.monthLabel.split(" ")[0]!,
+              })}
             </p>
             <p className="font-serif text-4xl font-semibold tabular-nums text-success">
               {euro(close.kept)}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {close.keptRate}% of what came in
+              {t("marketingStat.ofWhatCameIn", {
+                percent: percent(close.keptRate),
+              })}
             </p>
           </MockCard>
         </div>
@@ -1514,6 +1555,7 @@ function ReadCard({ compact = false }: { compact?: boolean }) {
 
 export function MonthReadMock({ variant = "web" }: { variant?: Variant }) {
   const sample = landingSampleFor(useLocale());
+  const t = useT();
   const euro = useEuro();
   const { monthLabel, remaining, income } = sample;
 
@@ -1525,9 +1567,9 @@ export function MonthReadMock({ variant = "web" }: { variant?: Variant }) {
         <MobileShell active={ACTIVE_NAV["month-read"]}>
           <MockCard innerClassName="p-4">
             <MobileHero
-              label={`Left in ${monthWord}`}
+              label={t("marketingStat.leftIn", { month: monthWord! })}
               amount={euro(remaining)}
-              subtitle={`of ${euro(income)} earned`}
+              subtitle={t("marketingStat.ofEarned", { amount: euro(income) })}
             />
           </MockCard>
           <ReadCard compact />
@@ -1546,9 +1588,9 @@ export function MonthReadMock({ variant = "web" }: { variant?: Variant }) {
           <div className="col-span-7 flex flex-col gap-4">
             <MockCard innerClassName="p-5">
               <WebHero
-                label={`Left in ${monthWord}`}
+                label={t("marketingStat.leftIn", { month: monthWord! })}
                 amount={euro(remaining)}
-                subtitle={`of ${euro(income)} earned`}
+                subtitle={t("marketingStat.ofEarned", { amount: euro(income) })}
               />
             </MockCard>
             <ReadCard />

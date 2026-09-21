@@ -700,6 +700,35 @@ export const fr: Messages = {
     savingsGoals: "Objectifs d'épargne",
     sampleHousing: "Logement",
     sampleEverythingElse: "Tout le reste",
+    oneShare: "1 part",
+    oneShareAtQuote: "1 part au cours actuel",
+    sharePriced: "Au cours",
+    templatesAllApplied: {
+      one: "{count} récurrent, appliqué",
+      other: "{count} récurrents, tous appliqués",
+    },
+  },
+
+  marketingStat: {
+    unrecordedIn: "Non enregistré en {month}",
+    underAllowance: "sous votre enveloppe de {amount}",
+    ofWhatCameIn: "{percent} de ce qui est entré",
+    monthsValue: {
+      one: "{count} mois",
+      other: "{count} mois",
+    },
+    monthsInARow: {
+      one: "{count} mois d'affilée",
+      other: "{count} mois d'affilée",
+    },
+    inARow: "{count} d'affilée",
+    inARowInsideAllowance: "d'affilée sous l'enveloppe",
+    readyToClose: "{month} est prêt à être clôturé",
+    keepTheRun:
+      "Restez sous {amount} de dépenses non enregistrées pour continuer la série.",
+    keptIn: "Gardé en {month}",
+    leftIn: "Reste en {month}",
+    ofEarned: "sur {amount} gagnés",
   },
 
   position: {

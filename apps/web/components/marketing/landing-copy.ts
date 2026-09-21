@@ -87,6 +87,12 @@ export const landingCopy = {
     ],
     footnote:
       "A balance higher than the rows allow is not a win — it means something is missing, and the close says so instead of quietly counting it.",
+    /** Under the sample figures beside this section, saying they are a sample.
+     * The whole sentence and not a label plus a clause bolted onto it: French
+     * wants its own punctuation between the two halves, and a page that
+     * concatenates them can only ever have English's. */
+    exampleNote:
+      "Example data. Your first close sets the baseline; the figures start from the second.",
   },
 
   monthRead: {
@@ -324,7 +330,6 @@ export const landingCopy = {
     openApp: "Open app",
     goToDashboard: "See where you stand",
   },
-  exampleLabel: "Example data",
 } as const;
 
 export type LandingPageId = (typeof landingCopy.pages)[number]["id"];

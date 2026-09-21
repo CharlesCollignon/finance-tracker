@@ -13,6 +13,23 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  /**
+   * Who may ask the dev server for its own dev assets.
+   *
+   * Development only — it has no effect on a build, and nothing here is
+   * reachable in production. Next blocks cross-origin requests to `/_next`
+   * dev resources unless the origin matches the host it was started on, which
+   * on this machine means the client bundle never arrives: the app runs
+   * inside WSL2 in `nat` mode and the browser runs on Windows, so the only
+   * URL that reaches it is the WSL interface's own address, never
+   * `localhost`. The page then renders from the server and simply never
+   * hydrates — every menu, toggle and language control is inert, with nothing
+   * in the browser console to say why.
+   *
+   * The private ranges rather than one address because the WSL IP is
+   * reassigned on reboot; `hostname -I` is how you find today's.
+   */
+  allowedDevOrigins: ["127.0.0.1", "172.*.*.*", "192.168.*.*", "10.*.*.*"],
   transpilePackages: ["@finance/core"],
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react"],

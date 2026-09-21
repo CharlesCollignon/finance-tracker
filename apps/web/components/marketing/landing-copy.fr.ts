@@ -94,6 +94,8 @@ export const landingCopyFr: LandingCopySections & {
     ],
     footnote:
       "Un solde plus élevé que les lignes ne le permettent n'est pas une bonne nouvelle — cela veut dire qu'il manque quelque chose, et la clôture le dit au lieu de le compter en silence.",
+    exampleNote:
+      "Données d'exemple. Votre première clôture fixe le point de départ ; les chiffres commencent à la deuxième.",
   },
 
   monthRead: {
@@ -319,5 +321,4 @@ export const landingCopyFr: LandingCopySections & {
     openApp: "Ouvrir l'application",
     goToDashboard: "Voir où vous en êtes",
   },
-  exampleLabel: "Données d'exemple",
 };

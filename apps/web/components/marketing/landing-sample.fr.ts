@@ -35,11 +35,20 @@ export const landingSampleFr = {
     { name: "Électricité", meta: "Charges", dayLabel: "Aujourd'hui" },
   ],
 
+  /**
+   * In the order `landingSample.templates` holds them.
+   *
+   * `schedule` and not `frequency`: the schedule line is what the Charges
+   * mock actually prints, and it used to come from a lookup table keyed on
+   * the English name — so in French every template rendered a blank line
+   * where "Mensuel · le 3" belongs. The cadence the arithmetic needs stays in
+   * the English file, where no translation can reach it.
+   */
   recurring: [
-    { name: "Salaire", frequency: "Mensuel" },
-    { name: "Loyer", frequency: "Mensuel" },
-    { name: "DCA PEA", frequency: "Hebdomadaire" },
-    { name: "Netflix", frequency: "Mensuel" },
+    { name: "Salaire", schedule: "Mensuel · le 3" },
+    { name: "Loyer", schedule: "Mensuel · le 5" },
+    { name: "DCA PEA", schedule: "Hebdomadaire · vendredi" },
+    { name: "Netflix", schedule: "Mensuel · le 15" },
   ],
 
   close: {

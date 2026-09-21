@@ -33,7 +33,7 @@ import type { CloseHistorySummary, ClosedMonthOutcome } from "./month-close";
 import type { MonthPulse } from "./month-pulse";
 import type { SavingsGoalProgress } from "./savings-goals";
 import type { CategoryBreakdown, MonthlySummary } from "./types/database";
-import { formatMonthLabel } from "./constants";
+import { formatMonthLabel, formatPercent } from "./constants";
 
 /**
  * What it means when a figure rises.
@@ -567,9 +567,7 @@ export function formatFact(
       // 11.42% is noise. The separator and the space before the sign are the
       // language's — French writes "11,4 %".
       return translator(locale)("units.percent", {
-        value: new Intl.NumberFormat(INTL_LOCALES[locale], {
-          maximumFractionDigits: 1,
-        }).format(fact.value),
+        value: formatPercent(fact.value, locale),
       });
     case "count":
       return new Intl.NumberFormat(INTL_LOCALES[locale]).format(

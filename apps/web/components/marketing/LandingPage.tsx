@@ -1,4 +1,4 @@
-import { formatEuro } from "@finance/core/constants";
+import { formatEuro, formatPercent } from "@finance/core/constants";
 import { getLocale, getT } from "@/lib/locale";
 import {
   ArrowsLeftRight,
@@ -84,6 +84,8 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
   const copy = landingCopyFor(locale);
   const sample = landingSampleFor(locale);
   const euro = (amount: number) => formatEuro(amount, locale);
+  const percent = (value: number) =>
+    t("units.percent", { value: formatPercent(value, locale) });
 
   const {
     hero,
@@ -283,9 +285,13 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
           <Rise className="flex flex-col gap-4 lg:pt-24">
             <GlassStat
               href={featureHref("month-close")}
-              label={`Unrecorded in ${close.monthLabel}`}
+              label={t("marketingStat.unrecordedIn", {
+                month: close.monthLabel,
+              })}
               value={euro(close.unrecorded)}
-              caption={`under your ${euro(close.unrecordedCap)} allowance`}
+              caption={t("marketingStat.underAllowance", {
+                amount: euro(close.unrecordedCap),
+              })}
               spark={UNRECORDED_TREND}
               className="w-full"
             />
@@ -293,21 +299,22 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
               <GlassStat
                 label={t("common.kept")}
                 value={euro(close.kept)}
-                caption={`${close.keptRate}% of what came in`}
+                caption={t("marketingStat.ofWhatCameIn", {
+                  percent: percent(close.keptRate),
+                })}
                 spark={KEPT_TREND}
                 className="w-full"
               />
               <GlassStat
                 label={t("common.theRun")}
-                value={`${close.streak} months`}
-                caption="in a row inside the allowance"
+                value={t("marketingStat.monthsValue", { count: close.streak })}
+                caption={t("marketingStat.inARowInsideAllowance")}
                 meter={close.streak / 6}
                 className="w-full"
               />
             </div>
             <p className="px-1 text-xs text-marketing-faint">
-              {copy.exampleLabel}. Your first close sets the baseline; the
-              figures start from the second.
+              {copy.monthClose.exampleNote}
             </p>
           </Rise>
         </div>

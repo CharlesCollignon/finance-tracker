@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Orb } from "@/components/brand/Orb";
+import { LocaleChoices } from "@/components/marketing/LocaleSwitch";
 import {
   featureHref,
   landingCopyFor,
@@ -35,7 +36,7 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <footer className="relative z-10 border-t border-white/10 px-6 py-14 md:py-16">
       <div className="mx-auto flex max-w-6xl flex-col gap-12">
-        <div className="grid gap-10 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="grid gap-10 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <div>
             <Link
               href="/"
@@ -97,6 +98,21 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
               </li>
             </ul>
           </nav>
+
+          {/* The second home for the language, and the conventional one: a
+              visitor who has read to the bottom without finding the control in
+              the header looks here, because every other site has put it here.
+              A section rather than a `nav` — the two buttons go nowhere, they
+              change the page you are on. */}
+          <section aria-labelledby="footer-language">
+            <h2
+              id="footer-language"
+              className="text-xs font-medium uppercase tracking-[0.16em] text-marketing-faint"
+            >
+              {t("locale.settingLabel")}
+            </h2>
+            <LocaleChoices variant="footer" />
+          </section>
         </div>
 
         <div className="marketing-rule" />

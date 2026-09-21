@@ -88,6 +88,26 @@ export function formatEuro(
   }).format(amount);
 }
 
+/**
+ * A percentage's digits, in the reader's language — without the sign.
+ *
+ * The sign and the space before it are not ours to place: English writes
+ * "35.7%" closed up and French "35,7 %" with a non-breaking gap. Both live in
+ * the `units.percent` message, so every caller formats the number here and
+ * then puts it through that message rather than concatenating a "%".
+ *
+ * One decimal at most, matching `describeFact`: a savings rate of 11.4% is a
+ * real distinction and 11.42% is noise.
+ */
+export function formatPercent(
+  value: number,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  return new Intl.NumberFormat(INTL_LOCALES[locale], {
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
 /** The two display currencies a user can pick between. Amounts are never
  * converted between them — this only changes how a number is labeled. */
 export type CurrencyCode = "EUR" | "USD";
