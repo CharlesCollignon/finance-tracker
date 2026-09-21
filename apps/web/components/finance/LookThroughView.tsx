@@ -102,15 +102,6 @@ export interface LookThroughViewProps {
   /** How many instruments are waiting to be read. */
   queueLength: number;
   /**
-   * Holdings with no ISIN at all.
-   *
-   * The case that made this page a dead end: `queue` is built only from
-   * positions that have an ISIN, so with none of them the read button never
-   * rendered while every holding still showed as unread — a stated problem
-   * with the explanation withheld.
-   */
-  unidentified: { positionId: string; name: string }[];
-  /**
    * What would have to move to reach the target.
    *
    * Computed on the server, because it needs every position's market value —
@@ -146,7 +137,6 @@ export function LookThroughView({
   writerBrand,
   readModel,
   queueLength,
-  unidentified,
   arbitrage,
 }: LookThroughViewProps) {
   const t = useT();
@@ -159,11 +149,6 @@ export function LookThroughView({
 
   const unclassified = lookThrough.caveats.find(
     (caveat) => caveat.kind === "unclassified",
-  );
-  // Not `crypto`: that shadows the browser global inside this component,
-  // which is legal and confusing in equal measure.
-  const cryptoCaveat = lookThrough.caveats.find(
-    (caveat) => caveat.kind === "crypto",
   );
 
   /**
@@ -345,17 +330,15 @@ export function LookThroughView({
           </StaggerItem>
 
           {/* What the app cannot see, before anything it can — and split by
-              what would actually fix it, because the three cases have three
-              different answers and merging them left no action at all. */}
+              what would actually fix it, because the four cases have four
+              different answers and one of them has no answer at all. Merging
+              them left no action, and listing them twice over left Bitcoin on
+              the card three times. */}
           {unclassified?.kind === "unclassified" ? (
             <StaggerItem className="w-full min-w-0">
               <Section
                 icon={<Eye size={ICON.md} weight="light" />}
-                title={
-                  unidentified.length > 0
-                    ? t("lookThrough.caveats.noIsin")
-                    : t("lookThrough.caveats.neverRead")
-                }
+                title={t("lookThrough.caveats.notCovered")}
                 tone="warning"
               >
                 <p className="text-sm text-muted-foreground">
@@ -366,115 +349,90 @@ export function LookThroughView({
 
                 {/* No ISIN: nothing can be read until one is recorded, and the
                     instrument search is the only thing that records it. */}
-                {unidentified.length > 0 ? (
-                  <div className="mt-4 flex flex-col gap-2 border-t border-border pt-3">
-                    <p className="text-sm">
-                      {t("lookThrough.caveats.noIsinBody", {
-                        count: unidentified.length,
-                      })}
-                    </p>
-                    <ul className="flex flex-col gap-1">
-                      {unidentified.map((row) => (
-                        <li
-                          key={row.positionId}
-                          className="min-w-0 truncate text-sm text-muted-foreground"
-                        >
-                          {row.name}
-                        </li>
-                      ))}
-                    </ul>
-                    {/* A link, not a button with an onClick: this navigates,
-                        and `buttonVariants` is how the app dresses a link as
-                        a control without cloning children. */}
-                    <Link
-                      href="/investments"
-                      className={cn(
-                        buttonVariants({ variant: "outline", size: "sm" }),
-                        "mt-1 self-start",
-                      )}
-                    >
-                      {t("lookThrough.caveats.goToPositions")}
-                    </Link>
-                  </div>
-                ) : null}
+                <Uncovered
+                  when={lookThrough.unidentifiedPositions.length > 0}
+                  heading={t("lookThrough.caveats.noIsin")}
+                  body={t("lookThrough.caveats.noIsinBody", {
+                    count: lookThrough.unidentifiedPositions.length,
+                  })}
+                  rows={lookThrough.unidentifiedPositions}
+                  formatEuro={formatEuro}
+                >
+                  {/* A link, not a button with an onClick: this navigates,
+                      and `buttonVariants` is how the app dresses a link as a
+                      control without cloning children. */}
+                  <Link
+                    href="/investments"
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                      "mt-1 self-start",
+                    )}
+                  >
+                    {t("lookThrough.caveats.goToPositions")}
+                  </Link>
+                </Uncovered>
 
                 {/* Has an ISIN, never read: this is the only case where
                     reading is the action, so it is the only case with the
-                    button. */}
-                {remaining > 0 ? (
-                  <div className="mt-4 flex flex-col gap-2 border-t border-border pt-3">
-                    <p className="text-sm">
-                      {t("lookThrough.caveats.neverReadBody", {
-                        count: remaining,
-                      })}
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="self-start"
-                      onClick={onReadAll}
-                      disabled={reading}
-                    >
-                      <ArrowsClockwise
-                        size={ICON.sm}
-                        weight="light"
-                        className={cn("mr-2", reading && "animate-spin")}
-                      />
-                      {reading
-                        ? t("lookThrough.readingOne")
-                        : t("lookThrough.readAll")}
-                    </Button>
-                  </div>
-                ) : null}
+                    button. The count comes from the queue rather than the
+                    list, because the queue is what the button walks and it
+                    shrinks under the reader as it goes. */}
+                <Uncovered
+                  when={remaining > 0}
+                  heading={t("lookThrough.caveats.neverRead")}
+                  body={t("lookThrough.caveats.neverReadBody", {
+                    count: remaining,
+                  })}
+                  rows={lookThrough.unreadPositions}
+                  formatEuro={formatEuro}
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="self-start"
+                    onClick={onReadAll}
+                    disabled={reading}
+                  >
+                    <ArrowsClockwise
+                      size={ICON.sm}
+                      weight="light"
+                      className={cn("mr-2", reading && "animate-spin")}
+                    />
+                    {reading
+                      ? t("lookThrough.readingOne")
+                      : t("lookThrough.readAll")}
+                  </Button>
+                </Uncovered>
 
-                {/* Crypto, which is unread for a reason nobody can fix. The
-                    block above tells the reader to open Positions and pick an
-                    instrument, and for a coin that sends them hunting for an
-                    ISIN that was never issued — the complaint this answers. */}
-                {cryptoCaveat?.kind === "crypto" ? (
-                  <div className="mt-4 flex flex-col gap-2 border-t border-border pt-3">
-                    <p className="flex items-start gap-2 text-sm">
-                      <CurrencyBtc
-                        size={ICON.md}
-                        weight="light"
-                        aria-hidden="true"
-                        className="mt-0.5 shrink-0 text-muted-foreground"
-                      />
-                      <span className="min-w-0">
-                        {t("lookThrough.caveats.crypto", {
-                          count: cryptoCaveat.positionCount,
-                        })}
-                      </span>
-                    </p>
-                    <ul className="flex flex-col gap-1">
-                      {lookThrough.cryptoPositions.map((row) => (
-                        <li
-                          key={row.positionId}
-                          className="flex items-baseline justify-between gap-3 text-sm text-muted-foreground"
-                        >
-                          <span className="min-w-0 truncate">{row.name}</span>
-                          <PrivateAmount className="shrink-0">
-                            {formatEuro(row.value)}
-                          </PrivateAmount>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
+                {/* Read, and the factsheet published no composition. Its own
+                    group because pressing the button again is a different
+                    proposition here: it may find more, or there may be
+                    nothing to find — a gold ETC sits in no country. */}
+                <Uncovered
+                  when={lookThrough.readButUnclassifiedPositions.length > 0}
+                  heading={t("lookThrough.caveats.readNothingUseful")}
+                  body={t("lookThrough.caveats.readNothingUsefulBody", {
+                    count: lookThrough.readButUnclassifiedPositions.length,
+                  })}
+                  rows={lookThrough.readButUnclassifiedPositions}
+                  formatEuro={formatEuro}
+                />
 
-                <ul className="mt-4 flex flex-col gap-1 border-t border-border pt-3">
-                  {lookThrough.unclassifiedPositions.map((row) => (
-                    <li
-                      key={row.positionId}
-                      className="flex items-baseline justify-between gap-3 text-sm"
-                    >
-                      <span className="min-w-0 truncate">{row.name}</span>
-                      <PrivateAmount className="shrink-0 text-muted-foreground">
-                        {formatEuro(row.value)}
-                      </PrivateAmount>
-                    </li>
-                  ))}
-                </ul>
+                {/* Crypto, which is uncovered for a reason nobody can fix.
+                    The first group tells the reader to open Positions and
+                    choose an instrument, and for a coin that sends them
+                    hunting for an ISIN that was never issued — the complaint
+                    this group answers. */}
+                <Uncovered
+                  when={lookThrough.cryptoPositions.length > 0}
+                  icon={<CurrencyBtc size={ICON.sm} weight="light" />}
+                  heading={t("lookThrough.caveats.cryptoHeading")}
+                  body={t("lookThrough.caveats.crypto", {
+                    count: lookThrough.cryptoPositions.length,
+                  })}
+                  rows={lookThrough.cryptoPositions}
+                  formatEuro={formatEuro}
+                />
               </Section>
             </StaggerItem>
           ) : null}
@@ -876,6 +834,79 @@ export function LookThroughView({
         </Stagger>
       </PageContainer>
     </>
+  );
+}
+
+/**
+ * One group of holdings the shares on this page do not cover.
+ *
+ * Drawn only when it has something in it, which is the whole reason this is a
+ * component rather than four copies: every group used to carry its own
+ * `length > 0 ?` guard, one of them was missing, and the pooled list under
+ * them re-listed everything a second time regardless. Bitcoin appeared three
+ * times on one card.
+ *
+ * Each group says what it is, why, and — where there is one — what to do
+ * about it. A group with no action says so by having no child, which is the
+ * honest shape for crypto: there is nothing to press.
+ */
+function Uncovered({
+  when,
+  icon,
+  heading,
+  body,
+  rows,
+  formatEuro,
+  children,
+}: {
+  /**
+   * Whether this group has anything to say.
+   *
+   * Stated by the caller rather than inferred from `rows` being empty,
+   * because for one group the two come apart: the queue counts instruments
+   * worth reading, which includes a reading old enough to retake, and such a
+   * position is classified and so is not in this card's rows at all. Inferring
+   * would have taken the only button on the card away in exactly the case
+   * where pressing it does something.
+   */
+  when: boolean;
+  icon?: React.ReactNode;
+  heading: string;
+  body: string;
+  rows: { positionId: string; name: string; value: number }[];
+  formatEuro: (amount: number) => string;
+  children?: React.ReactNode;
+}) {
+  if (!when) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 flex flex-col gap-2 border-t border-border pt-3">
+      <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+        {icon ? (
+          <span aria-hidden="true" className="shrink-0 text-muted-foreground">
+            {icon}
+          </span>
+        ) : null}
+        {heading}
+      </h3>
+      <p className="text-sm text-muted-foreground">{body}</p>
+      <ul className="flex flex-col gap-1">
+        {rows.map((row) => (
+          <li
+            key={row.positionId}
+            className="flex items-baseline justify-between gap-3 text-sm"
+          >
+            <span className="min-w-0 truncate">{row.name}</span>
+            <PrivateAmount className="shrink-0 text-muted-foreground">
+              {formatEuro(row.value)}
+            </PrivateAmount>
+          </li>
+        ))}
+      </ul>
+      {children}
+    </div>
   );
 }
 

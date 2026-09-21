@@ -1837,6 +1837,8 @@ export const fr: Messages = {
     },
 
     caveats: {
+      notCovered: "Ce que ces parts ne couvrent pas",
+      cryptoHeading: "Cryptos",
       noIsin: "Pas encore identifié",
       noIsinBody:
         "{count} de vos lignes n'ont pas d'ISIN : il n'y a donc rien à rechercher. Ouvrez chacune depuis Positions et choisissez son instrument dans la recherche — c'est ce qui enregistre l'ISIN.",
@@ -1846,11 +1848,11 @@ export const fr: Messages = {
         "{count} instruments ont un ISIN mais n'ont pas été lus. Lire un instrument va chercher ce qu'il contient — ses frais, ses pays, ses secteurs.",
       readNothingUseful: "Lu, mais incomplet",
       readNothingUsefulBody:
-        "{count} lectures ont trouvé des frais mais aucune répartition. Les relire peut en trouver davantage.",
+        "{count} lectures ont trouvé des frais mais aucun pays ni secteur. Relancer la lecture peut en trouver davantage — mais certains instruments n'en ont aucun à trouver : un ETC or détient un métal et ne se trouve dans aucun pays.",
       needsAReading:
         "Lisez d'abord au moins un instrument — il n'y a encore rien à passer en revue.",
       unclassified:
-        "{share} de votre encours investi se trouve dans des instruments qui n'ont pas été lus. Toutes les parts de cette page sont calculées sur la partie qui l'a été.",
+        "{share} de votre encours investi n'est pas couvert par les parts de cette page. Toutes les parts ici sont calculées sur la partie qui l'est.",
       overlapIsAFloor:
         "Le chevauchement est un plancher, pas une mesure. Seules les plus grosses lignes publiées de chaque fonds ont été comparées : deux fonds présentés comme partageant peu peuvent en réalité être largement les mêmes sociétés — l'indice suivi est le signal le plus fiable.",
       staleReadings:

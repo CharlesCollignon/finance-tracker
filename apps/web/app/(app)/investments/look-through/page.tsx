@@ -106,7 +106,6 @@ export default async function LookThroughPage() {
       writerBrand={describeModel(monthReadModel()).brand}
       readModel={stored?.read ? stored.model : null}
       queueLength={bundle.queue.length}
-      unidentified={bundle.unidentified}
       arbitrage={arbitrage}
     />
   );

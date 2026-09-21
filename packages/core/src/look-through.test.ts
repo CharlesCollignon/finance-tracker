@@ -688,3 +688,123 @@ describe("crypto holdings", () => {
     expect(result.unclassifiedValue).toBe(2400);
   });
 });
+
+describe("why each position is not covered", () => {
+  const bitcoin = position({
+    positionId: "pos-btc",
+    name: "Bitcoin",
+    walletId: "crypto",
+    isin: null,
+    marketValue: 2400,
+  });
+  const noIsin = position({
+    positionId: "pos-none",
+    name: "Something typed in",
+    isin: null,
+    marketValue: 500,
+  });
+  const unread = position({
+    positionId: "pos-unread",
+    name: "Never looked up",
+    isin: "IE00BK5BQT80",
+    marketValue: 800,
+  });
+  const gold = position({
+    positionId: "pos-gold",
+    name: "Physical Gold ETC",
+    isin: "DE000A0S9GB0",
+    marketValue: 250,
+  });
+
+  /** Read, and the reading found a charge but no composition at all. */
+  const goldReading = reading("DE000A0S9GB0", {
+    countryWeights: {},
+    sectorWeights: {},
+  });
+
+  function built() {
+    return buildLookThrough({
+      positions: [position(), bitcoin, noIsin, unread, gold],
+      readings: readings(reading("FR001400U5Q4"), goldReading),
+      now: NOW,
+    });
+  }
+
+  it("separates a coin from a holding still waiting for an ISIN", () => {
+    const result = built();
+
+    expect(result.cryptoPositions.map((row) => row.name)).toEqual(["Bitcoin"]);
+    expect(result.unidentifiedPositions.map((row) => row.name)).toEqual([
+      "Something typed in",
+    ]);
+  });
+
+  it("separates one never looked up from one whose factsheet said nothing", () => {
+    const result = built();
+
+    expect(result.unreadPositions.map((row) => row.name)).toEqual([
+      "Never looked up",
+    ]);
+    expect(result.readButUnclassifiedPositions.map((row) => row.name)).toEqual([
+      "Physical Gold ETC",
+    ]);
+  });
+
+  /**
+   * The bug this partition exists to prevent. Bitcoin appeared three times on
+   * one card — in the no-ISIN list, in the crypto list and in the pooled
+   * list under them — because two places worked out "has no ISIN" and only
+   * one of them had learned about crypto.
+   */
+  it("puts every uncovered position in exactly one group", () => {
+    const result = built();
+
+    const grouped = [
+      ...result.cryptoPositions,
+      ...result.unidentifiedPositions,
+      ...result.unreadPositions,
+      ...result.readButUnclassifiedPositions,
+    ].map((row) => row.positionId);
+
+    expect(new Set(grouped).size).toBe(grouped.length);
+    expect(grouped.sort()).toEqual(
+      result.unclassifiedPositions.map((row) => row.positionId).sort(),
+    );
+  });
+
+  it("still counts the whole of it as uncovered value", () => {
+    const result = built();
+    expect(result.unclassifiedValue).toBe(2400 + 500 + 800 + 250);
+  });
+});
+
+describe("a crypto wallet holding something that can be read", () => {
+  /**
+   * A crypto wallet is where crypto exposure sits, and some of it arrives as
+   * an ETC with an ISIN and a published factsheet. Saying "crypto has no
+   * issuer and no ISIN" over one of those would be false, and listing it as
+   * uncovered would be false twice: it is covered.
+   */
+  const etc = position({
+    positionId: "pos-etc",
+    name: "Bitcoin ETC",
+    walletId: "crypto",
+    isin: "DE000A27Z304",
+    marketValue: 1000,
+  });
+
+  it("leaves a readable crypto holding out of the crypto caveat", () => {
+    const result = buildLookThrough({
+      positions: [position(), etc],
+      readings: readings(
+        reading("FR001400U5Q4"),
+        reading("DE000A27Z304", { countryWeights: { DE: 1 } }),
+      ),
+      now: NOW,
+    });
+
+    expect(result.cryptoPositions).toEqual([]);
+    expect(result.caveats.map((caveat) => caveat.kind)).not.toContain("crypto");
+    expect(result.classifiedValue).toBe(11000);
+  });
+});

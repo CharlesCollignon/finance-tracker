@@ -36,15 +36,18 @@ import {
 import type { LookThroughFacts } from "./look-through-facts";
 
 /**
- * Lower than a month read's five, and lower than the Bearing's eight.
+ * The same five a month read gets, and lower than the Bearing's eight.
  *
- * A portfolio changes on the scale of months, so four reads a year apart
- * would be generous and four in one month is already more than the data can
- * justify. The `unchanged` refusal below is what actually rations this in
- * practice; the ceiling is only there for the case where somebody really is
- * trading every week.
+ * A portfolio changes on the scale of months, so the ceiling was four on the
+ * reasoning that even that is more than the data can justify. That reasoning
+ * holds for a portfolio nobody is touching and not for the month somebody
+ * rearranges one — and running out mid-rearrangement is the case where the
+ * button is worth most. The `unchanged` refusal below is what actually
+ * rations this in practice: a press over a portfolio that has not moved is
+ * refused before it costs anything, so the ceiling only ever binds on
+ * portfolios that really are changing between presses.
  */
-export const WALLET_READS_PER_MONTH = 4;
+export const WALLET_READS_PER_MONTH = 5;
 
 /** A double press is one call, not two. */
 export const WALLET_READ_COOLDOWN_SECONDS = 60;
