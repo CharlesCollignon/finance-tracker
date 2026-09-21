@@ -11,10 +11,13 @@ import { landingCopyFr } from "@/components/marketing/landing-copy.fr";
  *   checkable; "effortless clarity" is not, and a reader who has been sold to
  *   before can tell the difference in about a second.
  *
- *   Never promise what the app does not do. A bank can now be connected, and
- *   that changes what is safe to claim: the access is read-only, a row is only
- *   ever filed by a rule the user wrote, and there is still no advice. Writing
- *   around any of that would win a signup and lose the first session.
+ *   Never promise what the app does not do. Today nobody can connect a bank:
+ *   `lib/bank/client.ts` answers for exactly one user id, the one the owner's
+ *   credentials bundle is registered to, and the per-user path is a seam with
+ *   nothing behind it yet. So the site describes what a visitor will actually
+ *   meet — rows they type, a template they apply, an export they map, and one
+ *   balance a month — and says the connection is coming in exactly one place,
+ *   in the future tense, rather than in seven places in the present.
  */
 
 export const landingCopy = {
@@ -22,7 +25,7 @@ export const landingCopy = {
     /** Split so the line break is a choice rather than whatever the box does. */
     titleLines: ["Your whole month,", "on one quiet screen"],
     tagline:
-      "Income, bills, savings and investments — recorded by you or read from your bank, held privately, and reconciled against your real balance at the end of every month.",
+      "Income, bills, savings and investments — recorded by you, held privately, and reconciled against your real balance at the end of every month.",
     /** The two figures on the floating cards. Same month as every mock. */
     cards: {
       remaining: {
@@ -41,7 +44,7 @@ export const landingCopy = {
     items: [
       {
         title: "Move your money",
-        body: "The bank connection reads and nothing else. It can see what left the account; it cannot start a payment, and there is no version of it that could.",
+        body: "Nothing here can reach your account. There is no transfer, no payment and no standing order in the app — its rows describe money that has already moved, and there is no version of it that could move any.",
       },
       {
         title: "Act on a rule you did not write",
@@ -67,8 +70,8 @@ export const landingCopy = {
   monthClose: {
     heading: "The number that checks all the others",
     body: [
-      "Every total on every other screen is a sum of movements — some you typed, some the statement brought. That is honest, and it is incomplete: cash out of a machine, a card the feed does not cover, a month the sync missed. No amount of arithmetic over the rows can find what is not in them.",
-      "The balance can. If the account held one figure at the end of last month and another at the end of this one, and the rows only explain part of the gap, the remainder is spending nothing accounted for. With a bank connected the app reads both figures off the statement itself, so the check costs you nothing; without one, it costs a single number a month.",
+      "Every total on every other screen is a sum of movements — some you typed, some an imported export brought. That is honest, and it is incomplete: cash out of a machine, a tap you never thought about, a week you did not get round to entering. No amount of arithmetic over the rows can find what is not in them.",
+      "The balance can. If the account held one figure at the end of last month and another at the end of this one, and the rows only explain part of the gap, the remainder is spending nothing accounted for. Today that costs you one number a month, read off your bank and typed in on the day you picked; a read-only connection that fetches the figure for you is being built.",
     ],
     /** The three outcomes a close produces, in the order the sheet shows them. */
     outcomes: [
@@ -142,11 +145,11 @@ export const landingCopy = {
   },
 
   privacy: {
-    heading: "Read-only, server-side, and yours to cut off",
-    body: "Your figures live in rows behind your login, and every query is scoped to your account — no other account can read them, because there is no query that would. Connecting a bank is optional; where you do, the access is the kind that can only read, the credentials never reach a browser, and there is nothing to sell because there is nobody to sell it to.",
+    heading: "Behind your login, server-side, and yours to erase",
+    body: "Your figures live in rows behind your login, and every query is scoped to your account — no other account can read them, because there is no query that would. Everything in those rows is something you typed or imported yourself, none of it is sent anywhere else, and there is nothing to sell because there is nobody to sell it to.",
     points: [
-      "Read-only access, so it can see what moved and never move it.",
-      "Revoke the bank at any time; the rows it already filed stay yours.",
+      "Nothing is read from your bank: every row is one you entered or brought in.",
+      "An imported export writes nothing until you have read the list it proposes.",
       "Wipe every row and keep the account, or delete both.",
       "Blur every figure on screen with one tap, for the train.",
     ],
@@ -184,19 +187,19 @@ export const landingCopy = {
       title: "Ledger",
       body: "Every movement — as a list, laid on days, or a run of months per category.",
       utility:
-        "The record everything else reads from. Rows you typed, rows a template applied, and rows the statement brought that a habit of your own filed — one body of data, looked at three ways.",
+        "The record everything else reads from. Rows you typed, rows a template applied, and rows an export brought in that a habit of your own filed — one body of data, looked at three ways.",
       steps: [
         {
           title: "The list, the calendar, or by category",
           body: "The same rows throughout. The list is for finding one and changing it; the calendar lays them on days, which answers when the month gets tight rather than what you spent; by category gives each one its own twelve months, what it normally costs, and what has drifted away from that.",
         },
         {
-          title: "What the bank sends waits for you",
-          body: "A statement row files itself only where you have put that shop in the same place twice — the point at which it is a habit rather than a coincidence. Everything else waits in the review inbox, money arriving always among it. Answering one teaches the matcher, which is why the inbox shrinks instead of becoming a permanent chore.",
+          title: "It offers a category; you decide",
+          body: "Put a shop in the same place twice — the point at which it is a habit rather than a coincidence — and the app offers that place the next time the name comes up, whether you are typing the row or reading down an imported export. It proposes and you confirm, and every answer teaches it, so the guesses sharpen while the filing stays yours.",
         },
         {
           title: "Or bring a CSV",
-          body: "An export from your bank, with its columns mapped once. The same history that files the feed guesses at these, and nothing is written until you have read the list it proposes.",
+          body: "An export from your bank, with its columns mapped once. The same history guesses at these, and nothing is written until you have read the list it proposes.",
         },
       ],
     },
@@ -276,7 +279,7 @@ export const landingCopy = {
         },
         {
           title: "Enter one balance",
-          body: "What the account your spending actually leaves from held on that day. With a bank connected the app reads it off the statement instead. The first close is a baseline: it sets the point everything after is measured from.",
+          body: "What the account your spending actually leaves from held on that day — one number, off your bank's own screen and into the app. The first close is a baseline: it sets the point everything after is measured from.",
         },
         {
           title: "Read what it found",
@@ -309,19 +312,29 @@ export const landingCopy = {
 
   /**
    * The site's own navigation: two anchors in the header, repeated in the
-   * footer. Here rather than in the shared catalogue because they are marketing
-   * words — the app has no "how it works".
+   * footer, and the pair of words under the feature pages' prev/next links.
+   * Here rather than in the shared catalogue because they are marketing
+   * words — the app has no "how it works", and nothing behind the login walks
+   * a reader through seven pages in a fixed order.
    */
   nav: {
     howItWorks: "How it works",
     privacy: "Privacy",
+    previous: "Previous",
+    next: "Next",
   },
 
   footer: {
     tagline:
       "One person’s money: what came in, what went out, what is set aside, and what is invested — reconciled month by month.",
     copyright: "© 2026 Pluclair",
-    disclaimer: "No bank connection. No aggregator. No advice.",
+    /* The last line of every marketing page, and for a while the last stale
+       one: "No bank connection. No aggregator. No advice." outlived the
+       positioning it came from, and sat 200px under a call to action on a
+       page that spent a section explaining the connection. Both surviving
+       halves are checkable — the app has no payment path at all, and there is
+       no advice, no score and no nudge anywhere in it. */
+    disclaimer: "No advice. No score. It never moves your money.",
   },
 
   cta: {

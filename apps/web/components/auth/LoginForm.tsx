@@ -37,7 +37,7 @@ export function LoginForm() {
       innerClassName="p-6 md:p-8"
     >
       <h1 className="text-center font-serif text-2xl italic md:text-3xl">
-        Welcome back
+        {t("auth.welcomeBack")}
       </h1>
       <p className="mt-1 text-center text-sm text-muted-foreground">
         {t("auth.signInHeading")}
@@ -49,7 +49,7 @@ export function LoginForm() {
       <AuthDivider />
       <form action={action} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="email">Email</FormLabel>
+          <FormLabel htmlFor="email">{t("auth.email")}</FormLabel>
           <Input
             id="email"
             name="email"
@@ -69,11 +69,21 @@ export function LoginForm() {
             required
             className="text-base"
           />
+          {/* Under the field it is about, which is where somebody looks the
+              moment the password will not come. Email and password is a
+              first-class way in here, so without this a reader who has
+              forgotten theirs is locked out of their own ledger for good —
+              there was no reset route anywhere in the app. */}
+          <Link
+            href="/reset"
+            className="self-end text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            {t("auth.forgotPassword")}
+          </Link>
         </div>
         {(state.error || authError) && (
           <Text className="text-center text-sm text-destructive">
-            {state.error ??
-              "Sign-in link expired or invalid. Please try again."}
+            {state.error ?? t("auth.linkExpired")}
           </Text>
         )}
         <Button

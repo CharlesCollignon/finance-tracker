@@ -39,7 +39,7 @@ export function SignupForm() {
         {t("auth.createAccount")}
       </h1>
       <p className="mt-1 text-center text-sm text-muted-foreground">
-        Start tracking income and expenses
+        {t("auth.signUpHeading")}
       </p>
       <div className="mt-6">
         <GoogleSignInButton label={t("auth.withGoogleSignUp")} />
@@ -47,7 +47,7 @@ export function SignupForm() {
       <AuthDivider />
       <form action={action} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="email">Email</FormLabel>
+          <FormLabel htmlFor="email">{t("auth.email")}</FormLabel>
           <Input
             id="email"
             name="email"

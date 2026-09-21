@@ -110,7 +110,10 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
         setAdded((count) => count + 1);
         setExpenseAmount("");
         setExpenseCategory(null);
-        toast(`${category.name} added`, "success");
+        toast(
+          t("onboarding.templateAdded", { name: category.name }),
+          "success",
+        );
       }
     });
   }
@@ -215,6 +218,11 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
             <FormLabel htmlFor="income-amount">
               {t("onboarding.monthlyAmount")}
             </FormLabel>
+            {/* `0.00` rather than a translated `0,00`: these are
+                `type="number"` inputs, which accept the dot form whatever the
+                reader's locale, so a comma in the placeholder would teach a
+                format the field rejects. The month close's balance field is
+                `type="text"` and does carry a translated example. */}
             <Input
               id="income-amount"
               type="number"
@@ -307,7 +315,7 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
             </Button>
             {added > 0 ? (
               <p className="text-center text-xs text-muted-foreground">
-                {added} added — add another or continue below.
+                {t("onboarding.addedCount", { count: added })}
               </p>
             ) : null}
           </Card.Bezel>

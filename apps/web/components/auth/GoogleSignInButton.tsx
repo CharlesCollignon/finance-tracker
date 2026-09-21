@@ -10,12 +10,11 @@ import { resolveMessage } from "@finance/core/i18n/t";
 import { useT } from "@/lib/locale-context";
 
 interface GoogleSignInButtonProps {
+  /** Defaults to the neutral wording, which suits neither form in particular. */
   label?: string;
 }
 
-export function GoogleSignInButton({
-  label = "Continue with Google",
-}: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ label }: GoogleSignInButtonProps) {
   const t = useT();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +48,9 @@ export function GoogleSignInButton({
         disabled={pending}
       >
         <GoogleLogo size={ICON.xl} weight="bold" />
-        {pending ? "Redirecting…" : label}
+        {pending
+          ? t("auth.redirecting")
+          : (label ?? t("auth.withGoogleContinue"))}
       </Button>
       {error && (
         <Text className="text-sm text-destructive">

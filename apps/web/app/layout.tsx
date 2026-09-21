@@ -37,10 +37,14 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Pluclair",
   // The landing hero's tagline verbatim. This is the sentence search results
-  // and link previews show, so the two have to agree; it replaced a line that
-  // still advertised having no bank connection.
+  // and link previews show, so the two have to agree — which is the whole
+  // reason it has now been corrected twice. It first advertised having no
+  // bank connection, long after one was designed; then it advertised reading
+  // from your bank, which no visitor can actually do: `lib/bank/client.ts`
+  // answers for one owner user id and the per-user path is still a seam. It
+  // now says what someone arriving today will do, and nothing else.
   description:
-    "Income, bills, savings and investments — recorded by you or read from your bank, held privately, and reconciled against your real balance at the end of every month.",
+    "Income, bills, savings and investments — recorded by you, held privately, and reconciled against your real balance at the end of every month.",
   // iOS ignores the web manifest for these, so they have to be stated here
   // for an installed app to open without browser chrome.
   appleWebApp: {

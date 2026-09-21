@@ -34,6 +34,16 @@ interface SegmentedControlProps<T extends string> {
  * The track is an equal-fraction grid, so the pill's offset is a whole number
  * of columns and needs no measurement — the phone's twin has to measure with
  * `onLayout` because React Native has no grid to lean on.
+ *
+ * Plain buttons carrying `aria-pressed`, and deliberately not a radio group.
+ * It was `role="radiogroup"` over `role="radio"` children, which is a promise
+ * the markup did not keep: a radio group is a single tab stop whose members
+ * are moved between with the arrow keys, and there was no roving `tabIndex`
+ * and no key handler, so a screen reader announced "1 of 4" and then Down did
+ * nothing. Between implementing that contract and dropping it, dropping it is
+ * the honest fix — these segments are one tab stop each, which is what they
+ * have always actually been, and `aria-pressed` says which is in force
+ * without claiming keys the control does not handle.
  */
 export function SegmentedControl<T extends string>({
   segments,
@@ -49,7 +59,7 @@ export function SegmentedControl<T extends string>({
 
   return (
     <div
-      role="radiogroup"
+      role="group"
       aria-label={label}
       className={cn(
         "relative isolate grid rounded-full border border-border p-1",
@@ -76,8 +86,7 @@ export function SegmentedControl<T extends string>({
           <button
             key={segment.value}
             type="button"
-            role="radio"
-            aria-checked={active}
+            aria-pressed={active}
             disabled={segment.disabled}
             // Pressing the segment already in force is not a change, so it
             // does not report one. Unguarded, the setter still fires and

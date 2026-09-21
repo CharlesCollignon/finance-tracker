@@ -64,6 +64,31 @@
           "#ffffff"
         ]
       },
+      "bloom-violet": {
+        "role": "secondary",
+        "displayName": "Bloom Violet",
+        "canonical": "rgba(139, 74, 255, 0.55)"
+      },
+      "bloom-violet-deep": {
+        "role": "secondary",
+        "displayName": "Bloom Violet Deep",
+        "canonical": "rgba(124, 58, 237, 0.24)"
+      },
+      "offstage-magenta": {
+        "role": "tertiary",
+        "displayName": "Offstage Magenta",
+        "canonical": "rgba(232, 74, 178, 0.26)"
+      },
+      "rail-indigo": {
+        "role": "tertiary",
+        "displayName": "Rail Indigo",
+        "canonical": "rgba(88, 52, 196, 0.26)"
+      },
+      "bounce-purple": {
+        "role": "tertiary",
+        "displayName": "Bounce Purple",
+        "canonical": "rgba(84, 48, 160, 0.30)"
+      },
       "success": {
         "role": "tertiary",
         "displayName": "Income Green",
@@ -233,11 +258,12 @@
   ],
   "narrative": {
     "northStar": "The Quiet Ledger",
-    "overview": "Pluclair is a ledger that happens to be lit from behind. It carries the discipline of ruled paper — consistent rows, aligned figures, nothing decorative competing with a number — onto a cool near-black ground, and the inversion is the whole idea. Paper's restraint, none of paper's brightness. The system is calm, exact and unhurried: its job is to let a figure be read correctly, and everything that would interfere with that has already been taken out.\n\nThis is a dark system with no light counterpart, and that is settled rather than pending. A warm paper theme shipped alongside this one and was removed: it was the CSS default while every entry point sent users to dark, which meant two palettes to keep honest and only one anybody saw. Designing a light variant is not an improvement to this system; it is a reversal of a decision already made.\n\nRestraint here is specific, not general. There is one accent and it is used rarely. There are no shadows at all, with one deliberate exception. There are three marketing greys, because the site genuinely needs three and did not need the ten alpha literals it had. There are three display sizes, because five clamp ranges produced twenty-eight distinct size/weight/family triples across eight pages. Each of these is a reduction that was made on purpose, and the count is the point.",
+    "overview": "Pluclair is a ledger that happens to be lit from behind. It carries the discipline of ruled paper — consistent rows, aligned figures, nothing decorative competing with a number — onto a cool near-black ground, and the inversion is the whole idea. Paper's restraint, none of paper's brightness. The system is calm, exact and unhurried: its job is to let a figure be read correctly, and everything that would interfere with that has already been taken out.\n\nLit from behind is literal, and the light is the one thing that was not taken out. Mounted once in the shell, behind every screen in Operate mode, is a bloom: a violet main light high and wide over the content column, a magenta second source off to the right as if out of frame, indigo down the left edge, a purple bounce along the bottom, and the brand gold low and faint. Over it sits a WebGL veil, blurred past the point of structure, so the whole ground drifts slowly enough that nobody catches it moving. The surfaces above stay opaque and quiet, and they are quiet against something — which is what makes the restraint read as a decision rather than as the whole of the design. The same cards on an unlit near-black would read as printing.\n\nThis is a dark system with no light counterpart, and that is settled rather than pending. A warm paper theme shipped alongside this one and was removed: it was the CSS default while every entry point sent users to dark, which meant two palettes to keep honest and only one anybody saw. Designing a light variant is not an improvement to this system; it is a reversal of a decision already made.\n\nRestraint here is specific, not general. There is one accent and it is used rarely. There are no shadows at all, with one deliberate exception. There are three marketing greys, because the site genuinely needs three and did not need the ten alpha literals it had. There are three display sizes, because five clamp ranges produced twenty-eight distinct size/weight/family triples across eight pages. Each of these is a reduction that was made on purpose, and the count is the point.",
     "keyCharacteristics": [
-      "Dark-only, on a cool near-black with a faint violet cast",
-      "One accent — a warm gold — against an otherwise unsaturated field",
-      "Flat by rule; depth comes from surface value steps and hairlines",
+      "Dark-only, on a cool near-black lit from behind by a violet bloom",
+      "A ground that drifts — a blurred shader over that bloom, slow enough never to be caught moving",
+      "One accent — a warm gold — against otherwise unsaturated surfaces",
+      "Flat by rule; depth comes from surface value steps and hairlines, read against that lit ground",
       "Serif numerals for money, sans for everything that is words",
       "Controls that answer a press immediately and precisely, then stop"
     ],
@@ -259,7 +285,7 @@
       },
       {
         "name": "The Three Greys Rule",
-        "body": "Marketing text uses exactly three opacities: 0.85, 0.55, 0.35. A fourth value is a decision nobody made — reach for an existing step instead of interpolating.",
+        "body": "Marketing text uses exactly three opacities: 0.85, 0.55, 0.5. The faint step was 0.35 until it was measured at 3.09:1 against the marketing ground and failed AA; 0.5 reads 5.31:1. The count did not change and must not — a fourth value is a decision nobody made.",
         "section": "colors"
       },
       {
@@ -285,6 +311,11 @@
       {
         "name": "The Flat-With-One-Exception Rule",
         "body": "No element casts a shadow. The only depth cue in the system is the bezel's inset highlight, and it describes a recess. If something needs to feel separate, step its surface value or give it a hairline — do not reach for a drop shadow, and do not add an elevation scale.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Backdrop Rule",
+        "body": "The lit ground is mounted once, in AppShell, and never per route. A WebGL context is expensive to create and browsers cap how many can be live at once — Chrome at 16, silently dropping the oldest — so one backdrop that survives navigation beats one per page; the drift must not restart when somebody changes surface; and a backdrop unmounted mid-navigation would flash through everything sitting over it. Do not mount a second AppBackdrop, and do not give a screen its own gradient to match this one.",
         "section": "elevation"
       },
       {

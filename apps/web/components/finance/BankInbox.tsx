@@ -19,7 +19,7 @@ import {
 import type { Category } from "@finance/core/types/database";
 import type { DecidedFeedRow, PendingFeedRow } from "@/lib/queries/bank";
 import { ICON } from "@/lib/icon-scale";
-import { useT } from "@/lib/locale-context";
+import { useLocale, useT } from "@/lib/locale-context";
 
 interface BankInboxProps {
   items: PendingFeedRow[];
@@ -100,6 +100,7 @@ export function BankInbox({
   openOnArrival = false,
 }: BankInboxProps) {
   const t = useT();
+  const locale = useLocale();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [choices, setChoices] = useState<Record<string, string>>({});
@@ -148,18 +149,17 @@ export function BankInbox({
             className="size-2 shrink-0 rounded-full bg-primary"
           />
         ) : null}
-        {waiting ? (
-          <span className="min-w-0">
-            <span className="font-medium">{items.length}</span>{" "}
-            <span className="text-muted-foreground">
-              {items.length === 1 ? "entry needs" : "entries need"} a category
-            </span>
-          </span>
-        ) : (
-          <span className="text-muted-foreground">
-            Nothing waiting from your bank.
-          </span>
-        )}
+        {/* One sentence rather than a bold numeral beside a fragment. The
+            fragment was assembled from a ternary on `items.length`, which is
+            untranslatable twice over — French puts zero in the singular and
+            agrees the verb — and splitting a clause across two spans to
+            embolden the count is what made it a fragment in the first place.
+            The number is the first word either way. */}
+        <span className="min-w-0 text-muted-foreground">
+          {waiting
+            ? t("ledger.needsCategory", { count: items.length })
+            : t("inbox.nothingFromBank")}
+        </span>
       </p>
       <div className="flex shrink-0 items-center gap-2">
         {waiting || decided.length > 0 ? (
@@ -214,8 +214,7 @@ export function BankInbox({
                 : t("inbox.nothingWaiting")}
             </h3>
             <p className="text-sm text-muted-foreground">
-              Anything the app already recognised went straight in. These are
-              the exceptions — answering one teaches it for next time.
+              {t("inbox.taughtIt")}
             </p>
 
             <ul className="flex flex-col gap-3 md:max-h-[55vh] md:overflow-y-auto">
@@ -234,7 +233,7 @@ export function BankInbox({
                         {item.counterparty ?? item.note}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {formatShortDate(item.occurredOn)} · {item.why}
+                        {formatShortDate(item.occurredOn, locale)} · {item.why}
                       </p>
                     </div>
                     <Amount
@@ -263,7 +262,7 @@ export function BankInbox({
                       disabled={pending}
                       onClick={() => accept(item.id)}
                     >
-                      Add
+                      {t("inbox.add")}
                     </Button>
                     <Button
                       type="button"
@@ -272,7 +271,7 @@ export function BankInbox({
                       disabled={pending}
                       onClick={() => run(() => ignoreFeedItem(item.id))}
                     >
-                      Leave out
+                      {t("inbox.leaveOut")}
                     </Button>
                   </div>
                 </li>
@@ -283,10 +282,10 @@ export function BankInbox({
           {decided.length > 0 ? (
             <section className="flex min-w-0 flex-col gap-3 border-t border-border pt-6 md:w-80 md:shrink-0 md:border-l md:border-t-0 md:pl-8 md:pt-0">
               <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Recently decided
+                {t("inbox.recentlyDecided")}
               </h3>
               <p className="text-sm text-muted-foreground">
-                Put one back if it went to the wrong place.
+                {t("inbox.putOneBack")}
               </p>
 
               <ul className="flex flex-col divide-y divide-border md:max-h-[55vh] md:overflow-y-auto">
@@ -304,11 +303,11 @@ export function BankInbox({
                     </div>
 
                     <p className="text-xs text-muted-foreground">
-                      {formatShortDate(row.occurredOn)}
+                      {formatShortDate(row.occurredOn, locale)}
                       {" · "}
                       {row.status === "ignored"
-                        ? "left out"
-                        : (row.categoryName ?? "in your ledger")}
+                        ? t("inbox.leftOut")
+                        : (row.categoryName ?? t("inbox.inYourLedger"))}
                     </p>
 
                     {editing === row.id ? (
@@ -339,7 +338,7 @@ export function BankInbox({
                             run(() => recategoriseFeedItem(row.id, categoryId));
                           }}
                         >
-                          Move
+                          {t("inbox.move")}
                         </Button>
                         <Button
                           type="button"
@@ -347,7 +346,7 @@ export function BankInbox({
                           size="sm"
                           onClick={() => setEditing(null)}
                         >
-                          Cancel
+                          {t("common.cancel")}
                         </Button>
                       </div>
                     ) : (
@@ -361,7 +360,7 @@ export function BankInbox({
                             disabled={pending}
                             onClick={() => setEditing(row.id)}
                           >
-                            Change category
+                            {t("inbox.changeCategory")}
                           </Button>
                         ) : null}
                         <Button
@@ -373,7 +372,7 @@ export function BankInbox({
                           onClick={() => run(() => undoFeedDecision(row.id))}
                         >
                           <ArrowCounterClockwise size={ICON.sm} />
-                          Undo
+                          {t("inbox.undo")}
                         </Button>
                       </div>
                     )}

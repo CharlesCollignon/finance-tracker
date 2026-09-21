@@ -8,6 +8,11 @@ colors:
   card-surface: "#131320"
   raised-surface: "#1c1c2b"
   accent-wash: "#262015"
+  bloom-violet: "rgba(139, 74, 255, 0.55)"
+  bloom-violet-deep: "rgba(124, 58, 237, 0.24)"
+  offstage-magenta: "rgba(232, 74, 178, 0.26)"
+  rail-indigo: "rgba(88, 52, 196, 0.26)"
+  bounce-purple: "rgba(84, 48, 160, 0.30)"
   lamplit-gold: "#e0be7a"
   lamplit-gold-hover: "#eacb8f"
   foreground: "#ececf1"
@@ -20,7 +25,7 @@ colors:
   hairline-strong: "rgba(236, 236, 241, 0.16)"
   marketing-ink: "rgb(255 255 255 / 0.85)"
   marketing-muted: "rgb(255 255 255 / 0.55)"
-  marketing-faint: "rgb(255 255 255 / 0.35)"
+  marketing-faint: "rgb(255 255 255 / 0.5)"
   chart-1: "#d8a041"
   chart-2: "#b05645"
   chart-3: "#9fd08b"
@@ -146,6 +151,17 @@ The system is calm, exact and unhurried: its job is to let a figure be read
 correctly, and everything that would interfere with that has already been
 taken out.
 
+Lit from behind is literal, and the light is the one thing that was not taken
+out. Mounted once in the shell, behind every screen in Operate mode, is a
+bloom: a violet main light high and wide over the content column, a magenta
+second source off to the right as if out of frame, indigo down the left edge,
+a purple bounce along the bottom, and the brand gold low and faint. Over it
+sits a WebGL veil, blurred past the point of structure, so the whole ground
+drifts slowly enough that nobody catches it moving. The surfaces above stay
+opaque and quiet, and they are quiet *against* something — which is what makes
+the restraint read as a decision rather than as the whole of the design. The
+same cards on an unlit near-black would read as printing.
+
 This is a dark system with no light counterpart, and that is settled rather
 than pending. A warm paper theme shipped alongside this one and was removed:
 it was the CSS default while every entry point sent users to dark, which meant
@@ -163,16 +179,21 @@ count is the point: adding a fourth grey or a sixth type step undoes the work.
 
 **Key Characteristics:**
 
-- Dark-only, on a cool near-black with a faint violet cast
-- One accent — a warm gold — against an otherwise unsaturated field
-- Flat by rule; depth comes from surface value steps and hairlines
+- Dark-only, on a cool near-black lit from behind by a violet bloom
+- A ground that drifts — a blurred shader over that bloom, slow enough never to
+  be caught moving
+- One accent — a warm gold — against otherwise unsaturated surfaces
+- Flat by rule; depth comes from surface value steps and hairlines, read
+  against that lit ground
 - Serif numerals for money, sans for everything that is words
 - Controls that answer a press immediately and precisely, then stop
 
 ## Colors
 
-An unsaturated field of cool near-blacks with a single warm accent, plus a
-small set of status hues that appear only where a state has to be told apart.
+Unsaturated surfaces — cool near-blacks with a single warm accent, plus a small
+set of status hues that appear only where a state has to be told apart — over a
+ground that is not unsaturated at all. The restraint is in what the app paints;
+the colour is in what it paints on.
 
 ### Primary
 
@@ -204,6 +225,56 @@ small set of status hues that appear only where a state has to be told apart.
   (`rgba(236, 236, 241, 0.16)`): Every border in the app. The strong step is a
   hover or emphasis state, not a second default.
 
+### Ground Bloom
+
+Five colours that live only in the `BLOOM` stack inside `AppBackdrop`, which
+the shell mounts once behind every Operate-mode screen. They are light rather
+than paint: each is an alpha stop in a radial gradient read through the page's
+near-black, and none of them is a token, because nothing above the backdrop is
+meant to reach for them.
+
+- **Bloom Violet** (`rgba(139, 74, 255, 0.55)`): The main light, and the
+  brightest colour in the system by a wide margin. It is centred on the content
+  rather than on the window — 58% across on a desktop, where the side rail
+  takes the first 224–256px and the content column's optical centre sits right
+  of the middle, and 50% on a phone, where there is no rail and the content is
+  the window.
+- **Bloom Violet Deep** (`rgba(124, 58, 237, 0.24)`): The main light's second
+  stop, at 44% of its radius. One stop falls off like a spotlight; the second
+  is what makes it fall off like a room.
+- **Offstage Magenta** (`rgba(232, 74, 178, 0.26)`): A second source high on
+  the right, placed as though it were out of frame. One centred glow reads as a
+  spotlight; two of different hue, size and position read as depth.
+- **Rail Indigo** (`rgba(88, 52, 196, 0.26)`): Down the left edge, with exactly
+  one job — it keeps the navigation rail from reading as a separate black panel
+  bolted onto a coloured page.
+- **Bounce Purple** (`rgba(84, 48, 160, 0.30)`): The bounce along the bottom.
+  Without it the lower half of the page is dead black and the whole thing reads
+  as a bloom pasted onto a void rather than as a lit room.
+
+**Lamplit Gold at 10%** (`rgba(224, 190, 122, 0.10)`) closes the stack, low and
+faint in the bottom-left corner, so the palette still belongs to Pluclair
+rather than to the reference the bloom was drawn from. It is the accent's one
+non-semantic appearance, and at a tenth of an alpha over near-black it does not
+compete with the places the accent is actually spent.
+
+Over the bloom sits a WebGL veil (`DarkVeil`): a CPPN fragment shader
+hue-shifted 258° onto the same violet, rendered at `0.34` of the element's
+resolution, blurred `64px`, and composited at 45% opacity in `screen`. The blur
+is the design rather than a concession — left sharp the shader draws hard
+diagonal streaks that read as a smear across the page, and throwing it out of
+focus keeps only the one thing CSS cannot do, which is colour that moves. The
+bloom is the floor and the shader is a refinement of it, so where WebGL is
+missing, blocklisted, or on a software renderer that will not link a program
+this large, the page is very slightly flatter and nothing else changes. Someone
+who has asked for reduced motion gets the veil as a single still frame rather
+than not at all.
+
+One band deliberately puts the light out: a `h-32` wash at the bottom edge
+fading from the page ground to transparent, so the phone's floating navigation
+bar has something solid under it. An all-over vignette was tried and removed —
+the corners were already dark, and darkening them again only cost the violet.
+
 ### Status
 
 - **Success** (`#34d399`), **Info** (`#22d3ee`), **Destructive** (`#f87171`),
@@ -227,7 +298,7 @@ what a category is.
 ### Marketing Greys
 
 - **Marketing Ink** (`rgb(255 255 255 / 0.85)`), **Marketing Muted** (`/ 0.55`),
-  **Marketing Faint** (`/ 0.35`). Three, doing three jobs, replacing ten alpha
+  **Marketing Faint** (`/ 0.5`). Three, doing three jobs, replacing ten alpha
   literals that did the same three jobs inconsistently.
 
 ### Named Rules
@@ -249,7 +320,10 @@ negative. Do not colour an amount by sign, and do not invent a fifth category
 colour.
 
 **The Three Greys Rule.** Marketing text uses exactly three opacities: 0.85,
-0.55, 0.35. A fourth value is a decision nobody made — reach for an existing
+0.55, 0.5. The faint step was 0.35 until it was measured at 3.09:1 against the
+marketing ground and failed AA for the ten runs of prose it carries; 0.5 reads
+5.31:1. The count did not change and must not — a fourth value is a decision
+nobody made, so reach for an existing
 step instead of interpolating.
 
 ## Typography
@@ -334,11 +408,26 @@ one-off `17px` is a mistake, not a step.
 `--shadow-2xl` — is set to `none`, deliberately and not by omission. Surfaces
 never lift off the page, and there is no hover elevation anywhere.
 
-Depth is built two ways instead. First, surfaces step in value: marketing
-ground `#06060a`, page `#0a0a10`, sidebar `#0d0d15`, card `#131320`, raised
-`#1c1c2b`. Second, hairline borders separate what value alone leaves ambiguous.
+Depth is built three ways instead. First, there is a ground for the surfaces to
+be read against: the bloom described under Colors, fixed to the viewport by the
+shell so the light stays where it is while the page scrolls through it. Second,
+surfaces step in value: marketing ground `#06060a`, page `#0a0a10`, sidebar
+`#0d0d15`, card `#131320`, raised `#1c1c2b`. Third, hairline borders separate
+what value alone leaves ambiguous. The order is the reason it works: five
+near-blacks spanning so narrow a range separate far more legibly over a lit
+field than they would over a uniform void, so the ground is first and not an
+afterthought.
 
-There is exactly one exception, and it is a recess rather than a lift.
+The bloom is a ground, not an elevation. It sits at `-z-10` behind everything,
+it belongs to no component, and nothing is nearer the viewer for sitting over a
+brighter part of it. This is also where the web and the phone diverge: the
+mobile system answers the same lit ground with translucency — surfaces at 70%
+opacity, and the soft shadow a translucent pane needs to separate — while the
+web keeps its surfaces opaque and lets the light show only around them. Same
+room, different material, and the web's flatness survives intact.
+
+There is exactly one exception to that flatness, and it is a recess rather than
+a lift.
 
 ### Shadow Vocabulary
 
@@ -353,6 +442,14 @@ There is exactly one exception, and it is a recess rather than a lift.
 depth cue in the system is the bezel's inset highlight, and it describes a
 recess. If something needs to feel separate, step its surface value or give it
 a hairline — do not reach for a drop shadow, and do not add an elevation scale.
+
+**The One Backdrop Rule.** The lit ground is mounted once, in `AppShell`, and
+never per route. A WebGL context is expensive to create and browsers cap how
+many can be live at once — Chrome at 16, silently dropping the oldest — so one
+backdrop that survives navigation beats one per page; the drift must not
+restart when somebody changes surface; and a backdrop unmounted mid-navigation
+would flash through everything sitting over it. Do not mount a second
+`AppBackdrop`, and do not give a screen its own gradient to match this one.
 
 ## Shapes
 

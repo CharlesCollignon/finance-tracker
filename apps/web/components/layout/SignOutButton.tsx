@@ -3,12 +3,15 @@
 import { Button } from "@/components/retroui/Button";
 import { signOut } from "@/lib/actions/finance";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/locale-context";
 
 interface SignOutButtonProps {
   className?: string;
 }
 
 export function SignOutButton({ className }: SignOutButtonProps) {
+  const t = useT();
+
   return (
     <form action={signOut}>
       <Button
@@ -17,7 +20,7 @@ export function SignOutButton({ className }: SignOutButtonProps) {
         size="sm"
         className={cn("text-sm", className)}
       >
-        Sign out
+        {t("common.signOut")}
       </Button>
     </form>
   );

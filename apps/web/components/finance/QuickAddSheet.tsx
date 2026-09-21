@@ -224,9 +224,21 @@ function QuickAddFields({
     >
       <div className="flex flex-col gap-5">
         {/* ---- amount ------------------------------------------------- */}
-        <div className="relative flex items-center justify-center py-2">
+        {/* The ring is on the wrapper because the input it belongs to is
+            `opacity-0`: the field a keyboard reader lands on first, on the
+            app's primary action, otherwise showed no focus at all (SC 2.4.7).
+            `focus-within` puts the documented treatment — 2px in the accent,
+            2px of offset — around the mirror that is actually visible, which
+            is where the caret is. */}
+        <div
+          className={cn(
+            "relative flex items-center justify-center rounded-control py-2",
+            "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+            "focus-within:ring-offset-background focus-within:outline-none",
+          )}
+        >
           <label htmlFor="quick-amount" className="sr-only">
-            Amount
+            {t("quickAdd.amount")}
           </label>
           <input
             id="quick-amount"
@@ -338,7 +350,9 @@ function QuickAddFields({
               onClick={() => setShowAllCategories(true)}
               className="self-start text-sm text-muted-foreground underline underline-offset-4"
             >
-              {formatCategoryOptionLabel(selected, locale)} — change
+              {t("quickAdd.changeCategory", {
+                name: formatCategoryOptionLabel(selected, locale),
+              })}
             </button>
           ) : null}
 
@@ -348,7 +362,7 @@ function QuickAddFields({
             <div className="max-h-56 overflow-y-auto rounded-control border border-border">
               {groups.length === 0 ? (
                 <p className="p-3 text-sm text-muted-foreground">
-                  No category matches “{query.trim()}”.
+                  {t("quickAdd.noCategoryMatch", { query: query.trim() })}
                 </p>
               ) : (
                 groups.map((group) => (
@@ -389,7 +403,7 @@ function QuickAddFields({
               onClick={() => setShowAllCategories(true)}
               className="self-start text-sm text-muted-foreground underline underline-offset-4"
             >
-              All categories
+              {t("quickAdd.allCategories")}
             </button>
           ) : null}
         </div>
@@ -397,7 +411,7 @@ function QuickAddFields({
         {/* ---- note --------------------------------------------------- */}
         <div className="relative flex flex-col gap-2">
           <label htmlFor="quick-note" className="text-sm font-medium">
-            Note
+            {t("quickAdd.note")}
           </label>
           <input
             id="quick-note"
@@ -438,7 +452,9 @@ function QuickAddFields({
         {/* ---- tags --------------------------------------------------- */}
         {tags.length > 0 ? (
           <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm font-medium">Tags</legend>
+            <legend className="text-sm font-medium">
+              {t("quickAdd.tags")}
+            </legend>
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => {
                 const on = tagIds.includes(tag.id);
@@ -476,9 +492,7 @@ function QuickAddFields({
         {savedCount > 0 ? (
           <p className="flex items-center gap-2 text-sm text-success">
             <CheckCircle size={ICON.md} weight="fill" />
-            {savedCount === 1
-              ? "1 saved — keep going."
-              : `${savedCount} saved — keep going.`}
+            {t("quickAdd.savedKeepGoing", { count: savedCount })}
           </p>
         ) : null}
 
@@ -502,7 +516,7 @@ function QuickAddFields({
             onClick={() => void save(true)}
           >
             <Plus size={ICON.md} />
-            Save &amp; add another
+            {t("quickAdd.saveAndAnother")}
           </Button>
         </div>
       </div>

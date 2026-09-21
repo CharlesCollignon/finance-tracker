@@ -118,7 +118,7 @@ export function SelectionBar({
                 disabled={pending}
                 onClick={() => setConfirming(false)}
               >
-                Cancel
+                {t("selectionBar.cancel")}
               </Button>
             </div>
           </>
@@ -169,7 +169,7 @@ export function SelectionBar({
                 disabled={pending}
                 onClick={close}
               >
-                Cancel
+                {t("selectionBar.cancel")}
               </Button>
             </div>
           </>
@@ -186,7 +186,9 @@ export function SelectionBar({
               </p>
               {summary.recurringCount > 0 ? (
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {summary.recurringCount} from recurring
+                  {t("selectionBar.fromRecurring", {
+                    count: summary.recurringCount,
+                  })}
                 </p>
               ) : null}
             </div>
@@ -200,7 +202,7 @@ export function SelectionBar({
                 onClick={() => setChoosing(true)}
               >
                 <ArrowsLeftRight size={ICON.md} />
-                Move
+                {t("selectionBar.move")}
               </Button>
               <Button
                 variant="outline"
@@ -210,7 +212,7 @@ export function SelectionBar({
                 onClick={() => setConfirming(true)}
               >
                 <Trash size={ICON.md} />
-                Delete
+                {t("selectionBar.delete")}
               </Button>
               <Button
                 variant="ghost"

@@ -295,8 +295,7 @@ export function ProfileView({
                   className="flex flex-col gap-3"
                 >
                   <p className={cn("text-muted-foreground", MICRO)}>
-                    Transactions, recurring, positions and categories. Your
-                    account stays.
+                    {t("profile.wipeBlurb")}
                   </p>
                   <Input
                     name="confirmation"
@@ -333,12 +332,11 @@ export function ProfileView({
                   className="flex flex-col gap-3"
                 >
                   <p className={cn("text-muted-foreground", MICRO)}>
-                    Permanent. Everything above goes with it.
+                    {t("profile.closeBlurb")}
                   </p>
                   {!canDeleteAccount ? (
                     <p className="text-sm text-destructive">
-                      Account deletion requires SUPABASE_SERVICE_ROLE_KEY on the
-                      server (local: .env.local, production: Vercel env vars).
+                      {t("profile.deleteNeedsServiceKey")}
                     </p>
                   ) : null}
                   <Input

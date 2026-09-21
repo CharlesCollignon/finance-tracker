@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { cn } from "@/lib/utils";
 
 /**
@@ -138,8 +139,11 @@ export function GlassStat({
   );
 
   if (href) {
+    // The ring goes on the link and not on the shell: without an `href` this
+    // is a figure on a panel, which is not focusable and must not look as
+    // though it were.
     return (
-      <Link href={href} className={shell}>
+      <Link href={href} className={cn(shell, marketingFocus)}>
         {body}
       </Link>
     );
@@ -167,6 +171,7 @@ export function GlassLink({
       href={href}
       className={cn(
         "glass-flat glass-flat-hover group flex flex-col rounded-card p-card",
+        marketingFocus,
         className,
       )}
     >

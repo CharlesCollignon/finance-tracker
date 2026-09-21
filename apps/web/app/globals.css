@@ -280,10 +280,20 @@
      these are translucent whites, so the site's grain and orb show through
      them, over a ground a step deeper than the app's. `muted-foreground` is
      one opaque value tuned for the app's page. One token across both would
-     have to hold two values anyway. */
+     have to hold two values anyway.
+
+     The faint step was /0.35, which over `--marketing-ground` (#06060a)
+     composites to #5d5d60 and 3.09:1 — under the 4.5:1 AA floor, on a step
+     that carries real prose in a dozen places: the pillars heading, two
+     section footnotes, the example-data note, the footer tagline and its
+     three column headings, the copyright line, and Previous/Next on every
+     feature page. /0.50 is 5.31:1 and clears it, and on the glass panels,
+     whose ground is a shade lighter, it still reads at 5.23:1. Raised rather
+     than replaced: the count is the rule, so this is still the third grey and
+     not a fourth. */
   --color-marketing-ink: rgb(255 255 255 / 0.85);
   --color-marketing-muted: rgb(255 255 255 / 0.55);
-  --color-marketing-faint: rgb(255 255 255 / 0.35);
+  --color-marketing-faint: rgb(255 255 255 / 0.5);
 
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);

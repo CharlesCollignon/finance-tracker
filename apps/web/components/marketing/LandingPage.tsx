@@ -41,8 +41,16 @@ const FEATURE_ICONS: Record<LandingPageId, React.ReactNode> = {
   "month-read": <Sparkle size={18} />,
 };
 
-/** Twelve months of unrecorded spending, as fractions of the worst one. The
- * shape is the point — it settles as the habit takes — not the values. */
+/** Twelve months of unrecorded spending, as fractions of the worst one.
+ *
+ * Only ever drawn inside the month-close block, where `exampleNote` sits two
+ * elements below it and says in words that these figures are made up. It used
+ * to be on the hero card as well, above the fold and with nothing next to it
+ * saying so, where a row of bars falling from 0.95 to 0.34 was not an
+ * illustration of a mechanism but a claim about an outcome — that a year of
+ * using this drives unrecorded spending down by two thirds. There is no such
+ * measurement, and `PRODUCT.md` says none may be implied or dressed up as
+ * placeholder content. */
 const UNRECORDED_TREND = [
   0.95, 0.82, 0.88, 0.7, 0.74, 0.58, 0.62, 0.48, 0.52, 0.4, 0.44, 0.34,
 ] as const;
@@ -155,7 +163,6 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             label={hero.cards.unrecorded.label}
             value={euro(close.unrecorded)}
             caption={hero.cards.unrecorded.caption}
-            spark={UNRECORDED_TREND}
             className="absolute bottom-5 right-0 z-10 hidden w-[15.5rem] sm:block"
           />
 
@@ -168,6 +175,17 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             aria-hidden
           />
         </div>
+
+        {/* Two figures above the fold, neither of them anybody's. The same
+            sentence the close's sample figures carry further down, because
+            they are the same sample month and one wording is what keeps it
+            from reading as a legal hedge attached to each card. Below the
+            stage rather than inside it: the cards are pinned to the stage's
+            corners, and a caption placed among them lands under whichever
+            one the viewport puts there. */}
+        <p className="relative z-10 mx-auto max-w-sm pb-6 text-center text-xs leading-relaxed text-marketing-faint">
+          {monthClose.exampleNote}
+        </p>
       </section>
 
       {/* --------------------------------------------------------- pillars */}

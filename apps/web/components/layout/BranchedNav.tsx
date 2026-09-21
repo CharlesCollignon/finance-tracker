@@ -226,9 +226,15 @@ function Section({
                   on
                     ? "text-primary-ink font-medium"
                     : "hover:text-foreground text-muted-foreground",
-                  // Dimmer while you are elsewhere, so the surface you are
-                  // actually in still reads as the one you are in.
-                  !active && !on && "text-muted-foreground/60",
+                  // A branch you are not in used to be dimmed a further step,
+                  // to `text-muted-foreground/60`. That is about 3.2:1 against
+                  // the sidebar ground at 14px, under the 4.5:1 body-text
+                  // floor PRODUCT.md makes blocking, and the Don't in
+                  // DESIGN.md rules out inventing an alpha where a token
+                  // exists. The distinction it was making is carried by the
+                  // branch drawing itself: the trunk and the reach path are
+                  // what say which surface you are in, and they are drawn in
+                  // the accent rather than in text colour.
                 )}
               >
                 {t(kid.labelKey)}

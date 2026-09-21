@@ -4,6 +4,7 @@ import { ArrowsClockwise } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useRefresh } from "@/components/layout/RefreshProvider";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 /**
  * The refresh, in the band every surface already has.
@@ -22,6 +23,7 @@ export function RefreshButton({
   variant?: "icon" | "wide";
   className?: string;
 }) {
+  const t = useT();
   const refresh = useRefresh();
 
   if (!refresh) {
@@ -30,12 +32,12 @@ export function RefreshButton({
 
   const { running, age, stale, connected, known } = refresh;
   const label = !connected
-    ? "Reload everything"
+    ? t("refresh.reloadEverything")
     : running
-      ? "Asking your bank…"
+      ? t("refresh.askingBank")
       : known
-        ? `Refresh — last checked ${age}`
-        : "Ask your bank for anything new";
+        ? t("refresh.lastChecked", { age })
+        : t("refresh.askBank");
 
   if (variant === "icon") {
     return (
@@ -46,7 +48,11 @@ export function RefreshButton({
         aria-label={label}
         title={label}
         className={cn(
-          "relative inline-flex h-9 w-9 shrink-0 items-center justify-center",
+          // 44px square, which is the documented touch floor, while the icon
+          // inside stays the size it was. The header is `3.25rem` (52px) tall
+          // and the control sits inside that with 4px to spare, so raising it
+          // from `h-9 w-9` costs the band no height.
+          "relative inline-flex size-11 shrink-0 items-center justify-center",
           "rounded-control border border-border bg-card text-muted-foreground",
           "transition-colors hover:bg-muted hover:text-foreground",
           "disabled:cursor-wait disabled:opacity-70",
@@ -90,12 +96,17 @@ export function RefreshButton({
         weight="light"
         className={cn("shrink-0", running && "animate-spin")}
       />
-      {running ? "Refreshing…" : "Refresh"}
+      {running ? t("refresh.refreshing") : t("refresh.refresh")}
       {connected && known && !running ? (
+        // The age was set in `text-muted-foreground/70`, which is about 3.9:1
+        // at 11px — under the 4.5:1 floor, and on the one string here that
+        // says how much to trust the figures. Full-strength muted foreground
+        // is the token that already means "secondary text"; the size is what
+        // keeps it secondary.
         <span
           className={cn(
             "ml-auto truncate text-xs",
-            stale ? "text-primary-ink" : "text-muted-foreground/70",
+            stale ? "text-primary-ink" : "text-muted-foreground",
           )}
         >
           {age}

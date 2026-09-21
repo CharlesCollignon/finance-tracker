@@ -159,7 +159,7 @@ export function MonthCloseSheet({
         toast(response.error, "error");
         return;
       }
-      toast(`${monthLabel} reopened`, "success");
+      toast(t("monthClose.reopened", { month: monthLabel }), "success");
       close();
     });
   }
@@ -205,15 +205,14 @@ export function MonthCloseSheet({
               </span>
               {fromBank ? (
                 <span className="text-xs text-muted-foreground">
-                  Filled in from your bank. Change it if the reading day differs
-                  from today.
+                  {t("monthClose.filledFromBank")}
                 </span>
               ) : null}
               <Input
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
-                placeholder="2400.50"
+                placeholder={t("monthClose.balancePlaceholder")}
                 value={balance}
                 onChange={(event) => setBalance(event.target.value)}
                 aria-label={t("monthClose.balanceOn", { date: observeOn })}
@@ -242,9 +241,10 @@ export function MonthCloseSheet({
                   {t("monthClose.startingPointSet")}
                 </h3>
                 <Text className="mt-1 text-sm text-muted-foreground">
-                  {formatMoney(result.closingBalance)} on{" "}
-                  {formatShortDate(observeOn)}. Close next month and the app can
-                  start telling you what it never saw.
+                  {t("monthClose.baselineSet", {
+                    amount: formatMoney(result.closingBalance),
+                    date: formatShortDate(observeOn, locale),
+                  })}
                 </Text>
               </div>
             ) : result.status === "over-recorded" ? (
@@ -253,11 +253,9 @@ export function MonthCloseSheet({
                   {t("monthClose.somethingMissing")}
                 </h3>
                 <Text className="mt-1 text-sm text-muted-foreground">
-                  The account holds {formatMoney(result.unexplainedCredit ?? 0)}{" "}
-                  more than the recorded movements allow. Usually that means
-                  income that was never entered — or an expense entered twice,
-                  or a broker transfer recorded both as a transaction and as a
-                  transfer.
+                  {t("monthClose.unexplainedCredit", {
+                    amount: formatMoney(result.unexplainedCredit ?? 0),
+                  })}
                 </Text>
               </div>
             ) : (
@@ -278,8 +276,7 @@ export function MonthCloseSheet({
                 </Text>
                 {days !== null && (
                   <Text className="mt-1 text-sm text-muted-foreground">
-                    That is {days} {days === 1 ? "day" : "days"} of runway
-                    bought.
+                    {t("monthClose.runwayBought", { count: days })}
                   </Text>
                 )}
               </div>

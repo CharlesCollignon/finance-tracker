@@ -77,28 +77,27 @@ export function QuickAddProvider({
     );
   }, []);
 
+  /**
+   * One shortcut, and it carries a modifier.
+   *
+   * There were two. Beside Cmd/Ctrl+K there was a bare `n`, bound on `window`
+   * for the whole app and guarded only by "the focus is not in a field". That
+   * is WCAG 2.1 SC 2.1.4 Character Key Shortcuts at Level A, which PRODUCT.md
+   * makes blocking rather than advisory, and the failure it describes is not
+   * hypothetical here: a screen reader in browse mode sends single letters to
+   * the page as navigation keys — `n` is a quick-nav key in several of them —
+   * and voice dictation puts whatever was said onto whatever has focus. Either
+   * one opened a transaction sheet over the reader's place on the page, from a
+   * keystroke meant for something else.
+   *
+   * The guidance offers three remedies: let the shortcut be turned off,
+   * let it be remapped, or require a modifier. A single-user app with no
+   * settings surface for keybindings has one of those, so `n` is gone and
+   * Cmd/Ctrl+K — which is exempt, being modified — is the whole of it.
+   */
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      const target = event.target as HTMLElement | null;
-      const typing =
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.tagName === "SELECT" ||
-        target?.isContentEditable;
-
-      // Cmd/Ctrl+K works even while typing; bare "n" would eat the keystroke.
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setDate(undefined);
-        setIsOpen(true);
-        return;
-      }
-
-      if (typing || event.metaKey || event.ctrlKey || event.altKey) {
-        return;
-      }
-
-      if (event.key.toLowerCase() === "n") {
         event.preventDefault();
         setDate(undefined);
         setIsOpen(true);

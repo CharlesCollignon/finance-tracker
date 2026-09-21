@@ -187,7 +187,7 @@ function Card({
                 presented as somebody's worth, in an app that records no
                 debts, is wrong by exactly their mortgage. */}
             {card.lead?.note ? (
-              <span className={cn(MICRO, "text-muted-foreground/70")}>
+              <span className={cn(MICRO, "text-muted-foreground")}>
                 {card.lead.note}
               </span>
             ) : null}
@@ -398,15 +398,37 @@ function Run({
   );
 }
 
-/** The colour a figure takes from which way it has gone. */
+/**
+ * The colour a card figure takes, which is almost always none of its own.
+ *
+ * This used to read the datum's `sense`, paint Lamplit Gold on every figure
+ * that had moved the way the sense calls good and Destructive on every one
+ * that had not. Three rules say it cannot. The Semantic Amount Rule is that a
+ * colour names what kind of money a figure is — income, expense, savings,
+ * investment — and never whether it is up or down. The Rare Accent Rule is
+ * that gold is scarce and means savings, and `bearing-facts.ts` declares
+ * seventeen `up-is-good` data, so one healthy month spent the accent a dozen
+ * times on a single screen. And PRODUCT.md's third refusal is that the app
+ * does not tell the user what to do: a wall of good/bad colour is a score,
+ * whatever the tooltip says.
+ *
+ * So the default is the foreground, and two figures keep Destructive because
+ * each names something to do rather than a verdict. `free` below zero says
+ * the month has already promised more than it has. `unrecorded-over` is in
+ * the pack at all only when measured unrecorded spending has passed the
+ * allowance the reader set themselves — its presence is the finding, so it
+ * needs no threshold here.
+ *
+ * `sense` stays on the datum and is untouched. MonthRead is the surface
+ * licensed to say in a sentence that a month went well, and it reads the same
+ * field; this card only shows the figure.
+ */
 function toneFor(figure: CardFigure): string {
-  if (figure.sense === "neutral" || figure.value === 0) {
-    return "text-foreground";
+  if (figure.id === "free") {
+    return figure.value < 0 ? "text-destructive" : "text-foreground";
   }
-  // The datum says which way is good; the value says which way it went. A
-  // rise in something marked "rising is bad" is the one combination worth
-  // colouring, and its opposite is the one worth rewarding.
-  const good =
-    figure.sense === "up-is-good" ? figure.value > 0 : figure.value < 0;
-  return good ? "text-primary-ink" : "text-destructive";
+  if (figure.id === "unrecorded-over") {
+    return "text-destructive";
+  }
+  return "text-foreground";
 }

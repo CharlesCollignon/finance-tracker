@@ -142,6 +142,19 @@ export const en = {
     deleteMyAccount: "Delete my account",
     /** What a server action that reported nothing in particular means. */
     saved: "Saved",
+    /* What each of the two destructive rows takes with it. */
+    wipeBlurb:
+      "Transactions, recurring templates, positions and categories. Your account stays.",
+    closeBlurb: "Permanent. Everything above goes with it.",
+    /**
+     * Why the row below is inert on a deployment that cannot do it.
+     *
+     * Operational rather than conversational, and translated anyway: it is
+     * on screen, and a French reader meeting one English paragraph in the
+     * middle of their settings learns that the translation is partial.
+     */
+    deleteNeedsServiceKey:
+      "Account deletion requires SUPABASE_SERVICE_ROLE_KEY on the server (local: .env.local, production: Vercel env vars).",
   },
 
   /**
@@ -156,13 +169,14 @@ export const en = {
     applyPending: "Applying…",
     applyRecurring: "Apply recurring",
     applyWaiting: "Recurring changes are waiting to be applied",
-    applyAllDone: "All recurring entries already applied",
+    applyAllDone: "All recurring occurrences already applied",
     applyNothing: "Nothing to apply",
     applyResult: "Recurring applied: {parts}",
     applyAdded: "{count} added",
     applyUpdated: "{count} updated",
     emptyTitle: "Nothing recorded this month",
-    emptyBody: "Add an entry, or apply the charges you already know repeat.",
+    emptyBody:
+      "Add a transaction, or apply the charges you already know repeat.",
     searchPlaceholder: "Search category or note…",
     searchLabel: "Search transactions",
     filterByCategory: "Filter by category",
@@ -174,12 +188,42 @@ export const en = {
     select: "Select",
     clearAll: "Clear all",
     selectAll: "Select all",
-    exportCsv: "Export these entries as CSV",
+    exportCsv: "Export these transactions as CSV",
     importCsv: "Import a CSV statement",
     exportNothing: "Nothing to export for this view",
-    noMatchTitle: "No matching entries",
+    noMatchTitle: "No matching transactions",
     noMatchBody: "Try another search or filter.",
-    entryCount: { one: "{count} entry", other: "{count} entries" },
+    entryCount: {
+      one: "{count} transaction",
+      other: "{count} transactions",
+    },
+    /**
+     * The same line under a filter, which states two numbers.
+     *
+     * `count` is how many are showing, because that is the number the French
+     * noun agrees with — "1 transaction sur 5". English pluralises on the
+     * total instead, so both its forms are identical, the way
+     * `importer.alreadyInLedger` already carries two identical forms for a
+     * split French needs and English does not.
+     */
+    shownOfTotal: {
+      one: "{count} of {total} transactions",
+      other: "{count} of {total} transactions",
+    },
+    exported: {
+      one: "Exported {count} transaction",
+      other: "Exported {count} transactions",
+    },
+    /* The Ledger's own totals strip, which describes what is on screen. */
+    in: "In",
+    out: "Out",
+    leftAtMonthEnd: "Left at month end",
+    clearFilters: "Clear filters",
+    /* What a row's own control is called, for a reader who cannot see it. */
+    selectRow: "Select {name}",
+    editRow: "Edit {name}",
+    /** Stands in when a move's target category cannot be named. */
+    theNewCategory: "the new category",
     deleted: {
       one: "{count} transaction deleted",
       other: "{count} transactions deleted",
@@ -200,12 +244,12 @@ export const en = {
     selectHint: "Tap to select · Done to leave",
     editHint: "Tap to edit · long-press to select",
     needsCategory: {
-      one: "{count} entry needs a category",
-      other: "{count} entries need a category",
+      one: "{count} transaction needs a category",
+      other: "{count} transactions need a category",
     },
     needsCategoryAction: {
-      one: "{count} entry needs a category. Review",
-      other: "{count} entries need a category. Review",
+      one: "{count} transaction needs a category. Review",
+      other: "{count} transactions need a category. Review",
     },
     repeatTitle: "Repeat this today?",
     repeatBody: "Adds another {category} of {amount} dated today.",
@@ -255,6 +299,23 @@ export const en = {
       one: "Imported {count} transaction",
       other: "Imported {count} transactions",
     },
+    /* Reading the file, before there is anything to map. */
+    intro:
+      "Export a CSV from your bank and drop it here. The file is read in your browser — nothing is uploaded, and nothing is saved until you have reviewed every row.",
+    dropFile: "Drop a .csv file here",
+    fileTooLarge: "That file is larger than 5 MB — is it the right export?",
+    fileNoRows: "That file has no rows in it.",
+    noRowsRead: "No rows could be read from that file.",
+    /* Mapping. `columnNumber` stands in for a column the file did not name. */
+    columnNumber: "Column {number}",
+    rowCount: { one: "{count} row", other: "{count} rows" },
+    guesses: "These are the app’s guesses. Change any that are wrong.",
+    spendingIs: "In this file, spending is",
+    signNegative: "Negative (−12.50)",
+    signPositive: "Positive (12.50)",
+    /* Reviewing. */
+    categoryForLine: "Category for line {line}",
+    choose: "Choose…",
   },
 
   /** The Plan surface: spending caps, savings goals and tags. */
@@ -280,7 +341,7 @@ export const en = {
     allSavings: "All savings",
     tagsHeading: "Tags",
     tagsBlurb:
-      "A second way to group an entry, cutting across categories — a holiday, a flatmate, a side project.",
+      "A second way to group a transaction, cutting across categories — a holiday, a flatmate, a side project.",
     newTag: "New tag",
     addTag: "Add tag",
     tagAdded: "Tag added",
@@ -337,7 +398,7 @@ export const en = {
     close: "Close",
     category: "Category",
     description: "Description",
-    descriptionPlaceholder: "e.g. Netflix, gym membership, CTO DCA",
+    descriptionPlaceholder: "e.g. Netflix, gym membership, monthly ETF buy",
     schedule: "Schedule",
     monthly: "Monthly",
     weekly: "Weekly",
@@ -365,7 +426,7 @@ export const en = {
     updatedHint: "Updated. Apply recurring in the Ledger to see the change.",
     deletedHint: "Deleted — apply recurring in the Ledger to see the change.",
     brokerDcaNote:
-      "Broker DCA entries are tracked for visibility but do not reduce your remaining budget.",
+      "Buys at the broker are tracked for visibility but do not reduce your remaining budget.",
     bitstackNote:
       "Fixed EUR weekly buy on Bitstack. Market value on Wallets uses your total BTC × live BTC/EUR price.",
     sharesNote:
@@ -402,7 +463,7 @@ export const en = {
     confirmSkip: "Yes, skip this date",
     skipped: "Skipped for this date — won’t be re-applied",
     skipExplanation:
-      "Skip this date only? The entry will be removed and Apply won’t recreate it. The recurring rule stays active for later months.",
+      "Skip this date only? The transaction will be removed and Apply won’t recreate it. The recurring template stays active for later months.",
     cancel: "Cancel",
   },
 
@@ -418,7 +479,7 @@ export const en = {
     emptyBody:
       "Rent, subscriptions, a monthly transfer into savings — anything you already know is coming.",
     emptyTitleMobile: "What repeats each month?",
-    emptyBodyMobile: "Rent, salary, subscriptions, DCA.",
+    emptyBodyMobile: "Rent, salary, subscriptions, a monthly ETF buy.",
     openLedgerToApply: "Open the Ledger to apply these charges",
     /**
      * The banner above the list when this month was written before these
@@ -461,6 +522,20 @@ export const en = {
     saved: "Transaction saved",
     savedOffline:
       "Saved on this device — it will sync when you are back online",
+    /* The three field names, one of which is only ever heard. */
+    amount: "Amount",
+    note: "Note",
+    tags: "Tags",
+    allCategories: "All categories",
+    noCategoryMatch: "No category matches “{query}”.",
+    /**
+     * The running tally while saving several in a row. Both forms are the
+     * same in English and differ in French, which agrees the participle.
+     */
+    savedKeepGoing: {
+      one: "{count} saved — keep going.",
+      other: "{count} saved — keep going.",
+    },
   },
 
   /** First run: the two minutes that put real numbers on the Bearing. */
@@ -510,12 +585,14 @@ export const en = {
      * owed, because most readers who open it have already finished.
      */
     reopen: "Set-up walkthrough",
+    /** One of the charges the third step collects, once it is saved. */
+    templateAdded: "{name} added",
   },
 
   /** Categories: the labels the user files transactions under. */
   categories: {
     blurb:
-      "Categories organise your transactions and recurring items. Archived categories keep their history but no longer appear when adding entries.",
+      "Categories organise your transactions and recurring templates. Archived categories keep their history but no longer appear when adding transactions.",
     addCategory: "Add category",
     newCategory: "New category",
     editCategory: "Edit category",
@@ -547,7 +624,7 @@ export const en = {
     countsHintSavings:
       "Untick for money coming back out of savings — a transfer to your current account. It is subtracted from what you set aside, and comes off the reserve behind the runway.",
     countsHintInvestment:
-      "Untick for wallet DCA tracked outside the budget (e.g. buys funded by broker transfers).",
+      "Untick for wallet buys tracked outside the budget (e.g. buys funded by broker transfers).",
   },
 
   /**
@@ -774,6 +851,20 @@ export const en = {
     inviteNormal:
       "A normal month for you is around {amount} the app never sees.",
     inviteBare: "One balance, and the app can work out what it never saw.",
+    /** The card's own button, which names no month — the heading above it does. */
+    closeTheMonth: "Close the month",
+    monthsInARow: {
+      one: "{count} month in a row",
+      other: "{count} months in a row",
+    },
+    filledFromBank:
+      "Filled in from your bank. Change it if the reading day differs from today.",
+    /**
+     * A sample balance, and a real translation rather than a stray literal:
+     * French writes the decimal with a comma, so an English-shaped example
+     * in the field teaches the wrong format to the reader who needs it most.
+     */
+    balancePlaceholder: "2400.50",
     reopened: "{month} reopened",
     baselineSet:
       "{amount} on {date}. Close next month and the app can start telling you what it never saw.",
@@ -810,6 +901,16 @@ export const en = {
     },
     taughtIt:
       "Anything the app already recognised went straight in. Answering these teaches it for next time.",
+    nothingFromBank: "Nothing waiting from your bank.",
+    leaveOut: "Leave out",
+    /* The other column: what was decided, and how to take it back. */
+    recentlyDecided: "Recently decided",
+    putOneBack: "Put one back if it went to the wrong place.",
+    leftOut: "left out",
+    inYourLedger: "in your ledger",
+    move: "Move",
+    changeCategory: "Change category",
+    undo: "Undo",
   },
 
   /** The bar that appears once rows are selected. */
@@ -833,6 +934,11 @@ export const en = {
     confirmDelete: "Yes, delete",
     cancel: "Cancel",
     clear: "Clear selection",
+    /** How much of the selection Apply would put back if it were deleted. */
+    fromRecurring: {
+      one: "{count} from a recurring template",
+      other: "{count} from recurring templates",
+    },
   },
 
   /** The Ledger seen by date. */
@@ -871,6 +977,29 @@ export const en = {
     noAccount: "No account?",
     noAccountYet: "No account yet?",
     createOne: "Create one",
+    or: "or",
+    welcomeBack: "Welcome back",
+    signUpHeading: "Start tracking income and expenses",
+    linkExpired: "Sign-in link expired or invalid. Please try again.",
+    redirecting: "Redirecting…",
+    waitingForPasskey: "Waiting for passkey…",
+    /**
+     * Getting back in.
+     *
+     * `resetSent` says the same thing whether or not the address has an
+     * account behind it. That is the wording, not a hedge: a reply that
+     * distinguished the two would tell anybody who asked which addresses are
+     * registered here.
+     */
+    forgotPassword: "Forgot password?",
+    resetHeading: "Reset your password",
+    resetBody:
+      "Enter your email address and we will send you a link back into your ledger.",
+    sendResetLink: "Send the link",
+    sendingResetLink: "Sending…",
+    resetSent:
+      "If there is an account for {email}, a link is on its way. Check your inbox, and your spam folder.",
+    backToSignIn: "Back to sign in",
   },
 
   /**
@@ -1024,8 +1153,8 @@ export const en = {
     itemUpdated: "{name} updated",
     itemType: "Item type",
     recurringItem: "Recurring item",
-    dcaBitcoin: "Fixed EUR DCA · Bitcoin on Bitstack",
-    dcaEtf: "Fixed EUR DCA · ETF set under Plan",
+    dcaBitcoin: "Fixed EUR each month · Bitcoin on Bitstack",
+    dcaEtf: "Fixed EUR each month · ETF set under Plan",
     trackedAsset: "Tracked asset",
     trackedEtf: "Tracked ETF",
     bitcoin: "Bitcoin",
@@ -1124,12 +1253,12 @@ export const en = {
     actionClose: "Close",
     actionStart: "Start",
     attentionSwallowed: {
-      one: "{count} bank entry was merged away by an earlier sync",
-      other: "{count} bank entries were merged away by an earlier sync",
+      one: "{count} bank transaction was merged away by an earlier sync",
+      other: "{count} bank transactions were merged away by an earlier sync",
     },
     attentionInbox: {
-      one: "{count} entry needs a category",
-      other: "{count} entries need a category",
+      one: "{count} transaction needs a category",
+      other: "{count} transactions need a category",
     },
     attentionApply: {
       one: "{count} recurring item is ready to add",
@@ -1208,6 +1337,13 @@ export const en = {
     browserNotifications: "Browser notifications",
     theRun: "The run",
     kept: "Kept",
+    /**
+     * The privacy blur's toggle, which is an icon and nothing else — so
+     * these two are the whole of its wording, seen only by a screen reader
+     * and in the tooltip.
+     */
+    showAmounts: "Show amounts",
+    hideAmounts: "Hide amounts",
   },
 
   /** Choosing a language, and being asked whether to. */
@@ -1316,9 +1452,9 @@ export const en = {
     typeChangeSome:
       "{count} of them move to a different kind of category, so past months' totals and unrecorded spending will change.",
     rulesLeftBehind: {
-      one: "{names} will still be filed the old way, because a newer entry for it is not selected.",
+      one: "{names} will still be filed the old way, because a newer transaction for it is not selected.",
       other:
-        "{names} will still be filed the old way, because a newer entry for them is not selected.",
+        "{names} will still be filed the old way, because a newer transaction for them is not selected.",
     },
     rulesRewritten: "From now on {names} will be filed as {target}.",
     recurringKeepCategory:
@@ -1402,7 +1538,7 @@ export const en = {
     budgetOver: "{label} cap, gone over by",
     goalSaved: "{name}, saved",
     investedValue: "Invested value",
-    inboxPending: "Entries still waiting for a category",
+    inboxPending: "Transactions still waiting for a category",
     chargesUnconfirmed: "Recurring charges not yet confirmed",
   },
 
@@ -1481,7 +1617,7 @@ export const en = {
     walletConcentrationNote:
       "the largest single holding, weighed against what is invested rather than against cash",
     contributionPace: "Going into the wallets each month",
-    inboxPending: "Entries still waiting for a category",
+    inboxPending: "Transactions still waiting for a category",
   },
 
   /**
@@ -1614,8 +1750,8 @@ export const en = {
     measuredNote:
       "Measured against your last close, not remembered — so it moves when the bank does, and it is not final until the month is closed.",
     notYetMeasured:
-      "Close a month against your bank balance and this fills in: the app works out what left the account that no entry explains.",
-    findMissingEntry: "Find the missing entry",
+      "Close a month against your bank balance and this fills in: the app works out what left the account that no transaction explains.",
+    findMissingEntry: "Find the missing transaction",
     /**
      * The footer link's third state, offered when there is nothing yet to
      * measure. Its own key rather than `common.setUp` (a title, "Set up",
@@ -1825,9 +1961,9 @@ export const en = {
     currentOption: "Current · {date}",
     monthEndOption: "End of month · {date}",
     currentHint:
-      "Through today only — future expenses and DCA not counted yet.",
+      "Through today only — future expenses and wallet buys not counted yet.",
     monthEndHint:
-      "Includes all recurring due this month, including wallet DCA.",
+      "Includes every occurrence due this month, wallet buys included.",
   },
 
   /**
@@ -2380,6 +2516,39 @@ export const en = {
    * has a locale, so they carry these keys rather than these sentences and
    * the client resolves them at the point it shows a toast.
    */
+  /**
+   * When a page cannot be drawn at all.
+   *
+   * Two screens with nothing else in common beyond being the last thing a
+   * reader sees before they give up, which is exactly why they are worth
+   * translating: the app is at its least trustworthy here, and a paragraph
+   * that switches to English while apologising is one more thing gone wrong.
+   */
+  errorPage: {
+    title: "Something went wrong",
+    body: "We couldn’t load this page. Your data is safe — try again, and if the problem persists, sign out and back in.",
+    tryAgain: "Try again",
+    notFoundTitle: "Page not found",
+    notFoundBody: "The page you’re looking for doesn’t exist or has moved.",
+    goHome: "Go home",
+  },
+
+  /**
+   * The refresh, in both its shapes.
+   *
+   * The icon in the header has no visible words at all — these are its
+   * accessible name and its tooltip — and the wide one in the sidebar says
+   * how old the figures are beside them.
+   */
+  refresh: {
+    reloadEverything: "Reload everything",
+    askingBank: "Asking your bank…",
+    lastChecked: "Refresh — last checked {age}",
+    askBank: "Ask your bank for anything new",
+    refreshing: "Refreshing…",
+    refresh: "Refresh",
+  },
+
   errors: {
     /**
      * Validation messages, carried by the Zod schemas as keys.
