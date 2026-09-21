@@ -41,20 +41,19 @@ const FEATURE_ICONS: Record<LandingPageId, React.ReactNode> = {
   "month-read": <Sparkle size={18} />,
 };
 
-/** Twelve months of unrecorded spending, as fractions of the worst one.
- *
- * Only ever drawn inside the month-close block, where `exampleNote` sits two
- * elements below it and says in words that these figures are made up. It used
- * to be on the hero card as well, above the fold and with nothing next to it
- * saying so, where a row of bars falling from 0.95 to 0.34 was not an
- * illustration of a mechanism but a claim about an outcome — that a year of
- * using this drives unrecorded spending down by two thirds. There is no such
- * measurement, and `PRODUCT.md` says none may be implied or dressed up as
- * placeholder content. */
-const UNRECORDED_TREND = [
-  0.95, 0.82, 0.88, 0.7, 0.74, 0.58, 0.62, 0.48, 0.52, 0.4, 0.44, 0.34,
-] as const;
-const KEPT_TREND = [0.3, 0.38, 0.34, 0.45, 0.52, 0.48, 0.6, 0.66] as const;
+/* The two sparklines that used to live here are gone rather than relocated.
+   Twelve bars falling 0.95 to 0.34 and eight rising 0.30 to 0.66 were not
+   illustrations of a mechanism, they were claims about an outcome — that a
+   year of this drives unrecorded spending down by two thirds and more than
+   doubles what you keep. Nothing has measured either, and `PRODUCT.md` says
+   no benchmark may be invented, implied, or dressed up as placeholder
+   content. Moving them next to the "Example data" note did not help: that
+   note labels the figures, and a slope is not a figure.
+
+   The meters that replaced them are ratios the sample month actually
+   contains — 218 against a 260 allowance, 35.7% of what came in. The Run
+   draws no meter at all, because `close.streak / 6` measured progress toward
+   a six-month target that exists nowhere in the product. */
 
 function SectionHeading({
   heading,
@@ -310,7 +309,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
               caption={t("marketingStat.underAllowance", {
                 amount: euro(close.unrecordedCap),
               })}
-              spark={UNRECORDED_TREND}
+              meter={close.unrecorded / close.unrecordedCap}
               className="w-full"
             />
             <div className="grid gap-4 sm:grid-cols-2">
@@ -320,14 +319,13 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                 caption={t("marketingStat.ofWhatCameIn", {
                   percent: percent(close.keptRate),
                 })}
-                spark={KEPT_TREND}
+                meter={close.keptRate / 100}
                 className="w-full"
               />
               <GlassStat
                 label={t("common.theRun")}
                 value={t("marketingStat.monthsValue", { count: close.streak })}
                 caption={t("marketingStat.inARowInsideAllowance")}
-                meter={close.streak / 6}
                 className="w-full"
               />
             </div>

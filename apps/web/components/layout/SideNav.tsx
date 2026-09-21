@@ -12,6 +12,24 @@ import { RefreshButton } from "@/components/layout/RefreshButton";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 
+/**
+ * Whether to spell the quick-add shortcut with a Command glyph.
+ *
+ * Read from the browser rather than passed down, because the shortcut is
+ * decided by the keyboard in front of the reader and nothing the server knows.
+ * `navigator.platform` is deprecated but is the only field that still answers
+ * this in every engine; the optional chain keeps it safe before hydration.
+ */
+function isApplePlatform(): boolean {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+  return /mac|iphone|ipad|ipod/i.test(
+    (navigator as { userAgentData?: { platform?: string } }).userAgentData
+      ?.platform ?? navigator.platform,
+  );
+}
+
 /** The app's primary action, given the top slot rather than a page to visit. */
 function QuickAddButton() {
   const t = useT();
@@ -34,8 +52,15 @@ function QuickAddButton() {
     >
       <Plus size={ICON.lg} weight="bold" />
       {t("common.addTransaction")}
-      <kbd className="ml-auto rounded-control bg-black/15 px-1.5 py-0.5 text-[10px] font-normal">
-        N
+      {/* The badge used to read `N`, and the binding behind it was removed
+          because a bare letter opens this sheet over whatever a screen reader
+          is in the middle of (WCAG 2.1 SC 2.1.4). The badge stayed, which left
+          the only keyboard hint in the app teaching a key that does nothing.
+          It names the surviving shortcut instead, and reads the platform so a
+          Windows or Linux reader is not told to press a key their keyboard
+          does not have. */}
+      <kbd className="ml-auto rounded-control bg-black/15 px-1.5 py-0.5 text-xs font-normal">
+        {isApplePlatform() ? "\u2318K" : "Ctrl K"}
       </kbd>
     </button>
   );

@@ -48,7 +48,7 @@ export const landingCopy = {
       },
       {
         title: "Act on a rule you did not write",
-        body: "A statement row files itself only where you have already put that shop somewhere twice. Everything else waits in a list, and a recurring item is a template until you apply it.",
+        body: "An imported row files itself only where you have already put that shop somewhere twice. Everything else waits in a list, and a recurring item is a template until you apply it.",
       },
       {
         title: "Tell you what to do",
@@ -64,7 +64,7 @@ export const landingCopy = {
 
   features: {
     heading: "Every screen is the same ledger",
-    body: "Nothing here keeps a second set of numbers. Your entries and your statement land in one place, and every screen is a different reading of it.",
+    body: "Nothing here keeps a second set of numbers. Your entries and an imported export land in one place, and every screen is a different reading of it.",
   },
 
   monthClose: {
@@ -216,7 +216,7 @@ export const landingCopy = {
         },
         {
           title: "Apply it, skip it, or say it already happened",
-          body: "Nothing exists until you apply it, and applying writes ordinary rows you can still edit. Skip a single month without deactivating the template. And where the statement reported the movement itself, say that this is the one the template called for, instead of leaving a second row beside it.",
+          body: "Nothing exists until you apply it, and applying writes ordinary rows you can still edit. Skip a single month without deactivating the template. And where an import already brought the movement in, say that this is the one the template called for, instead of leaving a second row beside it.",
         },
         {
           title: "Kept in line with the market",

@@ -56,7 +56,7 @@ export const landingCopyFr: LandingCopySections & {
       },
       {
         title: "Agir sur une règle que vous n'avez pas écrite",
-        body: "Une ligne de relevé ne se classe toute seule que là où vous avez déjà mis ce commerçant deux fois. Tout le reste attend dans une liste, et un récurrent n'est qu'un modèle tant que vous ne l'appliquez pas.",
+        body: "Une ligne importée ne se classe toute seule que là où vous avez déjà mis ce commerçant deux fois. Tout le reste attend dans une liste, et un récurrent n'est qu'un modèle tant que vous ne l'appliquez pas.",
       },
       {
         title: "Vous dire quoi faire",
@@ -72,7 +72,7 @@ export const landingCopyFr: LandingCopySections & {
 
   features: {
     heading: "Chaque écran est le même journal",
-    body: "Rien ici ne tient un second jeu de chiffres. Vos saisies et votre relevé arrivent au même endroit, et chaque écran en est une lecture différente.",
+    body: "Rien ici ne tient un second jeu de chiffres. Vos saisies et un export importé arrivent au même endroit, et chaque écran en est une lecture différente.",
   },
 
   monthClose: {
@@ -216,7 +216,7 @@ export const landingCopyFr: LandingCopySections & {
         },
         {
           title: "Appliquez, sautez, ou dites que c'est déjà arrivé",
-          body: "Rien n'existe tant que vous n'appliquez pas, et appliquer écrit des lignes ordinaires que vous pouvez encore modifier. Sautez un mois sans désactiver le modèle. Et là où le relevé a rapporté le mouvement lui-même, dites que c'est bien celui que le modèle appelait, au lieu de laisser une seconde ligne à côté.",
+          body: "Rien n'existe tant que vous n'appliquez pas, et appliquer écrit des lignes ordinaires que vous pouvez encore modifier. Sautez un mois sans désactiver le modèle. Et là où un import a déjà apporté le mouvement, dites que c'est bien celui que le modèle appelait, au lieu de laisser une seconde ligne à côté.",
         },
         {
           title: "Tenu à jour avec le marché",

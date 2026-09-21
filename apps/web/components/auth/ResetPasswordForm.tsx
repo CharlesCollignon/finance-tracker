@@ -68,7 +68,12 @@ export function ResetPasswordForm() {
       className="w-full max-w-md md:max-w-lg"
       innerClassName="p-6 md:p-8"
     >
-      <h1 className="text-center font-serif text-2xl italic md:text-3xl">
+      {/* `font-head`, not the `font-serif ... italic` its two siblings use.
+          DESIGN.md is explicit that Fraunces is for figures and that a serif
+          heading is not in this system, so this screen does not copy the
+          neighbours it was modelled on. The other two are a known deviation
+          that predates this file. */}
+      <h1 className="text-center font-head text-2xl md:text-3xl">
         {t("auth.resetHeading")}
       </h1>
       <p className="mt-1 text-center text-sm text-muted-foreground">
