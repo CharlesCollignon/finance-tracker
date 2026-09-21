@@ -17,7 +17,6 @@ import { Spine } from "@/components/finance/bearing/Spine";
 import { Sparkline } from "@/components/finance/charts";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { BorderGlow } from "@/components/react-bits/BorderGlow";
-import { SpotlightCard } from "@/components/react-bits/SpotlightCard";
 import { GLASS_CARD } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
@@ -100,16 +99,22 @@ export function BearingCards({
 }
 
 /**
- * One card: `BorderGlow` at the edge, `SpotlightCard` across the interior,
- * and the app's own `GLASS_CARD` as the surface between them.
+ * One card: `BorderGlow` at the edge, and the app's own `GLASS_CARD` as the
+ * surface inside it.
  *
- * The nesting is not arbitrary. `BorderGlow` masks itself to a border box and
- * says in its own doc that "the fill is the caller's surface"; anything
- * painted over that border box hides it, so the glow gets a one-pixel gutter
- * (`p-px`) of its own and the surface sits inside. `SpotlightCard` is the
- * surface — it draws its gradient above its own background and below its
- * content, which is exactly where a spotlight belongs, and it takes
- * `GLASS_CARD` as a class rather than painting a palette of its own.
+ * `BorderGlow` masks itself to a border box and says in its own doc that "the
+ * fill is the caller's surface"; anything painted over that border box hides
+ * it, so the glow gets a one-pixel gutter (`p-px`) of its own and the surface
+ * sits inside.
+ *
+ * There used to be a `SpotlightCard` between them, drawing a radial gradient
+ * that followed the pointer across the interior. It went because the card was
+ * answering one hover four ways at once — an edge glow angled at the cursor, a
+ * spotlight tracking the same cursor, a background wash and the chevron fading
+ * in — and two of those were reading the same input to say the same thing. The
+ * craft floor asks for one authored moment rather than scattered effects. What
+ * is left is the edge, softened, plus the wash the rest of the app already uses
+ * to say a surface is pressable.
  */
 function Card({
   card,
@@ -166,7 +171,7 @@ function Card({
 
   return (
     <BorderGlow className="rounded-card p-px">
-      <SpotlightCard className={cn("rounded-card", GLASS_CARD)}>
+      <div className={cn("rounded-card", GLASS_CARD)}>
         <button
           type="button"
           onClick={onToggle}
@@ -306,7 +311,7 @@ function Card({
             </div>
           </div>
         </div>
-      </SpotlightCard>
+      </div>
     </BorderGlow>
   );
 }

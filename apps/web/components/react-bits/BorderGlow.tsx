@@ -6,7 +6,18 @@ import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
 /** Below this, the pointer is not near enough an edge to light it. */
-const EDGE_SENSITIVITY = 0.35;
+/*
+ * Softened deliberately, twice over.
+ *
+ * The glow was 70% of the foreground and began lighting from a third of the
+ * way out, so most of a card's area put a bright moving edge on screen. It is
+ * 40% now and starts at just over half, which keeps the effect as something
+ * you notice when the pointer is near an edge rather than something that
+ * follows you across the card. The Bearing is the screen the app opens to and
+ * five of these are visible at once; an effect that reads well on one reads as
+ * restless on five.
+ */
+const EDGE_SENSITIVITY = 0.55;
 
 /**
  * A card whose edge lights where the pointer approaches it.
@@ -90,7 +101,7 @@ export function BorderGlow({
           // five cards on the screen the app opens to spent it five times
           // before a figure had a chance to. The light is the effect; the
           // colour it was borrowing was doing no work here.
-          "[background:conic-gradient(from_var(--glow-angle,0deg),color-mix(in_srgb,var(--foreground)_70%,transparent),transparent_25%,transparent_75%,color-mix(in_srgb,var(--foreground)_70%,transparent))]",
+          "[background:conic-gradient(from_var(--glow-angle,0deg),color-mix(in_srgb,var(--foreground)_40%,transparent),transparent_25%,transparent_75%,color-mix(in_srgb,var(--foreground)_40%,transparent))]",
           // Border-box only: the fill is the caller's surface, and painting
           // under it would wash the figures out.
           "[mask:linear-gradient(#000_0_0)_padding-box,linear-gradient(#000_0_0)]",
