@@ -21,6 +21,7 @@ const WORLD = "FR001400U5Q4";
 function reading(partial: Partial<InstrumentReading> = {}): InstrumentReading {
   return {
     isin: WORLD,
+    assetKind: "companies",
     ongoingCharge: 0.002,
     currency: "EUR",
     countryWeights: { US: 0.7, FR: 0.05 },

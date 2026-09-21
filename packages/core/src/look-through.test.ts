@@ -34,6 +34,7 @@ function reading(
 ): InstrumentReading {
   return {
     isin,
+    assetKind: "companies",
     ongoingCharge: 0.002,
     currency: "EUR",
     countryWeights: { US: 0.7, JP: 0.06, FR: 0.03 },
@@ -647,7 +648,7 @@ describe("crypto holdings", () => {
       now: NOW,
     });
 
-    expect(result.cryptoPositions).toEqual([
+    expect(result.unresolvablePositions).toEqual([
       { positionId: "pos-btc", name: "Bitcoin", value: 2400 },
     ]);
   });
@@ -660,7 +661,7 @@ describe("crypto holdings", () => {
     });
 
     expect(result.caveats).toContainEqual({
-      kind: "crypto",
+      kind: "unresolvable",
       positionCount: 1,
       value: 2400,
     });
@@ -673,8 +674,10 @@ describe("crypto holdings", () => {
       now: NOW,
     });
 
-    expect(result.caveats.map((caveat) => caveat.kind)).not.toContain("crypto");
-    expect(result.cryptoPositions).toEqual([]);
+    expect(result.caveats.map((caveat) => caveat.kind)).not.toContain(
+      "unresolvable",
+    );
+    expect(result.unresolvablePositions).toEqual([]);
   });
 
   it("leaves the read coverage alone, because a coin is still unread value", () => {
@@ -733,7 +736,7 @@ describe("why each position is not covered", () => {
   it("separates a coin from a holding still waiting for an ISIN", () => {
     const result = built();
 
-    expect(result.cryptoPositions.map((row) => row.name)).toEqual(["Bitcoin"]);
+    expect(result.unresolvablePositions.map((row) => row.name)).toEqual(["Bitcoin"]);
     expect(result.unidentifiedPositions.map((row) => row.name)).toEqual([
       "Something typed in",
     ]);
@@ -760,7 +763,7 @@ describe("why each position is not covered", () => {
     const result = built();
 
     const grouped = [
-      ...result.cryptoPositions,
+      ...result.unresolvablePositions,
       ...result.unidentifiedPositions,
       ...result.unreadPositions,
       ...result.readButUnclassifiedPositions,
@@ -803,8 +806,70 @@ describe("a crypto wallet holding something that can be read", () => {
       now: NOW,
     });
 
-    expect(result.cryptoPositions).toEqual([]);
-    expect(result.caveats.map((caveat) => caveat.kind)).not.toContain("crypto");
+    expect(result.unresolvablePositions).toEqual([]);
+    expect(result.caveats.map((caveat) => caveat.kind)).not.toContain(
+      "unresolvable",
+    );
     expect(result.classifiedValue).toBe(11000);
+  });
+});
+
+describe("an instrument that holds no companies", () => {
+  const gold = position({
+    positionId: "pos-gold",
+    name: "Physical Gold EUR Hedged ETC",
+    isin: "DE000A0S9GB0",
+    marketValue: 250,
+  });
+
+  /** Read, and the reading says there was never anything to find. */
+  const goldReading = reading("DE000A0S9GB0", {
+    assetKind: "commodity",
+    countryWeights: {},
+    sectorWeights: {},
+  });
+
+  /** Read, and the factsheet merely did not publish a breakdown. */
+  const thinReading = reading("DE000A0S9GB0", {
+    assetKind: "companies",
+    countryWeights: {},
+    sectorWeights: {},
+  });
+
+  function built(instrumentReading: typeof goldReading) {
+    return buildLookThrough({
+      positions: [position(), gold],
+      readings: readings(reading("FR001400U5Q4"), instrumentReading),
+      now: NOW,
+    });
+  }
+
+  it("puts gold where crypto is, not among the things worth reading again", () => {
+    const result = built(goldReading);
+
+    expect(result.unresolvablePositions.map((row) => row.name)).toEqual([
+      "Physical Gold EUR Hedged ETC",
+    ]);
+    expect(result.readButUnclassifiedPositions).toEqual([]);
+  });
+
+  it("still offers a second reading to a fund whose factsheet was thin", () => {
+    // The distinction the whole asset kind exists for: one of these is worth
+    // reading again and the other never will be, and they look identical
+    // from the weights alone.
+    const result = built(thinReading);
+
+    expect(result.unresolvablePositions).toEqual([]);
+    expect(result.readButUnclassifiedPositions.map((row) => row.name)).toEqual([
+      "Physical Gold EUR Hedged ETC",
+    ]);
+  });
+
+  it("says out loud that some of the value can never be described", () => {
+    expect(built(goldReading).caveats).toContainEqual({
+      kind: "unresolvable",
+      positionCount: 1,
+      value: 250,
+    });
   });
 });

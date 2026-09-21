@@ -45,6 +45,8 @@ export type Json =
 type InstrumentReadingColumns = {
   user_id: string;
   isin: string;
+  /** What it holds. Null on a reading taken before migration 037. */
+  asset_kind: string | null;
   ongoing_charge: number | null;
   currency: string | null;
   country_weights: Json;
@@ -1057,6 +1059,7 @@ export interface Database {
         Insert: {
           user_id: string;
           isin: string;
+          asset_kind?: string | null;
           ongoing_charge?: number | null;
           currency?: string | null;
           country_weights?: Json;
@@ -1071,6 +1074,7 @@ export interface Database {
         Update: {
           user_id?: string;
           isin?: string;
+          asset_kind?: string | null;
           ongoing_charge?: number | null;
           currency?: string | null;
           country_weights?: Json;
@@ -1396,6 +1400,7 @@ export interface Database {
           new_sources: Json;
           new_model: string | null;
           new_version: number;
+          new_asset_kind?: string | null;
         };
         Returns: InstrumentReadingColumns;
       };

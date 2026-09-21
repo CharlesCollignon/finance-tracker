@@ -261,7 +261,7 @@ export async function readInstrument(
   }
 
   const reading = verdict.reading;
-  const { error: storeError } = await supabase.rpc("store_instrument_reading", {
+  const columns = {
     target_user: userId,
     target_isin: reading.isin,
     new_charge: reading.ongoingCharge,
@@ -273,13 +273,40 @@ export async function readInstrument(
     new_sources: reading.sources as never,
     new_model: reading.model,
     new_version: READING_VERSION,
+  };
+
+  let { error: storeError } = await supabase.rpc("store_instrument_reading", {
+    ...columns,
+    new_asset_kind: reading.assetKind,
   });
+
+  // The schema does not know that argument yet, so this deployment is running
+  // ahead of migration 037. PostgREST resolves a function by the names it is
+  // given, so an unknown one is not an ignored extra — it is a different
+  // function, and the call fails outright with PGRST202.
+  //
+  // Retried without it rather than failed, because what is lost is one field
+  // and what would be lost otherwise is the whole reading. The instrument
+  // keeps whatever countries and sectors it published; it simply cannot yet
+  // say that it has none to publish, which is the state the surface was
+  // already in before any of this.
+  if (storeError && isMissingArgument(storeError)) {
+    ({ error: storeError } = await supabase.rpc(
+      "store_instrument_reading",
+      columns,
+    ));
+  }
 
   if (storeError && !isMissingSchema(storeError)) {
     throw storeError;
   }
 
   return { status: "read" };
+}
+
+/** The function exists, but not with the arguments this build named. */
+function isMissingArgument(error: { code?: string } | null): boolean {
+  return error?.code === "PGRST202";
 }
 
 /**

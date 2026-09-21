@@ -1838,7 +1838,7 @@ export const fr: Messages = {
 
     caveats: {
       notCovered: "Ce que ces parts ne couvrent pas",
-      cryptoHeading: "Cryptos",
+      unresolvableHeading: "Rien à consulter",
       noIsin: "Pas encore identifié",
       noIsinBody:
         "{count} de vos lignes n'ont pas d'ISIN : il n'y a donc rien à rechercher. Ouvrez chacune depuis Positions et choisissez son instrument dans la recherche — c'est ce qui enregistre l'ISIN.",
@@ -1848,7 +1848,7 @@ export const fr: Messages = {
         "{count} instruments ont un ISIN mais n'ont pas été lus. Lire un instrument va chercher ce qu'il contient — ses frais, ses pays, ses secteurs.",
       readNothingUseful: "Lu, mais incomplet",
       readNothingUsefulBody:
-        "{count} lectures ont trouvé des frais mais aucun pays ni secteur. Relancer la lecture peut en trouver davantage — mais certains instruments n'en ont aucun à trouver : un ETC or détient un métal et ne se trouve dans aucun pays.",
+        "{count} lectures ont trouvé des frais mais aucun pays ni secteur, sans que le document d'information en dise la raison. Relancer la lecture peut en trouver davantage.",
       needsAReading:
         "Lisez d'abord au moins un instrument — il n'y a encore rien à passer en revue.",
       unclassified:
@@ -1861,10 +1861,10 @@ export const fr: Messages = {
         "Rien n'est détenu pour l'instant, il n'y a donc rien à examiner.",
       partialAxis:
         "Ces chiffres couvrent {coverage} de ce qui a été lu — une fiche ne publie pas toujours la répartition complète. Les parts sont celles publiées, pas une part de ce qui a été trouvé : elles ne totalisent donc pas l'ensemble.",
-      crypto: {
-        one: "Les cryptos n'ont ni émetteur, ni document d'information, ni ISIN : il n'y a rien à consulter. Elles sont détenues, et comptées dans le total ci-dessus, mais les parts de cette page ne peuvent pas les décrire.",
+      unresolvable: {
+        one: "L'or et les cryptos n'ont ni pays ni secteur — non pas non publiés : aucun. C'est détenu, et compté dans le total ci-dessus, mais les parts de cette page ne peuvent pas le décrire.",
         other:
-          "Les cryptos n'ont ni émetteur, ni document d'information, ni ISIN : il n'y a rien à consulter. Elles sont détenues, et comptées dans le total ci-dessus, mais les parts de cette page ne peuvent pas les décrire.",
+          "L'or et les cryptos n'ont ni pays ni secteur — non pas non publiés : aucun. C'est détenu, et compté dans le total ci-dessus, mais les parts de cette page ne peuvent pas le décrire.",
       },
       geographyIsNotCurrency:
         "La géographie désigne ici où sont les sociétés, pas la devise dans laquelle vous êtes payé. Un fonds peut détenir des sociétés américaines et être libellé en euro.",

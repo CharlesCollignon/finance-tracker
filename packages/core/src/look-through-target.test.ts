@@ -214,6 +214,7 @@ describe("defaultAssignments", () => {
   function reading(isin: string): InstrumentReading {
     return {
       isin,
+      assetKind: "companies",
       ongoingCharge: 0.002,
       currency: "EUR",
       countryWeights: { US: 0.7, FR: 0.03 },
