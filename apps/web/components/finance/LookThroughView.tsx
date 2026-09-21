@@ -160,7 +160,11 @@ export function LookThroughView({
   const unclassified = lookThrough.caveats.find(
     (caveat) => caveat.kind === "unclassified",
   );
-  const crypto = lookThrough.caveats.find((caveat) => caveat.kind === "crypto");
+  // Not `crypto`: that shadows the browser global inside this component,
+  // which is legal and confusing in equal measure.
+  const cryptoCaveat = lookThrough.caveats.find(
+    (caveat) => caveat.kind === "crypto",
+  );
 
   /**
    * Whether a read could say anything at all.
@@ -427,7 +431,7 @@ export function LookThroughView({
                     block above tells the reader to open Positions and pick an
                     instrument, and for a coin that sends them hunting for an
                     ISIN that was never issued — the complaint this answers. */}
-                {crypto?.kind === "crypto" ? (
+                {cryptoCaveat?.kind === "crypto" ? (
                   <div className="mt-4 flex flex-col gap-2 border-t border-border pt-3">
                     <p className="flex items-start gap-2 text-sm">
                       <CurrencyBtc
@@ -438,7 +442,7 @@ export function LookThroughView({
                       />
                       <span className="min-w-0">
                         {t("lookThrough.caveats.crypto", {
-                          count: crypto.positionCount,
+                          count: cryptoCaveat.positionCount,
                         })}
                       </span>
                     </p>
