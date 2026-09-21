@@ -32,4 +32,19 @@ describe("countryFlag", () => {
   it("has no flag for something that is not a country code", () => {
     expect(countryFlag("other")).toBe(null);
   });
+
+  /**
+   * A factsheet's "Other" bucket, which arrives looking exactly like a
+   * country code and is not one. Left as a row, because the weight behind it
+   * is real — but given no flag, since 🇴🇹 renders as two letters in a box
+   * and reads as a rendering fault rather than as "not a country".
+   */
+  it("has no flag for a two-letter code no country answers to", () => {
+    expect(countryFlag("OT")).toBe(null);
+    expect(countryFlag("QQ")).toBe(null);
+  });
+
+  it("still has one for a country the map is merely unfamiliar with", () => {
+    expect(countryFlag("XK")).toBe("🇽🇰");
+  });
 });
