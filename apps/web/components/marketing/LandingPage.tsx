@@ -144,8 +144,21 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             bare ground has nothing to blur and stops reading as glass. The
             whole sphere shows, resting on the section's bottom edge: at the
             reference's proportions a sharp orb cropped in half stops reading
-            as an object and starts reading as a sunrise. */}
-        <div className="relative z-10 mx-auto mt-4 min-h-[17.5rem] w-full max-w-3xl flex-1 sm:min-h-[19rem] md:min-h-[20.5rem]">
+            as an object and starts reading as a sunrise.
+
+            The minimum height is the sphere's, not a round number. The orb is
+            `min(58vw, 352px)` square from `top-1`, so it wants 356px, and this
+            box used to promise 304 at `sm` and 328 at `md`. The fade pinned to
+            its bottom edge reaches full `--marketing-ground` exactly at that
+            edge — so when the edge fell 28px short of the sphere, the fade put
+            an opaque horizontal line across it. The thing that exists to stop
+            the orb ending on a hard cut was drawing one.
+
+            `flex-1` still lets the stage grow on a tall window; all the
+            minimum has to guarantee is that the sphere never finishes outside
+            the box that fades it. Below `sm` the 352px cap does not bind —
+            58vw of a phone is about 220px — so the base stays as it was. */}
+        <div className="relative z-10 mx-auto mt-4 min-h-[17.5rem] w-full max-w-3xl flex-1 sm:min-h-[22.5rem]">
           <LandingOrb className="absolute left-1/2 top-1 aspect-square w-[min(58vw,352px)] -translate-x-1/2" />
 
           {/* Which card survives the narrow viewport, and why it is this one.
