@@ -47,6 +47,36 @@ describe("rollUpRecurring", () => {
     expect(rollup.committed).toBe(1150);
   });
 
+  it("subtracts what is set aside as well as what is committed", () => {
+    // Money promised to a fund is not spending, but it is not free either.
+    // A saver and a spender on the same income with the same rent have the
+    // same room; leaving contributions out would report the saver as having
+    // more, when they have simply already used theirs.
+    const rollup = rollUpRecurring([
+      template({ id: "salary", amount: 3200, type: "income" }),
+      template({ id: "rent", amount: 1150 }),
+      template({ id: "fund", amount: 400, type: "savings" }),
+    ]);
+
+    expect(rollup.left).toBe(1650);
+  });
+
+  it("leaves a broker transfer out of what is left", () => {
+    // `deployed` never entered the account's flow, so it cannot leave it.
+    const rollup = rollUpRecurring([
+      template({ id: "salary", amount: 3200, type: "income" }),
+      template({ id: "rent", amount: 1150 }),
+      template({
+        id: "transfer",
+        amount: 500,
+        type: "investment",
+        counts: false,
+      }),
+    ]);
+
+    expect(rollup.left).toBe(2050);
+  });
+
   it("leaves what income does not commit", () => {
     const rollup = rollUpRecurring([
       template({ id: "salary", amount: 3200, type: "income" }),

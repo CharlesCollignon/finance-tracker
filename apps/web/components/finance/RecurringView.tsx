@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+import { FIGURE } from "@/lib/type-scale";
 import {
   useCallback,
   useEffect,
@@ -239,6 +241,23 @@ function GroupCard({
   );
 }
 
+/** One scoreboard tile: a word, then a figure, and a lot of nothing else. */
+function Tile({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2 rounded-card border border-border bg-card px-5 py-6">
+      <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        {label}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+/** A figure at the documented card-level step, behind the privacy blur. */
+function PrivateFigure({ children }: { children: ReactNode }) {
+  return <span className={cn("privacy-amount", FIGURE)}>{children}</span>;
+}
+
 export function RecurringView({
   templates,
   categories,
@@ -364,75 +383,62 @@ export function RecurringView({
 
         {hasTemplates ? (
           <>
-            <section className="rounded-card border border-border bg-card p-5">
-              {/* Three figures across, stacking on a phone. One card rather
-                  than three, because they are one sentence: what comes in,
-                  what is already promised, and what that leaves. None of them
-                  is coloured — "what's left" being small is a circumstance,
-                  not a category, and the Semantic Amount Rule reserves colour
-                  for saying what kind of money a figure is. */}
-              <div className="grid gap-5 sm:grid-cols-3 sm:gap-4">
-                <div className="flex flex-col gap-1">
+            {/* Four tiles, and nothing in them but a word and a figure.
+                Distinct cards rather than one card in columns, because these
+                are four readings and not one paragraph — and because the air
+                around each is most of what makes the number the event.
+
+                Every term of the arithmetic is on screen: income, less what
+                is committed, less what is set aside, leaves what is left. The
+                set-aside figure used to be a sentence under the row, which
+                was tolerable while it was not subtracted from anything. It is
+                now, and a subtrahend nobody can see is what makes a total
+                unbelievable.
+
+                `FIGURE` rather than a size invented here. These are card
+                headline numbers and that is the step the type scale names for
+                them, Fraunces with tabular digits, so an amount on this page
+                looks like the same amount everywhere else. None is coloured:
+                a small "left" is a circumstance, not a kind of money. */}
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <Tile label={t("charges.tileIncome")}>
+                {rollup.income > 0 ? (
+                  <PrivateFigure>{formatEuro(rollup.income)}</PrivateFigure>
+                ) : (
+                  // Not a zero: nothing has been measured, and a figure in
+                  // this type would claim otherwise.
                   <p className="text-sm text-muted-foreground">
-                    {t("charges.incomeEveryMonth")}
+                    {t("charges.noIncomeYet")}
                   </p>
-                  {rollup.income > 0 ? (
-                    <span className="privacy-amount font-head text-3xl leading-none tabular-nums md:text-4xl">
-                      {formatEuro(rollup.income)}
-                    </span>
-                  ) : (
-                    // Not a zero. Nothing has been measured here, and a `0 €`
-                    // in the same type as the figures beside it would claim
-                    // otherwise.
-                    <p className="text-sm text-muted-foreground">
-                      {t("charges.noIncomeYet")}
-                    </p>
-                  )}
-                </div>
+                )}
+              </Tile>
 
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm text-muted-foreground">
-                    {t("charges.committedEveryMonth")}
-                  </p>
-                  <span className="privacy-amount font-head text-3xl leading-none tabular-nums md:text-4xl">
-                    {formatEuro(rollup.committed)}
-                  </span>
-                </div>
+              <Tile label={t("charges.tileCommitted")}>
+                <PrivateFigure>{formatEuro(rollup.committed)}</PrivateFigure>
+              </Tile>
 
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm text-muted-foreground">
-                    {t("charges.leftEveryMonth")}
-                  </p>
-                  <span className="privacy-amount font-head text-3xl leading-none tabular-nums md:text-4xl">
-                    {formatEuro(rollup.left)}
-                  </span>
-                </div>
-              </div>
+              <Tile label={t("charges.tileSetAside")}>
+                <PrivateFigure>{formatEuro(rollup.setAside)}</PrivateFigure>
+              </Tile>
 
-              {rollup.setAside > 0 ? (
-                <p className="mt-4 text-sm text-muted-foreground">
-                  {t("charges.plusSetAsideBefore")}{" "}
-                  <span className="privacy-amount tabular-nums text-foreground">
-                    {formatEuro(rollup.setAside)}
-                  </span>{" "}
-                  {t("charges.plusSetAsideAfter")}
-                </p>
-              ) : null}
+              <Tile label={t("charges.tileLeft")}>
+                <PrivateFigure>{formatEuro(rollup.left)}</PrivateFigure>
+              </Tile>
+            </div>
 
+            <p className="-mt-1 px-1 text-xs text-muted-foreground">
+              {t("charges.perMonth")}
               {rollup.deployed > 0 ? (
-                // The figure is its own element so the blur can cover it
-                // without covering the sentence it sits in, which is why this
-                // is two fragments either side of an amount rather than one
-                // template.
-                <p className="mt-1.5 text-sm text-muted-foreground">
+                <>
+                  {" · "}
                   {t("charges.plusMovedBefore")}{" "}
                   <span className="privacy-amount tabular-nums text-foreground">
                     {formatEuro(rollup.deployed)}
                   </span>{" "}
                   {t("charges.plusMovedAfter")}
-                </p>
+                </>
               ) : null}
-            </section>
+            </p>
 
             {/* One column of charges at a time on a phone: three lists stacked
                 would be a screen and a half of scrolling to reach investments,

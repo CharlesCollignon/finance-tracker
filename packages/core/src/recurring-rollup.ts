@@ -27,7 +27,17 @@ export interface RecurringRollup {
   setAside: number;
   /** Templates the summary does not count — a transfer into a broker. */
   deployed: number;
-  /** What income does not commit: `income - committed`. */
+  /**
+   * What is genuinely free: `income - committed - setAside`.
+   *
+   * Contributions are subtracted even though they are not spending, because
+   * this figure answers "what can I still decide about this month" and money
+   * already promised to a fund is not that. It is the honest version of the
+   * question rather than the flattering one: leaving contributions out would
+   * report a saver as having more room than a spender with the same income
+   * and the same rent, when they have exactly the same room and one of them
+   * has already used it.
+   */
   left: number;
 }
 
@@ -73,5 +83,11 @@ export function rollUpRecurring(
     }
   }
 
-  return { income, committed, setAside, deployed, left: income - committed };
+  return {
+    income,
+    committed,
+    setAside,
+    deployed,
+    left: income - committed - setAside,
+  };
 }
