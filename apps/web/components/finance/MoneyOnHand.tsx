@@ -100,7 +100,7 @@ export function MoneyOnHand({
         pulse.standing === "short"
           ? "border-destructive/40"
           : pulse.standing === "tight"
-            ? "border-primary-rim/50"
+            ? "border-hairline-strong"
             : undefined,
       )}
     >
@@ -206,7 +206,7 @@ export function MoneyOnHand({
               })}
             >
               <div
-                className="h-full rounded-full bg-gradient-to-r from-primary-rim to-primary"
+                className="h-full rounded-full bg-muted-foreground"
                 style={{ width: `${Math.min(100, elapsed * 100)}%` }}
               />
             </div>
@@ -257,7 +257,7 @@ export function MoneyOnHand({
             })}
             <Link
               href="/budgets"
-              className="ml-1 inline-flex items-center gap-1 text-primary-ink"
+              className="ml-1 inline-flex items-center gap-1 text-foreground hover:underline hover:underline-offset-4"
             >
               {t("moneyOnHand.fixLink")}
               <ArrowRight size={ICON.xs} />
@@ -301,9 +301,10 @@ function SpendDelta({ comparison }: { comparison: MonthComparison | null }) {
       className={cn(
         "mb-1.5 inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1",
         "text-xs font-semibold tabular-nums",
-        down
-          ? "bg-success/15 text-success"
-          : "bg-primary/20 text-primary-ink dark:text-primary",
+        // Spending up is not an error and not an emphasis: it is the reading
+        // that is not good news, so it takes the neutral raised pill while
+        // the good news keeps the status colour.
+        down ? "bg-success/15 text-success" : "bg-muted text-foreground",
       )}
       title={t(
         down ? "moneyOnHand.spendingDownTitle" : "moneyOnHand.spendingUpTitle",

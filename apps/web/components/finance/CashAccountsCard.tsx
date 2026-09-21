@@ -81,7 +81,7 @@ export function CashAccountsCard({ accounts }: CashAccountsCardProps) {
                   checked={account.counts_as_cash}
                   disabled={pending}
                   onChange={() => toggle(account)}
-                  className="size-4 shrink-0 accent-[var(--primary)]"
+                  className="size-4 shrink-0 accent-foreground"
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">

@@ -158,6 +158,21 @@ export const en = {
   },
 
   /**
+   * The passkey list inside the Security section.
+   *
+   * What a passkey is gets said by the section's own footer, so these are
+   * only the words the list itself needs: what it looks like empty, what an
+   * unnamed key is called, and when each one was added.
+   */
+  passkeys: {
+    none: "No passkeys yet.",
+    unnamed: "Passkey",
+    added: "Added {date}",
+    working: "Please wait…",
+    add: "Add passkey",
+  },
+
+  /**
    * The Ledger: searching, filtering, selecting and applying.
    *
    * The three plural ternaries this replaces read `count === 1 ? "transaction"
@@ -369,6 +384,11 @@ export const en = {
     goalNamed: "Goal {name}",
     goalRemoveHint: "Long press to remove this goal",
     amountOfTotal: "{amount} of {total}",
+    /** Web's rings are buttons that open the form, so they name that. */
+    editCapOn: "Edit the cap on {label}",
+    editGoalNamed: "Edit the goal {name}",
+    capScope: "Scope",
+    trackCategoryOptional: "Track category (optional)",
   },
 
   /**
@@ -417,9 +437,25 @@ export const en = {
     shareCount: "Number of shares",
     wholeSharesOnly: "Enter a whole number of shares",
     estimatedAmount: "Estimated amount",
+    fetchingPrice: "Fetching price…",
+    /**
+     * What a share-priced estimate is made of. The unit belongs to the
+     * sentence, so "/ share" is inside the message rather than appended to a
+     * formatted figure.
+     */
+    perSharePrice: "@ {price} / share",
+    convertedFrom: "({amount} converted)",
+    descriptionOptional: "Description (optional)",
+    monthOfYear: "Month",
+    activePeriod: "Active period (optional)",
+    activePeriodNote:
+      "Leave both empty to run until you stop it. Set both for a fixed instalment plan — a property tax spread over several months, say.",
     saving: "Saving…",
     save: "Save",
     delete: "Delete",
+    deleteItem: "Delete recurring item",
+    deleteExplanation:
+      "Delete this recurring template? Past transactions stay in your ledger.",
     deleting: "Deleting…",
     confirmDelete: "Confirm delete",
     savedHint: "Saved. Apply recurring in the Ledger to see the change.",
@@ -433,6 +469,87 @@ export const en = {
       "Pick your ETF and share count. Search by name or ISIN (e.g. LU1681043599). The app fetches the live price and computes the EUR amount when saving or applying recurring.",
     yearlyNote:
       "Counts as a monthly share in your budget (annual ÷ 12). The full payment is recorded once in the due month.",
+    /**
+     * The two blocks under a fixed-price template that buys something.
+     *
+     * "DCA" is what these said, and `CONTEXT.md` refuses the word: a
+     * standing instruction to buy is a recurring template, and one priced by
+     * a share count is a share-priced template. Neither of these is either —
+     * they are fixed amounts that happen to buy an instrument — so they say
+     * what the money does instead of naming a strategy.
+     */
+    trackedFund: "Tracked ETF / fund",
+    trackedFundNote:
+      "A fixed euro charge: pick the ETF it buys. On Wallets, enter how many shares you hold altogether for a live market value.",
+    bitcoinTitle: "Bitcoin charge",
+    bitcoinNote:
+      "Each buy converts your euro amount to BTC. Enter your total BTC balance on Wallets for a live value.",
+  },
+
+  /**
+   * Finding an instrument by name or ISIN.
+   *
+   * An ISIN is twelve characters, which is long enough that a reader is
+   * halfway through one before the search has anything to say — hence a line
+   * that tells them to keep going rather than an empty list that reads as no
+   * match.
+   */
+  instrument: {
+    label: "ETF / fund",
+    searching: "Searching…",
+    isinKeepTyping: "An ISIN is 12 characters — keep typing…",
+    noResults: "No instruments found. Try a name or a 12-character ISIN.",
+  },
+
+  /**
+   * Turning the occurrences a month calls for into transactions.
+   *
+   * The counts are plural messages rather than `count === 1` ternaries for
+   * the reason the rest of this file gives: French puts zero in the singular
+   * and agrees its participles.
+   */
+  applyRecurring: {
+    blurb:
+      "Writes the transactions this month's charges call for. What you have already recorded is left alone unless you confirm the updates below.",
+    repriceNote: {
+      one: "{count} occurrence is priced from the market and still dated ahead. It follows its instrument on its own — nothing to confirm.",
+      other:
+        "{count} occurrences are priced from the market and still dated ahead. They follow their instruments on their own — nothing to confirm.",
+    },
+    updateExisting: "Update existing ({count})",
+    updateExistingNote:
+      "These were applied already, but the recurring template has changed since — its amount, its note or its category.",
+    addNew: "Add new ({count})",
+    noteUpdated: "Note updated to match the recurring template",
+    movedToCategory: "Moved to the recurring template's category",
+    applying: "Applying…",
+    nothingSelected: "Nothing selected",
+    applySelected: {
+      one: "Apply {count} selected",
+      other: "Apply {count} selected",
+    },
+    applyNew: { one: "Apply {count} new", other: "Apply {count} new" },
+  },
+
+  /**
+   * Standing charges the statement implies, offered rather than created.
+   *
+   * Nothing here writes a template — the app proposes and the user agrees —
+   * so every word is an offer, and refusing one is a decision the app records
+   * rather than a dismissal that lasts until the next page load.
+   */
+  recurringProposals: {
+    lead: {
+      one: "{count} charge in your statement looks like it repeats.",
+      other: "{count} charges in your statement look like they repeat.",
+    },
+    everyWeek: "every week",
+    everyMonth: "every month",
+    everyYear: "every year",
+    seenTimes: { one: "seen {count} time", other: "seen {count} times" },
+    accept: "Add",
+    refuse: "Not this",
+    added: "Added",
   },
 
   /** The form both apps use to write or edit one transaction. */
@@ -447,6 +564,8 @@ export const en = {
     date: "Date",
     note: "Note (optional)",
     notePlaceholder: "Description",
+    /** The disabled first option of every category picker. */
+    selectCategory: "Select category",
     tags: "Tags",
     saving: "Saving…",
     saveTransaction: "Save transaction",
@@ -464,11 +583,26 @@ export const en = {
     skipped: "Skipped for this date — won’t be re-applied",
     skipExplanation:
       "Skip this date only? The transaction will be removed and Apply won’t recreate it. The recurring template stays active for later months.",
+    deleteExplanation:
+      "Delete this transaction permanently? Apply may write it again if the recurring template still calls for it.",
     cancel: "Cancel",
   },
 
   /** The Charges surface: the list of standing instructions. */
   charges: {
+    blurb: "What you already know is coming, every month.",
+    committedEveryMonth: "Committed every month",
+    /**
+     * What goes to the broker, either side of the figure.
+     *
+     * Two fragments rather than one template because the amount is its own
+     * element — that is what lets the privacy blur cover the figure without
+     * covering the sentence around it.
+     */
+    plusMovedBefore: "Plus",
+    plusMovedAfter: "moved into the broker — tracked, but not spent.",
+    nothingHereYet: "Nothing here yet.",
+    editNamed: "Edit {name}",
     addCharge: "Add charge",
     kindOfCharge: "Kind of charge",
     activate: "Activate",
@@ -561,6 +695,14 @@ export const en = {
     monthlyCap: "Monthly cap",
     category: "Category",
     continue: "Continue",
+    /**
+     * The step-back control, on every step but the first.
+     *
+     * Its own word rather than `common.*` because it names a move inside the
+     * wizard: the browser's Back does the same thing here, and the label has
+     * to read as the step before this one rather than as the page before it.
+     */
+    back: "Back",
     skipForNow: "Skip for now",
     saving: "Saving…",
     addIncome: "Add income",
@@ -613,6 +755,10 @@ export const en = {
     restoredToast: "Category restored",
     archiveNamed: "Archive {name}",
     restoreNamed: "Restore {name}",
+    editNamed: "Edit {name}",
+    deleteNamed: "Delete {name}",
+    /** The confirming half of the pair the row swaps in before deleting. */
+    confirmDelete: "Delete",
     deleted: "Category deleted",
     deleteWarning:
       "If it is used by transactions or recurring items, archive it instead.",
@@ -625,6 +771,16 @@ export const en = {
       "Untick for money coming back out of savings — a transfer to your current account. It is subtracted from what you set aside, and comes off the reserve behind the runway.",
     countsHintInvestment:
       "Untick for wallet buys tracked outside the budget (e.g. buys funded by broker transfers).",
+    /**
+     * The badge on a category that does not count toward the month.
+     *
+     * One word per type, because the flag means something different for each:
+     * an investment bought with money that already left, savings coming back
+     * out, income that is a refund rather than earnings.
+     */
+    notCountingInvestment: "Tracking",
+    notCountingSavings: "Withdrawal",
+    notCountingIncome: "Reimbursement",
   },
 
   /**
@@ -944,6 +1100,15 @@ export const en = {
   /** The Ledger seen by date. */
   calendarView: {
     monthlyCalendar: "Monthly calendar",
+    /**
+     * A day cell's accessible name, and the two figures under a month.
+     *
+     * `inAndOut` is one message rather than two amounts with "in" and "out"
+     * placed around them by the layout: where those words fall in the
+     * sentence is the language's decision.
+     */
+    dayLabel: "{day} — {entries}",
+    inAndOut: "{income} in · {outflow} out",
     selectedDay: "Selected day details",
     noTransactions: "No transactions",
     emptyTitle: "Nothing on this day",
@@ -1151,6 +1316,11 @@ export const en = {
     addCryptoItem: "Add crypto item",
     itemAdded: "Item added",
     itemUpdated: "{name} updated",
+    itemRemoved: "{name} removed",
+    /** The disabled first option of the recurring-template picker. */
+    pickRecurring: "Pick one…",
+    /** What the live quote is worth, above the field it would fill. */
+    liveEstimate: "Live market estimate:",
     itemType: "Item type",
     recurringItem: "Recurring item",
     dcaBitcoin: "Fixed EUR each month · Bitcoin on Bitstack",
@@ -1294,6 +1464,11 @@ export const en = {
     previousMonth: "Previous month",
     nextMonth: "Next month",
     pickAMonth: "Pick a month",
+    /* The month picker's own grid: its year stepper, its shortcut, its key. */
+    showYear: "Show {year}",
+    thisMonth: "This month",
+    monthClosed: "closed",
+    monthRecords: "records",
     close: "Close",
     closeSheet: "Close sheet",
     openMenu: "Open menu",
@@ -1378,6 +1553,8 @@ export const en = {
     perYear: "{rate} a year",
     percent: "{value}%",
     months: "{value} months",
+    /** Percentage points of drift from a target weight, never per cent. */
+    points: "{value} pts",
   },
 
   /**
@@ -1471,6 +1648,25 @@ export const en = {
     unknownMerchant: "First time here",
     /** A row in the inbox that has not been given a reason of its own. */
     waiting: "Waiting",
+  },
+
+  /**
+   * Bank rows an earlier sync merged away on its own.
+   *
+   * "Rows" rather than transactions, deliberately: these never became
+   * transactions, which is the whole complaint — the sync filed them against
+   * a recurring template on nothing more than a matching amount, and what it
+   * swallowed was spending nobody ever saw.
+   */
+  swallowed: {
+    title: {
+      one: "{count} bank row was merged away",
+      other: "{count} bank rows were merged away",
+    },
+    body: "An earlier sync decided these were charges your recurring templates had already written, on nothing more than a matching amount within five days. On a statement of small round figures that is not enough to go on, so most of them are probably real spending that never reached your ledger. Reopening puts them back in the review inbox for you to judge.",
+    reopenAll: "Reopen them all",
+    reopening: "Reopening…",
+    reopened: "Reopened",
   },
 
   /** Why there is no annualised rate to show. */
@@ -2547,6 +2743,11 @@ export const en = {
     askBank: "Ask your bank for anything new",
     refreshing: "Refreshing…",
     refresh: "Refresh",
+  },
+
+  /** Sending again what is still only on this device. */
+  outbox: {
+    retry: "Retry",
   },
 
   errors: {

@@ -85,7 +85,7 @@ export function GlassStat({
         </p>
         {href ? <ArrowNub /> : null}
       </div>
-      <p className="mt-3 font-mono text-2xl font-medium tabular-nums text-white sm:text-[1.75rem]">
+      <p className="mt-3 font-mono text-2xl font-medium tabular-nums text-marketing-ink sm:text-[1.75rem]">
         {value}
       </p>
       {caption ? (
@@ -154,7 +154,7 @@ export function GlassLink({
         ) : null}
         <ArrowNub className="ml-auto" />
       </div>
-      <h3 className="mt-4 font-head text-base text-white">{title}</h3>
+      <h3 className="mt-4 font-head text-base text-marketing-ink">{title}</h3>
       <p className="mt-1.5 text-sm leading-relaxed text-marketing-muted">
         {body}
       </p>

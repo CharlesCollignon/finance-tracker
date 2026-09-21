@@ -74,7 +74,7 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
                 <span className="font-mono text-xs text-primary/70">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <h2 className="mt-3 font-head text-lg text-white">
+                <h2 className="mt-3 font-head text-lg text-marketing-ink">
                   {step.title}
                 </h2>
                 <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
@@ -100,7 +100,7 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
               <span className="text-xs uppercase tracking-[0.14em] text-marketing-faint">
                 {nav.previous}
               </span>
-              <span className="mt-1 text-sm font-medium text-white">
+              <span className="mt-1 text-sm font-medium text-marketing-ink">
                 {prev.title}
               </span>
             </Link>
@@ -118,7 +118,7 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
               <span className="text-xs uppercase tracking-[0.14em] text-marketing-faint">
                 {nav.next}
               </span>
-              <span className="mt-1 text-sm font-medium text-white">
+              <span className="mt-1 text-sm font-medium text-marketing-ink">
                 {next.title}
               </span>
             </Link>

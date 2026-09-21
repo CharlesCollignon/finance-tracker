@@ -127,10 +127,7 @@ function RecurringFormFields({
       if (result.error) {
         toast(result.error, "error");
       } else {
-        toast(
-          "Deleted. Apply recurring in the Ledger to see the change.",
-          "success",
-        );
+        toast(t("recurring.deletedHint"), "success");
         onOpenChange(false);
       }
     });
@@ -241,7 +238,7 @@ function RecurringFormFields({
                 className={cn(
                   "rounded-full border px-3 py-2 text-sm font-medium",
                   effectivePricingType === "fixed"
-                    ? "border-foreground bg-primary text-primary-foreground"
+                    ? "border-foreground bg-secondary text-foreground"
                     : "border-border hover:bg-accent",
                 )}
               >
@@ -253,7 +250,7 @@ function RecurringFormFields({
                 className={cn(
                   "rounded-full border px-3 py-2 text-sm font-medium",
                   effectivePricingType === "shares"
-                    ? "border-foreground bg-primary text-primary-foreground"
+                    ? "border-foreground bg-secondary text-foreground"
                     : "border-border hover:bg-accent",
                 )}
               >
@@ -305,15 +302,25 @@ function RecurringFormFields({
             >
               <p className="font-medium">{t("recurring.estimatedAmount")}</p>
               {estimateLoading && (
-                <p className="mt-1 text-muted-foreground">Fetching price…</p>
+                <p className="mt-1 text-muted-foreground">
+                  {t("recurring.fetchingPrice")}
+                </p>
               )}
               {!estimateLoading && estimateShown && (
-                <p className="mt-1 font-mono tabular-nums text-base font-semibold">
+                <p className="privacy-sensitive mt-1 font-mono tabular-nums text-base font-semibold">
                   ≈ {formatEuro(estimateShown.amount)}
                   <span className="ml-2 block text-xs font-normal text-muted-foreground">
-                    @ {formatEuro(estimateShown.priceEur)} / share
+                    {t("recurring.perSharePrice", {
+                      price: formatEuro(estimateShown.priceEur),
+                    })}
                     {estimateShown.currency !== "EUR" &&
-                      ` (${formatMoney(estimateShown.priceOriginal, estimateShown.currency, locale)} converted)`}
+                      ` ${t("recurring.convertedFrom", {
+                        amount: formatMoney(
+                          estimateShown.priceOriginal,
+                          estimateShown.currency,
+                          locale,
+                        ),
+                      })}`}
                   </span>
                 </p>
               )}
@@ -343,10 +350,9 @@ function RecurringFormFields({
             </div>
             {supportsShares && !isCryptoCategory && (
               <div className="flex flex-col gap-2 rounded-control border border-border bg-muted/20 p-3">
-                <FormLabel>Tracked ETF / fund</FormLabel>
+                <FormLabel>{t("recurring.trackedFund")}</FormLabel>
                 <Text className="text-xs text-muted-foreground">
-                  Fixed EUR DCA: pick the ETF you buy here. On Wallets, enter
-                  how many shares you hold in total for live market value.
+                  {t("recurring.trackedFundNote")}
                 </Text>
                 <InstrumentSearch
                   symbol={instrumentSymbol}
@@ -375,10 +381,9 @@ function RecurringFormFields({
                   value={BITCOIN_INSTRUMENT.name}
                 />
                 <div className="rounded-control border border-border bg-muted/20 p-3 text-sm">
-                  <p className="font-medium">Bitcoin DCA</p>
+                  <p className="font-medium">{t("recurring.bitcoinTitle")}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Each buy converts your EUR amount to BTC. Enter your total
-                    BTC balance on Wallets for live value.
+                    {t("recurring.bitcoinNote")}
                   </p>
                 </div>
               </>
@@ -387,7 +392,7 @@ function RecurringFormFields({
         )}
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="recurring-description">
-            Description (optional)
+            {t("recurring.descriptionOptional")}
           </FormLabel>
           <Input
             id="recurring-description"
@@ -410,7 +415,7 @@ function RecurringFormFields({
                 className={cn(
                   "rounded-full border px-3 py-2 text-sm font-medium",
                   recurrence === value
-                    ? "border-foreground bg-primary text-primary-foreground"
+                    ? "border-foreground bg-secondary text-foreground"
                     : "border-border hover:bg-accent",
                 )}
               >
@@ -462,7 +467,9 @@ function RecurringFormFields({
         ) : (
           <>
             <div className="flex flex-col gap-2">
-              <FormLabel htmlFor="monthOfYear">Month</FormLabel>
+              <FormLabel htmlFor="monthOfYear">
+                {t("recurring.monthOfYear")}
+              </FormLabel>
               <select
                 id="monthOfYear"
                 name="monthOfYear"
@@ -495,10 +502,11 @@ function RecurringFormFields({
           </>
         )}
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium">Active period (optional)</span>
+          <span className="text-sm font-medium">
+            {t("recurring.activePeriod")}
+          </span>
           <Text className="text-xs text-muted-foreground">
-            Leave empty for open-ended. Use both dates for a fixed échéancier
-            (e.g. taxe foncière over several months).
+            {t("recurring.activePeriodNote")}
           </Text>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
@@ -539,8 +547,7 @@ function RecurringFormFields({
             {confirmDelete ? (
               <div className="flex flex-col gap-2">
                 <Text className="text-sm text-muted-foreground">
-                  Delete this recurring item? Past transactions stay in your
-                  ledger.
+                  {t("recurring.deleteExplanation")}
                 </Text>
                 <div className="flex gap-2">
                   <Button
@@ -563,7 +570,7 @@ function RecurringFormFields({
                     onClick={() => setConfirmDelete(false)}
                     disabled={deletePending}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                 </div>
               </div>
@@ -575,7 +582,7 @@ function RecurringFormFields({
                 className="w-full border-destructive text-destructive"
                 onClick={() => setConfirmDelete(true)}
               >
-                Delete recurring item
+                {t("recurring.deleteItem")}
               </Button>
             )}
           </div>

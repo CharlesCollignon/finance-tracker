@@ -67,7 +67,11 @@ export function FindingRow({
       aria-controls={panelId}
       className={cn(
         "flex w-full items-baseline gap-3 border-b border-border py-2.5",
-        "text-left last:border-0 transition-colors hover:text-primary-ink",
+        // A wash rather than a colour on the words. The row's name is already
+        // set in the foreground, so tinting it gold was the only way the old
+        // hover showed at all — and the List Rows rule in DESIGN.md wants the
+        // wash anyway.
+        "text-left last:border-0 transition-colors hover:bg-muted/40",
       )}
     >
       <span className="shrink-0 text-sm font-medium">
@@ -76,9 +80,12 @@ export function FindingRow({
       <span className="min-w-0 flex-1 text-sm text-muted-foreground">
         {t(finding.messageKey, finding.params)}
         {remark ? (
-          <span className="block text-xs italic text-muted-foreground/80">
-            {remark}
-          </span>
+          // Inherits the muted foreground of the sentence it hangs under. It
+          // carried `text-muted-foreground/80`, a further step down on top of
+          // that — an alpha literal where a token exists, and at 12px italic
+          // the one line here least able to afford it. The italic and the
+          // size are what make it an aside.
+          <span className="block text-xs italic">{remark}</span>
         ) : null}
       </span>
       <span

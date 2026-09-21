@@ -5,6 +5,7 @@ import { CloudArrowUp } from "@phosphor-icons/react";
 import { drainOutbox, useOutbox, watchConnection } from "@/lib/offline-outbox";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 /**
  * Says what is still only on this device.
@@ -16,6 +17,7 @@ import { ICON } from "@/lib/icon-scale";
  * It shows only when something is waiting, so in normal use it is invisible.
  */
 export function OutboxBanner() {
+  const t = useT();
   const { entries, label, retry } = useOutbox();
 
   // Draining is driven by the browser's own online event rather than polling.
@@ -54,9 +56,9 @@ export function OutboxBanner() {
       <button
         type="button"
         onClick={retry}
-        className="shrink-0 text-sm font-medium text-primary-ink underline underline-offset-4"
+        className="shrink-0 text-sm font-medium text-foreground underline underline-offset-4"
       >
-        Retry
+        {t("outbox.retry")}
       </button>
     </div>
   );

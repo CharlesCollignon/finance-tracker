@@ -179,7 +179,7 @@ export function SelectionBar({
               <p className="text-sm font-medium">
                 {t("selectionBar.countSelected", { count: summary.count })}
                 {summary.total > 0 ? (
-                  <span className="ml-2 font-mono text-xs text-muted-foreground tabular-nums">
+                  <span className="privacy-amount ml-2 font-mono text-xs text-muted-foreground tabular-nums">
                     {formatEuro(summary.total)}
                   </span>
                 ) : null}
@@ -249,7 +249,7 @@ export function RowCheckbox({
       aria-label={label}
       // Stops a click on the box from also opening the row's edit sheet.
       onClick={(event) => event.stopPropagation()}
-      className="size-5 shrink-0 accent-[var(--primary)]"
+      className="size-5 shrink-0 accent-foreground"
     />
   );
 }

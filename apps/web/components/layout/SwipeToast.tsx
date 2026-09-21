@@ -13,6 +13,7 @@ import { cssEasing, DURATION } from "@finance/core/motion";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 import { ICON } from "@/lib/icon-scale";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/locale-context";
 
 /**
  * A toast you can throw away.
@@ -63,16 +64,27 @@ const DEAD_ZONE = 4;
 /** How long the card takes to leave, and the row beneath it to close up. */
 const EXIT_MS = Math.round(DURATION.panel * 0.6);
 
+/**
+ * The three cards.
+ *
+ * The error is the only one that fills. A save that worked is the expected
+ * outcome, and lighting the whole card for it spent the accent on every
+ * successful edit in the app. But with the fill gone the confirmation read
+ * exactly like the neutral notice, so it keeps a rim in `--success` — the
+ * same green the semantic palette already gives income, carried as a border
+ * rather than a ground so it distinguishes without shouting. The failure
+ * keeps its fill, because that is the one a reader must not scroll past.
+ */
 const SURFACE: Record<ToastVariant, string> = {
   default: "border-border bg-background text-foreground",
-  success: "border-primary-rim bg-primary text-primary-foreground",
+  success: "border-success bg-secondary text-foreground",
   error: "border-destructive bg-destructive text-destructive-foreground",
 };
 
 /** The fuse, which has to stay legible against all three surfaces. */
 const FUSE: Record<ToastVariant, string> = {
-  default: "bg-primary",
-  success: "bg-primary-foreground/50",
+  default: "bg-muted-foreground",
+  success: "bg-muted-foreground",
   error: "bg-destructive-foreground/50",
 };
 
@@ -86,6 +98,7 @@ export function SwipeToast({
   onClose,
   closeButton = false,
 }: SwipeToastProps) {
+  const t = useT();
   const reducedMotion = usePrefersReducedMotion();
   const cardRef = useRef<HTMLDivElement>(null);
   const fuseRef = useRef<HTMLSpanElement>(null);
@@ -362,7 +375,7 @@ export function SwipeToast({
           {closeButton ? (
             <button
               type="button"
-              aria-label="Close"
+              aria-label={t("common.close")}
               className="shrink-0 rounded-control opacity-60 transition-opacity duration-hover hover:opacity-100"
               onClick={() => close("close")}
             >

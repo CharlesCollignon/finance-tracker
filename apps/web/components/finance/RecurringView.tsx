@@ -95,7 +95,7 @@ function RecurringItemRow({
         type="button"
         onClick={() => onEdit(template)}
         className="min-w-0 flex-1 text-left"
-        aria-label={`Edit ${template.categories.name}`}
+        aria-label={t("charges.editNamed", { name: template.categories.name })}
       >
         <p className="text-sm font-medium leading-snug break-words">
           {template.categories.name}
@@ -114,7 +114,12 @@ function RecurringItemRow({
           </p>
         ) : null}
         {template.description ? (
-          <p className="mt-0.5 text-xs leading-snug text-muted-foreground/70 break-words">
+          // The user's own note about the charge, and the only prose on the
+          // row. It was `text-muted-foreground/70`, about 3.9:1 at 12px —
+          // under the 4.5:1 body floor — and dimmer than the two lines above
+          // it for no reason anyone chose. Full-strength muted foreground is
+          // the token that already means secondary text.
+          <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
             {template.description}
           </p>
         ) : null}
@@ -133,9 +138,12 @@ function RecurringItemRow({
           onClick={() => onToggle(template.id, template.active)}
           className="shrink-0"
           aria-pressed={template.active}
-          aria-label={`${
-            template.active ? t("charges.deactivate") : t("charges.activate")
-          } ${template.categories.name}`}
+          aria-label={t("charges.toggleFor", {
+            action: template.active
+              ? t("charges.deactivate")
+              : t("charges.activate"),
+            name: template.categories.name,
+          })}
         >
           <Badge
             variant={template.active ? "surface" : "outline"}
@@ -159,9 +167,13 @@ function GroupList({
   onEdit: (template: RecurringTemplateWithCategory) => void;
   onToggle: (id: string, active: boolean) => void;
 }) {
+  const t = useT();
+
   if (items.length === 0) {
     return (
-      <p className="py-2 text-sm text-muted-foreground">Nothing here yet.</p>
+      <p className="py-2 text-sm text-muted-foreground">
+        {t("charges.nothingHereYet")}
+      </p>
     );
   }
 
@@ -305,10 +317,7 @@ export function RecurringView({
         toast(result.error, "error");
         return;
       }
-      toast(
-        "Updated. Apply recurring in the Ledger to see the change.",
-        "success",
-      );
+      toast(t("recurring.updatedHint"), "success");
       void refreshApplyPending();
     });
   }
@@ -319,9 +328,7 @@ export function RecurringView({
 
       <PageContainer className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            What you already know is coming, every month.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("charges.blurb")}</p>
           <Button
             variant="pill"
             size="sm"
@@ -336,7 +343,7 @@ export function RecurringView({
         </div>
 
         {applyPending ? (
-          <p className="rounded-control border border-dashed border-primary-rim/50 px-4 py-3 text-sm text-muted-foreground">
+          <p className="rounded-control border border-dashed border-hairline-strong px-4 py-3 text-sm text-muted-foreground">
             {t("charges.applyPendingBefore")}{" "}
             <Link
               href={transactionsHref}
@@ -352,18 +359,22 @@ export function RecurringView({
           <>
             <section className="flex flex-col gap-1 rounded-card border border-border bg-card p-5">
               <p className="text-sm text-muted-foreground">
-                Committed every month
+                {t("charges.committedEveryMonth")}
               </p>
               <span className="privacy-amount font-head text-3xl leading-none tabular-nums md:text-4xl">
                 {formatEuro(budgetMonthly)}
               </span>
               {deploymentMonthly > 0 ? (
+                // The figure is its own element so the blur can cover it
+                // without covering the sentence it sits in, which is why this
+                // is two fragments either side of an amount rather than one
+                // template.
                 <p className="mt-1.5 text-sm text-muted-foreground">
-                  Plus{" "}
+                  {t("charges.plusMovedBefore")}{" "}
                   <span className="privacy-amount tabular-nums text-foreground">
                     {formatEuro(deploymentMonthly)}
                   </span>{" "}
-                  moved into the broker — tracked, but not spent.
+                  {t("charges.plusMovedAfter")}
                 </p>
               ) : null}
             </section>
@@ -372,17 +383,23 @@ export function RecurringView({
                 would be a screen and a half of scrolling to reach investments,
                 and the three kinds are rarely read together. */}
             <div className="flex flex-col gap-3 md:hidden">
+              {/* A group of toggles, not tabs. `role="tablist"` over
+                  `role="tab"` was a promise the markup did not keep: the list
+                  below is not a `tabpanel`, nothing carries `aria-controls`,
+                  and there was neither a roving `tabIndex` nor a key handler —
+                  so a screen reader announced a tab set whose arrow keys did
+                  nothing. `aria-pressed` on plain buttons says which kind is
+                  showing and claims no keys the control does not handle. */}
               <div
                 className="flex gap-1.5 overflow-x-auto"
-                role="tablist"
+                role="group"
                 aria-label={t("charges.kindOfCharge")}
               >
                 {groups.map(({ type, label, items }) => (
                   <button
                     key={type}
                     type="button"
-                    role="tab"
-                    aria-selected={activeTab === type}
+                    aria-pressed={activeTab === type}
                     onClick={() => setActiveTab(type)}
                     className={cn(
                       "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",

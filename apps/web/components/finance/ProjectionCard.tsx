@@ -100,7 +100,7 @@ export function ProjectionCard({ projection, runway }: ProjectionCardProps) {
           )}
           period={period}
           tone={summary.shrinking ? "bad" : "good"}
-          swatch="bg-primary"
+          swatch="bg-chart-1"
           lead
         />
         <Figure
@@ -123,7 +123,7 @@ export function ProjectionCard({ projection, runway }: ProjectionCardProps) {
       <ProjectionSparkline points={points} />
 
       <p className="mt-3 text-sm text-muted-foreground">
-        <span className="tabular-nums">
+        <span className="privacy-sensitive tabular-nums">
           {t("projection.perMonth", {
             amount: `${summary.monthlyToAccounts >= 0 ? "+" : "−"}${formatEuro(
               Math.abs(summary.monthlyToAccounts),
@@ -131,13 +131,15 @@ export function ProjectionCard({ projection, runway }: ProjectionCardProps) {
           })}
         </span>
         {summary.shrinking ? ` · ${t("projection.shrinking")}` : null}
-        {!summary.shrinking && summary.accountsFalling
-          ? ` · ${t("projection.accountsFalling", {
+        {!summary.shrinking && summary.accountsFalling ? (
+          <span className="privacy-sensitive">
+            {` · ${t("projection.accountsFalling", {
               amount: formatEuro(
                 Math.abs(summary.monthlyAltogether - summary.monthlyToAccounts),
               ),
-            })}`
-          : null}
+            })}`}
+          </span>
+        ) : null}
       </p>
 
       <div className="mt-4 border-t border-border pt-4">
@@ -155,7 +157,7 @@ export function ProjectionCard({ projection, runway }: ProjectionCardProps) {
           <span className="font-medium tabular-nums text-foreground">
             {runwayLine.replace(/\.$/, "")}
           </span>
-          <span className="text-muted-foreground">
+          <span className="privacy-sensitive text-muted-foreground">
             {" "}
             {t("plan.runwayRate", {
               amount: formatEuro(runway.monthlyCommitted),
@@ -330,7 +332,11 @@ function ProjectionSparkline({ points }: { points: ProjectionPoint[] }) {
       preserveAspectRatio="none"
       role="img"
       aria-label={t("projection.sparklineLabel", { count: points.length })}
-      className="mt-4 h-16 w-full text-primary"
+      // The chart ramp rather than the accent: every stroke in here takes
+      // `currentColor`, so a series drawn in `--primary` was the accent spent
+      // on a whole graph. `--chart-1` is the token the first series is for,
+      // and it is what the kept figure's swatch above now carries.
+      className="mt-4 h-16 w-full text-chart-1"
     >
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">

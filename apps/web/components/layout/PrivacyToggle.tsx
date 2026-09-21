@@ -63,7 +63,10 @@ export function PrivacyToggle({ className }: { className?: string }) {
         "inline-flex size-11 items-center justify-center rounded-control",
         "border border-border bg-card text-muted-foreground",
         "transition-colors hover:bg-muted hover:text-foreground",
-        hidden && "bg-primary/10 text-primary-ink",
+        // On is a raised ground and full-strength ink, one step up from the
+        // card surface and muted ink it rests at. The glyph swapping from an
+        // eye to a struck-through eye is the other half of the state.
+        hidden && "bg-muted text-foreground",
         className,
       )}
     >

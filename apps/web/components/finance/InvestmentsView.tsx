@@ -206,9 +206,16 @@ export function InvestmentsView({
           ) : null}
 
           <StaggerItem className="w-full min-w-0">
+            {/* A group of toggles, not tabs. `role="tablist"` over
+                `role="tab"` was a promise the markup did not keep: the panel
+                below is not a `tabpanel`, nothing carries `aria-controls`,
+                and there was neither a roving `tabIndex` nor a key handler —
+                so a screen reader announced a tab set and then the arrow keys
+                did nothing. `aria-pressed` on plain buttons says which wallet
+                is in force and claims no keys the control does not handle. */}
             <div
               className="flex w-full min-w-0 flex-wrap justify-center gap-2"
-              role="tablist"
+              role="group"
               aria-label={t("wallets.walletPicker")}
             >
               {INVESTMENT_WALLET_IDS.map((walletId) => {
@@ -218,8 +225,7 @@ export function InvestmentsView({
                   <button
                     key={walletId}
                     type="button"
-                    role="tab"
-                    aria-selected={active}
+                    aria-pressed={active}
                     onClick={() => setActiveWallet(walletId)}
                     className={cn(
                       "shrink-0 rounded-full border px-4 py-2 text-sm font-semibold",
@@ -458,7 +464,7 @@ function InvestmentPositionRow({
               </p>
             ) : null}
             {item.needsShareCount ? (
-              <p className="mt-1 text-xs font-medium text-primary-ink">
+              <p className="mt-1 text-xs font-medium text-foreground">
                 {isCrypto
                   ? t("wallets.addBtcForValue")
                   : t("wallets.addSharesForValue")}

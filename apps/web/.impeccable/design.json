@@ -148,7 +148,17 @@
       {
         "name": "bezel-inset",
         "value": "inset 0 1px 1px rgba(255, 246, 230, 0.08)",
-        "purpose": "The only depth cue in the system. A warm highlight along a card's top inner edge inside its tray, reading as a machined recess rather than elevation."
+        "purpose": "The app's only depth cue. A warm highlight along a card's top inner edge inside its tray, reading as a machined recess rather than elevation."
+      },
+      {
+        "name": "marketing-panel-glass",
+        "value": "inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 24px 60px -20px rgba(0, 0, 0, 0.7)",
+        "purpose": "Marketing only, on .glass-panel, under The Marketing Glass Rule. The inset is the light along the pane's top edge; the drop is how far the pane sits in front of the orb. Never used in the app."
+      },
+      {
+        "name": "marketing-menu-glass",
+        "value": "inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 30px 70px -20px rgba(0, 0, 0, 0.85)",
+        "purpose": "Marketing only, on .glass-menu, under The Marketing Glass Rule. The same pair, longer and darker, because a dropdown opens over a 5rem headline and has the most to hold down. Never used in the app."
       },
       {
         "name": "none",
@@ -258,12 +268,13 @@
   ],
   "narrative": {
     "northStar": "The Quiet Ledger",
-    "overview": "Pluclair is a ledger that happens to be lit from behind. It carries the discipline of ruled paper — consistent rows, aligned figures, nothing decorative competing with a number — onto a cool near-black ground, and the inversion is the whole idea. Paper's restraint, none of paper's brightness. The system is calm, exact and unhurried: its job is to let a figure be read correctly, and everything that would interfere with that has already been taken out.\n\nLit from behind is literal, and the light is the one thing that was not taken out. Mounted once in the shell, behind every screen in Operate mode, is a bloom: a violet main light high and wide over the content column, a magenta second source off to the right as if out of frame, indigo down the left edge, a purple bounce along the bottom, and the brand gold low and faint. Over it sits a WebGL veil, blurred past the point of structure, so the whole ground drifts slowly enough that nobody catches it moving. The surfaces above stay opaque and quiet, and they are quiet against something — which is what makes the restraint read as a decision rather than as the whole of the design. The same cards on an unlit near-black would read as printing.\n\nThis is a dark system with no light counterpart, and that is settled rather than pending. A warm paper theme shipped alongside this one and was removed: it was the CSS default while every entry point sent users to dark, which meant two palettes to keep honest and only one anybody saw. Designing a light variant is not an improvement to this system; it is a reversal of a decision already made.\n\nRestraint here is specific, not general. There is one accent and it is used rarely. There are no shadows at all, with one deliberate exception. There are three marketing greys, because the site genuinely needs three and did not need the ten alpha literals it had. There are three display sizes, because five clamp ranges produced twenty-eight distinct size/weight/family triples across eight pages. Each of these is a reduction that was made on purpose, and the count is the point.",
+    "overview": "Pluclair is a ledger that happens to be lit from behind. It carries the discipline of ruled paper — consistent rows, aligned figures, nothing decorative competing with a number — onto a cool near-black ground, and the inversion is the whole idea. Paper's restraint, none of paper's brightness. The system is calm, exact and unhurried: its job is to let a figure be read correctly, and everything that would interfere with that has already been taken out.\n\nLit from behind is literal, and the light is the one thing that was not taken out. Mounted once in the shell, behind every screen in Operate mode, is a bloom: a violet main light high and wide over the content column, a magenta second source off to the right as if out of frame, indigo down the left edge, a purple bounce along the bottom, and the brand gold low and faint. Over it sits a WebGL veil, blurred past the point of structure, so the whole ground drifts slowly enough that nobody catches it moving. The surfaces above are translucent and quiet — a card is drawn at 60% over that light and blurs what shows through — so they are quiet against something they admit rather than hide, which is what makes the restraint read as a decision rather than as the whole of the design. The same cards on an unlit near-black would read as printing.\n\nThis is a dark system with no light counterpart, and that is settled rather than pending. A warm paper theme shipped alongside this one and was removed: it was the CSS default while every entry point sent users to dark, which meant two palettes to keep honest and only one anybody saw. Designing a light variant is not an improvement to this system; it is a reversal of a decision already made.\n\nRestraint here is specific, not general. There is one accent and it is used rarely. The app casts no shadow at all, with one deliberate exception, and the marketing surface casts two, named and scoped to itself. There are three marketing greys, because the site genuinely needs three and did not need the ten alpha literals it had. There are three display sizes, because five clamp ranges produced twenty-eight distinct size/weight/family triples across eight pages. Each of these is a reduction that was made on purpose, and the count is the point.",
     "keyCharacteristics": [
       "Dark-only, on a cool near-black lit from behind by a violet bloom",
       "A ground that drifts — a blurred shader over that bloom, slow enough never to be caught moving",
+      "Translucent surfaces over that ground — three glass weights between 60% and 80%, each blurring and saturating what shows through",
       "One accent — a warm gold — against otherwise unsaturated surfaces",
-      "Flat by rule; depth comes from surface value steps and hairlines, read against that lit ground",
+      "Flat by rule; depth comes from translucency, surface value steps and hairlines, read against that lit ground",
       "Serif numerals for money, sans for everything that is words",
       "Controls that answer a press immediately and precisely, then stop"
     ],
@@ -275,7 +286,7 @@
       },
       {
         "name": "The Rare Accent Rule",
-        "body": "Lamplit Gold earns attention by being scarce. Its places are the primary action, the focus ring, a figure that genuinely leads a screen, and — systematically — a savings amount. Outside those, a surface that reaches for it in three unrelated places has spent it.",
+        "body": "Lamplit Gold earns attention by being scarce. Its places are the primary action, the focus ring, a figure that genuinely leads a screen, and — systematically — a savings amount. Outside those, a surface that reaches for it in three unrelated places has spent it. The count is true rather than aspirational: roughly twenty-three roles across ninety-eight call sites were pulled back to these four, so add a fifth only by changing the rule first.",
         "section": "colors"
       },
       {
@@ -314,6 +325,11 @@
         "section": "elevation"
       },
       {
+        "name": "The Marketing Glass Rule",
+        "body": "The marketing surface casts two shadows and lifts one card on hover, and those three declarations are the whole of the exception: .glass-panel at inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 24px 60px -20px rgba(0, 0, 0, 0.7); .glass-menu at inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 30px 70px -20px rgba(0, 0, 0, 0.85); and .glass-flat-hover:hover adding transform: translateY(-2px) to the border and background it was already changing. All three live in app/globals.css beside the other marketing glass and apply nowhere else — a gold glow under the hero button and a black pool under the phone mock were deleted, because neither was glass and the exception is the vocabulary, not the surface. Marketing glass sits over the orb, where a pane with nothing under it reads as a hole punched in the light, so the drop describes the material rather than a lift: long offset, soft blur, pulled back in by a negative spread, measuring the distance to the orb the way the inset measures the light on the top edge. The app side stays flat and is not waiting for the same thing — its depth is the lit ground, the glass weights, the surface value steps and the hairlines, which is already a complete answer, and a shadow there would be a second depth system arguing with the first. Nothing here licenses a drop shadow, a hover lift or an elevation scale under app/(app)/**, in components/finance/**, or in anything both surfaces share. This does leave The Flat-With-One-Exception Rule carrying a name that is now slightly wrong, and the name stays: tooling and this file both reference it, and a rule renamed to accommodate an exception is a rule being negotiated rather than kept.",
+        "section": "elevation"
+      },
+      {
         "name": "The One Backdrop Rule",
         "body": "The lit ground is mounted once, in AppShell, and never per route. A WebGL context is expensive to create and browsers cap how many can be live at once — Chrome at 16, silently dropping the oldest — so one backdrop that survives navigation beats one per page; the drift must not restart when somebody changes surface; and a backdrop unmounted mid-navigation would flash through everything sitting over it. Do not mount a second AppBackdrop, and do not give a screen its own gradient to match this one.",
         "section": "elevation"
@@ -329,7 +345,8 @@
       "Do set monetary figures in Fraunces with tabular-nums when the figure is the subject of its screen, and in the sans when it is one value among many in a row.",
       "Do colour amounts by category type through @finance/core, so a figure means the same thing here as it does on the phone.",
       "Do mark every rendered amount with .privacy-amount or .privacy-sensitive so the blur keeps covering the whole app.",
-      "Do build depth from the surface value steps and hairlines already defined, in that order.",
+      "Do build depth from the lit ground, the glass weights, the surface value steps and the hairlines already defined, in that order.",
+      "Do reach for one of the three weights in lib/glass.ts when a surface sits over the lit ground, and for SOLID_PANEL when it opens out of another blurred surface — backdrop-filter composites against finished pixels and does not nest.",
       "Do give touch targets at least 44px, and list rows at least 56px.",
       "Do use the three duration tokens and the single easing curve; a transition with no duration inherits the hover token and is already correct.",
       "Do honour prefers-reduced-motion in any new animation, following the landing logo's example of switching off rather than merely shortening."
@@ -337,6 +354,7 @@
     "donts": [
       "Don't add a light theme, a light-mode token, or a light: variant. The paper theme was removed on purpose.",
       "Don't introduce a drop shadow or an elevation scale. Every --shadow-* is none by decision.",
+      "Don't read the shadow-lg and shadow-xl classes already in the tree as permission — and don't leave them where they are either. Six surfaces ask for a shadow against tokens that resolve to none: SOLID_PANEL in lib/glass.ts (shadow-xl shadow-black/40), SelectionBar, OutboxBanner, QuickAddSheet's note-suggestion list, QuickAddProvider's floating quick-add button and SwipeToast, each with shadow-lg. All six state an intent the system forbids and render nothing, so the classes read as approval to the next person. This is a known contradiction, recorded unresolved: resolving it means deciding per surface whether it needs an edge it can actually have — a hairline, a surface value step, or a heavier glass weight — and then deleting the dead class. It does not mean giving --shadow-lg a value, which would undo The Flat-With-One-Exception Rule that made these tokens none in the first place. Until that pass happens, do not add a seventh.",
       "Don't add a fourth marketing grey or a fourth display clamp. Both counts are the result of a deliberate reduction.",
       "Don't reach for a second display typeface to signal importance; headings are the body sans at 600.",
       "Don't colour an amount by whether it is positive or negative.",

@@ -187,7 +187,7 @@ function InvestmentPositionForm({
         return;
       }
 
-      toast(`${item.name} removed`, "success");
+      toast(t("position.itemRemoved", { name: item.name }), "success");
       onOpenChange(false);
     });
   }
@@ -252,7 +252,7 @@ function InvestmentPositionForm({
                 value={recurringTemplateId}
                 onChange={(event) => setRecurringTemplateId(event.target.value)}
               >
-                <option value="">Pick one…</option>
+                <option value="">{t("position.pickRecurring")}</option>
                 {recurringOptions.map((template) => (
                   <option key={template.id} value={template.id}>
                     {displayNameForRecurringTemplate(template)}
@@ -494,7 +494,7 @@ function InvestmentPositionForm({
               href={chargeLookupUrl(instrumentSymbol, instrumentName)!}
               target="_blank"
               rel="noreferrer noopener"
-              className="self-start text-xs text-primary-ink underline underline-offset-4"
+              className="self-start text-xs text-foreground underline underline-offset-4"
             >
               {t("position.lookUpCharge")}
             </a>
@@ -503,17 +503,17 @@ function InvestmentPositionForm({
 
         {estimateShown !== null && (
           <Text className="text-sm text-muted-foreground">
-            Live market estimate:{" "}
-            <span className="font-mono font-semibold text-foreground">
+            {t("position.liveEstimate")}{" "}
+            <span className="privacy-amount font-mono font-semibold text-foreground">
               ≈ {formatEuro(estimateShown.amount)}
             </span>
             {isCrypto ? (
-              <span className="block font-mono text-xs">
+              <span className="privacy-sensitive block font-mono text-xs">
                 @ {formatEuro(estimateShown.priceEur)} / BTC
               </span>
             ) : (
               estimateShown.currency !== "EUR" && (
-                <span className="block font-mono text-xs">
+                <span className="privacy-sensitive block font-mono text-xs">
                   {formatMoney(
                     estimateShown.priceOriginal,
                     estimateShown.currency,
@@ -554,7 +554,7 @@ function InvestmentPositionForm({
                 name="valuePinned"
                 checked={valuePinned}
                 onChange={(event) => setValuePinned(event.target.checked)}
-                className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
+                className="mt-0.5 size-4 shrink-0 accent-foreground"
               />
               <span className="flex flex-col gap-0.5">
                 <span className="text-sm">{t("position.pinValue")}</span>

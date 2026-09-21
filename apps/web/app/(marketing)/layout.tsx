@@ -12,6 +12,13 @@ import { LandingHeader } from "@/components/marketing/LandingHeader";
  * device frames and the mocks render their dark treatment here while the app
  * behind the login keeps whatever theme the visitor chose.
  *
+ * The inherited text colour is the marketing ink rather than the app's
+ * `text-foreground`. These pages are built from translucent whites, and
+ * `--foreground` is an opaque `#ececf1` that belongs to the opaque app
+ * surfaces; letting it default here gave every unstyled text node a value
+ * outside the three the surface is allowed (The Three Greys Rule), which is
+ * where the drift towards `text-white` started.
+ *
  * See the marketing block in globals.css for the tokens it brings, and for
  * the `html:has()` rule that stops overscroll flashing paper behind it.
  */
@@ -24,7 +31,7 @@ export default async function MarketingLayout({
   const isLoggedIn = Boolean(user);
 
   return (
-    <div className="dark marketing-shell relative flex min-h-dvh flex-col text-foreground">
+    <div className="dark marketing-shell relative flex min-h-dvh flex-col text-marketing-ink">
       {/* The room the glass sits in. A backdrop blur over a flat field is
           invisible, so every translucent panel below the hero needs something
           under it to move: a fixed bed of slow light and film grain, faint

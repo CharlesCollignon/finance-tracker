@@ -204,7 +204,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                 <p className="font-mono text-xs text-primary/70">
                   {String(index + 1).padStart(2, "0")}
                 </p>
-                <h3 className="mt-3 font-head text-lg text-white">
+                <h3 className="mt-3 font-head text-lg text-marketing-ink">
                   {item.title}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
@@ -399,7 +399,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                   <span className="font-mono text-xs text-primary/70">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <h3 className="mt-3 font-head text-lg text-white">
+                  <h3 className="mt-3 font-head text-lg text-marketing-ink">
                     {beat.title}
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-marketing-muted">

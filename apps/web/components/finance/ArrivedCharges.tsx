@@ -12,6 +12,7 @@ import { formatShortDate, relativeDayLabel } from "@finance/core/constants";
 import { fulfilOccurrence, refuseFulfilment } from "@/lib/actions/fulfilment";
 import { useToast } from "@/components/layout/ToastProvider";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
+import { Button } from "@/components/retroui/Button";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
@@ -156,7 +157,7 @@ export function ArrivedCharges({
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
-                <button
+                <Button
                   type="button"
                   disabled={pending}
                   onClick={() =>
@@ -168,16 +169,12 @@ export function ArrivedCharges({
                       ),
                     )
                   }
-                  className={cn(
-                    "inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium",
-                    "bg-primary text-primary-foreground",
-                    "transition-colors hover:bg-primary-hover",
-                    "disabled:opacity-60",
-                  )}
+                  size="sm"
+                  className="gap-1.5 rounded-full"
                 >
                   <Check size={ICON.sm} weight="bold" />
                   {t("fulfilment.thatsIt")}
-                </button>
+                </Button>
                 <button
                   type="button"
                   disabled={pending}

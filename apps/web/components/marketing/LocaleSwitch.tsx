@@ -66,7 +66,7 @@ export function LocaleMenu({ pathname }: { pathname: string }) {
         className={cn(
           "flex h-11 items-center gap-1.5 rounded-full px-2.5 text-sm transition-colors duration-hover",
           marketingFocus,
-          open ? "text-white" : "text-marketing-muted hover:text-white",
+          open ? "text-marketing-ink" : "text-marketing-muted hover:text-white",
           pending && "opacity-60",
         )}
         aria-expanded={open}
@@ -107,7 +107,7 @@ export function LocaleMenu({ pathname }: { pathname: string }) {
                 "flex min-h-11 w-full items-center justify-between gap-3 rounded-control px-3 text-sm transition-colors duration-hover",
                 marketingFocus,
                 option === locale
-                  ? "bg-white/10 font-medium text-white"
+                  ? "bg-white/10 font-medium text-marketing-ink"
                   : "text-marketing-muted hover:bg-white/[0.07] hover:text-white",
               )}
             >
@@ -167,7 +167,7 @@ export function LocaleChoices({
                   ? "lg:min-h-0"
                   : "w-full px-3 hover:bg-white/[0.07]",
                 current
-                  ? "font-medium text-white"
+                  ? "font-medium text-marketing-ink"
                   : "text-marketing-muted hover:text-white",
               )}
             >

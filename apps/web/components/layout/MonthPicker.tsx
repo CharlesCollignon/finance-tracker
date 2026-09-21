@@ -227,7 +227,7 @@ function MonthGrid({
         <button
           type="button"
           onClick={() => setShownYear((current) => current - 1)}
-          aria-label={`Show ${shownYear - 1}`}
+          aria-label={t("common.showYear", { year: shownYear - 1 })}
           className="flex size-8 items-center justify-center rounded-control hover:bg-muted"
         >
           <CaretLeft size={ICON.sm} weight="bold" />
@@ -236,7 +236,7 @@ function MonthGrid({
         <button
           type="button"
           onClick={() => setShownYear((current) => current + 1)}
-          aria-label={`Show ${shownYear + 1}`}
+          aria-label={t("common.showYear", { year: shownYear + 1 })}
           className="flex size-8 items-center justify-center rounded-control hover:bg-muted"
         >
           <CaretRight size={ICON.sm} weight="bold" />
@@ -251,7 +251,8 @@ function MonthGrid({
           const closed = marks?.closed.includes(value) ?? false;
           const hasData = marks?.withData.includes(value) ?? false;
           // Only ever ahead of today: a month that has not happened cannot
-          // have records, and greying it out says so without a tooltip.
+          // have records, and setting it a step back says so without a
+          // tooltip.
           const future =
             shownYear > today.year ||
             (shownYear === today.year && value > today.month);
@@ -265,12 +266,26 @@ function MonthGrid({
               className={cn(
                 "flex h-11 flex-col items-center justify-center gap-1 rounded-control",
                 "text-sm transition-colors",
+                // The month being read is the raised ground at full strength
+                // and semibold; hover takes the same ground at half. Two
+                // steps of one surface rather than the accent, which was
+                // being spent on a grid of twelve every time this opened.
                 selected
-                  ? "bg-primary font-medium text-primary-foreground"
-                  : future
-                    ? "text-muted-foreground/50 hover:bg-muted"
-                    : "hover:bg-muted",
-                isToday && !selected && "ring-1 ring-inset ring-primary-rim/60",
+                  ? "bg-secondary font-semibold text-foreground"
+                  : // A month ahead of today is dimmed, not disabled — it is
+                    // pressable, and pressing it is how you look forward. It
+                    // was set in `text-muted-foreground/50`, about 2.6:1 on
+                    // the card surface, which is unreadable for a control
+                    // anyone can use. Full-strength muted foreground is the
+                    // token that already means secondary, and the step down
+                    // from the foreground the past months are drawn in is the
+                    // whole of the distinction being made.
+                    future
+                    ? "text-muted-foreground hover:bg-muted/50"
+                    : "hover:bg-muted/50",
+                isToday &&
+                  !selected &&
+                  "ring-1 ring-inset ring-hairline-strong",
               )}
             >
               {label}
@@ -297,21 +312,21 @@ function MonthGrid({
         <button
           type="button"
           onClick={() => go(today.year, today.month)}
-          className="rounded-control px-2 py-1 text-sm text-primary-ink hover:bg-muted"
+          className="rounded-control px-2 py-1 text-sm text-foreground hover:bg-muted"
         >
-          This month
+          {t("common.thisMonth")}
         </button>
         <span className="flex items-center gap-2 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <span aria-hidden className="size-1 rounded-full bg-success" />
-            closed
+            {t("common.monthClosed")}
           </span>
           <span className="flex items-center gap-1">
             <span
               aria-hidden
               className="size-1 rounded-full bg-current opacity-40"
             />
-            {loading && !marks ? "…" : "records"}
+            {loading && !marks ? "…" : t("common.monthRecords")}
           </span>
         </span>
       </div>

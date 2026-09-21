@@ -35,6 +35,7 @@ import { Card } from "@/components/retroui/Card";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
 import { StatHero } from "@/components/finance/StatHero";
 import { WeightBars } from "@/components/finance/WeightBars";
@@ -332,9 +333,9 @@ export function LookThroughView({
                       className="flex items-baseline justify-between gap-3 text-sm"
                     >
                       <span className="min-w-0 truncate">{row.name}</span>
-                      <span className="shrink-0 tabular-nums text-muted-foreground">
+                      <PrivateAmount className="shrink-0 text-muted-foreground">
                         {formatEuro(row.value)}
-                      </span>
+                      </PrivateAmount>
                     </li>
                   ))}
                 </ul>
@@ -606,6 +607,7 @@ export function LookThroughView({
                 <Line
                   label={t("lookThrough.perYear", { amount: "" }).trim()}
                   value={formatEuro(lookThrough.charges.allInAnnualCost)}
+                  money
                 />
               </dl>
               {/* Which fees these are, and which are not counted — the
@@ -677,10 +679,12 @@ export function LookThroughView({
                             {Math.round(row.weight * 100)}%
                           </span>
                           {move ? (
+                            // "Buy 240 €" — the figure is inside the phrase,
+                            // so the phrase is what carries the marker.
                             <span
                               className={cn(
                                 MICRO,
-                                "ml-2",
+                                "privacy-sensitive ml-2",
                                 move.delta > 0
                                   ? "text-[var(--success)]"
                                   : "text-[var(--destructive)]",
@@ -782,21 +786,36 @@ function Line({
   label,
   value,
   strong,
+  money = false,
 }: {
   label: string;
   value: string;
   strong?: boolean;
+  /**
+   * Whether the figure is an amount of the user's money, and so goes under
+   * the privacy blur.
+   *
+   * Off by default because most of what this line carries is a charge ratio,
+   * and a ratio is a property of the funds held rather than of how much is
+   * held — blurring "0.22 %" hides nothing and makes a half-covered list look
+   * broken. The euro cost those ratios come to is money, and says so.
+   */
+  money?: boolean;
 }) {
+  const figureClass = cn(
+    "tabular-nums",
+    strong ? "text-sm font-semibold" : "text-sm",
+  );
+
   return (
     <div className="flex items-baseline justify-between gap-3">
       <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd
-        className={cn(
-          "tabular-nums",
-          strong ? "text-sm font-semibold" : "text-sm",
+      <dd className={money ? undefined : figureClass}>
+        {money ? (
+          <PrivateAmount className={figureClass}>{value}</PrivateAmount>
+        ) : (
+          value
         )}
-      >
-        {value}
       </dd>
     </div>
   );

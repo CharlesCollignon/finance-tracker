@@ -156,10 +156,7 @@ export function CalendarView({
         toast(result.error, "error");
         return;
       }
-      toast(
-        `${result.deleted} ${result.deleted === 1 ? "transaction" : "transactions"} deleted`,
-        "success",
-      );
+      toast(t("ledger.deleted", { count: result.deleted ?? 0 }), "success");
       leaveSelectMode();
     });
   }
@@ -183,11 +180,8 @@ export function CalendarView({
       }
       const name =
         categories.find((category) => category.id === categoryId)?.name ??
-        "the new category";
-      toast(
-        `${result.moved} ${result.moved === 1 ? "transaction" : "transactions"} moved to ${name}`,
-        "success",
-      );
+        t("ledger.theNewCategory");
+      toast(t("ledger.moved", { count: result.moved ?? 0, name }), "success");
       leaveSelectMode();
     });
   }
@@ -215,15 +209,15 @@ export function CalendarView({
                   monthTotals.net < 0 ? "text-destructive" : "text-success"
                 }
                 subtitle={
-                  <p className="font-mono">
-                    <span className="privacy-amount text-success tabular-nums">
-                      {formatEuro(monthTotals.income)}
-                    </span>
-                    {" in · "}
-                    <span className="privacy-amount text-destructive tabular-nums">
-                      {formatEuro(monthTotals.outflow)}
-                    </span>
-                    {" out"}
+                  // One message rather than two figures with English glue
+                  // between them: where "in" and "out" fall in the sentence
+                  // is the language's decision, not the layout's. The whole
+                  // line is money, so the whole line carries the marker.
+                  <p className="privacy-sensitive font-mono tabular-nums">
+                    {t("calendarView.inAndOut", {
+                      income: formatEuro(monthTotals.income),
+                      outflow: formatEuro(monthTotals.outflow),
+                    })}
                   </p>
                 }
               />
@@ -272,34 +266,49 @@ export function CalendarView({
                             "border-r border-border/40 p-1.5 text-left",
                             "transition-colors last:border-r-0",
                             "sm:min-h-[4.75rem] sm:p-2 md:min-h-[5.5rem]",
-                            !day.isCurrentMonth && "text-muted-foreground/50",
-                            day.isToday && "bg-primary/5",
-                            isSelected && "bg-primary/10",
+                            // A day spilling in from the neighbouring month is
+                            // pressable like any other, so its number has to
+                            // be readable. It was `text-muted-foreground/50`,
+                            // about 2.6:1 on the grid ground. Full-strength
+                            // muted foreground against the foreground the
+                            // month's own days carry is the distinction, and
+                            // the missing hover wash says the rest.
+                            !day.isCurrentMonth && "text-muted-foreground",
+                            // Today is an inset hairline and the day you are
+                            // reading is a raised ground, so the two can be
+                            // true at once and neither spends the accent on a
+                            // grid that repeats it forty-two times.
+                            day.isToday &&
+                              "ring-1 ring-inset ring-hairline-strong",
+                            isSelected && "bg-muted",
                             day.isCurrentMonth &&
                               !isSelected &&
                               "hover:bg-muted/30",
                           )}
-                          aria-label={`${day.day}${
-                            totals.count > 0
-                              ? `, ${totals.count} transactions`
-                              : ", no transactions"
-                          }`}
+                          aria-label={t("calendarView.dayLabel", {
+                            day: day.day,
+                            entries:
+                              totals.count > 0
+                                ? t("ledger.entryCount", {
+                                    count: totals.count,
+                                  })
+                                : t("calendarView.noTransactions"),
+                          })}
                           aria-pressed={isSelected}
                         >
-                          <span
-                            className={cn(
-                              "text-sm font-semibold leading-none",
-                              day.isToday && "text-primary-ink",
-                            )}
-                          >
+                          {/* Today's numeral needs no colour of its own: the
+                              cell it sits in is the one carrying the inset
+                              hairline, and every day of this month is already
+                              set in the foreground. */}
+                          <span className="text-sm font-semibold leading-none">
                             {day.day}
                           </span>
 
                           {totals.income > 0 ? (
                             <span
                               className={cn(
-                                "mt-auto truncate font-mono text-[10px] font-medium",
-                                "leading-tight text-success",
+                                "privacy-amount mt-auto truncate font-mono",
+                                "text-[10px] font-medium leading-tight text-success",
                                 "md:text-xs",
                               )}
                             >
@@ -309,8 +318,8 @@ export function CalendarView({
                           {totals.outflow > 0 ? (
                             <span
                               className={cn(
-                                "truncate font-mono text-[10px] font-medium leading-tight",
-                                "text-destructive md:text-xs",
+                                "privacy-amount truncate font-mono text-[10px]",
+                                "font-medium leading-tight text-destructive md:text-xs",
                                 totals.income > 0 && "-mt-0.5",
                               )}
                             >
@@ -339,12 +348,14 @@ export function CalendarView({
                   <p className="mt-1 text-sm text-muted-foreground">
                     {selectedTotals.count === 0
                       ? t("calendarView.noTransactions")
-                      : `${selectedTotals.count} transaction${
-                          selectedTotals.count === 1 ? "" : "s"
-                        }`}
+                      : t("ledger.entryCount", { count: selectedTotals.count })}
                     {selectedTotals.count > 0 ? (
-                      <span className="font-mono">
-                        {` · ${formatEuro(selectedTotals.income)} in · ${formatEuro(selectedTotals.outflow)} out`}
+                      <span className="privacy-sensitive font-mono">
+                        {" · "}
+                        {t("calendarView.inAndOut", {
+                          income: formatEuro(selectedTotals.income),
+                          outflow: formatEuro(selectedTotals.outflow),
+                        })}
                       </span>
                     ) : (
                       ""
@@ -380,7 +391,7 @@ export function CalendarView({
                   ) : null}
                   <Button size="sm" onClick={() => setFormOpen(true)}>
                     <Plus size={ICON.md} weight="bold" />
-                    <span className="hidden sm:inline">Add</span>
+                    <span className="hidden sm:inline">{t("ledger.add")}</span>
                   </Button>
                 </div>
               </div>
@@ -395,7 +406,7 @@ export function CalendarView({
                     size="md"
                     onClick={() => setFormOpen(true)}
                   >
-                    Add transaction
+                    {t("ledger.addTransaction")}
                     <ButtonNub>
                       <Plus size={ICON.md} weight="bold" />
                     </ButtonNub>
@@ -419,23 +430,27 @@ export function CalendarView({
                               )
                             : setEditTransaction(tx)
                         }
-                        aria-label={
-                          selectMode
-                            ? `Select ${tx.categories.name}`
-                            : `Edit ${tx.categories.name}`
-                        }
+                        aria-label={t(
+                          selectMode ? "ledger.selectRow" : "ledger.editRow",
+                          { name: tx.categories.name },
+                        )}
                         aria-pressed={
                           selectMode ? selected.has(tx.id) : undefined
                         }
                         className={cn(
                           "flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30",
-                          selectMode && selected.has(tx.id) && "bg-primary/5",
+                          // The checkbox is what says a row is picked; the
+                          // wash behind it only has to separate the picked
+                          // rows from the rest, which the raised ground does.
+                          selectMode && selected.has(tx.id) && "bg-muted",
                         )}
                       >
                         {selectMode ? (
                           <RowCheckbox
                             checked={selected.has(tx.id)}
-                            label={`Select ${tx.categories.name}`}
+                            label={t("ledger.selectRow", {
+                              name: tx.categories.name,
+                            })}
                             onChange={() =>
                               setSelected((current) =>
                                 toggleSelected(current, tx.id),

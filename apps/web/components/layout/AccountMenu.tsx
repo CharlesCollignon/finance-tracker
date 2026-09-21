@@ -172,8 +172,10 @@ export function AccountMenu({
             "justify-center gap-0.5 rounded-full mx-0.5 my-1 px-1 py-1",
             "text-[10px] font-medium sm:text-xs",
             "transition-colors duration-hover",
+            // Same rule as the rest of the bar: the open menu is said in
+            // foreground colour, not with a pill behind it.
             active
-              ? "bg-primary/15 text-primary-ink"
+              ? "text-foreground"
               : "text-muted-foreground hover:text-foreground",
           )}
         >
@@ -198,7 +200,7 @@ export function AccountMenu({
           "flex w-full min-h-10 items-center gap-3 rounded-control px-3 py-2",
           "text-sm font-medium transition-colors duration-hover",
           active
-            ? "bg-primary/10 text-primary-ink"
+            ? "text-foreground"
             : "text-muted-foreground hover:bg-muted hover:text-foreground",
         )}
       >

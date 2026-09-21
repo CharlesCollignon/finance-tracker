@@ -37,7 +37,10 @@ export function Switch({
         "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full",
         "border border-border transition-colors duration-hover",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-        checked ? "bg-primary" : "bg-muted",
+        // On is the foreground, off is the raised surface, and the knob
+        // inverts with the track. A switch is a setting, not an emphasis, so
+        // the on-state is the loudest neutral rather than the accent.
+        checked ? "bg-foreground" : "bg-muted",
         disabled && "cursor-not-allowed opacity-50",
         className,
       )}
@@ -46,7 +49,7 @@ export function Switch({
         className={cn(
           "pointer-events-none ml-0.5 size-4.5 rounded-full transition-transform duration-hover",
           checked
-            ? "translate-x-5 bg-primary-foreground"
+            ? "translate-x-5 bg-background"
             : "translate-x-0 bg-foreground/70",
         )}
       />

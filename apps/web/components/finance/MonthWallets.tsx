@@ -64,7 +64,7 @@ export function MonthWallets({ portfolio }: MonthWalletsProps) {
         <h2 className="text-sm font-medium">{t("month.invested")}</h2>
         <Link
           href="/investments"
-          className="flex items-center gap-1 text-sm text-primary-ink"
+          className="flex items-center gap-1 text-sm text-foreground hover:underline hover:underline-offset-4"
         >
           {t("nav.wallets")}
           <ArrowRight size={ICON.sm} />

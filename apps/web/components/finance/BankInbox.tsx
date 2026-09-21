@@ -66,7 +66,7 @@ function Amount({
   return (
     <span
       className={cn(
-        "shrink-0 tabular-nums",
+        "privacy-amount shrink-0 tabular-nums",
         direction === "in" ? "text-success" : "text-destructive",
         className,
       )}
@@ -139,14 +139,14 @@ export function BankInbox({
     <div
       className={cn(
         "flex flex-wrap items-center justify-between gap-3 rounded-control border px-4 py-2.5",
-        waiting ? "border-primary-rim bg-primary/5" : "border-border bg-card",
+        waiting ? "border-hairline-strong bg-muted" : "border-border bg-card",
       )}
     >
       <p className="flex min-w-0 items-center gap-2.5 text-sm">
         {waiting ? (
           <span
             aria-hidden
-            className="size-2 shrink-0 rounded-full bg-primary"
+            className="size-2 shrink-0 rounded-full bg-foreground"
           />
         ) : null}
         {/* One sentence rather than a bold numeral beside a fragment. The

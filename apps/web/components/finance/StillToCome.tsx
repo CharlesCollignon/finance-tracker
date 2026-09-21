@@ -124,7 +124,7 @@ export function StillToCome({
 
       <Link
         href="/calendar"
-        className="flex w-fit items-center gap-1 text-sm text-primary-ink"
+        className="flex w-fit items-center gap-1 text-sm text-foreground hover:underline hover:underline-offset-4"
       >
         {t("common.seeOnCalendar")}
         <ArrowRight size={ICON.sm} />

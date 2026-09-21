@@ -10,7 +10,10 @@ const badgeVariants = cva(
         default: "bg-muted text-muted-foreground",
         outline: "border border-border text-foreground",
         solid: "bg-foreground text-background",
-        surface: "bg-primary/15 text-primary-ink",
+        // The raised surface with full-strength ink, where `default` takes
+        // the same ground with muted ink. The two steps of emphasis a badge
+        // needs, without either of them being the accent.
+        surface: "bg-secondary text-foreground",
       },
       size: {
         sm: "px-2 py-0.5 text-xs",

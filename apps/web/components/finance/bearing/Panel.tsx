@@ -175,7 +175,7 @@ export function Panel({ card }: { card: BearingCard }) {
           <button
             type="button"
             onClick={() => setAttempt((count) => count + 1)}
-            className="font-medium text-primary-ink underline underline-offset-2"
+            className="font-medium text-foreground underline underline-offset-2"
           >
             {t("bearing.panel.retry")}
           </button>
@@ -220,7 +220,7 @@ function Footer({ destinations }: { destinations: string[] }) {
         <Link
           key={href}
           href={href}
-          className="flex items-center gap-1 text-sm font-medium text-primary-ink"
+          className="flex items-center gap-1 text-sm font-medium text-foreground hover:underline hover:underline-offset-4"
         >
           {t(surfaceKey(href) ?? "bearing.panel.footer")}
           <ArrowRight size={ICON.sm} />

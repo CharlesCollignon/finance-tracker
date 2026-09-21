@@ -68,11 +68,17 @@ export function SegmentedControl<T extends string>({
       style={{ gridTemplateColumns: `repeat(${segments.length}, 1fr)` }}
     >
       {/* The pill. Inset by the track's padding on every side, and offset in
-          whole columns, so it lands exactly on a segment at any width. */}
+          whole columns, so it lands exactly on a segment at any width.
+
+          A raised surface under an inset hairline rather than a gold fill:
+          the step up from the track and the edge around it are what make the
+          pill a thing, and the active label goes to full-strength foreground
+          against muted to say which segment it is under. */}
       <span
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-y-1 left-1 -z-10 rounded-full bg-primary",
+          "pointer-events-none absolute inset-y-1 left-1 -z-10 rounded-full",
+          "bg-secondary ring-1 ring-inset ring-hairline-strong",
           "transition-transform duration-hover ease-out",
         )}
         style={{
@@ -101,7 +107,7 @@ export function SegmentedControl<T extends string>({
               "transition-colors duration-hover sm:text-sm",
               "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
               active
-                ? "text-primary-foreground"
+                ? "text-foreground"
                 : "text-muted-foreground hover:text-foreground",
               segment.disabled && "cursor-not-allowed opacity-40",
             )}

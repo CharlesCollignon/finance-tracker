@@ -269,10 +269,21 @@ export function MonthCloseSheet({
                     <Figure
                       label={t("monthClose.neverRecorded")}
                       value={formatEuro(result.unrecorded)}
+                      /* Destructive when the reader's own allowance has been
+                         passed, and the ordinary foreground otherwise — not
+                         green. The Semantic Amount Rule says colour names what
+                         kind of money a figure is, never whether it is good,
+                         and PRODUCT.md refuses to hand out a score. Being over
+                         a line the reader drew names something to go and find;
+                         being under it is just the ordinary case, and painting
+                         it with approval is a grade awarded on somebody's
+                         month. The web's sheet resolves this the same way, and
+                         `bearing/BearingCards.tsx` on both clients is where the
+                         reasoning was worked out. */
                       toneClass={
                         overCap
                           ? "text-sm font-semibold text-destructive"
-                          : "text-sm font-semibold text-success"
+                          : "text-sm font-semibold text-foreground"
                       }
                     />
                   ) : null}

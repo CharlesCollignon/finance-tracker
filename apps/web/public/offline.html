@@ -4,47 +4,158 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Offline · Pluclair</title>
+    <script>
+      /*
+       * Pick the language before the body paints.
+       *
+       * This page is the service-worker fallback: it is served from the cache
+       * when a navigation fails, so it can neither import the message
+       * catalogues nor ask the server which locale was negotiated. Both
+       * languages therefore sit in the markup and the `lang` on <html> hides
+       * one of them. A duplicated paragraph is a cheap price for not dropping
+       * a French reader into English on the one screen that appears when
+       * everything else has already gone wrong.
+       *
+       * `pluclair-locale` is the cookie `lib/locale-cookies.ts` writes, and it
+       * is deliberately not httpOnly precisely so the client can read it.
+       * Where it is absent — a first visit that lost the network before
+       * anybody chose — the browser's own language stands in, which is the
+       * same signal `negotiateLocale` reads from `Accept-Language` on the
+       * server. A region suffix is accepted and anything unrecognised falls to
+       * English, matching `parseLocale` and `DEFAULT_LOCALE`.
+       *
+       * A service worker cannot serve this page without JavaScript, so the
+       * script always runs; English in the markup is the honest default if it
+       * somehow does not.
+       */
+      (function () {
+        var cookie = document.cookie.match(/(?:^|;\s*)pluclair-locale=([^;]*)/);
+        var tag = (
+          cookie ? decodeURIComponent(cookie[1]) : navigator.language || ""
+        ).toLowerCase();
+        var locale = tag.split("-")[0] === "fr" ? "fr" : "en";
+        document.documentElement.lang = locale;
+        document.title =
+          locale === "fr" ? "Hors ligne · Pluclair" : "Offline · Pluclair";
+      })();
+    </script>
     <style>
-      :root { color-scheme: light dark; }
+      /*
+       * Every value here is hard-coded, and that is correct rather than drift.
+       * This file is cached whole and served when the network is gone, so it
+       * cannot reach the token layer in `app/globals.css` — there is no
+       * stylesheet to load and no `:root` to inherit from. Each literal below
+       * mirrors a documented token and has to move when that token does:
+       *
+       *   #0a0a10  --background          Cool Near-Black, the app page; also
+       *                                  the ink used on the accent
+       *   #ececf1  --foreground          primary text, never pure white
+       *   #9b9bad  --muted-foreground    secondary prose
+       *   #e0be7a  --primary             Lamplit Gold, the one emphasis colour
+       *   #eacb8f  --primary-hover       its only fill change
+       *   0.625rem --radius-control      buttons and anything pressable
+       *   200ms    --transition-duration-hover
+       *   140ms    --transition-duration-press
+       *   cubic-bezier(0.32, 0.72, 0, 1)  the system's single easing curve
+       *
+       * There is one palette and it is dark (The One Palette Rule), so
+       * `color-scheme` names dark alone and there is no `prefers-color-scheme`
+       * branch to fall into: the page somebody reaches when everything else
+       * has failed must still be the product they were using.
+       */
+      :root {
+        color-scheme: dark;
+      }
       body {
         margin: 0;
         min-height: 100dvh;
         display: grid;
         place-items: center;
         padding: 2rem;
-        background: #f8f9fb;
-        color: #16161d;
-        font-family: system-ui, -apple-system, sans-serif;
+        background: #0a0a10;
+        color: #ececf1;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        letter-spacing: -0.01em;
         text-align: center;
       }
-      @media (prefers-color-scheme: dark) {
-        body { background: #0a0a10; color: #ececf1; }
+      /* The half of the copy this reader is not going to use. */
+      html[lang="en"] .copy[lang="fr"],
+      html[lang="fr"] .copy[lang="en"] {
+        display: none;
       }
-      main { max-width: 30rem; display: flex; flex-direction: column; gap: 0.75rem; }
-      h1 { margin: 0; font-size: 1.5rem; font-weight: 600; }
-      p { margin: 0; line-height: 1.6; opacity: 0.75; }
+      .copy {
+        max-width: 30rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: -0.035em;
+      }
+      p {
+        margin: 0;
+        line-height: 1.6;
+        color: #9b9bad;
+      }
       button {
         margin-top: 0.5rem;
+        min-height: 44px;
         padding: 0.7rem 1.25rem;
         border: 0;
-        border-radius: 0.5rem;
-        background: #4f2fd0;
-        color: #fff;
+        border-radius: 0.625rem;
+        background: #e0be7a;
+        color: #0a0a10;
         font: inherit;
         font-weight: 500;
+        letter-spacing: -0.01em;
         cursor: pointer;
+        transition:
+          background-color 200ms cubic-bezier(0.32, 0.72, 0, 1),
+          transform 140ms cubic-bezier(0.32, 0.72, 0, 1);
+      }
+      button:hover {
+        background: #eacb8f;
+      }
+      button:active {
+        transform: scale(0.98);
+      }
+      button:focus-visible {
+        outline: 2px solid #e0be7a;
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        button {
+          transition-duration: 0.01ms;
+        }
+        button:active {
+          transform: none;
+        }
       }
     </style>
   </head>
   <body>
     <main>
-      <h1>No connection</h1>
-      <p>
-        Pluclair needs the network to read your figures. Anything you entered
-        while offline is saved on this device and will sync by itself once you
-        are back.
-      </p>
-      <button type="button" onclick="location.reload()">Try again</button>
+      <div class="copy" lang="en">
+        <h1>No connection</h1>
+        <p>
+          Pluclair needs the network to read your figures. Anything you entered
+          while offline is saved on this device and will sync when you are back
+          online.
+        </p>
+        <button type="button" onclick="location.reload()">Try again</button>
+      </div>
+      <div class="copy" lang="fr">
+        <h1>Pas de connexion</h1>
+        <p>
+          Pluclair a besoin du réseau pour lire vos chiffres. Ce que vous avez
+          saisi hors ligne est enregistré sur cet appareil et sera synchronisé
+          dès le retour en ligne.
+        </p>
+        <button type="button" onclick="location.reload()">Réessayer</button>
+      </div>
     </main>
   </body>
 </html>

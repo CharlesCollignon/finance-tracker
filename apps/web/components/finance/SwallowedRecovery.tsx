@@ -7,6 +7,7 @@ import { Card } from "@/components/retroui/Card";
 import { useToast } from "@/components/layout/ToastProvider";
 import { reopenSwallowedFeedItems } from "@/lib/actions/bank";
 import { ICON } from "@/lib/icon-scale";
+import { useT } from "@/lib/locale-context";
 
 interface SwallowedRecoveryProps {
   count: number;
@@ -28,6 +29,7 @@ interface SwallowedRecoveryProps {
  * entitled to make.
  */
 export function SwallowedRecovery({ count }: SwallowedRecoveryProps) {
+  const t = useT();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
 
@@ -39,7 +41,7 @@ export function SwallowedRecovery({ count }: SwallowedRecoveryProps) {
     startTransition(async () => {
       const result = await reopenSwallowedFeedItems();
       toast(
-        result.error ?? result.message ?? "Reopened",
+        result.error ?? result.message ?? t("swallowed.reopened"),
         result.error ? "error" : "success",
       );
     });
@@ -49,7 +51,7 @@ export function SwallowedRecovery({ count }: SwallowedRecoveryProps) {
     <Card className="block w-full border-destructive/40">
       <Card.Header>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Card.Title>{count} entries were merged away</Card.Title>
+          <Card.Title>{t("swallowed.title", { count })}</Card.Title>
           <Button
             type="button"
             size="sm"
@@ -58,16 +60,10 @@ export function SwallowedRecovery({ count }: SwallowedRecoveryProps) {
             onClick={reopen}
           >
             <ArrowCounterClockwise size={ICON.sm} />
-            {pending ? "Reopening…" : "Reopen them all"}
+            {pending ? t("swallowed.reopening") : t("swallowed.reopenAll")}
           </Button>
         </div>
-        <Card.Description>
-          An earlier sync decided these were debits your recurring templates had
-          already written, on nothing more than a matching amount within five
-          days. On a statement of small round figures that is not enough to go
-          on, so most of them are probably real spending that never reached your
-          ledger. Reopening puts them back in the inbox for you to judge.
-        </Card.Description>
+        <Card.Description>{t("swallowed.body")}</Card.Description>
       </Card.Header>
     </Card>
   );

@@ -56,16 +56,24 @@ function pacingHint(
   pacing: GoalPacing,
   format: (amount: number) => string,
   t: Translate,
-): { text: string; className: string } | null {
+): { text: string; className: string; money: boolean } | null {
   switch (pacing.status) {
     case "reached":
-      return { text: t("plan.goalReached"), className: "text-success" };
+      return {
+        text: t("plan.goalReached"),
+        className: "text-success",
+        money: false,
+      };
     case "overdue":
       return {
         text: t("plan.goalOverdue", {
           amount: format(pacing.monthlyAmount ?? 0),
         }),
         className: "text-destructive",
+        // The two pacing lines that name what to put by each month are
+        // figures of the user's own inside a sentence, so they go under the
+        // blur; "You have reached it" names none and stays legible.
+        money: true,
       };
     case "on-schedule":
       return {
@@ -74,6 +82,7 @@ function pacingHint(
           month: pacing.targetLabel ?? "",
         }),
         className: "text-muted-foreground",
+        money: true,
       };
     case "no-date":
       return null;
@@ -191,7 +200,7 @@ export function BudgetsView({
                       setEditingBudget(budget);
                       setBudgetFormOpen(true);
                     }}
-                    aria-label={`Edit the cap on ${row.label}`}
+                    aria-label={t("plan.editCapOn", { label: row.label })}
                     className={cn(
                       "rounded-control p-2 transition-colors hover:bg-muted/40",
                       editingBudget?.id === row.budgetId && "bg-muted/60",
@@ -200,7 +209,11 @@ export function BudgetsView({
                     <ProgressRing
                       ratio={row.ratio}
                       label={row.label}
-                      detail={`${formatEuro(row.spent)} of ${formatEuro(row.limit)}`}
+                      detail={t("plan.amountOfTotal", {
+                        amount: formatEuro(row.spent),
+                        total: formatEuro(row.limit),
+                      })}
+                      money
                       over={row.over}
                       meaning="limit"
                       colorVar="--chart-1"
@@ -226,7 +239,9 @@ export function BudgetsView({
                 <input type="hidden" name="id" value={editingBudget.id} />
               )}
               <div className="flex flex-col gap-2">
-                <FormLabel htmlFor="budget-category">Scope</FormLabel>
+                <FormLabel htmlFor="budget-category">
+                  {t("plan.capScope")}
+                </FormLabel>
                 <select
                   id="budget-category"
                   name="categoryId"
@@ -274,7 +289,7 @@ export function BudgetsView({
                     setBudgetFormOpen(false);
                   }}
                 >
-                  Cancel
+                  {t("plan.cancel")}
                 </Button>
                 {editingBudget ? (
                   <Button
@@ -296,7 +311,7 @@ export function BudgetsView({
                     }
                   >
                     <Trash size={ICON.md} weight="light" className="mr-1.5" />
-                    Remove
+                    {t("common.remove")}
                   </Button>
                 ) : null}
               </div>
@@ -338,7 +353,7 @@ export function BudgetsView({
                       setEditingGoal(goal);
                       setGoalFormOpen(true);
                     }}
-                    aria-label={`Edit the goal ${row.name}`}
+                    aria-label={t("plan.editGoalNamed", { name: row.name })}
                     className={cn(
                       "flex flex-col items-center gap-1 rounded-control p-2",
                       "transition-colors hover:bg-muted/40",
@@ -348,7 +363,11 @@ export function BudgetsView({
                     <ProgressRing
                       ratio={row.ratio}
                       label={row.name}
-                      detail={`${formatEuro(row.saved)} of ${formatEuro(row.target)}`}
+                      detail={t("plan.amountOfTotal", {
+                        amount: formatEuro(row.saved),
+                        total: formatEuro(row.target),
+                      })}
+                      money
                       meaning="target"
                       colorVar="--chart-3"
                       size={84}
@@ -358,6 +377,7 @@ export function BudgetsView({
                         className={cn(
                           "max-w-36 text-balance text-center text-xs",
                           hint.className,
+                          hint.money && "privacy-sensitive",
                         )}
                       >
                         {hint.text}
@@ -383,7 +403,7 @@ export function BudgetsView({
                 <input type="hidden" name="id" value={editingGoal.id} />
               )}
               <div className="flex flex-col gap-2">
-                <FormLabel htmlFor="goal-name">Name</FormLabel>
+                <FormLabel htmlFor="goal-name">{t("plan.goalName")}</FormLabel>
                 <Input
                   id="goal-name"
                   name="name"
@@ -423,7 +443,7 @@ export function BudgetsView({
               </div>
               <div className="flex flex-col gap-2">
                 <FormLabel htmlFor="goal-category">
-                  Track category (optional)
+                  {t("plan.trackCategoryOptional")}
                 </FormLabel>
                 <select
                   id="goal-category"
@@ -454,7 +474,7 @@ export function BudgetsView({
                     setGoalFormOpen(false);
                   }}
                 >
-                  Cancel
+                  {t("plan.cancel")}
                 </Button>
                 {editingGoal ? (
                   <Button
@@ -476,7 +496,7 @@ export function BudgetsView({
                     }
                   >
                     <Trash size={ICON.md} weight="light" className="mr-1.5" />
-                    Remove
+                    {t("common.remove")}
                   </Button>
                 ) : null}
               </div>

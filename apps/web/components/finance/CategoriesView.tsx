@@ -33,7 +33,7 @@ import type { Category, CategoryType } from "@finance/core/types/database";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
-import { resolveMessage } from "@finance/core/i18n/t";
+import { resolveMessage, type Key } from "@finance/core/i18n/t";
 
 const ICON_KEYS = Object.keys(CATEGORY_ICONS);
 
@@ -54,21 +54,21 @@ interface CategoriesViewProps {
  * Null for a category that counts normally, and for expenses, which cannot
  * carry the flag at all.
  */
-function notCountingLabel(category: {
+function notCountingKey(category: {
   type: CategoryType;
   counts_toward_summary: boolean;
-}): string | null {
+}): Key | null {
   if (category.counts_toward_summary !== false) {
     return null;
   }
   switch (category.type) {
     case "investment":
       // Bought inside a wallet with money that already left as a transfer.
-      return "Tracking";
+      return "categories.notCountingInvestment";
     case "savings":
-      return "Withdrawal";
+      return "categories.notCountingSavings";
     case "income":
-      return "Reimbursement";
+      return "categories.notCountingIncome";
     default:
       return null;
   }
@@ -162,9 +162,9 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                           <p className="truncate font-medium">
                             {category.name}
                           </p>
-                          {notCountingLabel(category) ? (
+                          {notCountingKey(category) ? (
                             <Badge size="sm" variant="outline">
-                              {notCountingLabel(category)}
+                              {t(notCountingKey(category)!)}
                             </Badge>
                           ) : null}
                           {category.archived && (
@@ -183,7 +183,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                             onClick={() => handleDelete(category.id)}
                             disabled={pending}
                           >
-                            Delete
+                            {t("categories.confirmDelete")}
                           </Button>
                           <Button
                             size="sm"
@@ -191,7 +191,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                             className="h-9 min-w-[4.5rem]"
                             onClick={() => setConfirmDeleteId(null)}
                           >
-                            Cancel
+                            {t("common.cancel")}
                           </Button>
                         </div>
                       ) : (
@@ -203,7 +203,9 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                               "flex h-11 w-11 items-center justify-center",
                               "rounded-full border border-border hover:bg-accent",
                             )}
-                            aria-label={`Edit ${category.name}`}
+                            aria-label={t("categories.editNamed", {
+                              name: category.name,
+                            })}
                           >
                             <PencilSimple size={ICON.lg} weight="light" />
                           </button>
@@ -242,7 +244,9 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
                               "rounded-full border border-border",
                               "hover:bg-destructive hover:text-destructive-foreground",
                             )}
-                            aria-label={`Delete ${category.name}`}
+                            aria-label={t("categories.deleteNamed", {
+                              name: category.name,
+                            })}
                           >
                             <Trash size={ICON.lg} weight="light" />
                           </button>
@@ -338,7 +342,7 @@ function CategoryFormSheet({
             maxLength={100}
             defaultValue={category?.name ?? ""}
             className="text-base"
-            placeholder="e.g. Groceries"
+            placeholder={t("categories.namePlaceholder")}
           />
         </div>
 
@@ -369,7 +373,7 @@ function CategoryFormSheet({
               type="checkbox"
               checked={countsTowardSummary}
               onChange={(event) => setCountsTowardSummary(event.target.checked)}
-              className="mt-0.5 h-4 w-4 accent-primary"
+              className="mt-0.5 h-4 w-4 accent-foreground"
             />
             <span>
               {t("categories.countsTowardBudget")}
@@ -386,9 +390,17 @@ function CategoryFormSheet({
 
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="category-icon">{t("categories.icon")}</FormLabel>
+          {/* A group of toggles, not a radio group. `role="radiogroup"` over
+              `role="radio"` was a promise the markup did not keep: a radio
+              group is a single tab stop whose members are moved between with
+              the arrow keys, and there was no roving `tabIndex` and no key
+              handler — so a screen reader announced "1 of 36" and then Down
+              did nothing. Each icon is its own tab stop, which is what these
+              have always been, and `aria-pressed` says which one is chosen
+              without claiming keys the control does not handle. */}
           <div
             id="category-icon"
-            role="radiogroup"
+            role="group"
             aria-label={t("categories.iconPicker")}
             className="grid grid-cols-6 gap-2"
           >
@@ -396,14 +408,16 @@ function CategoryFormSheet({
               <button
                 key={key}
                 type="button"
-                role="radio"
-                aria-checked={icon === key}
+                aria-pressed={icon === key}
                 aria-label={key}
                 onClick={() => setIcon(key)}
                 className={cn(
                   "flex h-11 items-center justify-center rounded-control border",
+                  // The full-strength rim was always doing the work here; the
+                  // gold fill under it was the accent repeated across a
+                  // thirty-six cell grid.
                   icon === key
-                    ? "border-foreground bg-primary text-primary-foreground"
+                    ? "border-foreground bg-secondary text-foreground"
                     : "border-border bg-background hover:bg-accent",
                 )}
               >

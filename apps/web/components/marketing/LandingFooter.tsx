@@ -43,7 +43,7 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
             <Link
               href="/"
               className={cn(
-                "inline-flex min-h-11 items-center gap-2.5 rounded-full font-logo text-2xl leading-none text-white",
+                "inline-flex min-h-11 items-center gap-2.5 rounded-full font-logo text-2xl leading-none text-marketing-ink",
                 marketingFocus,
               )}
               aria-label="Pluclair"

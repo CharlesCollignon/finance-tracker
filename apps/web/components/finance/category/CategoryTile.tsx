@@ -66,8 +66,8 @@ export function CategoryTile({
       aria-label={t("categoryScreen.open", { name: history.name })}
       className={cn(
         "flex flex-col gap-1 rounded-card p-row border border-border text-left",
-        "transition-colors hover:border-primary-rim",
-        open && "border-primary-rim bg-muted/40",
+        "transition-colors hover:border-hairline-strong",
+        open && "border-hairline-strong bg-muted/40",
       )}
     >
       <span className="flex items-baseline justify-between gap-2">
