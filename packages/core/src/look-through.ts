@@ -199,8 +199,39 @@ export interface LookThrough {
   /** Of those, how many resolved through to a composition. */
   classifiedPositionCount: number;
   unclassifiedPositions: { positionId: string; name: string; value: number }[];
-  /** Crypto held, which has no composition to look through to. */
+  /**
+   * The same positions again, split by *why* the shares do not cover them.
+   *
+   * Four groups, disjoint, and together exactly `unclassifiedPositions`.
+   * Split here rather than at the surface because the surface got it wrong:
+   * "has no ISIN" was worked out in two places, only one of them had learned
+   * that a coin is not waiting for one, and Bitcoin ended up listed three
+   * times on the same card. A reader also cannot act on "not covered" — each
+   * of these has a different answer, and one of them has no answer at all,
+   * which is itself the thing worth saying.
+   */
   cryptoPositions: { positionId: string; name: string; value: number }[];
+  /** No ISIN recorded, and not crypto — the instrument search fixes these. */
+  unidentifiedPositions: {
+    positionId: string;
+    name: string;
+    value: number;
+  }[];
+  /** Has an ISIN and no reading at all. Reading one is the answer. */
+  unreadPositions: { positionId: string; name: string; value: number }[];
+  /**
+   * Read, and the reading published no countries and no sectors.
+   *
+   * Distinct from unread, because pressing the button again is a different
+   * proposition: it may find more, or the instrument may genuinely have no
+   * geography — a gold ETC does not. Listed anonymously under the unread
+   * ones it left a reader with no way to tell those two apart.
+   */
+  readButUnclassifiedPositions: {
+    positionId: string;
+    name: string;
+    value: number;
+  }[];
 
   countries: WeightRow[];
   sectors: WeightRow[];
@@ -360,6 +391,19 @@ function classifies(reading: InstrumentReading | undefined): boolean {
     (Object.keys(reading.countryWeights).length > 0 ||
       Object.keys(reading.sectorWeights).length > 0)
   );
+}
+
+/** One uncovered position, as every group below lists it. */
+function listed(position: LookThroughPosition): {
+  positionId: string;
+  name: string;
+  value: number;
+} {
+  return {
+    positionId: position.positionId,
+    name: position.name,
+    value: position.marketValue,
+  };
 }
 
 export function buildLookThrough(input: LookThroughInput): LookThrough {
@@ -595,7 +639,15 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
   // ISIN to go and find. Its value still sits outside the classified share —
   // the weights above genuinely do not describe it — but it is outside for a
   // reason the reader cannot act on, which is a different sentence.
-  const crypto = held.filter((position) => isCryptoWallet(position.walletId));
+  //
+  // Drawn from the unclassified positions rather than from everything held in
+  // the wallet, because a crypto wallet is where crypto *exposure* sits and
+  // some of that arrives as an ETC with an ISIN and a factsheet. Saying "no
+  // issuer and no ISIN" over one of those would be false, and listing it as
+  // uncovered would be false twice, since it is covered.
+  const crypto = unclassified.filter((position) =>
+    isCryptoWallet(position.walletId),
+  );
 
   const caveats: LookThroughCaveat[] = [];
   if (totalValue <= 0) {
@@ -669,16 +721,26 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
     classifiedShare: totalValue > 0 ? classifiedValue / totalValue : 0,
     positionCount: held.length,
     classifiedPositionCount: classified.length,
-    unclassifiedPositions: unclassified.map((position) => ({
-      positionId: position.positionId,
-      name: position.name,
-      value: position.marketValue,
-    })),
-    cryptoPositions: crypto.map((position) => ({
-      positionId: position.positionId,
-      name: position.name,
-      value: position.marketValue,
-    })),
+    unclassifiedPositions: unclassified.map(listed),
+    cryptoPositions: crypto.map(listed),
+    unidentifiedPositions: unclassified
+      .filter(
+        (position) =>
+          position.isin === null && !isCryptoWallet(position.walletId),
+      )
+      .map(listed),
+    unreadPositions: unclassified
+      .filter(
+        (position) =>
+          position.isin !== null && readings.get(position.isin) === undefined,
+      )
+      .map(listed),
+    readButUnclassifiedPositions: unclassified
+      .filter(
+        (position) =>
+          position.isin !== null && readings.get(position.isin) !== undefined,
+      )
+      .map(listed),
     countries: countryRows,
     sectors: sectorRows,
     assetClasses: assetClassRows,

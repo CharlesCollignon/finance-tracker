@@ -257,8 +257,6 @@ const KNOWN_DEAD_KEYS: readonly string[] = [
   "lookThrough.notReadBody",
   "lookThrough.readOne",
   "lookThrough.lastRead",
-  "lookThrough.caveats.readNothingUseful",
-  "lookThrough.caveats.readNothingUsefulBody",
   "lookThrough.caveats.staleReadings",
 
   // Strays.

@@ -2595,7 +2595,18 @@ export const en = {
 
     /* The caveats, said plainly. */
     caveats: {
-      /** The three reasons a holding has not been read, each with its own fix. */
+      /**
+       * The card's own title, and the four group headings under it.
+       *
+       * One stable title, because the groups each carry their own heading
+       * now. It used to be the title that changed — "Not identified yet" when
+       * anything lacked an ISIN, "Not read yet" otherwise — which meant a
+       * card holding a coin, a gold ETC and nothing unread at all announced
+       * itself as being about instruments waiting to be read.
+       */
+      notCovered: "What these shares do not cover",
+      cryptoHeading: "Crypto",
+      /** The four reasons a holding is not covered, each with its own fix. */
       noIsin: "Not identified yet",
       noIsinBody:
         "{count} of your holdings have no ISIN, so there is nothing to look up. Open each one on Positions and choose its instrument from the search — that is what records the ISIN.",
@@ -2605,11 +2616,16 @@ export const en = {
         "{count} instruments have an ISIN but have not been read. Reading one looks up what it holds — its charge, its countries, its sectors.",
       readNothingUseful: "Read, but incomplete",
       readNothingUsefulBody:
-        "{count} readings found a charge but no breakdown. Reading them again may find more.",
+        "{count} readings found a charge but no countries and no sectors. Reading again may find more — though some instruments have neither to find: a gold ETC holds one metal and sits in no country.",
       needsAReading:
         "Read at least one instrument first — there is nothing to review yet.",
+      /**
+       * Deliberately no longer "have not been read". Two of the four groups
+       * below have been read, or never can be, and a lead sentence that
+       * called all of them unread was contradicted by the headings under it.
+       */
       unclassified:
-        "{share} of your invested value sits in instruments that have not been read. Every share on this page is worked out over the part that has.",
+        "{share} of your invested value is not covered by the shares on this page. Every share here is worked out over the part that is.",
       overlapIsAFloor:
         "Overlap is a floor, not a measurement. Only each fund's published largest holdings were compared, so two funds shown as sharing a little may in truth be largely the same companies — the index they track is the more reliable signal.",
       staleReadings:

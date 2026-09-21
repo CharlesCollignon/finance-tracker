@@ -53,8 +53,6 @@ export interface LookThroughBundle {
   walletsInUse: InvestmentWalletId[];
   /** ISINs worth reading next, worst first. */
   queue: string[];
-  /** Positions held with no ISIN, so nothing can be read for them. */
-  unidentified: { positionId: string; name: string }[];
   /** False when migration 032 has not run. */
   readingsTracked: boolean;
 }
@@ -139,12 +137,6 @@ export async function gatherLookThrough(
       readings.byIsin,
       now,
     ),
-    unidentified: held
-      .filter((position) => position.isin === null)
-      .map((position) => ({
-        positionId: position.positionId,
-        name: position.name,
-      })),
     readingsTracked: readings.tracked,
   };
 }
