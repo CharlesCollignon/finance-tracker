@@ -1203,12 +1203,29 @@ export const en = {
     forgotPassword: "Forgot password?",
     resetHeading: "Reset your password",
     resetBody:
-      "Enter your email address and we will send you a link back into your ledger.",
+      "Enter your email address and we will send you a link to choose a new password.",
     sendResetLink: "Send the link",
     sendingResetLink: "Sending…",
     resetSent:
       "If there is an account for {email}, a link is on its way. Check your inbox, and your spam folder.",
     backToSignIn: "Back to sign in",
+    /** The page a reset link leads to. */
+    newPasswordHeading: "Choose a new password",
+    newPasswordBody:
+      "It replaces the old one everywhere you sign in with your email.",
+    newPassword: "New password",
+    confirmNewPassword: "The same again",
+    saveNewPassword: "Save the new password",
+    savingNewPassword: "Saving…",
+    passwordChanged: "Your password is changed.",
+    openLedger: "Open Pluclair",
+    resetLinkExpired:
+      "That link has expired or was already used. Ask for a new one below.",
+    resetNeedsLink:
+      "This page opens from the link in a reset email. Ask for a new one if yours has expired.",
+    /** On the phone, after asking: the new password is chosen on the web page the email opens. */
+    resetFinishOnWeb:
+      "Open the link on any device to choose a new password, then sign in here with it.",
   },
 
   /**
@@ -2943,6 +2960,8 @@ export const en = {
     selectEtf: "Select an ETF from the search results",
     endBeforeStart: "End date must be on or after start date",
     passwordTooShort: "Password must be at least 6 characters",
+    passwordsDiffer: "The two passwords are not the same",
+    invalidEmail: "That is not an email address",
     descriptionTooLong: "Description must be 500 characters or less",
     nameTooLong100: "Name must be 100 characters or less",
     nameTooLong40: "Name must be 40 characters or less",

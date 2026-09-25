@@ -201,6 +201,22 @@ export const authSchema = z.object({
   password: z.string().min(6, "errors.passwordTooShort"),
 });
 
+/** Choosing a new password: the same floor as signing up, typed twice. */
+export const newPasswordSchema = z
+  .object({
+    password: z.string().min(6, "errors.passwordTooShort"),
+    confirm: z.string(),
+  })
+  .refine((value) => value.password === value.confirm, {
+    message: "errors.passwordsDiffer",
+    path: ["confirm"],
+  });
+
+/** Asking for a reset link. */
+export const resetRequestSchema = z.object({
+  email: z.string().trim().email("errors.invalidEmail"),
+});
+
 export type RecurringTemplateInput = z.infer<typeof recurringTemplateSchema>;
 
 const uuidSchema = z.string().uuid();

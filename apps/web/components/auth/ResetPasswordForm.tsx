@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowRight } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
@@ -34,6 +35,7 @@ import { resolveMessage } from "@finance/core/i18n/t";
  */
 export function ResetPasswordForm() {
   const t = useT();
+  const expired = useSearchParams().get("error") === "link_expired";
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,10 +49,10 @@ export function ResetPasswordForm() {
     const supabase = createClient();
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email,
-      // Straight back through the callback the OAuth and magic-link flows
-      // already use, which exchanges the code for a session and lands the
-      // reader in the app signed in.
-      { redirectTo: `${window.location.origin}/auth/callback` },
+      // The confirm route (token hash) is where the email template sends
+      // people; until the template changes, the callback forwards to the same
+      // new-password page when the link is opened in this browser.
+      { redirectTo: `${window.location.origin}/auth/callback?next=/reset/new` },
     );
 
     setPending(false);
@@ -79,6 +81,15 @@ export function ResetPasswordForm() {
       <p className="mt-1 text-center text-sm text-muted-foreground">
         {t("auth.resetBody")}
       </p>
+
+      {expired && !sent ? (
+        <Text
+          role="alert"
+          className="mt-4 text-center text-sm text-destructive"
+        >
+          {t("auth.resetLinkExpired")}
+        </Text>
+      ) : null}
 
       {sent ? (
         // The form is replaced rather than disabled: there is nothing left to

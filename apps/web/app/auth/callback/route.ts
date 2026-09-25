@@ -5,25 +5,12 @@ import { getSupabaseEnv, getSiteUrl } from "@/lib/supabase/env";
 import { seedDefaultCategories } from "@/lib/queries/categories";
 import { syncLocaleFromPreferences } from "@/lib/locale-cookies";
 import { getLocale } from "@/lib/locale";
-
-function sanitizeNextPath(raw: string | null): string {
-  // Only allow same-origin relative paths ("/foo"), never "//host" or
-  // absolute URLs, to prevent open redirects.
-  if (
-    raw &&
-    raw.startsWith("/") &&
-    !raw.startsWith("//") &&
-    !raw.includes("\\")
-  ) {
-    return raw;
-  }
-  return "/bearing";
-}
+import { sanitizeNextPath } from "@/lib/auth/next-path";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = sanitizeNextPath(searchParams.get("next"));
+  const next = sanitizeNextPath(searchParams.get("next"), "/bearing");
 
   if (code) {
     const cookieStore = await cookies();

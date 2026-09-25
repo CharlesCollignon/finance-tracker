@@ -868,12 +868,27 @@ export const fr: Messages = {
     forgotPassword: "Mot de passe oublié\u00A0?",
     resetHeading: "Réinitialiser votre mot de passe",
     resetBody:
-      "Saisissez votre adresse e-mail et nous vous enverrons un lien pour revenir dans votre journal.",
+      "Saisissez votre adresse e-mail et nous vous enverrons un lien pour choisir un nouveau mot de passe.",
     sendResetLink: "Envoyer le lien",
     sendingResetLink: "Envoi…",
     resetSent:
       "S'il existe un compte pour {email}, un lien vient de partir. Regardez votre boîte de réception, et vos indésirables.",
     backToSignIn: "Retour à la connexion",
+    newPasswordHeading: "Choisir un nouveau mot de passe",
+    newPasswordBody:
+      "Il remplace l'ancien partout où vous vous connectez avec votre e-mail.",
+    newPassword: "Nouveau mot de passe",
+    confirmNewPassword: "Le même, encore une fois",
+    saveNewPassword: "Enregistrer le nouveau mot de passe",
+    savingNewPassword: "Enregistrement…",
+    passwordChanged: "Votre mot de passe est modifié.",
+    openLedger: "Ouvrir Pluclair",
+    resetLinkExpired:
+      "Ce lien a expiré ou a déjà servi. Demandez-en un nouveau ci-dessous.",
+    resetNeedsLink:
+      "Cette page s'ouvre depuis le lien d'un e-mail de réinitialisation. Demandez-en un nouveau si le vôtre a expiré.",
+    resetFinishOnWeb:
+      "Ouvrez le lien sur n'importe quel appareil pour choisir un nouveau mot de passe, puis connectez-vous ici avec lui.",
   },
 
   marketingMock: {
@@ -2013,6 +2028,8 @@ export const fr: Messages = {
     endBeforeStart:
       "La date de fin doit être égale ou postérieure à la date de début",
     passwordTooShort: "Le mot de passe doit faire au moins 6 caractères",
+    passwordsDiffer: "Les deux mots de passe ne sont pas identiques",
+    invalidEmail: "Ce n'est pas une adresse e-mail",
     descriptionTooLong: "Le libellé doit faire 500 caractères ou moins",
     nameTooLong100: "Le nom doit faire 100 caractères ou moins",
     nameTooLong40: "Le nom doit faire 40 caractères ou moins",
