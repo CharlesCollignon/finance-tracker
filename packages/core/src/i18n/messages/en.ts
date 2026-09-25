@@ -424,6 +424,12 @@ export const en = {
     yearly: "Yearly",
     dayOfMonth: "Day of month",
     dayOfWeek: "Day of week",
+    /**
+     * The phone's day-of-week field is a number the reader types (1-7),
+     * unlike the web's dropdown of real day names — so the label has to say
+     * what the numbers mean.
+     */
+    dayOfWeekNumeric: "Day of week (1=Mon … 7=Sun)",
     startsOn: "Starts on",
     endsOn: "Ends on",
     noStartDate: "No start date",
@@ -446,6 +452,8 @@ export const en = {
     convertedFrom: "({amount} converted)",
     descriptionOptional: "Description (optional)",
     monthOfYear: "Month",
+    /** Same reasoning as `dayOfWeekNumeric`, for the phone's month field. */
+    monthOfYearNumeric: "Month (1–12)",
     activePeriod: "Active period (optional)",
     activePeriodNote:
       "Leave both empty to run until you stop it. Set both for a fixed instalment plan — a property tax spread over several months, say.",

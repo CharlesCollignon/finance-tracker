@@ -412,7 +412,9 @@ export default function RecurringScreen() {
               >
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`Edit ${item.categories.name}`}
+                  accessibilityLabel={t("charges.editNamed", {
+                    name: item.categories.name,
+                  })}
                   className="min-w-0 flex-1"
                   onPress={() => {
                     void hapticLight();
@@ -465,7 +467,7 @@ export default function RecurringScreen() {
                     }}
                   >
                     <Badge
-                      label={item.active ? "On" : "Off"}
+                      label={t(item.active ? "recurring.on" : "recurring.off")}
                       size="sm"
                       variant={item.active ? "surface" : "outline"}
                       className="rounded-full"

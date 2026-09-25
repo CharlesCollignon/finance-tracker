@@ -298,6 +298,7 @@ export const fr: Messages = {
     yearly: "Annuel",
     dayOfMonth: "Jour du mois",
     dayOfWeek: "Jour de la semaine",
+    dayOfWeekNumeric: "Jour de la semaine (1 = lundi, 7 = dimanche)",
     startsOn: "Commence le",
     endsOn: "Se termine le",
     noStartDate: "Pas de date de début",
@@ -315,6 +316,7 @@ export const fr: Messages = {
     convertedFrom: "({amount} converti)",
     descriptionOptional: "Libellé (facultatif)",
     monthOfYear: "Mois",
+    monthOfYearNumeric: "Mois (de 1 à 12)",
     activePeriod: "Période d'activité (facultative)",
     activePeriodNote:
       "Laissez les deux vides pour que ça tourne jusqu'à ce que vous l'arrêtiez. Renseignez les deux pour un échéancier fixe\u00A0: une taxe foncière étalée sur plusieurs mois, par exemple.",

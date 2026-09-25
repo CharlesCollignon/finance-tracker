@@ -67,7 +67,13 @@ export function RecurringFormModal({
 
   // Income included, as on the web: a salary is a recurring template too,
   // and one opened from the Income group has to find its category here.
-  const groups = useMemo(() => groupCategoriesByType(categories), [categories]);
+  // `locale` is passed through so the group headings ("Income", "Expenses"…)
+  // read in French rather than silently falling back to English — a gap
+  // this call had even before this sweep.
+  const groups = useMemo(
+    () => groupCategoriesByType(categories, { locale }),
+    [categories, locale],
+  );
 
   async function handleSave() {
     setPending(true);
@@ -152,7 +158,7 @@ export function RecurringFormModal({
               accessibilityLabel={t("recurring.close")}
               hitSlop={8}
             >
-              <Text variant="muted">Close</Text>
+              <Text variant="muted">{t("recurring.close")}</Text>
             </Pressable>
           </View>
           <ScrollView
@@ -190,7 +196,9 @@ export function RecurringFormModal({
               ))}
             </View>
 
-            <Text className="mb-2 text-sm font-medium">Amount (EUR)</Text>
+            <Text className="mb-2 text-sm font-medium">
+              {t("recurring.amount")}
+            </Text>
             <Input
               value={amount}
               onChangeText={setAmount}
@@ -234,7 +242,7 @@ export function RecurringFormModal({
             {recurrence === "weekly" ? (
               <>
                 <Text className="mb-2 text-sm font-medium">
-                  Day of week (1=Mon … 7=Sun)
+                  {t("recurring.dayOfWeekNumeric")}
                 </Text>
                 <Input
                   value={dayOfWeek}
@@ -248,7 +256,7 @@ export function RecurringFormModal({
                 {recurrence === "yearly" ? (
                   <>
                     <Text className="mb-2 text-sm font-medium">
-                      Month (1–12)
+                      {t("recurring.monthOfYearNumeric")}
                     </Text>
                     <Input
                       value={monthOfYear}
@@ -271,10 +279,10 @@ export function RecurringFormModal({
             )}
 
             <Text className="mb-1 text-sm font-medium">
-              Active period (optional)
+              {t("recurring.activePeriod")}
             </Text>
             <Text variant="muted" className="mb-3 text-xs">
-              Leave empty for open-ended.
+              {t("recurring.activePeriodNote")}
             </Text>
             <Text className="mb-2 text-sm font-medium">
               {t("recurring.startsOn")}
