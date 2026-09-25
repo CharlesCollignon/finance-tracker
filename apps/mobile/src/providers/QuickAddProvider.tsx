@@ -116,7 +116,7 @@ function QuickAddFab() {
   const barHeight = useTabBarHeight();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.get() }],
   }));
 
   if (!quickAdd || quickAdd.isOpen) {
@@ -136,10 +136,10 @@ function QuickAddFab() {
         accessibilityRole="button"
         accessibilityLabel={t("common.addTransaction")}
         onPressIn={() => {
-          scale.value = withTiming(0.92, { duration: DURATION.press });
+          scale.set(withTiming(0.92, { duration: DURATION.press }));
         }}
         onPressOut={() => {
-          scale.value = withTiming(1, { duration: DURATION.press });
+          scale.set(withTiming(1, { duration: DURATION.press }));
         }}
         onPress={() => {
           void hapticMedium();

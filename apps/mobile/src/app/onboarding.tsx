@@ -65,7 +65,7 @@ export default function OnboardingScreen() {
     return { categories: await getCategories(user.id) };
   }, [user?.id]);
 
-  const categories = data?.categories ?? [];
+  const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
   const groups = useMemo(() => groupCategoriesByType(categories), [categories]);
   const incomeCategory = groups.find((g) => g.type === "income")?.categories[0];
   const expenseCategories =

@@ -46,7 +46,6 @@ export function BiometricLockProvider({ children }: { children: ReactNode }) {
   const [locked, setLocked] = useState(false);
   const [prompting, setPrompting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const restoredRef = useRef(false);
   const appStateRef = useRef(AppState.currentState);
 
   useEffect(() => {
@@ -63,21 +62,25 @@ export function BiometricLockProvider({ children }: { children: ReactNode }) {
 
   const canLock = enabled && hardware && enrolled && Boolean(session);
 
-  useEffect(() => {
+  // Signing out unlocks. Adjusted while rendering, the pattern React
+  // documents for "reset state when an input changes", instead of an effect
+  // that renders twice.
+  const [previousSession, setPreviousSession] = useState(session);
+  if (session !== previousSession) {
+    setPreviousSession(session);
     if (!session) {
       setLocked(false);
     }
-  }, [session]);
+  }
 
-  useEffect(() => {
-    if (initializing || !ready || restoredRef.current) {
-      return;
-    }
-    restoredRef.current = true;
+  // Lock once at launch, as soon as everything the decision needs is known.
+  const [restored, setRestored] = useState(false);
+  if (!restored && !initializing && ready) {
+    setRestored(true);
     if (session && enabled && hardware && enrolled) {
       setLocked(true);
     }
-  }, [initializing, ready, session, enabled, hardware, enrolled]);
+  }
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (next) => {

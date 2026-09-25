@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
+import { type Locale } from "@finance/core/i18n/locale";
 import { translator, type Translate } from "@finance/core/i18n/t";
 
 import { useAuth } from "@/providers/AuthProvider";

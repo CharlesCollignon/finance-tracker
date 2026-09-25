@@ -109,8 +109,10 @@ export default function RecurringScreen() {
       return { templates, categories };
     }, [user?.id, dataVersion]);
 
-  const templates = data?.templates ?? [];
-  const categories = data?.categories ?? [];
+  // Memoised so a render without new data keeps the same arrays, and the
+  // memos and effects below do not re-run for nothing.
+  const templates = useMemo(() => data?.templates ?? [], [data?.templates]);
+  const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
 
   const refreshApplyPending = useCallback(async () => {
     const result = await previewApplyRecurringForMonth(year, month);
@@ -121,9 +123,21 @@ export default function RecurringScreen() {
     setApplyPending(counts.creates + counts.updates > 0);
   }, [month, year]);
 
+  // Asked again whenever the templates change. The answer is set in the
+  // promise's callback, so the effect itself never sets state.
   useEffect(() => {
-    void refreshApplyPending();
-  }, [refreshApplyPending, templates]);
+    let cancelled = false;
+    void previewApplyRecurringForMonth(year, month).then((result) => {
+      if (cancelled || result.error || !result.plan) {
+        return;
+      }
+      const counts = applyRecurringPlanCounts(result.plan);
+      setApplyPending(counts.creates + counts.updates > 0);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [month, year, templates]);
 
   /*
    * The same rollup the web uses, for the same reason: `estimateMonthlyAmount`

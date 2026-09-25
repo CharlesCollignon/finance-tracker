@@ -31,9 +31,23 @@ export function PasskeysPanel() {
     }
   }, []);
 
+  // The first read sets state in the promise's callback, so the effect itself
+  // never does. `refresh` stays for after an add or a delete.
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let cancelled = false;
+    void listPasskeys().then((result) => {
+      if (cancelled) {
+        return;
+      }
+      setPasskeys(result.passkeys);
+      if (result.error) {
+        setMessage(result.error);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function onAdd() {
     setMessage(null);

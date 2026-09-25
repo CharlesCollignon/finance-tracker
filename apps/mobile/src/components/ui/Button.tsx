@@ -87,7 +87,7 @@ export function Button({
   const colors = useThemeColors();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.get() }],
   }));
 
   return (
@@ -105,10 +105,10 @@ export function Button({
         className,
       )}
       onPressIn={() => {
-        scale.value = withTiming(0.98, { duration: DURATION.press });
+        scale.set(withTiming(0.98, { duration: DURATION.press }));
       }}
       onPressOut={() => {
-        scale.value = withTiming(1, { duration: DURATION.press });
+        scale.set(withTiming(1, { duration: DURATION.press }));
       }}
       onPress={(event) => {
         void hapticLight();

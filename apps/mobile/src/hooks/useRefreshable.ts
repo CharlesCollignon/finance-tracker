@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useRefreshAll } from "@/providers/RefreshProvider";
 
@@ -28,35 +28,65 @@ export function useRefreshable<T>(
 } {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  // Every call site passes primitives (ids, a year, a month, a data version),
+  // so their JSON is a faithful key for "the inputs changed".
+  const depsKey = JSON.stringify(deps);
+  // The key of the last load that finished. Loading is simply "the current
+  // inputs have not finished loading yet", derived rather than flipped in an
+  // effect.
+  const [settledKey, setSettledKey] = useState<string | null>(null);
+  const loading = settledKey !== depsKey;
   // Null on the auth and onboarding screens, which render outside the
   // provider. There the gesture is a re-read and nothing more, which is all
   // it can be before anyone is signed in.
   const refreshAll = useRefreshAll();
 
+  // The latest loader, read at call time. Declared before the load effect so
+  // it has already been updated when that effect runs.
+  const loaderRef = useRef(loader);
+  useEffect(() => {
+    loaderRef.current = loader;
+  });
+
   const reload = useCallback(async () => {
     try {
+      const next = await loaderRef.current();
       setError(null);
-      const next = await loader();
       setData(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     }
-  }, deps);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    reload().finally(() => {
-      if (!cancelled) {
-        setLoading(false);
-      }
-    });
+    loaderRef
+      .current()
+      .then(
+        (next) => {
+          if (!cancelled) {
+            setError(null);
+            setData(next);
+          }
+        },
+        (err: unknown) => {
+          if (!cancelled) {
+            setError(
+              err instanceof Error ? err.message : "Something went wrong",
+            );
+          }
+        },
+      )
+      .finally(() => {
+        if (!cancelled) {
+          setSettledKey(depsKey);
+        }
+      });
     return () => {
       cancelled = true;
     };
-  }, [reload]);
+  }, [depsKey]);
 
   function onRefresh() {
     setRefreshing(true);

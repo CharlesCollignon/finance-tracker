@@ -65,6 +65,9 @@ jobs:
       - name: Typecheck mobile
         run: pnpm --filter mobile exec tsc --noEmit
 
+      - name: Lint mobile
+        run: pnpm --filter mobile exec expo lint --max-warnings 0
+
       - name: Typecheck core
         run: pnpm --filter @finance/core exec tsc --noEmit
 
@@ -83,16 +86,3 @@ jobs:
       # cover.
       - name: Test (apps/web)
         run: pnpm --filter web test
-
-# ---------------------------------------------------------------------
-# Gates NOT run by this workflow, and why, as measured on 2026-09-19:
-#
-# 2. `pnpm --filter mobile lint`
-#    Fails with 42 problems (11 errors, 31 warnings) of a similar
-#    character to the web lint failures.
-#    Fix (or explicitly suppress) those findings, then add this step back.
-#
-# None of these are fixed here: this workflow only wires up gates that
-# already pass, so CI is green from its first run instead of training
-# everyone to ignore a red badge.
-# ---------------------------------------------------------------------

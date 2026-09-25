@@ -58,11 +58,11 @@ import type {
   CategoryType,
   Database,
   RecurringTemplateWithCategory,
+  WalletId,
 } from "@finance/core/types/database";
 
 import { quoteSource } from "@/lib/quote-source";
 import { supabase } from "@/lib/supabase";
-import type { WalletId } from "@finance/core/types/database";
 
 type ActionResult = {
   error?: string;

@@ -122,9 +122,12 @@ export default function CalendarScreen() {
       return { transactions, categories, templates, confirmed, proposals };
     }, [user?.id, year, month, dataVersion]);
 
-  const transactions = data?.transactions ?? [];
-  const categories = data?.categories ?? [];
-  const templates = data?.templates ?? [];
+  const transactions = useMemo(
+    () => data?.transactions ?? [],
+    [data?.transactions],
+  );
+  const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
+  const templates = useMemo(() => data?.templates ?? [], [data?.templates]);
 
   /** What each row can say about itself, by transaction id. */
   const fulfilmentStates = useMemo(

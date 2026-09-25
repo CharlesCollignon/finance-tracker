@@ -17,7 +17,6 @@ import {
   filterLiveProposals,
   type RecurringProposal,
 } from "@finance/core/recurring-detection";
-export type { MonthlyTrendPoint };
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import {
   filterDatesBySchedule,
@@ -79,10 +78,13 @@ import type {
   TransactionWithCategory,
   WalletPlan,
 } from "@finance/core/types/database";
-import type { InvestmentPositionRow } from "@finance/core/investment-positions";
-import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
+import type {
+  InvestmentPortfolioSummary,
+  InvestmentPositionRow,
+} from "@finance/core/investment-positions";
 
 import { supabase } from "@/lib/supabase";
+export type { MonthlyTrendPoint };
 
 export async function getCategories(
   userId: string,
@@ -1536,9 +1538,7 @@ export async function hasBankFeed(userId: string): Promise<boolean> {
 }
 
 /** How many bank rows an earlier sync merged away without asking. */
-export async function countSwallowedFeedItems(
-  userId: string,
-): Promise<number> {
+export async function countSwallowedFeedItems(userId: string): Promise<number> {
   const { count, error } = await supabase
     .from("bank_feed_items")
     .select("id", { count: "exact", head: true })
@@ -1605,9 +1605,7 @@ export async function getRecurringProposals(
         .map((value) => bankMerchantKey(value as string | null))
         .filter((key) => key !== ""),
     ),
-    ...(dismissalsResult.data ?? []).map(
-      (row) => row.merchant_key as string,
-    ),
+    ...(dismissalsResult.data ?? []).map((row) => row.merchant_key as string),
   ]);
 
   const proposals = detectRecurring(
