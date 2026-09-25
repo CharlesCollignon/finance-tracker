@@ -34,6 +34,7 @@
     "./country-names": "./src/country-names.ts",
     "./crypto-holdings": "./src/crypto-holdings.ts",
     "./csv-import": "./src/csv-import.ts",
+    "./flags": "./src/flags.ts",
     "./fulfilment-state": "./src/fulfilment-state.ts",
     "./fund-costs": "./src/fund-costs.ts",
     "./i18n/calendar-names": "./src/i18n/calendar-names.ts",
