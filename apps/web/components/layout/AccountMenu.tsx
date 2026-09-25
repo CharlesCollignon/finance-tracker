@@ -43,6 +43,15 @@ export function AccountMenu({
   // The page the menu was opened on. Open only while still on that page, so
   // navigating closes it by derivation rather than through an effect.
   const [openAt, setOpenAt] = useState<string | null>(null);
+  // Clears the moment the path no longer matches, including a path reached
+  // by browser Back/Forward rather than a click here — adjusted while
+  // rendering, the pattern React documents for "adjust state when an input
+  // changes", already used in the phone's BiometricLockProvider. An effect
+  // would instead leave the menu visible for one frame after Back returns to
+  // the page it was opened on, because nothing else ever clears `openAt`.
+  if (openAt !== null && openAt !== pathname) {
+    setOpenAt(null);
+  }
   const open = openAt === pathname;
   // Measured when the menu opens, in the press handler, because reading the
   // trigger's box during render reads a ref during render.
