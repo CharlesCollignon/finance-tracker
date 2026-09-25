@@ -228,8 +228,8 @@ function GroupCard({
   const t = useT();
   const formatEuro = useFormatCurrency();
   const monthly = items
-    .filter((t) => t.active)
-    .reduce((sum, t) => sum + estimateMonthlyAmount(t), 0);
+    .filter((template) => template.active)
+    .reduce((sum, template) => sum + estimateMonthlyAmount(template), 0);
 
   return (
     <section className="flex min-w-0 flex-col gap-3 rounded-card p-card border border-border bg-card">
@@ -469,9 +469,9 @@ export function RecurringView({
               ) : null}
             </p>
 
-            {/* One column of charges at a time on a phone: three lists stacked
+            {/* One column of charges at a time on a phone: four lists stacked
                 would be a screen and a half of scrolling to reach investments,
-                and the three kinds are rarely read together. */}
+                and the four kinds are rarely read together. */}
             <div className="flex flex-col gap-3 md:hidden">
               {/* A group of toggles, not tabs. `role="tablist"` over
                   `role="tab"` was a promise the markup did not keep: the list
