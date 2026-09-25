@@ -888,7 +888,7 @@ export const fr: Messages = {
     saveNewPassword: "Enregistrer le nouveau mot de passe",
     savingNewPassword: "Enregistrement…",
     passwordChanged: "Votre mot de passe a été modifié.",
-    openLedger: "Ouvrir Pluclair",
+    openApp: "Ouvrir Pluclair",
     askForNewLink: "Demander un nouveau lien",
     resetLinkExpired:
       "Ce lien a expiré ou a déjà servi. Demandez-en un nouveau ci-dessous.",

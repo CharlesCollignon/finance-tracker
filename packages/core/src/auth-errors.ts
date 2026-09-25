@@ -1,3 +1,5 @@
+import type { Key } from "./i18n/t";
+
 /**
  * A password-reset request that failed, in the reader's language.
  *
@@ -11,8 +13,12 @@
  * request for a reason that has nothing to do with which addresses have
  * accounts (a rate limit), so nothing case-specific needs saying, and a code
  * this function does not recognise gets the same generic sentence.
+ *
+ * Returns `Key` rather than `string` — same as `newPasswordErrorKey` — so a
+ * typo in one of the two keys below fails typecheck instead of shipping a
+ * message the catalogue does not have.
  */
-export function resetRequestErrorKey(code: string | undefined): string {
+export function resetRequestErrorKey(code: string | undefined): Key {
   if (
     code === "over_email_send_rate_limit" ||
     code === "over_request_rate_limit"

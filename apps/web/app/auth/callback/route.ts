@@ -5,7 +5,10 @@ import { getSupabaseEnv, getSiteUrl } from "@/lib/supabase/env";
 import { seedDefaultCategories } from "@/lib/queries/categories";
 import { syncLocaleFromPreferences } from "@/lib/locale-cookies";
 import { getLocale } from "@/lib/locale";
-import { sanitizeNextPath } from "@/lib/auth/next-path";
+import {
+  callbackFailureRedirect,
+  sanitizeNextPath,
+} from "@/lib/auth/next-path";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -59,5 +62,7 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(`${getSiteUrl()}/login?error=auth_callback`);
+  return NextResponse.redirect(
+    `${getSiteUrl()}${callbackFailureRedirect(next)}`,
+  );
 }

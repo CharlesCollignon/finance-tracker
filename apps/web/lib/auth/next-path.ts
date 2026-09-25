@@ -37,3 +37,21 @@ export function confirmRedirect({
   }
   return sanitizeNextPath(next, "/reset/new");
 }
+
+/**
+ * Where a failed `/auth/callback` code exchange sends the reader.
+ *
+ * That route is also where a reset link lands (see `confirmRedirect`'s
+ * comment on why). A reset link that fails there — expired, already used, a
+ * mail provider's scanner having spent it, or opened on a different device
+ * than the one that asked — is failing on the one path a reset link ever
+ * takes, so it goes back to the reset form with a sentence saying so, the
+ * same as a failure in `/auth/confirm`. Every other failure keeps the
+ * generic sign-in screen.
+ */
+export function callbackFailureRedirect(next: string): string {
+  if (next === "/reset/new") {
+    return "/reset?error=link_expired";
+  }
+  return "/login?error=auth_callback";
+}

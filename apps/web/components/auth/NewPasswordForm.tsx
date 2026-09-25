@@ -105,7 +105,10 @@ export function NewPasswordForm({ signedIn }: { signedIn: boolean }) {
             {t("auth.resetNeedsLink")}
           </Text>
           <p className="mt-4 text-center text-sm">
-            <Link href="/reset" className="font-medium underline">
+            <Link
+              href="/reset"
+              className="inline-flex min-h-11 items-center font-medium underline"
+            >
               {t("auth.askForNewLink")}
             </Link>
           </p>
@@ -117,7 +120,7 @@ export function NewPasswordForm({ signedIn }: { signedIn: boolean }) {
           className="mt-6 w-full justify-between"
           render={<Link href="/bearing" />}
         >
-          {t("auth.openLedger")}
+          {t("auth.openApp")}
           <ButtonNub>
             <ArrowRight size={ICON.md} weight="bold" />
           </ButtonNub>

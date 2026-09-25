@@ -1224,7 +1224,7 @@ export const en = {
     saveNewPassword: "Save the new password",
     savingNewPassword: "Saving…",
     passwordChanged: "Your password has been changed.",
-    openLedger: "Open Pluclair",
+    openApp: "Open Pluclair",
     /** The link shown under the new-password form when there is no session to act on. */
     askForNewLink: "Ask for a new link",
     resetLinkExpired:

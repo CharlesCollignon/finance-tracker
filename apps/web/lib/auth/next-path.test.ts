@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { confirmRedirect, sanitizeNextPath } from "./next-path";
+import {
+  callbackFailureRedirect,
+  confirmRedirect,
+  sanitizeNextPath,
+} from "./next-path";
 
 describe("sanitizeNextPath", () => {
   it("keeps a same-origin path", () => {
@@ -37,6 +41,20 @@ describe("confirmRedirect", () => {
   it("falls back to the new-password page for an unsafe next path", () => {
     expect(confirmRedirect({ verified: true, next: "//evil.example" })).toBe(
       "/reset/new",
+    );
+  });
+});
+
+describe("callbackFailureRedirect", () => {
+  it("sends a failed reset exchange back to the reset form, saying so", () => {
+    expect(callbackFailureRedirect("/reset/new")).toBe(
+      "/reset?error=link_expired",
+    );
+  });
+
+  it("sends every other failure to sign-in as before", () => {
+    expect(callbackFailureRedirect("/bearing")).toBe(
+      "/login?error=auth_callback",
     );
   });
 });
