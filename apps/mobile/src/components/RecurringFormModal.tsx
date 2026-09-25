@@ -65,10 +65,9 @@ export function RecurringFormModal({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  const groups = useMemo(
-    () => groupCategoriesByType(categories, { excludeTypes: ["income"] }),
-    [categories],
-  );
+  // Income included, as on the web: a salary is a recurring template too,
+  // and one opened from the Income group has to find its category here.
+  const groups = useMemo(() => groupCategoriesByType(categories), [categories]);
 
   async function handleSave() {
     setPending(true);

@@ -607,6 +607,8 @@ export const en = {
     tileSetAside: "Set aside",
     tileLeft: "Left",
     perMonth: "Per month",
+    /** After a group's monthly figure: "€1,240 / mo". */
+    perMonthSuffix: " / mo",
     /**
      * Shown where the income figure would be, when no income charge exists.
      * A `0 €` there would read as measured; this says the box is waiting.

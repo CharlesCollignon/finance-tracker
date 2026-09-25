@@ -44,19 +44,27 @@ import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import type { Translate } from "@finance/core/i18n/t";
 
-type AllocType = Exclude<CategoryType, "income">;
-
-const GROUP_ORDER: AllocType[] = ["expense", "savings", "investment"];
+/**
+ * Income first: it is what the other three are paid from, and the header
+ * reads the same way — income, then what is committed and set aside.
+ */
+const GROUP_ORDER: CategoryType[] = [
+  "income",
+  "expense",
+  "savings",
+  "investment",
+];
 
 /**
- * What each of the three kinds of charge is called.
+ * What each of the four kinds of charge is called.
  *
  * A function of the locale, and drawn from the same `allocation.*` messages
- * the flow chart and the caps use, so the three kinds are named identically
+ * the flow chart and the caps use, so the four kinds are named identically
  * wherever they appear.
  */
-function groupLabels(t: Translate): Record<AllocType, string> {
+function groupLabels(t: Translate): Record<CategoryType, string> {
   return {
+    income: t("allocation.income"),
     expense: t("allocation.expenses"),
     savings: t("allocation.savings"),
     investment: t("allocation.investments"),
@@ -210,13 +218,14 @@ function GroupCard({
   onEdit,
   onToggle,
 }: {
-  type: AllocType;
+  type: CategoryType;
   label: string;
   items: RecurringTemplateWithCategory[];
   proposals: RecurringProposal[];
   onEdit: (template: RecurringTemplateWithCategory) => void;
   onToggle: (id: string, active: boolean) => void;
 }) {
+  const t = useT();
   const formatEuro = useFormatCurrency();
   const monthly = items
     .filter((t) => t.active)
@@ -229,7 +238,7 @@ function GroupCard({
         {monthly > 0 ? (
           <span className="privacy-amount text-sm tabular-nums text-muted-foreground">
             {formatEuro(monthly)}
-            <span className="text-xs"> / mo</span>
+            <span className="text-xs">{t("charges.perMonthSuffix")}</span>
           </span>
         ) : null}
       </div>
@@ -285,14 +294,14 @@ export function RecurringView({
     [templates, t],
   );
 
-  const defaultTab = useMemo<AllocType>(() => {
+  const defaultTab = useMemo<CategoryType>(() => {
     const firstNonEmpty = groups.find((group) => group.items.length > 0);
     return firstNonEmpty?.type ?? "expense";
   }, [groups]);
 
   // Derived rather than synced through an effect: the tab follows the first
   // non-empty group until the user picks one, as on the phone.
-  const [tabOverride, setTabOverride] = useState<AllocType | null>(null);
+  const [tabOverride, setTabOverride] = useState<CategoryType | null>(null);
   const activeTab = tabOverride ?? defaultTab;
 
   const refreshApplyPending = useCallback(async () => {
@@ -507,7 +516,7 @@ export function RecurringView({
               ) : null}
             </div>
 
-            <div className="hidden items-start gap-4 md:grid md:grid-cols-2 lg:grid-cols-3">
+            <div className="hidden items-start gap-4 md:grid md:grid-cols-2">
               {groups.map(({ type, label, items }) => (
                 <GroupCard
                   key={type}

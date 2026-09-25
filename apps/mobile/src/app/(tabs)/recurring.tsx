@@ -48,20 +48,24 @@ import { useLocale, useT } from "@/providers/LocaleProvider";
 import type { Translate } from "@finance/core/i18n/t";
 import { resolveMessage } from "@finance/core/i18n/t";
 
-/** Recurring only covers allocations; income has no recurring template. */
-type AllocType = Exclude<CategoryType, "income">;
-
-const GROUP_ORDER: AllocType[] = ["expense", "savings", "investment"];
+/** Income first, as on the web: it is what the other three are paid from. */
+const GROUP_ORDER: CategoryType[] = [
+  "income",
+  "expense",
+  "savings",
+  "investment",
+];
 
 /**
- * What each of the three kinds of charge is called.
+ * What each of the four kinds of charge is called.
  *
  * A function of the locale, and drawn from the same `allocation.*` messages
- * the flow chart and the caps use, so the three kinds are named identically
+ * the flow chart and the caps use, so the four kinds are named identically
  * wherever they appear.
  */
-function groupLabels(t: Translate): Record<AllocType, string> {
+function groupLabels(t: Translate): Record<CategoryType, string> {
   return {
+    income: t("allocation.income"),
     expense: t("allocation.expenses"),
     savings: t("allocation.savings"),
     investment: t("allocation.investments"),
@@ -167,14 +171,14 @@ export default function RecurringScreen() {
     [templates, t],
   );
 
-  const defaultTab = useMemo<AllocType>(
+  const defaultTab = useMemo<CategoryType>(
     () => groups.find((group) => group.items.length > 0)?.type ?? "expense",
     [groups],
   );
 
   // Derived rather than synced through an effect: the tab follows the first
   // non-empty group until the user picks one.
-  const [tabOverride, setTabOverride] = useState<AllocType | null>(null);
+  const [tabOverride, setTabOverride] = useState<CategoryType | null>(null);
   const activeTab = tabOverride ?? defaultTab;
 
   const activeItems =

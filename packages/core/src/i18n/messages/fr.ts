@@ -438,6 +438,7 @@ export const fr: Messages = {
     tileSetAside: "Mis de côté",
     tileLeft: "Reste",
     perMonth: "Par mois",
+    perMonthSuffix: " / mois",
     noIncomeYet: "Aucun revenu récurrent — ajoutez-en un et ceci se remplira.",
     ofWhichMovedBefore: "dont",
     ofWhichMovedAfter: "déplacés chez le courtier — suivis, mais pas dépensés.",
