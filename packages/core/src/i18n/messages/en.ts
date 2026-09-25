@@ -2970,6 +2970,9 @@ export const en = {
       "That password is too weak — choose a longer or less common one",
     passwordNotSaved:
       "The password could not be saved. Ask for a new link and try again.",
+    /** The two shapes a failed reset *request* takes, from Supabase's own error code. */
+    resetTooMany: "Too many links asked for. Wait a few minutes and try again.",
+    resetNotSent: "The link could not be sent. Try again in a moment.",
     descriptionTooLong: "Description must be 500 characters or less",
     nameTooLong100: "Name must be 100 characters or less",
     nameTooLong40: "Name must be 40 characters or less",

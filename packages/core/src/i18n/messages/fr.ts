@@ -2036,6 +2036,9 @@ export const fr: Messages = {
       "Ce mot de passe est trop faible — choisissez-en un plus long ou moins courant",
     passwordNotSaved:
       "Le mot de passe n'a pas pu être enregistré. Demandez un nouveau lien et réessayez.",
+    resetTooMany:
+      "Trop de liens demandés. Attendez quelques minutes et réessayez.",
+    resetNotSent: "Le lien n'a pas pu être envoyé. Réessayez dans un instant.",
     descriptionTooLong: "Le libellé doit faire 500 caractères ou moins",
     nameTooLong100: "Le nom doit faire 100 caractères ou moins",
     nameTooLong40: "Le nom doit faire 40 caractères ou moins",

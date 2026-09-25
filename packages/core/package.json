@@ -8,6 +8,7 @@
     "./amount-input": "./src/amount-input.ts",
     "./apply-recurring": "./src/apply-recurring.ts",
     "./attention": "./src/attention.ts",
+    "./auth-errors": "./src/auth-errors.ts",
     "./bank-balance": "./src/bank-balance.ts",
     "./bank-feed": "./src/bank-feed.ts",
     "./bank-merchant": "./src/bank-merchant.ts",

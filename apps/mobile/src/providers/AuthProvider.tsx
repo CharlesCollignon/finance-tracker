@@ -13,6 +13,7 @@ import {
 import { signInWithPasskeyCeremony } from "@/lib/passkeys";
 import { seedDefaultCategories } from "@/lib/seed-categories";
 import { supabase } from "@/lib/supabase";
+import { resetRequestErrorKey } from "@finance/core/auth-errors";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async requestPasswordReset(email) {
         const { error } = await supabase.auth.resetPasswordForEmail(email);
-        return error ? { error: error.message } : {};
+        return error ? { error: resetRequestErrorKey(error.code) } : {};
       },
       async signUp(email, password) {
         const { data, error } = await supabase.auth.signUp({

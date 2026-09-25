@@ -12,6 +12,7 @@ import { Text } from "@/components/retroui/Text";
 import { createClient } from "@/lib/supabase/client";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
+import { resetRequestErrorKey } from "@finance/core/auth-errors";
 import { resolveMessage } from "@finance/core/i18n/t";
 
 /**
@@ -58,7 +59,7 @@ export function ResetPasswordForm() {
     setPending(false);
 
     if (resetError) {
-      setError(resetError.message);
+      setError(resetRequestErrorKey(resetError.code));
       return;
     }
 
