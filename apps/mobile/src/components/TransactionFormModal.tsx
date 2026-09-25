@@ -80,6 +80,11 @@ export function TransactionFormModal({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSkip, setConfirmSkip] = useState(false);
   const [tagIds, setTagIds] = useState<string[]>([]);
+  // Whether the edited transaction's existing tags finished loading. Saving
+  // before this resolves — or after it fails — must not overwrite the row's
+  // tags with an empty list, so the write below checks this rather than
+  // assuming an empty `tagIds` means "no tags".
+  const [tagsLoaded, setTagsLoaded] = useState(false);
 
   // Existing tags load once per edited transaction.
   useEffect(() => {
@@ -87,11 +92,17 @@ export function TransactionFormModal({
       return;
     }
     let active = true;
-    void getTransactionTagIds(transaction.id).then((ids) => {
-      if (active) {
-        setTagIds(ids);
-      }
-    });
+    void getTransactionTagIds(transaction.id)
+      .then((ids) => {
+        if (active) {
+          setTagIds(ids);
+          setTagsLoaded(true);
+        }
+      })
+      .catch(() => {
+        // Leave tagsLoaded false: a failed load must block the tag write on
+        // save rather than silently clearing the transaction's tags.
+      });
     return () => {
       active = false;
     };
@@ -135,8 +146,10 @@ export function TransactionFormModal({
       return;
     }
     // Tags are a separate table, so they are written after the row exists.
+    // When editing, only write once the existing tags have loaded — writing
+    // before or after a failed load would clear the transaction's tags.
     const savedId = isEditing ? transaction.id : result.id;
-    if (savedId && tags.length > 0) {
+    if (savedId && tags.length > 0 && (!isEditing || tagsLoaded)) {
       await setTransactionTags(savedId, tagIds);
     }
     onSaved();
@@ -208,7 +221,7 @@ export function TransactionFormModal({
               accessibilityLabel={t("transaction.close")}
               hitSlop={8}
             >
-              <Text variant="muted">Close</Text>
+              <Text variant="muted">{t("transaction.close")}</Text>
             </Pressable>
           </View>
 
