@@ -29,7 +29,13 @@ import {
   holdingWeights,
   type HoldingWeight,
 } from "@finance/core/portfolio-weights";
-import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
+import {
+  buildGoalRunningTotals,
+  buildSavingsGoalProgress,
+  earliestGoalStart,
+  EMPTY_GOAL_LEDGER,
+  goalTotalsAsOf,
+} from "@finance/core/savings-goals";
 import type {
   Category,
   RecurringTemplateWithCategory,
@@ -44,6 +50,7 @@ import {
   getFulfilledKeys,
   getFulfilmentProposals,
   getFulfilmentReport,
+  getGoalLedger,
   getMonthCloseOverview,
   getMonthlySummary,
   getMonthlyTrend,
@@ -536,6 +543,15 @@ async function gatherRead(
       ),
     ]);
 
+  // Stopped where the web stops it, or the stored read's digest differs
+  // between the two clients.
+  const goalsAsOf = goalTotalsAsOf(year, month, todayIsoLocal());
+  const goalStart = earliestGoalStart(goals);
+  const goalLedger =
+    goalStart && goalStart <= goalsAsOf
+      ? await getGoalLedger(userId, goalStart, goalsAsOf)
+      : EMPTY_GOAL_LEDGER;
+
   const factsInput = {
     year,
     month,
@@ -549,8 +565,7 @@ async function gatherRead(
     budgets: figures.budgets,
     goals: buildSavingsGoalProgress(
       goals,
-      figures.summary.savingsBreakdown,
-      figures.summary.savings,
+      buildGoalRunningTotals(goals, goalLedger, figures.templates, goalsAsOf),
     ),
     investedValue: portfolio.totalMarketValue,
     inboxPending,

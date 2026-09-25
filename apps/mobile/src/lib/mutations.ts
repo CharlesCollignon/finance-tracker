@@ -1243,6 +1243,7 @@ export async function upsertSavingsGoal(input: {
   name: string;
   targetAmount: number;
   targetDate?: string;
+  startsOn?: string;
   categoryId?: string | null;
 }): Promise<ActionResult> {
   const userId = await requireUserId();
@@ -1260,6 +1261,8 @@ export async function upsertSavingsGoal(input: {
     target_amount: parsed.data.targetAmount,
     target_date: parsed.data.targetDate || null,
     category_id: parsed.data.categoryId ?? null,
+    // Absent means "keep what it was" on an edit and "today" on a new goal.
+    ...(parsed.data.startsOn ? { starts_on: parsed.data.startsOn } : {}),
   };
 
   if (parsed.data.id) {

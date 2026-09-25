@@ -18,6 +18,8 @@ import {
   type RecurringProposal,
 } from "@finance/core/recurring-detection";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
+import { allRows } from "@finance/core/paging";
+import type { GoalLedger } from "@finance/core/savings-goals";
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
@@ -468,6 +470,74 @@ export async function getSavingsGoals(userId: string) {
     throw error;
   }
   return data ?? [];
+}
+
+/**
+ * Everything a goal's running total is counted from, between two days.
+ *
+ * The web's `getGoalLedger`, read the same way, because the month read
+ * compares the two clients' facts by digest.
+ */
+export async function getGoalLedger(
+  userId: string,
+  from: string,
+  to: string,
+): Promise<GoalLedger> {
+  const [transactions, applied, skipped] = await Promise.all([
+    allRows<TransactionWithCategory>((start, end) =>
+      supabase
+        .from("transactions")
+        .select("*, categories!inner(name, type, icon, counts_toward_summary)")
+        .eq("user_id", userId)
+        .eq("categories.type", "savings")
+        .gte("occurred_on", from)
+        .lte("occurred_on", to)
+        .order("id")
+        .range(start, end)
+        .then(({ data, error }) => ({
+          data: data as TransactionWithCategory[] | null,
+          error,
+        })),
+    ),
+    allRows<{ recurring_template_id: string | null; occurred_on: string }>(
+      (start, end) =>
+        supabase
+          .from("transactions")
+          .select("recurring_template_id, occurred_on")
+          .eq("user_id", userId)
+          .not("recurring_template_id", "is", null)
+          .gte("occurred_on", from)
+          .lte("occurred_on", to)
+          .order("id")
+          .range(start, end),
+    ),
+    allRows<{ template_id: string; occurred_on: string }>((start, end) =>
+      supabase
+        .from("recurring_skips")
+        .select("template_id, occurred_on")
+        .eq("user_id", userId)
+        .gte("occurred_on", from)
+        .lte("occurred_on", to)
+        .order("id")
+        .range(start, end),
+    ),
+  ]);
+
+  return {
+    transactions,
+    appliedKeys: new Set(
+      applied.flatMap((row) =>
+        row.recurring_template_id
+          ? [recurringOccurrenceKey(row.recurring_template_id, row.occurred_on)]
+          : [],
+      ),
+    ),
+    skippedKeys: new Set(
+      skipped.map((row) =>
+        recurringOccurrenceKey(row.template_id, row.occurred_on),
+      ),
+    ),
+  };
 }
 
 /**

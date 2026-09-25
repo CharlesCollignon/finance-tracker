@@ -13,8 +13,11 @@ import {
   type Runway,
 } from "@finance/core/projection";
 import {
+  buildGoalRunningTotals,
   buildSavingsGoalProgress,
   computeGoalPacing,
+  earliestGoalStart,
+  EMPTY_GOAL_LEDGER,
   type GoalPacing,
 } from "@finance/core/savings-goals";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
@@ -50,6 +53,7 @@ import { resolveMessage } from "@finance/core/i18n/t";
 import {
   getBudgets,
   getCategories,
+  getGoalLedger,
   getMonthCloseOverview,
   getMonthlySummary,
   getRecurringTemplates,
@@ -126,6 +130,7 @@ export default function PlanningScreen() {
   const [goalName, setGoalName] = useState("");
   const [goalTarget, setGoalTarget] = useState("");
   const [goalTargetDate, setGoalTargetDate] = useState("");
+  const [goalStartsOn, setGoalStartsOn] = useState(() => todayIsoLocal());
   const [tagName, setTagName] = useState("");
   const [pending, setPending] = useState(false);
   /**
@@ -205,6 +210,13 @@ export default function PlanningScreen() {
         readCashBalance(user.id, today),
       ]);
 
+      // A running total from each goal's start. Asked for after the batch
+      // because the window depends on the goals it fetched.
+      const goalStart = earliestGoalStart(goals);
+      const goalLedger = goalStart
+        ? await getGoalLedger(user.id, goalStart, today)
+        : EMPTY_GOAL_LEDGER;
+
       const categoryNames = new Map(
         categories.map((c) => [c.id, c.name] as const),
       );
@@ -223,8 +235,7 @@ export default function PlanningScreen() {
         ),
         goalProgress: buildSavingsGoalProgress(
           goals,
-          summary.savingsBreakdown,
-          summary.savings,
+          buildGoalRunningTotals(goals, goalLedger, templates, today),
         ),
         projection: buildForwardProjection({
           templates,
@@ -264,6 +275,7 @@ export default function PlanningScreen() {
       name: goalName,
       targetAmount: Number(goalTarget),
       targetDate: goalTargetDate.trim() || undefined,
+      startsOn: goalStartsOn,
       categoryId: null,
     });
     setPending(false);
@@ -274,6 +286,7 @@ export default function PlanningScreen() {
     setGoalName("");
     setGoalTarget("");
     setGoalTargetDate("");
+    setGoalStartsOn(todayIsoLocal());
     await onRefresh();
   }
 
@@ -549,6 +562,11 @@ export default function PlanningScreen() {
                 placeholder={t("recurring.noEndDate")}
                 clearable
               />
+              <Text variant="label">{t("plan.goalStartsOn")}</Text>
+              <DateField value={goalStartsOn} onChange={setGoalStartsOn} />
+              <Text variant="muted" className="text-xs">
+                {t("plan.goalStartsOnHint")}
+              </Text>
               <Button
                 label={t("plan.addGoalSubmit")}
                 disabled={pending}
