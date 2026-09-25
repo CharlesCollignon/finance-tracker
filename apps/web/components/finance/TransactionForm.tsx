@@ -8,6 +8,7 @@ import { Text } from "@/components/retroui/Text";
 import { useToast } from "@/components/layout/ToastProvider";
 import { MobileSheet } from "@/components/layout/MobileSheet";
 import { CategorySelect } from "@/components/finance/CategorySelect";
+import { TAGS_FIELD_MARKER } from "@/lib/actions/tag-field";
 import {
   createTransaction,
   deleteTransaction,
@@ -235,6 +236,9 @@ function TransactionFormFields({
         </div>
         {tags.length > 0 && (
           <fieldset className="flex flex-col gap-2">
+            {/* Says "the tags were on screen", so an empty selection means
+                none rather than "not asked". */}
+            <input type="hidden" name={TAGS_FIELD_MARKER} value="1" />
             <legend className="text-sm font-medium">
               {t("transaction.tags")}
             </legend>

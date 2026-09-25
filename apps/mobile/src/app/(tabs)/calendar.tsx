@@ -22,6 +22,7 @@ import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
 import type {
   Category,
   RecurringTemplateWithCategory,
+  Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
@@ -62,11 +63,13 @@ import {
   getConfirmedTransactionIds,
   getFulfilmentProposals,
   getRecurringTemplates,
+  getTags,
   getTransactions,
 } from "@/lib/queries";
 
 /** Stable identity, so the derived selection keeps a steady reference. */
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
+const NO_TAGS: Tag[] = [];
 
 export default function CalendarScreen() {
   const t = useT();
@@ -99,9 +102,10 @@ export default function CalendarScreen() {
           templates: [] as RecurringTemplateWithCategory[],
           confirmed: new Set<string>(),
           proposals: [] as FulfilmentProposal[],
+          tags: [] as Tag[],
         };
       }
-      const [transactions, categories, templates, confirmed] =
+      const [transactions, categories, templates, confirmed, tags] =
         await Promise.all([
           getTransactions(user.id, year, month),
           getCategories(user.id),
@@ -109,6 +113,8 @@ export default function CalendarScreen() {
           // Which rows settle a charge. Needs nothing else the batch fetches,
           // so it rides along rather than costing a second hop.
           getConfirmedTransactionIds(user.id),
+          // So a transaction's tags can be changed from here, as on the web.
+          getTags(user.id),
         ]);
       // Asked after the batch, because it needs the templates and categories
       // the batch fetched.
@@ -119,7 +125,14 @@ export default function CalendarScreen() {
         year,
         month,
       );
-      return { transactions, categories, templates, confirmed, proposals };
+      return {
+        transactions,
+        categories,
+        templates,
+        confirmed,
+        proposals,
+        tags,
+      };
     }, [user?.id, year, month, dataVersion]);
 
   const transactions = useMemo(
@@ -529,6 +542,7 @@ export default function CalendarScreen() {
           onClose={() => setFormOpen(false)}
           onSaved={reload}
           categories={categories}
+          tags={data?.tags ?? NO_TAGS}
           defaultDate={effectiveSelected}
         />
       ) : null}
@@ -540,6 +554,7 @@ export default function CalendarScreen() {
           onSaved={reload}
           onDeleted={reload}
           categories={categories}
+          tags={data?.tags ?? NO_TAGS}
           transaction={editing}
           defaultDate={effectiveSelected}
         />

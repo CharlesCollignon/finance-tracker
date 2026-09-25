@@ -8,6 +8,7 @@ import {
   getConfirmedTransactionIds,
   getFulfilmentProposals,
 } from "@/lib/queries/fulfilment";
+import { getTags, getTransactionTagMap } from "@/lib/queries/phase4";
 
 interface CalendarPageProps {
   searchParams: Promise<{ y?: string; m?: string }>;
@@ -29,6 +30,8 @@ export default async function CalendarPage({
     categories,
     recurringTemplates,
     confirmedTransactionIds,
+    tags,
+    transactionTags,
   ] = await Promise.all([
     getTransactions(user.id, year, month),
     getCategories(user.id),
@@ -36,6 +39,10 @@ export default async function CalendarPage({
     // Which rows settle a recurring charge. Needs nothing else this batch
     // fetches, so it rides along rather than costing a second round trip.
     getConfirmedTransactionIds(user.id),
+    // The edit form needs them, or saving an edit from here cannot show,
+    // keep or change a transaction's tags.
+    getTags(user.id),
+    getTransactionTagMap(user.id, year, month),
   ]);
 
   // Asked after the batch, because it needs the templates and categories the
@@ -58,6 +65,8 @@ export default async function CalendarPage({
       proposedTransactionIds={proposals.map(
         (proposal) => proposal.transactionId,
       )}
+      tags={tags}
+      transactionTags={transactionTags}
       year={year}
       month={month}
     />

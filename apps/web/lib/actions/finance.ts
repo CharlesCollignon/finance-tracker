@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { revalidateRecurringDependents } from "@/lib/revalidate-paths";
+import { readSubmittedTagIds } from "@/lib/actions/tag-field";
 import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
 import { getAuthUser } from "@/lib/auth/get-user";
@@ -501,9 +502,8 @@ export async function updateTransaction(
     return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
-  const tagIds = formData
-    .getAll("tagIds")
-    .filter((value): value is string => typeof value === "string");
+  // Null when the form never showed the tags control: leave them alone.
+  const tagIds = readSubmittedTagIds(formData);
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -521,20 +521,27 @@ export async function updateTransaction(
     return { error: error.message };
   }
 
-  await supabase
-    .from("transaction_tags")
-    .delete()
-    .eq("transaction_id", parsed.data.id);
+  if (tagIds !== null) {
+    const { error: clearError } = await supabase
+      .from("transaction_tags")
+      .delete()
+      .eq("transaction_id", parsed.data.id);
+    if (clearError) {
+      return { error: clearError.message };
+    }
 
-  if (tagIds.length > 0) {
-    const { error: tagError } = await supabase.from("transaction_tags").insert(
-      tagIds.map((tagId) => ({
-        transaction_id: parsed.data.id,
-        tag_id: tagId,
-      })),
-    );
-    if (tagError) {
-      return { error: tagError.message };
+    if (tagIds.length > 0) {
+      const { error: tagError } = await supabase
+        .from("transaction_tags")
+        .insert(
+          tagIds.map((tagId) => ({
+            transaction_id: parsed.data.id,
+            tag_id: tagId,
+          })),
+        );
+      if (tagError) {
+        return { error: tagError.message };
+      }
     }
   }
 
