@@ -88,7 +88,10 @@ function monthsBetween(
 }
 
 function roundToCent(value: number): number {
-  return Math.round(value * 100) / 100;
+  // `|| 0` turns a -0 result (a deposit and its withdrawals netting to zero
+  // in floating point) into 0, which the UI shows as "0,00 €" rather than
+  // the alarming "-0,00 €".
+  return Math.round(value * 100) / 100 || 0;
 }
 
 /**

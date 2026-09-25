@@ -258,6 +258,74 @@ describe("buildGoalRunningTotals", () => {
     expect(totals.get(holidays.id)).toBe(0.3);
   });
 
+  it("never returns negative zero for an all-savings goal that nets to zero", () => {
+    const buffer = goal({ category_id: null });
+    const totals = buildGoalRunningTotals(
+      [buffer],
+      ledger([
+        tx({ on: "2026-01-05", amount: 0.3, categoryId: "cat-a" }),
+        tx({
+          on: "2026-01-10",
+          amount: 0.1,
+          categoryId: "cat-out",
+          counts: false,
+        }),
+        tx({
+          on: "2026-01-15",
+          amount: 0.2,
+          categoryId: "cat-out2",
+          counts: false,
+        }),
+      ]),
+      [],
+      "2026-01-31",
+    );
+    expect(Object.is(totals.get(buffer.id), 0)).toBe(true);
+  });
+
+  it("counts occurrences across a year boundary", () => {
+    const holidays = goal({ starts_on: "2025-12-01" });
+    const monthly = template({ id: "tpl-1", amount: 50, dayOfMonth: 5 });
+    const totals = buildGoalRunningTotals(
+      [holidays],
+      ledger([]),
+      [monthly],
+      "2026-01-31",
+    );
+    // The 5th of December and the 5th of January: two occurrences.
+    expect(totals.get(holidays.id)).toBe(100);
+  });
+
+  it("counts a goal linked to a withdrawal category's own rows positively, matching the breakdown", () => {
+    const rows = [
+      tx({
+        on: "2026-01-10",
+        amount: 200,
+        categoryId: "cat-out",
+        counts: false,
+      }),
+      tx({ on: "2026-01-15", amount: 50, categoryId: "cat-other" }),
+    ];
+    const emergency = goal({ category_id: "cat-out", starts_on: "2026-01-01" });
+    const totals = buildGoalRunningTotals(
+      [emergency],
+      ledger(rows),
+      [],
+      "2026-01-31",
+    );
+    const breakdown = buildBudgetSavingsBreakdownWithProjection(
+      rows,
+      [],
+      2026,
+      1,
+      "current",
+    );
+    expect(totals.get(emergency.id)).toBe(
+      breakdown.find((row) => row.categoryId === "cat-out")?.total,
+    );
+    expect(totals.get(emergency.id)).toBe(200);
+  });
+
   it("agrees with the monthly summary for a goal that spans the whole month", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-03-20T12:00:00.000Z"));
