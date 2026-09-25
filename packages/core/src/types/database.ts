@@ -1518,6 +1518,15 @@ export interface Database {
         Args: Record<PropertyKey, never>;
         Returns: { key: string; enabled: boolean }[];
       };
+      /**
+       * Move every transaction from one tag to another, those in the bin
+       * included, then delete the first (040). Returns how many transactions
+       * gained the second.
+       */
+      merge_tags: {
+        Args: { target_user: string; from_tag: string; into_tag: string };
+        Returns: number;
+      };
       /** Hand back an attempt that never reached the provider. */
       refund_category_selection: {
         Args: { target_user: string };
