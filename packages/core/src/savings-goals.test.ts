@@ -373,8 +373,9 @@ describe("buildSavingsGoalProgress", () => {
       [buffer],
       new Map([[buffer.id, -80]]),
     );
+    expect(row.saved).toBe(-80);
     expect(row.ratio).toBe(0);
-    expect(row.remaining).toBe(500);
+    expect(row.remaining).toBe(580);
     expect(row.complete).toBe(false);
   });
 

@@ -189,12 +189,10 @@ export function buildSavingsGoalProgress(
   return goals.map((goal) => {
     const saved = savedByGoal.get(goal.id) ?? 0;
     const target = Number(goal.target_amount);
+    const remaining = Math.max(0, target - saved);
     // Floored at zero: withdrawals can take an all-savings goal below
-    // nothing, and a bar cannot be drawn backwards or show more still
-    // needed than the target itself.
-    const flooredSaved = Math.max(0, saved);
-    const remaining = Math.max(0, target - flooredSaved);
-    const ratio = target > 0 ? Math.min(1, flooredSaved / target) : 0;
+    // nothing, and a bar cannot be drawn backwards.
+    const ratio = target > 0 ? Math.min(1, Math.max(0, saved / target)) : 0;
 
     return {
       goal,
