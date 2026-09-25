@@ -12,8 +12,10 @@ import {
   getBudgets,
   getGoalLedger,
   getSavingsGoals,
-  getTags,
+  getTagUsage,
 } from "@/lib/queries/phase4";
+import { isFlagOn } from "@finance/core/flags";
+import { getFlags } from "@/lib/flags";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
 import {
@@ -59,16 +61,18 @@ export default async function BudgetsPage() {
     // nothing.
     cash,
     closes,
+    flags,
   ] = await Promise.all([
     getBudgets(user.id),
     getCategories(user.id),
-    getTags(user.id),
+    getTagUsage(user.id),
     getSavingsGoals(user.id),
     getMonthlySummary(user.id, current.year, current.month),
     getRecurringTemplates(user.id),
     getSavingsReserve(user.id),
     bankFeedConfigured() ? readCashBalance(user.id, today) : null,
     getMonthCloseOverview(user.id, today),
+    getFlags(),
   ]);
 
   const categoryNames = new Map(categories.map((c) => [c.id, c.name] as const));
@@ -125,6 +129,7 @@ export default async function BudgetsPage() {
       budgets={budgets}
       categories={categories.filter((c) => !c.archived)}
       tags={tags}
+      manageTags={isFlagOn(flags, "tags.manage")}
       goals={goals}
       budgetProgress={budgetProgress}
       goalProgress={goalProgress}

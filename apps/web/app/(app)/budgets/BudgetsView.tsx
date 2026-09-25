@@ -15,7 +15,6 @@ import {
   deleteSavingsGoal,
   upsertBudget,
   upsertSavingsGoal,
-  upsertTag,
 } from "@/lib/actions/phase4";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { todayIsoLocal } from "@finance/core/constants";
@@ -24,8 +23,9 @@ import type {
   Budget,
   Category,
   SavingsGoal,
-  Tag,
 } from "@finance/core/types/database";
+import type { TagUsage } from "@finance/core/tags";
+import { TagsCard } from "@/components/finance/TagsCard";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
@@ -95,7 +95,9 @@ function pacingHint(
 type Props = {
   budgets: Budget[];
   categories: Category[];
-  tags: Tag[];
+  tags: TagUsage[];
+  /** `tags.manage`, read on the server. */
+  manageTags: boolean;
   /** Projection, links and close history — same column, one container. */
   footer?: ReactNode;
   goals: SavingsGoal[];
@@ -107,6 +109,7 @@ export function BudgetsView({
   budgets,
   categories,
   tags,
+  manageTags,
   goals,
   budgetProgress,
   goalProgress,
@@ -147,18 +150,6 @@ export function BudgetsView({
         toast(t("plan.goalSaved"), "success");
         setEditingGoal(null);
         setGoalFormOpen(false);
-      } else if (result.error) {
-        toast(result.error, "error");
-      }
-      return result;
-    },
-    {},
-  );
-  const [, tagAction, tagPending] = useActionState(
-    async (previous: PlanActionResult, formData: FormData) => {
-      const result = await upsertTag(previous, formData);
-      if (result.success) {
-        toast(t("plan.tagAdded"), "success");
       } else if (result.error) {
         toast(result.error, "error");
       }
@@ -531,34 +522,7 @@ export function BudgetsView({
           ) : null}
         </section>
 
-        <section className="flex flex-col gap-3 rounded-card p-card border border-border bg-card">
-          <h2 className="text-sm font-medium">{t("plan.tagsHeading")}</h2>
-          <p className="text-sm text-muted-foreground">{t("plan.tagsBlurb")}</p>
-          {tags.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className={cn(
-                    "rounded-full border border-border bg-muted",
-                    "px-3 py-1 text-xs font-medium",
-                  )}
-                >
-                  {tag.name}
-                </span>
-              ))}
-            </div>
-          ) : null}
-          <form action={tagAction} className="flex flex-wrap items-end gap-3">
-            <div className="flex min-w-48 flex-1 flex-col gap-2">
-              <FormLabel htmlFor="tag-name">{t("plan.newTag")}</FormLabel>
-              <Input id="tag-name" name="name" required maxLength={40} />
-            </div>
-            <Button type="submit" variant="outline" disabled={tagPending}>
-              {t("plan.addTag")}
-            </Button>
-          </form>
-        </section>
+        <TagsCard tags={tags} manage={manageTags} />
 
         {/* Wrapped rather than dropped in bare: see PageContainer. */}
         {footer ? <div className="contents">{footer}</div> : null}

@@ -4,6 +4,7 @@ import { getMonthBounds } from "@finance/core/constants";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { allRows } from "@finance/core/paging";
 import type { GoalLedger } from "@finance/core/savings-goals";
+import { tagUsageFromRows, type TagUsage } from "@finance/core/tags";
 import type {
   Budget,
   Database,
@@ -60,6 +61,26 @@ export async function getTags(userId: string): Promise<Tag[]> {
     throw error;
   }
   return data ?? [];
+}
+
+/**
+ * Every tag with how many transactions carry it, for the Plan page.
+ *
+ * One request: PostgREST's embedded count runs under RLS, so a transaction in
+ * the bin is not counted (see `@finance/core/tags`).
+ */
+export async function getTagUsage(userId: string): Promise<TagUsage[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tags")
+    .select("id, name, transaction_tags(count)")
+    .eq("user_id", userId)
+    .order("name");
+
+  if (error) {
+    throw error;
+  }
+  return tagUsageFromRows(data ?? []);
 }
 
 export async function getTransactionTagMap(

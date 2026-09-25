@@ -257,6 +257,27 @@ export const fr: Messages = {
     newTag: "Nouvelle étiquette",
     addTag: "Ajouter l'étiquette",
     tagAdded: "Étiquette ajoutée",
+    editTagNamed: "Modifier l'étiquette {name}",
+    tagName: "Nom",
+    renameTag: "Renommer",
+    tagRenamed: "Étiquette renommée",
+    tagNameExists: "{name} existe déjà.",
+    mergeIntoNamed: "Fusionner avec {name}",
+    mergeTagInto: "Fusionner avec",
+    chooseTag: "Choisir une étiquette",
+    mergeTag: "Fusionner",
+    mergeTagHint:
+      "Ses transactions prennent l'étiquette choisie, et {name} disparaît.",
+    tagMerged: "Étiquettes fusionnées",
+    deleteTag: "Supprimer l'étiquette",
+    deleteTagUses: {
+      one: "Elle sera retirée de {count} transaction\u00A0; la transaction reste.",
+      other:
+        "Elle sera retirée de {count} transactions\u00A0; les transactions restent.",
+    },
+    deleteTagUnused: "Aucune transaction ne la porte.",
+    confirmDeleteTag: "Oui, supprimer",
+    tagDeleted: "Étiquette supprimée",
     goalName: "Nom de l'objectif",
     deleteGoalTitle: "Supprimer cet objectif\u00A0?",
     deleteCapTitle: "Supprimer ce plafond\u00A0?",
@@ -2074,5 +2095,7 @@ export const fr: Messages = {
     // so translating the prompt without translating the literal would lock
     // French readers out of their own account deletion.
     deleteConfirmation: "Tapez DELETE pour confirmer",
+    tagNameTaken: "Une étiquette porte déjà ce nom.",
+    tagMergeFailed: "Ces étiquettes n'ont pas pu être fusionnées.",
   },
 };
