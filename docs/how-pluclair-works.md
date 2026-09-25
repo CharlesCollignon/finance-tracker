@@ -5,7 +5,7 @@ figure is computed, and what is known to be wrong. Written for whoever works
 on the repository next, human or agent. Every phase of
 `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` updates it before it closes.
 
-Last updated: Phase 0, Plan 0.1 (2026-09-25).
+Last updated: Phase 0, Plan 0.1 — closed (2026-09-25).
 
 ## Shape
 
@@ -101,10 +101,18 @@ Migrations: `npx supabase start`, `npx supabase db reset`, then
 
 ## Known issues
 
-- Editing a transaction from the web Calendar deletes its tags (fixed in Plan 0.1, Task 4).
-- A savings goal counts only the current month's savings (fixed in Plan 0.1, Tasks 5–8).
-- Income recurring templates cannot be opened from Charges (fixed in Plan 0.1, Task 9).
-- Password reset signs the user in without asking for a new password; the phone has no reset (fixed in Plan 0.1, Tasks 10–11).
+- Until the Supabase dashboard's "Reset password" email template links to
+  `/auth/confirm` with the token hash, a reset link only works in the browser
+  that asked for it, and never from the phone.
+- Linting is gated at zero warnings on both apps; a React Compiler finding is
+  fixed or suppressed inline with a reason, never wholesale.
+- On the phone's month-read route (`POST /api/month-read`, bearer token),
+  `gatherMonthFacts` reads most facts with the cookie client, which has no
+  session there, so a read asked for from the phone is likely written from
+  empty figures. Only `getGoalLedger`, `readCashBalance` and
+  `getFulfilledKeys` take the bearer client.
+- Migration `038` (`savings_goals.starts_on`) has not yet been executed against a local stack; it must pass `supabase/tests/038_goal_start.test.sql` after `supabase db reset` before this branch merges or reaches the hosted project.
+- Sign-in and sign-up still show Supabase's own error text, which is English; the reset-request and new-password screens map error codes to catalogue keys (`packages/core/src/auth-errors.ts`, `apps/web/lib/auth/new-password-error.ts`).
 - `writesAFigure` (`packages/core/src/month-read.ts`) knows English number words only; a French spelled-out quantity would pass. Digits are always caught.
 - The Wallets page's fund-cost card and the look-through page can show different annual costs: only the look-through falls back to the shortlist's charge hints.
 - `packages/core/src/types/database.ts` is maintained by hand and does not list `deleted_at` (migration `036`).
