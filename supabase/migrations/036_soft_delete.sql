@@ -57,7 +57,7 @@ begin
    where rel.relname = 'categories'
      and con.contype = 'u'
      and (
-       select array_agg(att.attname order by att.attname)
+       select array_agg(att.attname::text order by att.attname)
          from unnest(con.conkey) as k(attnum)
          join pg_attribute att
            on att.attrelid = con.conrelid and att.attnum = k.attnum

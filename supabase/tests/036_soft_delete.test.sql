@@ -89,8 +89,13 @@ select test_assert(
   (select count(*) from transactions) = 2,
   'both transactions visible before anything is deleted');
 
-update transactions set deleted_at = now()
- where id = 'bbbbbbbb-0000-0000-0000-000000000001';
+-- Through the function the app will call. A direct `update ... set
+-- deleted_at` is refused for the owner too, and rightly: Postgres checks an
+-- updated row against the select policy, which hides marked rows, so every
+-- mark has to go through the definer functions that also save the undo.
+select soft_delete_transactions(
+  '11111111-1111-1111-1111-111111111111',
+  array['bbbbbbbb-0000-0000-0000-000000000001']::uuid[]);
 
 select test_assert(
   (select count(*) from transactions) = 1,
@@ -136,12 +141,36 @@ exception
 end;
 $$;
 
--- ----------------------------------------- the unique slot is given back
+-- ------------------------------------------------- a category still refuses
 
+-- 001 makes categories.id `on delete restrict` from transactions, which is
+-- what produces today's "Archive it instead". A soft delete is an update and
+-- fires no constraint, so the refusal has to be restated or it is lost.
 select test_become('11111111-1111-1111-1111-111111111111');
 
+do $$
+begin
+  perform soft_delete_category(
+    '11111111-1111-1111-1111-111111111111',
+    'aaaaaaaa-0000-0000-0000-000000000001');
+  raise exception
+    'FAILED: a category with transactions behind it was allowed to be marked';
+exception
+  when foreign_key_violation then
+    raise notice '  ok  a category still in use refuses to be deleted';
+end;
+$$;
+
+-- ----------------------------------------- the unique slot is given back
+
+-- Groceries still has live transactions, so soft_delete_category refuses it
+-- (checked above). This section is about the unique index, not about who may
+-- mark, so the mark is made as the superuser.
+reset role;
 update categories set deleted_at = now()
  where id = 'aaaaaaaa-0000-0000-0000-000000000001';
+
+select test_become('11111111-1111-1111-1111-111111111111');
 
 -- Without a partial unique index this insert fails: the marked row still
 -- holds (user, 'Groceries', 'expense'), so somebody who deleted a category
@@ -165,24 +194,6 @@ select test_assert(
      from pg_indexes
     where indexname = 'transactions_recurring_date_uidx') is true,
   'the recurring-date unique index ignores marked rows');
-
--- ------------------------------------------------- a category still refuses
-
--- 001 makes categories.id `on delete restrict` from transactions, which is
--- what produces today's "Archive it instead". A soft delete is an update and
--- fires no constraint, so the refusal has to be restated or it is lost.
-do $$
-begin
-  perform soft_delete_category(
-    '11111111-1111-1111-1111-111111111111',
-    'aaaaaaaa-0000-0000-0000-000000000002');
-  raise exception
-    'FAILED: a category with transactions behind it was allowed to be marked';
-exception
-  when foreign_key_violation then
-    raise notice '  ok  a category still in use refuses to be deleted';
-end;
-$$;
 
 -- -------------------------------------------------------------- the sweeper
 
