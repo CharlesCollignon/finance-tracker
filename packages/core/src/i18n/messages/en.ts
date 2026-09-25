@@ -368,6 +368,12 @@ export const en = {
     goalOnSchedule: "Save {amount}/month to reach this by {month}.",
     globalMonthlyLimit: "Global monthly limit",
     goalTargetDateOptional: "Target date (optional)",
+    goalStartsOn: "Counting from",
+    goalStartsOnHint: "Savings from this day on count towards the goal.",
+    linkCategoriesTitle: "Categories",
+    linkCategoriesHint: "Where money is allowed to go",
+    linkImportTitle: "Import a statement",
+    linkImportHint: "A CSV, when there is no bank feed",
     /**
      * Said only when there is nothing to show yet, which is why neither
      * blurb points at the rings: on the screen that renders them, this

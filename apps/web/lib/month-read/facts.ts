@@ -2,7 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
 import { buildMonthPulse } from "@finance/core/month-pulse";
-import { buildSavingsGoalProgress } from "@finance/core/savings-goals";
+import {
+  buildGoalRunningTotals,
+  buildSavingsGoalProgress,
+  earliestGoalStart,
+  EMPTY_GOAL_LEDGER,
+  goalTotalsAsOf,
+} from "@finance/core/savings-goals";
 import { buildStillToCome } from "@finance/core/still-to-come";
 import { previousMonthKey } from "@finance/core/month-close";
 import {
@@ -19,7 +25,11 @@ import {
   getRecurringTemplates,
   getTransactions,
 } from "@/lib/queries/finance";
-import { getBudgets, getSavingsGoals } from "@/lib/queries/phase4";
+import {
+  getBudgets,
+  getGoalLedger,
+  getSavingsGoals,
+} from "@/lib/queries/phase4";
 import { getMonthCloseOverview } from "@/lib/queries/month-close";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { readCashBalance } from "@/lib/queries/bank-balance";
@@ -37,9 +47,10 @@ type Client = SupabaseClient<Database>;
  * Everything a month read may refer to, gathered from what the app already
  * computes.
  *
- * No new queries. Every figure here is one the Month page has on screen
- * anyway, which is the property that makes the read checkable: a reader can
- * look at the card above and see the same number.
+ * Every figure here is one another surface already has on screen — goal
+ * progress is the Plan page's running total, stopped at the end of the month
+ * being read — which is the property that makes the read checkable: a
+ * reader can look at that surface and see the same number.
  *
  * Recomputed server-side on every write, and deliberately not accepted from
  * the client. The Month page already holds most of this and passing it in
@@ -100,6 +111,15 @@ export async function gatherMonthFacts(
   const cash = isCurrentMonth
     ? await readCashBalance(userId, today, client)
     : null;
+
+  // Goal progress as it stood at the end of this month, or today for the
+  // month in progress. The phone computes the same figure the same way.
+  const goalsAsOf = goalTotalsAsOf(year, month, today);
+  const goalStart = earliestGoalStart(goals);
+  const goalLedger =
+    goalStart && goalStart <= goalsAsOf
+      ? await getGoalLedger(userId, goalStart, goalsAsOf, client)
+      : EMPTY_GOAL_LEDGER;
 
   const monthKey = `${year}-${String(month).padStart(2, "0")}`;
   const closed =
@@ -183,8 +203,7 @@ export async function gatherMonthFacts(
     ),
     goals: buildSavingsGoalProgress(
       goals,
-      summary.savingsBreakdown,
-      summary.savings,
+      buildGoalRunningTotals(goals, goalLedger, templates, goalsAsOf),
     ),
     // Always a number, so zero is the "nothing invested" case rather than
     // null. `buildMonthFacts` drops a zero here for exactly that reason.

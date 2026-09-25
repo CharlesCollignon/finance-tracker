@@ -266,6 +266,12 @@ export const fr: Messages = {
     goalOnSchedule: "Épargnez {amount}/mois pour y arriver avant {month}.",
     globalMonthlyLimit: "Plafond mensuel global",
     goalTargetDateOptional: "Date cible (facultative)",
+    goalStartsOn: "Compter à partir du",
+    goalStartsOnHint: "L'épargne à partir de ce jour compte pour l'objectif.",
+    linkCategoriesTitle: "Catégories",
+    linkCategoriesHint: "Là où l'argent a le droit d'aller",
+    linkImportTitle: "Importer un relevé",
+    linkImportHint: "Un CSV, quand il n'y a pas de connexion bancaire",
     capsBlurb:
       "Un plafond est un maximum mensuel — sur une catégorie, ou sur tout. Ajoutez-en un et vous verrez où vous en êtes.",
     goalsBlurb:

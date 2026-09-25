@@ -18,6 +18,7 @@ import {
   upsertTag,
 } from "@/lib/actions/phase4";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { todayIsoLocal } from "@finance/core/constants";
 import type { GoalPacing } from "@finance/core/savings-goals";
 import type {
   Budget,
@@ -448,6 +449,24 @@ export function BudgetsView({
                   type="date"
                   defaultValue={editingGoal?.target_date ?? ""}
                 />
+              </div>
+              <div className="flex flex-col gap-2">
+                <FormLabel htmlFor="goal-starts">
+                  {t("plan.goalStartsOn")}
+                </FormLabel>
+                <Input
+                  id="goal-starts"
+                  name="startsOn"
+                  type="date"
+                  aria-describedby="goal-starts-hint"
+                  defaultValue={editingGoal?.starts_on ?? todayIsoLocal()}
+                />
+                <p
+                  id="goal-starts-hint"
+                  className="text-xs text-muted-foreground"
+                >
+                  {t("plan.goalStartsOnHint")}
+                </p>
               </div>
               <div className="flex flex-col gap-2">
                 <FormLabel htmlFor="goal-category">

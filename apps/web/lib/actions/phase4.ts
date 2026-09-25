@@ -275,6 +275,7 @@ export async function upsertSavingsGoal(
     name: formData.get("name"),
     targetAmount: formData.get("targetAmount"),
     targetDate: formData.get("targetDate") || undefined,
+    startsOn: formData.get("startsOn") || undefined,
     categoryId: rawCategory === "" || rawCategory === null ? null : rawCategory,
   });
 
@@ -288,6 +289,9 @@ export async function upsertSavingsGoal(
     target_amount: parsed.data.targetAmount,
     target_date: parsed.data.targetDate || null,
     category_id: parsed.data.categoryId ?? null,
+    // Absent means "keep what it was" on an edit and "today" on a new goal,
+    // which is the column's default.
+    ...(parsed.data.startsOn ? { starts_on: parsed.data.startsOn } : {}),
   };
 
   if (parsed.data.id) {

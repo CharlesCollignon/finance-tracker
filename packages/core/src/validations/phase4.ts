@@ -45,5 +45,10 @@ export const savingsGoalSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "errors.invalidDate")
     .optional()
     .or(z.literal("")),
+  startsOn: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "errors.invalidDate")
+    .optional()
+    .or(z.literal("")),
   categoryId: z.string().uuid().nullable().optional(),
 });

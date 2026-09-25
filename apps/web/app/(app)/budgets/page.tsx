@@ -8,12 +8,20 @@ import {
   getRecurringTemplates,
   getSavingsReserve,
 } from "@/lib/queries/finance";
-import { getBudgets, getSavingsGoals, getTags } from "@/lib/queries/phase4";
+import {
+  getBudgets,
+  getGoalLedger,
+  getSavingsGoals,
+  getTags,
+} from "@/lib/queries/phase4";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import { buildBudgetProgress } from "@finance/core/budget-limits";
 import {
+  buildGoalRunningTotals,
   buildSavingsGoalProgress,
   computeGoalPacing,
+  earliestGoalStart,
+  EMPTY_GOAL_LEDGER,
 } from "@finance/core/savings-goals";
 import { buildForwardProjection, buildRunway } from "@finance/core/projection";
 import { ProjectionCard } from "@/components/finance/ProjectionCard";
@@ -25,7 +33,7 @@ import { getBankAccounts, readCashBalance } from "@/lib/queries/bank-balance";
 import { bankFeedConfigured } from "@/lib/bank/client";
 import { BudgetsView } from "./BudgetsView";
 import { ICON } from "@/lib/icon-scale";
-import { getLocale } from "@/lib/locale";
+import { getLocale, getT } from "@/lib/locale";
 
 export default async function BudgetsPage() {
   const user = await getAuthUser();
@@ -64,6 +72,7 @@ export default async function BudgetsPage() {
   ]);
 
   const categoryNames = new Map(categories.map((c) => [c.id, c.name] as const));
+  const t = await getT();
 
   const budgetProgress = buildBudgetProgress(
     budgets,
@@ -73,10 +82,15 @@ export default async function BudgetsPage() {
     await getLocale(),
   );
 
+  // A running total from each goal's start, not this month alone. Asked for
+  // after the batch because the window depends on the goals it fetched.
+  const goalStart = earliestGoalStart(goals);
+  const goalLedger = goalStart
+    ? await getGoalLedger(user.id, goalStart, today)
+    : EMPTY_GOAL_LEDGER;
   const goalProgress = buildSavingsGoalProgress(
     goals,
-    summary.savingsBreakdown,
-    summary.savings,
+    buildGoalRunningTotals(goals, goalLedger, templates, today),
   ).map((row) => ({
     goalId: row.goal.id,
     name: row.goal.name,
@@ -147,13 +161,13 @@ export default async function BudgetsPage() {
             {[
               {
                 href: "/categories",
-                title: "Categories",
-                hint: "Where money is allowed to go",
+                title: t("plan.linkCategoriesTitle"),
+                hint: t("plan.linkCategoriesHint"),
               },
               {
                 href: "/import",
-                title: "Import a statement",
-                hint: "A CSV, when there is no bank feed",
+                title: t("plan.linkImportTitle"),
+                hint: t("plan.linkImportHint"),
               },
             ].map(({ href, title, hint }) => (
               <Link
