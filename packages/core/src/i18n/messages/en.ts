@@ -379,6 +379,9 @@ export const en = {
     deleteTagUnused: "No transaction carries it.",
     confirmDeleteTag: "Yes, delete",
     tagDeleted: "Tag deleted",
+    /** The phone's tag sheet: its title, and the line that says chips open it. */
+    editTag: "Edit tag",
+    tagManageHint: "Tap a tag to rename, merge or delete it.",
     goalName: "Goal name",
     deleteGoalTitle: "Delete this goal?",
     deleteCapTitle: "Delete this budget?",
@@ -1568,6 +1571,8 @@ export const en = {
     save: "Save",
     remove: "Remove",
     cancel: "Cancel",
+    delete: "Delete",
+    working: "Working…",
     signOut: "Sign out",
     chartMode: "Chart mode",
     chartRange: "Chart range",

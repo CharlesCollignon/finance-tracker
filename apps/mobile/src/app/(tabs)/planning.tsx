@@ -25,10 +25,11 @@ import type {
   Budget,
   Category,
   SavingsGoal,
-  Tag,
 } from "@finance/core/types/database";
+import type { TagUsage } from "@finance/core/tags";
 
 import { Button } from "@/components/ui/Button";
+import { TagEditSheet } from "@/components/TagEditSheet";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { DateField } from "@/components/ui/DateField";
 import { Card } from "@/components/ui/Card";
@@ -43,6 +44,7 @@ import { MonthCloseHistoryCard } from "@/components/MonthCloseHistoryCard";
 import { MonthCloseSheet } from "@/components/MonthCloseSheet";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
+import { useFlag } from "@/providers/FlagsProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useChartSeries } from "@/theme/chart-series";
@@ -59,7 +61,7 @@ import {
   getRecurringTemplates,
   getSavingsGoals,
   getSavingsReserve,
-  getTags,
+  getTagUsage,
   readCashBalance,
   type MonthCloseOverview,
 } from "@/lib/queries";
@@ -133,6 +135,8 @@ export default function PlanningScreen() {
   const [goalStartsOn, setGoalStartsOn] = useState(() => todayIsoLocal());
   const [tagName, setTagName] = useState("");
   const [pending, setPending] = useState(false);
+  const manageTags = useFlag("tags.manage");
+  const [editingTag, setEditingTag] = useState<TagUsage | null>(null);
   /**
    * Everything the sheet is working from, held rather than read live.
    *
@@ -173,7 +177,7 @@ export default function PlanningScreen() {
         return {
           budgets: [] as Budget[],
           goals: [] as SavingsGoal[],
-          tags: [] as Tag[],
+          tags: [] as TagUsage[],
           categories: [] as Category[],
           budgetProgress: [] as ReturnType<typeof buildBudgetProgress>,
           goalProgress: [] as ReturnType<typeof buildSavingsGoalProgress>,
@@ -201,7 +205,7 @@ export default function PlanningScreen() {
       ] = await Promise.all([
         getBudgets(user.id),
         getSavingsGoals(user.id),
-        getTags(user.id),
+        getTagUsage(user.id),
         getCategories(user.id),
         getMonthlySummary(user.id, current.year, current.month),
         getRecurringTemplates(user.id),
@@ -299,6 +303,9 @@ export default function PlanningScreen() {
       return;
     }
     setTagName("");
+    // Other screens list tags too (the quick-add sheet, the calendar's
+    // forms); until now a new tag reached them only when they reloaded.
+    notifyDataChanged();
     await onRefresh();
   }
 
@@ -585,15 +592,34 @@ export default function PlanningScreen() {
               {t("plan.tagsHeading")}
             </Text>
             <View className="mt-3 flex-row flex-wrap gap-2">
-              {(data?.tags ?? []).map((t) => (
-                <View
-                  key={t.id}
-                  className="rounded-full border border-border bg-muted px-3 py-1"
-                >
-                  <Text className="text-xs font-semibold">{t.name}</Text>
-                </View>
-              ))}
+              {(data?.tags ?? []).map((tag) =>
+                manageTags ? (
+                  <Pressable
+                    key={tag.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={t("plan.editTagNamed", {
+                      name: tag.name,
+                    })}
+                    onPress={() => setEditingTag(tag)}
+                    className="min-h-11 justify-center rounded-full border border-border bg-muted px-4"
+                  >
+                    <Text className="text-sm font-semibold">{tag.name}</Text>
+                  </Pressable>
+                ) : (
+                  <View
+                    key={tag.id}
+                    className="rounded-full border border-border bg-muted px-3 py-1"
+                  >
+                    <Text className="text-xs font-semibold">{tag.name}</Text>
+                  </View>
+                ),
+              )}
             </View>
+            {manageTags && (data?.tags.length ?? 0) > 0 ? (
+              <Text variant="muted" className="mt-2 text-xs">
+                {t("plan.tagManageHint")}
+              </Text>
+            ) : null}
             <Text variant="label" className="mb-2 mt-4">
               {t("plan.newTag")}
             </Text>
@@ -629,6 +655,16 @@ export default function PlanningScreen() {
           }}
         />
       ) : null}
+
+      <TagEditSheet
+        tag={editingTag}
+        tags={data?.tags ?? []}
+        onClose={() => setEditingTag(null)}
+        onChanged={() => {
+          notifyDataChanged();
+          void onRefresh();
+        }}
+      />
 
       <ConfirmSheet
         open={confirming !== null}

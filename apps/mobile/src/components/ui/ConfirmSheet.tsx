@@ -26,8 +26,8 @@ export function ConfirmSheet({
   open,
   title,
   message,
-  confirmLabel = "Delete",
-  cancelLabel = "Cancel",
+  confirmLabel,
+  cancelLabel,
   destructive = true,
   pending = false,
   onConfirm,
@@ -59,14 +59,18 @@ export function ConfirmSheet({
           ) : null}
           <View className="mt-5 gap-2">
             <Button
-              label={pending ? "Working…" : confirmLabel}
+              label={
+                pending
+                  ? t("common.working")
+                  : (confirmLabel ?? t("common.delete"))
+              }
               variant="outline"
               className={destructive ? "border-destructive" : undefined}
               disabled={pending}
               onPress={onConfirm}
             />
             <Button
-              label={cancelLabel}
+              label={cancelLabel ?? t("common.cancel")}
               variant="ghost"
               disabled={pending}
               onPress={onCancel}

@@ -20,6 +20,7 @@ import {
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { allRows } from "@finance/core/paging";
 import type { GoalLedger } from "@finance/core/savings-goals";
+import { tagUsageFromRows, type TagUsage } from "@finance/core/tags";
 import {
   filterDatesBySchedule,
   getRecurringOccurrenceDates,
@@ -458,6 +459,19 @@ export async function getTags(userId: string) {
     throw error;
   }
   return data ?? [];
+}
+
+/** Every tag with how many transactions carry it, for the Plan screen. */
+export async function getTagUsage(userId: string): Promise<TagUsage[]> {
+  const { data, error } = await supabase
+    .from("tags")
+    .select("id, name, transaction_tags(count)")
+    .eq("user_id", userId)
+    .order("name");
+  if (error) {
+    throw error;
+  }
+  return tagUsageFromRows(data ?? []);
 }
 
 export async function getSavingsGoals(userId: string) {

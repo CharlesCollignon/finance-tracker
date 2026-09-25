@@ -1219,6 +1219,11 @@ export async function deleteWalletTransfer(id: string): Promise<ActionResult> {
   return { success: true };
 }
 
+/** A duplicate name, from `unique (user_id, name)` in 012, in the catalogue's words. */
+function tagWriteError(error: { code?: string; message: string }): string {
+  return error.code === "23505" ? "errors.tagNameTaken" : error.message;
+}
+
 export async function upsertTag(name: string): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
@@ -1233,7 +1238,67 @@ export async function upsertTag(name: string): Promise<ActionResult> {
     name: parsed.data.name,
   });
   if (error) {
+    return { error: tagWriteError(error) };
+  }
+  return { success: true };
+}
+
+export async function renameTag(
+  id: string,
+  name: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "errors.notAuthenticated" };
+  }
+  const parsed = tagSchema.safeParse({ id, name });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
+  }
+  const { error } = await supabase
+    .from("tags")
+    .update({ name: parsed.data.name })
+    .eq("id", id)
+    .eq("user_id", userId);
+  if (error) {
+    return { error: tagWriteError(error) };
+  }
+  return { success: true };
+}
+
+/** Deletes a tag; `transaction_tags` cascades, and the transactions stay. */
+export async function deleteTag(id: string): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "errors.notAuthenticated" };
+  }
+  const { error } = await supabase
+    .from("tags")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
+  if (error) {
     return { error: error.message };
+  }
+  return { success: true };
+}
+
+/** Moves every transaction from one tag to another, then deletes the first (040). */
+export async function mergeTags(
+  fromId: string,
+  intoId: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "errors.notAuthenticated" };
+  }
+  const { error } = await supabase.rpc("merge_tags", {
+    target_user: userId,
+    from_tag: fromId,
+    into_tag: intoId,
+  });
+  if (error) {
+    return { error: "errors.tagMergeFailed" };
   }
   return { success: true };
 }

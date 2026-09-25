@@ -278,6 +278,9 @@ export const fr: Messages = {
     deleteTagUnused: "Aucune transaction ne la porte.",
     confirmDeleteTag: "Oui, supprimer",
     tagDeleted: "Étiquette supprimée",
+    editTag: "Modifier l'étiquette",
+    tagManageHint:
+      "Touchez une étiquette pour la renommer, la fusionner ou la supprimer.",
     goalName: "Nom de l'objectif",
     deleteGoalTitle: "Supprimer cet objectif\u00A0?",
     deleteCapTitle: "Supprimer ce plafond\u00A0?",
@@ -1150,6 +1153,8 @@ export const fr: Messages = {
     save: "Enregistrer",
     remove: "Retirer",
     cancel: "Annuler",
+    delete: "Supprimer",
+    working: "En cours…",
     signOut: "Se déconnecter",
     chartMode: "Mode du graphique",
     chartRange: "Période du graphique",
