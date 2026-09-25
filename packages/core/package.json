@@ -67,6 +67,7 @@
     "./month-read-prompt": "./src/month-read-prompt.ts",
     "./motion": "./src/motion.ts",
     "./outbox": "./src/outbox.ts",
+    "./paging": "./src/paging.ts",
     "./pea": "./src/pea.ts",
     "./portfolio-weights": "./src/portfolio-weights.ts",
     "./projection": "./src/projection.ts",
