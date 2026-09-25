@@ -520,6 +520,7 @@ export interface Database {
           target_amount: number;
           target_date: string | null;
           category_id: string | null;
+          starts_on: string;
           created_at: string;
         };
         Insert: {
@@ -529,6 +530,7 @@ export interface Database {
           target_amount: number;
           target_date?: string | null;
           category_id?: string | null;
+          starts_on?: string;
           created_at?: string;
         };
         Update: {
@@ -538,6 +540,7 @@ export interface Database {
           target_amount?: number;
           target_date?: string | null;
           category_id?: string | null;
+          starts_on?: string;
           created_at?: string;
         };
         Relationships: [
