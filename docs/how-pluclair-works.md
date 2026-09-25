@@ -5,7 +5,7 @@ figure is computed, and what is known to be wrong. Written for whoever works
 on the repository next, human or agent. Every phase of
 `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` updates it before it closes.
 
-Last updated: Phase 0, Plan 0.1 — closed (2026-09-25).
+Last updated: Phase 0, Plan 0.2 — closed (2026-09-26).
 
 ## Shape
 
@@ -14,7 +14,7 @@ Last updated: Phase 0, Plan 0.1 — closed (2026-09-25).
 | `apps/web`      | Next.js 16.2 App Router. Server components read Supabase with the user's cookie session; server actions write.                                                                                                                     |
 | `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token. |
 | `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                         |
-| `supabase/`     | Migrations `001`–`038`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                       |
+| `supabase/`     | Migrations `001`–`040`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                       |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -83,6 +83,36 @@ Built and reachable by one account per deployment: the one whose id is
 enters balances and transactions by hand or imports a CSV. Rows the matcher
 would not file wait in the review inbox at `?review=inbox`.
 
+## Feature flags
+
+Evaluated in Postgres by `evaluated_feature_flags()` (migration `039`), so
+both clients get the same answer: an account's override wins; otherwise a
+flag is on when `enabled_by_default` is true or the account was created at or
+after `enabled_from`. No session can read the flag tables. The web asks once
+per request (`apps/web/lib/flags.ts`); the phone asks once per session and
+keeps the last answer per account (`apps/mobile/src/lib/flags.ts`,
+`FlagsProvider`). A flag the database does not return, or a key this build
+does not list (`packages/core/src/flags.ts`), is off.
+
+| Flag          | Gates                                          | Default |
+| ------------- | ---------------------------------------------- | ------- |
+| `tags.manage` | Rename, merge and delete tags on the Plan page | off     |
+
+Switched with SQL (the dashboard's SQL editor, or the service role):
+
+```sql
+-- On for one account
+insert into user_feature_flags (user_id, flag_key, enabled)
+values ('<account id>', 'tags.manage', true)
+on conflict (user_id, flag_key) do update set enabled = excluded.enabled;
+
+-- On for every account created from now on
+update feature_flags set enabled_from = now() where key = 'tags.manage';
+
+-- On for everyone
+update feature_flags set enabled_by_default = true where key = 'tags.manage';
+```
+
 ## Gates
 
 ```
@@ -96,8 +126,9 @@ pnpm --filter mobile exec expo lint --max-warnings 0
 pnpm check:reachability
 ```
 
-Migrations: `npx supabase start`, `npx supabase db reset`, then
-`docker exec -i supabase_db_finance-tracker psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/<n>.test.sql`.
+Migrations: `npx supabase start`, `npx supabase db reset`, then every
+assertion script:
+`for f in supabase/tests/*.test.sql; do docker exec -i supabase_db_finance-tracker psql -U postgres -q -v ON_ERROR_STOP=1 < "$f" || break; done`.
 
 ## Known issues
 
@@ -129,3 +160,11 @@ Migrations: `npx supabase start`, `npx supabase db reset`, then
 - `allRows` (`packages/core/src/paging.ts`) assumes the server's `max_rows`
   is at least 1,000 (the local config and the hosted default); a lower cap
   would truncate silently.
+- The SQL assertion scripts in `supabase/tests/` are run by hand against a
+  local stack; CI does not run them.
+- The phone reads flags once per session, so a switched flag reaches it at
+  its next launch or sign-in.
+- A web quick-add queued offline whose tag is deleted before it is sent is
+  saved with no tags: the tag insert fails after the transaction is written,
+  and the outbox drops the error (`saveQuickTransaction`,
+  `lib/offline-outbox.ts`).
