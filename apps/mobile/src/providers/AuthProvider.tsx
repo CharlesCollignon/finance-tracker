@@ -27,6 +27,12 @@ interface AuthContextValue {
   signUp: (email: string, password: string) => Promise<AuthResult>;
   signInWithGoogle: () => Promise<AuthResult>;
   signInWithPasskey: () => Promise<AuthResult>;
+  /**
+   * Sends the reset email. The link opens the web page that sets the new
+   * password; the phone's PKCE verifier could never reach that browser, so
+   * the email carries a token hash instead (see the web's /auth/confirm).
+   */
+  requestPasswordReset: (email: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
 }
 
@@ -80,6 +86,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await seedCategoriesSafely(data.user.id);
         }
         return {};
+      },
+      async requestPasswordReset(email) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email);
+        return error ? { error: error.message } : {};
       },
       async signUp(email, password) {
         const { data, error } = await supabase.auth.signUp({

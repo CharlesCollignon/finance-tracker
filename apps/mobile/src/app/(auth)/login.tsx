@@ -15,6 +15,7 @@ export default function LoginScreen() {
       footerPrompt={t("auth.noAccountYet")}
       footerLinkLabel={t("auth.createOne")}
       footerHref="/signup"
+      forgotHref="/reset"
     />
   );
 }

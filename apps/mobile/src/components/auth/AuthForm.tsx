@@ -36,6 +36,8 @@ export interface AuthFormProps {
    * a manager should offer to generate here and to fill everywhere else.
    */
   newPassword?: boolean;
+  /** Where "Forgot password?" leads. Sign-in only. */
+  forgotHref?: Href;
 }
 
 export function AuthForm({
@@ -47,6 +49,7 @@ export function AuthForm({
   footerHref,
   showPasskey = false,
   newPassword = false,
+  forgotHref,
 }: AuthFormProps) {
   const t = useT();
   const { signInWithGoogle, signInWithPasskey } = useAuth();
@@ -186,6 +189,20 @@ export function AuthForm({
                 </Pressable>
               </View>
             </View>
+
+            {forgotHref ? (
+              <Link href={forgotHref} asChild>
+                <Pressable
+                  accessibilityRole="link"
+                  hitSlop={8}
+                  className="min-h-11 justify-center self-end"
+                >
+                  <Text className="text-sm underline">
+                    {t("auth.forgotPassword")}
+                  </Text>
+                </Pressable>
+              </Link>
+            ) : null}
 
             {message ? (
               <Text
