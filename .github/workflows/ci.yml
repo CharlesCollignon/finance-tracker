@@ -68,26 +68,8 @@ jobs:
       - name: Reachability check
         run: pnpm check:reachability
 
-      # ---------------------------------------------------------------
-      # Test suite, with one known-failing file excluded.
-      #
-      # packages/core/src/still-to-come.test.ts > "totals exactly the gap
-      # between the current and month-end views" currently fails
-      # (expected 610 to be close to 520). This is long pre-existing and
-      # predates all recent work; it is a separate, un-made decision for
-      # the owner, not something fixed as part of adding CI.
-      #
-      # Excluding the whole file (rather than leaving it in and accepting
-      # a red job) means the other 1238 passing tests in the suite (of the
-      # 1249 that currently pass; the other 11 live alongside the failing
-      # assertion in this same file) are actually watched by CI, instead of
-      # the whole suite going unwatched because of one broken assertion.
-      #
-      # Remove this --exclude once still-to-come.test.ts is fixed, so the
-      # full suite (including that file) runs unconditionally again.
-      # ---------------------------------------------------------------
-      - name: Test (packages/core, with still-to-come.test.ts excluded)
-        run: pnpm --filter @finance/core exec vitest run --exclude '**/still-to-come.test.ts'
+      - name: Test (packages/core)
+        run: pnpm --filter @finance/core test
 
       # apps/web has tests too, and until now nothing ran them. The
       # marketing sample's arithmetic test passed locally only because
@@ -112,12 +94,7 @@ jobs:
 #    character to the web lint failures.
 #    Fix (or explicitly suppress) those findings, then add this step back.
 #
-# 3. The one excluded test file, see the comment above the test step:
-#    packages/core/src/still-to-come.test.ts (1 failing assertion out of
-#    12 tests in that file). Fix the assertion, then drop the --exclude.
-#
 # None of these are fixed here: this workflow only wires up gates that
-# already pass, plus the test suite minus its one known-failing file, so
-# CI is green from its first run instead of training everyone to ignore
-# a red badge.
+# already pass, so CI is green from its first run instead of training
+# everyone to ignore a red badge.
 # ---------------------------------------------------------------------
