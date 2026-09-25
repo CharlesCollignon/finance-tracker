@@ -119,3 +119,14 @@ Migrations: `npx supabase start`, `npx supabase db reset`, then
 - Dead schema: `user_preferences.bearing_pins` and the `bearing_arrangements` table have no readers.
 - The `delete-account` edge function deletes a fixed list of older tables and relies on `on delete cascade` for the rest.
 - The phone has no By category view, no look-through and no wallet read.
+- The phone cannot edit a savings goal (only add or remove), so a goal's
+  start date can be moved on the web only.
+- After this plan deploys, stored month reads that cite goal figures will
+  show those figures as moved, because goals now count from their start
+  date.
+- `/auth/confirm` verifies the recovery token on GET, so a mail provider's
+  link scanner can use it up before the reader clicks (Supabase's documented
+  pattern; a "Continue" interstitial is the known fix).
+- `allRows` (`packages/core/src/paging.ts`) assumes the server's `max_rows`
+  is at least 1,000 (the local config and the hosted default); a lower cap
+  would truncate silently.
