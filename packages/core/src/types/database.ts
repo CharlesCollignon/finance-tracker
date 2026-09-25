@@ -1510,6 +1510,14 @@ export interface Database {
         };
         Returns: CategorySelectionColumns;
       };
+      /**
+       * Every feature flag with its answer for the caller (039). A flag the
+       * database does not hold has no row; a caller with no session gets none.
+       */
+      evaluated_feature_flags: {
+        Args: Record<PropertyKey, never>;
+        Returns: { key: string; enabled: boolean }[];
+      };
       /** Hand back an attempt that never reached the provider. */
       refund_category_selection: {
         Args: { target_user: string };
