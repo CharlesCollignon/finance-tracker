@@ -236,12 +236,12 @@ function TransactionFormFields({
         </div>
         {tags.length > 0 && (
           <fieldset className="flex flex-col gap-2">
-            {/* Says "the tags were on screen", so an empty selection means
-                none rather than "not asked". */}
-            <input type="hidden" name={TAGS_FIELD_MARKER} value="1" />
             <legend className="text-sm font-medium">
               {t("transaction.tags")}
             </legend>
+            {/* Says "the tags were on screen", so an empty selection means
+                none rather than "not asked". */}
+            <input type="hidden" name={TAGS_FIELD_MARKER} value="1" />
             <div className="flex flex-wrap gap-2">
               {tags.map((tag) => (
                 <label
