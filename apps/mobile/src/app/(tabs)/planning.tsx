@@ -560,10 +560,15 @@ export default function PlanningScreen() {
                 value={goalTargetDate}
                 onChange={setGoalTargetDate}
                 placeholder={t("recurring.noEndDate")}
+                accessibilityLabel={t("plan.goalTargetDateOptional")}
                 clearable
               />
               <Text variant="label">{t("plan.goalStartsOn")}</Text>
-              <DateField value={goalStartsOn} onChange={setGoalStartsOn} />
+              <DateField
+                value={goalStartsOn}
+                onChange={setGoalStartsOn}
+                accessibilityLabel={t("plan.goalStartsOn")}
+              />
               <Text variant="muted" className="text-xs">
                 {t("plan.goalStartsOnHint")}
               </Text>

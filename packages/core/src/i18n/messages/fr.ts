@@ -1152,6 +1152,8 @@ export const fr: Messages = {
     searchInstrument: "Chercher par nom ou ISIN…",
     seeOnCalendar: "Voir le mois sur un calendrier",
     clearDate: "Effacer la date",
+    date: "Date",
+    pickADate: "Choisir une date",
     setUp: "Configuration",
     everyMonthClosed: "Tous les mois que vous avez clôturés",
     openWallets: "Ouvrir les portefeuilles",

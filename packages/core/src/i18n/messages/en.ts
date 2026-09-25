@@ -1572,6 +1572,8 @@ export const en = {
     searchInstrument: "Search by name or ISIN…",
     seeOnCalendar: "See the month on a calendar",
     clearDate: "Clear date",
+    date: "Date",
+    pickADate: "Pick a date",
     setUp: "Set up",
     everyMonthClosed: "Every month you have closed",
     openWallets: "Open wallets",

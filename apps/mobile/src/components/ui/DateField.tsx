@@ -18,6 +18,13 @@ interface DateFieldProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  /**
+   * The field's own visible label (e.g. "Starts on"), so the control's
+   * accessible name carries it rather than a generic "Date". The displayed
+   * date — or the placeholder, while empty — is appended automatically.
+   * Falls back to a generic "Date" name when omitted.
+   */
+  accessibilityLabel?: string;
   /** Allows clearing back to an empty value (open-ended end dates). */
   clearable?: boolean;
   className?: string;
@@ -65,7 +72,8 @@ function formatDisplay(value: string, locale: Locale): string {
 export function DateField({
   value,
   onChange,
-  placeholder = "Pick a date",
+  placeholder,
+  accessibilityLabel,
   clearable = false,
   className,
 }: DateFieldProps) {
@@ -86,12 +94,18 @@ export function DateField({
   }
 
   const display = formatDisplay(value, locale);
+  const resolvedPlaceholder = placeholder ?? t("common.pickADate");
+  const name = accessibilityLabel
+    ? `${accessibilityLabel} ${display || resolvedPlaceholder}`
+    : display
+      ? `${t("common.date")} ${display}`
+      : resolvedPlaceholder;
 
   return (
     <View className={className}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={display ? `Date ${display}` : placeholder}
+        accessibilityLabel={name}
         onPress={() => setOpen(true)}
         className={cn(
           "min-h-12 flex-row items-center justify-between gap-2 rounded-control",
@@ -99,7 +113,7 @@ export function DateField({
         )}
       >
         <Text className={cn("text-base", !display && "text-muted-foreground")}>
-          {display || placeholder}
+          {display || resolvedPlaceholder}
         </Text>
         <View className="flex-row items-center gap-2">
           {clearable && display ? (

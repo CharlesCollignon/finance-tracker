@@ -1,6 +1,13 @@
 import { Link } from "expo-router";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
+import {
+  AccessibilityInfo,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 
 import { Orb } from "@/components/Orb";
 import { Blur } from "@/components/ui/Blur";
@@ -35,7 +42,11 @@ export default function ResetScreen() {
     setMessage(null);
     const parsed = resetRequestSchema.safeParse({ email });
     if (!parsed.success) {
-      setMessage(parsed.error.issues[0]?.message ?? "errors.invalidInput");
+      const key = parsed.error.issues[0]?.message ?? "errors.invalidInput";
+      setMessage(key);
+      // iOS has no live-region equivalent for the error text below, so it is
+      // announced explicitly; Android already speaks it via the live region.
+      AccessibilityInfo.announceForAccessibility(resolveMessage(t, key));
       return;
     }
     setPending(true);
@@ -43,9 +54,15 @@ export default function ResetScreen() {
     setPending(false);
     if (result.error) {
       setMessage(result.error);
+      AccessibilityInfo.announceForAccessibility(
+        resolveMessage(t, result.error),
+      );
       return;
     }
     setSentTo(parsed.data.email);
+    AccessibilityInfo.announceForAccessibility(
+      `${t("auth.resetSent", { email: parsed.data.email })} ${t("auth.resetFinishOnWeb")}`,
+    );
   }
 
   return (
@@ -130,10 +147,16 @@ export default function ResetScreen() {
             )}
 
             <View className="flex-row justify-center">
-              <Link href="/login">
-                <Text className="font-bold underline">
-                  {t("auth.backToSignIn")}
-                </Text>
+              <Link href="/login" asChild>
+                <Pressable
+                  accessibilityRole="link"
+                  hitSlop={8}
+                  className="min-h-11 justify-center"
+                >
+                  <Text className="font-bold underline">
+                    {t("auth.backToSignIn")}
+                  </Text>
+                </Pressable>
               </Link>
             </View>
           </View>
