@@ -33,4 +33,10 @@ describe("confirmRedirect", () => {
       "/reset?error=link_expired",
     );
   });
+
+  it("falls back to the new-password page for an unsafe next path", () => {
+    expect(confirmRedirect({ verified: true, next: "//evil.example" })).toBe(
+      "/reset/new",
+    );
+  });
 });

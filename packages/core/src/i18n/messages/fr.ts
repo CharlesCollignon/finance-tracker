@@ -878,17 +878,18 @@ export const fr: Messages = {
     newPasswordBody:
       "Il remplace l'ancien partout où vous vous connectez avec votre e-mail.",
     newPassword: "Nouveau mot de passe",
-    confirmNewPassword: "Le même, encore une fois",
+    confirmNewPassword: "Confirmez le nouveau mot de passe",
     saveNewPassword: "Enregistrer le nouveau mot de passe",
     savingNewPassword: "Enregistrement…",
-    passwordChanged: "Votre mot de passe est modifié.",
+    passwordChanged: "Votre mot de passe a été modifié.",
     openLedger: "Ouvrir Pluclair",
+    askForNewLink: "Demander un nouveau lien",
     resetLinkExpired:
       "Ce lien a expiré ou a déjà servi. Demandez-en un nouveau ci-dessous.",
     resetNeedsLink:
       "Cette page s'ouvre depuis le lien d'un e-mail de réinitialisation. Demandez-en un nouveau si le vôtre a expiré.",
     resetFinishOnWeb:
-      "Ouvrez le lien sur n'importe quel appareil pour choisir un nouveau mot de passe, puis connectez-vous ici avec lui.",
+      "Ouvrez le lien sur n'importe quel appareil pour choisir un nouveau mot de passe, puis connectez-vous ici avec celui-ci.",
   },
 
   marketingMock: {
@@ -2030,6 +2031,11 @@ export const fr: Messages = {
     passwordTooShort: "Le mot de passe doit faire au moins 6 caractères",
     passwordsDiffer: "Les deux mots de passe ne sont pas identiques",
     invalidEmail: "Ce n'est pas une adresse e-mail",
+    samePassword: "Le nouveau mot de passe doit être différent de l'ancien",
+    passwordTooWeak:
+      "Ce mot de passe est trop faible — choisissez-en un plus long ou moins courant",
+    passwordNotSaved:
+      "Le mot de passe n'a pas pu être enregistré. Demandez un nouveau lien et réessayez.",
     descriptionTooLong: "Le libellé doit faire 500 caractères ou moins",
     nameTooLong100: "Le nom doit faire 100 caractères ou moins",
     nameTooLong40: "Le nom doit faire 40 caractères ou moins",

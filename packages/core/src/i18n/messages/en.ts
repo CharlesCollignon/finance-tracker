@@ -1214,11 +1214,13 @@ export const en = {
     newPasswordBody:
       "It replaces the old one everywhere you sign in with your email.",
     newPassword: "New password",
-    confirmNewPassword: "The same again",
+    confirmNewPassword: "Confirm the new password",
     saveNewPassword: "Save the new password",
     savingNewPassword: "Saving…",
-    passwordChanged: "Your password is changed.",
+    passwordChanged: "Your password has been changed.",
     openLedger: "Open Pluclair",
+    /** The link shown under the new-password form when there is no session to act on. */
+    askForNewLink: "Ask for a new link",
     resetLinkExpired:
       "That link has expired or was already used. Ask for a new one below.",
     resetNeedsLink:
@@ -2962,6 +2964,12 @@ export const en = {
     passwordTooShort: "Password must be at least 6 characters",
     passwordsDiffer: "The two passwords are not the same",
     invalidEmail: "That is not an email address",
+    /** The three shapes a failed password update takes, from Supabase's own error code. */
+    samePassword: "The new password must be different from the old one",
+    passwordTooWeak:
+      "That password is too weak — choose a longer or less common one",
+    passwordNotSaved:
+      "The password could not be saved. Ask for a new link and try again.",
     descriptionTooLong: "Description must be 500 characters or less",
     nameTooLong100: "Name must be 100 characters or less",
     nameTooLong40: "Name must be 40 characters or less",
