@@ -38,7 +38,10 @@ export function InstrumentLogo({
         className,
       )}
     >
-      {/* External brand marks 404 often; img + onError is the fallback path. */}
+      {/* External brand marks 404 often; img + onError is the fallback path.
+          next/image would need every logo host allow-listed and cannot fall
+          back when one fails. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- see above */}
       <img
         src={src}
         alt=""

@@ -46,6 +46,9 @@ jobs:
       - name: Typecheck web
         run: pnpm --filter web exec tsc --noEmit
 
+      - name: Lint web
+        run: pnpm --filter web exec eslint --max-warnings 0 .
+
       # apps/mobile/expo-env.d.ts supplies the ambient module declarations
       # (e.g. for the `@/global.css` side-effect import) that the mobile
       # typecheck needs, but Expo's own convention is for that file to be
@@ -83,11 +86,6 @@ jobs:
 
 # ---------------------------------------------------------------------
 # Gates NOT run by this workflow, and why, as measured on 2026-09-19:
-#
-# 1. `pnpm --filter web lint`
-#    Fails with 9 errors, 2 warnings, all react-hooks/set-state-in-effect
-#    and react-hooks/refs findings in files unrelated to recent work.
-#    Fix (or explicitly suppress) those findings, then add this step back.
 #
 # 2. `pnpm --filter mobile lint`
 #    Fails with 42 problems (11 errors, 31 warnings) of a similar

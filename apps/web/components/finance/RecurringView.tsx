@@ -290,11 +290,10 @@ export function RecurringView({
     return firstNonEmpty?.type ?? "expense";
   }, [groups]);
 
-  const [activeTab, setActiveTab] = useState<AllocType>(defaultTab);
-
-  useEffect(() => {
-    setActiveTab(defaultTab);
-  }, [defaultTab]);
+  // Derived rather than synced through an effect: the tab follows the first
+  // non-empty group until the user picks one, as on the phone.
+  const [tabOverride, setTabOverride] = useState<AllocType | null>(null);
+  const activeTab = tabOverride ?? defaultTab;
 
   const refreshApplyPending = useCallback(async () => {
     const result = await previewApplyRecurringForMonth(year, month);
@@ -305,9 +304,21 @@ export function RecurringView({
     setApplyPending(counts.creates + counts.updates > 0);
   }, [month, year]);
 
+  // Asked again whenever the templates change. The answer is set in the
+  // promise's callback, so the effect itself never sets state.
   useEffect(() => {
-    void refreshApplyPending();
-  }, [refreshApplyPending, templates]);
+    let cancelled = false;
+    void previewApplyRecurringForMonth(year, month).then((result) => {
+      if (cancelled || result.error || !result.plan) {
+        return;
+      }
+      const counts = applyRecurringPlanCounts(result.plan);
+      setApplyPending(counts.creates + counts.updates > 0);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [month, year, templates]);
 
   /*
    * One rollup rather than two reducers, and split by what kind of money each
@@ -470,7 +481,7 @@ export function RecurringView({
                     key={type}
                     type="button"
                     aria-pressed={activeTab === type}
-                    onClick={() => setActiveTab(type)}
+                    onClick={() => setTabOverride(type)}
                     className={cn(
                       "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
                       "transition-colors duration-hover",

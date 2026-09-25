@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/retroui/Button";
@@ -12,6 +12,8 @@ import type {
   ApplyRecurringPlan,
   RecurringOccurrenceUpdate,
 } from "@finance/core/apply-recurring";
+
+const NOTHING_DESELECTED: ReadonlySet<string> = new Set();
 
 interface ApplyRecurringSheetProps {
   open: boolean;
@@ -103,23 +105,28 @@ export function ApplyRecurringSheet({
     [plan],
   );
 
-  // Everything starts selected; deselecting is the exception.
-  const [deselected, setDeselected] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    setDeselected(new Set());
-  }, [allKeys]);
+  // Everything starts selected; deselecting is the exception. The choice is
+  // remembered against the list it was made on, so a new plan starts fully
+  // selected by derivation rather than through an effect that clears it.
+  const [deselection, setDeselection] = useState<{
+    keys: string[];
+    off: ReadonlySet<string>;
+  }>({ keys: allKeys, off: NOTHING_DESELECTED });
+  const deselected =
+    deselection.keys === allKeys ? deselection.off : NOTHING_DESELECTED;
 
   const isSelected = (key: string) => !deselected.has(key);
   const toggle = (key: string) =>
-    setDeselected((current) => {
-      const next = new Set(current);
+    setDeselection((current) => {
+      const next = new Set(
+        current.keys === allKeys ? current.off : NOTHING_DESELECTED,
+      );
       if (next.has(key)) {
         next.delete(key);
       } else {
         next.add(key);
       }
-      return next;
+      return { keys: allKeys, off: next };
     });
   const selectedKeys = allKeys.filter((key) => !deselected.has(key));
 

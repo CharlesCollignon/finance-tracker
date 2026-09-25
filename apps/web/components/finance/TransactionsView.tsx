@@ -259,9 +259,21 @@ export function TransactionsView({
     setApplyPending(counts.creates + counts.updates > 0);
   }, [month, year]);
 
+  // Asked again whenever the month's transactions change. The answer is set
+  // in the promise's callback, so the effect itself never sets state.
   useEffect(() => {
-    void refreshApplyPending();
-  }, [refreshApplyPending, transactions]);
+    let cancelled = false;
+    void previewApplyRecurringForMonth(year, month).then((result) => {
+      if (cancelled || result.error || !result.plan) {
+        return;
+      }
+      const counts = applyRecurringPlanCounts(result.plan);
+      setApplyPending(counts.creates + counts.updates > 0);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [month, year, transactions]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();

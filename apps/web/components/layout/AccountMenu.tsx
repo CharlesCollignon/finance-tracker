@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+} from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -19,6 +26,11 @@ interface AccountMenuProps {
   initial: string;
 }
 
+/** Nothing to subscribe to: the answer only differs between server and client. */
+function subscribeToNothing() {
+  return () => {};
+}
+
 export function AccountMenu({
   variant,
   displayName,
@@ -28,19 +40,34 @@ export function AccountMenu({
   const pathname = usePathname();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  // The page the menu was opened on. Open only while still on that page, so
+  // navigating closes it by derivation rather than through an effect.
+  const [openAt, setOpenAt] = useState<string | null>(null);
+  const open = openAt === pathname;
+  // Measured when the menu opens, in the press handler, because reading the
+  // trigger's box during render reads a ref during render.
+  const [panelStyle, setPanelStyle] = useState<CSSProperties | undefined>();
+  // False on the server and during hydration, true after: the portal needs
+  // `document.body`, which only exists on the client.
+  const mounted = useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  );
+
+  function toggle() {
+    if (open) {
+      setOpenAt(null);
+      return;
+    }
+    setPanelStyle(
+      variant === "side" ? sidePanelStyle(triggerRef.current) : undefined,
+    );
+    setOpenAt(pathname);
+  }
   const titleId = useId();
   const profileActive = pathname.startsWith(PROFILE_NAV_ITEM.href);
   const active = profileActive || open;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (!open) {
@@ -50,12 +77,12 @@ export function AccountMenu({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.stopPropagation();
-        setOpen(false);
+        setOpenAt(null);
         triggerRef.current?.focus();
       }
     }
 
-    const close = () => setOpen(false);
+    const close = () => setOpenAt(null);
     window.addEventListener("resize", close);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
@@ -85,7 +112,7 @@ export function AccountMenu({
               type="button"
               aria-label={t("common.closeAccountMenu")}
               className="fixed inset-0 z-[60] bg-black/25 md:bg-black/15"
-              onClick={() => setOpen(false)}
+              onClick={() => setOpenAt(null)}
             />
             <div
               className={cn(
@@ -94,11 +121,7 @@ export function AccountMenu({
                   ? "inset-x-0 justify-center px-4 bottom-[calc(var(--shell-bottom-nav-height)+var(--shell-bottom-nav-inset)+0.5rem+env(safe-area-inset-bottom,0px))]"
                   : "left-3",
               )}
-              style={
-                variant === "side"
-                  ? sidePanelStyle(triggerRef.current)
-                  : undefined
-              }
+              style={panelStyle}
             >
               <div
                 ref={panelRef}
@@ -120,7 +143,7 @@ export function AccountMenu({
                 <Link
                   href={PROFILE_NAV_ITEM.href}
                   className={rowClass}
-                  onClick={() => setOpen(false)}
+                  onClick={() => setOpenAt(null)}
                 >
                   <Gear size={ICON.lg} />
                   {t(PROFILE_NAV_ITEM.labelKey)}
@@ -139,7 +162,7 @@ export function AccountMenu({
                 <Link
                   href="/welcome"
                   className={rowClass}
-                  onClick={() => setOpen(false)}
+                  onClick={() => setOpenAt(null)}
                 >
                   <Compass size={ICON.lg} />
                   {t("onboarding.reopen")}
@@ -166,7 +189,7 @@ export function AccountMenu({
           aria-haspopup="dialog"
           aria-expanded={open}
           aria-label={displayName}
-          onClick={() => setOpen((value) => !value)}
+          onClick={toggle}
           className={cn(
             "relative flex min-w-[44px] flex-1 flex-col items-center",
             "justify-center gap-0.5 rounded-full mx-0.5 my-1 px-1 py-1",
@@ -195,7 +218,7 @@ export function AccountMenu({
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={displayName}
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggle}
         className={cn(
           "flex w-full min-h-10 items-center gap-3 rounded-control px-3 py-2",
           "text-sm font-medium transition-colors duration-hover",

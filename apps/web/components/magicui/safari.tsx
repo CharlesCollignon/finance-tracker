@@ -76,6 +76,10 @@ export function Safari({
             borderRadius: "0 0 11px 11px",
           }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element -- vendored
+              marketing frame; the screenshot inside is decorative and sized
+              by its container, which next/image cannot do without fixed
+              dimensions */}
           <img
             src={imageSrc}
             alt=""

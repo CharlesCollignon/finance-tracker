@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { useActionState, useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import { Trash } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
@@ -29,6 +29,8 @@ import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import type { Translate } from "@finance/core/i18n/t";
+
+type PlanActionResult = { error?: string; success?: boolean };
 
 type BudgetProgress = {
   budgetId: string;
@@ -112,16 +114,6 @@ export function BudgetsView({
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
   const t = useT();
-  const [budgetState, budgetAction, budgetPending] = useActionState(
-    upsertBudget,
-    {},
-  );
-  const [goalState, goalAction, goalPending] = useActionState(
-    upsertSavingsGoal,
-    {},
-  );
-  const [tagState, tagAction, tagPending] = useActionState(upsertTag, {});
-  const [pending, startTransition] = useTransition();
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
   // The forms used to sit open under a duplicate list of everything they
@@ -130,37 +122,53 @@ export function BudgetsView({
   // to fill in.
   const [budgetFormOpen, setBudgetFormOpen] = useState(false);
   const [goalFormOpen, setGoalFormOpen] = useState(false);
+  // Each action says what happened itself, once, when it returns. The three
+  // effects that used to watch the returned state set state inside an
+  // effect, which re-rendered the page a second time for every save.
+  const [, budgetAction, budgetPending] = useActionState(
+    async (previous: PlanActionResult, formData: FormData) => {
+      const result = await upsertBudget(previous, formData);
+      if (result.success) {
+        toast(t("plan.capSaved"), "success");
+        setEditingBudget(null);
+        setBudgetFormOpen(false);
+      } else if (result.error) {
+        toast(result.error, "error");
+      }
+      return result;
+    },
+    {},
+  );
+  const [, goalAction, goalPending] = useActionState(
+    async (previous: PlanActionResult, formData: FormData) => {
+      const result = await upsertSavingsGoal(previous, formData);
+      if (result.success) {
+        toast(t("plan.goalSaved"), "success");
+        setEditingGoal(null);
+        setGoalFormOpen(false);
+      } else if (result.error) {
+        toast(result.error, "error");
+      }
+      return result;
+    },
+    {},
+  );
+  const [, tagAction, tagPending] = useActionState(
+    async (previous: PlanActionResult, formData: FormData) => {
+      const result = await upsertTag(previous, formData);
+      if (result.success) {
+        toast(t("plan.tagAdded"), "success");
+      } else if (result.error) {
+        toast(result.error, "error");
+      }
+      return result;
+    },
+    {},
+  );
+  const [pending, startTransition] = useTransition();
 
   const expenseCategories = categories.filter((c) => c.type === "expense");
   const savingsCategories = categories.filter((c) => c.type === "savings");
-
-  useEffect(() => {
-    if (budgetState.success) {
-      toast(t("plan.capSaved"), "success");
-      setEditingBudget(null);
-      setBudgetFormOpen(false);
-    } else if (budgetState.error) {
-      toast(budgetState.error, "error");
-    }
-  }, [budgetState, toast, t]);
-
-  useEffect(() => {
-    if (goalState.success) {
-      toast(t("plan.goalSaved"), "success");
-      setEditingGoal(null);
-      setGoalFormOpen(false);
-    } else if (goalState.error) {
-      toast(goalState.error, "error");
-    }
-  }, [goalState, toast, t]);
-
-  useEffect(() => {
-    if (tagState.success) {
-      toast(t("plan.tagAdded"), "success");
-    } else if (tagState.error) {
-      toast(tagState.error, "error");
-    }
-  }, [tagState, toast, t]);
 
   return (
     <>
