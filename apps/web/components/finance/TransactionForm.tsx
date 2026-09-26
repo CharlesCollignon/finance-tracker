@@ -1,6 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import {
+  useActionState,
+  useEffect,
+  useEffectEvent,
+  useState,
+  useTransition,
+} from "react";
 import { Button } from "@/components/retroui/Button";
 import { Input } from "@/components/retroui/Input";
 import { FormLabel } from "@/components/layout/FormLabel";
@@ -100,14 +106,21 @@ function TransactionFormFields({
     transaction.recurring_template_id !== null &&
     transaction.recurring_template_id !== undefined;
 
-  useEffect(() => {
-    if (state.success) {
+  // Once per result. Keyed on the callbacks too, as it was, a parent passing
+  // `onOpenChange` inline replayed the last result on every render: the same
+  // error toasted again each time the page behind the sheet re-rendered.
+  const reportResult = useEffectEvent((result: typeof state) => {
+    if (result.success) {
       toast(t("transaction.saved"), "success");
       onOpenChange(false);
-    } else if (state.error) {
-      toast(state.error, "error");
+    } else if (result.error) {
+      toast(result.error, "error");
     }
-  }, [state.success, state.error, onOpenChange, toast, t]);
+  });
+
+  useEffect(() => {
+    reportResult(state);
+  }, [state]);
 
   /**
    * Repeating an entry is the most common thing anyone does with a ledger —

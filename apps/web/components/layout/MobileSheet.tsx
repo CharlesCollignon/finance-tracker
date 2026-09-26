@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useEffectEvent, useRef, type ReactNode } from "react";
 import { X } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
@@ -34,6 +34,15 @@ export function MobileSheet({
   const t = useT();
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  // Callers pass `onOpenChange` inline, a new function on every render. The
+  // effect below used to depend on it, so any render of the page behind the
+  // sheet ran its cleanup, which put focus back behind the sheet, and then its
+  // body, which moved focus to the close button. A native <select> closes
+  // when it loses focus, which is how a category could not be changed while
+  // editing a transaction. Read through an effect event, the callback is the
+  // current one when Escape is pressed and never re-runs the effect.
+  const requestClose = useEffectEvent(() => onOpenChange(false));
+
   useEffect(() => {
     if (!open) {
       return;
@@ -54,7 +63,7 @@ export function MobileSheet({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.stopPropagation();
-        onOpenChange(false);
+        requestClose();
         return;
       }
 
@@ -90,7 +99,7 @@ export function MobileSheet({
       document.body.style.overflow = previousOverflow;
       previouslyFocused?.focus();
     };
-  }, [open, onOpenChange]);
+  }, [open]);
 
   if (!open) {
     return null;
