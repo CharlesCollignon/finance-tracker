@@ -8,6 +8,7 @@ import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
 import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
 import { rollUpRecurring } from "@finance/core/recurring-rollup";
+import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { TYPE } from "@/theme/tokens";
 import type {
   Category,
@@ -441,7 +442,13 @@ export default function RecurringScreen() {
                 </Pressable>
 
                 <View className="shrink-0 items-end gap-2">
-                  <PrivateAmount className="font-mono text-sm font-semibold">
+                  {/* Coloured by kind of money, as the ledger's amounts are. */}
+                  <PrivateAmount
+                    className={cn(
+                      "font-mono text-sm font-semibold",
+                      TYPE_AMOUNT_CLASS[item.categories.type],
+                    )}
+                  >
                     {`${item.pricing_type === "shares" ? "≈" : ""}${formatEuro(Number(item.amount))}`}
                   </PrivateAmount>
                   <Pressable

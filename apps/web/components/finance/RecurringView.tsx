@@ -28,6 +28,7 @@ import {
   formatRecurrenceSchedule,
 } from "@finance/core/recurrence";
 import { rollUpRecurring } from "@finance/core/recurring-rollup";
+import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { formatSharesLabel } from "@finance/core/recurring-shares";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -140,7 +141,14 @@ function RecurringItemRow({
       </button>
 
       <div className="flex shrink-0 flex-col items-end justify-between gap-2">
-        <span className="privacy-amount text-sm font-semibold tabular-nums">
+        {/* Coloured by kind of money, as the ledger's amounts are: the
+            Semantic Amount Rule, from the same map. */}
+        <span
+          className={cn(
+            "privacy-amount text-sm font-semibold tabular-nums",
+            TYPE_AMOUNT_CLASS[template.categories.type],
+          )}
+        >
           {template.pricing_type === "shares" ? "≈" : ""}
           {formatEuro(Number(template.amount))}
         </span>
@@ -236,9 +244,16 @@ function GroupCard({
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="text-sm font-medium">{label}</h2>
         {monthly > 0 ? (
-          <span className="privacy-amount text-sm tabular-nums text-muted-foreground">
+          <span
+            className={cn(
+              "privacy-amount text-sm tabular-nums",
+              TYPE_AMOUNT_CLASS[type],
+            )}
+          >
             {formatEuro(monthly)}
-            <span className="text-xs">{t("charges.perMonthSuffix")}</span>
+            <span className="text-xs text-muted-foreground">
+              {t("charges.perMonthSuffix")}
+            </span>
           </span>
         ) : null}
       </div>
@@ -516,7 +531,10 @@ export function RecurringView({
               ) : null}
             </div>
 
-            <div className="hidden items-start gap-4 md:grid md:grid-cols-2">
+            {/* Four columns from xl, in the order of the tiles above. Not from
+                lg: beside the sidebar that leaves about 170px a column, too
+                narrow for a name, an amount and its on/off pill. */}
+            <div className="hidden items-start gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
               {groups.map(({ type, label, items }) => (
                 <GroupCard
                   key={type}
