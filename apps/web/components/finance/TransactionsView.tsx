@@ -12,6 +12,7 @@ import {
   DownloadSimple,
   MagnifyingGlass,
   Plus,
+  SlidersHorizontal,
   UploadSimple,
 } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/retroui/Button";
@@ -31,6 +32,7 @@ import {
   TYPE_AMOUNT_CLASS,
 } from "@finance/core/category-styles";
 import { cn } from "@/lib/utils";
+import { MICRO } from "@/lib/type-scale";
 import { useFormatCurrency } from "@/lib/use-currency";
 import {
   formatShortDate,
@@ -248,6 +250,9 @@ export function TransactionsView({
   const [applySheetOpen, setApplySheetOpen] = useState(false);
   const [applyPlan, setApplyPlan] = useState<ApplyRecurringPlan | null>(null);
   const [applyPending, setApplyPending] = useState(false);
+  // The phone's filters-and-actions panel. On a wider screen everything in it
+  // sits in the toolbar, so the flag only means anything below `md`.
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const refreshApplyPending = useCallback(async () => {
@@ -322,6 +327,8 @@ export function TransactionsView({
     [filtered],
   );
 
+  const dropdownFilters =
+    (categoryFilter !== "all" ? 1 : 0) + (tagFilter !== "all" ? 1 : 0);
   const hasActiveFilters =
     filter !== "all" ||
     categoryFilter !== "all" ||
@@ -503,17 +510,70 @@ export function TransactionsView({
     return inflow - outflow;
   }, [transactions, recurringTemplates, year, month, skippedKeys]);
 
+  /**
+   * The category and tag dropdowns, drawn in the toolbar on a wide screen and
+   * full width in the phone's panel. One definition, so the two can never
+   * filter differently.
+   */
+  function renderFilterSelects(stacked: boolean) {
+    const selectClass = cn(
+      "h-9 min-h-11 lg:min-h-0 min-w-0 rounded-full border border-border",
+      "bg-background px-3.5 text-sm text-foreground outline-none",
+      "focus:border-foreground",
+    );
+    return (
+      <>
+        <select
+          value={categoryFilter}
+          onChange={(event) => setCategoryFilter(event.target.value)}
+          aria-label={t("ledger.filterByCategory")}
+          className={cn(selectClass, stacked ? "w-full" : "w-44 flex-none")}
+        >
+          <option value="all">{t("ledger.allCategories")}</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+        {tags.length > 0 ? (
+          <select
+            value={tagFilter}
+            onChange={(event) => setTagFilter(event.target.value)}
+            aria-label={t("ledger.filterByTag")}
+            className={cn(selectClass, stacked ? "w-full" : "w-36 flex-none")}
+          >
+            <option value="all">{t("ledger.allTags")}</option>
+            {tags.map((tag) => (
+              <option key={tag.id} value={tag.id}>
+                {tag.name}
+              </option>
+            ))}
+          </select>
+        ) : null}
+      </>
+    );
+  }
+
   return (
     <>
       <PageHeader titleKey="nav.ledger">
         <MonthPicker basePath="/transactions" />
       </PageHeader>
 
-      <PageContainer className="flex flex-col gap-4">
+      <PageContainer className="flex flex-col gap-3 md:gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <SurfaceTabs tabs={LEDGER_TABS} />
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            <span className="relative inline-flex">
+            {/* On a phone only when there is something to apply: otherwise it
+                is a standing reminder of nothing, in the row that most needs
+                the room. */}
+            <span
+              className={cn(
+                "relative inline-flex",
+                !applyPending && "hidden md:inline-flex",
+              )}
+            >
               <Button
                 variant={applyPending ? "default" : "ghost"}
                 size="sm"
@@ -532,7 +592,13 @@ export function TransactionsView({
                 />
               ) : null}
             </span>
-            <Button variant="pill" size="sm" onClick={() => setFormOpen(true)}>
+            {/* A phone has the floating add button; this is the desktop's. */}
+            <Button
+              variant="pill"
+              size="sm"
+              className="hidden md:inline-flex"
+              onClick={() => setFormOpen(true)}
+            >
               {t("ledger.add")}
               <ButtonNub>
                 <Plus size={ICON.md} weight="bold" />
@@ -550,9 +616,11 @@ export function TransactionsView({
             description={t("ledger.emptyBody")}
           />
         ) : (
-          <section className="flex flex-col gap-4 rounded-card p-card border border-border bg-card">
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-2 sm:flex-row">
+          // No card on a phone: the list runs the full width and starts
+          // right under its toolbar instead of inside another frame.
+          <section className="flex flex-col gap-3 md:gap-4 md:rounded-card md:border md:border-border md:bg-card md:p-card">
+            <div className="flex flex-col gap-2 md:gap-3">
+              <div className="flex items-center gap-2">
                 <div className="relative min-w-0 flex-1">
                   <MagnifyingGlass
                     size={ICON.md}
@@ -573,47 +641,47 @@ export function TransactionsView({
                     )}
                   />
                 </div>
-                <div className="flex shrink-0 gap-2">
-                  <select
-                    value={categoryFilter}
-                    onChange={(event) => setCategoryFilter(event.target.value)}
-                    aria-label={t("ledger.filterByCategory")}
-                    className={cn(
-                      "h-9 min-h-11 lg:min-h-0 min-w-0 flex-1 rounded-full border border-border",
-                      "bg-background px-3.5 text-sm text-foreground outline-none",
-                      "focus:border-foreground sm:w-44 sm:flex-none",
-                    )}
-                  >
-                    <option value="all">{t("ledger.allCategories")}</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                  {tags.length > 0 ? (
-                    <select
-                      value={tagFilter}
-                      onChange={(event) => setTagFilter(event.target.value)}
-                      aria-label={t("ledger.filterByTag")}
+
+                {/* A phone gets one button for everything that is not the
+                    search or the type chips: the two dropdowns, selection,
+                    export and import. It used to be three rows of them above
+                    the first transaction. */}
+                <button
+                  type="button"
+                  onClick={() => setOptionsOpen((open) => !open)}
+                  aria-expanded={optionsOpen}
+                  aria-controls="ledger-options"
+                  aria-label={t("ledger.optionsToggle")}
+                  className={cn(
+                    "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border md:hidden",
+                    "transition-colors duration-hover",
+                    optionsOpen || dropdownFilters > 0
+                      ? "border-foreground text-foreground"
+                      : "border-border text-muted-foreground",
+                  )}
+                >
+                  <SlidersHorizontal size={ICON.md} weight="light" />
+                  {dropdownFilters > 0 ? (
+                    <span
                       className={cn(
-                        "h-9 min-h-11 lg:min-h-0 min-w-0 flex-1 rounded-full border border-border",
-                        "bg-background px-3.5 text-sm text-foreground outline-none",
-                        "focus:border-foreground sm:w-36 sm:flex-none",
+                        "absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-background",
+                        MICRO,
                       )}
                     >
-                      <option value="all">{t("ledger.allTags")}</option>
-                      {tags.map((tag) => (
-                        <option key={tag.id} value={tag.id}>
-                          {tag.name}
-                        </option>
-                      ))}
-                    </select>
+                      {dropdownFilters}
+                      <span className="sr-only">
+                        {t("ledger.filtersOn", { count: dropdownFilters })}
+                      </span>
+                    </span>
                   ) : null}
+                </button>
+
+                <div className="hidden shrink-0 gap-2 md:flex">
+                  {renderFilterSelects(false)}
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-x-4">
+              <div className="flex items-center gap-2 sm:gap-x-4">
                 {/* A group of toggles, not tabs. `role="tablist"` over
                     `role="tab"` was a promise the markup did not keep: there
                     is no tabpanel for any of these — they filter the list
@@ -646,7 +714,14 @@ export function TransactionsView({
                   ))}
                 </div>
 
-                <div className="flex shrink-0 items-center justify-end gap-1">
+                {/* In selection mode a phone keeps Done and Select all here,
+                    where the thumb already is; everything else is desktop. */}
+                <div
+                  className={cn(
+                    "shrink-0 items-center justify-end gap-1",
+                    selectMode ? "flex" : "hidden md:flex",
+                  )}
+                >
                   <Button
                     variant="link"
                     size="sm"
@@ -673,36 +748,95 @@ export function TransactionsView({
                         : t("ledger.selectAll")}
                     </Button>
                   ) : null}
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="h-8 px-2"
-                    onClick={handleExport}
-                    title={t("ledger.exportCsv")}
-                    aria-label={t("ledger.exportCsv")}
-                  >
-                    <DownloadSimple size={ICON.md} weight="light" />
-                  </Button>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="h-8 px-2"
-                    render={
-                      <Link
-                        href="/import"
-                        title={t("ledger.importCsv")}
-                        aria-label={t("ledger.importCsv")}
-                      >
-                        <UploadSimple size={ICON.md} weight="light" />
-                      </Link>
-                    }
-                  />
+                  <span className="hidden md:contents">
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={handleExport}
+                      title={t("ledger.exportCsv")}
+                      aria-label={t("ledger.exportCsv")}
+                    >
+                      <DownloadSimple size={ICON.md} weight="light" />
+                    </Button>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-8 px-2"
+                      render={
+                        <Link
+                          href="/import"
+                          title={t("ledger.importCsv")}
+                          aria-label={t("ledger.importCsv")}
+                        >
+                          <UploadSimple size={ICON.md} weight="light" />
+                        </Link>
+                      }
+                    />
+                  </span>
                 </div>
               </div>
+
+              {optionsOpen ? (
+                <div
+                  id="ledger-options"
+                  className="flex flex-col gap-2 md:hidden"
+                >
+                  {renderFilterSelects(true)}
+                  <div className="flex flex-wrap gap-2">
+                    {selectMode ? null : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectMode(true);
+                          setOptionsOpen(false);
+                        }}
+                      >
+                        {t("ledger.select")}
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExport}
+                      aria-label={t("ledger.exportCsv")}
+                    >
+                      <DownloadSimple
+                        size={ICON.md}
+                        weight="light"
+                        className="mr-1.5"
+                      />
+                      {t("ledger.exportShort")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      render={
+                        <Link href="/import" aria-label={t("ledger.importCsv")}>
+                          <UploadSimple
+                            size={ICON.md}
+                            weight="light"
+                            className="mr-1.5"
+                          />
+                          {t("ledger.importShort")}
+                        </Link>
+                      }
+                    />
+                  </div>
+                </div>
+              ) : null}
             </div>
 
-            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t border-border pt-3 text-sm">
-              <p className="text-muted-foreground">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t border-border pt-3 text-xs md:text-sm">
+              {/* On a phone the count only earns its line when a filter is
+                  hiding something. */}
+              <p
+                className={cn(
+                  "text-muted-foreground",
+                  filtered.length === transactions.length && "hidden md:block",
+                )}
+              >
                 {filtered.length === transactions.length
                   ? t("ledger.entryCount", { count: transactions.length })
                   : t("ledger.shownOfTotal", {
@@ -710,7 +844,7 @@ export function TransactionsView({
                       total: transactions.length,
                     })}
               </p>
-              <p className="flex flex-wrap gap-x-5 gap-y-1">
+              <p className="flex flex-wrap gap-x-4 gap-y-1 md:gap-x-5">
                 <span>
                   <span className="text-muted-foreground">
                     {t("ledger.in")}{" "}
@@ -727,7 +861,7 @@ export function TransactionsView({
                     {formatEuro(shownOut)}
                   </span>
                 </span>
-                <span className="border-l border-border pl-5">
+                <span className="border-l border-border pl-4 md:pl-5">
                   <span className="text-muted-foreground">
                     {t("ledger.leftAtMonthEnd")}{" "}
                   </span>

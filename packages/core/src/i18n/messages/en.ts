@@ -204,6 +204,14 @@ export const en = {
     selectAll: "Select all",
     exportCsv: "Export these transactions as CSV",
     importCsv: "Import a CSV statement",
+    /** The phone's toolbar button that opens the dropdowns and the actions. */
+    optionsToggle: "Filters and actions",
+    filtersOn: {
+      one: "{count} filter on",
+      other: "{count} filters on",
+    },
+    exportShort: "Export",
+    importShort: "Import",
     exportNothing: "Nothing to export for this view",
     noMatchTitle: "No matching transactions",
     noMatchBody: "Try another search or filter.",

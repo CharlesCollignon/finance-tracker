@@ -120,6 +120,13 @@ export const fr: Messages = {
     selectAll: "Tout sélectionner",
     exportCsv: "Exporter ces transactions en CSV",
     importCsv: "Importer un relevé CSV",
+    optionsToggle: "Filtres et actions",
+    filtersOn: {
+      one: "{count} filtre actif",
+      other: "{count} filtres actifs",
+    },
+    exportShort: "Exporter",
+    importShort: "Importer",
     exportNothing: "Rien à exporter pour cette vue",
     noMatchTitle: "Aucune transaction correspondante",
     noMatchBody: "Essayez une autre recherche ou un autre filtre.",
