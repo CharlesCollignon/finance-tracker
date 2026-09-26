@@ -643,6 +643,10 @@ export const en = {
     tileCommitted: "Committed",
     tileSetAside: "Set aside",
     tileLeft: "Left",
+    /** The web's summary card, which took the four tiles' place there. */
+    leftEachMonth: "Left each month",
+    ofIncomeBefore: "of",
+    ofIncomeAfter: "income",
     perMonth: "Per month",
     /** After a group's monthly figure: "€1,240 / mo". */
     perMonthSuffix: " / mo",

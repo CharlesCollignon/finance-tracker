@@ -23,12 +23,17 @@ import { RecurringForm } from "@/components/finance/RecurringForm";
 import { monthSearchParams, parseMonthParams } from "@finance/core/constants";
 import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
 import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
+import { formatRecurrenceSchedule } from "@finance/core/recurrence";
 import {
-  estimateMonthlyAmount,
-  formatRecurrenceSchedule,
-} from "@finance/core/recurrence";
-import { rollUpRecurring } from "@finance/core/recurring-rollup";
-import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
+  allocationSegments,
+  rollUpRecurring,
+  type AllocationKind,
+  type RecurringRollup,
+} from "@finance/core/recurring-rollup";
+import {
+  ALLOCATION_COLORS,
+  TYPE_AMOUNT_CLASS,
+} from "@finance/core/category-styles";
 import { formatSharesLabel } from "@finance/core/recurring-shares";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -212,7 +217,8 @@ function GroupList({
 
 /**
  * One kind of charge, with what it costs a month and anything the statement
- * suggests belongs in it.
+ * suggests belongs in it. The monthly figure is the rollup's `byType`, the
+ * same number the bar above draws, so the two cannot disagree.
  *
  * At module scope rather than nested in the view: a component declared inside
  * a render is a new type each pass, so React would remount the proposals
@@ -221,6 +227,7 @@ function GroupList({
 function GroupCard({
   type,
   label,
+  monthly,
   items,
   proposals,
   onEdit,
@@ -228,6 +235,7 @@ function GroupCard({
 }: {
   type: CategoryType;
   label: string;
+  monthly: number;
   items: RecurringTemplateWithCategory[];
   proposals: RecurringProposal[];
   onEdit: (template: RecurringTemplateWithCategory) => void;
@@ -235,9 +243,6 @@ function GroupCard({
 }) {
   const t = useT();
   const formatEuro = useFormatCurrency();
-  const monthly = items
-    .filter((template) => template.active)
-    .reduce((sum, template) => sum + estimateMonthlyAmount(template), 0);
 
   return (
     <section className="flex min-w-0 flex-col gap-3 rounded-card p-card border border-border bg-card">
@@ -265,21 +270,116 @@ function GroupCard({
   );
 }
 
-/** One scoreboard tile: a word, then a figure, and a lot of nothing else. */
-function Tile({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2 rounded-card border border-border bg-card px-5 py-6">
-      <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-        {label}
-      </p>
-      {children}
-    </div>
-  );
-}
-
 /** A figure at the documented card-level step, behind the privacy blur. */
 function PrivateFigure({ children }: { children: ReactNode }) {
   return <span className={cn("privacy-amount", FIGURE)}>{children}</span>;
+}
+
+/** Each part of the bar in the allocation chart's own colour, from one map. */
+const SEGMENT_COLOR: Record<AllocationKind, string> = {
+  expense: ALLOCATION_COLORS.expenses,
+  savings: ALLOCATION_COLORS.savings,
+  investment: ALLOCATION_COLORS.investments,
+  left: ALLOCATION_COLORS.remaining,
+};
+
+/**
+ * What a month of charges leaves, and where the rest of the income goes.
+ *
+ * One card in place of four tiles, which sat in the same four-column rhythm
+ * as the groups below and read as their headings while meaning something
+ * else. `Left` leads, uncoloured: a small figure there is a circumstance, not
+ * a kind of money. The bar and its legend keep every other term on screen —
+ * a total whose subtrahends nobody can see is not believed — in the colours
+ * the groups below give the same amounts.
+ */
+function WhereItGoes({ rollup }: { rollup: RecurringRollup }) {
+  const t = useT();
+  const formatEuro = useFormatCurrency();
+  const segments = allocationSegments(rollup);
+  const labels: Record<AllocationKind, string> = {
+    expense: t("allocation.expenses"),
+    savings: t("allocation.savings"),
+    investment: t("allocation.investments"),
+    left: t("charges.tileLeft"),
+  };
+
+  return (
+    <section className="flex flex-col gap-4 rounded-card border border-border bg-card px-5 py-6">
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            {t("charges.leftEachMonth")}
+          </h2>
+          {rollup.income > 0 ? (
+            <PrivateFigure>{formatEuro(rollup.left)}</PrivateFigure>
+          ) : (
+            // Not a figure: with no income recorded, what is left would only
+            // be the outgoings with a minus sign.
+            <p className="text-sm text-muted-foreground">
+              {t("charges.noIncomeYet")}
+            </p>
+          )}
+        </div>
+        {rollup.income > 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {t("charges.ofIncomeBefore")}{" "}
+            <span
+              className={cn(
+                "privacy-amount tabular-nums",
+                TYPE_AMOUNT_CLASS.income,
+              )}
+            >
+              {formatEuro(rollup.income)}
+            </span>{" "}
+            {t("charges.ofIncomeAfter")}
+          </p>
+        ) : null}
+      </div>
+
+      {segments.length > 0 ? (
+        <>
+          {/* Hidden from screen readers: the legend says the same in words.
+              Grown by share rather than sized in percent, so the gaps between
+              segments come out of the bar instead of overflowing it. */}
+          <div
+            aria-hidden="true"
+            className="flex h-2 w-full gap-0.5 overflow-hidden rounded-full"
+          >
+            {segments.map((segment) => (
+              <span
+                key={segment.kind}
+                className="h-full"
+                style={{
+                  flex: `${segment.share} 1 0%`,
+                  backgroundColor: SEGMENT_COLOR[segment.kind],
+                }}
+              />
+            ))}
+          </div>
+          <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            {segments.map((segment) => (
+              <li key={segment.kind} className="flex items-baseline gap-2">
+                <span className="text-muted-foreground">
+                  {labels[segment.kind]}
+                </span>
+                <span
+                  className={cn(
+                    "privacy-amount tabular-nums",
+                    segment.kind === "left"
+                      ? "text-foreground"
+                      : TYPE_AMOUNT_CLASS[segment.kind],
+                  )}
+                >
+                  {formatEuro(segment.amount)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+    </section>
+  );
 }
 
 export function RecurringView({
@@ -418,57 +518,7 @@ export function RecurringView({
 
         {hasTemplates ? (
           <>
-            {/* Four tiles, and nothing in them but a word and a figure.
-                Distinct cards rather than one card in columns, because these
-                are four readings and not one paragraph — and because the air
-                around each is most of what makes the number the event.
-
-                Every term of the arithmetic is on screen: income, less what
-                is committed, less what is set aside, leaves what is left. The
-                set-aside figure used to be a sentence under the row, which
-                was tolerable while it was not subtracted from anything. It is
-                now, and a subtrahend nobody can see is what makes a total
-                unbelievable.
-
-                `FIGURE` rather than a size invented here. These are card
-                headline numbers and that is the step the type scale names for
-                them, Fraunces with tabular digits, so an amount on this page
-                looks like the same amount everywhere else. None is coloured:
-                a small "left" is a circumstance, not a kind of money. */}
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <Tile label={t("charges.tileIncome")}>
-                {rollup.income > 0 ? (
-                  <PrivateFigure>{formatEuro(rollup.income)}</PrivateFigure>
-                ) : (
-                  // Not a zero: nothing has been measured, and a figure in
-                  // this type would claim otherwise.
-                  <p className="text-sm text-muted-foreground">
-                    {t("charges.noIncomeYet")}
-                  </p>
-                )}
-              </Tile>
-
-              <Tile label={t("charges.tileCommitted")}>
-                <PrivateFigure>{formatEuro(rollup.committed)}</PrivateFigure>
-              </Tile>
-
-              {/* Everything deliberately put by, including the broker
-                  transfers the monthly summary does not count as spending.
-                  `CONTEXT.md` splits Kept into "the cash it left in the
-                  account plus everything deliberately set aside" — this tile
-                  is the second half and `Left` is the first, so a transfer has
-                  to appear here or it would be subtracted from `Left` by a
-                  figure nobody can see. The breakdown is in the line below. */}
-              <Tile label={t("charges.tileSetAside")}>
-                <PrivateFigure>
-                  {formatEuro(rollup.setAside + rollup.deployed)}
-                </PrivateFigure>
-              </Tile>
-
-              <Tile label={t("charges.tileLeft")}>
-                <PrivateFigure>{formatEuro(rollup.left)}</PrivateFigure>
-              </Tile>
-            </div>
+            <WhereItGoes rollup={rollup} />
 
             <p className="-mt-1 px-1 text-xs text-muted-foreground">
               {t("charges.perMonth")}
@@ -523,6 +573,7 @@ export function RecurringView({
                 <GroupCard
                   type={activeGroup.type}
                   label={activeGroup.label}
+                  monthly={rollup.byType[activeGroup.type]}
                   items={activeGroup.items}
                   proposals={proposals}
                   onEdit={openEdit}
@@ -540,6 +591,7 @@ export function RecurringView({
                   key={type}
                   type={type}
                   label={label}
+                  monthly={rollup.byType[type]}
                   items={items}
                   proposals={proposals}
                   onEdit={openEdit}

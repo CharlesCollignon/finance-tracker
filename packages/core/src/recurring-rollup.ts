@@ -1,5 +1,8 @@
 import { estimateMonthlyAmount } from "./recurrence";
-import type { RecurringTemplateWithCategory } from "./types/database";
+import type {
+  CategoryType,
+  RecurringTemplateWithCategory,
+} from "./types/database";
 
 /**
  * What the standing instructions add up to in a month, split by what kind of
@@ -44,6 +47,13 @@ export interface RecurringRollup {
    * otherwise.
    */
   left: number;
+  /**
+   * Every active template's monthly amount by its category type, counted by
+   * the summary or not: what each group on the Charges page adds up to. A
+   * transfer into a broker is in `deployed` above and here under its own
+   * type, so this is a second view of the same money, not more of it.
+   */
+  byType: Record<CategoryType, number>;
 }
 
 /**
@@ -60,6 +70,12 @@ export function rollUpRecurring(
   let committed = 0;
   let setAside = 0;
   let deployed = 0;
+  const byType: Record<CategoryType, number> = {
+    income: 0,
+    expense: 0,
+    savings: 0,
+    investment: 0,
+  };
 
   for (const template of templates) {
     if (!template.active) {
@@ -67,6 +83,7 @@ export function rollUpRecurring(
     }
 
     const monthly = estimateMonthlyAmount(template, year, month);
+    byType[template.categories.type] += monthly;
 
     // Checked before the type, not after: a transfer into a broker is money
     // that never left the user's own hands, and the summary leaves it out
@@ -94,5 +111,43 @@ export function rollUpRecurring(
     setAside,
     deployed,
     left: income - committed - setAside - deployed,
+    byType,
   };
+}
+
+export type AllocationKind = "expense" | "savings" | "investment" | "left";
+
+export interface AllocationSegment {
+  kind: AllocationKind;
+  amount: number;
+  /** Of the whole bar, between 0 and 1. */
+  share: number;
+}
+
+/**
+ * Where a month's income goes, as the Charges page draws it: expenses,
+ * savings and investments by type, the same totals the groups below show,
+ * then what is left.
+ *
+ * The bar is as long as everything in it. With money left over that is the
+ * income, give or take a non-counting income template; with none, the
+ * outgoings alone fill it, and `left` is simply absent rather than negative.
+ * A kind worth nothing is left out, so no segment is ever zero wide.
+ */
+export function allocationSegments(
+  rollup: RecurringRollup,
+): AllocationSegment[] {
+  const parts: [AllocationKind, number][] = [
+    ["expense", rollup.byType.expense],
+    ["savings", rollup.byType.savings],
+    ["investment", rollup.byType.investment],
+    ["left", Math.max(rollup.left, 0)],
+  ];
+  const total = parts.reduce((sum, [, amount]) => sum + amount, 0);
+  if (total <= 0) {
+    return [];
+  }
+  return parts
+    .filter(([, amount]) => amount > 0)
+    .map(([kind, amount]) => ({ kind, amount, share: amount / total }));
 }

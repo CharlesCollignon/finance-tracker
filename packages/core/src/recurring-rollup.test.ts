@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { rollUpRecurring } from "./recurring-rollup";
+import { allocationSegments, rollUpRecurring } from "./recurring-rollup";
 import type { RecurringTemplateWithCategory } from "./types/database";
 
 function template({
@@ -147,5 +147,86 @@ describe("rollUpRecurring", () => {
 
     expect(rollup.income).toBe(0);
     expect(rollup.left).toBe(-1150);
+  });
+});
+
+describe("byType", () => {
+  it("sums every active template under its category type, counted or not", () => {
+    const rollup = rollUpRecurring([
+      template({ id: "salary", amount: 3000, type: "income" }),
+      template({ id: "rent", amount: 900 }),
+      template({ id: "livret", amount: 200, type: "savings" }),
+      template({ id: "etf", amount: 150, type: "investment" }),
+      // A transfer into a broker: deployed for the summary, still an
+      // investment for the page.
+      template({
+        id: "broker",
+        amount: 100,
+        type: "investment",
+        counts: false,
+      }),
+      template({ id: "gym", amount: 40, active: false }),
+    ]);
+
+    expect(rollup.byType).toEqual({
+      income: 3000,
+      expense: 900,
+      savings: 200,
+      investment: 250,
+    });
+  });
+});
+
+describe("allocationSegments", () => {
+  it("splits the income into expenses, savings, investments and what is left", () => {
+    const segments = allocationSegments(
+      rollUpRecurring([
+        template({ id: "salary", amount: 2000, type: "income" }),
+        template({ id: "rent", amount: 1000 }),
+        template({ id: "livret", amount: 300, type: "savings" }),
+        template({ id: "etf", amount: 200, type: "investment" }),
+      ]),
+    );
+
+    expect(segments).toEqual([
+      { kind: "expense", amount: 1000, share: 0.5 },
+      { kind: "savings", amount: 300, share: 0.15 },
+      { kind: "investment", amount: 200, share: 0.1 },
+      { kind: "left", amount: 500, share: 0.25 },
+    ]);
+  });
+
+  it("fills the bar with the outgoings when they exceed the income", () => {
+    const segments = allocationSegments(
+      rollUpRecurring([
+        template({ id: "salary", amount: 1000, type: "income" }),
+        template({ id: "rent", amount: 1200 }),
+        template({ id: "livret", amount: 300, type: "savings" }),
+      ]),
+    );
+
+    expect(segments.map((segment) => segment.kind)).toEqual([
+      "expense",
+      "savings",
+    ]);
+    expect(segments.reduce((sum, segment) => sum + segment.share, 0)).toBe(1);
+  });
+
+  it("leaves out a kind worth nothing", () => {
+    const segments = allocationSegments(
+      rollUpRecurring([
+        template({ id: "salary", amount: 1000, type: "income" }),
+        template({ id: "rent", amount: 400 }),
+      ]),
+    );
+
+    expect(segments.map((segment) => segment.kind)).toEqual([
+      "expense",
+      "left",
+    ]);
+  });
+
+  it("draws nothing when there is nothing to draw", () => {
+    expect(allocationSegments(rollUpRecurring([]))).toEqual([]);
   });
 });
