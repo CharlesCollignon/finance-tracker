@@ -186,6 +186,51 @@ export function suggestContributionSplit(
     .sort((left, right) => right.amount - left.amount);
 }
 
+/**
+ * Today's split as whole percentages that add up to exactly 100, so the
+ * target editor starts from where the portfolio is rather than from an even
+ * split across wallets nobody holds.
+ *
+ * Largest remainder: each wallet gets the floor of its share, and the points
+ * that rounding lost go to the wallets that lost the most. An empty portfolio
+ * starts every wallet at 0.
+ */
+export function currentSplitPercents(
+  summary: AllocationSummary,
+): Record<InvestmentWalletId, number> {
+  const percents = Object.fromEntries(
+    INVESTMENT_WALLET_IDS.map((walletId) => [walletId, 0]),
+  ) as Record<InvestmentWalletId, number>;
+  if (summary.total <= 0) {
+    return percents;
+  }
+
+  const exact = summary.rows.map((row) => ({
+    walletId: row.walletId,
+    exact: row.currentWeight * 100,
+  }));
+  let missing = 100;
+  for (const row of exact) {
+    percents[row.walletId] = Math.floor(row.exact);
+    missing -= percents[row.walletId];
+  }
+
+  const byRemainder = [...exact].sort(
+    (left, right) =>
+      right.exact -
+      Math.floor(right.exact) -
+      (left.exact - Math.floor(left.exact)),
+  );
+  for (const row of byRemainder) {
+    if (missing <= 0) {
+      break;
+    }
+    percents[row.walletId] += 1;
+    missing -= 1;
+  }
+  return percents;
+}
+
 /** Even split across the wallets, offered when the user first sets targets. */
 export function defaultTargets(): WalletTarget[] {
   const share = 1 / INVESTMENT_WALLET_IDS.length;

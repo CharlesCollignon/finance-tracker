@@ -1,13 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { PencilSimple } from "@phosphor-icons/react";
-import {
-  buildAllocation,
-  formatWeight,
-  suggestContributionSplit,
-  type WalletTarget,
-} from "@finance/core/allocation";
+import { formatWeight } from "@finance/core/allocation";
 import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
 import {
@@ -22,10 +16,10 @@ import type { WalletPlan } from "@finance/core/types/database";
 import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { useToast } from "@/components/layout/ToastProvider";
-import { saveWalletPlan, saveWalletTargets } from "@/lib/actions/investments";
+import { saveWalletPlan } from "@/lib/actions/investments";
+import { AllocationCard } from "@/components/finance/AllocationCard";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
-import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 
 interface WalletPlanPanelProps {
@@ -54,49 +48,18 @@ export function WalletPlanPanel({
   const t = useT();
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
-  const { toast } = useToast();
-  const [editing, setEditing] = useState(false);
-  const [pending, startTransition] = useTransition();
 
   const planByWallet = useMemo(
     () => new Map(plans.map((plan) => [plan.wallet, plan])),
     [plans],
   );
 
-  const targets: WalletTarget[] = useMemo(
-    () =>
-      portfolio.columns.map((column) => ({
-        walletId: column.walletId,
-        targetWeight:
-          planByWallet.get(column.walletId)?.target_weight === null ||
-          planByWallet.get(column.walletId)?.target_weight === undefined
-            ? null
-            : Number(planByWallet.get(column.walletId)!.target_weight),
-      })),
-    [portfolio.columns, planByWallet],
-  );
-
-  const allocation = useMemo(
-    () =>
-      buildAllocation(
-        portfolio.columns.map((column) => ({
-          walletId: column.walletId,
-          value: column.totalMarketValue,
-        })),
-        targets,
-      ),
-    [portfolio.columns, targets],
-  );
-
-  const split = useMemo(
-    () => suggestContributionSplit(allocation, monthlyContribution),
-    [allocation, monthlyContribution],
-  );
-
-  const returnByWallet = useMemo(
-    () => new Map(returns.wallets.map((row) => [row.walletId, row])),
-    [returns.wallets],
-  );
+  // Only the accounts with a return to state: one with no dated money in it
+  // has nothing to annualise.
+  const walletRates = returns.wallets.flatMap((row) => {
+    const rate = formatAnnualRate(row.rate, locale);
+    return rate ? [{ walletId: row.walletId, rate }] : [];
+  });
 
   const peaPlan = planByWallet.get("pea");
   const peaColumn = portfolio.columns.find((c) => c.walletId === "pea");
@@ -147,127 +110,31 @@ export function WalletPlanPanel({
             {t("position.amountNow")}
           </p>
         </div>
+        {walletRates.length > 1 ? (
+          // Each account's own return, here rather than in the allocation
+          // rows where it used to sit between a share and a target and read
+          // as part of the split.
+          <p className="mt-3 text-sm text-muted-foreground">
+            {t("position.returnByAccount")}:{" "}
+            {walletRates.map(({ walletId, rate }, index) => (
+              <span key={walletId}>
+                {index > 0 ? " · " : ""}
+                {INVESTMENT_WALLET_LABELS[walletId]}{" "}
+                <span className="tabular-nums text-foreground">{rate}</span>
+              </span>
+            ))}
+          </p>
+        ) : null}
         <p className="mt-3 max-w-prose text-sm text-muted-foreground">
           {t("position.returnExplainer")}
         </p>
       </Card.Bezel>
 
-      {/* ---- allocation -------------------------------------------- */}
-      <Card.Bezel className="w-full" innerClassName="p-5 md:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-head text-base">{t("position.allocation")}</h2>
-          <Button
-            variant="link"
-            size="sm"
-            onClick={() => setEditing((value) => !value)}
-          >
-            <PencilSimple size={ICON.sm} className="mr-1 inline" />
-            {editing ? t("position.cancel") : t("position.setTargets")}
-          </Button>
-        </div>
-
-        {editing ? (
-          <TargetEditor
-            initial={targets}
-            pending={pending}
-            onSave={(next) =>
-              startTransition(async () => {
-                const result = await saveWalletTargets(
-                  next.map((row) => ({
-                    wallet: row.walletId,
-                    targetWeight: row.targetWeight ?? 0,
-                  })),
-                );
-                if (result.error) {
-                  toast(result.error, "error");
-                  return;
-                }
-                toast(t("position.targetsSaved"), "success");
-                setEditing(false);
-              })
-            }
-          />
-        ) : (
-          <ul className="mt-4 flex flex-col gap-3">
-            {allocation.rows.map((row) => {
-              const walletReturn = returnByWallet.get(row.walletId);
-              const rate = formatAnnualRate(walletReturn?.rate ?? null, locale);
-
-              return (
-                <li key={row.walletId} className="flex flex-col gap-1.5">
-                  <div className="flex items-baseline justify-between gap-3 text-sm">
-                    <span className="font-medium">
-                      {INVESTMENT_WALLET_LABELS[row.walletId]}
-                    </span>
-                    <span className="privacy-amount tabular-nums">
-                      {formatEuro(row.value)}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-x-3 text-xs text-muted-foreground">
-                    <span>
-                      {formatWeight(row.currentWeight)}
-                      {row.targetWeight !== null
-                        ? ` ${t("position.ofTarget", {
-                            target: formatWeight(row.targetWeight),
-                          })}`
-                        : ""}
-                      {rate ? ` · ${rate}` : ""}
-                    </span>
-                    {row.status === "over" || row.status === "under" ? (
-                      <span
-                        className={
-                          row.status === "over"
-                            ? "text-destructive"
-                            : "text-muted-foreground"
-                        }
-                      >
-                        {row.status === "over" ? "+" : ""}
-                        {t("units.points", {
-                          value: Math.round(row.driftPoints ?? 0),
-                        })}
-                      </span>
-                    ) : null}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        {!editing && allocation.needsRebalance && split.length > 0 ? (
-          <p className="mt-4 border-t border-border pt-4 text-sm">
-            <span className="text-muted-foreground">
-              {t("position.splitLeadPrefix")}{" "}
-              <span className="privacy-amount tabular-nums">
-                {formatEuro(monthlyContribution)}
-              </span>{" "}
-              {t("position.splitLeadSuffix")}{" "}
-            </span>
-            {split.map((row, index) => (
-              <span key={row.walletId}>
-                {index > 0 ? ", " : ""}
-                <span className="privacy-amount font-medium tabular-nums">
-                  {formatEuro(row.amount)}
-                </span>{" "}
-                {t("position.splitItemTo", {
-                  wallet: INVESTMENT_WALLET_LABELS[row.walletId],
-                })}
-              </span>
-            ))}
-            <span className="text-muted-foreground">
-              {" "}
-              {t("position.splitTail")}
-            </span>
-          </p>
-        ) : null}
-
-        {!editing && allocation.targetCoverage === 0 ? (
-          <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
-            {t("position.noTargetHint")}
-          </p>
-        ) : null}
-      </Card.Bezel>
+      <AllocationCard
+        portfolio={portfolio}
+        plans={plans}
+        monthlyContribution={monthlyContribution}
+      />
 
       {/* ---- PEA ---------------------------------------------------- */}
       {peaStatus ? (
@@ -417,82 +284,6 @@ function EnvelopeFeeField({
   );
 }
 
-function TargetEditor({
-  initial,
-  pending,
-  onSave,
-}: {
-  initial: WalletTarget[];
-  pending: boolean;
-  onSave: (targets: WalletTarget[]) => void;
-}) {
-  const t = useT();
-  const [draft, setDraft] = useState(() =>
-    initial.map((target) => ({
-      walletId: target.walletId,
-      percent: Math.round((target.targetWeight ?? 0) * 100),
-    })),
-  );
-
-  const total = draft.reduce((sum, row) => sum + row.percent, 0);
-
-  return (
-    <div className="mt-4 flex flex-col gap-3">
-      {draft.map((row) => (
-        <label
-          key={row.walletId}
-          className="flex items-center justify-between gap-3 text-sm"
-        >
-          <span>{INVESTMENT_WALLET_LABELS[row.walletId]}</span>
-          <span className="flex items-center gap-2">
-            <input
-              type="number"
-              min={0}
-              max={100}
-              step={1}
-              value={row.percent}
-              onChange={(event) =>
-                setDraft((current) =>
-                  current.map((item) =>
-                    item.walletId === row.walletId
-                      ? { ...item, percent: Number(event.target.value) }
-                      : item,
-                  ),
-                )
-              }
-              className="h-10 min-h-11 lg:min-h-0 w-20 rounded-control border border-border bg-background px-2 text-right tabular-nums"
-            />
-            <span className="text-muted-foreground">%</span>
-          </span>
-        </label>
-      ))}
-
-      <p
-        className={cn(
-          "text-sm tabular-nums",
-          total === 100 ? "text-muted-foreground" : "text-destructive",
-        )}
-      >
-        {total}% allocated{total === 100 ? "" : " — must total 100%"}
-      </p>
-
-      <Button
-        disabled={pending || total !== 100}
-        onClick={() =>
-          onSave(
-            draft.map((row) => ({
-              walletId: row.walletId,
-              targetWeight: row.percent / 100,
-            })),
-          )
-        }
-      >
-        {pending ? t("position.saving") : t("position.saveTargets")}
-      </Button>
-    </div>
-  );
-}
-
 /** The one date that starts a PEA's five-year clock. */
 function PeaOpenedField({
   openedOn,
@@ -544,7 +335,7 @@ function PeaOpenedField({
         <p className="text-sm text-muted-foreground">{hint}</p>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Add the date to track the five-year mark.
+          {t("position.peaOpenedHint")}
         </p>
       )}
     </div>

@@ -997,13 +997,33 @@ export const fr: Messages = {
     amountNow: "aujourd'hui",
     returnExplainer:
       "Annualisé sur chaque versement daté, pour qu'un versement mensuel soit comparé équitablement à un apport unique. Le gain absolu seul avantagerait celui dont l'argent est resté investi le plus longtemps.",
-    ofTarget: "sur {target} visé",
-    splitLeadPrefix: "Vos prochains",
-    splitLeadSuffix: "combleraient l'écart le plus vite ainsi :",
+    returnByAccount: "Par compte",
+    allocationIntro:
+      "Comment vos placements se répartissent entre vos comptes.",
+    allocationIntroTargets:
+      "Chaque barre est la part d'un compte aujourd'hui\u00A0; le trait marque la part visée.",
+    shareOfInvestments: "{share} de vos placements",
+    shareNowTarget: "{share} aujourd'hui · cible {target}",
+    onTarget: "Dans la cible",
+    aboveTarget: "au-dessus de la cible",
+    belowTarget: "en dessous de la cible",
+    allOnTarget: "Chaque compte est dans sa cible.",
+    nextContributionBefore: "Répartissez vos prochains",
+    nextContributionAfter:
+      "ainsi pour revenir vers vos cibles, sans rien vendre\u00A0:",
     splitItemTo: "vers {wallet}",
-    splitTail: " — rééquilibrer par les versements plutôt qu'en vendant.",
     noTargetHint:
-      "Définissez une répartition cible pour voir la dérive du portefeuille et savoir où doit aller le prochain versement.",
+      "Choisissez la répartition voulue\u00A0: vous verrez l'écart de chaque compte et où placer votre prochain versement.",
+    editTargets: "Modifier les cibles",
+    targetEditorIntro:
+      "Choisissez la part de vos placements que chaque compte doit détenir. Le total doit faire 100\u00A0%.",
+    targetNow: "aujourd'hui {share}",
+    targetTotalComplete: "Total 100\u00A0%",
+    targetTotalShort: "{left}\u00A0% restant à répartir",
+    targetTotalOver: "{over}\u00A0% de trop",
+    useCurrentSplit: "Partir de la répartition actuelle",
+    removeTargets: "Supprimer les cibles",
+    targetsRemoved: "Cibles supprimées",
     peaPaidIn: "Versé",
     peaOfCeiling: "sur {ceiling}",
     peaRoomLeft: "de marge restante",
@@ -1213,7 +1233,6 @@ export const fr: Messages = {
     thousands: "{value} k",
     perYear: "{rate} par an",
     percent: "{value} %",
-    points: "{value} pts",
     months: "{value} mois",
   },
 
@@ -2103,6 +2122,7 @@ export const fr: Messages = {
     // so translating the prompt without translating the literal would lock
     // French readers out of their own account deletion.
     deleteConfirmation: "Tapez DELETE pour confirmer",
+    targetsMustTotal100: "Les cibles doivent totaliser 100\u00A0%.",
     tagNameTaken: "Une étiquette porte déjà ce nom.",
     tagMergeFailed: "Ces étiquettes n'ont pas pu être fusionnées.",
   },

@@ -1396,13 +1396,35 @@ export const en = {
     amountNow: "now",
     returnExplainer:
       "Annualised across every dated contribution, so paying in monthly is measured fairly against a lump sum. Absolute gain alone would flatter whichever had money in longest.",
-    ofTarget: "of {target} target",
-    splitLeadPrefix: "Your next",
-    splitLeadSuffix: "would close the gap fastest as",
+    /** The per-account returns line under the headline return. */
+    returnByAccount: "By account",
+    /** The Allocation card: what each account holds, against a target. */
+    allocationIntro: "How your investments are split across your accounts.",
+    allocationIntroTargets:
+      "Each bar is an account's share today; the line marks the share you aim for.",
+    shareOfInvestments: "{share} of your investments",
+    shareNowTarget: "{share} now · target {target}",
+    onTarget: "On target",
+    /** After an amount: "€1,240 above target". */
+    aboveTarget: "above target",
+    belowTarget: "below target",
+    allOnTarget: "Every account is on target.",
+    nextContributionBefore: "Put your next",
+    nextContributionAfter:
+      "like this to move back towards your targets, without selling anything:",
     splitItemTo: "to {wallet}",
-    splitTail: "— rebalancing by contribution rather than by selling.",
     noTargetHint:
-      "Set a target split to see how far the portfolio has drifted, and where the next contribution should go.",
+      "Choose the split you want, and this will show how far each account is from it and where your next contribution should go.",
+    editTargets: "Edit targets",
+    targetEditorIntro:
+      "Choose the share of your investments each account should hold. Together they must make 100%.",
+    targetNow: "now {share}",
+    targetTotalComplete: "Total 100%",
+    targetTotalShort: "{left}% left to assign",
+    targetTotalOver: "{over}% too much",
+    useCurrentSplit: "Use current split",
+    removeTargets: "Remove targets",
+    targetsRemoved: "Targets removed",
     peaPaidIn: "Paid in",
     peaOfCeiling: "of {ceiling}",
     peaRoomLeft: "of room left",
@@ -1653,8 +1675,6 @@ export const en = {
     perYear: "{rate} a year",
     percent: "{value}%",
     months: "{value} months",
-    /** Percentage points of drift from a target weight, never per cent. */
-    points: "{value} pts",
   },
 
   /**
@@ -3031,6 +3051,7 @@ export const en = {
     nameRequired: "Name is required",
     nameTooLong: "Name is too long",
     deleteConfirmation: "Type DELETE to confirm",
+    targetsMustTotal100: "Targets must add up to 100%.",
     tagNameTaken: "A tag with that name already exists.",
     tagMergeFailed: "Those tags could not be merged.",
   },

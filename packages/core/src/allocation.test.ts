@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { INVESTMENT_WALLET_IDS } from "./investments";
 import {
   buildAllocation,
+  currentSplitPercents,
   defaultTargets,
   formatWeight,
   suggestContributionSplit,
@@ -82,9 +83,9 @@ describe("buildAllocation", () => {
       BALANCED,
     );
     expect(summary.rows).toHaveLength(INVESTMENT_WALLET_IDS.length);
-    expect(
-      summary.rows.find((row) => row.walletId === "crypto")!.value,
-    ).toBe(0);
+    expect(summary.rows.find((row) => row.walletId === "crypto")!.value).toBe(
+      0,
+    );
   });
 });
 
@@ -146,6 +147,32 @@ describe("suggestContributionSplit", () => {
   it("returns nothing when no targets are set", () => {
     const summary = buildAllocation(values(6000, 3000, 1000), []);
     expect(suggestContributionSplit(summary, 500)).toEqual([]);
+  });
+});
+
+describe("currentSplitPercents", () => {
+  it("starts the editor from today's split", () => {
+    const percents = currentSplitPercents(
+      buildAllocation(values(6000, 3000, 1000), []),
+    );
+    expect(percents).toEqual({ pea: 60, cto: 30, av: 0, per: 0, crypto: 10 });
+  });
+
+  it("rounds so the shares add up to exactly 100", () => {
+    const percents = currentSplitPercents(
+      buildAllocation(values(1000, 1000, 1000), []),
+    );
+    expect(Object.values(percents).reduce((sum, value) => sum + value, 0)).toBe(
+      100,
+    );
+    expect([percents.pea, percents.cto, percents.crypto].sort()).toEqual([
+      33, 33, 34,
+    ]);
+  });
+
+  it("starts every wallet at 0 when nothing is held", () => {
+    const percents = currentSplitPercents(buildAllocation(values(0, 0, 0), []));
+    expect(Object.values(percents).every((value) => value === 0)).toBe(true);
   });
 });
 

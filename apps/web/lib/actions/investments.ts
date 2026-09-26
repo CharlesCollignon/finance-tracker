@@ -225,7 +225,7 @@ export async function saveWalletTargets(
 
   const parsed = walletTargetsSchema.safeParse({ targets });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid targets" };
+    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
   const total = parsed.data.targets.reduce(
@@ -235,7 +235,7 @@ export async function saveWalletTargets(
 
   // Anything else would make every wallet look permanently off-target.
   if (parsed.data.targets.length > 0 && Math.abs(total - 1) > 0.005) {
-    return { error: "Targets must add up to 100%" };
+    return { error: "errors.targetsMustTotal100" };
   }
 
   const supabase = await createClient();
@@ -248,6 +248,31 @@ export async function saveWalletTargets(
     })),
     { onConflict: "user_id,wallet" },
   );
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateRecurringDependents();
+  return { success: true };
+}
+
+/**
+ * Takes every target off, so the Allocation card goes back to showing the
+ * split alone. The rest of each wallet's plan (the PEA's opening date, a
+ * ceiling, an envelope fee) lives on the same rows and is left as it was.
+ */
+export async function clearWalletTargets(): Promise<ActionResult> {
+  const user = await getUser();
+  if (!user) {
+    return { error: "errors.notAuthenticated" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("wallet_plans")
+    .update({ target_weight: null, updated_at: new Date().toISOString() })
+    .eq("user_id", user.id);
 
   if (error) {
     return { error: error.message };
