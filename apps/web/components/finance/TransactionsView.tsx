@@ -52,6 +52,8 @@ import {
 } from "@/lib/actions/finance";
 import { ApplyRecurringSheet } from "@/components/finance/ApplyRecurringSheet";
 import { RowCheckbox, SelectionBar } from "@/components/finance/SelectionBar";
+import { CategoryPicker } from "@/components/finance/CategoryPicker";
+import { OptionPicker } from "@/components/layout/Picker";
 import {
   planSelectionMove,
   pruneSelection,
@@ -516,40 +518,37 @@ export function TransactionsView({
    * filter differently.
    */
   function renderFilterSelects(stacked: boolean) {
-    const selectClass = cn(
-      "h-9 min-h-11 lg:min-h-0 min-w-0 rounded-full border border-border",
-      "bg-background px-3.5 text-sm text-foreground outline-none",
-      "focus:border-foreground",
-    );
+    // Distinct ids: at phone width both copies are in the document at once,
+    // the toolbar's hidden by CSS and the panel's showing.
+    const suffix = stacked ? "-panel" : "";
+    const triggerClass = "h-9 min-h-11 rounded-full px-3.5 text-sm lg:min-h-0";
     return (
       <>
-        <select
-          value={categoryFilter}
-          onChange={(event) => setCategoryFilter(event.target.value)}
-          aria-label={t("ledger.filterByCategory")}
-          className={cn(selectClass, stacked ? "w-full" : "w-44 flex-none")}
-        >
-          <option value="all">{t("ledger.allCategories")}</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+        <CategoryPicker
+          id={`ledger-category-filter${suffix}`}
+          name="categoryFilter"
+          categories={categories}
+          value={categoryFilter === "all" ? "" : categoryFilter}
+          onValueChange={(categoryId) => setCategoryFilter(categoryId || "all")}
+          allLabel={t("ledger.allCategories")}
+          label={t("ledger.filterByCategory")}
+          className={stacked ? "w-full" : "w-44 flex-none"}
+          triggerClassName={triggerClass}
+        />
         {tags.length > 0 ? (
-          <select
+          <OptionPicker
+            id={`ledger-tag-filter${suffix}`}
+            panelLabel={t("ledger.filterByTag")}
+            label={t("ledger.filterByTag")}
+            options={[
+              { value: "all", label: t("ledger.allTags") },
+              ...tags.map((tag) => ({ value: tag.id, label: tag.name })),
+            ]}
             value={tagFilter}
-            onChange={(event) => setTagFilter(event.target.value)}
-            aria-label={t("ledger.filterByTag")}
-            className={cn(selectClass, stacked ? "w-full" : "w-36 flex-none")}
-          >
-            <option value="all">{t("ledger.allTags")}</option>
-            {tags.map((tag) => (
-              <option key={tag.id} value={tag.id}>
-                {tag.name}
-              </option>
-            ))}
-          </select>
+            onValueChange={setTagFilter}
+            className={stacked ? "w-full" : "w-36 flex-none"}
+            triggerClassName={triggerClass}
+          />
         ) : null}
       </>
     );

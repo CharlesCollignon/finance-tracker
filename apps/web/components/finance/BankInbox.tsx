@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { ArrowCounterClockwise, ArrowsClockwise } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
 import { MobileSheet } from "@/components/layout/MobileSheet";
-import { CategorySelect } from "@/components/finance/CategorySelect";
+import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import { useToast } from "@/components/layout/ToastProvider";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
@@ -244,14 +244,14 @@ export function BankInbox({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <CategorySelect
+                    <CategoryPicker
                       id={`feed-category-${item.id}`}
                       categories={categories}
                       value={choices[item.id] ?? ""}
-                      onChange={(event) =>
+                      onValueChange={(categoryId) =>
                         setChoices((current) => ({
                           ...current,
-                          [item.id]: event.target.value,
+                          [item.id]: categoryId,
                         }))
                       }
                       className="min-w-44 flex-1"
@@ -312,14 +312,14 @@ export function BankInbox({
 
                     {editing === row.id ? (
                       <div className="flex flex-wrap items-center gap-2">
-                        <CategorySelect
+                        <CategoryPicker
                           id={`decided-category-${row.id}`}
                           categories={categories}
                           value={choices[row.id] ?? row.categoryId ?? ""}
-                          onChange={(event) =>
+                          onValueChange={(categoryId) =>
                             setChoices((current) => ({
                               ...current,
-                              [row.id]: event.target.value,
+                              [row.id]: categoryId,
                             }))
                           }
                           className="min-w-40 flex-1"

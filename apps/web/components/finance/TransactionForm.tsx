@@ -13,7 +13,7 @@ import { FormLabel } from "@/components/layout/FormLabel";
 import { Text } from "@/components/retroui/Text";
 import { useToast } from "@/components/layout/ToastProvider";
 import { MobileSheet } from "@/components/layout/MobileSheet";
-import { CategorySelect } from "@/components/finance/CategorySelect";
+import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import { TAGS_FIELD_MARKER } from "@/lib/actions/tag-field";
 import {
   createTransaction,
@@ -202,9 +202,10 @@ function TransactionFormFields({
           <FormLabel htmlFor="categoryId">
             {t("transaction.category")}
           </FormLabel>
-          <CategorySelect
+          <CategoryPicker
             id="categoryId"
             categories={categories}
+            label={t("transaction.category")}
             required
             defaultValue={transaction?.category_id ?? ""}
           />

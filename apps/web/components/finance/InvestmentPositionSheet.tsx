@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Trash } from "@phosphor-icons/react";
+import { OptionPicker } from "@/components/layout/Picker";
 import { Button } from "@/components/retroui/Button";
 import { Input } from "@/components/retroui/Input";
 import { FormLabel } from "@/components/layout/FormLabel";
@@ -244,21 +245,20 @@ function InvestmentPositionForm({
               {t("position.recurringItem")}
             </FormLabel>
             {recurringOptions.length > 0 ? (
-              <select
+              <OptionPicker
                 id="recurringTemplateId"
                 name="recurringTemplateId"
                 required
-                className="h-10 min-h-11 lg:min-h-0 w-full rounded-control border border-border bg-input px-3 text-base"
+                panelLabel={t("position.recurringItem")}
+                label={t("position.recurringItem")}
+                options={recurringOptions.map((template) => ({
+                  value: template.id,
+                  label: displayNameForRecurringTemplate(template),
+                }))}
                 value={recurringTemplateId}
-                onChange={(event) => setRecurringTemplateId(event.target.value)}
-              >
-                <option value="">{t("position.pickRecurring")}</option>
-                {recurringOptions.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {displayNameForRecurringTemplate(template)}
-                  </option>
-                ))}
-              </select>
+                onValueChange={setRecurringTemplateId}
+                placeholder={t("position.pickRecurring")}
+              />
             ) : (
               <Text className="text-sm text-muted-foreground">
                 {t("position.noRecurringAvailable")}

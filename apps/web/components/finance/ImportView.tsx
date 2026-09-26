@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useId, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { ArrowLeft, UploadSimple, Warning } from "@phosphor-icons/react";
 import {
@@ -23,6 +23,8 @@ import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { ChoiceChips, OptionPicker } from "@/components/layout/Picker";
+import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
   getExistingKeysForRange,
@@ -429,25 +431,24 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                 </>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">
+                  <span id="import-sign-label" className="text-sm font-medium">
                     {t("importer.spendingIs")}
                   </span>
-                  <select
+                  <ChoiceChips
+                    labelledBy="import-sign-label"
+                    options={[
+                      {
+                        value: "negative" as const,
+                        label: t("importer.signNegative"),
+                      },
+                      {
+                        value: "positive" as const,
+                        label: t("importer.signPositive"),
+                      },
+                    ]}
                     value={expenseSign}
-                    onChange={(event) =>
-                      setExpenseSign(
-                        event.target.value as "negative" | "positive",
-                      )
-                    }
-                    className="h-11 rounded-control border border-border bg-background px-3 text-base"
-                  >
-                    <option value="negative">
-                      {t("importer.signNegative")}
-                    </option>
-                    <option value="positive">
-                      {t("importer.signPositive")}
-                    </option>
-                  </select>
+                    onValueChange={setExpenseSign}
+                  />
                 </div>
               )}
             </div>
@@ -583,42 +584,32 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
                               —
                             </span>
                           ) : (
-                            <select
-                              aria-label={t("importer.categoryForLine", {
+                            <CategoryPicker
+                              id={`import-row-${row.line}`}
+                              name={`importRowCategory-${row.line}`}
+                              categories={categories}
+                              excludeTypes={
+                                row.type === "income"
+                                  ? ["expense", "savings", "investment"]
+                                  : ["income"]
+                              }
+                              value={row.categoryId ?? ""}
+                              onValueChange={(categoryId) =>
+                                setRowCategory(row.line, categoryId)
+                              }
+                              placeholder={t("importer.choose")}
+                              label={t("importer.categoryForLine", {
                                 line: row.line,
                               })}
-                              value={row.categoryId ?? ""}
-                              onChange={(event) =>
-                                setRowCategory(row.line, event.target.value)
-                              }
-                              className={cn(
-                                "h-9 w-full min-w-[10rem] rounded-control border bg-background px-2 text-sm",
+                              className="min-w-[10rem]"
+                              triggerClassName={cn(
+                                "h-9 px-2 text-sm",
                                 row.categoryId === null &&
                                   row.status === "ready"
                                   ? "border-destructive"
                                   : "border-border",
                               )}
-                            >
-                              <option value="">{t("importer.choose")}</option>
-                              {categoryGroups
-                                .filter((group) =>
-                                  row.type === "income"
-                                    ? group.type === "income"
-                                    : group.type !== "income",
-                                )
-                                .map((group) => (
-                                  <optgroup
-                                    key={group.type}
-                                    label={group.label}
-                                  >
-                                    {group.categories.map((cat) => (
-                                      <option key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                      </option>
-                                    ))}
-                                  </optgroup>
-                                ))}
-                            </select>
+                            />
                           )}
                         </td>
                         <td
@@ -658,33 +649,34 @@ function ColumnPicker({
   onChange: (value: number | null) => void;
 }) {
   const t = useT();
+  const id = useId();
+  const options = [
+    ...(allowNone ? [{ value: "", label: t("importer.notInThisFile") }] : []),
+    ...columns.map((_, index) => ({
+      value: String(index),
+      label:
+        headers[index] ?? t("importer.columnNumber", { number: index + 1 }),
+    })),
+  ];
   return (
     <div className="flex flex-col gap-2">
       <span className="text-sm font-medium">{label}</span>
-      <select
-        aria-label={label}
+      <OptionPicker
+        id={id}
+        panelLabel={label}
+        label={label}
+        options={options}
         value={value === null ? "" : String(value)}
-        onChange={(event) =>
-          onChange(
-            event.target.value === "" ? null : Number(event.target.value),
-          )
-        }
-        className="h-11 rounded-control border border-border bg-background px-3 text-base"
-      >
-        {allowNone ? (
-          <option value="">{t("importer.notInThisFile")}</option>
-        ) : null}
-        {columns.map((_, index) => (
-          <option key={index} value={index}>
-            {headers[index] ??
-              t("importer.columnNumber", { number: index + 1 })}
-          </option>
-        ))}
-      </select>
+        onValueChange={(next) => onChange(next === "" ? null : Number(next))}
+      />
     </div>
   );
 }
 
+/**
+ * Files one kind of row at once. Always shows its prompt: it is an action,
+ * not a field, so it goes back to empty after each pick.
+ */
 function BulkAssign({
   label,
   groups,
@@ -695,28 +687,26 @@ function BulkAssign({
   onPick: (categoryId: string) => void;
 }) {
   const t = useT();
+  const id = useId();
 
   return (
-    <label className="flex flex-1 flex-col gap-2 text-sm">
+    <div className="flex flex-1 flex-col gap-2 text-sm">
       <span className="font-medium">{label}</span>
-      <select
-        defaultValue=""
-        onChange={(event) => {
-          onPick(event.target.value);
-          event.target.value = "";
+      <CategoryPicker
+        id={id}
+        name={`bulk-${id}`}
+        categories={groups.flatMap((group) => group.categories)}
+        value=""
+        onValueChange={(categoryId) => {
+          if (categoryId) {
+            onPick(categoryId);
+          }
         }}
-        className="h-10 rounded-control border border-border bg-background px-2 text-sm"
-      >
-        <option value="">{t("importer.chooseCategory")}</option>
-        {groups.map((group) =>
-          group.categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          )),
-        )}
-      </select>
-    </label>
+        placeholder={t("importer.chooseCategory")}
+        label={label}
+        triggerClassName="h-10 px-2 text-sm"
+      />
+    </div>
   );
 }
 

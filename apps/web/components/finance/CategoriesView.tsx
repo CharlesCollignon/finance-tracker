@@ -14,6 +14,7 @@ import { Card } from "@/components/retroui/Card";
 import { Input } from "@/components/retroui/Input";
 import { Text } from "@/components/retroui/Text";
 import { FormLabel } from "@/components/layout/FormLabel";
+import { ChoiceChips } from "@/components/layout/Picker";
 import { MobileSheet } from "@/components/layout/MobileSheet";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -32,7 +33,7 @@ import { categoryTypeLabels } from "@finance/core/category-styles";
 import type { Category, CategoryType } from "@finance/core/types/database";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
-import { useT } from "@/lib/locale-context";
+import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage, type Key } from "@finance/core/i18n/t";
 
 const ICON_KEYS = Object.keys(CATEGORY_ICONS);
@@ -297,6 +298,7 @@ function CategoryFormSheet({
   category,
 }: CategoryFormSheetProps) {
   const t = useT();
+  const locale = useLocale();
   const { toast } = useToast();
   const isEditing = category !== null;
   const [state, action, pending] = useActionState(upsertCategory, {});
@@ -347,24 +349,19 @@ function CategoryFormSheet({
         </div>
 
         <div className="flex flex-col gap-2">
-          <FormLabel htmlFor="category-type">{t("categories.type")}</FormLabel>
-          <select
-            id="category-type"
+          <FormLabel id="category-type-label">{t("categories.type")}</FormLabel>
+          {/* Four kinds, so chips rather than a menu. The labels follow the
+              reader's language; they were always English here. */}
+          <ChoiceChips
+            labelledBy="category-type-label"
             name="type"
-            required
+            options={CATEGORY_TYPE_ORDER.map((option) => ({
+              value: option,
+              label: categoryTypeLabels(locale)[option],
+            }))}
             value={type}
-            onChange={(event) => setType(event.target.value as CategoryType)}
-            className={cn(
-              "h-11 w-full rounded-control border border-border bg-background",
-              "px-3 text-base text-foreground",
-            )}
-          >
-            {CATEGORY_TYPE_ORDER.map((option) => (
-              <option key={option} value={option}>
-                {categoryTypeLabels()[option]}
-              </option>
-            ))}
-          </select>
+            onValueChange={setType}
+          />
         </div>
 
         {type !== "expense" && (

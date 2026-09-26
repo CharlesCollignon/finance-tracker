@@ -2091,6 +2091,15 @@ export const fr: Messages = {
     retry: "Réessayer",
   },
 
+  picker: {
+    choose: "Choisir",
+    search: "Rechercher",
+    searchCategories: "Rechercher une catégorie",
+    chooseCategory: "Choisir une catégorie",
+    kindOfCategory: "Type de catégorie",
+    noMatch: "Rien ne correspond à «\u00A0{query}\u00A0».",
+  },
+
   errors: {
     amountPositive: "Le montant doit être positif",
     invalidDate: "Date invalide",

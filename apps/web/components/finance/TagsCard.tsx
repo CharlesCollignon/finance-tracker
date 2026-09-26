@@ -6,6 +6,7 @@ import { PencilSimple, Trash } from "@phosphor-icons/react";
 import { Button } from "@/components/retroui/Button";
 import { Input } from "@/components/retroui/Input";
 import { FormLabel } from "@/components/layout/FormLabel";
+import { OptionPicker } from "@/components/layout/Picker";
 import { useToast } from "@/components/layout/ToastProvider";
 import {
   deleteTag,
@@ -220,23 +221,19 @@ function TagEditor({
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex min-w-48 flex-1 flex-col gap-2">
             <FormLabel htmlFor={mergeId}>{t("plan.mergeTagInto")}</FormLabel>
-            <select
+            <OptionPicker
               id={mergeId}
+              panelLabel={t("plan.mergeTagInto")}
+              label={t("plan.mergeTagInto")}
+              options={others.map((other) => ({
+                value: other.id,
+                label: other.name,
+              }))}
               value={intoId}
-              onChange={(event) => setIntoId(event.target.value)}
-              aria-describedby={`${mergeId}-hint`}
-              className={cn(
-                "h-11 w-full rounded-control border border-border",
-                "bg-background px-3 text-base",
-              )}
-            >
-              <option value="">{t("plan.chooseTag")}</option>
-              {others.map((other) => (
-                <option key={other.id} value={other.id}>
-                  {other.name}
-                </option>
-              ))}
-            </select>
+              onValueChange={setIntoId}
+              placeholder={t("plan.chooseTag")}
+              describedBy={`${mergeId}-hint`}
+            />
           </div>
           <Button
             type="button"

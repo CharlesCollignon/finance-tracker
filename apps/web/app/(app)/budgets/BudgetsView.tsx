@@ -26,6 +26,7 @@ import type {
 } from "@finance/core/types/database";
 import type { TagUsage } from "@finance/core/tags";
 import { TagsCard } from "@/components/finance/TagsCard";
+import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
@@ -242,22 +243,13 @@ export function BudgetsView({
                 <FormLabel htmlFor="budget-category">
                   {t("plan.capScope")}
                 </FormLabel>
-                <select
+                <CategoryPicker
                   id="budget-category"
-                  name="categoryId"
+                  categories={expenseCategories}
                   defaultValue={editingBudget?.category_id ?? ""}
-                  className={cn(
-                    "h-11 w-full rounded-control border border-border",
-                    "bg-background px-3 text-base",
-                  )}
-                >
-                  <option value="">{t("allocation.allExpenses")}</option>
-                  {expenseCategories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  allLabel={t("allocation.allExpenses")}
+                  label={t("plan.capScope")}
+                />
               </div>
               <div className="flex flex-col gap-2">
                 <FormLabel htmlFor="budget-amount">
@@ -463,22 +455,13 @@ export function BudgetsView({
                 <FormLabel htmlFor="goal-category">
                   {t("plan.trackCategoryOptional")}
                 </FormLabel>
-                <select
+                <CategoryPicker
                   id="goal-category"
-                  name="categoryId"
+                  categories={savingsCategories}
                   defaultValue={editingGoal?.category_id ?? ""}
-                  className={cn(
-                    "h-11 w-full rounded-control border border-border",
-                    "bg-background px-3 text-base",
-                  )}
-                >
-                  <option value="">{t("plan.allSavings")}</option>
-                  {savingsCategories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  allLabel={t("plan.allSavings")}
+                  label={t("plan.trackCategoryOptional")}
+                />
               </div>
               <div className="flex flex-wrap gap-2 sm:col-span-2">
                 <Button type="submit" disabled={goalPending}>

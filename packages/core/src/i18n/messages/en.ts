@@ -3020,6 +3020,16 @@ export const en = {
     retry: "Retry",
   },
 
+  /** The panel that replaces every dropdown: `components/layout/Picker`. */
+  picker: {
+    choose: "Choose",
+    search: "Search",
+    searchCategories: "Search categories",
+    chooseCategory: "Choose a category",
+    kindOfCategory: "Kind of category",
+    noMatch: "Nothing matches “{query}”.",
+  },
+
   errors: {
     /**
      * Validation messages, carried by the Zod schemas as keys.

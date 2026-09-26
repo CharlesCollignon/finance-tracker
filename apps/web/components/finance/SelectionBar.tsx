@@ -10,7 +10,7 @@ import {
 } from "@finance/core/selection";
 import type { Category } from "@finance/core/types/database";
 import { Button } from "@/components/retroui/Button";
-import { CategorySelect } from "@/components/finance/CategorySelect";
+import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
@@ -131,13 +131,16 @@ export function SelectionBar({
               >
                 {t("selectionBar.moveTo", { count: summary.count })}
               </label>
-              <CategorySelect
+              {/* Upwards: the bar sits at the bottom of the screen. */}
+              <CategoryPicker
                 id="selection-move-category"
                 categories={categories}
+                label={t("selectionBar.moveTo", { count: summary.count })}
                 value={target}
                 placeholder={t("selectionBar.pickCategory")}
                 disabled={pending}
-                onChange={(event) => setTarget(event.target.value)}
+                onValueChange={setTarget}
+                side="top"
               />
             </div>
 

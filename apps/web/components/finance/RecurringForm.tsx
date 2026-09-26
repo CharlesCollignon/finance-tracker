@@ -11,7 +11,8 @@ import {
   deleteRecurringTemplate,
   upsertRecurringTemplate,
 } from "@/lib/actions/finance";
-import { CategorySelect } from "@/components/finance/CategorySelect";
+import { CategoryPicker } from "@/components/finance/CategoryPicker";
+import { OptionPicker } from "@/components/layout/Picker";
 import { InstrumentSearch } from "@/components/finance/InstrumentSearch";
 import { estimateSharesAmountAction } from "@/lib/actions/market";
 import { formatMoney } from "@finance/core/market/fx";
@@ -228,11 +229,12 @@ function RecurringFormFields({
           <FormLabel htmlFor="recurring-category">
             {t("recurring.category")}
           </FormLabel>
-          <CategorySelect
+          <CategoryPicker
             id="recurring-category"
             categories={categories}
+            label={t("recurring.category")}
             value={categoryId}
-            onChange={(event) => setCategoryId(event.target.value)}
+            onValueChange={setCategoryId}
             required
           />
           {isDeploymentCategory && !isCryptoCategory && (
@@ -470,19 +472,19 @@ function RecurringFormFields({
             <FormLabel htmlFor="dayOfWeek">
               {t("recurring.dayOfWeek")}
             </FormLabel>
-            <select
+            <OptionPicker
               id="dayOfWeek"
               name="dayOfWeek"
               required
-              className="h-11 w-full rounded-control border border-border bg-background px-3 text-base text-foreground "
-              defaultValue={template?.day_of_week ?? 1}
-            >
-              {Object.entries(dayOfWeekLabels(locale)).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              panelLabel={t("recurring.dayOfWeek")}
+              label={t("recurring.dayOfWeek")}
+              options={Object.entries(dayOfWeekLabels(locale)).map(
+                ([value, label]) => ({ value, label }),
+              )}
+              defaultValue={String(template?.day_of_week ?? 1)}
+              columns={2}
+              searchable={false}
+            />
           </div>
         ) : (
           <>
@@ -490,19 +492,19 @@ function RecurringFormFields({
               <FormLabel htmlFor="monthOfYear">
                 {t("recurring.monthOfYear")}
               </FormLabel>
-              <select
+              <OptionPicker
                 id="monthOfYear"
                 name="monthOfYear"
                 required
-                className="h-11 w-full rounded-control border border-border bg-background px-3 text-base text-foreground "
-                defaultValue={template?.month_of_year ?? 10}
-              >
-                {Object.entries(monthLabels(locale)).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+                panelLabel={t("recurring.monthOfYear")}
+                label={t("recurring.monthOfYear")}
+                options={Object.entries(monthLabels(locale)).map(
+                  ([value, label]) => ({ value, label }),
+                )}
+                defaultValue={String(template?.month_of_year ?? 10)}
+                columns={3}
+                searchable={false}
+              />
             </div>
             <div className="flex flex-col gap-2">
               <FormLabel htmlFor="dayOfMonth">
