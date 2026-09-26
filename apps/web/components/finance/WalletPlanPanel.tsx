@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { formatWeight } from "@finance/core/allocation";
 import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
+import type { WalletFundingNeed } from "@finance/core/investment-upcoming";
 import {
   returnUnavailableLabel,
   type InvestmentReturns,
@@ -28,6 +29,8 @@ interface WalletPlanPanelProps {
   plans: WalletPlan[];
   /** Typical monthly contribution, used to suggest where the next one goes. */
   monthlyContribution: number;
+  /** What the recurring templates put into each account in a month. */
+  fundingNeeds: WalletFundingNeed[];
 }
 
 /**
@@ -44,6 +47,7 @@ export function WalletPlanPanel({
   returns,
   plans,
   monthlyContribution,
+  fundingNeeds,
 }: WalletPlanPanelProps) {
   const t = useT();
   const formatEuro = useFormatCurrency();
@@ -134,6 +138,7 @@ export function WalletPlanPanel({
         portfolio={portfolio}
         plans={plans}
         monthlyContribution={monthlyContribution}
+        fundingNeeds={fundingNeeds}
       />
 
       {/* ---- PEA ---------------------------------------------------- */}

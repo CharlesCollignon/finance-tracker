@@ -81,6 +81,7 @@ export default async function InvestmentsPage() {
           returns={returns}
           plans={plans}
           monthlyContribution={monthlyContribution}
+          fundingNeeds={fundingNeeds}
         />
 
         <div className="mt-4">

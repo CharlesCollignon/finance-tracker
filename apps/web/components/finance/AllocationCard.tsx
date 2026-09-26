@@ -15,6 +15,7 @@ import {
   type InvestmentWalletId,
 } from "@finance/core/investments";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
+import type { WalletFundingNeed } from "@finance/core/investment-upcoming";
 import type { WalletPlan } from "@finance/core/types/database";
 import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
@@ -33,7 +34,11 @@ interface AllocationCardProps {
   plans: WalletPlan[];
   /** Typical monthly contribution, used to suggest where the next one goes. */
   monthlyContribution: number;
+  /** What the recurring templates put into each account in a month. */
+  fundingNeeds: WalletFundingNeed[];
 }
+
+type AllocationView = "total" | "monthly";
 
 /**
  * How the portfolio is split across accounts, against the split the reader
@@ -47,16 +52,24 @@ interface AllocationCardProps {
  *
  * The bars are all investment cyan: every one of them is investment money,
  * and the label beside each says which account it is.
+ *
+ * The Monthly view asks the same question of the standing orders instead of
+ * the balances: of what the recurring templates put in each month, what share
+ * goes to each account, against the same targets. `buildAllocation` answers
+ * both, handed values in one case and monthly amounts in the other, so a gap
+ * in that view is euros a month.
  */
 export function AllocationCard({
   portfolio,
   plans,
   monthlyContribution,
+  fundingNeeds,
 }: AllocationCardProps) {
   const t = useT();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
+  const [view, setView] = useState<AllocationView>("total");
   const [pending, startTransition] = useTransition();
 
   const targets: WalletTarget[] = useMemo(() => {
@@ -83,6 +96,18 @@ export function AllocationCard({
     [portfolio.columns, targets],
   );
 
+  const monthly = useMemo(
+    () =>
+      buildAllocation(
+        fundingNeeds.map((need) => ({
+          walletId: need.walletId,
+          value: need.monthlyTotal,
+        })),
+        targets,
+      ),
+    [fundingNeeds, targets],
+  );
+
   const split = useMemo(
     () => suggestContributionSplit(allocation, monthlyContribution),
     [allocation, monthlyContribution],
@@ -95,6 +120,9 @@ export function AllocationCard({
     (row) => row.targetWeight !== null,
   );
   const shown = allocation.rows.filter(
+    (row) => row.value > 0 || (row.targetWeight ?? 0) > 0,
+  );
+  const monthlyShown = monthly.rows.filter(
     (row) => row.value > 0 || (row.targetWeight ?? 0) > 0,
   );
 
@@ -132,12 +160,41 @@ export function AllocationCard({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-head text-base">{t("position.allocation")}</h2>
         {editing ? null : (
-          <Button variant="link" size="sm" onClick={() => setEditing(true)}>
-            <PencilSimple size={ICON.sm} className="mr-1 inline" />
-            {targetsSaved
-              ? t("position.editTargets")
-              : t("position.setTargets")}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Toggles rather than tabs, as on Charges: `aria-pressed` says
+                which view is showing and claims no arrow-key handling. */}
+            <div
+              role="group"
+              aria-label={t("position.allocationView")}
+              className="flex rounded-full border border-border p-0.5 text-xs"
+            >
+              {(["total", "monthly"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={view === option}
+                  onClick={() => setView(option)}
+                  className={cn(
+                    "min-h-11 rounded-full px-3 font-medium lg:min-h-8",
+                    "transition-colors duration-hover",
+                    view === option
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {option === "total"
+                    ? t("position.viewTotal")
+                    : t("position.viewMonthly")}
+                </button>
+              ))}
+            </div>
+            <Button variant="link" size="sm" onClick={() => setEditing(true)}>
+              <PencilSimple size={ICON.sm} className="mr-1 inline" />
+              {targetsSaved
+                ? t("position.editTargets")
+                : t("position.setTargets")}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -161,6 +218,40 @@ export function AllocationCard({
           onRemove={remove}
           onCancel={() => setEditing(false)}
         />
+      ) : view === "monthly" ? (
+        monthly.total > 0 ? (
+          <>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("position.monthlyIntroBefore")}{" "}
+              <span className="privacy-amount tabular-nums text-foreground">
+                {formatEuro(monthly.total)}
+              </span>{" "}
+              {t("position.monthlyIntroAfter")}
+            </p>
+
+            <ul className="mt-4 flex flex-col gap-4">
+              {monthlyShown.map((row) => (
+                <AllocationRowItem key={row.walletId} row={row} monthly />
+              ))}
+            </ul>
+
+            {targetsMeasured && !monthly.needsRebalance ? (
+              <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
+                {t("position.monthlyOnTarget")}
+              </p>
+            ) : null}
+
+            {targetsMeasured ? null : (
+              <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
+                {t("position.noTargetHint")}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="mt-4 text-sm text-muted-foreground">
+            {t("position.monthlyNothing")}
+          </p>
+        )
       ) : (
         <>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -216,11 +307,27 @@ export function AllocationCard({
   );
 }
 
-/** One account: its value, its share drawn, and where it stands in words. */
-function AllocationRowItem({ row }: { row: AllocationRow }) {
+/**
+ * One account: its value, its share drawn, and where it stands in words.
+ * `monthly` reads the same row as a month of contributions rather than a
+ * balance, so every amount on it is per month.
+ */
+function AllocationRowItem({
+  row,
+  monthly = false,
+}: {
+  row: AllocationRow;
+  monthly?: boolean;
+}) {
   const t = useT();
   const formatEuro = useFormatCurrency();
   const share = formatWeight(row.currentWeight);
+  const target = formatWeight(row.targetWeight);
+  const perMonth = monthly ? (
+    <span className="text-xs text-muted-foreground">
+      {t("charges.perMonthSuffix")}
+    </span>
+  ) : null;
 
   return (
     <li className="flex flex-col gap-2">
@@ -230,6 +337,7 @@ function AllocationRowItem({ row }: { row: AllocationRow }) {
         </span>
         <span className="privacy-amount tabular-nums">
           {formatEuro(row.value)}
+          {perMonth}
         </span>
       </div>
 
@@ -253,12 +361,15 @@ function AllocationRowItem({ row }: { row: AllocationRow }) {
 
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
         <span className="text-muted-foreground">
-          {row.targetWeight === null
-            ? t("position.shareOfInvestments", { share })
-            : t("position.shareNowTarget", {
-                share,
-                target: formatWeight(row.targetWeight),
-              })}
+          {monthly
+            ? row.value === 0
+              ? t("position.monthlyNoneTarget", { target })
+              : row.targetWeight === null
+                ? t("position.shareOfEachMonth", { share })
+                : t("position.shareOfEachMonthTarget", { share, target })
+            : row.targetWeight === null
+              ? t("position.shareOfInvestments", { share })
+              : t("position.shareNowTarget", { share, target })}
         </span>
         {row.status === "on-target" ? (
           <span className="text-muted-foreground">
@@ -268,6 +379,7 @@ function AllocationRowItem({ row }: { row: AllocationRow }) {
           <span>
             <span className="privacy-amount tabular-nums">
               {formatEuro(Math.abs(row.gap ?? 0))}
+              {perMonth}
             </span>{" "}
             {row.status === "over"
               ? t("position.aboveTarget")

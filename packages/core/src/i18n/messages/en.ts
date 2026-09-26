@@ -1425,6 +1425,18 @@ export const en = {
     useCurrentSplit: "Use current split",
     removeTargets: "Remove targets",
     targetsRemoved: "Targets removed",
+    /** The Allocation card's switch between the whole portfolio and a month. */
+    allocationView: "Allocation view",
+    viewTotal: "Total",
+    viewMonthly: "Monthly",
+    monthlyIntroBefore: "How your",
+    monthlyIntroAfter: "a month is split across accounts.",
+    shareOfEachMonth: "{share} of each month",
+    shareOfEachMonthTarget: "{share} of each month · target {target}",
+    monthlyNoneTarget: "No monthly contribution · target {target}",
+    monthlyOnTarget: "Your monthly contributions follow your target.",
+    monthlyNothing:
+      "No recurring investment yet. Add one in Charges and its split will show here.",
     peaPaidIn: "Paid in",
     peaOfCeiling: "of {ceiling}",
     peaRoomLeft: "of room left",
