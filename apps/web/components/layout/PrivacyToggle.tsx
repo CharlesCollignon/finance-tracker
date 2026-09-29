@@ -30,7 +30,19 @@ function applyPrivacy(on: boolean): void {
   document.documentElement.dataset.privacy = on ? "on" : "off";
 }
 
-export function PrivacyToggle({ className }: { className?: string }) {
+/**
+ * The privacy blur's switch. `tone` is the company it keeps, as with
+ * `RefreshButton`: a bordered square on a card fill in the phone's glass
+ * header, and a bare circle in the desktop's top bar beside the refresh and
+ * the avatar.
+ */
+export function PrivacyToggle({
+  tone = "band",
+  className,
+}: {
+  tone?: "band" | "bar";
+  className?: string;
+}) {
   const t = useT();
   const hidden = useSyncExternalStore(
     subscribe,
@@ -60,9 +72,11 @@ export function PrivacyToggle({ className }: { className?: string }) {
       className={cn(
         // 44px square — the documented touch floor — inside a 52px header
         // band, so the row keeps its height and the icon keeps its size.
-        "inline-flex size-11 items-center justify-center rounded-control",
-        "border border-border bg-card text-muted-foreground",
-        "transition-colors hover:bg-muted hover:text-foreground",
+        "inline-flex size-11 shrink-0 cursor-pointer items-center justify-center",
+        "text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+        tone === "band"
+          ? "rounded-control border border-border bg-card"
+          : "rounded-full",
         // On is a raised ground and full-strength ink, one step up from the
         // card surface and muted ink it rests at. The glyph swapping from an
         // eye to a struck-through eye is the other half of the state.

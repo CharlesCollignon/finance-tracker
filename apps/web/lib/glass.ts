@@ -18,7 +18,7 @@
  * only forward children.
  */
 
-/** Header bands and the side rail — structure, not content. */
+/** Header bands — structure, not content. */
 export const GLASS_CHROME =
   "border-border bg-background/60 backdrop-blur-xl backdrop-saturate-150";
 

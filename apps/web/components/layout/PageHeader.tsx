@@ -24,14 +24,33 @@ interface PageHeaderProps {
   className?: string;
 }
 
+/**
+ * The band at the top of a page: on a phone, the only bar at the top of the
+ * screen — the orb, the page's title, its controls, the refresh and the
+ * privacy blur — sticky on the chrome glass.
+ *
+ * From `md` the notch is the chrome and says where you are, and the top bar
+ * beside it holds the refresh and the blur, so this band keeps only what is
+ * the page's own: the controls a caller hands in, like the month picker. The
+ * title stays in the document for screen readers — it is still the page's
+ * one `h1` — but is not drawn. A page with no controls of its own has
+ * nothing left to show, so the whole band goes the same way and takes no
+ * room, and the page starts right under the notch.
+ */
 export function PageHeader({ titleKey, children, className }: PageHeaderProps) {
+  const bare = !children;
+
   return (
     <header
       className={cn(
         "sticky top-0 z-30 box-border h-[calc(var(--shell-header-height)+env(safe-area-inset-top,0px))] shrink-0",
         "border-b pt-safe",
         GLASS_CHROME,
-        "md:static md:h-[var(--shell-header-height)] md:pt-0",
+        bare
+          ? "md:sr-only"
+          : // No glass and no hairline: the controls sit on the page rather
+            // than in a bar of their own under the notch.
+            "md:static md:h-[var(--shell-header-height)] md:border-b-0 md:bg-transparent md:pt-0 md:backdrop-filter-none",
         className,
       )}
     >
@@ -44,20 +63,25 @@ export function PageHeader({ titleKey, children, className }: PageHeaderProps) {
           {/* The orb alone, with no wordmark: the app's own name is on the
               tab and the home screen, and the band beside it is already
               carrying the page title. `tone="mark"` because at 22px over a
-              glass header a clear shell has nothing to catch. */}
-          <Orb size="22px" tone="mark" className="shrink-0" />
-          <h1 className="truncate font-head text-lg leading-none md:text-xl">
+              glass header a clear shell has nothing to catch. Phone only:
+              from `md` the top bar's wordmark is right above it. Hidden on a
+              wrapper because `.pc-orb` sets its own `display` outside
+              Tailwind's layers, and an unlayered rule beats `md:hidden`. */}
+          <span className="flex shrink-0 md:hidden">
+            <Orb size="22px" tone="mark" />
+          </span>
+          <h1 className="truncate font-head text-lg leading-none md:sr-only">
             <PageTitle titleKey={titleKey} />
           </h1>
         </div>
         <div className={SHELL_HEADER_ACTIONS_CLASS}>
           {children}
-          {/* Renders nothing outside the app shell, so the auth and marketing
-              headers are unaffected. On a desktop the sidebar carries the
-              wide version and this one would be a second button saying the
-              same thing. */}
+          {/* Both phone only: from `md` the top bar carries them, and these
+              would be second buttons saying the same thing. The refresh
+              renders nothing outside the app shell, so the auth and
+              marketing headers are unaffected. */}
           <RefreshButton className="md:hidden" />
-          <PrivacyToggle className="shrink-0" />
+          <PrivacyToggle className="md:hidden" />
         </div>
       </div>
     </header>

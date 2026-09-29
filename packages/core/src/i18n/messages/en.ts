@@ -3011,8 +3011,6 @@ export const en = {
     askingBank: "Asking your bank…",
     lastChecked: "Refresh — last checked {age}",
     askBank: "Ask your bank for anything new",
-    refreshing: "Refreshing…",
-    refresh: "Refresh",
   },
 
   /** Sending again what is still only on this device. */

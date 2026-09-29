@@ -198,7 +198,7 @@ export function Panel({ card }: { card: BearingCard }) {
  * Plan. Choosing one of them to be *the* destination would be the same
  * invention `bearing-tiles.ts` refuses when it leaves a figure's href null,
  * so every distinct destination is offered and each is named after the
- * surface it goes to, in the words the sidebar already uses for it.
+ * surface it goes to, in the words the nav already uses for it.
  *
  * `card.destinations` is de-duplicated and contains only hrefs the card's own
  * figures carry, so a card whose figures all lead nowhere renders nothing
@@ -234,7 +234,7 @@ function Footer({ destinations }: { destinations: string[] }) {
  * What to call a destination: the surface's own name, from `navigation.ts`.
  *
  * Reuses `activeNavHref` rather than matching paths a second time, so a link
- * is named by exactly the rule that decides which sidebar entry lights up for
+ * is named by exactly the rule that decides which nav entry lights up for
  * it — `/history` is the Ledger here because it is the Ledger there. The
  * query string is cut first: `/transactions?review=inbox` is the Ledger, and
  * `activeNavHref` is given pathnames.

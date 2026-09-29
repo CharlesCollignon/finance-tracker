@@ -13,8 +13,8 @@ export interface NavChild {
   /**
    * The message key for the label, not the label.
    *
-   * This module is imported by the sidebar, the phone's bottom bar, the
-   * account menu and the marketing mocks. Holding a key rather than a word
+   * This module is imported by the desktop's top bar, the phone's bottom
+   * bar, the account menu and the marketing mocks. Holding a key rather than a word
    * keeps all four naming the surfaces identically in whichever language the
    * reader chose, which is what the file already promised about English.
    */
@@ -64,9 +64,9 @@ export const APP_NAV_ITEMS = [
     href: "/transactions",
     labelKey: "nav.ledger" satisfies Key,
     icon: ArrowsLeftRight,
-    // The one surface with more than one way of looking at it. On a phone
-    // these are the tabs at the top of the surface; the sidebar has the room
-    // to show them without being asked.
+    // One of two surfaces with more than one way of looking at it. These are
+    // the tabs at the top of the surface, at every width; the nav names the
+    // surface and the tabs name its views.
     children: [
       { href: "/transactions", labelKey: "nav.ledgerList" },
       { href: "/calendar", labelKey: "nav.ledgerCalendar" },

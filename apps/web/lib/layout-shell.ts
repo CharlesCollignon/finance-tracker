@@ -1,5 +1,5 @@
 /**
- * Shared app shell dimensions — keep SideNav + PageHeader borders aligned.
+ * Shared app shell dimensions.
  *
  * The width steps here and in PageContainer have to stay in step with each
  * other: they are what makes the header band's contents line up with the
@@ -13,9 +13,6 @@
  * its reason, so it is 72rem — wide enough for the Ledger's table and narrow
  * enough that a line of prose stops short of a tiring measure.
  */
-
-export const SHELL_HEADER_BAND_CLASS =
-  "box-border h-[var(--shell-header-height)] shrink-0 border-b border-border";
 
 export const SHELL_HEADER_INNER_CLASS =
   "mx-auto flex h-[var(--shell-header-height)] w-full min-w-0 max-w-lg " +

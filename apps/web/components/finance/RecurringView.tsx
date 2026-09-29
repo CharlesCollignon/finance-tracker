@@ -583,7 +583,7 @@ export function RecurringView({
             </div>
 
             {/* Four columns from xl, in the order of the tiles above. Not from
-                lg: beside the sidebar that leaves about 170px a column, too
+                lg: beside the side rail it left about 170px a column, too
                 narrow for a name, an amount and its on/off pill. */}
             <div className="hidden items-start gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
               {groups.map(({ type, label, items }) => (

@@ -1,7 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CaretDown, Eye, Plus, Sparkle } from "@phosphor-icons/react";
+import {
+  ArrowsClockwise,
+  CaretDown,
+  Eye,
+  Plus,
+  Sparkle,
+} from "@phosphor-icons/react";
 import { formatEuro, formatPercent } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { Orb } from "@/components/brand/Orb";
@@ -10,13 +16,15 @@ import { Card } from "@/components/retroui/Card";
 import { Badge } from "@/components/retroui/Badge";
 import { APP_NAV_ITEMS, PROFILE_NAV_ITEM } from "@/lib/navigation";
 import {
-  branchPath,
-  childrenHeight,
-  INDENT,
-  reachPath,
-  ROW_HEIGHT,
-  trunkPath,
-} from "@/lib/nav-tree";
+  NOTCH_CENTRE_CLASS,
+  NOTCH_ITEM_ACTIVE_CLASS,
+  NOTCH_ITEM_CLASS,
+  NOTCH_ITEM_IDLE_CLASS,
+  NOTCH_PILL_CLASS,
+  TOPBAR_END_CLASS,
+  TOPBAR_START_CLASS,
+} from "@/lib/nav-notch";
+import { NotchWing } from "@/components/layout/NotchWing";
 import { progressTone } from "@/lib/progress-tone";
 import type { LandingPageId } from "@/components/marketing/landing-copy";
 import {
@@ -240,192 +248,83 @@ const ACTIVE_NAV: Record<LandingPageId, Key> = {
   "month-read": "nav.plan",
 };
 
-/** The real side nav's structure — logo band, primary action, then the same
- * APP_NAV_ITEMS the app renders, drawn as the tree `BranchedNav` draws, off
- * the shared geometry in `lib/nav-tree`. All three are shared rather than
- * copied, so the picture and the thing it is a picture of cannot drift.
+/** The real top bar's structure — the wordmark, the notch holding the same
+ * APP_NAV_ITEMS the app renders and the add button, then the refresh, the
+ * blur and the avatar — drawn with the bar's own
+ * class strings from `lib/nav-notch` and the same wings from
+ * `components/layout/NotchWing`. Structure, colour and shape are all shared,
+ * so the picture and the thing it is a picture of cannot drift; the side rail
+ * this replaced shared only its geometry, and went on painting an active
+ * state the app had dropped.
  *
- * The colours are not shared and that is the seam to watch. The drift-proofing
- * above guards the structure axis only: when the app's active state moved off
- * Lamplit Gold onto the foreground — a rail marker in `bg-foreground`, a row
- * in `text-foreground` with no pill behind it, a reach path in
- * `stroke-foreground` — this mock went on painting the gold version, because
- * every one of those classes is hand-written here and hand-written there.
+ * Positioned over the top of `WebShell`'s pane, as the real bar is over the
+ * page. The pill is still, because a picture has nowhere to slide from.
  *
- * So: **`components/layout/BranchedNav.tsx` and this component must move
- * together**, and `components/layout/BottomNav.tsx` and `MobileTabBar` below
- * are the same pair for the phone. Sharing the colour the way the geometry is
- * shared means lifting the four class strings — marker, active row, idle row,
- * reach stroke — into a module beside `lib/nav-tree`, which is a change to
- * `components/layout/**` and `lib/**` rather than to the marketing surface,
- * and is the right fix the day either of those files is open. Until then the
- * four call sites below carry a note apiece. */
-function WebSideNav({ active }: { active: Key }) {
+ * The mock is 1200px wide, so it is drawn as the real bar is at that width:
+ * every surface labelled, and the add button as the gold disc at the end of
+ * the notch. */
+function WebTopNav({ active }: { active: Key }) {
   const t = useT();
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
-      <div className="flex h-[52px] shrink-0 items-center justify-center gap-2 border-b border-border px-5">
-        <Orb tone="mark" size="24px" className="shrink-0" />
-        <span className="font-logo text-xl leading-none">Pluclair</span>
+    <div className="absolute inset-x-0 top-0 z-10">
+      <div className={TOPBAR_START_CLASS}>
+        <span className="flex items-center gap-2">
+          <Orb tone="mark" size="28px" className="shrink-0" />
+          <span className="font-logo text-[1.5rem] leading-none">Pluclair</span>
+        </span>
       </div>
 
-      <div className="px-3 pt-3">
-        <div className="flex min-h-10 items-center gap-3 rounded-control bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
-          <Plus size={18} weight="bold" />
-          {t("ledger.addTransaction")}
-          {/* The shortcut the app actually has. This said `N` until now, and
-              `SideNav`'s own comment says why that is wrong: the bare-letter
-              binding was removed because a single key opens the sheet over
-              whatever a screen reader is in the middle of (WCAG 2.1 SC 2.1.4),
-              which left the picture teaching a key that does nothing. The real
-              badge reads the platform and says `⌘K` or `Ctrl K`; a still
-              picture cannot ask, so it shows the one a visitor on a keyboard
-              with no Command key can still press. */}
-          <kbd className="ml-auto rounded-control bg-black/15 px-1.5 py-0.5 text-[10px] font-normal">
-            Ctrl K
-          </kbd>
-        </div>
-      </div>
-
-      <nav className="flex flex-1 flex-col gap-0.5 p-3">
-        {APP_NAV_ITEMS.map(({ labelKey, icon: Icon, children }) => {
+      <nav className={NOTCH_CENTRE_CLASS}>
+        <NotchWing side="start" />
+        <NotchWing side="end" />
+        {APP_NAV_ITEMS.map(({ labelKey, icon: Icon }) => {
           const isActive = labelKey === active;
-          // The real sidebar unfolds the surface you are in and leaves the
-          // others folded, so the mock shows one surface's views and no
-          // others. `BranchedNav` keeps that in state; here it is the
-          // active flag, which is the same rule with nothing to remember.
-          const showKids = isActive && children.length > 0;
           return (
-            <div key={labelKey} className="relative flex flex-col">
-              {/* `bg-foreground`, with `components/layout/BranchedNav.tsx`:
-                  against a rail that is otherwise a hairline, full-strength
-                  ink is already the brightest thing on it. */}
-              {isActive ? (
-                <span
-                  aria-hidden
-                  className="absolute -left-1.5 top-3 z-10 h-4 w-0.5 rounded-full bg-foreground"
-                />
-              ) : null}
-              <div className="flex items-center gap-1">
-                {/* No pill behind the row you are in, with
-                    `components/layout/BranchedNav.tsx`: DESIGN.md's Navigation
-                    section puts the active state in the foreground colour, and
-                    the marker beside it and the icon's `fill` weight say the
-                    rest. What stood here was `bg-primary/10 text-primary-ink`
-                    — the accent spent twice on a state three other channels
-                    already make unmistakable. */}
-                <span
-                  className={cn(
-                    "flex min-h-10 flex-1 items-center gap-3 rounded-control px-3 py-2 text-sm font-medium",
-                    isActive ? "text-foreground" : "text-muted-foreground",
-                  )}
-                >
-                  <Icon size={18} weight={isActive ? "fill" : "light"} />
-                  {t(labelKey)}
-                </span>
-                {children.length > 0 ? (
-                  <span className="shrink-0 p-1.5 text-muted-foreground">
-                    <CaretDown
-                      size={14}
-                      weight="bold"
-                      className={cn(!showKids && "-rotate-90")}
-                    />
-                  </span>
-                ) : null}
-              </div>
-
-              {showKids ? (
-                <div
-                  className="relative"
-                  style={{ height: childrenHeight(children.length) }}
-                >
-                  <svg
-                    width={INDENT}
-                    height={childrenHeight(children.length)}
-                    aria-hidden
-                    className="pointer-events-none absolute left-0 top-0 overflow-visible"
-                  >
-                    <path
-                      d={trunkPath(children.length)}
-                      className="fill-none stroke-hairline-strong"
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                    />
-                    {children.map((kid, index) => (
-                      <path
-                        key={kid.href}
-                        d={branchPath(index)}
-                        className="fill-none stroke-hairline-strong"
-                        strokeWidth={1.5}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    ))}
-                    {/* The reach, traced to the view the mock is showing —
-                        always the first, because that is the view each of
-                        these screenshots is of. `stroke-foreground` against
-                        the hairline the rest of the tree is drawn in, with
-                        `components/layout/BranchedNav.tsx`: two steps of the
-                        same ink, so the drawing and the words agree. It was
-                        `stroke-primary`, which made the tree the one place
-                        left on either surface where the accent marked a
-                        position. */}
-                    <path
-                      d={reachPath(0)}
-                      className="fill-none stroke-foreground"
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  {children.map((kid, index) => (
-                    <span
-                      key={kid.href}
-                      style={{ height: ROW_HEIGHT, paddingLeft: INDENT }}
-                      className={cn(
-                        "flex items-center rounded-control pr-3 text-sm",
-                        index === 0
-                          ? "font-medium text-foreground"
-                          : "text-muted-foreground",
-                      )}
-                    >
-                      {t(kid.labelKey)}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+            <span
+              key={labelKey}
+              className={cn(
+                NOTCH_ITEM_CLASS,
+                isActive ? NOTCH_ITEM_ACTIVE_CLASS : NOTCH_ITEM_IDLE_CLASS,
+              )}
+            >
+              {isActive ? <span className={NOTCH_PILL_CLASS} /> : null}
+              <span className="relative flex items-center gap-2">
+                <Icon size={18} weight={isActive ? "fill" : "light"} />
+                {t(labelKey)}
+              </span>
+            </span>
           );
         })}
+        <span className="ml-1 flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <Plus size={18} weight="bold" />
+        </span>
       </nav>
 
-      <div className="flex items-center gap-3 border-t border-border p-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-semibold">
-          C
+      <div className={TOPBAR_END_CLASS}>
+        <span className="flex size-11 items-center justify-center rounded-full text-muted-foreground">
+          <ArrowsClockwise size={18} />
         </span>
-        <span className="text-sm text-muted-foreground">Charles</span>
+        <span className="flex size-11 items-center justify-center rounded-full text-muted-foreground">
+          <Eye size={18} />
+        </span>
+        <span className="flex size-11 items-center justify-center">
+          <span className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+            C
+          </span>
+        </span>
       </div>
-    </aside>
+    </div>
   );
 }
 
-/** Header band: the screen's title, the month it is showing, privacy toggle. */
-function WebHeaderBand({
-  title,
-  trailing,
-}: {
-  title: string;
-  trailing?: ReactNode;
-}) {
+/** What is left of the page header on a desktop: the page's own controls,
+ * which in these screenshots is only ever the Ledger's month. The title is
+ * the notch's to say and the blur is in the top bar, as in the real
+ * `PageHeader`, so a page with nothing of its own draws no band at all. */
+function WebHeaderBand({ trailing }: { trailing: ReactNode }) {
   return (
-    <header className="flex h-[52px] shrink-0 items-center justify-between gap-4 border-b border-border px-6">
-      <h1 className="font-head text-xl leading-none">{title}</h1>
-      <div className="flex items-center gap-3">
-        {trailing}
-        <span className="flex h-8 w-8 items-center justify-center rounded-control text-muted-foreground">
-          <Eye size={18} />
-        </span>
-      </div>
+    <header className="mx-auto flex h-[52px] w-full max-w-5xl shrink-0 items-center justify-end gap-4 px-6">
+      {trailing}
     </header>
   );
 }
@@ -449,16 +348,20 @@ function WebShell({
   monthLabel?: string;
   children: ReactNode;
 }) {
-  const t = useT();
   return (
-    <div className="flex size-full">
-      <WebSideNav active={active} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <WebHeaderBand
-          title={t(active)}
-          trailing={monthLabel ? <MonthStepper label={monthLabel} /> : null}
-        />
-        <div className="flex min-h-0 flex-1 flex-col gap-4 px-6 py-5">
+    // The bezel, and the page as a rounded pane set into it — the real shell's
+    // `.app-frame`, drawn as a padding and a radius because a picture does
+    // not scroll and so has no reason to use the outline the real one needs.
+    <div className="flex size-full bg-frame p-2">
+      <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-background pt-[var(--shell-notch-height)]">
+        <WebTopNav active={active} />
+        {monthLabel ? (
+          <WebHeaderBand trailing={<MonthStepper label={monthLabel} />} />
+        ) : null}
+        {/* The real app's column at this width, `PageContainer`'s `lg` step,
+          rather than the whole frame: with no rail beside it, content left
+          to fill 1200px would be drawn wider than the app ever draws it. */}
+        <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-4 px-6 py-3">
           {children}
         </div>
       </div>

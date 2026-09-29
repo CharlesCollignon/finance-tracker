@@ -86,17 +86,17 @@ export function AppBackdrop() {
     <div
       aria-hidden
       /*
-       * `--bloom-x` is where the light is centred, and it is not the middle
-       * of the window. On a desktop the side rail takes the first 224–256px,
-       * so the content column's optical centre sits about 58% across — and a
-       * bloom centred at 50% reads as sitting off to the left of everything
-       * it is meant to be lighting. On a phone there is no rail and 50% is
-       * the middle of the content, which is the same rule with a different
-       * answer.
+       * `--bloom-x` is where the light is centred: over the content column's
+       * optical centre, which is the middle of the window at every width now.
+       * It sat at 58% on a desktop while a 224–256px side rail took the left
+       * of the window and pushed the column right; the rail became the top
+       * bar, and a light still at 58% would sit off to the right of
+       * everything it is meant to be lighting. The variable stays so the
+       * rule has a place to be restated the day the layout moves again.
        */
       className={cn(
         "pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-background",
-        "[--bloom-x:50%] md:[--bloom-x:58%]",
+        "[--bloom-x:50%]",
       )}
     >
       {/* The bloom. Two offset radials rather than one: a single centred glow

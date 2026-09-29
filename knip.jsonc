@@ -128,10 +128,6 @@
         // inside Next's own dependency tree rather than being declared here.
         // DEBT, mildly: declaring it would be more honest than this line.
         "server-only",
-
-        // DEBT: nothing in the app imports `motion` any more. Delete the
-        // dependency and this line together.
-        "motion",
       ],
       "ignoreIssues": {
         // ---------------------------------------------------------------

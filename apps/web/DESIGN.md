@@ -229,12 +229,17 @@ the colour is in what it paints on.
 
 ### Neutral
 
+- **Frame** (`#040406`): The desktop shell's bezel and the notch cut from it —
+  the one surface darker than the page, so the page reads as a lit pane set
+  into it.
 - **Cool Near-Black** (`#0a0a10`): The application page. Also the ink used
   *on* the accent, since dark-on-gold is the only readable direction there.
 - **Marketing Ground** (`#06060a`): The public site, one step deeper than the
   app so a lit artefact over it reads as a thing giving off light.
-- **Sidebar Ground** (`#0d0d15`): The navigation rail, sitting between the
-  marketing ground and the page.
+- **Sidebar Ground** (`#0d0d15`): The value step between the marketing ground
+  and the page. It named the navigation rail's ground; the rail became the
+  desktop's bezel and notch, which are Frame, so nothing on the web paints it now and
+  the token stays for the step it marks.
 - **Card Surface** (`#131320`): Cards, popovers and input fields. The first
   step that reads as a distinct surface rather than as the page.
 - **Raised Surface** (`#1c1c2b`): Secondary buttons, muted fills, and the hover
@@ -258,19 +263,20 @@ meant to reach for them.
 
 - **Bloom Violet** (`rgba(139, 74, 255, 0.55)`): The main light, and the
   brightest colour in the system by a wide margin. It is centred on the content
-  rather than on the window — 58% across on a desktop, where the side rail
-  takes the first 224–256px and the content column's optical centre sits right
-  of the middle, and 50% on a phone, where there is no rail and the content is
-  the window.
+  column's optical centre, which is the middle of the window at every width.
+  It sat at 58% on a desktop while a 224–256px side rail pushed the column
+  right; the rail became the top bar, and the light came back to 50%.
 - **Bloom Violet Deep** (`rgba(124, 58, 237, 0.24)`): The main light's second
   stop, at 44% of its radius. One stop falls off like a spotlight; the second
   is what makes it fall off like a room.
 - **Offstage Magenta** (`rgba(232, 74, 178, 0.26)`): A second source high on
   the right, placed as though it were out of frame. One centred glow reads as a
   spotlight; two of different hue, size and position read as depth.
-- **Rail Indigo** (`rgba(88, 52, 196, 0.26)`): Down the left edge, with exactly
-  one job — it keeps the navigation rail from reading as a separate black panel
-  bolted onto a coloured page.
+- **Rail Indigo** (`rgba(88, 52, 196, 0.26)`): Down the left edge. Its one job
+  was to keep the navigation rail from reading as a separate black panel
+  bolted onto a coloured page. The rail is gone, so for now it only colours the
+  left of the room; it is the first stop to question if the bloom is ever
+  redrawn.
 - **Bounce Purple** (`rgba(84, 48, 160, 0.30)`): The bounce along the bottom.
   Without it the lower half of the page is dead black and the whole thing reads
   as a bloom pasted onto a void rather than as a lit room.
@@ -412,10 +418,16 @@ is the move this system already rejected.
 
 ## Layout
 
-The application is a shell: a fixed header at `3.25rem`, a navigation rail on
-the sidebar ground, and on small screens a bottom navigation bar at `3.5rem`
-with a `0.75rem` inset, both respecting `env(safe-area-inset-*)` through the
-`pt-safe` and `pb-safe` utilities.
+The application is a shell. On a desktop the page is a rounded pane set into a
+`0.5rem` bezel in Frame, with one notch of the same colour hanging `3.5rem`
+below the bezel at the top centre holding the five surfaces and the add
+button, and the wordmark and the shared controls on the page either side of
+it. There are no page titles on a desktop — the notch says where you are — so
+a page's own header only appears, at `3.25rem`, when it has controls of its
+own, like the Ledger's month. On small screens the page header is the only bar at
+the top and a bottom navigation bar at `3.5rem` with a `0.75rem` inset is the
+nav, both respecting `env(safe-area-inset-*)` through the `pt-safe` and
+`pb-safe` utilities.
 
 Spacing derives from a `0.25rem` base. Two composite steps are named because
 they recur structurally rather than incidentally: **row** (`12px`) is the
@@ -485,9 +497,13 @@ translucency alone drains the violet it admits, and the saturate step is what
 puts it back.
 
 - **Chrome** (`GLASS_CHROME` — `bg-background/60`, `backdrop-blur-xl` (24px),
-  `backdrop-saturate-150`, over `border-border`): Header bands and the side
-  rail. Structure, not content, and it has to stay legible over anything that
-  scrolls under it. Used by `PageHeader` and `SideNav`.
+  `backdrop-saturate-150`, over `border-border`): Header bands. Structure, not
+  content, and it has to stay legible over anything that scrolls under it.
+  Used by `PageHeader` on a phone. The desktop's chrome is the bezel and its
+  notch, which are opaque Frame rather than glass: content scrolls behind
+  them, not under a blur, and a light frost (`.app-topbar-scrim`) comes up
+  behind the wordmark and actions once it has — a blur rather than a fade to
+  the page's colour, so the notch keeps light around it.
 - **Card** (`GLASS_CARD` — `bg-card/60`, `backdrop-blur-xl` (24px),
   `backdrop-saturate-150`, over a `border-foreground/10` hairline): A content
   card floating on the veil, and the most used of the three. `60` rather than a
@@ -725,10 +741,33 @@ all; changing one alone breaks the frame.
 
 ### Navigation
 
-- Header at `3.25rem` on the sidebar ground with a hairline beneath. On small
-  screens a bottom bar at `3.5rem` with a `0.75rem` inset, inside the safe
-  area. Active state is carried by foreground colour, not by a pill or an
-  underline.
+- From `md`, the bezel (`.app-frame`) and one notch cut from it (`TopNav`),
+  centred, holding the five surfaces and, at its end, the add button as a
+  gold "+" disc (its name in the tooltip and for screen readers). The notch is square where it meets the
+  bezel and round where it faces the page, and concave fillets (`NotchWing`)
+  turn its square corners into the bezel's line. The wordmark (left) and the
+  refresh, privacy blur and account (right) sit on the page itself, on the notch's row line, with no
+  ground at rest; once the page scrolls, a frost comes up behind them so
+  nothing is read through them, and the top of the pane keeps its light. The bezel is an outline on a
+  fixed element over the page, so the document still scrolls as a document.
+- In the centre notch the surface you are in is a pill of Raised Surface and a
+  filled icon. The pill is one Motion `layoutId`, so it slides to the next
+  surface rather than a second one lighting up; the layout engine behind it
+  loads after the page (`lib/motion-features`), and reduced motion moves it
+  without the slide. Below `lg` the other surfaces drop to their icon.
+- The bar's classes live in `lib/nav-notch` and the notch's wings in
+  `components/layout/NotchWing`, both shared with the marketing mock that
+  pictures them.
+- A surface's views (the Ledger's three, the Wallets' two) are the tab strip
+  at the top of the surface, at every width; the nav names only surfaces.
+- The page header at `3.25rem`: on a phone, sticky, on Chrome glass with a
+  hairline beneath, holding the orb, the title, the page's controls, the
+  refresh and the blur. From `md`, only the page's own controls, static and
+  bare; the title stays in the document as the page's `h1` for screen readers
+  but is not drawn, and a page with no controls draws no band at all.
+- On small screens a bottom bar at `3.5rem` with a `0.75rem` inset, inside the
+  safe area. There, active state is carried by foreground colour and the
+  icon's fill, not by a pill or an underline.
 
 ### Signature: The Privacy Blur
 

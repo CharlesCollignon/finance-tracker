@@ -2083,8 +2083,6 @@ export const fr: Messages = {
     askingBank: "Interrogation de votre banque…",
     lastChecked: "Actualiser — dernière vérification {age}",
     askBank: "Demander à votre banque s'il y a du nouveau",
-    refreshing: "Actualisation…",
-    refresh: "Actualiser",
   },
 
   outbox: {

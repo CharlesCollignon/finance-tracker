@@ -21,7 +21,8 @@ import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 
 interface AccountMenuProps {
-  variant: "bottom" | "side";
+  /** The phone's bottom bar, or the desktop's top bar. */
+  variant: "bottom" | "top";
   displayName: string;
   initial: string;
 }
@@ -70,7 +71,7 @@ export function AccountMenu({
       return;
     }
     setPanelStyle(
-      variant === "side" ? sidePanelStyle(triggerRef.current) : undefined,
+      variant === "top" ? topPanelStyle(triggerRef.current) : undefined,
     );
     setOpenAt(pathname);
   }
@@ -128,7 +129,7 @@ export function AccountMenu({
                 "fixed z-[70] flex",
                 variant === "bottom"
                   ? "inset-x-0 justify-center px-4 bottom-[calc(var(--shell-bottom-nav-height)+var(--shell-bottom-nav-inset)+0.5rem+env(safe-area-inset-bottom,0px))]"
-                  : "left-3",
+                  : "justify-end",
               )}
               style={panelStyle}
             >
@@ -147,7 +148,7 @@ export function AccountMenu({
                   {t("common.account")}
                 </p>
                 {/* The label comes off the nav item the href comes off, so
-                    the row cannot name a surface the sidebar does not. It
+                    the row cannot name a surface the nav does not. It
                     said "Settings", which is not one of this app's screens. */}
                 <Link
                   href={PROFILE_NAV_ITEM.href}
@@ -219,6 +220,8 @@ export function AccountMenu({
     );
   }
 
+  // The avatar alone. The rail had the width to print the name beside it;
+  // the bar keeps the name for the button's label and the initial's tooltip.
   return (
     <>
       <button
@@ -229,30 +232,31 @@ export function AccountMenu({
         aria-label={displayName}
         onClick={toggle}
         className={cn(
-          "flex w-full min-h-10 items-center gap-3 rounded-control px-3 py-2",
-          "text-sm font-medium transition-colors duration-hover",
-          active
-            ? "text-foreground"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+          "flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full",
+          "transition-colors duration-hover",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          active ? "bg-muted" : "hover:bg-muted",
         )}
       >
         <UserInitial initial={initial} name={displayName} size="md" />
-        <span className="min-w-0 truncate">{displayName}</span>
       </button>
       {panel}
     </>
   );
 }
 
-function sidePanelStyle(
+/** Under the avatar, its right edge on the avatar's, so it opens down and
+ * inward rather than off the side of the window. */
+function topPanelStyle(
   trigger: HTMLButtonElement | null,
 ): CSSProperties | undefined {
   if (!trigger) {
-    return { bottom: "4.5rem" };
+    return { top: "4.25rem", right: "1rem", width: "18rem" };
   }
   const rect = trigger.getBoundingClientRect();
   return {
-    bottom: `calc(${window.innerHeight - rect.top}px + 0.5rem)`,
-    width: Math.max(rect.width, 220),
+    top: `calc(${rect.bottom}px + 0.5rem)`,
+    right: `${window.innerWidth - rect.right}px`,
+    width: "18rem",
   };
 }
