@@ -2,42 +2,42 @@ import { Orb } from "@/components/brand/Orb";
 import { cn } from "@/lib/utils";
 
 /**
- * The hero artwork.
+ * The hero's sky: the orb as a horizon, several viewports across, its lit rim
+ * arcing from under the header on the left to off the bottom-right corner.
  *
  * Three layers, back to front:
  *
- *   The bloom — the warm light the sphere throws into the room. Sized by the
- *   box rather than by gradient stops so a caller scales the light by scaling
- *   the element.
+ *   The haze — the light the atmosphere scatters out into space, wide and
+ *   dim, breathing on an 11s cycle.
  *
- *   The contact smear — a flattened, brighter pool under the sphere. Without
- *   it the orb hangs in the middle of nothing; with it the hero has a floor.
+ *   The limb — a thin hot band hugging the outside of the rim, the
+ *   atmosphere seen edge-on.
  *
- *   The sphere itself, floating on a 16s cycle against the bloom's 11s, and
- *   inside it a 22s churn of cloud turning on a 45s shell, so no two of the
- *   four ever settle into one pulse the eye can lock onto.
+ *   The sphere itself, opaque, which is what shapes the other two: both are
+ *   plain discs centred on it, and it hides everything of them but the part
+ *   beyond its edge. Each is nudged toward the light, so what shows is a
+ *   crescent that is thickest where the rim burns and gone on the far side.
  *
- * The bloom sits behind rather than around the glass on purpose: the orb
- * frosts whatever is behind it, so light put back there comes through the
- * shell diffused, which is the whole reason the sphere looks lit from within
- * rather than pasted on.
+ * Where the planet sits, and why its size steps with the screen's shape as
+ * well as its width, is `.marketing-horizon-planet` in globals.css.
+ *
+ * The wrapper fades the whole thing out over the hero's last stretch, so the
+ * rim leaves the section as light going out rather than on a cut.
  */
-export function LandingOrb({ className }: { className?: string }) {
+export function LandingHorizon({ className }: { className?: string }) {
   return (
     <div
-      className={cn("pointer-events-none select-none", className)}
+      className={cn(
+        "pointer-events-none absolute inset-0 select-none overflow-hidden",
+        "[mask-image:linear-gradient(to_bottom,black_68%,transparent)]",
+        className,
+      )}
       aria-hidden
     >
-      <div className="relative h-full w-full">
-        <div
-          className="marketing-bloom marketing-bloom-breathe absolute -inset-[38%] rounded-full"
-          style={{ filter: "blur(12px)" }}
-        />
-        <div
-          className="marketing-bloom absolute left-1/2 top-[62%] h-[26%] w-[135%] -translate-x-1/2 rounded-[50%] opacity-70"
-          style={{ filter: "blur(28px)" }}
-        />
-        <Orb className="marketing-orb relative h-full w-full" />
+      <div className="marketing-horizon-planet">
+        <div className="marketing-horizon-haze marketing-horizon-breathe absolute inset-[-14%] translate-x-[7.5%] -translate-y-[2%] rounded-full" />
+        <div className="marketing-horizon-limb absolute inset-[-1.6%] translate-x-[1.1%] -translate-y-[0.3%] rounded-full" />
+        <Orb tone="horizon" className="absolute inset-0 h-full w-full" />
       </div>
     </div>
   );
@@ -45,7 +45,7 @@ export function LandingOrb({ className }: { className?: string }) {
 
 /**
  * The bloom on its own, for sections that want the sphere's light without a
- * second sphere competing with the hero's. Always decorative.
+ * sphere competing with the hero's horizon. Always decorative.
  */
 export function LandingBloom({ className }: { className?: string }) {
   return (

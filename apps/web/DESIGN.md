@@ -564,8 +564,13 @@ the inset highlights that are neither — including the orb's, the one
   the underside of the sphere, sized in `cqw` so it scales with the mark rather
   than with the viewport. Interior modelling of a decoration, not a claim about
   where its box sits.
+- **Orb Horizon Rim** (five insets on `.pc-orb-horizon::after`, each offset
+  along `--orb-away-x/y`): the landing hero's horizon, the orb several
+  viewports across and lit from behind. The filament, two bands and a thread,
+  all drawn inside the disc and all in `cqw`; the light beyond the rim is two
+  gradient discs behind the orb, not a shadow. Modelling, like the bounce.
 
-Five entries, and exactly two of them carry anything cast: the drop inside
+Six entries, and exactly two of them carry anything cast: the drop inside
 Marketing Panel Glass and the drop inside Marketing Menu Glass. Everything else
 here is an inset — light drawn on a surface, which is how a system that refuses
 elevation can hold this many and stay flat.
@@ -591,12 +596,13 @@ the phone mock — because neither was glass, and the exception is the
 vocabulary, not the surface.
 
 Two is the count of what is cast, not of what is written. `box-shadow` appears
-at five places in `app/globals.css`, and the three this rule does not name cast
+at six places in `app/globals.css`, and the four this rule does not name cast
 nothing: `.glass-flat` and `.glass-grid` each take
-`inset 0 1px 0 rgba(255, 255, 255, 0.09)`, and `.pc-orb::after` takes
-`inset 0 -7cqw 11cqw -5cqw rgb(255 237 194 / calc(0.24 * var(--orb-glass)))`.
-The two cast declarations open with an inset of their own as well, so the file
-holds five inset highlights against two drops. An inset puts nothing in front
+`inset 0 1px 0 rgba(255, 255, 255, 0.09)`, `.pc-orb::after` takes
+`inset 0 -7cqw 11cqw -5cqw rgb(255 237 194 / calc(0.24 * var(--orb-glass)))`,
+and `.pc-orb-horizon::after` replaces that with the rim's five insets. The two
+cast declarations open with an inset of their own as well, so the file holds
+six inset declarations against two drops. An inset puts nothing in front
 of the element and moves nothing away from the page — it is light drawn on a
 surface, which is precisely what the bezel inset is and why the flatness rule
 can call a recess its one exception. So this rule is scoped to what is thrown,
@@ -739,8 +745,8 @@ three-step duration scale: **press** 140ms, **hover** 200ms, **enter** 500ms
 (550ms for the page and stagger entrances). Tailwind's default transition
 duration is pointed at the hover token, so a transition written without a
 duration is still on the scale. A global `prefers-reduced-motion` block reduces
-all animation and transition to 0.01ms, and the landing logo's float is
-switched off entirely.
+all animation and transition to 0.01ms, and the landing logo's float and the
+hero horizon's breathing are switched off entirely.
 
 ## Do's and Don'ts
 

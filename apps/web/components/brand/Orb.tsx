@@ -5,14 +5,19 @@ import { cn } from "@/lib/utils";
  * because it has a whole hero's worth of dark sky behind it; a mark 22px
  * across over a scrolling header band needs the tint thickened or it reads
  * as a smudge. See `--orb-glass` in globals.css.
+ *
+ * `horizon` is the orb seen from close enough that it fills the sky: the
+ * night side, dark, lit only along the rim by a source behind it. It is the
+ * landing hero's backdrop, several viewports across, and like the mark it
+ * drops the interior — see `.pc-orb-horizon` for why.
  */
-type OrbTone = "hero" | "mark";
+type OrbTone = "hero" | "mark" | "horizon";
 
 interface OrbProps {
   /**
    * A CSS length for both axes. Left off, the orb takes its size from
-   * `className` — which is how the hero uses it, since a fluid
-   * `min(58vw,352px)` cannot be written here as a number. Every blur and
+   * `className` — which is how the hero's horizon uses it, since a width in
+   * percent of the section cannot be written here as a number. Every blur and
    * inset scales off the rendered width either way (see `.pc-orb` in
    * globals.css).
    */
@@ -44,7 +49,12 @@ interface OrbProps {
 export function Orb({ size, className, tone = "hero" }: OrbProps) {
   return (
     <div
-      className={cn("pc-orb", tone === "mark" && "pc-orb-mark", className)}
+      className={cn(
+        "pc-orb",
+        tone === "mark" && "pc-orb-mark",
+        tone === "horizon" && "pc-orb-horizon",
+        className,
+      )}
       style={{ width: size, height: size }}
       aria-hidden
     >

@@ -35,16 +35,6 @@ export const landingCopyFr: LandingCopySections & {
     titleLines: ["Tout votre mois,", "sur un seul écran calme"],
     tagline:
       "Revenus, factures, épargne et investissements — saisis par vous, gardés en privé, et rapprochés de votre vrai solde à la fin de chaque mois.",
-    cards: {
-      remaining: {
-        label: "Reste en mars",
-        caption: "sur 3 200 € gagnés",
-      },
-      unrecorded: {
-        label: "Non enregistré · févr.",
-        caption: "trouvé par un seul solde",
-      },
-    },
   },
 
   pillars: {

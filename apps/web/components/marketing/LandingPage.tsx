@@ -9,7 +9,10 @@ import {
   Sparkle,
   Target,
 } from "@phosphor-icons/react/dist/ssr";
-import { LandingBloom, LandingOrb } from "@/components/marketing/LandingOrb";
+import {
+  LandingBloom,
+  LandingHorizon,
+} from "@/components/marketing/LandingOrb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LandingDeviceStack } from "@/components/marketing/LandingDeviceStack";
 import { Reveal, Rise } from "@/components/marketing/LandingReveal";
@@ -29,7 +32,7 @@ interface LandingPageProps {
  * glyphs does not make this whole page a client component.
  *
  * The first five are the glyphs `APP_NAV_ITEMS` gives those same surfaces, so
- * a visitor meets each one's mark here and finds it again in the sidebar. The
+ * a visitor meets each one's mark here and finds it again in the app's nav. The
  * last two are not surfaces and have no nav entry to borrow from. */
 const FEATURE_ICONS: Record<LandingPageId, React.ReactNode> = {
   bearing: <Compass size={18} />,
@@ -110,17 +113,29 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
   return (
     <>
       {/* ------------------------------------------------------------ hero */}
-      <section className="relative isolate flex min-h-dvh flex-col overflow-hidden px-6">
+      <section className="relative isolate flex min-h-dvh flex-col justify-center overflow-hidden px-6 pb-20 pt-28">
         <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-          {/* Only the sparks now. There used to be a cool wash from the top
-              edge here, put in so the warm sphere had something to be warm
-              against; `.marketing-ambient` is that wash since it took the
-              app's violet, and two of them stacked only greyed the violet
-              out. */}
+          {/* The sparks, then the horizon in front of them. There used to be
+              a cool wash from the top edge here, put in so the warm sphere
+              had something to be warm against; `.marketing-ambient` is that
+              wash since it took the app's violet, and two of them stacked
+              only greyed the violet out. The horizon is opaque, so the sparks
+              behind it show only in the sky beyond the rim — a planet in
+              front of the stars hides them, and that is half of what makes it
+              read as one. */}
           <div className="marketing-sparks absolute inset-x-0 top-0 h-[70%] opacity-80" />
+          <LandingHorizon />
         </div>
 
-        <div className="page-enter relative z-20 mx-auto flex w-full max-w-3xl flex-col items-center pt-[calc(8rem+1vh)] text-center md:pt-[calc(8.5rem+2vh)]">
+        {/* Centred in the window, with nothing under it but the sky. The two
+            sample figures that used to float below it are gone; the one that
+            carried the argument — what February's balance proved was never
+            recorded — is in the month-close section further down, where it
+            is explained rather than merely shown. The top padding is the
+            fixed nav pill's clearance, a little more than the bottom's, so
+            the block sits at the middle of the part of the window the nav
+            leaves rather than of the whole window. */}
+        <div className="page-enter relative z-20 mx-auto flex w-full max-w-3xl flex-col items-center text-center">
           <h1 className="marketing-display text-display-hero">
             {hero.titleLines.map((line) => (
               <span key={line} className="block">
@@ -137,81 +152,6 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             className="mt-9 justify-center"
           />
         </div>
-
-        {/* The stage.
-            Width is capped well inside the page so the two cards, pinned to
-            its edges, actually overlap the sphere — a glass panel floating on
-            bare ground has nothing to blur and stops reading as glass. The
-            whole sphere shows, resting on the section's bottom edge: at the
-            reference's proportions a sharp orb cropped in half stops reading
-            as an object and starts reading as a sunrise.
-
-            The minimum height is the sphere's, not a round number. The orb is
-            `min(58vw, 352px)` square from `top-1`, so it wants 356px, and this
-            box used to promise 304 at `sm` and 328 at `md`. The fade pinned to
-            its bottom edge reaches full `--marketing-ground` exactly at that
-            edge — so when the edge fell 28px short of the sphere, the fade put
-            an opaque horizontal line across it. The thing that exists to stop
-            the orb ending on a hard cut was drawing one.
-
-            `flex-1` still lets the stage grow on a tall window; all the
-            minimum has to guarantee is that the sphere never finishes outside
-            the box that fades it. Below `sm` the 352px cap does not bind —
-            58vw of a phone is about 220px — so the base stays as it was. */}
-        <div className="relative z-10 mx-auto mt-4 min-h-[17.5rem] w-full max-w-3xl flex-1 sm:min-h-[22.5rem]">
-          <LandingOrb className="absolute left-1/2 top-1 aspect-square w-[min(58vw,352px)] -translate-x-1/2" />
-
-          {/* Which card survives the narrow viewport, and why it is this one.
-              Below 640px the stage is 327px wide and 280px tall, and two
-              cards of this height pinned to opposite corners overlap by about
-              thirty pixels down the middle — measured, not guessed — so one
-              of them goes. It used to be the unrecorded figure, which left
-              every phone showing "what's left this month" and nothing else:
-              the one number every budgeting app already prints, while the
-              number that is the entire reason this one exists was the one
-              hidden. The order is reversed now. What is left in March is the
-              figure a reader can get anywhere; what February's balance proved
-              was never recorded is the figure they cannot, so it is the one
-              that stays. The example-data note below the stage is one
-              sentence about the sample month and labels either card. */}
-          <GlassStat
-            href={featureHref("bearing")}
-            label={hero.cards.remaining.label}
-            value={euro(sample.remaining)}
-            caption={hero.cards.remaining.caption}
-            meter={sample.remaining / sample.income}
-            className="absolute left-0 top-6 z-10 hidden w-[15.5rem] sm:block"
-          />
-
-          <GlassStat
-            href={featureHref("month-close")}
-            label={hero.cards.unrecorded.label}
-            value={euro(close.unrecorded)}
-            caption={hero.cards.unrecorded.caption}
-            className="absolute left-0 top-5 z-10 w-[13.5rem] sm:bottom-5 sm:left-auto sm:right-0 sm:top-auto sm:w-[15.5rem]"
-          />
-
-          {/* Hands the sphere off to the next section instead of ending on a
-              hard cut through it. It lives inside the stage, between the orb
-              and the cards, so it softens the artwork without also greying
-              out the figures floating over it. */}
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-[var(--marketing-ground)]"
-            aria-hidden
-          />
-        </div>
-
-        {/* The figures above the fold — two of them on a tablet and up, one
-            on a phone — and neither of them anybody's. The same sentence the
-            close's sample figures carry further down, because they are the
-            same sample month and one wording is what keeps it from reading as
-            a legal hedge attached to each card. Below the stage rather than
-            inside it: the cards are pinned to the stage's corners, and a
-            caption placed among them lands under whichever one the viewport
-            puts there. */}
-        <p className="relative z-10 mx-auto max-w-sm pb-6 text-center text-xs leading-relaxed text-marketing-faint">
-          {monthClose.exampleNote}
-        </p>
       </section>
 
       {/* --------------------------------------------------------- pillars */}

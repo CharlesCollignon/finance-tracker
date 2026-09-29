@@ -606,19 +606,106 @@ html:has(.marketing-shell) {
   );
 }
 
-@keyframes marketing-orb-float {
-  0%,
-  100% {
-    transform: translateY(-10px) scale(1);
-  }
-  50% {
-    transform: translateY(10px) scale(1.012);
+/* Where the horizon sits: a square in percent of the hero's width, its top
+   under the header and its centre off the left edge.
+
+   The rim's path is a circle through two places — in at the left edge under
+   the header, and out past the right-hand end of the tagline — and the width
+   that puts it through both is not proportional to the screen. The type is a
+   fixed column in the middle, so the wider the screen is against its height,
+   the flatter the circle has to be to clear that column at the tagline's
+   depth: 240% of a 1280px screen does it with room to spare, and at
+   1920×1080 the same 240% runs the filament straight through the tagline's
+   words. Hence the aspect-ratio steps on top of the width ones.
+
+   On a portrait screen no circle does both — one wide enough to clear the
+   tagline is so flat it is out of the right edge before the buttons — so
+   there the rim crosses the text, as the reference's crosses its headline,
+   and the centre moves off-screen instead: half a screen off on a phone, a
+   quarter on a tablet, so the sweep still reaches down the right side rather
+   than bending round inside the screen and coming back up it. */
+.marketing-horizon-planet {
+  position: absolute;
+  top: 4.5rem;
+  left: -50%;
+  width: 320%;
+  aspect-ratio: 1;
+  translate: -50% 0;
+}
+
+@media (min-width: 40rem) {
+  .marketing-horizon-planet {
+    left: -25%;
+    width: 280%;
   }
 }
 
-.marketing-orb {
-  animation: marketing-orb-float 16s ease-in-out infinite;
-  will-change: transform;
+@media (min-width: 64rem) {
+  .marketing-horizon-planet {
+    left: -4%;
+    width: 240%;
+  }
+}
+
+@media (min-width: 64rem) and (min-aspect-ratio: 8/5) {
+  .marketing-horizon-planet {
+    width: 290%;
+  }
+}
+
+@media (min-width: 64rem) and (min-aspect-ratio: 2/1) {
+  .marketing-horizon-planet {
+    width: 340%;
+  }
+}
+
+/* The horizon's atmosphere, outside the rim. Both are plain discs the opaque
+   orb sits in front of, so only what lies beyond its edge ever shows; the
+   stops are placed off that edge. Each disc is pushed toward the light, so
+   the edge falls at a different fraction of its radius round the rim: about
+   63% of the haze's and 95% of the limb's on the near side, 93% and 99% on
+   the far, which is the whole of what makes them crescents (see the insets
+   and translates in `LandingHorizon`).
+
+   The haze is the light scattered out into space: ember, wide and faint,
+   reddening as it thins, the way scattered light does. The limb is the atmosphere seen edge-on — a hot, narrow
+   band hugging the rim, which is what makes the filament on the orb read as
+   the edge of air rather than as a drawn line. */
+.marketing-horizon-haze {
+  background: radial-gradient(
+    closest-side,
+    rgba(226, 96, 40, 0.42) 60%,
+    rgba(180, 56, 28, 0.2) 70%,
+    rgba(110, 30, 18, 0.08) 84%,
+    transparent 100%
+  );
+}
+
+.marketing-horizon-limb {
+  background: radial-gradient(
+    closest-side,
+    rgba(255, 214, 150, 0.95) 94%,
+    rgba(240, 112, 48, 0.55) 96.5%,
+    rgba(190, 60, 30, 0.16) 98.5%,
+    transparent 100%
+  );
+}
+
+/* Opacity alone: scaling a disc this size would walk the haze's inner edge
+   in and out across the rim, and the rim is the one thing that holds still. */
+@keyframes marketing-horizon-breathe {
+  0%,
+  100% {
+    opacity: 0.78;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.marketing-horizon-breathe {
+  animation: marketing-horizon-breathe 11s ease-in-out infinite;
+  will-change: opacity;
 }
 
 /* --- the sphere ---------------------------------------------------------- */
@@ -631,8 +718,9 @@ html:has(.marketing-shell) {
    shows through, blurred, and the colour lives *inside* as slow clouds
    rather than sitting on the outside as a shine.
 
-   Sizing is the caller's business — the hero's orb is `min(58vw,352px)` and
-   so has no fixed pixel size to compute a blur radius from. `container-type`
+   Sizing is the caller's business — the hero's horizon is a percentage of
+   the section's width and so has no fixed pixel size to compute a blur
+   radius from. `container-type`
    makes the orb its own query container, which lets every blur and inset be
    a `cqw`: a percentage of whatever width it ends up at, correct at every
    size, with no JS measuring anything. */
@@ -916,6 +1004,67 @@ html:has(.marketing-shell) {
   display: none;
 }
 
+/* The orb as a horizon: the same sphere from close enough that it fills the
+   sky, with the light behind it instead of in front.
+
+   The interior goes, for the mark's reason turned round. At 22px the clouds
+   are under a pixel; at three viewports across they are a 280px blur over
+   nine million pixels, repainted every frame the conic sweeps turn, and the
+   frost is a 150px backdrop blur recomputed on every scroll frame as the page
+   slides over the fixed ambient. And a night side is dark: a body in front of
+   a light reads as a body by what it stops, so the shell goes opaque and the
+   colour moves to the rim.
+
+   The light is off the right edge, a little above the horizontal, which is
+   what makes the rim burn at the bottom-right and cool to a thread across the
+   top-left. `--orb-away-x/y` is the unit vector pointing away from it, and
+   every band below is an inset pushed along that vector: it thickens toward
+   the source and, through its negative spread, is simply absent on the far
+   side. Nothing here is drawn outside the disc — the atmosphere beyond the
+   rim belongs to `LandingHorizon`, not to the orb. */
+.pc-orb-horizon {
+  /* Between the body amber and c3, where a warm rim goes as it thins: the
+     step toward red the mark's c3 already takes, taken once more. */
+  --orb-ember: 222 108 46;
+  --orb-away-x: -0.966;
+  --orb-away-y: 0.259;
+  /* The hero shell's thickening toward the rim, kept to its last 2%: any
+     wider and, at this size, it is a brown band a hundred pixels deep running
+     under the headline. */
+  background: radial-gradient(
+    closest-side,
+    #050407 0%,
+    #050407 98%,
+    rgb(var(--orb-c3) / 0.4) 100%
+  );
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  animation: none;
+}
+
+.pc-orb-horizon::before,
+.pc-orb-horizon .pc-orb-clouds {
+  display: none;
+}
+
+.pc-orb-horizon::after {
+  background: none;
+  box-shadow:
+    /* The filament, where the light grazes the limb: pale, a few pixels,
+       and only on the near side. */
+    inset calc(0.3cqw * var(--orb-away-x)) calc(0.3cqw * var(--orb-away-y))
+      0.06cqw -0.16cqw rgb(255 247 226),
+    /* The band it sits in, gold into ember. Kept narrow on purpose: the
+       headline crosses the rim, and light spilling inward from it is light
+       behind the type. The glow belongs outside, in the sky. */
+    inset calc(0.5cqw * var(--orb-away-x)) calc(0.5cqw * var(--orb-away-y))
+      0.25cqw -0.24cqw rgb(var(--orb-c1) / 0.75),
+    inset calc(0.9cqw * var(--orb-away-x)) calc(0.9cqw * var(--orb-away-y))
+      0.8cqw -0.36cqw rgb(var(--orb-ember) / 0.45),
+    /* The thread that keeps the far side a sphere, even all the way round. */
+    inset 0 0 0.12cqw 0.03cqw rgb(var(--orb-ember) / 0.6);
+}
+
 @keyframes orb-turn {
   from {
     --angle: 0deg;
@@ -1013,7 +1162,7 @@ html:has(.marketing-shell) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .marketing-orb,
+  .marketing-horizon-breathe,
   .marketing-bloom-breathe,
   .pc-orb,
   .pc-orb::before,

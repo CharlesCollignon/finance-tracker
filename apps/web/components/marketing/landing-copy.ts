@@ -26,17 +26,6 @@ export const landingCopy = {
     titleLines: ["Your whole month,", "on one quiet screen"],
     tagline:
       "Income, bills, savings and investments — recorded by you, held privately, and reconciled against your real balance at the end of every month.",
-    /** The two figures on the floating cards. Same month as every mock. */
-    cards: {
-      remaining: {
-        label: "Left in March",
-        caption: "of €3,200 earned",
-      },
-      unrecorded: {
-        label: "Unrecorded · Feb",
-        caption: "found by one balance",
-      },
-    },
   },
 
   pillars: {
