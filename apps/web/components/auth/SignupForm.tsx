@@ -83,11 +83,11 @@ export function SignupForm() {
           type="submit"
           variant="pill"
           size="lg"
-          className="w-full justify-between"
+          className="w-full justify-between px-2"
           disabled={pending}
         >
           {pending ? t("auth.creating") : t("auth.signUp")}
-          <ButtonNub>
+          <ButtonNub balanced>
             <ArrowRight size={ICON.md} weight="bold" />
           </ButtonNub>
         </Button>

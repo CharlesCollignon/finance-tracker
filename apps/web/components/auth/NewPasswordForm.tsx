@@ -117,11 +117,11 @@ export function NewPasswordForm({ signedIn }: { signedIn: boolean }) {
         <Button
           variant="pill"
           size="lg"
-          className="mt-6 w-full justify-between"
+          className="mt-6 w-full justify-between px-2"
           render={<Link href="/bearing" />}
         >
           {t("auth.openApp")}
-          <ButtonNub>
+          <ButtonNub balanced>
             <ArrowRight size={ICON.md} weight="bold" />
           </ButtonNub>
         </Button>
@@ -180,13 +180,13 @@ export function NewPasswordForm({ signedIn }: { signedIn: boolean }) {
               type="submit"
               variant="pill"
               size="lg"
-              className="w-full justify-between"
+              className="w-full justify-between px-2"
               disabled={pending}
             >
               {pending
                 ? t("auth.savingNewPassword")
                 : t("auth.saveNewPassword")}
-              <ButtonNub>
+              <ButtonNub balanced>
                 <ArrowRight size={ICON.md} weight="bold" />
               </ButtonNub>
             </Button>

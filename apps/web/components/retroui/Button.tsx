@@ -72,11 +72,37 @@ export const Button = ({
   );
 };
 
-/** Circular chip for a pill button's trailing icon — nests flush inside the button's end padding. */
-export function ButtonNub({ children }: { children: React.ReactNode }) {
-  return (
+/**
+ * Circular chip for a pill button's trailing icon — nests flush inside the
+ * button's end padding.
+ *
+ * `balanced` is for a full-width pill whose label should sit in the middle
+ * rather than hard against the start: it puts an empty twin of the nub at
+ * the start of the row (`order-first`, so it can be written after the label
+ * like the nub itself), and with `justify-between` and equal padding on both
+ * ends the label lands halfway between the two. Equal padding matters — the
+ * pill's own is heavier at the start, which would leave the label 8px right
+ * of centre.
+ */
+export function ButtonNub({
+  children,
+  balanced = false,
+}: {
+  children: React.ReactNode;
+  balanced?: boolean;
+}) {
+  const nub = (
     <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-black/10 transition-transform duration-hover [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
       {children}
     </span>
+  );
+  if (!balanced) {
+    return nub;
+  }
+  return (
+    <>
+      <span aria-hidden className="order-first h-[30px] w-[30px] shrink-0" />
+      {nub}
+    </>
   );
 }

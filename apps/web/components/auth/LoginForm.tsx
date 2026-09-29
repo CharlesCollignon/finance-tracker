@@ -90,11 +90,11 @@ export function LoginForm() {
           type="submit"
           variant="pill"
           size="lg"
-          className="w-full justify-between"
+          className="w-full justify-between px-2"
           disabled={pending}
         >
           {pending ? t("auth.signingIn") : t("auth.signIn")}
-          <ButtonNub>
+          <ButtonNub balanced>
             <ArrowRight size={ICON.md} weight="bold" />
           </ButtonNub>
         </Button>
