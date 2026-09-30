@@ -11,6 +11,7 @@ import { ReminderProvider } from "@/providers/ReminderProvider";
 
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useLedgerBadge } from "@/hooks/useLedgerBadge";
+import { useMonthFill } from "@/hooks/useMonthFill";
 import { useT } from "@/providers/LocaleProvider";
 import type { Key } from "@finance/core/i18n/t";
 import { RADIUS } from "@/theme/tokens";
@@ -87,6 +88,9 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const barHeight = useTabBarHeight();
   const waiting = useLedgerBadge();
+  // The month's charges, written in when the app opens — there is no Apply
+  // button any more.
+  useMonthFill();
 
   return (
     <ReminderProvider>

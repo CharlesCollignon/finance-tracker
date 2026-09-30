@@ -34,24 +34,24 @@ import type { Key, Vars } from "./i18n/t";
  *     records gap is exactly the thing that makes a close's answer
  *     inaccurate: closing on top of a swallowed entry would produce a
  *     close that looks clean and is not.
- *  3. The three errands, in a fixed order of their own: entries waiting on
+ *  3. The two errands, in a fixed order of their own: entries waiting on
  *     a category (`inbox`) come first because an uncategorised entry keeps
  *     every total that depends on categories wrong, not merely incomplete.
- *     Recurring items ready to write (`apply`) come next: money already
- *     committed, sitting unwritten. A repeating charge merely noticed
- *     (`proposals`) comes last — nothing is blocked or incorrect without
- *     it, it is only a suggestion.
+ *     A repeating charge merely noticed (`proposals`) comes last — nothing
+ *     is blocked or incorrect without it, it is only a suggestion.
+ *
+ * Recurring charges waiting to be written used to be a third errand. They
+ * are not anyone's errand any more: the month fills itself from them, so
+ * there is nothing here for the reader to go and do.
  */
 
-export type AttentionId = "swallowed" | "close" | "inbox" | "apply" | "proposals";
+export type AttentionId = "swallowed" | "close" | "inbox" | "proposals";
 
 export interface AttentionInput {
   /** Bank entries an earlier sync merged away rather than left for review. */
   swallowed: number;
   /** Entries with no category, waiting behind the inbox review. */
   pendingInbox: number;
-  /** Recurring items this month's plan is ready to write as rows. */
-  recurringToApply: number;
   /**
    * The next month a close could act on, or null when nothing is open to
    * close. `isBaseline` marks the very first close, which asks for a
@@ -137,19 +137,6 @@ export function buildAttention(input: AttentionInput): AttentionItem[] {
       // second Review button is the same question asked twice.
       href: "/transactions?review=inbox",
       actionKey: "month.actionReview",
-    });
-  }
-
-  if (input.recurringToApply > 0) {
-    items.push({
-      id: "apply",
-      tone: "waiting",
-      messageKey: "month.attentionApply",
-      params: { count: input.recurringToApply },
-      // The Ledger, not the Charges list: applying writes rows, and the
-      // button that writes them lives where the rows land.
-      href: "/transactions",
-      actionKey: "month.actionApply",
     });
   }
 

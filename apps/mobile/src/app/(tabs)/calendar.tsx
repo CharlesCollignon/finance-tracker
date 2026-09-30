@@ -19,6 +19,11 @@ import {
   indexFulfilmentStates,
 } from "@finance/core/fulfilment-state";
 import type { FulfilmentProposal } from "@finance/core/recurring-fulfilment";
+import {
+  plannedOccurrences,
+  recurringOccurrenceKey,
+  type PlannedOccurrence,
+} from "@finance/core/apply-recurring";
 import type {
   Category,
   RecurringTemplateWithCategory,
@@ -29,6 +34,7 @@ import type {
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { FulfilmentDot } from "@/components/FulfilmentDot";
 import { MonthPicker } from "@/components/MonthPicker";
+import { PlannedOccurrenceSheet } from "@/components/PlannedOccurrenceSheet";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { deleteTransactions, moveTransactions } from "@/lib/mutations";
 import { TransactionFormModal } from "@/components/TransactionFormModal";
@@ -53,16 +59,20 @@ import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
+import { useQuickAdd } from "@/providers/QuickAddProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useTabBarClearance } from "@/theme/chrome";
+import { useThemeColors } from "@/theme/useThemeColors";
 import { useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
 import {
   getCategories,
   getConfirmedTransactionIds,
+  getFulfilledKeys,
   getFulfilmentProposals,
   getRecurringTemplates,
+  getSkippedOccurrences,
   getTags,
   getTransactions,
 } from "@/lib/queries";
@@ -77,11 +87,12 @@ export default function CalendarScreen() {
   const { user } = useAuth();
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
+  const colors = useThemeColors();
   const now = parseMonthParams();
   const [year, setYear] = useState(now.year);
   const [month, setMonth] = useState(now.month);
   const [selectedDate, setSelectedDate] = useState(() => todayIsoLocal());
-  const [formOpen, setFormOpen] = useState(false);
+  const quickAdd = useQuickAdd();
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
   // Row selection is keyed by day, so changing day empties it by
   // derivation rather than through a state-syncing effect.
@@ -91,6 +102,9 @@ export default function CalendarScreen() {
     ids: ReadonlySet<string>;
   }>({ date: "", mode: false, ids: EMPTY_SELECTION });
   const [deletePending, setDeletePending] = useState(false);
+  const [openPlanned, setOpenPlanned] = useState<PlannedOccurrence | null>(
+    null,
+  );
 
   const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, onRefreshAll, reload, error } =
@@ -103,19 +117,31 @@ export default function CalendarScreen() {
           confirmed: new Set<string>(),
           proposals: [] as FulfilmentProposal[],
           tags: [] as Tag[],
+          notPlanned: new Set<string>(),
         };
       }
-      const [transactions, categories, templates, confirmed, tags] =
-        await Promise.all([
-          getTransactions(user.id, year, month),
-          getCategories(user.id),
-          getRecurringTemplates(user.id),
-          // Which rows settle a charge. Needs nothing else the batch fetches,
-          // so it rides along rather than costing a second hop.
-          getConfirmedTransactionIds(user.id),
-          // So a transaction's tags can be changed from here, as on the web.
-          getTags(user.id),
-        ]);
+      const [
+        transactions,
+        categories,
+        templates,
+        confirmed,
+        tags,
+        skipped,
+        fulfilled,
+      ] = await Promise.all([
+        getTransactions(user.id, year, month),
+        getCategories(user.id),
+        getRecurringTemplates(user.id),
+        // Which rows settle a charge. Needs nothing else the batch fetches,
+        // so it rides along rather than costing a second hop.
+        getConfirmedTransactionIds(user.id),
+        // So a transaction's tags can be changed from here, as on the web.
+        getTags(user.id),
+        // What is not planned although a charge calls for it: taken out of
+        // the month, or already stood for by another row.
+        getSkippedOccurrences(user.id, year, month),
+        getFulfilledKeys(user.id),
+      ]);
       // Asked after the batch, because it needs the templates and categories
       // the batch fetched.
       const proposals = await getFulfilmentProposals(
@@ -132,6 +158,12 @@ export default function CalendarScreen() {
         confirmed,
         proposals,
         tags,
+        notPlanned: new Set([
+          ...skipped.map((entry) =>
+            recurringOccurrenceKey(entry.templateId, entry.occurredOn),
+          ),
+          ...fulfilled,
+        ]),
       };
     }, [user?.id, year, month, dataVersion]);
 
@@ -156,6 +188,38 @@ export default function CalendarScreen() {
     () => groupTransactionsByDate(transactions),
     [transactions],
   );
+  /**
+   * The month's charges still to come, by day — drawn from the templates, not
+   * stored. Each becomes a transaction on its day; until then the calendar
+   * shows it muted, under the day's rows, and marks its day with a ring
+   * rather than a dot so the grid says which days have only a plan.
+   */
+  const plannedByDate = useMemo(() => {
+    const out = new Map<string, PlannedOccurrence[]>();
+    if (!data) {
+      return out;
+    }
+    const written = new Set(
+      transactions.flatMap((tx) =>
+        tx.recurring_template_id
+          ? [recurringOccurrenceKey(tx.recurring_template_id, tx.occurred_on)]
+          : [],
+      ),
+    );
+    for (const occurrence of plannedOccurrences(
+      templates,
+      written,
+      year,
+      month,
+      data.notPlanned,
+      todayIsoLocal(),
+    )) {
+      const day = out.get(occurrence.occurredOn) ?? [];
+      day.push(occurrence);
+      out.set(occurrence.occurredOn, day);
+    }
+    return out;
+  }, [data, transactions, templates, year, month]);
   const weeks = useMemo(() => buildCalendarWeeks(year, month), [year, month]);
   const monthTotals = useMemo(
     () => computeMonthlyBudget(transactions, templates),
@@ -170,6 +234,8 @@ export default function CalendarScreen() {
       : defaultSelectedDate(year, month, byDate);
 
   const dayTxs = byDate.get(effectiveSelected) ?? [];
+  const dayPlanned = plannedByDate.get(effectiveSelected) ?? [];
+  // What has happened only: a planned row is not money in or out yet.
   const dayTotals = computeDayTotals(dayTxs);
 
   const visibleIds = dayTxs.map((tx) => tx.id);
@@ -254,7 +320,10 @@ export default function CalendarScreen() {
     <Screen title={t("nav.ledger")}>
       <SurfaceTabs tabs={LEDGER_TABS} className="mb-3" />
 
+      {/* Under the tabs, as on the list: the By category view has no month,
+          and a bar above the tabs would make them jump between views. */}
       <MonthPicker
+        prominent
         year={year}
         month={month}
         onChange={(y, m) => {
@@ -312,6 +381,7 @@ export default function CalendarScreen() {
               {week.map((day) => {
                 const selected = day.date === effectiveSelected;
                 const hasTx = byDate.has(day.date);
+                const hasPlanned = plannedByDate.has(day.date);
                 return (
                   <Pressable
                     key={day.date}
@@ -331,6 +401,11 @@ export default function CalendarScreen() {
                     <Text className="text-sm font-semibold">{day.day}</Text>
                     {hasTx ? (
                       <View className="mt-0.5 h-1.5 w-1.5 rounded-full bg-foreground" />
+                    ) : hasPlanned ? (
+                      <View
+                        className="mt-0.5 h-1.5 w-1.5 rounded-full border"
+                        style={{ borderColor: colors.mutedForeground }}
+                      />
                     ) : null}
                   </Pressable>
                 );
@@ -343,7 +418,7 @@ export default function CalendarScreen() {
             <Button
               label={t("ledger.add")}
               size="sm"
-              onPress={() => setFormOpen(true)}
+              onPress={() => quickAdd?.open({ date: effectiveSelected })}
             />
           </View>
           <Text variant="muted" className="mb-2">
@@ -400,7 +475,7 @@ export default function CalendarScreen() {
             </View>
           ) : null}
 
-          {dayTxs.length === 0 ? (
+          {dayTxs.length === 0 && dayPlanned.length === 0 ? (
             <EmptyState
               title={t("calendarView.emptyTitle")}
               description={t("calendarView.emptyBodyMobile")}
@@ -409,7 +484,7 @@ export default function CalendarScreen() {
                 label={t("ledger.addTransaction")}
                 variant="pill"
                 icon="add"
-                onPress={() => setFormOpen(true)}
+                onPress={() => quickAdd?.open({ date: effectiveSelected })}
               />
             </EmptyState>
           ) : (
@@ -521,6 +596,49 @@ export default function CalendarScreen() {
                   </Pressable>
                 );
               })}
+              {dayPlanned.map((occurrence, index) => (
+                <Pressable
+                  key={occurrence.key}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${occurrence.categoryName}, ${t("ledger.planned")}`}
+                  accessibilityHint={occurrence.name}
+                  disabled={selectMode}
+                  onPress={() => {
+                    void hapticLight();
+                    setOpenPlanned(occurrence);
+                  }}
+                  className={cn(
+                    "flex-row items-start gap-3 px-2 py-3.5",
+                    (dayTxs.length > 0 || index > 0) &&
+                      "border-t border-border",
+                  )}
+                  style={selectMode ? { opacity: 0.4 } : undefined}
+                >
+                  <View style={{ opacity: 0.5 }}>
+                    <CategoryIcon icon={occurrence.categoryIcon} />
+                  </View>
+                  <View className="min-w-0 flex-1">
+                    <Text
+                      numberOfLines={1}
+                      className="shrink text-sm font-medium text-muted-foreground"
+                    >
+                      {occurrence.categoryName}
+                    </Text>
+                    <Text
+                      variant="muted"
+                      numberOfLines={1}
+                      className="mt-0.5 text-xs"
+                    >
+                      {[t("ledger.planned"), occurrence.note]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </Text>
+                  </View>
+                  <PrivateAmount className="font-mono text-sm font-semibold text-muted-foreground">
+                    {`${occurrence.categoryType === "income" ? "+" : "−"}${formatEuro(occurrence.amount)}`}
+                  </PrivateAmount>
+                </Pressable>
+              ))}
             </Card>
           )}
         </ScrollView>
@@ -536,16 +654,14 @@ export default function CalendarScreen() {
         onMove={(categoryId) => void handleBulkMove(categoryId)}
       />
 
-      {formOpen ? (
-        <TransactionFormModal
-          open={formOpen}
-          onClose={() => setFormOpen(false)}
-          onSaved={reload}
-          categories={categories}
-          tags={data?.tags ?? NO_TAGS}
-          defaultDate={effectiveSelected}
-        />
-      ) : null}
+      <PlannedOccurrenceSheet
+        occurrence={openPlanned}
+        onClose={() => setOpenPlanned(null)}
+        onChanged={() => {
+          notifyDataChanged();
+          void reload();
+        }}
+      />
 
       {editing ? (
         <TransactionFormModal
@@ -556,7 +672,6 @@ export default function CalendarScreen() {
           categories={categories}
           tags={data?.tags ?? NO_TAGS}
           transaction={editing}
-          defaultDate={effectiveSelected}
         />
       ) : null}
     </Screen>

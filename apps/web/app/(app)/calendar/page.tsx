@@ -1,11 +1,21 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getCategories } from "@/lib/queries/categories";
-import { getRecurringTemplates, getTransactions } from "@/lib/queries/finance";
+import {
+  getRecurringSkipKeys,
+  getRecurringTemplates,
+  getTransactions,
+} from "@/lib/queries/finance";
+import {
+  plannedOccurrences,
+  recurringOccurrenceKey,
+} from "@finance/core/apply-recurring";
+import { todayIsoLocal } from "@finance/core/constants";
 import { resolveMonthScope } from "@/lib/month-scope";
 import { CalendarView } from "@/components/finance/CalendarView";
 import {
   getConfirmedTransactionIds,
+  getFulfilledKeys,
   getFulfilmentProposals,
 } from "@/lib/queries/fulfilment";
 import { getTags, getTransactionTagMap } from "@/lib/queries/phase4";
@@ -32,6 +42,8 @@ export default async function CalendarPage({
     confirmedTransactionIds,
     tags,
     transactionTags,
+    skippedKeys,
+    fulfilledKeys,
   ] = await Promise.all([
     getTransactions(user.id, year, month),
     getCategories(user.id),
@@ -43,7 +55,27 @@ export default async function CalendarPage({
     // keep or change a transaction's tags.
     getTags(user.id),
     getTransactionTagMap(user.id, year, month),
+    // What keeps an occurrence from being drawn as planned.
+    getRecurringSkipKeys(user.id, year, month),
+    getFulfilledKeys(user.id),
   ]);
+
+  // The Ledger list draws these too; see its page for why they are drawn
+  // rather than stored.
+  const planned = plannedOccurrences(
+    recurringTemplates,
+    new Set(
+      transactions.flatMap((tx) =>
+        tx.recurring_template_id
+          ? [recurringOccurrenceKey(tx.recurring_template_id, tx.occurred_on)]
+          : [],
+      ),
+    ),
+    year,
+    month,
+    new Set([...skippedKeys, ...fulfilledKeys]),
+    todayIsoLocal(),
+  );
 
   // Asked after the batch, because it needs the templates and categories the
   // batch fetched. Only the ids are handed on: a proposal carries twelve
@@ -59,6 +91,7 @@ export default async function CalendarPage({
   return (
     <CalendarView
       transactions={transactions}
+      planned={planned}
       categories={categories}
       recurringTemplates={recurringTemplates}
       confirmedTransactionIds={[...confirmedTransactionIds]}

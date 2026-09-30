@@ -46,7 +46,7 @@ export const landingCopyFr: LandingCopySections & {
       },
       {
         title: "Agir sur une règle que vous n'avez pas écrite",
-        body: "Une ligne importée ne se classe toute seule que là où vous avez déjà mis ce commerçant deux fois. Tout le reste attend dans une liste, et un récurrent n'est qu'un modèle tant que vous ne l'appliquez pas.",
+        body: "Une ligne importée ne se classe toute seule que là où vous avez déjà mis ce commerçant deux fois. Tout le reste attend dans une liste, et une charge récurrente écrit dans chaque mois exactement ce que vous lui avez demandé d'écrire, rien de plus.",
       },
       {
         title: "Vous dire quoi faire",
@@ -123,8 +123,8 @@ export const landingCopyFr: LandingCopySections & {
         body: "Salaire, loyer, abonnements, un achat mensuel dans le PEA. Chacun est un modèle avec un montant et un rythme — un modèle en parts prend plutôt son montant du cours du moment.",
       },
       {
-        title: "Appliquez-le au mois",
-        body: "Appliquer transforme ce que le mois appelle en vraies lignes que vous pouvez encore modifier. Passez-en une, appliquez en retard, appliquez deux fois : le mois est à vous pour le décrire fidèlement, pas pour le tenir bien rangé.",
+        title: "Les mois se remplissent tout seuls",
+        body: "Chaque mois à venir montre ce que vos charges appellent en lignes prévues, et chacune devient une vraie ligne, que vous pouvez encore modifier, le jour venu. Modifiez une charge et tous les mois à venir changent avec elle ; les lignes de ce mois-ci seulement si vous le dites.",
       },
       {
         title: "Ajoutez le reste au fil de l'eau",
@@ -178,7 +178,7 @@ export const landingCopyFr: LandingCopySections & {
       title: "Journal",
       body: "Chaque mouvement — en liste, posé sur les jours, ou mois par mois et par catégorie.",
       utility:
-        "L'enregistrement dont tout le reste découle. Des lignes que vous avez saisies, des lignes qu'un modèle de charge a appliquées, et des lignes venues d'un export qu'une de vos propres habitudes a classées — un seul corps de données, regardé de trois façons.",
+        "L'enregistrement dont tout le reste découle. Des lignes que vous avez saisies, des lignes que vos charges ont écrites, et des lignes venues d'un export qu'une de vos propres habitudes a classées — un seul corps de données, regardé de trois façons.",
       steps: [
         {
           title: "La liste, le calendrier, ou par catégorie",
@@ -196,21 +196,21 @@ export const landingCopyFr: LandingCopySections & {
     },
     charges: {
       title: "Charges",
-      body: "Salaire, loyer, abonnements, un achat mensuel. Appliqués quand vous le dites.",
+      body: "Salaire, loyer, abonnements, un achat mensuel. Écrits dans chaque mois pour vous.",
       utility:
-        "Des instructions permanentes pour ce qui se répète, chaque mois, chaque semaine ou chaque année, éventuellement bornées par un début et une fin. Elles ne s'exécutent pas toutes seules — et c'est le but, parce qu'une instruction qui part sans surveillance est la façon dont un journal s'éloigne de la vérité.",
+        "Des instructions permanentes pour ce qui se répète, chaque mois, chaque semaine ou chaque année, éventuellement bornées par un début et une fin. Chaque échéance est écrite le jour venu, et seulement si elle manque : une ligne que vous avez corrigée à la main n'est jamais réécrite. D'ici là, les mois à venir la montrent comme prévue.",
       steps: [
         {
           title: "Définissez ce qui se répète",
           body: "Un montant et un rythme. Un modèle au cours prend son montant d'un nombre de parts multiplié par le cours actuel plutôt que d'un chiffre fixe, pour qu'un achat mensuel vaille ce qu'il a coûté et non ce que vous aviez estimé.",
         },
         {
-          title: "Appliquez, sautez, ou dites que c'est déjà arrivé",
-          body: "Rien n'existe tant que vous n'appliquez pas, et appliquer écrit des lignes ordinaires que vous pouvez encore modifier. Sautez un mois sans désactiver le modèle. Et là où un import a déjà apporté le mouvement, dites que c'est bien celui que le modèle appelait, au lieu de laisser une seconde ligne à côté.",
+          title: "Écrit, retiré, ou déjà là",
+          body: "Les échéances arrivent le jour venu en lignes ordinaires que vous pouvez encore modifier. Passez-en une prévue, ou supprimez-en une déjà écrite, et ce mois s'en passe pendant que le modèle continue. Et là où un import a déjà apporté le mouvement, dites que c'est bien celui que le modèle appelait, et la ligne du modèle lui cède la place.",
         },
         {
           title: "Tenu à jour avec le marché",
-          body: "Une échéance appliquée mais encore datée dans le futur est revalorisée quand son cours bouge, discrètement et sans rien demander — que le marché bouge n'est la décision de personne. Une fois sa date passée, son montant est ce qui a réellement bougé et ne change plus.",
+          body: "Une échéance prévue affiche le dernier cours et s'écrit au prix de son jour, discrètement et sans rien demander — que le marché bouge n'est la décision de personne. Une fois écrite, son montant est ce qui a réellement bougé et ne change plus.",
         },
       ],
     },

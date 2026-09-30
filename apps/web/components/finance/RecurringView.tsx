@@ -2,14 +2,7 @@
 
 import type { ReactNode } from "react";
 import { FIGURE } from "@/lib/type-scale";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/retroui/Button";
 import { Badge } from "@/components/retroui/Badge";
@@ -20,8 +13,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { useToast } from "@/components/layout/ToastProvider";
 import { RecurringForm } from "@/components/finance/RecurringForm";
-import { monthSearchParams, parseMonthParams } from "@finance/core/constants";
-import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
+import { useQuickAdd } from "@/components/layout/QuickAddProvider";
 import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
 import {
@@ -37,10 +29,7 @@ import {
 import { formatSharesLabel } from "@finance/core/recurring-shares";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
-import {
-  previewApplyRecurringForMonth,
-  toggleRecurringActive,
-} from "@/lib/actions/finance";
+import { toggleRecurringActive } from "@/lib/actions/finance";
 import type {
   Category,
   CategoryType,
@@ -82,6 +71,10 @@ interface RecurringViewProps {
   categories: Category[];
   /** Standing charges the statement implies, keyed by category type. */
   proposals?: RecurringProposal[];
+  /** The days each charge is already recorded on this month, by template. */
+  recordedThisMonth?: Record<string, string[]>;
+  /** A charge to arrive with open for editing. */
+  initialEditId?: string;
 }
 
 interface RecurringItemRowProps {
@@ -386,18 +379,31 @@ export function RecurringView({
   templates,
   categories,
   proposals = [],
+  recordedThisMonth = {},
+  initialEditId,
 }: RecurringViewProps) {
   const t = useT();
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
-  const [formOpen, setFormOpen] = useState(false);
+  const quickAdd = useQuickAdd();
+  // Read once, as the initial state: a save revalidates this page with the
+  // same address, and consulting the param on every render would reopen the
+  // editor the user had just closed.
   const [editing, setEditing] = useState<RecurringTemplateWithCategory | null>(
-    null,
+    () => templates.find((template) => template.id === initialEditId) ?? null,
   );
-  const [applyPending, setApplyPending] = useState(false);
+
+  // Out of the address once it has been read, so a reload after closing the
+  // editor does not open it again.
+  useEffect(() => {
+    if (!initialEditId) {
+      return;
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.delete("edit");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  }, [initialEditId]);
   const [, startTransition] = useTransition();
-  const { year, month } = parseMonthParams();
-  const transactionsHref = `/transactions${monthSearchParams(year, month)}`;
 
   const groups = useMemo(
     () =>
@@ -419,31 +425,6 @@ export function RecurringView({
   const [tabOverride, setTabOverride] = useState<CategoryType | null>(null);
   const activeTab = tabOverride ?? defaultTab;
 
-  const refreshApplyPending = useCallback(async () => {
-    const result = await previewApplyRecurringForMonth(year, month);
-    if (result.error || !result.plan) {
-      return;
-    }
-    const counts = applyRecurringPlanCounts(result.plan);
-    setApplyPending(counts.creates + counts.updates > 0);
-  }, [month, year]);
-
-  // Asked again whenever the templates change. The answer is set in the
-  // promise's callback, so the effect itself never sets state.
-  useEffect(() => {
-    let cancelled = false;
-    void previewApplyRecurringForMonth(year, month).then((result) => {
-      if (cancelled || result.error || !result.plan) {
-        return;
-      }
-      const counts = applyRecurringPlanCounts(result.plan);
-      setApplyPending(counts.creates + counts.updates > 0);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [month, year, templates]);
-
   /*
    * One rollup rather than two reducers, and split by what kind of money each
    * template is rather than only by whether the summary counts it.
@@ -461,14 +442,14 @@ export function RecurringView({
   const hasTemplates = templates.length > 0;
   const activeGroup = groups.find((group) => group.type === activeTab);
 
+  // The same sheet as every other Add, opened on a charge because this is
+  // the page of them. Editing one still happens in a sheet of its own.
   function openCreate() {
-    setEditing(null);
-    setFormOpen(true);
+    quickAdd?.open({ kind: "charge" });
   }
 
   function openEdit(template: RecurringTemplateWithCategory) {
     setEditing(template);
-    setFormOpen(true);
   }
 
   function handleToggle(id: string, active: boolean) {
@@ -479,7 +460,6 @@ export function RecurringView({
         return;
       }
       toast(t("recurring.updatedHint"), "success");
-      void refreshApplyPending();
     });
   }
 
@@ -502,19 +482,6 @@ export function RecurringView({
             </ButtonNub>
           </Button>
         </div>
-
-        {applyPending ? (
-          <p className="rounded-control border border-dashed border-hairline-strong px-4 py-3 text-sm text-muted-foreground">
-            {t("charges.applyPendingBefore")}{" "}
-            <Link
-              href={transactionsHref}
-              className="font-medium text-foreground underline underline-offset-4"
-            >
-              {t("charges.applyPendingLink")}
-            </Link>{" "}
-            {t("charges.applyPendingAfter")}
-          </p>
-        ) : null}
 
         {hasTemplates ? (
           <>
@@ -618,8 +585,13 @@ export function RecurringView({
       <RecurringForm
         categories={categories}
         template={editing}
-        open={formOpen}
-        onOpenChange={setFormOpen}
+        recordedDates={editing ? recordedThisMonth[editing.id] : undefined}
+        open={editing !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditing(null);
+          }
+        }}
       />
     </>
   );

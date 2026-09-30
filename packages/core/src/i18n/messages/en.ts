@@ -93,6 +93,7 @@ export const en = {
   pages: {
     categories: "Categories",
     import: "Import",
+    bank: "Bank",
   },
 
   /**
@@ -172,7 +173,7 @@ export const en = {
   },
 
   /**
-   * The Ledger: searching, filtering, selecting and applying.
+   * The Ledger: searching, filtering and selecting.
    *
    * The three plural ternaries this replaces read `count === 1 ? "transaction"
    * : "transactions"`, which is untranslatable twice over — French puts zero
@@ -180,17 +181,9 @@ export const en = {
    * "supprimées"). Both forms have to be written out.
    */
   ledger: {
-    applyPending: "Applying…",
-    applyRecurring: "Apply recurring",
-    applyWaiting: "Recurring changes are waiting to be applied",
-    applyAllDone: "All recurring occurrences already applied",
-    applyNothing: "Nothing to apply",
-    applyResult: "Recurring applied: {parts}",
-    applyAdded: "{count} added",
-    applyUpdated: "{count} updated",
     emptyTitle: "Nothing recorded this month",
     emptyBody:
-      "Add a transaction, or apply the charges you already know repeat.",
+      "Add what happened. The charges you set up fill each month in on their own.",
     searchPlaceholder: "Search category or note…",
     searchLabel: "Search transactions",
     filterByCategory: "Filter by category",
@@ -276,6 +269,12 @@ export const en = {
     repeatTitle: "Repeat this today?",
     repeatBody: "Adds another {category} of {amount} dated today.",
     repeatConfirm: "Add for today",
+    /**
+     * A charge's occurrence still to come, drawn from its template rather
+     * than stored. A word as well as a muted row: the dimming alone does not
+     * say which of the row's meanings it carries.
+     */
+    planned: "Planned",
   },
 
   /** Bringing a bank statement in from a file, step by step. */
@@ -499,18 +498,44 @@ export const en = {
     delete: "Delete",
     deleteItem: "Delete recurring item",
     deleteExplanation:
-      "Delete this recurring template? Past transactions stay in your ledger.",
+      "Delete this charge? What it wrote for days already past stays in your ledger; anything it wrote ahead of today goes with it.",
     deleting: "Deleting…",
     confirmDelete: "Confirm delete",
-    savedHint: "Saved. Apply recurring in the Ledger to see the change.",
-    updatedHint: "Updated. Apply recurring in the Ledger to see the change.",
-    deletedHint: "Deleted — apply recurring in the Ledger to see the change.",
+    savedHint: "Charge saved",
+    updatedHint: "Charge updated",
+    deletedHint: "Charge deleted",
+    /**
+     * Saving a change to a charge already recorded this month.
+     *
+     * The months ahead always follow — their rows are planned, drawn from the
+     * charge — and past months never do. This month is the one genuine
+     * question: the rent paid on the 5th was paid at the old amount, unless
+     * the change is a correction.
+     */
+    applyTo: "Apply this change to",
+    scopeUpcoming: "Upcoming only",
+    scopeUpcomingHint: "What is already recorded ({dates}) stays as it is.",
+    scopeThisMonth: "This month too",
+    scopeThisMonthHint: "Also updates {dates}.",
+    pastMonthsNote: "Past months never change.",
+    /**
+     * Creating a charge whose day has already passed this month. It starts
+     * from the next date to come unless the user says this month's happened.
+     */
+    startFrom: "Start",
+    startNow: "From now on",
+    startNowHint: "Its first entry is the next date to come.",
+    startThisMonth: "Include this month",
+    startThisMonthHint: {
+      one: "Also records {dates}, already past.",
+      other: "Also records {dates}, already past.",
+    },
     brokerDcaNote:
       "Buys at the broker are tracked for visibility but do not reduce your remaining budget.",
     bitstackNote:
       "Fixed EUR weekly buy on Bitstack. Market value on Wallets uses your total BTC × live BTC/EUR price.",
     sharesNote:
-      "Pick your ETF and share count. Search by name or ISIN (e.g. LU1681043599). The app fetches the live price and computes the EUR amount when saving or applying recurring.",
+      "Pick your ETF and share count. Search by name or ISIN (e.g. LU1681043599). The app fetches the live price and computes the EUR amount when saving, and again each time the charge is written into a month.",
     yearlyNote:
       "Counts as a monthly share in your budget (annual ÷ 12). The full payment is recorded once in the due month.",
     /**
@@ -548,36 +573,6 @@ export const en = {
   },
 
   /**
-   * Turning the occurrences a month calls for into transactions.
-   *
-   * The counts are plural messages rather than `count === 1` ternaries for
-   * the reason the rest of this file gives: French puts zero in the singular
-   * and agrees its participles.
-   */
-  applyRecurring: {
-    blurb:
-      "Writes the transactions this month's charges call for. What you have already recorded is left alone unless you confirm the updates below.",
-    repriceNote: {
-      one: "{count} occurrence is priced from the market and still dated ahead. It follows its instrument on its own — nothing to confirm.",
-      other:
-        "{count} occurrences are priced from the market and still dated ahead. They follow their instruments on their own — nothing to confirm.",
-    },
-    updateExisting: "Update existing ({count})",
-    updateExistingNote:
-      "These were applied already, but the recurring template has changed since — its amount, its note or its category.",
-    addNew: "Add new ({count})",
-    noteUpdated: "Note updated to match the recurring template",
-    movedToCategory: "Moved to the recurring template's category",
-    applying: "Applying…",
-    nothingSelected: "Nothing selected",
-    applySelected: {
-      one: "Apply {count} selected",
-      other: "Apply {count} selected",
-    },
-    applyNew: { one: "Apply {count} new", other: "Apply {count} new" },
-  },
-
-  /**
    * Standing charges the statement implies, offered rather than created.
    *
    * Nothing here writes a template — the app proposes and the user agrees —
@@ -600,7 +595,6 @@ export const en = {
 
   /** The form both apps use to write or edit one transaction. */
   transaction: {
-    addTitle: "Add transaction",
     editTitle: "Edit transaction",
     close: "Close",
     category: "Category",
@@ -623,14 +617,15 @@ export const en = {
     deleting: "Deleting…",
     confirmDelete: "Yes, delete",
     deleted: "Transaction deleted",
-    skipThisDate: "Skip this month / date",
-    skipping: "Skipping…",
-    confirmSkip: "Yes, skip this date",
-    skipped: "Skipped for this date — won’t be re-applied",
-    skipExplanation:
-      "Skip this date only? The transaction will be removed and Apply won’t recreate it. The recurring template stays active for later months.",
-    deleteExplanation:
-      "Delete this transaction permanently? Apply may write it again if the recurring template still calls for it.",
+    deleteExplanation: "Delete this transaction permanently?",
+    /**
+     * The same button on a row a charge wrote. Deleting it also takes that
+     * occurrence out of its month, which is what skipping used to be a
+     * separate button for: the month fills itself, so without the skip the
+     * row would simply come back.
+     */
+    deleteChargeExplanation:
+      "Delete this entry? It came from a charge and won't be added back this month. The charge carries on in the months after.",
     cancel: "Cancel",
   },
 
@@ -685,20 +680,6 @@ export const en = {
       "Rent, subscriptions, a monthly transfer into savings — anything you already know is coming.",
     emptyTitleMobile: "What repeats each month?",
     emptyBodyMobile: "Rent, salary, subscriptions, a monthly ETF buy.",
-    openLedgerToApply: "Open the Ledger to apply these charges",
-    /**
-     * The banner above the list when this month was written before these
-     * charges changed.
-     *
-     * Split in three because web draws the link through the middle clause
-     * only, while the phone makes the whole banner one target and joins the
-     * three back into a sentence. `openLedgerToApply` above is that target's
-     * accessible name, which is why it is a whole sentence and these are not.
-     */
-    applyPendingBefore:
-      "These charges have changed since this month was written.",
-    applyPendingLink: "Open the Ledger",
-    applyPendingAfter: "and apply them.",
     remindTitle: "Want a nudge before these post?",
     remindBody:
       "One reminder the evening before each item is due, so nothing lands unnoticed. Entirely on your device.",
@@ -708,9 +689,48 @@ export const en = {
     remindOn: "Reminders on — you'll hear the evening before",
   },
 
+  /**
+   * The one sheet every "+" and every Add opens, for either kind of thing.
+   *
+   * There used to be three: the notch's quick entry, the Ledger's own form,
+   * and the Charges page's. They asked for different fields in a different
+   * order, and a charge could only be added from the one page that listed
+   * them. Now the sheet asks which, and the page it was opened from answers
+   * first.
+   */
+  add: {
+    title: "Add",
+    /** The "+" buttons' accessible name and tooltip. */
+    open: "Add a transaction or a charge",
+    kind: "What you are adding",
+    transaction: "Transaction",
+    charge: "Charge",
+    transactionHint: "Something that happened once.",
+    chargeHint: "Something that repeats — rent, pay, a subscription.",
+  },
+
+  /** A planned row, opened: what can be done about one occurrence to come. */
+  planned: {
+    body: "Planned for {date}. It is recorded on the day.",
+    recordNow: "Record it now",
+    recordNowHint: "It already happened — adds it dated today.",
+    skip: "Skip this date",
+    editCharge: "Edit the charge",
+    recorded: "Recorded for today",
+    skipped: "Skipped for {date}",
+    undo: "Undo",
+  },
+
+  /** What the month filling itself from its charges says, when it wrote any. */
+  monthFill: {
+    added: {
+      one: "{count} charge added to this month",
+      other: "{count} charges added to this month",
+    },
+  },
+
   /** The one-handed sheet for adding a transaction in a hurry. */
   quickAdd: {
-    title: "Add transaction",
     close: "Close",
     deleteLastDigit: "Delete last digit",
     date: "Date",
@@ -1122,7 +1142,6 @@ export const en = {
   inbox: {
     fromYourBank: "From your bank",
     review: "Review",
-    recentlyAdded: "Recently added",
     needsCategory: "Needs a category",
     nothingWaiting: "Nothing waiting",
     thatsTheInbox: "That's the inbox",
@@ -1142,7 +1161,6 @@ export const en = {
     },
     taughtIt:
       "Anything the app already recognised went straight in. Answering these teaches it for next time.",
-    nothingFromBank: "Nothing waiting from your bank.",
     leaveOut: "Leave out",
     /* The other column: what was decided, and how to take it back. */
     recentlyDecided: "Recently decided",
@@ -1152,6 +1170,46 @@ export const en = {
     move: "Move",
     changeCategory: "Change category",
     undo: "Undo",
+  },
+
+  /**
+   * The review grouped by shop: one answer files every row from the same
+   * merchant. Counts are plural messages for the reason the rest of this
+   * file gives — French puts zero in the singular and agrees its participles.
+   */
+  inboxGroups: {
+    groups: { one: "{count} group", other: "{count} groups" },
+    entries: { one: "{count} entry", other: "{count} entries" },
+    fileAll: "File all",
+    leaveOutAll: "Leave out all",
+    showRows: "Show the entries",
+    hideRows: "Hide the entries",
+    mixed:
+      "You have filed this shop more than one way, so each entry is asked separately.",
+    groupLabel: "{name}, {entries}, {amount}",
+    filed: {
+      one: "{count} entry filed under {category}",
+      other: "{count} entries filed under {category}",
+    },
+    alreadyRecorded: {
+      one: "{count} was already in your ledger",
+      other: "{count} were already in your ledger",
+    },
+    leftOut: {
+      one: "{count} entry left out",
+      other: "{count} entries left out",
+    },
+    putBack: {
+      one: "{count} entry is back in the review",
+      other: "{count} entries are back in the review",
+    },
+    allFiled: "Everything is filed.",
+    /* The phone's review, one group at a time. */
+    later: "Later",
+    whichCategory: "Which category?",
+    recentCategories: "Recent",
+    decidedJustNow: "Decided just now",
+    keyboardHint: "↑ ↓ to move · Enter to file · L to leave out",
   },
 
   /** The bar that appears once rows are selected. */
@@ -1175,7 +1233,7 @@ export const en = {
     confirmDelete: "Yes, delete",
     cancel: "Cancel",
     clear: "Clear selection",
-    /** How much of the selection Apply would put back if it were deleted. */
+    /** How much of the selection came from charges. */
     fromRecurring: {
       one: "{count} from a recurring template",
       other: "{count} from recurring templates",
@@ -1224,6 +1282,10 @@ export const en = {
     withPasskey: "Sign in with passkey",
     invalidCredentials: "Invalid credentials",
     haveAccount: "Already have an account?",
+    legalConsent:
+      "By creating an account, you accept the {terms} and the {privacy}.",
+    termsLink: "terms of use",
+    privacyLink: "privacy policy",
     noAccount: "No account?",
     noAccountYet: "No account yet?",
     createOne: "Create one",
@@ -1537,16 +1599,10 @@ export const en = {
     cameIn: "Came in",
     wentOut: "Went out",
     savingsRate: "Savings rate",
-    leftIn: "Left in {month}",
-    overIn: "Over in {month}",
     over: "Over by",
     left: "Left",
     today: "Today",
     monthEnd: "Month end",
-    finishedMonthNote:
-      "A finished month, as the ledger recorded it. What an account holds is only ever true today.",
-    connectBankNote:
-      "Connect a bank to lead with what is actually in your account.",
     setUpTitle: "Set up your month",
     setUpBody: "Add what repeats once. Every month is forecast from it.",
     setUpCharges: "Set up charges",
@@ -1554,10 +1610,8 @@ export const en = {
     capsAndGoals: "Caps and goals",
     moreThisMonth: "More this month",
     startingBalanceHint: "Set a starting balance to begin closing months",
-    nothingToApply: "Nothing to apply",
     actionReopen: "Reopen",
     actionReview: "Review",
-    actionApply: "Apply",
     actionClose: "Close",
     actionStart: "Start",
     attentionSwallowed: {
@@ -1567,10 +1621,6 @@ export const en = {
     attentionInbox: {
       one: "{count} transaction needs a category",
       other: "{count} transactions need a category",
-    },
-    attentionApply: {
-      one: "{count} recurring item is ready to add",
-      other: "{count} recurring items are ready to add",
     },
     attentionBaseline:
       "Enter your account balance once, to start catching spending the app never sees",
@@ -1628,7 +1678,6 @@ export const en = {
     remindersOff: "Reminders off",
     remindersNeedPermission: "Reminders need notification permission",
     typeDeleteToConfirm: "Type DELETE to confirm.",
-    addNewOnly: "Add new only — skip updates",
     /* The last of the shared labels, mostly for screen readers. */
     product: "Product",
     account: "Account",
@@ -1637,7 +1686,6 @@ export const en = {
     needsYou: "Needs you",
     budgetView: "Budget view",
     arrivedCharges: "Charges that look like they arrived",
-    applyRecurring: "Apply recurring",
     closePopUp: "Close pop-up",
     clearInstrument: "Clear selected instrument",
     searchInstrument: "Search by name or ISIN…",
@@ -1646,10 +1694,8 @@ export const en = {
     date: "Date",
     pickADate: "Pick a date",
     setUp: "Set up",
-    everyMonthClosed: "Every month you have closed",
     openWallets: "Open wallets",
     usePassword: "Use password",
-    addTransaction: "Add transaction",
     capsAndNewMonths: "Caps and new months",
     browserNotifications: "Browser notifications",
     theRun: "The run",
@@ -1755,12 +1801,11 @@ export const en = {
     },
     deletePermanent: "This cannot be undone.",
     deleteAllRecurring: {
-      one: "It comes from a recurring template, so Apply will recreate it unless you skip the date.",
-      other:
-        "They come from recurring templates, so Apply will recreate them unless you skip the date.",
+      one: "It came from a charge, so it won't be added back this month.",
+      other: "They came from charges, so they won't be added back this month.",
     },
     deleteSomeRecurring:
-      "{count} of them come from recurring templates, so Apply will recreate those unless you skip the date.",
+      "{count} of them came from charges, so those won't be added back this month.",
     typeChangeAll: {
       one: "This one moves to a different kind of category, so past months' totals and unrecorded spending will change.",
       other:
@@ -2042,9 +2087,6 @@ export const en = {
      */
     stillToLeave: "still to leave",
     stillToArrive: "still to arrive",
-    pastMonthBanner: "Looking at {month} — a month that has ended",
-    /** Trails a figure already stated by `month.overIn` / `month.leftIn`. */
-    countingAhead: "counting what is still to come",
     /** The progress bar's own accessible name; the line under it is separate. */
     elapsedLabel: "{percent}% of the month elapsed",
     elapsedGone: "{percent}% of {month} gone",
@@ -2053,10 +2095,6 @@ export const en = {
       other:
         "Could not read {accounts} — their balances are not counted above.",
     },
-    fixLink: "Fix",
-    spendingDownTitle:
-      "Spending down {percent}% against the same days of {month}",
-    spendingUpTitle: "Spending up {percent}% against the same days of {month}",
     /** The phone's today/month-end toggle, its accessible hint. */
     switchesTo: "Switches to {option}",
   },
@@ -2087,14 +2125,6 @@ export const en = {
       "Measured against your last close, not remembered — so it moves when the bank does, and it is not final until the month is closed.",
     notYetMeasured:
       "Close a month against your bank balance and this fills in: the app works out what left the account that no transaction explains.",
-    findMissingEntry: "Find the missing transaction",
-    /**
-     * The footer link's third state, offered when there is nothing yet to
-     * measure. Its own key rather than `common.setUp` (a title, "Set up",
-     * used on the onboarding screen) because this is a CTA link and reads in
-     * a different register — a link says "Set this up", a heading doesn't.
-     */
-    setUpCta: "Set this up",
   },
 
   /**
@@ -2311,10 +2341,10 @@ export const en = {
   push: {
     monthOpen: {
       title: "A new month",
-      idle: "Apply your recurring to fill it in, and see what's left.",
+      idle: "Set up what repeats, and see what the month leaves you.",
       pending: {
-        one: "{count} recurring item is ready to apply.",
-        other: "{count} recurring items are ready to apply.",
+        one: "It starts with {count} charge. See what's left.",
+        other: "It starts with {count} charges. See what's left.",
       },
     },
     arrived: {
@@ -2331,6 +2361,26 @@ export const en = {
     breach: {
       title: "{label} is over budget",
       body: "{spent} spent of {limit}.",
+    },
+    bankRenew: {
+      title: "Keep your bank syncing",
+      body: {
+        one: "Your bank consent ends tomorrow, {date}. Renew it on open-banking.io — it takes a minute.",
+        other:
+          "Your bank consent ends in {count} days, on {date}. Renew it on open-banking.io — it takes a minute.",
+      },
+      today:
+        "Your bank consent ends today. Renew it on open-banking.io — it takes a minute.",
+      ended:
+        "Your bank consent has ended. Renew it on open-banking.io to start syncing again.",
+    },
+    bankExpired: {
+      title: "Your bank stopped syncing",
+      body: "Pluclair can no longer read your open-banking.io account. Upload a new credentials file to bring your figures up to date.",
+    },
+    bankPaused: {
+      title: "Bank syncing is paused",
+      body: "open-banking.io paused syncing, usually because the wallet is empty. Top it up to resume.",
     },
   },
 
@@ -2831,6 +2881,188 @@ export const en = {
   },
 
   /**
+   * Connecting a bank through open-banking.io, and looking after the
+   * connection afterwards.
+   *
+   * The price is always stated, always as open-banking.io's, and never as
+   * "free": the user pays them directly, and learning that on their checkout
+   * page would be the first thing this feature got wrong.
+   */
+  bankConnect: {
+    sheetTitle: "Connect your bank",
+    sheetLead:
+      "Your transactions arrive on their own, and your real balance is read four times a day. You set it up once, with your own open-banking.io account.",
+    step1Title: "Create your open-banking.io account",
+    step1Body:
+      "Sign up and top up its wallet. About €3 a month for one bank account and €1 for each extra one — paid to them, not to Pluclair.",
+    step2Title: "Connect your bank there",
+    step2Body:
+      "Through your bank's own login. Pluclair never sees your bank password.",
+    step3Title: "Download your credentials file",
+    step3Body:
+      "On the Developers page, create an API key and choose “Download credentials.json” in the window that shows it. The export under “Encryption key” has the same name but no API key.",
+    step4Title: "Drop it here",
+    step4Body:
+      "Pluclair checks it, then brings in your history. Whatever it can't file on its own waits for you in one short review.",
+    factReadOnly: "Read-only: nothing here can move money.",
+    factKey:
+      "Pluclair keeps your credentials file encrypted, where no app can read it, and deletes it the moment you disconnect.",
+    factConsent:
+      "Your bank's consent lasts about 180 days. You renew it on open-banking.io, and you're reminded before it ends.",
+    factHistory:
+      "Past months are filled in from your bank, so their totals may change.",
+    privacyLink: "How your bank data is handled",
+    openSite: "Open open-banking.io",
+    dropTitle: "Drop credentials.json here",
+    dropHint: "Any name works — the file you download may carry a date.",
+    chooseFile: "Choose the file",
+    checking: "Checking your file…",
+    fileTooLarge: "That file is too big to be a credentials file.",
+    fileNotCredentials:
+      "That isn't an open-banking.io credentials file. Download credentials.json again and drop that one.",
+    fileMissingApiKey:
+      "This file holds your encryption key but no API key: it's the export from the “Encryption key” card. On the Developers page, create an API key and choose “Download credentials.json” in the window that shows it.",
+    fileWrongService:
+      "That credentials file is for another service, not open-banking.io.",
+    fileRejected:
+      "open-banking.io didn't accept the key in that file — it may have been deleted. Create a new API key and download the file again.",
+    fileKeyMismatch:
+      "The private key in that file doesn't open your data. Download credentials.json again.",
+    openBankingUnreachable:
+      "open-banking.io couldn't be reached, so your file wasn't saved. Try again in a moment.",
+    saveFailed: "Your file couldn't be saved. Try again.",
+    connectedPaused:
+      "Your file works, but open-banking.io has paused syncing until its wallet is topped up.",
+    noAccountsYet:
+      "Your file works, but no bank is connected on open-banking.io yet. Connect one there, then come back here.",
+    checkAgain: "Check again",
+    unavailable: "Bank connection isn't available here yet.",
+    unreachable: "Couldn't reach Pluclair just now. Try again in a moment.",
+    notConnected: "No bank is connected.",
+    priceNote: "About €3 a month, paid to open-banking.io.",
+    connected: "Your bank is connected.",
+    importTitle: "Bringing in your history",
+    importBody:
+      "Keep this page open. If you leave, it picks up where it stopped next time.",
+    importAccountDone: { one: "{count} entry", other: "{count} entries" },
+    importDone: "Your history is in.",
+    reviewCta: { one: "Review {count} entry", other: "Review {count} entries" },
+    toBearing: "See your balance",
+    statusConnected: "Syncing",
+    lastSynced: "Last synced {when}",
+    neverSynced: "Not synced yet",
+    sourceOwner: "Connected through this deployment's own credentials.",
+    ownerUpload:
+      "Upload your credentials file to keep this connection on your account rather than in this deployment's settings.",
+    ownerUploadCta: "Upload the file",
+    consentUntil: "Your bank's consent runs until {date}.",
+    consentSoon:
+      "Your bank's consent ends on {date}. Renew it on open-banking.io to keep syncing.",
+    consentEnded:
+      "Your bank's consent has ended. Renew it on open-banking.io to start syncing again.",
+    details: "Details",
+    renew: "Renew",
+    expiredTitle: "Pluclair can no longer read your account",
+    expiredBody:
+      "open-banking.io stopped accepting your credentials file — usually because its API key was deleted. Create a new key, download the file again and drop it here. Everything already imported stays.",
+    reconnect: "Upload a new file",
+    replaceFile: "Replace the credentials file",
+    pausedTitle: "Syncing is paused",
+    pausedBody: "open-banking.io paused it until its wallet is topped up.",
+    errorTitle: "Your bank couldn't be reached",
+    errorBody: "It will be tried again at the next sync.",
+    accounts: "Accounts",
+    accountsBody:
+      "Choose which accounts hold your spending money. Their balance is the one on your Bearing.",
+    disconnect: "Disconnect",
+    disconnectTitle: "Disconnect your bank?",
+    disconnectBody:
+      "Syncing stops and your credentials file is deleted from Pluclair.",
+    disconnectApiKey:
+      "Then delete its API key on open-banking.io, and close your account there if you no longer need it.",
+    keepImported: "Keep the imported transactions",
+    keepImportedHint: "Your ledger stays as it is.",
+    deleteImported: "Delete them too",
+    deleteImportedHint: "Only what the bank added. Anything you typed stays.",
+    confirmDisconnect: "Disconnect",
+    disconnected: "Your bank is disconnected.",
+    notConnectedBody:
+      "See your real balance, let entries arrive on their own, and have months close themselves.",
+    unlockBalance: "Your real balance, read from your bank four times a day",
+    unlockEntries:
+      "Entries that arrive and file themselves from your own history",
+    unlockArrived: "Charges confirmed as they arrive",
+    unlockClose: "Months that close themselves on your reading day",
+    profileLink: "Bank connection",
+    /* What each invitation promises, on the surface it appears on. */
+    inviteBearing:
+      "See your real balance, read from your bank four times a day.",
+    inviteWelcome: "Let your bank fill this in for you.",
+    inviteLedger:
+      "Stop typing: connect your bank and entries arrive on their own.",
+    invitePlan: "Your balance gets read for you, and months close themselves.",
+    dismissInvite: "Don't show this again",
+    orEnterBalance: "Or enter your balance by hand",
+  },
+
+  /**
+   * The Bearing, rebuilt around one month: what the account holds, where the
+   * month ends, and what it went on.
+   *
+   * The figures' names change with what they can claim. A balance read from
+   * the bank is "on your account"; one carried from a close is the same
+   * words with a caption saying so; with neither, the screen counts the
+   * month's net and says that instead of pretending it is a balance.
+   */
+  bearingMonth: {
+    onAccount: "On your account",
+    expectedEnd: "Expected at month end",
+    startedWith: "Started with",
+    endedWith: "Ended with",
+    expectedStart: "Expected to start with",
+    netSoFar: "This month so far",
+    netByEnd: "By month end",
+    netMonth: "This month",
+    netCaption: "What came in, minus what went out.",
+    fromBank: "Today, from your bank",
+    fromClose: "From your last close, plus what you have recorded since",
+    plannedOnly: "Your charges only — everyday spending is not in this",
+    fromToday: "{amount} from today",
+    lowestAhead: "Lowest ahead: {amount} on {date}",
+    lowest: "Lowest: {amount} on {date}",
+    toComeIn: "{amount} still to come in",
+    toGoOut: "{amount} still to go out",
+    chartLabel: "Balance through {month}",
+    netChartLabel: "Net through {month}",
+    recorded: "Recorded",
+    setBalance: "Enter your balance",
+    setBalanceBody:
+      "Type what your account holds once, and this becomes your real balance.",
+    spent: "Spent",
+    ofCap: "of a {amount} cap",
+    spentLessSoFar: "{amount} less than {month} by now",
+    spentMoreSoFar: "{amount} more than {month} by now",
+    spentLess: "{amount} less than {month}",
+    spentMore: "{amount} more than {month}",
+    spentSame: "Level with {month}",
+    stillToCome: "Still to come",
+    plannedThisMonth: "Planned this month",
+    nothingToCome: "Nothing else planned this month.",
+    moreToCome: { one: "+{count} more", other: "+{count} more" },
+    seeInLedger: "See in the Ledger",
+    whereItWent: "Where it went",
+    everythingElse: "Everything else",
+    capOf: "{spent} of {cap}",
+    run: { one: "{count}-month run", other: "{count}-month run" },
+    runBody: "Months in a row closed under your allowance.",
+    bestRun: "Best: {count}",
+    noRunYet: "Close a month under your allowance to start a run.",
+    goals: "Goals",
+    goalToGo: "{amount} to go",
+    invested: "Invested",
+  },
+
+  /**
    * The Bearing: the whole position, on one screen.
    *
    * Deliberately sparse. This is the app's most figure-dense screen and every
@@ -2888,8 +3120,6 @@ export const en = {
       open: "Show what this is made of",
       footer: "See the full surface",
       horizon: "How far ahead",
-      /** The month stepper above a month panel, for a screen reader. */
-      monthScope: "Which month this panel shows",
       /** The run, in the streak chrome. */
       streakMonths: {
         one: "{count} month inside the allowance",

@@ -7,6 +7,13 @@ import { createClient } from "@/lib/supabase/server";
 import { findLedgerMatch } from "@finance/core/bank-feed";
 import { getBankConnection } from "@/lib/bank/client";
 import { ledgerRowsAround } from "@/lib/bank/duplicates";
+import {
+  fileFeedItems,
+  leaveOutFeedItems,
+  matchedExisting,
+  reopenFeedItems,
+  type BatchFeedResult,
+} from "@/lib/bank/feed-decisions";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
 import { getRecurringProposals } from "@/lib/queries/bank";
@@ -225,6 +232,68 @@ export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
 }
 
 /**
+ * File a whole group of waiting rows under one category, with one
+ * revalidation at the end rather than one per row. The rows are decided in
+ * `fileFeedItems`, which the phone's route shares.
+ */
+export async function importFeedItems(
+  itemIds: string[],
+  categoryId: string,
+): Promise<BatchFeedResult> {
+  const user = await getAuthUser();
+  if (!user) {
+    return { error: "errors.notAuthenticated" };
+  }
+  const result = await fileFeedItems(
+    await createClient(),
+    user.id,
+    itemIds,
+    categoryId,
+  );
+  if (!result.error) {
+    revalidateFeedDependents();
+  }
+  return result;
+}
+
+/** Leave a whole group out, in one write. See `ignoreFeedItem`. */
+export async function ignoreFeedItems(
+  itemIds: string[],
+): Promise<BatchFeedResult> {
+  const user = await getAuthUser();
+  if (!user) {
+    return { error: "errors.notAuthenticated" };
+  }
+  const result = await leaveOutFeedItems(
+    await createClient(),
+    user.id,
+    itemIds,
+  );
+  if (!result.error) {
+    revalidateFeedDependents();
+  }
+  return result;
+}
+
+/**
+ * Take back a whole group's decision: `undoFeedDecision` for each row, with
+ * one revalidation. What the undo toast after "File all" calls.
+ */
+export async function undoFeedDecisions(
+  itemIds: string[],
+): Promise<ActionResult & { reopened?: number }> {
+  const user = await getAuthUser();
+  if (!user) {
+    return { error: "errors.notAuthenticated" };
+  }
+  const result = await reopenFeedItems(await createClient(), user.id, itemIds);
+  if (!result.error) {
+    revalidateFeedDependents();
+  }
+  return result;
+}
+
+/**
  * Move an already-filed bank row to a different category.
  *
  * Edits the ledger row it became rather than unpicking and refiling it, so
@@ -267,19 +336,6 @@ export async function recategoriseFeedItem(
 
   revalidateFeedDependents();
   return { success: true, message: "Moved" };
-}
-
-/**
- * Whether this row's transaction belongs to something else.
- *
- * `decided_by` records how the row was settled, and two of its three shapes
- * mean "filed against a transaction that was already there": `match:recurring`
- * when the sync paired it with a recurring charge, and `match:ledger` when
- * pressing Add found the movement already recorded. Only `auto:` and a
- * category picked by hand actually write a transaction.
- */
-function matched(decidedBy: string | null): boolean {
-  return decidedBy?.startsWith("match:") ?? false;
 }
 
 /**
@@ -328,7 +384,7 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
   // failed, the row would point at a transaction that no longer exists.
   const { error } = await supabase
     .from("bank_feed_items")
-    .update({ status: "pending", transaction_id: null })
+    .update({ status: "pending", transaction_id: null, decided_by: null })
     .eq("id", itemId)
     .eq("user_id", user.id);
 
@@ -336,7 +392,7 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
     return { error: error.message };
   }
 
-  if (item.transaction_id && !matched(item.decided_by)) {
+  if (item.transaction_id && !matchedExisting(item.decided_by)) {
     const { error: deleteError } = await supabase
       .from("transactions")
       .delete()
@@ -367,7 +423,7 @@ export async function getBankBalanceSuggestion(): Promise<
     return { error: "errors.notAuthenticated" };
   }
 
-  const connection = getBankConnection(user.id);
+  const connection = await getBankConnection(user.id);
   if (!connection) {
     return { success: true };
   }

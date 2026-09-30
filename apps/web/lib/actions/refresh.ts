@@ -4,6 +4,7 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { bankFeedStatus, describeBankFeedStatus } from "@/lib/bank/client";
+import { noteSyncFailure, noteSyncHealthy } from "@/lib/bank/health-note";
 import type { PullFreshness } from "@finance/core/bank-pull";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { syncBankFeed } from "@/lib/bank/sync";
@@ -51,10 +52,10 @@ export async function refreshEverythingAction(): Promise<RefreshResult> {
   // What it must not do is report "Up to date", which is what it used to.
   // Nothing here asked a bank, so nothing here has earned a word about
   // whether the figures match one — the same reason the cooldown branch
-  // below returns the refusal verbatim instead of "nothing new". And the two
-  // reasons a bank is missing are worth telling apart: `other-owner` is a
-  // configuration mistake wearing the costume of an ordinary absence.
-  const status = bankFeedStatus(user.id);
+  // below returns the refusal verbatim instead of "nothing new". And the
+  // reasons a bank is missing are worth telling apart: an ended connection
+  // or a paused wallet each have something the user can do about them.
+  const status = await bankFeedStatus(user.id);
   if (status !== "connected") {
     revalidateEverySurface();
     return { success: true, message: describeBankFeedStatus(status) };
@@ -62,6 +63,7 @@ export async function refreshEverythingAction(): Promise<RefreshResult> {
 
   try {
     const outcome = await syncBankFeed(supabase, user.id, { pull: "attended" });
+    await noteSyncHealthy(user.id);
     const closes = await autoCloseMonths(supabase, user.id);
 
     revalidateEverySurface();
@@ -109,9 +111,7 @@ export async function refreshEverythingAction(): Promise<RefreshResult> {
       freshness: await readPullFreshness(supabase, user.id, await getLocale()),
     };
   } catch (error) {
-    return {
-      error:
-        error instanceof Error ? error.message : "Could not reach the bank.",
-    };
+    // The words, not the error: an SDK failure carries the API path it hit.
+    return { error: (await noteSyncFailure(user.id, error)).message };
   }
 }

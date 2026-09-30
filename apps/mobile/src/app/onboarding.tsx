@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 
 import { CURRENCY_LABELS, type CurrencyCode } from "@finance/core/constants";
 import { groupCategoriesByType } from "@finance/core/categories";
 import type { Category } from "@finance/core/types/database";
 
+import { ConnectBankSheet } from "@/components/bank/ConnectBankSheet";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Logo } from "@/components/Logo";
 import { FadeIn } from "@/components/motion/FadeIn";
@@ -14,7 +15,9 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
+import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { shouldInvite } from "@/lib/bank-connect";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useOnboarding } from "@/providers/OnboardingProvider";
@@ -27,9 +30,18 @@ import { useT } from "@/providers/LocaleProvider";
 
 const CURRENCIES: CurrencyCode[] = ["EUR", "USD"];
 
-type Step = "currency" | "income" | "recurring" | "cap" | "done";
+type Step = "currency" | "income" | "recurring" | "bank" | "cap" | "done";
 
-const STEP_ORDER: Step[] = ["currency", "income", "recurring", "cap", "done"];
+/**
+ * The bank step sits after the charges and only where connecting one is
+ * possible, as on the web: after typing a charge or two by hand is when
+ * "let your bank do this" means something.
+ */
+function stepsFor(offerBank: boolean): Step[] {
+  return offerBank
+    ? ["currency", "income", "recurring", "bank", "cap", "done"]
+    : ["currency", "income", "recurring", "cap", "done"];
+}
 
 /**
  * First-run setup. Currency is required because it changes how every figure in
@@ -71,13 +83,22 @@ export default function OnboardingScreen() {
   const expenseCategories =
     groups.find((g) => g.type === "expense")?.categories ?? [];
 
-  const stepIndex = STEP_ORDER.indexOf(step);
+  const { bank } = useBankState();
+  const offerBank = bank !== null && shouldInvite("welcome", bank);
+  const stepOrder = stepsFor(offerBank);
+  const stepIndex = stepOrder.indexOf(step);
+  // What follows the charges: the bank step where there is one.
+  const afterCharges: Step = offerBank ? "bank" : "cap";
+  const [bankOpen, setBankOpen] = useState(false);
+  // Connected during setup: setup then ends on the Bank screen, where the
+  // history comes in, rather than on a Bearing still waiting for it.
+  const [bankConnected, setBankConnected] = useState(false);
 
   async function finish() {
     // Update shared state before navigating, or the navigator still reads
     // "incomplete" and sends us straight back here.
     await markComplete();
-    router.replace("/");
+    router.replace((bankConnected ? "/bank" : "/") as Href);
   }
 
   async function saveMonthly(
@@ -168,7 +189,7 @@ export default function OnboardingScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row justify-center gap-1.5 pt-2">
-          {STEP_ORDER.slice(0, 4).map((value, index) => (
+          {stepOrder.slice(0, -1).map((value, index) => (
             <View
               key={value}
               className={cn(
@@ -363,7 +384,38 @@ export default function OnboardingScreen() {
               <Button
                 label={t("onboarding.continue")}
                 size="lg"
-                onPress={() => setStep("cap")}
+                onPress={() => setStep(afterCharges)}
+              />
+              <Button
+                label={t("onboarding.skipForNow")}
+                variant="ghost"
+                onPress={() => setStep(afterCharges)}
+              />
+            </View>
+          </FadeIn>
+        ) : null}
+
+        {step === "bank" ? (
+          <FadeIn className="gap-6">
+            <View className="gap-2">
+              <Text className="text-2xl font-bold">
+                {t("bankConnect.inviteWelcome")}
+              </Text>
+              <Text variant="muted">{t("bankConnect.notConnectedBody")}</Text>
+            </View>
+
+            <Card bezel innerClassName="gap-2 p-5">
+              <Text className="text-sm">{t("bankConnect.factReadOnly")}</Text>
+              <Text variant="muted" className="text-sm">
+                {t("bankConnect.priceNote")}
+              </Text>
+            </Card>
+
+            <View className="gap-2">
+              <Button
+                label={t("bankConnect.sheetTitle")}
+                size="lg"
+                onPress={() => setBankOpen(true)}
               />
               <Button
                 label={t("onboarding.skipForNow")}
@@ -371,6 +423,16 @@ export default function OnboardingScreen() {
                 onPress={() => setStep("cap")}
               />
             </View>
+
+            <ConnectBankSheet
+              open={bankOpen}
+              onOpenChange={setBankOpen}
+              onConnected={() => {
+                toast(t("bankConnect.connected"), "success");
+                setBankConnected(true);
+                setStep("cap");
+              }}
+            />
           </FadeIn>
         ) : null}
 

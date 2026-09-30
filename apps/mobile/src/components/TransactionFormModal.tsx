@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import { todayIsoLocal } from "@finance/core/constants";
 import {
   formatCategoryOptionLabel,
   groupCategoriesByType,
@@ -23,10 +22,8 @@ import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useThemeColors } from "@/theme/useThemeColors";
 import {
-  createTransaction,
   deleteTransaction,
   setTransactionTags,
-  skipRecurringOccurrence,
   updateTransaction,
 } from "@/lib/mutations";
 import { getTransactionTagIds } from "@/lib/queries";
@@ -40,17 +37,21 @@ interface TransactionFormModalProps {
   onSaved: () => void;
   onDeleted?: () => void;
   categories: Category[];
-  transaction?: TransactionWithCategory | null;
-  defaultDate?: string;
+  /** The transaction being edited. */
+  transaction: TransactionWithCategory;
   /** Most-recently-used category ids, newest first. */
   recentCategoryIds?: string[];
   tags?: Tag[];
 }
 
 /**
- * Transaction sheet mirroring the web TransactionForm: category, amount, date
- * and note, then — when editing — the skip and delete actions behind inline
- * confirmations rather than a system alert.
+ * Editing one transaction, mirroring the web TransactionForm: category,
+ * amount, date and note, then the delete action behind an inline
+ * confirmation rather than a system alert.
+ *
+ * Adding one happens in the shared Add sheet behind the "+"; this sheet used
+ * to do both, which is how the Ledger's Add and the "+" came to ask for the
+ * same thing in two different ways.
  */
 export function TransactionFormModal({
   open,
@@ -58,27 +59,20 @@ export function TransactionFormModal({
   onSaved,
   onDeleted,
   categories,
-  transaction = null,
-  defaultDate = todayIsoLocal(),
+  transaction,
   recentCategoryIds = [],
   tags = [],
 }: TransactionFormModalProps) {
   const locale = useLocale();
   const t = useT();
   const colors = useThemeColors();
-  const isEditing = transaction !== null;
-  const [categoryId, setCategoryId] = useState(transaction?.category_id ?? "");
-  const [amount, setAmount] = useState(
-    transaction ? String(Number(transaction.amount)) : "",
-  );
-  const [occurredOn, setOccurredOn] = useState(
-    transaction?.occurred_on ?? defaultDate,
-  );
-  const [note, setNote] = useState(transaction?.note ?? "");
+  const [categoryId, setCategoryId] = useState(transaction.category_id);
+  const [amount, setAmount] = useState(String(Number(transaction.amount)));
+  const [occurredOn, setOccurredOn] = useState(transaction.occurred_on);
+  const [note, setNote] = useState(transaction.note ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [confirmSkip, setConfirmSkip] = useState(false);
   const [tagIds, setTagIds] = useState<string[]>([]);
   // Whether the edited transaction's existing tags finished loading. Saving
   // before this resolves — or after it fails — must not overwrite the row's
@@ -88,9 +82,6 @@ export function TransactionFormModal({
 
   // Existing tags load once per edited transaction.
   useEffect(() => {
-    if (!transaction) {
-      return;
-    }
     let active = true;
     void getTransactionTagIds(transaction.id)
       .then((ids) => {
@@ -124,65 +115,40 @@ export function TransactionFormModal({
     .map((id) => categories.find((cat) => cat.id === id))
     .filter((cat): cat is Category => cat !== undefined)
     .slice(0, 4);
-  const templateId = transaction?.recurring_template_id ?? null;
-  const canSkip = isEditing && Boolean(templateId);
+  // A charge's row. Deleting it takes that occurrence out of its month —
+  // which is what skipping used to be a separate button for — so the month
+  // filling itself does not write it straight back.
+  const fromCharge = Boolean(transaction.recurring_template_id);
 
   async function handleSave() {
     setPending(true);
     setError(null);
-    const payload = {
-      ...(isEditing ? { id: transaction.id } : {}),
+    const result = await updateTransaction({
+      id: transaction.id,
       categoryId,
       amount,
       occurredOn,
       note: note || undefined,
-    };
-    const result = isEditing
-      ? await updateTransaction(payload)
-      : await createTransaction(payload);
+    });
     setPending(false);
     if (result.error) {
       setError(result.error);
       return;
     }
-    // Tags are a separate table, so they are written after the row exists.
-    // When editing, only write once the existing tags have loaded — writing
-    // before or after a failed load would clear the transaction's tags.
-    const savedId = isEditing ? transaction.id : result.id;
-    if (savedId && tags.length > 0 && (!isEditing || tagsLoaded)) {
-      await setTransactionTags(savedId, tagIds);
+    // Tags are a separate table, so they are written after the row. Only
+    // once the existing tags have loaded — writing before or after a failed
+    // load would clear the transaction's tags.
+    if (tags.length > 0 && tagsLoaded) {
+      await setTransactionTags(transaction.id, tagIds);
     }
     onSaved();
     onClose();
   }
 
   async function handleDelete() {
-    if (!transaction) {
-      return;
-    }
     setPending(true);
     setError(null);
     const result = await deleteTransaction(transaction.id);
-    setPending(false);
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-    (onDeleted ?? onSaved)();
-    onClose();
-  }
-
-  async function handleSkip() {
-    if (!transaction || !templateId) {
-      return;
-    }
-    setPending(true);
-    setError(null);
-    const result = await skipRecurringOccurrence(
-      templateId,
-      transaction.occurred_on,
-      transaction.id,
-    );
     setPending(false);
     if (result.error) {
       setError(result.error);
@@ -212,9 +178,7 @@ export function TransactionFormModal({
           </View>
           <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
             <Text className="font-semibold" style={{ fontSize: 18 }}>
-              {isEditing
-                ? t("transaction.editTitle")
-                : t("transaction.addTitle")}
+              {t("transaction.editTitle")}
             </Text>
             <Pressable
               onPress={onClose}
@@ -406,91 +370,45 @@ export function TransactionFormModal({
               onPress={handleSave}
             />
 
-            {isEditing ? (
-              <View className="mt-6 gap-3 border-t border-border pt-4">
-                {canSkip ? (
-                  confirmSkip ? (
-                    <View className="gap-2">
-                      <Text variant="muted" className="text-sm">
-                        Skip this date only? The entry will be removed and Apply
-                        won&apos;t recreate it. The recurring rule stays active
-                        for later months.
-                      </Text>
-                      <View className="flex-row gap-2">
-                        <Button
-                          label={
-                            pending
-                              ? t("transaction.skipping")
-                              : t("transaction.confirmSkip")
-                          }
-                          variant="outline"
-                          className="flex-1"
-                          disabled={pending}
-                          onPress={handleSkip}
-                        />
-                        <Button
-                          label={t("transaction.cancel")}
-                          variant="outline"
-                          className="flex-1"
-                          disabled={pending}
-                          onPress={() => setConfirmSkip(false)}
-                        />
-                      </View>
-                    </View>
-                  ) : (
+            <View className="mt-6 gap-3 border-t border-border pt-4">
+              {confirmDelete ? (
+                <View className="gap-2">
+                  <Text variant="muted" className="text-sm">
+                    {fromCharge
+                      ? t("transaction.deleteChargeExplanation")
+                      : t("transaction.deleteExplanation")}
+                  </Text>
+                  <View className="flex-row gap-2">
                     <Button
-                      label={t("transaction.skipThisDate")}
+                      label={
+                        pending
+                          ? t("transaction.deleting")
+                          : t("transaction.confirmDelete")
+                      }
                       variant="outline"
+                      className="flex-1 border-destructive"
                       disabled={pending}
-                      onPress={() => {
-                        setConfirmDelete(false);
-                        setConfirmSkip(true);
-                      }}
+                      onPress={handleDelete}
                     />
-                  )
-                ) : null}
-
-                {confirmDelete ? (
-                  <View className="gap-2">
-                    <Text variant="muted" className="text-sm">
-                      Delete this transaction permanently? (Apply may recreate
-                      it if the recurring rule is still active.)
-                    </Text>
-                    <View className="flex-row gap-2">
-                      <Button
-                        label={
-                          pending
-                            ? t("transaction.deleting")
-                            : t("transaction.confirmDelete")
-                        }
-                        variant="outline"
-                        className="flex-1 border-destructive"
-                        disabled={pending}
-                        onPress={handleDelete}
-                      />
-                      <Button
-                        label={t("transaction.cancel")}
-                        variant="outline"
-                        className="flex-1"
-                        disabled={pending}
-                        onPress={() => setConfirmDelete(false)}
-                      />
-                    </View>
+                    <Button
+                      label={t("transaction.cancel")}
+                      variant="outline"
+                      className="flex-1"
+                      disabled={pending}
+                      onPress={() => setConfirmDelete(false)}
+                    />
                   </View>
-                ) : (
-                  <Button
-                    label={t("transaction.deleteTransaction")}
-                    variant="outline"
-                    className="border-destructive"
-                    disabled={pending}
-                    onPress={() => {
-                      setConfirmSkip(false);
-                      setConfirmDelete(true);
-                    }}
-                  />
-                )}
-              </View>
-            ) : null}
+                </View>
+              ) : (
+                <Button
+                  label={t("transaction.deleteTransaction")}
+                  variant="outline"
+                  className="border-destructive"
+                  disabled={pending}
+                  onPress={() => setConfirmDelete(true)}
+                />
+              )}
+            </View>
 
             <View className="h-10" />
           </ScrollView>

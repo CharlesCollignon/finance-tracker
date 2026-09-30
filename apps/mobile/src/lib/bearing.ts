@@ -35,10 +35,7 @@ import {
   readCashBalance,
   type MonthCloseOverview,
 } from "@/lib/queries";
-import {
-  countRecurringToApply,
-  recurringOccurrenceKey,
-} from "@finance/core/apply-recurring";
+import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 
 /**
  * The Bearing on the phone.
@@ -70,8 +67,7 @@ import {
  * the same way and for the same reason: `pulse`, `summary` and `closes` were
  * already computed here and fed into `buildBearingFacts` before being thrown
  * away. `swallowed` and `proposals` are the two new reads — see the gate
- * below for why each is necessary, and for why `recurringToApply` is
- * counted out of rows already in hand rather than read at all.
+ * below for why each is necessary.
  */
 export interface GatheredBearingFacts extends BearingFacts {
   pulse: MonthPulse;
@@ -83,8 +79,6 @@ export interface GatheredBearingFacts extends BearingFacts {
   swallowed: number;
   /** Standing charges the statement implies but no template covers. */
   proposals: number;
-  /** Recurring items this month's plan is ready to write as rows. */
-  recurringToApply: number;
   /**
    * Net per month, oldest first, for the two figures that draw a run behind
    * themselves.
@@ -153,38 +147,6 @@ export async function gatherBearingFacts(
       recurringOccurrenceKey(entry.templateId, entry.occurredOn),
     ),
   );
-
-  /**
-   * How many recurring charges are waiting to be written — counted, not
-   * priced. The web twin carries the full reasoning; in short, this was
-   * `previewApplyRecurringForMonth`, which builds a whole plan and pays one
-   * live market quote per quote-priced occurrence to do it, on the screen
-   * the app opens on. The action row asks how many, not for how much, and
-   * `templates`, `currentTx` and `skipped` are all already read above.
-   *
-   * The `bankFed` gate is the one that function applied internally: with a
-   * bank feeding the ledger, templates forecast and never write.
-   */
-  const recurringToApply = bankFed
-    ? 0
-    : countRecurringToApply(
-        templates,
-        new Set(
-          currentTx.flatMap((tx) =>
-            tx.recurring_template_id
-              ? [
-                  recurringOccurrenceKey(
-                    tx.recurring_template_id,
-                    tx.occurred_on,
-                  ),
-                ]
-              : [],
-          ),
-        ),
-        year,
-        month,
-        skippedKeys,
-      );
 
   const monthKey = `${year}-${String(month).padStart(2, "0")}`;
   // The same adjacency rule every other surface uses: only the close of the
@@ -304,7 +266,6 @@ export async function gatherBearingFacts(
     pendingInbox: pending,
     swallowed,
     proposals: proposals.length,
-    recurringToApply,
     trend: trend.map((point) => point.net),
   };
 }

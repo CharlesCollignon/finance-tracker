@@ -1,5 +1,6 @@
 import {
   formatMonthLabel,
+  getCurrentMonth,
   getMonthBounds,
   type BudgetViewMode,
 } from "@finance/core/constants";
@@ -11,7 +12,11 @@ import {
 
 import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
-import { bankMerchantKey } from "@finance/core/bank-merchant";
+import {
+  bankMerchantKey,
+  buildBankMerchantIndex,
+  type BankMerchantIndex,
+} from "@finance/core/bank-merchant";
 import {
   detectRecurring,
   filterLiveProposals,
@@ -186,6 +191,44 @@ export async function getRecurringTemplates(
     throw error;
   }
   return (data ?? []) as RecurringTemplateWithCategory[];
+}
+
+/**
+ * The days each charge has already been recorded on this month, today
+ * included — what "apply this change to this month too" would reach.
+ *
+ * Only this month: past months are never offered, and the months ahead hold
+ * nothing to rewrite because their occurrences are planned, not stored.
+ */
+export async function getRecordedChargeDates(
+  userId: string,
+): Promise<Map<string, string[]>> {
+  const { year, month } = getCurrentMonth();
+  const { start } = getMonthBounds(year, month);
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("recurring_template_id, occurred_on")
+    .eq("user_id", userId)
+    .not("recurring_template_id", "is", null)
+    .gte("occurred_on", start)
+    .lte("occurred_on", todayIsoLocal())
+    .order("occurred_on", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  const byTemplate = new Map<string, string[]>();
+  for (const row of data ?? []) {
+    const templateId = row.recurring_template_id as string | null;
+    if (!templateId) {
+      continue;
+    }
+    const dates = byTemplate.get(templateId) ?? [];
+    dates.push(row.occurred_on as string);
+    byTemplate.set(templateId, dates);
+  }
+  return byTemplate;
 }
 
 export interface SkippedOccurrence {
@@ -1461,7 +1504,9 @@ export async function getPendingFeedItems(
     .eq("user_id", userId)
     .eq("status", "pending")
     .order("occurred_on", { ascending: false })
-    .limit(100);
+    // As many as the web's grouped review holds: grouping only works when a
+    // shop's rows are all here, and a year of weekly shopping is past 100.
+    .limit(1000);
 
   if (error) {
     if (isMissingSchema(error)) {
@@ -1479,6 +1524,40 @@ export async function getPendingFeedItems(
     note: row.note,
     why: reasonOf(row.decided_by, locale),
   }));
+}
+
+/**
+ * The user's history keyed the way the bank matcher keys it — what the
+ * grouped review suggests a shop's category from. The web's
+ * `getBankMerchantIndex`, bounded the same way.
+ */
+export async function getBankMerchantIndex(
+  userId: string,
+): Promise<BankMerchantIndex> {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("note, category_id, occurred_on, categories(name, type)")
+    .eq("user_id", userId)
+    .order("occurred_on", { ascending: false })
+    .limit(2000);
+
+  if (error) {
+    // A suggestion is a convenience: without one, the review still works.
+    return new Map();
+  }
+
+  type Row = {
+    note: string | null;
+    category_id: string;
+    occurred_on: string;
+    categories: { name: string; type: string } | null;
+  };
+
+  return buildBankMerchantIndex(
+    ((data ?? []) as unknown as Row[]).flatMap((row) =>
+      row.categories ? [{ ...row, categories: row.categories }] : [],
+    ),
+  );
 }
 
 export interface DecidedFeedRow {

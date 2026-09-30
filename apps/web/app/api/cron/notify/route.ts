@@ -12,7 +12,12 @@ import {
   type UserDevices,
 } from "@/lib/push/send";
 import {
+  bankAttention,
+  bankAttentionNotification,
+} from "@finance/core/bank-attention";
+import {
   formatCurrency,
+  formatShortDate,
   getCurrentMonth,
   getMonthBounds,
   todayIsoLocal,
@@ -216,9 +221,15 @@ async function notificationsFor(
   const templateRows = (templates.data ??
     []) as RecurringTemplateWithCategory[];
 
-  // Nothing to say to someone with no caps and no templates.
+  // Ahead of the digest and outside its cap on how many one run sends: a
+  // feed about to stop is the one thing here that gets worse by waiting, and
+  // it applies to people with no caps or templates at all.
+  const bank = await bankNotificationFor(supabase, userId, today, locale);
+  const lead = bank ? [bank] : [];
+
+  // Nothing else to say to someone with no caps and no templates.
   if (budgetRows.length === 0 && templateRows.length === 0) {
-    return [];
+    return lead;
   }
 
   const summary = buildMonthlySummary(
@@ -254,7 +265,7 @@ async function notificationsFor(
     arrivedCharges = 0;
   }
 
-  return buildDueNotifications({
+  const digest = buildDueNotifications({
     today,
     budgetProgress: progress,
     arrivedCharges,
@@ -269,4 +280,46 @@ async function notificationsFor(
     formatAmount: (amount: number) => formatCurrency(amount, "EUR", locale),
     t: translator(locale),
   });
+  return [...lead, ...digest];
+}
+
+/**
+ * The reminder a connected bank earns today, if it has not been sent.
+ *
+ * Asked apart from the month's log read above, which only fetches keys that
+ * mention the month: a consent key names the day it ends, which is as often
+ * next month as this one.
+ */
+async function bankNotificationFor(
+  supabase: AdminClient,
+  userId: string,
+  today: string,
+  locale: Locale,
+): Promise<PendingNotification | null> {
+  const { data: connection } = await supabase
+    .from("bank_connections")
+    .select("status, consent_valid_until, last_synced_at, connected_at")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!connection) {
+    return null;
+  }
+  const notification = bankAttentionNotification(
+    bankAttention(connection, today),
+    {
+      since: connection.last_synced_at ?? connection.connected_at,
+      formatDate: (isoDate) => formatShortDate(isoDate, locale),
+      t: translator(locale),
+    },
+  );
+  if (!notification) {
+    return null;
+  }
+  const { data: sent } = await supabase
+    .from("notification_log")
+    .select("key")
+    .eq("user_id", userId)
+    .eq("key", notification.key)
+    .maybeSingle();
+  return sent ? null : notification;
 }

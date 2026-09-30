@@ -323,6 +323,8 @@ Acceptance: the four known issues are closed with tests; all existing AI feature
 
 ### Phase 1 — Bank connection for every user (L)
 
+> **Refined on 30 September 2026 by [`BANK_CONNECT_PLAN.md`](./BANK_CONNECT_PLAN.md):** open-banking.io through Partner Connect, paid by each user, public from launch, full-history import with a grouped review inbox. Where the two differ, that plan wins.
+
 **Goal:** any user can connect their banks through an aggregator; the owner-only feed disappears.
 
 Tasks:
@@ -452,7 +454,7 @@ Acceptance: 100% of numbers in answers trace to tool results on the eval set; re
 ## 7. Human-only track (I do these; you prepare material when asked)
 
 - **H1. Regulatory path for tiers 4 and 5.** Legal opinion on the tier 3/4 boundary. For instrument-level advice: CIF status (ORIAS registration, membership of an AMF-approved association, certification, professional liability insurance, engagement letter and written suitability report) or a partnership with a licensed firm. For AV and PER contract recommendations: insurance intermediary registration. Crypto instrument advice stays excluded (MiCA requires a CASP authorisation). Records retention period.
-- **H2. Aggregator choice:** coverage of French banks, neobanks and deferred debit cards; savings and investment coverage; consent duration and renewal; pricing; contract model; sandbox; data residency. Candidates: Powens, Bridge, Linxo Connect, Tink.
+- **H2. Aggregator choice** — *answered 30 Sep 2026: open-banking.io via Partner Connect, user-paid (see `BANK_CONNECT_PLAN.md`); applying for partner access is step P0 there.* Original brief: coverage of French banks, neobanks and deferred debit cards; savings and investment coverage; consent duration and renewal; pricing; contract model; sandbox; data residency. Candidates: Powens, Bridge, Linxo Connect, Tink.
 - **H3. GDPR:** DPIA (financial data plus profiling), processing register, data processing agreements with the aggregator and Mistral, retention policy, privacy policy and terms updates, AI transparency labels.
 - **H4. Brand promises (D6)** on the marketing site, feature pages and onboarding.
 - **H5. Business model:** aggregator and AI costs per active user, pricing (free vs premium), quotas.
@@ -463,7 +465,7 @@ Acceptance: 100% of numbers in answers trace to tool results on the eval set; re
 ## 8. Open questions (answer before the phase that needs them)
 
 1. Which aggregator, and does it cover savings and investment accounts? (Phase 1)
-2. Keep or delete imported data when a user disconnects a bank: default choice? (Phase 1)
+2. ~~Keep or delete imported data when a user disconnects a bank: default choice? (Phase 1)~~ Ask, keep by default (`BANK_CONNECT_PLAN.md`).
 3. Store uploaded PDF statements, or discard after extraction? (Phase 2)
 4. Existing users: switch to auto-posted charges by default, or opt-in? (Phase 3)
 5. French labels for Recurring and Inside your funds. (Phase 3)

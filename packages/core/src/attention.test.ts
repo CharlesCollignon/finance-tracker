@@ -4,7 +4,6 @@ import { buildAttention } from "./attention";
 const none = {
   swallowed: 0,
   pendingInbox: 0,
-  recurringToApply: 0,
   readyToClose: null,
   proposals: 0,
 };
@@ -42,7 +41,6 @@ describe("buildAttention", () => {
     const items = buildAttention({
       swallowed: 1,
       pendingInbox: 1,
-      recurringToApply: 1,
       readyToClose: { monthLabel: "August" },
       proposals: 1,
     });
@@ -50,14 +48,12 @@ describe("buildAttention", () => {
       "swallowed",
       "close",
       "inbox",
-      "apply",
       "proposals",
     ]);
     expect(items.map((item) => item.actionKey)).toEqual([
       "month.actionReopen",
       "month.actionClose",
       "month.actionReview",
-      "month.actionApply",
       "month.actionReview",
     ]);
   });

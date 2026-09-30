@@ -41,6 +41,7 @@ export const fr: Messages = {
   pages: {
     categories: "Catégories",
     import: "Importer",
+    bank: "Banque",
   },
 
   profile: {
@@ -96,17 +97,9 @@ export const fr: Messages = {
   },
 
   ledger: {
-    applyPending: "Application…",
-    applyRecurring: "Appliquer les récurrents",
-    applyWaiting: "Des récurrents attendent d'être appliqués",
-    applyAllDone: "Toutes les échéances récurrentes sont déjà appliquées",
-    applyNothing: "Rien à appliquer",
-    applyResult: "Récurrents appliqués\u00A0: {parts}",
-    applyAdded: "{count} ajoutés",
-    applyUpdated: "{count} mis à jour",
     emptyTitle: "Rien d'enregistré ce mois-ci",
     emptyBody:
-      "Ajoutez une transaction, ou appliquez les charges que vous savez déjà récurrentes.",
+      "Ajoutez ce qui s'est passé. Les charges que vous avez prévues remplissent chaque mois d'elles-mêmes.",
     searchPlaceholder: "Chercher une catégorie ou une note…",
     searchLabel: "Chercher dans les transactions",
     filterByCategory: "Filtrer par catégorie",
@@ -178,6 +171,7 @@ export const fr: Messages = {
     repeatTitle: "Répéter aujourd'hui ?",
     repeatBody: "Ajoute un autre {category} de {amount} daté d'aujourd'hui.",
     repeatConfirm: "Ajouter pour aujourd'hui",
+    planned: "Prévu",
   },
 
   importer: {
@@ -362,21 +356,32 @@ export const fr: Messages = {
     delete: "Supprimer",
     deleteItem: "Supprimer le récurrent",
     deleteExplanation:
-      "Supprimer ce modèle récurrent\u00A0? Les transactions passées restent dans votre journal.",
+      "Supprimer cette charge\u00A0? Ce qu'elle a écrit pour les jours passés reste dans votre journal\u00A0; ce qu'elle avait écrit à l'avance disparaît avec elle.",
     deleting: "Suppression…",
     confirmDelete: "Confirmer la suppression",
-    savedHint:
-      "Enregistré. Appliquez les récurrents dans le Journal pour voir le changement.",
-    updatedHint:
-      "Mis à jour. Appliquez les récurrents dans le Journal pour voir le changement.",
-    deletedHint:
-      "Supprimé — appliquez les récurrents dans le Journal pour voir le changement.",
+    savedHint: "Charge enregistrée",
+    updatedHint: "Charge mise à jour",
+    deletedHint: "Charge supprimée",
+    applyTo: "Appliquer ce changement à",
+    scopeUpcoming: "À venir seulement",
+    scopeUpcomingHint: "Ce qui est déjà enregistré ({dates}) reste tel quel.",
+    scopeThisMonth: "Ce mois-ci aussi",
+    scopeThisMonthHint: "Met aussi à jour {dates}.",
+    pastMonthsNote: "Les mois passés ne changent jamais.",
+    startFrom: "Début",
+    startNow: "À partir de maintenant",
+    startNowHint: "Sa première ligne est la prochaine date à venir.",
+    startThisMonth: "Inclure ce mois-ci",
+    startThisMonthHint: {
+      one: "Enregistre aussi {dates}, déjà passé.",
+      other: "Enregistre aussi {dates}, déjà passés.",
+    },
     brokerDcaNote:
       "Les achats chez le courtier sont suivis pour information mais ne réduisent pas votre budget restant.",
     bitstackNote:
       "Achat hebdomadaire à montant fixe en EUR sur Bitstack. La valeur de marché dans Portefeuilles utilise votre total BTC × le cours BTC/EUR en direct.",
     sharesNote:
-      "Choisissez votre ETF et le nombre de parts. Cherchez par nom ou par ISIN (ex. LU1681043599). L'application récupère le cours en direct et calcule le montant en euros à l'enregistrement ou à l'application.",
+      "Choisissez votre ETF et le nombre de parts. Cherchez par nom ou par ISIN (ex. LU1681043599). L'application récupère le cours en direct et calcule le montant en euros à l'enregistrement, puis à chaque fois que la charge est écrite dans un mois.",
     yearlyNote:
       "Compté comme une part mensuelle dans votre budget (annuel ÷ 12). Le paiement complet est enregistré une fois, le mois dû.",
     trackedFund: "ETF ou fonds suivi",
@@ -396,32 +401,6 @@ export const fr: Messages = {
       "Aucun instrument trouvé. Essayez un nom ou un ISIN de 12 caractères.",
   },
 
-  applyRecurring: {
-    blurb:
-      "Écrit les transactions que les charges de ce mois réclament. Ce que vous avez déjà enregistré n'est pas touché, sauf si vous confirmez les mises à jour ci-dessous.",
-    repriceNote: {
-      one: "{count} échéance est valorisée au marché et encore datée à venir. Elle suit son instrument toute seule — rien à confirmer.",
-      other:
-        "{count} échéances sont valorisées au marché et encore datées à venir. Elles suivent leurs instruments toutes seules — rien à confirmer.",
-    },
-    updateExisting: "Mettre à jour l'existant ({count})",
-    updateExistingNote:
-      "Elles ont déjà été appliquées, mais le modèle récurrent a changé depuis\u00A0: son montant, son libellé ou sa catégorie.",
-    addNew: "Ajouter les nouvelles ({count})",
-    noteUpdated: "Libellé aligné sur le modèle récurrent",
-    movedToCategory: "Déplacée vers la catégorie du modèle récurrent",
-    applying: "Application…",
-    nothingSelected: "Rien de sélectionné",
-    applySelected: {
-      one: "Appliquer la sélection ({count})",
-      other: "Appliquer la sélection ({count})",
-    },
-    applyNew: {
-      one: "Appliquer {count} nouvelle",
-      other: "Appliquer {count} nouvelles",
-    },
-  },
-
   recurringProposals: {
     lead: {
       one: "{count} charge de votre relevé a l'air de se répéter.",
@@ -437,7 +416,6 @@ export const fr: Messages = {
   },
 
   transaction: {
-    addTitle: "Ajouter une transaction",
     editTitle: "Modifier la transaction",
     close: "Fermer",
     category: "Catégorie",
@@ -459,14 +437,9 @@ export const fr: Messages = {
     deleting: "Suppression…",
     confirmDelete: "Oui, supprimer",
     deleted: "Transaction supprimée",
-    skipThisDate: "Passer ce mois / cette date",
-    skipping: "Exclusion…",
-    confirmSkip: "Oui, passer cette date",
-    skipped: "Cette date est passée — elle ne sera pas réappliquée",
-    skipExplanation:
-      "Passer cette date seulement\u00A0? La transaction sera retirée et Appliquer ne la recréera pas. Le modèle récurrent reste actif pour les mois suivants.",
-    deleteExplanation:
-      "Supprimer définitivement cette transaction\u00A0? Appliquer pourra la réécrire si le modèle récurrent la réclame toujours.",
+    deleteExplanation: "Supprimer définitivement cette transaction\u00A0?",
+    deleteChargeExplanation:
+      "Supprimer cette ligne\u00A0? Elle vient d'une charge et ne sera pas rajoutée ce mois-ci. La charge continue les mois suivants.",
     cancel: "Annuler",
   },
 
@@ -497,10 +470,6 @@ export const fr: Messages = {
       "Loyer, abonnements, un virement mensuel vers l'épargne — tout ce que vous savez déjà à venir.",
     emptyTitleMobile: "Qu'est-ce qui revient chaque mois\u00A0?",
     emptyBodyMobile: "Loyer, salaire, abonnements, un achat d'ETF mensuel.",
-    openLedgerToApply: "Ouvrir le Journal pour appliquer ces charges",
-    applyPendingBefore: "Ces charges ont changé depuis l'écriture de ce mois.",
-    applyPendingLink: "Ouvrez le Journal",
-    applyPendingAfter: "et appliquez-les.",
     remindTitle: "Un rappel avant qu'elles ne passent\u00A0?",
     remindBody:
       "Un rappel la veille de chaque échéance, pour que rien ne passe inaperçu. Entièrement sur votre appareil.",
@@ -510,8 +479,35 @@ export const fr: Messages = {
     remindOn: "Rappels activés — vous serez prévenu la veille",
   },
 
+  add: {
+    title: "Ajouter",
+    open: "Ajouter une transaction ou une charge",
+    kind: "Ce que vous ajoutez",
+    transaction: "Transaction",
+    charge: "Charge",
+    transactionHint: "Quelque chose qui s'est passé une fois.",
+    chargeHint: "Quelque chose qui revient — loyer, salaire, abonnement.",
+  },
+
+  planned: {
+    body: "Prévu le {date}. Il sera enregistré le jour même.",
+    recordNow: "L'enregistrer maintenant",
+    recordNowHint: "C'est déjà arrivé — l'ajoute à la date d'aujourd'hui.",
+    skip: "Passer cette date",
+    editCharge: "Modifier la charge",
+    recorded: "Enregistré à la date d'aujourd'hui",
+    skipped: "Passé pour le {date}",
+    undo: "Annuler",
+  },
+
+  monthFill: {
+    added: {
+      one: "{count} charge ajoutée à ce mois",
+      other: "{count} charges ajoutées à ce mois",
+    },
+  },
+
   quickAdd: {
-    title: "Ajouter une transaction",
     close: "Fermer",
     deleteLastDigit: "Effacer le dernier chiffre",
     date: "Date",
@@ -805,7 +801,6 @@ export const fr: Messages = {
   inbox: {
     fromYourBank: "De votre banque",
     review: "À vérifier",
-    recentlyAdded: "Ajouté récemment",
     needsCategory: "Attend une catégorie",
     nothingWaiting: "Rien en attente",
     thatsTheInbox: "C'est tout",
@@ -825,7 +820,6 @@ export const fr: Messages = {
     },
     taughtIt:
       "Tout ce que l'application reconnaissait déjà est passé directement. Répondre à celles-ci le lui apprend pour la prochaine fois.",
-    nothingFromBank: "Rien en attente du côté de votre banque.",
     leaveOut: "Laisser de côté",
     recentlyDecided: "Décidé récemment",
     putOneBack:
@@ -835,6 +829,42 @@ export const fr: Messages = {
     move: "Déplacer",
     changeCategory: "Changer de catégorie",
     undo: "Annuler",
+  },
+
+  inboxGroups: {
+    groups: { one: "{count} groupe", other: "{count} groupes" },
+    entries: { one: "{count} ligne", other: "{count} lignes" },
+    fileAll: "Tout classer",
+    leaveOutAll: "Tout laisser de côté",
+    showRows: "Afficher les lignes",
+    hideRows: "Masquer les lignes",
+    mixed:
+      "Vous avez classé ce commerçant de plusieurs façons, donc chaque ligne est demandée à part.",
+    groupLabel: "{name}, {entries}, {amount}",
+    filed: {
+      one: "{count} ligne classée dans {category}",
+      other: "{count} lignes classées dans {category}",
+    },
+    alreadyRecorded: {
+      one: "{count} était déjà dans votre journal",
+      other: "{count} étaient déjà dans votre journal",
+    },
+    leftOut: {
+      one: "{count} ligne laissée de côté",
+      other: "{count} lignes laissées de côté",
+    },
+    putBack: {
+      one: "{count} ligne est de nouveau à vérifier",
+      other: "{count} lignes sont de nouveau à vérifier",
+    },
+    allFiled: "Tout est classé.",
+    /* The phone's review, one group at a time. */
+    later: "Plus tard",
+    whichCategory: "Quelle catégorie\u00A0?",
+    recentCategories: "Récentes",
+    decidedJustNow: "Décidé à l'instant",
+    keyboardHint:
+      "↑ ↓ pour naviguer · Entrée pour classer · L pour laisser de côté",
   },
 
   selectionBar: {
@@ -896,6 +926,10 @@ export const fr: Messages = {
     withPasskey: "Se connecter avec une clé d'accès",
     invalidCredentials: "Identifiants incorrects",
     haveAccount: "Vous avez déjà un compte\u00A0?",
+    legalConsent:
+      "En créant un compte, vous acceptez les {terms} et la {privacy}.",
+    termsLink: "conditions d'utilisation",
+    privacyLink: "politique de confidentialité",
     noAccount: "Pas de compte\u00A0?",
     noAccountYet: "Pas encore de compte\u00A0?",
     createOne: "En créer un",
@@ -1126,16 +1160,10 @@ export const fr: Messages = {
     cameIn: "Entré",
     wentOut: "Sorti",
     savingsRate: "Taux d'épargne",
-    leftIn: "Reste en {month}",
-    overIn: "Dépassement en {month}",
     over: "Dépassement de",
     left: "Reste",
     today: "Aujourd'hui",
     monthEnd: "Fin de mois",
-    finishedMonthNote:
-      "Un mois terminé, tel que le journal l'a enregistré. Ce qu'un compte contient n'est vrai qu'aujourd'hui.",
-    connectBankNote:
-      "Connectez une banque pour afficher d'abord ce qu'il y a vraiment sur le compte.",
     setUpTitle: "Configurez votre mois",
     setUpBody:
       "Ajoutez une fois ce qui revient. Chaque mois est projeté à partir de là.",
@@ -1145,10 +1173,8 @@ export const fr: Messages = {
     moreThisMonth: "Plus sur ce mois",
     startingBalanceHint:
       "Indiquez un solde de départ pour commencer à clôturer les mois",
-    nothingToApply: "Rien à appliquer",
     actionReopen: "Réouvrir",
     actionReview: "Vérifier",
-    actionApply: "Appliquer",
     actionClose: "Clôturer",
     actionStart: "Commencer",
     attentionSwallowed: {
@@ -1159,10 +1185,6 @@ export const fr: Messages = {
     attentionInbox: {
       one: "{count} transaction attend une catégorie",
       other: "{count} transactions attendent une catégorie",
-    },
-    attentionApply: {
-      one: "{count} récurrent est prêt à être ajouté",
-      other: "{count} récurrents sont prêts à être ajoutés",
     },
     attentionBaseline:
       "Saisissez une fois le solde de votre compte, pour commencer à capter les dépenses que l'application ne voit jamais",
@@ -1205,7 +1227,6 @@ export const fr: Messages = {
     remindersOff: "Rappels désactivés",
     remindersNeedPermission: "Les rappels demandent l'autorisation de notifier",
     typeDeleteToConfirm: "Tapez DELETE pour confirmer.",
-    addNewOnly: "Ajouter seulement les nouveaux — ignorer les mises à jour",
     product: "Le produit",
     account: "Compte",
     marketing: "Présentation",
@@ -1213,7 +1234,6 @@ export const fr: Messages = {
     needsYou: "À votre attention",
     budgetView: "Vue du budget",
     arrivedCharges: "Charges qui semblent arrivées",
-    applyRecurring: "Appliquer les récurrents",
     closePopUp: "Fermer la fenêtre",
     clearInstrument: "Retirer l'instrument sélectionné",
     searchInstrument: "Chercher par nom ou ISIN…",
@@ -1222,10 +1242,8 @@ export const fr: Messages = {
     date: "Date",
     pickADate: "Choisir une date",
     setUp: "Configuration",
-    everyMonthClosed: "Tous les mois que vous avez clôturés",
     openWallets: "Ouvrir les portefeuilles",
     usePassword: "Utiliser le mot de passe",
-    addTransaction: "Ajouter une transaction",
     capsAndNewMonths: "Plafonds et nouveaux mois",
     browserNotifications: "Notifications du navigateur",
     theRun: "La série",
@@ -1286,12 +1304,12 @@ export const fr: Messages = {
     },
     deletePermanent: "C'est irréversible.",
     deleteAllRecurring: {
-      one: "Elle provient d'un modèle récurrent\u00A0: Appliquer la recréera si vous ne passez pas la date.",
+      one: "Elle vient d'une charge\u00A0: elle ne sera pas rajoutée ce mois-ci.",
       other:
-        "Elles proviennent de modèles récurrents\u00A0: Appliquer les recréera si vous ne passez pas la date.",
+        "Elles viennent de charges\u00A0: elles ne seront pas rajoutées ce mois-ci.",
     },
     deleteSomeRecurring:
-      "{count} d'entre elles proviennent de modèles récurrents\u00A0: Appliquer les recréera si vous ne passez pas la date.",
+      "{count} d'entre elles viennent de charges\u00A0: celles-là ne seront pas rajoutées ce mois-ci.",
     typeChangeAll: {
       one: "Elle change de type de catégorie, donc les totaux des mois passés et les dépenses non enregistrées vont bouger.",
       other:
@@ -1483,8 +1501,6 @@ export const fr: Messages = {
   moneyOnHand: {
     stillToLeave: "encore à sortir",
     stillToArrive: "encore à arriver",
-    pastMonthBanner: "Vous regardez {month} — un mois déjà terminé",
-    countingAhead: "en comptant ce qui reste à venir",
     elapsedLabel: "{percent} % du mois écoulé",
     elapsedGone: "En {month}, {percent} % du mois est écoulé",
     unreadableAccounts: {
@@ -1492,11 +1508,6 @@ export const fr: Messages = {
       other:
         "Impossible de lire {accounts} — leurs soldes ne sont pas comptés ci-dessus.",
     },
-    fixLink: "Corriger",
-    spendingDownTitle:
-      "Dépenses en baisse de {percent} % par rapport aux mêmes jours en {month}",
-    spendingUpTitle:
-      "Dépenses en hausse de {percent} % par rapport aux mêmes jours en {month}",
     switchesTo: "Passer à {option}",
   },
 
@@ -1516,8 +1527,6 @@ export const fr: Messages = {
       "Mesuré par rapport à votre dernière clôture, pas mémorisé — cela bouge donc avec la banque, et ce n'est définitif qu'une fois le mois clôturé.",
     notYetMeasured:
       "Clôturez un mois par rapport au solde de votre banque et ceci se remplit : l'application calcule ce qui a quitté le compte sans qu'aucune transaction ne l'explique.",
-    findMissingEntry: "Trouver la transaction manquante",
-    setUpCta: "Configurer",
   },
 
   cashAccounts: {
@@ -1666,10 +1675,10 @@ export const fr: Messages = {
   push: {
     monthOpen: {
       title: "Un nouveau mois",
-      idle: "Appliquez vos récurrents pour le remplir, et voyez ce qu'il reste.",
+      idle: "Prévoyez ce qui revient, et voyez ce que le mois vous laisse.",
       pending: {
-        one: "{count} récurrent est prêt à être appliqué.",
-        other: "{count} récurrents sont prêts à être appliqués.",
+        one: "Il commence avec {count} charge. Voyez ce qu'il reste.",
+        other: "Il commence avec {count} charges. Voyez ce qu'il reste.",
       },
     },
     arrived: {
@@ -1686,6 +1695,26 @@ export const fr: Messages = {
     breach: {
       title: "{label} dépasse son budget",
       body: "{spent} dépensés sur {limit}.",
+    },
+    bankRenew: {
+      title: "Gardez votre banque synchronisée",
+      body: {
+        one: "Le consentement de votre banque se termine demain, le {date}. Renouvelez-le sur open-banking.io — cela prend une minute.",
+        other:
+          "Le consentement de votre banque se termine dans {count} jours, le {date}. Renouvelez-le sur open-banking.io — cela prend une minute.",
+      },
+      today:
+        "Le consentement de votre banque se termine aujourd'hui. Renouvelez-le sur open-banking.io — cela prend une minute.",
+      ended:
+        "Le consentement de votre banque a pris fin. Renouvelez-le sur open-banking.io pour reprendre la synchronisation.",
+    },
+    bankExpired: {
+      title: "Votre banque ne se synchronise plus",
+      body: "Pluclair ne peut plus lire votre compte open-banking.io. Déposez un nouveau fichier d'identifiants pour remettre vos chiffres à jour.",
+    },
+    bankPaused: {
+      title: "Synchronisation en pause",
+      body: "open-banking.io a mis la synchronisation en pause, souvent faute de crédit. Rechargez le portefeuille pour reprendre.",
     },
   },
 
@@ -2010,6 +2039,179 @@ export const fr: Messages = {
     },
   },
 
+  bankConnect: {
+    sheetTitle: "Connecter votre banque",
+    sheetLead:
+      "Vos transactions arrivent toutes seules, et votre vrai solde est lu quatre fois par jour. Vous le mettez en place une fois, avec votre propre compte open-banking.io.",
+    step1Title: "Créez votre compte open-banking.io",
+    step1Body:
+      "Inscrivez-vous et approvisionnez son portefeuille. Environ 3\u00A0€ par mois pour un compte bancaire et 1\u00A0€ par compte supplémentaire — payés à eux, pas à Pluclair.",
+    step2Title: "Connectez-y votre banque",
+    step2Body:
+      "Avec l'identification de votre banque. Pluclair ne voit jamais votre mot de passe bancaire.",
+    step3Title: "Téléchargez votre fichier d'identifiants",
+    step3Body:
+      "Sur la page Développeurs, créez une clé API et choisissez «\u00A0Télécharger credentials.json\u00A0» dans la fenêtre qui l'affiche. L'export de la carte «\u00A0Clé de chiffrement\u00A0» porte le même nom, mais sans clé API.",
+    step4Title: "Déposez-le ici",
+    step4Body:
+      "Pluclair le vérifie, puis importe votre historique. Ce qu'il ne sait pas classer seul vous attend dans une courte revue.",
+    factReadOnly: "Lecture seule : rien ici ne peut déplacer d'argent.",
+    factKey:
+      "Pluclair conserve votre fichier d'identifiants chiffré, hors de portée de toute application, et le supprime dès que vous vous déconnectez.",
+    factConsent:
+      "Le consentement de votre banque dure environ 180 jours. Vous le renouvelez sur open-banking.io, et vous êtes prévenu avant la fin.",
+    factHistory:
+      "Les mois passés sont complétés depuis votre banque, leurs totaux peuvent donc changer.",
+    privacyLink: "Comment vos données bancaires sont traitées",
+    openSite: "Ouvrir open-banking.io",
+    dropTitle: "Déposez credentials.json ici",
+    dropHint:
+      "Peu importe son nom — le fichier téléchargé peut comporter une date.",
+    chooseFile: "Choisir le fichier",
+    checking: "Vérification de votre fichier…",
+    fileTooLarge:
+      "Ce fichier est trop gros pour être un fichier d'identifiants.",
+    fileNotCredentials:
+      "Ce n'est pas un fichier d'identifiants open-banking.io. Téléchargez à nouveau credentials.json et déposez celui-là.",
+    fileMissingApiKey:
+      "Ce fichier contient votre clé de chiffrement, mais pas de clé API\u00A0: c'est l'export de la carte «\u00A0Clé de chiffrement\u00A0». Sur la page Développeurs, créez une clé API et choisissez «\u00A0Télécharger credentials.json\u00A0» dans la fenêtre qui l'affiche.",
+    fileWrongService:
+      "Ce fichier d'identifiants est destiné à un autre service qu'open-banking.io.",
+    fileRejected:
+      "open-banking.io n'a pas accepté la clé de ce fichier — elle a peut-être été supprimée. Créez une nouvelle clé API et téléchargez à nouveau le fichier.",
+    fileKeyMismatch:
+      "La clé privée de ce fichier n'ouvre pas vos données. Téléchargez à nouveau credentials.json.",
+    openBankingUnreachable:
+      "open-banking.io n'a pas pu être joint, votre fichier n'a donc pas été enregistré. Réessayez dans un instant.",
+    saveFailed: "Votre fichier n'a pas pu être enregistré. Réessayez.",
+    connectedPaused:
+      "Votre fichier fonctionne, mais open-banking.io a mis la synchronisation en pause jusqu'à ce que son portefeuille soit approvisionné.",
+    noAccountsYet:
+      "Votre fichier fonctionne, mais aucune banque n'est encore connectée sur open-banking.io. Connectez-en une là-bas, puis revenez ici.",
+    checkAgain: "Vérifier à nouveau",
+    unavailable: "La connexion bancaire n'est pas encore disponible ici.",
+    unreachable:
+      "Impossible de joindre Pluclair pour l'instant. Réessayez dans un moment.",
+    notConnected: "Aucune banque n'est connectée.",
+    priceNote: "Environ 3 € par mois, payés à open-banking.io.",
+    connected: "Votre banque est connectée.",
+    importTitle: "Import de votre historique",
+    importBody:
+      "Gardez cette page ouverte. Si vous la quittez, l'import reprend là où il s'est arrêté la prochaine fois.",
+    importAccountDone: { one: "{count} ligne", other: "{count} lignes" },
+    importDone: "Votre historique est là.",
+    reviewCta: { one: "Revoir {count} ligne", other: "Revoir {count} lignes" },
+    toBearing: "Voir votre solde",
+    statusConnected: "Synchronisation active",
+    lastSynced: "Dernière synchronisation {when}",
+    neverSynced: "Pas encore synchronisé",
+    sourceOwner: "Connectée avec les identifiants propres à ce déploiement.",
+    ownerUpload:
+      "Déposez votre fichier d'identifiants pour rattacher cette connexion à votre compte plutôt qu'aux réglages de ce déploiement.",
+    ownerUploadCta: "Déposer le fichier",
+    consentUntil: "Le consentement de votre banque court jusqu'au {date}.",
+    consentSoon:
+      "Le consentement de votre banque se termine le {date}. Renouvelez-le sur open-banking.io pour continuer la synchronisation.",
+    consentEnded:
+      "Le consentement de votre banque a pris fin. Renouvelez-le sur open-banking.io pour reprendre la synchronisation.",
+    details: "Détails",
+    renew: "Renouveler",
+    expiredTitle: "Pluclair ne peut plus lire votre compte",
+    expiredBody:
+      "open-banking.io n'accepte plus votre fichier d'identifiants — en général parce que sa clé API a été supprimée. Créez une nouvelle clé, téléchargez à nouveau le fichier et déposez-le ici. Tout ce qui a déjà été importé reste.",
+    reconnect: "Déposer un nouveau fichier",
+    replaceFile: "Remplacer le fichier d'identifiants",
+    pausedTitle: "La synchronisation est en pause",
+    pausedBody:
+      "open-banking.io l'a mise en pause jusqu'à ce que son portefeuille soit approvisionné.",
+    errorTitle: "Votre banque n'a pas pu être jointe",
+    errorBody: "Nouvel essai à la prochaine synchronisation.",
+    accounts: "Comptes",
+    accountsBody:
+      "Choisissez les comptes qui contiennent votre argent courant. Leur solde est celui de votre Cap.",
+    disconnect: "Déconnecter",
+    disconnectTitle: "Déconnecter votre banque ?",
+    disconnectBody:
+      "La synchronisation s'arrête et votre fichier d'identifiants est supprimé de Pluclair.",
+    disconnectApiKey:
+      "Supprimez ensuite sa clé API sur open-banking.io, et fermez votre compte là-bas si vous n'en avez plus besoin.",
+    keepImported: "Garder les transactions importées",
+    keepImportedHint: "Votre journal reste tel quel.",
+    deleteImported: "Les supprimer aussi",
+    deleteImportedHint:
+      "Seulement ce que la banque a ajouté. Ce que vous avez saisi reste.",
+    confirmDisconnect: "Déconnecter",
+    disconnected: "Votre banque est déconnectée.",
+    notConnectedBody:
+      "Voyez votre vrai solde, laissez les lignes arriver toutes seules et les mois se clôturer d'eux-mêmes.",
+    unlockBalance:
+      "Votre vrai solde, lu depuis votre banque quatre fois par jour",
+    unlockEntries:
+      "Des lignes qui arrivent et se classent d'après votre propre historique",
+    unlockArrived: "Des charges confirmées à leur arrivée",
+    unlockClose: "Des mois qui se clôturent d'eux-mêmes le jour du relevé",
+    profileLink: "Connexion bancaire",
+    inviteBearing:
+      "Voyez votre vrai solde, lu depuis votre banque quatre fois par jour.",
+    inviteWelcome: "Laissez votre banque remplir tout cela pour vous.",
+    inviteLedger:
+      "Arrêtez de tout saisir : connectez votre banque et les lignes arrivent toutes seules.",
+    invitePlan:
+      "Votre solde est lu pour vous, et les mois se clôturent d'eux-mêmes.",
+    dismissInvite: "Ne plus afficher",
+    orEnterBalance: "Ou saisissez votre solde à la main",
+  },
+
+  bearingMonth: {
+    onAccount: "Sur votre compte",
+    expectedEnd: "Prévu en fin de mois",
+    startedWith: "Au début du mois",
+    endedWith: "À la fin du mois",
+    expectedStart: "Prévu au début du mois",
+    netSoFar: "Ce mois-ci à ce jour",
+    netByEnd: "D'ici la fin du mois",
+    netMonth: "Ce mois-ci",
+    netCaption: "Ce qui est entré, moins ce qui est sorti.",
+    fromBank: "Aujourd'hui, d'après votre banque",
+    fromClose:
+      "D'après votre dernière clôture, plus ce que vous avez enregistré depuis",
+    plannedOnly:
+      "Vos charges seulement — les dépenses du quotidien n'y sont pas",
+    fromToday: "{amount} par rapport à aujourd'hui",
+    lowestAhead: "Point le plus bas à venir\u00A0: {amount} le {date}",
+    lowest: "Point le plus bas\u00A0: {amount} le {date}",
+    toComeIn: "{amount} encore à recevoir",
+    toGoOut: "{amount} encore à sortir",
+    chartLabel: "Solde au fil de {month}",
+    netChartLabel: "Net au fil de {month}",
+    recorded: "Enregistré",
+    setBalance: "Saisir votre solde",
+    setBalanceBody:
+      "Saisissez une fois ce que contient votre compte, et ceci devient votre vrai solde.",
+    spent: "Dépensé",
+    ofCap: "sur un plafond de {amount}",
+    spentLessSoFar: "{amount} de moins qu'en {month} à ce stade",
+    spentMoreSoFar: "{amount} de plus qu'en {month} à ce stade",
+    spentLess: "{amount} de moins qu'en {month}",
+    spentMore: "{amount} de plus qu'en {month}",
+    spentSame: "Comme en {month}",
+    stillToCome: "Encore à venir",
+    plannedThisMonth: "Prévu ce mois-ci",
+    nothingToCome: "Plus rien de prévu ce mois-ci.",
+    moreToCome: { one: "+{count} autre", other: "+{count} autres" },
+    seeInLedger: "Voir dans le Journal",
+    whereItWent: "Où c'est parti",
+    everythingElse: "Tout le reste",
+    capOf: "{spent} sur {cap}",
+    run: { one: "{count} mois d'affilée", other: "{count} mois d'affilée" },
+    runBody: "Mois clôturés d'affilée sous votre marge.",
+    bestRun: "Record\u00A0: {count}",
+    noRunYet: "Clôturez un mois sous votre marge pour lancer une série.",
+    goals: "Objectifs",
+    goalToGo: "Encore {amount}",
+    invested: "Investi",
+  },
+
   bearing: {
     title: "Cap",
     headline: {
@@ -2030,7 +2232,6 @@ export const fr: Messages = {
       open: "Voir ce qui compose ce chiffre",
       footer: "Voir la surface complète",
       horizon: "Jusqu'où",
-      monthScope: "Le mois affiché par ce panneau",
       streakMonths: {
         one: "{count} mois dans l'enveloppe",
         other: "{count} mois dans l'enveloppe",

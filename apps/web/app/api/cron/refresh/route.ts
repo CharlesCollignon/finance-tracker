@@ -1,9 +1,11 @@
 import type { NextRequest } from "next/server";
 import { todayIsoLocal } from "@finance/core/constants";
 import { configureWebPush, fanOut, readDevicesFor } from "@/lib/push/send";
-import { bankFeedOwnerId } from "@/lib/bank/client";
+import { getBankConnection, syncableUserIds } from "@/lib/bank/client";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
-import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
+import { recordFailure, recordHealthy } from "@/lib/bank/health";
+import { syncBankFeed } from "@/lib/bank/sync";
+import { fillEveryUser } from "@/lib/recurring-fill-run";
 import { repriceEveryUser } from "@/lib/recurring-reprice-run";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -11,9 +13,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * The refresh: everything that brings the ledger up to date from somewhere
  * outside it.
  *
- * Two jobs share this route. Repricing corrects share-priced occurrences that
- * are applied but not yet due, so a DCA written in advance carries the price
- * it will actually cost rather than the one it cost when it was written. The
+ * Three jobs share this route. Filling writes the month's charges for anyone
+ * whose ledger they are the source of, so the first of the month opens with
+ * them already in it. Repricing corrects share-priced occurrences that are
+ * applied but not yet due, so a DCA written in advance carries the price it
+ * will actually cost rather than the one it cost when it was written. The
  * bank sync asks the bank for anything new and files what it says.
  *
  * They run several times a day, from several schedules pointed at this one
@@ -23,11 +27,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * account information service to read an account without the user present.
  * The two ceilings agreeing is a coincidence, but a convenient one.
  *
- * Only the first run of the day does the expensive half. Repricing walks
- * every user's templates and quotes each against the market; doing that four
- * times would quadruple the load on the quote source to correct prices that
- * move on a scale of days. The statement is the thing worth re-reading, so
- * the later runs read only that.
+ * Only the first run of the day fills and reprices. Repricing walks every
+ * user's templates and quotes each against the market; doing that four times
+ * would quadruple the load on the quote source to correct prices that move on
+ * a scale of days. Filling only has anything to do once a month, and the app
+ * fills on opening anyway. The statement is the thing worth re-reading, so the
+ * later runs read only that.
  *
  * Sharing a request does not mean sharing a fate. They talk to different
  * third parties and fail independently, so each is wrapped: an unreachable
@@ -44,7 +49,7 @@ export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 interface StepFailure {
-  step: "reprice" | "bank";
+  step: "fill" | "reprice" | "bank";
   message: string;
 }
 
@@ -65,7 +70,15 @@ function isFullRun(request: NextRequest): boolean {
   return schedule === null || schedule === FULL_RUN_SCHEDULE;
 }
 
+/**
+ * When to stop starting another user's sync. The function has sixty seconds
+ * in all; a sync that starts at forty has room to finish, and the users not
+ * reached are the ones synced most recently, picked up first next run.
+ */
+const BANK_BUDGET_MS = 40_000;
+
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now();
   const cronSecret = process.env.CRON_SECRET;
   if (
     !cronSecret ||
@@ -84,6 +97,26 @@ export async function GET(request: NextRequest) {
   const today = todayIsoLocal();
   const failures: StepFailure[] = [];
   const full = isFullRun(request);
+
+  // --- the month's charges ---------------------------------------------
+
+  // Before repricing, so a row written here at today's quote is not
+  // immediately compared against that same quote.
+  let fill: { users: number; created: number } | null = null;
+  if (full) {
+    try {
+      const outcome = await fillEveryUser(supabase, today);
+      fill = { users: outcome.users, created: outcome.created };
+      for (const message of outcome.failures.slice(0, 3)) {
+        failures.push({ step: "fill", message });
+      }
+    } catch (error) {
+      failures.push({
+        step: "fill",
+        message: error instanceof Error ? error.message : "Filling failed",
+      });
+    }
+  }
 
   // --- quotes ------------------------------------------------------------
 
@@ -110,42 +143,70 @@ export async function GET(request: NextRequest) {
 
   // --- the bank ----------------------------------------------------------
 
-  const ownerId = bankFeedOwnerId();
-  let bank: SyncOutcome | null = null;
-
+  // Every connected user, stalest first — no longer one owner. Each is its
+  // own try: one person's lapsed consent must not cost everyone else their
+  // sync.
+  const userIds = await syncableUserIds();
+  const bank = {
+    users: userIds.length,
+    synced: 0,
+    deferred: 0,
+    imported: 0,
+    pending: 0,
+    notified: 0,
+  };
   let monthsClosed = 0;
 
-  if (ownerId) {
+  for (const userId of userIds) {
+    if (Date.now() - startedAt > BANK_BUDGET_MS) {
+      bank.deferred += 1;
+      continue;
+    }
     try {
       // Unattended: nobody is watching, so this spends from the four-a-day
       // allowance. When it is spent the sync still runs and reads the stored
       // statement, which is what every run did before pulling existed.
-      bank = await syncBankFeed(supabase, ownerId, { pull: "unattended" });
+      const outcome = await syncBankFeed(supabase, userId, {
+        pull: "unattended",
+      });
+      bank.synced += 1;
+      bank.imported += outcome.imported;
+      bank.pending += outcome.pending;
+
+      const connection = await getBankConnection(userId);
+      if (connection) {
+        await recordHealthy(supabase, userId, connection.client);
+      }
+
       // Straight after the statement is filed, because that is when the
       // balance a close needs has just arrived. Closing is arithmetic on
       // rows this run has already stored, so it costs no network call and
       // cannot be the thing that runs the function out of time.
-      const closes = await autoCloseMonths(supabase, ownerId);
-      monthsClosed = closes.closed.length;
+      const closes = await autoCloseMonths(supabase, userId);
+      monthsClosed += closes.closed.length;
+
+      if (outcome.pending > 0) {
+        bank.notified += await notifyPendingReview(
+          supabase,
+          userId,
+          outcome.pending,
+          today,
+        );
+      }
     } catch (error) {
       // A bank that cannot be reached today is an ordinary outcome, not an
-      // incident; tomorrow's run picks up everything this one missed.
-      failures.push({
-        step: "bank",
-        message: error instanceof Error ? error.message : "Sync failed",
-      });
+      // incident; the next run picks up everything this one missed. What it
+      // says about the connection is recorded for the status screen.
+      const failure = await recordFailure(supabase, userId, error);
+      failures.push({ step: "bank", message: failure.message });
     }
   }
 
-  const notified =
-    bank && ownerId && bank.pending > 0
-      ? await notifyPendingReview(supabase, ownerId, bank.pending, today)
-      : 0;
-
   return Response.json({
     run: full ? "full" : "bank-only",
+    fill,
     reprice,
-    bank: bank ? { ...bank, notified } : null,
+    bank,
     monthsClosed,
     ...(failures.length > 0 ? { failures } : {}),
   });

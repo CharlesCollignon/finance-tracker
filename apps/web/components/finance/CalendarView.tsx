@@ -10,6 +10,9 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { TransactionForm } from "@/components/finance/TransactionForm";
+import { PlannedOccurrenceSheet } from "@/components/finance/PlannedOccurrenceSheet";
+import type { PlannedOccurrence } from "@finance/core/apply-recurring";
+import { useQuickAdd } from "@/components/layout/QuickAddProvider";
 import { RowCheckbox, SelectionBar } from "@/components/finance/SelectionBar";
 import { useToast } from "@/components/layout/ToastProvider";
 import { FulfilmentDot } from "@/components/finance/FulfilmentDot";
@@ -23,7 +26,7 @@ import {
 } from "@finance/core/selection";
 import { StatHero } from "@/components/finance/StatHero";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
-import { formatMonthLabel } from "@finance/core/constants";
+import { formatMonthLabel, todayIsoLocal } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { amountSign } from "@/components/finance/amount-sign";
 import {
@@ -56,6 +59,8 @@ const EMPTY_SELECTION: ReadonlySet<string> = new Set();
 
 interface CalendarViewProps {
   transactions: TransactionWithCategory[];
+  /** The month's charges still to come, drawn rather than stored. */
+  planned?: PlannedOccurrence[];
   categories: Category[];
   recurringTemplates: RecurringTemplateWithCategory[];
   /** Rows the user has confirmed settle a recurring charge. */
@@ -71,6 +76,7 @@ interface CalendarViewProps {
 
 export function CalendarView({
   transactions,
+  planned = [],
   categories,
   recurringTemplates,
   confirmedTransactionIds,
@@ -81,6 +87,20 @@ export function CalendarView({
   month,
 }: CalendarViewProps) {
   const t = useT();
+  const quickAdd = useQuickAdd();
+  const [openPlanned, setOpenPlanned] = useState<PlannedOccurrence | null>(
+    null,
+  );
+  const plannedByDate = useMemo(() => {
+    const out = new Map<string, PlannedOccurrence[]>();
+    for (const occurrence of planned) {
+      out.set(occurrence.occurredOn, [
+        ...(out.get(occurrence.occurredOn) ?? []),
+        occurrence,
+      ]);
+    }
+    return out;
+  }, [planned]);
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
   const { toast } = useToast();
@@ -121,7 +141,6 @@ export function CalendarView({
     monthKey: string;
     date: string;
   } | null>(null);
-  const [formOpen, setFormOpen] = useState(false);
 
   const selectedDate =
     selection && selection.monthKey === monthKey
@@ -133,6 +152,7 @@ export function CalendarView({
   }
 
   const selectedTransactions = byDate.get(selectedDate) ?? [];
+  const selectedPlanned = plannedByDate.get(selectedDate) ?? [];
   const visibleIds = selectedTransactions.map((tx) => tx.id);
   const onThisDay = rowSelection.date === selectedDate;
   const selected = onThisDay ? rowSelection.ids : EMPTY_SELECTION;
@@ -197,12 +217,18 @@ export function CalendarView({
 
   return (
     <>
-      <PageHeader titleKey="nav.ledger">
-        <MonthPicker basePath="/calendar" />
-      </PageHeader>
+      <PageHeader titleKey="nav.ledger" />
 
       <PageContainer>
-        <SurfaceTabs tabs={LEDGER_TABS} className="mb-4" />
+        {/* The Ledger list's toolbar, without its Add: here the day's own Add
+            is under the calendar, beside the day it adds to. */}
+        <div className="mb-4 grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2 lg:grid-cols-[1fr_auto_1fr]">
+          <SurfaceTabs tabs={LEDGER_TABS} className="min-w-0" />
+          <MonthPicker
+            basePath="/calendar"
+            className="col-span-2 row-start-2 justify-self-center lg:col-span-1 lg:col-start-2 lg:row-start-1"
+          />
+        </div>
         <Stagger
           className="flex w-full min-w-0 flex-col items-center gap-8 md:gap-10"
           stagger={0.05}
@@ -262,6 +288,13 @@ export function CalendarView({
                       const dayTxs = byDate.get(day.date) ?? [];
                       const totals = computeDayTotals(dayTxs);
                       const isSelected = day.date === selectedDate;
+                      // Only on a day with nothing recorded, and muted: a
+                      // planned amount is what the day is expected to hold,
+                      // not what it did.
+                      const dayPlanned =
+                        totals.count === 0 && day.isCurrentMonth
+                          ? plannedTotals(plannedByDate.get(day.date) ?? [])
+                          : null;
 
                       return (
                         <button
@@ -299,7 +332,9 @@ export function CalendarView({
                                 ? t("ledger.entryCount", {
                                     count: totals.count,
                                   })
-                                : t("calendarView.noTransactions"),
+                                : dayPlanned
+                                  ? t("ledger.planned")
+                                  : t("calendarView.noTransactions"),
                           })}
                           aria-pressed={isSelected}
                         >
@@ -331,6 +366,21 @@ export function CalendarView({
                               )}
                             >
                               −{formatShortAmount(totals.outflow, locale)} €
+                            </span>
+                          ) : null}
+                          {dayPlanned && dayPlanned.income > 0 ? (
+                            <span className="privacy-amount mt-auto truncate font-mono text-[10px] font-medium leading-tight text-muted-foreground md:text-xs">
+                              +{formatShortAmount(dayPlanned.income, locale)} €
+                            </span>
+                          ) : null}
+                          {dayPlanned && dayPlanned.outflow > 0 ? (
+                            <span
+                              className={cn(
+                                "privacy-amount truncate font-mono text-[10px] font-medium leading-tight text-muted-foreground md:text-xs",
+                                dayPlanned.income > 0 ? "-mt-0.5" : "mt-auto",
+                              )}
+                            >
+                              −{formatShortAmount(dayPlanned.outflow, locale)} €
                             </span>
                           ) : null}
                         </button>
@@ -396,14 +446,18 @@ export function CalendarView({
                         : t("calendarView.all")}
                     </Button>
                   ) : null}
-                  <Button size="sm" onClick={() => setFormOpen(true)}>
+                  <Button
+                    size="sm"
+                    onClick={() => quickAdd?.open({ date: selectedDate })}
+                  >
                     <Plus size={ICON.md} weight="bold" />
                     <span className="hidden sm:inline">{t("ledger.add")}</span>
                   </Button>
                 </div>
               </div>
 
-              {selectedTransactions.length === 0 ? (
+              {selectedTransactions.length === 0 &&
+              selectedPlanned.length === 0 ? (
                 <EmptyState
                   title={t("calendarView.emptyTitle")}
                   description={t("calendarView.emptyBody")}
@@ -411,7 +465,7 @@ export function CalendarView({
                   <Button
                     variant="pill"
                     size="md"
-                    onClick={() => setFormOpen(true)}
+                    onClick={() => quickAdd?.open({ date: selectedDate })}
                   >
                     {t("ledger.addTransaction")}
                     <ButtonNub>
@@ -505,12 +559,49 @@ export function CalendarView({
                       </button>
                     );
                   })}
+                  {selectedPlanned.map((occurrence) => (
+                    <button
+                      key={occurrence.key}
+                      type="button"
+                      disabled={selectMode}
+                      onClick={() => setOpenPlanned(occurrence)}
+                      aria-label={`${occurrence.name}, ${t("ledger.planned")}`}
+                      className="flex w-full items-start gap-3 px-2 py-3.5 text-left transition-colors hover:bg-muted/30 disabled:cursor-default disabled:hover:bg-transparent"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium leading-snug text-muted-foreground">
+                          {occurrence.categoryName}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {[t("ledger.planned"), occurrence.note]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      </div>
+                      <span className="privacy-amount shrink-0 font-mono text-sm font-semibold tabular-nums text-muted-foreground">
+                        {amountSign(occurrence.categoryType)}
+                        {formatEuro(occurrence.amount)}
+                      </span>
+                    </button>
+                  ))}
                 </Card.Bezel>
               )}
             </section>
           </StaggerItem>
         </Stagger>
       </PageContainer>
+
+      <PlannedOccurrenceSheet
+        occurrence={openPlanned}
+        onOpenChange={(open) => {
+          if (!open) {
+            setOpenPlanned(null);
+          }
+        }}
+        inCurrentMonth={todayIsoLocal().startsWith(
+          `${year}-${String(month).padStart(2, "0")}`,
+        )}
+      />
 
       <SelectionBar
         summary={selectionSummary}
@@ -525,20 +616,11 @@ export function CalendarView({
       <TransactionForm
         categories={categories}
         tags={tags}
-        defaultDate={selectedDate}
-        open={formOpen}
-        onOpenChange={setFormOpen}
-      />
-
-      <TransactionForm
-        categories={categories}
-        tags={tags}
         selectedTagIds={
           editTransaction
             ? (transactionTags[editTransaction.id] ?? []).map((tag) => tag.id)
             : []
         }
-        defaultDate={selectedDate}
         open={editTransaction !== null}
         onOpenChange={(open) => {
           if (!open) {
@@ -549,4 +631,23 @@ export function CalendarView({
       />
     </>
   );
+}
+
+/** What a day's planned occurrences come to, in and out. */
+function plannedTotals(
+  occurrences: readonly PlannedOccurrence[],
+): { income: number; outflow: number } | null {
+  if (occurrences.length === 0) {
+    return null;
+  }
+  let income = 0;
+  let outflow = 0;
+  for (const occurrence of occurrences) {
+    if (occurrence.categoryType === "income") {
+      income += occurrence.amount;
+    } else {
+      outflow += occurrence.amount;
+    }
+  }
+  return { income, outflow };
 }

@@ -30,6 +30,7 @@ const MOBILE_ROUTES = [
   "/recurring",
   "/planning",
   "/investments",
+  "/bank",
 ] as const;
 
 /** Web path → the phone's name for the same surface. */

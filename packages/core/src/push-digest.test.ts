@@ -50,14 +50,14 @@ describe("buildDueNotifications", () => {
     expect(due[0]!.url).toBe("/bearing");
   });
 
-  it("counts the waiting recurring items when it knows them", () => {
+  it("counts the charges the month starts with when it knows them", () => {
     const due = build({ today: "2026-09-01", pendingRecurring: 8 });
-    expect(due[0]!.body).toContain("8 recurring items are ready");
+    expect(due[0]!.body).toContain("starts with 8 charges");
   });
 
-  it("uses the singular for one waiting item", () => {
+  it("uses the singular for one charge", () => {
     const due = build({ today: "2026-09-01", pendingRecurring: 1 });
-    expect(due[0]!.body).toContain("1 recurring item is ready");
+    expect(due[0]!.body).toContain("starts with 1 charge.");
   });
 
   it("does not announce the month twice", () => {
@@ -163,7 +163,7 @@ describe("the reader's language", () => {
     });
     expect(notification?.title).toBe("Un nouveau mois");
     expect(notification?.body).toBe(
-      "3 récurrents sont prêts à être appliqués.",
+      "Il commence avec 3 charges. Voyez ce qu'il reste.",
     );
   });
 
@@ -172,7 +172,9 @@ describe("the reader's language", () => {
       today: "2026-09-01",
       pendingRecurring: 1,
     });
-    expect(notification?.body).toBe("1 récurrent est prêt à être appliqué.");
+    expect(notification?.body).toBe(
+      "Il commence avec 1 charge. Voyez ce qu'il reste.",
+    );
   });
 
   it("keeps the amounts the caller formatted", () => {

@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition,
-} from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   DownloadSimple,
@@ -26,6 +20,9 @@ import { EmptyState } from "@/components/layout/EmptyState";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { useToast } from "@/components/layout/ToastProvider";
 import { TransactionForm } from "@/components/finance/TransactionForm";
+import { PlannedOccurrenceSheet } from "@/components/finance/PlannedOccurrenceSheet";
+import type { PlannedOccurrence } from "@finance/core/apply-recurring";
+import { useQuickAdd } from "@/components/layout/QuickAddProvider";
 import { amountSign } from "@/components/finance/amount-sign";
 import {
   categoryTypeLabels,
@@ -44,13 +41,7 @@ import {
   FULFILMENT_STATE_KEY,
   indexFulfilmentStates,
 } from "@finance/core/fulfilment-state";
-import {
-  applyRecurringForMonth,
-  deleteTransactions,
-  moveTransactions,
-  previewApplyRecurringForMonth,
-} from "@/lib/actions/finance";
-import { ApplyRecurringSheet } from "@/components/finance/ApplyRecurringSheet";
+import { deleteTransactions, moveTransactions } from "@/lib/actions/finance";
 import { RowCheckbox, SelectionBar } from "@/components/finance/SelectionBar";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import { OptionPicker } from "@/components/layout/Picker";
@@ -62,10 +53,6 @@ import {
   toggleSelectAll,
   toggleSelected,
 } from "@finance/core/selection";
-import {
-  applyRecurringPlanCounts,
-  type ApplyRecurringPlan,
-} from "@finance/core/apply-recurring";
 import type {
   Category,
   CategoryType,
@@ -80,6 +67,12 @@ type FilterType = "all" | CategoryType;
 
 interface TransactionsViewProps {
   transactions: TransactionWithCategory[];
+  /**
+   * The month's charges still to come, drawn from their templates rather than
+   * stored. Shown among the rows, and never counted in the figures that
+   * describe what has happened.
+   */
+  planned?: PlannedOccurrence[];
   categories: Category[];
   recurringTemplates: RecurringTemplateWithCategory[];
   /** Occurrences waved off for this month, so they are not counted as owed. */
@@ -167,6 +160,7 @@ function computeTypeTotals(transactions: TransactionWithCategory[]) {
 
 export function TransactionsView({
   transactions,
+  planned = [],
   categories,
   recurringTemplates,
   skippedKeys,
@@ -183,6 +177,12 @@ export function TransactionsView({
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
   const t = useT();
+  const quickAdd = useQuickAdd();
+  // Today while reading this month; the month's first day while reading
+  // another, so an entry added from there lands in the month on screen.
+  const addDate = todayIsoLocal().startsWith(defaultDate.slice(0, 7))
+    ? undefined
+    : defaultDate;
 
   /**
    * The four type filters, plus "all".
@@ -237,9 +237,11 @@ export function TransactionsView({
     },
     [fulfilmentStates, t],
   );
-  const [formOpen, setFormOpen] = useState(false);
   const [editTransaction, setEditTransaction] =
     useState<TransactionWithCategory | null>(null);
+  const [openPlanned, setOpenPlanned] = useState<PlannedOccurrence | null>(
+    null,
+  );
   const [filter, setFilter] = useState<FilterType>("all");
   const [search, setSearch] = useState("");
   const [selectMode, setSelectMode] = useState(false);
@@ -249,38 +251,9 @@ export function TransactionsView({
   const [deletePending, startDelete] = useTransition();
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [tagFilter, setTagFilter] = useState<string>("all");
-  const [applySheetOpen, setApplySheetOpen] = useState(false);
-  const [applyPlan, setApplyPlan] = useState<ApplyRecurringPlan | null>(null);
-  const [applyPending, setApplyPending] = useState(false);
   // The phone's filters-and-actions panel. On a wider screen everything in it
   // sits in the toolbar, so the flag only means anything below `md`.
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
-
-  const refreshApplyPending = useCallback(async () => {
-    const result = await previewApplyRecurringForMonth(year, month);
-    if (result.error || !result.plan) {
-      return;
-    }
-    const counts = applyRecurringPlanCounts(result.plan);
-    setApplyPending(counts.creates + counts.updates > 0);
-  }, [month, year]);
-
-  // Asked again whenever the month's transactions change. The answer is set
-  // in the promise's callback, so the effect itself never sets state.
-  useEffect(() => {
-    let cancelled = false;
-    void previewApplyRecurringForMonth(year, month).then((result) => {
-      if (cancelled || result.error || !result.plan) {
-        return;
-      }
-      const counts = applyRecurringPlanCounts(result.plan);
-      setApplyPending(counts.creates + counts.updates > 0);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [month, year, transactions]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -323,6 +296,35 @@ export function TransactionsView({
     transactionTags,
   ]);
 
+  // The same filters, so a planned rent does not survive an "Income" chip.
+  // A tag filter hides every planned row: nothing planned carries a tag yet.
+  const filteredPlanned = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return planned.filter((occurrence) => {
+      if (filter !== "all" && occurrence.categoryType !== filter) {
+        return false;
+      }
+      if (
+        categoryFilter !== "all" &&
+        occurrence.categoryId !== categoryFilter
+      ) {
+        return false;
+      }
+      if (tagFilter !== "all") {
+        return false;
+      }
+      if (query.length > 0) {
+        const haystack =
+          `${occurrence.categoryName} ${occurrence.name} ${occurrence.note ?? ""}`.toLowerCase();
+        if (!haystack.includes(query)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [planned, filter, categoryFilter, tagFilter, search]);
+
   const sortedRows = useMemo(
     () =>
       [...filtered].sort((a, b) => b.occurred_on.localeCompare(a.occurred_on)),
@@ -336,62 +338,6 @@ export function TransactionsView({
     categoryFilter !== "all" ||
     tagFilter !== "all" ||
     search.trim().length > 0;
-
-  function handleApplyRecurring() {
-    startTransition(async () => {
-      const result = await previewApplyRecurringForMonth(year, month);
-      if (result.error) {
-        toast(result.error, "error");
-        return;
-      }
-
-      const plan = result.plan ?? { toCreate: [], toUpdate: [], toReprice: [] };
-
-      if (plan.toCreate.length === 0 && plan.toUpdate.length === 0) {
-        setApplyPending(false);
-        toast(t("ledger.applyAllDone"), "success");
-        return;
-      }
-
-      setApplyPlan(plan);
-      setApplySheetOpen(true);
-    });
-  }
-
-  function handleConfirmApply(includeUpdates: boolean, selectedKeys: string[]) {
-    startTransition(async () => {
-      const result = await applyRecurringForMonth(
-        year,
-        month,
-        includeUpdates,
-        selectedKeys,
-      );
-      if (result.error) {
-        toast(result.error, "error");
-        return;
-      }
-
-      setApplySheetOpen(false);
-      setApplyPlan(null);
-      setApplyPending(false);
-
-      const parts: string[] = [];
-      if (result.created) {
-        parts.push(t("ledger.applyAdded", { count: result.created }));
-      }
-      if (result.updated) {
-        parts.push(t("ledger.applyUpdated", { count: result.updated }));
-      }
-
-      toast(
-        parts.length > 0
-          ? t("ledger.applyResult", { parts: parts.join(", ") })
-          : t("ledger.applyNothing"),
-        "success",
-      );
-      void refreshApplyPending();
-    });
-  }
 
   const visibleIds = useMemo(() => sortedRows.map((tx) => tx.id), [sortedRows]);
   // A filter can hide rows that are still in the stored set. Pruning here
@@ -465,27 +411,39 @@ export function TransactionsView({
   // its rows in the same object, so the list can never draw a date with
   // nothing under it.
   const days = useMemo(() => {
-    const out: {
-      date: string;
-      rows: TransactionWithCategory[];
-      net: number;
-    }[] = [];
+    const byDate = new Map<
+      string,
+      {
+        date: string;
+        rows: TransactionWithCategory[];
+        planned: PlannedOccurrence[];
+        net: number;
+      }
+    >();
+    const day = (date: string) => {
+      let entry = byDate.get(date);
+      if (!entry) {
+        entry = { date, rows: [], planned: [], net: 0 };
+        byDate.set(date, entry);
+      }
+      return entry;
+    };
 
     for (const tx of sortedRows) {
       const amount = Number(tx.amount);
-      const signed = tx.categories.type === "income" ? amount : -amount;
-      const last = out[out.length - 1];
-
-      if (last && last.date === tx.occurred_on) {
-        last.rows.push(tx);
-        last.net += signed;
-      } else {
-        out.push({ date: tx.occurred_on, rows: [tx], net: signed });
-      }
+      const entry = day(tx.occurred_on);
+      entry.rows.push(tx);
+      entry.net += tx.categories.type === "income" ? amount : -amount;
     }
 
-    return out;
-  }, [sortedRows]);
+    // Planned rows join their day but not its net: the net says what the day
+    // did, and a planned row has not done anything yet.
+    for (const occurrence of filteredPlanned) {
+      day(occurrence.occurredOn).planned.push(occurrence);
+    }
+
+    return [...byDate.values()].sort((a, b) => b.date.localeCompare(a.date));
+  }, [sortedRows, filteredPlanned]);
 
   // The figures describe what is on screen, which is the whole reason they
   // are here: the month's own totals are Month's job, and repeating them
@@ -556,47 +514,29 @@ export function TransactionsView({
 
   return (
     <>
-      <PageHeader titleKey="nav.ledger">
-        <MonthPicker basePath="/transactions" />
-      </PageHeader>
+      <PageHeader titleKey="nav.ledger" />
 
       <PageContainer className="flex flex-col gap-3 md:gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <SurfaceTabs tabs={LEDGER_TABS} />
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            {/* On a phone only when there is something to apply: otherwise it
-                is a standing reminder of nothing, in the row that most needs
-                the room. */}
-            <span
-              className={cn(
-                "relative inline-flex",
-                !applyPending && "hidden md:inline-flex",
-              )}
-            >
-              <Button
-                variant={applyPending ? "default" : "ghost"}
-                size="sm"
-                onClick={handleApplyRecurring}
-                disabled={pending}
-              >
-                {pending
-                  ? t("ledger.applyPending")
-                  : t("ledger.applyRecurring")}
-              </Button>
-              {applyPending && !pending ? (
-                <span
-                  aria-label={t("ledger.applyWaiting")}
-                  role="status"
-                  className="absolute -right-1 -top-1 size-2.5 rounded-full bg-destructive ring-2 ring-background"
-                />
-              ) : null}
-            </span>
-            {/* A phone has the floating add button; this is the desktop's. */}
+        {/* The views, the month and Add in one row from `lg`: the month in the
+            middle, because it is what everything below is about. Narrower,
+            the month takes a row of its own under the views — under rather
+            than over, so the views stay where they are on the one Ledger view
+            that has no month. */}
+        <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-2 lg:grid-cols-[1fr_auto_1fr]">
+          <SurfaceTabs tabs={LEDGER_TABS} className="min-w-0" />
+          <MonthPicker
+            basePath="/transactions"
+            className="col-span-2 row-start-2 justify-self-center lg:col-span-1 lg:col-start-2 lg:row-start-1"
+          />
+          <div className="flex shrink-0 items-center gap-2 justify-self-end lg:col-start-3 lg:row-start-1">
+            {/* A phone has the floating add button; this is the desktop's.
+                The same sheet as the notch's "+", opened on the month being
+                read when that is not this one. */}
             <Button
               variant="pill"
               size="sm"
               className="hidden md:inline-flex"
-              onClick={() => setFormOpen(true)}
+              onClick={() => quickAdd?.open({ date: addDate })}
             >
               {t("ledger.add")}
               <ButtonNub>
@@ -609,7 +549,7 @@ export function TransactionsView({
         {/* Wrapped rather than dropped in bare: see PageContainer. */}
         {bankSlot ? <div className="contents">{bankSlot}</div> : null}
 
-        {transactions.length === 0 ? (
+        {transactions.length === 0 && planned.length === 0 ? (
           <EmptyState
             title={t("ledger.emptyTitle")}
             description={t("ledger.emptyBody")}
@@ -876,7 +816,7 @@ export function TransactionsView({
               </p>
             </div>
 
-            {filtered.length === 0 ? (
+            {filtered.length === 0 && filteredPlanned.length === 0 ? (
               <EmptyState
                 title={t("ledger.noMatchTitle")}
                 description={t("ledger.noMatchBody")}
@@ -909,10 +849,12 @@ export function TransactionsView({
                       <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                         {relativeDayLabel(day.date, formatShortDate, locale)}
                       </h3>
-                      <span className="privacy-amount text-xs tabular-nums text-muted-foreground xl:col-start-4 xl:text-right">
-                        {day.net >= 0 ? "+" : "−"}
-                        {formatEuro(Math.abs(day.net))}
-                      </span>
+                      {day.rows.length > 0 ? (
+                        <span className="privacy-amount text-xs tabular-nums text-muted-foreground xl:col-start-4 xl:text-right">
+                          {day.net >= 0 ? "+" : "−"}
+                          {formatEuro(Math.abs(day.net))}
+                        </span>
+                      ) : null}
                     </div>
 
                     <div className="divide-y divide-border">
@@ -1031,6 +973,14 @@ export function TransactionsView({
                           </span>
                         </button>
                       ))}
+                      {day.planned.map((occurrence) => (
+                        <PlannedRow
+                          key={occurrence.key}
+                          occurrence={occurrence}
+                          disabled={selectMode}
+                          onOpen={() => setOpenPlanned(occurrence)}
+                        />
+                      ))}
                     </div>
                   </div>
                 ))}
@@ -1043,20 +993,11 @@ export function TransactionsView({
       <TransactionForm
         categories={categories}
         tags={tags}
-        defaultDate={defaultDate}
-        open={formOpen}
-        onOpenChange={setFormOpen}
-      />
-
-      <TransactionForm
-        categories={categories}
-        tags={tags}
         selectedTagIds={
           editTransaction
             ? (transactionTags[editTransaction.id] ?? []).map((t) => t.id)
             : []
         }
-        defaultDate={defaultDate}
         open={editTransaction !== null}
         onOpenChange={(open) => {
           if (!open) {
@@ -1064,6 +1005,16 @@ export function TransactionsView({
           }
         }}
         transaction={editTransaction}
+      />
+
+      <PlannedOccurrenceSheet
+        occurrence={openPlanned}
+        onOpenChange={(open) => {
+          if (!open) {
+            setOpenPlanned(null);
+          }
+        }}
+        inCurrentMonth={todayIsoLocal().startsWith(defaultDate.slice(0, 7))}
       />
 
       <SelectionBar
@@ -1075,19 +1026,71 @@ export function TransactionsView({
         planMove={planMove}
         onMove={handleBulkMove}
       />
-
-      <ApplyRecurringSheet
-        open={applySheetOpen}
-        onOpenChange={(open) => {
-          setApplySheetOpen(open);
-          if (!open) {
-            setApplyPlan(null);
-          }
-        }}
-        plan={applyPlan}
-        pending={pending}
-        onConfirm={handleConfirmApply}
-      />
     </>
+  );
+}
+
+/**
+ * A charge's occurrence still to come, among the rows that have happened.
+ *
+ * Told apart three ways, because dimming alone says nothing to a reader who
+ * cannot see it and little to one who can: the icon sits in a dashed outline
+ * instead of a filled square, the name and amount are muted, and the second
+ * line starts with the word. Pressing it opens what can be done about it;
+ * in select mode it is inert, since there is nothing stored to select.
+ */
+function PlannedRow({
+  occurrence,
+  disabled,
+  onOpen,
+}: {
+  occurrence: PlannedOccurrence;
+  disabled: boolean;
+  onOpen: () => void;
+}) {
+  const t = useT();
+  const formatEuro = useFormatCurrency();
+  const subtitle = [t("ledger.planned"), occurrence.note]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      disabled={disabled}
+      aria-label={`${occurrence.name}, ${t("ledger.planned")}`}
+      className={cn(
+        "-mx-2 flex w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-control px-2 py-2.5 text-left",
+        "transition-colors hover:bg-muted/40 disabled:cursor-default disabled:hover:bg-transparent",
+        LEDGER_COLUMNS,
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <CategoryIcon
+          icon={occurrence.categoryIcon}
+          className="size-9 shrink-0 rounded-control border border-dashed border-hairline-strong bg-transparent opacity-70"
+        />
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-medium text-muted-foreground">
+            {occurrence.categoryName}
+          </span>
+          <span className="block truncate text-xs text-muted-foreground xl:hidden">
+            {subtitle}
+          </span>
+        </span>
+      </span>
+
+      <span className="hidden min-w-0 truncate text-sm text-muted-foreground xl:block">
+        {subtitle}
+      </span>
+
+      <span className="hidden xl:block" />
+
+      <span className="privacy-amount shrink-0 whitespace-nowrap text-sm tabular-nums text-muted-foreground xl:text-right">
+        {amountSign(occurrence.categoryType)}
+        {formatEuro(occurrence.amount)}
+      </span>
+    </button>
   );
 }

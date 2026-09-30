@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
+import { MonthFill } from "@/components/layout/MonthFill";
 import { OutboxBanner } from "@/components/layout/OutboxBanner";
 import { QuickAddProvider } from "@/components/layout/QuickAddProvider";
 import { RefreshProvider } from "@/components/layout/RefreshProvider";
@@ -23,10 +24,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // Per user, not per deployment. This flag decides what the refresh control
   // promises, and the action behind it gates on whether *this* user has a
   // bank — so a deployment-wide answer here is what let the button offer to
-  // ask your bank and then report back without having asked anything. The
-  // display surfaces keep the deployment-wide question, which is the one
-  // they are actually asking.
-  const connected = user ? bankFeedBelongsTo(user.id) : false;
+  // ask your bank and then report back without having asked anything.
+  const connected = user ? await bankFeedBelongsTo(user.id) : false;
 
   // Fetched here rather than per page so the quick-add sheet — reachable from
   // every screen — opens with no loading state.
@@ -81,6 +80,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           merchants={quickEntry.merchants}
         >
           <ServiceWorkerRegistration />
+          {user ? <MonthFill /> : null}
           <OutboxBanner />
           <AppShell
             displayName={name}

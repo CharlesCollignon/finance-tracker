@@ -29,8 +29,40 @@ what they were. Everything the user's own history already answered for is a
 transaction by the time they see this, so the inbox is the exceptions — and
 answering one teaches the matcher, which is why it shrinks rather than being a
 permanent chore. Addressed as `?review=inbox` on both apps, because it is a
-decision with a location rather than a section of a page.
+decision with a location rather than a section of a page. Shown grouped by
+shop (`groupPendingFeed`): a year of history arrives as a few dozen groups
+rather than hundreds of rows, and one answer files a whole group, with the
+category its history suggests already picked.
 _Avoid_: pending, unfiled, queue, triage
+
+**Bank connection**:
+One user's link to their own bank, through their own open-banking.io account:
+they sign up and pay open-banking.io directly, connect their bank there, and
+upload the credentials file it lets them download — the same file the
+deployment's owner keeps in the environment. Pluclair takes no money for it.
+Read-only. The file's two keys are sealed on the server and unreadable by
+either app; what the apps may read is its status: active, expired
+(open-banking.io stopped accepting the file's key — a new file brings it
+back), paused (the user's open-banking.io wallet is empty), revoked (the user
+disconnected) or error. Offered only where the `bank.connect` flag is on.
+Disconnecting asks whether to keep what the bank brought in, and keeps it by
+default.
+_Avoid_: bank feed (the rows it brings), integration, account link
+
+**Consent renewal**:
+Giving the bank a new consent before the old one ends, done in the user's own
+open-banking.io account; the credentials file Pluclair holds does not change. PSD2 caps a consent,
+usually at 180 days, and when it lapses the numbers simply stop moving, so the
+app says so ahead of time: from 14 days out on the Bank page and the Bearing,
+and in one push 7 days out (`bankAttention` decides all three).
+_Avoid_: reconnect (that is replacing a file that stopped working)
+
+**Invitation**:
+A card offering to connect a bank, on the Bearing's balance card, `/welcome`,
+the Ledger and the Plan. Only where setup is offered (`bankSetupOffered`), only to
+someone without a live connection, and dismissed for good per surface
+(`dismissed_prompts`, so dismissing on the laptop holds on the phone).
+_Avoid_: CTA, upsell, promo
 
 **Monthly summary**:
 Income, expense and savings totals for one month, with a per-category
@@ -55,13 +87,33 @@ One dated instance a recurring template calls for. An occurrence is not a
 transaction until it is applied.
 _Avoid_: instance, instalment, due date
 
+**Planned occurrence**:
+An occurrence dated after today. Never stored: the ledger draws it from its
+template every time it is read, which is why a future month shows its charges
+and why changing a charge changes every month ahead at once. It becomes a
+transaction on its day, and until then it is counted by nothing that describes
+what has happened.
+_Avoid_: forecast row, pending, scheduled transaction
+
 **Skip**:
 The user's decision that one specific occurrence should not exist this month.
-Distinct from deactivating the template, which stops all of them.
+Distinct from deactivating the template, which stops all of them. Deleting a
+row a template wrote records one, and so does moving that row to another
+date: the month fills itself, and without the skip the occurrence would be
+written again.
 _Avoid_: ignore, dismiss
 
 **Apply**:
-Turning the occurrences a month calls for into transactions.
+Turning an occurrence into a transaction, on its day. Nobody presses anything
+for it: occurrences whose day has come are written by a daily run on the
+server and whenever the app opens, looking back as far as last month. Only
+missing ones are written — a row that differs from its template may be one the
+user corrected — and never one from before its template was set up, unless the
+user asks for this month's when creating it. Saving a template is the one thing
+that reaches rows already written: the user chooses whether this month's
+recorded rows follow it ("this month too") or keep what they say ("upcoming
+only"), and past months never change. With a bank feeding the ledger, nothing
+is applied at all: the bank is the record, and a template only forecasts.
 _Avoid_: sync, generate, run
 
 **Reprice**:
@@ -76,7 +128,7 @@ moved, so a later quote does not change it; only a reclassification does.
 _Avoid_: locked, frozen, historical
 
 **Fulfil**:
-The user's confirmation that a movement the bank reported *is* the occurrence
+The user's confirmation that a movement the bank reported _is_ the occurrence
 a template called for. Distinct from applying, which writes a transaction the
 bank never saw, and from skipping, which says the occurrence should not exist:
 fulfilling says it already happened and here is the proof. Never inferred —
@@ -101,7 +153,7 @@ _Avoid_: cut-off, statement date
 
 **Month close**:
 Recording one month's closing balance, and what the app works out from it.
-Distinct from applying, which opens a month by filling it in.
+Distinct from applying, which fills a month in as it opens.
 _Avoid_: reconciliation, month end, settle
 
 **Unrecorded spending**:
@@ -135,8 +187,8 @@ the charges that produce it, and why no market value appears anywhere in it.
 _Avoid_: forecast, prediction, estimate, outlook, trajectory
 
 **Track**:
-One of the projection's two lines. *In the accounts* is what the spending
-accounts hold; *everything kept* is that plus every euro set aside along the
+One of the projection's two lines. _In the accounts_ is what the spending
+accounts hold; _everything kept_ is that plus every euro set aside along the
 way. There are two because one was a lie: a single line counting money moved
 into savings as money gone had a diligent saver watching their position sink.
 The gap between the tracks is exactly what has been put by.
@@ -261,12 +313,16 @@ _Avoid_: average, baseline, typical
 ### Where it all stands
 
 **Bearing**:
-Where the whole of someone's money stands on one day, and where it is
-heading: what is on hand, what is committed to the months ahead, what is
-invested, and what a year of unchanged habits leads to. Distinct from a
-monthly summary, which is one month's flows, and from a forward projection,
-which is only the forward half. Every figure on it is one another surface already
-shows, which is what makes it checkable rather than a second source of truth.
+Where one month stands: what is on the account, where the month ends, and
+what it went on. The month in progress by default, switched with the same
+control as the Ledger; a month that has ended tells what it did, one ahead
+what its charges call for. The balance is only ever carried from something
+read — the bank's statement, or the close of the month before — and without
+either the screen counts the month's net and says so rather than inventing a
+balance. Every figure on it is one another surface already shows, which is
+what makes it checkable rather than a second source of truth. (The phone
+still draws the earlier version: where everything stood on one day, as five
+cards.)
 _Avoid_: dashboard, overview, home, net worth
 
 **Tile**:

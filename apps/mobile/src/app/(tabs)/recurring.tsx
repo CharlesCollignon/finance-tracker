@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, RefreshControl, View } from "react-native";
-import { type Href, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
-import { parseMonthParams } from "@finance/core/constants";
-import { applyRecurringPlanCounts } from "@finance/core/apply-recurring";
 import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
 import { rollUpRecurring } from "@finance/core/recurring-rollup";
@@ -35,15 +33,17 @@ import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { useDataVersion } from "@/lib/data-version";
+import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
+import { useQuickAdd } from "@/providers/QuickAddProvider";
+import { toggleRecurringActive } from "@/lib/mutations";
 import {
-  previewApplyRecurringForMonth,
-  toggleRecurringActive,
-} from "@/lib/mutations";
-import { getCategories, getRecurringTemplates } from "@/lib/queries";
+  getCategories,
+  getRecordedChargeDates,
+  getRecurringTemplates,
+} from "@/lib/queries";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import type { Translate } from "@finance/core/i18n/t";
@@ -90,28 +90,36 @@ export default function RecurringScreen() {
   const locale = useLocale();
   const t = useT();
   const { toast } = useToast();
+  const quickAdd = useQuickAdd();
   const router = useRouter();
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<RecurringTemplateWithCategory | null>(
+  /*
+   * `?edit=<id>` opens that charge's editor on arrival — the Ledger's planned
+   * rows link here with it. The param is cleared on close, so it opens once
+   * per link rather than every time the screen renders.
+   */
+  const params = useLocalSearchParams<{ edit?: string }>();
+  const [chosen, setChosen] = useState<RecurringTemplateWithCategory | null>(
     null,
   );
-  const [applyPending, setApplyPending] = useState(false);
-  const { year, month } = parseMonthParams();
 
   const dataVersion = useDataVersion();
-  const { data, loading, refreshing, onRefreshAll, reload, error } =
+  const { data, loading, refreshing, onRefreshAll, error } =
     useRefreshable(async () => {
       if (!user) {
         return {
           templates: [] as RecurringTemplateWithCategory[],
           categories: [] as Category[],
+          recorded: new Map<string, string[]>(),
         };
       }
-      const [templates, categories] = await Promise.all([
+      const [templates, categories, recorded] = await Promise.all([
         getRecurringTemplates(user.id),
         getCategories(user.id),
+        // Which charges have already been recorded this month, so saving an
+        // edit can ask whether those rows change too.
+        getRecordedChargeDates(user.id),
       ]);
-      return { templates, categories };
+      return { templates, categories, recorded };
     }, [user?.id, dataVersion]);
 
   // Memoised so a render without new data keeps the same arrays, and the
@@ -119,30 +127,17 @@ export default function RecurringScreen() {
   const templates = useMemo(() => data?.templates ?? [], [data?.templates]);
   const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
 
-  const refreshApplyPending = useCallback(async () => {
-    const result = await previewApplyRecurringForMonth(year, month);
-    if (result.error || !result.plan) {
-      return;
-    }
-    const counts = applyRecurringPlanCounts(result.plan);
-    setApplyPending(counts.creates + counts.updates > 0);
-  }, [month, year]);
+  const fromLink = params.edit
+    ? (templates.find((template) => template.id === params.edit) ?? null)
+    : null;
+  const editing = chosen ?? fromLink;
 
-  // Asked again whenever the templates change. The answer is set in the
-  // promise's callback, so the effect itself never sets state.
-  useEffect(() => {
-    let cancelled = false;
-    void previewApplyRecurringForMonth(year, month).then((result) => {
-      if (cancelled || result.error || !result.plan) {
-        return;
-      }
-      const counts = applyRecurringPlanCounts(result.plan);
-      setApplyPending(counts.creates + counts.updates > 0);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [month, year, templates]);
+  function closeEditor() {
+    setChosen(null);
+    if (params.edit) {
+      router.setParams({ edit: undefined });
+    }
+  }
 
   /*
    * The same rollup the web uses, for the same reason: `estimateMonthlyAmount`
@@ -212,6 +207,12 @@ export default function RecurringScreen() {
     void syncRecurringReminders(templates, formatEuro);
   }, [templates, formatEuro]);
 
+  // The same sheet as every other Add, opened on a charge because this is
+  // the screen of them. Editing one still happens in a sheet of its own.
+  function openCreate() {
+    quickAdd?.open({ kind: "charge" });
+  }
+
   async function handleEnableReminders() {
     const { granted } = await enableReminders();
     setRemindersPrompt(false);
@@ -228,19 +229,6 @@ export default function RecurringScreen() {
 
   return (
     <Screen title={t("nav.charges")}>
-      {applyPending ? (
-        <Pressable
-          accessibilityRole="link"
-          accessibilityLabel={t("charges.openLedgerToApply")}
-          onPress={() => router.push("/(tabs)/transactions" as Href)}
-          className="mb-3 rounded-control border border-dashed border-primary-rim/50 px-4 py-3"
-        >
-          <Text variant="muted" className="text-sm">
-            {`${t("charges.applyPendingBefore")} ${t("charges.applyPendingLink")} ${t("charges.applyPendingAfter")}`}
-          </Text>
-        </Pressable>
-      ) : null}
-
       {remindersPrompt ? (
         <Card bezel className="mb-4" innerClassName="gap-3 p-5">
           <Text className="text-sm font-medium">
@@ -337,10 +325,7 @@ export default function RecurringScreen() {
         variant="pill"
         icon="add"
         className="mb-4 self-center"
-        onPress={() => {
-          setEditing(null);
-          setFormOpen(true);
-        }}
+        onPress={openCreate}
       />
 
       <View className="mb-4 flex-row flex-wrap justify-center gap-2">
@@ -393,10 +378,7 @@ export default function RecurringScreen() {
                 label={t("recurring.addTitleMobile")}
                 variant="pill"
                 icon="add"
-                onPress={() => {
-                  setEditing(null);
-                  setFormOpen(true);
-                }}
+                onPress={openCreate}
               />
             </EmptyState>
           }
@@ -419,8 +401,7 @@ export default function RecurringScreen() {
                   className="min-w-0 flex-1"
                   onPress={() => {
                     void hapticLight();
-                    setEditing(item);
-                    setFormOpen(true);
+                    setChosen(item);
                   }}
                 >
                   <Text className="text-sm font-medium">
@@ -469,8 +450,10 @@ export default function RecurringScreen() {
                         toast(result.error, "error");
                         return;
                       }
-                      await reload();
-                      await refreshApplyPending();
+                      // Every screen, not just this one: switching a charge
+                      // on writes this month's rows, and off removes the
+                      // ones still ahead.
+                      notifyDataChanged();
                     }}
                   >
                     <Badge
@@ -487,19 +470,15 @@ export default function RecurringScreen() {
         />
       )}
 
-      {formOpen ? (
+      {editing ? (
         <RecurringFormModal
-          open={formOpen}
-          onClose={() => {
-            setFormOpen(false);
-            setEditing(null);
-          }}
-          onSaved={async () => {
-            await reload();
-            await refreshApplyPending();
-          }}
+          open
+          onClose={closeEditor}
+          // Every screen: a saved charge moves the ledger's rows with it.
+          onSaved={notifyDataChanged}
           categories={categories}
           template={editing}
+          recordedThisMonth={data?.recorded.get(editing.id) ?? []}
         />
       ) : null}
     </Screen>

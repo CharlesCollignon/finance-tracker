@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { useRouter } from "next/navigation";
 import { CaretLeft } from "@phosphor-icons/react";
 import { CURRENCY_LABELS, type CurrencyCode } from "@finance/core/constants";
@@ -9,6 +15,7 @@ import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { Input } from "@/components/retroui/Input";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
+import { ConnectBankSheet } from "@/components/finance/bank/ConnectBankSheet";
 import { FormLabel } from "@/components/layout/FormLabel";
 import { Logo } from "@/components/layout/Logo";
 import { useToast } from "@/components/layout/ToastProvider";
@@ -21,9 +28,18 @@ import { useT } from "@/lib/locale-context";
 
 const CURRENCIES: CurrencyCode[] = ["EUR", "USD"];
 
-type Step = "currency" | "income" | "recurring" | "cap";
+type Step = "currency" | "income" | "recurring" | "bank" | "cap";
 
-const STEPS: Step[] = ["currency", "income", "recurring", "cap"];
+/**
+ * The bank step sits after the charges and only where connecting one is
+ * possible: by then the reader has seen what the app does by hand, which is
+ * what makes "let your bank do this" mean something.
+ */
+function stepsFor(offerBank: boolean): Step[] {
+  return offerBank
+    ? ["currency", "income", "recurring", "bank", "cap"]
+    : ["currency", "income", "recurring", "cap"];
+}
 
 /** The query key the step is carried in, and what a history entry remembers. */
 const STEP_PARAM = "step";
@@ -37,6 +53,8 @@ function urlForStep(step: Step): string {
 
 interface WelcomeFlowProps {
   categories: Category[];
+  /** Whether to offer connecting a bank as a step of its own. */
+  offerBank?: boolean;
 }
 
 /**
@@ -72,13 +90,21 @@ interface WelcomeFlowProps {
  * looks safe — lost both without being told. Skipping is the one path that
  * discards, and it is the one that says so.
  */
-export function WelcomeFlow({ categories }: WelcomeFlowProps) {
+export function WelcomeFlow({
+  categories,
+  offerBank = false,
+}: WelcomeFlowProps) {
   const t = useT();
   const router = useRouter();
   const { toast } = useToast();
   const currency = useCurrency();
 
+  const STEPS = useMemo(() => stepsFor(offerBank), [offerBank]);
   const [step, setStep] = useState<Step>("currency");
+  const [bankOpen, setBankOpen] = useState(false);
+  const [bankConnected, setBankConnected] = useState(false);
+  // What follows the charges: the bank step where there is one.
+  const afterCharges: Step = offerBank ? "bank" : "cap";
   const [pending, startTransition] = useTransition();
 
   const [incomeAmount, setIncomeAmount] = useState("");
@@ -109,7 +135,7 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
 
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, []);
+  }, [STEPS]);
 
   /** Forward one step, leaving a history entry behind to come back to. */
   const goTo = useCallback((next: Step) => {
@@ -131,7 +157,9 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
   }
 
   function finish() {
-    router.push("/bearing");
+    // A bank connected on the way ends setup on the Bank page, where its
+    // history is brought in; otherwise, where the month is read.
+    router.push(bankConnected ? "/bank" : "/bearing");
   }
 
   /** Both actions take FormData, so the wizard builds one rather than
@@ -197,7 +225,7 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
   function handleRecurringContinue() {
     const category = expenseCategories.find((c) => c.id === expenseCategory);
     if (!category || !expenseAmount.trim()) {
-      goTo("cap");
+      goTo(afterCharges);
       return;
     }
     startTransition(async () => {
@@ -207,7 +235,7 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
           t("onboarding.templateAdded", { name: category.name }),
           "success",
         );
-        goTo("cap");
+        goTo(afterCharges);
       }
     });
   }
@@ -455,11 +483,46 @@ export function WelcomeFlow({ categories }: WelcomeFlowProps) {
             <Button
               variant="ghost"
               disabled={pending}
-              onClick={() => goTo("cap")}
+              onClick={() => goTo(afterCharges)}
             >
               {t("onboarding.skipForNow")}
             </Button>
           </div>
+        </div>
+      ) : null}
+
+      {step === "bank" ? (
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <h1 className="font-head text-2xl">
+              {t("bankConnect.inviteWelcome")}
+            </h1>
+            <p className="text-muted-foreground">
+              {t("bankConnect.notConnectedBody")}
+            </p>
+          </div>
+          <Card.Bezel innerClassName="flex flex-col gap-2 p-5 text-sm">
+            <p>{t("bankConnect.factReadOnly")}</p>
+            <p className="text-muted-foreground">
+              {t("bankConnect.priceNote")}
+            </p>
+          </Card.Bezel>
+          <div className="flex flex-col gap-2">
+            <Button size="lg" onClick={() => setBankOpen(true)}>
+              {t("bankConnect.sheetTitle")}
+            </Button>
+            <Button variant="ghost" onClick={() => goTo("cap")}>
+              {t("onboarding.skipForNow")}
+            </Button>
+          </div>
+          <ConnectBankSheet
+            open={bankOpen}
+            onOpenChange={setBankOpen}
+            onConnected={() => {
+              setBankConnected(true);
+              goTo("cap");
+            }}
+          />
         </div>
       ) : null}
 

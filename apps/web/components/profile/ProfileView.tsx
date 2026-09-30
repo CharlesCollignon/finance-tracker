@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  Bank,
   CreditCard,
   EnvelopeSimple,
   Flag,
@@ -49,6 +50,8 @@ interface ProfileViewProps {
   initialPasskeys: PasskeyItem[];
   /** Empty when the deployment has no VAPID key configured. */
   pushPublicKey: string;
+  /** Whether the Bank row leads anywhere for this account. */
+  showBank: boolean;
 }
 
 /** Which row is showing its editor. One at a time, as on the phone. */
@@ -78,6 +81,7 @@ export function ProfileView({
   provider,
   canDeleteAccount,
   initialPasskeys,
+  showBank,
 }: ProfileViewProps) {
   const { toast } = useToast();
   const currency = useCurrency();
@@ -238,6 +242,13 @@ export function ProfileView({
             label={t("profile.budgetsAndGoals")}
             href="/budgets"
           />
+          {showBank ? (
+            <ListRow
+              icon={Bank}
+              label={t("bankConnect.profileLink")}
+              href="/bank"
+            />
+          ) : null}
           <ListRow
             icon={CreditCard}
             label={t("profile.currency")}

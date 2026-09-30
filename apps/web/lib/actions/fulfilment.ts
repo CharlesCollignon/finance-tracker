@@ -110,6 +110,20 @@ export async function fulfilOccurrence(
     return { error: error.message };
   }
 
+  // The month fills itself from its charges, so this occurrence may already
+  // have a row the template wrote. The movement just confirmed is the real
+  // one; the template's row would count the same rent twice.
+  const { error: duplicateError } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("recurring_template_id", parsed.data.templateId)
+    .eq("occurred_on", parsed.data.occurredOn);
+
+  if (duplicateError) {
+    return { error: duplicateError.message };
+  }
+
   revalidateEverySurface();
   return { success: true, message: "Counted — it is no longer forecast" };
 }

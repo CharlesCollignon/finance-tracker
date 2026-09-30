@@ -6,7 +6,6 @@ import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { CaretDown, CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { calendarNames } from "@finance/core/i18n/calendar-names";
 import {
-  formatMonthCompact,
   formatMonthLabel,
   getCurrentMonth,
   monthSearchParams,
@@ -19,12 +18,18 @@ import { rememberMonth } from "@/lib/month-memory";
 import { cn } from "@/lib/utils";
 import { SOLID_PANEL } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
-import { useT } from "@/lib/locale-context";
+import { useLocale, useT } from "@/lib/locale-context";
 
 interface MonthPickerProps {
   basePath: string;
   className?: string;
 }
+
+/** The arrows' shape, shared by the two of them. */
+const ARROW_CLASS = cn(
+  "flex size-11 shrink-0 items-center justify-center rounded-full",
+  "border border-border transition-colors duration-hover hover:bg-accent",
+);
 
 /**
  * Which month a surface is showing, and how to get to another one.
@@ -39,6 +44,13 @@ interface MonthPickerProps {
  * a wide margin, and making that a two-tap popover to save a control would be
  * a poor trade.
  *
+ * It sits in the middle of the Ledger's toolbar rather than in the page's top
+ * corner. The month is what everything under it is about, and a small label
+ * up beside the refresh read as one more setting instead of as the answer to
+ * "which month am I looking at". Away from the month in progress, a chip
+ * beside it goes straight back: the commonest trip out is a look at last
+ * month, and the way home should not be counting arrow presses.
+ *
  * It no longer carries a `view` through. `BudgetViewToggle` was the only
  * thing that ever wrote `?view=month_end`, and it is gone — the current /
  * month-end choice is a Bearing panel's own local chrome now, deliberately
@@ -47,6 +59,9 @@ interface MonthPickerProps {
  */
 export function MonthPicker({ basePath, className }: MonthPickerProps) {
   const t = useT();
+  // The label was always English, which the old corner placement let pass;
+  // in the middle of the page a French reader reads it first.
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const { year, month } = parseMonthParams(
     searchParams.get("y") ?? undefined,
@@ -57,47 +72,39 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
 
   const [open, setOpen] = useState(false);
   const panelId = useId();
+  const current = getCurrentMonth();
+  const away = current.year !== year || current.month !== month;
 
   return (
-    <div
-      className={cn("relative flex items-center gap-0.5 sm:gap-1", className)}
-    >
+    <div className={cn("relative flex items-center gap-1 sm:gap-2", className)}>
       <Link
         href={`${basePath}${monthSearchParams(prev.year, prev.month)}`}
         onClick={() => rememberMonth(prev.year, prev.month)}
-        className={cn(
-          // Narrower, never shorter: the 44px touch height is kept, and only
-          // the horizontal padding gives way on a phone.
-          "flex h-11 w-8 shrink-0 items-center justify-center rounded-control sm:w-11",
-          "border border-border hover:bg-accent",
-        )}
+        className={ARROW_CLASS}
         aria-label={t("common.previousMonth")}
       >
-        <CaretLeft size={ICON.xl} weight="bold" />
+        <CaretLeft size={ICON.lg} weight="bold" />
       </Link>
 
       <button
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => setOpen((open) => !open)}
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-controls={open ? panelId : undefined}
         className={cn(
-          "flex h-11 min-w-0 shrink items-center gap-1 rounded-control px-1.5 text-sm font-medium sm:px-2",
-          "hover:bg-accent",
+          "flex h-11 min-w-0 shrink items-center justify-center gap-1.5 rounded-full px-3",
+          "text-base font-semibold transition-colors duration-hover hover:bg-accent sm:min-w-[11rem] sm:text-lg",
         )}
       >
-        <span className="hidden whitespace-nowrap text-center sm:inline sm:min-w-[8.5rem]">
-          {formatMonthLabel(year, month)}
-        </span>
-        <span className="whitespace-nowrap text-center sm:hidden">
-          {formatMonthCompact(year, month)}
+        <span className="whitespace-nowrap">
+          {formatMonthLabel(year, month, locale)}
         </span>
         <CaretDown
           size={ICON.xs}
           weight="bold"
           className={cn(
-            "shrink-0 transition-transform duration-hover",
+            "shrink-0 text-muted-foreground transition-transform duration-hover",
             open && "rotate-180",
           )}
         />
@@ -106,14 +113,28 @@ export function MonthPicker({ basePath, className }: MonthPickerProps) {
       <Link
         href={`${basePath}${monthSearchParams(next.year, next.month)}`}
         onClick={() => rememberMonth(next.year, next.month)}
-        className={cn(
-          "flex h-11 w-8 shrink-0 items-center justify-center rounded-control sm:w-11",
-          "border border-border hover:bg-accent",
-        )}
+        className={ARROW_CLASS}
         aria-label={t("common.nextMonth")}
       >
-        <CaretRight size={ICON.xl} weight="bold" />
+        <CaretRight size={ICON.lg} weight="bold" />
       </Link>
+
+      {/* Absolutely placed, so appearing does not push the month off the
+          centre it was put on. Not on a phone, where there is no room beside
+          a full-width row: the grid's own "This month" is two taps away. */}
+      {away ? (
+        <Link
+          href={`${basePath}${monthSearchParams(current.year, current.month)}`}
+          onClick={() => rememberMonth(current.year, current.month)}
+          className={cn(
+            "absolute left-full top-1/2 ml-2 hidden -translate-y-1/2 whitespace-nowrap sm:inline-flex",
+            "min-h-9 items-center rounded-full border border-border px-3 text-xs font-medium",
+            "text-muted-foreground transition-colors duration-hover hover:bg-muted hover:text-foreground",
+          )}
+        >
+          {t("common.thisMonth")}
+        </Link>
+      ) : null}
 
       {open ? (
         <MonthGrid
@@ -150,6 +171,7 @@ function MonthGrid({
   onClose: () => void;
 }) {
   const t = useT();
+  const locale = useLocale();
   const router = useRouter();
   const [shownYear, setShownYear] = useState(year);
   const [availability, setAvailability] = useState<MonthAvailability | null>(
@@ -217,7 +239,7 @@ function MonthGrid({
       role="dialog"
       aria-label={t("common.pickAMonth")}
       className={cn(
-        "absolute right-0 top-full z-50 mt-1 w-[min(17rem,calc(100vw-2rem))]",
+        "absolute left-1/2 top-full z-50 mt-1 w-[min(17rem,calc(100vw-2rem))] -translate-x-1/2",
         "rounded-card p-row",
         SOLID_PANEL,
         "account-menu-panel",
@@ -244,7 +266,7 @@ function MonthGrid({
       </div>
 
       <div className="mt-2 grid grid-cols-4 gap-1">
-        {calendarNames().monthShort.map((label, index) => {
+        {calendarNames(locale).monthShort.map((label, index) => {
           const value = index + 1;
           const selected = shownYear === year && value === month;
           const isToday = shownYear === today.year && value === today.month;

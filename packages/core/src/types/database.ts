@@ -9,6 +9,10 @@ export type PricingType = "fixed" | "shares";
 
 export type WalletId = "pea" | "cto" | "av" | "per" | "crypto";
 
+/** Where a user's bank connection stands — see migration 041. */
+export type BankConnectionStatus =
+  "active" | "expired" | "paused" | "revoked" | "error";
+
 export type Json =
   | string
   | number
@@ -760,6 +764,63 @@ export interface Database {
         };
         Relationships: [];
       };
+      bank_connections: {
+        Row: {
+          user_id: string;
+          status: BankConnectionStatus;
+          connected_at: string;
+          key_expires_at: string | null;
+          consent_valid_until: string | null;
+          last_synced_at: string | null;
+          last_error: string | null;
+          backfilled_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          status?: BankConnectionStatus;
+          connected_at?: string;
+          key_expires_at?: string | null;
+          consent_valid_until?: string | null;
+          last_synced_at?: string | null;
+          last_error?: string | null;
+          backfilled_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          status?: BankConnectionStatus;
+          connected_at?: string;
+          key_expires_at?: string | null;
+          consent_valid_until?: string | null;
+          last_synced_at?: string | null;
+          last_error?: string | null;
+          backfilled_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      bank_connection_secrets: {
+        Row: {
+          user_id: string;
+          ciphertext: string;
+          key_id: string;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          ciphertext: string;
+          key_id: string;
+          created_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          ciphertext?: string;
+          key_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       bank_accounts: {
         Row: {
           user_id: string;
@@ -939,18 +1000,22 @@ export interface Database {
            * opinion is what lets the arrangement lead.
            */
           bearing_pins: Json | null;
+          /** Invitations dismissed for good, e.g. `bank-invite:ledger`. */
+          dismissed_prompts: string[];
           updated_at: string;
         };
         Insert: {
           user_id: string;
           locale?: Locale;
           bearing_pins?: Json | null;
+          dismissed_prompts?: string[];
           updated_at?: string;
         };
         Update: {
           user_id?: string;
           locale?: Locale;
           bearing_pins?: Json | null;
+          dismissed_prompts?: string[];
           updated_at?: string;
         };
         Relationships: [];

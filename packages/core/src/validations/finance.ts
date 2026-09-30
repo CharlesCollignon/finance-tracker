@@ -191,11 +191,6 @@ export const recurringTemplateSchema = z.discriminatedUnion("recurrence", [
     .superRefine(applyRecurringRules),
 ]);
 
-export const applyRecurringSchema = z.object({
-  year: z.coerce.number().int().min(2000).max(2100),
-  month: z.coerce.number().int().min(1).max(12),
-});
-
 export const authSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6, "errors.passwordTooShort"),

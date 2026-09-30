@@ -7,12 +7,15 @@ import { resolveSpine } from "@finance/core/spine";
 import { gatherBearingFacts } from "@/lib/bearing";
 import { clearPanelCache } from "@/lib/bearing-panel";
 
+import { BankAttentionBanner } from "@/components/bank/BankAttentionBanner";
+import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
 import { AttentionRow } from "@/components/bearing/AttentionRow";
 import { BearingCards } from "@/components/bearing/BearingCards";
 import { Headline } from "@/components/bearing/Headline";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
+import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -71,6 +74,9 @@ export default function BearingScreen() {
     async () => (user ? await gatherBearingFacts(user.id, locale) : null),
     [user?.id, locale, dataVersion],
   );
+  // Apart from the fact pack, and asked of the server where it has to be:
+  // whether a bank can be connected here at all is the deployment's to say.
+  const { bank } = useBankState();
 
   if (loading || !data) {
     return (
@@ -83,15 +89,12 @@ export default function BearingScreen() {
   const facts = data;
 
   // Built above the thin branch on purpose. `thin` is not "nobody has done
-  // anything" — it is "no position has been taken yet", which is exactly
-  // what a reader who has just finished onboarding looks like: templates
-  // saved, not one row written, so `recurringToApply` is already non-zero
-  // and this list already has an item in it. It used to be built below the
-  // branch and thrown away for them.
+  // anything" — it is "no position has been taken yet", and a reader in that
+  // state can still have something waiting, such as a first balance to
+  // enter. It used to be built below the branch and thrown away for them.
   const attention = buildAttention({
     swallowed: facts.swallowed,
     pendingInbox: facts.pendingInbox,
-    recurringToApply: facts.recurringToApply,
     readyToClose: facts.closes.next
       ? {
           monthLabel: facts.closes.next.label,
@@ -114,13 +117,16 @@ export default function BearingScreen() {
             <AttentionRow attention={attention} />
           ) : undefined}
         </EmptyState>
+        {/* The reader with nothing recorded yet is the one a bank would
+            help most: it fills in what this empty state is asking for. */}
+        <ConnectBankInvite surface="bearing" bank={bank} className="mt-2" />
       </Screen>
     );
   }
 
   // The spine's ladder, a pure function of figures `gatherBearingFacts`
   // already widened its return with — see that function's own doc comment
-  // for where `swallowed`, `proposals` and `recurringToApply` come from.
+  // for where `swallowed` and `proposals` come from.
   // The action row's own list is built above, before the thin branch.
   //
   // `everClosed` and `closes` answer two different questions, per
@@ -159,9 +165,17 @@ export default function BearingScreen() {
         contentContainerStyle={{ paddingTop: 16, paddingBottom: bottom }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Above the figures, because a bank feed that has stopped leaves
+            every one of them quietly stale. */}
+        {bank?.attention ? (
+          <BankAttentionBanner attention={bank.attention} />
+        ) : null}
+
         {/* The two figures the screen is opened for, before anything that has
             to be pressed to be read. */}
         <Headline state={spineState} />
+
+        <ConnectBankInvite surface="bearing" bank={bank} />
 
         {attention.length > 0 ? <AttentionRow attention={attention} /> : null}
 

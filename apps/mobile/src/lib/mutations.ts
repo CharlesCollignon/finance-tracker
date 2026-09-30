@@ -1,5 +1,4 @@
 import {
-  applyRecurringSchema,
   authSchema,
   categorySchema,
   deleteTransactionsSchema,
@@ -23,7 +22,12 @@ import {
   tagSchema,
   walletTransferSchema,
 } from "@finance/core/validations/phase4";
-import { getMonthBounds, todayIsoLocal } from "@finance/core/constants";
+import {
+  getCurrentMonth,
+  getMonthBounds,
+  shiftIsoDate,
+  todayIsoLocal,
+} from "@finance/core/constants";
 import {
   monthColumnValue,
   observationDateFor,
@@ -43,9 +47,15 @@ import {
 import { findLedgerMatch } from "@finance/core/bank-feed";
 import {
   buildApplyRecurringPlan,
-  type ApplyRecurringPlan,
+  calledForKeys,
+  countRecurringToApply,
+  followTemplateUpdates,
+  forecastsNoLongerCalledFor,
+  pastOccurrencesNotWritten,
+  recurringOccurrenceKey,
+  scheduleDatesBefore,
+  type RecurringOccurrenceUpdate,
 } from "@finance/core/apply-recurring";
-import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { resolveRecurringAmount } from "@finance/core/recurring-shares";
 import { resolveWalletId } from "@finance/core/investments";
 import { displayNameForRecurringTemplate } from "@finance/core/investment-positions";
@@ -128,6 +138,31 @@ export async function updateTransaction(
     return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
+  // A row a template wrote, moved to another day, leaves the day it came
+  // from unwritten — and the month fills itself, so that day would be written
+  // again. Skipping it is what makes the move stick.
+  const { data: before } = await supabase
+    .from("transactions")
+    .select("recurring_template_id, occurred_on")
+    .eq("id", parsed.data.id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (
+    before?.recurring_template_id &&
+    before.occurred_on !== parsed.data.occurredOn
+  ) {
+    const skipError = await skipOccurrences(userId, [
+      {
+        templateId: before.recurring_template_id as string,
+        occurredOn: before.occurred_on as string,
+      },
+    ]);
+    if (skipError) {
+      return { error: skipError };
+    }
+  }
+
   const { error } = await supabase
     .from("transactions")
     .update({
@@ -151,6 +186,13 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
     return { error: "errors.notAuthenticated" };
   }
 
+  // A charge's row: deleting it takes that occurrence out of its month, so
+  // the month filling itself does not write it straight back.
+  const skipError = await skipWhatTemplatesWrote(userId, [id]);
+  if (skipError) {
+    return { error: skipError };
+  }
+
   const { error } = await supabase
     .from("transactions")
     .delete()
@@ -161,75 +203,6 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
     return { error: error.message };
   }
   return { success: true };
-}
-
-/**
- * Removes one generated occurrence and records a skip so Apply will not
- * recreate it. The recurring rule itself stays active. Ported from the web
- * skipRecurringOccurrence action.
- */
-export async function skipRecurringOccurrence(
-  templateId: string,
-  occurredOn: string,
-  transactionId?: string | null,
-): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  if (
-    !/^[0-9a-f-]{36}$/i.test(templateId) ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)
-  ) {
-    return { error: "Invalid occurrence" };
-  }
-
-  const { data: template } = await supabase
-    .from("recurring_templates")
-    .select("id")
-    .eq("id", templateId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (!template) {
-    return { error: "Recurring template not found" };
-  }
-
-  if (transactionId) {
-    const { error: deleteError } = await supabase
-      .from("transactions")
-      .delete()
-      .eq("id", transactionId)
-      .eq("user_id", userId)
-      .eq("recurring_template_id", templateId);
-
-    if (deleteError) {
-      return { error: deleteError.message };
-    }
-  } else {
-    await supabase
-      .from("transactions")
-      .delete()
-      .eq("user_id", userId)
-      .eq("recurring_template_id", templateId)
-      .eq("occurred_on", occurredOn);
-  }
-
-  const { error: skipError } = await supabase.from("recurring_skips").upsert(
-    {
-      user_id: userId,
-      template_id: templateId,
-      occurred_on: occurredOn,
-    },
-    { onConflict: "user_id,template_id,occurred_on" },
-  );
-
-  if (skipError) {
-    return { error: skipError.message };
-  }
-
-  return { success: true, message: "Skipped for this date" };
 }
 
 /**
@@ -391,8 +364,8 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
 }
 
 /**
- * Lifts a skip so Apply will recreate the occurrence. Without this, skipping
- * was a one-way door — the row simply vanished with no way back.
+ * Lifts a skip and writes the occurrence straight back. Without this,
+ * skipping was a one-way door — the row simply vanished with no way back.
  */
 export async function unskipRecurringOccurrence(
   templateId: string,
@@ -401,6 +374,13 @@ export async function unskipRecurringOccurrence(
   const userId = await requireUserId();
   if (!userId) {
     return { error: "errors.notAuthenticated" };
+  }
+
+  if (
+    !/^[0-9a-f-]{36}$/i.test(templateId) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)
+  ) {
+    return { error: "Invalid occurrence" };
   }
 
   const { error } = await supabase
@@ -413,6 +393,20 @@ export async function unskipRecurringOccurrence(
   if (error) {
     return { error: error.message };
   }
+
+  // Only this one: restoring an occurrence in a past month is not a reason
+  // to fill the rest of that month.
+  if (!(await hasBankFeed(userId))) {
+    const [year, month] = occurredOn.split("-").map(Number);
+    await fillMonth(
+      userId,
+      year!,
+      month!,
+      todayIsoLocal(),
+      new Set([recurringOccurrenceKey(templateId, occurredOn)]),
+    );
+  }
+
   return { success: true };
 }
 
@@ -651,6 +645,19 @@ export async function upsertRecurringTemplate(
 
   let templateId = data.id;
 
+  // What the template said before this save, so the rows it already wrote
+  // can tell whether they have been moved to another day or stopped.
+  const { data: previous } = data.id
+    ? await supabase
+        .from("recurring_templates")
+        .select(
+          "recurrence, day_of_month, day_of_week, month_of_year, starts_on, ends_on, active",
+        )
+        .eq("id", data.id)
+        .eq("user_id", userId)
+        .maybeSingle()
+    : { data: null };
+
   if (data.id) {
     const updatePayload: RecurringTemplateUpdate = base;
     const { error } = await supabase
@@ -681,7 +688,73 @@ export async function upsertRecurringTemplate(
     await syncInvestmentPositionFromRecurring(userId, templateId);
   }
 
+  // The ledger follows the template straight away rather than on the next
+  // open. A failure here does not undo a save that worked: the month fills
+  // itself again the next time the app opens.
+  if (templateId && !(await hasBankFeed(userId))) {
+    const today = todayIsoLocal();
+    try {
+      if (previous === null) {
+        // New. It starts from the next date to come — `isDue` sees to that —
+        // unless the user said this month's had already happened.
+        if (input.startThisMonth === true) {
+          const { year, month } = getCurrentMonth();
+          const id = templateId;
+          await fillMonth(
+            userId,
+            year,
+            month,
+            today,
+            new Set(
+              scheduleDatesBefore(
+                {
+                  recurrence: schedule.recurrence,
+                  day_of_month: schedule.day_of_month ?? null,
+                  day_of_week: schedule.day_of_week ?? null,
+                  month_of_year: schedule.month_of_year ?? null,
+                  starts_on: base.starts_on,
+                  ends_on: base.ends_on,
+                },
+                year,
+                month,
+                today,
+              ).map((date) => recurringOccurrenceKey(id, date)),
+            ),
+          );
+        }
+      } else {
+        const reschedule =
+          previous.recurrence !== schedule.recurrence ||
+          previous.day_of_month !== (schedule.day_of_month ?? null) ||
+          previous.day_of_week !== (schedule.day_of_week ?? null) ||
+          previous.month_of_year !== (schedule.month_of_year ?? null) ||
+          previous.starts_on !== base.starts_on ||
+          previous.ends_on !== base.ends_on ||
+          previous.active !== base.active;
+
+        // "Apply this change to": this month too reaches back to its first
+        // day, upcoming only starts tomorrow. Nothing reaches a past month.
+        await followTemplate(userId, templateId, {
+          today,
+          from:
+            input.applyToThisMonth === true
+              ? firstOfCurrentMonth()
+              : shiftIsoDate(today, 1),
+          reschedule,
+        });
+      }
+    } catch {
+      // See above.
+    }
+  }
+
   return { success: true };
+}
+
+/** The first day of the month in progress. */
+function firstOfCurrentMonth(): string {
+  const { year, month } = getCurrentMonth();
+  return getMonthBounds(year, month).start;
 }
 
 export async function deleteRecurringTemplate(
@@ -690,6 +763,18 @@ export async function deleteRecurringTemplate(
   const userId = await requireUserId();
   if (!userId) {
     return { error: "errors.notAuthenticated" };
+  }
+
+  // Before the template goes, while its rows still say where they came from.
+  if (!(await hasBankFeed(userId))) {
+    const removeError = await removeTemplateForecasts(
+      userId,
+      id,
+      todayIsoLocal(),
+    );
+    if (removeError) {
+      return { error: removeError };
+    }
   }
 
   await supabase
@@ -728,6 +813,23 @@ export async function toggleRecurringActive(
   if (error) {
     return { error: error.message };
   }
+
+  // Either way it starts again, or stops, from tomorrow: switched on, the
+  // days it missed while off are not written after the fact; switched off,
+  // its rows written ahead go with it. What it recorded before stays.
+  if (!(await hasBankFeed(userId))) {
+    const today = todayIsoLocal();
+    try {
+      await followTemplate(userId, id, {
+        today,
+        from: shiftIsoDate(today, 1),
+        reschedule: true,
+      });
+    } catch {
+      // The switch itself worked, and the next open fills the month.
+    }
+  }
+
   return { success: true };
 }
 
@@ -742,6 +844,7 @@ async function loadApplyRecurringData(
     { data: templates, error: tplError },
     { data: transactions, error: txError },
     { data: skips, error: skipError },
+    { data: fulfilments, error: fulfilmentError },
   ] = await Promise.all([
     supabase
       .from("recurring_templates")
@@ -763,6 +866,12 @@ async function loadApplyRecurringData(
       .eq("user_id", userId)
       .gte("occurred_on", start)
       .lte("occurred_on", end),
+    supabase
+      .from("recurring_fulfilments")
+      .select("template_id, occurred_on")
+      .eq("user_id", userId)
+      .gte("occurred_on", start)
+      .lte("occurred_on", end),
   ]);
 
   if (tplError) {
@@ -773,6 +882,10 @@ async function loadApplyRecurringData(
   }
   if (skipError) {
     throw new Error(skipError.message);
+  }
+  // Missing only before migration 023, where nothing can have been fulfilled.
+  if (fulfilmentError && !fulfilmentSchemaMissing(fulfilmentError)) {
+    throw new Error(fulfilmentError.message);
   }
 
   const existingByKey = new Map<
@@ -797,8 +910,13 @@ async function loadApplyRecurringData(
     });
   }
 
+  // A fulfilled occurrence is already in the ledger, as the movement the
+  // user confirmed it was. Writing the template's row as well would count it
+  // twice, so to anything that writes it is as good as skipped.
   const skippedKeys = new Set(
-    (skips ?? []).map((row) => `${row.template_id}:${row.occurred_on}`),
+    [...(skips ?? []), ...(fulfilments ?? [])].map(
+      (row) => `${row.template_id}:${row.occurred_on}`,
+    ),
   );
 
   return {
@@ -808,30 +926,281 @@ async function loadApplyRecurringData(
   };
 }
 
-export async function previewApplyRecurringForMonth(
+/** PostgreSQL's unique-violation code: the row is already there. */
+const ALREADY_WRITTEN = "23505";
+
+/**
+ * Bring each quote-priced template's stored price up to date — the price the
+ * rows just written were priced at becomes the fallback for a month whose
+ * quote cannot be fetched. The web twin's `refreshTemplateQuotes`.
+ */
+async function refreshTemplateQuotes(
+  userId: string,
+  templates: readonly RecurringTemplateWithCategory[],
+): Promise<void> {
+  for (const template of templates) {
+    let quoteUpdate: {
+      amount: number;
+      last_quote_price: number;
+      last_quote_at: string;
+    } | null = null;
+
+    try {
+      const resolved = await resolveRecurringAmount(
+        {
+          pricing_type: template.pricing_type ?? "fixed",
+          amount: Number(template.amount),
+          share_count: template.share_count,
+          instrument_symbol: template.instrument_symbol,
+          instrument_name: template.instrument_name,
+          description: template.description,
+          last_quote_price: template.last_quote_price,
+        },
+        quoteSource,
+      );
+      quoteUpdate = resolved.quoteUpdate;
+    } catch {
+      // No price and nothing to fall back to: leave the stored figures be.
+      continue;
+    }
+
+    if (!quoteUpdate) {
+      continue;
+    }
+
+    await supabase
+      .from("recurring_templates")
+      .update(quoteUpdate)
+      .eq("id", template.id)
+      .eq("user_id", userId);
+  }
+}
+
+/** Write amount, note and category through to rows already written. */
+async function writeOccurrenceUpdates(
+  userId: string,
+  updates: readonly RecurringOccurrenceUpdate[],
+): Promise<string[]> {
+  const failures: string[] = [];
+  for (const item of updates) {
+    const { error } = await supabase
+      .from("transactions")
+      .update({
+        amount: item.amount,
+        note: item.note,
+        category_id: item.categoryId,
+      })
+      .eq("id", item.transactionId)
+      .eq("user_id", userId);
+
+    if (error) {
+      failures.push(error.message);
+    }
+  }
+  return failures;
+}
+
+/**
+ * Write the occurrences of one month whose day has come and that are not in
+ * the ledger yet.
+ *
+ * Only what is due — see `isDue`. Everything after today stays planned: the
+ * ledger draws it from the template, and it is written here on its day. The
+ * web twin in `lib/recurring-apply.ts` carries the rest of the reasoning: only
+ * `toCreate` is written, because a row that differs from its template may be
+ * one the user corrected; the question "is anything missing?" is asked first
+ * without pricing anything; and two runs at once are safe, because the unique
+ * index on (template, date) turns the slower one's inserts into no-ops.
+ *
+ * `only` writes named occurrences whose day has come, even from before the
+ * template was set up — the user asking for them by name — without filling
+ * in anything else. The caller decides whether templates may write at all:
+ * with a bank feed they only forecast.
+ */
+async function fillMonth(
+  userId: string,
   year: number,
   month: number,
-): Promise<ActionResult & { plan?: ApplyRecurringPlan }> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
+  today: string,
+  only?: ReadonlySet<string>,
+): Promise<{ created: number; failures: string[] }> {
+  const { templates, existingByKey, skippedKeys } =
+    await loadApplyRecurringData(userId, year, month);
+
+  // Named occurrences are checked against today only; the rest must be due.
+  const dueBy = only ? undefined : today;
+
+  const waiting = countRecurringToApply(
+    templates,
+    new Set(existingByKey.keys()),
+    year,
+    month,
+    skippedKeys,
+    dueBy,
+  );
+  if (waiting === 0) {
+    return { created: 0, failures: [] };
   }
 
-  const parsed = applyRecurringSchema.safeParse({ year, month });
-  if (!parsed.success) {
-    return { error: "Invalid month" };
+  const plan = await buildApplyRecurringPlan(
+    templates,
+    existingByKey,
+    year,
+    month,
+    { quotes: quoteSource, skippedKeys, today, dueBy },
+  );
+
+  let created = 0;
+  const failures: string[] = [];
+  const priced = new Set<string>();
+
+  for (const item of plan.toCreate) {
+    if (
+      only &&
+      (!only.has(recurringOccurrenceKey(item.templateId, item.occurredOn)) ||
+        item.occurredOn > today)
+    ) {
+      continue;
+    }
+
+    const { error } = await supabase.from("transactions").insert({
+      user_id: userId,
+      category_id: item.categoryId,
+      recurring_template_id: item.templateId,
+      occurred_on: item.occurredOn,
+      amount: item.amount,
+      note: item.note,
+    });
+
+    if (error) {
+      if (error.code !== ALREADY_WRITTEN) {
+        failures.push(error.message);
+      }
+      continue;
+    }
+
+    created += 1;
+    if (item.pricedFromQuote) {
+      priced.add(item.templateId);
+    }
   }
 
-  // With a bank feeding the ledger, templates only forecast; an empty plan is
-  // what makes every apply affordance stand down at once. See the web twin.
-  if (await hasBankFeed(userId)) {
-    return {
-      success: true,
-      plan: { toCreate: [], toUpdate: [], toReprice: [] },
-    };
+  if (priced.size > 0) {
+    await refreshTemplateQuotes(
+      userId,
+      templates.filter((template) => priced.has(template.id)),
+    );
   }
 
-  try {
+  // Not anyone's decision: a market move. The server's daily run does this
+  // too; here it is free, because the write is already open.
+  failures.push(...(await writeOccurrenceUpdates(userId, plan.toReprice)));
+
+  return { created, failures };
+}
+
+/** The month before, and this one: what a fill looks at. */
+function fillWindow(): { year: number; month: number }[] {
+  const current = getCurrentMonth();
+  const previous =
+    current.month === 1
+      ? { year: current.year - 1, month: 12 }
+      : { year: current.year, month: current.month - 1 };
+  return [previous, current];
+}
+
+/**
+ * Write every occurrence that has come due and is not written yet, in the
+ * month before as well as this one — a charge on the 31st that nobody opened
+ * the app for would otherwise slip through when the month turned. Looking
+ * back is safe because only due occurrences are written.
+ */
+async function fillDue(
+  userId: string,
+  today: string,
+): Promise<{ created: number; failures: string[] }> {
+  let created = 0;
+  const failures: string[] = [];
+
+  for (const { year, month } of fillWindow()) {
+    const result = await fillMonth(userId, year, month, today);
+    created += result.created;
+    failures.push(...result.failures);
+  }
+
+  return { created, failures };
+}
+
+/**
+ * Bring what one template has written in line with it, right after the user
+ * changed it.
+ *
+ * The months ahead need nothing: their occurrences are planned, drawn from
+ * the template whenever the ledger is read. What is left is the rows already
+ * written, and `from` is the user's answer to "apply this change to…" —
+ * tomorrow for upcoming only, the first of this month for this month too.
+ * Rows from then on follow the template; rows before it keep what they say,
+ * and past months are never reached.
+ *
+ * When `reschedule` is set — moved to another day, stopped, or started again
+ * — the days its new schedule calls for that have already come, this month
+ * and last, are skipped rather than filled, and rows written ahead of today
+ * that it no longer calls for are removed. See the web twin for why that is
+ * the caller's to set.
+ */
+async function followTemplate(
+  userId: string,
+  templateId: string,
+  options: { today: string; from: string; reschedule: boolean },
+): Promise<{ failures: string[] }> {
+  const { today, from, reschedule } = options;
+  const failures: string[] = [];
+
+  if (reschedule) {
+    for (const { year, month } of fillWindow()) {
+      const { templates, existingByKey, skippedKeys } =
+        await loadApplyRecurringData(userId, year, month);
+      const skipError = await skipOccurrences(
+        userId,
+        pastOccurrencesNotWritten(
+          templates.filter((template) => template.id === templateId),
+          new Set(existingByKey.keys()),
+          year,
+          month,
+          skippedKeys,
+          today,
+        ),
+      );
+      if (skipError) {
+        failures.push(skipError);
+      }
+    }
+  }
+
+  const filled = await fillDue(userId, today);
+  failures.push(...filled.failures);
+
+  const { data: rows, error } = await supabase
+    .from("transactions")
+    .select("id, occurred_on")
+    .eq("user_id", userId)
+    .eq("recurring_template_id", templateId)
+    .gte("occurred_on", from < today ? from : today);
+
+  if (error) {
+    return { failures: [...failures, error.message] };
+  }
+
+  const months = new Set(
+    (rows ?? []).map((row) => String(row.occurred_on).slice(0, 7)),
+  );
+
+  for (const monthKey of months) {
+    const [year, month] = monthKey.split("-").map(Number);
+    if (!year || !month) {
+      continue;
+    }
+
     const { templates, existingByKey, skippedKeys } =
       await loadApplyRecurringData(userId, year, month);
     const plan = await buildApplyRecurringPlan(
@@ -839,190 +1208,309 @@ export async function previewApplyRecurringForMonth(
       existingByKey,
       year,
       month,
-      { quotes: quoteSource, skippedKeys, today: todayIsoLocal() },
+      { quotes: quoteSource, skippedKeys, today },
     );
-    return { success: true, plan };
+
+    failures.push(
+      ...(await writeOccurrenceUpdates(
+        userId,
+        followTemplateUpdates(plan, templateId, from),
+      )),
+    );
+
+    if (!reschedule) {
+      continue;
+    }
+
+    const stale = forecastsNoLongerCalledFor(
+      (rows ?? [])
+        .filter((row) => String(row.occurred_on).startsWith(monthKey))
+        .map((row) => ({
+          id: row.id as string,
+          templateId,
+          occurredOn: String(row.occurred_on),
+        })),
+      calledForKeys(templates, year, month, skippedKeys),
+      today,
+    );
+
+    if (stale.length > 0) {
+      const { error: removeError } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("user_id", userId)
+        .in("id", stale);
+      if (removeError) {
+        failures.push(removeError.message);
+      }
+    }
+  }
+
+  return { failures };
+}
+
+/**
+ * Take away the rows a template wrote ahead of today, before the template
+ * goes. Once it is deleted its rows lose the link that says where they came
+ * from, and a charge nobody pays any more would sit in next week's ledger as
+ * an ordinary transaction. Today's row stays: it has been recorded.
+ */
+async function removeTemplateForecasts(
+  userId: string,
+  templateId: string,
+  today: string,
+): Promise<string | null> {
+  const { error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("user_id", userId)
+    .eq("recurring_template_id", templateId)
+    .gt("occurred_on", today);
+
+  return error?.message ?? null;
+}
+
+/**
+ * Remember that the user took an occurrence out of its month, so filling the
+ * month does not write it straight back. Deleting a row a template wrote, or
+ * moving it to another date, would otherwise only last until the app next
+ * opened.
+ */
+async function skipOccurrences(
+  userId: string,
+  occurrences: readonly { templateId: string; occurredOn: string }[],
+): Promise<string | null> {
+  if (occurrences.length === 0) {
+    return null;
+  }
+
+  const { error } = await supabase.from("recurring_skips").upsert(
+    occurrences.map((occurrence) => ({
+      user_id: userId,
+      template_id: occurrence.templateId,
+      occurred_on: occurrence.occurredOn,
+    })),
+    // Only ever inserted: the table has no update policy, so a skip that
+    // is already there has to be left alone rather than written over.
+    { onConflict: "user_id,template_id,occurred_on", ignoreDuplicates: true },
+  );
+
+  return error?.message ?? null;
+}
+
+/**
+ * Record a skip for every row in `ids` that a template wrote, before those
+ * rows are deleted. Deleting it is the user saying that occurrence should not
+ * exist, which is what a skip is.
+ */
+async function skipWhatTemplatesWrote(
+  userId: string,
+  ids: string[],
+): Promise<string | null> {
+  const { data: rows, error } = await supabase
+    .from("transactions")
+    .select("recurring_template_id, occurred_on")
+    .eq("user_id", userId)
+    .in("id", ids)
+    .not("recurring_template_id", "is", null);
+
+  if (error) {
+    return error.message;
+  }
+
+  return skipOccurrences(
+    userId,
+    (rows ?? []).flatMap((row) =>
+      row.recurring_template_id
+        ? [
+            {
+              templateId: row.recurring_template_id as string,
+              occurredOn: row.occurred_on as string,
+            },
+          ]
+        : [],
+    ),
+  );
+}
+
+/**
+ * Write the charges whose day has come.
+ *
+ * There is no button for this any more. The app calls it when it opens and
+ * again when it comes back to the foreground on another day, so the charges
+ * the user set up are simply there on their day — and the days ahead show
+ * them as planned until then. Most calls find nothing to write and cost a
+ * few small reads.
+ */
+export async function fillThisMonth(): Promise<{
+  created: number;
+  error?: string;
+}> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { created: 0 };
+  }
+
+  // With a bank feeding the ledger, templates only forecast and never write.
+  if (await hasBankFeed(userId)) {
+    return { created: 0 };
+  }
+
+  try {
+    const { created, failures } = await fillDue(userId, todayIsoLocal());
+    return failures.length > 0 ? { created, error: failures[0] } : { created };
   } catch (error) {
     return {
+      created: 0,
       error:
-        error instanceof Error
-          ? error.message
-          : "Could not preview recurring changes.",
+        error instanceof Error ? error.message : "Could not fill this month.",
     };
   }
 }
 
-export async function applyRecurringForMonth(
-  year: number,
-  month: number,
-  includeUpdates = false,
-  /**
-   * Occurrence keys to apply. Omitted means everything in the plan; supplying
-   * it lets the caller deselect individual rows before confirming.
-   */
-  selectedKeys?: Set<string>,
-): Promise<ActionResult & { created?: number; updated?: number }> {
+const UUID = /^[0-9a-f-]{36}$/i;
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * A planned occurrence that has already happened, recorded today — the
+ * salary due on the 28th that arrived on the 27th. Written now at the
+ * charge's amount, and the planned day skipped so its day does not write it
+ * a second time. The web twin's `recordPlannedNow`.
+ */
+export async function recordPlannedNow(
+  templateId: string,
+  occurredOn: string,
+): Promise<ActionResult & { transactionId?: string }> {
   const userId = await requireUserId();
   if (!userId) {
     return { error: "errors.notAuthenticated" };
   }
 
-  const parsed = applyRecurringSchema.safeParse({ year, month });
-  if (!parsed.success) {
-    return { error: "Invalid month" };
+  const today = todayIsoLocal();
+  if (
+    !UUID.test(templateId) ||
+    !ISO_DATE.test(occurredOn) ||
+    occurredOn <= today
+  ) {
+    return { error: "Invalid occurrence" };
   }
 
-  // Refused rather than merely hidden, so a stale screen cannot reintroduce
-  // the second writer this model exists to avoid.
-  if (await hasBankFeed(userId)) {
-    return {
-      error:
-        "Your bank fills this in now — recurring items are a forecast rather than something to apply.",
-    };
+  const { data: template } = await supabase
+    .from("recurring_templates")
+    .select("id, category_id, amount, description")
+    .eq("id", templateId)
+    .eq("user_id", userId)
+    .eq("active", true)
+    .maybeSingle();
+
+  if (!template) {
+    return { error: "Recurring template not found" };
   }
 
-  try {
-    const { templates, existingByKey, skippedKeys } =
-      await loadApplyRecurringData(userId, year, month);
-    const plan = await buildApplyRecurringPlan(
-      templates,
-      existingByKey,
-      year,
-      month,
-      { quotes: quoteSource, skippedKeys, today: todayIsoLocal() },
-    );
-    const templatesById = new Map(
-      templates.map((template) => [template.id, template]),
-    );
-
-    let created = 0;
-    let updated = 0;
-    const failures: string[] = [];
-
-    for (const item of plan.toCreate) {
-      if (
-        selectedKeys &&
-        !selectedKeys.has(
-          recurringOccurrenceKey(item.templateId, item.occurredOn),
-        )
-      ) {
-        continue;
-      }
-      const template = templatesById.get(item.templateId);
-      let quoteUpdate: {
-        amount: number;
-        last_quote_price: number;
-        last_quote_at: string;
-      } | null = null;
-
-      if (template) {
-        try {
-          const resolved = await resolveRecurringAmount(
-            {
-              pricing_type: template.pricing_type ?? "fixed",
-              amount: Number(template.amount),
-              share_count: template.share_count,
-              instrument_symbol: template.instrument_symbol,
-              instrument_name: template.instrument_name,
-              description: template.description,
-              last_quote_price: template.last_quote_price,
-            },
-            quoteSource,
-          );
-          quoteUpdate = resolved.quoteUpdate;
-        } catch {
-          quoteUpdate = null;
-        }
-      }
-
-      const { error } = await supabase.from("transactions").insert({
-        user_id: userId,
-        category_id: item.categoryId,
-        recurring_template_id: item.templateId,
-        occurred_on: item.occurredOn,
-        amount: item.amount,
-        note: item.note,
-      });
-
-      if (error) {
-        failures.push(error.message);
-        continue;
-      }
-
-      created += 1;
-      if (quoteUpdate) {
-        await supabase
-          .from("recurring_templates")
-          .update(quoteUpdate)
-          .eq("id", item.templateId)
-          .eq("user_id", userId);
-      }
-    }
-
-    if (includeUpdates) {
-      for (const item of plan.toUpdate) {
-        if (
-          selectedKeys &&
-          !selectedKeys.has(
-            recurringOccurrenceKey(item.templateId, item.occurredOn),
-          )
-        ) {
-          continue;
-        }
-        const { error } = await supabase
-          .from("transactions")
-          .update({
-            amount: item.amount,
-            note: item.note,
-            category_id: item.categoryId,
-          })
-          .eq("id", item.transactionId)
-          .eq("user_id", userId);
-
-        if (error) {
-          failures.push(error.message);
-          continue;
-        }
-        updated += 1;
-      }
-    }
-
-    // Not offered and not selectable: a market move is nobody's decision.
-    // The server's daily run does this too; here it is free, because the
-    // write is already open.
-    for (const item of plan.toReprice) {
-      const { error } = await supabase
-        .from("transactions")
-        .update({
-          amount: item.amount,
-          note: item.note,
-          category_id: item.categoryId,
-        })
-        .eq("id", item.transactionId)
-        .eq("user_id", userId);
-
-      if (error) {
-        failures.push(error.message);
-      }
-    }
-
-    if (failures.length > 0) {
-      return {
-        error: `Applied ${created} and updated ${updated}, but ${failures.length} failed: ${failures[0]}`,
-        created,
-        updated,
-      };
-    }
-
-    return { success: true, created, updated };
-  } catch (error) {
-    return {
-      error:
-        error instanceof Error
-          ? error.message
-          : "Could not apply recurring entries.",
-    };
+  const skipError = await skipOccurrences(userId, [
+    { templateId: template.id as string, occurredOn },
+  ]);
+  if (skipError) {
+    return { error: skipError };
   }
+
+  const { data: inserted, error } = await supabase
+    .from("transactions")
+    .insert({
+      user_id: userId,
+      category_id: template.category_id as string,
+      recurring_template_id: template.id as string,
+      occurred_on: today,
+      amount: Number(template.amount),
+      note: (template.description as string | null)?.trim() || null,
+    })
+    .select("id")
+    .single();
+
+  if (error || !inserted) {
+    return { error: error?.message ?? "Could not record it" };
+  }
+
+  return { success: true, transactionId: inserted.id as string };
+}
+
+/** Take back "record it now": the row goes and the planned day returns. */
+export async function undoRecordPlanned(
+  transactionId: string,
+  templateId: string,
+  occurredOn: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "errors.notAuthenticated" };
+  }
+
+  if (
+    !UUID.test(transactionId) ||
+    !UUID.test(templateId) ||
+    !ISO_DATE.test(occurredOn)
+  ) {
+    return { error: "Invalid occurrence" };
+  }
+
+  const { error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", transactionId)
+    .eq("user_id", userId)
+    .eq("recurring_template_id", templateId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  await supabase
+    .from("recurring_skips")
+    .delete()
+    .eq("user_id", userId)
+    .eq("template_id", templateId)
+    .eq("occurred_on", occurredOn);
+
+  return { success: true };
+}
+
+/**
+ * Take one planned occurrence out of its month. Nothing is stored for a
+ * planned row, so this is only the skip; `unskipRecurringOccurrence` puts it
+ * back.
+ */
+export async function skipPlannedOccurrence(
+  templateId: string,
+  occurredOn: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "errors.notAuthenticated" };
+  }
+
+  if (!UUID.test(templateId) || !ISO_DATE.test(occurredOn)) {
+    return { error: "Invalid occurrence" };
+  }
+
+  const { data: template } = await supabase
+    .from("recurring_templates")
+    .select("id")
+    .eq("id", templateId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!template) {
+    return { error: "Recurring template not found" };
+  }
+
+  const skipError = await skipOccurrences(userId, [
+    { templateId: template.id as string, occurredOn },
+  ]);
+  if (skipError) {
+    return { error: skipError };
+  }
+
+  return { success: true };
 }
 
 export async function updateProfile(fullName: string): Promise<ActionResult> {
@@ -1518,6 +2006,11 @@ export async function deleteTransactions(
     return { error: parsed.error.issues[0]?.message ?? "Invalid selection" };
   }
 
+  const skipError = await skipWhatTemplatesWrote(userId, parsed.data.ids);
+  if (skipError) {
+    return { error: skipError };
+  }
+
   const { error, count } = await supabase
     .from("transactions")
     .delete({ count: "exact" })
@@ -1828,6 +2321,20 @@ export async function fulfilOccurrence(
     return { error: error.message };
   }
 
+  // The month fills itself from its charges, so this occurrence may already
+  // have a row the template wrote. The movement just confirmed is the real
+  // one; the template's row would count the same rent twice.
+  const { error: duplicateError } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("user_id", userId)
+    .eq("recurring_template_id", templateId)
+    .eq("occurred_on", occurredOn);
+
+  if (duplicateError) {
+    return { error: duplicateError.message };
+  }
+
   return { success: true, message: "Counted — it is no longer forecast" };
 }
 
@@ -2094,9 +2601,12 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
 
   // The feed row first: if deleting the transaction succeeded and this then
   // failed, the row would point at a transaction that no longer exists.
+  // `decided_by` goes too, as on the web: a row put back after a match must
+  // not carry `match:` into its next decision, where it would stop a later
+  // undo from deleting the transaction that decision wrote.
   const { error } = await supabase
     .from("bank_feed_items")
-    .update({ status: "pending", transaction_id: null })
+    .update({ status: "pending", transaction_id: null, decided_by: null })
     .eq("id", itemId)
     .eq("user_id", userId);
 

@@ -46,4 +46,5 @@ export function revalidateEverySurface(): void {
   revalidatePath("/import");
   revalidatePath("/profile");
   revalidatePath("/welcome");
+  revalidatePath("/bank");
 }

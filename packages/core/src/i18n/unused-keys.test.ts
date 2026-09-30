@@ -209,17 +209,19 @@ function collectReferences(): References {
 /**
  * DEBT — dead copy this check found on its first run, left in place.
  *
- * Twenty-nine keys in both languages that no screen asks for. They are
+ * Twenty-five keys in both languages that no screen asks for. They are
  * recorded rather than deleted because deleting product copy is the owner's
  * call and because two of them read like a screen that was planned and never
- * built rather than one that was retired — `month.setUp*` and the sixteen
- * `lookThrough.*` entries, which describe a look-through view richer than the
+ * built rather than one that was retired — the sixteen `lookThrough.*`
+ * entries, which describe a look-through view richer than the
  * one `LookThroughView.tsx` actually renders.
  *
  * It was thirty. `bearing.pinned` ("Moved by you", the label on a tile the
  * reader had dragged) left with the arranger it belonged to, and its line
  * here left in the same commit — which is exactly the shrinking this comment
- * asks for.
+ * asks for. So did `month.nothingToApply`, once nothing was left to apply,
+ * and the three `month.setUp*` lines, once the Bearing had a first visit to
+ * say them on.
  *
  * **This list is meant to shrink, and it cannot silently grow stale.** An
  * entry that no longer names an unused key fails the test below just as
@@ -230,13 +232,9 @@ const KNOWN_DEAD_KEYS: readonly string[] = [
   // Left behind by the Month screen's retirement, alongside the two this
   // branch already removed by hand (`common.walkMeThrough`,
   // `common.trendRange`).
-  "month.setUpTitle",
-  "month.setUpBody",
-  "month.setUpCharges",
   "month.capsAndGoals",
   "month.moreThisMonth",
   "month.startingBalanceHint",
-  "month.nothingToApply",
   "common.chartMode",
   "common.unrealisedProfitLoss",
   "common.needsYou",

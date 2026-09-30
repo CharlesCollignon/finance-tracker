@@ -16,10 +16,8 @@ import { MobileSheet } from "@/components/layout/MobileSheet";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import { TAGS_FIELD_MARKER } from "@/lib/actions/tag-field";
 import {
-  createTransaction,
   deleteTransaction,
   saveQuickTransaction,
-  skipRecurringOccurrence,
   updateTransaction,
 } from "@/lib/actions/finance";
 import { todayIsoLocal } from "@finance/core/constants";
@@ -31,35 +29,39 @@ interface TransactionFormProps {
   categories: Category[];
   tags?: Tag[];
   selectedTagIds?: string[];
-  defaultDate: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** When set, the form edits this transaction instead of creating one. */
-  transaction?: Transaction | null;
+  /** The transaction being edited. */
+  transaction: Transaction | null;
   onDeleted?: () => void;
 }
 
+/**
+ * Editing one transaction.
+ *
+ * Adding one happens in the shared Add sheet, the same one behind every "+"
+ * in the app; this form used to do both, which is how the Ledger's Add and
+ * the notch's came to ask for the same thing in two different ways.
+ */
 export function TransactionForm({
   categories,
   tags = [],
   selectedTagIds = [],
-  defaultDate,
   open,
   onOpenChange,
-  transaction = null,
+  transaction,
   onDeleted,
 }: TransactionFormProps) {
-  if (!open) {
+  if (!open || !transaction) {
     return null;
   }
 
   return (
     <TransactionFormFields
-      key={transaction?.id ?? defaultDate}
+      key={transaction.id}
       categories={categories}
       tags={tags}
       selectedTagIds={selectedTagIds}
-      defaultDate={defaultDate}
       open={open}
       onOpenChange={onOpenChange}
       transaction={transaction}
@@ -72,10 +74,9 @@ interface TransactionFormFieldsProps {
   categories: Category[];
   tags: Tag[];
   selectedTagIds: string[];
-  defaultDate: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  transaction: Transaction | null;
+  transaction: Transaction;
   onDeleted?: () => void;
 }
 
@@ -83,7 +84,6 @@ function TransactionFormFields({
   categories,
   tags,
   selectedTagIds,
-  defaultDate,
   open,
   onOpenChange,
   transaction,
@@ -91,20 +91,14 @@ function TransactionFormFields({
 }: TransactionFormFieldsProps) {
   const { toast } = useToast();
   const t = useT();
-  const isEditing = transaction !== null;
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [confirmSkip, setConfirmSkip] = useState(false);
   const [deletePending, startDelete] = useTransition();
-  const [skipPending, startSkip] = useTransition();
   const [duplicatePending, startDuplicate] = useTransition();
-  const [state, action, pending] = useActionState(
-    isEditing ? updateTransaction : createTransaction,
-    {},
-  );
-  const canSkip =
-    isEditing &&
-    transaction.recurring_template_id !== null &&
-    transaction.recurring_template_id !== undefined;
+  const [state, action, pending] = useActionState(updateTransaction, {});
+  // A charge's row. Deleting it takes that occurrence out of its month —
+  // which is what skipping used to be a separate button for — so the month
+  // filling itself does not write it straight back.
+  const fromCharge = Boolean(transaction.recurring_template_id);
 
   // Once per result. Keyed on the callbacks too, as it was, a parent passing
   // `onOpenChange` inline replayed the last result on every render: the same
@@ -128,10 +122,6 @@ function TransactionFormFields({
    * desktop client was the slower one for the same task.
    */
   function handleDuplicate() {
-    if (!transaction) {
-      return;
-    }
-
     startDuplicate(async () => {
       const result = await saveQuickTransaction({
         categoryId: transaction.category_id,
@@ -153,10 +143,6 @@ function TransactionFormFields({
   }
 
   function handleDelete() {
-    if (!transaction) {
-      return;
-    }
-
     startDelete(async () => {
       const result = await deleteTransaction(transaction.id);
       if (result.error) {
@@ -169,35 +155,14 @@ function TransactionFormFields({
     });
   }
 
-  function handleSkip() {
-    if (!transaction?.recurring_template_id) {
-      return;
-    }
-
-    startSkip(async () => {
-      const result = await skipRecurringOccurrence(
-        transaction.recurring_template_id!,
-        transaction.occurred_on,
-        transaction.id,
-      );
-      if (result.error) {
-        toast(result.error, "error");
-        return;
-      }
-      toast(t("transaction.skipped"), "success");
-      onOpenChange(false);
-      onDeleted?.();
-    });
-  }
-
   return (
     <MobileSheet
       open={open}
       onOpenChange={onOpenChange}
-      title={isEditing ? t("transaction.editTitle") : t("transaction.addTitle")}
+      title={t("transaction.editTitle")}
     >
       <form action={action} className="flex flex-col gap-4">
-        {isEditing && <input type="hidden" name="id" value={transaction.id} />}
+        <input type="hidden" name="id" value={transaction.id} />
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="categoryId">
             {t("transaction.category")}
@@ -207,7 +172,7 @@ function TransactionFormFields({
             categories={categories}
             label={t("transaction.category")}
             required
-            defaultValue={transaction?.category_id ?? ""}
+            defaultValue={transaction.category_id}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -221,9 +186,7 @@ function TransactionFormFields({
             required
             className="text-base"
             placeholder="0.00"
-            defaultValue={
-              transaction ? String(Number(transaction.amount)) : undefined
-            }
+            defaultValue={String(Number(transaction.amount))}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -233,7 +196,7 @@ function TransactionFormFields({
             name="occurredOn"
             type="date"
             required
-            defaultValue={transaction?.occurred_on ?? defaultDate}
+            defaultValue={transaction.occurred_on}
             className="text-base"
           />
         </div>
@@ -245,7 +208,7 @@ function TransactionFormFields({
             type="text"
             className="text-base"
             placeholder={t("transaction.notePlaceholder")}
-            defaultValue={transaction?.note ?? undefined}
+            defaultValue={transaction.note ?? undefined}
           />
         </div>
         {tags.length > 0 && (
@@ -283,115 +246,66 @@ function TransactionFormFields({
           type="submit"
           size="lg"
           className="w-full"
-          disabled={pending || deletePending || skipPending}
+          disabled={pending || deletePending}
         >
           {pending ? t("transaction.saving") : t("transaction.saveTransaction")}
         </Button>
       </form>
 
-      {isEditing && (
-        <div className="mt-6 space-y-3 border-t border-border pt-4">
+      <div className="mt-6 space-y-3 border-t border-border pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          disabled={duplicatePending}
+          onClick={handleDuplicate}
+        >
+          {duplicatePending
+            ? t("transaction.duplicating")
+            : t("transaction.duplicateToToday")}
+        </Button>
+
+        {confirmDelete ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-muted-foreground">
+              {fromCharge
+                ? t("transaction.deleteChargeExplanation")
+                : t("transaction.deleteExplanation")}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 border-destructive text-destructive"
+                disabled={deletePending}
+                onClick={handleDelete}
+              >
+                {deletePending
+                  ? t("transaction.deleting")
+                  : t("transaction.confirmDelete")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                disabled={deletePending}
+                onClick={() => setConfirmDelete(false)}
+              >
+                {t("transaction.cancel")}
+              </Button>
+            </div>
+          </div>
+        ) : (
           <Button
             type="button"
             variant="outline"
-            className="w-full"
-            disabled={duplicatePending}
-            onClick={handleDuplicate}
+            className="w-full border-destructive text-destructive"
+            onClick={() => setConfirmDelete(true)}
           >
-            {duplicatePending
-              ? t("transaction.duplicating")
-              : t("transaction.duplicateToToday")}
+            {t("transaction.deleteTransaction")}
           </Button>
-
-          {canSkip && (
-            <div>
-              {confirmSkip ? (
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm text-muted-foreground">
-                    {t("transaction.skipExplanation")}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1"
-                      disabled={skipPending}
-                      onClick={handleSkip}
-                    >
-                      {skipPending
-                        ? t("transaction.skipping")
-                        : t("transaction.confirmSkip")}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="flex-1"
-                      disabled={skipPending}
-                      onClick={() => setConfirmSkip(false)}
-                    >
-                      {t("transaction.cancel")}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setConfirmDelete(false);
-                    setConfirmSkip(true);
-                  }}
-                >
-                  {t("transaction.skipThisDate")}
-                </Button>
-              )}
-            </div>
-          )}
-
-          {confirmDelete ? (
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-muted-foreground">
-                {t("transaction.deleteExplanation")}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1 border-destructive text-destructive"
-                  disabled={deletePending}
-                  onClick={handleDelete}
-                >
-                  {deletePending
-                    ? t("transaction.deleting")
-                    : t("transaction.confirmDelete")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1"
-                  disabled={deletePending}
-                  onClick={() => setConfirmDelete(false)}
-                >
-                  {t("transaction.cancel")}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-destructive text-destructive"
-              onClick={() => {
-                setConfirmSkip(false);
-                setConfirmDelete(true);
-              }}
-            >
-              {t("transaction.deleteTransaction")}
-            </Button>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </MobileSheet>
   );
 }

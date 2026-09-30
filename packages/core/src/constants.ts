@@ -151,6 +151,27 @@ function nowInAppTimeZone(): { year: number; month: number; day: number } {
   return { year, month, day };
 }
 
+/**
+ * The calendar date an instant falls on in the app timezone, as YYYY-MM-DD.
+ * A `created_at` stored in UTC at 23:30 on the 4th is the 5th in Paris, and
+ * the 5th is the day the user did it.
+ */
+export function isoDateInAppTimeZone(instant: string | Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(instant));
+}
+
+/** An ISO date moved by whole days, across month and year ends. */
+export function shiftIsoDate(isoDate: string, days: number): string {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const date = new Date(Date.UTC(year!, month! - 1, day! + days));
+  return date.toISOString().slice(0, 10);
+}
+
 /** Calendar date in the app timezone as YYYY-MM-DD. */
 export function todayIsoLocal(): string {
   const { year, month, day } = nowInAppTimeZone();

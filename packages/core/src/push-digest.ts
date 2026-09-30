@@ -29,7 +29,7 @@ export interface BuildDigestOptions {
   budgetProgress: readonly BudgetProgress[];
   /** Keys already sent to this user, so nothing repeats. */
   alreadySent: ReadonlySet<string>;
-  /** How many recurring occurrences the new month is waiting to apply. */
+  /** How many charges the new month starts with. */
   pendingRecurring?: number;
   /**
    * How many charges look as though the bank already delivered them and are
@@ -77,7 +77,8 @@ export function buildDueNotifications({
   const monthKey = monthKeyOf(today);
   const due: PendingNotification[] = [];
 
-  // The month's opening moment, which is when applying is most worth doing.
+  // The month's opening moment, which is when its charges have just been
+  // written and the month has a shape worth looking at.
   if (dayOf(today) === 1) {
     const key = `month-open:${monthKey}`;
     if (!alreadySent.has(key)) {

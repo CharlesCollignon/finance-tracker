@@ -20,10 +20,10 @@ landed by the last of the month — but France is one case rather than the
 target. Future work should treat France-only assumptions as things to
 generalise, not as the shape of the product.
 
-The situation is monthly and deliberate. The user sets what repeats, applies it
-to the month, types the rest as it happens, and on their reading day enters the
-one closing balance the app cannot know — read off their bank and typed in, on
-every deployment there is today.
+The situation is monthly and deliberate. The user sets what repeats once, each
+month fills itself in from it, they type the rest as it happens, and on their
+reading day they enter the one closing balance the app cannot know — read off
+their bank and typed in, on every deployment there is today.
 
 ## Product Purpose
 
@@ -47,27 +47,32 @@ missed, because that requires asking the user for a balance and then being
 willing to publish the gap. Unrecorded spending is the output of that, and the
 forward projection is allowed to subtract it precisely because it was measured.
 
-The bank connection is **not shipped**, and the positioning above does not rest
-on it. `lib/bank/client.ts` states the shape plainly: two ways in exist and only
-the first is wired. `getBankConnection(userId)` returns `null` unless the id
-matches `OPEN_BANKING_OWNER_USER_ID`, `BankConnection.source` has exactly one
-variant — `"owner-credentials"` — and Partner Connect, the path by which an
-ordinary user would connect their own bank, "is a seam rather than an
-implementation" waiting on an approved partner application. So one person on a
-deployment can have a feed; nobody who signs up can. The month close therefore
-stands on a balance the user types, which is also why it is the positioning and
-not a feature of the feed.
+The per-user bank connection is **built, and opened one account at a time**;
+the positioning above does not rest on it. Each user brings their own
+open-banking.io account — signs up and pays open-banking.io directly, about €3
+a month for one bank account, connects their bank there — and uploads the
+credentials file it lets them download, on `/bank`. Pluclair stays free. It is
+the owner's environment setup, per user (`lib/bank/credentials.ts`,
+`docs/plans/BANK_CONNECT_PLAN.md`); open-banking.io's partner programme, which
+the first design used, closed in September 2026.
+
+Who is offered it is the `bank.connect` flag (migration 042), off by default
+and switched on per account, on top of `BANK_SECRETS_KEY` being set. The
+privacy policy and terms are drafts until the owner signs them off, and the
+marketing site says nothing of it until then. The month close therefore still
+stands on a balance the user types, which is also why it is the positioning
+and not a feature of the feed.
 
 Three commitments stated on the marketing site and binding on all future work
 (`components/marketing/landing-copy.ts`):
 
 - **It does not move money.** Nothing in the app can reach an account: there is
-  no transfer, no payment and no standing order in it, and the connection being
-  built is read-only, with no version of it that could initiate a payment.
+  no transfer, no payment and no standing order in it, and the bank connection
+  is read-only, with no version of it that could initiate a payment.
 - **It does not act on a rule the user did not write.** A statement row files
   itself only where the user has put that shop in the same place twice;
-  everything else waits in the review inbox, and a recurring template is a
-  template until applied.
+  everything else waits in the review inbox, and a recurring template writes
+  into each month exactly what the user set it up to write, and nothing else.
 - **It does not tell the user what to do.** No advice, no score, no nudge to
   switch products.
 
@@ -84,28 +89,38 @@ modules in `packages/core`, over one Supabase backend.
 Money reaches the ledger three ways in practice: typed by the user, applied
 from a recurring template, or brought in from a mapped CSV export, where the
 same merchant history proposes a category for each row and nothing is written
-until the user has read the list. A fourth way is built and reachable by one
-account per deployment — the owner-credentials bank feed, whose rows wait in
-the review inbox at `?review=inbox` where answering one teaches the matcher.
-Anything written for a general audience describes the first three; the feed is
-not something a visitor or a new user can have.
+until the user has read the list. A fourth way is built and waits on launch —
+a connected bank, whose whole history arrives on connecting and whose rows the
+app cannot file itself wait in the review inbox at `?review=inbox`, grouped by
+shop, where answering one teaches the matcher. Until launch it is reachable by
+the owner's account alone, so anything written for a general audience
+describes the first three.
 
 Surfaces in this app: the Bearing, the Ledger (list, calendar, by category),
 transactions, budgets, recurring, categories, investments and look-through,
-history, import, welcome, profile, plus a public marketing site at
-pluclair.com with its own feature pages.
+history, import, welcome, profile and its Bank page (`/bank`: connect, the
+first import, status and renewal, disconnect), plus a public marketing site at
+pluclair.com with its own feature pages and, once signed off, the privacy
+policy and terms (`/privacy`, `/terms`; drafts are served only off production,
+see `LEGAL_DRAFT` in `components/marketing/legal-copy.ts`).
 
 ## Capabilities and Constraints
 
 - Euro-centric throughout. Instrument quotes carry both the euro value and the
   price and currency originally quoted in.
-- Bank access, where it exists at all, is read-only and server-side, and its
-  credentials never reach a browser. It exists for exactly one user id per
-  deployment today, so it is an operating fact about the owner's own account
-  and not a capability of the product. The per-user path is an unshipped seam:
-  until it lands, no surface may describe connecting a bank in the present
-  tense, and the marketing site says so in the future tense in one place only
-  (the month-close section of `landing-copy.ts`).
+- Bank access is read-only and server-side. The keys that open a user's bank
+  data are sealed with `BANK_SECRETS_KEY` in a table neither app can select
+  (`bank_connection_secrets`), and they never reach a browser, a phone, a log
+  or an error message; the apps read only `bank_connections`, the status. Until
+  launch, no public surface may describe connecting a bank in the present
+  tense: the marketing site says so in the future tense in one place only (the
+  month-close section of `landing-copy.ts`), and its privacy points stay true
+  of the app as a visitor can have it. Launching changes both, with the
+  owner's sign-off on the brand promises.
+- A connected bank is read at most four times a day unattended (PSD2's limit,
+  counted in `bank_pulls`), and the refresh cron gives every connected user a
+  share of one 40-second budget inside its 60-second run, stalest first; whoever
+  does not fit is read on the next run.
 - Every user-facing string goes through the `en` and `fr` catalogues in
   `packages/core/src/i18n/messages/`. Findings and other computed prose carry an
   i18n key and its parameters, never a sentence, so wording belongs to the
@@ -159,8 +174,12 @@ placeholder content on any surface.
 
 1. **Measure, do not guess.** A figure the app can prove beats one it can infer;
    where nothing can be measured, say so rather than estimate.
-2. **Nothing happens that the user did not ask for.** Applying, filing,
-   fulfilling and writing are all acts the user initiates.
+2. **Nothing happens that the user did not ask for.** Filing, fulfilling and
+   writing are acts the user initiates. Applying is the one the app carries
+   out on its own, because a recurring template already is the user asking —
+   once, for every month — and a button that restated the same request each
+   month was a chore, not a safeguard. It writes only what is missing, never
+   overrules a row the user corrected, and says what it wrote.
 3. **Every figure is traceable to the surface that owns it.** Nothing keeps a
    second set of numbers, and a figure with nowhere honest to lead is not
    dressed as though it had somewhere.

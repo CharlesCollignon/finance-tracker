@@ -12,26 +12,37 @@ import {
 import { Plus } from "@phosphor-icons/react";
 import type { MerchantRule } from "@finance/core/merchant-memory";
 import type { Category, Tag } from "@finance/core/types/database";
-import { QuickAddSheet } from "@/components/finance/QuickAddSheet";
+import {
+  QuickAddSheet,
+  type AddKind,
+} from "@/components/finance/QuickAddSheet";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 
+interface OpenOptions {
+  /** A date to start on — the calendar opens the sheet on the day in view. */
+  date?: string;
+  /** Which kind to start on. A transaction unless the caller says otherwise. */
+  kind?: AddKind;
+}
+
 interface QuickAddValue {
-  /** Opens the sheet, optionally on a specific date. */
-  open: (date?: string) => void;
+  /** Opens the sheet; the reader can still switch kind inside it. */
+  open: (options?: OpenOptions) => void;
   isOpen: boolean;
 }
 
 const QuickAddContext = createContext<QuickAddValue | null>(null);
 
 /**
- * Adding a transaction from anywhere.
+ * Adding a transaction or a charge from anywhere.
  *
  * Lives in the app layout rather than on the transactions page, because the
  * thing the app exists for should not require navigating somewhere first. The
  * data it needs is fetched once by the layout, so the sheet opens with no
- * loading state.
+ * loading state. Every Add in the app opens this one sheet, so there is a
+ * single way in whichever button was pressed.
  */
 export function QuickAddProvider({
   children,
@@ -48,9 +59,11 @@ export function QuickAddProvider({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState<string | undefined>(undefined);
+  const [kind, setKind] = useState<AddKind>("transaction");
 
-  const open = useCallback((nextDate?: string) => {
-    setDate(nextDate);
+  const open = useCallback((options?: OpenOptions) => {
+    setDate(options?.date);
+    setKind(options?.kind ?? "transaction");
     setIsOpen(true);
   }, []);
 
@@ -67,6 +80,7 @@ export function QuickAddProvider({
     // useState initializer would be the usual alternative, but the server
     // cannot see the query string, so it would desync hydration.
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    setKind("transaction");
     setIsOpen(true);
     params.delete("add");
     const query = params.toString();
@@ -100,6 +114,7 @@ export function QuickAddProvider({
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setDate(undefined);
+        setKind("transaction");
         setIsOpen(true);
       }
     }
@@ -125,6 +140,7 @@ export function QuickAddProvider({
         recentCategoryIds={recentCategoryIds}
         merchants={merchants}
         defaultDate={date}
+        kind={kind}
       />
     </QuickAddContext.Provider>
   );
@@ -150,7 +166,7 @@ function QuickAddFab() {
   return (
     <button
       type="button"
-      aria-label={t("common.addTransaction")}
+      aria-label={t("add.open")}
       onClick={() => quickAdd.open()}
       className={cn(
         "fixed right-4 z-40 md:hidden",

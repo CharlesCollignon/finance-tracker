@@ -187,27 +187,25 @@ describe("describeSelectionDeletion", () => {
     expect(describe_(["a", "b"])).toContain("Delete 2 transactions?");
   });
 
-  it("warns that a single recurring entry will come back", () => {
-    // "a recurring template", singular. The sentence used to read "It comes
-    // from recurring templates" — a singular subject with a plural object,
-    // which only survived because the two halves were assembled from
-    // separate ternaries. Writing each form out as one message is what made
-    // the disagreement visible.
+  it("says a single charge's entry will not come back this month", () => {
+    // "a charge", singular. The sentence once read "It comes from recurring
+    // templates" — a singular subject with a plural object, which only
+    // survived because the two halves were assembled from separate
+    // ternaries. Writing each form out as one message is what made the
+    // disagreement visible.
     const text = describe_(["c"])!;
-    expect(text).toContain("It comes from a recurring template");
-    expect(text).toContain("recreate it");
+    expect(text).toContain("It came from a charge");
+    expect(text).toContain("won't be added back this month");
   });
 
-  it("warns for an all-recurring selection", () => {
+  it("says the same for an all-recurring selection", () => {
     const text = describe_(["c", "d"])!;
-    expect(text).toContain("They come from recurring templates");
-    expect(text).toContain("recreate them");
+    expect(text).toContain("They came from charges");
+    expect(text).toContain("they won't be added back");
   });
 
   it("counts the recurring subset in a mixed selection", () => {
-    expect(describe_(["a", "c", "d"])).toContain(
-      "2 of them come from recurring templates",
-    );
+    expect(describe_(["a", "c", "d"])).toContain("2 of them came from charges");
   });
 });
 

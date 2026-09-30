@@ -15,6 +15,11 @@
 const FLAG_KEYS = [
   /** Rename, merge and delete tags on the Plan page (Phase 0, T6). */
   "tags.manage",
+  /**
+   * Connecting a bank by uploading an open-banking.io credentials file: the
+   * Bank page's setup, and every invitation to it (migration 042).
+   */
+  "bank.connect",
 ] as const;
 
 export type FlagKey = (typeof FLAG_KEYS)[number];

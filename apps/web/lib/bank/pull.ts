@@ -208,7 +208,7 @@ export async function pullFromBank(
   userId: string,
   kind: PullKind,
 ): Promise<PullOutcome> {
-  const connection = getBankConnection(userId);
+  const connection = await getBankConnection(userId);
   if (!connection) {
     return { pulled: false, why: "No bank is connected to this account." };
   }

@@ -1,7 +1,19 @@
-import { useState } from "react";
-import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  TextInput,
+  View,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import {
+  groupPendingFeed,
+  type FeedGroup,
+} from "@finance/core/bank-inbox-groups";
+import type { BankMerchantIndex } from "@finance/core/bank-merchant";
 import {
   formatCategoryOptionLabel,
   groupCategoriesByType,
@@ -14,14 +26,16 @@ import { PrivateAmount } from "@/components/PrivateAmount";
 import { Button } from "@/components/ui/Button";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { Text } from "@/components/ui/Text";
+import {
+  fileFeedGroup,
+  leaveOutFeedGroup,
+  reopenFeedGroup,
+  type GroupDecision,
+} from "@/lib/bank-connect";
 import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
-import {
-  ignoreFeedItem,
-  importFeedItem,
-  undoFeedDecision,
-} from "@/lib/mutations";
-import type { PendingFeedRow } from "@/lib/queries";
+import { getBankMerchantIndex, type PendingFeedRow } from "@/lib/queries";
+import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON, TYPE } from "@/theme/tokens";
@@ -39,42 +53,64 @@ interface BankInboxSheetProps {
   onDecided: () => void;
 }
 
-/** What became of a row answered in this sitting, so it can be taken back. */
+/** One question: a shop's rows, or one row of a shop filed more than one way. */
+type Card = FeedGroup<PendingFeedRow>;
+
+/** What became of a card answered in this sitting, so it can be taken back. */
 interface Answered {
-  item: PendingFeedRow;
+  card: Card;
   outcome: string;
+  /** The rows the decision took — what an undo puts back. */
+  decidedIds: string[];
 }
 
 interface Session {
   /** Which queue this state belongs to, so a new inbox reads as fresh. */
   queueKey: string;
-  waiting: PendingFeedRow[];
+  waiting: Card[];
   answered: Answered[];
   /** Passed over for now. Still pending in the database, so still in the inbox. */
-  later: PendingFeedRow[];
+  later: Card[];
 }
 
 /**
- * The review inbox, one decision at a time.
+ * A shop the user has filed more than one way is asked about row by row —
+ * the web opens such a group with a picker per entry; here each entry is
+ * simply a card of its own, which is the same question in the phone's shape.
+ */
+function cardsFrom(groups: readonly Card[]): Card[] {
+  return groups.flatMap((group) =>
+    group.mixed
+      ? group.rows.map((row) => ({
+          ...group,
+          key: `${group.key}:${row.id}`,
+          name: row.counterparty?.trim() || row.note,
+          rows: [row],
+          count: 1,
+          total: row.amount,
+          firstOn: row.occurredOn,
+          lastOn: row.occurredOn,
+          suggestedCategoryId: null,
+        }))
+      : [group],
+  );
+}
+
+/**
+ * The review inbox, one shop at a time.
  *
- * What the bank reported that the app would not file on its own. Everything
- * the user's own history already answered for is in the ledger by the time
- * they get here, so this is the exceptions — a first visit somewhere, money
- * arriving, a cash withdrawal — and answering one teaches the matcher, which
- * is why the list gets shorter every month rather than being a permanent
- * chore.
+ * What the bank reported that the app would not file on its own. A first
+ * import can leave hundreds of those, and one answer per row was the chore
+ * the inbox exists to shrink — so rows are grouped by shop the way the web's
+ * review groups them (`groupPendingFeed`), and one answer files every row of
+ * a shop and teaches the matcher that shop once. The biggest groups come
+ * first, so the first few answers clear most of the pile.
  *
- * None of this existed on the phone. The count was fetched on the Month
- * screen and spent only on the month read's fact pack; the statement card
- * offered "6 to review" and pushed to a Ledger that said nothing about the
- * bank. So a feed the cron filled overnight could only be answered on the web
- * app, and the phone quietly showed figures that were short by six entries.
- *
- * One card at a time rather than the web's list of rows. The web sheet can
- * put a category dropdown on every row because it has a desktop's width to
- * spend; here the same list would be six collapsed rows to tap open before
- * any deciding started. A phone is better at "this one — which is it?" asked
- * six times, and the count in the corner is what makes that feel finite.
+ * Still one card at a time rather than the web's list. A phone is better at
+ * "this one — which is it?" asked a few times than at a list of groups each
+ * with its own picker, and the count in the corner is what makes it feel
+ * finite. Deciding a group goes through the web server (`/api/bank/feed`),
+ * so its duplicate check is the web's own.
  */
 export function BankInboxSheet({
   open,
@@ -89,54 +125,73 @@ export function BankInboxSheet({
   const colors = useThemeColors();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [pending, setPending] = useState(false);
   const [query, setQuery] = useState("");
+  const [showRows, setShowRows] = useState(false);
   /*
-   * Keyed by item id, like the web inbox's `choices`, rather than a single
-   * {itemId, categoryId} for the card in front of you.
-   *
-   * The pair was a null-dereference waiting to happen, and it happened: the
-   * read was `choice?.itemId === current?.id ? choice.categoryId : ""`, and
-   * with an empty queue both sides are undefined, so the comparison is true
-   * and it reaches into null. An empty queue is the first render of this
-   * screen, every time, because the inbox has not loaded yet — so the Ledger
-   * crashed on mount and a tapped notification opened onto a red screen.
-   *
-   * A map has no such state. There is nothing to compare, and a missing key
-   * is an empty selection. It also means a decision undone comes back with
-   * the category it was filed under already picked, which is what someone
-   * correcting a mistake wants to see.
+   * Keyed by card, like the web inbox's `choices`: a missing key is an empty
+   * selection rather than a comparison that can reach into null, and a card
+   * undone comes back with the category it was filed under already picked.
    */
   const [choices, setChoices] = useState<Record<string, string>>({});
 
-  // Seeded from the props on first sight and owned locally after that. The
-  // alternative — reloading the screen behind each decision and re-deriving
-  // the queue — renumbers "3 of 6" under the user's thumb mid-sitting. The
+  // The history the suggestions come from, read on each opening: filing is
+  // what teaches it, so the last sitting's answers belong in this one's.
+  const [merchants, setMerchants] = useState<BankMerchantIndex | null>(null);
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    if (!open || !userId) {
+      return;
+    }
+    let cancelled = false;
+    void getBankMerchantIndex(userId).then((index) => {
+      if (!cancelled) {
+        setMerchants(index);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, userId]);
+
+  const cards = useMemo(
+    () =>
+      merchants
+        ? cardsFrom(
+            groupPendingFeed(items, { bankMerchants: merchants, categories }),
+          )
+        : null,
+    [items, merchants, categories],
+  );
+
+  // Seeded from the props on first sight and owned locally after that, so
+  // the count does not renumber under the user's thumb mid-sitting. The
   // reload happens once, on close.
   const queueKey = items.map((item) => item.id).join("|");
   const [stored, setStored] = useState<Session | null>(null);
-  const session: Session =
+  const session: Session | null =
     stored?.queueKey === queueKey
       ? stored
-      : { queueKey, waiting: items, answered: [], later: [] };
+      : cards
+        ? { queueKey, waiting: cards, answered: [], later: [] }
+        : null;
 
   /*
-   * Null when the queue is empty, which is the first render of this screen
-   * every time — the inbox has not loaded yet — as well as the end of a
-   * sitting. Every read of `current` below must cope with that.
-   *
-   * Do not expect the compiler to enforce it. Without
-   * `noUncheckedIndexedAccess`, `waiting[0]` is typed as always present, so
-   * `?? null` narrows to non-null and stays that way; annotating the
-   * declaration does not help, because narrowing follows the initializer
-   * rather than the declared type. That is how the dereference this replaced
-   * shipped: it type-checked, and crashed on mount.
+   * Null while the history is loading, when the queue is empty, and at the
+   * end of a sitting — every read of `current` below must cope with that.
+   * The compiler will not insist: without `noUncheckedIndexedAccess`,
+   * `waiting[0]` is typed as always present.
    */
-  const current = session.waiting[0] ?? null;
-  const total = items.length;
-  const position = session.answered.length + session.later.length + 1;
+  const current = session?.waiting[0] ?? null;
+  const remainingEntries = (session?.waiting ?? []).reduce(
+    (sum, card) => sum + card.count,
+    0,
+  );
 
-  const selected = current ? (choices[current.id] ?? "") : "";
+  const selected = current
+    ? (choices[current.key] ?? current.suggestedCategoryId ?? "")
+    : "";
 
   // Filtered before grouping, so empty groups disappear while searching.
   const visible = query.trim()
@@ -144,7 +199,7 @@ export function BankInboxSheet({
         category.name.toLowerCase().includes(query.trim().toLowerCase()),
       )
     : categories;
-  const groups = groupCategoriesByType(visible);
+  const categoryGroups = groupCategoriesByType(visible);
 
   // One tap instead of scrolling the grouped list, which is the common case:
   // the exceptions still land in the same handful of categories.
@@ -156,27 +211,40 @@ export function BankInboxSheet({
   function close() {
     onOpenChange(false);
     setQuery("");
+    setShowRows(false);
     // Only when something actually happened: closing a sheet you opened by
     // accident should not cost the screen behind it a round trip.
-    if (session.answered.length > 0) {
+    if (session && session.answered.length > 0) {
       onDecided();
     }
   }
 
+  function pick(categoryId: string) {
+    if (!current) {
+      return;
+    }
+    void hapticLight();
+    setChoices((previous) => ({ ...previous, [current.key]: categoryId }));
+  }
+
   /** Records a decision locally once the write has stuck. */
-  function settle(item: PendingFeedRow, outcome: string) {
+  function settle(card: Card, outcome: string, decidedIds: string[]) {
+    if (!session) {
+      return;
+    }
+    setShowRows(false);
     setStored({
       queueKey,
-      waiting: session.waiting.filter((row) => row.id !== item.id),
-      answered: [{ item, outcome }, ...session.answered],
+      waiting: session.waiting.filter((other) => other.key !== card.key),
+      answered: [{ card, outcome, decidedIds }, ...session.answered],
       later: session.later,
     });
   }
 
   function decide(
-    item: PendingFeedRow,
-    work: () => Promise<{ error?: string; message?: string }>,
-    outcome: string,
+    card: Card,
+    work: () => Promise<GroupDecision | { error: string }>,
+    describe: (decision: GroupDecision) => string,
     good: boolean,
   ) {
     if (pending) {
@@ -188,76 +256,135 @@ export function BankInboxSheet({
       const result = await work();
       setPending(false);
 
-      if (result.error) {
+      if ("error" in result) {
         toast(result.error, "error");
         return;
       }
 
-      if (good) {
-        void hapticSuccess();
-      }
-      settle(item, outcome);
+      void (good ? hapticSuccess() : hapticLight());
+      settle(card, describe(result), result.decidedIds);
     })();
   }
 
-  function add(item: PendingFeedRow) {
+  function file(card: Card) {
     if (!selected) {
       toast(t("inbox.pickCategoryFirst"), "error");
       return;
     }
+    const categoryId = selected;
     const name =
-      categories.find((category) => category.id === selected)?.name ??
-      "your ledger";
-    decide(item, () => importFeedItem(item.id, selected), name, true);
+      categories.find((category) => category.id === categoryId)?.name ?? "";
+    decide(
+      card,
+      () =>
+        fileFeedGroup(
+          card.rows.map((row) => row.id),
+          categoryId,
+        ),
+      (decision) =>
+        [
+          decision.imported > 0
+            ? t("inboxGroups.filed", {
+                count: decision.imported,
+                category: name,
+              })
+            : null,
+          decision.matched > 0
+            ? t("inboxGroups.alreadyRecorded", { count: decision.matched })
+            : null,
+        ]
+          .filter((part): part is string => part !== null)
+          .join(" · ") || t("inbox.done"),
+      true,
+    );
+  }
+
+  function leaveOut(card: Card) {
+    decide(
+      card,
+      () => leaveOutFeedGroup(card.rows.map((row) => row.id)),
+      (decision) => t("inboxGroups.leftOut", { count: decision.ignored }),
+      false,
+    );
   }
 
   function undo(answered: Answered) {
-    if (pending) {
+    if (pending || !session) {
       return;
     }
     setPending(true);
 
     void (async () => {
-      const result = await undoFeedDecision(answered.item.id);
+      const result =
+        answered.decidedIds.length > 0
+          ? await reopenFeedGroup(answered.decidedIds)
+          : { reopened: 0 };
       setPending(false);
 
-      if (result.error) {
+      if ("error" in result) {
         toast(result.error, "error");
         return;
       }
 
+      toast(
+        t("inboxGroups.putBack", {
+          count: result.reopened || answered.card.count,
+        }),
+        "success",
+      );
       // Back onto the front of the queue rather than silently gone: undoing
       // means the question is open again, and the question is what this
       // sheet is for.
       setStored({
         queueKey,
-        waiting: [answered.item, ...session.waiting],
+        waiting: [answered.card, ...session.waiting],
         answered: session.answered.filter(
-          (row) => row.item.id !== answered.item.id,
+          (row) => row.card.key !== answered.card.key,
         ),
         later: session.later,
       });
     })();
   }
 
+  function laterFor(card: Card) {
+    if (!session) {
+      return;
+    }
+    void hapticLight();
+    setShowRows(false);
+    setStored({
+      queueKey,
+      waiting: session.waiting.slice(1),
+      answered: session.answered,
+      later: [...session.later, card],
+    });
+  }
+
+  function signed(card: Card, amount: number): string {
+    return `${card.direction === "in" ? "+" : "−"}${formatEuro(amount)}`;
+  }
+
   const header = (
     <View className="mb-4 flex-row items-center justify-between gap-3">
-      <View className="min-w-0 flex-1 flex-row items-baseline gap-2">
+      <View className="min-w-0 flex-1 gap-0.5">
         <Text className="font-semibold" style={{ fontSize: 18 }}>
-          From your bank
+          {t("inbox.fromYourBank")}
         </Text>
         {current ? (
           <Text variant="muted" className="text-xs tabular-nums">
-            {`${position} of ${total}`}
+            {`${t("inboxGroups.groups", {
+              count: session?.waiting.length ?? 0,
+            })} · ${t("inboxGroups.entries", { count: remainingEntries })}`}
           </Text>
         ) : null}
       </View>
       <Pressable
         onPress={close}
+        accessibilityRole="button"
         accessibilityLabel={t("inbox.close")}
-        hitSlop={8}
+        className="min-h-11 justify-center px-2"
       >
-        <Text variant="muted">Close</Text>
+        <Text variant="muted">{t("inbox.close")}</Text>
       </Pressable>
     </View>
   );
@@ -280,16 +407,16 @@ export function BankInboxSheet({
           <SheetGrabber />
           {header}
 
-          {current ? (
+          {!session ? (
+            <View className="items-center py-10">
+              <ActivityIndicator color={colors.mutedForeground} />
+            </View>
+          ) : current ? (
             <>
-              {/* The bank's own words, in full. Truncating is what the
-                  statement card does, where the row is a receipt someone
-                  already recognises; here the string *is* the decision, and
-                  "PRELEVEMENT Navi…" answers nothing. */}
+              {/* The bank's own words, in full: here the string *is* the
+                  decision, and "PRELEVEMENT Navi…" answers nothing. */}
               <View className="gap-1.5 rounded-card p-card border border-primary-rim bg-primary/5">
-                <Text className="text-base font-medium">
-                  {current.counterparty ?? current.note}
-                </Text>
+                <Text className="text-base font-medium">{current.name}</Text>
                 <PrivateAmount
                   style={TYPE.figure}
                   className={
@@ -298,21 +425,83 @@ export function BankInboxSheet({
                       : "text-destructive"
                   }
                 >
-                  {`${current.direction === "in" ? "+" : "−"}${formatEuro(
-                    current.amount,
-                  )}`}
+                  {signed(current, current.total)}
                 </PrivateAmount>
                 <Text variant="muted" className="text-xs">
-                  {`${formatShortDate(current.occurredOn)} · ${current.why}`}
+                  {current.count > 1
+                    ? `${t("inboxGroups.entries", { count: current.count })} · ${formatShortDate(current.firstOn, locale)} – ${formatShortDate(current.lastOn, locale)}`
+                    : `${formatShortDate(current.firstOn, locale)} · ${current.rows[0]!.why}`}
                 </Text>
+                {current.mixed ? (
+                  <Text variant="muted" className="text-xs">
+                    {t("inboxGroups.mixed")}
+                  </Text>
+                ) : null}
+                {current.count > 1 ? (
+                  <>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityState={{ expanded: showRows }}
+                      onPress={() => {
+                        void hapticLight();
+                        setShowRows((shown) => !shown);
+                      }}
+                      className="min-h-11 flex-row items-center gap-1 self-start"
+                    >
+                      <Text className="text-sm font-medium text-primary-ink">
+                        {showRows
+                          ? t("inboxGroups.hideRows")
+                          : t("inboxGroups.showRows")}
+                      </Text>
+                      <Ionicons
+                        name={showRows ? "chevron-up" : "chevron-down"}
+                        size={ICON.sm}
+                        color={colors.primaryInk}
+                      />
+                    </Pressable>
+                    {showRows ? (
+                      <ScrollView
+                        className="max-h-40"
+                        nestedScrollEnabled
+                        showsVerticalScrollIndicator={false}
+                      >
+                        {current.rows.map((row, index) => (
+                          <View
+                            key={row.id}
+                            className={cn(
+                              "flex-row items-center gap-3 py-2",
+                              index > 0 && "border-t border-border",
+                            )}
+                          >
+                            <Text
+                              variant="muted"
+                              className="w-20 text-xs tabular-nums"
+                            >
+                              {formatShortDate(row.occurredOn, locale)}
+                            </Text>
+                            <Text
+                              numberOfLines={1}
+                              className="min-w-0 flex-1 text-xs"
+                            >
+                              {row.note}
+                            </Text>
+                            <PrivateAmount className="text-xs tabular-nums">
+                              {signed(current, row.amount)}
+                            </PrivateAmount>
+                          </View>
+                        ))}
+                      </ScrollView>
+                    ) : null}
+                  </>
+                ) : null}
               </View>
 
               <Text className="mb-2 mt-4 text-sm font-medium">
-                Which category?
+                {t("inboxGroups.whichCategory")}
               </Text>
 
               <ScrollView
-                className="max-h-72"
+                className="max-h-64"
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
               >
@@ -337,7 +526,7 @@ export function BankInboxSheet({
                 {recent.length > 0 && !query.trim() ? (
                   <View className="mb-3">
                     <Text variant="muted" className="mb-2 text-xs">
-                      Recent
+                      {t("inboxGroups.recentCategories")}
                     </Text>
                     <View className="flex-row flex-wrap gap-2">
                       {recent.map((category) => {
@@ -348,13 +537,7 @@ export function BankInboxSheet({
                             accessibilityRole="button"
                             accessibilityState={{ selected: active }}
                             accessibilityLabel={category.name}
-                            onPress={() => {
-                              void hapticLight();
-                              setChoices((current$) => ({
-                                ...current$,
-                                [current.id]: category.id,
-                              }));
-                            }}
+                            onPress={() => pick(category.id)}
                             className={cn(
                               "min-h-11 flex-row items-center gap-2 rounded-full border px-3 py-2",
                               active
@@ -375,7 +558,7 @@ export function BankInboxSheet({
                 ) : null}
 
                 <View className="gap-3">
-                  {groups.map((group) => (
+                  {categoryGroups.map((group) => (
                     <View key={group.type} className="gap-1.5">
                       <Text variant="muted" className="text-xs">
                         {group.label}
@@ -388,13 +571,7 @@ export function BankInboxSheet({
                             accessibilityRole="button"
                             accessibilityState={{ selected: active }}
                             accessibilityLabel={category.name}
-                            onPress={() => {
-                              void hapticLight();
-                              setChoices((current$) => ({
-                                ...current$,
-                                [current.id]: category.id,
-                              }));
-                            }}
+                            onPress={() => pick(category.id)}
                             className={cn(
                               "min-h-11 flex-row items-center gap-3 rounded-control border px-3 py-2",
                               active
@@ -414,67 +591,62 @@ export function BankInboxSheet({
                 </View>
               </ScrollView>
 
-              {/* Outside the scroller: the three ways out of this card should
-                  not depend on where the category list happens to be. */}
-              <View className="mt-4 flex-row items-center gap-2">
+              {/* Outside the scroller: the ways out of this card should not
+                  depend on where the category list happens to be. */}
+              <View className="mt-4 gap-1">
                 <Button
-                  label={pending ? t("inbox.adding") : t("inbox.add")}
-                  className="flex-1"
-                  disabled={pending || !selected}
-                  onPress={() => add(current)}
-                />
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Leave ${
-                    current.counterparty ?? current.note
-                  } out of your ledger`}
-                  accessibilityState={{ disabled: pending }}
-                  disabled={pending}
-                  onPress={() =>
-                    decide(
-                      current,
-                      () => ignoreFeedItem(current.id),
-                      "left out",
-                      false,
-                    )
+                  label={
+                    pending
+                      ? t("inbox.adding")
+                      : current.count > 1
+                        ? t("inboxGroups.fileAll")
+                        : t("inbox.add")
                   }
-                  className={cn(
-                    "min-h-11 items-center justify-center rounded-full px-3",
-                    pending && "opacity-60",
-                  )}
-                >
-                  <Text variant="muted" className="text-sm">
-                    Leave out
-                  </Text>
-                </Pressable>
-                {/* Sets it aside for this sitting only — the row stays
-                    pending, so it is in the inbox next time. Deciding under
-                    pressure is how a card payment ends up in the wrong
-                    category, and the fix for that is a worse chore than the
-                    original one. */}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("inbox.later")}
-                  accessibilityState={{ disabled: pending }}
-                  disabled={pending}
-                  onPress={() => {
-                    void hapticLight();
-                    setStored({
-                      queueKey,
-                      waiting: session.waiting.slice(1),
-                      answered: session.answered,
-                      later: [...session.later, current],
-                    });
-                  }}
-                  className={cn(
-                    "min-h-11 items-center justify-center rounded-full px-3",
-                    pending && "opacity-60",
-                  )}
-                >
-                  <Text variant="muted" className="text-sm">
-                    Later
-                  </Text>
-                </Pressable>
+                  disabled={pending || !selected}
+                  onPress={() => file(current)}
+                />
+                <View className="flex-row items-center justify-between gap-2">
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${
+                      current.count > 1
+                        ? t("inboxGroups.leaveOutAll")
+                        : t("inbox.leaveOut")
+                    } — ${current.name}`}
+                    accessibilityState={{ disabled: pending }}
+                    disabled={pending}
+                    onPress={() => leaveOut(current)}
+                    className={cn(
+                      "min-h-11 items-center justify-center rounded-full px-3",
+                      pending && "opacity-60",
+                    )}
+                  >
+                    <Text variant="muted" className="text-sm">
+                      {current.count > 1
+                        ? t("inboxGroups.leaveOutAll")
+                        : t("inbox.leaveOut")}
+                    </Text>
+                  </Pressable>
+                  {/* Sets it aside for this sitting only — the rows stay
+                      pending, so they are in the inbox next time. Deciding
+                      under pressure is how a card payment ends up in the
+                      wrong category. */}
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t("inbox.later")}
+                    accessibilityState={{ disabled: pending }}
+                    disabled={pending}
+                    onPress={() => laterFor(current)}
+                    className={cn(
+                      "min-h-11 items-center justify-center rounded-full px-3",
+                      pending && "opacity-60",
+                    )}
+                  >
+                    <Text variant="muted" className="text-sm">
+                      {t("inboxGroups.later")}
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
             </>
           ) : (
@@ -487,13 +659,18 @@ export function BankInboxSheet({
                 />
                 <Text className="text-base font-medium">
                   {session.answered.length > 0
-                    ? t("inbox.thatsTheInbox")
+                    ? session.later.length > 0
+                      ? t("inbox.thatsTheInbox")
+                      : t("inboxGroups.allFiled")
                     : t("inbox.nothingWaiting")}
                 </Text>
                 <Text variant="muted" className="text-center text-sm">
                   {session.later.length > 0
                     ? t("inbox.leftForLater", {
-                        count: session.later.length,
+                        count: session.later.reduce(
+                          (sum, card) => sum + card.count,
+                          0,
+                        ),
                       })
                     : t("inbox.taughtIt")}
                 </Text>
@@ -502,33 +679,28 @@ export function BankInboxSheet({
               {session.answered.length > 0 ? (
                 <View className="gap-2">
                   <Text variant="muted" className="text-xs">
-                    Decided just now
+                    {t("inboxGroups.decidedJustNow")}
                   </Text>
                   {session.answered.map((row) => (
                     <View
-                      key={row.item.id}
+                      key={row.card.key}
                       className="flex-row items-center gap-3 border-b border-border py-2.5"
                     >
                       <View className="min-w-0 flex-1">
                         <Text numberOfLines={1} className="text-sm">
-                          {row.item.counterparty ?? row.item.note}
+                          {row.card.name}
                         </Text>
                         <Text variant="muted" className="text-xs">
-                          {`${formatShortDate(row.item.occurredOn)} · ${
-                            row.outcome
-                          }`}
+                          {row.outcome}
                         </Text>
                       </View>
                       <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel={`Undo ${
-                          row.item.counterparty ?? row.item.note
-                        }`}
+                        accessibilityLabel={`${t("inbox.undo")} — ${row.card.name}`}
                         accessibilityState={{ disabled: pending }}
                         disabled={pending}
                         onPress={() => undo(row)}
-                        hitSlop={8}
-                        className="flex-row items-center gap-1"
+                        className="min-h-11 flex-row items-center gap-1 px-1"
                       >
                         <Ionicons
                           name="arrow-undo-outline"
@@ -536,7 +708,7 @@ export function BankInboxSheet({
                           color={colors.mutedForeground}
                         />
                         <Text variant="muted" className="text-sm">
-                          Undo
+                          {t("inbox.undo")}
                         </Text>
                       </Pressable>
                     </View>

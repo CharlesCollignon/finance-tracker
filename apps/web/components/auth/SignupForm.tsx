@@ -16,7 +16,51 @@ import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
 
-export function SignupForm() {
+/**
+ * The acceptance line, with its two document names as links.
+ *
+ * The sentence stays whole in each catalogue, so a language can put the two
+ * names wherever its grammar wants them; the names are filled with markers
+ * and the markers swapped for links here. Control characters, because no
+ * sentence contains one — built from their codes rather than written as
+ * escapes, which the catalogue's unused-key scan cannot read past.
+ */
+const TERMS_MARK = String.fromCharCode(1);
+const PRIVACY_MARK = String.fromCharCode(2);
+const MARKS = new RegExp(`(${TERMS_MARK}|${PRIVACY_MARK})`);
+const LEGAL_LINK = "underline underline-offset-2 hover:text-foreground";
+
+function LegalConsent() {
+  const t = useT();
+  const sentence = t("auth.legalConsent", {
+    terms: TERMS_MARK,
+    privacy: PRIVACY_MARK,
+  });
+  return (
+    <p className="mt-4 text-center text-xs leading-relaxed text-muted-foreground">
+      {sentence.split(MARKS).map((part, index) =>
+        part === TERMS_MARK ? (
+          <Link key={index} href="/terms" className={LEGAL_LINK}>
+            {t("auth.termsLink")}
+          </Link>
+        ) : part === PRIVACY_MARK ? (
+          <Link key={index} href="/privacy" className={LEGAL_LINK}>
+            {t("auth.privacyLink")}
+          </Link>
+        ) : (
+          part
+        ),
+      )}
+    </p>
+  );
+}
+
+export function SignupForm({
+  legalLinks = false,
+}: {
+  /** Whether the privacy policy and terms may be linked on this deployment. */
+  legalLinks?: boolean;
+}) {
   const t = useT();
   const router = useRouter();
   const [state, action, pending] = useActionState(signUp, {});
@@ -92,6 +136,7 @@ export function SignupForm() {
           </ButtonNub>
         </Button>
       </form>
+      {legalLinks ? <LegalConsent /> : null}
       <p className="mt-4 text-center text-sm text-muted-foreground">
         {t("auth.haveAccount")}{" "}
         <Link href="/login" className="font-medium underline">

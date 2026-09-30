@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { ProfileView } from "@/components/profile/ProfileView";
+import { bankFeedStatus } from "@/lib/bank/client";
+import { bankSetupOffered } from "@/lib/bank/offer";
 import { type PasskeyItem } from "@/components/profile/PasskeysPanel";
 import { createClient } from "@/lib/supabase/server";
 
@@ -32,6 +34,13 @@ export default async function ProfilePage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
   );
 
+  // The Bank row only where it leads somewhere: setup is open to this
+  // account, or a bank already syncs for it.
+  const [offered, bankStatus] = await Promise.all([
+    bankSetupOffered(),
+    bankFeedStatus(user.id),
+  ]);
+
   let initialPasskeys: PasskeyItem[] = [];
   try {
     const supabase = await createClient();
@@ -49,6 +58,7 @@ export default async function ProfilePage() {
       canDeleteAccount={canDeleteAccount}
       initialPasskeys={initialPasskeys}
       pushPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""}
+      showBank={offered || bankStatus !== "unconfigured"}
     />
   );
 }

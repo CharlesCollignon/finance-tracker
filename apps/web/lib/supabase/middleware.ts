@@ -124,7 +124,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/categories") ||
     pathname.startsWith("/history") ||
     pathname.startsWith("/budgets") ||
-    pathname.startsWith("/profile");
+    pathname.startsWith("/profile") ||
+    pathname.startsWith("/bank");
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone();

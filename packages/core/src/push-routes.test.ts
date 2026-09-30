@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildDueNotifications } from "./push-digest";
 import { mobileRouteForPushUrl } from "./push-routes";
 import { translator } from "./i18n/t";
+import { bankAttention, bankAttentionNotification } from "./bank-attention";
 
 describe("mobileRouteForPushUrl", () => {
   it("opens the review, not the Ledger it lives on", () => {
@@ -105,6 +106,27 @@ describe("mobileRouteForPushUrl", () => {
     // The bank sync's own push is written in the refresh route rather than by
     // the digest, so it is named here explicitly.
     written.add("/transactions?review=inbox");
+
+    // So is the bank's renewal reminder, which the notify job adds ahead of
+    // the digest: every kind it can take, built by the builder itself.
+    for (const attention of [
+      bankAttention(
+        { status: "active", consent_valid_until: "2026-09-18T00:00:00Z" },
+        "2026-09-14",
+      ),
+      { kind: "expired" } as const,
+      { kind: "paused" } as const,
+    ]) {
+      const notification = bankAttentionNotification(attention, {
+        since: "2026-09-10",
+        formatDate: (iso) => iso,
+        t: translator("en"),
+      });
+      if (notification) {
+        written.add(notification.url);
+      }
+    }
+    expect(written.has("/bank")).toBe(true);
 
     expect(written.size).toBeGreaterThan(0);
     for (const url of written) {

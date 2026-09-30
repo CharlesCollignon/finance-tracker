@@ -15,7 +15,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { QuickAddSheet } from "@/components/QuickAddSheet";
+import { QuickAddSheet, type AddKind } from "@/components/QuickAddSheet";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { hapticMedium } from "@/lib/haptics";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
@@ -34,8 +34,16 @@ const EMPTY: QuickEntryContext = {
   merchants: [],
 };
 
+interface OpenOptions {
+  /** A date to start on — the calendar opens the sheet on the day in view. */
+  date?: string;
+  /** Which kind to start on. A transaction unless the caller says otherwise. */
+  kind?: AddKind;
+}
+
 interface QuickAddValue {
-  open: (date?: string) => void;
+  /** Opens the sheet; the reader can still switch kind inside it. */
+  open: (options?: OpenOptions) => void;
   isOpen: boolean;
 }
 
@@ -44,17 +52,20 @@ const QuickAddContext = createContext<QuickAddValue | null>(null);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Adding a transaction from anywhere in the tab stack.
+ * Adding a transaction or a charge from anywhere in the tab stack.
  *
  * Sits above the tabs rather than inside them: the bar already carries six
  * destinations, and the app's primary action should not have to compete with
  * them for a slot — nor should logging a coffee start with choosing a tab.
+ * Every Add in the app opens this one sheet, so there is a single way in
+ * whichever button was pressed.
  */
 export function QuickAddProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const dataVersion = useDataVersion();
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState<string | undefined>(undefined);
+  const [kind, setKind] = useState<AddKind>("transaction");
   // Bumped on every open so the sheet's fields remount with clean state.
   const [openToken, setOpenToken] = useState(0);
 
@@ -65,8 +76,9 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
     return getQuickEntryContext(user.id);
   }, [user?.id, dataVersion]);
 
-  const open = useCallback((nextDate?: string) => {
-    setDate(nextDate);
+  const open = useCallback((options?: OpenOptions) => {
+    setDate(options?.date);
+    setKind(options?.kind ?? "transaction");
     setOpenToken((token) => token + 1);
     setIsOpen(true);
   }, []);
@@ -94,6 +106,7 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
         recentCategoryIds={context.recentCategoryIds}
         merchants={context.merchants}
         defaultDate={date}
+        kind={kind}
         openToken={openToken}
       />
     </QuickAddContext.Provider>
@@ -134,7 +147,7 @@ function QuickAddFab() {
     >
       <AnimatedPressable
         accessibilityRole="button"
-        accessibilityLabel={t("common.addTransaction")}
+        accessibilityLabel={t("add.open")}
         onPressIn={() => {
           scale.set(withTiming(0.92, { duration: DURATION.press }));
         }}

@@ -1,29 +1,32 @@
 import { OpenBankingClient } from "@open-banking-io/client";
+import type { BankConnectionStatus } from "@finance/core/types/database";
+import {
+  clientFor,
+  credentialStore,
+  readCredentials,
+} from "@/lib/bank/credentials";
+import { secretsConfigured } from "@/lib/bank/secrets";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * Where a bank connection comes from.
+ * Where a user's bank connection comes from.
  *
- * Two ways in exist, and only the first is wired. Single-user: the owner
- * connects their banks in open-banking.io's own app, exports the credentials
- * bundle, and it arrives here as one environment variable — no partner
- * application, no consent flow, nothing stored. Partner Connect: every user
- * connects their own bank through an OAuth flow, and the token plus their
- * private key is kept per user.
+ * Two ways in, both the same file. Every user can upload the credentials
+ * file of their own open-banking.io account, which is stored sealed, per user
+ * (`lib/bank/credentials`). The owner bundle is how this started — the same
+ * file, in an environment variable — and it stays until the owner uploads
+ * theirs: a stored connection always wins over it, and it answers for nobody
+ * but the owner.
  *
- * The second needs an approved partner application, so this is a seam rather
- * than an implementation: everything downstream asks for a client by user id
- * and does not care which half answered. When the partner credentials arrive,
- * only this file changes.
- *
- * The bundle is a decryption key. It is read from the environment on the
- * server and must never be sent to a browser, logged, or returned from an
- * action.
+ * Everything downstream asks for a client by user id and does not care which
+ * half answered. Neither the key nor the bundle may be sent to a browser,
+ * logged, or returned from an action.
  */
 
 export interface BankConnection {
   client: OpenBankingClient;
   /** How this connection was established, for the UI to be honest about. */
-  source: "owner-credentials";
+  source: "uploaded" | "owner-credentials";
 }
 
 /**
@@ -57,63 +60,132 @@ function ownerClient(): OpenBankingClient | null {
   }
 }
 
-export function getBankConnection(userId: string): BankConnection | null {
+function ownerConnection(userId: string): BankConnection | null {
   const owner = ownerUserId();
   if (!owner || owner !== userId) {
     return null;
   }
-
   const client = ownerClient();
   return client ? { client, source: "owner-credentials" } : null;
 }
 
-/** Who the feed belongs to, for the unattended run that has no session. */
-export function bankFeedOwnerId(): string | null {
-  return ownerUserId() && ownerClient() ? ownerUserId() : null;
+/** The connection row, read with the service role: the user may be absent. */
+async function readStatus(
+  userId: string,
+): Promise<BankConnectionStatus | null> {
+  const admin = createAdminClient();
+  if (!admin) {
+    return null;
+  }
+  const { data } = await admin
+    .from("bank_connections")
+    .select("status")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data?.status ?? null;
 }
 
-/** Whether this deployment could connect at all, for the UI to explain itself. */
-export function bankFeedConfigured(): boolean {
-  return Boolean(ownerUserId() && ownerClient());
+export async function getBankConnection(
+  userId: string,
+): Promise<BankConnection | null> {
+  const admin = createAdminClient();
+  if (admin && secretsConfigured()) {
+    const status = await readStatus(userId);
+    if (status && status !== "revoked") {
+      try {
+        const credentials = await readCredentials(
+          credentialStore(admin),
+          userId,
+        );
+        if (credentials) {
+          return { client: clientFor(credentials), source: "uploaded" };
+        }
+      } catch {
+        // A secret that no longer opens — sealed under another environment's
+        // BANK_SECRETS_KEY, as a rule — is a file to upload again, which the
+        // status screen says. For the owner, the environment's own bundle
+        // still reads the same account, so their feed does not stop over it;
+        // for anyone else this is null.
+        return ownerConnection(userId);
+      }
+    }
+    if (status === "revoked") {
+      return null;
+    }
+  }
+  return ownerConnection(userId);
 }
 
 /**
- * Why this user has no bank — which is two answers, not one.
+ * Every user the unattended run should sync: each active connection, and the
+ * owner while their bundle is still the environment's.
+ */
+export async function syncableUserIds(): Promise<string[]> {
+  const ids = new Set<string>();
+  const admin = createAdminClient();
+  if (admin) {
+    const { data } = await admin
+      .from("bank_connections")
+      .select("user_id, last_synced_at")
+      // Paused too: it costs one refused call a run, and it is how a wallet
+      // topped up at open-banking.io comes back without anyone asking.
+      .in("status", ["active", "error", "paused"])
+      // Stalest first: if the run's budget ends partway, the users it did not
+      // reach are the ones it reached most recently.
+      .order("last_synced_at", { ascending: true, nullsFirst: true });
+    for (const row of data ?? []) {
+      ids.add(row.user_id);
+    }
+  }
+  const owner = ownerUserId();
+  if (owner && ownerClient()) {
+    ids.add(owner);
+  }
+  return [...ids];
+}
+
+/**
+ * Whether this deployment can store a bank connection at all: a key to seal
+ * it with, and the service role to write where no app can read.
  *
- * `getBankConnection` returns null for two quite different reasons: nothing
- * is configured, or something is and it is registered to somebody else.
- * This file already refuses that collapse for the bundle itself — a
- * malformed one is a configuration error and not "no bank" — and then
- * reintroduced it for the owner id, where it is worse: a bundle whose
- * `OPEN_BANKING_OWNER_USER_ID` does not match the signed-in user reads
- * exactly like no bundle at all. So the one person who has connected a bank
- * gets told there is nothing to reconcile with, and the deployment-wide
- * `bankFeedConfigured()` still lights up the control that promises to ask
- * it. A button that offers to reach your bank and then reports everything
- * fine without having reached it is the shape that bug took.
+ * Whether a given person is offered it is the `bank.connect` flag's answer on
+ * top of this (`lib/bank/offer`), so the feature can be opened one account at
+ * a time before it is opened to everyone.
+ */
+export function bankConnectAvailable(): boolean {
+  return secretsConfigured() && createAdminClient() !== null;
+}
+
+/**
+ * Where a user's bank stands, in the words both apps show.
  *
- * Named rather than left to each call site to infer from a null, because
- * both apps have to say the same thing about it and neither can work it out
- * afterwards.
+ * `connected` is the only one that syncs. The rest each have their own
+ * sentence and their own button: renew, reconnect, top up, connect.
  */
 export type BankFeedStatus =
-  /** The bundle is here and it is this user's. */
+  /** Syncing. */
   | "connected"
-  /** No bundle on this deployment. Nothing is wrong; there is just no bank. */
-  | "unconfigured"
-  /** A bundle is here, registered to another account. */
-  | "other-owner";
+  /** open-banking.io stopped accepting the stored file's API key. */
+  | "expired"
+  /** open-banking.io suspended syncing — an unpaid wallet. */
+  | "paused"
+  /** The last sync failed for another reason; the next may work. */
+  | "error"
+  /** Nothing connected, or disconnected. */
+  | "unconfigured";
 
-/**
- * Deliberately built on `getBankConnection` rather than repeating its
- * ownership test, so what the interface says can never drift from what the
- * sync will actually accept.
- */
-export function bankFeedStatus(userId: string): BankFeedStatus {
-  if (getBankConnection(userId)) {
-    return "connected";
+export async function bankFeedStatus(userId: string): Promise<BankFeedStatus> {
+  const status = await readStatus(userId);
+  switch (status) {
+    case "active":
+      return (await getBankConnection(userId)) ? "connected" : "expired";
+    case "expired":
+    case "paused":
+    case "error":
+      return status;
+    default:
+      return ownerConnection(userId) ? "connected" : "unconfigured";
   }
-  return bankFeedConfigured() ? "other-owner" : "unconfigured";
 }
 
 /**
@@ -122,12 +194,9 @@ export function bankFeedStatus(userId: string): BankFeedStatus {
  *
  * Both surfaces read it from here so they cannot drift: the web action and
  * the route the phone calls were describing the same condition two different
- * ways, one of them ("Up to date") a claim about a bank that was never asked.
- * Mirrors `explain()` in `bank/pull`, which does the same job for a refusal.
- *
- * Each of these still follows a re-read, so each leads with what did happen.
- * "Reloaded" is the honest half of a refresh with no bank behind it: another
- * device may well have written something since.
+ * ways. Mirrors `explain()` in `bank/pull`, which does the same job for a
+ * refusal. Each of these still follows a re-read, so each leads with what did
+ * happen: "Reloaded" is the honest half of a refresh with no bank behind it.
  */
 export function describeBankFeedStatus(
   status: Exclude<BankFeedStatus, "connected">,
@@ -135,25 +204,16 @@ export function describeBankFeedStatus(
   switch (status) {
     case "unconfigured":
       return "Reloaded — no bank is connected.";
-    case "other-owner":
-      // Deliberately says which half is wrong. The alternative was the
-      // friendly "no bank", and on a single-user deployment that is the
-      // sentence that hid a mistyped OPEN_BANKING_OWNER_USER_ID behind a
-      // reassuring notice for as long as it took someone to file a bug.
-      return "Reloaded — this deployment's bank credentials are registered to another account.";
+    case "expired":
+      return "Reloaded — open-banking.io no longer accepts your credentials file. Upload a new one to sync again.";
+    case "paused":
+      return "Reloaded — open-banking.io has paused syncing until its wallet is topped up.";
+    case "error":
+      return "Reloaded — your bank could not be reached. It will be tried again.";
   }
 }
 
-/**
- * Whether the feed belongs to this user in particular.
- *
- * The distinction from `bankFeedConfigured()` matters at a gate: that one
- * answers a deployment-wide question, while `getBankConnection` — which
- * `syncBankFeed` calls and throws on — is per-user. Gating a refresh on the
- * deployment-wide answer let a non-owner through the friendly "no bank"
- * branch and into that throw, so the same condition came back as a hard
- * error for them and as a soft notice for everyone else.
- */
-export function bankFeedBelongsTo(userId: string): boolean {
-  return bankFeedStatus(userId) === "connected";
+/** Whether this user's bank syncs right now. */
+export async function bankFeedBelongsTo(userId: string): Promise<boolean> {
+  return (await bankFeedStatus(userId)) === "connected";
 }

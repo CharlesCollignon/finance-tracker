@@ -15,9 +15,9 @@ import { cn } from "@/lib/utils";
  * reader the spine never reached. `bearing/page.tsx` returns its `thin`
  * empty state — no net position, nothing invested, nothing recorded —
  * before the spine mounts at all, and that state is exactly what somebody
- * who has just finished `/welcome` sees: recurring templates saved, not one
- * row written. `buildAttention` had already produced their "apply these"
- * item and the page was throwing it away.
+ * who has just finished `/welcome` sees. `buildAttention` had already
+ * produced something for them to do — a first balance to enter, say — and
+ * the page was throwing it away.
  *
  * Only the row moved, not the spine. A ring and a headline over an account
  * with nothing in it would be worse than nothing — the headline falls back

@@ -5,6 +5,10 @@ import {
   featureHref,
   landingCopyFor,
 } from "@/components/marketing/landing-copy";
+import {
+  legalCopyFor,
+  legalPagesVisible,
+} from "@/components/marketing/legal-copy";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
 import { cn } from "@/lib/utils";
 import { getLocale, getT } from "@/lib/locale";
@@ -34,7 +38,9 @@ const footerList = "mt-2 flex flex-col lg:mt-4 lg:gap-3";
 
 export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
   const t = await getT();
-  const copy = landingCopyFor(await getLocale());
+  const locale = await getLocale();
+  const copy = landingCopyFor(locale);
+  const legal = legalPagesVisible() ? legalCopyFor(locale).nav : null;
   return (
     <footer className="relative z-10 border-t border-white/10 px-6 py-14 md:py-16">
       <div className="mx-auto flex max-w-6xl flex-col gap-12">
@@ -101,6 +107,20 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
                   {copy.nav.privacy}
                 </Link>
               </li>
+              {legal ? (
+                <>
+                  <li>
+                    <Link href="/privacy" className={footerLink}>
+                      {legal.privacy}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/terms" className={footerLink}>
+                      {legal.terms}
+                    </Link>
+                  </li>
+                </>
+              ) : null}
             </ul>
           </nav>
 

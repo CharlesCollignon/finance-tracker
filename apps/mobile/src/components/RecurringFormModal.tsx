@@ -2,9 +2,14 @@ import { useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 
 import {
+  formatOccurrenceDates,
+  scheduleDatesBefore,
+} from "@finance/core/apply-recurring";
+import {
   formatCategoryOptionLabel,
   groupCategoriesByType,
 } from "@finance/core/categories";
+import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import type {
   Category,
   Recurrence,
@@ -21,6 +26,7 @@ import {
   deleteRecurringTemplate,
   upsertRecurringTemplate,
 } from "@/lib/mutations";
+import { cn } from "@/lib/cn";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
 
@@ -30,15 +36,103 @@ interface RecurringFormModalProps {
   onSaved: () => void;
   categories: Category[];
   template?: RecurringTemplateWithCategory | null;
+  /** The days this charge has been recorded on this month, today included. */
+  recordedThisMonth?: string[];
 }
 
+/**
+ * Editing a charge, in a sheet of its own.
+ *
+ * Adding one happens in the shared Add sheet, which draws the same fields
+ * through `RecurringFormBody` — so the two can never ask for different things.
+ */
 export function RecurringFormModal({
   open,
   onClose,
   onSaved,
   categories,
   template = null,
+  recordedThisMonth = [],
 }: RecurringFormModalProps) {
+  const t = useT();
+
+  return (
+    <Modal
+      visible={open}
+      animationType="slide"
+      transparent
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
+      <View className="flex-1 justify-end bg-black/50">
+        <Pressable
+          className="flex-1"
+          accessibilityLabel={t("recurring.close")}
+          onPress={onClose}
+        />
+        <View className="max-h-[90%] rounded-t-card border border-border bg-card">
+          <View className="items-center pt-3">
+            <SheetGrabber />
+          </View>
+          <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
+            <Text className="font-semibold" style={{ fontSize: 18 }}>
+              {template
+                ? t("recurring.editTitleMobile")
+                : t("recurring.addTitleMobile")}
+            </Text>
+            <Pressable
+              onPress={onClose}
+              accessibilityLabel={t("recurring.close")}
+              hitSlop={8}
+            >
+              <Text variant="muted">{t("recurring.close")}</Text>
+            </Pressable>
+          </View>
+          <ScrollView
+            className="px-5"
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <RecurringFormBody
+              categories={categories}
+              template={template}
+              recordedThisMonth={recordedThisMonth}
+              onSaved={onSaved}
+              onDone={onClose}
+            />
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+interface RecurringFormBodyProps {
+  categories: Category[];
+  template?: RecurringTemplateWithCategory | null;
+  /**
+   * The days this charge has been recorded on this month, today included.
+   * When there are any, saving an edit asks whether they change too.
+   */
+  recordedThisMonth?: string[];
+  /** Called after a save or a delete, so screens can reload. */
+  onSaved: () => void;
+  /** Called once the sheet around these fields should close. */
+  onDone: () => void;
+}
+
+/**
+ * The charge's fields, without a sheet around them. Drawn inside a scroll
+ * view the caller owns: this modal's when editing, the Add sheet's when
+ * adding.
+ */
+export function RecurringFormBody({
+  categories,
+  template = null,
+  recordedThisMonth = [],
+  onSaved,
+  onDone,
+}: RecurringFormBodyProps) {
   const locale = useLocale();
   const t = useT();
   const { toast } = useToast();
@@ -64,6 +158,63 @@ export function RecurringFormModal({
   const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // Both default to leaving this month alone: what was recorded at the old
+  // amount was paid at the old amount, and a charge set up today did not
+  // happen on the 5th unless the user says it did.
+  const [applyToThisMonth, setApplyToThisMonth] = useState(false);
+  const [startThisMonth, setStartThisMonth] = useState(false);
+
+  /*
+   * The days the schedule on screen falls on this month that are already
+   * behind today — what "include this month" would record. Recomputed as the
+   * fields change, so the choice only appears when it means something and
+   * names the days it means.
+   */
+  const pastThisMonth = useMemo(() => {
+    if (isEditing) {
+      return [];
+    }
+    const day = Number(dayOfMonth);
+    const weekday = Number(dayOfWeek);
+    const monthNumber = Number(monthOfYear);
+    const valid =
+      recurrence === "weekly"
+        ? Number.isInteger(weekday) && weekday >= 1 && weekday <= 7
+        : Number.isInteger(day) &&
+          day >= 1 &&
+          day <= 31 &&
+          (recurrence !== "yearly" ||
+            (Number.isInteger(monthNumber) &&
+              monthNumber >= 1 &&
+              monthNumber <= 12));
+    if (!valid) {
+      return [];
+    }
+    const { year, month } = getCurrentMonth();
+    return scheduleDatesBefore(
+      {
+        recurrence,
+        day_of_month: recurrence === "weekly" ? null : day,
+        day_of_week: recurrence === "weekly" ? weekday : null,
+        month_of_year: recurrence === "yearly" ? monthNumber : null,
+        starts_on: startsOn.trim() || null,
+        ends_on: endsOn.trim() || null,
+      },
+      year,
+      month,
+      todayIsoLocal(),
+    );
+  }, [
+    isEditing,
+    recurrence,
+    dayOfMonth,
+    dayOfWeek,
+    monthOfYear,
+    startsOn,
+    endsOn,
+  ]);
+  const askApplyTo = isEditing && recordedThisMonth.length > 0;
+  const askStart = !isEditing && pastThisMonth.length > 0;
 
   // Income included, as on the web: a salary is a recurring template too,
   // and one opened from the Income group has to find its category here.
@@ -101,6 +252,14 @@ export function RecurringFormModal({
     if (endsOn.trim()) {
       payload.endsOn = endsOn.trim();
     }
+    // Only sent when the question was on screen, so an answer given to a
+    // question that then disappeared is not acted on.
+    if (askApplyTo) {
+      payload.applyToThisMonth = applyToThisMonth;
+    }
+    if (askStart) {
+      payload.startThisMonth = startThisMonth;
+    }
 
     const result = await upsertRecurringTemplate(payload);
     setPending(false);
@@ -108,9 +267,12 @@ export function RecurringFormModal({
       setError(result.error);
       return;
     }
-    toast(t("recurring.savedHint"), "success");
+    toast(
+      isEditing ? t("recurring.updatedHint") : t("recurring.savedHint"),
+      "success",
+    );
     onSaved();
-    onClose();
+    onDone();
   }
 
   async function handleDelete() {
@@ -126,211 +288,273 @@ export function RecurringFormModal({
     }
     toast(t("recurring.deletedHint"));
     onSaved();
-    onClose();
+    onDone();
   }
 
   return (
-    <Modal
-      visible={open}
-      animationType="slide"
-      transparent
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <View className="flex-1 justify-end bg-black/50">
-        <Pressable
-          className="flex-1"
-          accessibilityLabel={t("recurring.close")}
-          onPress={onClose}
-        />
-        <View className="max-h-[90%] rounded-t-card border border-border bg-card">
-          <View className="items-center pt-3">
-            <SheetGrabber />
-          </View>
-          <View className="flex-row items-center justify-between px-5 pb-2 pt-3">
-            <Text className="font-semibold" style={{ fontSize: 18 }}>
-              {isEditing
-                ? t("recurring.editTitleMobile")
-                : t("recurring.addTitleMobile")}
-            </Text>
-            <Pressable
-              onPress={onClose}
-              accessibilityLabel={t("recurring.close")}
-              hitSlop={8}
-            >
-              <Text variant="muted">{t("recurring.close")}</Text>
-            </Pressable>
-          </View>
-          <ScrollView
-            className="px-5"
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <Text className="mb-2 text-sm font-medium">
-              {t("recurring.category")}
-            </Text>
-            <View className="mb-4 gap-2">
-              {groups.map((group) => (
-                <View key={group.type} className="gap-1">
-                  <Text variant="muted">{group.label}</Text>
-                  {group.categories.map((cat) => {
-                    const selected = categoryId === cat.id;
-                    return (
-                      <Pressable
-                        key={cat.id}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected }}
-                        accessibilityLabel={cat.name}
-                        onPress={() => setCategoryId(cat.id)}
-                        className={`rounded-full border px-3 py-2 ${
-                          selected
-                            ? "border-foreground bg-primary"
-                            : "border-border"
-                        }`}
-                      >
-                        <Text>{formatCategoryOptionLabel(cat, locale)}</Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ))}
-            </View>
-
-            <Text className="mb-2 text-sm font-medium">
-              {t("recurring.amount")}
-            </Text>
-            <Input
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="decimal-pad"
-              className="mb-4"
-            />
-
-            <Text className="mb-2 text-sm font-medium">
-              {t("recurring.description")}
-            </Text>
-            <Input
-              value={description}
-              onChangeText={setDescription}
-              className="mb-4"
-            />
-
-            <Text className="mb-2 text-sm font-medium">
-              {t("recurring.schedule")}
-            </Text>
-            <View className="mb-4 flex-row gap-2">
-              {(["monthly", "weekly", "yearly"] as const).map((value) => (
+    <>
+      <Text className="mb-2 text-sm font-medium">
+        {t("recurring.category")}
+      </Text>
+      <View className="mb-4 gap-2">
+        {groups.map((group) => (
+          <View key={group.type} className="gap-1">
+            <Text variant="muted">{group.label}</Text>
+            {group.categories.map((cat) => {
+              const selected = categoryId === cat.id;
+              return (
                 <Pressable
-                  key={value}
+                  key={cat.id}
                   accessibilityRole="button"
-                  accessibilityState={{ selected: recurrence === value }}
-                  accessibilityLabel={t(`recurring.${value}`)}
-                  onPress={() => setRecurrence(value)}
-                  className={`flex-1 rounded-full border py-2 ${
-                    recurrence === value
-                      ? "border-foreground bg-primary"
-                      : "border-border"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={cat.name}
+                  onPress={() => setCategoryId(cat.id)}
+                  className={`rounded-full border px-3 py-2 ${
+                    selected ? "border-foreground bg-primary" : "border-border"
                   }`}
                 >
-                  <Text className="text-center text-xs font-semibold">
-                    {t(`recurring.${value}`)}
-                  </Text>
+                  <Text>{formatCategoryOptionLabel(cat, locale)}</Text>
                 </Pressable>
-              ))}
-            </View>
-
-            {recurrence === "weekly" ? (
-              <>
-                <Text className="mb-2 text-sm font-medium">
-                  {t("recurring.dayOfWeekNumeric")}
-                </Text>
-                <Input
-                  value={dayOfWeek}
-                  onChangeText={setDayOfWeek}
-                  keyboardType="number-pad"
-                  className="mb-4"
-                />
-              </>
-            ) : (
-              <>
-                {recurrence === "yearly" ? (
-                  <>
-                    <Text className="mb-2 text-sm font-medium">
-                      {t("recurring.monthOfYearNumeric")}
-                    </Text>
-                    <Input
-                      value={monthOfYear}
-                      onChangeText={setMonthOfYear}
-                      keyboardType="number-pad"
-                      className="mb-4"
-                    />
-                  </>
-                ) : null}
-                <Text className="mb-2 text-sm font-medium">
-                  {t("recurring.dayOfMonth")}
-                </Text>
-                <Input
-                  value={dayOfMonth}
-                  onChangeText={setDayOfMonth}
-                  keyboardType="number-pad"
-                  className="mb-4"
-                />
-              </>
-            )}
-
-            <Text className="mb-1 text-sm font-medium">
-              {t("recurring.activePeriod")}
-            </Text>
-            <Text variant="muted" className="mb-3 text-xs">
-              {t("recurring.activePeriodNote")}
-            </Text>
-            <Text className="mb-2 text-sm font-medium">
-              {t("recurring.startsOn")}
-            </Text>
-            <DateField
-              value={startsOn}
-              onChange={setStartsOn}
-              placeholder={t("recurring.noStartDate")}
-              clearable
-              className="mb-4"
-            />
-            <Text className="mb-2 text-sm font-medium">
-              {t("recurring.endsOn")}
-            </Text>
-            <DateField
-              value={endsOn}
-              onChange={setEndsOn}
-              placeholder={t("recurring.noEndDate")}
-              clearable
-              className="mb-4"
-            />
-
-            {error ? (
-              <Text className="mb-3 text-destructive">
-                {resolveMessage(t, error)}
-              </Text>
-            ) : null}
-
-            <Button
-              label={pending ? t("recurring.saving") : t("recurring.save")}
-              disabled={pending}
-              onPress={handleSave}
-              className="mb-3"
-            />
-            {isEditing ? (
-              <Button
-                label={t("recurring.delete")}
-                variant="outline"
-                disabled={pending}
-                onPress={handleDelete}
-                className="mb-8 border-destructive"
-              />
-            ) : (
-              <View className="mb-8" />
-            )}
-          </ScrollView>
-        </View>
+              );
+            })}
+          </View>
+        ))}
       </View>
-    </Modal>
+
+      <Text className="mb-2 text-sm font-medium">{t("recurring.amount")}</Text>
+      <Input
+        value={amount}
+        onChangeText={setAmount}
+        keyboardType="decimal-pad"
+        className="mb-4"
+      />
+
+      <Text className="mb-2 text-sm font-medium">
+        {t("recurring.description")}
+      </Text>
+      <Input
+        value={description}
+        onChangeText={setDescription}
+        className="mb-4"
+      />
+
+      <Text className="mb-2 text-sm font-medium">
+        {t("recurring.schedule")}
+      </Text>
+      <View className="mb-4 flex-row gap-2">
+        {(["monthly", "weekly", "yearly"] as const).map((value) => (
+          <Pressable
+            key={value}
+            accessibilityRole="button"
+            accessibilityState={{ selected: recurrence === value }}
+            accessibilityLabel={t(`recurring.${value}`)}
+            onPress={() => setRecurrence(value)}
+            className={`flex-1 rounded-full border py-2 ${
+              recurrence === value
+                ? "border-foreground bg-primary"
+                : "border-border"
+            }`}
+          >
+            <Text className="text-center text-xs font-semibold">
+              {t(`recurring.${value}`)}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {recurrence === "weekly" ? (
+        <>
+          <Text className="mb-2 text-sm font-medium">
+            {t("recurring.dayOfWeekNumeric")}
+          </Text>
+          <Input
+            value={dayOfWeek}
+            onChangeText={setDayOfWeek}
+            keyboardType="number-pad"
+            className="mb-4"
+          />
+        </>
+      ) : (
+        <>
+          {recurrence === "yearly" ? (
+            <>
+              <Text className="mb-2 text-sm font-medium">
+                {t("recurring.monthOfYearNumeric")}
+              </Text>
+              <Input
+                value={monthOfYear}
+                onChangeText={setMonthOfYear}
+                keyboardType="number-pad"
+                className="mb-4"
+              />
+            </>
+          ) : null}
+          <Text className="mb-2 text-sm font-medium">
+            {t("recurring.dayOfMonth")}
+          </Text>
+          <Input
+            value={dayOfMonth}
+            onChangeText={setDayOfMonth}
+            keyboardType="number-pad"
+            className="mb-4"
+          />
+        </>
+      )}
+
+      <Text className="mb-1 text-sm font-medium">
+        {t("recurring.activePeriod")}
+      </Text>
+      <Text variant="muted" className="mb-3 text-xs">
+        {t("recurring.activePeriodNote")}
+      </Text>
+      <Text className="mb-2 text-sm font-medium">
+        {t("recurring.startsOn")}
+      </Text>
+      <DateField
+        value={startsOn}
+        onChange={setStartsOn}
+        placeholder={t("recurring.noStartDate")}
+        clearable
+        className="mb-4"
+      />
+      <Text className="mb-2 text-sm font-medium">{t("recurring.endsOn")}</Text>
+      <DateField
+        value={endsOn}
+        onChange={setEndsOn}
+        placeholder={t("recurring.noEndDate")}
+        clearable
+        className="mb-4"
+      />
+
+      {askApplyTo ? (
+        <ThisMonthChoice
+          title={t("recurring.applyTo")}
+          value={applyToThisMonth}
+          onChange={setApplyToThisMonth}
+          no={{
+            label: t("recurring.scopeUpcoming"),
+            hint: t("recurring.scopeUpcomingHint", {
+              dates: formatOccurrenceDates(recordedThisMonth, locale),
+            }),
+          }}
+          yes={{
+            label: t("recurring.scopeThisMonth"),
+            hint: t("recurring.scopeThisMonthHint", {
+              dates: formatOccurrenceDates(recordedThisMonth, locale),
+            }),
+          }}
+          footnote={t("recurring.pastMonthsNote")}
+        />
+      ) : null}
+
+      {askStart ? (
+        <ThisMonthChoice
+          title={t("recurring.startFrom")}
+          value={startThisMonth}
+          onChange={setStartThisMonth}
+          no={{
+            label: t("recurring.startNow"),
+            hint: t("recurring.startNowHint"),
+          }}
+          yes={{
+            label: t("recurring.startThisMonth"),
+            hint: t("recurring.startThisMonthHint", {
+              count: pastThisMonth.length,
+              dates: formatOccurrenceDates(pastThisMonth, locale),
+            }),
+          }}
+        />
+      ) : null}
+
+      {error ? (
+        <Text className="mb-3 text-destructive">
+          {resolveMessage(t, error)}
+        </Text>
+      ) : null}
+
+      <Button
+        label={pending ? t("recurring.saving") : t("recurring.save")}
+        disabled={pending}
+        onPress={handleSave}
+        className="mb-3"
+      />
+      {isEditing ? (
+        <Button
+          label={t("recurring.delete")}
+          variant="outline"
+          disabled={pending}
+          onPress={handleDelete}
+          className="mb-8 border-destructive"
+        />
+      ) : (
+        <View className="mb-8" />
+      )}
+    </>
+  );
+}
+
+interface ChoiceOption {
+  label: string;
+  hint: string;
+}
+
+/**
+ * The one question a charge asks about the month in progress: leave it as
+ * it is (`no`, the default) or reach into it (`yes`). The same shape for
+ * "apply this change to" and "start", so the two read as the same kind of
+ * decision.
+ *
+ * Two stacked options rather than the schedule's row of pills, because each
+ * carries a sentence saying which days it touches — the choice is only
+ * honest if the dates it would rewrite are on screen when it is made.
+ */
+function ThisMonthChoice({
+  title,
+  value,
+  onChange,
+  no,
+  yes,
+  footnote,
+}: {
+  title: string;
+  value: boolean;
+  onChange: (next: boolean) => void;
+  no: ChoiceOption;
+  yes: ChoiceOption;
+  footnote?: string;
+}) {
+  return (
+    <View className="mb-4">
+      <Text className="mb-2 text-sm font-medium">{title}</Text>
+      <View className="gap-2">
+        {[
+          { chosen: !value, option: no, next: false },
+          { chosen: value, option: yes, next: true },
+        ].map(({ chosen, option, next }) => (
+          <Pressable
+            key={String(next)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: chosen }}
+            accessibilityLabel={option.label}
+            accessibilityHint={option.hint}
+            onPress={() => onChange(next)}
+            className={cn(
+              "rounded-control border px-4 py-3",
+              chosen ? "border-foreground bg-primary/15" : "border-border",
+            )}
+          >
+            <Text className="text-sm font-semibold">{option.label}</Text>
+            <Text variant="muted" className="mt-0.5 text-xs">
+              {option.hint}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      {footnote ? (
+        <Text variant="muted" className="mt-2 text-xs">
+          {footnote}
+        </Text>
+      ) : null}
+    </View>
   );
 }

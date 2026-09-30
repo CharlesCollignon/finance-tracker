@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { ListRow, ListSection } from "@/components/ui/ListRow";
+import { useBankState } from "@/hooks/useBankState";
+import { disconnectBank } from "@/lib/bank-connect";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { PasskeysPanel } from "@/components/profile/SecurityCards";
@@ -32,6 +34,14 @@ export default function ProfileScreen() {
   const tabBarClearance = useTabBarClearance();
   const { user, signOut } = useAuth();
   const router = useRouter();
+  // The Bank row only where it leads somewhere: setup is open to this
+  // account, or a bank already syncs for it.
+  const { bank } = useBankState();
+  const showBank =
+    bank !== null &&
+    (bank.available ||
+      bank.ownerCredentials ||
+      (bank.connection !== null && bank.connection.status !== "revoked"));
   const { toast } = useToast();
   const { currency, setCurrency } = useCurrency();
   const { locale, setLocale, t } = useLocaleContext();
@@ -135,6 +145,11 @@ export default function ProfileScreen() {
     }
 
     setPending(true);
+    // The bank key first, as the web's deleteAccount does: removing the
+    // account deletes the stored key with it, but only the web server can
+    // tell open-banking.io the key is dead. Never throws, and a failure
+    // here must not stand in the way of the deletion that was asked for.
+    await disconnectBank(false);
     // Mobile cannot hold the service role key. Call the Supabase Edge
     // Function when configured; otherwise delete user data and sign out.
     try {
@@ -246,6 +261,13 @@ export default function ProfileScreen() {
             label={t("profile.categories")}
             onPress={() => router.push("/categories" as Href)}
           />
+          {showBank ? (
+            <ListRow
+              icon="business-outline"
+              label={t("bankConnect.profileLink")}
+              onPress={() => router.push("/bank" as Href)}
+            />
+          ) : null}
           <ListRow
             icon="flag-outline"
             label={t("profile.budgetsAndGoals")}

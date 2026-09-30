@@ -58,16 +58,18 @@ Project Settings → API):
 cp apps/web/.env.local.example apps/web/.env.local
 ```
 
-| Variable                        | Required | Notes                                                                |
-| ------------------------------- | -------- | -------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | yes      | `https://xxxx.supabase.co`                                           |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes      | Public anon key                                                      |
-| `NEXT_PUBLIC_SITE_URL`          | yes      | `http://localhost:3000` in dev; `https://pluclair.com` in production |
-| `SUPABASE_SERVICE_ROLE_KEY`     | optional | “Delete account” on web, and the daily cron jobs                     |
-| `APPLE_TEAM_ID`                 | optional | Passkeys on iOS — Apple Team ID for AASA                             |
-| `ANDROID_SHA256_FINGERPRINTS`   | optional | Passkeys on Android — colon-hex SHA-256 fingerprints                 |
-| `MISTRAL_API_KEY`               | optional | Every model call: the month read, and the look-through's read and     |
-|                                 |          | instrument readings                                                   |
+| Variable                        | Required | Notes                                                                   |
+| ------------------------------- | -------- | ----------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | yes      | `https://xxxx.supabase.co`                                              |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes      | Public anon key                                                         |
+| `NEXT_PUBLIC_SITE_URL`          | yes      | `http://localhost:3000` in dev; `https://pluclair.com` in production    |
+| `SUPABASE_SERVICE_ROLE_KEY`     | optional | “Delete account” on web, and the daily cron jobs                        |
+| `APPLE_TEAM_ID`                 | optional | Passkeys on iOS — Apple Team ID for AASA                                |
+| `ANDROID_SHA256_FINGERPRINTS`   | optional | Passkeys on Android — colon-hex SHA-256 fingerprints                    |
+| `MISTRAL_API_KEY`               | optional | Every model call: the month read, and the look-through's read and       |
+|                                 |          | instrument readings                                                     |
+| `BANK_SECRETS_KEY`              | optional | 32 random bytes, base64; seals each user's credentials file. Bank setup |
+|                                 |          | is then offered where the `bank.connect` flag is on                     |
 
 One key and one model for all three. `MISTRAL_MODEL` overrides the model
 everywhere; there is no per-feature override, on the grounds that a
@@ -153,26 +155,33 @@ at the same refresh route. All run under the service role, so all need
 `SUPABASE_SERVICE_ROLE_KEY`, and all refuse to run without `CRON_SECRET` —
 Vercel sends it as `Authorization: Bearer <secret>`.
 
-| Route               | When                | What it does                                                    |
-| ------------------- | ------------------- | --------------------------------------------------------------- |
-| `/api/cron/refresh` | 07:00               | Reprices not-yet-due occurrences, then pulls and syncs the bank |
-| `/api/cron/notify`  | 08:00               | Sends the day's web push digest                                 |
-| `/api/cron/refresh` | 12:00, 17:00, 21:00 | Pulls and syncs the bank only                                   |
-| `/api/cron/read-instruments` | 04:00      | Re-reads one aging instrument reading, for a few users           |
+| Route                        | When                | What it does                                                                               |
+| ---------------------------- | ------------------- | ------------------------------------------------------------------------------------------ |
+| `/api/cron/refresh`          | 07:00               | Fills the month's charges, reprices not-yet-due occurrences, then pulls and syncs the bank |
+| `/api/cron/notify`           | 08:00               | Sends the day's web push digest                                                            |
+| `/api/cron/refresh`          | 12:00, 17:00, 21:00 | Pulls and syncs the bank only                                                              |
+| `/api/cron/read-instruments` | 04:00               | Re-reads one aging instrument reading, for a few users                                     |
 
 **Refreshing** is everything that brings the ledger up to date from outside
 it. Hobby allows a hundred cron jobs per project but insists each runs at most
 once a day, so four separate daily entries at four different hours is how the
 app is current four times a day rather than once. Vercel sends the firing
 schedule as `x-vercel-cron-schedule`, and the route reads it to decide how
-much to do: only the 07:00 run reprices, because quoting every user's
-templates against the market is slow and prices move on a scale of days,
-while the statement is worth re-reading. A hand-run `curl` sends no such
+much to do: only the 07:00 run fills and reprices, because quoting every
+user's templates against the market is slow and prices move on a scale of
+days, while the statement is worth re-reading. A hand-run `curl` sends no such
 header and gets the full job.
 
-The two halves fail independently: an unreachable bank does not stop quotes
+The steps fail independently: an unreachable bank does not stop quotes
 refreshing, and a rate-limited quote source does not stop the statement being
 read.
+
+_Filling_ writes every occurrence whose day has come and that is not written
+yet — this month and last — for every user whose ledger is not fed by a bank.
+Occurrences after today are never stored: the apps draw them as planned rows
+from the templates. This run is the server's half of what replaced the "Apply
+recurring" button; both apps also fill when they open, so the run is what makes
+the morning's charges already be there rather than arrive a second later.
 
 **Reading instruments** has its own entry rather than a step inside the
 refresh, for the same reason: a search-backed reading takes tens of seconds,
@@ -187,15 +196,20 @@ reading one day staler is a reading still being used.
 _Repricing_ brings occurrences that are applied but still dated ahead back in
 line with their instrument's quote, and refreshes each template's stored
 price. It never touches a date that has passed and never creates a
-transaction. This is what stops "Apply recurring" from asking about a DCA
-every time the market moves.
+transaction. This is what keeps a DCA written ahead of time at the price it
+will actually cost.
 
 _The bank sync_ asks the bank for anything new, then reads the statement,
 files what the user's own history already answers for, and leaves the rest in
 the review inbox. It pushes only when the run left something needing a
-decision, keyed by the day so it is said once. Needs
-`OPEN_BANKING_CREDENTIALS` and `OPEN_BANKING_OWNER_USER_ID`; without them the
-step is skipped and the refresh still reprices.
+decision, keyed by the day so it is said once. It runs for every
+connected user, stalest first, inside a 40-second share of the run, and
+records each connection's health so an expired consent or a paused wallet
+reaches the Bank page and the Bearing. A connection comes from a credentials
+file the user uploaded on `/bank` (sealed with `BANK_SECRETS_KEY`), or from the
+owner's `OPEN_BANKING_CREDENTIALS` and `OPEN_BANKING_OWNER_USER_ID` until they
+upload their own; with neither the step is skipped and the refresh still
+reprices.
 
 Both answer `200` with a JSON summary of what they did, so a run can be
 checked by hand:
@@ -205,7 +219,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://pluclair.com/api/cron/refre
 ```
 
 **Notifying** says at most one useful thing a day — a new month, a breached
-budget — to every device the user has granted permission on.
+budget — to every device the user has granted permission on. A bank consent
+ending within seven days, or a connection that stopped, is said on top of
+that, once per event.
 
 Two kinds of device, reached two different ways, and neither is a fallback for
 the other. A browser is reached over Web Push and needs the VAPID keys; a

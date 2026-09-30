@@ -16,10 +16,9 @@ import { useThemeColors } from "@/theme/useThemeColors";
  *
  * Lifted out of `Spine` because the reader who needs it most never reached
  * `Spine` at all: `(tabs)/index.tsx` returns its `thin` empty state before
- * the spine mounts, and `thin` is exactly what somebody who has just
- * finished onboarding looks like — templates saved, not one row written, so
- * `recurringToApply` is already non-zero and this list already has an item
- * in it. It was being built and discarded for them.
+ * the spine mounts, and `thin` is what somebody who has just finished
+ * onboarding looks like — and they can still have something waiting, such
+ * as a first balance to enter. It was being built and discarded for them.
  *
  * Only the row moved. A headline and a ring over an account with nothing in
  * it would be worse than nothing: the headline falls back to the month's

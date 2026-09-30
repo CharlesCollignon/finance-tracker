@@ -62,8 +62,8 @@ Three commitments, binding on all future work:
   of it that could initiate a payment.
 - **It does not act on a rule the user did not write.** A statement row files
   itself only where the user has put that shop in the same place twice;
-  everything else waits in the review inbox, and a recurring template is a
-  template until applied.
+  everything else waits in the review inbox, and a recurring template writes
+  into each month exactly what the user set it up to write, and nothing else.
 - **It does not tell the user what to do.** No advice, no score, no nudge to
   switch products.
 
@@ -83,7 +83,13 @@ planning and investments — with calendar, categories, import, profile,
 onboarding and the auth flow alongside them. Money reaches the ledger typed by
 the user, applied from a recurring template, or brought in by the optional
 read-only bank connection or a mapped CSV export; rows the app will not file on
-its own wait in the review inbox at `?review=inbox`, the same address as on web.
+its own wait in the review inbox at `?review=inbox`, the same address as on web,
+one card per shop. A user connects their bank from the phone as on the web —
+see `apps/web/PRODUCT.md`: the setup sheet's steps link to their own
+open-banking.io account, and "Choose the file" picks the credentials file and
+sends it once to the web server, deleting the copy the picker made. Profile →
+Bank then has the first import, status, renewal (at open-banking.io) and
+disconnect. Where the `bank.connect` flag is off, none of it appears.
 
 The phone is the client that is opened in public, on a train or in a queue,
 which is why blurring every figure on screen matters more here than anywhere
@@ -101,7 +107,11 @@ else.
   `webcredentials:pluclair.com` association.
 - Sends notifications through a single `reminders` channel.
 - Bank access is read-only, optional, and revocable; rows it already filed stay
-  with the user afterwards. Credentials never reach a browser or a device.
+  with the user afterwards unless they ask for them to go. Credentials never
+  reach a browser or a device: the phone reads only the connection's status
+  row, and everything that needs the bank goes through the web server's bearer
+  routes under `/api/bank/` (`lib/web-api.ts`), which run the same code as the
+  web's actions.
 - Every user-facing string goes through the `en` and `fr` catalogues in
   `packages/core/src/i18n/messages/`, with the device locale read via
   `expo-localization`. Findings and other computed prose carry an i18n key and
@@ -160,8 +170,12 @@ dressed up as placeholder content on any surface, including store listings.
 
 1. **Measure, do not guess.** A figure the app can prove beats one it can infer;
    where nothing can be measured, say so rather than estimate.
-2. **Nothing happens that the user did not ask for.** Applying, filing,
-   fulfilling and writing are all acts the user initiates.
+2. **Nothing happens that the user did not ask for.** Filing, fulfilling and
+   writing are acts the user initiates. Applying is the one the app carries
+   out on its own, because a recurring template already is the user asking —
+   once, for every month — and a button that restated the same request each
+   month was a chore, not a safeguard. It writes only what is missing, never
+   overrules a row the user corrected, and says what it wrote.
 3. **Every figure is traceable to the surface that owns it.** Nothing keeps a
    second set of numbers, and a figure with nowhere honest to lead is not
    dressed as though it had somewhere.

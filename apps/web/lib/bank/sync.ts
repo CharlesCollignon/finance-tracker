@@ -99,14 +99,20 @@ export interface SyncOptions {
    * anything that only needs the statement re-planned.
    */
   pull?: PullKind;
+  /**
+   * Only these accounts. The first import of a whole history runs one
+   * account per request, so no single request has to outlast the function's
+   * time limit however long the statement is.
+   */
+  accountIds?: readonly string[];
 }
 
 export async function syncBankFeed(
   supabase: Client,
   userId: string,
-  { backfill = false, pull }: SyncOptions = {},
+  { backfill = false, pull, accountIds }: SyncOptions = {},
 ): Promise<SyncOutcome> {
-  const connection = getBankConnection(userId);
+  const connection = await getBankConnection(userId);
   if (!connection) {
     throw new Error("No bank is connected to this account.");
   }
@@ -124,8 +130,14 @@ export async function syncBankFeed(
   // dangerous possible lie for a ledger. Skipped and counted instead, so the
   // silence is visible. N26 alone contributes a Space per envelope, most of
   // them empty, so this is not a rare case.
-  const accounts = allAccounts.filter((account) => !account.needsReconnect);
-  const needReconnect = allAccounts.length - accounts.length;
+  const accounts = allAccounts.filter(
+    (account) =>
+      !account.needsReconnect &&
+      (!accountIds || accountIds.includes(account.id)),
+  );
+  const needReconnect = allAccounts.filter(
+    (account) => account.needsReconnect,
+  ).length;
   const since = isoDaysAgo(backfill ? BACKFILL_DAYS : LOOKBACK_DAYS);
 
   // The user's own answers are what make a sync mostly automatic, and the

@@ -140,9 +140,9 @@ export function pruneSelection(
 /**
  * The sentence shown above the confirm button.
  *
- * Says plainly that recurring entries can come back, because "deleted" meaning
- * "until you next press Apply" is the kind of surprise that makes people
- * distrust a ledger.
+ * Says what happens to entries a charge wrote: deleting one also takes that
+ * occurrence out of its month, so the month filling itself does not write it
+ * straight back. Saying so is what stops the reader wondering whether it will.
  */
 export function describeSelectionDeletion(
   summary: SelectionSummary,

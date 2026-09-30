@@ -1,5 +1,6 @@
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { bankFeedStatus, describeBankFeedStatus } from "@/lib/bank/client";
+import { noteSyncFailure, noteSyncHealthy } from "@/lib/bank/health-note";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { syncBankFeed } from "@/lib/bank/sync";
 import { sessionFromBearer } from "@/lib/supabase/bearer";
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const status = bankFeedStatus(session.userId);
+  const status = await bankFeedStatus(session.userId);
   if (status !== "connected") {
     // Nothing outside the database to reconcile with. Not an error: the
     // client's own re-read is still the right thing to do. Asked per user,
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
     const outcome = await syncBankFeed(session.supabase, session.userId, {
       pull: "attended",
     });
+    await noteSyncHealthy(session.userId);
     const closes = await autoCloseMonths(session.supabase, session.userId);
 
     if (outcome.pull && !outcome.pull.pulled && outcome.pull.why) {
@@ -107,11 +109,9 @@ export async function POST(request: Request) {
       ),
     });
   } catch (error) {
+    // The words, not the error: an SDK failure carries the API path it hit.
     return Response.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Could not reach the bank.",
-      },
+      { error: (await noteSyncFailure(session.userId, error)).message },
       { status: 502 },
     );
   }

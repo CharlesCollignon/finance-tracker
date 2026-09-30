@@ -15,9 +15,10 @@ import { landingCopyFr } from "@/components/marketing/landing-copy.fr";
  *   `lib/bank/client.ts` answers for exactly one user id, the one the owner's
  *   credentials bundle is registered to, and the per-user path is a seam with
  *   nothing behind it yet. So the site describes what a visitor will actually
- *   meet — rows they type, a template they apply, an export they map, and one
- *   balance a month — and says the connection is coming in exactly one place,
- *   in the future tense, rather than in seven places in the present.
+ *   meet — rows they type, charges that fill each month in, an export they
+ *   map, and one balance a month — and says the connection is coming in
+ *   exactly one place, in the future tense, rather than in seven places in the
+ *   present.
  */
 
 export const landingCopy = {
@@ -37,7 +38,7 @@ export const landingCopy = {
       },
       {
         title: "Act on a rule you did not write",
-        body: "An imported row files itself only where you have already put that shop somewhere twice. Everything else waits in a list, and a recurring item is a template until you apply it.",
+        body: "An imported row files itself only where you have already put that shop somewhere twice. Everything else waits in a list, and a recurring charge writes into each month exactly what you set it up to write, and nothing else.",
       },
       {
         title: "Tell you what to do",
@@ -119,8 +120,8 @@ export const landingCopy = {
         body: "Salary, rent, subscriptions, a monthly buy in the PEA. Each is a template with an amount and a rhythm — a share-priced one takes its amount from the current quote instead.",
       },
       {
-        title: "Apply it to the month",
-        body: "Applying turns what the month calls for into real rows you can still edit. Skip one, apply late, apply twice: the month is yours to describe accurately, not to keep tidy.",
+        title: "The months fill themselves in",
+        body: "Every month ahead shows what your charges call for as planned rows, and each one becomes a real row you can still edit on its day. Change a charge and every month ahead changes with it; this month's rows only if you say so.",
       },
       {
         title: "Add the rest as you go",
@@ -176,7 +177,7 @@ export const landingCopy = {
       title: "Ledger",
       body: "Every movement — as a list, laid on days, or a run of months per category.",
       utility:
-        "The record everything else reads from. Rows you typed, rows a template applied, and rows an export brought in that a habit of your own filed — one body of data, looked at three ways.",
+        "The record everything else reads from. Rows you typed, rows your charges wrote, and rows an export brought in that a habit of your own filed — one body of data, looked at three ways.",
       steps: [
         {
           title: "The list, the calendar, or by category",
@@ -195,21 +196,21 @@ export const landingCopy = {
     {
       id: "charges",
       title: "Charges",
-      body: "Salary, rent, subscriptions, a monthly buy. Applied when you say so.",
+      body: "Salary, rent, subscriptions, a monthly buy. Written into each month for you.",
       utility:
-        "Standing instructions for what repeats, monthly, weekly or yearly, optionally bounded by a start and an end. They do not run on their own — which is the point, because an instruction that fires unattended is how a ledger drifts away from the truth.",
+        "Standing instructions for what repeats, monthly, weekly or yearly, optionally bounded by a start and an end. Each occurrence is written on its day, and only if it is missing: a row you corrected by hand is never written over. Until then, the months ahead show it as planned.",
       steps: [
         {
           title: "Define what repeats",
           body: "An amount and a rhythm. A share-priced template takes its amount from a share count times the current quote instead of a fixed figure, so a monthly buy is worth what it cost rather than what you guessed.",
         },
         {
-          title: "Apply it, skip it, or say it already happened",
-          body: "Nothing exists until you apply it, and applying writes ordinary rows you can still edit. Skip a single month without deactivating the template. And where an import already brought the movement in, say that this is the one the template called for, instead of leaving a second row beside it.",
+          title: "Filled in, taken out, or already there",
+          body: "Occurrences arrive on their day as ordinary rows you can still edit. Skip a planned one, or delete one already written, and that month goes without it while the template carries on. And where an import already brought the movement in, say that this is the one the template called for, and the template's own row makes way for it.",
         },
         {
           title: "Kept in line with the market",
-          body: "An applied occurrence still dated ahead is repriced when its quote moves, quietly and without asking — the market moving is not a decision anyone made. Once its date has passed, its amount is what actually moved and stays put.",
+          body: "A planned occurrence shows the latest quote and is written at the price of its day, quietly and without asking — the market moving is not a decision anyone made. Once written, its amount is what actually moved and stays put.",
         },
       ],
     },

@@ -9,19 +9,29 @@ import {
 import { getTags, getTransactionTagMap } from "@/lib/queries/phase4";
 import {
   getConfirmedTransactionIds,
+  getFulfilledKeys,
   getFulfilmentProposals,
 } from "@/lib/queries/fulfilment";
+import {
+  plannedOccurrences,
+  recurringOccurrenceKey,
+} from "@finance/core/apply-recurring";
+import { todayIsoLocal } from "@finance/core/constants";
 import { resolveMonthScope } from "@/lib/month-scope";
 import { TransactionsView } from "@/components/finance/TransactionsView";
 import { BankInbox } from "@/components/finance/BankInbox";
-import { bankFeedConfigured } from "@/lib/bank/client";
 import {
   countSwallowedFeedItems,
   countFeedItems,
+  getBankMerchantIndex,
   getDecidedFeedItems,
   getPendingFeedItems,
+  hasBankFeed,
 } from "@/lib/queries/bank";
+import { groupPendingFeed } from "@finance/core/bank-inbox-groups";
 import { SwallowedRecovery } from "@/components/finance/SwallowedRecovery";
+import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
+import { shouldInviteToConnect } from "@/lib/bank/invite";
 import { getLocale } from "@/lib/locale";
 
 interface TransactionsPageProps {
@@ -50,6 +60,7 @@ export default async function TransactionsPage({
     transactionTags,
     skippedKeys,
     confirmedTransactionIds,
+    fulfilledKeys,
   ] = await Promise.all([
     getTransactions(user.id, year, month),
     getCategories(user.id),
@@ -60,6 +71,7 @@ export default async function TransactionsPage({
     // Which rows settle a recurring charge. Needs nothing else this batch
     // fetches, so it rides along rather than costing a second round trip.
     getConfirmedTransactionIds(user.id),
+    getFulfilledKeys(user.id),
   ]);
 
   // Asked after the batch, because it needs the templates and categories the
@@ -75,20 +87,56 @@ export default async function TransactionsPage({
 
   const defaultDate = `${year}-${String(month).padStart(2, "0")}-01`;
 
-  // Only queried when a bank is actually connected, so the page costs nothing
-  // extra on a deployment that has never seen the feed.
-  const [feedItems, swallowed, feedSize, decided] = bankFeedConfigured()
+  // What the month's charges still have to bring, drawn rather than stored:
+  // the rows a future month shows, and the rest of this one. An occurrence
+  // already written, skipped, or fulfilled by another row is not planned.
+  const planned = plannedOccurrences(
+    recurringTemplates,
+    new Set(
+      transactions.flatMap((tx) =>
+        tx.recurring_template_id
+          ? [recurringOccurrenceKey(tx.recurring_template_id, tx.occurred_on)]
+          : [],
+      ),
+    ),
+    year,
+    month,
+    new Set([...skippedKeys, ...fulfilledKeys]),
+    todayIsoLocal(),
+  );
+
+  // Only queried for someone whose ledger a bank has fed, so the page costs
+  // nothing extra for everyone else. Per user rather than per deployment now
+  // that anyone can connect — and still true after a disconnect that kept
+  // the rows, whose decisions can still be taken back.
+  const bankFed = await hasBankFeed(user.id);
+  const [feedItems, swallowed, feedSize, decided, bankMerchants] = bankFed
     ? await Promise.all([
         getPendingFeedItems(user.id, await getLocale()),
         countSwallowedFeedItems(user.id),
         countFeedItems(user.id),
         getDecidedFeedItems(user.id),
+        getBankMerchantIndex(user.id),
       ])
-    : [null, 0, 0, []];
+    : [null, 0, 0, [], null];
+
+  // Without a feed, the slot the inbox would fill invites one instead: this
+  // page is where typing every line in is felt most.
+  const bankInvite =
+    !bankFed && (await shouldInviteToConnect(user.id, "ledger"));
+
+  // One answer per shop rather than per row: the review is grouped by the
+  // key the matcher files on, with the user's own history suggesting the
+  // category — see `groupPendingFeed`.
+  const feedGroups =
+    feedItems && bankMerchants
+      ? groupPendingFeed(feedItems, { bankMerchants, categories })
+      : [];
 
   return (
     <TransactionsView
       transactions={transactions}
+      planned={planned}
       categories={categories}
       recurringTemplates={recurringTemplates}
       skippedKeys={[...skippedKeys]}
@@ -107,6 +155,7 @@ export default async function TransactionsPage({
             <SwallowedRecovery count={swallowed} />
             <BankInbox
               items={feedItems}
+              groups={feedGroups}
               decided={decided}
               categories={categories}
               // A statement worth of rows means the backfill has been done.
@@ -118,6 +167,8 @@ export default async function TransactionsPage({
               openOnArrival={params.review === "inbox" && feedItems.length > 0}
             />
           </div>
+        ) : bankInvite ? (
+          <ConnectBankInvite surface="ledger" />
         ) : null
       }
     />

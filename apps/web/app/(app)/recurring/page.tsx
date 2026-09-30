@@ -1,23 +1,37 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getCategories } from "@/lib/queries/categories";
-import { getRecurringTemplates } from "@/lib/queries/finance";
+import {
+  getRecordedThisMonth,
+  getRecurringTemplates,
+} from "@/lib/queries/finance";
 import { getRecurringProposals, hasBankFeed } from "@/lib/queries/bank";
 import { todayIsoLocal } from "@finance/core/constants";
 import { RecurringView } from "@/components/finance/RecurringView";
 
-export default async function RecurringPage() {
+interface RecurringPageProps {
+  searchParams: Promise<{ edit?: string }>;
+}
+
+export default async function RecurringPage({
+  searchParams,
+}: RecurringPageProps) {
   const user = await getAuthUser();
 
   if (!user) {
     redirect("/login");
   }
 
-  const [templates, categories, bankFed] = await Promise.all([
-    getRecurringTemplates(user.id),
-    getCategories(user.id),
-    hasBankFeed(user.id),
-  ]);
+  const [templates, categories, bankFed, recordedThisMonth, params] =
+    await Promise.all([
+      getRecurringTemplates(user.id),
+      getCategories(user.id),
+      hasBankFeed(user.id),
+      // What editing a charge asks about: the days it is already recorded on
+      // this month.
+      getRecordedThisMonth(user.id),
+      searchParams,
+    ]);
 
   // Only worth asking where there is a statement to read it out of. Without
   // one the transactions are the user's own typing, and they already know
@@ -31,6 +45,9 @@ export default async function RecurringPage() {
       templates={templates}
       categories={categories}
       proposals={proposals}
+      recordedThisMonth={recordedThisMonth}
+      // A planned row's "Edit the charge" lands here with the editor open.
+      initialEditId={params.edit}
     />
   );
 }

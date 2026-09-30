@@ -1,4 +1,10 @@
-import { formatShortDate } from "./constants";
+import {
+  formatDayMonth,
+  formatShortDate,
+  isoDateInAppTimeZone,
+} from "./constants";
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 import { displayNameForRecurringTemplate } from "./investment-positions";
 import type { QuoteSource } from "./market/quote-source";
 import {
@@ -6,7 +12,10 @@ import {
   getRecurringOccurrenceDates,
 } from "./recurrence";
 import { isQuotePriced, resolveRecurringAmount } from "./recurring-shares";
-import type { RecurringTemplateWithCategory } from "./types/database";
+import type {
+  CategoryType,
+  RecurringTemplateWithCategory,
+} from "./types/database";
 
 export interface RecurringOccurrencePlan {
   templateId: string;
@@ -33,7 +42,12 @@ export interface RecurringOccurrenceUpdate extends RecurringOccurrencePlan {
 
 export interface ApplyRecurringPlan {
   toCreate: RecurringOccurrencePlan[];
-  /** Differences that are somebody's decision, so somebody has to confirm. */
+  /**
+   * Differences that come from the user editing a template. Written only
+   * when that edit is saved, and only to rows still dated ahead — see
+   * `followTemplateUpdates`. A run that merely fills the month leaves them
+   * alone, because a row the user corrected by hand also shows up here.
+   */
   toUpdate: RecurringOccurrenceUpdate[];
   /**
    * Quote-priced occurrences, already applied, still dated ahead. Nobody
@@ -80,6 +94,53 @@ export function recurringOccurrenceKey(
   return `${templateId}:${occurredOn}`;
 }
 
+/**
+ * Whether an applied occurrence is still a forecast rather than something
+ * that happened. Today counts as ahead: the day is not over, and a charge
+ * falling on it may not have left yet. What repricing goes by.
+ */
+export function isForecast(occurredOn: string, today: string): boolean {
+  return occurredOn >= today;
+}
+
+/**
+ * Whether an occurrence is still planned: its day has not come.
+ *
+ * A planned occurrence is never stored. The ledger draws it from the template
+ * — which is why editing a charge changes every month ahead at once — and it
+ * becomes a transaction on its day. Today is not planned: today's charges are
+ * written this morning.
+ */
+export function isPlanned(occurredOn: string, today: string): boolean {
+  return occurredOn > today;
+}
+
+/** The day a template was set up, in the app's calendar. */
+export function templateSetUpOn(
+  template: Pick<RecurringTemplateWithCategory, "created_at">,
+): string {
+  return template.created_at
+    ? isoDateInAppTimeZone(template.created_at)
+    : "0000-01-01";
+}
+
+/**
+ * Whether filling may write an occurrence: its day has come, and it is not
+ * from before the template existed.
+ *
+ * The second half is what lets a fill look back past the month boundary
+ * safely. A charge set up on the 20th with the 5th as its day has not been
+ * missed on the 5th — it did not exist — so it starts with the next 5th, and
+ * writing this month's is something the user asks for when they create it.
+ */
+export function isDue(
+  template: Pick<RecurringTemplateWithCategory, "created_at">,
+  occurredOn: string,
+  today: string,
+): boolean {
+  return occurredOn <= today && occurredOn >= templateSetUpOn(template);
+}
+
 export interface ApplyRecurringDeps {
   /** Prices for share-priced templates. */
   quotes: QuoteSource;
@@ -90,6 +151,12 @@ export interface ApplyRecurringDeps {
    * one that has already happened.
    */
   today: string;
+  /**
+   * When set, only occurrences due by this day are planned for creation — see
+   * `isDue`. What filling a month passes; comparing rows against their
+   * template does not, because a row can exist for any day.
+   */
+  dueBy?: string;
 }
 
 /**
@@ -144,19 +211,18 @@ function* monthOccurrences(
  * How many rows a month's templates are waiting to write — without pricing
  * a single one of them.
  *
- * The home screen's action row needs a count, not a plan. Asking
- * `buildApplyRecurringPlan` for one costs a live market quote per priced
- * occurrence, on the landing page, every load — and the answer it gives back
- * is *worse*: a quote that cannot be fetched makes that occurrence vanish
- * from `toCreate` entirely, so a reader with a broken network is told fewer
- * charges are waiting than actually are. Nothing about whether a template
- * has written its row this month depends on what the row would say.
+ * The month fills itself every time the app opens, so the question "is
+ * anything missing?" is asked on nearly every visit and answered "no" on
+ * nearly all of them. Asking `buildApplyRecurringPlan` instead costs a live
+ * market quote per priced occurrence to reach that same "no". Nothing about
+ * whether a template has written its row this month depends on what the row
+ * would say, so the plan is only built once this says there is something to
+ * write.
  *
  * Deliberately only `toCreate`'s count. `toUpdate` is a genuine comparison
  * of amounts and notes against what is already recorded, which cannot be
- * answered without resolving those amounts; it is also not what the action
- * row claims. See `applyRecurringPlanCounts` for the badge that does count
- * both, from a plan that has already been built for other reasons.
+ * answered without resolving those amounts, and filling a month never
+ * writes it anyway.
  */
 export function countRecurringToApply(
   templates: readonly RecurringTemplateWithCategory[],
@@ -164,9 +230,18 @@ export function countRecurringToApply(
   year: number,
   month: number,
   skippedKeys: ReadonlySet<string> = new Set<string>(),
+  dueBy?: string,
 ): number {
   let waiting = 0;
-  for (const { key } of monthOccurrences(templates, year, month, skippedKeys)) {
+  for (const { template, occurredOn, key } of monthOccurrences(
+    templates,
+    year,
+    month,
+    skippedKeys,
+  )) {
+    if (dueBy !== undefined && !isDue(template, occurredOn, dueBy)) {
+      continue;
+    }
     if (!existingKeys.has(key)) {
       waiting += 1;
     }
@@ -175,23 +250,23 @@ export function countRecurringToApply(
 }
 
 /**
- * What a month's templates call for, sorted by who owes a decision.
+ * What a month's templates call for, sorted by what may write it.
+ *
+ * `toCreate` is written by anything that fills the month. The other two are
+ * differences against rows already written, and they are kept apart because
+ * they have different causes.
  *
  * A quote-priced occurrence differs from a freshly built plan almost always —
- * an ETF ticks between two page loads — and routing that into `toUpdate`
- * turns a pending badge into wallpaper: the user is asked, every day, to
- * rubber-stamp the market. So a difference is only theirs to confirm when
- * they are the reason for it.
+ * an ETF ticks between two page loads — and nobody made that happen. While
+ * its date is still ahead the amount is a forecast, so it is corrected on its
+ * own: `toReprice`. Once its date has passed it is settled: that much money
+ * moved at that price, and a later quote does not change what happened. A
+ * reclassification still reaches it, without touching the settled figure.
  *
- * Once its date has passed, a quote-priced occurrence is settled: that much
- * money moved at that price, and a later quote does not change what happened.
- * A reclassification still needs applying, and does so without touching the
- * settled figure. While the date is still ahead the amount is a forecast, so
- * it is corrected on its own — `toReprice`.
- *
- * A fixed amount is different in kind. It only moves because the template was
- * edited, and whether that reaches occurrences already applied is genuinely
- * the user's call.
+ * A fixed amount is different in kind. It only differs because someone edited
+ * something — the template, or the row itself — so `toUpdate` is only written
+ * when the template is saved, and then only ahead of today. See
+ * `followTemplateUpdates`.
  */
 export async function buildApplyRecurringPlan(
   templates: RecurringTemplateWithCategory[],
@@ -200,7 +275,7 @@ export async function buildApplyRecurringPlan(
   month: number,
   deps: ApplyRecurringDeps,
 ): Promise<ApplyRecurringPlan> {
-  const { quotes, skippedKeys = new Set<string>(), today } = deps;
+  const { quotes, skippedKeys = new Set<string>(), today, dueBy } = deps;
   const toCreate: RecurringOccurrencePlan[] = [];
   const toUpdate: RecurringOccurrenceUpdate[] = [];
   const toReprice: RecurringOccurrenceUpdate[] = [];
@@ -211,6 +286,17 @@ export async function buildApplyRecurringPlan(
     month,
     skippedKeys,
   )) {
+    const existing = existingByKey.get(key);
+
+    // Not written and not due: nothing to plan, and nothing worth a quote.
+    if (
+      !existing &&
+      dueBy !== undefined &&
+      !isDue(template, occurredOn, dueBy)
+    ) {
+      continue;
+    }
+
     const pricedFromQuote = isQuotePriced({
       pricing_type: template.pricing_type ?? "fixed",
       share_count: template.share_count,
@@ -250,8 +336,6 @@ export async function buildApplyRecurringPlan(
       pricedFromQuote,
     };
 
-    const existing = existingByKey.get(key);
-
     if (!existing) {
       toCreate.push(plan);
       continue;
@@ -274,7 +358,7 @@ export async function buildApplyRecurringPlan(
       continue;
     }
 
-    if (occurredOn >= today) {
+    if (isForecast(occurredOn, today)) {
       toReprice.push(update);
       continue;
     }
@@ -294,15 +378,224 @@ export async function buildApplyRecurringPlan(
 }
 
 /**
- * How much of a plan is waiting on the user — what a pending badge counts.
- * Repricing is deliberately absent: it is not waiting on anyone.
+ * Every occurrence a month's templates call for, skips taken out, as keys.
+ *
+ * What a charge's rows still dated ahead are checked against once the charge
+ * itself has changed: a row whose key is not in here is a forecast the charge
+ * no longer makes.
  */
-export function applyRecurringPlanCounts(plan: ApplyRecurringPlan): {
-  creates: number;
-  updates: number;
-} {
-  return {
-    creates: plan.toCreate.length,
-    updates: plan.toUpdate.length,
-  };
+export function calledForKeys(
+  templates: readonly RecurringTemplateWithCategory[],
+  year: number,
+  month: number,
+  skippedKeys: ReadonlySet<string> = new Set<string>(),
+): Set<string> {
+  const keys = new Set<string>();
+  for (const { key } of monthOccurrences(templates, year, month, skippedKeys)) {
+    keys.add(key);
+  }
+  return keys;
+}
+
+/**
+ * What saving a template changes about the rows it has already written, from
+ * a given day on.
+ *
+ * `from` is the user's answer to "apply this change to…": tomorrow for
+ * upcoming only, the first of the month for this month too. Rows dated
+ * before it are what happened and keep what they say — raising the rent today
+ * does not rewrite what was paid on the 5th unless the user says it should.
+ * Rows from it on follow the template: amount, note and category.
+ *
+ * Only ever run when the template is saved. `toUpdate` also holds rows the
+ * user corrected by hand, and nothing else may undo those.
+ */
+export function followTemplateUpdates(
+  plan: ApplyRecurringPlan,
+  templateId: string,
+  from: string,
+): RecurringOccurrenceUpdate[] {
+  return [...plan.toUpdate, ...plan.toReprice].filter(
+    (update) => update.templateId === templateId && update.occurredOn >= from,
+  );
+}
+
+/**
+ * Occurrences a template calls for on days that have come, today included,
+ * that nothing has written — what a rescheduled or re-activated template would
+ * otherwise backfill.
+ *
+ * Moving the rent from the 5th to the 10th on the 12th means next month's
+ * rent is on the 10th, not that this month had a second one. The month's
+ * occurrence already happened on the old day, so the new schedule's days that
+ * have come are recorded as skipped rather than left for the month to fill.
+ * Switching a charge back on means the same: it starts again from tomorrow.
+ * A brand-new template needs none of this — `isDue` already starts it on the
+ * day it was set up.
+ */
+export function pastOccurrencesNotWritten(
+  templates: readonly RecurringTemplateWithCategory[],
+  existingKeys: ReadonlySet<string>,
+  year: number,
+  month: number,
+  skippedKeys: ReadonlySet<string>,
+  today: string,
+): { templateId: string; occurredOn: string }[] {
+  const out: { templateId: string; occurredOn: string }[] = [];
+  for (const { template, occurredOn, key } of monthOccurrences(
+    templates,
+    year,
+    month,
+    skippedKeys,
+  )) {
+    if (occurredOn <= today && !existingKeys.has(key)) {
+      out.push({ templateId: template.id, occurredOn });
+    }
+  }
+  return out;
+}
+
+/** One row a template wrote, as much of it as deciding its fate needs. */
+export interface TemplateRow {
+  id: string;
+  templateId: string;
+  occurredOn: string;
+}
+
+/**
+ * Rows dated after today that their template no longer calls for — after it
+ * was switched off, deleted, or moved to another day. Only rows written ahead
+ * before occurrences were planned rather than stored can be in this state.
+ *
+ * Rows dated today or earlier are never in here, whatever the template now
+ * says: they are the record of what happened. And the caller decides when to ask. A row the
+ * user moved to another date is not called for either, which is why this is
+ * only consulted when the template's own schedule, or its existence, changed.
+ */
+export function forecastsNoLongerCalledFor(
+  rows: readonly TemplateRow[],
+  calledFor: ReadonlySet<string>,
+  today: string,
+): string[] {
+  return rows
+    .filter(
+      (row) =>
+        isPlanned(row.occurredOn, today) &&
+        !calledFor.has(recurringOccurrenceKey(row.templateId, row.occurredOn)),
+    )
+    .map((row) => row.id);
+}
+
+/** One occurrence still to come, drawn from its template rather than stored. */
+export interface PlannedOccurrence {
+  templateId: string;
+  occurredOn: string;
+  /** `templateId:YYYY-MM-DD`, the same key a written row and a skip use. */
+  key: string;
+  name: string;
+  /**
+   * The template's stored amount. A share-priced one is kept at the latest
+   * quote by the daily run, and the row written on the day is priced then.
+   */
+  amount: number;
+  note: string | null;
+  categoryId: string;
+  categoryName: string;
+  categoryType: CategoryType;
+  categoryIcon: string | null;
+}
+
+/**
+ * What a month's charges still have to bring, for the ledger to draw as
+ * planned rows.
+ *
+ * Every occurrence dated after today that is neither written, skipped nor
+ * already fulfilled by another row. Nothing here is stored — which is the
+ * whole reason a future month can show its charges without anything having
+ * to be kept in step when a charge changes.
+ */
+export function plannedOccurrences(
+  templates: readonly RecurringTemplateWithCategory[],
+  existingKeys: ReadonlySet<string>,
+  year: number,
+  month: number,
+  skippedKeys: ReadonlySet<string>,
+  today: string,
+): PlannedOccurrence[] {
+  const planned: PlannedOccurrence[] = [];
+  for (const { template, occurredOn, key } of monthOccurrences(
+    templates,
+    year,
+    month,
+    skippedKeys,
+  )) {
+    if (!isPlanned(occurredOn, today) || existingKeys.has(key)) {
+      continue;
+    }
+    planned.push({
+      templateId: template.id,
+      occurredOn,
+      key,
+      name: displayNameForRecurringTemplate(template),
+      amount: Number(template.amount),
+      note: template.description?.trim() || null,
+      categoryId: template.category_id,
+      categoryName: template.categories.name,
+      categoryType: template.categories.type,
+      categoryIcon: template.categories.icon,
+    });
+  }
+  return planned.sort((a, b) => a.occurredOn.localeCompare(b.occurredOn));
+}
+
+/**
+ * The days a schedule falls on this month that are already behind today —
+ * what "include this month" would record for a charge being created.
+ */
+export function scheduleDatesBefore(
+  schedule: {
+    recurrence: RecurringTemplateWithCategory["recurrence"];
+    day_of_month: number | null;
+    day_of_week: number | null;
+    month_of_year: number | null;
+    starts_on: string | null;
+    ends_on: string | null;
+  },
+  year: number,
+  month: number,
+  today: string,
+): string[] {
+  return filterDatesBySchedule(
+    getRecurringOccurrenceDates(
+      {
+        recurrence: schedule.recurrence ?? "monthly",
+        day_of_month: schedule.day_of_month,
+        day_of_week: schedule.day_of_week,
+        month_of_year: schedule.month_of_year,
+      },
+      year,
+      month,
+    ),
+    schedule.starts_on,
+    schedule.ends_on,
+  ).filter((date) => date < today);
+}
+
+/**
+ * A few occurrence dates as one phrase — "5 Sep", "5 Sep and 12 Sep",
+ * "5 Sep, 12 Sep and 19 Sep" — for the sentences that say which rows a
+ * choice would touch.
+ */
+export function formatOccurrenceDates(
+  dates: readonly string[],
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  const labels = dates.map((date) => formatDayMonth(date, locale));
+  if (labels.length <= 1) {
+    return labels[0] ?? "";
+  }
+  return translator(locale)("list.conjunction", {
+    first: labels.slice(0, -1).join(", "),
+    last: labels[labels.length - 1]!,
+  });
 }

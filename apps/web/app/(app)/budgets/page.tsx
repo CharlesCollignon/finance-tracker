@@ -29,10 +29,11 @@ import { buildForwardProjection, buildRunway } from "@finance/core/projection";
 import { ProjectionCard } from "@/components/finance/ProjectionCard";
 import { CashAccountsCard } from "@/components/finance/CashAccountsCard";
 import { MonthCloseCard } from "@/components/finance/MonthCloseCard";
+import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
+import { shouldInviteToConnect } from "@/lib/bank/invite";
 import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
 import { getMonthCloseOverview } from "@/lib/queries/month-close";
 import { getBankAccounts, readCashBalance } from "@/lib/queries/bank-balance";
-import { bankFeedConfigured } from "@/lib/bank/client";
 import { BudgetsView } from "./BudgetsView";
 import { ICON } from "@/lib/icon-scale";
 import { getLocale, getT } from "@/lib/locale";
@@ -70,7 +71,9 @@ export default async function BudgetsPage() {
     getMonthlySummary(user.id, current.year, current.month),
     getRecurringTemplates(user.id),
     getSavingsReserve(user.id),
-    bankFeedConfigured() ? readCashBalance(user.id, today) : null,
+    // Null for anyone with no spending accounts picked, which is everyone
+    // who has not connected a bank.
+    readCashBalance(user.id, today),
     getMonthCloseOverview(user.id, today),
     getFlags(),
   ]);
@@ -118,11 +121,11 @@ export default async function BudgetsPage() {
     locale: await getLocale(),
   });
   const runway = buildRunway(reserve, templates, current.year, current.month);
-  // Only asked of people who have connected a bank; on a deployment that has
-  // never seen one this costs nothing and shows nothing.
-  const bankAccounts = bankFeedConfigured()
-    ? await getBankAccounts(user.id)
-    : [];
+  // Empty for anyone who has not connected a bank, which shows nothing.
+  const [bankAccounts, bankInvite] = await Promise.all([
+    getBankAccounts(user.id),
+    shouldInviteToConnect(user.id, "plan"),
+  ]);
 
   return (
     <BudgetsView
@@ -141,6 +144,11 @@ export default async function BudgetsPage() {
               dead end that told people to close a month and then offered no
               way to. */}
           <CashAccountsCard accounts={bankAccounts} />
+
+          {/* Beside the close, because a connected bank is what makes it
+              happen on its own: the balance read for you, the month closed on
+              the reading day. */}
+          {bankInvite ? <ConnectBankInvite surface="plan" /> : null}
 
           {/* Still here when the statement cannot answer: a lapsed consent, a
               month the provider's window no longer covers, or no bank at all.

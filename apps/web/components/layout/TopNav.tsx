@@ -107,7 +107,7 @@ function QuickAddButton() {
   // names the surviving shortcut, and reads the platform so a Windows or
   // Linux reader is not told to press a key their keyboard does not have.
   const shortcut = isApplePlatform() ? "\u2318K" : "Ctrl K";
-  const label = t("common.addTransaction");
+  const label = t("add.open");
 
   return (
     <button

@@ -53,23 +53,23 @@ describe("translator", () => {
   it("selects the plural form from the count", () => {
     const t = translator("en");
     expect(t("push.monthOpen.pending", { count: 1 })).toBe(
-      "1 recurring item is ready to apply.",
+      "It starts with 1 charge. See what's left.",
     );
     expect(t("push.monthOpen.pending", { count: 3 })).toBe(
-      "3 recurring items are ready to apply.",
+      "It starts with 3 charges. See what's left.",
     );
   });
 
   it("selects the French plural, zero included", () => {
     const t = translator("fr");
-    expect(t("push.monthOpen.pending", { count: 0 })).toBe(
-      "0 récurrent est prêt à être appliqué.",
+    expect(t("monthFill.added", { count: 0 })).toBe(
+      "0 charge ajoutée à ce mois",
     );
-    expect(t("push.monthOpen.pending", { count: 1 })).toBe(
-      "1 récurrent est prêt à être appliqué.",
+    expect(t("monthFill.added", { count: 1 })).toBe(
+      "1 charge ajoutée à ce mois",
     );
-    expect(t("push.monthOpen.pending", { count: 2 })).toBe(
-      "2 récurrents sont prêts à être appliqués.",
+    expect(t("monthFill.added", { count: 2 })).toBe(
+      "2 charges ajoutées à ce mois",
     );
   });
 

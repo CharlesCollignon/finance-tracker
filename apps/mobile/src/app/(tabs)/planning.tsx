@@ -38,6 +38,8 @@ import { ProgressRing } from "@/components/charts";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
+import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
+import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { ProjectionCard } from "@/components/ProjectionCard";
 import { MonthCloseHistoryCard } from "@/components/MonthCloseHistoryCard";
@@ -257,6 +259,7 @@ export default function PlanningScreen() {
         closes,
       };
     }, [user?.id, current.year, current.month, dataVersion]);
+  const { bank } = useBankState();
 
   async function handleAddBudget() {
     setPending(true);
@@ -431,6 +434,10 @@ export default function PlanningScreen() {
               />
             </Card>
           ) : null}
+
+          {/* Beside the closes, because a connected bank is what closes
+              months without being asked. */}
+          <ConnectBankInvite surface="plan" bank={bank} />
 
           {closes ? (
             <MonthCloseHistoryCard
