@@ -3,7 +3,7 @@ import {
   formatShortDate,
   isoDateInAppTimeZone,
 } from "./constants";
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { displayNameForRecurringTemplate } from "./investment-positions";
 import type { QuoteSource } from "./market/quote-source";
@@ -588,7 +588,7 @@ export function scheduleDatesBefore(
  */
 export function formatOccurrenceDates(
   dates: readonly string[],
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const labels = dates.map((date) => formatDayMonth(date, locale));
   if (labels.length <= 1) {

@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * Selecting several transactions at once.
@@ -146,7 +146,7 @@ export function pruneSelection(
  */
 export function describeSelectionDeletion(
   summary: SelectionSummary,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string | null {
   if (summary.count === 0) {
     return null;
@@ -310,7 +310,7 @@ export function describeSelectionMove(
   effect: MoveEffect,
   summary: SelectionSummary,
   targetName: string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string | null {
   if (summary.count === 0) {
     return null;

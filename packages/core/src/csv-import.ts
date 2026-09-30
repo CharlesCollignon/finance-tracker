@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * Reading a bank statement export.
@@ -462,7 +462,7 @@ export function buildImportRows(
     existing = [],
     guessCategory,
     expenseSign = "negative",
-    locale = DEFAULT_LOCALE,
+    locale = FALLBACK_LOCALE,
   } = options;
   const t = translator(locale);
 

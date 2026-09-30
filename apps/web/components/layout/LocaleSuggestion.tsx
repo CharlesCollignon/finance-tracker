@@ -9,21 +9,21 @@ import { MICRO } from "@/lib/type-scale";
 import { cn } from "@/lib/utils";
 
 /**
- * "You seem to be in France — read Pluclair in French?"
+ * "Read Pluclair in English?" — for a browser that would rather.
  *
- * Renders nothing almost always: only when the edge reports a country, that
- * country suggests a language, that language is not the one on screen, and
- * the reader has not already answered. `suggestLocale` holds that rule and is
- * unit-tested; this file holds only the asking.
+ * Everyone starts in French. This renders only when the browser prefers a
+ * language we have that is not the one on screen, and the reader has not
+ * already answered. `suggestLocale` holds that rule and is unit-tested; this
+ * file holds only the asking.
  *
  * Two things about the copy. The offer is written in the language being
  * offered and the refusal in the language in use, so whichever of the two the
  * reader actually knows, the half of the banner that matters to them is
  * legible — a French offer with a French "no thanks" is no use to somebody
  * who cannot read either. And it is a question with two buttons rather than a
- * notice about a switch that has already happened: a country is a guess about
- * a person, and an app that acts on that guess can land somebody in a
- * language they cannot read well enough to change back.
+ * notice about a switch that has already happened: a browser setting is a
+ * guess about a person, and an app that acts on that guess can land somebody
+ * in a language they did not pick.
  *
  * Plain forms, no client component. Both answers are a server round trip
  * anyway — the language lives in a cookie and a table, and most of the
@@ -31,8 +31,8 @@ import { cn } from "@/lib/utils";
  * JavaScript to do here, and the banner works before any of it has loaded.
  */
 export async function LocaleSuggestion() {
-  const { locale, country, asked } = await getLocaleContext();
-  const suggested = suggestLocale({ current: locale, country, asked });
+  const { locale, preferred, asked } = await getLocaleContext();
+  const suggested = suggestLocale({ current: locale, preferred, asked });
 
   if (!suggested) {
     return null;

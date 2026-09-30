@@ -11,7 +11,7 @@ import { getCurrentMonth } from "@finance/core/constants";
 import { monthColumnValue } from "@finance/core/month-close";
 import type { CategoryReadRow, Database } from "@finance/core/types/database";
 import { createClient } from "@/lib/supabase/server";
-import { DEFAULT_LOCALE, parseLocale, type Locale } from "@finance/core/i18n/locale";
+import { FALLBACK_LOCALE, parseLocale, type Locale } from "@finance/core/i18n/locale";
 
 type Client = SupabaseClient<Database>;
 
@@ -148,7 +148,7 @@ function toStored(row: CategoryReadRow): StoredCategoryRead {
     model: row.model,
     promptVersion: row.prompt_version,
     trimmed: row.trimmed,
-    locale: parseLocale(row.locale) ?? DEFAULT_LOCALE,
+    locale: parseLocale(row.locale) ?? FALLBACK_LOCALE,
   };
 }
 

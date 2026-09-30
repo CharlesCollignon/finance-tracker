@@ -25,7 +25,7 @@
  * system message, and this is the rule whose failure is expensive.
  */
 
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { factLines, missingLines } from "./month-read-prompt";
 import { shortlistForWrapper } from "./etf-shortlist";
 import { INVESTMENT_WALLET_LABELS } from "./investments";
@@ -303,7 +303,7 @@ const PROMPT = { en: EN, fr: FR } as const;
 export function buildWalletReadPrompt(
   facts: LookThroughFacts,
   lookThrough: LookThrough,
-  { money, locale = DEFAULT_LOCALE, wallets }: BuildWalletPromptOptions,
+  { money, locale = FALLBACK_LOCALE, wallets }: BuildWalletPromptOptions,
 ): WalletReadRequest {
   const text = PROMPT[locale];
 

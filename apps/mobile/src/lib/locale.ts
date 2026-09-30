@@ -1,48 +1,26 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Localization from "expo-localization";
-import {
-  DEFAULT_LOCALE,
-  parseLocale,
-  type Locale,
-} from "@finance/core/i18n/locale";
+import { parseLocale, type Locale } from "@finance/core/i18n/locale";
 
 import { supabase } from "@/lib/supabase";
 
 const STORAGE_KEY = "locale";
 
 /**
- * What language the phone is set to, as far as the app has one for.
+ * The first language the phone is set to that the app has a catalogue for,
+ * or null when it has none of them.
  *
- * `getLocales()` returns the device's preferences in order, so the first tag
- * the app has a catalogue for is the honest answer — somebody whose phone
- * lists Breton then French should be read to in French rather than in
- * English. Regioned tags come back here (`fr-FR`), which `parseLocale`
- * reduces to the language.
+ * Not the language the app starts in — that is French until the reader
+ * chooses (`DEFAULT_LOCALE`) — but what the banner reads to decide whether to
+ * offer English (`suggestLocale`). `getLocales()` returns the device's
+ * preferences in order, and regioned tags (`fr-FR`) reduce to the language.
  */
-export function deviceLocale(): Locale {
+export function devicePreferredLocale(): Locale | null {
   for (const locale of Localization.getLocales()) {
     const parsed =
       parseLocale(locale.languageCode) ?? parseLocale(locale.languageTag);
     if (parsed) {
       return parsed;
-    }
-  }
-  return DEFAULT_LOCALE;
-}
-
-/**
- * The country the phone thinks it is in.
- *
- * Read from the device's region setting rather than from an IP address,
- * because there is no edge in front of a phone to ask. It is the weaker
- * signal of the two — a region is a setting somebody chose once, where an IP
- * is where they are now — but it is the one available, and it only ever feeds
- * a banner the reader can decline.
- */
-export function deviceCountry(): string | null {
-  for (const locale of Localization.getLocales()) {
-    if (locale.regionCode) {
-      return locale.regionCode;
     }
   }
   return null;
@@ -52,8 +30,8 @@ export function deviceCountry(): string | null {
  * The stored choice, or null if there has never been one.
  *
  * Null rather than the default, because "never chosen" and "chose English"
- * are different states: the first should follow the phone's language, and the
- * second should not.
+ * are different states: the first starts in French, and the second should
+ * stay in English.
  */
 export async function loadLocale(): Promise<Locale | null> {
   try {

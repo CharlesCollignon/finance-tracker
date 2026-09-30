@@ -7,21 +7,20 @@ import { suggestLocale } from "@finance/core/i18n/locale-suggestion";
 import { translator } from "@finance/core/i18n/t";
 
 import { Text } from "@/components/ui/Text";
-import { deviceCountry } from "@/lib/locale";
+import { devicePreferredLocale } from "@/lib/locale";
 import { useLocaleContext } from "@/providers/LocaleProvider";
 
 const ASKED_KEY = "locale.asked";
 
 /**
- * "Lire Pluclair en français ?"
+ * "Read Pluclair in English?"
  *
- * The phone's half of the language suggestion. The rule is the shared,
- * unit-tested `suggestLocale`; the only difference from the web is where the
- * country comes from. There is no edge in front of a phone to report an IP
- * country, so this reads the device's region setting instead — the weaker
- * signal of the two, which is another reason it asks rather than switches.
+ * The phone's half of the language suggestion. Everyone starts in French; a
+ * phone set to English is offered English, once. The rule is the shared,
+ * unit-tested `suggestLocale`; the only difference from the web is that the
+ * preference comes from the device's languages rather than `Accept-Language`.
  *
- * Renders nothing almost always: only when `enabled`, the region suggests a
+ * Renders nothing almost always: only when `enabled`, the phone prefers a
  * language that is not the one on screen, and the question has not been put
  * before.
  *
@@ -68,7 +67,11 @@ export function LocaleSuggestion({ enabled }: { enabled: boolean }) {
   const suggested =
     asked === null || !enabled
       ? null
-      : suggestLocale({ current: locale, country: deviceCountry(), asked });
+      : suggestLocale({
+          current: locale,
+          preferred: devicePreferredLocale(),
+          asked,
+        });
 
   if (!suggested) {
     return null;

@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * What a PEA is, as opposed to just another wallet id.
@@ -114,7 +114,7 @@ export function buildPeaStatus(
 /** One plain-language line about the five-year clock. */
 export function peaMaturityHint(
   status: PeaStatus,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string | null {
   if (!status.openedOn || !status.maturesOn) {
     return null;

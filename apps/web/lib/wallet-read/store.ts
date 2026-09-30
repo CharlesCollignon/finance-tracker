@@ -12,7 +12,7 @@ import { getCurrentMonth } from "@finance/core/constants";
 import type { Database, WalletReadRow } from "@finance/core/types/database";
 import { createClient } from "@/lib/supabase/server";
 import {
-  DEFAULT_LOCALE,
+  FALLBACK_LOCALE,
   parseLocale,
   type Locale,
 } from "@finance/core/i18n/locale";
@@ -85,7 +85,7 @@ function toStored(row: WalletReadRow): StoredWalletRead {
     model: row.model,
     promptVersion: row.prompt_version,
     dropped: row.dropped,
-    locale: parseLocale(row.locale) ?? DEFAULT_LOCALE,
+    locale: parseLocale(row.locale) ?? FALLBACK_LOCALE,
     tally: {
       // A tally from a month that has passed is not this month's tally. The
       // database resets it on the next reservation, but a page rendered

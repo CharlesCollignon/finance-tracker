@@ -26,7 +26,7 @@
  * a network or a model.
  */
 
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import type {
   FactPack,
@@ -119,7 +119,7 @@ export function categorySense(type: CategoryType): FactSense {
 }
 
 export function buildCategoryFacts(input: CategoryFactsInput): CategoryFacts {
-  const locale = input.locale ?? DEFAULT_LOCALE;
+  const locale = input.locale ?? FALLBACK_LOCALE;
   const t = translator(locale);
   const sense = categorySense(input.type);
 

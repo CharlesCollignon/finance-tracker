@@ -1,5 +1,5 @@
 import { calendarNames, monthLong, monthShort } from "./i18n/calendar-names";
-import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 
 export const DEFAULT_CATEGORIES = [
@@ -78,7 +78,7 @@ export function savingsRatePercent(
 
 export function formatEuro(
   amount: number,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   return new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: "currency",
@@ -101,7 +101,7 @@ export function formatEuro(
  */
 export function formatPercent(
   value: number,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   return new Intl.NumberFormat(INTL_LOCALES[locale], {
     maximumFractionDigits: 1,
@@ -125,7 +125,7 @@ export const CURRENCY_LABELS: Record<CurrencyCode, string> = {
 export function formatCurrency(
   amount: number,
   currency: CurrencyCode = DEFAULT_CURRENCY,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   return new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: "currency",
@@ -189,7 +189,7 @@ export function todayIsoLocal(): string {
 export function formatMonthShortYear(
   year: number,
   month: number,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   return `${monthShort(month, locale)} ${year}`;
 }
@@ -198,7 +198,7 @@ export function formatMonthShortYear(
 export function formatMonthCompact(
   year: number,
   month: number,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   return `${monthShort(month, locale)} ${String(year).slice(-2)}`;
 }
@@ -206,7 +206,7 @@ export function formatMonthCompact(
 /** "Tuesday 1 September" — the unhurried form, for a calendar heading. */
 export function formatLongDate(
   isoDate: string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const [year, month, day] = isoDate.split("-").map(Number);
   const weekday =
@@ -227,7 +227,7 @@ export function formatLongDate(
 export function relativeDayLabel(
   isoDate: string,
   fallback: (isoDate: string, locale: Locale) => string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const t = translator(locale);
   const today = todayIsoLocal();
@@ -248,7 +248,7 @@ export function relativeDayLabel(
 
 export function formatShortDate(
   isoDate: string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const [year, month, day] = isoDate.split("-").map(Number);
   const weekday =
@@ -261,7 +261,7 @@ export function formatShortDate(
 /** Compact day + month for toggles (e.g. "12 Aug"). */
 export function formatDayMonth(
   isoDate: string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const [, month, day] = isoDate.split("-").map(Number);
   return `${day} ${monthShort(month!, locale)}`;
@@ -312,7 +312,7 @@ export function shiftMonth(
 export function formatMonthLabel(
   year: number,
   month: number,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   return `${monthLong(month, locale)} ${year}`;
 }
@@ -328,7 +328,7 @@ export function budgetViewOptionLabel(
   mode: BudgetViewMode,
   year: number,
   month: number,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const t = translator(locale);
   if (mode === "month_end") {
@@ -344,7 +344,7 @@ export function budgetViewOptionLabel(
 
 export function budgetViewHint(
   view: BudgetViewMode,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const t = translator(locale);
   return view === "month_end"

@@ -7,7 +7,7 @@ import {
 } from "@finance/core/category-selection";
 import { getCurrentMonth } from "@finance/core/constants";
 import {
-  DEFAULT_LOCALE,
+  FALLBACK_LOCALE,
   parseLocale,
   type Locale,
 } from "@finance/core/i18n/locale";
@@ -156,7 +156,7 @@ function toStored(row: CategorySelectionRow): StoredCategorySelection | null {
   return {
     selection: { picks },
     digest: row.findings_digest,
-    locale: parseLocale(payload.locale) ?? DEFAULT_LOCALE,
+    locale: parseLocale(payload.locale) ?? FALLBACK_LOCALE,
   };
 }
 

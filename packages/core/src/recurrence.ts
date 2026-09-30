@@ -1,6 +1,6 @@
 import { formatMonthShortYear } from "./constants";
 import { dayOfWeekLong, monthLong } from "./i18n/calendar-names";
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 
 export type Recurrence = "monthly" | "weekly" | "yearly";
@@ -14,7 +14,7 @@ export type Recurrence = "monthly" | "weekly" | "yearly";
  * needed all three updated in step or the app would have spoken two at once.
  */
 export function dayOfWeekLabels(
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): Record<number, string> {
   return Object.fromEntries(
     [1, 2, 3, 4, 5, 6, 7].map((day) => [day, dayOfWeekLong(day, locale)]),
@@ -23,7 +23,7 @@ export function dayOfWeekLabels(
 
 /** The twelve months a yearly template can fall in, keyed 1-12. */
 export function monthLabels(
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): Record<number, string> {
   return Object.fromEntries(
     Array.from({ length: 12 }, (_, index) => [
@@ -75,7 +75,7 @@ function formatIsoMonthYear(isoDate: string, locale: Locale): string {
 export function formatScheduleWindow(
   startsOn: string | null | undefined,
   endsOn: string | null | undefined,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string | null {
   if (!startsOn && !endsOn) {
     return null;
@@ -94,7 +94,7 @@ export function formatRecurrenceSchedule(
     starts_on?: string | null;
     ends_on?: string | null;
   },
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const t = translator(locale);
 

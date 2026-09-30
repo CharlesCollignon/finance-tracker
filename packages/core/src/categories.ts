@@ -1,5 +1,5 @@
 import { categoryTypeLabels } from "./category-styles";
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import type { Category, CategoryType } from "./types/database";
 
@@ -21,7 +21,7 @@ export function groupCategoriesByType(
   options?: { excludeTypes?: CategoryType[]; locale?: Locale },
 ): CategoryGroup[] {
   const exclude = new Set(options?.excludeTypes ?? []);
-  const labels = categoryTypeLabels(options?.locale ?? DEFAULT_LOCALE);
+  const labels = categoryTypeLabels(options?.locale ?? FALLBACK_LOCALE);
 
   return CATEGORY_TYPE_ORDER.filter((type) => !exclude.has(type))
     .map((type) => ({
@@ -34,7 +34,7 @@ export function groupCategoriesByType(
 
 export function formatCategoryOptionLabel(
   category: Category,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   if (
     category.type === "investment" &&

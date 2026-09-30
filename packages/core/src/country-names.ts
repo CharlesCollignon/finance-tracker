@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
 
 /**
  * Naming the countries a look-through resolves to.
@@ -60,7 +60,7 @@ function namesFor(locale: Locale): Intl.DisplayNames | null {
 
 /** Whether any country answers to this code. */
 function isACountry(code: string): boolean {
-  const names = namesFor(DEFAULT_LOCALE);
+  const names = namesFor(FALLBACK_LOCALE);
   if (names === null) {
     // No region data to check against. Assume it is a country: a flag that
     // should not be there is a smaller fault than every flag missing.
@@ -85,7 +85,7 @@ function isACountry(code: string): boolean {
  */
 export function countryName(
   code: string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const trimmed = code.trim();
   if (!ALPHA_2.test(trimmed)) {

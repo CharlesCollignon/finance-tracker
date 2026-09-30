@@ -36,7 +36,7 @@
 
 import { categorySense } from "./category-facts";
 import type { CategoryFinding } from "./category-findings";
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import type { MonthFact } from "./month-facts";
 import type { MonthReadRequest } from "./month-read";
@@ -180,7 +180,7 @@ const PROMPT = { en: EN, fr: FR } as const;
 
 export function buildCategorySelectionPrompt(
   findings: readonly CategoryFinding[],
-  { money, locale = DEFAULT_LOCALE }: BuildCategorySelectionPromptOptions,
+  { money, locale = FALLBACK_LOCALE }: BuildCategorySelectionPromptOptions,
 ): MonthReadRequest {
   const text = PROMPT[locale];
 

@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { formatMonthCompact } from "./constants";
 import type { TransactionWithCategory } from "./types/database";
@@ -359,7 +359,7 @@ export function buildWalletOverview(
 export function buildTotalInvestedSeries(
   transactions: TransactionWithCategory[],
   settings: InvestmentWalletSettings,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): MonthlyWalletPoint[] {
   const initial = initialTotals(settings);
   const contributionSeries = buildCumulativeMonthlySeries(transactions);

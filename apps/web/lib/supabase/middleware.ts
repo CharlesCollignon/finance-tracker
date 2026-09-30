@@ -2,9 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { parseRememberedMonth, MONTH_COOKIE } from "@finance/core/month-memory";
 import {
-  COUNTRY_COOKIE,
+  DEFAULT_LOCALE,
   LOCALE_COOKIE,
-  negotiateLocale,
   parseLocale,
 } from "@finance/core/i18n/locale";
 import { getSupabaseEnv } from "@/lib/supabase/env";
@@ -51,37 +50,20 @@ function restoredMonthUrl(request: NextRequest): URL | null {
 }
 
 /**
- * The language and the country, decided before anything renders.
+ * The language, decided before anything renders: French for anyone the
+ * cookie does not already speak for.
  *
- * Both are written onto the response as cookies rather than passed on as
- * headers, because both have to outlive this request: the language so that
- * `Accept-Language` is negotiated once rather than on every navigation, and
- * the country because `x-vercel-ip-country` exists only on the platform and a
- * cookie is a cleaner absence than a header that means "no geo" in production
- * and "not deployed" on a laptop.
- *
- * `request.geo` would have been the obvious place to read the country from,
- * and was removed in Next 15 — the platform header is now the only source.
- *
- * A locale cookie that is already there is left alone. It is either the
- * browser's negotiated guess from an earlier request or, for somebody signed
- * in, the choice pushed into it at sign-in, and re-deciding it here would
- * quietly overrule a reader who has chosen English in a French browser.
+ * Not negotiated from `Accept-Language`: Pluclair is for French users, so it
+ * starts in French whatever the browser says, and a browser that prefers
+ * English is offered it by the banner instead (`suggestLocale`). A cookie
+ * that is already there is left alone — it is the reader's own choice, pushed
+ * into it at sign-in and whenever it changes.
  */
 function stampLocale(request: NextRequest, response: NextResponse): void {
   if (!parseLocale(request.cookies.get(LOCALE_COOKIE)?.value)) {
-    response.cookies.set(
-      LOCALE_COOKIE,
-      negotiateLocale(request.headers.get("accept-language")),
-      { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" },
-    );
-  }
-
-  const country = request.headers.get("x-vercel-ip-country");
-  if (country) {
-    response.cookies.set(COUNTRY_COOKIE, country, {
+    response.cookies.set(LOCALE_COOKIE, DEFAULT_LOCALE, {
       path: "/",
-      maxAge: 60 * 60 * 24,
+      maxAge: 60 * 60 * 24 * 365,
       sameSite: "lax",
     });
   }

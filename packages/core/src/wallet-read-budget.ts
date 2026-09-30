@@ -23,7 +23,7 @@
  */
 
 import { describePullAge } from "./bank-pull";
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { factsDigest } from "./month-facts";
 import {
@@ -124,7 +124,7 @@ export function decideWalletReadWrite({
 /** A refusal in words, for a button's label or a route's answer. */
 export function explainWalletReadRefusal(
   refusal: WalletWriteRefusal,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const t = translator(locale);
   switch (refusal.reason) {

@@ -1,10 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_LOCALE,
+  FALLBACK_LOCALE,
   isLocale,
-  localeForCountry,
-  negotiateLocale,
   parseLocale,
+  preferredLocale,
 } from "./locale";
+
+describe("the defaults", () => {
+  it("speaks French to anyone who has not chosen, and falls back on English", () => {
+    expect(DEFAULT_LOCALE).toBe("fr");
+    expect(FALLBACK_LOCALE).toBe("en");
+  });
+});
 
 describe("isLocale", () => {
   it("accepts the two supported languages", () => {
@@ -43,83 +51,41 @@ describe("parseLocale", () => {
   });
 });
 
-describe("negotiateLocale", () => {
-  it("falls back to English when the header is absent or empty", () => {
-    expect(negotiateLocale(undefined)).toBe("en");
-    expect(negotiateLocale(null)).toBe("en");
-    expect(negotiateLocale("   ")).toBe("en");
+describe("preferredLocale", () => {
+  it("prefers nothing when the browser says nothing", () => {
+    expect(preferredLocale(undefined)).toBeNull();
+    expect(preferredLocale(null)).toBeNull();
+    expect(preferredLocale("   ")).toBeNull();
   });
 
-  it("takes the only language on offer", () => {
-    expect(negotiateLocale("fr")).toBe("fr");
+  it("reads a single supported language", () => {
+    expect(preferredLocale("fr")).toBe("fr");
+    expect(preferredLocale("en-US")).toBe("en");
   });
 
-  it("prefers the higher quality rather than the earlier entry", () => {
-    expect(negotiateLocale("en;q=0.4,fr;q=0.9")).toBe("fr");
-    expect(negotiateLocale("fr;q=0.4,en;q=0.9")).toBe("en");
+  it("follows the quality weights over the order", () => {
+    expect(preferredLocale("en;q=0.4,fr;q=0.9")).toBe("fr");
+    expect(preferredLocale("fr;q=0.4,en;q=0.9")).toBe("en");
   });
 
-  it("keeps the sent order when qualities tie", () => {
-    expect(negotiateLocale("fr,en")).toBe("fr");
-    expect(negotiateLocale("en,fr")).toBe("en");
+  it("keeps the order sent when the weights are equal", () => {
+    expect(preferredLocale("fr,en")).toBe("fr");
+    expect(preferredLocale("en,fr")).toBe("en");
   });
 
-  it("treats a missing quality as the strongest preference", () => {
-    // The real header Chrome sends with French first.
-    expect(negotiateLocale("fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7")).toBe("fr");
+  it("skips languages it has no catalogue for", () => {
+    expect(preferredLocale("de-DE,de;q=0.9,fr;q=0.8")).toBe("fr");
+    expect(preferredLocale("de-DE,de;q=0.9")).toBeNull();
   });
 
-  it("skips languages it does not have", () => {
-    expect(negotiateLocale("de-DE,de;q=0.9,fr;q=0.8")).toBe("fr");
+  it("treats q=0 as refused and a malformed weight as unreadable", () => {
+    expect(preferredLocale("fr;q=0,en;q=0.1")).toBe("en");
+    expect(preferredLocale("fr;q=banana,en")).toBe("en");
   });
 
-  it("honours q=0 as a refusal rather than a weak preference", () => {
-    expect(negotiateLocale("fr;q=0,en;q=0.1")).toBe("en");
-  });
-
-  it("ignores an entry whose quality cannot be read", () => {
-    expect(negotiateLocale("fr;q=banana,en")).toBe("en");
-  });
-
-  it("answers a wildcard with the default", () => {
-    expect(negotiateLocale("*")).toBe("en");
-    expect(negotiateLocale("de,*;q=0.5")).toBe("en");
-  });
-
-  it("does not let an unsupported language outrank the wildcard's default", () => {
-    expect(negotiateLocale("fr;q=0.9,*;q=0.1")).toBe("fr");
-  });
-});
-
-describe("localeForCountry", () => {
-  it("suggests French for a country where French is official", () => {
-    expect(localeForCountry("FR")).toBe("fr");
-    expect(localeForCountry("BE")).toBe("fr");
-    expect(localeForCountry("SN")).toBe("fr");
-  });
-
-  it("does not care about case or padding", () => {
-    expect(localeForCountry(" fr ")).toBe("fr");
-  });
-
-  it("suggests nothing for a country it has no opinion about", () => {
-    // Not "en": a country that does not suggest French suggests nothing, so
-    // an English reader in Germany is never asked to confirm English.
-    expect(localeForCountry("DE")).toBeNull();
-    expect(localeForCountry("GB")).toBeNull();
-    expect(localeForCountry("US")).toBeNull();
-  });
-
-  it("suggests nothing for the Maghreb, where French is read but not official", () => {
-    expect(localeForCountry("MA")).toBeNull();
-    expect(localeForCountry("TN")).toBeNull();
-    expect(localeForCountry("DZ")).toBeNull();
-  });
-
-  it("suggests nothing for a value that is not a country code", () => {
-    expect(localeForCountry("FRA")).toBeNull();
-    expect(localeForCountry("")).toBeNull();
-    expect(localeForCountry(null)).toBeNull();
-    expect(localeForCountry(undefined)).toBeNull();
+  it("reads a wildcard as asking for nothing in particular", () => {
+    expect(preferredLocale("*")).toBeNull();
+    expect(preferredLocale("de,*;q=0.5")).toBeNull();
+    expect(preferredLocale("en;q=0.9,*;q=0.1")).toBe("en");
   });
 });

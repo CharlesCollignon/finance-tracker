@@ -14,7 +14,7 @@
  */
 
 import type { Key } from "./i18n/t";
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import type { BearingFacts, FactFamily } from "./bearing-facts";
 import { formatFact } from "./month-facts";
 import { BEARING_TILES, type TileId, type TileSeries } from "./bearing-tiles";
@@ -137,7 +137,7 @@ export interface BearingCard {
 export function buildBearingCards(
   facts: BearingFacts,
   formatMoney: (amount: number) => string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): BearingCard[] {
   const cards: BearingCard[] = [];
 

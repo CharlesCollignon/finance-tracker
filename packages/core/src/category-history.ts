@@ -1,5 +1,5 @@
 import { monthShort } from "./i18n/calendar-names";
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 /**
  * How one category has moved, month by month.
  *
@@ -123,7 +123,7 @@ export function buildCategoryHistory(
   transactions: readonly TransactionWithCategory[],
   year: number,
   month: number,
-  { months = 12, locale = DEFAULT_LOCALE }: BuildCategoryHistoryOptions = {},
+  { months = 12, locale = FALLBACK_LOCALE }: BuildCategoryHistoryOptions = {},
 ): CategoryHistory[] {
   const window = monthKeysEndingAt(year, month, months);
   const inWindow = new Set(window.map((entry) => entry.key));

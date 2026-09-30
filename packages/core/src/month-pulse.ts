@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * How the month is actually going, in the one figure people open the app for.
@@ -169,7 +169,7 @@ function standingOf(free: number | null, cap: number | null): MonthStanding {
  */
 export function pulseHeadline(
   pulse: MonthPulse,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const t = translator(locale);
   if (pulse.onHand === null) {
@@ -185,7 +185,7 @@ export function pulseHeadline(
  */
 export function pulseExplanation(
   pulse: MonthPulse,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const t = translator(locale);
   if (pulse.onHand === null) {

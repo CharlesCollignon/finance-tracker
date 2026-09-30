@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * Whether the bank itself may be asked right now.
@@ -210,7 +210,7 @@ export function unattendedRemaining(
 export function describePullAge(
   lastPulledAt: string | null,
   now: string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const t = translator(locale);
 

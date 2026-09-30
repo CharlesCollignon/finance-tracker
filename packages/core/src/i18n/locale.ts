@@ -1,14 +1,17 @@
 /**
  * Which language the app is speaking.
  *
- * One locale, carried four ways, because the four askers have different
+ * One locale, carried three ways, because the three askers have different
  * powers. The database is the only one a cron job can read, the cookie is the
- * only one the proxy can read without a query, the phone's storage is the only
- * one that works on a plane, and `Accept-Language` is the only one that
- * answers before the user has ever chosen. Precedence runs in that order of
- * authority rather than that order of availability: a stored choice beats a
- * cookie beats a header, so switching language once is not undone by the next
- * request arriving from a browser that still says otherwise.
+ * only one the proxy can read without a query, and the phone's storage is the
+ * only one that works on a plane. A stored choice beats a cookie, so
+ * switching language once is not undone by the next request.
+ *
+ * Pluclair is for French users, about French banks, so French is what anyone
+ * gets until they choose otherwise — whatever their browser or phone is set
+ * to. English stays available, offered once to a reader whose device prefers
+ * it (`./locale-suggestion`), and it is the catalogue a missing string falls
+ * back to.
  *
  * The locale is a language, not a place and not a currency. `APP_TIME_ZONE`
  * stays Europe/Paris whatever this says, because the ledger's "today" is a
@@ -21,13 +24,18 @@ export type Locale = "en" | "fr";
 export const LOCALES: readonly Locale[] = ["en", "fr"];
 
 /**
- * The locale used when nothing else answers.
- *
- * English rather than French despite an EUR/France-centric domain: it is the
- * language the app was written in, so it is the one guaranteed to have a
- * message for every key. A missing French string falls back to it.
+ * The locale used when nobody has chosen: every new visitor, every account
+ * without a stored choice, every notification composed for one.
  */
-export const DEFAULT_LOCALE: Locale = "en";
+export const DEFAULT_LOCALE: Locale = "fr";
+
+/**
+ * The catalogue a missing string is looked up in.
+ *
+ * English, not the default, because it is the language the app is written
+ * in: the one guaranteed to have a message for every key.
+ */
+export const FALLBACK_LOCALE: Locale = "en";
 
 /**
  * Where the web app keeps it.
@@ -38,18 +46,7 @@ export const DEFAULT_LOCALE: Locale = "en";
  */
 export const LOCALE_COOKIE = "pluclair-locale";
 
-/**
- * The country the edge thinks the request came from, stamped by the proxy.
- *
- * A cookie rather than a header read at render time because `x-vercel-ip-country`
- * only exists on the platform: locally, and on any other host, there is
- * nothing to read, and a cookie the proxy either set or did not is a cleaner
- * absence than a header that means "no geo" in production and "not deployed"
- * on a laptop.
- */
-export const COUNTRY_COOKIE = "pluclair-country";
-
-/** Set once the reader has answered the "read this in French?" banner, either way. */
+/** Set once the reader has answered the "read this in English?" banner, either way. */
 export const LOCALE_ASKED_COOKIE = "pluclair-locale-asked";
 
 /**
@@ -112,7 +109,12 @@ interface RankedTag {
 }
 
 /**
- * The best supported locale an `Accept-Language` header asks for.
+ * The best supported locale an `Accept-Language` header asks for, or null
+ * when it asks for none of them.
+ *
+ * Null rather than the default, because this no longer picks the language on
+ * screen — French does, until the reader chooses — and only says whether the
+ * browser would rather have another one we can offer.
  *
  * Hand-rolled rather than pulled from `negotiator` and
  * `@formatjs/intl-localematcher`, which is what the Next.js guide reaches for.
@@ -124,11 +126,11 @@ interface RankedTag {
  * dropped rather than ranked last; a malformed `q` is dropped too, since a
  * header we cannot read is not a preference we should guess at.
  */
-export function negotiateLocale(
+export function preferredLocale(
   acceptLanguage: string | null | undefined,
-): Locale {
+): Locale | null {
   if (typeof acceptLanguage !== "string" || acceptLanguage.trim() === "") {
-    return DEFAULT_LOCALE;
+    return null;
   }
 
   const ranked: RankedTag[] = [];
@@ -161,9 +163,10 @@ export function negotiateLocale(
   );
 
   for (const { tag } of ranked) {
-    // A wildcard says "anything will do", which is what the default is for.
+    // A wildcard says "anything will do", which asks for nothing in
+    // particular.
     if (tag === "*") {
-      return DEFAULT_LOCALE;
+      return null;
     }
     const locale = parseLocale(tag);
     if (locale) {
@@ -171,72 +174,6 @@ export function negotiateLocale(
     }
   }
 
-  return DEFAULT_LOCALE;
+  return null;
 }
 
-/**
- * The language a country suggests, or null for a country that suggests nothing.
- *
- * Crude by nature — a country is not a language, and plenty of people read
- * Pluclair in a language their address does not predict. That is exactly why
- * nothing acts on this without asking: the return value feeds a banner the
- * reader can decline, never a switch. The browser's own `Accept-Language` is
- * the better signal and wins by default; the country only gets a say when it
- * disagrees with what is already on screen.
- *
- * Listed are the countries where French is an official language. The Maghreb
- * is deliberately absent: French is widely read there but Arabic is the
- * official language, and offering the wrong one is worse than offering none.
- */
-const FRENCH_SPEAKING_COUNTRIES = new Set([
-  // Europe
-  "FR",
-  "BE",
-  "CH",
-  "LU",
-  "MC",
-  // West and Central Africa
-  "BF",
-  "BI",
-  "BJ",
-  "CD",
-  "CF",
-  "CG",
-  "CI",
-  "CM",
-  "GA",
-  "GN",
-  "GQ",
-  "KM",
-  "ML",
-  "NE",
-  "SN",
-  "TD",
-  "TG",
-  // Indian Ocean and the Caribbean
-  "DJ",
-  "HT",
-  "MG",
-  "RE",
-  "SC",
-  "GP",
-  "MQ",
-  "GF",
-  "NC",
-  "PF",
-]);
-
-export function localeForCountry(
-  country: string | null | undefined,
-): Locale | null {
-  if (typeof country !== "string") {
-    return null;
-  }
-
-  const code = country.trim().toUpperCase();
-  if (code.length !== 2) {
-    return null;
-  }
-
-  return FRENCH_SPEAKING_COUNTRIES.has(code) ? "fr" : null;
-}

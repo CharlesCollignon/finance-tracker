@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "./locale";
+import { FALLBACK_LOCALE, type Locale } from "./locale";
 import { messages, type Messages } from "./messages";
 
 /**
@@ -124,9 +124,9 @@ function interpolate(template: string, vars: Vars | undefined): string {
 function resolve(locale: Locale, key: string, vars: Vars | undefined): string {
   const message =
     lookup(messages[locale], key) ??
-    (locale === DEFAULT_LOCALE
+    (locale === FALLBACK_LOCALE
       ? undefined
-      : lookup(messages[DEFAULT_LOCALE], key));
+      : lookup(messages[FALLBACK_LOCALE], key));
 
   if (message === undefined) {
     return key;

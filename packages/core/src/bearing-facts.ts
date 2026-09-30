@@ -21,7 +21,7 @@
  * which is exactly the amount of judgement a fact pack should contain.
  */
 
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 
 import type { AllocationSummary } from "./allocation";
@@ -131,7 +131,7 @@ export function buildBearingFacts(
     inboxPending,
   } = input;
 
-  const t = translator(input.locale ?? DEFAULT_LOCALE);
+  const t = translator(input.locale ?? FALLBACK_LOCALE);
   const facts: BearingFact[] = [];
   const missing: MissingFact[] = [];
 

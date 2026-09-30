@@ -46,7 +46,7 @@ import {
   templateOccurrenceDates,
 } from "./budget";
 import { formatMonthLabel, lastDayIsoOfMonth } from "./constants";
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { MIN_CLOSES_FOR_CAP, type CloseHistorySummary } from "./month-close";
 import type { RecurringTemplateWithCategory } from "./types/database";
@@ -262,7 +262,7 @@ export function buildForwardProjection(
     months = 12,
     onHand,
     closes,
-    locale = DEFAULT_LOCALE,
+    locale = FALLBACK_LOCALE,
   } = input;
 
   const unrecorded = measuredUnrecorded(closes);
@@ -566,7 +566,7 @@ export function buildRunway(
 /** "4.2 months of committed costs", or null when there is nothing to say. */
 export function formatRunway(
   runway: Runway,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string | null {
   if (runway.months === null || runway.reserve <= 0) {
     return null;

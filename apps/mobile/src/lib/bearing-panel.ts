@@ -40,7 +40,7 @@ import type {
   Category,
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
-import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "@finance/core/i18n/locale";
 
 import {
   countPendingFeedItems,
@@ -294,7 +294,7 @@ async function monthFigures(
   year: number,
   month: number,
   view: BudgetViewMode,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): Promise<MonthFigures> {
   const today = todayIsoLocal();
   const current = getCurrentMonth();

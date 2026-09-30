@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * Turning what the bank says into what the ledger holds.
@@ -138,7 +138,7 @@ export function toCandidate(
   tx: BankTransaction,
   options: ToCandidateOptions = {},
 ): BankFeedCandidate | null {
-  const locale = options.locale ?? DEFAULT_LOCALE;
+  const locale = options.locale ?? FALLBACK_LOCALE;
   const occurredOn = tx.bookingDate ?? tx.valueDate ?? tx.transactionDate;
   if (!occurredOn || !/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)) {
     return null;
@@ -530,7 +530,7 @@ export function indexCategoriesByName(
 /** Exposed for the review UI, which shows why a row is waiting. */
 export function describeReviewReason(
   why: ReviewReason,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const t = translator(locale);
   switch (why) {

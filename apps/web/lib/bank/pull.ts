@@ -13,7 +13,7 @@ import {
 import { todayIsoLocal } from "@finance/core/constants";
 import type { Database } from "@finance/core/types/database";
 import { getBankConnection } from "@/lib/bank/client";
-import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "@finance/core/i18n/locale";
 
 type Client = SupabaseClient<Database>;
 
@@ -127,7 +127,7 @@ export async function readPullState(
 export async function readPullFreshness(
   supabase: Client,
   userId: string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): Promise<PullFreshness> {
   const state = await readPullState(supabase, userId);
   const now = new Date().toISOString();

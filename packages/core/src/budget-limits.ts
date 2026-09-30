@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import type { Budget, CategoryBreakdown } from "./types/database";
 
@@ -19,7 +19,7 @@ export function buildBudgetProgress(
   expenseBreakdown: CategoryBreakdown[],
   totalExpenses: number,
   categoryNames: Map<string, string>,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): BudgetProgress[] {
   const t = translator(locale);
 

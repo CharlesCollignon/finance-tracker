@@ -38,7 +38,7 @@
  */
 
 import type { CategoryFacts } from "./category-facts";
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import type { MonthReadRequest } from "./month-read";
 import { factLines, missingLines } from "./month-read-prompt";
 import type { CategoryType } from "./types/database";
@@ -388,7 +388,7 @@ export interface BuildCategoryPromptOptions {
  */
 export function buildCategoryReadPrompt(
   facts: CategoryFacts,
-  { money, locale = DEFAULT_LOCALE }: BuildCategoryPromptOptions,
+  { money, locale = FALLBACK_LOCALE }: BuildCategoryPromptOptions,
 ): MonthReadRequest {
   const text = PROMPT[locale];
 

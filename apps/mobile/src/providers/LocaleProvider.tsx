@@ -7,12 +7,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { type Locale } from "@finance/core/i18n/locale";
+import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
 import { translator, type Translate } from "@finance/core/i18n/t";
 
 import { useAuth } from "@/providers/AuthProvider";
 import {
-  deviceLocale,
   fetchStoredLocale,
   loadLocale,
   pushStoredLocale,
@@ -34,10 +33,11 @@ const LocaleContext = createContext<LocaleContextValue | null>(null);
  * the language is settled in three steps rather than one, in order of who
  * knows best.
  *
- *   1. The phone's own language, synchronously, so the very first frame is in
- *      a plausible language rather than in English while storage is read.
- *   2. The choice stored on this device, which beats the phone's setting —
- *      somebody with a French phone who asked for English meant it.
+ *   1. French, synchronously: Pluclair is for French users, so that is what
+ *      anyone gets until they choose. A phone set to English is offered
+ *      English by the banner (`LocaleSuggestion`), never switched to it.
+ *   2. The choice stored on this device, which beats the default — somebody
+ *      who asked for English meant it.
  *   3. The choice stored against the account, which beats both, because it is
  *      the one they made most recently on any device. This arrives last
  *      because it needs the network, and it is the only step that can be
@@ -50,7 +50,7 @@ const LocaleContext = createContext<LocaleContextValue | null>(null);
  */
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [locale, setLocaleState] = useState<Locale>(deviceLocale);
+  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
 
   useEffect(() => {
     void loadLocale().then((stored) => {

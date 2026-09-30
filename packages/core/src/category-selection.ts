@@ -36,7 +36,7 @@
 import { z } from "zod";
 
 import type { CategoryFinding } from "./category-findings";
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { fingerprint } from "./month-facts";
 import { visibleLength, writesAFigure, type MonthReadRefusal } from "./month-read";
@@ -174,7 +174,7 @@ const SCHEMA_WORDS: Record<Locale, { id: string; remark: string }> = {
  * Exported so the prompt and the adapter cannot drift apart. Counts and
  * lengths are deliberately absent: see `categorySelectionAnswerSchema`.
  */
-export function categorySelectionJsonSchema(locale: Locale = DEFAULT_LOCALE) {
+export function categorySelectionJsonSchema(locale: Locale = FALLBACK_LOCALE) {
   const words = SCHEMA_WORDS[locale];
   return {
     type: "json_schema",
@@ -251,7 +251,7 @@ export function findingsDigest(findings: readonly CategoryFinding[]): string {
 export function verifyCategorySelection(
   raw: unknown,
   findings: readonly CategoryFinding[],
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): CategorySelectionVerdict {
   const t = translator(locale);
   const parsed = categorySelectionAnswerSchema.safeParse(raw);

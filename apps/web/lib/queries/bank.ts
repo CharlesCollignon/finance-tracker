@@ -14,7 +14,7 @@ import {
   type RecurringProposal,
 } from "@finance/core/recurring-detection";
 import type { BankFeedItem, CategoryType } from "@finance/core/types/database";
-import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
 
 export interface PendingFeedRow {
@@ -33,7 +33,7 @@ export interface PendingFeedRow {
 /** Parses `review:<reason>` / `auto:<reason>` back out of `decided_by`. */
 function reasonOf(
   decidedBy: string | null,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const why = decidedBy?.startsWith("review:")
     ? (decidedBy.slice("review:".length) as ReviewReason)
@@ -45,7 +45,7 @@ function reasonOf(
 
 export async function getPendingFeedItems(
   userId: string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): Promise<PendingFeedRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase

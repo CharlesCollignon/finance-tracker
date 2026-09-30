@@ -47,7 +47,7 @@
 import { z } from "zod";
 
 import type { CategoryFacts } from "./category-facts";
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { factIds } from "./month-facts";
 import {
@@ -190,7 +190,7 @@ const SCHEMA_WORDS: Record<Locale, { claim: string; basis: string }> = {
  * or `$ref` — strict-mode support for references is uneven across providers,
  * and this schema is small enough to inline.
  */
-export function categoryReadJsonSchema(locale: Locale = DEFAULT_LOCALE) {
+export function categoryReadJsonSchema(locale: Locale = FALLBACK_LOCALE) {
   const words = SCHEMA_WORDS[locale];
   return {
     type: "json_schema",
@@ -295,7 +295,7 @@ function normalise(answer: CategoryReadAnswer): CategoryReadAnswer {
 export function verifyCategoryRead(
   raw: unknown,
   facts: CategoryFacts,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): CategoryReadVerdict {
   const t = translator(locale);
   const parsed = categoryReadAnswerSchema.safeParse(raw);
@@ -418,7 +418,7 @@ export function renderCategoryRead(
   read: CategoryRead,
   facts: CategoryFacts,
   formatMoney: (amount: number) => string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): RenderedCategoryRead | null {
   const observations: RenderedClaim[] = [];
   for (const row of read.observations) {

@@ -31,7 +31,7 @@
 
 import { z } from "zod";
 
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { ETF_SHORTLIST, shortlistEntry } from "./etf-shortlist";
 import { INVESTMENT_WALLET_IDS } from "./investments";
@@ -136,7 +136,7 @@ const SCHEMA_WORDS: Record<
  * is read at the moment the field is written, which is exactly when a system
  * prompt three hundred lines up has stopped being persuasive.
  */
-export function walletReadJsonSchema(locale: Locale = DEFAULT_LOCALE) {
+export function walletReadJsonSchema(locale: Locale = FALLBACK_LOCALE) {
   const words = SCHEMA_WORDS[locale];
   return {
     type: "json_schema",
@@ -276,7 +276,7 @@ export type WalletReadVerdict =
 export function verifyWalletRead(
   raw: unknown,
   facts: LookThroughFacts,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): WalletReadVerdict {
   const t = translator(locale);
   const parsed = walletReadAnswerSchema.safeParse(raw);
@@ -514,7 +514,7 @@ export function renderWalletRead(
   read: WalletRead,
   facts: LookThroughFacts,
   formatMoney: (amount: number) => string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): RenderedWalletRead | null {
   const headline = factSegments(read.headline, facts, formatMoney, locale);
   if (!headline) {
@@ -589,7 +589,7 @@ export function targetFromWalletRead(read: WalletRead): TargetAllocation {
  */
 export function walletReadFooting(
   facts: LookThroughFacts,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string[] {
   const t = translator(locale);
   const lines = [t("walletRead.footing.notAdvice")];

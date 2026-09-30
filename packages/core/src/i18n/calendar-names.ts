@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "./locale";
+import { FALLBACK_LOCALE, type Locale } from "./locale";
 
 /**
  * Day and month names, in every language, still written out.
@@ -128,17 +128,17 @@ const FR: CalendarNames = {
 
 export const CALENDAR_NAMES: Record<Locale, CalendarNames> = { en: EN, fr: FR };
 
-export function calendarNames(locale: Locale = DEFAULT_LOCALE): CalendarNames {
-  return CALENDAR_NAMES[locale] ?? CALENDAR_NAMES[DEFAULT_LOCALE];
+export function calendarNames(locale: Locale = FALLBACK_LOCALE): CalendarNames {
+  return CALENDAR_NAMES[locale] ?? CALENDAR_NAMES[FALLBACK_LOCALE];
 }
 
 /** "September" from a 1-indexed month, the way every caller holds it. */
-export function monthLong(month: number, locale: Locale = DEFAULT_LOCALE): string {
+export function monthLong(month: number, locale: Locale = FALLBACK_LOCALE): string {
   return calendarNames(locale).monthLong[month - 1] ?? "";
 }
 
 /** "Sep" from a 1-indexed month. */
-export function monthShort(month: number, locale: Locale = DEFAULT_LOCALE): string {
+export function monthShort(month: number, locale: Locale = FALLBACK_LOCALE): string {
   return calendarNames(locale).monthShort[month - 1] ?? "";
 }
 
@@ -148,7 +148,7 @@ export function monthShort(month: number, locale: Locale = DEFAULT_LOCALE): stri
  * existing grid already assumes.
  */
 export function weekdayShortMondayFirst(
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): readonly string[] {
   const { weekdayShort } = calendarNames(locale);
   return [...weekdayShort.slice(1), weekdayShort[0]!];
@@ -163,7 +163,7 @@ export function weekdayShortMondayFirst(
  */
 export function dayOfWeekLong(
   isoDayOfWeek: number,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   return calendarNames(locale).weekdayLong[isoDayOfWeek % 7] ?? "";
 }

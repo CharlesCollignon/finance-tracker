@@ -19,7 +19,7 @@ import type { MonthCloseOverview } from "@/lib/queries";
 import { WEB_APP_URL } from "@/lib/env";
 import { supabase } from "@/lib/supabase";
 import {
-  DEFAULT_LOCALE,
+  FALLBACK_LOCALE,
   parseLocale,
   type Locale,
 } from "@finance/core/i18n/locale";
@@ -169,7 +169,7 @@ export async function getMonthRead(
       model: row.model,
       // Null on a row written before migration 028, which means English: the
       // app was English-only when it was written.
-      locale: parseLocale(row.locale) ?? DEFAULT_LOCALE,
+      locale: parseLocale(row.locale) ?? FALLBACK_LOCALE,
       freshness: describeReadFreshness({
         storedFacts,
         currentFacts,

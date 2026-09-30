@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * A month read: prose written by a model, figures written by the app.
@@ -216,7 +216,7 @@ const SCHEMA_WORDS: Record<
   },
 };
 
-export function monthReadJsonSchema(locale: Locale = DEFAULT_LOCALE) {
+export function monthReadJsonSchema(locale: Locale = FALLBACK_LOCALE) {
   const words = SCHEMA_WORDS[locale];
   return {
     type: "json_schema",
@@ -450,7 +450,7 @@ function normalise(answer: MonthReadAnswer): MonthReadAnswer {
 export function verifyMonthRead(
   raw: unknown,
   facts: MonthFacts,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): MonthReadVerdict {
   const t = translator(locale);
   const parsed = monthReadAnswerSchema.safeParse(raw);
@@ -597,7 +597,7 @@ export function factSegments(
   text: string,
   facts: FactPack,
   formatMoney: (amount: number) => string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): ReadSegment[] | null {
   const segments: ReadSegment[] = [];
   let cursor = 0;
@@ -656,7 +656,7 @@ export function renderMonthRead(
   read: MonthRead,
   facts: MonthFacts,
   formatMoney: (amount: number) => string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): RenderedRead | null {
   const headline = factSegments(read.headline, facts, formatMoney, locale);
   if (!headline) {

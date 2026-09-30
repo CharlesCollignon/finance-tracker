@@ -13,12 +13,13 @@ shared account, not an adviser looking at someone else's figures: every
 surface answers to one person's ledger, and `CONTEXT.md` states that scope as
 "one person's money".
 
-The audience is euro-zone individuals broadly. French banking is the case the
-app currently covers best — the `pea`, `cto`, `av` and `per` wallets are French
-wrappers, and the reading day exists because a deferred-debit card has not
-landed by the last of the month — but France is one case rather than the
-target. Future work should treat France-only assumptions as things to
-generalise, not as the shape of the product.
+The audience is individuals in France, with French banks, under French law
+(decided October 2026). The `pea`, `cto`, `av` and `per` wallets are French
+wrappers, the reading day exists because a deferred-debit card has not landed
+by the last of the month, bank sync goes to French banks, and the legal texts
+are written for French and EU law. France-specific assumptions are the shape of
+the product, not things to generalise; work aimed at other countries needs the
+owner's go-ahead first.
 
 The situation is monthly and deliberate. The user sets what repeats once, each
 month fills itself in from it, they type the rest as it happens, and on their
@@ -121,7 +122,11 @@ see `LEGAL_DRAFT` in `components/marketing/legal-copy.ts`).
   counted in `bank_pulls`), and the refresh cron gives every connected user a
   share of one 40-second budget inside its 60-second run, stalest first; whoever
   does not fit is read on the next run.
-- Every user-facing string goes through the `en` and `fr` catalogues in
+- French by default: everyone starts in French whatever their browser says
+  (`DEFAULT_LOCALE`), and English is the back-up — offered once to a browser
+  that prefers it, chosen any time from the profile, and the catalogue a
+  missing string falls back to (`FALLBACK_LOCALE`). Every user-facing string
+  goes through the `fr` and `en` catalogues in
   `packages/core/src/i18n/messages/`. Findings and other computed prose carry an
   i18n key and its parameters, never a sentence, so wording belongs to the
   client drawing it in the reader's language.

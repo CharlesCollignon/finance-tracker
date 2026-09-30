@@ -2,41 +2,33 @@ import { describe, expect, it } from "vitest";
 import { suggestLocale } from "./locale-suggestion";
 
 describe("suggestLocale", () => {
-  it("offers French to an English reader in France", () => {
-    expect(suggestLocale({ current: "en", country: "FR", asked: false })).toBe(
-      "fr",
+  it("offers English to a reader in French whose device prefers English", () => {
+    expect(suggestLocale({ current: "fr", preferred: "en", asked: false })).toBe(
+      "en",
     );
   });
 
-  it("says nothing once the reader has answered", () => {
+  it("asks only once", () => {
     expect(
-      suggestLocale({ current: "en", country: "FR", asked: true }),
+      suggestLocale({ current: "fr", preferred: "en", asked: true }),
     ).toBeNull();
   });
 
-  it("says nothing when the country agrees with the screen", () => {
+  it("says nothing when the device already has what is on screen", () => {
     expect(
-      suggestLocale({ current: "fr", country: "FR", asked: false }),
+      suggestLocale({ current: "fr", preferred: "fr", asked: false }),
+    ).toBeNull();
+    expect(
+      suggestLocale({ current: "en", preferred: "en", asked: false }),
     ).toBeNull();
   });
 
-  it("says nothing when the country suggests nothing", () => {
+  it("says nothing when the device prefers no language we have", () => {
     expect(
-      suggestLocale({ current: "en", country: "DE", asked: false }),
+      suggestLocale({ current: "fr", preferred: null, asked: false }),
     ).toBeNull();
     expect(
-      suggestLocale({ current: "fr", country: "DE", asked: false }),
-    ).toBeNull();
-  });
-
-  it("says nothing without a country to go on", () => {
-    // Which is every request off the platform, so this is the local
-    // development case as much as it is the missing-header one.
-    expect(
-      suggestLocale({ current: "en", country: null, asked: false }),
-    ).toBeNull();
-    expect(
-      suggestLocale({ current: "en", country: undefined, asked: false }),
+      suggestLocale({ current: "fr", preferred: undefined, asked: false }),
     ).toBeNull();
   });
 });

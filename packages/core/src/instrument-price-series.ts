@@ -12,7 +12,7 @@
  * of it, each thinned to something a sparkline can carry.
  */
 
-import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
 
 export type PriceRange = "1M" | "1Y" | "5Y" | "ALL";
 
@@ -262,7 +262,7 @@ export function buildPriceSeries(
  */
 export function formatSignedPercent(
   changePct: number | null,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   if (changePct === null) {
     return "—";

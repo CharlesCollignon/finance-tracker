@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * The figures a month read is allowed to refer to.
@@ -219,7 +219,7 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
     chargesUnconfirmed,
   } = input;
 
-  const t = translator(input.locale ?? DEFAULT_LOCALE);
+  const t = translator(input.locale ?? FALLBACK_LOCALE);
   const facts: MonthFact[] = [];
   const missing: MissingFact[] = [];
 
@@ -513,7 +513,7 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
 
   return {
     monthKey: `${year}-${String(month).padStart(2, "0")}`,
-    monthLabel: formatMonthLabel(year, month, input.locale ?? DEFAULT_LOCALE),
+    monthLabel: formatMonthLabel(year, month, input.locale ?? FALLBACK_LOCALE),
     state,
     coverage: inboxPending > 0 || close === null ? "partial" : "full",
     facts,
@@ -557,7 +557,7 @@ export function findFact<T extends MonthFact = MonthFact>(
 export function formatFact(
   fact: MonthFact,
   formatMoney: (amount: number) => string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   switch (fact.unit) {
     case "money":

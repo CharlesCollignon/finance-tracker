@@ -1,5 +1,5 @@
 import { weekdayShortMondayFirst } from "./i18n/calendar-names";
-import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { formatLongDate, relativeDayLabel } from "./constants";
 import type { TransactionWithCategory } from "./types/database";
@@ -106,7 +106,7 @@ export function buildCalendarWeeks(
  * this is only here to keep the calendar's own import surface unchanged.
  */
 export function weekdayLabels(
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): readonly string[] {
   return weekdayShortMondayFirst(locale);
 }
@@ -150,7 +150,7 @@ export function computeDayTotals(
 
 export function formatCalendarDate(
   isoDate: string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   return relativeDayLabel(isoDate, formatLongDate, locale);
 }
@@ -164,7 +164,7 @@ export function formatCalendarDate(
  */
 export function formatShortAmount(
   amount: number,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const rounded = Math.round(amount);
   const format = (value: number) =>

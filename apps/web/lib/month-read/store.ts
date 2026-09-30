@@ -11,7 +11,7 @@ import { monthColumnValue } from "@finance/core/month-close";
 import type { Database, MonthReadRow } from "@finance/core/types/database";
 import { createClient } from "@/lib/supabase/server";
 import {
-  DEFAULT_LOCALE,
+  FALLBACK_LOCALE,
   parseLocale,
   type Locale,
 } from "@finance/core/i18n/locale";
@@ -76,7 +76,7 @@ function toStored(row: MonthReadRow): StoredMonthRead {
     model: row.model,
     promptVersion: row.prompt_version,
     trimmed: row.trimmed,
-    locale: parseLocale(row.locale) ?? DEFAULT_LOCALE,
+    locale: parseLocale(row.locale) ?? FALLBACK_LOCALE,
     tally: {
       writes: row.writes,
       refused: row.refused,

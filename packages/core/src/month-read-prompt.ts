@@ -31,7 +31,7 @@ import {
   type MonthFact,
   type MonthFacts,
 } from "./month-facts";
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import type { MonthReadRequest } from "./month-read";
 
 export const MONTH_READ_PROMPT_VERSION = 3;
@@ -444,7 +444,7 @@ export interface BuildPromptOptions {
 
 export function buildMonthReadPrompt(
   facts: MonthFacts,
-  { money, locale = DEFAULT_LOCALE }: BuildPromptOptions,
+  { money, locale = FALLBACK_LOCALE }: BuildPromptOptions,
 ): MonthReadRequest {
   const provisional = facts.state === "in-progress";
   const text = PROMPT[locale];

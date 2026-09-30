@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "../i18n/locale";
+import { FALLBACK_LOCALE, INTL_LOCALES, type Locale } from "../i18n/locale";
 import {
   applyMonthlyRates,
   buildPriceSeries,
@@ -75,7 +75,7 @@ export async function fetchInstrumentQuoteInEur(
 export function formatMoney(
   amount: number,
   currency: string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   return new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: "currency",

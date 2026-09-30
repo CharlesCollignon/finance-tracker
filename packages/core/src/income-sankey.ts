@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { ALLOCATION_COLORS } from "./category-styles";
 import { investedForSavingsRate } from "./constants";
@@ -92,7 +92,7 @@ function sortLeavesByValueDesc(
  */
 export function buildIncomeSankey(
   summary: MonthlySummary,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): IncomeSankeyGraph | null {
   if (summary.income <= 0) {
     return null;

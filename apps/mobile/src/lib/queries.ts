@@ -10,7 +10,7 @@ import {
   type MonthlyTrendPoint,
 } from "@finance/core/monthly-trend";
 
-import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
+import { FALLBACK_LOCALE, type Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
 import {
   bankMerchantKey,
@@ -1484,7 +1484,7 @@ export interface PendingFeedRow {
 /** Parses `review:<reason>` back out of `decided_by`. */
 function reasonOf(
   decidedBy: string | null,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): string {
   const why = decidedBy?.startsWith("review:")
     ? (decidedBy.slice("review:".length) as ReviewReason)
@@ -1496,7 +1496,7 @@ function reasonOf(
 
 export async function getPendingFeedItems(
   userId: string,
-  locale: Locale = DEFAULT_LOCALE,
+  locale: Locale = FALLBACK_LOCALE,
 ): Promise<PendingFeedRow[]> {
   const { data, error } = await supabase
     .from("bank_feed_items")
