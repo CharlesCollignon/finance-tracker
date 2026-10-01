@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import type { Db } from "./client";
 import { isMissingSchema } from "./schema";
+import { dbError } from "./errors";
 
 /**
  * Confirming, refusing and undoing a fulfilment, for both apps.
@@ -93,7 +94,7 @@ export async function fulfilOccurrence(
     if (error.code === "23505") {
       return { error: "actions.movementTaken" };
     }
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   // The month fills itself from its charges, so this occurrence may already
@@ -107,7 +108,7 @@ export async function fulfilOccurrence(
     .eq("occurred_on", parsed.data.occurredOn);
 
   if (duplicateError) {
-    return { error: duplicateError.message };
+    return { error: dbError(duplicateError) };
   }
 
   // A planned item counts in the month it was planned for: a payment whose
@@ -135,7 +136,7 @@ export async function fulfilOccurrence(
     return {
       error: isMissingSchema(moveError)
         ? "actions.cashDateSetup"
-        : moveError.message,
+        : dbError(moveError),
     };
   }
 
@@ -180,7 +181,7 @@ export async function moveBackEarlyIncome(
     .eq("user_id", userId)
     .eq("transaction_id", transactionId);
   if (unlinkError && !isMissingSchema(unlinkError)) {
-    return { error: unlinkError.message };
+    return { error: dbError(unlinkError) };
   }
 
   const { error } = await db
@@ -189,7 +190,7 @@ export async function moveBackEarlyIncome(
     .eq("id", transactionId)
     .eq("user_id", userId);
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   return {
@@ -231,7 +232,7 @@ export async function refuseFulfilment(
   );
 
   if (error) {
-    return { error: isMissingSchema(error) ? SETUP_MESSAGE : error.message };
+    return { error: isMissingSchema(error) ? SETUP_MESSAGE : dbError(error) };
   }
 
   return { success: true, message: "actions.pairingDismissed" };
@@ -269,7 +270,7 @@ export async function undoFulfilment(
     .eq("occurred_on", occurredOn);
 
   if (error) {
-    return { error: isMissingSchema(error) ? SETUP_MESSAGE : error.message };
+    return { error: isMissingSchema(error) ? SETUP_MESSAGE : dbError(error) };
   }
 
   if (fulfilment?.transaction_id) {

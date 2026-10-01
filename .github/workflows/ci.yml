@@ -80,6 +80,9 @@ jobs:
       - name: Test (packages/core)
         run: pnpm --filter @finance/core test
 
+      - name: Test (packages/data)
+        run: pnpm --filter @finance/data test
+
       # apps/web has tests too, and until now nothing ran them. The
       # marketing sample's arithmetic test passed locally only because
       # pnpm's hoisted layout puts vitest on the path from anywhere — the

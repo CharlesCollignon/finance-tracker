@@ -11,6 +11,7 @@ import type { z } from "zod";
 
 import type { Db } from "./client";
 import { skipOccurrences, skipWhatTemplatesWrote } from "./recurring-apply";
+import { dbError } from "./errors";
 
 /**
  * Writing transactions, for both apps.
@@ -55,7 +56,7 @@ export async function createTransaction(
     note: parsed.data.note ?? null,
   });
 
-  return error ? { error: error.message } : { success: true };
+  return error ? { error: dbError(error) } : { success: true };
 }
 
 export async function updateTransaction(
@@ -104,7 +105,7 @@ export async function updateTransaction(
     .eq("id", parsed.data.id)
     .eq("user_id", userId);
 
-  return error ? { error: error.message } : { success: true };
+  return error ? { error: dbError(error) } : { success: true };
 }
 
 /**
@@ -131,7 +132,7 @@ export async function deleteTransaction(
     .eq("id", id)
     .eq("user_id", userId);
 
-  return error ? { error: error.message } : { success: true };
+  return error ? { error: dbError(error) } : { success: true };
 }
 
 /** Delete several at once, with the same skips as one at a time. */
@@ -157,7 +158,7 @@ export async function deleteTransactions(
     .in("id", parsed.data.ids);
 
   return error
-    ? { error: error.message }
+    ? { error: dbError(error) }
     : { success: true, deleted: count ?? parsed.data.ids.length };
 }
 
@@ -194,7 +195,7 @@ export async function moveTransactions(
     .maybeSingle();
 
   if (categoryError) {
-    return { error: categoryError.message };
+    return { error: dbError(categoryError) };
   }
   if (!category) {
     return { error: "actions.categoryMissing" };
@@ -207,7 +208,7 @@ export async function moveTransactions(
     .in("id", parsed.data.ids);
 
   return error
-    ? { error: error.message }
+    ? { error: dbError(error) }
     : { success: true, moved: count ?? parsed.data.ids.length };
 }
 
@@ -240,7 +241,7 @@ export async function importTransactions(
     .in("id", categoryIds);
 
   if (categoryError) {
-    return { error: categoryError.message };
+    return { error: dbError(categoryError) };
   }
   if ((owned?.length ?? 0) !== categoryIds.length) {
     return { error: "actions.oneCategoryMissing" };
@@ -257,6 +258,6 @@ export async function importTransactions(
   );
 
   return error
-    ? { error: error.message }
+    ? { error: dbError(error) }
     : { success: true, imported: parsed.data.rows.length };
 }

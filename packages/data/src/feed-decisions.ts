@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import type { Db } from "./client";
 import { ledgerRowsAround } from "./ledger-duplicates";
+import { dbError } from "./errors";
 
 /**
  * Deciding waiting bank rows, one at a time or a group at a time.
@@ -143,7 +144,7 @@ export async function fileFeedItems(
       // The category is refused for every row alike — the insert policy
       // checks it belongs to the user — so the first refusal ends the batch.
       if (imported + matched === 0) {
-        return { error: error?.message ?? "actions.couldNotAddEntry" };
+        return { error: error ? dbError(error) : "actions.couldNotAddEntry" };
       }
       break;
     }
@@ -198,7 +199,7 @@ export async function leaveOutFeedItems(
     .select("id");
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   const decidedIds = (data ?? []).map((row) => row.id as string);
@@ -321,7 +322,7 @@ export async function importFeedItem(
         .eq("id", itemId)
         .eq("user_id", userId);
       if (matchError) {
-        return { error: matchError.message };
+        return { error: dbError(matchError) };
       }
       return {
         success: true,
@@ -344,7 +345,7 @@ export async function importFeedItem(
     .single();
 
   if (error || !transaction) {
-    return { error: error?.message ?? "actions.couldNotAddEntry" };
+    return { error: error ? dbError(error) : "actions.couldNotAddEntry" };
   }
 
   const { error: fileError } = await db
@@ -358,7 +359,7 @@ export async function importFeedItem(
       .delete()
       .eq("id", transaction.id)
       .eq("user_id", userId);
-    return { error: fileError.message };
+    return { error: dbError(fileError) };
   }
 
   return { success: true, message: "recurringProposals.added" };
@@ -386,7 +387,7 @@ export async function ignoreFeedItem(
     .eq("status", "pending");
 
   return error
-    ? { error: error.message }
+    ? { error: dbError(error) }
     : { success: true, message: "actions.leftOut" };
 }
 
@@ -426,7 +427,7 @@ export async function undoFeedDecision(
     .eq("user_id", userId);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   if (item.transaction_id && !matchedExisting(item.decided_by)) {
@@ -437,7 +438,7 @@ export async function undoFeedDecision(
       .eq("user_id", userId);
 
     if (deleteError) {
-      return { error: deleteError.message };
+      return { error: dbError(deleteError) };
     }
   }
 

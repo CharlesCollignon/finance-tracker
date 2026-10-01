@@ -20,6 +20,7 @@ import { z } from "zod";
 
 import type { Db } from "./client";
 import { isMissingSchema } from "./schema";
+import { dbError } from "./errors";
 
 /**
  * The accounts a user keeps on Placements — their savings accounts
@@ -48,7 +49,7 @@ const rateSchema = z.number().finite().min(0).max(0.2);
 function failure(error: { code?: string; message: string }): {
   error: string;
 } {
-  return { error: isMissingSchema(error) ? SETUP : error.message };
+  return { error: isMissingSchema(error) ? SETUP : dbError(error) };
 }
 
 /** Only a PEL's and a bank livret's rate are the user's to set. */

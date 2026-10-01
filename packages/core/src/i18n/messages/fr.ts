@@ -2131,6 +2131,12 @@ export const fr: Messages = {
   },
 
   errors: {
+    alreadyThere: "C'est déjà enregistré.",
+    stillInUse: "C'est encore utilisé ailleurs, donc rien n'a été supprimé.",
+    notAllowed: "Vous n'avez pas accès à cet élément.",
+    notFound: "Introuvable — il a peut-être déjà été supprimé.",
+    offline: "Pas de connexion pour l'instant. Réessayez dans un moment.",
+    couldNotSave: "L'enregistrement n'a pas fonctionné. Réessayez.",
     amountPositive: "Le montant doit être positif",
     invalidDate: "Date invalide",
     nothingSelected: "Rien de sélectionné",

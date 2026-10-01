@@ -3034,6 +3034,12 @@ export const en = {
   },
 
   errors: {
+    alreadyThere: "That is already saved.",
+    stillInUse: "It is still used elsewhere, so nothing was deleted.",
+    notAllowed: "You do not have access to that.",
+    notFound: "Not found — it may already have been deleted.",
+    offline: "No connection right now. Try again in a moment.",
+    couldNotSave: "That did not save. Try again.",
     /**
      * Validation messages, carried by the Zod schemas as keys.
      *

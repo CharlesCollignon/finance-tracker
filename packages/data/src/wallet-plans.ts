@@ -11,6 +11,7 @@ import { walletPlanSchema } from "@finance/core/validations/investments";
 import { z } from "zod";
 
 import type { Db } from "./client";
+import { dbError } from "./errors";
 
 /**
  * What a user means to do with each account: a wallet's plan — its target
@@ -82,7 +83,7 @@ export async function saveWalletPlan(
     .from("wallet_plans")
     .upsert(row, { onConflict: "user_id,wallet" });
 
-  return error ? { error: error.message } : { success: true };
+  return error ? { error: dbError(error) } : { success: true };
 }
 
 const accountTargetsInput = z.object({
@@ -140,7 +141,7 @@ export async function saveAccountTargets(
       return {
         error: savingsTargetsMissing(error)
           ? "placementsWeb.targetsSetup"
-          : error.message,
+          : dbError(error),
       };
     }
   }
@@ -156,7 +157,7 @@ export async function saveAccountTargets(
       { onConflict: "user_id,wallet" },
     );
     if (error) {
-      return { error: error.message };
+      return { error: dbError(error) };
     }
   }
 
@@ -178,7 +179,7 @@ export async function clearAccountTargets(
     .update({ target_weight: null, updated_at: now })
     .eq("user_id", userId);
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   // Before 047 no savings account can hold a target, so there is none to take off.
@@ -187,7 +188,7 @@ export async function clearAccountTargets(
     .update({ target_weight: null, updated_at: now })
     .eq("user_id", userId);
   if (savingsError && !savingsTargetsMissing(savingsError)) {
-    return { error: savingsError.message };
+    return { error: dbError(savingsError) };
   }
 
   return { success: true };

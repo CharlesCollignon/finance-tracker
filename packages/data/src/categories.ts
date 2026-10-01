@@ -4,6 +4,7 @@ import { categorySchema, parseUuid } from "@finance/core/validations/finance";
 import type { z } from "zod";
 
 import type { Db } from "./client";
+import { dbError } from "./errors";
 
 /** A category to create or rename, as either app's form hands it over. */
 export type CategoryChange = z.input<typeof categorySchema>;
@@ -13,14 +14,18 @@ export type CategoryChange = z.input<typeof categorySchema>;
  * keys: a category still used by transactions cannot be deleted, and two
  * of the same name and kind cannot exist.
  */
-function friendlyCategoryError(message: string): string {
-  if (message.includes("foreign key")) {
+function friendlyCategoryError(error: {
+  code?: string;
+  message?: string;
+}): string {
+  const message = error.message ?? "";
+  if (error.code === "23503" || message.includes("foreign key")) {
     return "actions.categoryInUse";
   }
-  if (message.includes("duplicate key")) {
+  if (error.code === "23505" || message.includes("duplicate key")) {
     return "actions.categoryExists";
   }
-  return message;
+  return dbError(error);
 }
 
 export async function upsertCategory(
@@ -48,9 +53,7 @@ export async function upsertCategory(
         .eq("user_id", userId)
     : await db.from("categories").insert({ user_id: userId, ...payload });
 
-  return error
-    ? { error: friendlyCategoryError(error.message) }
-    : { success: true };
+  return error ? { error: friendlyCategoryError(error) } : { success: true };
 }
 
 /** Archive a category, or bring it back: its history stays either way. */
@@ -70,7 +73,7 @@ export async function setCategoryArchived(
     .eq("id", id)
     .eq("user_id", userId);
 
-  return error ? { error: error.message } : { success: true };
+  return error ? { error: dbError(error) } : { success: true };
 }
 
 export async function deleteCategory(
@@ -88,7 +91,5 @@ export async function deleteCategory(
     .eq("id", id)
     .eq("user_id", userId);
 
-  return error
-    ? { error: friendlyCategoryError(error.message) }
-    : { success: true };
+  return error ? { error: friendlyCategoryError(error) } : { success: true };
 }

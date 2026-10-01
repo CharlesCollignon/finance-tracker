@@ -15,6 +15,7 @@ import {
 
 import type { Db } from "./client";
 import { getMonthCloseSettings, previewMonthClose } from "./month-close";
+import { dbError } from "./errors";
 
 /**
  * Closing a month, for both apps: the dry run the sheet shows before the
@@ -112,7 +113,7 @@ export async function recordMonthClose(
       { onConflict: "user_id,month" },
     );
 
-    return error ? { error: error.message } : { success: true, result };
+    return error ? { error: dbError(error) } : { success: true, result };
   } catch (error) {
     return {
       error:
@@ -140,7 +141,7 @@ export async function deleteMonthClose(
     .eq("month", monthColumnValue(parsed.data.year, parsed.data.month));
 
   return error
-    ? { error: error.message }
+    ? { error: dbError(error) }
     : { success: true, message: "actions.closeRemoved" };
 }
 
@@ -165,7 +166,7 @@ export async function updateUnrecordedCap(
   );
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
   return {
     success: true,
@@ -194,6 +195,6 @@ export async function updateCloseDay(
   );
 
   return error
-    ? { error: error.message }
+    ? { error: dbError(error) }
     : { success: true, message: "actions.readingDayUpdated" };
 }

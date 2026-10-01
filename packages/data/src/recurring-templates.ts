@@ -21,6 +21,7 @@ import type { Db } from "./client";
 import { quoteSource } from "./quote-source";
 import { fillMonth, followTemplate } from "./recurring-apply";
 import { syncInvestmentPositionFromRecurring } from "./recurring-positions";
+import { dbError } from "./errors";
 
 type TemplateInsert =
   Database["public"]["Tables"]["recurring_templates"]["Insert"];
@@ -200,7 +201,7 @@ export async function saveRecurringTemplate(
       .eq("user_id", userId);
 
     if (error) {
-      return { error: error.message };
+      return { error: dbError(error) };
     }
     templateId = data.id;
   } else {
@@ -212,7 +213,9 @@ export async function saveRecurringTemplate(
       .single();
 
     if (error || !inserted) {
-      return { error: error?.message ?? "actions.couldNotSaveRecurring" };
+      return {
+        error: error ? dbError(error) : "actions.couldNotSaveRecurring",
+      };
     }
     templateId = inserted.id;
   }

@@ -13,6 +13,7 @@ import {
   skipOccurrences,
 } from "./recurring-apply";
 import { removeInvestmentPositionForRecurring } from "./recurring-positions";
+import { dbError } from "./errors";
 
 /**
  * What can be done to a recurring template and to one of its occurrences,
@@ -55,7 +56,7 @@ export async function deleteRecurringTemplate(
     .eq("id", id)
     .eq("user_id", userId);
 
-  return error ? { error: error.message } : { success: true };
+  return error ? { error: dbError(error) } : { success: true };
 }
 
 /**
@@ -82,7 +83,7 @@ export async function toggleRecurringActive(
     .eq("user_id", userId);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   if (!(await hasBankFeed(db, userId))) {
@@ -182,7 +183,7 @@ export async function recordPlannedNow(
     .single();
 
   if (error || !inserted) {
-    return { error: error?.message ?? "actions.couldNotRecord" };
+    return { error: error ? dbError(error) : "actions.couldNotRecord" };
   }
 
   return { success: true, transactionId: inserted.id };
@@ -216,7 +217,7 @@ export async function undoRecordPlanned(
     .eq("recurring_template_id", parsed.data.templateId);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   const { error: skipError } = await db
@@ -226,7 +227,7 @@ export async function undoRecordPlanned(
     .eq("template_id", parsed.data.templateId)
     .eq("occurred_on", parsed.data.occurredOn);
 
-  return skipError ? { error: skipError.message } : { success: true };
+  return skipError ? { error: dbError(skipError) } : { success: true };
 }
 
 /**
@@ -286,7 +287,7 @@ export async function unskipRecurringOccurrence(
     .eq("occurred_on", parsed.data.occurredOn);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   if (!(await hasBankFeed(db, userId))) {

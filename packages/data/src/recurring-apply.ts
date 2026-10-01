@@ -19,6 +19,7 @@ import type { RecurringTemplateWithCategory } from "@finance/core/types/database
 import type { Db } from "./client";
 import { quoteSource } from "./quote-source";
 import { isMissingSchema } from "./schema";
+import { dbError } from "./errors";
 
 /**
  * The reads and writes behind applying recurring templates, for both apps.
@@ -158,7 +159,7 @@ export async function writeReprices(
       .eq("user_id", userId);
 
     if (error) {
-      failures.push(error.message);
+      failures.push(dbError(error));
       continue;
     }
 
@@ -325,7 +326,7 @@ export async function fillMonth(
 
     if (error) {
       if (error.code !== ALREADY_WRITTEN) {
-        failures.push(error.message);
+        failures.push(dbError(error));
       }
       continue;
     }
@@ -451,7 +452,7 @@ export async function followTemplate(
     .gte("occurred_on", from < today ? from : today);
 
   if (error) {
-    return { failures: [...failures, error.message] };
+    return { failures: [...failures, dbError(error)] };
   }
 
   const months = new Set(
@@ -504,7 +505,7 @@ export async function followTemplate(
         .eq("user_id", userId)
         .in("id", stale);
       if (removeError) {
-        failures.push(removeError.message);
+        failures.push(dbError(removeError));
       }
     }
   }
@@ -534,7 +535,7 @@ export async function removeTemplateForecasts(
     .eq("recurring_template_id", templateId)
     .gt("occurred_on", today);
 
-  return error?.message ?? null;
+  return error ? dbError(error) : null;
 }
 
 /**
@@ -566,7 +567,7 @@ export async function skipOccurrences(
     { onConflict: "user_id,template_id,occurred_on", ignoreDuplicates: true },
   );
 
-  return error?.message ?? null;
+  return error ? dbError(error) : null;
 }
 
 /**
@@ -590,7 +591,7 @@ export async function skipWhatTemplatesWrote(
     .not("recurring_template_id", "is", null);
 
   if (error) {
-    return error.message;
+    return dbError(error);
   }
 
   return skipOccurrences(
