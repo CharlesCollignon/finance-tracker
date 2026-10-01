@@ -2,6 +2,7 @@ import { hasBankFeed as bankFeeds } from "@finance/data/bank-feed";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
+import * as templates from "@finance/data/templates";
 import {
   getCurrentMonth,
   getMonthBounds,
@@ -21,7 +22,6 @@ import {
   filterLiveProposals,
   type RecurringProposal,
 } from "@finance/core/recurring-detection";
-import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { type FulfilmentProposal } from "@finance/core/recurring-fulfilment";
 import { buildMonthlySummary } from "@finance/core/monthly-summary";
 import {
@@ -111,16 +111,7 @@ export async function getTransactions(
 export async function getRecurringTemplates(
   userId: string,
 ): Promise<RecurringTemplateWithCategory[]> {
-  const { data, error } = await supabase
-    .from("recurring_templates")
-    .select("*, categories(name, type, icon, counts_toward_summary)")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    throw error;
-  }
-  return (data ?? []) as RecurringTemplateWithCategory[];
+  return templates.getRecurringTemplates(supabase, userId);
 }
 
 /**
@@ -200,28 +191,12 @@ export async function getSkippedOccurrences(
   }));
 }
 
-async function getRecurringSkipKeys(
+function getRecurringSkipKeys(
   userId: string,
   year: number,
   month: number,
 ): Promise<Set<string>> {
-  const { start, end } = getMonthBounds(year, month);
-  const { data, error } = await supabase
-    .from("recurring_skips")
-    .select("template_id, occurred_on")
-    .eq("user_id", userId)
-    .gte("occurred_on", start)
-    .lte("occurred_on", end);
-
-  if (error) {
-    throw error;
-  }
-
-  return new Set(
-    (data ?? []).map((row) =>
-      recurringOccurrenceKey(row.template_id, row.occurred_on),
-    ),
-  );
+  return templates.getRecurringSkipKeys(supabase, userId, year, month);
 }
 
 export async function getMonthlySummary(
