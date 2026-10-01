@@ -14,6 +14,7 @@ import type {
   RecurringTemplateWithCategory,
   TransactionWithCategory,
 } from "./types/database";
+import type { Locale } from "./i18n/locale";
 
 export interface UpcomingInvestment {
   id: string;
@@ -46,6 +47,7 @@ export function buildUpcomingInvestments(
   templates: RecurringTemplateWithCategory[],
   transactions: TransactionWithCategory[],
   asOfDate: string,
+  locale: Locale,
   skippedKeys: Set<string> = new Set(),
 ): UpcomingInvestment[] {
   const [year, month] = asOfDate.split("-").map(Number);
@@ -91,7 +93,7 @@ export function buildUpcomingInvestments(
         upcoming.push({
           id: key,
           date,
-          dateLabel: formatShortDate(date),
+          dateLabel: formatShortDate(date, locale),
           name: displayNameForRecurringTemplate(template),
           walletId: resolveWalletId(template.categories.name),
           amount: Number(template.amount),

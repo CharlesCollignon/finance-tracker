@@ -96,14 +96,17 @@ export function BiometricLockProvider({ children }: { children: ReactNode }) {
   const unlock = useCallback(async () => {
     setPrompting(true);
     setMessage(null);
-    const result = await promptBiometric("Unlock Pluclair");
+    const result = await promptBiometric(
+      t("biometric.unlockPrompt"),
+      t("biometric.cancelLabel"),
+    );
     setPrompting(false);
     if (result.success) {
       setLocked(false);
       return;
     }
-    setMessage(result.error ?? "Could not unlock.");
-  }, []);
+    setMessage(result.error ?? "biometric.couldNotUnlock");
+  }, [t]);
 
   const autoPromptedRef = useRef(false);
 
@@ -124,18 +127,19 @@ export function BiometricLockProvider({ children }: { children: ReactNode }) {
     setHardware(availability.hardware);
     setEnrolled(availability.enrolled);
     if (!availability.hardware || !availability.enrolled) {
-      return {
-        error: "Set up Face ID or a fingerprint in system settings first.",
-      };
+      return { error: "biometric.needsSetup" };
     }
-    const result = await promptBiometric("Enable biometric unlock");
+    const result = await promptBiometric(
+      t("biometric.enablePrompt"),
+      t("biometric.cancelLabel"),
+    );
     if (!result.success) {
-      return { error: result.error ?? "Could not enable biometric unlock." };
+      return { error: result.error ?? "biometric.couldNotEnable" };
     }
     await saveBiometricUnlockEnabled(true);
     setEnabled(true);
     return {};
-  }, []);
+  }, [t]);
 
   const disable = useCallback(async () => {
     await saveBiometricUnlockEnabled(false);
@@ -163,10 +167,10 @@ export function BiometricLockProvider({ children }: { children: ReactNode }) {
           <Logo size="hero" />
           <View className="items-center gap-2">
             <Text variant="title" className="text-center">
-              Unlock
+              {t("biometric.unlockTitle")}
             </Text>
             <Text variant="muted" className="text-center">
-              Use Face ID or your fingerprint to open Pluclair.
+              {t("biometric.unlockBody")}
             </Text>
           </View>
           {message ? (
@@ -176,7 +180,9 @@ export function BiometricLockProvider({ children }: { children: ReactNode }) {
           ) : null}
           <View className="w-full max-w-sm gap-3">
             <Button
-              label={prompting ? "Waiting…" : "Unlock"}
+              label={
+                prompting ? t("biometric.waiting") : t("biometric.unlockTitle")
+              }
               disabled={prompting}
               onPress={() => {
                 void unlock();

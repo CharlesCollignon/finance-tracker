@@ -36,7 +36,7 @@
 
 import { categorySense } from "./category-facts";
 import type { CategoryFinding } from "./category-findings";
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import type { MonthFact } from "./month-facts";
 import type { MonthReadRequest } from "./month-read";
@@ -47,7 +47,7 @@ export const CATEGORY_SELECTION_PROMPT_VERSION = 1;
 
 export interface BuildCategorySelectionPromptOptions {
   money: (amount: number) => string;
-  locale?: Locale;
+  locale: Locale;
 }
 
 /**
@@ -180,7 +180,7 @@ const PROMPT = { en: EN, fr: FR } as const;
 
 export function buildCategorySelectionPrompt(
   findings: readonly CategoryFinding[],
-  { money, locale = FALLBACK_LOCALE }: BuildCategorySelectionPromptOptions,
+  { money, locale }: BuildCategorySelectionPromptOptions,
 ): MonthReadRequest {
   const text = PROMPT[locale];
 

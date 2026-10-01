@@ -9,7 +9,7 @@ import type { PullFreshness } from "@finance/core/bank-pull";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { syncBankFeed } from "@/lib/bank/sync";
 import { revalidateEverySurface } from "@/lib/revalidate-paths";
-import { getLocale } from "@/lib/locale";
+import { getLocale, getT } from "@/lib/locale";
 
 /**
  * Bring everything up to date, from wherever the user happens to be.
@@ -84,30 +84,27 @@ export async function refreshEverythingAction(): Promise<RefreshResult> {
       };
     }
 
+    const t = await getT();
     if (outcome.imported > 0) {
-      parts.push(`${outcome.imported} added`);
+      parts.push(t("actions.syncAdded", { count: outcome.imported }));
     }
     if (outcome.pending > 0) {
-      parts.push(`${outcome.pending} to review`);
+      parts.push(t("actions.syncToReview", { count: outcome.pending }));
     }
     if (closes.closed.length > 0) {
       parts.push(
-        `${closes.closed.length} ${
-          closes.closed.length === 1 ? "month" : "months"
-        } closed`,
+        t("actions.syncMonthsClosed", { count: closes.closed.length }),
       );
     }
     if (outcome.needReconnect > 0) {
       parts.push(
-        `${outcome.needReconnect} ${
-          outcome.needReconnect === 1 ? "account needs" : "accounts need"
-        } reconnecting`,
+        t("actions.syncNeedReconnect", { count: outcome.needReconnect }),
       );
     }
 
     return {
       success: true,
-      message: parts.length > 0 ? parts.join(", ") : "Nothing new",
+      message: parts.length > 0 ? parts.join(", ") : "actions.nothingNew",
       freshness: await readPullFreshness(supabase, user.id, await getLocale()),
     };
   } catch (error) {

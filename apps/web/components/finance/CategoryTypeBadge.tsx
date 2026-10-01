@@ -1,3 +1,5 @@
+"use client";
+
 import { Badge } from "@/components/retroui/Badge";
 import {
   CATEGORY_TYPE_BADGE_CLASS,
@@ -5,6 +7,7 @@ import {
 } from "@finance/core/category-styles";
 import type { CategoryType } from "@finance/core/types/database";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/locale-context";
 
 interface CategoryTypeBadgeProps {
   type: CategoryType;
@@ -12,13 +15,14 @@ interface CategoryTypeBadgeProps {
 }
 
 export function CategoryTypeBadge({ type, className }: CategoryTypeBadgeProps) {
+  const locale = useLocale();
   return (
     <Badge
       size="sm"
       variant="default"
       className={cn(CATEGORY_TYPE_BADGE_CLASS[type], className)}
     >
-      {categoryTypeLabels()[type]}
+      {categoryTypeLabels(locale)[type]}
     </Badge>
   );
 }

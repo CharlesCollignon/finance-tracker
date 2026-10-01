@@ -30,7 +30,7 @@ export async function searchInstrumentsAction(
     const results = await searchInstruments(query);
     return { data: results };
   } catch {
-    return { error: "Could not search instruments. Try again." };
+    return { error: "actions.couldNotSearch" };
   }
 }
 
@@ -46,7 +46,7 @@ export async function fetchInstrumentQuoteAction(
     const quote = await fetchInstrumentQuote(symbol);
     return { data: quote };
   } catch {
-    return { error: "Could not fetch the latest price. Try again." };
+    return { error: "actions.couldNotFetchPrice" };
   }
 }
 
@@ -67,7 +67,7 @@ export async function estimateSharesAmountAction(
   }
 
   if (!Number.isFinite(shareCount) || shareCount <= 0) {
-    return { error: "Share count must be a positive number" };
+    return { error: "actions.shareCountPositive" };
   }
 
   try {
@@ -81,7 +81,7 @@ export async function estimateSharesAmountAction(
       },
     };
   } catch {
-    return { error: "Could not estimate amount from current price." };
+    return { error: "actions.couldNotEstimate" };
   }
 }
 

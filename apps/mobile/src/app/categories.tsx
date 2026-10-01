@@ -5,10 +5,12 @@ import { useRouter } from "expo-router";
 
 import { categoryTypeLabels } from "@finance/core/category-styles";
 import { groupCategoriesByType } from "@finance/core/categories";
-import type { Category } from "@finance/core/types/database";
+import type { Category, CategoryType } from "@finance/core/types/database";
+import type { Key } from "@finance/core/i18n/t";
 
 import { CategoryFormSheet } from "@/components/CategoryFormSheet";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { Badge } from "@/components/ui/Badge";
 import { StaggerItem } from "@/components/motion/Stagger";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -26,15 +28,42 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
-import { useT } from "@/providers/LocaleProvider";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
 
 /**
- * Category management — the one thing mobile could not do at all. Mirrors the
- * web categories page: create, rename, re-icon, archive and delete.
+ * What a category that does not count is, by its kind — the web's badge.
+ * Income that does not count is money coming back, savings that do not count
+ * is money coming out, an investment that does not count is only tracked.
+ */
+function notCountingKey(category: {
+  type: CategoryType;
+  counts_toward_summary: boolean;
+}): Key | null {
+  if (category.counts_toward_summary !== false) {
+    return null;
+  }
+  switch (category.type) {
+    case "investment":
+      return "categories.notCountingInvestment";
+    case "savings":
+      return "categories.notCountingSavings";
+    case "income":
+      return "categories.notCountingIncome";
+    default:
+      return "categories.excludedFromTotals";
+  }
+}
+
+/**
+ * Category management. Mirrors the web categories page: a sentence on what
+ * categories are for, one Add, then each kind with its rows — a badge for a
+ * category that does not count or is archived, and the three actions on the
+ * row itself rather than behind a long press nobody would find.
  */
 export default function CategoriesScreen() {
   const t = useT();
+  const locale = useLocale();
   const { user } = useAuth();
   const router = useRouter();
   const colors = useThemeColors();
@@ -55,7 +84,7 @@ export default function CategoriesScreen() {
     }, [user?.id]);
 
   const categories = data?.categories ?? [];
-  const groups = groupCategoriesByType(categories);
+  const groups = groupCategoriesByType(categories, { locale });
 
   async function toggleArchived(category: Category) {
     const result = await setCategoryArchived(category.id, !category.archived);
@@ -117,11 +146,14 @@ export default function CategoriesScreen() {
           contentContainerClassName="gap-4 pb-28"
           showsVerticalScrollIndicator={false}
         >
+          <Text variant="muted" className="text-sm">
+            {t("categories.blurb")}
+          </Text>
           <Button
-            label={t("categories.newCategory")}
+            label={t("categories.addCategory")}
             variant="pill"
+            size="lg"
             icon="add"
-            className="self-center"
             onPress={() => {
               setEditing(null);
               setFormOpen(true);
@@ -146,71 +178,112 @@ export default function CategoriesScreen() {
           ) : (
             groups.map((group, groupIndex) => (
               <StaggerItem key={group.type} index={groupIndex}>
-                <Text className="mb-2 text-base">
-                  {categoryTypeLabels()[group.type]}
+                <Text variant="label" className="mb-2 tracking-wide">
+                  {categoryTypeLabels(locale)[group.type]}
                 </Text>
                 <Card bezel innerClassName="px-2 py-1">
-                  {group.categories.map((category, index) => (
-                    <Pressable
-                      key={category.id}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Edit ${category.name}`}
-                      onPress={() => {
-                        void hapticLight();
-                        setEditing(category);
-                        setFormOpen(true);
-                      }}
-                      onLongPress={() => setConfirming(category)}
-                      className={cn(
-                        "min-h-14 flex-row items-center gap-3 px-2 py-3",
-                        index > 0 && "border-t border-border",
-                        category.archived && "opacity-50",
-                      )}
-                    >
-                      <CategoryIcon icon={category.icon} />
-                      <View className="min-w-0 flex-1">
-                        <Text numberOfLines={1} className="text-sm font-medium">
-                          {category.name}
-                        </Text>
-                        {!category.counts_toward_summary ? (
-                          <Text variant="muted" className="text-xs">
-                            Excluded from totals
-                          </Text>
-                        ) : null}
-                      </View>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={
-                          category.archived
-                            ? `Restore ${category.name}`
-                            : `Archive ${category.name}`
-                        }
-                        hitSlop={8}
-                        onPress={() => {
-                          void toggleArchived(category);
-                        }}
-                        className="h-11 w-11 items-center justify-center"
+                  {group.categories.map((category, index) => {
+                    const notCounting = notCountingKey(category);
+                    return (
+                      <View
+                        key={category.id}
+                        className={cn(
+                          "min-h-16 flex-row items-center gap-3 px-2 py-3",
+                          index > 0 && "border-t border-border",
+                        )}
                       >
-                        <Ionicons
-                          name={
-                            category.archived
-                              ? "arrow-undo-outline"
-                              : "archive-outline"
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={t("categories.editNamed", {
+                            name: category.name,
+                          })}
+                          onPress={() => {
+                            void hapticLight();
+                            setEditing(category);
+                            setFormOpen(true);
+                          }}
+                          className="min-w-0 flex-1 flex-row items-center gap-3"
+                          style={
+                            category.archived ? { opacity: 0.6 } : undefined
                           }
-                          size={ICON.md}
-                          color={colors.mutedForeground}
-                        />
-                      </Pressable>
-                    </Pressable>
-                  ))}
+                        >
+                          <CategoryIcon icon={category.icon} />
+                          <View className="min-w-0 flex-1 gap-1">
+                            <Text
+                              numberOfLines={1}
+                              className="text-sm font-medium"
+                            >
+                              {category.name}
+                            </Text>
+                            {notCounting || category.archived ? (
+                              <View className="flex-row flex-wrap gap-1.5">
+                                {notCounting ? (
+                                  <Badge
+                                    label={t(notCounting)}
+                                    size="sm"
+                                    variant="outline"
+                                  />
+                                ) : null}
+                                {category.archived ? (
+                                  <Badge
+                                    label={t("categories.archived")}
+                                    size="sm"
+                                    variant="outline"
+                                  />
+                                ) : null}
+                              </View>
+                            ) : null}
+                          </View>
+                        </Pressable>
+                        <View className="shrink-0 flex-row items-center gap-1.5">
+                          <RowAction
+                            icon="pencil-outline"
+                            label={t("categories.editNamed", {
+                              name: category.name,
+                            })}
+                            onPress={() => {
+                              void hapticLight();
+                              setEditing(category);
+                              setFormOpen(true);
+                            }}
+                          />
+                          <RowAction
+                            icon={
+                              category.archived
+                                ? "arrow-undo-outline"
+                                : "archive-outline"
+                            }
+                            label={
+                              category.archived
+                                ? t("categories.restoreNamed", {
+                                    name: category.name,
+                                  })
+                                : t("categories.archiveNamed", {
+                                    name: category.name,
+                                  })
+                            }
+                            onPress={() => {
+                              void toggleArchived(category);
+                            }}
+                          />
+                          <RowAction
+                            icon="trash-outline"
+                            label={t("categories.deleteNamed", {
+                              name: category.name,
+                            })}
+                            onPress={() => {
+                              void hapticLight();
+                              setConfirming(category);
+                            }}
+                          />
+                        </View>
+                      </View>
+                    );
+                  })}
                 </Card>
               </StaggerItem>
             ))
           )}
-
-          <Text variant="muted" className="text-center text-xs">
-            Tap to edit · long-press to delete
-          </Text>
         </ScrollView>
       )}
 
@@ -228,11 +301,42 @@ export default function CategoriesScreen() {
 
       <ConfirmSheet
         open={confirming !== null}
-        title={`Delete ${confirming?.name ?? "category"}?`}
+        title={
+          confirming
+            ? t("categories.deleteNamed", { name: confirming.name })
+            : ""
+        }
         message={t("categories.deleteWarning")}
         onConfirm={handleDelete}
         onCancel={() => setConfirming(null)}
       />
     </Screen>
+  );
+}
+
+/** One of the three round actions at the end of a row, as on the web. */
+function RowAction({
+  icon,
+  label,
+  onPress,
+}: {
+  icon:
+    | "pencil-outline"
+    | "archive-outline"
+    | "arrow-undo-outline"
+    | "trash-outline";
+  label: string;
+  onPress: () => void;
+}) {
+  const colors = useThemeColors();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      className="h-11 w-11 items-center justify-center rounded-full border border-border"
+    >
+      <Ionicons name={icon} size={ICON.md} color={colors.foreground} />
+    </Pressable>
   );
 }

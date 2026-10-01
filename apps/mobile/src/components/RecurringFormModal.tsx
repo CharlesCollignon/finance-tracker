@@ -5,17 +5,17 @@ import {
   formatOccurrenceDates,
   scheduleDatesBefore,
 } from "@finance/core/apply-recurring";
-import {
-  formatCategoryOptionLabel,
-  groupCategoriesByType,
-} from "@finance/core/categories";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
+import { dayOfWeekLabels, monthLabels } from "@finance/core/recurrence";
 import type {
   Category,
   Recurrence,
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
 
+import { CategoryPicker } from "@/components/pickers/CategoryPicker";
+import { ChoiceChips } from "@/components/pickers/ChoiceChips";
+import { OptionPicker } from "@/components/pickers/OptionPicker";
 import { Button } from "@/components/ui/Button";
 import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
@@ -27,6 +27,7 @@ import {
   upsertRecurringTemplate,
 } from "@/lib/mutations";
 import { cn } from "@/lib/cn";
+import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
 
@@ -134,12 +135,21 @@ export function RecurringFormBody({
   onDone,
 }: RecurringFormBodyProps) {
   const locale = useLocale();
+  const formatEuro = useFormatCurrency();
   const t = useT();
   const { toast } = useToast();
   const isEditing = template !== null;
   const [categoryId, setCategoryId] = useState(template?.category_id ?? "");
   const [amount, setAmount] = useState(
     template ? String(Number(template.amount)) : "",
+  );
+  // A charge priced in shares keeps its pricing when edited here: the share
+  // count is editable, the fund is shown, and nothing is quietly turned into
+  // a fixed amount. A fixed amount that tracks a fund keeps its fund too.
+  // Choosing a different fund is done on the web, which has the search.
+  const sharePriced = template?.pricing_type === "shares";
+  const [shareCount, setShareCount] = useState(
+    template?.share_count ? String(template.share_count) : "",
   );
   const [description, setDescription] = useState(template?.description ?? "");
   const [recurrence, setRecurrence] = useState<Recurrence>(
@@ -158,6 +168,7 @@ export function RecurringFormBody({
   const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   // Both default to leaving this month alone: what was recorded at the old
   // amount was paid at the old amount, and a charge set up today did not
   // happen on the 5th unless the user says it did.
@@ -216,14 +227,23 @@ export function RecurringFormBody({
   const askApplyTo = isEditing && recordedThisMonth.length > 0;
   const askStart = !isEditing && pastThisMonth.length > 0;
 
-  // Income included, as on the web: a salary is a recurring template too,
-  // and one opened from the Income group has to find its category here.
-  // `locale` is passed through so the group headings ("Income", "Expenses"…)
-  // read in French rather than silently falling back to English — a gap
-  // this call had even before this sweep.
-  const groups = useMemo(
-    () => groupCategoriesByType(categories, { locale }),
-    [categories, locale],
+  // Chosen from the language's own names rather than typed as "1 = Monday"
+  // or "a month from 1 to 12", which the fields used to ask for.
+  const weekdayOptions = useMemo(
+    () =>
+      Object.entries(dayOfWeekLabels(locale)).map(([value, label]) => ({
+        value,
+        label,
+      })),
+    [locale],
+  );
+  const monthOptions = useMemo(
+    () =>
+      Object.entries(monthLabels(locale)).map(([value, label]) => ({
+        value,
+        label,
+      })),
+    [locale],
   );
 
   async function handleSave() {
@@ -232,11 +252,23 @@ export function RecurringFormBody({
     const payload: Record<string, unknown> = {
       ...(isEditing ? { id: template.id } : {}),
       categoryId,
-      amount,
       description: description || undefined,
       recurrence,
-      pricingType: "fixed",
       active: template?.active !== false,
+      ...(sharePriced
+        ? {
+            pricingType: "shares",
+            shareCount,
+            instrumentSymbol: template?.instrument_symbol ?? undefined,
+            instrumentName: template?.instrument_name ?? undefined,
+          }
+        : {
+            pricingType: "fixed",
+            // A French keypad types a comma; the schema reads a point.
+            amount: amount.replace(",", ".").trim(),
+            instrumentSymbol: template?.instrument_symbol ?? undefined,
+            instrumentName: template?.instrument_name ?? undefined,
+          }),
     };
     if (recurrence === "monthly") {
       payload.dayOfMonth = dayOfMonth;
@@ -293,41 +325,53 @@ export function RecurringFormBody({
 
   return (
     <>
+      {/* Income included, as on the web: a salary is a recurring entry
+          too, and one opened from the Income group has to find its
+          category here. */}
       <Text className="mb-2 text-sm font-medium">
         {t("recurring.category")}
       </Text>
-      <View className="mb-4 gap-2">
-        {groups.map((group) => (
-          <View key={group.type} className="gap-1">
-            <Text variant="muted">{group.label}</Text>
-            {group.categories.map((cat) => {
-              const selected = categoryId === cat.id;
-              return (
-                <Pressable
-                  key={cat.id}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={cat.name}
-                  onPress={() => setCategoryId(cat.id)}
-                  className={`rounded-full border px-3 py-2 ${
-                    selected ? "border-foreground bg-primary" : "border-border"
-                  }`}
-                >
-                  <Text>{formatCategoryOptionLabel(cat, locale)}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ))}
-      </View>
-
-      <Text className="mb-2 text-sm font-medium">{t("recurring.amount")}</Text>
-      <Input
-        value={amount}
-        onChangeText={setAmount}
-        keyboardType="decimal-pad"
+      <CategoryPicker
+        label={t("recurring.category")}
+        categories={categories}
+        value={categoryId}
+        onChange={setCategoryId}
         className="mb-4"
       />
+
+      {sharePriced ? (
+        <>
+          <Text className="mb-2 text-sm font-medium">
+            {t("recurring.shareCount")}
+          </Text>
+          <Input
+            value={shareCount}
+            onChangeText={setShareCount}
+            keyboardType="number-pad"
+            className="mb-1"
+          />
+          <Text variant="muted" className="mb-4 text-xs">
+            {template?.instrument_name ?? template?.instrument_symbol}
+            {template?.last_quote_price
+              ? ` · ${t("recurring.perSharePrice", {
+                  price: formatEuro(Number(template.last_quote_price)),
+                })}`
+              : ""}
+          </Text>
+        </>
+      ) : (
+        <>
+          <Text className="mb-2 text-sm font-medium">
+            {t("recurring.amount")}
+          </Text>
+          <Input
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="decimal-pad"
+            className="mb-4"
+          />
+        </>
+      )}
 
       <Text className="mb-2 text-sm font-medium">
         {t("recurring.description")}
@@ -341,36 +385,30 @@ export function RecurringFormBody({
       <Text className="mb-2 text-sm font-medium">
         {t("recurring.schedule")}
       </Text>
-      <View className="mb-4 flex-row gap-2">
-        {(["monthly", "weekly", "yearly"] as const).map((value) => (
-          <Pressable
-            key={value}
-            accessibilityRole="button"
-            accessibilityState={{ selected: recurrence === value }}
-            accessibilityLabel={t(`recurring.${value}`)}
-            onPress={() => setRecurrence(value)}
-            className={`flex-1 rounded-full border py-2 ${
-              recurrence === value
-                ? "border-foreground bg-primary"
-                : "border-border"
-            }`}
-          >
-            <Text className="text-center text-xs font-semibold">
-              {t(`recurring.${value}`)}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <ChoiceChips
+        label={t("recurring.schedule")}
+        fill
+        className="mb-4"
+        options={(["monthly", "weekly", "yearly"] as const).map((value) => ({
+          value,
+          label: t(`recurring.${value}`),
+        }))}
+        value={recurrence}
+        onChange={setRecurrence}
+      />
 
       {recurrence === "weekly" ? (
         <>
           <Text className="mb-2 text-sm font-medium">
-            {t("recurring.dayOfWeekNumeric")}
+            {t("recurring.dayOfWeek")}
           </Text>
-          <Input
+          <OptionPicker
+            label={t("recurring.dayOfWeek")}
+            options={weekdayOptions}
             value={dayOfWeek}
-            onChangeText={setDayOfWeek}
-            keyboardType="number-pad"
+            onChange={setDayOfWeek}
+            columns={2}
+            searchable={false}
             className="mb-4"
           />
         </>
@@ -379,12 +417,15 @@ export function RecurringFormBody({
           {recurrence === "yearly" ? (
             <>
               <Text className="mb-2 text-sm font-medium">
-                {t("recurring.monthOfYearNumeric")}
+                {t("recurring.monthOfYear")}
               </Text>
-              <Input
+              <OptionPicker
+                label={t("recurring.monthOfYear")}
+                options={monthOptions}
                 value={monthOfYear}
-                onChangeText={setMonthOfYear}
-                keyboardType="number-pad"
+                onChange={setMonthOfYear}
+                columns={3}
+                searchable={false}
                 className="mb-4"
               />
             </>
@@ -396,6 +437,7 @@ export function RecurringFormBody({
             value={dayOfMonth}
             onChangeText={setDayOfMonth}
             keyboardType="number-pad"
+            maxLength={2}
             className="mb-4"
           />
         </>
@@ -474,18 +516,50 @@ export function RecurringFormBody({
 
       <Button
         label={pending ? t("recurring.saving") : t("recurring.save")}
+        size="lg"
         disabled={pending}
         onPress={handleSave}
-        className="mb-3"
       />
       {isEditing ? (
-        <Button
-          label={t("recurring.delete")}
-          variant="outline"
-          disabled={pending}
-          onPress={handleDelete}
-          className="mb-8 border-destructive"
-        />
+        // Behind a second press, as on the web: deleting a recurring entry
+        // also takes away what it had written ahead of today.
+        <View className="mb-8 mt-6 border-t border-border pt-4">
+          {confirmDelete ? (
+            <View className="gap-2">
+              <Text variant="muted" className="text-sm">
+                {t("recurring.deleteExplanation")}
+              </Text>
+              <View className="flex-row gap-2">
+                <Button
+                  label={
+                    pending
+                      ? t("recurring.deleting")
+                      : t("recurring.confirmDelete")
+                  }
+                  variant="outline"
+                  className="flex-1 border-destructive"
+                  disabled={pending}
+                  onPress={handleDelete}
+                />
+                <Button
+                  label={t("common.cancel")}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={pending}
+                  onPress={() => setConfirmDelete(false)}
+                />
+              </View>
+            </View>
+          ) : (
+            <Button
+              label={t("recurring.delete")}
+              variant="outline"
+              className="border-destructive"
+              disabled={pending}
+              onPress={() => setConfirmDelete(true)}
+            />
+          )}
+        </View>
       ) : (
         <View className="mb-8" />
       )}
@@ -526,21 +600,25 @@ function ThisMonthChoice({
   return (
     <View className="mb-4">
       <Text className="mb-2 text-sm font-medium">{title}</Text>
-      <View className="gap-2">
+      <View
+        accessibilityRole="radiogroup"
+        accessibilityLabel={title}
+        className="gap-2"
+      >
         {[
           { chosen: !value, option: no, next: false },
           { chosen: value, option: yes, next: true },
         ].map(({ chosen, option, next }) => (
           <Pressable
             key={String(next)}
-            accessibilityRole="button"
+            accessibilityRole="radio"
             accessibilityState={{ selected: chosen }}
             accessibilityLabel={option.label}
             accessibilityHint={option.hint}
             onPress={() => onChange(next)}
             className={cn(
-              "rounded-control border px-4 py-3",
-              chosen ? "border-foreground bg-primary/15" : "border-border",
+              "min-h-12 rounded-control border px-4 py-3",
+              chosen ? "border-foreground bg-secondary" : "border-border",
             )}
           >
             <Text className="text-sm font-semibold">{option.label}</Text>

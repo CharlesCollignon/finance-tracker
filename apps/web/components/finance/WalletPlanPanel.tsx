@@ -157,7 +157,7 @@ export function WalletPlanPanel({
               })}{" "}
               —{" "}
               <span className="privacy-amount tabular-nums">
-                {formatWeight(peaStatus.ratio)}
+                {formatWeight(peaStatus.ratio, locale)}
               </span>
             </span>
             <span
@@ -234,6 +234,7 @@ function EnvelopeFeeField({
   fee: number | null;
 }) {
   const t = useT();
+  const locale = useLocale();
   const { toast } = useToast();
   const [value, setValue] = useState(chargeToInput(fee));
   const [pending, startTransition] = useTransition();
@@ -278,7 +279,7 @@ function EnvelopeFeeField({
         </Button>
         {fee !== null ? (
           <span className="text-sm text-muted-foreground">
-            {formatCharge(fee)}
+            {formatCharge(fee, locale)}
           </span>
         ) : null}
       </div>

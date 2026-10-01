@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { BackHandler, Pressable, ScrollView, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 import { CURRENCY_LABELS, type CurrencyCode } from "@finance/core/constants";
 import { groupCategoriesByType } from "@finance/core/categories";
@@ -26,21 +27,24 @@ import { getCategories } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
-import { useT } from "@/providers/LocaleProvider";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import { ICON } from "@/theme/tokens";
+import { useThemeColors } from "@/theme/useThemeColors";
 
 const CURRENCIES: CurrencyCode[] = ["EUR", "USD"];
 
-type Step = "currency" | "income" | "recurring" | "bank" | "cap" | "done";
+type Step = "currency" | "income" | "recurring" | "bank" | "cap";
 
 /**
  * The bank step sits after the charges and only where connecting one is
  * possible, as on the web: after typing a charge or two by hand is when
- * "let your bank do this" means something.
+ * "let your bank do this" means something. There is no "done" step: the cap
+ * step finishes, as on the web, and the meter counted a step nobody saw.
  */
 function stepsFor(offerBank: boolean): Step[] {
   return offerBank
-    ? ["currency", "income", "recurring", "bank", "cap", "done"]
-    : ["currency", "income", "recurring", "cap", "done"];
+    ? ["currency", "income", "recurring", "bank", "cap"]
+    : ["currency", "income", "recurring", "cap"];
 }
 
 /**
@@ -53,13 +57,23 @@ function stepsFor(offerBank: boolean): Step[] {
  */
 export default function OnboardingScreen() {
   const t = useT();
+  const locale = useLocale();
   const { user } = useAuth();
   const router = useRouter();
   const { currency, setCurrency } = useCurrency();
   const { toast } = useToast();
   const { markComplete } = useOnboarding();
+  const colors = useThemeColors();
 
-  const [step, setStep] = useState<Step>("currency");
+  /*
+   * The steps walked so far, so Back returns to the one before rather than
+   * to a fixed predecessor: with the bank step optional, "the step before the
+   * cap" depends on the way the reader came. The web keeps the same stack in
+   * the browser's history; here it is state, and Android's back button walks
+   * it too.
+   */
+  const [history, setHistory] = useState<Step[]>(["currency"]);
+  const step = history[history.length - 1]!;
   const [incomeAmount, setIncomeAmount] = useState("");
   const [incomeDay, setIncomeDay] = useState("1");
   const [expenseName, setExpenseName] = useState<string | null>(null);
@@ -78,7 +92,10 @@ export default function OnboardingScreen() {
   }, [user?.id]);
 
   const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
-  const groups = useMemo(() => groupCategoriesByType(categories), [categories]);
+  const groups = useMemo(
+    () => groupCategoriesByType(categories, { locale }),
+    [categories, locale],
+  );
   const incomeCategory = groups.find((g) => g.type === "income")?.categories[0];
   const expenseCategories =
     groups.find((g) => g.type === "expense")?.categories ?? [];
@@ -87,6 +104,29 @@ export default function OnboardingScreen() {
   const offerBank = bank !== null && shouldInvite("welcome", bank);
   const stepOrder = stepsFor(offerBank);
   const stepIndex = stepOrder.indexOf(step);
+
+  function goTo(next: Step) {
+    setHistory((walked) => [...walked, next]);
+  }
+
+  function goBack() {
+    setHistory((walked) => (walked.length > 1 ? walked.slice(0, -1) : walked));
+  }
+
+  const canGoBack = history.length > 1;
+  useEffect(() => {
+    if (!canGoBack) {
+      return;
+    }
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        goBack();
+        return true;
+      },
+    );
+    return () => subscription.remove();
+  }, [canGoBack]);
   // What follows the charges: the bank step where there is one.
   const afterCharges: Step = offerBank ? "bank" : "cap";
   const [bankOpen, setBankOpen] = useState(false);
@@ -123,9 +163,10 @@ export default function OnboardingScreen() {
     return true;
   }
 
+  /** Continue from the income step, keeping an amount that was typed. */
   async function handleIncome() {
     if (!incomeCategory || !incomeAmount.trim()) {
-      setStep("recurring");
+      goTo("recurring");
       return;
     }
     setPending(true);
@@ -133,10 +174,11 @@ export default function OnboardingScreen() {
     setPending(false);
     if (ok) {
       toast(t("onboarding.incomeAdded"), "success");
-      setStep("recurring");
+      goTo("recurring");
     }
   }
 
+  /** Save the charge on screen, and stay here so another can be added. */
   async function handleExpense() {
     const category = expenseCategories.find((c) => c.id === expenseName);
     if (!category || !expenseAmount.trim()) {
@@ -149,7 +191,28 @@ export default function OnboardingScreen() {
       setAdded((count) => count + 1);
       setExpenseAmount("");
       setExpenseName(null);
-      toast(`${category.name} added`, "success");
+      toast(t("onboarding.templateAdded", { name: category.name }), "success");
+    }
+  }
+
+  /**
+   * Continue from the charges step, keeping a charge that was filled in but
+   * never submitted with "Add this one" — as the web does. It used to be
+   * dropped without a word.
+   */
+  async function handleRecurringContinue() {
+    const category = expenseCategories.find((c) => c.id === expenseName);
+    if (!category || !expenseAmount.trim()) {
+      goTo(afterCharges);
+      return;
+    }
+    setPending(true);
+    const ok = await saveMonthly(category.id, expenseAmount, expenseDay);
+    setPending(false);
+    if (ok) {
+      setAdded((count) => count + 1);
+      toast(t("onboarding.templateAdded", { name: category.name }), "success");
+      goTo(afterCharges);
     }
   }
 
@@ -188,16 +251,56 @@ export default function OnboardingScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View className="flex-row justify-center gap-1.5 pt-2">
-          {stepOrder.slice(0, -1).map((value, index) => (
+        <View
+          accessibilityRole="progressbar"
+          accessibilityLabel={t("onboarding.progress")}
+          accessibilityValue={{
+            min: 1,
+            max: stepOrder.length,
+            now: stepIndex + 1,
+          }}
+          className="flex-row justify-center gap-1.5 pt-2"
+        >
+          {stepOrder.map((value, index) => (
             <View
               key={value}
               className={cn(
                 "h-1 w-10 rounded-full",
-                index <= stepIndex ? "bg-primary" : "bg-hairline-strong",
+                // Behind you in the foreground, ahead in the hairline: a
+                // meter is a measurement, not something to decide on.
+                index <= stepIndex ? "bg-foreground" : "bg-hairline-strong",
               )}
             />
           ))}
+        </View>
+
+        {/* One Back control for the whole wizard, absent on the first step,
+            where there is nothing behind it. Always the same height, so the
+            step below does not jump when it appears. */}
+        <View className="h-11 flex-row items-center">
+          {canGoBack ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("onboarding.back")}
+              disabled={pending}
+              hitSlop={8}
+              onPress={() => {
+                void hapticLight();
+                goBack();
+              }}
+              className="h-11 flex-row items-center gap-1 rounded-control pr-3"
+              style={pending ? { opacity: 0.5 } : undefined}
+            >
+              <Ionicons
+                name="chevron-back"
+                size={ICON.sm}
+                color={colors.foreground}
+              />
+              <Text className="text-sm font-medium">
+                {t("onboarding.back")}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
 
         {step === "currency" ? (
@@ -234,16 +337,11 @@ export default function OnboardingScreen() {
                       className={cn(
                         "flex-1 rounded-control border px-4 py-3",
                         selected
-                          ? "border-primary bg-primary/15"
+                          ? "border-foreground bg-secondary"
                           : "border-border bg-background",
                       )}
                     >
-                      <Text
-                        className={cn(
-                          "text-center text-sm font-semibold",
-                          selected && "text-primary-ink",
-                        )}
-                      >
+                      <Text className="text-center text-sm font-semibold">
                         {CURRENCY_LABELS[code]}
                       </Text>
                     </Pressable>
@@ -255,7 +353,7 @@ export default function OnboardingScreen() {
             <Button
               label={t("onboarding.continue")}
               size="lg"
-              onPress={() => setStep("income")}
+              onPress={() => goTo("income")}
             />
           </FadeIn>
         ) : null}
@@ -291,18 +389,27 @@ export default function OnboardingScreen() {
             </Card>
 
             <View className="gap-2">
+              {/* Continue whatever is typed, as on the web; the label says
+                  when continuing also saves. */}
               <Button
                 label={
-                  pending ? t("onboarding.saving") : t("onboarding.addIncome")
+                  pending
+                    ? t("onboarding.saving")
+                    : incomeAmount.trim()
+                      ? t("onboarding.addIncome")
+                      : t("onboarding.continue")
                 }
                 size="lg"
-                disabled={pending || !incomeAmount.trim()}
-                onPress={handleIncome}
+                disabled={pending}
+                onPress={() => {
+                  void handleIncome();
+                }}
               />
               <Button
                 label={t("onboarding.skipForNow")}
                 variant="ghost"
-                onPress={() => setStep("recurring")}
+                disabled={pending}
+                onPress={() => goTo("recurring")}
               />
             </View>
           </FadeIn>
@@ -314,10 +421,7 @@ export default function OnboardingScreen() {
               <Text className="text-2xl font-bold">
                 {t("onboarding.expensesTitle")}
               </Text>
-              <Text variant="muted">
-                {t("onboarding.expensesBody")}
-                coming. These are what make the forecast useful.
-              </Text>
+              <Text variant="muted">{t("onboarding.expensesBody")}</Text>
             </View>
 
             <Card bezel innerClassName="gap-3 p-5">
@@ -336,7 +440,7 @@ export default function OnboardingScreen() {
                       className={cn(
                         "flex-row items-center gap-2 rounded-full border px-3 py-2",
                         selected
-                          ? "border-primary bg-primary/15"
+                          ? "border-foreground bg-secondary"
                           : "border-border bg-background",
                       )}
                     >
@@ -382,14 +486,20 @@ export default function OnboardingScreen() {
 
             <View className="gap-2">
               <Button
-                label={t("onboarding.continue")}
+                label={
+                  pending ? t("onboarding.saving") : t("onboarding.continue")
+                }
                 size="lg"
-                onPress={() => setStep(afterCharges)}
+                disabled={pending}
+                onPress={() => {
+                  void handleRecurringContinue();
+                }}
               />
               <Button
                 label={t("onboarding.skipForNow")}
                 variant="ghost"
-                onPress={() => setStep(afterCharges)}
+                disabled={pending}
+                onPress={() => goTo(afterCharges)}
               />
             </View>
           </FadeIn>
@@ -420,7 +530,7 @@ export default function OnboardingScreen() {
               <Button
                 label={t("onboarding.skipForNow")}
                 variant="ghost"
-                onPress={() => setStep("cap")}
+                onPress={() => goTo("cap")}
               />
             </View>
 
@@ -430,7 +540,7 @@ export default function OnboardingScreen() {
               onConnected={() => {
                 toast(t("bankConnect.connected"), "success");
                 setBankConnected(true);
-                setStep("cap");
+                goTo("cap");
               }}
             />
           </FadeIn>
@@ -464,7 +574,7 @@ export default function OnboardingScreen() {
                       className={cn(
                         "flex-row items-center gap-2 rounded-full border px-3 py-2",
                         selected
-                          ? "border-primary bg-primary/15"
+                          ? "border-foreground bg-secondary"
                           : "border-border bg-background",
                       )}
                     >

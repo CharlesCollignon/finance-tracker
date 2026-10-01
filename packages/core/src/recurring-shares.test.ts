@@ -80,8 +80,16 @@ describe("resolveRecurringAmount", () => {
       quotes,
     );
 
-    expect(resolved.note).toContain("/ share)");
+    // Stored in the product's language unless the reader's is known.
+    expect(resolved.note).toContain("/ part)");
     expect(resolved.amount).toBe(300);
+
+    const inEnglish = await resolveRecurringAmount(
+      { ...shares, instrument_symbol: "VOO", instrument_name: "Vanguard 500" },
+      quotes,
+      "en",
+    );
+    expect(inEnglish.note).toContain("/ share)");
   });
 
   it("falls back to the stored quote when the source has no price", async () => {

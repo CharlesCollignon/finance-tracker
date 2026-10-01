@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, RefreshControl, ScrollView, View } from "react-native";
+import { RefreshControl, ScrollView, View } from "react-native";
 
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import {
@@ -10,6 +10,7 @@ import { formatAnnualRate } from "@finance/core/xirr";
 import {
   INVESTMENT_WALLET_IDS,
   INVESTMENT_WALLET_LABELS,
+  INVESTMENT_WALLET_NAME_KEYS,
   type InvestmentWalletId,
 } from "@finance/core/investments";
 import {
@@ -27,17 +28,14 @@ import type {
   RecurringTemplateWithCategory,
   TransactionWithCategory,
   WalletPlan,
-  WalletTransfer,
 } from "@finance/core/types/database";
 
 import { InvestmentPositionRow } from "@/components/InvestmentPositionRow";
 import { WalletPerformance } from "@/components/WalletPerformance";
 import { InvestmentPositionSheet } from "@/components/InvestmentPositionSheet";
-import { Button } from "@/components/ui/Button";
-import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { Card } from "@/components/ui/Card";
+import { ChipRow } from "@/components/ui/ChipRow";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Input } from "@/components/ui/Input";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
@@ -49,16 +47,14 @@ import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
 import { useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
-import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
-import { deleteWalletTransfer, upsertWalletTransfer } from "@/lib/mutations";
 import { useTabBarClearance } from "@/theme/chrome";
+import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
 import {
   getInvestmentTransactions,
   getRecurringTemplates,
   getWalletPortfolio,
   getWalletPlans,
-  getWalletTransfers,
 } from "@/lib/queries";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
@@ -69,14 +65,7 @@ export default function InvestmentsScreen() {
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
-  const { toast } = useToast();
-  const [confirmingTransfer, setConfirmingTransfer] = useState<string | null>(
-    null,
-  );
   const current = getCurrentMonth();
-  const [toWallet, setToWallet] = useState<InvestmentWalletId>("pea");
-  const [amount, setAmount] = useState("");
-  const [pending, setPending] = useState(false);
   const [activeWallet, setActiveWallet] = useState<InvestmentWalletId>("pea");
   const [editingPosition, setEditingPosition] =
     useState<InvestmentPositionItem | null>(null);
@@ -89,20 +78,17 @@ export default function InvestmentsScreen() {
           portfolio: null as InvestmentPortfolioSummary | null,
           upcoming: [] as ReturnType<typeof buildUpcomingInvestments>,
           fundingNeeds: [] as WalletFundingNeed[],
-          transfers: [] as WalletTransfer[],
           returns: null as ReturnType<typeof buildInvestmentReturns> | null,
           plans: [] as WalletPlan[],
         };
       }
-      const [portfolio, templates, transactions, transfers, plans] =
-        await Promise.all([
-          // History powers the per-position charts.
-          getWalletPortfolio(user.id, { includeHistory: true }),
-          getRecurringTemplates(user.id),
-          getInvestmentTransactions(user.id),
-          getWalletTransfers(user.id, current.year, current.month),
-          getWalletPlans(user.id),
-        ]);
+      const [portfolio, templates, transactions, plans] = await Promise.all([
+        // History powers the per-position charts.
+        getWalletPortfolio(user.id, locale, { includeHistory: true }),
+        getRecurringTemplates(user.id),
+        getInvestmentTransactions(user.id),
+        getWalletPlans(user.id),
+      ]);
       const investmentTemplates = (
         templates as RecurringTemplateWithCategory[]
       ).filter((template) => template.categories.type === "investment");
@@ -110,6 +96,7 @@ export default function InvestmentsScreen() {
         investmentTemplates,
         transactions as TransactionWithCategory[],
         todayIsoLocal(),
+        locale,
       );
       const fundingNeeds = buildWalletFundingNeeds(
         investmentTemplates,
@@ -121,14 +108,13 @@ export default function InvestmentsScreen() {
         portfolio,
         todayIsoLocal(),
       );
-      return { portfolio, upcoming, fundingNeeds, transfers, returns, plans };
+      return { portfolio, upcoming, fundingNeeds, returns, plans };
     }, [user?.id, current.year, current.month, dataVersion]);
 
   const portfolio = data?.portfolio;
   const returns = data?.returns ?? null;
   const plans = data?.plans ?? [];
   const upcoming = data?.upcoming ?? [];
-  const transfers = data?.transfers ?? [];
   const nextByWallet = nextUpcomingByWallet(upcoming);
   const fundingNeeds = (data?.fundingNeeds ?? []).filter(
     (need) => need.monthlyTotal > 0,
@@ -142,24 +128,15 @@ export default function InvestmentsScreen() {
       (column) => column.items.length > 0 || column.totalInvested > 0,
     );
 
-  async function handleAddTransfer() {
-    setPending(true);
-    const result = await upsertWalletTransfer({
-      toWallet,
-      amount: Number(amount),
-      occurredOn: todayIsoLocal(),
-    });
-    setPending(false);
-    if (result.error) {
-      toast(result.error, "error");
-      return;
-    }
-    setAmount("");
-    await onRefresh();
-  }
+  const walletOptions = INVESTMENT_WALLET_IDS.map((id) => ({
+    value: id,
+    label: INVESTMENT_WALLET_LABELS[id],
+  }));
 
   return (
-    <Screen title={t("nav.wallets")}>
+    <Screen title={t("nav.wallets")} className="pb-0">
+      {/* Positions and what they are made of, as the web's strip. */}
+      <SurfaceTabs tabs={WALLET_TABS} className="mb-3" />
       {loading && !portfolio ? (
         <ScreenSkeleton rows={3} />
       ) : error ? (
@@ -170,11 +147,18 @@ export default function InvestmentsScreen() {
           description={t("wallets.emptyBodyMobile")}
         />
       ) : (
+        /*
+         * In the web's order: what it is all worth, what goes in each month,
+         * then one account and what it holds. The positions used to come
+         * eighth, under the return, the fees, the plan, one card per
+         * account to fund and the performance chart; the reasons to open
+         * this screen were the last thing on it.
+         */
         <ScrollView
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
           }
-          contentContainerClassName="gap-4 pt-2"
+          contentContainerClassName="gap-5 pt-2"
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
           <StatHero
@@ -184,84 +168,67 @@ export default function InvestmentsScreen() {
             format={formatEuro}
             subtitle={
               <>
-                {`${formatEuro(portfolio.totalInvested)} invested`}
-                {portfolio.hasMarketSnapshot ? (
-                  <Text
-                    className={
-                      portfolio.totalGainLoss > 0
-                        ? "font-mono text-sm font-medium text-success"
-                        : "font-mono text-sm font-medium text-destructive"
-                    }
-                  >
-                    {` · ${formatEuro(portfolio.totalGainLoss)}`}
-                  </Text>
+                <PrivateAmount className="text-sm text-muted-foreground">
+                  {formatEuro(portfolio.totalInvested)}
+                </PrivateAmount>
+                {` ${t("wallets.investedSuffix")}`}
+                {portfolio.hasMarketSnapshot &&
+                portfolio.totalGainLoss !== 0 ? (
+                  <>
+                    {" · "}
+                    <PrivateAmount
+                      className={cn(
+                        "text-sm font-medium",
+                        portfolio.totalGainLoss > 0
+                          ? "text-success"
+                          : "text-destructive",
+                      )}
+                    >
+                      {formatSigned(portfolio.totalGainLoss, formatEuro)}
+                    </PrivateAmount>
+                  </>
                 ) : null}
-                {upcoming.length > 0
-                  ? ` · upcoming DCA ${formatEuro(sumUpcomingAmount(upcoming))}`
-                  : ""}
               </>
             }
           />
 
-          {returns ? (
-            <Card bezel innerClassName="p-5">
-              <View className="flex-row items-baseline justify-between gap-3">
-                <Text variant="muted" className="text-sm">
-                  Money-weighted return
-                </Text>
-                <Text
-                  className={cn(
-                    "font-mono font-bold",
-                    returns.total.rate === null
-                      ? "text-muted-foreground"
-                      : returns.total.rate >= 0
-                        ? "text-success"
-                        : "text-destructive",
-                  )}
-                  style={{ fontSize: 18 }}
+          {/* One row of tags rather than one card per account: three cards
+              of "Send to X €Y / month" were three cards of height for three
+              numbers, and the account's name is label enough. */}
+          {fundingNeeds.length > 0 || upcoming.length > 0 ? (
+            <View className="items-center gap-2">
+              {fundingNeeds.length > 0 ? (
+                <View
+                  accessibilityLabel={t("wallets.fundingLabel")}
+                  className="flex-row flex-wrap justify-center gap-2"
                 >
-                  {formatAnnualRate(returns.total.rate) ??
-                    returnUnavailableLabel(
-                      returns.total.unavailableReason,
-                      locale,
-                    )}
+                  {fundingNeeds.map((need) => (
+                    <View
+                      key={need.walletId}
+                      className="flex-row items-baseline gap-1.5 rounded-full border border-border px-3 py-1"
+                    >
+                      <Text variant="muted" className="text-xs">
+                        {INVESTMENT_WALLET_LABELS[need.walletId]}
+                      </Text>
+                      <PrivateAmount className="text-xs font-medium">
+                        {formatEuro(need.monthlyTotal)}
+                      </PrivateAmount>
+                      <Text variant="muted" className="text-xs">
+                        {t("wallets.perMonth")}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+              {upcoming.length > 0 ? (
+                <Text variant="muted" className="text-center text-xs">
+                  {t("wallets.upcomingThisMonth", {
+                    amount: formatEuro(sumUpcomingAmount(upcoming)),
+                  })}
                 </Text>
-              </View>
-              <Text variant="muted" className="mt-2 text-xs">
-                Annualised across every dated contribution, so paying in monthly
-                is measured fairly against a lump sum.
-              </Text>
-            </Card>
+              ) : null}
+            </View>
           ) : null}
-
-          <FundCostCard portfolio={portfolio} />
-
-          <WalletPlanPanel
-            portfolio={portfolio}
-            returns={returns}
-            plans={plans}
-            monthlyContribution={fundingNeeds.reduce(
-              (sum, need) => sum + need.monthlyTotal,
-              0,
-            )}
-            onSaved={onRefresh}
-          />
-
-          {fundingNeeds.map((need) => (
-            <Card key={need.walletId} bezel>
-              <Text variant="muted">
-                Send to {INVESTMENT_WALLET_LABELS[need.walletId]}
-              </Text>
-              <View className="mt-1 flex-row items-baseline gap-1">
-                <PrivateAmount className="font-mono text-2xl font-bold">
-                  {formatEuro(need.monthlyTotal)}
-                </PrivateAmount>
-                <Text variant="muted" className="text-sm">
-                  / month
-                </Text>
-              </View>
-            </Card>
-          ))}
 
           {!hasData ? (
             <EmptyState
@@ -270,21 +237,29 @@ export default function InvestmentsScreen() {
             />
           ) : null}
 
-          <WalletPerformance
-            portfolio={portfolio}
-            activeWallet={activeWallet}
-            onWalletChange={setActiveWallet}
-            nextByWallet={nextByWallet}
-          />
+          <View className="gap-2">
+            <ChipRow
+              label={t("wallets.walletPicker")}
+              options={walletOptions}
+              value={activeWallet}
+              onChange={setActiveWallet}
+            />
+            {/* The acronym spelled out, once, under the chip that uses it. */}
+            <Text variant="muted" className="px-1 text-xs">
+              {t(INVESTMENT_WALLET_NAME_KEYS[activeWallet])}
+            </Text>
+          </View>
 
           <View>
-            <Text className="mb-2 text-base">
-              {`${INVESTMENT_WALLET_LABELS[activeWallet]} positions`}
+            <Text className="mb-2 text-base font-medium">
+              {t("wallets.inWallet", {
+                wallet: INVESTMENT_WALLET_LABELS[activeWallet],
+              })}
             </Text>
             <Card bezel innerClassName="px-4 py-1">
               {activeItems.length === 0 ? (
                 <Text variant="muted" className="py-4 text-sm">
-                  No positions in this wallet yet.
+                  {t("wallets.noItems")}
                 </Text>
               ) : (
                 activeItems.map((item, index) => (
@@ -302,89 +277,58 @@ export default function InvestmentsScreen() {
             </Card>
           </View>
 
-          <Card bezel>
-            <Text className="font-bold">Cash → wallet transfers</Text>
-            <Text variant="muted" className="mt-1 mb-3">
-              This month
-            </Text>
-            <View className="mb-3 flex-row flex-wrap gap-2">
-              {INVESTMENT_WALLET_IDS.map((id) => {
-                const selected = toWallet === id;
-                return (
-                  <Pressable
-                    key={id}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    accessibilityLabel={INVESTMENT_WALLET_LABELS[id]}
-                    onPress={() => setToWallet(id)}
-                    className={`rounded-full border px-4 py-1.5 ${
-                      selected
-                        ? "border-foreground bg-foreground"
-                        : "border-border bg-background"
-                    }`}
-                  >
-                    <Text
-                      className={`text-center text-xs font-semibold ${
-                        selected ? "text-background" : ""
-                      }`}
-                    >
-                      {INVESTMENT_WALLET_LABELS[id]}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-            <Input
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="decimal-pad"
-              placeholder={t("wallets.transferAmountPlaceholder")}
-              className="mb-3"
-            />
-            <Button
-              label={t("wallets.addTransfer")}
-              disabled={pending}
-              onPress={handleAddTransfer}
-            />
-            {transfers.map((t) => (
-              <Pressable
-                key={t.id}
-                accessibilityRole="button"
-                accessibilityHint="Long press to delete this transfer"
-                className="mt-3 flex-row items-center justify-between border-t border-border pt-3"
-                onLongPress={() => setConfirmingTransfer(t.id)}
-              >
-                <Text>
-                  {INVESTMENT_WALLET_LABELS[t.to_wallet]} · {t.occurred_on}
+          <WalletPerformance
+            portfolio={portfolio}
+            activeWallet={activeWallet}
+            nextByWallet={nextByWallet}
+          />
+
+          {returns ? (
+            <Card bezel innerClassName="p-5">
+              <View className="flex-row items-baseline justify-between gap-3">
+                <Text variant="muted" className="text-sm">
+                  {t("wallets.returnTitle")}
                 </Text>
-                <PrivateAmount className="font-mono font-semibold">
-                  {formatEuro(Number(t.amount))}
-                </PrivateAmount>
-              </Pressable>
-            ))}
-          </Card>
+                <Text
+                  className={cn(
+                    "font-sans tabular-nums font-bold",
+                    returns.total.rate === null
+                      ? "text-muted-foreground"
+                      : returns.total.rate >= 0
+                        ? "text-success"
+                        : "text-destructive",
+                  )}
+                  style={{ fontSize: 18 }}
+                >
+                  {formatAnnualRate(returns.total.rate, locale) ??
+                    returnUnavailableLabel(
+                      returns.total.unavailableReason,
+                      locale,
+                    )}
+                </Text>
+              </View>
+              <Text variant="muted" className="mt-2 text-xs">
+                {t("wallets.returnBody")}
+              </Text>
+            </Card>
+          ) : null}
+
+          <WalletPlanPanel
+            portfolio={portfolio}
+            returns={returns}
+            plans={plans}
+            monthlyContribution={fundingNeeds.reduce(
+              (sum, need) => sum + need.monthlyTotal,
+              0,
+            )}
+            onSaved={onRefresh}
+          />
+
+          {/* Fees last: a figure worth checking once a year, not on every
+              visit. */}
+          <FundCostCard portfolio={portfolio} />
         </ScrollView>
       )}
-
-      <ConfirmSheet
-        open={confirmingTransfer !== null}
-        title={t("wallets.deleteTransferTitle")}
-        message={t("wallets.deleteTransferBody")}
-        onConfirm={async () => {
-          const id = confirmingTransfer;
-          setConfirmingTransfer(null);
-          if (!id) {
-            return;
-          }
-          const result = await deleteWalletTransfer(id);
-          if (result.error) {
-            toast(result.error, "error");
-            return;
-          }
-          await onRefresh();
-        }}
-        onCancel={() => setConfirmingTransfer(null)}
-      />
 
       <InvestmentPositionSheet
         item={editingPosition}
@@ -393,4 +337,11 @@ export default function InvestmentsScreen() {
       />
     </Screen>
   );
+}
+
+function formatSigned(amount: number, format: (v: number) => string): string {
+  const formatted = format(Math.abs(amount));
+  if (amount > 0) return `+${formatted}`;
+  if (amount < 0) return `−${formatted}`;
+  return formatted;
 }

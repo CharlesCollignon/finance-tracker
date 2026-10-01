@@ -1,4 +1,10 @@
 import type { Messages } from "./en";
+import { moreScreensFr } from "./more-screens.fr";
+import { formPickersFr } from "./form-pickers.fr";
+import { reviewScreensFr } from "./review-screens.fr";
+import { planScreenFr } from "./plan-screen.fr";
+import { homeScreenFr } from "./home-screen.fr";
+import { actionsFr } from "./actions.fr";
 
 /**
  * What the app says, in French.
@@ -23,17 +29,17 @@ import type { Messages } from "./en";
  */
 export const fr: Messages = {
   nav: {
-    bearing: "Cap",
+    bearing: "Le point",
     ledger: "Journal",
-    charges: "Charges",
+    charges: "Récurrents",
     plan: "Plan",
-    wallets: "Portefeuilles",
+    wallets: "Placements",
     profile: "Profil",
     ledgerList: "Liste",
     ledgerCalendar: "Calendrier",
     ledgerByCategory: "Par catégorie",
     walletsPositions: "Positions",
-    walletsLookThrough: "Transparence",
+    walletsLookThrough: "Composition",
 
     waiting: "{count} en attente",
   },
@@ -58,7 +64,7 @@ export const fr: Messages = {
     moneySection: "Argent",
     moneyFooter: "La devise change le symbole, pas les montants.",
     categories: "Catégories",
-    budgetsAndGoals: "Plafonds et objectifs",
+    budgetsAndGoals: "Budgets et objectifs",
     currency: "Devise",
     securitySection: "Sécurité",
     securityFooterWeb:
@@ -81,37 +87,79 @@ export const fr: Messages = {
     deleteAccount: "Supprimer le compte",
     deleteMyAccount: "Supprimer mon compte",
     saved: "Enregistré",
+    notificationsOn: "Notifications activées",
+    remindersOnly:
+      "Rappels activés. Cette version ne peut pas recevoir les alertes de votre banque.",
+    dataDeleted: "Données supprimées",
+    deleteAccountUnavailable:
+      "La suppression du compte n'est pas encore possible depuis le téléphone. Supprimez vos données ci-dessus, puis écrivez-nous.",
+    biometricsUnavailable: "Pas sur cet appareil",
+    biometricsNeedsSetup: "À configurer dans les réglages du téléphone",
     wipeBlurb:
-      "Transactions, modèles récurrents, positions et catégories. Votre compte reste.",
+      "Vos opérations, ponctuelles et récurrentes, vos placements et vos catégories. Votre compte reste.",
     closeBlurb: "Définitif. Tout ce qui précède part avec.",
     deleteNeedsServiceKey:
       "La suppression du compte exige SUPABASE_SERVICE_ROLE_KEY sur le serveur (en local\u00A0: .env.local, en production\u00A0: les variables d'environnement Vercel).",
   },
 
+  biometric: {
+    unlockTitle: "Déverrouiller",
+    unlockBody: "Utilisez Face ID ou votre empreinte pour ouvrir Pluclair.",
+    unlockPrompt: "Déverrouiller Pluclair",
+    enablePrompt: "Activer le déverrouillage biométrique",
+    waiting: "Un instant…",
+    cancelLabel: "Annuler",
+    cancelled: "Annulé.",
+    failed: "Le déverrouillage biométrique a échoué.",
+    couldNotUnlock: "Impossible de déverrouiller.",
+    needsSetup:
+      "Configurez d'abord Face ID ou une empreinte dans les réglages du téléphone.",
+    couldNotEnable: "Impossible d'activer le déverrouillage biométrique.",
+  },
+  reminders: {
+    channelName: "Rappels",
+    dueTomorrowTitle: "{name} demain",
+    dueTodayTitle: "{name} aujourd'hui",
+    dueBody: "{amount} à prévoir.",
+    monthOpenTitle: "Un nouveau mois commence",
+    monthOpenBody:
+      "Vos opérations récurrentes y sont déjà. Voyez ce qu'il vous restera.",
+    overCapOne: "{name} a dépassé son budget",
+    overCapMany: {
+      one: "{count} budget dépassé",
+      other: "{count} budgets dépassés",
+    },
+    overCapBody: "{spent} dépensés sur {limit}.",
+  },
   passkeys: {
     none: "Aucune clé d'accès pour l'instant.",
     unnamed: "Clé d'accès",
     added: "Ajoutée le {date}",
     working: "Un instant…",
     add: "Ajouter une clé d'accès",
+    removeBody:
+      "Retirer {name}\u00A0? Vous pourrez l'ajouter à nouveau plus tard.",
+    failed: "La demande de clé d'accès a échoué.",
+    unsupported: "Les clés d'accès ne sont pas disponibles sur cet appareil.",
+    cancelled: "Demande de clé d'accès annulée.",
   },
 
   ledger: {
-    emptyTitle: "Rien d'enregistré ce mois-ci",
+    emptyTitle: "Aucune opération ce mois-ci",
     emptyBody:
-      "Ajoutez ce qui s'est passé. Les charges que vous avez prévues remplissent chaque mois d'elles-mêmes.",
+      "Ajoutez ce qui s'est passé. Vos opérations récurrentes remplissent chaque mois d'elles-mêmes.",
     searchPlaceholder: "Chercher une catégorie ou une note…",
-    searchLabel: "Chercher dans les transactions",
+    searchLabel: "Chercher dans les opérations",
     filterByCategory: "Filtrer par catégorie",
     filterByTag: "Filtrer par étiquette",
-    filterTransactions: "Filtrer les transactions",
+    filterTransactions: "Filtrer les opérations",
     allCategories: "Toutes les catégories",
     allTags: "Toutes les étiquettes",
     selectDone: "Terminé",
     select: "Sélectionner",
     clearAll: "Tout désélectionner",
     selectAll: "Tout sélectionner",
-    exportCsv: "Exporter ces transactions en CSV",
+    exportCsv: "Exporter ces opérations en CSV",
     importCsv: "Importer un relevé CSV",
     optionsToggle: "Filtres et actions",
     filtersOn: {
@@ -121,57 +169,66 @@ export const fr: Messages = {
     exportShort: "Exporter",
     importShort: "Importer",
     exportNothing: "Rien à exporter pour cette vue",
-    noMatchTitle: "Aucune transaction correspondante",
+    noMatchTitle: "Aucune opération correspondante",
     noMatchBody: "Essayez une autre recherche ou un autre filtre.",
     entryCount: {
-      one: "{count} transaction",
-      other: "{count} transactions",
+      one: "{count} opération",
+      other: "{count} opérations",
     },
     shownOfTotal: {
-      one: "{count} transaction sur {total}",
-      other: "{count} transactions sur {total}",
+      one: "{count} opération sur {total}",
+      other: "{count} opérations sur {total}",
     },
     exported: {
-      one: "{count} transaction exportée",
-      other: "{count} transactions exportées",
+      one: "{count} opération exportée",
+      other: "{count} opérations exportées",
     },
-    in: "Entré",
-    out: "Sorti",
-    leftAtMonthEnd: "Restant en fin de mois",
+    in: "Entrées",
+    out: "Sorties",
+    leftAtMonthEnd: "Il restera en fin de mois",
     clearFilters: "Effacer les filtres",
     selectRow: "Sélectionner {name}",
     editRow: "Modifier {name}",
     theNewCategory: "la nouvelle catégorie",
     deleted: {
-      one: "{count} transaction supprimée",
-      other: "{count} transactions supprimées",
+      one: "{count} opération supprimée",
+      other: "{count} opérations supprimées",
     },
     moved: {
-      one: "{count} transaction déplacée vers {name}",
-      other: "{count} transactions déplacées vers {name}",
+      one: "{count} opération déplacée vers {name}",
+      other: "{count} opérations déplacées vers {name}",
     },
     add: "Ajouter",
-    addTransaction: "Ajouter une transaction",
+    addTransaction: "Ajouter une opération",
     importCsvShort: "Importer un CSV",
     clearSearch: "Effacer la recherche",
     allTypes: "Tous les types",
-    restore: "Restaurer",
+    restore: "Remettre",
+    restored: "Remis dans le mois\u00A0: {name}",
+    addedForToday: "Ajouté pour aujourd'hui\u00A0: {name}",
+    skippedCount: {
+      one: "{count} opération prévue retirée de ce mois-ci",
+      other: "{count} opérations prévues retirées de ce mois-ci",
+    },
+    skippedBody:
+      "Retirées de ce mois. Remettez-en une pour qu'elle compte à nouveau.",
     review: "Vérifier",
     fillThisMonth: "Remplir ce mois-ci",
     selectHint: "Touchez pour sélectionner · Terminé pour quitter",
     editHint: "Touchez pour modifier · appui long pour sélectionner",
     needsCategory: {
-      one: "{count} transaction attend une catégorie",
-      other: "{count} transactions attendent une catégorie",
+      one: "{count} opération attend une catégorie",
+      other: "{count} opérations attendent une catégorie",
     },
     needsCategoryAction: {
-      one: "{count} transaction attend une catégorie. Vérifier",
-      other: "{count} transactions attendent une catégorie. Vérifier",
+      one: "{count} opération attend une catégorie. Vérifier",
+      other: "{count} opérations attendent une catégorie. Vérifier",
     },
     repeatTitle: "Répéter aujourd'hui ?",
     repeatBody: "Ajoute un autre {category} de {amount} daté d'aujourd'hui.",
     repeatConfirm: "Ajouter pour aujourd'hui",
-    planned: "Prévu",
+    planned: "À venir",
+    recurringEntry: "Opération récurrente",
   },
 
   importer: {
@@ -213,14 +270,19 @@ export const fr: Messages = {
     setRemainingSpending: "Mettre toutes les dépenses restantes dans",
     setRemainingIncome: "Mettre tous les revenus restants dans",
     imported: {
-      one: "{count} transaction importée",
-      other: "{count} transactions importées",
+      one: "{count} opération importée",
+      other: "{count} opérations importées",
     },
     intro:
       "Exportez un CSV depuis votre banque et déposez-le ici. Le fichier est lu dans votre navigateur — rien n'est envoyé, et rien n'est enregistré tant que vous n'avez pas relu chaque ligne.",
     dropFile: "Déposez un fichier .csv ici",
     fileTooLarge: "Ce fichier dépasse 5\u00A0Mo — est-ce le bon export\u00A0?",
     fileNoRows: "Ce fichier ne contient aucune ligne.",
+    fileUnreadable: "Ce fichier n'a pas pu être ouvert.",
+    introPhone:
+      "Exportez un CSV depuis votre banque et choisissez-le ici. Le fichier est lu sur votre téléphone — rien n'est envoyé, et rien n'est enregistré tant que vous n'avez pas relu chaque ligne.",
+    firstRows: "Les premières lignes, telles que lues",
+    categoryForRow: "Catégorie pour {description}",
     noRowsRead: "Aucune ligne n'a pu être lue dans ce fichier.",
     columnNumber: "Colonne {number}",
     rowCount: { one: "{count} ligne", other: "{count} lignes" },
@@ -235,14 +297,14 @@ export const fr: Messages = {
   plan: {
     runwayLead: "Tout ce que vous avez enregistré comme épargne couvre",
     runwayRate: "à {amount} par mois.",
-    capsHeading: "Plafonds de dépense",
-    addCap: "Ajouter un plafond",
-    addCapSubmit: "Ajouter le plafond",
+    capsHeading: "Budgets",
+    addCap: "Ajouter un budget",
+    addCapSubmit: "Ajouter le budget",
     update: "Mettre à jour",
     cancel: "Annuler",
-    monthlyLimit: "Plafond mensuel",
-    capSaved: "Plafond enregistré",
-    capRemoved: "Plafond supprimé",
+    monthlyLimit: "Budget mensuel",
+    capSaved: "Budget enregistré",
+    capRemoved: "Budget supprimé",
     goalsHeading: "Objectifs d'épargne",
     addGoal: "Ajouter un objectif",
     addGoalSubmit: "Ajouter l'objectif",
@@ -254,7 +316,7 @@ export const fr: Messages = {
     allSavings: "Toute l'épargne",
     tagsHeading: "Étiquettes",
     tagsBlurb:
-      "Une deuxième façon de regrouper une transaction, en travers des catégories — des vacances, un colocataire, un projet à côté.",
+      "Une deuxième façon de regrouper une opération, en travers des catégories — des vacances, un colocataire, un projet à côté.",
     newTag: "Nouvelle étiquette",
     addTag: "Ajouter l'étiquette",
     tagAdded: "Étiquette ajoutée",
@@ -268,28 +330,25 @@ export const fr: Messages = {
     chooseTag: "Choisir une étiquette",
     mergeTag: "Fusionner",
     mergeTagHint:
-      "Ses transactions prennent l'étiquette choisie, et {name} disparaît.",
+      "Ses opérations prennent l'étiquette choisie, et {name} disparaît.",
     tagMerged: "Étiquettes fusionnées",
     deleteTag: "Supprimer l'étiquette",
     deleteTagUses: {
-      one: "Elle sera retirée de {count} transaction\u00A0; la transaction reste.",
+      one: "Elle sera retirée de {count} opération\u00A0; l'opération reste.",
       other:
-        "Elle sera retirée de {count} transactions\u00A0; les transactions restent.",
+        "Elle sera retirée de {count} opérations\u00A0; les opérations restent.",
     },
-    deleteTagUnused: "Aucune transaction ne la porte.",
+    deleteTagUnused: "Aucune opération ne la porte.",
     confirmDeleteTag: "Oui, supprimer",
     tagDeleted: "Étiquette supprimée",
     editTag: "Modifier l'étiquette",
-    tagManageHint:
-      "Touchez une étiquette pour la renommer, la fusionner ou la supprimer.",
     goalName: "Nom de l'objectif",
     deleteGoalTitle: "Supprimer cet objectif\u00A0?",
-    deleteCapTitle: "Supprimer ce plafond\u00A0?",
-    deleteWarning: "C'est irréversible. Vos transactions ne sont pas touchées.",
+    deleteCapTitle: "Supprimer ce budget\u00A0?",
+    deleteWarning: "C'est irréversible. Vos opérations ne sont pas touchées.",
     goalReached: "Objectif atteint\u00A0!",
     goalOverdue: "Date cible dépassée — {amount} encore à épargner.",
     goalOnSchedule: "Épargnez {amount}/mois pour y arriver avant {month}.",
-    globalMonthlyLimit: "Plafond mensuel global",
     goalTargetDateOptional: "Date cible (facultative)",
     goalStartsOn: "Compter à partir du",
     goalStartsOnHint: "L'épargne à partir de ce jour compte pour l'objectif.",
@@ -298,27 +357,23 @@ export const fr: Messages = {
     linkImportTitle: "Importer un relevé",
     linkImportHint: "Un CSV, quand il n'y a pas de connexion bancaire",
     capsBlurb:
-      "Un plafond est un maximum mensuel — sur une catégorie, ou sur tout. Ajoutez-en un et vous verrez où vous en êtes.",
+      "Un budget est un maximum mensuel — sur une catégorie, ou sur tout. Ajoutez-en un et vous verrez où vous en êtes.",
     goalsBlurb:
       "Un objectif est un montant à atteindre — un apport, un voyage, une réserve. Mettez de l'argent de côté dans une catégorie d'épargne et il se remplit.",
-    capOn: "Plafond sur {label}",
-    capRemoveHint: "Appui long pour supprimer ce plafond",
-    goalNamed: "Objectif {name}",
-    goalRemoveHint: "Appui long pour supprimer cet objectif",
     amountOfTotal: "{amount} sur {total}",
-    editCapOn: "Modifier le plafond sur {label}",
+    editCapOn: "Modifier le budget sur {label}",
     editGoalNamed: "Modifier l'objectif {name}",
-    capScope: "Portée",
+    capScope: "Sur quelles dépenses",
     trackCategoryOptional: "Catégorie suivie (facultative)",
   },
 
   recurring: {
     on: "Actif",
     off: "Inactif",
-    addTitle: "Ajouter un récurrent",
-    editTitle: "Modifier le récurrent",
-    addTitleMobile: "Ajouter un récurrent",
-    editTitleMobile: "Modifier le récurrent",
+    addTitle: "Nouvelle opération récurrente",
+    editTitle: "Modifier l'opération récurrente",
+    addTitleMobile: "Nouvelle opération récurrente",
+    editTitleMobile: "Modifier l'opération récurrente",
     close: "Fermer",
     category: "Catégorie",
     description: "Libellé",
@@ -329,7 +384,6 @@ export const fr: Messages = {
     yearly: "Annuel",
     dayOfMonth: "Jour du mois",
     dayOfWeek: "Jour de la semaine",
-    dayOfWeekNumeric: "Jour de la semaine (1 = lundi, 7 = dimanche)",
     startsOn: "Commence le",
     endsOn: "Se termine le",
     noStartDate: "Pas de date de début",
@@ -347,21 +401,20 @@ export const fr: Messages = {
     convertedFrom: "({amount} converti)",
     descriptionOptional: "Libellé (facultatif)",
     monthOfYear: "Mois",
-    monthOfYearNumeric: "Mois (de 1 à 12)",
     activePeriod: "Période d'activité (facultative)",
     activePeriodNote:
       "Laissez les deux vides pour que ça tourne jusqu'à ce que vous l'arrêtiez. Renseignez les deux pour un échéancier fixe\u00A0: une taxe foncière étalée sur plusieurs mois, par exemple.",
     saving: "Enregistrement…",
     save: "Enregistrer",
     delete: "Supprimer",
-    deleteItem: "Supprimer le récurrent",
+    deleteItem: "Supprimer l'opération récurrente",
     deleteExplanation:
-      "Supprimer cette charge\u00A0? Ce qu'elle a écrit pour les jours passés reste dans votre journal\u00A0; ce qu'elle avait écrit à l'avance disparaît avec elle.",
+      "Supprimer cette opération récurrente\u00A0? Ce qu'elle a écrit pour les jours passés reste dans votre journal\u00A0; ce qu'elle avait écrit à l'avance disparaît avec elle.",
     deleting: "Suppression…",
     confirmDelete: "Confirmer la suppression",
-    savedHint: "Charge enregistrée",
-    updatedHint: "Charge mise à jour",
-    deletedHint: "Charge supprimée",
+    savedHint: "Opération récurrente enregistrée",
+    updatedHint: "Opération récurrente mise à jour",
+    deletedHint: "Opération récurrente supprimée",
     applyTo: "Appliquer ce changement à",
     scopeUpcoming: "À venir seulement",
     scopeUpcomingHint: "Ce qui est déjà enregistré ({dates}) reste tel quel.",
@@ -379,17 +432,17 @@ export const fr: Messages = {
     brokerDcaNote:
       "Les achats chez le courtier sont suivis pour information mais ne réduisent pas votre budget restant.",
     bitstackNote:
-      "Achat hebdomadaire à montant fixe en EUR sur Bitstack. La valeur de marché dans Portefeuilles utilise votre total BTC × le cours BTC/EUR en direct.",
+      "Achat hebdomadaire à montant fixe en EUR sur Bitstack. La valeur de marché dans Placements utilise votre total BTC × le cours BTC/EUR en direct.",
     sharesNote:
-      "Choisissez votre ETF et le nombre de parts. Cherchez par nom ou par ISIN (ex. LU1681043599). L'application récupère le cours en direct et calcule le montant en euros à l'enregistrement, puis à chaque fois que la charge est écrite dans un mois.",
+      "Choisissez votre ETF et le nombre de parts. Cherchez par nom ou par ISIN (ex. LU1681043599). L'application récupère le cours en direct et calcule le montant en euros à l'enregistrement, puis à chaque fois que l'opération récurrente est écrite dans un mois.",
     yearlyNote:
       "Compté comme une part mensuelle dans votre budget (annuel ÷ 12). Le paiement complet est enregistré une fois, le mois dû.",
     trackedFund: "ETF ou fonds suivi",
     trackedFundNote:
-      "Une charge à montant fixe en euros\u00A0: indiquez l'ETF qu'elle achète. Dans Portefeuilles, saisissez le nombre total de parts que vous détenez pour une valeur de marché en direct.",
-    bitcoinTitle: "Charge en bitcoin",
+      "Un versement fixe en euros\u00A0: indiquez l'ETF qu'il achète. Dans Placements, saisissez le nombre total de parts que vous détenez pour une valeur de marché en direct.",
+    bitcoinTitle: "Achat récurrent de bitcoin",
     bitcoinNote:
-      "Chaque achat convertit votre montant en euros en BTC. Saisissez votre solde BTC total dans Portefeuilles pour une valeur en direct.",
+      "Chaque achat convertit votre montant en euros en BTC. Saisissez votre solde BTC total dans Placements pour une valeur en direct.",
   },
 
   instrument: {
@@ -403,8 +456,8 @@ export const fr: Messages = {
 
   recurringProposals: {
     lead: {
-      one: "{count} charge de votre relevé a l'air de se répéter.",
-      other: "{count} charges de votre relevé ont l'air de se répéter.",
+      one: "{count} opération de votre relevé a l'air de se répéter.",
+      other: "{count} opérations de votre relevé ont l'air de se répéter.",
     },
     everyWeek: "chaque semaine",
     everyMonth: "chaque mois",
@@ -416,11 +469,9 @@ export const fr: Messages = {
   },
 
   transaction: {
-    editTitle: "Modifier la transaction",
+    editTitle: "Modifier l'opération",
     close: "Fermer",
     category: "Catégorie",
-    filterCategories: "Filtrer les catégories",
-    filterCategoriesPlaceholder: "Filtrer les catégories…",
     amount: "Montant",
     date: "Date",
     note: "Note (facultatif)",
@@ -428,28 +479,26 @@ export const fr: Messages = {
     selectCategory: "Choisir une catégorie",
     tags: "Étiquettes",
     saving: "Enregistrement…",
-    saveTransaction: "Enregistrer la transaction",
-    saved: "Transaction enregistrée",
+    saveTransaction: "Enregistrer l'opération",
+    saved: "Opération enregistrée",
     duplicating: "Duplication…",
     duplicateToToday: "Dupliquer à aujourd'hui",
     duplicated: "Dupliquée à aujourd'hui",
-    deleteTransaction: "Supprimer la transaction",
+    deleteTransaction: "Supprimer l'opération",
     deleting: "Suppression…",
     confirmDelete: "Oui, supprimer",
-    deleted: "Transaction supprimée",
-    deleteExplanation: "Supprimer définitivement cette transaction\u00A0?",
+    deleted: "Opération supprimée",
+    deleteExplanation: "Supprimer définitivement cette opération\u00A0?",
     deleteChargeExplanation:
-      "Supprimer cette ligne\u00A0? Elle vient d'une charge et ne sera pas rajoutée ce mois-ci. La charge continue les mois suivants.",
+      "Supprimer cette ligne\u00A0? Elle vient d'une opération récurrente et ne sera pas rajoutée ce mois-ci. L'opération récurrente continue les mois suivants.",
     cancel: "Annuler",
   },
 
   charges: {
     blurb: "Ce que vous savez déjà devoir payer, chaque mois.",
-    tileIncome: "Revenus",
-    tileCommitted: "Engagé",
-    tileSetAside: "Mis de côté",
     tileLeft: "Reste",
     leftEachMonth: "Reste chaque mois",
+    keptShare: "Vous gardez {percent} de vos revenus",
     ofIncomeBefore: "sur",
     ofIncomeAfter: "de revenus",
     perMonth: "Par mois",
@@ -459,13 +508,13 @@ export const fr: Messages = {
     ofWhichMovedAfter: "déplacés chez le courtier — suivis, mais pas dépensés.",
     nothingHereYet: "Rien ici pour l'instant.",
     editNamed: "Modifier {name}",
-    addCharge: "Ajouter une charge",
-    kindOfCharge: "Type de charge",
+    addCharge: "Ajouter une opération récurrente",
+    kindOfCharge: "Type d'opération récurrente",
     activate: "Activer",
     deactivate: "Désactiver",
     toggleFor: "{action} {name}",
     fixedToBitcoin: "Montant fixe en EUR → Bitcoin",
-    emptyTitle: "Aucune charge pour l'instant",
+    emptyTitle: "Aucune opération récurrente pour l'instant",
     emptyBody:
       "Loyer, abonnements, un virement mensuel vers l'épargne — tout ce que vous savez déjà à venir.",
     emptyTitleMobile: "Qu'est-ce qui revient chaque mois\u00A0?",
@@ -481,10 +530,10 @@ export const fr: Messages = {
 
   add: {
     title: "Ajouter",
-    open: "Ajouter une transaction ou une charge",
+    open: "Ajouter une opération",
     kind: "Ce que vous ajoutez",
-    transaction: "Transaction",
-    charge: "Charge",
+    transaction: "Une fois",
+    charge: "Récurrente",
     transactionHint: "Quelque chose qui s'est passé une fois.",
     chargeHint: "Quelque chose qui revient — loyer, salaire, abonnement.",
   },
@@ -494,7 +543,7 @@ export const fr: Messages = {
     recordNow: "L'enregistrer maintenant",
     recordNowHint: "C'est déjà arrivé — l'ajoute à la date d'aujourd'hui.",
     skip: "Passer cette date",
-    editCharge: "Modifier la charge",
+    editCharge: "Modifier l'opération récurrente",
     recorded: "Enregistré à la date d'aujourd'hui",
     skipped: "Passé pour le {date}",
     undo: "Annuler",
@@ -502,8 +551,8 @@ export const fr: Messages = {
 
   monthFill: {
     added: {
-      one: "{count} charge ajoutée à ce mois",
-      other: "{count} charges ajoutées à ce mois",
+      one: "{count} opération récurrente ajoutée à ce mois",
+      other: "{count} opérations récurrentes ajoutées à ce mois",
     },
   },
 
@@ -514,18 +563,17 @@ export const fr: Messages = {
     category: "Catégorie",
     searchCategories: "Chercher une catégorie",
     searchCategoriesPlaceholder: "Chercher une catégorie…",
-    filterCategories: "Filtrer les catégories",
-    filterCategoriesPlaceholder: "Filtrer les catégories…",
     changeCategory: "{name} — changer",
     notePlaceholder: "C'était pour quoi\u00A0?",
     saving: "Enregistrement…",
     save: "Enregistrer",
     saveAndAnother: "Enregistrer et en ajouter une autre",
-    saved: "Transaction enregistrée",
+    saved: "Opération enregistrée",
     savedOffline:
       "Enregistrée sur cet appareil — elle sera synchronisée dès le retour en ligne",
     amount: "Montant",
     note: "Note",
+    anotherDay: "Un autre jour",
     tags: "Étiquettes",
     allCategories: "Toutes les catégories",
     noCategoryMatch: "Aucune catégorie ne correspond à «\u00A0{query}\u00A0».",
@@ -539,7 +587,7 @@ export const fr: Messages = {
     progress: "Progression de la configuration",
     welcomeTitle: "Bienvenue sur Pluclair",
     welcomeBody:
-      "Deux minutes maintenant, et Cap affichera de vrais chiffres au lieu de zéros.",
+      "Deux minutes maintenant, et Le point affichera de vrais chiffres au lieu de zéros.",
     currencyTitle: "Dans quelle devise pensez-vous\u00A0?",
     currencyBody:
       "Tous les montants de l'application sont affichés ainsi. Vous pourrez changer plus tard dans Profil.",
@@ -548,13 +596,13 @@ export const fr: Messages = {
       "Vos revenus mensuels sont la référence de tout le reste. Ajoutez-les une fois et ils reviennent chaque mois.",
     expensesTitle: "Qu'est-ce qui sort\u00A0?",
     expensesBody:
-      "Loyer, abonnements, factures — les charges que vous savez déjà à venir. C'est ce qui rend la projection utile.",
+      "Loyer, abonnements, factures — ce que vous savez déjà devoir payer. C'est ce qui rend la projection utile.",
     capTitle: "Sur quoi préférez-vous ne pas déraper\u00A0?",
     capBody:
-      "Choisissez une catégorie et un plafond mensuel. Un panneau dans Cap affichera un anneau qui se remplit à mesure que vous dépensez. Vous pourrez en ajouter d'autres dans Plan.",
+      "Choisissez une catégorie et un budget mensuel. Le point affichera un anneau qui se remplit à mesure que vous dépensez. Vous pourrez en ajouter d'autres dans Plan.",
     monthlyAmount: "Montant mensuel",
     dayOfMonth: "Jour du mois",
-    monthlyCap: "Plafond mensuel",
+    monthlyCap: "Budget mensuel",
     category: "Catégorie",
     continue: "Continuer",
     back: "Retour",
@@ -564,18 +612,18 @@ export const fr: Messages = {
     incomeAdded: "Revenu ajouté",
     adding: "Ajout…",
     addThisOne: "Ajouter celle-ci",
-    setCapAndFinish: "Fixer le plafond et terminer",
+    setCapAndFinish: "Fixer le budget et terminer",
     addedCount: {
       one: "{count} ajoutée — ajoutez-en une autre ou terminez ci-dessous.",
       other: "{count} ajoutées — ajoutez-en une autre ou terminez ci-dessous.",
     },
     reopen: "Prise en main",
-    templateAdded: "{name} ajouté",
+    templateAdded: "Ajouté\u00A0: {name}",
   },
 
   categories: {
     blurb:
-      "Les catégories organisent vos transactions et vos récurrents. Une catégorie archivée garde son historique mais n'apparaît plus à la saisie.",
+      "Les catégories rangent toutes vos opérations, ponctuelles ou récurrentes. Une catégorie archivée garde son historique mais n'apparaît plus à la saisie.",
     addCategory: "Ajouter une catégorie",
     newCategory: "Nouvelle catégorie",
     editCategory: "Modifier la catégorie",
@@ -601,7 +649,7 @@ export const fr: Messages = {
     confirmDelete: "Supprimer",
     deleted: "Catégorie supprimée",
     deleteWarning:
-      "Si elle est utilisée par des transactions ou des récurrents, archivez-la plutôt.",
+      "Si des opérations l'utilisent, ponctuelles ou récurrentes, archivez-la plutôt.",
     emptyTitle: "Ajoutez votre première catégorie",
     emptyBody: "Revenus, dépenses, épargne, investissements.",
     countsTowardBudget: "Compte dans le budget mensuel",
@@ -610,7 +658,10 @@ export const fr: Messages = {
     countsHintSavings:
       "Décochez pour de l'argent qui ressort de l'épargne — un virement vers votre compte courant. Il est retiré de ce que vous avez mis de côté, et sort de la réserve derrière l'autonomie.",
     countsHintInvestment:
-      "Décochez pour un achat de portefeuille suivi hors budget (par exemple des achats financés par un virement chez le courtier).",
+      "Décochez pour un achat de placement suivi hors budget (par exemple des achats financés par un virement chez le courtier).",
+    countsHintExpense:
+      "Décochez pour un virement que vous ne voulez pas voir dans le bilan du mois.",
+    excludedFromTotals: "Hors des totaux",
     notCountingInvestment: "Suivi",
     notCountingSavings: "Retrait",
     notCountingIncome: "Remboursement",
@@ -640,27 +691,27 @@ export const fr: Messages = {
     weightOnce: "{amount}",
     bandTitle: "Ce qui a bougé",
     bandEmpty: "Rien n'a assez bougé pour mériter une phrase.",
-    rerank: "Faire classer par un modèle",
-    reranked: "Classé par un modèle",
+    rerank: "Faire classer par l'IA",
+    reranked: "Classé par l'IA",
     rerankStale: "Les chiffres ont bougé depuis ce classement.",
   },
 
   categoryScreen: {
     empty: "Rien à revoir pour l'instant",
     emptyBody:
-      "Dès que quelques mois auront des transactions, la série de chaque catégorie apparaîtra ici.",
+      "Dès que quelques mois auront des opérations, la série de chaque catégorie apparaîtra ici.",
     normal: "{amount} dans un mois normal",
     normalShifted: "{amount} par période de paie",
     periodShifted:
-      "Ces mouvements tombent de part et d'autre d'une fin de mois : chacun est compté dans la période à laquelle il appartient. Un mois ici peut différer du même mois dans le Ledger.",
+      "Ces mouvements tombent de part et d'autre d'une fin de mois\u00A0: chacun est compté dans la période à laquelle il appartient. Un mois ici peut différer du même mois dans le Ledger.",
     groupExpense: "Ce qui sort",
     groupIncome: "Ce qui entre",
-    groupSavings: "Mis de côté",
+    groupSavings: "Épargne et placements",
     groupInvestment: "Investi",
     open: "Ouvrir {name}",
     close: "Fermer",
     behindThisMonth: "Derrière {month}",
-    seeInLedger: "Tout voir dans le Ledger",
+    seeInLedger: "Tout voir dans le Journal",
     months: "{count} derniers mois",
   },
 
@@ -679,43 +730,57 @@ export const fr: Messages = {
     refreshQuotes: "Actualiser les cours",
     refreshingQuotes: "Actualisation…",
     quotesRefreshed: "Cours actualisés",
-    marketValue: "Valeur de marché",
+    marketValue: "Valeur aujourd'hui",
     value: "Valeur",
-    invested: "Investi",
-    market: "Marché",
-    profitLoss: "+/-",
-    walletPicker: "Portefeuille d'investissement",
+    invested: "Versé",
+    market: "Aujourd'hui",
+    profitLoss: "Gain ou perte",
+    walletPicker: "Compte de placement",
+    namePea: "Plan d'épargne en actions",
+    nameCto: "Compte-titres ordinaire",
+    nameAv: "Assurance vie",
+    namePer: "Plan d'épargne retraite",
+    nameCrypto: "Cryptomonnaies",
     rangeAll: "Tout",
+    range1D: "1\u00A0j",
+    range1W: "1\u00A0sem.",
+    range1M: "1\u00A0mois",
+    range3M: "3\u00A0mois",
+    range1Y: "1\u00A0an",
     positions: "Positions",
     orderBy: "Trier",
     orderByName: "Nom",
-    orderByInvested: "Investi",
-    noItems: "Aucune ligne dans ce portefeuille pour l'instant.",
+    orderByInvested: "Versé",
+    noItems: "Rien dans ce compte pour l'instant.",
     editPosition: "Modifier {name}",
-    investedSuffix: "investi",
+    showChart: "Voir la courbe",
+    hideChart: "Masquer la courbe",
+    investedSuffix: "versés",
     fundingLabel: "Versements mensuels",
-    perMonth: "/mois",
-    emptyTitle: "Aucun investissement suivi pour l'instant",
+    perMonth: "par mois",
+    emptyTitle: "Aucun placement suivi pour l'instant",
     emptyBody:
-      "Ajoutez des lignes dans chaque portefeuille pour suivre ce que vous avez investi et sa valeur actuelle.",
-    emptyTitleMobile: "Ouvrir un portefeuille",
-    emptyBodyMobile: "PEA, CTO et crypto arrivent ici.",
-    trackTitle: "Suivre un investissement",
-    trackBody: "Une contribution récurrente devient une position.",
+      "Ajoutez ce que vous détenez sur chaque compte pour suivre ce que vous avez versé et ce que ça vaut aujourd'hui.",
+    emptyTitleMobile: "Suivez vos placements",
+    emptyBodyMobile:
+      "Votre PEA, votre compte-titres et vos cryptos, au même endroit.",
+    trackTitle: "Suivre un placement",
+    trackBody:
+      "Un versement récurrent vers un placement apparaît ici tout seul.",
     addBtcForValue:
-      "Renseignez le total BTC pour la valeur de marché en direct",
+      "Indiquez combien de bitcoins vous détenez pour voir leur valeur du jour",
     addSharesForValue:
-      "Renseignez le nombre de parts pour la valeur de marché en direct",
-    transferAmountPlaceholder: "Montant",
-    addTransfer: "Ajouter le virement",
-    deleteTransferTitle: "Supprimer ce virement\u00A0?",
-    deleteTransferBody:
-      "L'enregistrement du virement est retiré\u00A0; vos transactions ne sont pas touchées.",
+      "Indiquez combien de parts vous détenez pour voir leur valeur du jour",
+    returnTitle: "Rendement par an",
+    returnBody:
+      "Calculé sur chacun de vos versements, à sa date\u00A0: verser un peu chaque mois est comparé équitablement à un gros versement unique.",
+    upcomingThisMonth: "{amount} encore à verser ce mois-ci",
+    inWallet: "Dans votre {wallet}",
   },
 
   fundCost: {
-    title: "Ce que coûte la détention",
-    weightedSuffix: "par an, pondéré",
+    title: "Frais des fonds",
+    weightedSuffix: "par an, en moyenne",
     emptyBody:
       "Renseignez les frais courants de chaque ligne — la commission annuelle indiquée sur son DIC — et ceci devient un montant en euros. C'est le premier poste de coût de la plupart des portefeuilles, et le seul qui n'apparaît sur aucun relevé.",
     aYearOn: "par an sur",
@@ -733,35 +798,35 @@ export const fr: Messages = {
   },
 
   monthClose: {
-    closeMonth: "Clôturer {month}",
+    closeMonth: "Faire le bilan de {month}",
     balance: "Solde",
     balancePrompt:
       "Combien votre compte contenait-il le {date}\u00A0? Additionnez les comptes d'où partent vos dépenses courantes — un seul chiffre suffit.",
     baselineNote:
-      "Cette première clôture ne fixe que le point de départ. Il n'y a encore rien à comparer\u00A0; le mois prochain, si.",
+      "Ce premier bilan ne fixe que le point de départ. Il n'y a encore rien à comparer\u00A0; le mois prochain, si.",
     sameDayNote:
       "Relevez-le le même jour chaque mois. Ainsi les paiements par carte encore en route faussent la lecture de la même façon à chaque fois, et les mois restent comparables.",
     working: "Calcul…",
     seeWhatThatMeans: "Voir ce que cela donne",
     couldNotWorkOut: "Impossible de calculer cela.",
-    couldNotClose: "Impossible de clôturer le mois.",
+    couldNotClose: "Impossible de faire le bilan du mois.",
     startingPointSet: "Point de départ fixé",
     somethingMissing: "Il manque quelque chose",
-    youKept: "Vous avez gardé {amount}",
+    youKept: "Vous avez économisé {amount}",
     costMoreThanItBrought: "{month} a coûté plus qu'il n'a rapporté",
     keptRate:
-      "{rate}% de ce qui est entré, en comptant ce que vous avez mis de côté.",
+      "{rate} de ce qui est entré, en comptant ce que vous avez mis de côté.",
     keptRateUnknown: "En comptant ce que vous avez mis de côté.",
     cameIn: "Entré",
     recordedSpending: "Dépenses enregistrées",
-    setAside: "Mis de côté",
+    setAside: "Épargne et placements",
     neverRecorded: "Jamais enregistré",
-    overAllowance: "C'est {over} au-delà de votre enveloppe de {cap}.",
-    insideAllowance: "Dans votre enveloppe de {cap}, avec {spare} de marge.",
+    overAllowance: "C'est {over} au-delà de votre marge de {cap}.",
+    insideAllowance: "Dans votre marge de {cap}, il vous reste {spare}.",
     normalMonth: "Un mois normal chez vous tourne autour de {amount}.",
     unrecordedBlurb:
       "Des dépenses dont l'application n'a jamais entendu parler — les restaurants, les tournées, ce qu'on achète en rentrant. Rien à corriger, juste bon à savoir.",
-    closing: "Clôture…",
+    closing: "Bilan en cours…",
     changeTheBalance: "Modifier le solde",
     done: "Terminé",
     reopen: "Ce solde était faux — réouvrir le mois",
@@ -769,7 +834,7 @@ export const fr: Messages = {
     close: "Fermer",
     balanceOn: "Solde au {date}",
     unexplainedCredit:
-      "Le compte contient {amount} de plus que les mouvements enregistrés ne le permettent. En général cela veut dire un revenu jamais saisi — ou une dépense saisie deux fois, ou un virement chez le courtier enregistré à la fois comme transaction et comme virement.",
+      "Le compte contient {amount} de plus que les mouvements enregistrés ne le permettent. En général cela veut dire un revenu jamais saisi — ou une dépense saisie deux fois, ou un virement chez le courtier enregistré à la fois comme opération et comme virement.",
     runwayBought: {
       one: "Cela fait {count} jour d'autonomie gagné.",
       other: "Cela fait {count} jours d'autonomie gagnés.",
@@ -778,12 +843,12 @@ export const fr: Messages = {
     inviteBaseline:
       "Saisissez ce que votre compte contient réellement aujourd'hui. Dès le mois prochain, l'application pourra le comparer à ce qu'elle a enregistré et vous dire ce qu'elle n'a jamais vu — des espèces, un paiement oublié, une carte que vous ne suivez pas.",
     inviteAllowance:
-      "Restez sous {cap} de dépenses non enregistrées pour garder la série en vie.",
+      "Restez sous {cap} de dépenses non notées pour garder la série en vie.",
     inviteNormal:
       "Un mois normal chez vous tourne autour de {amount} que l'application ne voit jamais.",
     inviteBare:
       "Un seul solde, et l'application peut calculer ce qu'elle n'a jamais vu.",
-    closeTheMonth: "Clôturer le mois",
+    closeTheMonth: "Faire le bilan du mois",
     monthsInARow: {
       one: "{count} mois d'affilée",
       other: "{count} mois d'affilée",
@@ -795,7 +860,7 @@ export const fr: Messages = {
     balancePlaceholder: "2400,50",
     reopened: "{month} réouvert",
     baselineSet:
-      "{amount} au {date}. Clôturez le mois prochain et l'application pourra commencer à vous dire ce qu'elle n'a jamais vu.",
+      "{amount} au {date}. Faites le bilan du mois prochain et l'application pourra commencer à vous dire ce qu'elle n'a jamais vu.",
   },
 
   inbox: {
@@ -803,21 +868,14 @@ export const fr: Messages = {
     review: "À vérifier",
     needsCategory: "Attend une catégorie",
     nothingWaiting: "Rien en attente",
-    thatsTheInbox: "C'est tout",
     fetching: "Récupération…",
     fetchEverything: "Tout récupérer",
     pickCategoryFirst: "Choisissez d'abord une catégorie",
-    adding: "Ajout…",
     add: "Ajouter",
-    later: "Décider plus tard",
     done: "Terminé",
     close: "Fermer",
     filterCategories: "Filtrer les catégories",
     filterCategoriesPlaceholder: "Filtrer les catégories…",
-    leftForLater: {
-      one: "{count} laissée pour plus tard — elle est encore à vérifier.",
-      other: "{count} laissées pour plus tard — elles sont encore à vérifier.",
-    },
     taughtIt:
       "Tout ce que l'application reconnaissait déjà est passé directement. Répondre à celles-ci le lui apprend pour la prochaine fois.",
     leaveOut: "Laisser de côté",
@@ -859,25 +917,23 @@ export const fr: Messages = {
     },
     allFiled: "Tout est classé.",
     /* The phone's review, one group at a time. */
-    later: "Plus tard",
     whichCategory: "Quelle catégorie\u00A0?",
     recentCategories: "Récentes",
-    decidedJustNow: "Décidé à l'instant",
     keyboardHint:
       "↑ ↓ pour naviguer · Entrée pour classer · L pour laisser de côté",
   },
 
   selectionBar: {
-    region: "Transactions sélectionnées",
+    region: "Opérations sélectionnées",
     regionMobile: {
-      one: "{count} transaction sélectionnée",
-      other: "{count} transactions sélectionnées",
+      one: "{count} opération sélectionnée",
+      other: "{count} opérations sélectionnées",
     },
     countSelected: "{count} sélectionnées",
     move: "Déplacer",
     moveTo: {
-      one: "Déplacer {count} transaction vers",
-      other: "Déplacer {count} transactions vers",
+      one: "Déplacer {count} opération vers",
+      other: "Déplacer {count} opérations vers",
     },
     moving: "Déplacement…",
     confirmMove: "Oui, les déplacer",
@@ -888,8 +944,8 @@ export const fr: Messages = {
     cancel: "Annuler",
     clear: "Vider la sélection",
     fromRecurring: {
-      one: "{count} vient d'un modèle récurrent",
-      other: "{count} viennent de modèles récurrents",
+      one: "{count} vient d'une opération récurrente",
+      other: "{count} viennent d'opérations récurrentes",
     },
   },
 
@@ -898,9 +954,9 @@ export const fr: Messages = {
     dayLabel: "{day} — {entries}",
     inAndOut: "{income} en entrée · {outflow} en sortie",
     selectedDay: "Détail du jour sélectionné",
-    noTransactions: "Aucune transaction",
+    noTransactions: "Aucune opération",
     emptyTitle: "Rien ce jour-là",
-    emptyBody: "Ajoutez une transaction ou choisissez une autre date.",
+    emptyBody: "Ajoutez une opération ou choisissez une autre date.",
     emptyBodyMobile: "Ajoutez ce qui s'est passé.",
     recurring: "Récurrent",
     all: "Tout",
@@ -938,6 +994,12 @@ export const fr: Messages = {
     signUpHeading: "Commencez à suivre vos revenus et vos dépenses",
     linkExpired: "Lien de connexion expiré ou invalide. Veuillez réessayer.",
     redirecting: "Redirection…",
+    finishingSignIn: "Connexion en cours…",
+    confirmEmail:
+      "Ouvrez l'e-mail que nous venons d'envoyer pour confirmer votre compte, puis connectez-vous.",
+    googleStartFailed: "Impossible de lancer la connexion avec Google.",
+    googleCancelled: "Connexion avec Google annulée.",
+    googleFailed: "Impossible de terminer la connexion avec Google.",
     waitingForPasskey: "En attente de la clé d'accès…",
     forgotPassword: "Mot de passe oublié\u00A0?",
     resetHeading: "Réinitialiser votre mot de passe",
@@ -970,15 +1032,15 @@ export const fr: Messages = {
     openingBalance: "Solde d'ouverture",
     recordedIn: "Entrées enregistrées",
     recordedOut: "Sorties enregistrées",
-    closingBalance: "Solde de clôture",
+    closingBalance: "Solde en fin de mois",
     howItAddsUp: "Comment on y arrive",
     monthRead: "Lecture du mois",
     whereItWent: "Où c'est parti",
     whatsLeft: "Ce qu'il reste",
     expectedImpact: "Impact prévu",
     expectedImpactPerMonth: "Impact prévu par mois",
-    portfolioValue: "Valeur du portefeuille",
-    monthlyBudgets: "Plafonds mensuels",
+    portfolioValue: "Valeur des placements",
+    monthlyBudgets: "Budgets mensuels",
     savingsGoals: "Objectifs d'épargne",
     sampleHousing: "Logement",
     sampleEverythingElse: "Tout le reste",
@@ -992,8 +1054,8 @@ export const fr: Messages = {
   },
 
   marketingStat: {
-    unrecordedIn: "Non enregistré en {month}",
-    underAllowance: "sous votre enveloppe de {amount}",
+    unrecordedIn: "Non noté en {month}",
+    underAllowance: "sous votre marge de {amount}",
     ofWhatCameIn: "{percent} de ce qui est entré",
     monthsValue: {
       one: "{count} mois",
@@ -1004,40 +1066,40 @@ export const fr: Messages = {
       other: "{count} mois d'affilée",
     },
     inARow: "{count} d'affilée",
-    inARowInsideAllowance: "d'affilée sous l'enveloppe",
-    readyToClose: "{month} est prêt à être clôturé",
+    inARowInsideAllowance: "d'affilée dans la marge",
+    readyToClose: "{month} est prêt pour son bilan",
     keepTheRun:
-      "Restez sous {amount} de dépenses non enregistrées pour continuer la série.",
-    keptIn: "Gardé en {month}",
+      "Restez sous {amount} de dépenses non notées pour continuer la série.",
+    keptIn: "Économisé en {month}",
     leftIn: "Reste en {month}",
     ofEarned: "sur {amount} gagnés",
   },
 
   position: {
-    fromRecurring: "Depuis un récurrent",
+    fromRecurring: "Depuis une opération récurrente",
     customHolding: "Ligne personnalisée",
     noRecurringAvailable:
-      "Aucun récurrent disponible pour ce portefeuille. Créez-en un sur la page Charges, ou utilisez une ligne personnalisée.",
+      "Aucune opération récurrente disponible pour ce compte. Créez-en une dans Récurrents, ou utilisez une ligne personnalisée.",
     nameLabel: "Nom",
     namePlaceholder: "ex. ETF MSCI World",
-    costBasis: "Total investi (prix de revient)",
+    costBasis: "Total versé (ce que ça vous a coûté)",
     costBasisHint:
-      "Le total investi indiqué par votre courtier pour cette ligne. Sert au calcul du +/- ; il n'est pas mis à jour par les transactions récurrentes.",
+      "Le total versé que votre courtier indique pour cette ligne. Sert à calculer le gain ou la perte\u00A0; il n'est pas mis à jour par les opérations récurrentes.",
     changeFundPrefix: "Changez le fonds sur la page",
-    changeFundLink: "Charges",
+    changeFundLink: "Récurrents",
     changeFundSuffix: ".",
     linkEtfPrefix: "Liez d'abord votre ETF depuis",
-    linkEtfLink: "Charges → {name}",
+    linkEtfLink: "Récurrents → {name}",
     linkEtfSuffix: ", puis saisissez le nombre total de parts ci-dessous.",
     chargePlaceholder: "ex. 0,20",
     isinLabel: "ISIN (facultatif)",
     isinHint:
-      "Douze caractères, sur le DIC ou la fiche du fonds. La transparence en a besoin pour lire la composition ; les actions et le Bitcoin peuvent rester vides.",
-    moneyWeightedReturn: "Rendement pondéré par les flux",
+      "Douze caractères, sur le DIC (document d'informations clés) ou la fiche du fonds. Pluclair en a besoin pour lire ce que contient le fonds\u00A0; les actions et le bitcoin peuvent rester vides.",
+    moneyWeightedReturn: "Rendement par an",
     amountIn: "versés",
     amountNow: "aujourd'hui",
     returnExplainer:
-      "Annualisé sur chaque versement daté, pour qu'un versement mensuel soit comparé équitablement à un apport unique. Le gain absolu seul avantagerait celui dont l'argent est resté investi le plus longtemps.",
+      "Calculé sur chacun de vos versements, à sa date\u00A0: verser un peu chaque mois est comparé équitablement à un gros versement unique. Le gain en euros seul avantagerait l'argent resté placé le plus longtemps.",
     returnByAccount: "Par compte",
     allocationIntro:
       "Comment vos placements se répartissent entre vos comptes.",
@@ -1048,6 +1110,14 @@ export const fr: Messages = {
     onTarget: "Dans la cible",
     aboveTarget: "au-dessus de la cible",
     belowTarget: "en dessous de la cible",
+    pointsAbove: {
+      one: "{count} point au-dessus de la cible",
+      other: "{count} points au-dessus de la cible",
+    },
+    pointsBelow: {
+      one: "{count} point en dessous de la cible",
+      other: "{count} points en dessous de la cible",
+    },
     allOnTarget: "Chaque compte est dans sa cible.",
     nextContributionBefore: "Répartissez vos prochains",
     nextContributionAfter:
@@ -1075,7 +1145,7 @@ export const fr: Messages = {
     monthlyNoneTarget: "Aucun versement mensuel · cible {target}",
     monthlyOnTarget: "Vos versements mensuels suivent votre cible.",
     monthlyNothing:
-      "Aucun investissement récurrent pour l'instant. Ajoutez-en un dans Charges et sa répartition s'affichera ici.",
+      "Aucun investissement récurrent pour l'instant. Ajoutez-en un dans Récurrents et sa répartition s'affichera ici.",
     peaPaidIn: "Versé",
     peaOfCeiling: "sur {ceiling}",
     peaRoomLeft: "de marge restante",
@@ -1089,7 +1159,7 @@ export const fr: Messages = {
     pickRecurring: "Choisissez-en un…",
     liveEstimate: "Estimation au cours du marché\u00A0:",
     itemType: "Type de ligne",
-    recurringItem: "Récurrent associé",
+    recurringItem: "Opération récurrente associée",
     dcaBitcoin: "Montant fixe chaque mois · Bitcoin sur Bitstack",
     dcaEtf: "Montant fixe chaque mois · ETF défini dans Plan",
     trackedAsset: "Actif suivi",
@@ -1105,7 +1175,7 @@ export const fr: Messages = {
       "Depuis Bitstack — les fractions de BTC sont acceptées (virgule ou point).",
     sharesHint:
       "Depuis votre courtier — les fractions de parts sont acceptées (virgule ou point, ex. 1,1465).",
-    manualValuePlaceholder: "Valeur totale du portefeuille chez votre courtier",
+    manualValuePlaceholder: "Valeur totale de ce compte chez votre courtier",
     marketValuePlaceholder: "Laisser vide pour utiliser le marché",
     brokerValue: "Le total de votre courtier (optionnel)",
     brokerValueHint:
@@ -1113,21 +1183,26 @@ export const fr: Messages = {
     pinValue: "Utiliser ce chiffre plutôt que le cours du marché",
     pinValueHint:
       "Non épinglé, votre chiffre ne sert que de repli quand aucun cours ne peut être récupéré.",
-    valuedLive: "Valorisé au marché",
-    valuedPinned: "Valorisé sur votre chiffre",
-    valuedManual: "Valorisé sur votre chiffre — aucun cours disponible",
+    manualValueHint:
+      "S'il est rempli, ce chiffre remplace la valeur calculée au cours du jour.",
+    removeConfirmBody:
+      "Retirer cette ligne\u00A0? Vos opérations restent\u00A0; seule la ligne suivie est supprimée.",
+    targetPercentFor: "Part visée pour {wallet}, en pourcentage",
+    valuedLive: "Valeur au cours du jour",
+    valuedPinned: "Valeur\u00A0: votre chiffre",
+    valuedManual: "Valeur\u00A0: votre chiffre — aucun cours disponible",
     valuedCost:
-      "Valorisé au prix de revient — ajoutez les parts pour suivre le marché",
+      "Valeur\u00A0: ce que vous avez versé — ajoutez les parts pour suivre le cours",
     ongoingChargeLabel: "Frais courants du fonds (optionnel)",
     ongoingChargeHint:
-      "Les frais annuels du fonds lui-même, en pourcentage — 0,20 pour 0,20 %. Ils figurent sur le DIC et n'apparaissent jamais sur un relevé, car ils sont prélevés sur la valeur du fonds. Ce ne sont pas les frais de votre courtier, que l'app ne suit pas.",
+      "Les frais annuels du fonds lui-même, en pourcentage — 0,20 pour 0,20\u00A0%. Ils figurent sur le DIC (document d'informations clés) et n'apparaissent jamais sur un relevé, car ils sont prélevés sur la valeur du fonds. Ce ne sont pas les frais de votre courtier, que Pluclair ne suit pas.",
     perYear: "% par an",
     lookUpCharge: "Chercher les frais sur justETF",
     saving: "Enregistrement…",
     saveItem: "Enregistrer la ligne",
     savePosition: "Enregistrer la position",
     removing: "Retrait…",
-    removeFromPortfolio: "Retirer du portefeuille",
+    removeFromPortfolio: "Retirer de ce compte",
     removePosition: "Retirer la position",
     confirmRemove: "Oui, retirer",
     cancel: "Annuler",
@@ -1143,57 +1218,47 @@ export const fr: Messages = {
     peaOpenedHint:
       "Ajoutez la date d'ouverture pour suivre le cap des cinq ans.",
     chartRange: "Période du graphique",
-    totalInvested: "Total investi",
+    totalInvested: "Total versé",
     averageBuyPrice: "Prix d'achat moyen",
     averageSharePrice: "Prix moyen par part",
-    averageMonthly: "Contribution mensuelle moyenne",
-    nextContribution: "Prochaine contribution",
-    returnAmount: "Performance",
-    returnPercent: "Performance %",
-    noHistory: "Pas encore d'historique pour ce portefeuille.",
+    averageMonthly: "Versement moyen par mois",
+    nextContribution: "Prochain versement",
+    returnAmount: "Gain ou perte",
+    returnPercent: "Gain ou perte en %",
+    noHistory: "Pas encore d'historique pour ce compte.",
     oneMonthOnly:
       "Un seul mois d'historique pour l'instant — une courbe en demande deux.",
   },
 
   month: {
-    inTheAccount: "Sur le compte",
-    cameIn: "Entré",
-    wentOut: "Sorti",
-    savingsRate: "Taux d'épargne",
-    over: "Dépassement de",
-    left: "Reste",
-    today: "Aujourd'hui",
-    monthEnd: "Fin de mois",
     setUpTitle: "Configurez votre mois",
     setUpBody:
       "Ajoutez une fois ce qui revient. Chaque mois est projeté à partir de là.",
-    setUpCharges: "Configurer les charges",
-    whereItWent: "Où c'est parti",
-    capsAndGoals: "Plafonds et objectifs",
+    setUpCharges: "Configurer vos opérations récurrentes",
+    capsAndGoals: "Budgets et objectifs",
     moreThisMonth: "Plus sur ce mois",
     startingBalanceHint:
-      "Indiquez un solde de départ pour commencer à clôturer les mois",
+      "Indiquez un solde de départ pour commencer à faire le bilan de vos mois",
     actionReopen: "Réouvrir",
     actionReview: "Vérifier",
-    actionClose: "Clôturer",
+    actionClose: "Faire le bilan",
     actionStart: "Commencer",
     attentionSwallowed: {
-      one: "{count} transaction bancaire a été fusionnée par une synchronisation précédente",
+      one: "{count} opération bancaire a été fusionnée par une synchronisation précédente",
       other:
-        "{count} transactions bancaires ont été fusionnées par une synchronisation précédente",
+        "{count} opérations bancaires ont été fusionnées par une synchronisation précédente",
     },
     attentionInbox: {
-      one: "{count} transaction attend une catégorie",
-      other: "{count} transactions attendent une catégorie",
+      one: "{count} opération attend une catégorie",
+      other: "{count} opérations attendent une catégorie",
     },
     attentionBaseline:
       "Saisissez une fois le solde de votre compte, pour commencer à capter les dépenses que l'application ne voit jamais",
-    attentionReadyToClose: "{month} est prêt à être clôturé",
+    attentionReadyToClose: "{month} est prêt pour son bilan",
     attentionProposals: {
-      one: "{count} charge a l'air de revenir",
-      other: "{count} charges ont l'air de revenir",
+      one: "{count} opération a l'air de revenir",
+      other: "{count} opérations ont l'air de revenir",
     },
-    invested: "Investi",
     streakInARow: "{count} d'affilée",
     bestStreak: "record {count}",
   },
@@ -1204,8 +1269,11 @@ export const fr: Messages = {
     pickAMonth: "Choisir un mois",
     showYear: "Afficher {year}",
     thisMonth: "Ce mois-ci",
-    monthClosed: "clôturé",
-    monthRecords: "écritures",
+    backToThisMonth: "Revenir à ce mois-ci",
+    previousYear: "Année précédente",
+    nextYear: "Année suivante",
+    monthClosed: "bilan fait",
+    monthRecords: "opérations",
     close: "Fermer",
     closeSheet: "Fermer le panneau",
     openMenu: "Ouvrir le menu",
@@ -1214,6 +1282,9 @@ export const fr: Messages = {
     closeAccountMenu: "Fermer le menu du compte",
     view: "Vue",
     save: "Enregistrer",
+    loading: "Chargement",
+    add: "Ajouter",
+    change: "Modifier",
     remove: "Retirer",
     cancel: "Annuler",
     delete: "Supprimer",
@@ -1221,8 +1292,8 @@ export const fr: Messages = {
     signOut: "Se déconnecter",
     chartMode: "Mode du graphique",
     chartRange: "Période du graphique",
-    unrealisedProfitLoss: "+/- latent",
-    unrecordedAllowance: "Enveloppe non enregistrée",
+    unrealisedProfitLoss: "Gain ou perte à ce jour",
+    unrecordedAllowance: "Marge pour les dépenses non notées",
     removePasskey: "Retirer la clé d'accès",
     remindersOff: "Rappels désactivés",
     remindersNeedPermission: "Les rappels demandent l'autorisation de notifier",
@@ -1232,22 +1303,19 @@ export const fr: Messages = {
     marketing: "Présentation",
     nearbyPages: "Pages voisines",
     needsYou: "À votre attention",
-    budgetView: "Vue du budget",
-    arrivedCharges: "Charges qui semblent arrivées",
+    arrivedCharges: "Opérations récurrentes qui semblent arrivées",
     closePopUp: "Fermer la fenêtre",
     clearInstrument: "Retirer l'instrument sélectionné",
     searchInstrument: "Chercher par nom ou ISIN…",
-    seeOnCalendar: "Voir le mois sur un calendrier",
     clearDate: "Effacer la date",
     date: "Date",
     pickADate: "Choisir une date",
     setUp: "Configuration",
-    openWallets: "Ouvrir les portefeuilles",
     usePassword: "Utiliser le mot de passe",
-    capsAndNewMonths: "Plafonds et nouveaux mois",
+    capsAndNewMonths: "Budgets et nouveaux mois",
     browserNotifications: "Notifications du navigateur",
     theRun: "La série",
-    kept: "Gardé",
+    kept: "Économisé",
     showAmounts: "Afficher les montants",
     hideAmounts: "Masquer les montants",
   },
@@ -1266,9 +1334,9 @@ export const fr: Messages = {
   },
 
   units: {
-    thousands: "{value} k",
+    thousands: "{value}\u00A0k",
     perYear: "{rate} par an",
-    percent: "{value} %",
+    percent: "{value}\u00A0%",
     months: "{value} mois",
   },
 
@@ -1299,32 +1367,32 @@ export const fr: Messages = {
 
   selection: {
     deleteConfirm: {
-      one: "Supprimer {count} transaction\u00A0?",
-      other: "Supprimer {count} transactions\u00A0?",
+      one: "Supprimer {count} opération\u00A0?",
+      other: "Supprimer {count} opérations\u00A0?",
     },
     deletePermanent: "C'est irréversible.",
     deleteAllRecurring: {
-      one: "Elle vient d'une charge\u00A0: elle ne sera pas rajoutée ce mois-ci.",
+      one: "Elle vient d'une opération récurrente\u00A0: elle ne sera pas rajoutée ce mois-ci.",
       other:
-        "Elles viennent de charges\u00A0: elles ne seront pas rajoutées ce mois-ci.",
+        "Elles viennent d'opérations récurrentes\u00A0: elles ne seront pas rajoutées ce mois-ci.",
     },
     deleteSomeRecurring:
-      "{count} d'entre elles viennent de charges\u00A0: celles-là ne seront pas rajoutées ce mois-ci.",
+      "{count} d'entre elles viennent d'opérations récurrentes\u00A0: celles-là ne seront pas rajoutées ce mois-ci.",
     typeChangeAll: {
-      one: "Elle change de type de catégorie, donc les totaux des mois passés et les dépenses non enregistrées vont bouger.",
+      one: "Elle change de type de catégorie, donc les totaux des mois passés et les dépenses non notées vont bouger.",
       other:
-        "Toutes changent de type de catégorie, donc les totaux des mois passés et les dépenses non enregistrées vont bouger.",
+        "Toutes changent de type de catégorie, donc les totaux des mois passés et les dépenses non notées vont bouger.",
     },
     typeChangeSome:
-      "{count} d'entre elles changent de type de catégorie, donc les totaux des mois passés et les dépenses non enregistrées vont bouger.",
+      "{count} d'entre elles changent de type de catégorie, donc les totaux des mois passés et les dépenses non notées vont bouger.",
     rulesLeftBehind: {
-      one: "{names} restera classé à l'ancienne, car une transaction plus récente n'est pas sélectionnée.",
+      one: "{names} restera classé à l'ancienne, car une opération plus récente n'est pas sélectionnée.",
       other:
-        "{names} resteront classés à l'ancienne, car des transactions plus récentes ne sont pas sélectionnées.",
+        "{names} resteront classés à l'ancienne, car des opérations plus récentes ne sont pas sélectionnées.",
     },
     rulesRewritten: "Désormais {names} sera classé en {target}.",
     recurringKeepCategory:
-      "{count} proviennent de modèles récurrents, qui garderont leur propre catégorie.",
+      "{count} proviennent d'opérations récurrentes, qui garderont leur propre catégorie.",
   },
 
   bankReview: {
@@ -1343,7 +1411,7 @@ export const fr: Messages = {
       one: "{count} ligne bancaire a été fusionnée sans vous demander",
       other: "{count} lignes bancaires ont été fusionnées sans vous demander",
     },
-    body: "Une synchronisation plus ancienne a décidé que c'étaient des charges déjà écrites par vos modèles récurrents, sur la seule foi d'un montant identique à cinq jours près. Sur un relevé plein de petites sommes rondes, ça ne suffit pas\u00A0: la plupart sont probablement de vraies dépenses qui ne sont jamais arrivées dans votre journal. Les rouvrir les remet dans la boîte de revue, à vous de juger.",
+    body: "Une synchronisation plus ancienne a décidé que c'étaient des opérations récurrentes déjà écrites, sur la seule foi d'un montant identique à cinq jours près. Sur un relevé plein de petites sommes rondes, ça ne suffit pas\u00A0: la plupart sont probablement de vraies dépenses qui ne sont jamais arrivées dans votre journal. Les rouvrir les remet dans la boîte de revue, à vous de juger.",
     reopenAll: "Toutes les rouvrir",
     reopening: "Réouverture…",
     reopened: "Rouvertes",
@@ -1365,7 +1433,7 @@ export const fr: Messages = {
   facts: {
     income: "Argent entré",
     expenses: "Argent sorti",
-    savings: "Mis de côté",
+    savings: "Épargne et placements",
     remaining: "Reste",
     investments: "Investi",
     savingsRate: "Taux d'épargne",
@@ -1374,103 +1442,42 @@ export const fr: Messages = {
     expensesVsPreviousMissing: "Écart avec le mois dernier",
     expensesVsPreviousNote:
       "la même période dans les deux mois, pas un mois entier contre une partie",
-    kept: "Gardé",
-    keptRate: "Gardé, en part de ce qui est entré",
-    unrecorded: "Dépenses non enregistrées",
+    kept: "Économisé",
+    keptRate: "Économisé, en part de ce qui est entré",
+    unrecorded: "Dépenses non notées",
     unrecordedNote: "mesuré sur le solde du compte, pas estimé",
     cashChange: "Ce que le compte a bougé",
-    unrecordedSoFar: "Dépenses non enregistrées à ce jour",
-    unrecordedSoFarNote: "mesuré, et pas définitif avant la clôture du mois",
+    unrecordedSoFar: "Dépenses non notées à ce jour",
+    unrecordedSoFarNote: "mesuré, et pas définitif avant le bilan du mois",
     onHand: "Ce que les comptes contiennent",
     committed: "Doit encore partir",
     arriving: "Doit encore arriver",
     free: "À vous de dépenser",
-    unrecordedAllowance: "Enveloppe non enregistrée",
-    unrecordedAllowanceNote: "un plafond fixé d'après son propre historique",
-    unrecordedOver: "Dépenses non enregistrées au-delà de l'enveloppe",
-    unrecordedBaseline: "Dépenses non enregistrées habituelles",
+    unrecordedAllowance: "Marge pour les dépenses non notées",
+    unrecordedAllowanceNote: "une marge fixée d'après son propre historique",
+    unrecordedOver: "Dépenses non notées au-delà de la marge",
+    unrecordedBaseline: "Dépenses non notées habituelles",
     unrecordedBaselineNote:
-      "la médiane des mois clôturés, pour qu'un seul voyage ne la déplace pas",
-    streak: "Mois d'affilée dans l'enveloppe",
+      "la médiane de vos bilans passés, pour qu'un seul voyage ne la déplace pas",
+    streak: "Mois d'affilée dans la marge",
     bestStreak: "Meilleure série à ce jour",
-    budgetSpent: "Plafond {label}, dépensé",
-    budgetLeft: "Plafond {label}, restant",
-    budgetOver: "Plafond {label}, dépassé de",
+    budgetSpent: "Budget {label}, dépensé",
+    budgetLeft: "Budget {label}, restant",
+    budgetOver: "Budget {label}, dépassé de",
     goalSaved: "{name}, épargné",
     investedValue: "Valeur investie",
-    inboxPending: "Écritures encore sans catégorie",
-    chargesUnconfirmed: "Charges récurrentes pas encore confirmées",
+    inboxPending: "Opérations encore sans catégorie",
+    chargesUnconfirmed: "Opérations récurrentes pas encore confirmées",
   },
 
   bearingFacts: {
     netPosition: "Tout, additionné",
-    netPositionNote:
-      "comptes et investissements uniquement ; cette application n'enregistre aucune dette",
-    onHand: "Sur les comptes",
-    invested: "Investi",
-    investedShare: "Part investie",
-    free: "À dépenser ce mois-ci",
     committed: "Reste à partir ce mois-ci",
     arriving: "Reste à arriver ce mois-ci",
     savingsRate: "Taux d'épargne ce mois-ci",
-    expensesVsPrevious: "Sorties par rapport à {month}",
-    expensesVsPreviousNote:
-      "la même portion des deux mois, pas un mois entier contre une partie",
-    unrecordedSoFar: "Dépenses non enregistrées à ce jour",
-    unrecordedSoFarNote:
-      "mesurées, et non définitives tant que le mois n'est pas clôturé",
-    unrecordedAllowance: "Enveloppe non enregistrée",
-    unrecordedAllowanceNote:
-      "un plafond établi à partir de l'historique de cette personne",
-    unrecordedOver: "Dépenses non enregistrées au-delà de l'enveloppe",
-    unrecordedBaseline: "Dépenses non enregistrées habituelles",
-    unrecordedBaselineNote:
-      "la médiane des mois clôturés, pour qu'un seul voyage ne la déplace pas",
-    streak: "Mois d'affilée dans l'enveloppe",
-    bestStreak: "Meilleure série à ce jour",
-    monthlyNetAverage: "Ce qu'un mois garde habituellement, sur {count} mois",
-    projectedBalance: "Où les comptes arrivent d'ici {month}",
-    projectedBalanceNote:
-      "un calcul sur des charges déjà programmées, moins ce que les mois clôturés mesurent qu'un mois normal coûte sans le voir",
-    projectedBalanceNoteUnmeasured:
-      "un calcul sur des charges déjà programmées ; les dépenses courantes ne sont pas encore mesurées",
-    projectedAdded: {
-      one: "Ce que le mois prochain ajoute aux comptes",
-      other: "Ce que les {count} prochains mois ajoutent aux comptes",
-    },
+    unrecordedBaseline: "Dépenses non notées habituelles",
     projectedBalanceBare: "Où les comptes arrivent",
-    projectedKept: "Tout ce qui est gardé, d'ici {month}",
-    projectedKeptAdded: {
-      one: "Ce que le mois prochain garde en tout",
-      other: "Ce que les {count} prochains mois gardent en tout",
-    },
-    projectedKeptBare: "Tout ce qui est gardé",
-    projectedKeptNote:
-      "les comptes plus tout ce qui est mis de côté, compté à ce qui y a été versé et non à ce que cela pourrait devenir",
-    projectedMonthlyNet:
-      "Ce que chaque mois ajoute aux comptes, si rien ne change",
-    committedMonthly: "Un mois de charges engagées",
-    runwayMonths: "Mois que la réserve couvrirait",
-    walletCost: "Versé dans les portefeuilles",
-    walletGain: "Gain sur ce qui a été versé",
-    walletReturn: "Rendement par an",
-    walletReturnNote:
-      "pondéré par les flux, la date de chaque achat compte donc",
-    walletDrag: "Ce que la détention coûte par an",
-    walletDragNote:
-      "prélevé à l'intérieur des fonds, cela n'apparaît donc jamais comme une transaction",
-    walletDragPartial: {
-      one: "partiel — {count} ligne sans frais renseignés",
-      other: "partiel — {count} lignes sans frais renseignés",
-    },
-    walletDrift: "Portefeuille le plus éloigné de sa cible",
-    walletDriftNote:
-      "en points de pourcentage, quel que soit le sens de l'écart",
-    walletConcentration: "{name}, part des portefeuilles",
-    walletConcentrationNote:
-      "la plus grosse ligne, pesée contre ce qui est investi plutôt que contre les liquidités",
-    contributionPace: "Versé chaque mois dans les portefeuilles",
-    inboxPending: "Écritures encore sans catégorie",
+    walletCost: "Versé sur vos placements",
   },
 
   categoryFacts: {
@@ -1480,9 +1487,9 @@ export const fr: Messages = {
     oddMonth: "De combien ce mois s'écarte d'un mois normal",
     monthsActive: "Mois où quelque chose est enregistré",
     shareOfMonth: "Part de tout ce qui est sorti ce mois-là",
-    cap: "Le plafond de cette catégorie",
-    capLeft: "Le plafond, restant ce mois-là",
-    capOver: "Le plafond, dépassé de",
+    cap: "Le budget de cette catégorie",
+    capLeft: "Le budget, restant ce mois-là",
+    capOver: "Le budget, dépassé de",
   },
 
   pulse: {
@@ -1498,79 +1505,36 @@ export const fr: Messages = {
       "Après ce qui doit encore partir, et ce qui doit encore arriver.",
   },
 
-  moneyOnHand: {
-    stillToLeave: "encore à sortir",
-    stillToArrive: "encore à arriver",
-    elapsedLabel: "{percent} % du mois écoulé",
-    elapsedGone: "En {month}, {percent} % du mois est écoulé",
-    unreadableAccounts: {
-      one: "Impossible de lire {accounts} — son solde n'est pas compté ci-dessus.",
-      other:
-        "Impossible de lire {accounts} — leurs soldes ne sont pas comptés ci-dessus.",
-    },
-    switchesTo: "Passer à {option}",
-  },
-
-  monthScore: {
-    heading: "Dépenses non enregistrées, jusqu'ici",
-    overRecorded:
-      "Votre compte contient plus que ce que le journal permet — un revenu manque, ou quelque chose est enregistré deux fois. Rien à mesurer tant que ce n'est pas réglé.",
-    capPrefixChosen: "de votre plafond de",
-    capSuffixChosen: "",
-    capPrefixUnchosen: "par rapport à un montant habituel de",
-    meterLabel: "{spent} sur {target}",
-    noNormalYet:
-      "Clôturez deux mois et l'application saura à quoi ressemble une normale pour vous.",
-    pastCap: "{amount} au-delà, alors que le mois est encore en cours.",
-    roomLeft: "Il reste {amount} de marge ce mois-ci.",
-    measuredNote:
-      "Mesuré par rapport à votre dernière clôture, pas mémorisé — cela bouge donc avec la banque, et ce n'est définitif qu'une fois le mois clôturé.",
-    notYetMeasured:
-      "Clôturez un mois par rapport au solde de votre banque et ceci se remplit : l'application calcule ce qui a quitté le compte sans qu'aucune transaction ne l'explique.",
-  },
-
   cashAccounts: {
     tickHint: "Cochez celles que vous utilisez pour dépenser.",
     lastRead: "Dernière lecture {when}",
     noneTicked:
-      "Rien n'est coché, les mois se clôturent donc encore à la main.",
+      "Rien n'est coché\u00A0: le bilan des mois se fait donc encore à la main.",
     autoCloses:
-      "Les mois se clôturent d'eux-mêmes une fois que le relevé couvre le jour où ils sont lus. Un mois dont les comptes cochés ne peuvent pas tous être lus attend, plutôt que de deviner.",
-  },
-
-  recentOnAccount: {
-    title: "Dernier sur votre compte",
-    toReview: "{count} à vérifier",
-    waitingCategory: "en attente d'une catégorie",
-    leftOut: "écarté",
-    inYourLedger: "dans votre journal",
-  },
-
-  stillToCome: {
-    title: "Encore à venir",
-    arrivingNamed: "encore à arriver, {name} le {when}",
+      "Le bilan de chaque mois se fait de lui-même une fois que le relevé couvre le jour où il est lu. Un mois dont les comptes cochés ne peuvent pas tous être lus attend, plutôt que de deviner.",
   },
 
   monthCloseHistory: {
-    title: "Mois clôturés",
+    title: "Bilans des mois",
     normalMonthCost:
       "Un mois normal vous coûte environ {amount} que l'application ne voit jamais.",
     oneMoreForBaseline:
-      "Encore une clôture, et il y aura un mois normal auquel vous comparer.",
-    closeFromSurface: "Clôturez un mois depuis {surface} et il apparaîtra ici.",
+      "Encore un bilan, et il y aura un mois normal auquel vous comparer.",
+    closeFromSurface:
+      "Faites le bilan d'un mois depuis {surface} et il apparaîtra ici.",
     allowanceHint:
       "Ce que vous acceptez de dépenser sans l'enregistrer. Rester en dessous, c'est ce qui garde une série vivante.",
     useSuggested: "Utiliser {amount}",
     needMoreForSuggestion:
-      "Clôturez un mois de plus, et l'application pourra suggérer un montant à partir de vos propres dépenses.",
+      "Faites le bilan d'un mois de plus, et l'application pourra suggérer un montant à partir de vos propres dépenses.",
     readingDayHeading: "Jour de lecture",
     readingDayHint:
       "Le jour du mois suivant où vous relevez le solde. Plus tard est plus sûr avec une carte à débit différé, car les dépenses par carte du mois doivent avoir été prélevées. Le plus important est que ce soit toujours le même jour.",
     startingPoint: "Point de départ",
     needsLook:
-      "À vérifier — plus sur le compte que ce que les transactions permettent",
+      "À vérifier — plus sur le compte que ce que les opérations permettent",
     neverRecordedAmount: "{amount} jamais enregistré",
-    keptPercent: "{rate} % gardé",
+    keptPercent: "{rate}\u00A0% économisé",
     saved: "Enregistré",
   },
 
@@ -1582,52 +1546,52 @@ export const fr: Messages = {
     },
 
     inAccounts: "Sur les comptes",
-    kept: "Tout ce qui est gardé",
+    kept: "Tout ce qui est économisé",
     by: "d'ici {month}",
     added: {
       one: "ajouté sur {count} mois",
       other: "ajouté sur {count} mois",
     },
     noOpeningBalance:
-      "Aucun solde de compte comme point de départ : ce sont donc les montants que les mois ajoutent, et non là où ils vous laissent.",
+      "Aucun solde de compte comme point de départ\u00A0: ce sont donc les montants que les mois ajoutent, et non là où ils vous laissent.",
 
     perMonth: "{amount} par mois en moyenne",
     shrinking: "Il sort plus qu'il n'entre, mois après mois.",
     accountsFalling:
-      "Les comptes baissent parce que {amount} par mois partent en épargne et en portefeuille. Cet argent reste le vôtre — il est sur l'autre courbe.",
+      "Les comptes baissent parce que {amount} par mois partent en épargne et en placements. Cet argent reste le vôtre — il est sur l'autre courbe.",
 
     madeOf: "Ce qui compose ce chiffre",
     income: "Revenus",
-    committed: "Charges engagées",
-    setAside: "Mis de côté",
-    deployed: "Investi depuis un portefeuille",
+    committed: "Dépenses fixes",
+    setAside: "Épargne et placements",
+    deployed: "Investi depuis un compte de placement",
     unrecorded: "Dépenses courantes",
     charges: {
-      one: "{count} charge",
-      other: "{count} charges",
+      one: "{count} opération récurrente",
+      other: "{count} opérations récurrentes",
     },
     noCharges: "rien de programmé",
     setAsideNote: "Sort du compte, reste à vous.",
     deployedNote:
-      "Déjà dans un portefeuille : aucune des deux courbes ne bouge.",
+      "Déjà sur un compte de placement\u00A0: aucune des deux courbes ne bouge.",
     unrecordedMeasured: {
-      one: "la médiane de {count} mois clôturé",
-      other: "la médiane de {count} mois clôturés",
+      one: "la médiane de {count} bilan",
+      other: "la médiane de {count} bilans",
     },
     unrecordedNotYet:
-      "Pas encore compté — clôturez deux mois et ce sera le cas.",
+      "Pas encore compté — faites le bilan de deux mois et ce sera le cas.",
     noIncomeCharge:
-      "Aucune charge n'apporte de revenu : votre salaire n'entre dans aucun de ces chiffres. Ajoutez-le dans Charges et tout change ici.",
-    noIncomeCta: "Ajouter une charge",
+      "Aucune opération récurrente n'apporte de revenu\u00A0: votre salaire n'entre dans aucun de ces chiffres. Ajoutez-le dans Récurrents et tout change ici.",
+    noIncomeCta: "Ajouter un revenu récurrent",
     sparklineLabel: {
-      one: "Comptes projetés et total gardé sur {count} mois",
-      other: "Comptes projetés et total gardé sur {count} mois",
+      one: "Comptes projetés et total économisé sur {count} mois",
+      other: "Comptes projetés et total économisé sur {count} mois",
     },
   },
 
   runway: {
-    underAMonth: "Moins d'un mois de charges engagées.",
-    months: "{count} mois de charges engagées.",
+    underAMonth: "Moins d'un mois de dépenses fixes.",
+    months: "{count} mois de dépenses fixes.",
   },
 
   allocation: {
@@ -1667,9 +1631,9 @@ export const fr: Messages = {
     currentOption: "Actuel · {date}",
     monthEndOption: "Fin de mois · {date}",
     currentHint:
-      "Jusqu'à aujourd'hui seulement — dépenses et achats de portefeuille à venir non comptés.",
+      "Jusqu'à aujourd'hui seulement — dépenses et achats de placements à venir non comptés.",
     monthEndHint:
-      "Inclut toutes les échéances dues ce mois-ci, achats de portefeuille compris.",
+      "Inclut toutes les échéances dues ce mois-ci, achats de placements compris.",
   },
 
   push: {
@@ -1677,8 +1641,9 @@ export const fr: Messages = {
       title: "Un nouveau mois",
       idle: "Prévoyez ce qui revient, et voyez ce que le mois vous laisse.",
       pending: {
-        one: "Il commence avec {count} charge. Voyez ce qu'il reste.",
-        other: "Il commence avec {count} charges. Voyez ce qu'il reste.",
+        one: "Il commence avec {count} opération récurrente. Voyez ce qu'il reste.",
+        other:
+          "Il commence avec {count} opérations récurrentes. Voyez ce qu'il reste.",
       },
     },
     arrived: {
@@ -1687,9 +1652,9 @@ export const fr: Messages = {
         other: "Sont-ils bien arrivés\u00A0?",
       },
       body: {
-        one: "Une charge récurrente semble déjà payée par votre banque.",
+        one: "Une opération récurrente semble déjà payée par votre banque.",
         other:
-          "{count} charges récurrentes semblent déjà payées par votre banque.",
+          "{count} opérations récurrentes semblent déjà payées par votre banque.",
       },
     },
     breach: {
@@ -1731,6 +1696,7 @@ export const fr: Messages = {
     },
     thatsIt: "C'est ça",
     notIt: "Ce n'est pas ça",
+    notThis: "Non, ce n'est pas {name}",
     done: "Terminé",
     state: {
       confirmed: "Confirmé",
@@ -1739,9 +1705,9 @@ export const fr: Messages = {
     misses: {
       hide: "Masquer ce qui n'a pas été proposé",
       show: {
-        one: "{count} autre charge n'a pas été proposée — pourquoi\u00A0?",
+        one: "{count} autre opération récurrente n'a pas été proposée — pourquoi\u00A0?",
         other:
-          "{count} autres charges n'ont pas été proposées — pourquoi\u00A0?",
+          "{count} autres opérations récurrentes n'ont pas été proposées — pourquoi\u00A0?",
       },
       nothingAlike: "rien dans sa catégorie à rapprocher",
       refused:
@@ -1781,6 +1747,7 @@ export const fr: Messages = {
     noWriter: "Aucun rédacteur n'est configuré.",
     noAnswer: "Le rédacteur n'a pas répondu à l'instant.",
     unusable: "La réponse du rédacteur n'était pas utilisable.",
+    writeFailed: "Impossible d'écrire la lecture pour le moment.",
     threwAway:
       "Le rédacteur a utilisé un chiffre que l'application ne lui avait pas donné, la lecture a donc été écartée. ({detail})",
     writtenInOtherLanguage: "Écrit en {language}.",
@@ -1808,7 +1775,7 @@ export const fr: Messages = {
     writeAgainLabel: "Réécrire la lecture avec {model}",
     writeLabel: "Écrire la lecture avec {model}",
     writtenBy: "Écrit par {model}.",
-    writtenByUnknown: "Écrit par un modèle que l'app n'enregistre plus.",
+    writtenByUnknown: "Rédigé par un modèle d'IA que Pluclair ne propose plus.",
     standingMoved: {
       one: "Un chiffre sur lequel elle s'appuie a bougé depuis qu'elle a été écrite, {age}.",
       other:
@@ -1839,13 +1806,13 @@ export const fr: Messages = {
     writeOne: "Écrire avec {model} ({left} restantes)",
     writtenToast: "Écrit pour {category}",
     writtenBy: "Écrit par {model}.",
-    writtenByUnknown: "Écrit par un modèle que l'app n'enregistre plus.",
+    writtenByUnknown: "Rédigé par un modèle d'IA que Pluclair ne propose plus.",
   },
 
   /** La transparence : de quoi les portefeuilles sont faits. */
   lookThrough: {
-    title: "Transparence",
-    subtitle: "De quoi vos portefeuilles sont réellement faits",
+    title: "Composition",
+    subtitle: "De quoi vos placements sont réellement faits",
 
     geography: "Où est l'argent",
     sectors: "Dans quoi il est",
@@ -1893,9 +1860,9 @@ export const fr: Messages = {
     fundCharges: "Les frais propres aux fonds",
     envelopeFeeHint:
       "Sur le relevé annuel de votre contrat, en pourcentage — généralement 0,5 à 0,8. Ils s'ajoutent aux frais courants de chaque support.",
-    envelopeFee: "Les frais de l'enveloppe",
+    envelopeFee: "Les frais du compte",
     chargesNote:
-      "Ce sont les frais des fonds et de l'enveloppe. Les commissions de votre courtier et les frais de transaction ne sont pas suivis.",
+      "Ce sont les frais des fonds et du compte. Les commissions de votre courtier et les frais de transaction ne sont pas suivis.",
     allIn: "Tout compris",
     perYear: "{amount} par an",
     overYears: "{amount} sur {years} ans",
@@ -1920,7 +1887,7 @@ export const fr: Messages = {
     readCoverage: "{share} de votre encours a été lu",
     notRead: "Pas encore lu",
     notReadBody:
-      "{count} lignes n'ont pas été lues : leur composition est donc inconnue, et non vide. Les parts ci-dessus sont calculées sur le reste.",
+      "{count} lignes n'ont pas été lues\u00A0: leur composition est donc inconnue, et non vide. Les parts ci-dessus sont calculées sur le reste.",
     readOne: "Lire celle-ci",
     readingOne: "Lecture…",
     readAll: "Lire le reste",
@@ -1934,7 +1901,7 @@ export const fr: Messages = {
       notSetUp:
         "Les lectures d'instruments ne sont pas encore en place (migration 032).",
       noSearch:
-        "{model} ne peut pas chercher sur le web avec cette formule : rien ne peut être consulté.",
+        "{model} ne peut pas chercher sur le web avec cette formule\u00A0: rien ne peut être consulté.",
       providerDown: "{model} n'a pas répondu à l'instant.",
       nothingFound: "Rien de publié n'a été trouvé pour {name}.",
       wrongInstrument: "Ce qui est revenu pour {name} concernait autre chose.",
@@ -1963,7 +1930,7 @@ export const fr: Messages = {
       unresolvableHeading: "Rien à consulter",
       noIsin: "Pas encore identifié",
       noIsinBody:
-        "{count} de vos lignes n'ont pas d'ISIN : il n'y a donc rien à rechercher. Ouvrez chacune depuis Positions et choisissez son instrument dans la recherche — c'est ce qui enregistre l'ISIN.",
+        "{count} de vos lignes n'ont pas d'ISIN\u00A0: il n'y a donc rien à rechercher. Ouvrez chacune depuis Positions et choisissez son instrument dans la recherche — c'est ce qui enregistre l'ISIN.",
       goToPositions: "Ouvrir Positions",
       neverRead: "Pas encore lu",
       neverReadBody:
@@ -1976,17 +1943,17 @@ export const fr: Messages = {
       unclassified:
         "{share} de votre encours investi n'est pas couvert par les parts de cette page. Toutes les parts ici sont calculées sur la partie qui l'est.",
       overlapIsAFloor:
-        "Le chevauchement est un plancher, pas une mesure. Seules les plus grosses lignes publiées de chaque fonds ont été comparées : deux fonds présentés comme partageant peu peuvent en réalité être largement les mêmes sociétés — l'indice suivi est le signal le plus fiable.",
+        "Le chevauchement est un plancher, pas une mesure. Seules les plus grosses lignes publiées de chaque fonds ont été comparées\u00A0: deux fonds présentés comme partageant peu peuvent en réalité être largement les mêmes sociétés — l'indice suivi est le signal le plus fiable.",
       staleReadings:
-        "{count} lectures ont plus de six mois. Elles servent quand même : la composition de l'an dernier vaut mieux que rien.",
+        "{count} lectures ont plus de six mois. Elles servent quand même\u00A0: la composition de l'an dernier vaut mieux que rien.",
       noMarketValue:
         "Rien n'est détenu pour l'instant, il n'y a donc rien à examiner.",
       partialAxis:
-        "Ces chiffres couvrent {coverage} de ce qui a été lu — une fiche ne publie pas toujours la répartition complète. Les parts sont celles publiées, pas une part de ce qui a été trouvé : elles ne totalisent donc pas l'ensemble.",
+        "Ces chiffres couvrent {coverage} de ce qui a été lu — une fiche ne publie pas toujours la répartition complète. Les parts sont celles publiées, pas une part de ce qui a été trouvé\u00A0: elles ne totalisent donc pas l'ensemble.",
       unresolvable: {
-        one: "L'or et les cryptos n'ont ni pays ni secteur — non pas non publiés : aucun. C'est détenu, et compté dans le total ci-dessus, mais les parts de cette page ne peuvent pas le décrire.",
+        one: "L'or et les cryptos n'ont ni pays ni secteur — non pas non publiés\u00A0: aucun. C'est détenu, et compté dans le total ci-dessus, mais les parts de cette page ne peuvent pas le décrire.",
         other:
-          "L'or et les cryptos n'ont ni pays ni secteur — non pas non publiés : aucun. C'est détenu, et compté dans le total ci-dessus, mais les parts de cette page ne peuvent pas le décrire.",
+          "L'or et les cryptos n'ont ni pays ni secteur — non pas non publiés\u00A0: aucun. C'est détenu, et compté dans le total ci-dessus, mais les parts de cette page ne peuvent pas le décrire.",
       },
       geographyIsNotCurrency:
         "La géographie désigne ici où sont les sociétés, pas la devise dans laquelle vous êtes payé. Un fonds peut détenir des sociétés américaines et être libellé en euro.",
@@ -2000,7 +1967,7 @@ export const fr: Messages = {
     reviewHint:
       "Lit les chiffres de cette page et dit ce qu'il en pense. {remaining} restantes ce mois-ci.",
     writtenBy: "Écrit par {model}.",
-    writtenByUnknown: "Écrit par un modèle que l'app n'enregistre plus.",
+    writtenByUnknown: "Rédigé par un modèle d'IA que Pluclair ne propose plus.",
     readAt: "Lu {when}",
     stale: "Vos positions ont bougé depuis cette lecture",
     writtenInOtherLanguage: "Rédigé en {language}.",
@@ -2012,10 +1979,10 @@ export const fr: Messages = {
     coolingDown: "Une vient d'être écrite — réessayez dans {seconds} s.",
     inFlight: "Une revue est déjà en cours d'écriture.",
     nothingToSay:
-      "Trop peu a été lu pour dire quoi que ce soit de l'ensemble du portefeuille.",
+      "Trop peu a été lu pour dire quoi que ce soit de l'ensemble de vos placements.",
     unchanged: "Rien n'a bougé depuis la dernière revue.",
     untracked:
-      "Les revues de portefeuille ne sont pas encore en place (migration 033).",
+      "Les revues de placements ne sont pas encore en place (migration 033).",
     noWriter: "Aucun rédacteur n'est configuré.",
     noAnswer: "Le rédacteur n'a pas répondu à l'instant.",
     unusable: "La réponse du rédacteur n'a pas pu être utilisée.",
@@ -2023,9 +1990,10 @@ export const fr: Messages = {
 
     refusal: {
       wrongShape: "Pas la forme demandée",
-      unknownDatum: "Elle citait « {id} », qui n'a jamais été transmis",
+      unknownDatum:
+        "Elle citait «\u00A0{id}\u00A0», qui n'a jamais été transmis",
       unknownInstrument:
-        "Elle proposait « {isin} », qui n'est pas un instrument connu de l'app",
+        "Elle proposait «\u00A0{isin}\u00A0», qui n'est pas un instrument connu de Pluclair",
       headlineHadFigure: "Le titre contenait un chiffre de son cru",
       headlineTooLong: "Le titre dépassait une ligne",
       everythingDropped: "Toutes les observations ont dû être écartées",
@@ -2033,15 +2001,16 @@ export const fr: Messages = {
 
     footing: {
       notAdvice:
-        "Ce sont des informations sur vos propres avoirs, pas un conseil en investissement. Chaque chiffre est le calcul de l'app.",
+        "Ce sont des informations sur vos propres avoirs, pas un conseil en investissement. Chaque chiffre est le calcul de Pluclair.",
       partiallyRead:
-        "Certaines lignes n'ont pas été lues : ceci porte donc sur la partie du portefeuille que l'app peut voir.",
+        "Certaines lignes n'ont pas été lues\u00A0: ceci porte donc sur la partie de vos placements que Pluclair peut voir.",
     },
   },
 
   bankConnect: {
     sheetTitle: "Connecter votre banque",
-    sheetLead: "Vos transactions et votre vrai solde viennent directement de votre banque à chaque actualisation. Vous le mettez en place une fois, avec votre propre compte open-banking.io.",
+    sheetLead:
+      "Vos opérations et votre vrai solde viennent directement de votre banque à chaque actualisation. Vous le mettez en place une fois, avec votre propre compte open-banking.io.",
     step1Title: "Créez votre compte open-banking.io",
     step1Body:
       "Inscrivez-vous et approvisionnez son portefeuille. Environ 3\u00A0€ par mois pour un compte bancaire et 1\u00A0€ par compte supplémentaire — payés à eux, pas à Pluclair.",
@@ -2061,12 +2030,15 @@ export const fr: Messages = {
       "Le consentement de votre banque dure environ 180 jours. Vous le renouvelez sur open-banking.io, et vous êtes prévenu avant la fin.",
     factHistory:
       "Les mois passés sont complétés depuis votre banque, leurs totaux peuvent donc changer.",
-    notRegulated: "Pluclair n'est pas un prestataire de services de paiement\u00A0: le service réglementé d'information sur les comptes est fourni par Enable Banking Oy, via votre compte open-banking.io.",
+    notRegulated:
+      "Pluclair n'est pas un prestataire de services de paiement\u00A0: le service réglementé d'information sur les comptes est fourni par Enable Banking Oy, via votre compte open-banking.io.",
     privacyLink: "Comment vos données bancaires sont traitées",
-    consentLabel: "J'autorise Pluclair à utiliser mon fichier d'identifiants pour lire les comptes et les opérations de mon compte open-banking.io — des données que ma banque fournit via Enable Banking Oy, prestataire agréé de services d'information sur les comptes — afin de tenir mon budget. Ces opérations peuvent révéler des informations sensibles (santé, convictions, appartenance syndicale…), et j'accepte expressément qu'elles soient traitées dans ce seul but. Pluclair ne sollicite ma banque que lorsque je demande une actualisation. Je peux retirer ce consentement à tout moment en déconnectant ma banque.",
+    consentLabel:
+      "J'autorise Pluclair à utiliser mon fichier d'identifiants pour lire les comptes et les opérations de mon compte open-banking.io — des données que ma banque fournit via Enable Banking Oy, prestataire agréé de services d'information sur les comptes — afin de tenir mon budget. Ces opérations peuvent révéler des informations sensibles (santé, convictions, appartenance syndicale…), et j'accepte expressément qu'elles soient traitées dans ce seul but. Pluclair ne sollicite ma banque que lorsque je demande une actualisation. Je peux retirer ce consentement à tout moment en déconnectant ma banque.",
     consentRequired: "Cochez d'abord la case de consentement.",
     consentMissingTitle: "Confirmez votre consentement",
-    consentMissingBody: "Pluclair enregistre désormais ce consentement avant de lire des données bancaires. Merci de le confirmer pour votre connexion.",
+    consentMissingBody:
+      "Pluclair enregistre désormais ce consentement avant de lire des données bancaires. Merci de le confirmer pour votre connexion.",
     consentConfirm: "J'accepte",
     openSite: "Ouvrir open-banking.io",
     dropTitle: "Déposez credentials.json ici",
@@ -2133,14 +2105,14 @@ export const fr: Messages = {
     errorBody: "Nouvel essai à la prochaine synchronisation.",
     accounts: "Comptes",
     accountsBody:
-      "Choisissez les comptes qui contiennent votre argent courant. Leur solde est celui de votre Cap.",
+      "Choisissez les comptes qui contiennent votre argent courant. Leur solde est celui affiché dans Le point.",
     disconnect: "Déconnecter",
     disconnectTitle: "Déconnecter votre banque ?",
     disconnectBody:
       "La synchronisation s'arrête et votre fichier d'identifiants est supprimé de Pluclair.",
     disconnectApiKey:
       "Supprimez ensuite sa clé API sur open-banking.io, et fermez votre compte là-bas si vous n'en avez plus besoin.",
-    keepImported: "Garder les transactions importées",
+    keepImported: "Garder les opérations importées",
     keepImportedHint: "Votre journal reste tel quel.",
     deleteImported: "Les supprimer aussi",
     deleteImportedHint:
@@ -2148,19 +2120,21 @@ export const fr: Messages = {
     confirmDisconnect: "Déconnecter",
     disconnected: "Votre banque est déconnectée.",
     notConnectedBody:
-      "Voyez votre vrai solde, laissez les lignes arriver toutes seules et les mois se clôturer d'eux-mêmes.",
-    unlockBalance: "Votre vrai solde, lu depuis votre banque à chaque actualisation",
+      "Voyez votre vrai solde, laissez les lignes arriver toutes seules et le bilan de vos mois se faire de lui-même.",
+    unlockBalance:
+      "Votre vrai solde, lu depuis votre banque à chaque actualisation",
     unlockEntries:
       "Des lignes qui arrivent et se classent d'après votre propre historique",
-    unlockArrived: "Des charges confirmées à leur arrivée",
-    unlockClose: "Des mois qui se clôturent d'eux-mêmes le jour du relevé",
+    unlockArrived: "Des opérations récurrentes confirmées à leur arrivée",
+    unlockClose: "Des bilans de mois qui se font d'eux-mêmes le jour du relevé",
     profileLink: "Connexion bancaire",
-    inviteBearing: "Voyez votre vrai solde, lu depuis votre banque à chaque actualisation.",
+    inviteBearing:
+      "Voyez votre vrai solde, lu depuis votre banque à chaque actualisation.",
     inviteWelcome: "Laissez votre banque remplir tout cela pour vous.",
     inviteLedger:
       "Arrêtez de tout saisir : connectez votre banque et les lignes arrivent toutes seules.",
     invitePlan:
-      "Votre solde est lu pour vous, et les mois se clôturent d'eux-mêmes.",
+      "Votre solde est lu pour vous, et le bilan des mois se fait de lui-même.",
     dismissInvite: "Ne plus afficher",
     orEnterBalance: "Ou saisissez votre solde à la main",
   },
@@ -2176,10 +2150,9 @@ export const fr: Messages = {
     netMonth: "Ce mois-ci",
     netCaption: "Ce qui est entré, moins ce qui est sorti.",
     fromBank: "Aujourd'hui, d'après votre banque",
-    fromClose:
-      "D'après votre dernière clôture, plus ce que vous avez enregistré depuis",
+    fromClose: "D'après votre dernier bilan, plus ce que vous avez noté depuis",
     plannedOnly:
-      "Vos charges seulement — les dépenses du quotidien n'y sont pas",
+      "Vos opérations récurrentes seulement — les dépenses du quotidien n'y sont pas",
     fromToday: "{amount} par rapport à aujourd'hui",
     lowestAhead: "Point le plus bas à venir\u00A0: {amount} le {date}",
     lowest: "Point le plus bas\u00A0: {amount} le {date}",
@@ -2192,7 +2165,7 @@ export const fr: Messages = {
     setBalanceBody:
       "Saisissez une fois ce que contient votre compte, et ceci devient votre vrai solde.",
     spent: "Dépensé",
-    ofCap: "sur un plafond de {amount}",
+    ofCap: "sur un budget de {amount}",
     spentLessSoFar: "{amount} de moins qu'en {month} à ce stade",
     spentMoreSoFar: "{amount} de plus qu'en {month} à ce stade",
     spentLess: "{amount} de moins qu'en {month}",
@@ -2207,65 +2180,34 @@ export const fr: Messages = {
     everythingElse: "Tout le reste",
     capOf: "{spent} sur {cap}",
     run: { one: "{count} mois d'affilée", other: "{count} mois d'affilée" },
-    runBody: "Mois clôturés d'affilée sous votre marge.",
+    runBody: "Bilans d'affilée sous votre marge.",
     bestRun: "Record\u00A0: {count}",
-    noRunYet: "Clôturez un mois sous votre marge pour lancer une série.",
+    noRunYet:
+      "Faites le bilan d'un mois sous votre marge pour lancer une série.",
     goals: "Objectifs",
     goalToGo: "Encore {amount}",
-    invested: "Investi",
+    invested: "Valeur de vos placements",
   },
 
   bearing: {
-    title: "Cap",
     headline: {
       onHand: "actuellement sur votre compte courant",
       free: "vous finirez le mois à",
-      remaining: "enregistré comme restant",
     },
     cards: {
       month: "Ce mois-ci",
       now: "Les comptes",
       run: "Votre régularité",
       ahead: "L'année à venir",
-      wallet: "Portefeuilles",
+      wallet: "Placements",
     },
-    empty: "Dès qu'un mois sera enregistré, il y aura de quoi faire le point.",
     panel: {
-      close: "Fermer",
-      open: "Voir ce qui compose ce chiffre",
-      footer: "Voir la surface complète",
-      horizon: "Jusqu'où",
-      streakMonths: {
-        one: "{count} mois dans l'enveloppe",
-        other: "{count} mois dans l'enveloppe",
-      },
-      streakNone:
-        "Pas encore de série — clôturez un mois dans l'enveloppe pour la commencer.",
-      bestRun: "Record : {count}",
-      comparisonHeading: "Par rapport au mois dernier",
-      trendHeading: "Mois par mois",
-      trendThin:
-        "Pas encore assez de mois pour parler de tendance — {count} jusqu'ici.",
-      holdingsHeading: "Principales positions",
-      moreHoldings: "{count} de plus",
-      failed: "Le détail n'a pas pu être lu pour le moment.",
-      retry: "Réessayer",
       cashAccountsHeading: "Quels comptes détiennent vos liquidités",
       cashAccountsBody:
-        "Clôturer un mois compare ce que ces comptes détenaient au début et à la fin avec ce que le grand livre indique.",
+        "Faire le bilan d'un mois compare ce que ces comptes détenaient au début et à la fin avec ce que le journal indique.",
       cashAccountsLapsed: "Le consentement a expiré — rien ne peut en être lu",
-      cashAccountsLastRead: "Lu {when}",
     },
     spine: {
-      ringUnmeasured: "Pas encore mesuré — aucun mois n'a été clôturé",
-      ringMeasuring:
-        "Mesure de votre premier mois — aucune enveloppe définie pour l'instant",
-      ringUsed: "{percent} % de votre enveloppe utilisés",
-      ringUsedOver: "{percent} % de votre enveloppe utilisés, déjà au-delà",
-      ringStandingClear:
-        "ce qu'il vous reste à dépenser couvre encore une enveloppe entière",
-      ringStandingTight: "il vous reste moins d'une enveloppe à dépenser",
-      ringStandingShort: "le mois est parti pour finir dans le rouge",
       moreWaiting: {
         one: "+{count} en attente",
         other: "+{count} en attente",
@@ -2275,6 +2217,7 @@ export const fr: Messages = {
 
   errorPage: {
     title: "Quelque chose s'est mal passé",
+    appFailed: "L'application n'a pas pu démarrer",
     body: "Cette page n'a pas pu être chargée. Vos données sont intactes — réessayez, et si le problème persiste, déconnectez-vous puis reconnectez-vous.",
     tryAgain: "Réessayer",
     notFoundTitle: "Page introuvable",
@@ -2287,6 +2230,23 @@ export const fr: Messages = {
     askingBank: "Interrogation de votre banque…",
     lastChecked: "Actualiser — dernière vérification {age}",
     askBank: "Demander à votre banque s'il y a du nouveau",
+    unreachable: "Impossible de joindre votre banque pour le moment.",
+    coolingDown:
+      "Votre banque vient d'être interrogée — réessayez dans {seconds}\u00A0s.",
+    allowanceSpent:
+      "Les {allowance} vérifications automatiques du jour sont épuisées. Actualiser vous-même fonctionne toujours.",
+    nothingToPull: "Aucun compte connecté ne peut être lu pour le moment.",
+    onlyWhenAsked:
+      "Pluclair n'interroge votre banque que lorsque vous actualisez.",
+    noBank: "Aucune banque n'est connectée à ce compte.",
+    bankDidNotAnswer: "Votre banque n'a pas répondu pour le moment.",
+    reloadedNoBank: "Rechargé — aucune banque n'est connectée.",
+    reloadedRejected:
+      "Rechargé — open-banking.io n'accepte plus votre fichier d'identifiants. Déposez-en un nouveau pour synchroniser à nouveau.",
+    reloadedPaused:
+      "Rechargé — open-banking.io a mis la synchronisation en pause jusqu'à ce que son portefeuille soit approvisionné.",
+    reloadedUnreachable:
+      "Rechargé — votre banque n'a pas pu être jointe. Un nouvel essai aura lieu plus tard.",
   },
 
   outbox: {
@@ -2306,10 +2266,10 @@ export const fr: Messages = {
     amountPositive: "Le montant doit être positif",
     invalidDate: "Date invalide",
     nothingSelected: "Rien de sélectionné",
-    tooManySelected: "Sélectionnez au plus 200 transactions à la fois",
+    tooManySelected: "Sélectionnez au plus 200 opérations à la fois",
     pickCategory: "Choisissez une catégorie",
     pickDay: "Choisissez un jour entre 1 et 28",
-    pickRecurring: "Choisissez un récurrent",
+    pickRecurring: "Choisissez une opération récurrente",
     selectEtf: "Choisissez un ETF dans les résultats de recherche",
     endBeforeStart:
       "La date de fin doit être égale ou postérieure à la date de début",
@@ -2330,7 +2290,7 @@ export const fr: Messages = {
     nameRequiredCustom: "Le nom est obligatoire pour une ligne personnalisée",
     shareCountRequired: "Le nombre de parts est obligatoire",
     targetPositive: "L'objectif doit être positif",
-    capNotNegative: "Un plafond ne peut pas être négatif",
+    capNotNegative: "Un budget ne peut pas être négatif",
     zeroOrMore: "Doit être 0 ou plus",
     positiveNumber:
       "Saisissez un nombre positif (virgule ou point pour les décimales)",
@@ -2339,7 +2299,7 @@ export const fr: Messages = {
       "Cela semble trop élevé — saisissez 0,20 pour 0,20 %, pas 20",
     notAnIsin: "Cela ne ressemble pas à un ISIN, par exemple IE00B4L5Y983",
     notABalance: "Cela ne ressemble pas à un solde",
-    notACap: "Cela ne ressemble pas à un plafond",
+    notACap: "Cela ne ressemble pas à un budget",
     nothingToImport: "Rien à importer",
     tooManyRows: "Importez au plus 2000 lignes à la fois",
     invalidInput: "Saisie invalide",
@@ -2355,4 +2315,10 @@ export const fr: Messages = {
     tagNameTaken: "Une étiquette porte déjà ce nom.",
     tagMergeFailed: "Ces étiquettes n'ont pas pu être fusionnées.",
   },
+  actions: actionsFr,
+  moreScreens: moreScreensFr,
+  formPickers: formPickersFr,
+  reviewScreens: reviewScreensFr,
+  planScreen: planScreenFr,
+  homeScreen: homeScreenFr,
 };

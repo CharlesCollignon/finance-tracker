@@ -3,7 +3,7 @@ import {
   formatShortDate,
   isoDateInAppTimeZone,
 } from "./constants";
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { displayNameForRecurringTemplate } from "./investment-positions";
 import type { QuoteSource } from "./market/quote-source";
@@ -144,6 +144,8 @@ export function isDue(
 export interface ApplyRecurringDeps {
   /** Prices for share-priced templates. */
   quotes: QuoteSource;
+  /** The reader's language, for the date labels the plan carries. */
+  locale: Locale;
   /** Occurrence keys the user chose to skip this month. */
   skippedKeys?: Set<string>;
   /**
@@ -275,7 +277,13 @@ export async function buildApplyRecurringPlan(
   month: number,
   deps: ApplyRecurringDeps,
 ): Promise<ApplyRecurringPlan> {
-  const { quotes, skippedKeys = new Set<string>(), today, dueBy } = deps;
+  const {
+    quotes,
+    skippedKeys = new Set<string>(),
+    today,
+    dueBy,
+    locale,
+  } = deps;
   const toCreate: RecurringOccurrencePlan[] = [];
   const toUpdate: RecurringOccurrenceUpdate[] = [];
   const toReprice: RecurringOccurrenceUpdate[] = [];
@@ -328,7 +336,7 @@ export async function buildApplyRecurringPlan(
     const plan: RecurringOccurrencePlan = {
       templateId: template.id,
       name: displayNameForRecurringTemplate(template),
-      dateLabel: formatShortDate(occurredOn),
+      dateLabel: formatShortDate(occurredOn, locale),
       occurredOn,
       amount,
       note,
@@ -588,7 +596,7 @@ export function scheduleDatesBefore(
  */
 export function formatOccurrenceDates(
   dates: readonly string[],
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   const labels = dates.map((date) => formatDayMonth(date, locale));
   if (labels.length <= 1) {

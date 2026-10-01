@@ -146,7 +146,13 @@ export default function RootLayout() {
     // TYPE.hero (56) actually render at.
     "Fraunces-Regular": require("../../assets/fonts/Fraunces-Regular.ttf"),
     "Fraunces-SemiBold": require("../../assets/fonts/Fraunces-SemiBold.ttf"),
+    // Static instances again, one per weight, for the reason given above:
+    // `font-medium`, `font-semibold` and `font-bold` are turned into these
+    // families by `sansWeightFace` (src/lib/text-class.ts).
     "InstrumentSans-Regular": require("../../assets/fonts/InstrumentSans-Regular.ttf"),
+    "InstrumentSans-Medium": require("../../assets/fonts/InstrumentSans-Medium.ttf"),
+    "InstrumentSans-SemiBold": require("../../assets/fonts/InstrumentSans-SemiBold.ttf"),
+    "InstrumentSans-Bold": require("../../assets/fonts/InstrumentSans-Bold.ttf"),
     "IBMPlexMono-Regular": require("../../assets/fonts/IBMPlexMono-Regular.ttf"),
     "IBMPlexMono-Medium": require("../../assets/fonts/IBMPlexMono-Medium.ttf"),
   });

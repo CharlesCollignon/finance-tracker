@@ -18,6 +18,7 @@ import type {
   RecurringTemplateWithCategory,
   TransactionWithCategory,
 } from "@finance/core/types/database";
+import { getLocale } from "@/lib/locale";
 
 export async function getTransactions(
   userId: string,
@@ -183,6 +184,7 @@ export async function getMonthComparison(
   ]);
 
   return buildMonthComparison({
+    locale: await getLocale(),
     current,
     previous,
     year,

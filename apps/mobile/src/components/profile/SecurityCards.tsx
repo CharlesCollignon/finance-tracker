@@ -4,7 +4,8 @@ import { View } from "react-native";
 import { Button } from "@/components/ui/Button";
 import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { Text } from "@/components/ui/Text";
-import { useT } from "@/providers/LocaleProvider";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import { formatLongDate } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 import {
   deletePasskey,
@@ -15,6 +16,7 @@ import {
 
 export function PasskeysPanel() {
   const t = useT();
+  const locale = useLocale();
   const [passkeys, setPasskeys] = useState<PasskeyItem[]>([]);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -83,11 +85,11 @@ export function PasskeysPanel() {
   return (
     <View className="gap-3">
       {passkeys.length === 0 ? (
-        <Text variant="micro">No passkeys yet.</Text>
+        <Text variant="micro">{t("passkeys.none")}</Text>
       ) : (
         <View className="gap-2">
           {passkeys.map((item) => {
-            const label = item.friendly_name ?? "Passkey";
+            const label = item.friendly_name ?? t("passkeys.unnamed");
             return (
               <View
                 key={item.id}
@@ -96,7 +98,12 @@ export function PasskeysPanel() {
                 <View className="flex-1">
                   <Text>{label}</Text>
                   <Text variant="muted">
-                    Added {item.created_at.slice(0, 10)}
+                    {t("passkeys.added", {
+                      date: formatLongDate(
+                        item.created_at.slice(0, 10),
+                        locale,
+                      ),
+                    })}
                   </Text>
                 </View>
                 <Button
@@ -112,7 +119,7 @@ export function PasskeysPanel() {
         </View>
       )}
       <Button
-        label={pending ? "Please wait…" : "Add passkey"}
+        label={pending ? t("passkeys.working") : t("passkeys.add")}
         variant="outline"
         disabled={pending}
         onPress={() => {
@@ -130,7 +137,7 @@ export function PasskeysPanel() {
         title={t("common.removePasskey")}
         message={
           confirming
-            ? `Remove ${confirming.label}? You can add it again later.`
+            ? t("passkeys.removeBody", { name: confirming.label })
             : undefined
         }
         confirmLabel={t("common.remove")}

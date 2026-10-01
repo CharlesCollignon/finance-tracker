@@ -18,6 +18,7 @@ import type {
   MonthClose,
   TransactionWithCategory,
 } from "@finance/core/types/database";
+import { getLocale } from "@/lib/locale";
 
 /** What the app assumes until the user says otherwise. */
 export const DEFAULT_CLOSE_DAY = 5;
@@ -233,6 +234,7 @@ export async function getMonthCloseOverview(
   userId: string,
   today: string,
 ): Promise<MonthCloseOverview> {
+  const locale = await getLocale();
   const [settings, closes] = await Promise.all([
     getMonthCloseSettings(userId),
     getMonthCloses(userId),
@@ -264,7 +266,7 @@ export async function getMonthCloseOverview(
 
     history.push({
       monthKey,
-      label: formatMonthLabel(year!, month!),
+      label: formatMonthLabel(year!, month!, locale),
       closingBalance,
       observedOn: close.observed_on,
       status: result.status,
@@ -286,7 +288,7 @@ export async function getMonthCloseOverview(
     settings,
     history: [...history].reverse(),
     summary: summarizeCloseHistory(history, settings.unrecordedCap),
-    next: closableMonth(today, settings.closeDay, lastClosedMonthKey),
+    next: closableMonth(today, settings.closeDay, lastClosedMonthKey, locale),
   };
 }
 

@@ -2,6 +2,7 @@ import { formatEuro } from "./constants";
 import { formatMoney } from "./market/fx";
 import type { QuoteSource } from "./market/quote-source";
 import { computeSharesAmount } from "./market/yahoo";
+import { DEFAULT_LOCALE, type Locale } from "./i18n/locale";
 
 interface SharesTemplateFields {
   pricing_type: string | null;
@@ -48,6 +49,9 @@ export function isQuotePriced(template: {
 export async function resolveRecurringAmount(
   template: SharesTemplateFields,
   quotes: QuoteSource,
+  // The note is written into the transaction itself, once, so it is stored
+  // in the product's language unless a caller knows the reader's.
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<ResolvedRecurringAmount> {
   if (!isQuotePriced(template)) {
     return {
@@ -75,8 +79,8 @@ export async function resolveRecurringAmount(
 
   const priceLabel =
     live && live.currency !== "EUR"
-      ? `${formatEuro(price)} (${formatMoney(live.priceOriginal, live.currency)} / share)`
-      : formatEuro(price);
+      ? `${formatEuro(price, locale)} (${formatMoney(live.priceOriginal, live.currency, locale)} / ${locale === "fr" ? "part" : "share"})`
+      : formatEuro(price, locale);
   const shareNote =
     `${shareCount} × ` +
     `${template.instrument_name ?? template.instrument_symbol} @ ${priceLabel}`;

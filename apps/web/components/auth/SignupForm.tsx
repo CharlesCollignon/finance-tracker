@@ -120,7 +120,7 @@ export function SignupForm({
         )}
         {state.message && (
           <Text className="text-center text-sm text-muted-foreground">
-            {state.message}
+            {resolveMessage(t, state.message)}
           </Text>
         )}
         <Button

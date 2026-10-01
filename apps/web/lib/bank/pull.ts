@@ -13,7 +13,9 @@ import {
 import { todayIsoLocal } from "@finance/core/constants";
 import type { Database } from "@finance/core/types/database";
 import { getBankConnection } from "@/lib/bank/client";
-import { FALLBACK_LOCALE, type Locale } from "@finance/core/i18n/locale";
+import type { Locale } from "@finance/core/i18n/locale";
+import { translator } from "@finance/core/i18n/t";
+import { getLocale } from "@/lib/locale";
 
 type Client = SupabaseClient<Database>;
 
@@ -129,7 +131,7 @@ export async function readPullState(
 export async function readPullFreshness(
   supabase: Client,
   userId: string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): Promise<PullFreshness> {
   const state = await readPullState(supabase, userId);
   const now = new Date().toISOString();
@@ -184,15 +186,25 @@ export type PullOutcome =
   /** Nothing was asked, and this is the reason in words a screen can show. */
   | { pulled: false; why: string };
 
-/** Why a refusal happened, in words a screen can show. */
-function explain(decision: Exclude<PullDecision, { pull: true }>): string {
+/**
+ * Why a refusal happened, in the reader's words. The two with a number in
+ * them are written out here; the rest travel as message keys, which the
+ * toast on either client resolves.
+ */
+function explain(
+  decision: Exclude<PullDecision, { pull: true }>,
+  locale: Locale,
+): string {
+  const t = translator(locale);
   switch (decision.reason) {
     case "cooling-down":
-      return `Your bank was asked moments ago — try again in ${decision.retryAfterSeconds}s.`;
+      return t("refresh.coolingDown", {
+        seconds: decision.retryAfterSeconds,
+      });
     case "allowance-spent":
-      return `Today's ${decision.allowance} unattended checks are used up. Pressing refresh yourself still works.`;
+      return t("refresh.allowanceSpent", { allowance: decision.allowance });
     case "nothing-to-pull":
-      return "No connected account can be read right now.";
+      return "refresh.nothingToPull";
   }
 }
 
@@ -214,13 +226,13 @@ export async function pullFromBank(
   if (kind === "unattended") {
     return {
       pulled: false,
-      why: "Pluclair asks your bank only when you refresh.",
+      why: "refresh.onlyWhenAsked",
     };
   }
 
   const connection = await getBankConnection(userId);
   if (!connection) {
-    return { pulled: false, why: "No bank is connected to this account." };
+    return { pulled: false, why: "refresh.noBank" };
   }
 
   let pullable = 0;
@@ -233,7 +245,7 @@ export async function pullFromBank(
   } catch (error) {
     return {
       pulled: false,
-      why: error instanceof Error ? error.message : "Could not reach the bank.",
+      why: error instanceof Error ? error.message : "actions.couldNotReachBank",
     };
   }
 
@@ -248,7 +260,7 @@ export async function pullFromBank(
   });
 
   if (!decision.pull) {
-    return { pulled: false, why: explain(decision) };
+    return { pulled: false, why: explain(decision, await getLocale()) };
   }
 
   try {
@@ -267,10 +279,7 @@ export async function pullFromBank(
     // nothing was read, so nothing was spent.
     return {
       pulled: false,
-      why:
-        error instanceof Error
-          ? error.message
-          : "Your bank did not answer just now.",
+      why: error instanceof Error ? error.message : "refresh.bankDidNotAnswer",
     };
   }
 }

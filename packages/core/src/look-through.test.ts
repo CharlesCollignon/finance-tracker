@@ -7,10 +7,7 @@ import {
   lookThroughIsThin,
   type LookThroughPosition,
 } from "./look-through";
-import {
-  READING_VERSION,
-  type InstrumentReading,
-} from "./instrument-reading";
+import { READING_VERSION, type InstrumentReading } from "./instrument-reading";
 
 const NOW = new Date("2026-09-14T12:00:00.000Z");
 
@@ -110,8 +107,31 @@ describe("buildLookThrough", () => {
       positions: [position()],
       readings: readings(
         reading("FR001400U5Q4", {
-          countryWeights: { US: 0.71, JP: 0.06, GB: 0.04, FR: 0.03, DE: 0.02, CA: 0.03, CH: 0.03, AU: 0.02, NL: 0.01, SE: 0.05 },
-          sectorWeights: { "information-technology": 0.25, financials: 0.16, "health-care": 0.12, industrials: 0.11, "consumer-discretionary": 0.1, "communication-services": 0.09, "consumer-staples": 0.06, energy: 0.04, materials: 0.03, utilities: 0.025, "real-estate": 0.02 },
+          countryWeights: {
+            US: 0.71,
+            JP: 0.06,
+            GB: 0.04,
+            FR: 0.03,
+            DE: 0.02,
+            CA: 0.03,
+            CH: 0.03,
+            AU: 0.02,
+            NL: 0.01,
+            SE: 0.05,
+          },
+          sectorWeights: {
+            "information-technology": 0.25,
+            financials: 0.16,
+            "health-care": 0.12,
+            industrials: 0.11,
+            "consumer-discretionary": 0.1,
+            "communication-services": 0.09,
+            "consumer-staples": 0.06,
+            energy: 0.04,
+            materials: 0.03,
+            utilities: 0.025,
+            "real-estate": 0.02,
+          },
         }),
       ),
       now: NOW,
@@ -201,7 +221,10 @@ describe("buildLookThrough", () => {
 
     it("ignores a position worth nothing entirely", () => {
       const result = buildLookThrough({
-        positions: [position(), position({ positionId: "empty", marketValue: 0 })],
+        positions: [
+          position(),
+          position({ positionId: "empty", marketValue: 0 }),
+        ],
         readings: readings(reading("FR001400U5Q4")),
         now: NOW,
       });
@@ -296,7 +319,11 @@ describe("buildLookThrough", () => {
 
     const pair = () => ({
       positions: [
-        position({ positionId: "world", name: "MSCI World", isin: "FR001400U5Q4" }),
+        position({
+          positionId: "world",
+          name: "MSCI World",
+          isin: "FR001400U5Q4",
+        }),
         position({ positionId: "sp", name: "S&P 500", isin: "FR0013412285" }),
       ],
       readings: readings(
@@ -339,9 +366,9 @@ describe("buildLookThrough", () => {
 
     it("always says the floor is a floor", () => {
       const result = buildLookThrough(pair());
-      expect(
-        result.caveats.some((c) => c.kind === "overlap-is-a-floor"),
-      ).toBe(true);
+      expect(result.caveats.some((c) => c.kind === "overlap-is-a-floor")).toBe(
+        true,
+      );
     });
 
     it("matches the same company written three different ways", () => {
@@ -407,9 +434,9 @@ describe("buildLookThrough", () => {
       // The index collision still stands, which is the point of having it.
       expect(result.indexCollisions).toHaveLength(1);
       expect(result.constituentOverlaps).toEqual([]);
-      expect(
-        result.caveats.some((c) => c.kind === "overlap-is-a-floor"),
-      ).toBe(false);
+      expect(result.caveats.some((c) => c.kind === "overlap-is-a-floor")).toBe(
+        false,
+      );
     });
   });
 
@@ -460,9 +487,7 @@ describe("buildLookThrough", () => {
     it("prefers the charge typed on the position over a reading's", () => {
       const result = buildLookThrough({
         positions: [position({ ongoingCharge: 0.009 })],
-        readings: readings(
-          reading("FR001400U5Q4", { ongoingCharge: 0.002 }),
-        ),
+        readings: readings(reading("FR001400U5Q4", { ongoingCharge: 0.002 })),
         now: NOW,
       });
       expect(result.charges.weightedAverage).toBeCloseTo(0.009, 6);
@@ -471,9 +496,7 @@ describe("buildLookThrough", () => {
     it("uses a reading's charge where nothing was typed", () => {
       const result = buildLookThrough({
         positions: [position({ ongoingCharge: null })],
-        readings: readings(
-          reading("FR001400U5Q4", { ongoingCharge: 0.0031 }),
-        ),
+        readings: readings(reading("FR001400U5Q4", { ongoingCharge: 0.0031 })),
         now: NOW,
       });
       expect(result.charges.weightedAverage).toBeCloseTo(0.0031, 6);
@@ -577,7 +600,9 @@ describe("constituentKey", () => {
   });
 
   it("keeps genuinely different companies apart", () => {
-    expect(constituentKey("Apple")).not.toBe(constituentKey("Applied Materials"));
+    expect(constituentKey("Apple")).not.toBe(
+      constituentKey("Applied Materials"),
+    );
     expect(constituentKey("Bank of America")).not.toBe(
       constituentKey("Bank of Montreal"),
     );
@@ -736,7 +761,9 @@ describe("why each position is not covered", () => {
   it("separates a coin from a holding still waiting for an ISIN", () => {
     const result = built();
 
-    expect(result.unresolvablePositions.map((row) => row.name)).toEqual(["Bitcoin"]);
+    expect(result.unresolvablePositions.map((row) => row.name)).toEqual([
+      "Bitcoin",
+    ]);
     expect(result.unidentifiedPositions.map((row) => row.name)).toEqual([
       "Something typed in",
     ]);

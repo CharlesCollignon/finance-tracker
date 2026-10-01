@@ -8,7 +8,6 @@ import {
   budgetSchema,
   savingsGoalSchema,
   tagSchema,
-  walletTransferSchema,
 } from "@finance/core/validations/phase4";
 import { parseUuid } from "@finance/core/validations/finance";
 
@@ -83,88 +82,12 @@ export async function deleteBudget(id: string): Promise<ActionResult> {
   }
 
   if (!parseUuid(id)) {
-    return { error: "Invalid budget" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("budgets")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", userId);
-
-  if (error) {
-    return { error: error.message };
-  }
-  revalidatePhase4();
-  return { success: true };
-}
-
-export async function upsertWalletTransfer(
-  _prev: ActionResult,
-  formData: FormData,
-): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = walletTransferSchema.safeParse({
-    id: formData.get("id") || undefined,
-    toWallet: formData.get("toWallet"),
-    amount: formData.get("amount"),
-    occurredOn: formData.get("occurredOn"),
-    note: formData.get("note") || undefined,
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const payload = {
-    to_wallet: parsed.data.toWallet,
-    amount: parsed.data.amount,
-    occurred_on: parsed.data.occurredOn,
-    note: parsed.data.note ?? null,
-  };
-
-  if (parsed.data.id) {
-    const { error } = await supabase
-      .from("wallet_transfers")
-      .update(payload)
-      .eq("id", parsed.data.id)
-      .eq("user_id", userId);
-    if (error) {
-      return { error: error.message };
-    }
-  } else {
-    const { error } = await supabase.from("wallet_transfers").insert({
-      user_id: userId,
-      ...payload,
-    });
-    if (error) {
-      return { error: error.message };
-    }
-  }
-
-  revalidatePhase4();
-  return { success: true };
-}
-
-export async function deleteWalletTransfer(id: string): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  if (!parseUuid(id)) {
-    return { error: "Invalid transfer" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("wallet_transfers")
     .delete()
     .eq("id", id)
     .eq("user_id", userId);
@@ -319,7 +242,7 @@ export async function setTransactionTags(
     .maybeSingle();
 
   if (!tx) {
-    return { error: "Transaction not found" };
+    return { error: "actions.transactionNotFound" };
   }
 
   await supabase
@@ -407,7 +330,7 @@ export async function deleteSavingsGoal(id: string): Promise<ActionResult> {
   }
 
   if (!parseUuid(id)) {
-    return { error: "Invalid goal" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();

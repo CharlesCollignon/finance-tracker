@@ -8,6 +8,8 @@
  */
 
 import { INVESTMENT_WALLET_IDS, type InvestmentWalletId } from "./investments";
+import { INTL_LOCALES, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 
 export interface WalletTarget {
   walletId: InvestmentWalletId;
@@ -240,10 +242,13 @@ export function defaultTargets(): WalletTarget[] {
   }));
 }
 
-/** Percent for display, e.g. 0.6 → "60%". */
-export function formatWeight(weight: number | null): string {
+/** Percent for display, e.g. 0.6 → "60%" / "60 %". */
+export function formatWeight(weight: number | null, locale: Locale): string {
   if (weight === null) {
     return "—";
   }
-  return `${Math.round(weight * 100)}%`;
+  const value = new Intl.NumberFormat(INTL_LOCALES[locale], {
+    maximumFractionDigits: 0,
+  }).format(weight * 100);
+  return translator(locale)("units.percent", { value });
 }

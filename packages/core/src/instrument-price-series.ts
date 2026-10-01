@@ -12,7 +12,8 @@
  * of it, each thinned to something a sparkline can carry.
  */
 
-import { FALLBACK_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
+import { formatSignedPercentOf } from "./constants";
 
 export type PriceRange = "1M" | "1Y" | "5Y" | "ALL";
 
@@ -262,16 +263,11 @@ export function buildPriceSeries(
  */
 export function formatSignedPercent(
   changePct: number | null,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   if (changePct === null) {
     return "—";
   }
 
-  return new Intl.NumberFormat(INTL_LOCALES[locale], {
-    style: "percent",
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-    signDisplay: "exceptZero",
-  }).format(changePct / 100);
+  return formatSignedPercentOf(changePct / 100, locale);
 }

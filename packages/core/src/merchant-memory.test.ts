@@ -142,8 +142,9 @@ describe("suggestMerchants", () => {
     const results = suggestMerchants(index, "fran");
     expect(results[0]?.key).toBe("franprix");
     expect(results.map((r) => r.key)).toContain("boulangerie fran");
-    expect(results.indexOf(results.find((r) => r.key === "boulangerie fran")!)).
-      toBeGreaterThan(0);
+    expect(
+      results.indexOf(results.find((r) => r.key === "boulangerie fran")!),
+    ).toBeGreaterThan(0);
   });
 
   it("ranks the more frequent merchant first among prefix matches", () => {

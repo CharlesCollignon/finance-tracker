@@ -1,12 +1,8 @@
 import { useMemo, useState } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import type { EChartsCoreOption } from "echarts/core";
 
-import {
-  INVESTMENT_WALLET_IDS,
-  INVESTMENT_WALLET_LABELS,
-  type InvestmentWalletId,
-} from "@finance/core/investments";
+import type { InvestmentWalletId } from "@finance/core/investments";
 import { isCryptoWallet } from "@finance/core/crypto-holdings";
 import type {
   InvestmentPortfolioSummary,
@@ -20,15 +16,15 @@ import { PrivateAmount } from "@/components/PrivateAmount";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
-import { hapticLight } from "@/lib/haptics";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
-import { useT } from "@/providers/LocaleProvider";
+import { useT, useLocale } from "@/providers/LocaleProvider";
+import { formatSignedPercentOf } from "@finance/core/constants";
+import { INTL_LOCALES } from "@finance/core/i18n/locale";
 
 interface WalletPerformanceProps {
   portfolio: InvestmentPortfolioSummary;
   activeWallet: InvestmentWalletId;
-  onWalletChange: (wallet: InvestmentWalletId) => void;
   nextByWallet: Partial<Record<InvestmentWalletId, UpcomingInvestment>>;
 }
 
@@ -49,6 +45,16 @@ const RANGE_MONTHS: Record<RangeKey, number> = {
 };
 
 const RANGES: RangeKey[] = ["1D", "1W", "1M", "3M", "1Y", "All"];
+
+/** "1D" is English; French shortens a day, a week and a year differently. */
+const RANGE_LABEL_KEY = {
+  "1D": "wallets.range1D",
+  "1W": "wallets.range1W",
+  "1M": "wallets.range1M",
+  "3M": "wallets.range3M",
+  "1Y": "wallets.range1Y",
+  All: "wallets.rangeAll",
+} as const satisfies Record<RangeKey, string>;
 
 function slice(points: PositionChartPoint[], range: RangeKey) {
   const months = RANGE_MONTHS[range];
@@ -82,7 +88,7 @@ function Metric({
       <PrivateAmount
         numberOfLines={1}
         className={cn(
-          "mt-0.5 font-mono text-base font-semibold",
+          "mt-0.5 font-sans tabular-nums text-base font-semibold",
           tone === "positive" && "text-success",
           tone === "negative" && "text-destructive",
         )}
@@ -113,7 +119,7 @@ function StatRow({
       <Text className="flex-1 text-sm">{label}</Text>
       <PrivateAmount
         className={cn(
-          "font-mono text-sm font-semibold",
+          "font-sans tabular-nums text-sm font-semibold",
           tone === "positive" && "text-success",
           tone === "negative" && "text-destructive",
         )}
@@ -124,14 +130,17 @@ function StatRow({
   );
 }
 
-/** Per-wallet performance: tabs, headline metrics, chart, then the detail. */
+/**
+ * One wallet's performance: headline metrics, chart, then the detail. The
+ * wallet is chosen on the screen above, which also lists its positions.
+ */
 export function WalletPerformance({
   portfolio,
   activeWallet,
-  onWalletChange,
   nextByWallet,
 }: WalletPerformanceProps) {
   const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
   const [range, setRange] = useState<RangeKey>("All");
@@ -216,39 +225,6 @@ export function WalletPerformance({
 
   return (
     <View className="gap-4">
-      <View className="flex-row gap-2">
-        {INVESTMENT_WALLET_IDS.map((walletId) => {
-          const selected = walletId === activeWallet;
-          return (
-            <Pressable
-              key={walletId}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              onPress={() => {
-                void hapticLight();
-                onWalletChange(walletId);
-              }}
-              className={cn(
-                "flex-1 rounded-full border px-3 py-2",
-                selected
-                  ? "border-foreground bg-foreground"
-                  : "border-border bg-background",
-              )}
-            >
-              <Text
-                numberOfLines={1}
-                className={cn(
-                  "text-center text-sm font-semibold",
-                  selected ? "text-background" : "text-muted-foreground",
-                )}
-              >
-                {INVESTMENT_WALLET_LABELS[walletId]}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
       <View className="flex-row gap-3">
         <Metric
           label={t("wallets.marketValue")}
@@ -265,8 +241,12 @@ export function WalletPerformance({
           value={
             holdings > 0
               ? isCrypto
-                ? `${holdings.toFixed(8)} ₿`
-                : String(holdings)
+                ? `${new Intl.NumberFormat(INTL_LOCALES[locale], {
+                    maximumFractionDigits: 8,
+                  }).format(holdings)} ₿`
+                : new Intl.NumberFormat(INTL_LOCALES[locale], {
+                    maximumFractionDigits: 4,
+                  }).format(holdings)
               : "—"
           }
         />
@@ -290,7 +270,7 @@ export function WalletPerformance({
         onChange={setRange}
         segments={RANGES.map((key) => ({
           value: key,
-          label: key,
+          label: t(RANGE_LABEL_KEY[key]),
           disabled: slice(points, key).length < 2 && key !== "All",
         }))}
       />
@@ -332,7 +312,7 @@ export function WalletPerformance({
           label={t("position.returnPercent")}
           value={
             returnPct !== null
-              ? `${returnPct >= 0 ? "+" : "−"}${Math.abs(returnPct).toFixed(2)} %`
+              ? formatSignedPercentOf(returnPct / 100, locale, 2)
               : "—"
           }
           tone={

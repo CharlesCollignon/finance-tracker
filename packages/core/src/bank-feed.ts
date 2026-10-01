@@ -1,4 +1,4 @@
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * Turning what the bank says into what the ledger holds.
@@ -21,6 +21,7 @@ import { translator } from "./i18n/t";
  */
 
 import { categoryNameForMcc, mccNeedsReview } from "./bank-mcc";
+import { categoryNameVariants } from "./constants";
 import { lookupBankMerchant, type BankMerchantIndex } from "./bank-merchant";
 import {
   lookupMerchant,
@@ -126,7 +127,7 @@ export interface ToCandidateOptions {
    */
   ownIbans?: ReadonlySet<string>;
   /** The language the fallback description is written in. */
-  locale?: Locale;
+  locale: Locale;
 }
 
 function cleanIban(iban: string | null): string | null {
@@ -136,9 +137,9 @@ function cleanIban(iban: string | null): string | null {
 /** `null` when the row is not something the ledger should ever hold. */
 export function toCandidate(
   tx: BankTransaction,
-  options: ToCandidateOptions = {},
+  options: ToCandidateOptions,
 ): BankFeedCandidate | null {
-  const locale = options.locale ?? FALLBACK_LOCALE;
+  const locale = options.locale;
   const occurredOn = tx.bookingDate ?? tx.valueDate ?? tx.transactionDate;
   if (!occurredOn || !/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)) {
     return null;
@@ -402,7 +403,10 @@ export function decide(
 
   const mccName = categoryNameForMcc(candidate.merchantCategoryCode);
   if (mccName) {
-    const category = categoryIdsByName.get(mccName.toLowerCase());
+    // The code names a default in English; the user's may be in French.
+    const category = categoryNameVariants(mccName)
+      .map((name) => categoryIdsByName.get(name.toLowerCase()))
+      .find((match) => match !== undefined);
     if (category) {
       return {
         kind: "auto",
@@ -530,7 +534,7 @@ export function indexCategoriesByName(
 /** Exposed for the review UI, which shows why a row is waiting. */
 export function describeReviewReason(
   why: ReviewReason,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   const t = translator(locale);
   switch (why) {

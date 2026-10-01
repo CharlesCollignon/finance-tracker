@@ -160,7 +160,12 @@ describe("connecting with a file", () => {
     const { store, secrets, statuses, consents } = memoryStore();
     const { open, seen } = answering("accounts");
 
-    const result = await connectWithFile({ store, open }, "user-1", file(), CONSENT);
+    const result = await connectWithFile(
+      { store, open },
+      "user-1",
+      file(),
+      CONSENT,
+    );
 
     expect(result).toEqual({ outcome: "connected", accounts: 2 });
     expect(seen).toHaveLength(1);
@@ -184,7 +189,9 @@ describe("connecting with a file", () => {
     ] as const) {
       const { store, secrets } = memoryStore();
       const { open } = answering(answer);
-      expect(await connectWithFile({ store, open }, "user-1", file(), CONSENT)).toEqual({
+      expect(
+        await connectWithFile({ store, open }, "user-1", file(), CONSENT),
+      ).toEqual({
         problem,
       });
       expect(secrets.size).toBe(0);
@@ -194,7 +201,9 @@ describe("connecting with a file", () => {
   it("keeps a good key on an empty wallet, as paused", async () => {
     const { store, statuses } = memoryStore();
     const { open } = answering(402);
-    expect(await connectWithFile({ store, open }, "user-1", file(), CONSENT)).toEqual({
+    expect(
+      await connectWithFile({ store, open }, "user-1", file(), CONSENT),
+    ).toEqual({
       outcome: "paused",
       accounts: 0,
     });

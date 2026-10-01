@@ -118,7 +118,7 @@ function answer(overrides: Record<string, unknown> = {}) {
 
 describe("verifyWalletRead", () => {
   it("accepts a clean answer", () => {
-    const verdict = verifyWalletRead(answer(), pack().facts);
+    const verdict = verifyWalletRead(answer(), pack().facts, "en");
     expect(verdict.ok).toBe(true);
     if (!verdict.ok) return;
 
@@ -128,7 +128,7 @@ describe("verifyWalletRead", () => {
   });
 
   it("refuses an answer that is not the shape asked for", () => {
-    const verdict = verifyWalletRead({ nope: true }, pack().facts);
+    const verdict = verifyWalletRead({ nope: true }, pack().facts, "en");
     expect(verdict.ok).toBe(false);
     if (verdict.ok) return;
     expect(verdict.reason).toBe("unreadable");
@@ -140,6 +140,7 @@ describe("verifyWalletRead", () => {
     const verdict = verifyWalletRead(
       answer({ headline: "You are 65% United States." }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(false);
     if (verdict.ok) return;
@@ -150,6 +151,7 @@ describe("verifyWalletRead", () => {
     const verdict = verifyWalletRead(
       answer({ headline: "Nearly two thirds of it sits in one country." }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(false);
     if (verdict.ok) return;
@@ -173,6 +175,7 @@ describe("verifyWalletRead", () => {
         ],
       }),
       pack().facts,
+      "en",
     );
 
     expect(verdict.ok).toBe(true);
@@ -210,6 +213,7 @@ describe("verifyWalletRead", () => {
           ],
         }),
         pack().facts,
+        "en",
       );
 
       expect(verdict.ok).toBe(true);
@@ -230,6 +234,7 @@ describe("verifyWalletRead", () => {
           ],
         }),
         pack().facts,
+        "en",
       );
       expect(verdict.ok).toBe(true);
       if (!verdict.ok) return;
@@ -254,6 +259,7 @@ describe("verifyWalletRead", () => {
           ],
         }),
         pack().facts,
+        "en",
       );
       expect(verdict.ok).toBe(true);
       if (!verdict.ok) return;
@@ -267,6 +273,7 @@ describe("verifyWalletRead", () => {
           headline: "The S&P 500 is nearly two thirds of it.",
         }),
         pack().facts,
+        "en",
       );
       expect(verdict.ok).toBe(false);
       if (verdict.ok) return;
@@ -288,6 +295,7 @@ describe("verifyWalletRead", () => {
         ],
       }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(false);
     if (verdict.ok) return;
@@ -308,6 +316,7 @@ describe("verifyWalletRead", () => {
         ],
       }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(true);
     if (!verdict.ok) return;
@@ -331,6 +340,7 @@ describe("verifyWalletRead", () => {
         ],
       }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(true);
     if (!verdict.ok) return;
@@ -360,6 +370,7 @@ describe("verifyWalletRead", () => {
         ],
       }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(false);
     if (verdict.ok) return;
@@ -388,6 +399,7 @@ describe("verifyWalletRead", () => {
         ],
       }),
       pack().facts,
+      "en",
     );
 
     expect(verdict.ok).toBe(true);
@@ -412,6 +424,7 @@ describe("verifyWalletRead", () => {
         ],
       }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(true);
     if (!verdict.ok) return;
@@ -431,6 +444,7 @@ describe("verifyWalletRead", () => {
     const verdict = verifyWalletRead(
       answer({ suggestions: [suggestion, { ...suggestion, text: "Again." }] }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(true);
     if (!verdict.ok) return;
@@ -453,6 +467,7 @@ describe("verifyWalletRead", () => {
         ],
       }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(true);
     if (!verdict.ok) return;
@@ -465,6 +480,7 @@ describe("verifyWalletRead", () => {
     const verdict = verifyWalletRead(
       answer({ headline: "x".repeat(MAX_WALLET_HEADLINE_LENGTH + 1) }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(false);
     if (verdict.ok) return;
@@ -488,6 +504,7 @@ describe("verifyWalletRead", () => {
         ],
       }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(true);
     if (!verdict.ok) return;
@@ -503,6 +520,7 @@ describe("verifyWalletRead", () => {
     const verdict = verifyWalletRead(
       answer({ observations: Array.from({ length: 8 }, () => observation) }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(true);
     if (!verdict.ok) return;
@@ -524,6 +542,7 @@ describe("verifyWalletRead", () => {
         })),
       }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(true);
     if (!verdict.ok) return;
@@ -538,6 +557,7 @@ describe("verifyWalletRead", () => {
         ],
       }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(false);
     if (verdict.ok) return;
@@ -548,6 +568,7 @@ describe("verifyWalletRead", () => {
     const verdict = verifyWalletRead(
       answer({ verdict: "sell everything" }),
       pack().facts,
+      "en",
     );
     expect(verdict.ok).toBe(false);
     if (verdict.ok) return;
@@ -558,11 +579,11 @@ describe("verifyWalletRead", () => {
 describe("renderWalletRead", () => {
   it("fills every figure in from the app's own arithmetic", () => {
     const { facts } = pack();
-    const verdict = verifyWalletRead(answer(), facts);
+    const verdict = verifyWalletRead(answer(), facts, "en");
     expect(verdict.ok).toBe(true);
     if (!verdict.ok) return;
 
-    const rendered = renderWalletRead(verdict.read, facts, marked)!;
+    const rendered = renderWalletRead(verdict.read, facts, marked, "en")!;
     expect(rendered).not.toBeNull();
 
     const figures = rendered.observations
@@ -574,7 +595,8 @@ describe("renderWalletRead", () => {
     // locale's business, not the caller's. So the money figure is the one
     // that proves the value came from the app rather than from the model.
     const cost = figures.find(
-      (segment) => segment.kind === "figure" && segment.factId === "annual-cost",
+      (segment) =>
+        segment.kind === "figure" && segment.factId === "annual-cost",
     );
     expect(cost?.kind).toBe("figure");
     if (cost?.kind !== "figure") return;
@@ -590,29 +612,27 @@ describe("renderWalletRead", () => {
 
   it("names a fund from the catalogue, never from the read", () => {
     const { facts } = pack();
-    const verdict = verifyWalletRead(answer(), facts);
+    const verdict = verifyWalletRead(answer(), facts, "en");
     if (!verdict.ok) return;
 
-    const rendered = renderWalletRead(verdict.read, facts, money)!;
-    expect(rendered.suggestions[0]!.name).toBe(
-      "Amundi PEA Monde (MSCI World)",
-    );
+    const rendered = renderWalletRead(verdict.read, facts, money, "en")!;
+    expect(rendered.suggestions[0]!.name).toBe("Amundi PEA Monde (MSCI World)");
     expect(rendered.suggestions[0]!.symbol).toBe("DCAM");
   });
 
   it("cannot be rendered once a cited figure has gone", () => {
     const { facts } = pack();
-    const verdict = verifyWalletRead(answer(), facts);
+    const verdict = verifyWalletRead(answer(), facts, "en");
     if (!verdict.ok) return;
 
     const emptied = { ...facts, facts: [] };
-    expect(renderWalletRead(verdict.read, emptied, money)).toBeNull();
+    expect(renderWalletRead(verdict.read, emptied, money, "en")).toBeNull();
   });
 });
 
 describe("targetFromWalletRead", () => {
   it("turns the read's classes into weights that add up", () => {
-    const verdict = verifyWalletRead(answer(), pack().facts);
+    const verdict = verifyWalletRead(answer(), pack().facts, "en");
     if (!verdict.ok) return;
 
     const target = targetFromWalletRead(verdict.read);
@@ -621,7 +641,11 @@ describe("targetFromWalletRead", () => {
   });
 
   it("yields nothing when the read suggested nothing", () => {
-    const verdict = verifyWalletRead(answer({ suggestions: [] }), pack().facts);
+    const verdict = verifyWalletRead(
+      answer({ suggestions: [] }),
+      pack().facts,
+      "en",
+    );
     if (!verdict.ok) return;
     expect(targetFromWalletRead(verdict.read).rows).toEqual([]);
   });
@@ -629,13 +653,13 @@ describe("targetFromWalletRead", () => {
 
 describe("walletReadFooting", () => {
   it("always says this is not advice", () => {
-    const lines = walletReadFooting(pack().facts);
+    const lines = walletReadFooting(pack().facts, "en");
     expect(lines.length).toBeGreaterThan(0);
     expect(lines[0]).toContain("not investment advice");
   });
 
   it("says so when part of the portfolio was never read", () => {
-    const lines = walletReadFooting(pack({ unread: true }).facts);
+    const lines = walletReadFooting(pack({ unread: true }).facts, "en");
     expect(lines.some((line) => line.includes("have not been read"))).toBe(
       true,
     );
@@ -646,6 +670,7 @@ describe("buildWalletReadPrompt", () => {
   it("hands over the catalogue in full, which is what makes refusal fair", () => {
     const { facts, lookThrough } = pack();
     const request = buildWalletReadPrompt(facts, lookThrough, {
+      locale: "en",
       money,
       wallets: ["pea"],
     });
@@ -657,6 +682,7 @@ describe("buildWalletReadPrompt", () => {
   it("states the figure rule twice, first and last", () => {
     const { facts, lookThrough } = pack();
     const request = buildWalletReadPrompt(facts, lookThrough, {
+      locale: "en",
       money,
       wallets: ["pea"],
     });
@@ -667,6 +693,7 @@ describe("buildWalletReadPrompt", () => {
   it("forbids writing a percentage and offers classes instead", () => {
     const { facts, lookThrough } = pack();
     const request = buildWalletReadPrompt(facts, lookThrough, {
+      locale: "en",
       money,
       wallets: ["pea"],
     });
@@ -677,6 +704,7 @@ describe("buildWalletReadPrompt", () => {
   it("says the overlap figure is a floor", () => {
     const { facts, lookThrough } = pack();
     const request = buildWalletReadPrompt(facts, lookThrough, {
+      locale: "en",
       money,
       wallets: ["pea"],
     });
@@ -687,6 +715,7 @@ describe("buildWalletReadPrompt", () => {
   it("forbids a claim about currency", () => {
     const { facts, lookThrough } = pack();
     const request = buildWalletReadPrompt(facts, lookThrough, {
+      locale: "en",
       money,
       wallets: ["pea"],
     });
@@ -696,6 +725,7 @@ describe("buildWalletReadPrompt", () => {
   it("names the index collision it found", () => {
     const { facts, lookThrough } = pack();
     const request = buildWalletReadPrompt(facts, lookThrough, {
+      locale: "en",
       money,
       wallets: ["pea"],
     });
@@ -721,6 +751,7 @@ describe("createFakeWalletReadSource", () => {
     const source = createFakeWalletReadSource([answer()]);
     const { facts, lookThrough } = pack();
     const request = buildWalletReadPrompt(facts, lookThrough, {
+      locale: "en",
       money,
       wallets: ["pea"],
     });
@@ -736,7 +767,11 @@ describe("createFakeWalletReadSource", () => {
     const { facts, lookThrough } = pack();
     expect(
       await source.write(
-        buildWalletReadPrompt(facts, lookThrough, { money, wallets: ["pea"] }),
+        buildWalletReadPrompt(facts, lookThrough, {
+          locale: "en",
+          money,
+          wallets: ["pea"],
+        }),
       ),
     ).toBeNull();
   });

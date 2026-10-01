@@ -24,13 +24,13 @@ colors:
 typography:
   hero:
     fontFamily: "Fraunces-SemiBold"
-    fontSize: "56px"
-    letterSpacing: "-2px"
+    fontSize: "44px"
+    letterSpacing: "-1.5px"
     fontFeature: "tabular-nums"
   figure:
     fontFamily: "Fraunces-SemiBold"
-    fontSize: "32px"
-    letterSpacing: "-0.6px"
+    fontSize: "24px"
+    letterSpacing: "-0.85px"
     fontFeature: "tabular-nums"
   title:
     fontFamily: "InstrumentSans-Regular"
@@ -53,7 +53,7 @@ typography:
     fontWeight: 600
     letterSpacing: "0.015em"
   amount:
-    fontFamily: "IBMPlexMono-Regular"
+    fontFamily: "InstrumentSans-Regular"
     fontSize: "16px"
     fontFeature: "tabular-nums"
   micro:
@@ -140,16 +140,13 @@ no line height because Tailwind's size utilities set one and Android clipped
 the font's taller glyphs. Font weights are asked for by their registered
 instance name because React Native does not synthesise a weight.
 
-The one difference worth stating carefully is where the blur lives, because it
-decides how each client pays for an edge. On the web the blur travels with the
-surface: every glass weight carries its own `backdrop-blur` and
-`backdrop-saturate`, so a card re-focuses what is behind it and a hairline is
-enough to finish the edge. Here the blur is a separate native component
-(`src/components/ui/Blur.tsx`) used on four chrome surfaces only — the orb, the
-month picker, the auth form and the tab bar — so an ordinary card is
-translucency with no blur at all. It has no re-focused edge to separate on, and
-buys one with the single soft shadow this system allows instead. That is the
-reason for the shadow; it is not that the web is flat and the phone is not.
+The one difference worth stating carefully is where the blur lives. On the web
+the blur travels with the surface: every glass weight carries its own
+`backdrop-blur` and `backdrop-saturate`, so a card re-focuses what is behind
+it. Here an ordinary card is translucency with no blur at all, and its edge is
+a hairline, exactly as the web finishes its own. There is no shadow anywhere —
+the "+" and the selection bar used to cast one, and were the only surfaces on
+either client that did.
 
 **Key Characteristics:**
 
@@ -157,8 +154,8 @@ reason for the shadow; it is not that the web is flat and the phone is not.
   chosen from the system
 - Translucent surfaces at 70% over a lit backdrop — shared with the web, which
   sits at 60%; the number is the one place the two genuinely differ
-- Two numeric faces: a serif for figures that own a screen, a mono for amounts
-  in a ledger
+- One serif for the figures that own a screen; every other amount in the UI
+  face with even-width digits, as on the web
 - Amounts coloured by what kind of money they are, not by sign
 - One shared palette with the web, stated in both and drifting in neither
 
@@ -233,28 +230,37 @@ colour.
 
 ## Typography
 
-**UI Face:** Instrument Sans (`InstrumentSans-Regular`)
+**UI Face:** Instrument Sans, four static files (`InstrumentSans-Regular`,
+`-Medium`, `-SemiBold`, `-Bold`)
 **Figure Face:** Fraunces (`Fraunces-Regular`, `Fraunces-SemiBold`)
-**Ledger Face:** IBM Plex Mono (`IBMPlexMono-Regular`, `IBMPlexMono-Medium`)
+**Raw Data Face:** IBM Plex Mono — only for text read out of a file, such as
+the CSV preview on the import screen
 **Logo Face:** Orbit
 
-**Character:** The phone runs two numeric treatments, and the distinction is
-the system's sharpest typographic idea. A figure that owns a screen is set in
-the serif at 56 or 32 points. An amount inside a ledger row is set in the mono
-at 16. The serif says *this is the number you came for*; the mono says *this is
-one row among many, and its digits will line up with the rows above and below*.
+**Character:** A figure that owns a screen is set in the serif at 44 or 24
+points, the web's sizes at phone width. Every other amount — a ledger row, a
+legend, a total — is the UI face with tabular digits, so it lines up with the
+rows above and below without changing typeface. It used to be IBM Plex Mono,
+whose no-break space is three times as wide and printed "20 €".
+
+React Native cannot weight a variable font, so the UI face ships as static
+files and `sansWeightFace` (`src/lib/text-class.ts`) maps a `font-medium`,
+`font-semibold` or `font-bold` class to the right one. The `tabular-nums`
+class only reaches the web; `Text` and `PrivateAmount` add the native
+`fontVariant` when they see it.
 
 ### Hierarchy
 
-- **Hero** (Fraunces SemiBold, 56, tracking -2, tabular): The one figure that
-  owns a screen — money on hand, a portfolio total.
-- **Figure** (Fraunces SemiBold, 32, tracking -0.6, tabular): Card-level
-  amounts, one step under the hero.
+- **Hero** (Fraunces SemiBold, 44, tracking -1.5, tabular): The one figure that
+  owns a screen — money on hand, a portfolio total. One line, shrinking to fit.
+- **Figure** (Fraunces SemiBold, 24, tracking -0.85, tabular): Card-level
+  amounts, one step under the hero. One line, shrinking to fit.
 - **Title** (Instrument Sans, 24, bold): A screen or sheet heading.
 - **Head** (Instrument Sans, 16, bold): A block heading inside a screen.
 - **Body** (Instrument Sans, 16): Prose and row labels.
 - **Muted** (Instrument Sans, 14): Secondary text and row subtitles.
-- **Amount** (IBM Plex Mono, 16, tabular): Every amount in a ledger row.
+- **Amount** (Instrument Sans, 16, tabular): Every amount in a row, with its
+  sign in front (+ in, − out) so the direction never rests on colour alone.
 - **Label** (Instrument Sans, 12, semibold, uppercase): Section headers.
 - **Micro** (11): Timestamps, units, the line under a figure.
 
@@ -305,23 +311,18 @@ site is exactly what this scale replaced.
 
 Depth comes from translucency first. A card is drawn at 70% opacity over the
 app's lit ground, so separation is carried by what shows through rather than by
-a cast shadow.
-
-Where a surface still needs a defined edge, a single soft shadow is available —
-`0px 1px 2px rgba(0, 0, 0, 0.06)` — described in the tokens as soft elevation,
-explicitly not a brutalist offset shadow. Beyond that, depth is a hairline or a
-bezel.
-
-### Shadow Vocabulary
-
-- **Soft** (`0px 1px 2px rgba(0, 0, 0, 0.06)`): The only shadow. A hint of
-  separation for a translucent surface, never a lift.
+a cast shadow, and its edge is a hairline.
 
 ### Named Rules
 
-**The One Shadow Rule.** There is a single soft shadow and no elevation scale.
-If something needs to read as separate, raise its surface, give it a hairline,
-or wrap it in a bezel before reaching for depth.
+**The No Shadow Rule.** There is no shadow, as on the web. If something needs
+to read as separate, raise its surface, give it a hairline, or wrap it in a
+bezel.
+
+**The Gold Is For Decisions Rule.** The accent marks the one thing on a screen
+that wants a decision — the review inbox bar, a primary button. A selected
+chip, an active tab, a success toast and a list icon are the foreground, not
+gold; the phone had 89 gold references against the web's 12.
 
 ## Shapes
 
@@ -366,6 +367,17 @@ same component disagreed. Change the three together or not at all.
   region beneath and a divider inset by 56px between siblings.
 - Grouped under an uppercase label, with an optional micro footnote below.
 
+### Navigation
+
+The web's phone chrome: a header band with the orb and the screen title on the
+left and the refresh, privacy and account controls on the right, and the five
+tabs in a glass pill floating 12 above the bottom edge and 16 in from each side
+(`TAB_BAR_INSET`, `TAB_BAR_SIDE` in `theme/chrome.ts`). The active tab is the
+foreground with its filled icon, never gold. Screens pad their scroll content
+with `useTabBarClearance()`, which already counts the bar, its inset and the
+"+" above it. A view of a surface (the calendar, the look-through) is a hidden
+tab, so the bar stays on it.
+
 ### Sheets and Modals
 
 Bottom sheets carry a grabber and are the default for a focused sub-task;
@@ -391,8 +403,10 @@ merely shortening.
 
 - **Do** state a colour change in both this file's tokens and the web
   stylesheet, in the same commit.
-- **Do** set a screen-owning figure in Fraunces and a ledger-row amount in
-  IBM Plex Mono, both with tabular digits.
+- **Do** set a screen-owning figure in Fraunces and every other amount in
+  Instrument Sans, both with tabular digits.
+- **Do** put a row of filters on one line that scrolls sideways (`ChipRow`),
+  never a wrapping block of chips.
 - **Do** colour amounts by category type through `@finance/core`.
 - **Do** ask for a font weight by its registered instance name.
 - **Do** keep every touch target at 48dp or more, and list rows at 56px.
@@ -409,8 +423,10 @@ merely shortening.
   thing that was removed.
 - **Don't** set a line height on a display size; Android clips the tall glyphs.
 - **Don't** layer a second text-size utility over a `Text` variant.
-- **Don't** add an elevation scale or a second shadow. There is one, and it is
-  soft.
+- **Don't** add a shadow or an elevation scale.
+- **Don't** build a percentage or a sign by hand. Every number goes through
+  `Intl` (`formatPercentLabel`, `formatSignedPercentOf`): French writes
+  "34,7 %", and Hermes once printed "+34.7+".
 - **Don't** colour an amount by whether it is positive or negative.
 - **Don't** reinvent a platform control — switches, pickers, date fields,
   action sheets and the system Back behaviour belong to the OS.

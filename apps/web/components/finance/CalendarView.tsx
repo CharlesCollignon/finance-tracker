@@ -28,7 +28,7 @@ import { StatHero } from "@/components/finance/StatHero";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { formatMonthLabel, todayIsoLocal } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
-import { amountSign } from "@/components/finance/amount-sign";
+import { amountSign } from "@finance/core/amount-sign";
 import {
   FULFILMENT_STATE_KEY,
   indexFulfilmentStates,
@@ -213,7 +213,7 @@ export function CalendarView({
     });
   }
   const selectedTotals = computeDayTotals(selectedTransactions);
-  const monthLabel = formatMonthLabel(year, month);
+  const monthLabel = formatMonthLabel(year, month, locale);
 
   return (
     <>
@@ -400,7 +400,7 @@ export function CalendarView({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-sm font-medium text-muted-foreground">
-                    {formatCalendarDate(selectedDate)}
+                    {formatCalendarDate(selectedDate, locale)}
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {selectedTotals.count === 0

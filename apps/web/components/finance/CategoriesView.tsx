@@ -77,6 +77,7 @@ function notCountingKey(category: {
 
 export function CategoriesView({ categories }: CategoriesViewProps) {
   const t = useT();
+  const locale = useLocale();
   const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
   const [editCategory, setEditCategory] = useState<Category | null>(null);
@@ -85,7 +86,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
 
   const groups = CATEGORY_TYPE_ORDER.map((type) => ({
     type,
-    label: categoryTypeLabels()[type],
+    label: categoryTypeLabels(locale)[type],
     categories: categories.filter((cat) => cat.type === type),
   })).filter((group) => group.categories.length > 0);
 

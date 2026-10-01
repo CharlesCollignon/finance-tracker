@@ -1,8 +1,9 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { buildMissingCategorySeeds } from "@finance/core/seed-categories";
+import type { Locale } from "@finance/core/i18n/locale";
 
-export async function seedDefaultCategories(userId: string) {
+export async function seedDefaultCategories(userId: string, locale: Locale) {
   const supabase = await createClient();
 
   const { data: existing, error: existingError } = await supabase
@@ -14,7 +15,7 @@ export async function seedDefaultCategories(userId: string) {
     throw existingError;
   }
 
-  const missing = buildMissingCategorySeeds(userId, existing ?? []);
+  const missing = buildMissingCategorySeeds(userId, existing ?? [], locale);
 
   if (missing.length === 0) {
     return;

@@ -1,4 +1,4 @@
-import { FALLBACK_LOCALE, INTL_LOCALES, type Locale } from "../i18n/locale";
+import { INTL_LOCALES, type Locale } from "../i18n/locale";
 import {
   applyMonthlyRates,
   buildPriceSeries,
@@ -75,7 +75,7 @@ export async function fetchInstrumentQuoteInEur(
 export function formatMoney(
   amount: number,
   currency: string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   return new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: "currency",
@@ -167,7 +167,10 @@ export async function fetchMonthlyClosesInEur(
     // `applyMonthlyRates` works on dated points; a monthly close is the first
     // of its month as far as the rate lookup is concerned.
     const dated = applyMonthlyRates(
-      points.map((point) => ({ date: `${point.month}-01`, close: point.close })),
+      points.map((point) => ({
+        date: `${point.month}-01`,
+        close: point.close,
+      })),
       rates,
       fallback,
     );
@@ -200,7 +203,8 @@ export async function fetchPriceSeriesInEur(
     return cached.series;
   }
 
-  const { currency, daily, monthly } = await fetchInstrumentPriceHistory(symbol);
+  const { currency, daily, monthly } =
+    await fetchInstrumentPriceHistory(symbol);
 
   if (daily.length === 0 && monthly.length === 0) {
     return emptyPriceSeries();

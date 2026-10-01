@@ -4,7 +4,7 @@ import { noteSyncFailure, noteSyncHealthy } from "@/lib/bank/health-note";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { syncBankFeed } from "@/lib/bank/sync";
 import { sessionFromBearer } from "@/lib/supabase/bearer";
-import { getLocale } from "@/lib/locale";
+import { getLocale, getT } from "@/lib/locale";
 
 /**
  * Asking the bank, for a client that cannot ask it directly.
@@ -38,7 +38,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   const session = await sessionFromBearer(request);
   if (!session) {
-    return Response.json({ error: "Not authenticated" }, { status: 401 });
+    return Response.json({ error: "errors.notAuthenticated" }, { status: 401 });
   }
 
   const status = await bankFeedStatus(session.userId);
@@ -55,8 +55,16 @@ export async function POST(request: Request) {
     });
   }
 
+  // `backfill` is the review's "Fetch everything": the whole statement rather
+  // than the recent window, as the web's `syncBankFeedAction(true)` asks. A
+  // plain pull-to-refresh sends no body at all.
+  const body = (await request.json().catch(() => ({}))) as {
+    backfill?: unknown;
+  };
+
   try {
     const outcome = await syncBankFeed(session.supabase, session.userId, {
+      backfill: body.backfill === true,
       pull: "attended",
     });
     await noteSyncHealthy(session.userId);
@@ -75,24 +83,21 @@ export async function POST(request: Request) {
     }
 
     const parts: string[] = [];
+    const t = await getT();
     if (outcome.imported > 0) {
-      parts.push(`${outcome.imported} added`);
+      parts.push(t("actions.syncAdded", { count: outcome.imported }));
     }
     if (outcome.pending > 0) {
-      parts.push(`${outcome.pending} to review`);
+      parts.push(t("actions.syncToReview", { count: outcome.pending }));
     }
     if (closes.closed.length > 0) {
       parts.push(
-        `${closes.closed.length} ${
-          closes.closed.length === 1 ? "month" : "months"
-        } closed`,
+        t("actions.syncMonthsClosed", { count: closes.closed.length }),
       );
     }
     if (outcome.needReconnect > 0) {
       parts.push(
-        `${outcome.needReconnect} ${
-          outcome.needReconnect === 1 ? "account needs" : "accounts need"
-        } reconnecting`,
+        t("actions.syncNeedReconnect", { count: outcome.needReconnect }),
       );
     }
 
@@ -101,7 +106,7 @@ export async function POST(request: Request) {
       imported: outcome.imported,
       pending: outcome.pending,
       monthsClosed: closes.closed.length,
-      message: parts.length > 0 ? parts.join(", ") : "Nothing new",
+      message: parts.length > 0 ? parts.join(", ") : "actions.nothingNew",
       freshness: await readPullFreshness(
         session.supabase,
         session.userId,

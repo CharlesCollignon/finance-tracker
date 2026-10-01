@@ -9,6 +9,7 @@ import { buildCategoryFacts, type CategoryFactsInput } from "./category-facts";
 import { buildCategoryReadPrompt } from "./category-read-prompt";
 
 const facts = buildCategoryFacts({
+  locale: "en",
   categoryId: "cat-groceries",
   categoryName: "Groceries",
   type: "expense",
@@ -38,7 +39,7 @@ function answer(overrides: Record<string, unknown> = {}) {
 
 describe("verifyCategoryRead", () => {
   it("accepts a claim whose every figure is a placeholder", () => {
-    const verdict = verifyCategoryRead(answer(), facts);
+    const verdict = verifyCategoryRead(answer(), facts, "en");
 
     expect(verdict.ok).toBe(true);
   });
@@ -55,6 +56,7 @@ describe("verifyCategoryRead", () => {
         ],
       }),
       facts,
+      "en",
     );
 
     expect(verdict.ok).toBe(false);
@@ -73,6 +75,7 @@ describe("verifyCategoryRead", () => {
         ],
       }),
       facts,
+      "en",
     );
 
     expect(verdict.ok).toBe(false);
@@ -104,6 +107,7 @@ describe("verifyCategoryRead", () => {
         ],
       }),
       facts,
+      "en",
     );
 
     expect(verdict.ok).toBe(false);
@@ -134,6 +138,7 @@ describe("verifyCategoryRead", () => {
         ],
       }),
       facts,
+      "en",
     );
 
     expect(verdict.ok).toBe(true);
@@ -166,6 +171,7 @@ describe("verifyCategoryRead", () => {
         ],
       }),
       facts,
+      "en",
     );
 
     expect(verdict.ok).toBe(true);
@@ -185,6 +191,7 @@ describe("verifyCategoryRead", () => {
         ],
       }),
       facts,
+      "en",
     );
 
     expect(verdict.ok).toBe(false);
@@ -196,6 +203,7 @@ describe("verifyCategoryRead", () => {
 
 function input(overrides: Partial<CategoryFactsInput> = {}) {
   return {
+    locale: "en",
     categoryId: "cat-groceries",
     categoryName: "Groceries",
     type: "expense",
@@ -338,6 +346,7 @@ describe("renderCategoryRead", () => {
       read,
       buildCategoryFacts(input({ normal: 430 })),
       money,
+      "en",
     );
 
     expect(rendered?.observations[0]?.segments).toEqual([
@@ -353,7 +362,7 @@ describe("renderCategoryRead", () => {
   });
 
   it("puts the soonest suggestion first", () => {
-    const rendered = renderCategoryRead(read, facts, money);
+    const rendered = renderCategoryRead(read, facts, money, "en");
 
     expect(rendered?.suggestions.map((row) => row.effort)).toEqual([
       "now",
@@ -369,16 +378,19 @@ describe("renderCategoryRead", () => {
       suggestions: [],
     };
 
-    expect(renderCategoryRead(capped, buildCategoryFacts(input()), money)).toBe(
-      null,
-    );
+    expect(
+      renderCategoryRead(capped, buildCategoryFacts(input()), money, "en"),
+    ).toBe(null);
   });
 });
 
 /* ---------------------------------------------------------- the prompt */
 
 describe("buildCategoryReadPrompt", () => {
-  const { system, user } = buildCategoryReadPrompt(facts, { money });
+  const { system, user } = buildCategoryReadPrompt(facts, {
+    locale: "en",
+    money,
+  });
 
   it("states the figure rule first and again last", () => {
     const rule = "Never write a number yourself";
@@ -429,7 +441,7 @@ describe("buildCategoryReadPrompt", () => {
 
     expect(french.system).toContain('ni une "enveloppe"');
     expect(french.user).toContain(
-      "  cap | Le plafond de cette catégorie | aucun plafond n'a été fixé",
+      "  cap | Le budget de cette catégorie | aucun budget n'a été fixé",
     );
     expect(french.user).not.toContain("enveloppe");
   });

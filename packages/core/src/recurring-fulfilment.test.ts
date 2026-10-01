@@ -268,7 +268,7 @@ describe("describeFulfilment", () => {
       { today: TODAY },
     );
 
-    expect(describeFulfilment(proposal!, money)).toBe(
+    expect(describeFulfilment(proposal!, money, "en")).toBe(
       "The same to the cent, on the day it was due",
     );
   });
@@ -286,7 +286,7 @@ describe("describeFulfilment", () => {
       { today: TODAY },
     );
 
-    expect(describeFulfilment(proposal!, money)).toBe(
+    expect(describeFulfilment(proposal!, money, "en")).toBe(
       "33.14 € more than expected, 2 days late",
     );
   });
@@ -298,7 +298,7 @@ describe("describeFulfilment", () => {
       { today: TODAY },
     );
 
-    expect(describeFulfilment(proposal!, money)).toBe(
+    expect(describeFulfilment(proposal!, money, "en")).toBe(
       "10.00 € less than expected, 1 day early",
     );
   });
@@ -392,7 +392,9 @@ describe("explainFulfilmentMisses", () => {
     );
 
     expect(miss).toMatchObject({ reason: "nothing-alike", nearest: null });
-    expect(describeMiss(miss!, money)).toBe("nothing in its category to match");
+    expect(describeMiss(miss!, money, "en")).toBe(
+      "nothing in its category to match",
+    );
   });
 
   it("blames the amount when the date was fine", () => {
@@ -402,7 +404,7 @@ describe("explainFulfilmentMisses", () => {
     );
 
     expect(miss!.reason).toBe("amount");
-    expect(describeMiss(miss!, money)).toBe(
+    expect(describeMiss(miss!, money, "en")).toBe(
       "nearest was 980.00 €, too far from 780.00 €",
     );
   });
@@ -416,7 +418,7 @@ describe("explainFulfilmentMisses", () => {
     );
 
     expect(miss!.reason).toBe("date");
-    expect(describeMiss(miss!, money)).toBe(
+    expect(describeMiss(miss!, money, "en")).toBe(
       "nearest was 10 days away, beyond the 4-day window",
     );
   });
@@ -429,7 +431,7 @@ describe("explainFulfilmentMisses", () => {
     );
 
     expect(miss!.reason).toBe("not-arrived");
-    expect(describeMiss(miss!, money)).toBe(
+    expect(describeMiss(miss!, money, "en")).toBe(
       "the nearest movement has not happened yet",
     );
   });
@@ -450,7 +452,7 @@ describe("explainFulfilmentMisses", () => {
 
     expect(justOutside).toMatchObject({ reason: "date" });
     expect(justOutside!.nearest!.daysApart).toBe(5);
-    expect(describeMiss(justOutside!, money)).toBe(
+    expect(describeMiss(justOutside!, money, "en")).toBe(
       "nearest was 5 days away, beyond the 4-day window",
     );
 

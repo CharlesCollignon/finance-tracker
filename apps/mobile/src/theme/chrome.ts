@@ -1,8 +1,18 @@
 import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-/** Tab bar height above the bottom inset, at the system's default text size. */
-const TAB_BAR_BASE = 60;
+/** Tab bar height, at the system's default text size — the web's 3.5rem. */
+const TAB_BAR_BASE = 56;
+
+/**
+ * The gap under the floating tab bar, above the bottom safe-area inset — the
+ * web's `--shell-bottom-nav-inset`. The bar floats as a pill rather than
+ * docking to the edge.
+ */
+export const TAB_BAR_INSET = 12;
+
+/** The gap either side of the floating tab bar. */
+export const TAB_BAR_SIDE = 16;
 
 /**
  * How far fixed chrome is allowed to grow with the system text size.
@@ -34,7 +44,14 @@ export function useTabBarHeight() {
  * number from here so it tracks the bar it is clearing instead of being
  * restated as a `pb-` class on each one.
  */
-export function useTabBarClearance(extra = 16) {
+/**
+ * Room for the floating add button (56) and a gap either side (16 + 16), so
+ * the last row of a list can always scroll clear of it — the right-hand
+ * column of the bottom rows used to sit permanently under the "+".
+ */
+const ADD_BUTTON_CLEARANCE = 88;
+
+export function useTabBarClearance(extra = ADD_BUTTON_CLEARANCE) {
   const insets = useSafeAreaInsets();
-  return useTabBarHeight() + insets.bottom + extra;
+  return useTabBarHeight() + insets.bottom + TAB_BAR_INSET + extra;
 }

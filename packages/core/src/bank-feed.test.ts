@@ -64,7 +64,7 @@ const NO_MERCHANTS = buildMerchantIndex([]);
 
 describe("toCandidate", () => {
   it("reads a card payment as money going out", () => {
-    expect(toCandidate(bank())).toMatchObject({
+    expect(toCandidate(bank(), { locale: "en" })).toMatchObject({
       providerId: "prov-1",
       occurredOn: "2026-09-12",
       amount: "42.10",
@@ -75,7 +75,9 @@ describe("toCandidate", () => {
   });
 
   it("keeps the amount as the bank stated it, never as a float", () => {
-    const candidate = toCandidate(bank({ amount: "1234567.89" }));
+    const candidate = toCandidate(bank({ amount: "1234567.89" }), {
+      locale: "en",
+    });
     expect(candidate?.amount).toBe("1234567.89");
     expect(typeof candidate?.amount).toBe("string");
   });
@@ -83,6 +85,7 @@ describe("toCandidate", () => {
   it("strips the sign but keeps the direction from it when the bank sets no indicator", () => {
     const candidate = toCandidate(
       bank({ creditDebitIndicator: "", amount: "-19.99" }),
+      { locale: "en" },
     );
     expect(candidate).toMatchObject({ amount: "19.99", direction: "out" });
   });
@@ -90,7 +93,9 @@ describe("toCandidate", () => {
   it("refuses a row whose direction cannot be established", () => {
     // Booking a salary as an expense is worse than dropping the row.
     expect(
-      toCandidate(bank({ creditDebitIndicator: "", amount: "19.99" })),
+      toCandidate(bank({ creditDebitIndicator: "", amount: "19.99" }), {
+        locale: "en",
+      }),
     ).toBeNull();
   });
 
@@ -102,14 +107,16 @@ describe("toCandidate", () => {
           creditorName: null,
           debtorName: "EMPLOYER SA",
         }),
+        { locale: "en" },
       ),
     ).toMatchObject({ direction: "in", counterparty: "EMPLOYER SA" });
   });
 
   it("falls back through the dates the bank may or may not set", () => {
     expect(
-      toCandidate(bank({ bookingDate: null, valueDate: "2026-09-10" }))
-        ?.occurredOn,
+      toCandidate(bank({ bookingDate: null, valueDate: "2026-09-10" }), {
+        locale: "en",
+      })?.occurredOn,
     ).toBe("2026-09-10");
     expect(
       toCandidate(
@@ -118,29 +125,35 @@ describe("toCandidate", () => {
           valueDate: null,
           transactionDate: "2026-09-09",
         }),
+        { locale: "en" },
       )?.occurredOn,
     ).toBe("2026-09-09");
   });
 
   it("drops a row with no usable date, amount or sane decimal", () => {
-    expect(toCandidate(bank({ bookingDate: null }))).toBeNull();
-    expect(toCandidate(bank({ amount: "0.00" }))).toBeNull();
-    expect(toCandidate(bank({ amount: "not a number" }))).toBeNull();
-    expect(toCandidate(bank({ amount: "1.234" }))).toBeNull();
+    expect(
+      toCandidate(bank({ bookingDate: null }), { locale: "en" }),
+    ).toBeNull();
+    expect(toCandidate(bank({ amount: "0.00" }), { locale: "en" })).toBeNull();
+    expect(
+      toCandidate(bank({ amount: "not a number" }), { locale: "en" }),
+    ).toBeNull();
+    expect(toCandidate(bank({ amount: "1.234" }), { locale: "en" })).toBeNull();
   });
 
   it("drops a movement between the user's own accounts", () => {
     const own = new Set(["FR7630006000011234567890189"]);
     const moved = bank({ creditorIban: "FR76 3000 6000 0112 3456 7890 189" });
-    expect(toCandidate(moved, { ownIbans: own })).toBeNull();
+    expect(toCandidate(moved, { locale: "en", ownIbans: own })).toBeNull();
     // The same row is real spending for someone who does not own that account.
-    expect(toCandidate(moved)).not.toBeNull();
+    expect(toCandidate(moved, { locale: "en" })).not.toBeNull();
   });
 
   it("falls back to the remittance line when nobody is named", () => {
     expect(
       toCandidate(
         bank({ creditorName: null, remittanceInformation: "PRLV SEPA EDF" }),
+        { locale: "en" },
       )?.note,
     ).toBe("PRLV SEPA EDF");
   });
@@ -165,7 +178,7 @@ describe("decide", () => {
   ];
 
   it("writes through a merchant the user has already answered for", () => {
-    const decision = decide(toCandidate(bank())!, {
+    const decision = decide(toCandidate(bank(), { locale: "en" })!, {
       merchants: buildMerchantIndex(groceries),
       categoryIdsByName: CATEGORIES,
     });
@@ -177,7 +190,7 @@ describe("decide", () => {
 
   it("still asks after a single sighting", () => {
     expect(AUTO_MERCHANT_THRESHOLD).toBe(2);
-    const decision = decide(toCandidate(bank())!, {
+    const decision = decide(toCandidate(bank(), { locale: "en" })!, {
       merchants: buildMerchantIndex(groceries.slice(0, 1)),
       // No MCC, so the merchant rule is the only signal available.
       categoryIdsByName: new Map(),
@@ -190,7 +203,7 @@ describe("decide", () => {
 
   it("falls back to the card network's own code for an unseen merchant", () => {
     const decision = decide(
-      toCandidate(bank({ creditorName: "SPAR RENNES" }))!,
+      toCandidate(bank({ creditorName: "SPAR RENNES" }), { locale: "en" })!,
       {
         merchants: NO_MERCHANTS,
         categoryIdsByName: CATEGORIES,
@@ -207,6 +220,7 @@ describe("decide", () => {
     const decision = decide(
       toCandidate(
         bank({ creditorName: "LE BISTROT", merchantCategoryCode: "5812" }),
+        { locale: "en" },
       )!,
       { merchants: NO_MERCHANTS, categoryIdsByName: CATEGORIES },
     );
@@ -222,6 +236,7 @@ describe("decide", () => {
     const decision = decide(
       toCandidate(
         bank({ creditorName: "RETRAIT DAB", merchantCategoryCode: "6011" }),
+        { locale: "en" },
       )!,
       { merchants: buildMerchantIndex(atm), categoryIdsByName: CATEGORIES },
     );
@@ -236,6 +251,7 @@ describe("decide", () => {
           creditorName: null,
           debtorName: "EMPLOYER SA",
         }),
+        { locale: "en" },
       )!,
       { merchants: NO_MERCHANTS, categoryIdsByName: CATEGORIES },
     );
@@ -250,6 +266,7 @@ describe("decide", () => {
           creditorName: null,
           debtorName: "Carrefour Market",
         }),
+        { locale: "en" },
       )!,
       {
         merchants: buildMerchantIndex(groceries),
@@ -267,6 +284,7 @@ describe("decide", () => {
     const decision = decide(
       toCandidate(
         bank({ creditorName: "Acme Payroll", merchantCategoryCode: null }),
+        { locale: "en" },
       )!,
       { merchants: buildMerchantIndex(salary), categoryIdsByName: CATEGORIES },
     );
@@ -309,7 +327,7 @@ describe("planFeed", () => {
         }),
         bank({ id: "d", amount: "0.00" }),
       ],
-      { merchants, categoryIdsByName: CATEGORIES },
+      { locale: "en", merchants, categoryIdsByName: CATEGORIES },
     );
 
     expect(plan.automatic.map((r) => r.candidate.providerId)).toEqual(["a"]);
@@ -320,6 +338,7 @@ describe("planFeed", () => {
 
   it("never imports the same bank transaction twice", () => {
     const plan = planFeed([bank({ id: "a" }), bank({ id: "b" })], {
+      locale: "en",
       merchants: NO_MERCHANTS,
       categoryIdsByName: CATEGORIES,
       seenProviderIds: new Set(["a"]),
@@ -334,6 +353,7 @@ describe("planFeed", () => {
   it("keeps two identical purchases on the same day apart", () => {
     // Same merchant, same amount, same day — two coffees, not one counted twice.
     const plan = planFeed([bank({ id: "a" }), bank({ id: "b" })], {
+      locale: "en",
       merchants: NO_MERCHANTS,
       categoryIdsByName: CATEGORIES,
     });
@@ -360,7 +380,7 @@ describe("not recording the same movement twice", () => {
     // It used to merge on its own when the existing row came from a
     // template. On a real statement that swallowed a ten-euro purchase into
     // an unrelated ten-euro DCA, so the guess is now always the user's.
-    const decision = decide(toCandidate(bank())!, {
+    const decision = decide(toCandidate(bank(), { locale: "en" })!, {
       ...opts,
       existing: [ledger()],
     });
@@ -373,7 +393,7 @@ describe("not recording the same movement twice", () => {
   });
 
   it("tolerates the bank debiting a few days off the nominal day", () => {
-    const decision = decide(toCandidate(bank())!, {
+    const decision = decide(toCandidate(bank(), { locale: "en" })!, {
       ...opts,
       existing: [ledger({ occurredOn: "2026-09-09" })],
     });
@@ -382,7 +402,7 @@ describe("not recording the same movement twice", () => {
   });
 
   it("does not reach past the window", () => {
-    const decision = decide(toCandidate(bank())!, {
+    const decision = decide(toCandidate(bank(), { locale: "en" })!, {
       ...opts,
       existing: [ledger({ occurredOn: "2026-09-01" })],
     });
@@ -391,7 +411,7 @@ describe("not recording the same movement twice", () => {
   });
 
   it("will not pair on an amount that is merely close", () => {
-    const decision = decide(toCandidate(bank())!, {
+    const decision = decide(toCandidate(bank(), { locale: "en" })!, {
       ...opts,
       existing: [ledger({ amount: 42.2 })],
     });
@@ -400,7 +420,7 @@ describe("not recording the same movement twice", () => {
   });
 
   it("asks about something entered by hand too", () => {
-    const decision = decide(toCandidate(bank())!, {
+    const decision = decide(toCandidate(bank(), { locale: "en" })!, {
       ...opts,
       existing: [ledger({ fromRecurringTemplate: false })],
     });
@@ -420,6 +440,7 @@ describe("not recording the same movement twice", () => {
           creditorName: null,
           debtorName: "X",
         }),
+        { locale: "en" },
       )!,
       { ...opts, existing: [ledger()] },
     );
@@ -432,6 +453,7 @@ describe("not recording the same movement twice", () => {
     // one existing transaction are two rows the user is asked about, not one
     // row and one disappearance.
     const plan = planFeed([bank({ id: "a" }), bank({ id: "b" })], {
+      locale: "en",
       ...opts,
       existing: [ledger()],
     });

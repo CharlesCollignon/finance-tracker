@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 
     if (!error && data.user) {
       try {
-        await seedDefaultCategories(data.user.id);
+        await seedDefaultCategories(data.user.id, await getLocale());
       } catch (seedError) {
         // Never block sign-in on seeding; retried on next sign-in.
         console.error("Failed to seed default categories", seedError);

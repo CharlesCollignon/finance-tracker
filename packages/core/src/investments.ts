@@ -1,5 +1,5 @@
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
-import { translator } from "./i18n/t";
+import { type Locale } from "./i18n/locale";
+import { translator, type Key } from "./i18n/t";
 import { formatMonthCompact } from "./constants";
 import type { TransactionWithCategory } from "./types/database";
 import type { WalletId } from "./types/database";
@@ -21,6 +21,19 @@ export const INVESTMENT_WALLET_LABELS: Record<WalletId, string> = {
   av: "AV",
   per: "PER",
   crypto: "Crypto",
+};
+
+/**
+ * Each wallet spelled out, for the line under a picker that shows only the
+ * short labels above: an acronym is fine in a chip once the reader has been
+ * told, once, what it stands for.
+ */
+export const INVESTMENT_WALLET_NAME_KEYS: Record<WalletId, Key> = {
+  pea: "wallets.namePea",
+  cto: "wallets.nameCto",
+  av: "wallets.nameAv",
+  per: "wallets.namePer",
+  crypto: "wallets.nameCrypto",
 };
 
 export const INVESTMENT_WALLET_COLORS: Record<WalletId, string> = {
@@ -126,16 +139,13 @@ function addToWallet(
 export function sumWalletTotals(
   transactions: TransactionWithCategory[],
 ): WalletTotals {
-  return transactions.reduce(
-    (totals, tx) => {
-      const walletId = matchWalletId(tx.categories.name);
-      if (walletId === null) {
-        return totals;
-      }
-      return addToWallet(totals, walletId, Number(tx.amount));
-    },
-    emptyWalletTotals(),
-  );
+  return transactions.reduce((totals, tx) => {
+    const walletId = matchWalletId(tx.categories.name);
+    if (walletId === null) {
+      return totals;
+    }
+    return addToWallet(totals, walletId, Number(tx.amount));
+  }, emptyWalletTotals());
 }
 
 export function sumWalletTotalsForMonth(
@@ -166,6 +176,7 @@ export function buildInvestmentSummary(
 
 export function buildCumulativeMonthlySeries(
   transactions: TransactionWithCategory[],
+  locale: Locale,
 ): MonthlyWalletPoint[] {
   const monthly = new Map<string, WalletTotals>();
 
@@ -195,13 +206,14 @@ export function buildCumulativeMonthlySeries(
     return {
       ...running,
       monthKey,
-      label: formatMonthCompact(year, month),
+      label: formatMonthCompact(year, month, locale),
     };
   });
 }
 
 export function buildMonthlyContributionSeries(
   transactions: TransactionWithCategory[],
+  locale: Locale,
 ): MonthlyWalletPoint[] {
   const monthly = new Map<string, WalletTotals>();
 
@@ -223,7 +235,7 @@ export function buildMonthlyContributionSeries(
 
       return {
         monthKey,
-        label: formatMonthCompact(year, month),
+        label: formatMonthCompact(year, month, locale),
         ...totals,
       };
     });
@@ -359,10 +371,10 @@ export function buildWalletOverview(
 export function buildTotalInvestedSeries(
   transactions: TransactionWithCategory[],
   settings: InvestmentWalletSettings,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): MonthlyWalletPoint[] {
   const initial = initialTotals(settings);
-  const contributionSeries = buildCumulativeMonthlySeries(transactions);
+  const contributionSeries = buildCumulativeMonthlySeries(transactions, locale);
 
   if (contributionSeries.length === 0) {
     if (initial.total === 0) {

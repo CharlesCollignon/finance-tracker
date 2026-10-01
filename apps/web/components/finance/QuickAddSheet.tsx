@@ -200,6 +200,8 @@ function QuickAddFields({
     return () => clearTimeout(timer);
   }, []);
 
+  // Before the memos below, which read it while this render runs.
+  const locale = useLocale();
   const merchantIndex = useMemo(
     () => new Map(merchants.map((rule) => [rule.key, rule])),
     [merchants],
@@ -222,8 +224,8 @@ function QuickAddFields({
   }, [categories, query]);
 
   const groups = useMemo(
-    () => groupCategoriesByType(visibleCategories),
-    [visibleCategories],
+    () => groupCategoriesByType(visibleCategories, { locale }),
+    [visibleCategories, locale],
   );
 
   const selected = categories.find((cat) => cat.id === categoryId) ?? null;
@@ -235,7 +237,6 @@ function QuickAddFields({
     return suggestMerchants(merchantIndex, note, 3);
   }, [merchantIndex, note, noteFocused]);
 
-  const locale = useLocale();
   const t = useT();
   const display = formatAmountInput(amount, locale);
   const canSave = isAmountInputComplete(amount) && categoryId !== "";

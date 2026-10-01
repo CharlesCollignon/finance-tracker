@@ -52,7 +52,9 @@ export function ListRow({
   expanded,
 }: ListRowProps) {
   const colors = useThemeColors();
-  const tint = destructive ? colors.destructive : colors.primary;
+  // Foreground, as on the web; gold on every row's icon drowned out the
+  // things that are actually gold — the add button, the active choice.
+  const tint = destructive ? colors.destructive : colors.foreground;
 
   const body = (
     <View className="min-h-14 flex-row items-center gap-3 px-5 py-3.5">

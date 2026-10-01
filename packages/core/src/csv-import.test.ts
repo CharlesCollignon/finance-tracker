@@ -29,7 +29,8 @@ describe("detectDelimiter", () => {
 
   it("prefers the delimiter that splits every line the same way", () => {
     // Commas appear inside the description but semicolons separate fields.
-    const text = "date;libelle;montant\n01/09/2026;PARIS, FR;-12,50\n02/09/2026;X;-1,00";
+    const text =
+      "date;libelle;montant\n01/09/2026;PARIS, FR;-12,50\n02/09/2026;X;-1,00";
     expect(detectDelimiter(text)).toBe(";");
   });
 
@@ -227,7 +228,9 @@ describe("looksLikeHeaderRow", () => {
   });
 
   it("recognises a data row", () => {
-    expect(looksLikeHeaderRow(["01/09/2026", "Franprix", "-12,50"])).toBe(false);
+    expect(looksLikeHeaderRow(["01/09/2026", "Franprix", "-12,50"])).toBe(
+      false,
+    );
   });
 
   it("recognises a data row with no readable date", () => {
@@ -247,10 +250,10 @@ const MAPPING: ColumnMapping = {
 
 describe("buildImportRows", () => {
   it("reads an expense as a positive amount with an expense type", () => {
-    const [row] = buildImportRows(
-      [["01/09/2026", "Franprix", "-12,50"]],
-      { mapping: MAPPING },
-    );
+    const [row] = buildImportRows([["01/09/2026", "Franprix", "-12,50"]], {
+      locale: "en",
+      mapping: MAPPING,
+    });
 
     expect(row).toMatchObject({
       occurredOn: "2026-09-01",
@@ -263,6 +266,7 @@ describe("buildImportRows", () => {
 
   it("reads a credit as income", () => {
     const [row] = buildImportRows([["01/09/2026", "Salaire", "2400,00"]], {
+      locale: "en",
       mapping: MAPPING,
     });
 
@@ -271,6 +275,7 @@ describe("buildImportRows", () => {
 
   it("honours a positive-is-expense export", () => {
     const [row] = buildImportRows([["01/09/2026", "Franprix", "12,50"]], {
+      locale: "en",
       mapping: MAPPING,
       expenseSign: "positive",
     });
@@ -285,6 +290,7 @@ describe("buildImportRows", () => {
         ["02/09/2026", "Salaire", "", "2400,00"],
       ],
       {
+        locale: "en",
         mapping: { date: 0, description: 1, amount: null, debit: 2, credit: 3 },
       },
     );
@@ -295,14 +301,19 @@ describe("buildImportRows", () => {
 
   it("flags a row with no readable date", () => {
     const [row] = buildImportRows([["", "Franprix", "-12,50"]], {
+      locale: "en",
       mapping: MAPPING,
     });
 
-    expect(row).toMatchObject({ status: "invalid", problem: "No readable date" });
+    expect(row).toMatchObject({
+      status: "invalid",
+      problem: "No readable date",
+    });
   });
 
   it("flags a row with no readable amount", () => {
     const [row] = buildImportRows([["01/09/2026", "Franprix", ""]], {
+      locale: "en",
       mapping: MAPPING,
     });
 
@@ -318,7 +329,7 @@ describe("buildImportRows", () => {
         ["01/09/2026", "A", "-1,00"],
         ["nope", "B", "-2,00"],
       ],
-      { mapping: MAPPING },
+      { locale: "en", mapping: MAPPING },
     );
 
     expect(rows[1].line).toBe(2);
@@ -326,6 +337,7 @@ describe("buildImportRows", () => {
 
   it("marks a row already in the ledger as a duplicate", () => {
     const [row] = buildImportRows([["01/09/2026", "Franprix", "-12,50"]], {
+      locale: "en",
       mapping: MAPPING,
       existing: [
         { occurredOn: "2026-09-01", amount: 12.5, note: "CB FRANPRIX 01/09" },
@@ -341,7 +353,7 @@ describe("buildImportRows", () => {
         ["01/09/2026", "Franprix", "-12,50"],
         ["01/09/2026", "Franprix", "-12,50"],
       ],
-      { mapping: MAPPING },
+      { locale: "en", mapping: MAPPING },
     );
 
     expect(rows[0].status).toBe("ready");
@@ -354,7 +366,7 @@ describe("buildImportRows", () => {
         ["01/09/2026", "Franprix", "-12,50"],
         ["01/09/2026", "Franprix", "-4,00"],
       ],
-      { mapping: MAPPING },
+      { locale: "en", mapping: MAPPING },
     );
 
     expect(rows.every((row) => row.status === "ready")).toBe(true);
@@ -362,6 +374,7 @@ describe("buildImportRows", () => {
 
   it("applies a guessed category", () => {
     const [row] = buildImportRows([["01/09/2026", "Franprix", "-12,50"]], {
+      locale: "en",
       mapping: MAPPING,
       guessCategory: () => ({
         categoryId: "cat-1",
@@ -378,6 +391,7 @@ describe("buildImportRows", () => {
 
   it("refuses a guessed category that disagrees on direction", () => {
     const [row] = buildImportRows([["01/09/2026", "Refund", "40,00"]], {
+      locale: "en",
       mapping: MAPPING,
       guessCategory: () => ({
         categoryId: "cat-1",
@@ -391,7 +405,10 @@ describe("buildImportRows", () => {
   });
 
   it("survives a row with fewer cells than the mapping expects", () => {
-    const [row] = buildImportRows([["01/09/2026"]], { mapping: MAPPING });
+    const [row] = buildImportRows([["01/09/2026"]], {
+      locale: "en",
+      mapping: MAPPING,
+    });
     expect(row.status).toBe("invalid");
   });
 });
@@ -404,7 +421,7 @@ describe("summarizeImportRows", () => {
         ["01/09/2026", "Franprix", "-12,50"],
         ["bad", "X", "-1,00"],
       ],
-      { mapping: MAPPING },
+      { locale: "en", mapping: MAPPING },
     );
 
     expect(summarizeImportRows(rows)).toEqual({
@@ -418,6 +435,7 @@ describe("summarizeImportRows", () => {
 
   it("does not count a categorised row as needing one", () => {
     const rows = buildImportRows([["01/09/2026", "Franprix", "-12,50"]], {
+      locale: "en",
       mapping: MAPPING,
       guessCategory: () => ({
         categoryId: "cat-1",

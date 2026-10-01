@@ -1,4 +1,5 @@
 import { formatMonthLabel } from "./constants";
+import type { Locale } from "./i18n/locale";
 
 export interface MonthlyTrendPoint {
   /** `YYYY-MM`, so a list of these sorts as text. */
@@ -55,6 +56,7 @@ export function bucketMonthlyTrend(
   rows: MonthlyTrendRow[],
   months: number,
   now: Date,
+  locale: Locale,
 ): MonthlyTrendPoint[] {
   const buckets = new Map<string, { income: number; outflow: number }>();
 
@@ -89,7 +91,7 @@ export function bucketMonthlyTrend(
       const [year, month] = monthKey.split("-").map(Number);
       return {
         monthKey,
-        label: formatMonthLabel(year!, month!),
+        label: formatMonthLabel(year!, month!, locale),
         income: totals.income,
         outflow: totals.outflow,
         net: totals.income - totals.outflow,

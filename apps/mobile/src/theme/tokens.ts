@@ -114,15 +114,17 @@ export const TYPE: Record<"hero" | "figure" | "micro", TextStyle> = {
   /** The one figure that owns a screen. Month on hand, portfolio total. */
   hero: {
     fontFamily: FIGURE_FACE,
-    fontSize: 56,
-    letterSpacing: -2,
+    // The web's hero at phone width: 2.75rem, tracking -0.035em.
+    fontSize: 44,
+    letterSpacing: -1.5,
     fontVariant: ["tabular-nums"],
   },
   /** Card-level amounts, one step under the hero. */
   figure: {
     fontFamily: FIGURE_FACE,
-    fontSize: 32,
-    letterSpacing: -0.6,
+    // The web's card figure at phone width: text-2xl, tracking -0.035em.
+    fontSize: 24,
+    letterSpacing: -0.85,
     fontVariant: ["tabular-nums"],
   },
   /** Timestamps, units, the line under a figure. */

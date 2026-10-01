@@ -1,5 +1,6 @@
-import { FALLBACK_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
+import { formatSignedPercentOf } from "./constants";
 /**
  * Money-weighted return.
  *
@@ -239,18 +240,13 @@ export function buildPortfolioReturn(
 /** "+7.4% a year" / "+7,4 % par an", or null when there is no rate. */
 export function formatAnnualRate(
   rate: number | null,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string | null {
   if (rate === null) {
     return null;
   }
 
-  const percent = new Intl.NumberFormat(INTL_LOCALES[locale], {
-    style: "percent",
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-    signDisplay: "exceptZero",
-  }).format(rate);
+  const percent = formatSignedPercentOf(rate, locale);
 
   return translator(locale)("units.perYear", { rate: percent });
 }

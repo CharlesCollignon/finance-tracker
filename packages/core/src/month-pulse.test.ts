@@ -214,29 +214,42 @@ describe("the wording", () => {
   it("does not call the month's arithmetic money in an account", () => {
     const withoutBank = buildMonthPulse(input({ onHand: null }));
 
-    expect(pulseHeadline(withoutBank)).toBe("Left this month");
-    expect(pulseExplanation(withoutBank)).toContain("Connect a bank");
+    expect(pulseHeadline(withoutBank, "en")).toBe("Left this month");
+    expect(pulseExplanation(withoutBank, "en")).toContain("Connect a bank");
   });
 
   it("names a shortfall as one", () => {
     expect(
-      pulseHeadline(buildMonthPulse(input({ onHand: 100, committed: 400 }))),
+      pulseHeadline(
+        buildMonthPulse(input({ onHand: 100, committed: 400 })),
+        "en",
+      ),
     ).toBe("Short by");
   });
 
   it("explains only the parts that exist", () => {
     expect(
-      pulseExplanation(buildMonthPulse(input({ committed: 0, arriving: 0 }))),
+      pulseExplanation(
+        buildMonthPulse(input({ committed: 0, arriving: 0 })),
+        "en",
+      ),
     ).toBe("Nothing else is due this month.");
     expect(
-      pulseExplanation(buildMonthPulse(input({ committed: 500, arriving: 0 }))),
+      pulseExplanation(
+        buildMonthPulse(input({ committed: 500, arriving: 0 })),
+        "en",
+      ),
     ).toBe("After everything still due to leave.");
     expect(
-      pulseExplanation(buildMonthPulse(input({ committed: 0, arriving: 900 }))),
+      pulseExplanation(
+        buildMonthPulse(input({ committed: 0, arriving: 900 })),
+        "en",
+      ),
     ).toBe("Including what is still due to arrive.");
     expect(
       pulseExplanation(
         buildMonthPulse(input({ committed: 500, arriving: 900 })),
+        "en",
       ),
     ).toBe("After what is still due to leave, and what is still to arrive.");
   });

@@ -25,7 +25,7 @@
  * system message, and this is the rule whose failure is expensive.
  */
 
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { factLines, missingLines } from "./month-read-prompt";
 import { shortlistForWrapper } from "./etf-shortlist";
 import { INVESTMENT_WALLET_LABELS } from "./investments";
@@ -39,7 +39,7 @@ export const WALLET_READ_PROMPT_VERSION = 1;
 
 export interface BuildWalletPromptOptions {
   money: (amount: number) => string;
-  locale?: Locale;
+  locale: Locale;
   /** The wrappers this person actually holds something in. */
   wallets: InvestmentWalletId[];
 }
@@ -51,10 +51,7 @@ export interface BuildWalletPromptOptions {
  * ISIN outside it defensible: the model cannot have been expected to know
  * about something it was not shown, and it was shown everything.
  */
-function catalogueLines(
-  wallets: InvestmentWalletId[],
-  locale: Locale,
-): string {
+function catalogueLines(wallets: InvestmentWalletId[], locale: Locale): string {
   const offered = new Map<string, string>();
 
   for (const wallet of wallets.length > 0 ? wallets : (["cto"] as const)) {
@@ -64,7 +61,7 @@ function catalogueLines(
           ? locale === "fr"
             ? "frais inconnus"
             : "charge unknown"
-          : formatCharge(entry.terHint.charge);
+          : formatCharge(entry.terHint.charge, locale);
       const wrappers = entry.wrappers
         .map((id) => INVESTMENT_WALLET_LABELS[id])
         .join("/");
@@ -196,7 +193,8 @@ const EN = {
   positionsHeading: "The positions:",
   factsHeading: "The figures, as id | what it is | value:",
   missingHeading: "Not available, and why:",
-  catalogueHeading: "The instruments you may suggest, as ISIN | name | index | charge | wrappers:",
+  catalogueHeading:
+    "The instruments you may suggest, as ISIN | name | index | charge | wrappers:",
   collisionsHeading: "Holdings tracking the same or a nested index:",
   wrapperHeading: "Holdings sitting in a wrapper they are not eligible for:",
 };
@@ -303,7 +301,7 @@ const PROMPT = { en: EN, fr: FR } as const;
 export function buildWalletReadPrompt(
   facts: LookThroughFacts,
   lookThrough: LookThrough,
-  { money, locale = FALLBACK_LOCALE, wallets }: BuildWalletPromptOptions,
+  { money, locale, wallets }: BuildWalletPromptOptions,
 ): WalletReadRequest {
   const text = PROMPT[locale];
 

@@ -34,13 +34,14 @@ const VISIBLE_MS = 3500;
 
 const SURFACE: Record<ToastVariant, string> = {
   default: "bg-card",
-  success: "bg-primary",
+  // The web's success: the neutral fill with a green edge, not a gold slab.
+  success: "bg-secondary border border-success/40",
   error: "bg-destructive",
 };
 
 const LABEL: Record<ToastVariant, string> = {
   default: "text-foreground",
-  success: "text-primary-foreground",
+  success: "text-foreground",
   error: "text-destructive-foreground",
 };
 

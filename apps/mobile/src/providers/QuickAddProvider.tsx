@@ -21,7 +21,7 @@ import { hapticMedium } from "@/lib/haptics";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { getQuickEntryContext, type QuickEntryContext } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
-import { useTabBarHeight } from "@/theme/chrome";
+import { TAB_BAR_INSET, useTabBarHeight } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON, RADIUS } from "@/theme/tokens";
 import { useT } from "@/providers/LocaleProvider";
@@ -142,7 +142,8 @@ function QuickAddFab() {
       style={{
         position: "absolute",
         right: 16,
-        bottom: barHeight + insets.bottom + 16,
+        // Above the floating tab bar, which itself sits TAB_BAR_INSET up.
+        bottom: barHeight + insets.bottom + TAB_BAR_INSET + 16,
       }}
     >
       <AnimatedPressable
@@ -166,11 +167,6 @@ function QuickAddFab() {
             alignItems: "center",
             justifyContent: "center",
             backgroundColor: colors.primary,
-            shadowColor: "#000",
-            shadowOpacity: 0.25,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 4 },
-            elevation: 6,
           },
           animatedStyle,
         ]}

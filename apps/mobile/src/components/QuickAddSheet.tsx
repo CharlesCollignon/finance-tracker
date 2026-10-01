@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
+import { Modal, Pressable, ScrollView, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import {
@@ -9,7 +9,6 @@ import {
   pressAmountKey,
   type AmountKey,
 } from "@finance/core/amount-input";
-import { groupCategoriesByType } from "@finance/core/categories";
 import { todayIsoLocal } from "@finance/core/constants";
 import {
   lookupMerchant,
@@ -20,6 +19,9 @@ import type { Category, Tag } from "@finance/core/types/database";
 
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { RecurringFormBody } from "@/components/RecurringFormModal";
+import { CategoryPicker } from "@/components/pickers/CategoryPicker";
+import { ChoiceChips } from "@/components/pickers/ChoiceChips";
+import { MultiChips } from "@/components/pickers/MultiChips";
 import { Button } from "@/components/ui/Button";
 import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
@@ -36,8 +38,8 @@ import { resolveMessage } from "@finance/core/i18n/t";
 
 const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", USD: "$" };
 
-/** Once the list is longer than this, searching beats scrolling. */
-const SEARCH_THRESHOLD = 8;
+/** How many recent categories sit above the picker as one-tap chips. */
+const RECENT_CHIPS = 6;
 
 const KEYPAD_ROWS: AmountKey[][] = [
   ["1", "2", "3"],
@@ -157,47 +159,17 @@ function AddPanel({
         showsVerticalScrollIndicator={false}
       >
         {/* ---- what is being added --------------------------------- */}
-        <View
-          accessible={false}
-          accessibilityLabel={t("add.kind")}
-          className="mt-3 flex-row gap-2"
-        >
-          {(
-            [
-              { value: "transaction", label: t("add.transaction") },
-              { value: "charge", label: t("add.charge") },
-            ] as const
-          ).map((option) => {
-            const active = kind === option.value;
-            return (
-              <Pressable
-                key={option.value}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                accessibilityHint={t("add.kind")}
-                onPress={() => {
-                  void hapticLight();
-                  setKind(option.value);
-                }}
-                className={cn(
-                  "min-h-11 flex-1 items-center justify-center rounded-full border px-3",
-                  active
-                    ? "border-primary bg-primary/15"
-                    : "border-border bg-background",
-                )}
-              >
-                <Text
-                  className={cn(
-                    "text-sm font-medium",
-                    active ? "text-primary-ink" : "text-muted-foreground",
-                  )}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <ChoiceChips
+          label={t("add.kind")}
+          fill
+          className="mt-3"
+          options={[
+            { value: "transaction", label: t("add.transaction") },
+            { value: "charge", label: t("add.charge") },
+          ]}
+          value={kind}
+          onChange={setKind}
+        />
         <Text variant="muted" className="mb-1 mt-2 text-sm">
           {kind === "transaction"
             ? t("add.transactionHint")
@@ -258,35 +230,35 @@ function QuickAddFields({
   const [occurredOn, setOccurredOn] = useState(defaultDate ?? today);
   const [note, setNote] = useState("");
   const [tagIds, setTagIds] = useState<string[]>([]);
-  const [query, setQuery] = useState("");
-  const [showAllCategories, setShowAllCategories] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  // Open from the start when the sheet arrives on a day that is neither
+  // today nor yesterday — the first of another month, opened from there —
+  // so the date it will save under is on screen rather than implied.
+  const [showDatePicker, setShowDatePicker] = useState(
+    defaultDate !== undefined &&
+      defaultDate !== today &&
+      defaultDate !== shiftDays(today, -1),
+  );
   const [pending, setPending] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
+  // Before the memos below, which read it while this render runs.
+  const locale = useLocale();
   const merchantIndex = useMemo(
     () => new Map(merchants.map((rule) => [rule.key, rule])),
     [merchants],
   );
 
+  // A handful, not every category the month has used: the picker below has
+  // the rest, and a dozen chips would push the note off the sheet.
   const recentCategories = useMemo(
     () =>
       recentCategoryIds
         .map((id) => categories.find((cat) => cat.id === id))
-        .filter((cat): cat is Category => cat !== undefined),
+        .filter((cat): cat is Category => cat !== undefined)
+        .slice(0, RECENT_CHIPS),
     [recentCategoryIds, categories],
   );
-
-  const groups = useMemo(() => {
-    const trimmed = query.trim().toLowerCase();
-    const visible = trimmed
-      ? categories.filter((cat) => cat.name.toLowerCase().includes(trimmed))
-      : categories;
-    return groupCategoriesByType(visible);
-  }, [categories, query]);
-
-  const selected = categories.find((cat) => cat.id === categoryId) ?? null;
 
   const noteSuggestions = useMemo(() => {
     if (note.trim().length < 2) {
@@ -295,12 +267,17 @@ function QuickAddFields({
     return suggestMerchants(merchantIndex, note, 3);
   }, [merchantIndex, note]);
 
-  const locale = useLocale();
   const t = useT();
   const display = formatAmountInput(amount, locale);
   const canSave = isAmountInputComplete(amount) && categoryId !== "";
-  const categoryListOpen =
-    showAllCategories || query.trim() !== "" || recentCategories.length === 0;
+  const yesterday = shiftDays(today, -1);
+  const dateChoice: "today" | "yesterday" | "other" = showDatePicker
+    ? "other"
+    : occurredOn === today
+      ? "today"
+      : occurredOn === yesterday
+        ? "yesterday"
+        : "other";
 
   function handleKey(key: AmountKey) {
     void hapticLight();
@@ -372,11 +349,14 @@ function QuickAddFields({
       {/* ---- amount --------------------------------------------- */}
       <View
         accessibilityRole="text"
-        accessibilityLabel={`Amount ${display.integer}${display.fraction}`}
+        accessibilityLabel={t("formPickers.fieldValue", {
+          label: t("quickAdd.amount"),
+          value: `${display.integer}${display.fraction} ${symbol}`,
+        })}
         className="flex-row items-baseline justify-center py-5"
       >
         <Text
-          className="font-mono"
+          className="font-sans tabular-nums"
           style={{
             fontSize: 22,
             color: display.empty ? colors.mutedForeground : colors.foreground,
@@ -385,7 +365,7 @@ function QuickAddFields({
           {symbol}
         </Text>
         <Text
-          className="font-mono font-bold"
+          className="font-sans tabular-nums font-bold"
           style={{
             fontSize: 48,
             lineHeight: 56,
@@ -395,7 +375,7 @@ function QuickAddFields({
           {display.integer}
         </Text>
         <Text
-          className="font-mono"
+          className="font-sans tabular-nums"
           style={{
             fontSize: 22,
             color: display.empty ? colors.mutedForeground : colors.foreground,
@@ -432,7 +412,10 @@ function QuickAddFields({
                     color={colors.foreground}
                   />
                 ) : (
-                  <Text className="font-mono" style={{ fontSize: 22 }}>
+                  <Text
+                    className="font-sans tabular-nums"
+                    style={{ fontSize: 22 }}
+                  >
                     {key}
                   </Text>
                 )}
@@ -443,53 +426,26 @@ function QuickAddFields({
       </View>
 
       {/* ---- date ----------------------------------------------- */}
-      <View className="mb-4 flex-row flex-wrap gap-2">
-        {[
-          { label: t("calendar.today"), value: today },
-          { label: t("calendar.yesterday"), value: shiftDays(today, -1) },
-        ].map((option) => {
-          const active = occurredOn === option.value && !showDatePicker;
-          return (
-            <Pressable
-              key={option.value}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              onPress={() => {
-                void hapticLight();
-                setShowDatePicker(false);
-                setOccurredOn(option.value);
-              }}
-              className={cn(
-                "rounded-full border px-4 py-2",
-                active
-                  ? "border-primary bg-primary/15"
-                  : "border-border bg-background",
-              )}
-            >
-              <Text className={cn("text-sm", active && "text-primary-ink")}>
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ selected: showDatePicker }}
-          onPress={() => setShowDatePicker((value) => !value)}
-          className={cn(
-            "rounded-full border px-4 py-2",
-            showDatePicker
-              ? "border-primary bg-primary/15"
-              : "border-border bg-background",
-          )}
-        >
-          <Text className={cn("text-sm", showDatePicker && "text-primary-ink")}>
-            Another day
-          </Text>
-        </Pressable>
-      </View>
+      <ChoiceChips
+        label={t("quickAdd.date")}
+        className="mb-4"
+        options={[
+          { value: "today", label: t("calendar.today") },
+          { value: "yesterday", label: t("calendar.yesterday") },
+          { value: "other", label: t("quickAdd.anotherDay") },
+        ]}
+        value={dateChoice}
+        onChange={(choice) => {
+          if (choice === "other") {
+            setShowDatePicker(true);
+            return;
+          }
+          setShowDatePicker(false);
+          setOccurredOn(choice === "today" ? today : yesterday);
+        }}
+      />
 
-      {showDatePicker ? (
+      {dateChoice === "other" ? (
         <DateField
           value={occurredOn}
           onChange={setOccurredOn}
@@ -498,106 +454,58 @@ function QuickAddFields({
       ) : null}
 
       {/* ---- category ------------------------------------------- */}
+      {/* The few categories used most stay one tap away; everything else is
+          behind the picker, a kind at a time, rather than every category
+          drawn under the keypad. */}
       <Text className="mb-2 text-sm font-medium">{t("quickAdd.category")}</Text>
 
-      {recentCategories.length > 0 && !query.trim() ? (
+      {recentCategories.length > 0 ? (
         <View className="mb-3 flex-row flex-wrap gap-2">
           {recentCategories.map((cat) => {
             const active = categoryId === cat.id;
             return (
               <Pressable
                 key={cat.id}
-                accessibilityRole="button"
+                accessibilityRole="radio"
                 accessibilityState={{ selected: active }}
+                accessibilityLabel={cat.name}
                 onPress={() => {
                   void hapticLight();
                   setCategoryId(cat.id);
                 }}
                 className={cn(
-                  "flex-row items-center gap-2 rounded-full border px-3 py-2",
-                  active
-                    ? "border-primary bg-primary/15"
-                    : "border-border bg-background",
+                  "min-h-11 flex-row items-center gap-2 rounded-full border py-1 pl-1.5 pr-3",
+                  active ? "border-foreground bg-secondary" : "border-border",
                 )}
               >
-                <CategoryIcon icon={cat.icon} className="h-6 w-6" />
-                <Text className="text-sm">{cat.name}</Text>
+                <CategoryIcon
+                  icon={cat.icon}
+                  className="h-7 w-7 border-0 bg-muted"
+                />
+                <Text
+                  className={cn(
+                    "text-sm",
+                    active ? "font-medium text-foreground" : "text-foreground",
+                  )}
+                >
+                  {cat.name}
+                </Text>
               </Pressable>
             );
           })}
         </View>
       ) : null}
 
-      {categories.length > SEARCH_THRESHOLD && categoryListOpen ? (
-        <View className="mb-3 flex-row items-center gap-2 rounded-full border border-border bg-background px-3">
-          <Ionicons
-            name="search-outline"
-            size={ICON.md}
-            color={colors.mutedForeground}
-          />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={t("quickAdd.filterCategoriesPlaceholder")}
-            placeholderTextColor={colors.mutedForeground}
-            accessibilityLabel={t("quickAdd.filterCategories")}
-            className="h-10 flex-1 font-sans text-sm text-foreground"
-          />
-        </View>
-      ) : null}
-
-      {categoryListOpen ? (
-        <View className="mb-4 gap-3">
-          {groups.map((group) => (
-            <View key={group.type} className="gap-1.5">
-              <Text variant="muted" className="text-xs">
-                {group.label}
-              </Text>
-              {group.categories.map((cat) => {
-                const active = categoryId === cat.id;
-                return (
-                  <Pressable
-                    key={cat.id}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                    accessibilityLabel={cat.name}
-                    onPress={() => {
-                      void hapticLight();
-                      setCategoryId(cat.id);
-                      setShowAllCategories(false);
-                      setQuery("");
-                    }}
-                    className={cn(
-                      "flex-row items-center gap-3 rounded-control border px-3 py-2",
-                      active
-                        ? "border-primary bg-primary/15"
-                        : "border-border bg-background",
-                    )}
-                  >
-                    <CategoryIcon icon={cat.icon} />
-                    <Text className="flex-1 text-sm">{cat.name}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ))}
-        </View>
-      ) : (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setShowAllCategories(true)}
-          className="mb-4 self-start"
-        >
-          <Text variant="muted" className="text-sm underline">
-            {selected
-              ? t("quickAdd.changeCategory", { name: selected.name })
-              : t("ledger.allCategories")}
-          </Text>
-        </Pressable>
-      )}
+      <CategoryPicker
+        label={t("quickAdd.category")}
+        categories={categories}
+        value={categoryId}
+        onChange={setCategoryId}
+        className="mb-4"
+      />
 
       {/* ---- note ----------------------------------------------- */}
-      <Text className="mb-2 text-sm font-medium">Note</Text>
+      <Text className="mb-2 text-sm font-medium">{t("quickAdd.note")}</Text>
       <Input
         value={note}
         onChangeText={setNote}
@@ -611,9 +519,12 @@ function QuickAddFields({
             <Pressable
               key={rule.key}
               accessibilityRole="button"
-              accessibilityLabel={`Use ${rule.label}, ${rule.categoryName}`}
+              accessibilityLabel={t("formPickers.useSuggestion", {
+                label: rule.label,
+                category: rule.categoryName,
+              })}
               onPress={() => applyMerchant(rule)}
-              className="flex-row items-center justify-between gap-3 rounded-control border border-border bg-background px-3 py-2"
+              className="min-h-11 flex-row items-center justify-between gap-3 rounded-control border border-border bg-background px-3 py-2"
             >
               <Text className="flex-1 text-sm" numberOfLines={1}>
                 {rule.label}
@@ -629,37 +540,14 @@ function QuickAddFields({
       {/* ---- tags ----------------------------------------------- */}
       {tags.length > 0 ? (
         <>
-          <Text className="mb-2 text-sm font-medium">Tags</Text>
-          <View className="mb-4 flex-row flex-wrap gap-2">
-            {tags.map((tag) => {
-              const on = tagIds.includes(tag.id);
-              return (
-                <Pressable
-                  key={tag.id}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: on }}
-                  accessibilityLabel={tag.name}
-                  onPress={() =>
-                    setTagIds((current) =>
-                      current.includes(tag.id)
-                        ? current.filter((id) => id !== tag.id)
-                        : [...current, tag.id],
-                    )
-                  }
-                  className={cn(
-                    "rounded-full border px-3 py-2",
-                    on
-                      ? "border-primary bg-primary/15"
-                      : "border-border bg-background",
-                  )}
-                >
-                  <Text className={cn("text-sm", on && "text-primary-ink")}>
-                    {tag.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <Text className="mb-2 text-sm font-medium">{t("quickAdd.tags")}</Text>
+          <MultiChips
+            label={t("quickAdd.tags")}
+            className="mb-4"
+            options={tags.map((tag) => ({ value: tag.id, label: tag.name }))}
+            values={tagIds}
+            onChange={setTagIds}
+          />
         </>
       ) : null}
 
@@ -671,9 +559,7 @@ function QuickAddFields({
 
       {savedCount > 0 ? (
         <Text className="mb-3 text-sm text-success">
-          {savedCount === 1
-            ? "1 saved — keep going."
-            : `${savedCount} saved — keep going.`}
+          {t("quickAdd.savedKeepGoing", { count: savedCount })}
         </Text>
       ) : null}
 

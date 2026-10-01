@@ -5,7 +5,6 @@ import {
   SectionList,
   Pressable,
   RefreshControl,
-  ScrollView,
   TextInput,
   View,
 } from "react-native";
@@ -27,6 +26,7 @@ import {
   recurringOccurrenceKey,
   type PlannedOccurrence,
 } from "@finance/core/apply-recurring";
+import { amountSign } from "@finance/core/amount-sign";
 import {
   categoryTypeLabels,
   TYPE_AMOUNT_CLASS,
@@ -60,7 +60,7 @@ import {
   toggleSelected,
 } from "@finance/core/selection";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { ChipRow } from "@/components/ui/ChipRow";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { Screen } from "@/components/ui/Screen";
@@ -70,6 +70,7 @@ import { useRefreshable } from "@/hooks/useRefreshable";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQuickAdd } from "@/providers/QuickAddProvider";
+import { useScreenMonth } from "@/providers/MonthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -138,12 +139,12 @@ export default function TransactionsScreen() {
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
   const colors = useThemeColors();
-  const now = parseMonthParams();
-  const [year, setYear] = useState(now.year);
-  const [month, setMonth] = useState(now.month);
+  // Shared with the calendar and Le point, so switching view keeps the month.
+  const { year, month, setMonth } = useScreenMonth();
   const [filter, setFilter] = useState<FilterType>("all");
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
   const [duplicating, setDuplicating] =
     useState<TransactionWithCategory | null>(null);
@@ -212,7 +213,7 @@ export default function TransactionsScreen() {
         // Not scoped to the month on screen. The inbox is a queue of
         // decisions, not a view of a month: a coffee from the 29th of last
         // month needs a category whichever month you happen to be reading.
-        getPendingFeedItems(user.id),
+        getPendingFeedItems(user.id, locale),
         // Which rows settle a charge. Needs nothing else the batch fetches,
         // so it rides along rather than costing a second hop.
         getConfirmedTransactionIds(user.id),
@@ -527,7 +528,7 @@ export default function TransactionsScreen() {
     notifyDataChanged();
     const name =
       categories.find((category) => category.id === categoryId)?.name ??
-      "the new category";
+      t("ledger.theNewCategory");
     toast(t("ledger.moved", { count: result.moved ?? 0, name }), "success");
     leaveSelectMode();
     void onRefresh();
@@ -549,7 +550,10 @@ export default function TransactionsScreen() {
       toast(result.error, "error");
       return;
     }
-    toast(`${source.categories.name} added for today`, "success");
+    toast(
+      t("ledger.addedForToday", { name: source.categories.name }),
+      "success",
+    );
     await reload();
   }
 
@@ -563,7 +567,10 @@ export default function TransactionsScreen() {
       return;
     }
     // Written straight back by the restore itself, so every screen moves.
-    toast(`${entry.name} restored`, "success");
+    toast(
+      t("ledger.restored", { name: entry.name || t("ledger.recurringEntry") }),
+      "success",
+    );
     notifyDataChanged();
   }
 
@@ -579,245 +586,60 @@ export default function TransactionsScreen() {
     });
   }
 
-  return (
-    <Screen title={t("nav.ledger")}>
+  function clearFilters() {
+    setFilter("all");
+    setCategoryFilter("all");
+    setSearch("");
+  }
+
+  const typeOptions = useMemo(() => {
+    const labels = categoryTypeLabels(locale);
+    return FILTERS.map((value) => ({
+      value,
+      label: value === "all" ? t("ledger.allTypes") : labels[value],
+    }));
+  }, [locale, t]);
+
+  const categoryOptions = useMemo(
+    () => [
+      { value: "all", label: t("ledger.allCategories") },
+      ...usedCategories.map((category) => ({
+        value: category.id,
+        label: category.name,
+      })),
+    ],
+    [usedCategories, t],
+  );
+
+  // The category is the one filter tucked behind the button, so it is the
+  // one the button has to own up to.
+  const hiddenFilters = categoryFilter === "all" ? 0 : 1;
+  const nothingAtAll = transactions.length === 0 && planned.length === 0;
+
+  /*
+   * Everything above the first day scrolls with the list rather than staying
+   * pinned over it. Pinned, the tabs, the month, the search, three rows of
+   * filters and two lines of figures took half the screen before a single
+   * entry — the web's phone layout had already cut the same stack down to
+   * this, in this order.
+   */
+  const header = (
+    <View className="pb-1">
       <SurfaceTabs tabs={LEDGER_TABS} className="mb-3" />
 
       {/* Under the tabs, not above them: the By category view has no month,
           and a month bar above the tabs would make them jump when switching
           views. Prominent, because the month is what everything below is
-          about. */}
-      <MonthPicker
-        prominent
-        year={year}
-        month={month}
-        onChange={(y, m) => {
-          setYear(y);
-          setMonth(m);
-        }}
-      />
-
-      {/* The same sheet as the "+", which asks whether this is a transaction
-          or a charge. */}
-      <View className="mb-3 mt-4 flex-row items-center gap-2">
-        <Button
-          label={t("ledger.add")}
-          size="sm"
-          className="flex-1"
-          icon="add"
-          onPress={openAdd}
-        />
-      </View>
-
-      {/* Housekeeping, not the main action: right-aligned and quiet, where a
-          centred row of full-width buttons used to read as the point of the
-          screen. */}
-      <View className="mb-3 flex-row items-center justify-end gap-1">
-        {selectMode ? (
-          <>
-            <Button
-              label={
-                allState === "all"
-                  ? t("ledger.clearAll")
-                  : t("ledger.selectAll")
-              }
-              variant="ghost"
-              size="sm"
-              onPress={() =>
-                setSelected((current) => toggleSelectAll(visibleIds, current))
-              }
-            />
-            <Button
-              label={t("ledger.selectDone")}
-              variant="ghost"
-              size="sm"
-              onPress={leaveSelectMode}
-            />
-          </>
-        ) : (
-          <>
-            <Button
-              label={t("ledger.select")}
-              variant="ghost"
-              size="sm"
-              icon="checkbox-outline"
-              onPress={() => setSelectMode(true)}
-            />
-            <Button
-              label={t("ledger.importCsvShort")}
-              variant="ghost"
-              size="sm"
-              icon="document-outline"
-              onPress={() => router.push("/import" as Href)}
-            />
-          </>
-        )}
-      </View>
-
-      <View className="mb-3 flex-row items-center gap-2 rounded-full border border-border bg-card px-3">
-        <Ionicons
-          name="search-outline"
-          size={ICON.md}
-          color={colors.mutedForeground}
-        />
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder={t("ledger.searchPlaceholder")}
-          placeholderTextColor={colors.mutedForeground}
-          accessibilityLabel={t("ledger.searchLabel")}
-          returnKeyType="search"
-          className="h-11 flex-1 font-sans text-sm text-foreground"
-        />
-        {search ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("ledger.clearSearch")}
-            onPress={() => setSearch("")}
-          >
-            <Ionicons
-              name="close-circle"
-              size={ICON.md}
-              color={colors.mutedForeground}
-            />
-          </Pressable>
-        ) : null}
-      </View>
-
-      <View className="mb-3 flex-row flex-wrap gap-1.5">
-        {FILTERS.map((value) => {
-          const selected = filter === value;
-          return (
-            <Pressable
-              key={value}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              accessibilityLabel={
-                value === "all"
-                  ? t("ledger.allTypes")
-                  : categoryTypeLabels(locale)[value]
-              }
-              onPress={() => setFilter(value)}
-              className={`rounded-full border px-3 py-1 ${
-                selected
-                  ? "border-foreground bg-foreground"
-                  : "border-border bg-background"
-              }`}
-            >
-              <Text
-                className={`text-xs font-medium ${
-                  selected ? "text-background" : "text-muted-foreground"
-                }`}
-              >
-                {value === "all" ? "All" : categoryTypeLabels()[value]}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {usedCategories.length > 1 ? (
-        <View className="mb-4">
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="gap-4 px-0.5"
-          >
-            {[
-              { id: "all", name: t("ledger.allCategories") },
-              ...usedCategories,
-            ].map((option) => {
-              const selected = categoryFilter === option.id;
-              return (
-                <Pressable
-                  hitSlop={8}
-                  key={option.id}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  onPress={() => setCategoryFilter(option.id)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5",
-                    selected
-                      ? "border-primary bg-primary/15"
-                      : "border-border bg-background",
-                  )}
-                >
-                  <Text
-                    className={cn(
-                      "text-xs font-medium",
-                      selected ? "text-primary-ink" : "text-muted-foreground",
-                    )}
-                  >
-                    {option.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
-      ) : null}
-
-      {skipped.length > 0 ? (
-        <Card bezel className="mb-4" innerClassName="gap-2 p-5">
-          <Text className="text-sm font-medium">
-            {`Skipped this month (${skipped.length})`}
-          </Text>
-          <Text variant="muted" className="text-xs">
-            Taken out of this month. Restore one to bring it back.
-          </Text>
-          {skipped.map((entry) => (
-            <View
-              key={`${entry.templateId}:${entry.occurredOn}`}
-              className="flex-row items-center justify-between gap-3"
-            >
-              <View className="min-w-0 flex-1">
-                <Text numberOfLines={1} className="text-sm">
-                  {entry.name}
-                </Text>
-                <Text variant="muted" className="text-xs">
-                  {entry.occurredOn}
-                </Text>
-              </View>
-              <Button
-                label={t("ledger.restore")}
-                variant="outline"
-                size="sm"
-                onPress={() => {
-                  void handleRestore(entry);
-                }}
-              />
-            </View>
-          ))}
-        </Card>
-      ) : null}
-
-      <View className="mb-2 flex-row items-baseline justify-between gap-3">
-        <Text variant="muted" className="text-sm">
-          {filtered.length === transactions.length
-            ? t("ledger.entryCount", { count: transactions.length })
-            : `${filtered.length} of ${transactions.length} entries`}
-        </Text>
-        <View className="flex-row gap-4">
-          <Text className="text-sm text-muted-foreground">
-            {"In "}
-            <PrivateAmount className="text-sm text-success">
-              {formatEuro(shown.income)}
-            </PrivateAmount>
-          </Text>
-          <Text className="text-sm text-muted-foreground">
-            {"Out "}
-            <PrivateAmount className="text-sm text-destructive">
-              {formatEuro(shownOut)}
-            </PrivateAmount>
-          </Text>
-        </View>
-      </View>
+          about. No Add beside it: the "+" in the tab bar opens the same
+          sheet, on this month. */}
+      <MonthPicker prominent year={year} month={month} onChange={setMonth} />
 
       {/* The one row on this screen that wants a decision, and the phone's
           counterpart to the web inbox bar. Rimmed and dotted like the Needs
           you block on Month, because it is the same errand seen from its
           other end — and without it the only way to the review was a link
-          from another screen. */}
+          from another screen. Above the search, where the web puts its bank
+          strip: it is about the month, not about the filters. */}
       {inbox.length > 0 ? (
         <Pressable
           accessibilityRole="button"
@@ -828,7 +650,7 @@ export default function TransactionsScreen() {
             void hapticLight();
             setInboxChoice(true);
           }}
-          className="mb-3 min-h-14 flex-row items-center gap-2.5 rounded-control border bg-primary/5 px-4 py-3"
+          className="mt-3 min-h-14 flex-row items-center gap-2.5 rounded-control border bg-primary/5 px-4 py-3"
           style={{ borderColor: colors.primaryRim }}
         >
           <View
@@ -849,241 +671,421 @@ export default function TransactionsScreen() {
             />
           </View>
         </Pressable>
-      ) : null}
-
-      {inbox.length === 0 ? (
-        <ConnectBankInvite surface="ledger" bank={bank} className="mb-3" />
-      ) : null}
-
-      <View className="mb-2 flex-row items-baseline justify-between gap-3">
-        <Text variant="muted" className="text-sm">
-          Left at month end
-        </Text>
-        <PrivateAmount
-          className={cn("text-sm", monthEnd < 0 && "text-destructive")}
-        >
-          {formatEuro(monthEnd)}
-        </PrivateAmount>
-      </View>
-
-      {loading && !data ? (
-        <ScreenSkeleton rows={5} />
-      ) : error ? (
-        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
       ) : (
-        <View className="flex-1 rounded-shell border border-border bg-foreground/[0.04] p-1.5">
-          <View className="flex-1 rounded-card bg-card">
-            <SectionList
-              sections={days}
-              keyExtractor={(item) =>
-                item.kind === "tx"
-                  ? item.tx.id
-                  : `planned:${item.occurrence.key}`
+        <ConnectBankInvite surface="ledger" bank={bank} className="mt-3" />
+      )}
+
+      {nothingAtAll ? null : (
+        <>
+          <View className="mt-3 flex-row items-center gap-2">
+            <View className="h-11 min-w-0 flex-1 flex-row items-center gap-2 rounded-full border border-border bg-background px-3.5">
+              <Ionicons
+                name="search-outline"
+                size={ICON.md}
+                color={colors.mutedForeground}
+              />
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                placeholder={t("ledger.searchPlaceholder")}
+                placeholderTextColor={colors.mutedForeground}
+                accessibilityLabel={t("ledger.searchLabel")}
+                returnKeyType="search"
+                className="h-11 flex-1 font-sans text-sm text-foreground"
+              />
+              {search ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("ledger.clearSearch")}
+                  hitSlop={8}
+                  onPress={() => setSearch("")}
+                >
+                  <Ionicons
+                    name="close-circle"
+                    size={ICON.md}
+                    color={colors.mutedForeground}
+                  />
+                </Pressable>
+              ) : null}
+            </View>
+
+            {/* One button for everything that is not the search or the type
+                chips: the category, selection and import. They were three
+                rows of their own above the first entry. */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("ledger.optionsToggle")}
+              accessibilityHint={
+                hiddenFilters > 0
+                  ? t("ledger.filtersOn", { count: hiddenFilters })
+                  : undefined
               }
-              stickySectionHeadersEnabled={false}
-              renderSectionHeader={({ section }) => (
-                <View className="flex-row items-baseline justify-between gap-3 pb-1 pt-4">
-                  <Text className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    {relativeDayLabel(section.date, formatShortDate)}
+              accessibilityState={{ expanded: optionsOpen }}
+              onPress={() => {
+                void hapticLight();
+                setOptionsOpen((open) => !open);
+              }}
+              className={cn(
+                "h-11 w-11 items-center justify-center rounded-full border",
+                optionsOpen || hiddenFilters > 0
+                  ? "border-foreground"
+                  : "border-border",
+              )}
+            >
+              <Ionicons
+                name="options-outline"
+                size={ICON.md}
+                color={
+                  optionsOpen || hiddenFilters > 0
+                    ? colors.foreground
+                    : colors.mutedForeground
+                }
+              />
+              {hiddenFilters > 0 ? (
+                <View className="absolute -right-0.5 -top-0.5 h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1">
+                  <Text variant="micro" className="text-background">
+                    {String(hiddenFilters)}
                   </Text>
-                  {section.recorded > 0 ? (
-                    <PrivateAmount className="text-xs text-muted-foreground">
-                      {`${section.net >= 0 ? "+" : "−"}${formatEuro(Math.abs(section.net))}`}
-                    </PrivateAmount>
+                </View>
+              ) : null}
+            </Pressable>
+          </View>
+
+          <View className="mt-2 flex-row items-center gap-1">
+            <View className="min-w-0 flex-1">
+              <ChipRow
+                label={t("ledger.filterTransactions")}
+                options={typeOptions}
+                value={filter}
+                onChange={setFilter}
+              />
+            </View>
+            {/* In selection mode Done and Select all stay here, where the
+                thumb already is. */}
+            {selectMode ? (
+              <>
+                <Button
+                  label={
+                    allState === "all"
+                      ? t("ledger.clearAll")
+                      : t("ledger.selectAll")
+                  }
+                  variant="ghost"
+                  size="sm"
+                  onPress={() =>
+                    setSelected((current) =>
+                      toggleSelectAll(visibleIds, current),
+                    )
+                  }
+                />
+                <Button
+                  label={t("ledger.selectDone")}
+                  variant="ghost"
+                  size="sm"
+                  onPress={leaveSelectMode}
+                />
+              </>
+            ) : null}
+          </View>
+
+          {optionsOpen ? (
+            <View className="mt-3 gap-3 rounded-card border border-border p-3">
+              {usedCategories.length > 1 ? (
+                <ChipRow
+                  label={t("ledger.filterByCategory")}
+                  options={categoryOptions}
+                  value={categoryFilter}
+                  onChange={setCategoryFilter}
+                />
+              ) : null}
+              <View className="flex-row flex-wrap gap-2">
+                {selectMode ? null : (
+                  <Button
+                    label={t("ledger.select")}
+                    variant="outline"
+                    size="sm"
+                    icon="checkbox-outline"
+                    onPress={() => {
+                      setSelectMode(true);
+                      setOptionsOpen(false);
+                    }}
+                  />
+                )}
+                <Button
+                  label={t("ledger.importCsvShort")}
+                  variant="outline"
+                  size="sm"
+                  icon="document-outline"
+                  onPress={() => router.push("/import" as Href)}
+                />
+              </View>
+            </View>
+          ) : null}
+
+          {skipped.length > 0 ? (
+            <SkippedLine
+              skipped={skipped}
+              onRestore={(entry) => void handleRestore(entry)}
+            />
+          ) : null}
+
+          {/* The figures describe what is on screen; the month's end is a
+              fact about the whole month and does not move with the filters,
+              hence the rule before it. The count only earns its line when a
+              filter is hiding something. */}
+          <View className="mt-3 border-t border-border pt-3">
+            {filtered.length !== transactions.length ? (
+              <Text variant="muted" className="mb-2 text-xs">
+                {t("ledger.shownOfTotal", {
+                  count: filtered.length,
+                  total: transactions.length,
+                })}
+              </Text>
+            ) : null}
+            <View className="flex-row items-stretch gap-3">
+              <SummaryFigure
+                label={t("ledger.in")}
+                value={formatEuro(shown.income)}
+                className="text-success"
+              />
+              <SummaryFigure
+                label={t("ledger.out")}
+                value={formatEuro(shownOut)}
+                className="text-destructive"
+              />
+              <View className="w-px bg-border" />
+              <SummaryFigure
+                label={t("ledger.leftAtMonthEnd")}
+                value={formatEuro(monthEnd)}
+                className={monthEnd < 0 ? "text-destructive" : undefined}
+                wide
+              />
+            </View>
+          </View>
+        </>
+      )}
+    </View>
+  );
+
+  return (
+    <Screen title={t("nav.ledger")} className="pb-0">
+      {/* No card around the list, as on the web's phone layout: the days run
+          the full width and start right under the figures. */}
+      <SectionList
+        sections={loading && !data ? [] : days}
+        keyExtractor={(item) =>
+          item.kind === "tx" ? item.tx.id : `planned:${item.occurrence.key}`
+        }
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        stickySectionHeadersEnabled={false}
+        ListHeaderComponent={header}
+        renderSectionHeader={({ section }) => (
+          <View className="flex-row items-baseline justify-between gap-3 pb-1 pt-5">
+            <Text className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {relativeDayLabel(section.date, formatShortDate, locale)}
+            </Text>
+            {section.recorded > 0 ? (
+              <PrivateAmount className="text-xs text-muted-foreground">
+                {`${section.net >= 0 ? "+" : "−"}${formatEuro(Math.abs(section.net))}`}
+              </PrivateAmount>
+            ) : null}
+          </View>
+        )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
+        }
+        ListEmptyComponent={
+          loading && !data ? (
+            <View className="pt-4">
+              <ScreenSkeleton rows={5} />
+            </View>
+          ) : error ? (
+            <Text className="pt-4 text-destructive">
+              {resolveMessage(t, error)}
+            </Text>
+          ) : nothingAtAll ? (
+            <EmptyState
+              title={t("ledger.fillThisMonth")}
+              description={t("ledger.emptyBody")}
+              className="mt-4"
+            >
+              <Button
+                label={t("ledger.addTransaction")}
+                variant="pill"
+                icon="add"
+                onPress={openAdd}
+              />
+            </EmptyState>
+          ) : (
+            <EmptyState
+              title={t("ledger.noMatchTitle")}
+              description={t("ledger.noMatchBody")}
+              className="mt-4"
+            >
+              <Button
+                label={t("ledger.clearFilters")}
+                variant="outline"
+                size="sm"
+                onPress={clearFilters}
+              />
+            </EmptyState>
+          )
+        }
+        contentContainerStyle={{ paddingBottom: tabBarClearance }}
+        ListFooterComponent={
+          filtered.length > 0 ? (
+            <Text variant="muted" className="py-4 text-center text-xs">
+              {selectMode ? t("ledger.selectHint") : t("ledger.editHint")}
+            </Text>
+          ) : null
+        }
+        ItemSeparatorComponent={() => <View className="h-px bg-border" />}
+        SectionSeparatorComponent={null}
+        renderItem={({ item: row, index }) => {
+          if (row.kind === "planned") {
+            const occurrence = row.occurrence;
+            return (
+              <StaggerItem index={index}>
+                {/* Muted, and the word says why: the dimming alone does not
+                    tell a reader which of the row's meanings it carries. Not
+                    selectable — there is nothing stored to delete or move. */}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${occurrence.categoryName}, ${t("ledger.planned")}`}
+                  accessibilityHint={occurrence.name}
+                  disabled={selectMode}
+                  className="min-h-14 flex-row items-center gap-3 py-3"
+                  style={selectMode ? { opacity: 0.4 } : undefined}
+                  onPress={() => {
+                    void hapticLight();
+                    setOpenPlanned(occurrence);
+                  }}
+                >
+                  <View style={{ opacity: 0.5 }}>
+                    <CategoryIcon icon={occurrence.categoryIcon} />
+                  </View>
+                  <View className="min-w-0 flex-1">
+                    <Text
+                      numberOfLines={1}
+                      className="shrink text-sm font-medium text-muted-foreground"
+                    >
+                      {occurrence.categoryName}
+                    </Text>
+                    <Text variant="muted" numberOfLines={1} className="text-xs">
+                      {[t("ledger.planned"), occurrence.note]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </Text>
+                  </View>
+                  <PrivateAmount className="text-sm font-semibold text-muted-foreground">
+                    {`${amountSign(occurrence.categoryType)}${formatEuro(occurrence.amount)}`}
+                  </PrivateAmount>
+                </Pressable>
+              </StaggerItem>
+            );
+          }
+
+          const item = row.tx;
+          const fulfilment = fulfilmentStates.get(item.id);
+          // The state leads the subtitle, ahead of the note, using the same
+          // " · " join the Calendar row already uses. The colour is the
+          // glance; this is what makes it mean something.
+          const subtitle = [
+            fulfilment ? t(FULFILMENT_STATE_KEY[fulfilment]) : null,
+            item.note,
+          ]
+            .filter(Boolean)
+            .join(" · ");
+          const rowName = { name: item.categories.name };
+          return (
+            <StaggerItem index={index}>
+              {/* Whole row opens the edit sheet; delete lives inside it, as
+                  on web. */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  selectMode
+                    ? t("ledger.selectRow", rowName)
+                    : t("ledger.editRow", rowName)
+                }
+                accessibilityState={
+                  selectMode ? { selected: selected.has(item.id) } : undefined
+                }
+                // A hint rather than part of the label: the label is the
+                // action this row performs, and the row's standing is not
+                // part of the name of a button.
+                accessibilityHint={
+                  fulfilment ? t(FULFILMENT_STATE_KEY[fulfilment]) : undefined
+                }
+                className={cn(
+                  "min-h-14 flex-row items-center gap-3 py-3",
+                  selectMode && selected.has(item.id) && "bg-primary/5",
+                )}
+                onPress={() => {
+                  void hapticLight();
+                  if (selectMode) {
+                    setSelected((current) => toggleSelected(current, item.id));
+                    return;
+                  }
+                  setEditing(item);
+                }}
+                onLongPress={() => {
+                  void hapticLight();
+                  // Long-press enters selection when it is not already on,
+                  // which is the gesture people expect from a list.
+                  if (!selectMode) {
+                    setSelectMode(true);
+                    setSelected(() => new Set([item.id]));
+                    return;
+                  }
+                  setDuplicating(item);
+                }}
+              >
+                {selectMode ? (
+                  <RowCheckbox
+                    checked={selected.has(item.id)}
+                    label={t("ledger.selectRow", rowName)}
+                    onPress={() =>
+                      setSelected((current) => toggleSelected(current, item.id))
+                    }
+                  />
+                ) : null}
+                <CategoryIcon icon={item.categories.icon} />
+                <View className="min-w-0 flex-1">
+                  <View className="flex-row items-center gap-1.5">
+                    {/* `shrink` because Yoga defaults flexShrink to 0 and
+                        overflow to visible: without it a long name does not
+                        clip, it draws over the amount. */}
+                    <Text
+                      numberOfLines={1}
+                      className="shrink text-sm font-medium"
+                    >
+                      {item.categories.name}
+                    </Text>
+                    <FulfilmentDot state={fulfilment} />
+                  </View>
+                  {subtitle ? (
+                    <Text variant="muted" numberOfLines={1} className="text-xs">
+                      {subtitle}
+                    </Text>
                   ) : null}
                 </View>
-              )}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefreshAll}
-                />
-              }
-              ListEmptyComponent={
-                <EmptyState
-                  title={t("ledger.fillThisMonth")}
-                  description={t("ledger.emptyBody")}
+                {/* The colour says what kind of money this is; the sign says
+                    which way it went — colour alone is not a channel. */}
+                <PrivateAmount
+                  className={cn(
+                    "text-sm font-semibold",
+                    TYPE_AMOUNT_CLASS[item.categories.type],
+                  )}
                 >
-                  <Button
-                    label={t("ledger.addTransaction")}
-                    variant="pill"
-                    icon="add"
-                    onPress={openAdd}
-                  />
-                </EmptyState>
-              }
-              contentContainerClassName="px-3 py-1"
-              contentContainerStyle={{ paddingBottom: tabBarClearance }}
-              ListFooterComponent={
-                filtered.length > 0 ? (
-                  <Text variant="muted" className="py-3 text-center text-xs">
-                    {selectMode ? t("ledger.selectHint") : t("ledger.editHint")}
-                  </Text>
-                ) : null
-              }
-              ItemSeparatorComponent={() => <View className="h-px bg-border" />}
-              SectionSeparatorComponent={null}
-              renderItem={({ item: row, index }) => {
-                if (row.kind === "planned") {
-                  const occurrence = row.occurrence;
-                  return (
-                    <StaggerItem index={index}>
-                      {/* Muted, and the word says why: the dimming alone does
-                          not tell a reader which of the row's meanings it
-                          carries. Not selectable — there is nothing stored to
-                          delete or move. */}
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`${occurrence.categoryName}, ${t("ledger.planned")}`}
-                        accessibilityHint={occurrence.name}
-                        disabled={selectMode}
-                        className="min-h-14 flex-row items-center gap-3 py-3"
-                        style={selectMode ? { opacity: 0.4 } : undefined}
-                        onPress={() => {
-                          void hapticLight();
-                          setOpenPlanned(occurrence);
-                        }}
-                      >
-                        <View style={{ opacity: 0.5 }}>
-                          <CategoryIcon icon={occurrence.categoryIcon} />
-                        </View>
-                        <View className="min-w-0 flex-1">
-                          <Text
-                            numberOfLines={1}
-                            className="shrink text-sm font-medium text-muted-foreground"
-                          >
-                            {occurrence.categoryName}
-                          </Text>
-                          <Text
-                            variant="muted"
-                            numberOfLines={1}
-                            className="text-xs"
-                          >
-                            {[t("ledger.planned"), occurrence.note]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </Text>
-                        </View>
-                        <PrivateAmount className="font-mono text-sm font-semibold text-muted-foreground">
-                          {formatEuro(occurrence.amount)}
-                        </PrivateAmount>
-                      </Pressable>
-                    </StaggerItem>
-                  );
-                }
-
-                const item = row.tx;
-                const fulfilment = fulfilmentStates.get(item.id);
-                // The state leads the subtitle, ahead of the note, using the
-                // same " · " join the Calendar row already uses. The colour is
-                // the glance; this is what makes it mean something.
-                const subtitle = [
-                  fulfilment ? t(FULFILMENT_STATE_KEY[fulfilment]) : null,
-                  item.note,
-                ]
-                  .filter(Boolean)
-                  .join(" · ");
-                return (
-                  <StaggerItem index={index}>
-                    {/* Whole row opens the edit sheet; delete lives inside it,
-                      as on web. */}
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        selectMode
-                          ? `Select ${item.categories.name}`
-                          : `Edit ${item.categories.name}`
-                      }
-                      accessibilityState={
-                        selectMode
-                          ? { selected: selected.has(item.id) }
-                          : undefined
-                      }
-                      // A hint rather than part of the label: the label is the
-                      // action this row performs, and the row's standing is not
-                      // part of the name of a button.
-                      accessibilityHint={
-                        fulfilment
-                          ? t(FULFILMENT_STATE_KEY[fulfilment])
-                          : undefined
-                      }
-                      className={cn(
-                        "min-h-14 flex-row items-center gap-3 py-3",
-                        selectMode && selected.has(item.id) && "bg-primary/5",
-                      )}
-                      onPress={() => {
-                        void hapticLight();
-                        if (selectMode) {
-                          setSelected((current) =>
-                            toggleSelected(current, item.id),
-                          );
-                          return;
-                        }
-                        setEditing(item);
-                      }}
-                      onLongPress={() => {
-                        void hapticLight();
-                        // Long-press enters selection when it is not already on,
-                        // which is the gesture people expect from a list.
-                        if (!selectMode) {
-                          setSelectMode(true);
-                          setSelected(() => new Set([item.id]));
-                          return;
-                        }
-                        setDuplicating(item);
-                      }}
-                    >
-                      {selectMode ? (
-                        <RowCheckbox
-                          checked={selected.has(item.id)}
-                          label={`Select ${item.categories.name}`}
-                          onPress={() =>
-                            setSelected((current) =>
-                              toggleSelected(current, item.id),
-                            )
-                          }
-                        />
-                      ) : null}
-                      <CategoryIcon icon={item.categories.icon} />
-                      <View className="min-w-0 flex-1">
-                        <View className="flex-row items-center gap-1.5">
-                          {/* `shrink` because Yoga defaults flexShrink to 0 and
-                            overflow to visible: without it a long name does
-                            not clip, it draws over the amount. */}
-                          <Text
-                            numberOfLines={1}
-                            className="shrink text-sm font-medium"
-                          >
-                            {item.categories.name}
-                          </Text>
-                          <FulfilmentDot state={fulfilment} />
-                        </View>
-                        {subtitle ? (
-                          <Text
-                            variant="muted"
-                            numberOfLines={1}
-                            className="text-xs"
-                          >
-                            {subtitle}
-                          </Text>
-                        ) : null}
-                      </View>
-                      <PrivateAmount
-                        className={cn(
-                          "font-mono text-sm font-semibold",
-                          TYPE_AMOUNT_CLASS[item.categories.type],
-                        )}
-                      >
-                        {formatEuro(Number(item.amount))}
-                      </PrivateAmount>
-                    </Pressable>
-                  </StaggerItem>
-                );
-              }}
-            />
-          </View>
-        </View>
-      )}
+                  {`${amountSign(item.categories.type)}${formatEuro(Number(item.amount))}`}
+                </PrivateAmount>
+              </Pressable>
+            </StaggerItem>
+          );
+        }}
+      />
 
       {editing ? (
         <TransactionFormModal
@@ -1148,5 +1150,115 @@ export default function TransactionsScreen() {
         }}
       />
     </Screen>
+  );
+}
+
+/**
+ * Charges taken out of this month, folded to one line until asked.
+ *
+ * It was a card of its own above the figures, open on every visit, for a
+ * decision made once and rarely revisited.
+ */
+function SkippedLine({
+  skipped,
+  onRestore,
+}: {
+  skipped: SkippedOccurrence[];
+  onRestore: (entry: SkippedOccurrence) => void;
+}) {
+  const t = useT();
+  const locale = useLocale();
+  const colors = useThemeColors();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <View className="mt-3 rounded-control border border-border">
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        onPress={() => {
+          void hapticLight();
+          setOpen((value) => !value);
+        }}
+        className="min-h-11 flex-row items-center gap-2 px-3 py-2.5"
+      >
+        <Ionicons
+          name="play-skip-forward-outline"
+          size={ICON.sm}
+          color={colors.mutedForeground}
+        />
+        <Text className="min-w-0 flex-1 text-sm text-muted-foreground">
+          {t("ledger.skippedCount", { count: skipped.length })}
+        </Text>
+        <Ionicons
+          name={open ? "chevron-up" : "chevron-down"}
+          size={ICON.sm}
+          color={colors.mutedForeground}
+        />
+      </Pressable>
+      {open ? (
+        <View className="gap-2 border-t border-border px-3 pb-3 pt-2.5">
+          <Text variant="muted" className="text-xs">
+            {t("ledger.skippedBody")}
+          </Text>
+          {skipped.map((entry) => (
+            <View
+              key={`${entry.templateId}:${entry.occurredOn}`}
+              className="flex-row items-center justify-between gap-3"
+            >
+              <View className="min-w-0 flex-1">
+                <Text numberOfLines={1} className="text-sm">
+                  {entry.name || t("ledger.recurringEntry")}
+                </Text>
+                <Text variant="muted" className="text-xs">
+                  {formatShortDate(entry.occurredOn, locale)}
+                </Text>
+              </View>
+              <Button
+                label={t("ledger.restore")}
+                variant="outline"
+                size="sm"
+                onPress={() => onRestore(entry)}
+              />
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** One of the three figures over the list: a small label, then the amount. */
+function SummaryFigure({
+  label,
+  value,
+  className,
+  wide = false,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+  /** The month-end label is the long one; it gets the room. */
+  wide?: boolean;
+}) {
+  return (
+    <View className="min-w-0 gap-0.5" style={{ flex: wide ? 1.5 : 1 }}>
+      <Text
+        variant="muted"
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+        className="text-xs"
+      >
+        {label}
+      </Text>
+      <PrivateAmount
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        className={cn("text-sm font-semibold", className)}
+      >
+        {value}
+      </PrivateAmount>
+    </View>
   );
 }

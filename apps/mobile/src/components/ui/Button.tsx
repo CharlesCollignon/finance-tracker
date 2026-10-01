@@ -8,6 +8,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { hapticLight } from "@/lib/haptics";
+import { sansWeightFace } from "@/lib/text-class";
 import { cn } from "@/lib/cn";
 import { ICON, type COLORS } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
@@ -116,7 +117,10 @@ export function Button({
       }}
       {...props}
     >
-      <Text className={cn("font-semibold", LABEL[variant], LABEL_SIZE[size])}>
+      <Text
+        className={cn("font-semibold", LABEL[variant], LABEL_SIZE[size])}
+        style={sansWeightFace("font-semibold")}
+      >
         {label}
       </Text>
       {icon ? (

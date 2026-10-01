@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   const session = await sessionFromBearer(request);
   if (!session) {
-    return Response.json({ error: "Not authenticated" }, { status: 401 });
+    return Response.json({ error: "errors.notAuthenticated" }, { status: 401 });
   }
 
   try {

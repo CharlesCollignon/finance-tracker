@@ -6,9 +6,13 @@ import {
 import { buildCategoryHistory } from "@finance/core/category-history";
 import { getCurrentMonth, shiftMonth } from "@finance/core/constants";
 import type { Locale } from "@finance/core/i18n/locale";
-import type { Database, TransactionWithCategory } from "@finance/core/types/database";
+import type {
+  Database,
+  TransactionWithCategory,
+} from "@finance/core/types/database";
 import { CATEGORY_MONTHS_READ } from "@/lib/category-read/facts";
 import { createClient } from "@/lib/supabase/server";
+import { getLocale } from "@/lib/locale";
 
 type Client = SupabaseClient<Database>;
 
@@ -55,7 +59,10 @@ export async function gatherCategoryFindings(
     (data ?? []) as TransactionWithCategory[],
     current.year,
     current.month,
-    { months: CATEGORY_MONTHS_READ, locale: localeOverride },
+    {
+      months: CATEGORY_MONTHS_READ,
+      locale: localeOverride ?? (await getLocale()),
+    },
   );
 
   return buildCategoryFindings(histories);

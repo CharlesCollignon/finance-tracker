@@ -1,155 +1,94 @@
-import { useEffect } from "react";
-import { RefreshControl, ScrollView } from "react-native";
+import { RefreshControl, ScrollView, View } from "react-native";
 
-import { buildAttention } from "@finance/core/attention";
-import { resolveSpine } from "@finance/core/spine";
+import { getMonthBounds, todayIsoLocal } from "@finance/core/constants";
+import { resolveMessage } from "@finance/core/i18n/t";
 
-import { gatherBearingFacts } from "@/lib/bearing";
-import { clearPanelCache } from "@/lib/bearing-panel";
-
+import { ArrivedCharges } from "@/components/ArrivedCharges";
+import { MonthPicker } from "@/components/MonthPicker";
+import { MonthRead } from "@/components/MonthRead";
 import { BankAttentionBanner } from "@/components/bank/BankAttentionBanner";
-import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
 import { AttentionRow } from "@/components/bearing/AttentionRow";
-import { BearingCards } from "@/components/bearing/BearingCards";
-import { Headline } from "@/components/bearing/Headline";
-import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  BalanceCard,
+  MomentumCard,
+  SetUpCard,
+  SpentCard,
+  UpcomingCard,
+  WhereItWentCard,
+} from "@/components/bearing/MonthCards";
+import { StaggerItem } from "@/components/motion/Stagger";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
+import { Text } from "@/components/ui/Text";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
+import { gatherHomeMonth, gatherHomeRead } from "@/lib/home-data";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
-import { useDataVersion } from "@/lib/data-version";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { useScreenMonth } from "@/providers/MonthProvider";
 
 /**
- * Where the whole of it stands, on one day.
+ * Le point: what is on the account, where the month ends, and what it went
+ * on — one month at a time, as the web's Bearing tells it.
  *
- * The phone's first tab, and the app's landing surface on both clients. Two
- * figures and five cards, the same five the web draws and in the same order:
- * every figure here is one some other screen already renders, so a card is a
- * way in to the places its numbers are explained — the Ledger, Charges, Plan,
- * Wallets.
+ * It opens on the month in progress, always: it is the landing tab, and a
+ * landing tab that opened on whatever month was last browsed would answer
+ * last March's question on the first of October. Another month is one press
+ * of the same picker the Journal has.
  *
- * It was twelve draggable tiles whose order a model wrote and a reader could
- * overrule, and the three mechanisms that produced that order — an
- * arrangement, a set of pins, a slot template — were all answers to "which of
- * these matters most?". A list of five, one per fact family, does not ask the
- * question: nothing is ranked because nothing is hidden. The model, the pins,
- * the drag handle and the arrange button are gone with it, and so is the
- * staleness line that existed to say the model's choice had aged.
+ * The two questions the screen is opened for lead — the balance today and
+ * where the month ends, as big figures over the curve that joins them — and
+ * everything else is a card only when it has something to say. A month that
+ * has ended tells what it did; one ahead tells what its recurring entries
+ * call for; the month in progress tells both, joined at today.
  *
- * Nothing on this screen calls a model, and nothing on it now reaches the web
- * app at all: the fact pack comes straight out of Supabase like every other
- * query, so the Bearing renders with no server of ours in the path.
- *
- * Everything visible comes from one fact pack, so there is no half of the
- * screen that could arrive first. What a card holds *under* its figures is
- * fetched on the press instead — see `Panel`.
+ * It replaces the twelve-tile, five-family Bearing with panels fetched on the
+ * press, which the web had already left behind: most of it was true and
+ * almost none of it was what the screen is opened for.
  */
-export default function BearingScreen() {
+export default function HomeScreen() {
   const { user } = useAuth();
   const t = useT();
   const locale = useLocale();
   const colors = useThemeColors();
   const bottom = useTabBarClearance();
   const dataVersion = useDataVersion();
+  // Shared with the Journal and its calendar, so changing tab keeps the month.
+  const { year, month, setMonth } = useScreenMonth();
 
-  // A write anywhere in the app should not leave a panel showing what a
-  // figure used to be. This covers the writes made from outside a panel —
-  // the quick-add sheet, another screen — so that a panel not open yet is
-  // not handed stale detail the next time it opens.
-  //
-  // It is not what rescues the panel a write was made *in*. That one clears
-  // the cache itself before asking again, because this effect runs after its
-  // refetch rather than before it: passive effects flush child-first, and
-  // `Panel` sits several levels below this screen. See `handleChanged` in
-  // `components/bearing/Panel.tsx`.
-  useEffect(() => {
-    clearPanelCache();
-  }, [dataVersion]);
-
-  const { data, loading, refreshing, onRefreshAll } = useRefreshable(
-    async () => (user ? await gatherBearingFacts(user.id, locale) : null),
-    [user?.id, locale, dataVersion],
+  const { data, error, refreshing, onRefreshAll, reload } = useRefreshable(
+    async () =>
+      user ? await gatherHomeMonth(user.id, year, month, locale) : null,
+    [user?.id, year, month, locale, dataVersion],
   );
-  // Apart from the fact pack, and asked of the server where it has to be:
-  // whether a bank can be connected here at all is the deployment's to say.
+
+  // A month ahead has nothing to read yet: nothing has happened in it.
+  const readable = getMonthBounds(year, month).start <= todayIsoLocal();
+  // Apart from the month, and after it: the read's fact pack is the slowest
+  // thing the screen asks for, and the balance should not wait on it.
+  const { data: read, reload: reloadRead } = useRefreshable(
+    async () =>
+      user && readable
+        ? await gatherHomeRead(user.id, year, month, locale)
+        : null,
+    [user?.id, year, month, locale, readable, dataVersion],
+  );
+
+  // Whether a bank can be connected here at all is the deployment's to say.
   const { bank } = useBankState();
 
-  if (loading || !data) {
-    return (
-      <Screen title={t("nav.bearing")}>
-        <ScreenSkeleton />
-      </Screen>
-    );
-  }
+  // Kept on screen while the next month loads, dimmed, so the picker does not
+  // flash the screen empty on every step.
+  const stale = data !== null && (data.year !== year || data.month !== month);
+  const period = data?.balance.period;
+  const current = period === "current";
+  const past = period === "past";
 
-  const facts = data;
-
-  // Built above the thin branch on purpose. `thin` is not "nobody has done
-  // anything" — it is "no position has been taken yet", and a reader in that
-  // state can still have something waiting, such as a first balance to
-  // enter. It used to be built below the branch and thrown away for them.
-  const attention = buildAttention({
-    swallowed: facts.swallowed,
-    pendingInbox: facts.pendingInbox,
-    readyToClose: facts.closes.next
-      ? {
-          monthLabel: facts.closes.next.label,
-          isBaseline: facts.closes.next.isBaseline,
-        }
-      : null,
-    proposals: facts.proposals,
-  });
-
-  if (facts.thin) {
-    return (
-      <Screen title={t("nav.bearing")}>
-        <EmptyState title={t("bearing.title")} description={t("bearing.empty")}>
-          {/* The row, and deliberately not the headline: two hero-sized
-              figures over an empty account are two statements about a
-              position nobody has taken yet. The row states nothing about the
-              account. It names the one thing worth doing and links to where
-              it is done, which is all this reader is short of. */}
-          {attention.length > 0 ? (
-            <AttentionRow attention={attention} />
-          ) : undefined}
-        </EmptyState>
-        {/* The reader with nothing recorded yet is the one a bank would
-            help most: it fills in what this empty state is asking for. */}
-        <ConnectBankInvite surface="bearing" bank={bank} className="mt-2" />
-      </Screen>
-    );
-  }
-
-  // The spine's ladder, a pure function of figures `gatherBearingFacts`
-  // already widened its return with — see that function's own doc comment
-  // for where `swallowed` and `proposals` come from.
-  // The action row's own list is built above, before the thin branch.
-  //
-  // `everClosed` and `closes` answer two different questions, per
-  // `spine.ts`'s own doc comment on `SpineInput`, and per the identical
-  // reasoning the web `BearingPage` already carries: `everClosed` is "has
-  // any close happened, a baseline included" — `history` carries a baseline
-  // close, so its length is the right signal, not `summary.sample` (which
-  // only counts *reconciled* closes and stays 0 for the whole month between
-  // a baseline close and the first one after it). `closes` is only "is
-  // there a streak worth a flame", which a baseline genuinely has none of
-  // yet, so it stays null exactly when `sample` is 0.
-  const spineState = resolveSpine({
-    pulse: facts.pulse,
-    everClosed: facts.closes.history.length > 0,
-    closes:
-      facts.closes.summary.sample > 0
-        ? {
-            streak: facts.closes.summary.streak,
-            bestStreak: facts.closes.summary.bestStreak,
-          }
-        : null,
-    remaining: facts.summary.remaining,
-  });
+  let index = 0;
+  const next = () => index++;
 
   return (
     <Screen title={t("nav.bearing")} className="px-4 py-0">
@@ -161,30 +100,111 @@ export default function BearingScreen() {
             tintColor={colors.mutedForeground}
           />
         }
-        contentContainerClassName="gap-6"
+        contentContainerClassName="gap-4"
         contentContainerStyle={{ paddingTop: 16, paddingBottom: bottom }}
         showsVerticalScrollIndicator={false}
       >
+        <MonthPicker prominent year={year} month={month} onChange={setMonth} />
+
         {/* Above the figures, because a bank feed that has stopped leaves
             every one of them quietly stale. */}
         {bank?.attention ? (
           <BankAttentionBanner attention={bank.attention} />
         ) : null}
 
-        {/* The two figures the screen is opened for, before anything that has
-            to be pressed to be read. */}
-        <Headline state={spineState} />
+        {data ? (
+          <View
+            // Replayed per month: a new month is a new set of figures arriving.
+            key={`${data.year}-${data.month}`}
+            className="gap-4"
+            style={stale ? { opacity: 0.5 } : undefined}
+          >
+            {data.attention.length > 0 ? (
+              <AttentionRow attention={data.attention} />
+            ) : null}
 
-        <ConnectBankInvite surface="bearing" bank={bank} />
+            {/* Before the figures, because answering one changes them: a
+                salary confirmed as arrived stops being counted as still to
+                come. */}
+            {data.arrived ? (
+              <View className="rounded-card border border-border bg-card/70 p-card">
+                <ArrivedCharges
+                  proposals={data.arrived.proposals}
+                  misses={data.arrived.misses}
+                  onDecided={() => {
+                    notifyDataChanged();
+                    void reload();
+                  }}
+                />
+              </View>
+            ) : null}
 
-        {attention.length > 0 ? <AttentionRow attention={attention} /> : null}
+            <StaggerItem index={next()}>
+              <BalanceCard data={data} bank={bank} />
+            </StaggerItem>
 
-        <BearingCards
-          facts={facts}
-          spine={spineState}
-          trend={facts.trend}
-          locale={locale}
-        />
+            {data.empty ? (
+              <StaggerItem index={next()}>
+                <SetUpCard />
+              </StaggerItem>
+            ) : null}
+
+            {!data.empty && period !== "future" ? (
+              <StaggerItem index={next()}>
+                <SpentCard data={data} />
+              </StaggerItem>
+            ) : null}
+
+            {!past && data.upcoming ? (
+              <StaggerItem index={next()}>
+                <UpcomingCard data={data} />
+              </StaggerItem>
+            ) : null}
+
+            {current &&
+            (data.run !== null ||
+              data.goals.length > 0 ||
+              data.invested !== null) ? (
+              <StaggerItem index={next()}>
+                <MomentumCard data={data} />
+              </StaggerItem>
+            ) : null}
+
+            {data.spending.total > 0 ? (
+              <StaggerItem index={next()}>
+                <WhereItWentCard data={data} />
+              </StaggerItem>
+            ) : null}
+
+            {read && read.year === year && read.month === month && !stale ? (
+              <StaggerItem index={next()}>
+                <View className="rounded-card border border-border bg-card/70 p-card">
+                  <MonthRead
+                    year={year}
+                    month={month}
+                    monthLabel={read.monthLabel}
+                    read={read.read}
+                    freshness={read.freshness}
+                    facts={read.facts}
+                    readFacts={read.readFacts}
+                    readLocale={read.readLocale}
+                    writesLeft={read.writesLeft}
+                    writable={read.configured}
+                    writerBrand={read.writerBrand}
+                    readModel={read.readModel}
+                    onWritten={() => {
+                      void reloadRead();
+                    }}
+                  />
+                </View>
+              </StaggerItem>
+            ) : null}
+          </View>
+        ) : error ? (
+          <Text className="text-destructive">{resolveMessage(t, error)}</Text>
+        ) : (
+          <ScreenSkeleton />
+        )}
       </ScrollView>
     </Screen>
   );

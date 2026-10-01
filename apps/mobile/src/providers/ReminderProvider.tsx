@@ -98,7 +98,11 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
       try {
         if (force || (await dueForSync())) {
           const templates = await getRecurringTemplates(id);
-          await syncRecurringReminders(templates, format.current);
+          await syncRecurringReminders(
+            templates,
+            format.current,
+            language.current,
+          );
           await markSynced();
         }
 
@@ -168,5 +172,5 @@ async function checkBreaches(
     }));
 
   const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-  await notifyBudgetBreaches(breaches, monthKey, formatAmount);
+  await notifyBudgetBreaches(breaches, monthKey, formatAmount, locale);
 }

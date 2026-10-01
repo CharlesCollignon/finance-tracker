@@ -3,7 +3,6 @@ import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import type { AttentionItem } from "@finance/core/attention";
-import { PHONE_PATHS } from "@finance/core/bearing-tiles";
 
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
@@ -14,20 +13,11 @@ import { useThemeColors } from "@/theme/useThemeColors";
 /**
  * The one thing most worth doing next, and how many others are waiting.
  *
- * Lifted out of `Spine` because the reader who needs it most never reached
- * `Spine` at all: `(tabs)/index.tsx` returns its `thin` empty state before
- * the spine mounts, and `thin` is what somebody who has just finished
- * onboarding looks like — and they can still have something waiting, such
- * as a first balance to enter. It was being built and discarded for them.
- *
- * Only the row moved. A headline and a ring over an account with nothing in
- * it would be worse than nothing: the headline falls back to the month's
- * plain arithmetic, which on a new account is a hero-sized zero, and the
- * ring would be dark — two statements about a position nobody has taken
- * yet. This row states no figure about the account at all.
- *
- * Renders nothing when nothing is waiting, for the same reason
- * `buildAttention` builds no "all clear" item.
+ * At the top of Le point, as on the web's Bearing: one line naming the most
+ * useful thing to do and linking to where it is done. It states no figure
+ * about the account, so it is right even on a first visit, and renders
+ * nothing when nothing is waiting — `buildAttention` builds no "all clear"
+ * item.
  */
 export function AttentionRow({
   attention,
@@ -86,28 +76,13 @@ export function AttentionRow({
 /**
  * Where an attention row's action leads, on the phone.
  *
- * `buildAttention`'s `href`s are a web route from a fixed, closed set of
- * five (`/transactions`, `/transactions?review=inbox`, `/budgets` twice,
- * `/recurring`) — a different vocabulary from a bearing tile's, and NOT
- * covered by `phoneHref` from `@finance/core/bearing-tiles`: that function
- * falls through to the raw href for anything not in its own table, which is
- * the exact silent pass-through that shipped 15 dead phone links on the
- * predecessor plan, and its table is documented as a translation of the
- * *tile* catalogue's own paths, not a general web-to-phone router. So this
- * checks the attention set by hand against `apps/mobile/src/app/(tabs)/`:
- * `transactions.tsx` and `recurring.tsx` are real tabs and answer
- * `/transactions`, `/transactions?review=inbox` and `/recurring` unchanged;
- * there is no `budgets` route at all, and its answer — the caps, the close
- * and the ready-to-close prompt this item is about — lives on
- * `planning.tsx`.
- *
- * *Which* hrefs get redirected is this function's own, separately-verified
- * judgement — the four-way check above. *Where* `/budgets` redirects to is
- * not: that is one fact about this app's route topology, already owned by
- * `PHONE_PATHS["/budgets"]` in `bearing-tiles.ts`, so this reads it from
- * there rather than retyping `"/planning"` as a second literal that table's
- * own future edits would have no way to reach.
+ * `buildAttention`'s `href`s are web routes from a closed set of five
+ * (`/transactions`, `/transactions?review=inbox`, `/budgets` twice,
+ * `/recurring`). `transactions.tsx` and `recurring.tsx` are real tabs and
+ * answer three of them unchanged; there is no `budgets` route on the phone,
+ * and its answer — the caps, the close and the ready-to-close prompt — lives
+ * on `planning.tsx`.
  */
 function attentionHref(href: string): string {
-  return href === "/budgets" ? PHONE_PATHS["/budgets"] : href;
+  return href === "/budgets" ? "/planning" : href;
 }

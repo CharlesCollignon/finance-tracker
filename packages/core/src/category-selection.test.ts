@@ -39,6 +39,7 @@ describe("verifyCategorySelection", () => {
     const verdict = verifyCategorySelection(
       { picks: [{ id: "drift:b" }, { id: "drift:a" }] },
       findings,
+      "en",
     );
 
     expect(verdict.ok).toBe(true);
@@ -52,6 +53,7 @@ describe("verifyCategorySelection", () => {
     const verdict = verifyCategorySelection(
       { picks: [{ id: "drift:invented" }, { id: "drift:a" }] },
       findings,
+      "en",
     );
 
     expect(verdict.ok && verdict.selection.picks.map((p) => p.id)).toEqual([
@@ -63,6 +65,7 @@ describe("verifyCategorySelection", () => {
     const verdict = verifyCategorySelection(
       { picks: [{ id: "drift:a", remark: "up by 300 a month" }] },
       findings,
+      "en",
     );
 
     const pick = verdict.ok ? verdict.selection.picks[0] : null;
@@ -75,6 +78,7 @@ describe("verifyCategorySelection", () => {
     const verdict = verifyCategorySelection(
       { picks: [{ id: "nope" }] },
       findings,
+      "en",
     );
 
     expect(verdict.ok).toBe(false);
@@ -84,6 +88,7 @@ describe("verifyCategorySelection", () => {
     const verdict = verifyCategorySelection(
       { picks: [{ id: "drift:a", remark: "nearly a third of what goes out" }] },
       findings,
+      "en",
     );
 
     const pick = verdict.ok ? verdict.selection.picks[0] : null;
@@ -95,6 +100,7 @@ describe("verifyCategorySelection", () => {
     const verdict = verifyCategorySelection(
       { picks: [{ id: "drift:b", remark: "the one you can act on" }] },
       findings,
+      "en",
     );
 
     expect(verdict.ok && verdict.selection.picks[0]?.remark).toBe(
@@ -107,6 +113,7 @@ describe("verifyCategorySelection", () => {
     const verdict = verifyCategorySelection(
       { picks: [{ id: "drift:a" }, { id: "drift:a" }, { id: "drift:b" }] },
       findings,
+      "en",
     );
 
     expect(verdict.ok && verdict.selection.picks.map((p) => p.id)).toEqual([
@@ -116,10 +123,10 @@ describe("verifyCategorySelection", () => {
   });
 
   it("refuses an answer that is not the shape asked for", () => {
-    expect(verifyCategorySelection({ order: ["drift:a"] }, findings).ok).toBe(
-      false,
-    );
-    expect(verifyCategorySelection(null, findings).ok).toBe(false);
+    expect(
+      verifyCategorySelection({ order: ["drift:a"] }, findings, "en").ok,
+    ).toBe(false);
+    expect(verifyCategorySelection(null, findings, "en").ok).toBe(false);
   });
 });
 
@@ -143,7 +150,9 @@ describe("applySelection", () => {
 
 describe("findingsDigest", () => {
   it("is the same for the same findings, whatever order they arrive in", () => {
-    expect(findingsDigest(findings)).toBe(findingsDigest([...findings].reverse()));
+    expect(findingsDigest(findings)).toBe(
+      findingsDigest([...findings].reverse()),
+    );
   });
 
   it("moves when a weight moves", () => {

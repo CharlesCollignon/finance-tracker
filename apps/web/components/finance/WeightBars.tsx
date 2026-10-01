@@ -1,11 +1,15 @@
 "use client";
 
+import { useLocale } from "@/lib/locale-context";
 import { useId, useState } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
 import { MICRO } from "@/lib/type-scale";
 import { ICON } from "@/lib/icon-scale";
+import { formatPercentLabel } from "@finance/core/constants";
+import { INTL_LOCALES, type Locale } from "@finance/core/i18n/locale";
+import { translator } from "@finance/core/i18n/t";
 
 export interface WeightBarRow {
   id: string;
@@ -72,6 +76,7 @@ export function WeightBars({
   hideRestLabel,
   className,
 }: WeightBarsProps) {
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const restId = useId();
 
@@ -137,7 +142,7 @@ export function WeightBars({
                 </span>
               </span>
               <span className="shrink-0 text-sm font-semibold tabular-nums">
-                {formatShare(restWeight)}
+                {formatShare(restWeight, locale)}
               </span>
             </div>
             <Bar weight={restWeight} largest={largest} />
@@ -160,6 +165,7 @@ export function WeightBars({
 }
 
 function Row({ row, largest }: { row: WeightBarRow; largest: number }) {
+  const locale = useLocale();
   return (
     <li className="flex flex-col gap-1">
       <div className="flex min-w-0 items-baseline justify-between gap-3">
@@ -177,7 +183,7 @@ function Row({ row, largest }: { row: WeightBarRow; largest: number }) {
           <span className="min-w-0 truncate text-sm">{row.label}</span>
         </span>
         <span className="shrink-0 text-sm font-semibold tabular-nums">
-          {formatShare(row.weight)}
+          {formatShare(row.weight, locale)}
           {row.detail ? (
             <span
               className={cn(MICRO, "ml-2 font-normal text-muted-foreground")}
@@ -218,10 +224,14 @@ function Bar({ weight, largest }: { weight: number; largest: number }) {
  * Below a tenth of a percent it reads as "<0.1%" rather than "0.0%", which
  * would say the holding is not there.
  */
-function formatShare(weight: number): string {
+function formatShare(weight: number, locale: Locale): string {
   const percent = weight * 100;
   if (percent > 0 && percent < 0.1) {
-    return "<0.1%";
+    return `<${formatPercentLabel(0.1, locale)}`;
   }
-  return `${percent.toFixed(percent < 10 ? 1 : 0)}%`;
+  return translator(locale)("units.percent", {
+    value: new Intl.NumberFormat(INTL_LOCALES[locale], {
+      maximumFractionDigits: percent < 10 ? 1 : 0,
+    }).format(percent),
+  });
 }

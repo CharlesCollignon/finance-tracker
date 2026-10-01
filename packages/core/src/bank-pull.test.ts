@@ -253,25 +253,35 @@ describe("unattendedUsedOn", () => {
 
 describe("describePullAge", () => {
   it("says never when nothing has been pulled", () => {
-    expect(describePullAge(null, NOW)).toBe("never");
+    expect(describePullAge(null, NOW, "en")).toBe("never");
   });
 
   it("says just now rather than zero minutes", () => {
-    expect(describePullAge("2026-09-04T11:59:31.000Z", NOW)).toBe("just now");
+    expect(describePullAge("2026-09-04T11:59:31.000Z", NOW, "en")).toBe(
+      "just now",
+    );
   });
 
   it("counts minutes, then hours, then days", () => {
-    expect(describePullAge("2026-09-04T11:40:00.000Z", NOW)).toBe("20 min ago");
-    expect(describePullAge("2026-09-04T11:00:00.000Z", NOW)).toBe("1 hour ago");
-    expect(describePullAge("2026-09-04T07:00:00.000Z", NOW)).toBe(
+    expect(describePullAge("2026-09-04T11:40:00.000Z", NOW, "en")).toBe(
+      "20 min ago",
+    );
+    expect(describePullAge("2026-09-04T11:00:00.000Z", NOW, "en")).toBe(
+      "1 hour ago",
+    );
+    expect(describePullAge("2026-09-04T07:00:00.000Z", NOW, "en")).toBe(
       "5 hours ago",
     );
-    expect(describePullAge("2026-09-03T11:00:00.000Z", NOW)).toBe("yesterday");
-    expect(describePullAge("2026-08-30T11:00:00.000Z", NOW)).toBe("5 days ago");
+    expect(describePullAge("2026-09-03T11:00:00.000Z", NOW, "en")).toBe(
+      "yesterday",
+    );
+    expect(describePullAge("2026-08-30T11:00:00.000Z", NOW, "en")).toBe(
+      "5 days ago",
+    );
   });
 
   it("reads an unparseable instant as never", () => {
-    expect(describePullAge("not a date", NOW)).toBe("never");
+    expect(describePullAge("not a date", NOW, "en")).toBe("never");
   });
 });
 

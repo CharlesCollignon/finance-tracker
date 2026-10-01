@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 
-import { formatShortDate } from "@finance/core/constants";
+import { parseTypedAmount } from "@finance/core/amount-input";
+import { formatPercentLabel, formatShortDate } from "@finance/core/constants";
 import {
   runwayDaysAdded,
   type MonthCloseResult,
@@ -18,6 +19,9 @@ import {
   previewMonthCloseFor,
   recordMonthClose,
 } from "@/lib/mutations";
+import { readCashBalance } from "@/lib/queries";
+import { toTypedAmount } from "@/lib/typed-amount";
+import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -83,23 +87,66 @@ export function MonthCloseSheet({
 }: MonthCloseSheetProps) {
   const locale = useLocale();
   const t = useT();
+  const { user } = useAuth();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
   const [balance, setBalance] = useState("");
   const [stage, setStage] = useState<Stage>("entering");
   const [result, setResult] = useState<MonthCloseResult | null>(null);
   const [pending, setPending] = useState(false);
+  const [fromStatement, setFromStatement] = useState(false);
+  // Whether the reader has typed anything since the sheet opened, which a
+  // late-arriving statement reading must never overwrite.
+  const typed = useRef(false);
+
+  /*
+   * The web asks the bank for today's balance when its sheet opens. The phone
+   * cannot reach the bank, but it can read the stored statement — and for the
+   * reading day itself, which is the date the question is about, rather than
+   * for today. Only a complete reading fills the field: a sum missing one of
+   * the counted accounts is not a balance. Anything the reader has already
+   * typed wins.
+   */
+  useEffect(() => {
+    if (!open || stage !== "entering" || !user) {
+      return;
+    }
+    let live = true;
+    void readCashBalance(user.id, observeOn)
+      .then((cash) => {
+        if (!live || !cash?.ok || typed.current) {
+          return;
+        }
+        setBalance(toTypedAmount(cash.total, locale, 2));
+        setFromStatement(true);
+      })
+      .catch(() => {
+        // An empty field is the ordinary way in; nothing to say.
+      });
+    return () => {
+      live = false;
+    };
+  }, [open, stage, user, observeOn, locale]);
 
   function dismiss() {
     onOpenChange(false);
     setBalance("");
     setStage("entering");
     setResult(null);
+    setFromStatement(false);
+    typed.current = false;
   }
 
-  const parsedBalance = Number(balance.replace(",", "."));
-  const balanceIsUsable =
-    balance.trim() !== "" && Number.isFinite(parsedBalance);
+  /*
+   * `Number(balance.replace(",", "."))` rejected every shape the app's own
+   * formatter prints over a thousand — "1 234,56" kept its space and came
+   * back NaN — so the button simply never enabled. `parseTypedAmount` reads
+   * either convention, and returns null so an unreadable entry can say so.
+   */
+  const parsed = parseTypedAmount(balance);
+  const parsedBalance = parsed ?? 0;
+  const balanceIsUsable = parsed !== null;
+  const balanceIsUnreadable = balance.trim() !== "" && parsed === null;
 
   async function check() {
     setPending(true);
@@ -190,15 +237,37 @@ export function MonthCloseSheet({
                   <Text className="text-sm font-medium">
                     {t("monthClose.balance")}
                   </Text>
+                  {fromStatement ? (
+                    <Text variant="muted" className="text-xs">
+                      {t("planScreen.filledFromStatement", {
+                        date: formatShortDate(observeOn, locale),
+                      })}
+                    </Text>
+                  ) : null}
                   <Input
                     keyboardType="decimal-pad"
-                    placeholder="2400.50"
+                    placeholder={t("monthClose.balancePlaceholder")}
                     value={balance}
-                    onChangeText={setBalance}
+                    onChangeText={(value) => {
+                      typed.current = true;
+                      setBalance(value);
+                      setFromStatement(false);
+                    }}
+                    invalid={balanceIsUnreadable}
                     accessibilityLabel={t("monthClose.balanceOn", {
-                      date: observeOn,
+                      date: formatShortDate(observeOn, locale),
                     })}
                   />
+                  {balanceIsUnreadable ? (
+                    <Text
+                      accessibilityLiveRegion="polite"
+                      className="text-sm text-destructive"
+                    >
+                      {t("monthClose.balanceUnreadable", {
+                        example: t("monthClose.balancePlaceholder"),
+                      })}
+                    </Text>
+                  ) : null}
                 </View>
 
                 <Button
@@ -240,7 +309,9 @@ export function MonthCloseSheet({
                             amount: formatEuro(result.unexplainedCredit ?? 0),
                           })
                         : result.keptRate !== null
-                          ? t("monthClose.keptRate", { rate: result.keptRate })
+                          ? t("monthClose.keptRate", {
+                              rate: formatPercentLabel(result.keptRate, locale),
+                            })
                           : t("monthClose.keptRateUnknown")}
                   </Text>
                   {days !== null ? (

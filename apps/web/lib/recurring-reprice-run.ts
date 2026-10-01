@@ -8,6 +8,7 @@ import {
   writeReprices,
 } from "@/lib/recurring-apply";
 import type { Database } from "@finance/core/types/database";
+import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 
 type Client = SupabaseClient<Database>;
 
@@ -42,7 +43,12 @@ export async function repriceEveryUser(
     .eq("pricing_type", "shares");
 
   if (templateError) {
-    return { users: 0, repriced: 0, refreshed: 0, failures: [templateError.message] };
+    return {
+      users: 0,
+      repriced: 0,
+      refreshed: 0,
+      failures: [templateError.message],
+    };
   }
 
   const userIds = new Set(
@@ -116,7 +122,7 @@ export async function repriceEveryUser(
           existingByKey,
           year,
           month,
-          { quotes: quoteSource, skippedKeys, today },
+          { locale: DEFAULT_LOCALE, quotes: quoteSource, skippedKeys, today },
         );
 
         const result = await writeReprices(supabase, userId, plan.toReprice);

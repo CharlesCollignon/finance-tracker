@@ -106,7 +106,8 @@ export async function refreshFromBank(): Promise<BankRefreshOutcome> {
       return {
         pulled: false,
         failed: true,
-        message: body?.error ?? "Could not reach your bank just now.",
+        // A message key; the toast resolves it to the reader's language.
+        message: body?.error ?? "refresh.unreachable",
         freshness: null,
       };
     }
@@ -125,7 +126,7 @@ export async function refreshFromBank(): Promise<BankRefreshOutcome> {
     return {
       pulled: false,
       failed: true,
-      message: "Could not reach your bank just now.",
+      message: "refresh.unreachable",
       freshness: null,
     };
   } finally {

@@ -141,6 +141,7 @@ export function WalletPlanPanel({
             {allocation.rows.map((row) => {
               const rate = formatAnnualRate(
                 returnByWallet.get(row.walletId)?.rate ?? null,
+                locale,
               );
 
               return (
@@ -149,7 +150,7 @@ export function WalletPlanPanel({
                     <Text className="text-sm font-medium">
                       {INVESTMENT_WALLET_LABELS[row.walletId]}
                     </Text>
-                    <PrivateAmount className="font-mono text-sm">
+                    <PrivateAmount className="font-sans tabular-nums text-sm">
                       {formatEuro(row.value)}
                     </PrivateAmount>
                   </View>
@@ -170,10 +171,12 @@ export function WalletPlanPanel({
 
                   <View className="flex-row flex-wrap items-center justify-between gap-x-3">
                     <Text variant="muted" className="text-xs">
-                      {formatWeight(row.currentWeight)}
                       {row.targetWeight !== null
-                        ? ` of ${formatWeight(row.targetWeight)} target`
-                        : ""}
+                        ? t("position.shareNowTarget", {
+                            share: formatWeight(row.currentWeight, locale),
+                            target: formatWeight(row.targetWeight, locale),
+                          })
+                        : formatWeight(row.currentWeight, locale)}
                       {rate ? ` · ${rate}` : ""}
                     </Text>
                     {row.status === "over" || row.status === "under" ? (
@@ -185,9 +188,12 @@ export function WalletPlanPanel({
                             : "text-muted-foreground",
                         )}
                       >
-                        {`${row.status === "over" ? "+" : ""}${Math.round(
-                          row.driftPoints ?? 0,
-                        )} pts`}
+                        {t(
+                          row.status === "over"
+                            ? "position.pointsAbove"
+                            : "position.pointsBelow",
+                          { count: Math.abs(Math.round(row.driftPoints ?? 0)) },
+                        )}
                       </Text>
                     ) : null}
                   </View>
@@ -200,25 +206,29 @@ export function WalletPlanPanel({
         {!editing && allocation.needsRebalance && split.length > 0 ? (
           <View className="border-t border-border pt-3">
             <Text variant="muted" className="text-sm">
-              {`Your next ${formatEuro(monthlyContribution)} would close the gap fastest as `}
+              {`${t("position.nextContributionBefore")} `}
+              <PrivateAmount className="text-sm text-foreground">
+                {formatEuro(monthlyContribution)}
+              </PrivateAmount>
+              {` ${t("position.nextContributionAfter")} `}
               {split.map((row, index) => (
                 <Text key={row.walletId} className="text-sm">
                   {index > 0 ? ", " : ""}
-                  <Text className="font-mono font-semibold text-foreground">
+                  <PrivateAmount className="text-sm font-semibold text-foreground">
                     {formatEuro(row.amount)}
-                  </Text>
-                  {` to ${INVESTMENT_WALLET_LABELS[row.walletId]}`}
+                  </PrivateAmount>
+                  {` ${t("position.splitItemTo", {
+                    wallet: INVESTMENT_WALLET_LABELS[row.walletId],
+                  })}`}
                 </Text>
               ))}
-              {" — rebalancing by contribution rather than by selling."}
             </Text>
           </View>
         ) : null}
 
         {!editing && allocation.targetCoverage === 0 ? (
           <Text variant="muted" className="border-t border-border pt-3 text-sm">
-            Set a target split to see how far the portfolio has drifted, and
-            where the next contribution should go.
+            {t("position.noTargetHint")}
           </Text>
         ) : null}
       </Card>
@@ -229,21 +239,23 @@ export function WalletPlanPanel({
 
           <View className="flex-row flex-wrap items-baseline justify-between gap-2">
             <Text variant="muted" className="text-sm">
-              {"Paid in "}
-              <PrivateAmount className="font-mono text-sm text-foreground">
+              {`${t("position.peaPaidIn")} `}
+              <PrivateAmount className="text-sm text-foreground">
                 {formatEuro(peaStatus.contributed)}
               </PrivateAmount>
-              {` of ${formatEuro(peaStatus.ceiling)}`}
+              {` ${t("position.peaOfCeiling", {
+                ceiling: formatEuro(peaStatus.ceiling),
+              })}`}
             </Text>
             <Text
               className={cn(
-                "font-mono text-sm",
+                "font-sans tabular-nums text-sm",
                 peaStatus.nearCeiling
                   ? "text-destructive"
                   : "text-muted-foreground",
               )}
             >
-              {`${formatEuro(peaStatus.headroom)} left`}
+              {`${formatEuro(peaStatus.headroom)} ${t("position.peaRoomLeft")}`}
             </Text>
           </View>
 
@@ -264,7 +276,7 @@ export function WalletPlanPanel({
           </View>
 
           <Text variant="muted" className="text-xs">
-            Only cash paid in counts against the ceiling — growth does not.
+            {t("position.peaCashOnly")}
           </Text>
 
           <PeaOpenedField
@@ -338,7 +350,9 @@ function TargetEditor({
                 )
               }
               keyboardType="number-pad"
-              accessibilityLabel={`${INVESTMENT_WALLET_LABELS[row.walletId]} target percent`}
+              accessibilityLabel={t("position.targetPercentFor", {
+                wallet: INVESTMENT_WALLET_LABELS[row.walletId],
+              })}
               className="flex-1 text-right"
             />
             <Text variant="muted" className="text-sm">
@@ -350,11 +364,15 @@ function TargetEditor({
 
       <Text
         className={cn(
-          "font-mono text-sm",
+          "font-sans tabular-nums text-sm",
           total === 100 ? "text-muted-foreground" : "text-destructive",
         )}
       >
-        {`${total}% allocated${total === 100 ? "" : " — must total 100%"}`}
+        {total === 100
+          ? t("position.targetTotalComplete")
+          : total < 100
+            ? t("position.targetTotalShort", { left: 100 - total })
+            : t("position.targetTotalOver", { over: total - 100 })}
       </Text>
 
       <Button
@@ -429,7 +447,7 @@ function PeaOpenedField({
           <Text variant="muted" className="text-sm">
             {hint ?? t("position.peaOpenedHint")}
             <Text className="text-sm font-medium text-primary-ink">
-              {openedOn ? "  Change" : "  Add"}
+              {`  ${openedOn ? t("common.change") : t("common.add")}`}
             </Text>
           </Text>
         </Pressable>

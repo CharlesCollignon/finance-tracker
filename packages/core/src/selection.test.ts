@@ -170,7 +170,10 @@ describe("pruneSelection", () => {
 
 describe("describeSelectionDeletion", () => {
   function describe_(ids: string[]) {
-    return describeSelectionDeletion(summarizeSelection(rows, new Set(ids)));
+    return describeSelectionDeletion(
+      summarizeSelection(rows, new Set(ids)),
+      "en",
+    );
   }
 
   it("says nothing when nothing is selected", () => {
@@ -327,19 +330,26 @@ describe("describeSelectionMove", () => {
     const effect = planSelectionMove(rows, new Set(["a"]), GROCERIES);
 
     expect(
-      describeSelectionMove(effect, summaryOf(["a"]), "Groceries"),
+      describeSelectionMove(effect, summaryOf(["a"]), "Groceries", "en"),
     ).toBeNull();
   });
 
   it("says nothing for an empty selection", () => {
     const effect = planSelectionMove(rows, new Set(), BROKER);
 
-    expect(describeSelectionMove(effect, summaryOf([]), "Broker")).toBeNull();
+    expect(
+      describeSelectionMove(effect, summaryOf([]), "Broker", "en"),
+    ).toBeNull();
   });
 
   it("warns that past months will change when the kind changes", () => {
     const effect = planSelectionMove(rows, new Set(["a"]), BROKER);
-    const sentence = describeSelectionMove(effect, summaryOf(["a"]), "Broker");
+    const sentence = describeSelectionMove(
+      effect,
+      summaryOf(["a"]),
+      "Broker",
+      "en",
+    );
 
     expect(sentence).toContain("unrecorded spending");
   });
@@ -356,6 +366,7 @@ describe("describeSelectionMove", () => {
       effect,
       summaryOf(["old"], history),
       "Groceries",
+      "en",
     );
 
     expect(sentence).toContain("CARREFOUR");
@@ -379,6 +390,7 @@ describe("describeSelectionMove", () => {
       effect,
       summaryOf(["taught", "old"], history),
       "Groceries",
+      "en",
     );
 
     expect(sentence).toContain("CARREFOUR");

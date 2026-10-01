@@ -20,13 +20,13 @@ import {
   budgetSchema,
   savingsGoalSchema,
   tagSchema,
-  walletTransferSchema,
 } from "@finance/core/validations/phase4";
 import {
   getCurrentMonth,
   getMonthBounds,
   shiftIsoDate,
   todayIsoLocal,
+  formatLongDate,
 } from "@finance/core/constants";
 import {
   monthColumnValue,
@@ -73,6 +73,8 @@ import type {
 
 import { quoteSource } from "@/lib/quote-source";
 import { supabase } from "@/lib/supabase";
+import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
+import { translator } from "@finance/core/i18n/t";
 
 type ActionResult = {
   error?: string;
@@ -224,7 +226,7 @@ export async function saveInvestmentPosition(input: {
   }
 
   if (!Number.isFinite(input.initialBalance) || input.initialBalance < 0) {
-    return { error: "Enter a valid starting balance" };
+    return { error: "actions.invalidStartingBalance" };
   }
 
   const { error } = await supabase
@@ -271,10 +273,10 @@ export async function removeInvestmentPosition(
 /** Maps Postgres constraint failures onto something a user can act on. */
 function friendlyCategoryError(message: string): string {
   if (message.includes("foreign key")) {
-    return "This category is used by transactions or recurring items. Archive it instead.";
+    return "actions.categoryInUse";
   }
   if (message.includes("duplicate key")) {
-    return "A category with this name and type already exists.";
+    return "actions.categoryExists";
   }
   return message;
 }
@@ -380,7 +382,7 @@ export async function unskipRecurringOccurrence(
     !/^[0-9a-f-]{36}$/i.test(templateId) ||
     !/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)
   ) {
-    return { error: "Invalid occurrence" };
+    return { error: "errors.invalidInput" };
   }
 
   const { error } = await supabase
@@ -428,7 +430,7 @@ export async function setTransactionTags(
     .maybeSingle();
 
   if (!tx) {
-    return { error: "Transaction not found" };
+    return { error: "actions.transactionNotFound" };
   }
 
   await supabase
@@ -578,10 +580,7 @@ export async function upsertRecurringTemplate(
       };
     } catch (error) {
       return {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Could not price this instrument.",
+        error: error instanceof Error ? error.message : "actions.couldNotPrice",
       };
     }
   } else {
@@ -679,7 +678,7 @@ export async function upsertRecurringTemplate(
       .select("id")
       .single();
     if (error || !inserted) {
-      return { error: error?.message ?? "Could not save recurring item" };
+      return { error: error?.message ?? "actions.couldNotSaveRecurring" };
     }
     templateId = inserted.id;
   }
@@ -1047,7 +1046,7 @@ async function fillMonth(
     existingByKey,
     year,
     month,
-    { quotes: quoteSource, skippedKeys, today, dueBy },
+    { locale: DEFAULT_LOCALE, quotes: quoteSource, skippedKeys, today, dueBy },
   );
 
   let created = 0;
@@ -1208,7 +1207,7 @@ async function followTemplate(
       existingByKey,
       year,
       month,
-      { quotes: quoteSource, skippedKeys, today },
+      { locale: DEFAULT_LOCALE, quotes: quoteSource, skippedKeys, today },
     );
 
     failures.push(
@@ -1363,7 +1362,7 @@ export async function fillThisMonth(): Promise<{
     return {
       created: 0,
       error:
-        error instanceof Error ? error.message : "Could not fill this month.",
+        error instanceof Error ? error.message : "actions.couldNotFillMonth",
     };
   }
 }
@@ -1392,7 +1391,7 @@ export async function recordPlannedNow(
     !ISO_DATE.test(occurredOn) ||
     occurredOn <= today
   ) {
-    return { error: "Invalid occurrence" };
+    return { error: "errors.invalidInput" };
   }
 
   const { data: template } = await supabase
@@ -1404,7 +1403,7 @@ export async function recordPlannedNow(
     .maybeSingle();
 
   if (!template) {
-    return { error: "Recurring template not found" };
+    return { error: "actions.recurringNotFound" };
   }
 
   const skipError = await skipOccurrences(userId, [
@@ -1428,7 +1427,7 @@ export async function recordPlannedNow(
     .single();
 
   if (error || !inserted) {
-    return { error: error?.message ?? "Could not record it" };
+    return { error: error?.message ?? "actions.couldNotRecord" };
   }
 
   return { success: true, transactionId: inserted.id as string };
@@ -1450,7 +1449,7 @@ export async function undoRecordPlanned(
     !UUID.test(templateId) ||
     !ISO_DATE.test(occurredOn)
   ) {
-    return { error: "Invalid occurrence" };
+    return { error: "errors.invalidInput" };
   }
 
   const { error } = await supabase
@@ -1489,7 +1488,7 @@ export async function skipPlannedOccurrence(
   }
 
   if (!UUID.test(templateId) || !ISO_DATE.test(occurredOn)) {
-    return { error: "Invalid occurrence" };
+    return { error: "errors.invalidInput" };
   }
 
   const { data: template } = await supabase
@@ -1500,7 +1499,7 @@ export async function skipPlannedOccurrence(
     .maybeSingle();
 
   if (!template) {
-    return { error: "Recurring template not found" };
+    return { error: "actions.recurringNotFound" };
   }
 
   const skipError = await skipOccurrences(userId, [
@@ -1526,7 +1525,7 @@ export async function updateProfile(fullName: string): Promise<ActionResult> {
   if (error) {
     return { error: error.message };
   }
-  return { success: true, message: "Profile updated" };
+  return { success: true, message: "actions.profileUpdated" };
 }
 
 export async function deleteAllUserData(
@@ -1539,7 +1538,7 @@ export async function deleteAllUserData(
 
   const parsed = deleteConfirmSchema.safeParse({ confirmation });
   if (!parsed.success) {
-    return { error: "Type DELETE to confirm" };
+    return { error: "errors.deleteConfirmation" };
   }
 
   const { data: txs } = await supabase
@@ -1602,7 +1601,7 @@ export async function deleteAllUserData(
     return { error: categoriesError.message };
   }
 
-  return { success: true, message: "All data deleted" };
+  return { success: true, message: "profile.dataDeleted" };
 }
 
 export async function upsertBudget(input: {
@@ -1653,51 +1652,6 @@ export async function deleteBudget(id: string): Promise<ActionResult> {
   }
   const { error } = await supabase
     .from("budgets")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", userId);
-  if (error) {
-    return { error: error.message };
-  }
-  return { success: true };
-}
-
-export async function upsertWalletTransfer(input: {
-  toWallet: WalletId;
-  amount: number;
-  occurredOn: string;
-  note?: string;
-}): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = walletTransferSchema.safeParse(input);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const { error } = await supabase.from("wallet_transfers").insert({
-    user_id: userId,
-    to_wallet: parsed.data.toWallet,
-    amount: parsed.data.amount,
-    occurred_on: parsed.data.occurredOn,
-    note: parsed.data.note ?? null,
-  });
-  if (error) {
-    return { error: error.message };
-  }
-  return { success: true };
-}
-
-export async function deleteWalletTransfer(id: string): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-  const { error } = await supabase
-    .from("wallet_transfers")
     .delete()
     .eq("id", id)
     .eq("user_id", userId);
@@ -1917,7 +1871,9 @@ export async function saveWalletTargets(
 
   const parsed = walletTargetsSchema.safeParse({ targets });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid targets" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const total = parsed.data.targets.reduce(
@@ -1927,7 +1883,7 @@ export async function saveWalletTargets(
 
   // Anything else would make every wallet look permanently off-target.
   if (parsed.data.targets.length > 0 && Math.abs(total - 1) > 0.005) {
-    return { error: "Targets must add up to 100%" };
+    return { error: "errors.targetsMustTotal100" };
   }
 
   const { error } = await supabase.from("wallet_plans").upsert(
@@ -1968,7 +1924,9 @@ export async function importTransactions(
 
   const parsed = importTransactionsSchema.safeParse({ rows });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid import" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const { error } = await supabase.from("transactions").insert(
@@ -2003,7 +1961,9 @@ export async function deleteTransactions(
 
   const parsed = deleteTransactionsSchema.safeParse({ ids });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid selection" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const skipError = await skipWhatTemplatesWrote(userId, parsed.data.ids);
@@ -2043,7 +2003,9 @@ export async function moveTransactions(
 
   const parsed = moveTransactionsSchema.safeParse({ ids, categoryId });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid selection" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const { data: category, error: categoryError } = await supabase
@@ -2057,7 +2019,7 @@ export async function moveTransactions(
     return { error: categoryError.message };
   }
   if (!category) {
-    return { error: "That category does not exist." };
+    return { error: "actions.categoryMissing" };
   }
 
   const { error, count } = await supabase
@@ -2087,7 +2049,9 @@ export async function previewMonthCloseFor(
 
   const parsed = monthCloseSchema.safeParse({ year, month, closingBalance });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid close" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   try {
@@ -2101,7 +2065,7 @@ export async function previewMonthCloseFor(
   } catch (error) {
     return {
       error:
-        error instanceof Error ? error.message : "Could not work that out.",
+        error instanceof Error ? error.message : "monthClose.couldNotWorkOut",
     };
   }
 }
@@ -2118,7 +2082,9 @@ export async function recordMonthClose(
 
   const parsed = monthCloseSchema.safeParse({ year, month, closingBalance });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid close" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const settings = await getMonthCloseSettings(userId);
@@ -2133,7 +2099,11 @@ export async function recordMonthClose(
   // window that has not finished.
   if (todayIsoLocal() < observeOn) {
     return {
-      error: `This month can be closed from ${observeOn}, once the last of its spending has landed.`,
+      // The phone's mutations have no reader's language to hand, so a
+      // message with a date in it is composed in the default one.
+      error: translator(DEFAULT_LOCALE)("actions.closeTooEarly", {
+        date: formatLongDate(observeOn, DEFAULT_LOCALE),
+      }),
     };
   }
 
@@ -2165,7 +2135,7 @@ export async function recordMonthClose(
   } catch (error) {
     return {
       error:
-        error instanceof Error ? error.message : "Could not close the month.",
+        error instanceof Error ? error.message : "monthClose.couldNotClose",
     };
   }
 }
@@ -2182,7 +2152,7 @@ export async function deleteMonthClose(
 
   const parsed = monthCloseSchema.safeParse({ year, month, closingBalance: 0 });
   if (!parsed.success) {
-    return { error: "Invalid month" };
+    return { error: "errors.invalidInput" };
   }
 
   const { error } = await supabase
@@ -2195,7 +2165,7 @@ export async function deleteMonthClose(
     return { error: error.message };
   }
 
-  return { success: true, message: "Close removed" };
+  return { success: true, message: "actions.closeRemoved" };
 }
 
 export async function updateUnrecordedCap(
@@ -2208,7 +2178,9 @@ export async function updateUnrecordedCap(
 
   const parsed = unrecordedCapSchema.safeParse({ cap });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid cap" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const { error } = await supabase.from("month_close_settings").upsert(
@@ -2226,7 +2198,7 @@ export async function updateUnrecordedCap(
 
   return {
     success: true,
-    message: parsed.data.cap === null ? "Cap removed" : "Cap set",
+    message: parsed.data.cap === null ? "plan.capRemoved" : "actions.capSet",
   };
 }
 
@@ -2238,7 +2210,9 @@ export async function updateCloseDay(closeDay: number): Promise<ActionResult> {
 
   const parsed = closeDaySchema.safeParse({ closeDay });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid day" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const { error } = await supabase.from("month_close_settings").upsert(
@@ -2254,7 +2228,7 @@ export async function updateCloseDay(closeDay: number): Promise<ActionResult> {
     return { error: error.message };
   }
 
-  return { success: true, message: "Reading day updated" };
+  return { success: true, message: "actions.readingDayUpdated" };
 }
 
 /* ------------------------------------------ charges the bank already paid */
@@ -2283,8 +2257,7 @@ function fulfilmentSchemaMissing(error: { code?: string } | null): boolean {
   );
 }
 
-const FULFILMENT_SETUP_MESSAGE =
-  "Confirming charges needs migration 023 — run it and this will work.";
+const FULFILMENT_SETUP_MESSAGE = "actions.fulfilmentSetup";
 
 /** Yes: that movement is the occurrence this template called for. */
 export async function fulfilOccurrence(
@@ -2315,7 +2288,7 @@ export async function fulfilOccurrence(
     // means this movement is already standing in for a different occurrence.
     if (error.code === "23505") {
       return {
-        error: "That movement is already accounted for by another charge",
+        error: "actions.movementTaken",
       };
     }
     return { error: error.message };
@@ -2335,7 +2308,7 @@ export async function fulfilOccurrence(
     return { error: duplicateError.message };
   }
 
-  return { success: true, message: "Counted — it is no longer forecast" };
+  return { success: true, message: "actions.counted" };
 }
 
 /** No: that is not what this charge was. */
@@ -2371,7 +2344,7 @@ export async function refuseFulfilment(
 
   // Deliberately says what it will and will not do. The refusal names the
   // pair, so a better candidate for the same occurrence is still offered.
-  return { success: true, message: "Won't suggest that pairing again" };
+  return { success: true, message: "actions.pairingDismissed" };
 }
 
 /** Take a confirmation back, and put the occurrence back in the forecast. */
@@ -2398,7 +2371,7 @@ export async function undoFulfilment(
     return { error: error.message };
   }
 
-  return { success: true, message: "Back in the forecast" };
+  return { success: true, message: "actions.backInForecast" };
 }
 
 /* ---------------------------------------------------- the review inbox */
@@ -2444,10 +2417,10 @@ export async function importFeedItem(
     .maybeSingle();
 
   if (!item) {
-    return { error: "That entry is no longer waiting" };
+    return { error: "actions.entryNoLongerWaiting" };
   }
   if (item.status !== "pending") {
-    return { error: "That entry has already been dealt with" };
+    return { error: "actions.entryAlreadyDealtWith" };
   }
 
   if (!force) {
@@ -2485,7 +2458,7 @@ export async function importFeedItem(
       return {
         success: true,
         duplicateOf: already.transactionId,
-        message: "Already in your ledger — filed against the entry you had",
+        message: "actions.alreadyInLedger",
       };
     }
   }
@@ -2503,7 +2476,7 @@ export async function importFeedItem(
     .single();
 
   if (error || !transaction) {
-    return { error: error?.message ?? "Could not add that entry" };
+    return { error: error?.message ?? "actions.couldNotAddEntry" };
   }
 
   await supabase
@@ -2512,7 +2485,7 @@ export async function importFeedItem(
     .eq("id", itemId)
     .eq("user_id", userId);
 
-  return { success: true, message: "Added" };
+  return { success: true, message: "recurringProposals.added" };
 }
 
 /**
@@ -2538,7 +2511,7 @@ export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
     return { error: error.message };
   }
 
-  return { success: true, message: "Left out" };
+  return { success: true, message: "actions.leftOut" };
 }
 
 /**
@@ -2593,10 +2566,10 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
     .maybeSingle();
 
   if (!item) {
-    return { error: "That entry is no longer here" };
+    return { error: "actions.entryNoLongerHere" };
   }
   if (item.status === "pending") {
-    return { error: "That entry is already waiting" };
+    return { error: "actions.entryAlreadyWaiting" };
   }
 
   // The feed row first: if deleting the transaction succeeded and this then
@@ -2626,5 +2599,5 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
     }
   }
 
-  return { success: true, message: "Back in the inbox" };
+  return { success: true, message: "actions.backInInbox" };
 }

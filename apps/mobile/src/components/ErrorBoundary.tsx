@@ -1,5 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { ScrollView, Text, View } from "react-native";
+import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
+import { translator } from "@finance/core/i18n/t";
 
 interface Props {
   children: ReactNode;
@@ -48,12 +50,12 @@ export class ErrorBoundary extends Component<Props, State> {
             color: "#f87171",
           }}
         >
-          {/* Untranslated on purpose, and it is the one screen where that is
-              right: this boundary sits above LocaleProvider, so if it is
-              rendering then the provider never mounted and there is no
-              language to read. The message below it is a JavaScript
-              exception, which was never in a language either. */}
-          App failed to start
+          {/* In the default language rather than the reader's: this
+              boundary sits above LocaleProvider, so if it is rendering then
+              the provider never mounted and there is no choice to read. The
+              message below it is a JavaScript exception, which was never in
+              a language at all. */}
+          {translator(DEFAULT_LOCALE)("errorPage.appFailed")}
         </Text>
         <ScrollView>
           <Text

@@ -79,13 +79,22 @@ the Next.js web app in `apps/web`, and the domain modules in `packages/core`,
 over one Supabase backend. A row added on the phone is on the other clients
 without a reconciliation step, because there is only ever one record.
 
-Surfaces here: five tabs — the bearing (`index`), transactions, recurring,
-planning and investments — with calendar, categories, import, profile,
-onboarding and the auth flow alongside them. Money reaches the ledger typed by
-the user, applied from a recurring template, or brought in by the optional
+Surfaces here: five tabs — Le point (`index`), Journal (`transactions`),
+Récurrents (`recurring`), Plan (`planning`) and Placements (`investments`), in
+English Overview, Ledger, Recurring, Plan and Investments — with the calendar
+(a view of the Journal), the look-through (a view of Placements, "Composition"),
+categories, import, profile, onboarding and the auth flow alongside them. Le
+point is the web's one-month Bearing at phone width: one month at a time,
+chosen with the month picker, its balance drawn as a curve. The month chosen on
+Le point, the Journal or the calendar is the month the other two open on, for
+as long as the app is open. A new account starts with its default categories
+named in its language ("Courses", "Salaire"…); `DEFAULT_CATEGORIES` keeps both
+names so an account seeded in English is never handed French duplicates. Money reaches the ledger typed by
+the user, written by a recurring template on its own, or brought in by the optional
 read-only bank connection or a mapped CSV export; rows the app will not file on
 its own wait in the review inbox at `?review=inbox`, the same address as on web,
-one card per shop. A user connects their bank from the phone as on the web —
+every shop at once, with what was decided lately (and its undo) kept until it
+is undone or ages out. A user connects their bank from the phone as on the web —
 see `apps/web/PRODUCT.md`: the setup sheet's steps link to their own
 open-banking.io account, and "Choose the file" picks the credentials file and
 sends it once to the web server, deleting the copy the picker made. Profile →

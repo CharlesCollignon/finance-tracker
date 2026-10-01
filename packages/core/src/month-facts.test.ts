@@ -36,6 +36,7 @@ function input(
   partial: Partial<BuildMonthFactsInput> = {},
 ): BuildMonthFactsInput {
   return {
+    locale: "en",
     year: 2026,
     month: 3,
     state: "closed",
@@ -432,21 +433,25 @@ describe("formatFact", () => {
   });
 
   it("hands money to the injected formatter, because the currency is the reader's", () => {
-    expect(formatFact(fact({ value: 412.4 }), money)).toBe("412.40 €");
-    expect(formatFact(fact({ value: 412.4 }), () => "«masked»")).toBe(
+    expect(formatFact(fact({ value: 412.4 }), money, "en")).toBe("412.40 €");
+    expect(formatFact(fact({ value: 412.4 }), () => "«masked»", "en")).toBe(
       "«masked»",
     );
   });
 
   it("writes a percent to one decimal at most", () => {
-    expect(formatFact(fact({ unit: "percent", value: 11.42 }), money)).toBe(
-      "11.4%",
+    expect(
+      formatFact(fact({ unit: "percent", value: 11.42 }), money, "en"),
+    ).toBe("11.4%");
+    expect(formatFact(fact({ unit: "percent", value: 11 }), money, "en")).toBe(
+      "11%",
     );
-    expect(formatFact(fact({ unit: "percent", value: 11 }), money)).toBe("11%");
   });
 
   it("writes a count without a currency", () => {
-    expect(formatFact(fact({ unit: "count", value: 3 }), money)).toBe("3");
+    expect(formatFact(fact({ unit: "count", value: 3 }), money, "en")).toBe(
+      "3",
+    );
   });
 });
 
@@ -457,7 +462,7 @@ describe("the reader's language", () => {
 
     expect(labels.get("income")).toBe("Argent entré");
     expect(labels.get("expenses")).toBe("Argent sorti");
-    expect(labels.get("savings")).toBe("Mis de côté");
+    expect(labels.get("savings")).toBe("Épargne et placements");
   });
 
   it("keeps the ids in English, because a stored read refers to them", () => {
@@ -495,7 +500,7 @@ describe("the reader's language", () => {
       value: 11.42,
       sense: "up-is-good" as const,
     };
-    expect(formatFact(rate, money, "fr")).toBe("11,4 %");
+    expect(formatFact(rate, money, "fr")).toBe("11,4\u00A0%");
     expect(formatFact(rate, money, "en")).toBe("11.4%");
   });
 });

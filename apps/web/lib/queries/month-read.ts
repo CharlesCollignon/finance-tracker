@@ -7,6 +7,7 @@ import { readMonthReadState } from "@/lib/month-read/store";
 import type { ReadFreshness } from "@finance/core/month-read-budget";
 import type { MonthRead } from "@finance/core/month-read";
 import type { Locale } from "@finance/core/i18n/locale";
+import { getLocale } from "@/lib/locale";
 
 type Client = SupabaseClient<Database>;
 
@@ -53,6 +54,7 @@ export async function getMonthRead(
     writtenAt: stored.writtenAt,
     locale: stored.locale,
     freshness: describeReadFreshness({
+      locale: await getLocale(),
       storedFacts: stored.facts,
       currentFacts,
       footing: readFooting(stored.read),

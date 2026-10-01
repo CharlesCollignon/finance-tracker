@@ -92,8 +92,8 @@ export function ImportView({ categories, merchants }: ImportViewProps) {
   );
 
   const categoryGroups = useMemo(
-    () => groupCategoriesByType(categories),
-    [categories],
+    () => groupCategoriesByType(categories, { locale }),
+    [categories, locale],
   );
 
   const headers = hasHeader ? (table[0] ?? []) : [];

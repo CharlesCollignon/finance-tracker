@@ -133,7 +133,7 @@ export function InvestmentPositionSheet({
               accessibilityLabel={t("position.close")}
               hitSlop={8}
             >
-              <Text variant="muted">Close</Text>
+              <Text variant="muted">{t("position.close")}</Text>
             </Pressable>
           </View>
 
@@ -143,17 +143,16 @@ export function InvestmentPositionSheet({
             showsVerticalScrollIndicator={false}
           >
             <Text className="mb-2 text-sm font-medium">
-              Starting balance (EUR)
+              {t("position.costBasis")}
             </Text>
             <Text variant="muted" className="mb-2 text-xs">
-              Counts toward invested and P/L — not updated from recurring
-              transactions.
+              {t("position.costBasisHint")}
             </Text>
             <Input
               value={initialBalance}
               onChangeText={setInitialBalance}
               keyboardType="decimal-pad"
-              placeholder="0.00"
+              placeholder="0"
               className="mb-4"
             />
 
@@ -161,7 +160,7 @@ export function InvestmentPositionSheet({
               {isCrypto ? t("position.totalBtc") : t("position.totalShares")}
             </Text>
             <Text variant="muted" className="mb-2 text-xs">
-              Needed for a live market value.
+              {isCrypto ? t("position.btcHint") : t("position.sharesHint")}
             </Text>
             <Input
               value={shareCount}
@@ -172,10 +171,10 @@ export function InvestmentPositionSheet({
             />
 
             <Text className="mb-2 text-sm font-medium">
-              Manual value (EUR, optional)
+              {t("position.brokerValue")}
             </Text>
             <Text variant="muted" className="mb-2 text-xs">
-              Overrides the market quote when set.
+              {t("position.manualValueHint")}
             </Text>
             <Input
               value={currentValue}
@@ -186,18 +185,16 @@ export function InvestmentPositionSheet({
             />
 
             <Text className="mb-2 text-sm font-medium">
-              Ongoing charge (optional)
+              {t("position.ongoingChargeLabel")}
             </Text>
             <Text variant="muted" className="mb-2 text-xs">
-              The yearly fee as a percentage — 0.20 for 0.20%. It is on the
-              fund&apos;s KID and never appears on a statement, because it is
-              taken out of the fund&apos;s value.
+              {t("position.ongoingChargeHint")}
             </Text>
             <Input
               value={ongoingCharge}
               onChangeText={setOngoingCharge}
               keyboardType="decimal-pad"
-              placeholder="e.g. 0,20"
+              placeholder={t("position.chargePlaceholder")}
               className="mb-2"
             />
             {lookupUrl ? (
@@ -210,7 +207,7 @@ export function InvestmentPositionSheet({
                 className="mb-4 self-start"
               >
                 <Text className="text-xs text-primary-ink underline">
-                  Look it up on justETF
+                  {t("position.lookUpCharge")}
                 </Text>
               </Pressable>
             ) : (
@@ -236,8 +233,7 @@ export function InvestmentPositionSheet({
               {confirmDelete ? (
                 <View className="gap-2">
                   <Text variant="muted" className="text-sm">
-                    Remove this position? Its transactions stay; only the
-                    tracked position is deleted.
+                    {t("position.removeConfirmBody")}
                   </Text>
                   <View className="flex-row gap-2">
                     <Button

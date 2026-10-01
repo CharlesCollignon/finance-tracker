@@ -26,7 +26,7 @@ import type { BearingMonth } from "@/lib/bearing/month";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { ProgressRing } from "@/components/finance/ProgressRing";
-import { amountSign } from "@/components/finance/amount-sign";
+import { amountSign } from "@finance/core/amount-sign";
 import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
 import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
 import { BankAttentionBanner } from "@/components/finance/bank/BankAttentionBanner";

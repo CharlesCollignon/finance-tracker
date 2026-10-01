@@ -13,7 +13,10 @@
  * outcome rather than a wrong drawer.
  */
 
-/** Default category names, from DEFAULT_CATEGORIES in constants. */
+/**
+ * Default category names, by their English name in DEFAULT_CATEGORIES; the
+ * feed also tries the French one (`categoryNameVariants`).
+ */
 export const MCC_CATEGORY_NAMES: Record<string, string> = {
   // Food shopping
   "5411": "Groceries",

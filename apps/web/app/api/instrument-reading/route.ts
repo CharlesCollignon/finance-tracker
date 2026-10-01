@@ -39,13 +39,13 @@ const bodySchema = z
 export async function POST(request: Request) {
   const session = await sessionFromBearer(request);
   if (!session) {
-    return Response.json({ error: "Not authenticated" }, { status: 401 });
+    return Response.json({ error: "errors.notAuthenticated" }, { status: 401 });
   }
 
   const raw = await request.json().catch(() => ({}));
   const parsed = bodySchema.safeParse(raw ?? {});
   if (!parsed.success) {
-    return Response.json({ error: "Invalid ISIN" }, { status: 400 });
+    return Response.json({ error: "errors.notAnIsin" }, { status: 400 });
   }
 
   try {

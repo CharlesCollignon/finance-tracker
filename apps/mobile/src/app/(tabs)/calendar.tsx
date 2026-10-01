@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 
 import {
+  formatLongDate,
   formatMonthLabel,
-  parseMonthParams,
   todayIsoLocal,
 } from "@finance/core/constants";
 import {
@@ -13,6 +13,7 @@ import {
   groupTransactionsByDate,
 } from "@finance/core/calendar";
 import { computeMonthlyBudget } from "@finance/core/budget";
+import { amountSign } from "@finance/core/amount-sign";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import {
   FULFILMENT_STATE_KEY,
@@ -31,6 +32,7 @@ import type {
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
+import { CalendarGrid } from "@/components/calendar/CalendarGrid";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { FulfilmentDot } from "@/components/FulfilmentDot";
 import { MonthPicker } from "@/components/MonthPicker";
@@ -63,8 +65,7 @@ import { useQuickAdd } from "@/providers/QuickAddProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useTabBarClearance } from "@/theme/chrome";
-import { useThemeColors } from "@/theme/useThemeColors";
-import { useT } from "@/providers/LocaleProvider";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
 import {
   getCategories,
@@ -76,6 +77,7 @@ import {
   getTags,
   getTransactions,
 } from "@/lib/queries";
+import { useScreenMonth } from "@/providers/MonthProvider";
 
 /** Stable identity, so the derived selection keeps a steady reference. */
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
@@ -83,14 +85,13 @@ const NO_TAGS: Tag[] = [];
 
 export default function CalendarScreen() {
   const t = useT();
+  const locale = useLocale();
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
-  const colors = useThemeColors();
-  const now = parseMonthParams();
-  const [year, setYear] = useState(now.year);
-  const [month, setMonth] = useState(now.month);
+  // Shared with the list and Le point, so switching view keeps the month.
+  const { year, month, setMonth } = useScreenMonth();
   const [selectedDate, setSelectedDate] = useState(() => todayIsoLocal());
   const quickAdd = useQuickAdd();
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
@@ -273,10 +274,7 @@ export default function CalendarScreen() {
 
     void hapticSuccess();
     notifyDataChanged();
-    toast(
-      `${result.deleted} ${result.deleted === 1 ? "transaction" : "transactions"} deleted`,
-      "success",
-    );
+    toast(t("ledger.deleted", { count: result.deleted ?? 0 }), "success");
     leaveSelectMode();
     void onRefresh();
   }
@@ -307,11 +305,8 @@ export default function CalendarScreen() {
     notifyDataChanged();
     const name =
       categories.find((category) => category.id === categoryId)?.name ??
-      "the new category";
-    toast(
-      `${result.moved} ${result.moved === 1 ? "transaction" : "transactions"} moved to ${name}`,
-      "success",
-    );
+      t("ledger.theNewCategory");
+    toast(t("ledger.moved", { count: result.moved ?? 0, name }), "success");
     leaveSelectMode();
     void onRefresh();
   }
@@ -322,33 +317,25 @@ export default function CalendarScreen() {
 
       {/* Under the tabs, as on the list: the By category view has no month,
           and a bar above the tabs would make them jump between views. */}
-      <MonthPicker
-        prominent
-        year={year}
-        month={month}
-        onChange={(y, m) => {
-          setYear(y);
-          setMonth(m);
-        }}
-      />
+      <MonthPicker prominent year={year} month={month} onChange={setMonth} />
 
       <Card bezel className="my-5" innerClassName="p-5">
         <StatHero
-          label={formatMonthLabel(year, month)}
+          label={formatMonthLabel(year, month, locale)}
           amount={`${monthTotals.net >= 0 ? "+" : "−"}${formatEuro(Math.abs(monthTotals.net))}`}
           amountClassName={
             monthTotals.net < 0 ? "text-destructive" : "text-success"
           }
           subtitle={
             <>
-              <Text className="font-mono text-sm text-success">
+              {`${t("ledger.in")} `}
+              <PrivateAmount className="text-sm text-success">
                 {formatEuro(monthTotals.income)}
-              </Text>
-              {" in · "}
-              <Text className="font-mono text-sm text-destructive">
+              </PrivateAmount>
+              {` · ${t("ledger.out")} `}
+              <PrivateAmount className="text-sm text-destructive">
                 {formatEuro(monthTotals.outflow)}
-              </Text>
-              {" out"}
+              </PrivateAmount>
             </>
           }
         />
@@ -365,71 +352,40 @@ export default function CalendarScreen() {
           }
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
-          <View className="mb-2 flex-row">
-            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-              <Text
-                key={`${d}-${i}`}
-                className="flex-1 text-center text-xs font-semibold text-muted-foreground"
-              >
-                {d}
-              </Text>
-            ))}
-          </View>
-
-          {weeks.map((week, wi) => (
-            <View key={wi} className="mb-1 flex-row gap-1">
-              {week.map((day) => {
-                const selected = day.date === effectiveSelected;
-                const hasTx = byDate.has(day.date);
-                const hasPlanned = plannedByDate.has(day.date);
-                return (
-                  <Pressable
-                    key={day.date}
-                    accessibilityLabel={day.date}
-                    accessibilityState={{ selected }}
-                    onPress={() => {
-                      void hapticLight();
-                      setSelectedDate(day.date);
-                      setSelectionKey(monthKey);
-                    }}
-                    className={`min-h-12 flex-1 items-center justify-center rounded-control border ${
-                      selected
-                        ? "border-foreground bg-primary"
-                        : "border-border bg-card"
-                    } ${day.isCurrentMonth ? "" : "opacity-40"}`}
-                  >
-                    <Text className="text-sm font-semibold">{day.day}</Text>
-                    {hasTx ? (
-                      <View className="mt-0.5 h-1.5 w-1.5 rounded-full bg-foreground" />
-                    ) : hasPlanned ? (
-                      <View
-                        className="mt-0.5 h-1.5 w-1.5 rounded-full border"
-                        style={{ borderColor: colors.mutedForeground }}
-                      />
-                    ) : null}
-                  </Pressable>
-                );
-              })}
-            </View>
-          ))}
+          <CalendarGrid
+            weeks={weeks}
+            byDate={byDate}
+            plannedByDate={plannedByDate}
+            selectedDate={effectiveSelected}
+            onSelect={(date) => {
+              setSelectedDate(date);
+              setSelectionKey(monthKey);
+            }}
+          />
 
           <View className="mt-4 flex-row items-center justify-between">
-            <Text className="font-bold">{effectiveSelected}</Text>
+            <Text className="font-bold">
+              {formatLongDate(effectiveSelected, locale)}
+            </Text>
             <Button
               label={t("ledger.add")}
               size="sm"
               onPress={() => quickAdd?.open({ date: effectiveSelected })}
             />
           </View>
-          <Text variant="muted" className="mb-2">
-            In{" "}
-            <PrivateAmount className="font-mono">
-              {formatEuro(dayTotals.income)}
-            </PrivateAmount>
-            {" · Out "}
-            <PrivateAmount className="font-mono">
-              {formatEuro(dayTotals.outflow)}
-            </PrivateAmount>
+          {/* The web's line: how many, then what came in and went out. */}
+          <Text variant="muted" className="mb-2 text-sm">
+            {dayTotals.count === 0
+              ? t("calendarView.noTransactions")
+              : t("ledger.entryCount", { count: dayTotals.count })}
+            {dayTotals.count > 0 ? (
+              <PrivateAmount className="text-sm text-muted-foreground">
+                {` · ${t("calendarView.inAndOut", {
+                  income: formatEuro(dayTotals.income),
+                  outflow: formatEuro(dayTotals.outflow),
+                })}`}
+              </PrivateAmount>
+            ) : null}
           </Text>
 
           {dayTxs.length > 0 ? (
@@ -497,8 +453,8 @@ export default function CalendarScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={
                       selectMode
-                        ? `Select ${tx.categories.name}`
-                        : `Edit ${tx.categories.name}`
+                        ? t("ledger.selectRow", { name: tx.categories.name })
+                        : t("ledger.editRow", { name: tx.categories.name })
                     }
                     accessibilityState={
                       selectMode
@@ -542,7 +498,9 @@ export default function CalendarScreen() {
                     {selectMode ? (
                       <RowCheckbox
                         checked={selectedIds.has(tx.id)}
-                        label={`Select ${tx.categories.name}`}
+                        label={t("ledger.selectRow", {
+                          name: tx.categories.name,
+                        })}
                         onPress={() =>
                           setSelected((current) =>
                             toggleSelected(current, tx.id),
@@ -587,11 +545,11 @@ export default function CalendarScreen() {
                     </View>
                     <PrivateAmount
                       className={cn(
-                        "font-mono text-sm font-semibold",
+                        "font-sans tabular-nums text-sm font-semibold",
                         TYPE_AMOUNT_CLASS[tx.categories.type],
                       )}
                     >
-                      {`${tx.categories.type === "income" ? "+" : "−"}${formatEuro(Number(tx.amount))}`}
+                      {`${amountSign(tx.categories.type)}${formatEuro(Number(tx.amount))}`}
                     </PrivateAmount>
                   </Pressable>
                 );
@@ -634,8 +592,8 @@ export default function CalendarScreen() {
                         .join(" · ")}
                     </Text>
                   </View>
-                  <PrivateAmount className="font-mono text-sm font-semibold text-muted-foreground">
-                    {`${occurrence.categoryType === "income" ? "+" : "−"}${formatEuro(occurrence.amount)}`}
+                  <PrivateAmount className="font-sans tabular-nums text-sm font-semibold text-muted-foreground">
+                    {`${amountSign(occurrence.categoryType)}${formatEuro(occurrence.amount)}`}
                   </PrivateAmount>
                 </Pressable>
               ))}

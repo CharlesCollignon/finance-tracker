@@ -42,3 +42,38 @@ export function withoutTextColor(className: string): string {
     .filter((token) => token && !isTextColorClass(token))
     .join(" ");
 }
+
+/*
+ * The sans weights, by family name.
+ *
+ * React Native draws the exact family it is given and does not pick a weight
+ * from `fontWeight`: with one Regular file registered, `font-semibold` was
+ * either ignored or faked by thickening the strokes. So each weight is its
+ * own static file (`src/app/_layout.tsx`), and a weight class is turned into
+ * the family that has it. Text set in another face — serif figures, the logo,
+ * anything mono — is left to its own class.
+ */
+const OTHER_FACE =
+  /(^|\s)font-(serif|serif-semibold|mono|mono-medium|logo)(\s|$)/;
+const WEIGHT_FACE: readonly [RegExp, string][] = [
+  [/(^|\s)font-(bold|extrabold|black)(\s|$)/, "InstrumentSans-Bold"],
+  [/(^|\s)font-semibold(\s|$)/, "InstrumentSans-SemiBold"],
+  [/(^|\s)font-medium(\s|$)/, "InstrumentSans-Medium"],
+];
+
+/** The style that gives a weight class its real font, or undefined. */
+export function sansWeightFace(
+  className?: string,
+): { fontFamily: string; fontWeight: "normal" } | undefined {
+  if (!className || OTHER_FACE.test(className)) {
+    return undefined;
+  }
+  for (const [pattern, fontFamily] of WEIGHT_FACE) {
+    if (pattern.test(className)) {
+      // "normal" so the platform does not embolden a face that is already
+      // the weight asked for.
+      return { fontFamily, fontWeight: "normal" };
+    }
+  }
+  return undefined;
+}

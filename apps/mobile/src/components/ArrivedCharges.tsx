@@ -141,7 +141,7 @@ export function ArrivedCharges({
                 {`${income ? "+" : "−"}${formatEuro(proposal.actualAmount)}`}
               </PrivateAmount>
               <Text className="text-sm text-muted-foreground">
-                {relativeDayLabel(proposal.actualOn, formatShortDate)}
+                {relativeDayLabel(proposal.actualOn, formatShortDate, locale)}
               </Text>
             </View>
 
@@ -193,7 +193,9 @@ export function ArrivedCharges({
 
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`No, that is not ${proposal.label}`}
+                accessibilityLabel={t("fulfilment.notThis", {
+                  name: proposal.label,
+                })}
                 accessibilityState={{ disabled: pending }}
                 disabled={pending}
                 onPress={() => {
@@ -266,7 +268,7 @@ export function ArrivedCharges({
                     {formatEuro(miss.expectedAmount)}
                   </PrivateAmount>
                   <Text className="text-xs text-muted-foreground">
-                    {formatShortDate(miss.occurredOn)}
+                    {formatShortDate(miss.occurredOn, locale)}
                   </Text>
                   <Text className="text-xs text-muted-foreground">
                     {`· ${describeMiss(miss, formatEuro, locale)}`}

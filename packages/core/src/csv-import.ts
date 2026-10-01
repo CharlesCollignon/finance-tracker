@@ -1,4 +1,4 @@
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * Reading a bank statement export.
@@ -428,7 +428,7 @@ export interface BuildImportRowsOptions {
    */
   expenseSign?: "negative" | "positive";
   /** The language the row problems are reported in. */
-  locale?: Locale;
+  locale: Locale;
 }
 
 /** date + amount + merchant, which is as close to an identity as a line has. */
@@ -462,7 +462,7 @@ export function buildImportRows(
     existing = [],
     guessCategory,
     expenseSign = "negative",
-    locale = FALLBACK_LOCALE,
+    locale,
   } = options;
   const t = translator(locale);
 

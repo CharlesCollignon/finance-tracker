@@ -80,3 +80,13 @@ export const LEDGER_TABS: SurfaceTab[] = [
   { href: "/transactions", labelKey: "nav.ledgerList" },
   { href: "/calendar", labelKey: "nav.ledgerCalendar" },
 ];
+
+/**
+ * Placements' views: what is held, and what it is made of. Both live inside
+ * the tabs, as the Ledger's do, so the tab bar stays on the second one too.
+ */
+export const WALLET_TABS: SurfaceTab[] = [
+  { href: "/investments", labelKey: "nav.walletsPositions" },
+  // Cast until the typed-routes list next regenerates with the moved file.
+  { href: "/look-through" as Href, labelKey: "nav.walletsLookThrough" },
+];

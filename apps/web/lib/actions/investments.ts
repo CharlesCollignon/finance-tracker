@@ -74,7 +74,7 @@ export async function saveInvestmentPosition(
       .single();
 
     if (error || !template) {
-      return { error: "Recurring item not found" };
+      return { error: "actions.recurringNotFound" };
     }
 
     name = displayNameForRecurringTemplate(
@@ -109,9 +109,7 @@ export async function saveInvestmentPosition(
   } catch (error) {
     return {
       error:
-        error instanceof Error
-          ? error.message
-          : "Could not save this position.",
+        error instanceof Error ? error.message : "actions.couldNotSavePosition",
     };
   }
 
@@ -134,7 +132,7 @@ export async function removeInvestmentPosition(
       error:
         error instanceof Error
           ? error.message
-          : "Could not remove this position.",
+          : "actions.couldNotRemovePosition",
     };
   }
 

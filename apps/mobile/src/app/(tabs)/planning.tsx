@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter, type Href } from "expo-router";
 
 import { buildBudgetProgress } from "@finance/core/budget-limits";
-import {
-  closeInvitation,
-  type CloseableMonth,
-} from "@finance/core/month-close";
+import type { CloseableMonth } from "@finance/core/month-close";
 import {
   buildForwardProjection,
   buildRunway,
@@ -15,46 +14,38 @@ import {
 import {
   buildGoalRunningTotals,
   buildSavingsGoalProgress,
-  computeGoalPacing,
   earliestGoalStart,
   EMPTY_GOAL_LEDGER,
-  type GoalPacing,
 } from "@finance/core/savings-goals";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import type {
+  BankAccount,
   Budget,
   Category,
   SavingsGoal,
 } from "@finance/core/types/database";
 import type { TagUsage } from "@finance/core/tags";
+import { resolveMessage } from "@finance/core/i18n/t";
 
-import { Button } from "@/components/ui/Button";
-import { TagEditSheet } from "@/components/TagEditSheet";
-import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
-import { DateField } from "@/components/ui/DateField";
-import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
-import { ProgressRing } from "@/components/charts";
+import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
+import { MonthCloseHistoryCard } from "@/components/MonthCloseHistoryCard";
+import { MonthCloseSheet } from "@/components/MonthCloseSheet";
+import { StaggerItem } from "@/components/motion/Stagger";
+import { BudgetsCard } from "@/components/plan/BudgetsCard";
+import { CashAccountsCard } from "@/components/plan/CashAccountsCard";
+import { GoalsCard } from "@/components/plan/GoalsCard";
+import { MonthCloseCard } from "@/components/plan/MonthCloseCard";
+import { TagsCard } from "@/components/plan/TagsCard";
+import { ProjectionCard } from "@/components/ProjectionCard";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
-import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { ProjectionCard } from "@/components/ProjectionCard";
-import { MonthCloseHistoryCard } from "@/components/MonthCloseHistoryCard";
-import { MonthCloseSheet } from "@/components/MonthCloseSheet";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
-import { useAuth } from "@/providers/AuthProvider";
-import { useFlag } from "@/providers/FlagsProvider";
-import { useToast } from "@/providers/ToastProvider";
-import { useFormatCurrency } from "@/providers/CurrencyProvider";
-import { useChartSeries } from "@/theme/chart-series";
-import { useTabBarClearance } from "@/theme/chrome";
-import { useLocale, useT } from "@/providers/LocaleProvider";
-import type { Translate } from "@finance/core/i18n/t";
-import { resolveMessage } from "@finance/core/i18n/t";
+import { hapticLight } from "@/lib/haptics";
 import {
+  getBankAccounts,
   getBudgets,
   getCategories,
   getGoalLedger,
@@ -67,42 +58,12 @@ import {
   readCashBalance,
   type MonthCloseOverview,
 } from "@/lib/queries";
-import {
-  deleteBudget,
-  deleteSavingsGoal,
-  upsertBudget,
-  upsertSavingsGoal,
-  upsertTag,
-} from "@/lib/mutations";
-
-/** Plain-language pacing line under a goal's progress bar — no jargon, just what to do. */
-function pacingHint(
-  pacing: GoalPacing,
-  formatEuro: (amount: number) => string,
-  t: Translate,
-): { text: string; className: string } | null {
-  switch (pacing.status) {
-    case "reached":
-      return { text: t("plan.goalReached"), className: "text-success" };
-    case "overdue":
-      return {
-        text: t("plan.goalOverdue", {
-          amount: formatEuro(pacing.monthlyAmount ?? 0),
-        }),
-        className: "text-destructive",
-      };
-    case "on-schedule":
-      return {
-        text: t("plan.goalOnSchedule", {
-          amount: formatEuro(pacing.monthlyAmount ?? 0),
-          month: pacing.targetLabel ?? "",
-        }),
-        className: "text-muted-foreground",
-      };
-    case "no-date":
-      return null;
-  }
-}
+import { useAuth } from "@/providers/AuthProvider";
+import { useFlag } from "@/providers/FlagsProvider";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useTabBarClearance } from "@/theme/chrome";
+import { ICON } from "@/theme/tokens";
+import { useThemeColors } from "@/theme/useThemeColors";
 
 /**
  * One close, and every figure the sheet reads while it is open. Assembled
@@ -116,29 +77,25 @@ interface ClosePrompt {
   baseline: number | null;
 }
 
+/**
+ * Plan, in the web's order: what the month may spend (budgets), what is being
+ * saved towards (goals), the tags; then the footer the web keeps under them —
+ * which accounts hold spending money, the month's close, the projection, the
+ * way to categories and import, and the history of closes.
+ *
+ * It was the other way round on the phone: the projection and the close first,
+ * the budgets fourth, and every form open at all times, so the screen was
+ * mostly empty fields. A budget could only be set on all spending, and
+ * nothing could be edited once made.
+ */
 export default function PlanningScreen() {
   const t = useT();
   const locale = useLocale();
+  const router = useRouter();
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
-  const formatEuro = useFormatCurrency();
-  // The third chart series, matching the web app's goal rings.
-  const goalColor = useChartSeries()[2];
-  const { toast } = useToast();
-  const [confirming, setConfirming] = useState<{
-    kind: "budget" | "goal";
-    id: string;
-  } | null>(null);
   const current = getCurrentMonth();
-  const [budgetAmount, setBudgetAmount] = useState("");
-  const [goalName, setGoalName] = useState("");
-  const [goalTarget, setGoalTarget] = useState("");
-  const [goalTargetDate, setGoalTargetDate] = useState("");
-  const [goalStartsOn, setGoalStartsOn] = useState(() => todayIsoLocal());
-  const [tagName, setTagName] = useState("");
-  const [pending, setPending] = useState(false);
   const manageTags = useFlag("tags.manage");
-  const [editingTag, setEditingTag] = useState<TagUsage | null>(null);
   /**
    * Everything the sheet is working from, held rather than read live.
    *
@@ -157,18 +114,9 @@ export default function PlanningScreen() {
    */
   const [closing, setClosing] = useState<ClosePrompt | null>(null);
   /**
-   * Whether the sheet is showing, kept apart from *what* it is showing.
-   *
-   * These used to be one thing: `closing` was both the frozen figures and
-   * the open flag, so dismissing cleared it, which left `sheet` falling back
-   * to `prompt` — and after a successful close `prompt` is null, because the
-   * month it was about is now closed. The sheet therefore unmounted on the
-   * frame the reader tapped Done, with no slide-out at all. Cancelling never
-   * showed it, because cancelling leaves `prompt` standing.
-   *
-   * Split, `closing` keeps holding the month that was just closed while the
-   * modal animates away, and only the flag moves. What stays mounted
-   * afterwards is hidden and is replaced wholesale by the next tap.
+   * Whether the sheet is showing, kept apart from *what* it is showing, so
+   * the month just closed stays on the sheet while it animates away — see
+   * `closing` above.
    */
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -181,6 +129,7 @@ export default function PlanningScreen() {
           goals: [] as SavingsGoal[],
           tags: [] as TagUsage[],
           categories: [] as Category[],
+          accounts: [] as BankAccount[],
           budgetProgress: [] as ReturnType<typeof buildBudgetProgress>,
           goalProgress: [] as ReturnType<typeof buildSavingsGoalProgress>,
           projection: null as ForwardProjection | null,
@@ -204,6 +153,9 @@ export default function PlanningScreen() {
         // it reads the stored statement, which is why the phone can answer
         // at all. Null when no account is ticked, which is ordinary.
         cash,
+        // Empty for anyone who has not connected a bank, which hides the
+        // card that lists them.
+        accounts,
       ] = await Promise.all([
         getBudgets(user.id),
         getSavingsGoals(user.id),
@@ -212,8 +164,9 @@ export default function PlanningScreen() {
         getMonthlySummary(user.id, current.year, current.month),
         getRecurringTemplates(user.id),
         getSavingsReserve(user.id),
-        getMonthCloseOverview(user.id, today),
+        getMonthCloseOverview(user.id, today, locale),
         readCashBalance(user.id, today),
+        getBankAccounts(user.id),
       ]);
 
       // A running total from each goal's start. Asked for after the batch
@@ -232,6 +185,7 @@ export default function PlanningScreen() {
         goals,
         tags,
         categories,
+        accounts,
         budgetProgress: buildBudgetProgress(
           budgets,
           summary.expenseBreakdown,
@@ -258,76 +212,16 @@ export default function PlanningScreen() {
         runway: buildRunway(reserve, templates, current.year, current.month),
         closes,
       };
-    }, [user?.id, current.year, current.month, dataVersion]);
+    }, [user?.id, current.year, current.month, dataVersion, locale]);
   const { bank } = useBankState();
 
-  async function handleAddBudget() {
-    setPending(true);
-    const result = await upsertBudget({
-      amount: Number(budgetAmount),
-      categoryId: null,
-    });
-    setPending(false);
-    if (result.error) {
-      toast(result.error, "error");
-      return;
-    }
-    setBudgetAmount("");
-    await onRefresh();
-  }
-
-  async function handleAddGoal() {
-    setPending(true);
-    const result = await upsertSavingsGoal({
-      name: goalName,
-      targetAmount: Number(goalTarget),
-      targetDate: goalTargetDate.trim() || undefined,
-      startsOn: goalStartsOn,
-      categoryId: null,
-    });
-    setPending(false);
-    if (result.error) {
-      toast(result.error, "error");
-      return;
-    }
-    setGoalName("");
-    setGoalTarget("");
-    setGoalTargetDate("");
-    setGoalStartsOn(todayIsoLocal());
-    await onRefresh();
-  }
-
-  async function handleAddTag() {
-    setPending(true);
-    const result = await upsertTag(tagName);
-    setPending(false);
-    if (result.error) {
-      toast(result.error, "error");
-      return;
-    }
-    setTagName("");
-    // Other screens list tags too (the quick-add sheet, the calendar's
-    // forms); until now a new tag reached them only when they reloaded.
+  /** Every screen, not just this one: budgets and goals sit on Le point too. */
+  function changed() {
     notifyDataChanged();
-    await onRefresh();
+    void onRefresh();
   }
 
-  async function handleConfirmDelete() {
-    if (!confirming) {
-      return;
-    }
-    const result =
-      confirming.kind === "budget"
-        ? await deleteBudget(confirming.id)
-        : await deleteSavingsGoal(confirming.id);
-    setConfirming(null);
-    if (result.error) {
-      toast(result.error, "error");
-      return;
-    }
-    await onRefresh();
-  }
-
+  const categories = (data?.categories ?? []).filter((c) => !c.archived);
   const closes = data?.closes ?? null;
   // What the app is currently asking about, if anything. Null once the latest
   // month is closed and the next one's reading day has not arrived.
@@ -346,45 +240,14 @@ export default function PlanningScreen() {
       : null;
 
   /**
-   * The snapshot once one has been taken, the live prompt before that.
-   *
-   * Reading the live one while nothing is open is what lets the sheet be
-   * mounted hidden and then toggled, the way the deleted Month screen had it,
-   * rather than appearing already open on the frame it first exists. The two
-   * are identical at the moment of the tap, so nothing moves across it.
+   * The snapshot once one has been taken, the live prompt before that, so the
+   * sheet can be mounted hidden and then toggled rather than appearing
+   * already open on the frame it first exists.
    */
   const sheet = closing ?? prompt;
 
-  const invitation = prompt
-    ? closeInvitation({
-        isBaseline: prompt.month.isBaseline,
-        unrecordedCap: prompt.unrecordedCap,
-        baseline: prompt.baseline,
-      })
-    : null;
-
-  function inviteDetail(): string | null {
-    if (invitation === null) {
-      return null;
-    }
-    switch (invitation.kind) {
-      case "baseline":
-        return t("monthClose.inviteBaseline");
-      case "allowance":
-        return t("monthClose.inviteAllowance", {
-          cap: formatEuro(invitation.cap),
-        });
-      case "normal":
-        return t("monthClose.inviteNormal", {
-          amount: formatEuro(invitation.baseline),
-        });
-      case "bare":
-        return t("monthClose.inviteBare");
-    }
-  }
-
   return (
-    <Screen title={t("nav.plan")}>
+    <Screen title={t("nav.plan")} className="pb-0">
       {loading && !data ? (
         <ScreenSkeleton rows={4} />
       ) : error ? (
@@ -397,47 +260,89 @@ export default function PlanningScreen() {
           contentContainerClassName="gap-4 pt-1"
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
+          <StaggerItem index={0}>
+            <BudgetsCard
+              budgets={data?.budgets ?? []}
+              progress={data?.budgetProgress ?? []}
+              categories={categories.filter((c) => c.type === "expense")}
+              onChanged={changed}
+            />
+          </StaggerItem>
+
+          <StaggerItem index={1}>
+            <GoalsCard
+              goals={data?.goals ?? []}
+              progress={data?.goalProgress ?? []}
+              categories={categories.filter((c) => c.type === "savings")}
+              onChanged={changed}
+            />
+          </StaggerItem>
+
+          <StaggerItem index={2}>
+            <TagsCard
+              tags={data?.tags ?? []}
+              manage={manageTags}
+              onChanged={changed}
+            />
+          </StaggerItem>
+
+          {/* The footer, as on the web. Which accounts hold spending money
+              comes first: ticked and readable, they close months on their
+              own, and the card below then never appears. */}
+          <CashAccountsCard
+            accounts={data?.accounts ?? []}
+            onChanged={changed}
+          />
+
+          {/* Beside the close, because a connected bank is what closes
+              months without being asked. */}
+          <ConnectBankInvite surface="plan" bank={bank} />
+
+          {/* Still here when the statement cannot answer: a lapsed consent, a
+              month the provider no longer covers, or no bank at all. Le
+              point's "ready to close" row sends people here. */}
+          {prompt && closes ? (
+            <MonthCloseCard
+              monthLabel={prompt.month.label}
+              isBaseline={prompt.month.isBaseline}
+              unrecordedCap={prompt.unrecordedCap}
+              baseline={prompt.baseline}
+              streak={closes.summary.streak}
+              onOpen={() => {
+                setClosing(prompt);
+                setSheetOpen(true);
+              }}
+            />
+          ) : null}
+
           <ProjectionCard
             projection={data?.projection ?? null}
             runway={data?.runway ?? null}
           />
 
-          {/* The close itself, directly above the history it writes into.
-              The phone lost this when the Month tab was deleted: the sheet
-              below survived with no caller at all, so a phone-only reader
-              could not close a month — and every rung of Bearing's ladder
-              above the first is derived from closes. Bearing's own "ready to
-              close" row sends people here, and `monthCloseHistory`'s empty
-              state names this surface by the same `nav.plan` word. */}
-          {prompt ? (
-            <Card bezel innerClassName="gap-4 p-5">
-              <View>
-                <Text className="font-semibold" style={{ fontSize: 16 }}>
-                  {prompt.month.isBaseline
-                    ? t("monthClose.setStartingBalance")
-                    : t("month.attentionReadyToClose", {
-                        month: prompt.month.label,
-                      })}
-                </Text>
-                <Text variant="muted" className="mt-1 text-sm">
-                  {inviteDetail()}
-                </Text>
-              </View>
-              <Button
-                label={t("monthClose.closeMonth", {
-                  month: prompt.month.label,
-                })}
-                onPress={() => {
-                  setClosing(prompt);
-                  setSheetOpen(true);
-                }}
+          <View className="gap-3">
+            {(
+              [
+                {
+                  href: "/categories",
+                  title: t("plan.linkCategoriesTitle"),
+                  hint: t("plan.linkCategoriesHint"),
+                },
+                {
+                  href: "/import",
+                  title: t("plan.linkImportTitle"),
+                  hint: t("plan.linkImportHint"),
+                },
+              ] as const
+            ).map((link) => (
+              <PlanLink
+                key={link.href}
+                title={link.title}
+                hint={link.hint}
+                onPress={() => router.push(link.href as Href)}
               />
-            </Card>
-          ) : null}
-
-          {/* Beside the closes, because a connected bank is what closes
-              months without being asked. */}
-          <ConnectBankInvite surface="plan" bank={bank} />
+            ))}
+          </View>
 
           {closes ? (
             <MonthCloseHistoryCard
@@ -445,198 +350,9 @@ export default function PlanningScreen() {
               summary={closes.summary}
               unrecordedCap={closes.settings.unrecordedCap}
               closeDay={closes.settings.closeDay}
-              onChanged={() => {
-                notifyDataChanged();
-                void onRefresh();
-              }}
+              onChanged={changed}
             />
           ) : null}
-
-          <Card bezel innerClassName="gap-4 p-5">
-            <Text className="text-sm font-medium">{t("plan.capsHeading")}</Text>
-
-            {(data?.budgetProgress ?? []).length > 0 ? (
-              <View className="flex-row flex-wrap items-start gap-2">
-                {(data?.budgetProgress ?? []).map((row) => (
-                  <Pressable
-                    hitSlop={8}
-                    key={row.budgetId}
-                    accessibilityRole="button"
-                    accessibilityLabel={t("plan.capOn", { label: row.label })}
-                    accessibilityHint={t("plan.capRemoveHint")}
-                    onLongPress={() =>
-                      setConfirming({ kind: "budget", id: row.budgetId })
-                    }
-                    className="rounded-control p-1"
-                  >
-                    <ProgressRing
-                      ratio={row.ratio}
-                      label={row.label}
-                      detail={t("plan.amountOfTotal", {
-                        amount: formatEuro(row.spent),
-                        total: formatEuro(row.limit),
-                      })}
-                      over={row.over}
-                      meaning="limit"
-                    />
-                  </Pressable>
-                ))}
-              </View>
-            ) : (
-              <Text variant="muted" className="text-sm">
-                {t("plan.capsBlurb")}
-              </Text>
-            )}
-
-            <View className="gap-2 border-t border-border pt-4">
-              <Text variant="label">{t("plan.globalMonthlyLimit")}</Text>
-              <Input
-                value={budgetAmount}
-                onChangeText={setBudgetAmount}
-                keyboardType="decimal-pad"
-              />
-              <Button
-                label={t("plan.addCapSubmit")}
-                disabled={pending}
-                onPress={handleAddBudget}
-              />
-            </View>
-          </Card>
-
-          <Card bezel innerClassName="gap-4 p-5">
-            <Text className="text-sm font-medium">
-              {t("plan.goalsHeading")}
-            </Text>
-
-            {(data?.goalProgress ?? []).length > 0 ? (
-              <View className="flex-row flex-wrap items-start gap-2">
-                {(data?.goalProgress ?? []).map((row) => {
-                  const hint = pacingHint(
-                    computeGoalPacing(row),
-                    formatEuro,
-                    t,
-                  );
-                  return (
-                    <Pressable
-                      hitSlop={8}
-                      key={row.goal.id}
-                      accessibilityRole="button"
-                      accessibilityLabel={t("plan.goalNamed", {
-                        name: row.goal.name,
-                      })}
-                      accessibilityHint={t("plan.goalRemoveHint")}
-                      onLongPress={() =>
-                        setConfirming({ kind: "goal", id: row.goal.id })
-                      }
-                      className="items-center gap-1 rounded-control p-1"
-                    >
-                      <ProgressRing
-                        ratio={row.ratio}
-                        label={row.goal.name}
-                        detail={t("plan.amountOfTotal", {
-                          amount: formatEuro(row.saved),
-                          total: formatEuro(Number(row.goal.target_amount)),
-                        })}
-                        // A goal is a target, not a limit: filling it is the
-                        // point, and a full ring in red says the opposite.
-                        meaning="target"
-                        color={goalColor}
-                      />
-                      {hint ? (
-                        <Text
-                          numberOfLines={2}
-                          className={`w-32 text-center text-xs ${hint.className}`}
-                        >
-                          {hint.text}
-                        </Text>
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            ) : (
-              <Text variant="muted" className="text-sm">
-                {t("plan.goalsBlurb")}
-              </Text>
-            )}
-
-            <View className="gap-2 border-t border-border pt-4">
-              <Text variant="label">{t("plan.goalName")}</Text>
-              <Input value={goalName} onChangeText={setGoalName} />
-              <Text variant="label">{t("plan.goalTarget")}</Text>
-              <Input
-                value={goalTarget}
-                onChangeText={setGoalTarget}
-                keyboardType="decimal-pad"
-              />
-              <Text variant="label">{t("plan.goalTargetDateOptional")}</Text>
-              <DateField
-                value={goalTargetDate}
-                onChange={setGoalTargetDate}
-                placeholder={t("recurring.noEndDate")}
-                accessibilityLabel={t("plan.goalTargetDateOptional")}
-                clearable
-              />
-              <Text variant="label">{t("plan.goalStartsOn")}</Text>
-              <DateField
-                value={goalStartsOn}
-                onChange={setGoalStartsOn}
-                accessibilityLabel={t("plan.goalStartsOn")}
-              />
-              <Text variant="muted" className="text-xs">
-                {t("plan.goalStartsOnHint")}
-              </Text>
-              <Button
-                label={t("plan.addGoalSubmit")}
-                disabled={pending}
-                onPress={handleAddGoal}
-              />
-            </View>
-          </Card>
-
-          <Card bezel>
-            <Text className="text-base font-semibold">
-              {t("plan.tagsHeading")}
-            </Text>
-            <View className="mt-3 flex-row flex-wrap gap-2">
-              {(data?.tags ?? []).map((tag) =>
-                manageTags ? (
-                  <Pressable
-                    key={tag.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={t("plan.editTagNamed", {
-                      name: tag.name,
-                    })}
-                    onPress={() => setEditingTag(tag)}
-                    className="min-h-11 justify-center rounded-full border border-border bg-muted px-4"
-                  >
-                    <Text className="text-sm font-semibold">{tag.name}</Text>
-                  </Pressable>
-                ) : (
-                  <View
-                    key={tag.id}
-                    className="rounded-full border border-border bg-muted px-3 py-1"
-                  >
-                    <Text className="text-xs font-semibold">{tag.name}</Text>
-                  </View>
-                ),
-              )}
-            </View>
-            {manageTags && (data?.tags.length ?? 0) > 0 ? (
-              <Text variant="muted" className="mt-2 text-xs">
-                {t("plan.tagManageHint")}
-              </Text>
-            ) : null}
-            <Text variant="label" className="mb-2 mt-4">
-              {t("plan.newTag")}
-            </Text>
-            <Input value={tagName} onChangeText={setTagName} className="mb-3" />
-            <Button
-              label={t("plan.addTag")}
-              disabled={pending}
-              onPress={handleAddTag}
-            />
-          </Card>
         </ScrollView>
       )}
 
@@ -656,34 +372,42 @@ export default function PlanningScreen() {
           monthlyCommitted={sheet.monthlyCommitted}
           unrecordedCap={sheet.unrecordedCap}
           baseline={sheet.baseline}
-          onClosed={() => {
-            notifyDataChanged();
-            void onRefresh();
-          }}
+          onClosed={changed}
         />
       ) : null}
-
-      <TagEditSheet
-        tag={editingTag}
-        tags={data?.tags ?? []}
-        onClose={() => setEditingTag(null)}
-        onChanged={() => {
-          notifyDataChanged();
-          void onRefresh();
-        }}
-      />
-
-      <ConfirmSheet
-        open={confirming !== null}
-        title={
-          confirming?.kind === "goal"
-            ? t("plan.deleteGoalTitle")
-            : t("plan.deleteCapTitle")
-        }
-        message={t("plan.deleteWarning")}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setConfirming(null)}
-      />
     </Screen>
+  );
+}
+
+/** One of the footer's ways out, as the web's linked cards. */
+function PlanLink({
+  title,
+  hint,
+  onPress,
+}: {
+  title: string;
+  hint: string;
+  onPress: () => void;
+}) {
+  const colors = useThemeColors();
+  return (
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={title}
+      accessibilityHint={hint}
+      onPress={() => {
+        void hapticLight();
+        onPress();
+      }}
+      className="min-h-14 flex-row items-center justify-between gap-3 rounded-card border border-border bg-card px-4 py-3"
+    >
+      <View className="min-w-0 flex-1">
+        <Text className="text-sm font-medium">{title}</Text>
+        <Text variant="muted" className="text-xs">
+          {hint}
+        </Text>
+      </View>
+      <Ionicons name="arrow-forward" size={ICON.md} color={colors.foreground} />
+    </Pressable>
   );
 }

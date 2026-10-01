@@ -90,8 +90,8 @@ export default function ImportScreen() {
     [data?.merchants],
   );
   const categoryGroups = useMemo(
-    () => groupCategoriesByType(categories),
-    [categories],
+    () => groupCategoriesByType(categories, { locale }),
+    [categories, locale],
   );
 
   const headers = hasHeader ? (table[0] ?? []) : [];
@@ -115,7 +115,7 @@ export default function ImportScreen() {
     const asset = result.assets[0];
 
     if ((asset.size ?? 0) > MAX_FILE_BYTES) {
-      setProblem("That file is larger than 5 MB — is it the right export?");
+      setProblem(t("importer.fileTooLarge"));
       return;
     }
 
@@ -123,13 +123,13 @@ export default function ImportScreen() {
     try {
       text = await new File(asset.uri).text();
     } catch {
-      setProblem("That file could not be opened.");
+      setProblem(t("importer.fileUnreadable"));
       return;
     }
 
     const parsed = parseCsv(text, detectDelimiter(text));
     if (parsed.length === 0) {
-      setProblem("That file has no rows in it.");
+      setProblem(t("importer.fileNoRows"));
       return;
     }
 
@@ -379,7 +379,13 @@ export default function ImportScreen() {
                 {row.status !== "invalid" ? (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`Category for ${row.description || "row"}`}
+                    accessibilityLabel={
+                      row.description
+                        ? t("importer.categoryForRow", {
+                            description: row.description,
+                          })
+                        : t("importer.categoryForLine", { line: row.line })
+                    }
                     onPress={() => {
                       void hapticLight();
                       setExpanded(expanded === row.line ? null : row.line);
@@ -446,12 +452,10 @@ export default function ImportScreen() {
           {step === "choose" ? (
             <Card bezel innerClassName="gap-4 p-5">
               <Text className="font-bold" style={{ fontSize: 17 }}>
-                Import a bank statement
+                {t("importer.heading")}
               </Text>
               <Text variant="muted" className="text-sm">
-                Export a CSV from your bank and pick it here. The file is read
-                on your phone — nothing is uploaded, and nothing is saved until
-                you have reviewed every row.
+                {t("importer.introPhone")}
               </Text>
               <Button
                 label={t("importer.chooseFile")}
@@ -469,10 +473,10 @@ export default function ImportScreen() {
             <>
               <Card bezel innerClassName="gap-3 p-5">
                 <Text className="font-bold" style={{ fontSize: 17 }}>
-                  Check the columns
+                  {t("importer.checkColumns")}
                 </Text>
                 <Text variant="muted" className="font-mono text-xs">
-                  {`${fileName} · ${dataRows.length} rows`}
+                  {`${fileName} · ${t("importer.rowCount", { count: dataRows.length })}`}
                 </Text>
 
                 <Pressable
@@ -565,7 +569,7 @@ export default function ImportScreen() {
 
               <Card bezel innerClassName="gap-2 p-5">
                 <Text variant="muted" className="text-xs">
-                  First rows as read
+                  {t("importer.firstRows")}
                 </Text>
                 {dataRows.slice(0, 3).map((row, index) => (
                   <Text

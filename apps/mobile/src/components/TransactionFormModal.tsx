@@ -1,33 +1,26 @@
 import { useEffect, useState } from "react";
-import { Modal, Pressable, ScrollView, TextInput, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Modal, Pressable, ScrollView, View } from "react-native";
 
-import {
-  formatCategoryOptionLabel,
-  groupCategoriesByType,
-} from "@finance/core/categories";
+import { INTL_LOCALES } from "@finance/core/i18n/locale";
 import type {
   Category,
   Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
-import { CategoryIcon } from "@/components/CategoryIcon";
+import { CategoryPicker } from "@/components/pickers/CategoryPicker";
+import { MultiChips } from "@/components/pickers/MultiChips";
 import { Button } from "@/components/ui/Button";
 import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
-import { cn } from "@/lib/cn";
-import { hapticLight } from "@/lib/haptics";
-import { useThemeColors } from "@/theme/useThemeColors";
 import {
   deleteTransaction,
   setTransactionTags,
   updateTransaction,
 } from "@/lib/mutations";
 import { getTransactionTagIds } from "@/lib/queries";
-import { ICON } from "@/theme/tokens";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
 
@@ -65,7 +58,6 @@ export function TransactionFormModal({
 }: TransactionFormModalProps) {
   const locale = useLocale();
   const t = useT();
-  const colors = useThemeColors();
   const [categoryId, setCategoryId] = useState(transaction.category_id);
   const [amount, setAmount] = useState(String(Number(transaction.amount)));
   const [occurredOn, setOccurredOn] = useState(transaction.occurred_on);
@@ -99,22 +91,10 @@ export function TransactionFormModal({
     };
   }, [transaction]);
 
-  const [categoryQuery, setCategoryQuery] = useState("");
-
-  // Filter before grouping so empty groups disappear while searching.
-  const visibleCategories = categoryQuery.trim()
-    ? categories.filter((cat) =>
-        cat.name.toLowerCase().includes(categoryQuery.trim().toLowerCase()),
-      )
-    : categories;
-  const groups = groupCategoriesByType(visibleCategories);
-
-  // One tap instead of scrolling the full grouped list, which is the common
-  // case: people log the same handful of categories over and over.
-  const recentCategories = recentCategoryIds
-    .map((id) => categories.find((cat) => cat.id === id))
-    .filter((cat): cat is Category => cat !== undefined)
-    .slice(0, 4);
+  // "0,00" in French: the placeholder shows the separator to type.
+  const amountPlaceholder = new Intl.NumberFormat(INTL_LOCALES[locale], {
+    minimumFractionDigits: 2,
+  }).format(0);
   // A charge's row. Deleting it takes that occurrence out of its month —
   // which is what skipping used to be a separate button for — so the month
   // filling itself does not write it straight back.
@@ -126,7 +106,8 @@ export function TransactionFormModal({
     const result = await updateTransaction({
       id: transaction.id,
       categoryId,
-      amount,
+      // A French keypad types a comma; the schema reads a point.
+      amount: amount.replace(",", ".").trim(),
       occurredOn,
       note: note || undefined,
     });
@@ -194,91 +175,21 @@ export function TransactionFormModal({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
+            {/* The web's picker, a sheet over this one. It used to be the
+                whole category list drawn above the amount, with a search box
+                and a row of recent ones on top of that; the recent ones now
+                head the picker instead. */}
             <Text className="mb-2 text-sm font-medium">
               {t("transaction.category")}
             </Text>
-            {categories.length > 8 ? (
-              <View className="mb-3 flex-row items-center gap-2 rounded-full border border-border bg-background px-3">
-                <Ionicons
-                  name="search-outline"
-                  size={ICON.md}
-                  color={colors.mutedForeground}
-                />
-                <TextInput
-                  value={categoryQuery}
-                  onChangeText={setCategoryQuery}
-                  placeholder={t("transaction.filterCategoriesPlaceholder")}
-                  placeholderTextColor={colors.mutedForeground}
-                  accessibilityLabel={t("transaction.filterCategories")}
-                  className="h-10 flex-1 font-sans text-sm text-foreground"
-                />
-              </View>
-            ) : null}
-            {recentCategories.length > 0 && !categoryQuery.trim() ? (
-              <View className="mb-3">
-                <Text variant="muted" className="mb-2 text-xs">
-                  Recent
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {recentCategories.map((cat) => {
-                    const selected = categoryId === cat.id;
-                    return (
-                      <Pressable
-                        key={cat.id}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected }}
-                        onPress={() => {
-                          void hapticLight();
-                          setCategoryId(cat.id);
-                        }}
-                        className={cn(
-                          "flex-row items-center gap-2 rounded-full border px-3 py-2",
-                          selected
-                            ? "border-primary bg-primary/15"
-                            : "border-border bg-background",
-                        )}
-                      >
-                        <CategoryIcon icon={cat.icon} className="h-6 w-6" />
-                        <Text className="text-sm">{cat.name}</Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </View>
-            ) : null}
-
-            <View className="mb-4 gap-3">
-              {groups.map((group) => (
-                <View key={group.type} className="gap-1.5">
-                  <Text variant="muted" className="text-xs">
-                    {group.label}
-                  </Text>
-                  {group.categories.map((cat) => {
-                    const selected = categoryId === cat.id;
-                    return (
-                      <Pressable
-                        key={cat.id}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected }}
-                        accessibilityLabel={cat.name}
-                        onPress={() => setCategoryId(cat.id)}
-                        className={cn(
-                          "flex-row items-center gap-3 rounded-control border px-3 py-2",
-                          selected
-                            ? "border-primary bg-primary/15"
-                            : "border-border bg-background",
-                        )}
-                      >
-                        <CategoryIcon icon={cat.icon} />
-                        <Text className="flex-1 text-sm">
-                          {formatCategoryOptionLabel(cat, locale)}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ))}
-            </View>
+            <CategoryPicker
+              label={t("transaction.category")}
+              categories={categories}
+              value={categoryId}
+              onChange={setCategoryId}
+              recentIds={recentCategoryIds}
+              className="mb-4"
+            />
 
             <Text className="mb-2 text-sm font-medium">
               {t("transaction.amount")}
@@ -287,7 +198,7 @@ export function TransactionFormModal({
               value={amount}
               onChangeText={setAmount}
               keyboardType="decimal-pad"
-              placeholder="0.00"
+              placeholder={amountPlaceholder}
               className="mb-4"
             />
 
@@ -315,41 +226,16 @@ export function TransactionFormModal({
                 <Text className="mb-2 text-sm font-medium">
                   {t("transaction.tags")}
                 </Text>
-                <View className="mb-4 flex-row flex-wrap gap-2">
-                  {tags.map((tag) => {
-                    const selected = tagIds.includes(tag.id);
-                    return (
-                      <Pressable
-                        key={tag.id}
-                        accessibilityRole="checkbox"
-                        accessibilityState={{ checked: selected }}
-                        accessibilityLabel={tag.name}
-                        onPress={() =>
-                          setTagIds((current) =>
-                            current.includes(tag.id)
-                              ? current.filter((id) => id !== tag.id)
-                              : [...current, tag.id],
-                          )
-                        }
-                        className={cn(
-                          "rounded-full border px-3 py-2",
-                          selected
-                            ? "border-primary bg-primary/15"
-                            : "border-border bg-background",
-                        )}
-                      >
-                        <Text
-                          className={cn(
-                            "text-sm",
-                            selected && "text-primary-ink",
-                          )}
-                        >
-                          {tag.name}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
+                <MultiChips
+                  label={t("transaction.tags")}
+                  className="mb-4"
+                  options={tags.map((tag) => ({
+                    value: tag.id,
+                    label: tag.name,
+                  }))}
+                  values={tagIds}
+                  onChange={setTagIds}
+                />
               </>
             ) : null}
 

@@ -5,7 +5,11 @@ import {
 } from "react-native";
 
 import { cn } from "@/lib/cn";
-import { hasTextColor, withoutTextColor } from "@/lib/text-class";
+import {
+  hasTextColor,
+  sansWeightFace,
+  withoutTextColor,
+} from "@/lib/text-class";
 import { TABULAR, TYPE } from "@/theme/tokens";
 
 type Variant =
@@ -36,7 +40,9 @@ const VARIANTS: Record<Variant, string> = {
   title: "font-sans text-2xl font-bold text-foreground",
   muted: "font-sans text-sm text-muted-foreground",
   label: "font-sans text-xs font-semibold uppercase text-muted-foreground",
-  amount: "font-mono text-base text-foreground",
+  // The sans face with even-width digits, as on the web. It was IBM Plex
+  // Mono, whose no-break space is three times as wide: "20  €".
+  amount: "font-sans text-base text-foreground",
   // The display sizes carry no text-* class, and no font-* one either: size,
   // face, tracking and digit metric all arrive together from TYPE below —
   // for the lineHeight reason described there, and so that a figure cannot
@@ -61,6 +67,8 @@ export function Text({
   variant = "body",
   className,
   style,
+  numberOfLines,
+  adjustsFontSizeToFit,
   ...props
 }: TextProps) {
   // A colour on the call site must win over the variant's; NativeWind would
@@ -69,10 +77,24 @@ export function Text({
     ? withoutTextColor(VARIANTS[variant])
     : VARIANTS[variant];
 
+  const classes = cn(base, className);
+  // A figure is one line that shrinks to fit rather than a figure that
+  // wraps ("1 281,84 / €"), unless the call site asks for something else.
+  const display = variant === "hero" || variant === "figure";
+
   return (
     <RNText
-      className={cn(base, className)}
-      style={[VARIANT_STYLE[variant], style]}
+      className={classes}
+      style={[
+        VARIANT_STYLE[variant],
+        // `tabular-nums` as a class only reaches the web; native reads this.
+        /(^|\s)tabular-nums(\s|$)/.test(classes) ? TABULAR : undefined,
+        sansWeightFace(classes),
+        style,
+      ]}
+      numberOfLines={numberOfLines ?? (display ? 1 : undefined)}
+      adjustsFontSizeToFit={adjustsFontSizeToFit ?? display}
+      minimumFontScale={display ? 0.6 : undefined}
       {...props}
     />
   );

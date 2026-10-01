@@ -83,10 +83,7 @@ function isACountry(code: string): boolean {
  * raw key says "this much is somewhere the app could not name", which is
  * true; showing nothing would lose the weight entirely.
  */
-export function countryName(
-  code: string,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+export function countryName(code: string, locale: Locale): string {
   const trimmed = code.trim();
   if (!ALPHA_2.test(trimmed)) {
     return code;

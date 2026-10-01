@@ -3,9 +3,9 @@ import { suggestLocale } from "./locale-suggestion";
 
 describe("suggestLocale", () => {
   it("offers English to a reader in French whose device prefers English", () => {
-    expect(suggestLocale({ current: "fr", preferred: "en", asked: false })).toBe(
-      "en",
-    );
+    expect(
+      suggestLocale({ current: "fr", preferred: "en", asked: false }),
+    ).toBe("en");
   });
 
   it("asks only once", () => {

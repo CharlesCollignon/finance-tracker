@@ -80,12 +80,18 @@ describe("downsample", () => {
   });
 
   it("thins to the cap", () => {
-    const points = daily("2020-01-01", Array.from({ length: 500 }, (_, i) => i));
+    const points = daily(
+      "2020-01-01",
+      Array.from({ length: 500 }, (_, i) => i),
+    );
     expect(downsample(points, 60)).toHaveLength(60);
   });
 
   it("keeps both ends untouched", () => {
-    const points = daily("2020-01-01", Array.from({ length: 500 }, (_, i) => i));
+    const points = daily(
+      "2020-01-01",
+      Array.from({ length: 500 }, (_, i) => i),
+    );
     const thinned = downsample(points, 60);
     expect(thinned[0]).toEqual(points[0]);
     expect(thinned[thinned.length - 1]).toEqual(points[points.length - 1]);
@@ -229,7 +235,10 @@ describe("buildPriceSeries", () => {
 
   it("holds every range to the cap", () => {
     const dense = {
-      daily: daily("2020-01-01", Array.from({ length: 400 }, (_, i) => 10 + i)),
+      daily: daily(
+        "2020-01-01",
+        Array.from({ length: 400 }, (_, i) => 10 + i),
+      ),
       monthly: daily(
         "2010-01-01",
         Array.from({ length: 4000 }, (_, i) => 10 + i),

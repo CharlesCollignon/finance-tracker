@@ -11,7 +11,7 @@ import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
 import { Card } from "@/components/retroui/Card";
 import { useFormatCurrency } from "@/lib/use-currency";
-import { useT } from "@/lib/locale-context";
+import { useT, useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
 
 /** Long enough to make the drag visible, short enough to stay believable. */
@@ -35,6 +35,7 @@ interface FundCostCardProps {
  */
 export function FundCostCard({ portfolio }: FundCostCardProps) {
   const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
 
   const summary = useMemo(
@@ -66,7 +67,7 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
         <h2 className="font-head text-base">{t("fundCost.title")}</h2>
         {summary.weightedAverage !== null ? (
           <p className="text-sm text-muted-foreground">
-            {formatCharge(summary.weightedAverage)}{" "}
+            {formatCharge(summary.weightedAverage, locale)}{" "}
             {t("fundCost.weightedSuffix")}
           </p>
         ) : null}
@@ -110,7 +111,7 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
                   </span>
                 </span>
                 <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                  {formatCharge(row.ongoingCharge)}
+                  {formatCharge(row.ongoingCharge, locale)}
                 </span>
                 <span className="privacy-amount w-20 shrink-0 text-right font-mono tabular-nums">
                   {formatEuro(row.annualCost ?? 0)}
@@ -124,7 +125,7 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
               {t("fundCost.cheapestPrefix")}{" "}
               <span className="text-foreground">{summary.cheapest.name}</span>{" "}
               {t("fundCost.cheapestAt", {
-                charge: formatCharge(summary.cheapest.ongoingCharge),
+                charge: formatCharge(summary.cheapest.ongoingCharge, locale),
               })}{" "}
               <span className="privacy-amount tabular-nums">
                 {formatEuro(summary.coveredValue)}

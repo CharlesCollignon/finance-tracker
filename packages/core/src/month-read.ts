@@ -1,4 +1,4 @@
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * A month read: prose written by a model, figures written by the app.
@@ -216,7 +216,7 @@ const SCHEMA_WORDS: Record<
   },
 };
 
-export function monthReadJsonSchema(locale: Locale = FALLBACK_LOCALE) {
+export function monthReadJsonSchema(locale: Locale) {
   const words = SCHEMA_WORDS[locale];
   return {
     type: "json_schema",
@@ -367,10 +367,7 @@ const UNIT_WORDS = ["percent", "per cent", "euro", "euros", "cent", "cents"];
 // match "thirds", so "nearly two thirds of it" sailed past a check whose
 // entire purpose is to catch exactly that sentence — the singular forms were
 // the ones tried by hand, and the plural is the one a model actually writes.
-const SCALE_PATTERN = new RegExp(
-  `\\b(${SCALE_WORDS.join("|")})s?\\b`,
-  "i",
-);
+const SCALE_PATTERN = new RegExp(`\\b(${SCALE_WORDS.join("|")})s?\\b`, "i");
 
 const INTEGER_WITH_UNIT_PATTERN = new RegExp(
   `\\b(${SMALL_INTEGERS.join("|")})\\s+(${UNIT_WORDS.join("|")})\\b`,
@@ -450,7 +447,7 @@ function normalise(answer: MonthReadAnswer): MonthReadAnswer {
 export function verifyMonthRead(
   raw: unknown,
   facts: MonthFacts,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): MonthReadVerdict {
   const t = translator(locale);
   const parsed = monthReadAnswerSchema.safeParse(raw);
@@ -597,7 +594,7 @@ export function factSegments(
   text: string,
   facts: FactPack,
   formatMoney: (amount: number) => string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): ReadSegment[] | null {
   const segments: ReadSegment[] = [];
   let cursor = 0;
@@ -656,7 +653,7 @@ export function renderMonthRead(
   read: MonthRead,
   facts: MonthFacts,
   formatMoney: (amount: number) => string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): RenderedRead | null {
   const headline = factSegments(read.headline, facts, formatMoney, locale);
   if (!headline) {

@@ -218,10 +218,10 @@ describe("defaultTargets", () => {
 
 describe("formatWeight", () => {
   it("renders a fraction as a percentage", () => {
-    expect(formatWeight(0.6)).toBe("60%");
+    expect(formatWeight(0.6, "en")).toBe("60%");
   });
 
   it("renders an absent target as a dash", () => {
-    expect(formatWeight(null)).toBe("—");
+    expect(formatWeight(null, "en")).toBe("—");
   });
 });

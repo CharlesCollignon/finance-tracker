@@ -31,7 +31,7 @@ import {
   type MonthFact,
   type MonthFacts,
 } from "./month-facts";
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import type { MonthReadRequest } from "./month-read";
 
 export const MONTH_READ_PROMPT_VERSION = 3;
@@ -65,7 +65,7 @@ const FIGURE_RULE_EN =
  * braces — the pack cannot anticipate every relationship a model might want.
  */
 const NAMING_RULE_EN =
-  "A placeholder is a number, not a name. Name the category, the cap or the " +
+  "A placeholder is a number, not a name. Name the category, the budget or the " +
   'month in words, and put the figure beside it: "you spent ' +
   '{{fact:expenses}}", never "the {{fact:expenses}} was high". Each figure\'s ' +
   "label is in the list; use those words for the name. And use each figure " +
@@ -94,7 +94,7 @@ const BASIS_RULE_EN =
  * because the wrong word is actively misleading, not merely off-brand:
  * "forecast" implies a prediction where the app means a projection of things
  * already scheduled, and "budget" for the allowance collides with the
- * per-category caps, which are a different feature.
+ * per-category budgets, which are a different feature.
  */
 const VOCABULARY_EN = [
   '"Unrecorded spending" — what a balance proves left the account that no ' +
@@ -102,11 +102,11 @@ const VOCABULARY_EN = [
     'Never call it a "leak", "untracked" or "missing".',
   '"Kept" — the cash a month left in the account plus everything ' +
     'deliberately set aside. Never call it "saved", "surplus" or "profit".',
-  '"Unrecorded allowance" — a cap on unrecorded spending, set from this ' +
-    'person\'s own history. Never call it a "budget", "target" or "limit".',
+  '"Unrecorded allowance" — a limit on unrecorded spending, set from this ' +
+    'person\'s own history. Never call it a "budget", "target" or "cap".',
   '"Month close" — recording what the account held and what follows from ' +
     'it. Never call it a "reconciliation" or "month end".',
-  'A projection of charges already scheduled is not a "forecast".',
+  'A projection of recurring entries already scheduled is not a "forecast".',
 ];
 
 /**
@@ -175,7 +175,7 @@ const MISSING_WORDS_EN: Record<MissingReason, string> = {
   // feature; the French clause used to print that forbidden word two
   // paragraphs under the line forbidding it. The label beside each line says
   // which cap is meant, so nothing is lost here.
-  "no-cap": "no cap has been set",
+  "no-cap": "no budget has been set",
   "month-unfinished": "the month is not over yet",
   "not-recorded": "nothing was recorded for it",
   "no-target": "no target allocation has been set",
@@ -233,13 +233,13 @@ const FIGURE_RULE_FR =
   "le chiffre, ou ne le dites pas.";
 
 const NAMING_RULE_FR =
-  "Un substitut est un nombre, pas un nom. Nommez la catégorie, le plafond " +
+  "Un substitut est un nombre, pas un nom. Nommez la catégorie, le budget " +
   'ou le mois en mots, et mettez le chiffre à côté : "vous avez dépensé ' +
   '{{fact:expenses}}", jamais "le {{fact:expenses}} était élevé". Le libellé ' +
   "de chaque chiffre figure dans la liste ; utilisez ces mots comme nom. Et " +
   "employez chaque chiffre pour ce que son libellé dit qu'il est : " +
-  '"dépassé l\'enveloppe de {{fact:unrecorded-allowance}}" désigne ' +
-  "l'enveloppe et l'appelle le montant du dépassement, ce qui est autre chose.";
+  '"dépassé la marge de {{fact:unrecorded-allowance}}" désigne la marge et ' +
+  "l'appelle le montant du dépassement, ce qui est autre chose.";
 
 const BASIS_RULE_FR =
   "Chaque observation et chaque suggestion porte une base : les ids sur " +
@@ -252,30 +252,32 @@ const BASIS_RULE_FR =
  *
  * Each entry names the term the card prints and the words to refuse, exactly
  * as the English block does. The refused words are the French ones a model
- * actually reaches for: "fuite" for unrecorded spending, "économisé" for
- * kept, "budget" for the allowance — that last one colliding with the
- * per-category caps the same way the English "budget" does.
+ * actually reaches for: "fuite" for unrecorded spending, "gardé" for what
+ * the card now calls "Économisé", "budget" for the allowance — that last one
+ * colliding with the per-category budgets the same way the English "budget"
+ * does.
  */
 const VOCABULARY_FR = [
-  '"Dépenses non enregistrées" — ce qu\'un solde prouve être sorti du compte ' +
-    "et qu'aucune écriture n'explique. C'est mesuré, pas estimé, et jamais " +
+  '"Dépenses non notées" — ce qu\'un solde prouve être sorti du compte et ' +
+    "qu'aucune opération n'explique. C'est mesuré, pas estimé, et jamais " +
     'négatif. Ne parlez jamais de "fuite", de "non suivi" ni de "manquant".',
-  "\"Gardé\" — l'argent qu'un mois a laissé sur le compte plus tout ce qui a " +
-    'été mis de côté délibérément. Ne dites jamais "économisé", ' +
+  "\"Économisé\" — l'argent qu'un mois a laissé sur le compte plus tout ce " +
+    'qui a été mis de côté délibérément. Ne dites jamais "gardé", ' +
     '"excédent" ni "bénéfice".',
-  '"Enveloppe non enregistrée" — un plafond sur les dépenses non ' +
-    "enregistrées, fixé d'après l'historique de cette personne. Ne l'appelez " +
-    'jamais un "budget", un "objectif" ni une "limite".',
-  '"Clôture du mois" — enregistrer ce que le compte contenait et ce qui en ' +
-    'découle. Ne parlez jamais de "réconciliation" ni de "fin de mois".',
-  "Une projection de charges déjà programmées n'est pas une " + '"prévision".',
+  '"Marge pour les dépenses non notées" (ou "la marge") — une limite sur ' +
+    "les dépenses non notées, fixée d'après l'historique de cette personne. " +
+    'Ne l\'appelez jamais un "budget", un "objectif" ni une "enveloppe".',
+  '"Bilan du mois" — enregistrer ce que le compte contenait et ce qui en ' +
+    'découle. Ne parlez jamais de "réconciliation" ni de "clôture".',
+  "Une projection d'opérations récurrentes déjà programmées n'est pas une " +
+    '"prévision".',
 ];
 
 const MISSING_WORDS_FR: Record<MissingReason, string> = {
   "no-bank": "aucune banque n'est connectée, cela ne peut donc pas être su",
   "no-close":
-    "aucun mois n'a encore été clôturé, cela ne peut donc pas être mesuré",
-  "no-cap": "aucun plafond n'a été fixé",
+    "aucun bilan de mois n'a encore été fait, cela ne peut donc pas être mesuré",
+  "no-cap": "aucun budget n'a été fixé",
   "month-unfinished": "le mois n'est pas terminé",
   "not-recorded": "rien n'a été enregistré pour cela",
   "no-target": "aucune répartition cible n'a été fixée",
@@ -336,8 +338,8 @@ const PROMPT: Record<Locale, PromptText> = {
     ],
     vocabularyHeading: "Use these words exactly, and avoid the ones marked:",
     suggestions: [
-      "Say what to change. Name a cut, a cap, a habit or something to check.",
-      "Every suggestion must point at a category, a cap or one of the figures",
+      "Say what to change. Name a cut, a budget, a habit or something to check.",
+      "Every suggestion must point at a category, a budget or one of the figures",
       "you were given — advice that would fit anyone's month is not worth the",
       "space. Do not congratulate; a suggestion is advice, not encouragement.",
     ],
@@ -383,9 +385,9 @@ const PROMPT: Record<Locale, PromptText> = {
     vocabularyHeading:
       "Employez ces mots exactement, et évitez ceux qui sont signalés :",
     suggestions: [
-      "Dites quoi changer. Nommez une coupe, un plafond, une habitude ou",
+      "Dites quoi changer. Nommez une coupe, un budget, une habitude ou",
       "quelque chose à vérifier. Chaque suggestion doit désigner une",
-      "catégorie, un plafond ou l'un des chiffres qui vous ont été donnés — un",
+      "catégorie, un budget ou l'un des chiffres qui vous ont été donnés — un",
       "conseil qui conviendrait au mois de n'importe qui ne vaut pas la place.",
       "Ne félicitez pas ; une suggestion est un conseil, pas un encouragement.",
     ],
@@ -406,10 +408,10 @@ const PROMPT: Record<Locale, PromptText> = {
       "bonne nouvelle.",
     ],
     provisional:
-      'Ce mois est encore en cours. Dites "à ce jour" là où cela compte, et ne parlez jamais du mois comme terminé ni de ses dépenses non enregistrées comme définitives.',
+      'Ce mois est encore en cours. Dites "à ce jour" là où cela compte, et ne parlez jamais du mois comme terminé ni de ses dépenses non notées comme définitives.',
     settled: "Ce mois est terminé, ses chiffres sont donc définitifs.",
     partial:
-      "Le tableau est incomplet — certaines écritures n'ont pas encore de catégorie, ou rien n'a été clôturé. Dites-le plutôt que d'écrire comme si les catégories étaient complètes.",
+      "Le tableau est incomplet — certaines opérations n'ont pas encore de catégorie, ou aucun bilan n'a été fait. Dites-le plutôt que d'écrire comme si les catégories étaient complètes.",
     lengthRule: [
       "Au plus quatre observations et trois suggestions. Deux phrases chacune,",
       "pas plus. Le titre est une seule courte proposition.",
@@ -439,12 +441,12 @@ export interface BuildPromptOptions {
    * Stored on the read as well, so a read written in French is still
    * rendered with French labels after the reader switches language.
    */
-  locale?: Locale;
+  locale: Locale;
 }
 
 export function buildMonthReadPrompt(
   facts: MonthFacts,
-  { money, locale = FALLBACK_LOCALE }: BuildPromptOptions,
+  { money, locale }: BuildPromptOptions,
 ): MonthReadRequest {
   const provisional = facts.state === "in-progress";
   const text = PROMPT[locale];

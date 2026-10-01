@@ -73,7 +73,7 @@ export async function fileFeedItems(
   const parsed = feedIds.safeParse(itemIds);
   const category = uuid.safeParse(categoryId);
   if (!parsed.success || !category.success) {
-    return { error: "Invalid selection" };
+    return { error: "errors.invalidInput" };
   }
 
   const { data: items } = await supabase
@@ -142,7 +142,7 @@ export async function fileFeedItems(
       // The category is refused for every row alike — the insert policy
       // checks it belongs to the user — so the first refusal ends the batch.
       if (imported + matched === 0) {
-        return { error: error?.message ?? "Could not add those entries" };
+        return { error: error?.message ?? "actions.couldNotAddEntry" };
       }
       break;
     }
@@ -177,7 +177,7 @@ export async function leaveOutFeedItems(
 ): Promise<BatchFeedResult> {
   const parsed = feedIds.safeParse(itemIds);
   if (!parsed.success) {
-    return { error: "Invalid selection" };
+    return { error: "errors.invalidInput" };
   }
 
   const { data, error } = await supabase
@@ -216,7 +216,7 @@ export async function reopenFeedItems(
 ): Promise<{ error?: string; success?: boolean; reopened?: number }> {
   const parsed = feedIds.safeParse(itemIds);
   if (!parsed.success) {
-    return { error: "Invalid selection" };
+    return { error: "errors.invalidInput" };
   }
 
   const { data: items } = await supabase

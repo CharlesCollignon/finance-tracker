@@ -163,7 +163,7 @@ describe("the reader's language", () => {
     });
     expect(notification?.title).toBe("Un nouveau mois");
     expect(notification?.body).toBe(
-      "Il commence avec 3 charges. Voyez ce qu'il reste.",
+      "Il commence avec 3 opérations récurrentes. Voyez ce qu'il reste.",
     );
   });
 
@@ -173,7 +173,7 @@ describe("the reader's language", () => {
       pendingRecurring: 1,
     });
     expect(notification?.body).toBe(
-      "Il commence avec 1 charge. Voyez ce qu'il reste.",
+      "Il commence avec 1 opération récurrente. Voyez ce qu'il reste.",
     );
   });
 

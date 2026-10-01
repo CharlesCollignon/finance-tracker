@@ -72,6 +72,7 @@ export function SelectionBar({
         effect,
         summary,
         categories.find((category) => category.id === target)?.name ?? "",
+        locale,
       )
     : null;
   // The only move that asks twice; see the note on this component.

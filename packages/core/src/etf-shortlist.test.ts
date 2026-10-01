@@ -100,8 +100,24 @@ describe("ETF_SHORTLIST", () => {
 
     it("only admits UCITS funds domiciled in the EU or EEA", () => {
       const EU_EEA = new Set([
-        "FR", "LU", "IE", "DE", "NL", "BE", "ES", "IT", "PT", "AT",
-        "FI", "SE", "DK", "PL", "CZ", "NO", "IS", "LI",
+        "FR",
+        "LU",
+        "IE",
+        "DE",
+        "NL",
+        "BE",
+        "ES",
+        "IT",
+        "PT",
+        "AT",
+        "FI",
+        "SE",
+        "DK",
+        "PL",
+        "CZ",
+        "NO",
+        "IS",
+        "LI",
       ]);
       for (const entry of peaEligible) {
         expect(entry.ucits).toBe(true);
@@ -156,9 +172,7 @@ describe("ETF_SHORTLIST", () => {
     it("allows an unknown charge rather than inviting a guess", () => {
       // Not a property of the data so much as of the schema: an entry whose
       // charge was never confirmed must be expressible.
-      expect(
-        ENTRIES.some((entry) => entry.terHint === null),
-      ).toBe(true);
+      expect(ENTRIES.some((entry) => entry.terHint === null)).toBe(true);
     });
   });
 });

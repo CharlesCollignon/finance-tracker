@@ -134,7 +134,7 @@ describe("amountToInput", () => {
 
 describe("formatAmountInput", () => {
   it("marks an empty entry so the placeholder can be dimmed", () => {
-    expect(formatAmountInput("")).toEqual({
+    expect(formatAmountInput("", "en")).toEqual({
       integer: "0",
       fraction: "",
       empty: true,

@@ -47,6 +47,7 @@ function summary(partial: Partial<MonthlySummary> = {}): MonthlySummary {
 
 function pack(partial: Partial<BuildMonthFactsInput> = {}) {
   return buildMonthFacts({
+    locale: "en",
     year: 2026,
     month: 3,
     state: "closed",
@@ -112,7 +113,7 @@ describe("writesAFigure", () => {
 
 describe("verifyMonthRead", () => {
   it("accepts a well-formed answer", () => {
-    const verdict = verifyMonthRead(answer(), pack());
+    const verdict = verifyMonthRead(answer(), pack(), "en");
 
     expect(verdict.ok).toBe(true);
     if (verdict.ok) {
@@ -123,13 +124,17 @@ describe("verifyMonthRead", () => {
 
   describe("fatal", () => {
     it("rejects a shape that is not the schema", () => {
-      const verdict = verifyMonthRead({ headline: "x" }, pack());
+      const verdict = verifyMonthRead({ headline: "x" }, pack(), "en");
 
       expect(verdict).toMatchObject({ ok: false, reason: "unreadable" });
     });
 
     it("rejects an extra top-level key rather than ignoring it", () => {
-      const verdict = verifyMonthRead(answer({ confidence: 0.9 }), pack());
+      const verdict = verifyMonthRead(
+        answer({ confidence: 0.9 }),
+        pack(),
+        "en",
+      );
 
       expect(verdict).toMatchObject({ ok: false, reason: "unreadable" });
     });
@@ -138,6 +143,7 @@ describe("verifyMonthRead", () => {
       const verdict = verifyMonthRead(
         answer({ headline: "You spent 412 on groceries" }),
         pack(),
+        "en",
       );
 
       expect(verdict).toMatchObject({ ok: false, reason: "invented-figure" });
@@ -148,6 +154,7 @@ describe("verifyMonthRead", () => {
       const verdict = verifyMonthRead(
         answer({ headline: "a".repeat(140) }),
         pack(),
+        "en",
       );
 
       expect(verdict).toMatchObject({ ok: false, reason: "unreadable" });
@@ -168,6 +175,7 @@ describe("verifyMonthRead", () => {
           ],
         }),
         pack({ close: null }),
+        "en",
       );
 
       expect(verdict).toMatchObject({ ok: false, reason: "unknown-datum" });
@@ -188,6 +196,7 @@ describe("verifyMonthRead", () => {
           ],
         }),
         pack(),
+        "en",
       );
 
       expect(verdict).toMatchObject({ ok: false, reason: "unknown-datum" });
@@ -201,6 +210,7 @@ describe("verifyMonthRead", () => {
           ],
         }),
         pack(),
+        "en",
       );
 
       expect(verdict).toMatchObject({ ok: false, reason: "nothing-left" });
@@ -222,6 +232,7 @@ describe("verifyMonthRead", () => {
         ],
       }),
       pack(),
+      "en",
     );
 
     expect(verdict.ok).toBe(true);
@@ -251,6 +262,7 @@ describe("verifyMonthRead", () => {
         })),
       }),
       pack(),
+      "en",
     );
 
     expect(verdict.ok).toBe(true);
@@ -278,6 +290,7 @@ describe("verifyMonthRead", () => {
         ],
       }),
       pack(),
+      "en",
     );
 
     expect(verdict.ok).toBe(true);
@@ -301,6 +314,7 @@ describe("verifyMonthRead", () => {
           ],
         }),
         pack(),
+        "en",
       );
 
       expect(verdict.ok).toBe(true);
@@ -332,6 +346,7 @@ describe("verifyMonthRead", () => {
           ],
         }),
         pack(),
+        "en",
       );
 
       expect(verdict.ok).toBe(true);
@@ -355,6 +370,7 @@ describe("verifyMonthRead", () => {
       const verdict = verifyMonthRead(
         answer({ observations: [{ text, basis: ids, tone: "neutral" }] }),
         pack(),
+        "en",
       );
 
       expect(verdict.ok).toBe(true);
@@ -383,6 +399,7 @@ describe("verifyMonthRead", () => {
           ],
         }),
         pack(),
+        "en",
       );
 
       expect(verdict.ok).toBe(true);
@@ -424,7 +441,7 @@ describe("renderMonthRead", () => {
   };
 
   it("substitutes the app's own formatted figure, never the model's text", () => {
-    const rendered = renderMonthRead(read, pack(), marked)!;
+    const rendered = renderMonthRead(read, pack(), marked, "en")!;
     const figure = rendered.observations[0]!.segments.find(
       (segment) => segment.kind === "figure",
     );
@@ -438,7 +455,7 @@ describe("renderMonthRead", () => {
   });
 
   it("keeps the prose either side of a figure", () => {
-    const rendered = renderMonthRead(read, pack(), money)!;
+    const rendered = renderMonthRead(read, pack(), money, "en")!;
 
     expect(rendered.observations[0]!.segments.map((s) => s.kind)).toEqual([
       "text",
@@ -459,7 +476,7 @@ describe("renderMonthRead", () => {
       ],
     };
 
-    const rendered = renderMonthRead(twoClaims, withoutGroceries, money)!;
+    const rendered = renderMonthRead(twoClaims, withoutGroceries, money, "en")!;
     expect(rendered.observations).toHaveLength(1);
   });
 
@@ -474,6 +491,7 @@ describe("renderMonthRead", () => {
         headlined,
         pack({ summary: summary({ expenseBreakdown: [] }) }),
         money,
+        "en",
       ),
     ).toBeNull();
   });
@@ -490,6 +508,7 @@ describe("renderMonthRead", () => {
       },
       pack(),
       money,
+      "en",
     )!;
 
     expect(rendered.suggestions.map((s) => s.effort)).toEqual([
@@ -538,16 +557,16 @@ describe("createFakeMonthReadSource", () => {
 
 describe("monthReadJsonSchema", () => {
   it("forbids extra properties, matching the strict zod parse", () => {
-    expect(monthReadJsonSchema().json_schema.schema.additionalProperties).toBe(
-      false,
-    );
-    expect(monthReadJsonSchema().json_schema.strict).toBe(true);
+    expect(
+      monthReadJsonSchema("en").json_schema.schema.additionalProperties,
+    ).toBe(false);
+    expect(monthReadJsonSchema("en").json_schema.strict).toBe(true);
   });
 
   it("carries no count or length rules, which zod enforces instead", () => {
     // Mistral's strict mode does not reliably honour minItems/maxLength, so
     // stating them here would imply a guarantee the app does not have.
-    const asText = JSON.stringify(monthReadJsonSchema());
+    const asText = JSON.stringify(monthReadJsonSchema("en"));
     expect(asText).not.toContain("maxItems");
     expect(asText).not.toContain("minItems");
     expect(asText).not.toContain("maxLength");

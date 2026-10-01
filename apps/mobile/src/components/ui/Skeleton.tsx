@@ -10,6 +10,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { Orb } from "@/components/Orb";
+import { useT } from "@/providers/LocaleProvider";
 import { cn } from "@/lib/cn";
 
 interface SkeletonProps extends ViewProps {
@@ -48,10 +49,11 @@ export function Skeleton({ className, style, ...props }: SkeletonProps) {
 
 /** Centred orb for indeterminate waits, where a shape preview would lie. */
 export function LoadingOrb({ label }: { label?: string }) {
+  const t = useT();
   return (
     <View
       accessibilityRole="progressbar"
-      accessibilityLabel={label ?? "Loading"}
+      accessibilityLabel={label ?? t("common.loading")}
       className="items-center justify-center gap-3 py-10"
     >
       <Orb size="hero" spin="loading" />

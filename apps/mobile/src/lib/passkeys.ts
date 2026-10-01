@@ -15,7 +15,7 @@ type CreatedPasskey = NonNullable<
 >;
 
 function passkeyError(error: { message: string } | null | undefined): string {
-  return error?.message ?? "Passkey request failed.";
+  return error?.message ?? "passkeys.failed";
 }
 
 async function loadPasskeys(): Promise<PasskeysModule | null> {
@@ -29,9 +29,9 @@ async function loadPasskeys(): Promise<PasskeysModule | null> {
 
 function cancelledOrUnsupported(passkeys: PasskeysModule | null): string {
   if (!passkeys?.isSupported()) {
-    return "Passkeys are not available on this device.";
+    return "passkeys.unsupported";
   }
-  return "Passkey prompt was cancelled.";
+  return "passkeys.cancelled";
 }
 
 /**

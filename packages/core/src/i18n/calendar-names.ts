@@ -128,17 +128,17 @@ const FR: CalendarNames = {
 
 export const CALENDAR_NAMES: Record<Locale, CalendarNames> = { en: EN, fr: FR };
 
-export function calendarNames(locale: Locale = FALLBACK_LOCALE): CalendarNames {
+export function calendarNames(locale: Locale): CalendarNames {
   return CALENDAR_NAMES[locale] ?? CALENDAR_NAMES[FALLBACK_LOCALE];
 }
 
 /** "September" from a 1-indexed month, the way every caller holds it. */
-export function monthLong(month: number, locale: Locale = FALLBACK_LOCALE): string {
+export function monthLong(month: number, locale: Locale): string {
   return calendarNames(locale).monthLong[month - 1] ?? "";
 }
 
 /** "Sep" from a 1-indexed month. */
-export function monthShort(month: number, locale: Locale = FALLBACK_LOCALE): string {
+export function monthShort(month: number, locale: Locale): string {
   return calendarNames(locale).monthShort[month - 1] ?? "";
 }
 
@@ -147,9 +147,7 @@ export function monthShort(month: number, locale: Locale = FALLBACK_LOCALE): str
  * Monday first — which is the week Europe starts on, and the order the
  * existing grid already assumes.
  */
-export function weekdayShortMondayFirst(
-  locale: Locale = FALLBACK_LOCALE,
-): readonly string[] {
+export function weekdayShortMondayFirst(locale: Locale): readonly string[] {
   const { weekdayShort } = calendarNames(locale);
   return [...weekdayShort.slice(1), weekdayShort[0]!];
 }
@@ -161,9 +159,6 @@ export function weekdayShortMondayFirst(
  * from `Date.getDay()` in a way that has to be converted somewhere; here is
  * the somewhere.
  */
-export function dayOfWeekLong(
-  isoDayOfWeek: number,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+export function dayOfWeekLong(isoDayOfWeek: number, locale: Locale): string {
   return calendarNames(locale).weekdayLong[isoDayOfWeek % 7] ?? "";
 }

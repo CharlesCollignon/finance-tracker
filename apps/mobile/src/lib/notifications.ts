@@ -9,6 +9,8 @@ import {
   occurrenceWithinSchedule,
 } from "@finance/core/recurrence";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
+import type { Locale } from "@finance/core/i18n/locale";
+import { translator } from "@finance/core/i18n/t";
 
 import { supabase } from "@/lib/supabase";
 
@@ -75,12 +77,13 @@ async function setEnabledFlag(enabled: boolean): Promise<void> {
   }
 }
 
-async function ensureChannel(): Promise<void> {
+/** The channel's name is what Android's settings list it under. */
+async function ensureChannel(locale: Locale): Promise<void> {
   if (Platform.OS !== "android") {
     return;
   }
   await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-    name: "Reminders",
+    name: translator(locale)("reminders.channelName"),
     importance: Notifications.AndroidImportance.DEFAULT,
   });
 }
@@ -199,8 +202,8 @@ export interface ReminderOptIn {
  * whatever the OS had decided on its own and the switch could report a denial
  * the user was never shown.
  */
-export async function enableReminders(): Promise<ReminderOptIn> {
-  await ensureChannel();
+export async function enableReminders(locale: Locale): Promise<ReminderOptIn> {
+  await ensureChannel(locale);
 
   const current = await Notifications.getPermissionsAsync();
   const granted =
@@ -237,17 +240,29 @@ interface ReminderCopy {
   body: string;
 }
 
-function dueTomorrow(name: string, amount: string): ReminderCopy {
-  return {
-    title: `${name} tomorrow`,
-    body: `${amount} is due. Open Pluclair to apply it.`,
-  };
-}
+/** Whether a reminder fires the evening before its day or on the morning. */
+type ReminderWhen = "tomorrow" | "today";
 
-function dueToday(name: string, amount: string): ReminderCopy {
+/*
+ * Nothing to apply any more: a charge writes itself into its month, so the
+ * reminder only says what is coming. It used to end "Open Pluclair to apply
+ * it", from when every month had to be filled by hand.
+ */
+function reminderCopy(
+  when: ReminderWhen,
+  name: string,
+  amount: string,
+  locale: Locale,
+): ReminderCopy {
+  const t = translator(locale);
   return {
-    title: `${name} today`,
-    body: `${amount} is due. Open Pluclair to apply it.`,
+    title: t(
+      when === "tomorrow"
+        ? "reminders.dueTomorrowTitle"
+        : "reminders.dueTodayTitle",
+      { name },
+    ),
+    body: t("reminders.dueBody", { amount }),
   };
 }
 
@@ -258,11 +273,9 @@ function dueToday(name: string, amount: string): ReminderCopy {
  * A repeating trigger is the whole point: it keeps firing without the app ever
  * being opened again, which the previous one-off schedule could not do.
  */
-function repeatingTriggerFor(
-  template: RecurringTemplateWithCategory,
-): {
+function repeatingTriggerFor(template: RecurringTemplateWithCategory): {
   trigger: Notifications.NotificationTriggerInput;
-  copy: (name: string, amount: string) => ReminderCopy;
+  when: ReminderWhen;
 } | null {
   const recurrence = template.recurrence ?? "monthly";
 
@@ -275,7 +288,7 @@ function repeatingTriggerFor(
         minute: 0,
         channelId,
       },
-      copy: dueTomorrow,
+      when: "tomorrow",
     };
   }
 
@@ -294,7 +307,7 @@ function repeatingTriggerFor(
         minute: 0,
         channelId,
       },
-      copy: eveningBefore ? dueTomorrow : dueToday,
+      when: eveningBefore ? "tomorrow" : "today",
     };
   }
 
@@ -310,7 +323,7 @@ function repeatingTriggerFor(
         minute: 0,
         channelId,
       },
-      copy: eveningBefore ? dueTomorrow : dueToday,
+      when: eveningBefore ? "tomorrow" : "today",
     };
   }
 
@@ -347,7 +360,11 @@ function boundedDatesFor(
 
     for (const occurredOn of occurrences) {
       if (
-        !occurrenceWithinSchedule(occurredOn, template.starts_on, template.ends_on)
+        !occurrenceWithinSchedule(
+          occurredOn,
+          template.starts_on,
+          template.ends_on,
+        )
       ) {
         continue;
       }
@@ -385,12 +402,13 @@ function isOpenEnded(template: RecurringTemplateWithCategory): boolean {
 export async function syncRecurringReminders(
   templates: RecurringTemplateWithCategory[],
   formatAmount: (amount: number) => string,
+  locale: Locale,
 ): Promise<void> {
   if (!(await remindersEnabled())) {
     return;
   }
 
-  await ensureChannel();
+  await ensureChannel(locale);
   await Notifications.cancelAllScheduledNotificationsAsync();
 
   const now = new Date();
@@ -419,7 +437,12 @@ export async function syncRecurringReminders(
       if (!repeating) {
         continue;
       }
-      const { title, body } = repeating.copy(name, amount);
+      const { title, body } = reminderCopy(
+        repeating.when,
+        name,
+        amount,
+        locale,
+      );
       await Notifications.scheduleNotificationAsync({
         content: { title, body },
         trigger: repeating.trigger,
@@ -432,7 +455,7 @@ export async function syncRecurringReminders(
       if (scheduled >= MAX_TEMPLATE_REMINDERS) {
         break;
       }
-      const { title, body } = dueTomorrow(name, amount);
+      const { title, body } = reminderCopy("tomorrow", name, amount, locale);
       await Notifications.scheduleNotificationAsync({
         content: { title, body },
         trigger: {
@@ -445,7 +468,7 @@ export async function syncRecurringReminders(
     }
   }
 
-  await scheduleMonthOpenReminder();
+  await scheduleMonthOpenReminder(locale);
 }
 
 /**
@@ -455,11 +478,12 @@ export async function syncRecurringReminders(
  * arrives for a user whose templates all changed, and it lands on the day the
  * Apply step is most worth doing.
  */
-async function scheduleMonthOpenReminder(): Promise<void> {
+async function scheduleMonthOpenReminder(locale: Locale): Promise<void> {
+  const t = translator(locale);
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: "A new month",
-      body: "Apply your recurring to fill it in, and see what's left.",
+      title: t("reminders.monthOpenTitle"),
+      body: t("reminders.monthOpenBody"),
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.MONTHLY,
@@ -515,6 +539,7 @@ export async function notifyBudgetBreaches(
   breaches: BudgetBreach[],
   monthKey: string,
   formatAmount: (amount: number) => string,
+  locale: Locale,
 ): Promise<void> {
   if (breaches.length === 0 || !(await remindersEnabled())) {
     return;
@@ -535,16 +560,20 @@ export async function notifyBudgetBreaches(
     return;
   }
 
-  await ensureChannel();
+  await ensureChannel(locale);
 
+  const t = translator(locale);
   const [first] = fresh;
   const title =
     fresh.length === 1
-      ? `${first!.label} is over budget`
-      : `${fresh.length} budgets are over`;
+      ? t("reminders.overCapOne", { name: first!.label })
+      : t("reminders.overCapMany", { count: fresh.length });
   const body =
     fresh.length === 1
-      ? `${formatAmount(first!.spent)} spent of ${formatAmount(first!.limit)}.`
+      ? t("reminders.overCapBody", {
+          spent: formatAmount(first!.spent),
+          limit: formatAmount(first!.limit),
+        })
       : fresh.map((breach) => breach.label).join(", ");
 
   await Notifications.scheduleNotificationAsync({

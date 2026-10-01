@@ -1,4 +1,4 @@
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import type { CategoryType } from "./types/database";
 
@@ -11,7 +11,7 @@ import type { CategoryType } from "./types/database";
  * migration is involved.
  */
 export function categoryTypeLabels(
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): Record<CategoryType, string> {
   const t = translator(locale);
   return {

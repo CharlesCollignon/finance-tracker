@@ -10,7 +10,9 @@ const Card = ({ className, ...props }: ICardProps) => {
   return (
     <div
       className={cn(
-        "inline-block rounded-control border border-border bg-card",
+        // The card radius, as every other surface holding content: it was
+        // the control radius, 10px against the system's 20.
+        "inline-block rounded-card border border-border bg-card",
         className,
       )}
       {...props}

@@ -78,7 +78,7 @@ describe("buildPeaStatus", () => {
 
 describe("peaMaturityHint", () => {
   function hintFor(openedOn: string | null, today: string) {
-    return peaMaturityHint(buildPeaStatus(0, openedOn, today));
+    return peaMaturityHint(buildPeaStatus(0, openedOn, today), "en");
   }
 
   it("says nothing without an opening date", () => {

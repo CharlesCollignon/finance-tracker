@@ -94,7 +94,7 @@ export default async function LookThroughPage() {
       footing={walletReadFooting(facts, locale)}
       readAt={
         stored?.readAt
-          ? describePullAge(stored.readAt, new Date().toISOString())
+          ? describePullAge(stored.readAt, new Date().toISOString(), locale)
           : null
       }
       stale={stale}

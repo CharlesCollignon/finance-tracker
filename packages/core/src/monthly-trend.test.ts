@@ -36,7 +36,7 @@ describe("monthlyTrendStart", () => {
 
 describe("bucketMonthlyTrend", () => {
   it("returns one point per month in the window, oldest first", () => {
-    const points = bucketMonthlyTrend([], 6, NOW);
+    const points = bucketMonthlyTrend([], 6, NOW, "en");
 
     expect(points.map((point) => point.monthKey)).toEqual([
       "2025-10",
@@ -49,7 +49,7 @@ describe("bucketMonthlyTrend", () => {
   });
 
   it("keeps a month with no rows as a zero rather than dropping it", () => {
-    const points = bucketMonthlyTrend([row("2026-03-02", 100)], 3, NOW);
+    const points = bucketMonthlyTrend([row("2026-03-02", 100)], 3, NOW, "en");
 
     expect(points).toHaveLength(3);
     expect(points[0]).toMatchObject({ monthKey: "2026-01", net: 0 });
@@ -66,6 +66,7 @@ describe("bucketMonthlyTrend", () => {
       ],
       1,
       NOW,
+      "en",
     );
 
     expect(points[0]).toMatchObject({
@@ -83,6 +84,7 @@ describe("bucketMonthlyTrend", () => {
       ],
       1,
       NOW,
+      "en",
     );
 
     expect(points[0]).toMatchObject({ outflow: 0, net: 3200 });
@@ -93,17 +95,19 @@ describe("bucketMonthlyTrend", () => {
       [row("2024-01-01", 999), row("2026-03-01", 10)],
       2,
       NOW,
+      "en",
     );
 
     expect(points.reduce((sum, point) => sum + point.outflow, 0)).toBe(10);
   });
 
   it("accepts an amount that arrives as a string", () => {
-    const points = bucketMonthlyTrend([row("2026-03-01", 0)], 1, NOW);
+    const points = bucketMonthlyTrend([row("2026-03-01", 0)], 1, NOW, "en");
     const asText = bucketMonthlyTrend(
       [{ ...row("2026-03-01", 0), amount: "64.20" }],
       1,
       NOW,
+      "en",
     );
 
     expect(points[0]!.outflow).toBe(0);
@@ -115,6 +119,7 @@ describe("bucketMonthlyTrend", () => {
       [{ ...row("2026-03-01", 0), amount: "not a number" }],
       1,
       NOW,
+      "en",
     );
 
     expect(points[0]!.outflow).toBe(0);
@@ -122,7 +127,7 @@ describe("bucketMonthlyTrend", () => {
   });
 
   it("labels each point with the month it covers", () => {
-    const points = bucketMonthlyTrend([], 2, NOW);
+    const points = bucketMonthlyTrend([], 2, NOW, "en");
 
     expect(points.map((point) => point.label)).toEqual([
       "February 2026",
@@ -131,7 +136,11 @@ describe("bucketMonthlyTrend", () => {
   });
 });
 
-function point(monthKey: string, income: number, outflow: number): MonthlyTrendPoint {
+function point(
+  monthKey: string,
+  income: number,
+  outflow: number,
+): MonthlyTrendPoint {
   return {
     monthKey,
     label: monthKey,

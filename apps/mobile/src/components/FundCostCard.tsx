@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/Card";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Text } from "@/components/ui/Text";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
-import { useT } from "@/providers/LocaleProvider";
+import { useT, useLocale } from "@/providers/LocaleProvider";
 
 /** Long enough to make the drag visible, short enough to stay believable. */
 const HORIZON_YEARS = 10;
@@ -35,6 +35,7 @@ interface FundCostCardProps {
 export function FundCostCard({ portfolio }: FundCostCardProps) {
   const formatEuro = useFormatCurrency();
   const t = useT();
+  const locale = useLocale();
 
   const summary = useMemo(
     () =>
@@ -65,7 +66,7 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
         <Text className="font-bold">{t("fundCost.title")}</Text>
         {summary.weightedAverage !== null ? (
           <Text variant="muted" className="text-xs">
-            {`${formatCharge(summary.weightedAverage)} ${t(
+            {`${formatCharge(summary.weightedAverage, locale)} ${t(
               "fundCost.weightedSuffix",
             )}`}
           </Text>
@@ -79,7 +80,7 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
       ) : (
         <>
           <PrivateAmount
-            className="font-mono font-bold"
+            className="font-sans tabular-nums font-bold"
             style={{ fontSize: 26 }}
           >
             {formatEuro(summary.totalAnnualCost)}
@@ -99,10 +100,13 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
                 <Text numberOfLines={1} className="flex-1 text-sm">
                   {row.name}
                 </Text>
-                <Text variant="muted" className="font-mono text-xs">
-                  {formatCharge(row.ongoingCharge)}
+                <Text
+                  variant="muted"
+                  className="font-sans tabular-nums text-xs"
+                >
+                  {formatCharge(row.ongoingCharge, locale)}
                 </Text>
-                <PrivateAmount className="w-20 text-right font-mono text-sm">
+                <PrivateAmount className="w-20 text-right font-sans tabular-nums text-sm">
                   {formatEuro(row.annualCost ?? 0)}
                 </PrivateAmount>
               </View>
@@ -113,7 +117,9 @@ export function FundCostCard({ portfolio }: FundCostCardProps) {
             <Text variant="muted" className="mt-1 text-sm">
               {`${t("fundCost.cheapestPrefix")} ${summary.cheapest.name} ${t(
                 "fundCost.cheapestAt",
-                { charge: formatCharge(summary.cheapest.ongoingCharge) },
+                {
+                  charge: formatCharge(summary.cheapest.ongoingCharge, locale),
+                },
               )} ${formatEuro(summary.coveredValue)} ${t(
                 "fundCost.wouldCost",
               )} ${formatEuro(summary.costAtCheapest ?? 0)} ${t(

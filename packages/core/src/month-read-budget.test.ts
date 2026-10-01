@@ -35,6 +35,7 @@ function summary(partial: Partial<MonthlySummary> = {}): MonthlySummary {
 
 function pack(partial: Partial<BuildMonthFactsInput> = {}) {
   return buildMonthFacts({
+    locale: "en",
     year: 2026,
     month: 3,
     state: "closed",
@@ -233,13 +234,13 @@ describe("explainWriteRefusal", () => {
     ];
 
     for (const refusal of refusals) {
-      expect(explainWriteRefusal(refusal, "March 2026")).toMatch(/\S/);
+      expect(explainWriteRefusal(refusal, "March 2026", "en")).toMatch(/\S/);
     }
   });
 
   it("names the month where the month is the point", () => {
     expect(
-      explainWriteRefusal({ reason: "nothing-to-say" }, "March 2026"),
+      explainWriteRefusal({ reason: "nothing-to-say" }, "March 2026", "en"),
     ).toContain("March 2026");
   });
 });
@@ -252,6 +253,7 @@ describe("describeReadFreshness", () => {
 
     expect(
       describeReadFreshness({
+        locale: "en",
         storedFacts: facts,
         currentFacts: facts,
         footing: ["income", "expenses"],
@@ -264,6 +266,7 @@ describe("describeReadFreshness", () => {
   it("reports only the figures the read actually rests on", () => {
     // A figure nobody cited moving is not staleness.
     const freshness = describeReadFreshness({
+      locale: "en",
       storedFacts: pack(),
       currentFacts: pack({ summary: summary({ expenses: 1900 }) }),
       footing: ["income"],
@@ -277,6 +280,7 @@ describe("describeReadFreshness", () => {
 
   it("reports movement in a cited figure", () => {
     const freshness = describeReadFreshness({
+      locale: "en",
       storedFacts: pack(),
       currentFacts: pack({ summary: summary({ expenses: 1900 }) }),
       footing: ["expenses"],
@@ -292,6 +296,7 @@ describe("describeReadFreshness", () => {
 
   it("treats a sub-cent difference as rounding", () => {
     const freshness = describeReadFreshness({
+      locale: "en",
       storedFacts: pack(),
       currentFacts: pack({ summary: summary({ expenses: 1650.004 }) }),
       footing: ["expenses"],
@@ -307,6 +312,7 @@ describe("describeReadFreshness", () => {
     // would be lit permanently — and a warning that is always on is one
     // nobody reads.
     const freshness = describeReadFreshness({
+      locale: "en",
       storedFacts: pack({ state: "in-progress" }),
       currentFacts: pack({
         state: "in-progress",
@@ -325,6 +331,7 @@ describe("describeReadFreshness", () => {
   it("says how old the read is, in the app's existing words", () => {
     expect(
       describeReadFreshness({
+        locale: "en",
         storedFacts: pack(),
         currentFacts: pack(),
         footing: [],
@@ -337,6 +344,7 @@ describe("describeReadFreshness", () => {
   it("ignores a cited figure that has since disappeared", () => {
     // Rendering drops that claim; there is nothing to compare here.
     const freshness = describeReadFreshness({
+      locale: "en",
       storedFacts: pack({ inboxPending: 3 }),
       currentFacts: pack(),
       footing: ["inbox-pending"],

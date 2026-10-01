@@ -102,7 +102,7 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
   }
 
   if (!parseUuid(id)) {
-    return { error: "Invalid category" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -122,10 +122,10 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
 
 function friendlyCategoryError(message: string): string {
   if (message.includes("foreign key")) {
-    return "This category is used by transactions or recurring items. Archive it instead.";
+    return "actions.categoryInUse";
   }
   if (message.includes("duplicate key")) {
-    return "A category with this name and type already exists.";
+    return "actions.categoryExists";
   }
   return message;
 }

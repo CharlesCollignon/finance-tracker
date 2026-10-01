@@ -40,6 +40,7 @@ import { getLocale, getT } from "@/lib/locale";
 
 export default async function BudgetsPage() {
   const user = await getAuthUser();
+  const locale = await getLocale();
 
   if (!user) {
     redirect("/login");
@@ -105,7 +106,7 @@ export default async function BudgetsPage() {
     saved: row.saved,
     remaining: row.remaining,
     ratio: row.ratio,
-    pacing: computeGoalPacing(row),
+    pacing: computeGoalPacing(row, locale),
   }));
 
   const projection = buildForwardProjection({

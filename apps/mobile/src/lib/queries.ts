@@ -4,13 +4,8 @@ import {
   getMonthBounds,
   type BudgetViewMode,
 } from "@finance/core/constants";
-import {
-  bucketMonthlyTrend,
-  monthlyTrendStart,
-  type MonthlyTrendPoint,
-} from "@finance/core/monthly-trend";
 
-import { FALLBACK_LOCALE, type Locale } from "@finance/core/i18n/locale";
+import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
 import {
   bankMerchantKey,
@@ -92,7 +87,6 @@ import type {
 } from "@finance/core/investment-positions";
 
 import { supabase } from "@/lib/supabase";
-export type { MonthlyTrendPoint };
 
 export async function getCategories(
   userId: string,
@@ -134,48 +128,6 @@ export async function getTransactions(
     throw error;
   }
   return (data ?? []) as TransactionWithCategory[];
-}
-
-/**
- * Income/outflow per month for the last `months` months, in one round trip.
- *
- * The bucketing lives in core so that the web app's server-side twin produces
- * the same figures from the same window; this is only the query and the shape
- * PostgREST hands back.
- */
-export async function getMonthlyTrend(
-  userId: string,
-  months = 6,
-): Promise<MonthlyTrendPoint[]> {
-  const now = new Date();
-
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("amount, occurred_on, categories(type, counts_toward_summary)")
-    .eq("user_id", userId)
-    .gte("occurred_on", monthlyTrendStart(months, now))
-    .order("occurred_on", { ascending: true });
-
-  if (error) {
-    throw error;
-  }
-
-  type Row = {
-    amount: number | string;
-    occurred_on: string;
-    categories: { type: string; counts_toward_summary: boolean } | null;
-  };
-
-  return bucketMonthlyTrend(
-    ((data ?? []) as unknown as Row[]).map((row) => ({
-      amount: row.amount,
-      occurredOn: row.occurred_on,
-      type: row.categories?.type ?? "",
-      countsTowardSummary: row.categories?.counts_toward_summary ?? false,
-    })),
-    months,
-    now,
-  );
 }
 
 export async function getRecurringTemplates(
@@ -265,7 +217,8 @@ export async function getSkippedOccurrences(
   return ((data ?? []) as unknown as Row[]).map((row) => ({
     templateId: row.template_id,
     occurredOn: row.occurred_on,
-    name: row.recurring_templates?.categories?.name ?? "Recurring item",
+    // Empty rather than an English word; the screen names it.
+    name: row.recurring_templates?.categories?.name ?? "",
   }));
 }
 
@@ -418,6 +371,7 @@ async function fetchHistoricalQuotes(
 
 export async function getWalletPortfolio(
   userId: string,
+  locale: Locale,
   options: { includeHistory?: boolean } = {},
 ): Promise<InvestmentPortfolioSummary> {
   // History is off by default: mobile screens show totals, not charts.
@@ -456,6 +410,7 @@ export async function getWalletPortfolio(
     positionRows,
     recurringTemplates,
     liveQuotes,
+    locale,
     todayIsoLocal(),
     historicalQuotes,
   );
@@ -467,25 +422,6 @@ export async function getBudgets(userId: string) {
     .select("*")
     .eq("user_id", userId)
     .order("created_at");
-  if (error) {
-    throw error;
-  }
-  return data ?? [];
-}
-
-export async function getWalletTransfers(
-  userId: string,
-  year: number,
-  month: number,
-) {
-  const { start, end } = getMonthBounds(year, month);
-  const { data, error } = await supabase
-    .from("wallet_transfers")
-    .select("*")
-    .eq("user_id", userId)
-    .gte("occurred_on", start)
-    .lte("occurred_on", end)
-    .order("occurred_on", { ascending: false });
   if (error) {
     throw error;
   }
@@ -891,6 +827,7 @@ export interface MonthCloseOverview {
 export async function getMonthCloseOverview(
   userId: string,
   today: string,
+  locale: Locale,
 ): Promise<MonthCloseOverview> {
   const [settings, closes] = await Promise.all([
     getMonthCloseSettings(userId),
@@ -923,7 +860,7 @@ export async function getMonthCloseOverview(
 
     history.push({
       monthKey,
-      label: formatMonthLabel(year!, month!),
+      label: formatMonthLabel(year!, month!, locale),
       closingBalance,
       observedOn: close.observed_on,
       status: result.status,
@@ -946,6 +883,7 @@ export async function getMonthCloseOverview(
       today,
       settings.closeDay,
       monthKeys.length > 0 ? monthKeys[monthKeys.length - 1]! : null,
+      locale,
     ),
   };
 }
@@ -1482,10 +1420,7 @@ export interface PendingFeedRow {
 }
 
 /** Parses `review:<reason>` back out of `decided_by`. */
-function reasonOf(
-  decidedBy: string | null,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+function reasonOf(decidedBy: string | null, locale: Locale): string {
   const why = decidedBy?.startsWith("review:")
     ? (decidedBy.slice("review:".length) as ReviewReason)
     : null;
@@ -1496,7 +1431,7 @@ function reasonOf(
 
 export async function getPendingFeedItems(
   userId: string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): Promise<PendingFeedRow[]> {
   const { data, error } = await supabase
     .from("bank_feed_items")

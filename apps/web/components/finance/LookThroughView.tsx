@@ -54,6 +54,7 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { ICON } from "@/lib/icon-scale";
 import { MICRO } from "@/lib/type-scale";
 import { cn } from "@/lib/utils";
+import { INTL_LOCALES } from "@finance/core/i18n/locale";
 
 /**
  * What to say when a walk stops early.
@@ -320,7 +321,10 @@ export function LookThroughView({
                     </PrivateAmount>
                     <span className={cn(MICRO, "text-muted-foreground")}>
                       {t("lookThrough.costAllIn", {
-                        rate: formatCharge(lookThrough.charges.weightedAllIn),
+                        rate: formatCharge(
+                          lookThrough.charges.weightedAllIn,
+                          locale,
+                        ),
                       })}
                     </span>
                   </span>
@@ -712,19 +716,26 @@ export function LookThroughView({
               <dl className="flex flex-col gap-2">
                 <Line
                   label={t("lookThrough.fundCharges")}
-                  value={formatCharge(lookThrough.charges.weightedAverage)}
+                  value={formatCharge(
+                    lookThrough.charges.weightedAverage,
+                    locale,
+                  )}
                 />
                 {lookThrough.charges.weightedEnvelopeFee !== null ? (
                   <Line
                     label={t("lookThrough.envelopeFee")}
                     value={formatCharge(
                       lookThrough.charges.weightedEnvelopeFee,
+                      locale,
                     )}
                   />
                 ) : null}
                 <Line
                   label={t("lookThrough.allIn")}
-                  value={formatCharge(lookThrough.charges.weightedAllIn)}
+                  value={formatCharge(
+                    lookThrough.charges.weightedAllIn,
+                    locale,
+                  )}
                   strong
                 />
                 <Line
@@ -1069,6 +1080,7 @@ function Bias({
   factor: number | null;
 }) {
   const t = useT();
+  const locale = useLocale();
 
   return (
     <div className="flex flex-col">
@@ -1084,7 +1096,9 @@ function Bias({
           {Math.abs(factor - 1) < 0.15
             ? t("lookThrough.inLineWithMarket")
             : t("lookThrough.timesMarket", {
-                factor: factor.toFixed(factor < 10 ? 1 : 0),
+                factor: new Intl.NumberFormat(INTL_LOCALES[locale], {
+                  maximumFractionDigits: factor < 10 ? 1 : 0,
+                }).format(factor),
               })}
         </span>
       ) : null}

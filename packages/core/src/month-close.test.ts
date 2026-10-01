@@ -381,7 +381,7 @@ describe("closableMonth", () => {
   it("anchors on the newest month whose reading date has passed", () => {
     // On 2 September, August cannot be read yet (that waits for the 5th),
     // so the anchor is July, which the user can look up today.
-    const first = closableMonth("2026-09-02", 5, null);
+    const first = closableMonth("2026-09-02", 5, null, "en");
 
     expect(first).toMatchObject({
       monthKey: "2026-07",
@@ -391,7 +391,7 @@ describe("closableMonth", () => {
   });
 
   it("anchors on last month once its reading date arrives", () => {
-    expect(closableMonth("2026-09-05", 5, null)).toMatchObject({
+    expect(closableMonth("2026-09-05", 5, null, "en")).toMatchObject({
       monthKey: "2026-08",
       observeOn: "2026-09-05",
       isBaseline: true,
@@ -399,7 +399,7 @@ describe("closableMonth", () => {
   });
 
   it("offers the month straight after the last close", () => {
-    expect(closableMonth("2026-11-06", 5, "2026-09")).toMatchObject({
+    expect(closableMonth("2026-11-06", 5, "2026-09", "en")).toMatchObject({
       monthKey: "2026-10",
       observeOn: "2026-11-05",
       isBaseline: false,
@@ -409,8 +409,8 @@ describe("closableMonth", () => {
   it("asks for nothing until the next reading date arrives", () => {
     // October is closed by reading the balance on 5 November, so on the 4th
     // there is still nothing to ask for.
-    expect(closableMonth("2026-11-04", 5, "2026-09")).toBeNull();
-    expect(closableMonth("2026-11-05", 5, "2026-09")).toMatchObject({
+    expect(closableMonth("2026-11-04", 5, "2026-09", "en")).toBeNull();
+    expect(closableMonth("2026-11-05", 5, "2026-09", "en")).toMatchObject({
       monthKey: "2026-10",
     });
   });
@@ -418,14 +418,14 @@ describe("closableMonth", () => {
   it("walks a user who has fallen behind forwards, in order", () => {
     // Three months missed: July is offered first, not October, because each
     // close measures from the one before it.
-    expect(closableMonth("2026-11-20", 5, "2026-06")).toMatchObject({
+    expect(closableMonth("2026-11-20", 5, "2026-06", "en")).toMatchObject({
       monthKey: "2026-07",
       observeOn: "2026-08-05",
     });
   });
 
   it("has nothing to ask when the latest month is already closed", () => {
-    expect(closableMonth("2026-11-20", 5, "2026-10")).toBeNull();
+    expect(closableMonth("2026-11-20", 5, "2026-10", "en")).toBeNull();
   });
 });
 

@@ -199,18 +199,18 @@ describe("buildPortfolioReturn", () => {
 
 describe("formatAnnualRate", () => {
   it("shows a gain with an explicit plus", () => {
-    expect(formatAnnualRate(0.074)).toBe("+7.4% a year");
+    expect(formatAnnualRate(0.074, "en")).toBe("+7.4% a year");
   });
 
   it("shows a loss with a minus", () => {
-    expect(formatAnnualRate(-0.021)).toBe("-2.1% a year");
+    expect(formatAnnualRate(-0.021, "en")).toBe("-2.1% a year");
   });
 
   it("shows a flat return without a sign", () => {
-    expect(formatAnnualRate(0)).toBe("0.0% a year");
+    expect(formatAnnualRate(0, "en")).toBe("0.0% a year");
   });
 
   it("returns null when there is no rate", () => {
-    expect(formatAnnualRate(null)).toBeNull();
+    expect(formatAnnualRate(null, "en")).toBeNull();
   });
 });

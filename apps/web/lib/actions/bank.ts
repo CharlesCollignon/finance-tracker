@@ -18,6 +18,7 @@ import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
 import { getRecurringProposals } from "@/lib/queries/bank";
 import { todayIsoLocal } from "@finance/core/constants";
+import { getT } from "@/lib/locale";
 
 type ActionResult = { error?: string; success?: boolean; message?: string };
 
@@ -56,28 +57,29 @@ export async function syncBankFeedAction(
 
     // Led with, because it is the thing the press was for. "0 added" after a
     // refused pull reads as "nothing happened"; "asked moments ago" says why.
+    const t = await getT();
     const parts: string[] = [];
     if (outcome.pull && !outcome.pull.pulled && outcome.pull.why) {
       parts.push(outcome.pull.why);
     }
-    parts.push(`${outcome.imported} added`);
+    parts.push(t("actions.syncAdded", { count: outcome.imported }));
     if (closes.closed.length > 0) {
       parts.push(
-        `${closes.closed.length} ${closes.closed.length === 1 ? "month" : "months"} closed`,
+        t("actions.syncMonthsClosed", { count: closes.closed.length }),
       );
     }
     if (outcome.matched > 0) {
-      parts.push(`${outcome.matched} already recorded`);
+      parts.push(t("actions.syncAlreadyRecorded", { count: outcome.matched }));
     }
     if (outcome.pending > 0) {
-      parts.push(`${outcome.pending} to review`);
+      parts.push(t("actions.syncToReview", { count: outcome.pending }));
     }
     if (outcome.duplicates > 0) {
-      parts.push(`${outcome.duplicates} already seen`);
+      parts.push(t("actions.syncAlreadySeen", { count: outcome.duplicates }));
     }
     if (outcome.needReconnect > 0) {
       parts.push(
-        `${outcome.needReconnect} ${outcome.needReconnect === 1 ? "account needs" : "accounts need"} reconnecting`,
+        t("actions.syncNeedReconnect", { count: outcome.needReconnect }),
       );
     }
 
@@ -85,7 +87,7 @@ export async function syncBankFeedAction(
   } catch (error) {
     return {
       error:
-        error instanceof Error ? error.message : "Could not reach the bank.",
+        error instanceof Error ? error.message : "actions.couldNotReachBank",
     };
   }
 }
@@ -109,7 +111,7 @@ export async function importFeedItem(
     return { error: "errors.notAuthenticated" };
   }
   if (!uuid.safeParse(itemId).success || !uuid.safeParse(categoryId).success) {
-    return { error: "Invalid selection" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -121,10 +123,10 @@ export async function importFeedItem(
     .maybeSingle();
 
   if (!item) {
-    return { error: "That entry is no longer waiting" };
+    return { error: "actions.entryNoLongerWaiting" };
   }
   if (item.status !== "pending") {
-    return { error: "That entry has already been dealt with" };
+    return { error: "actions.entryAlreadyDealtWith" };
   }
 
   if (!force) {
@@ -167,7 +169,7 @@ export async function importFeedItem(
       return {
         success: true,
         duplicateOf: already.transactionId,
-        message: "Already in your ledger — filed against the entry you had",
+        message: "actions.alreadyInLedger",
       };
     }
   }
@@ -185,7 +187,7 @@ export async function importFeedItem(
     .single();
 
   if (error || !transaction) {
-    return { error: error?.message ?? "Could not add that entry" };
+    return { error: error?.message ?? "actions.couldNotAddEntry" };
   }
 
   await supabase
@@ -195,7 +197,7 @@ export async function importFeedItem(
     .eq("user_id", user.id);
 
   revalidateFeedDependents();
-  return { success: true, message: "Added" };
+  return { success: true, message: "recurringProposals.added" };
 }
 
 /**
@@ -211,7 +213,7 @@ export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
     return { error: "errors.notAuthenticated" };
   }
   if (!uuid.safeParse(itemId).success) {
-    return { error: "Invalid selection" };
+    return { error: "errors.invalidInput" };
   }
 
   const { error } = await (
@@ -228,7 +230,7 @@ export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
   }
 
   revalidateFeedDependents();
-  return { success: true, message: "Left out" };
+  return { success: true, message: "actions.leftOut" };
 }
 
 /**
@@ -309,7 +311,7 @@ export async function recategoriseFeedItem(
     return { error: "errors.notAuthenticated" };
   }
   if (!uuid.safeParse(itemId).success || !uuid.safeParse(categoryId).success) {
-    return { error: "Invalid selection" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -321,7 +323,7 @@ export async function recategoriseFeedItem(
     .maybeSingle();
 
   if (!item?.transaction_id) {
-    return { error: "That entry is not in your ledger" };
+    return { error: "actions.entryNotInLedger" };
   }
 
   const { error } = await supabase
@@ -335,7 +337,7 @@ export async function recategoriseFeedItem(
   }
 
   revalidateFeedDependents();
-  return { success: true, message: "Moved" };
+  return { success: true, message: "actions.moved" };
 }
 
 /**
@@ -362,7 +364,7 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
     return { error: "errors.notAuthenticated" };
   }
   if (!uuid.safeParse(itemId).success) {
-    return { error: "Invalid selection" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -374,10 +376,10 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
     .maybeSingle();
 
   if (!item) {
-    return { error: "That entry is no longer here" };
+    return { error: "actions.entryNoLongerHere" };
   }
   if (item.status === "pending") {
-    return { error: "That entry is already waiting" };
+    return { error: "actions.entryAlreadyWaiting" };
   }
 
   // The feed row first: if deleting the transaction succeeded and this then
@@ -405,7 +407,7 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
   }
 
   revalidateFeedDependents();
-  return { success: true, message: "Back in the inbox" };
+  return { success: true, message: "actions.backInInbox" };
 }
 
 /**
@@ -535,7 +537,7 @@ export async function acceptRecurringProposal(
   const proposals = await getRecurringProposals(user.id, todayIsoLocal());
   const proposal = proposals.find((candidate) => candidate.key === key);
   if (!proposal) {
-    return { error: "That one is no longer being suggested" };
+    return { error: "actions.suggestionGone" };
   }
 
   const supabase = await createClient();
@@ -560,7 +562,11 @@ export async function acceptRecurringProposal(
 
   revalidateFeedDependents();
   revalidatePath("/recurring");
-  return { success: true, message: `${proposal.label} added` };
+  const t = await getT();
+  return {
+    success: true,
+    message: t("actions.proposalAdded", { name: proposal.label }),
+  };
 }
 
 /** Refuse one suggestion for good. */
@@ -572,7 +578,7 @@ export async function dismissRecurringProposal(
     return { error: "errors.notAuthenticated" };
   }
   if (!key.trim()) {
-    return { error: "Invalid selection" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -588,7 +594,7 @@ export async function dismissRecurringProposal(
   }
 
   revalidatePath("/recurring");
-  return { success: true, message: "Won't suggest that again" };
+  return { success: true, message: "actions.suggestionDismissed" };
 }
 
 /**

@@ -189,7 +189,7 @@ function Figure({
       </Text>
       <PrivateAmount
         className={cn(
-          "font-mono font-bold",
+          "font-sans tabular-nums font-bold",
           tone === "bad" && "text-destructive",
           tone === "good" && "text-primary-ink",
         )}
@@ -266,7 +266,7 @@ function Ingredient({ ingredient }: { ingredient: ProjectionIngredient }) {
         </Text>
       </View>
       <View className="flex-row items-center gap-1.5">
-        <PrivateAmount className="font-mono text-sm">
+        <PrivateAmount className="font-sans tabular-nums text-sm">
           {`${sign}${formatEuro(ingredient.monthly)}`}
         </PrivateAmount>
         <Ionicons

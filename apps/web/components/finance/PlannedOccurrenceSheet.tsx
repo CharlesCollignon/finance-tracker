@@ -8,7 +8,7 @@ import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { resolveMessage } from "@finance/core/i18n/t";
 import { Button, buttonVariants } from "@/components/retroui/Button";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
-import { amountSign } from "@/components/finance/amount-sign";
+import { amountSign } from "@finance/core/amount-sign";
 import { MobileSheet } from "@/components/layout/MobileSheet";
 import { useToast } from "@/components/layout/ToastProvider";
 import {

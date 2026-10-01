@@ -27,6 +27,7 @@ function tx(
 describe("buildCategoryHistory", () => {
   it("gives every month in the window a bar, including the empty ones", () => {
     const [history] = buildCategoryHistory([tx("2026-09-04", 100)], 2026, 9, {
+      locale: "en",
       months: 3,
     });
 
@@ -44,7 +45,7 @@ describe("buildCategoryHistory", () => {
       [tx("2026-09-04", 40), tx("2026-09-19", 60)],
       2026,
       9,
-      { months: 1 },
+      { locale: "en", months: 1 },
     );
 
     expect(history!.points[0]!.total).toBe(100);
@@ -55,7 +56,7 @@ describe("buildCategoryHistory", () => {
       [tx("2026-08-04", 100), tx("2026-09-04", 100)],
       2026,
       9,
-      { months: 3 },
+      { locale: "en", months: 3 },
     );
 
     expect(history!.total).toBe(200);
@@ -70,7 +71,7 @@ describe("buildCategoryHistory", () => {
       ],
       2026,
       9,
-      { months: 1 },
+      { locale: "en", months: 1 },
     );
 
     expect(history!.points[0]!.total).toBe(300);
@@ -78,6 +79,7 @@ describe("buildCategoryHistory", () => {
 
   it("ignores anything outside the window", () => {
     const histories = buildCategoryHistory([tx("2025-01-04", 100)], 2026, 9, {
+      locale: "en",
       months: 3,
     });
 
@@ -92,7 +94,7 @@ describe("buildCategoryHistory", () => {
       ],
       2026,
       9,
-      { months: 1 },
+      { locale: "en", months: 1 },
     );
 
     expect(histories.map((h) => h.name)).toEqual(["Rent", "Sport"]);
@@ -103,7 +105,7 @@ describe("buildCategoryHistory", () => {
       [tx("2025-12-04", 100), tx("2026-01-04", 100)],
       2026,
       1,
-      { months: 3 },
+      { locale: "en", months: 3 },
     );
 
     expect(history!.points.map((p) => p.monthKey)).toEqual([
@@ -159,7 +161,7 @@ describe("buildCategoryHistory, when payments straddle a month boundary", () => 
       dates.map((date, index) => salary(`t${index}`, date)),
       2026,
       9,
-      { months: 12 },
+      { locale: "en", months: 12 },
     );
 
     expect(history!.periodShifted).toBe(true);
@@ -196,10 +198,9 @@ describe("buildCategoryHistory, when payments straddle a month boundary", () => 
       "2026-08-31",
       "2026-10-01",
     ];
-    const transactions = dates.map((date, index) =>
-      salary(`t${index}`, date),
-    );
+    const transactions = dates.map((date, index) => salary(`t${index}`, date));
     const [history] = buildCategoryHistory(transactions, 2026, 9, {
+      locale: "en",
       months: 12,
     });
     const keyOf = categoryBucketing(transactions).get("pay")!.keyOf;
@@ -234,7 +235,7 @@ describe("buildCategoryHistory, when payments straddle a month boundary", () => 
       })),
       2026,
       9,
-      { months: 12 },
+      { locale: "en", months: 12 },
     );
 
     expect(history!.periodShifted).toBe(false);

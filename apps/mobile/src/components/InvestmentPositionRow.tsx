@@ -68,7 +68,9 @@ export function InvestmentPositionRow({
 
   const isCrypto = isCryptoWallet(item.walletId);
   const valueLabel =
-    item.hasManualValue || item.hasMarketQuote ? "Market" : "Invested";
+    item.hasManualValue || item.hasMarketQuote
+      ? t("wallets.market")
+      : t("wallets.invested");
   const hasChart = item.chartPoints.length > 0;
 
   const option = useMemo<EChartsCoreOption | null>(() => {
@@ -94,7 +96,7 @@ export function InvestmentPositionRow({
       series: [
         {
           type: "line",
-          name: "Invested",
+          name: t("wallets.invested"),
           smooth: true,
           showSymbol: false,
           lineStyle: { color: colors.mutedForeground, width: 1.5 },
@@ -103,7 +105,7 @@ export function InvestmentPositionRow({
         },
         {
           type: "line",
-          name: "Market",
+          name: t("wallets.market"),
           smooth: true,
           showSymbol: false,
           lineStyle: { color: line, width: 2 },
@@ -112,7 +114,7 @@ export function InvestmentPositionRow({
         },
       ],
     };
-  }, [colors, hasChart, item.chartPoints, item.gainLoss]);
+  }, [colors, hasChart, item.chartPoints, item.gainLoss, t]);
 
   return (
     <View className="min-w-0 py-4">
@@ -126,22 +128,22 @@ export function InvestmentPositionRow({
             {item.instrumentSymbol ? (
               <Text variant="muted" numberOfLines={1} className="text-xs">
                 {isCrypto
-                  ? "Bitcoin"
+                  ? t("position.bitcoin")
                   : (item.instrumentName ?? item.instrumentSymbol)}
               </Text>
             ) : null}
             {item.needsShareCount ? (
               <Text className="mt-1 text-xs font-medium text-primary-ink">
                 {isCrypto
-                  ? "Add total BTC for live market value"
-                  : "Add total shares for live market value"}
+                  ? t("wallets.addBtcForValue")
+                  : t("wallets.addSharesForValue")}
               </Text>
             ) : null}
           </View>
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Edit ${item.name}`}
+          accessibilityLabel={t("wallets.editPosition", { name: item.name })}
           onPress={onEdit}
           hitSlop={8}
           className="h-11 w-11 items-center justify-center"
@@ -161,7 +163,7 @@ export function InvestmentPositionRow({
           value={formatEuro(item.totalInvested)}
         />
         <Metric
-          label="P/L"
+          label={t("wallets.profitLoss")}
           value={formatSigned(item.gainLoss, formatEuro)}
           tone={
             item.gainLoss > 0
@@ -180,7 +182,7 @@ export function InvestmentPositionRow({
           className="mt-2 min-h-11 justify-center"
         >
           <Text variant="muted" className="text-xs font-medium">
-            {chartOpen ? "Hide chart" : "Show chart"}
+            {chartOpen ? t("wallets.hideChart") : t("wallets.showChart")}
           </Text>
         </Pressable>
       ) : null}

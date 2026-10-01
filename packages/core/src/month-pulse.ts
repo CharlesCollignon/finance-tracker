@@ -1,4 +1,4 @@
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * How the month is actually going, in the one figure people open the app for.
@@ -167,10 +167,7 @@ function standingOf(free: number | null, cap: number | null): MonthStanding {
  * calling both "on hand" would be the kind of small lie that costs an app its
  * credibility the first time someone checks.
  */
-export function pulseHeadline(
-  pulse: MonthPulse,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+export function pulseHeadline(pulse: MonthPulse, locale: Locale): string {
   const t = translator(locale);
   if (pulse.onHand === null) {
     return t("pulse.headlineLeft");
@@ -183,10 +180,7 @@ export function pulseHeadline(
 /**
  * One line explaining the headline, without repeating the number above it.
  */
-export function pulseExplanation(
-  pulse: MonthPulse,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+export function pulseExplanation(pulse: MonthPulse, locale: Locale): string {
   const t = translator(locale);
   if (pulse.onHand === null) {
     return t("pulse.noBalance");

@@ -1,5 +1,6 @@
 import { Text, View, type ViewProps } from "react-native";
 
+import { sansWeightFace } from "@/lib/text-class";
 import { cn } from "@/lib/cn";
 
 type Variant = "default" | "outline" | "solid" | "surface";
@@ -16,14 +17,16 @@ const CONTAINER: Record<Variant, string> = {
   default: "bg-muted rounded-control",
   outline: "border border-border bg-transparent rounded-control",
   solid: "bg-foreground rounded-control",
-  surface: "bg-primary/15 rounded-control",
+  // Neutral, as on the web: gold is kept for what can be pressed or must
+  // be noticed, and a status pill on every row is neither.
+  surface: "bg-secondary rounded-control",
 };
 
 const LABEL: Record<Variant, string> = {
   default: "text-muted-foreground",
   outline: "text-foreground",
   solid: "text-background",
-  surface: "text-primary-ink",
+  surface: "text-foreground",
 };
 
 const PADDING: Record<Size, string> = {
@@ -50,7 +53,10 @@ export function Badge({
       className={cn("self-start", PADDING[size], CONTAINER[variant], className)}
       {...props}
     >
-      <Text className={cn("font-medium", LABEL_SIZE[size], LABEL[variant])}>
+      <Text
+        className={cn("font-medium", LABEL_SIZE[size], LABEL[variant])}
+        style={sansWeightFace("font-medium")}
+      >
         {label}
       </Text>
     </View>

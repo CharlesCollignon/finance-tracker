@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Orb } from "@/components/Orb";
 import { Text } from "@/components/ui/Text";
 import { useAuth } from "@/providers/AuthProvider";
+import { useT } from "@/providers/LocaleProvider";
 
 /** Long enough to cover a slow token exchange, short enough not to strand. */
 const EXCHANGE_TIMEOUT_MS = 12_000;
@@ -18,6 +19,7 @@ const EXCHANGE_TIMEOUT_MS = 12_000;
  * then hands them on.
  */
 export default function AuthCallbackScreen() {
+  const t = useT();
   const { session } = useAuth();
   const router = useRouter();
   const { error } = useLocalSearchParams<{ error?: string }>();
@@ -39,7 +41,7 @@ export default function AuthCallbackScreen() {
   return (
     <View className="flex-1 items-center justify-center gap-4 bg-background">
       <Orb size="hero" spin="loading" />
-      <Text variant="muted">Finishing sign-in…</Text>
+      <Text variant="muted">{t("auth.finishingSignIn")}</Text>
     </View>
   );
 }

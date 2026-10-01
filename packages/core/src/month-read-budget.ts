@@ -1,4 +1,4 @@
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * Whether to ask the writer, and whether what it wrote still stands.
@@ -163,7 +163,7 @@ export function writesRemaining(
 export function explainWriteRefusal(
   refusal: WriteRefusal,
   monthLabel: string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   const t = translator(locale);
   switch (refusal.reason) {
@@ -221,6 +221,7 @@ export interface FreshnessQuestion {
   footing: readonly string[];
   writtenAt: string;
   now: string;
+  locale: Locale;
 }
 
 /**
@@ -267,8 +268,9 @@ export function describeReadFreshness({
   footing,
   writtenAt,
   now,
+  locale,
 }: FreshnessQuestion): ReadFreshness {
-  const writtenAge = describePullAge(writtenAt, now);
+  const writtenAge = describePullAge(writtenAt, now, locale);
   const moved = movedFacts(storedFacts, currentFacts, footing);
 
   // A month in progress is never reported as stale, however much has moved.

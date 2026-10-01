@@ -26,7 +26,9 @@ const TODAY = "2026-09-14";
  * right one.
  */
 
-function row(partial: Partial<InvestmentPositionRow> = {}): InvestmentPositionRow {
+function row(
+  partial: Partial<InvestmentPositionRow> = {},
+): InvestmentPositionRow {
   return {
     id: "pos-1",
     wallet: "cto",
@@ -58,6 +60,7 @@ function value(
     [positionRow],
     templates,
     liveQuotes,
+    "en",
     TODAY,
   );
 
@@ -178,7 +181,11 @@ describe("valuation precedence", () => {
 
   it("ignores a pin with no figure behind it", () => {
     const item = value(
-      row({ instrument_symbol: "SWDA.AS", share_count: 100, value_pinned: true }),
+      row({
+        instrument_symbol: "SWDA.AS",
+        share_count: 100,
+        value_pinned: true,
+      }),
       { "SWDA.AS": 112.5 },
     );
 

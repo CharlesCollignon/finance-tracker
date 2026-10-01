@@ -27,7 +27,7 @@ export async function writeMonthReadAction(
 
   const parsed = monthReadRequestSchema.safeParse({ year, month });
   if (!parsed.success) {
-    return { written: false, message: "Invalid month", writesLeft: 0 };
+    return { written: false, message: "errors.invalidInput", writesLeft: 0 };
   }
 
   const outcome = await writeMonthRead(

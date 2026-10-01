@@ -38,7 +38,7 @@
  */
 
 import type { CategoryFacts } from "./category-facts";
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import type { MonthReadRequest } from "./month-read";
 import { factLines, missingLines } from "./month-read-prompt";
 import type { CategoryType } from "./types/database";
@@ -73,7 +73,7 @@ const FIGURE_RULE_EN =
  */
 const NAMING_RULE_EN =
   "A placeholder is a number, not a name. Name the category, the month or " +
-  'the cap in words, and put the figure beside it: "an ordinary month costs ' +
+  'the budget in words, and put the figure beside it: "an ordinary month costs ' +
   'you {{fact:normal}}", never "the {{fact:normal}} has gone up". Each ' +
   "figure's label is in the list; use those words for the name. And use each " +
   'figure for what its label says it is: "{{fact:normal}} above what you ' +
@@ -98,7 +98,7 @@ const BASIS_RULE_EN =
  * without — the app has a word for the median month and a word for a run
  * going one way, and a model left to its own devices will write "average" and
  * "anomaly" beside labels that say neither. The third is a collision rather
- * than a preference: this app already has an "allowance", it is a cap on
+ * than a preference: this app already has an "allowance", it is a limit on
  * unrecorded spending, and it is not this. Both directions are pinned, here
  * and in the entry above.
  */
@@ -108,20 +108,20 @@ const VOCABULARY_EN = [
     'Never call it a "leak", "untracked" or "missing".',
   '"Kept" — the cash a month left in the account plus everything ' +
     'deliberately set aside. Never call it "saved", "surplus" or "profit".',
-  '"Unrecorded allowance" — a cap on unrecorded spending, set from this ' +
-    'person\'s own history. Never call it a "budget", "target" or "limit".',
+  '"Unrecorded allowance" — a limit on unrecorded spending, set from this ' +
+    'person\'s own history. Never call it a "budget", "target" or "cap".',
   '"Month close" — recording what the account held and what follows from ' +
     'it. Never call it a "reconciliation" or "month end".',
-  'A projection of charges already scheduled is not a "forecast".',
+  'A projection of recurring entries already scheduled is not a "forecast".',
   '"A normal month" — the median of this category\'s recent months, and what ' +
     'every comparison here is measured against. Never call it an "average", ' +
     'a "baseline", a "typical month" or a "trend".',
   'Nothing here is an "anomaly", an "alert", an "outlier" or a "spike". A ' +
     "month sitting far from normal is an unusual month, and a run that has " +
     'been going one way has "drifted".',
-  '"Cap" — a monthly ceiling set on this one category. Never call it a ' +
-    '"budget", a "target", a "limit" or an "allowance"; the unrecorded ' +
-    "allowance is a different feature.",
+  '"Budget" — a monthly limit set on this one category. Never call it a ' +
+    '"cap", a "target" or an "allowance"; the unrecorded allowance is a ' +
+    "different feature.",
 ];
 
 /**
@@ -142,7 +142,7 @@ const PANEL_RULE_EN = [
 ];
 
 const SUGGESTIONS_EN = [
-  "Say what to change about this category. Name a cut, a cap, a habit or",
+  "Say what to change about this category. Name a cut, a budget, a habit or",
   "something to check, and point at one of the figures you were given —",
   "advice that would fit anyone's category is not worth the space. Do not",
   "congratulate; a suggestion is advice, not encouragement. If there is",
@@ -198,7 +198,7 @@ const FIGURE_RULE_FR =
 
 const NAMING_RULE_FR =
   "Un substitut est un nombre, pas un nom. Nommez la catégorie, le mois ou " +
-  'le plafond en mots, et mettez le chiffre à côté : "un mois ordinaire ' +
+  'le budget en mots, et mettez le chiffre à côté : "un mois ordinaire ' +
   'vous coûte {{fact:normal}}", jamais "le {{fact:normal}} a augmenté". Le ' +
   "libellé de chaque chiffre figure dans la liste ; utilisez ces mots comme " +
   "nom. Et employez chaque chiffre pour ce que son libellé dit qu'il est : " +
@@ -212,27 +212,28 @@ const BASIS_RULE_FR =
   "vous n'ayez utilisé.";
 
 const VOCABULARY_FR = [
-  '"Dépenses non enregistrées" — ce qu\'un solde prouve être sorti du compte ' +
-    "et qu'aucune écriture n'explique. C'est mesuré, pas estimé, et jamais " +
+  '"Dépenses non notées" — ce qu\'un solde prouve être sorti du compte et ' +
+    "qu'aucune opération n'explique. C'est mesuré, pas estimé, et jamais " +
     'négatif. Ne parlez jamais de "fuite", de "non suivi" ni de "manquant".',
-  "\"Gardé\" — l'argent qu'un mois a laissé sur le compte plus tout ce qui a " +
-    'été mis de côté délibérément. Ne dites jamais "économisé", ' +
+  "\"Économisé\" — l'argent qu'un mois a laissé sur le compte plus tout ce " +
+    'qui a été mis de côté délibérément. Ne dites jamais "gardé", ' +
     '"excédent" ni "bénéfice".',
-  '"Enveloppe non enregistrée" — un plafond sur les dépenses non ' +
-    "enregistrées, fixé d'après l'historique de cette personne. Ne l'appelez " +
-    'jamais un "budget", un "objectif" ni une "limite".',
-  '"Clôture du mois" — enregistrer ce que le compte contenait et ce qui en ' +
-    'découle. Ne parlez jamais de "réconciliation" ni de "fin de mois".',
-  "Une projection de charges déjà programmées n'est pas une " + '"prévision".',
+  '"Marge pour les dépenses non notées" (ou "la marge") — une limite sur ' +
+    "les dépenses non notées, fixée d'après l'historique de cette personne. " +
+    'Ne l\'appelez jamais un "budget", un "objectif" ni une "enveloppe".',
+  '"Bilan du mois" — enregistrer ce que le compte contenait et ce qui en ' +
+    'découle. Ne parlez jamais de "réconciliation" ni de "clôture".',
+  "Une projection d'opérations récurrentes déjà programmées n'est pas une " +
+    '"prévision".',
   '"Un mois normal" — la médiane des derniers mois de cette catégorie, et ce ' +
     "à quoi toute comparaison est rapportée ici. Ne parlez jamais de " +
     '"moyenne", de "référence", d\'un "mois type" ni d\'une "tendance".',
   'Rien ici n\'est une "anomalie", une "alerte", une "valeur aberrante" ' +
     'ni un "pic". Un mois éloigné du normal est un mois inhabituel, et une ' +
     'série qui va dans le même sens a "dérivé".',
-  '"Plafond" — une limite mensuelle posée sur cette seule catégorie. Ne ' +
-    'l\'appelez jamais un "budget", un "objectif", une "limite" ni une ' +
-    '"enveloppe" ; l\'enveloppe non enregistrée est une autre fonctionnalité.',
+  '"Budget" — une limite mensuelle posée sur cette seule catégorie. Ne ' +
+    'l\'appelez jamais un "plafond", un "objectif" ni une "enveloppe" ; la ' +
+    "marge pour les dépenses non notées est une autre fonctionnalité.",
 ];
 
 const PANEL_RULE_FR = [
@@ -243,7 +244,7 @@ const PANEL_RULE_FR = [
 ];
 
 const SUGGESTIONS_FR = [
-  "Dites quoi changer dans cette catégorie. Nommez une coupe, un plafond,",
+  "Dites quoi changer dans cette catégorie. Nommez une coupe, un budget,",
   "une habitude ou quelque chose à vérifier, et désignez l'un des chiffres",
   "qui vous ont été donnés — un conseil qui conviendrait à n'importe quelle",
   "catégorie ne vaut pas la place. Ne félicitez pas ; une suggestion est un",
@@ -374,7 +375,7 @@ export interface BuildCategoryPromptOptions {
    * written in French is still rendered with French labels after the reader
    * switches language.
    */
-  locale?: Locale;
+  locale: Locale;
 }
 
 /**
@@ -388,7 +389,7 @@ export interface BuildCategoryPromptOptions {
  */
 export function buildCategoryReadPrompt(
   facts: CategoryFacts,
-  { money, locale = FALLBACK_LOCALE }: BuildCategoryPromptOptions,
+  { money, locale }: BuildCategoryPromptOptions,
 ): MonthReadRequest {
   const text = PROMPT[locale];
 

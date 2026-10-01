@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
-import { todayIsoLocal } from "@finance/core/constants";
+import { formatLongDate, todayIsoLocal } from "@finance/core/constants";
+import { getLocale, getT } from "@/lib/locale";
 import {
   monthColumnValue,
   observationDateFor,
@@ -45,7 +46,9 @@ export async function previewMonthCloseAction(
 
   const parsed = monthCloseSchema.safeParse({ year, month, closingBalance });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid close" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   try {
@@ -59,7 +62,7 @@ export async function previewMonthCloseAction(
   } catch (error) {
     return {
       error:
-        error instanceof Error ? error.message : "Could not work that out.",
+        error instanceof Error ? error.message : "monthClose.couldNotWorkOut",
     };
   }
 }
@@ -76,7 +79,9 @@ export async function recordMonthClose(
 
   const parsed = monthCloseSchema.safeParse({ year, month, closingBalance });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid close" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const settings = await getMonthCloseSettings(user.id);
@@ -90,8 +95,11 @@ export async function recordMonthClose(
   // spending is still landing, and the figure would be measured against a
   // window that has not finished.
   if (todayIsoLocal() < observeOn) {
+    const t = await getT();
     return {
-      error: `This month can be closed from ${observeOn}, once the last of its spending has landed.`,
+      error: t("actions.closeTooEarly", {
+        date: formatLongDate(observeOn, await getLocale()),
+      }),
     };
   }
 
@@ -125,7 +133,7 @@ export async function recordMonthClose(
   } catch (error) {
     return {
       error:
-        error instanceof Error ? error.message : "Could not close the month.",
+        error instanceof Error ? error.message : "monthClose.couldNotClose",
     };
   }
 }
@@ -146,7 +154,7 @@ export async function deleteMonthClose(
     closingBalance: 0,
   });
   if (!parsed.success) {
-    return { error: "Invalid month" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -161,7 +169,7 @@ export async function deleteMonthClose(
   }
 
   revalidateCloseDependents();
-  return { success: true, message: "Close removed" };
+  return { success: true, message: "actions.closeRemoved" };
 }
 
 export async function updateUnrecordedCap(
@@ -174,7 +182,9 @@ export async function updateUnrecordedCap(
 
   const parsed = unrecordedCapSchema.safeParse({ cap });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid cap" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const supabase = await createClient();
@@ -194,7 +204,7 @@ export async function updateUnrecordedCap(
   revalidateCloseDependents();
   return {
     success: true,
-    message: parsed.data.cap === null ? "Cap removed" : "Cap set",
+    message: parsed.data.cap === null ? "plan.capRemoved" : "actions.capSet",
   };
 }
 
@@ -206,7 +216,9 @@ export async function updateCloseDay(closeDay: number): Promise<ActionResult> {
 
   const parsed = closeDaySchema.safeParse({ closeDay });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid day" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const supabase = await createClient();
@@ -224,5 +236,5 @@ export async function updateCloseDay(closeDay: number): Promise<ActionResult> {
   }
 
   revalidateCloseDependents();
-  return { success: true, message: "Reading day updated" };
+  return { success: true, message: "actions.readingDayUpdated" };
 }

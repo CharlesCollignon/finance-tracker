@@ -1,6 +1,13 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+/*
+ * A solid card, left-aligned, at the card radius — the phone's shape. It was a
+ * centred statement over a dashed outline, which reads as a placeholder that
+ * failed to load rather than as a step, and broke the system's own rule
+ * against dashed strokes.
+ */
+
 interface EmptyStateProps {
   title: string;
   description: string;
@@ -17,8 +24,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "rounded-control border border-dashed border-border bg-card p-8",
-        "text-center",
+        "rounded-card border border-border bg-card p-card",
         className,
       )}
     >

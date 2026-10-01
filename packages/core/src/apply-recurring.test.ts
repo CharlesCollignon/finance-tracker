@@ -77,7 +77,7 @@ describe("buildApplyRecurringPlan", () => {
       new Map(),
       2026,
       1,
-      { quotes: noQuotes(), today: TODAY },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(plan.toUpdate).toEqual([]);
@@ -97,7 +97,7 @@ describe("buildApplyRecurringPlan", () => {
       new Map(),
       2026,
       1,
-      { quotes: noQuotes(), today: TODAY },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(plan.toCreate).toEqual([]);
@@ -116,10 +116,7 @@ describe("buildApplyRecurringPlan", () => {
       existing,
       2026,
       1,
-      {
-        quotes: noQuotes(),
-        today: TODAY,
-      },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(plan.toCreate).toEqual([]);
@@ -139,10 +136,7 @@ describe("buildApplyRecurringPlan", () => {
       existing,
       2026,
       1,
-      {
-        quotes: noQuotes(),
-        today: TODAY,
-      },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(plan.toUpdate).toEqual([]);
@@ -161,10 +155,7 @@ describe("buildApplyRecurringPlan", () => {
       existing,
       2026,
       1,
-      {
-        quotes: noQuotes(),
-        today: TODAY,
-      },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(plan.toCreate).toEqual([]);
@@ -184,6 +175,7 @@ describe("buildApplyRecurringPlan", () => {
       2026,
       1,
       {
+        locale: "en",
         quotes: noQuotes(),
         today: TODAY,
         skippedKeys: new Set([recurringOccurrenceKey("tpl-1", "2026-01-15")]),
@@ -199,7 +191,7 @@ describe("buildApplyRecurringPlan", () => {
       new Map(),
       2026,
       1,
-      { quotes: noQuotes(), today: TODAY },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(plan.toCreate).toEqual([]);
@@ -212,7 +204,7 @@ describe("buildApplyRecurringPlan", () => {
       new Map(),
       2026,
       1,
-      { quotes, today: TODAY },
+      { locale: "en", quotes, today: TODAY },
     );
 
     expect(quotes.calls).toEqual(["CW8"]);
@@ -229,7 +221,7 @@ describe("buildApplyRecurringPlan", () => {
       new Map(),
       2026,
       1,
-      { quotes: noQuotes(), today: TODAY },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(plan.toCreate).toEqual([]);
@@ -242,7 +234,7 @@ describe("buildApplyRecurringPlan", () => {
       new Map(),
       2026,
       1,
-      { quotes: noQuotes(), today: TODAY },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(plan.toCreate.map((item) => item.occurredOn)).toEqual([
@@ -265,12 +257,10 @@ describe("buildApplyRecurringPlan", () => {
       new Map(),
       2026,
       1,
-      {
-        quotes: noQuotes(),
-        today: TODAY,
-      },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
     const march = await buildApplyRecurringPlan([yearly], new Map(), 2026, 3, {
+      locale: "en",
       quotes: noQuotes(),
       today: TODAY,
     });
@@ -287,7 +277,7 @@ describe("buildApplyRecurringPlan", () => {
       new Map(),
       2026,
       1,
-      { quotes: noQuotes(), today: TODAY },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(plan.toCreate[0]?.pricedFromQuote).toBe(false);
@@ -300,7 +290,7 @@ describe("buildApplyRecurringPlan", () => {
       new Map(),
       2026,
       1,
-      { quotes, today: TODAY },
+      { locale: "en", quotes, today: TODAY },
     );
 
     expect(quotes.calls).toEqual([]);
@@ -323,7 +313,11 @@ describe("buildApplyRecurringPlan", () => {
       existing,
       2026,
       1,
-      { quotes: createFakeQuoteSource({ CW8: 25 }), today: TODAY },
+      {
+        locale: "en",
+        quotes: createFakeQuoteSource({ CW8: 25 }),
+        today: TODAY,
+      },
     );
 
     expect(plan.toCreate).toEqual([]);
@@ -344,7 +338,11 @@ describe("buildApplyRecurringPlan", () => {
       existing,
       2026,
       1,
-      { quotes: createFakeQuoteSource({ CW8: 25 }), today: TODAY },
+      {
+        locale: "en",
+        quotes: createFakeQuoteSource({ CW8: 25 }),
+        today: TODAY,
+      },
     );
 
     expect(plan.toUpdate).toEqual([]);
@@ -370,7 +368,11 @@ describe("buildApplyRecurringPlan", () => {
       existing,
       2026,
       1,
-      { quotes: createFakeQuoteSource({ CW8: 25 }), today: TODAY },
+      {
+        locale: "en",
+        quotes: createFakeQuoteSource({ CW8: 25 }),
+        today: TODAY,
+      },
     );
 
     expect(plan.toReprice).toHaveLength(1);
@@ -395,7 +397,11 @@ describe("buildApplyRecurringPlan", () => {
       existing,
       2026,
       1,
-      { quotes: createFakeQuoteSource({ CW8: 25 }), today: TODAY },
+      {
+        locale: "en",
+        quotes: createFakeQuoteSource({ CW8: 25 }),
+        today: TODAY,
+      },
     );
 
     expect(plan.toReprice).toEqual([]);
@@ -425,6 +431,7 @@ describe("buildApplyRecurringPlan", () => {
     ]);
 
     const settled = await buildApplyRecurringPlan([template()], past, 2026, 1, {
+      locale: "en",
       quotes: noQuotes(),
       today: TODAY,
     });
@@ -433,7 +440,7 @@ describe("buildApplyRecurringPlan", () => {
       future,
       2026,
       1,
-      { quotes: noQuotes(), today: TODAY },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(settled.toUpdate).toHaveLength(1);
@@ -487,6 +494,7 @@ describe("countRecurringToApply", () => {
       sharesTemplate({ id: "tpl-2", day_of_month: 25 }),
     ];
     const plan = await buildApplyRecurringPlan(templates, new Map(), 2026, 1, {
+      locale: "en",
       quotes: createFakeQuoteSource({ CW8: 120 }),
       today: TODAY,
     });
@@ -498,6 +506,7 @@ describe("countRecurringToApply", () => {
   it("still counts a priced occurrence the market could not answer for", async () => {
     const templates = [sharesTemplate({ day_of_month: 25 })];
     const plan = await buildApplyRecurringPlan(templates, new Map(), 2026, 1, {
+      locale: "en",
       quotes: noQuotes(),
       today: TODAY,
     });
@@ -552,7 +561,7 @@ describe("followTemplateUpdates", () => {
       existing("2026-01-25", 42),
       2026,
       1,
-      { quotes: noQuotes(), today: TODAY },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(followTemplateUpdates(plan, "tpl-1", TODAY)).toMatchObject([
@@ -566,7 +575,7 @@ describe("followTemplateUpdates", () => {
       existing("2026-01-15", 42),
       2026,
       1,
-      { quotes: noQuotes(), today: TODAY },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(plan.toUpdate).toHaveLength(1);
@@ -579,7 +588,7 @@ describe("followTemplateUpdates", () => {
       existing("2026-01-25", 42),
       2026,
       1,
-      { quotes: noQuotes(), today: TODAY },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
 
     expect(followTemplateUpdates(plan, "tpl-other", TODAY)).toEqual([]);
@@ -596,7 +605,11 @@ describe("followTemplateUpdates", () => {
       ]),
       2026,
       1,
-      { quotes: createFakeQuoteSource({ CW8: 120 }), today: TODAY },
+      {
+        locale: "en",
+        quotes: createFakeQuoteSource({ CW8: 120 }),
+        today: TODAY,
+      },
     );
 
     expect(followTemplateUpdates(plan, "tpl-1", TODAY)).toMatchObject([
@@ -738,6 +751,7 @@ describe("filling only what is due", () => {
 
   it("plans only the due occurrences for creation", async () => {
     const plan = await buildApplyRecurringPlan([weekly], new Map(), 2026, 1, {
+      locale: "en",
       quotes: noQuotes(),
       today: TODAY,
       dueBy: TODAY,
@@ -760,7 +774,7 @@ describe("filling only what is due", () => {
       ]),
       2026,
       1,
-      { quotes: noQuotes(), today: TODAY, dueBy: TODAY },
+      { locale: "en", quotes: noQuotes(), today: TODAY, dueBy: TODAY },
     );
     expect(plan.toUpdate).toHaveLength(1);
   });
@@ -778,7 +792,7 @@ describe("followTemplateUpdates from the first of the month", () => {
       ]),
       2026,
       1,
-      { quotes: noQuotes(), today: TODAY },
+      { locale: "en", quotes: noQuotes(), today: TODAY },
     );
     expect(followTemplateUpdates(plan, "tpl-1", "2026-01-21")).toEqual([]);
     expect(followTemplateUpdates(plan, "tpl-1", "2026-01-01")).toMatchObject([

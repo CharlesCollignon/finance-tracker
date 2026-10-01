@@ -10,6 +10,7 @@ import {
 } from "./investments";
 import { formatMonthCompact, todayIsoLocal } from "./constants";
 import { BITCOIN_INSTRUMENT, isCryptoWallet } from "./crypto-holdings";
+import type { Locale } from "./i18n/locale";
 
 export type { InvestmentWalletId };
 
@@ -185,11 +186,11 @@ function monthKeyFromIso(isoDate: string): string {
   return isoDate.slice(0, 7);
 }
 
-function formatMonthLabelShort(monthKey: string): string {
+function formatMonthLabelShort(monthKey: string, locale: Locale): string {
   const [yearText, monthText] = monthKey.split("-");
   const year = Number(yearText);
   const month = Number(monthText);
-  return formatMonthCompact(year, month);
+  return formatMonthCompact(year, month, locale);
 }
 
 function listMonthKeys(startMonth: string, endMonth: string): string[] {
@@ -248,6 +249,7 @@ function buildPositionChartPoints(
   instrumentSymbol: string | null,
   historicalQuotes: Record<string, Record<string, number>>,
   asOfDate: string,
+  locale: Locale,
 ): PositionChartPoint[] {
   const linked = position.recurring_template_id
     ? transactions.filter(
@@ -320,7 +322,7 @@ function buildPositionChartPoints(
 
     points.push({
       monthKey,
-      label: formatMonthLabelShort(monthKey),
+      label: formatMonthLabelShort(monthKey, locale),
       invested,
       market,
     });
@@ -386,6 +388,7 @@ function buildPositionItem(
   liveQuotes: Record<string, number>,
   historicalQuotes: Record<string, Record<string, number>>,
   asOfDate: string,
+  locale: Locale,
 ): InvestmentPositionItem {
   const template = row.recurring_template_id
     ? recurringById.get(row.recurring_template_id)
@@ -501,6 +504,7 @@ function buildPositionItem(
       instrumentSymbol,
       historicalQuotes,
       asOfDate,
+      locale,
     ),
   };
 }
@@ -511,6 +515,7 @@ export function buildInvestmentPortfolio(
   positionRows: InvestmentPositionRow[],
   recurringTemplates: RecurringTemplateWithCategory[],
   liveQuotes: Record<string, number>,
+  locale: Locale,
   asOfDate: string = todayIsoLocal(),
   historicalQuotes: Record<string, Record<string, number>> = {},
 ): InvestmentPortfolioSummary {
@@ -529,6 +534,7 @@ export function buildInvestmentPortfolio(
       liveQuotes,
       historicalQuotes,
       asOfDate,
+      locale,
     ),
   );
 

@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { AppBackdrop } from "@/components/AppBackdrop";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { AccountMenu } from "@/components/layout/AccountMenu";
-import { Logo } from "@/components/Logo";
+import { Orb } from "@/components/Orb";
 import { PrivacyToggle } from "@/components/PrivacyToggle";
 import { RefreshButton } from "@/components/RefreshButton";
 import { Text } from "@/components/ui/Text";
@@ -28,7 +28,7 @@ export interface ScreenProps {
   showRefresh?: boolean;
   /** Account monogram sits right of the eye; off for the auth screens. */
   showAccountMenu?: boolean;
-  /** Centred mark; off for the auth screens, which show their own. */
+  /** The orb beside the title; off for the auth screens, which show their own. */
   showLogo?: boolean;
 }
 
@@ -99,12 +99,16 @@ export function Screen({
             sibling reports an unexpected width. Reserving the actions' width
             explicitly takes that negotiation out of the picture entirely.
           */}
+          {/* The orb, then the title, as on the web's header at phone
+              width. The mark used to sit centred between the title and the
+              actions, where it competed with both for the same band. */}
           <View
-            className="absolute inset-y-0 left-4 justify-center"
+            className="absolute inset-y-0 left-4 flex-row items-center gap-2.5"
             style={{ right: ACTIONS_WIDTH }}
           >
+            {showLogo ? <Orb size="sm" /> : null}
             <Text
-              className="font-sans text-foreground"
+              className="min-w-0 shrink font-sans text-foreground"
               style={{ fontSize: TITLE_SIZE }}
               maxFontSizeMultiplier={CHROME_MAX_FONT_SCALE}
               numberOfLines={1}
@@ -112,15 +116,6 @@ export function Screen({
               {title}
             </Text>
           </View>
-
-          {showLogo ? (
-            <View
-              pointerEvents="none"
-              className="absolute inset-0 items-center justify-center"
-            >
-              <Logo size="sm" />
-            </View>
-          ) : null}
 
           <View className="absolute inset-y-0 right-4 flex-row items-center gap-2">
             {headerActions}

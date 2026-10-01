@@ -1,21 +1,9 @@
 /**
- * The chart vocabulary: five marks, and only one of them costs a runtime.
- *
- * The same four the web app draws, so a screen described in one place looks
- * the way it is described in the other:
- *
- *   BarSeries     one series over time     plain views
- *   SpendStrip    a whole split as one bar plain views
- *   ProgressRing  progress toward a limit  react-native-svg
- *   Sparkline     the shape of a run       react-native-svg
- *   line          a dense time series      ECharts, on Wallets alone
- *
- * The mobile app had drifted the same way the web one had — a donut, a
- * Sankey, a trend chart and a hand-drawn ring, three of them pulling in a
- * charting runtime to draw shapes that a few views can draw for nothing.
+ * The shared chart marks. One is left now: the ring, for progress toward a
+ * limit or a goal (react-native-svg). The bar series, the split strip and
+ * the sparkline went with the old Bearing panels, their only screen; Le
+ * point draws its own curve and bars (`components/bearing`), and the
+ * dense time series on Placements is ECharts.
  */
 
-export { BarSeries, type BarPoint } from "./BarSeries";
-export { SpendStrip } from "./SpendStrip";
 export { ProgressRing } from "./ProgressRing";
-export { Sparkline } from "./Sparkline";

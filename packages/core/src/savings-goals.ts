@@ -6,6 +6,7 @@ import type {
   SavingsGoal,
   TransactionWithCategory,
 } from "./types/database";
+import type { Locale } from "./i18n/locale";
 
 export interface SavingsGoalProgress {
   goal: SavingsGoal;
@@ -235,6 +236,7 @@ function wholeMonthsUntil(target: Date, now: Date): number {
  */
 export function computeGoalPacing(
   progress: Pick<SavingsGoalProgress, "goal" | "remaining" | "complete">,
+  locale: Locale,
   now: Date = new Date(),
 ): GoalPacing {
   if (progress.complete) {
@@ -259,6 +261,7 @@ export function computeGoalPacing(
   const targetLabel = formatMonthLabel(
     target.getFullYear(),
     target.getMonth() + 1,
+    locale,
   );
   const months = wholeMonthsUntil(target, now);
 

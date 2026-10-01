@@ -9,7 +9,10 @@ import {
   walletReadsRemaining,
 } from "./wallet-read-budget";
 import { factsDigest } from "./month-facts";
-import { buildLookThroughFacts, type LookThroughFacts } from "./look-through-facts";
+import {
+  buildLookThroughFacts,
+  type LookThroughFacts,
+} from "./look-through-facts";
 import { buildLookThrough } from "./look-through";
 import { buildTargetAllocation } from "./look-through-target";
 import { READING_VERSION, type InstrumentReading } from "./instrument-reading";
@@ -80,7 +83,9 @@ function tally(partial: Partial<MonthReadTally> = {}): MonthReadTally {
   };
 }
 
-function ask(overrides: Parameters<typeof decideWalletReadWrite>[0] | null = null) {
+function ask(
+  overrides: Parameters<typeof decideWalletReadWrite>[0] | null = null,
+) {
   return (
     overrides ?? {
       tally: tally(),
@@ -178,9 +183,9 @@ describe("decideWalletReadWrite", () => {
     });
 
     it("writes when there is no stored read to compare against", () => {
-      expect(
-        decideWalletReadWrite({ ...ask(), storedDigest: null }),
-      ).toEqual({ write: true });
+      expect(decideWalletReadWrite({ ...ask(), storedDigest: null })).toEqual({
+        write: true,
+      });
     });
 
     it("says nothing-to-say rather than unchanged for an empty portfolio", () => {
@@ -224,7 +229,7 @@ describe("explainWalletReadRefusal", () => {
       { reason: "untracked" as const },
     ];
     for (const refusal of refusals) {
-      const said = explainWalletReadRefusal(refusal);
+      const said = explainWalletReadRefusal(refusal, "en");
       expect(said.length).toBeGreaterThan(0);
       // Never the raw key: an unresolved key reaching a reader is the failure
       // this assertion exists to catch.
@@ -245,6 +250,7 @@ describe("describeWalletReadFreshness", () => {
   it("is current while the cited figures stand still", () => {
     const pack = facts();
     const freshness = describeWalletReadFreshness({
+      locale: "en",
       storedFacts: pack,
       currentFacts: pack,
       cited,
@@ -257,6 +263,7 @@ describe("describeWalletReadFreshness", () => {
 
   it("has moved once a cited figure has", () => {
     const freshness = describeWalletReadFreshness({
+      locale: "en",
       storedFacts: facts(10000),
       currentFacts: facts(14000),
       cited,
@@ -272,6 +279,7 @@ describe("describeWalletReadFreshness", () => {
   /** A figure nobody leaned on moving is not staleness, it is Tuesday. */
   it("ignores a figure the read never rested on", () => {
     const freshness = describeWalletReadFreshness({
+      locale: "en",
       storedFacts: facts(10000),
       currentFacts: facts(14000),
       cited: ["us-share"],

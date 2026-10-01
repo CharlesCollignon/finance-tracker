@@ -3,18 +3,22 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { usePrivacy } from "@/providers/PrivacyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { useT } from "@/providers/LocaleProvider";
 import { hapticLight } from "@/lib/haptics";
 import { ICON } from "@/theme/tokens";
 
 export function PrivacyToggle() {
   const { hidden, toggle } = usePrivacy();
   const colors = useThemeColors();
+  const t = useT();
 
   return (
     <Pressable
       hitSlop={6}
       accessibilityRole="button"
-      accessibilityLabel={hidden ? "Show amounts" : "Hide amounts"}
+      accessibilityLabel={
+        hidden ? t("common.showAmounts") : t("common.hideAmounts")
+      }
       onPress={() => {
         void hapticLight();
         toggle();

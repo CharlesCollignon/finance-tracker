@@ -1,0 +1,654 @@
+import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
+import { buildAttention, type AttentionItem } from "@finance/core/attention";
+import { buildBudgetProgress } from "@finance/core/budget-limits";
+import {
+  formatMonthLabel,
+  getCurrentMonth,
+  getMonthBounds,
+  shiftIsoDate,
+  shiftMonth,
+  todayIsoLocal,
+} from "@finance/core/constants";
+import type { Locale } from "@finance/core/i18n/locale";
+import { DEFAULT_WRITER_MODEL, describeModel } from "@finance/core/model-name";
+import {
+  buildMonthBalance,
+  spendingByMonth,
+  topSpending,
+  transactionDelta,
+  upcomingDelta,
+  type BalanceAnchor,
+  type CategorySpend,
+  type DatedDelta,
+  type MonthBalance,
+} from "@finance/core/month-balance";
+import { previousMonthKey } from "@finance/core/month-close";
+import { buildMonthComparison } from "@finance/core/month-comparison";
+import type { MonthFacts } from "@finance/core/month-facts";
+import { buildMonthPulse } from "@finance/core/month-pulse";
+import type { ReadFreshness } from "@finance/core/month-read-budget";
+import { allRows } from "@finance/core/paging";
+import {
+  buildGoalRunningTotals,
+  buildSavingsGoalProgress,
+  earliestGoalStart,
+  EMPTY_GOAL_LEDGER,
+  goalTotalsAsOf,
+} from "@finance/core/savings-goals";
+import {
+  buildStillToCome,
+  type UpcomingCharge,
+} from "@finance/core/still-to-come";
+import type { TransactionWithCategory } from "@finance/core/types/database";
+
+import {
+  getMonthRead,
+  monthFactsFromScreen,
+  monthReadWritable,
+  type MonthReadView,
+} from "@/lib/month-read";
+import {
+  countPendingFeedItems,
+  countSwallowedFeedItems,
+  getBudgets,
+  getCategories,
+  getFulfilledKeys,
+  getFulfilmentProposals,
+  getFulfilmentReport,
+  getGoalLedger,
+  getMonthCloseOverview,
+  getMonthlySummary,
+  getRecordedCashFlows,
+  getRecurringProposals,
+  getRecurringTemplates,
+  getSavingsGoals,
+  getSkippedOccurrences,
+  getTransactions,
+  getWalletPortfolio,
+  hasBankFeed,
+  readCashBalance,
+  type FulfilmentReport,
+} from "@/lib/queries";
+import { supabase } from "@/lib/supabase";
+
+/**
+ * Le point on the phone: one month, as the web's Bearing tells it.
+ *
+ * The twin of `apps/web/lib/bearing/month.ts`, gathered here rather than
+ * asked of the web app for the reason the rest of the phone's reads give:
+ * every table this touches is select-own under row level security, so the
+ * rows come straight out of Supabase and no server of ours is in the path.
+ * The arithmetic is the web's, from the same engines in `packages/core` —
+ * `buildMonthBalance`, `topSpending`, `buildStillToCome` — so the two clients
+ * draw the same curve over the same month.
+ */
+
+/** How many months the spending bars look back over, the month shown included. */
+const TREND_MONTHS = 6;
+
+export interface HomeMonth {
+  year: number;
+  month: number;
+  today: string;
+  balance: MonthBalance;
+  /** What the balance is pinned to: the bank's statement, a close, or nothing. */
+  source: "bank" | "close" | "none";
+  spent: {
+    total: number;
+    /**
+     * Last month at the same point: its whole month for a month that has
+     * ended, and up to today's day of the month for this one — comparing
+     * three weeks against four would make every month look like a win.
+     */
+    previous: number | null;
+    /** The cap on all spending, when one is set. */
+    cap: number | null;
+    trend: { monthKey: string; label: string; total: number }[];
+  };
+  spending: {
+    top: (CategorySpend & { cap: number | null })[];
+    rest: number;
+    total: number;
+  };
+  /** Still to come in this month; null for a month that has ended. */
+  upcoming: {
+    charges: UpcomingCharge[];
+    leaving: number;
+    arriving: number;
+  } | null;
+  /** The month in progress only — goals, the run and wallets are about now. */
+  goals: {
+    id: string;
+    name: string;
+    saved: number;
+    target: number;
+    ratio: number;
+  }[];
+  run: { streak: number; best: number } | null;
+  invested: number | null;
+  attention: AttentionItem[];
+  /**
+   * Movements that look like a charge that has arrived, waiting for a yes or
+   * a no. The month in progress only: it is the one whose forecast a salary
+   * already paid would otherwise count a second time.
+   */
+  arrived: FulfilmentReport | null;
+  /** Nothing recorded, nothing planned and no balance: a first visit. */
+  empty: boolean;
+}
+
+function monthKeyOf(year: number, month: number): string {
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+/**
+ * Every transaction dated in a range, however many months it spans, paged
+ * past the server's row cap — six months of a busy account is past it.
+ */
+async function getTransactionsBetween(
+  userId: string,
+  from: string,
+  to: string,
+): Promise<TransactionWithCategory[]> {
+  if (from > to) {
+    return [];
+  }
+  const rows = await allRows<TransactionWithCategory>((start, end) =>
+    supabase
+      .from("transactions")
+      .select("*, categories(name, type, icon, counts_toward_summary)")
+      .eq("user_id", userId)
+      .gte("occurred_on", from)
+      .lte("occurred_on", to)
+      .order("id")
+      .range(start, end)
+      .then(({ data, error }) => ({
+        data: data as TransactionWithCategory[] | null,
+        error,
+      })),
+  );
+  return rows.sort((a, b) => a.occurred_on.localeCompare(b.occurred_on));
+}
+
+/** The skipped occurrences of one month, as the keys `buildStillToCome` takes. */
+async function skipKeysFor(
+  userId: string,
+  year: number,
+  month: number,
+): Promise<Set<string>> {
+  const skipped = await getSkippedOccurrences(userId, year, month);
+  return new Set(
+    skipped.map((entry) =>
+      recurringOccurrenceKey(entry.templateId, entry.occurredOn),
+    ),
+  );
+}
+
+/**
+ * Everything Le point shows for one month.
+ *
+ * One month and not "today", because the question the screen answers is the
+ * month's: what the account holds, where the month ends, and what it went
+ * on. A past month answers it with what happened, a future one with what the
+ * charges call for, and the month in progress with both, joined at today.
+ *
+ * The balance is only ever carried from something read — the bank's
+ * statement, or the close of the month before — and never from further
+ * back: a balance measured against movements from a different window says
+ * nothing about either.
+ */
+export async function gatherHomeMonth(
+  userId: string,
+  year: number,
+  month: number,
+  locale: Locale,
+): Promise<HomeMonth> {
+  const today = todayIsoLocal();
+  const current = getCurrentMonth();
+  const { start: first, end: last } = getMonthBounds(year, month);
+  const period = last < today ? "past" : first > today ? "future" : "current";
+  const isCurrent = period === "current";
+  const previousMonth = shiftMonth(year, month, -1);
+
+  const [templates, fulfilledKeys, closes, bankFed, budgets] =
+    await Promise.all([
+      getRecurringTemplates(userId),
+      getFulfilledKeys(userId),
+      getMonthCloseOverview(userId, today, locale),
+      hasBankFeed(userId),
+      getBudgets(userId),
+    ]);
+
+  /* ------------------------------------------------------------ the anchor */
+
+  let anchor: BalanceAnchor | null = null;
+  let source: HomeMonth["source"] = "none";
+
+  if (bankFed) {
+    const onDate = period === "past" ? last : today;
+    const cash = await readCashBalance(userId, onDate);
+    // A reading short of an account is short by whatever it holds: not a
+    // balance, and not something to carry.
+    if (cash?.ok) {
+      anchor = { onDate, balance: cash.total };
+      source = "bank";
+    }
+  }
+
+  if (!anchor) {
+    const closeOf = (key: string) =>
+      closes.history.find((row) => row.monthKey === key);
+    // Carried forward from the close of the month before the one the
+    // balance starts in — the month shown, or this one for a month ahead.
+    const opensFrom =
+      period === "future"
+        ? shiftMonth(current.year, current.month, -1)
+        : previousMonth;
+    const before = closeOf(monthKeyOf(opensFrom.year, opensFrom.month));
+    const own = period === "past" ? closeOf(monthKeyOf(year, month)) : null;
+    if (before) {
+      anchor = {
+        onDate: getMonthBounds(opensFrom.year, opensFrom.month).end,
+        balance: before.closingBalance,
+      };
+      source = "close";
+    } else if (own) {
+      anchor = { onDate: last, balance: own.closingBalance };
+      source = "close";
+    }
+  }
+
+  /* ------------------------------------------------------- the movements */
+
+  // Every day between the anchor and the month shown has to be accounted
+  // for, recorded or planned, or the balance drifts by what was missed.
+  const rangeStart =
+    anchor && shiftIsoDate(anchor.onDate, 1) < first
+      ? shiftIsoDate(anchor.onDate, 1)
+      : first;
+  const rangeEnd = anchor && anchor.onDate > last ? anchor.onDate : last;
+  const trendFrom = shiftMonth(year, month, -(TREND_MONTHS - 1));
+  const trendStart = getMonthBounds(trendFrom.year, trendFrom.month).start;
+
+  const rows = await getTransactionsBetween(
+    userId,
+    rangeStart < trendStart ? rangeStart : trendStart,
+    rangeEnd,
+  );
+
+  const recorded: DatedDelta[] = rows
+    .filter((tx) => tx.occurred_on >= rangeStart && tx.occurred_on <= today)
+    .map((tx) => ({ date: tx.occurred_on, delta: transactionDelta(tx) }));
+
+  // What the charges still call for, month by month from this one to the
+  // end of the range — never a month that has ended.
+  const planned: DatedDelta[] = [];
+  let shownUpcoming: HomeMonth["upcoming"] = null;
+  if (rangeEnd > today) {
+    let cursor = { year: current.year, month: current.month };
+    while (monthKeyOf(cursor.year, cursor.month) <= rangeEnd.slice(0, 7)) {
+      const key = monthKeyOf(cursor.year, cursor.month);
+      const skipped = await skipKeysFor(userId, cursor.year, cursor.month);
+      const upcoming = buildStillToCome(
+        rows.filter((tx) => tx.occurred_on.startsWith(key)),
+        templates,
+        cursor.year,
+        cursor.month,
+        today,
+        skipped,
+        fulfilledKeys,
+      );
+      for (const charge of [...upcoming.outgoing, ...upcoming.incoming]) {
+        planned.push({ date: charge.occurredOn, delta: upcomingDelta(charge) });
+      }
+      if (cursor.year === year && cursor.month === month) {
+        shownUpcoming = {
+          charges: [...upcoming.outgoing, ...upcoming.incoming].sort((a, b) =>
+            a.occurredOn.localeCompare(b.occurredOn),
+          ),
+          leaving: upcoming.leaving,
+          arriving: upcoming.arriving,
+        };
+      }
+      cursor = shiftMonth(cursor.year, cursor.month, 1);
+    }
+  }
+
+  const balance = buildMonthBalance({
+    year,
+    month,
+    today,
+    anchor,
+    recorded,
+    planned,
+  });
+
+  /* ------------------------------------------------------- the spending */
+
+  const inMonth = rows.filter(
+    (tx) => tx.occurred_on >= first && tx.occurred_on <= last,
+  );
+  const trendKeys = Array.from({ length: TREND_MONTHS }, (_, index) => {
+    const at = shiftMonth(year, month, index - (TREND_MONTHS - 1));
+    return { ...at, key: monthKeyOf(at.year, at.month) };
+  });
+  const byMonth = spendingByMonth(
+    rows,
+    trendKeys.map((entry) => entry.key),
+  );
+  const previousKey = monthKeyOf(previousMonth.year, previousMonth.month);
+  const sameDay = today.slice(8, 10);
+  const previousSoFar = isCurrent
+    ? spendingByMonth(
+        rows.filter((tx) => tx.occurred_on.slice(8, 10) <= sameDay),
+        [previousKey],
+      ).get(previousKey)
+    : byMonth.get(previousKey);
+
+  const spending = topSpending(inMonth, 4);
+  const capByCategory = new Map(
+    budgets
+      .filter((budget) => budget.category_id !== null)
+      .map((budget) => [budget.category_id!, Number(budget.amount)]),
+  );
+  const overallCap = budgets.find((budget) => budget.category_id === null);
+
+  /* --------------------------------------- what only the present has */
+
+  let goals: HomeMonth["goals"] = [];
+  let run: HomeMonth["run"] = null;
+  let invested: number | null = null;
+  let attention: AttentionItem[] = [];
+  let arrived: FulfilmentReport | null = null;
+
+  if (isCurrent) {
+    const [savingsGoals, categories] = await Promise.all([
+      getSavingsGoals(userId),
+      getCategories(userId),
+    ]);
+    const goalStart = earliestGoalStart(savingsGoals);
+    const [report, goalLedger, portfolio, pending, swallowed, proposals] =
+      await Promise.all([
+        getFulfilmentReport(userId, templates, categories, year, month).catch(
+          () => null,
+        ),
+        goalStart
+          ? getGoalLedger(userId, goalStart, today)
+          : Promise.resolve(EMPTY_GOAL_LEDGER),
+        getWalletPortfolio(userId, locale, { includeHistory: false }),
+        bankFed ? countPendingFeedItems(userId) : Promise.resolve(0),
+        bankFed ? countSwallowedFeedItems(userId) : Promise.resolve(0),
+        bankFed ? getRecurringProposals(userId, today) : Promise.resolve([]),
+      ]);
+    arrived = report;
+
+    goals = buildSavingsGoalProgress(
+      savingsGoals,
+      buildGoalRunningTotals(savingsGoals, goalLedger, templates, today),
+    )
+      .filter((row) => !row.complete)
+      .slice(0, 3)
+      .map((row) => ({
+        id: row.goal.id,
+        name: row.goal.name,
+        saved: row.saved,
+        target: Number(row.goal.target_amount),
+        ratio: row.ratio,
+      }));
+
+    if (closes.summary.sample > 0) {
+      run = {
+        streak: closes.summary.streak,
+        best: closes.summary.bestStreak,
+      };
+    }
+
+    const total = portfolio.columns.reduce(
+      (sum, column) => sum + column.totalMarketValue,
+      0,
+    );
+    invested = total > 0 ? total : null;
+
+    attention = buildAttention({
+      swallowed,
+      pendingInbox: pending,
+      readyToClose: closes.next
+        ? { monthLabel: closes.next.label, isBaseline: closes.next.isBaseline }
+        : null,
+      proposals: proposals.length,
+    });
+  }
+
+  return {
+    year,
+    month,
+    today,
+    balance,
+    source,
+    spent: {
+      total: byMonth.get(monthKeyOf(year, month)) ?? 0,
+      previous: previousSoFar ?? null,
+      cap: overallCap ? Number(overallCap.amount) : null,
+      trend: trendKeys.map((entry) => ({
+        monthKey: entry.key,
+        label: formatMonthLabel(entry.year, entry.month, locale),
+        total: byMonth.get(entry.key) ?? 0,
+      })),
+    },
+    spending: {
+      top: spending.top.map((entry) => ({
+        ...entry,
+        cap: capByCategory.get(entry.categoryId) ?? null,
+      })),
+      rest: spending.rest,
+      total: spending.total,
+    },
+    upcoming: shownUpcoming,
+    goals,
+    run,
+    invested,
+    attention,
+    arrived:
+      arrived && (arrived.proposals.length > 0 || arrived.misses.length > 0)
+        ? arrived
+        : null,
+    empty:
+      anchor === null &&
+      rows.length === 0 &&
+      templates.every((template) => !template.active),
+  };
+}
+
+/* ------------------------------------------------------------ the read */
+
+/** The stored month read, and everything its card needs to render it. */
+export interface HomeRead {
+  /** The month the read is about, so a screen can tell it from a stale one. */
+  year: number;
+  month: number;
+  monthLabel: string;
+  read: MonthReadView["read"] | null;
+  freshness: ReadFreshness | null;
+  /** The figures as they stand now, in the reader's language. */
+  facts: MonthFacts;
+  /** The same figures, labelled in the language the read was written in. */
+  readFacts: MonthFacts;
+  readLocale: Locale;
+  writesLeft: number;
+  /** Whether a read can be written from this build at all. */
+  configured: boolean;
+  /**
+   * The maker, for the control that spends a call: the phone posts to the
+   * web app's `/api/month-read`, whose key is Mistral's, so only the model's
+   * size can differ. Which model wrote a stored read is on the read itself.
+   */
+  writerBrand: string;
+  readModel: string | null;
+}
+
+/**
+ * The month read, gathered apart from the month's figures.
+ *
+ * Its fact pack is the slowest thing the screen asks for, so the web streams
+ * it in behind its own boundary and the phone loads it on its own, after the
+ * balance has drawn. The facts are the Month screen's — the same summary,
+ * comparison, pulse and caps the read was written against on either client —
+ * so a read written on the web renders here against the same figures.
+ */
+export async function gatherHomeRead(
+  userId: string,
+  year: number,
+  month: number,
+  locale: Locale,
+): Promise<HomeRead> {
+  const today = todayIsoLocal();
+  const current = getCurrentMonth();
+  const isCurrentMonth = year === current.year && month === current.month;
+  const previous = shiftMonth(year, month, -1);
+
+  const [
+    summary,
+    closes,
+    templates,
+    categories,
+    budgetRows,
+    currentTx,
+    previousTx,
+    skipKeys,
+    fulfilledKeys,
+    goals,
+    portfolio,
+    inboxPending,
+  ] = await Promise.all([
+    getMonthlySummary(userId, year, month, "current"),
+    getMonthCloseOverview(userId, today, locale),
+    getRecurringTemplates(userId),
+    getCategories(userId),
+    getBudgets(userId),
+    getTransactions(userId, year, month),
+    getTransactions(userId, previous.year, previous.month),
+    skipKeysFor(userId, year, month),
+    getFulfilledKeys(userId),
+    getSavingsGoals(userId),
+    getWalletPortfolio(userId, locale, { includeHistory: false }),
+    countPendingFeedItems(userId),
+  ]);
+
+  // Only a month in progress has a live pulse — a past month's balance is a
+  // figure from a moment that has gone.
+  let pulse: ReturnType<typeof buildMonthPulse> | null = null;
+  if (isCurrentMonth) {
+    const [cash, flows] = await Promise.all([
+      readCashBalance(userId, today),
+      getRecordedCashFlows(userId, year, month),
+    ]);
+    const upcoming = buildStillToCome(
+      currentTx,
+      templates,
+      year,
+      month,
+      today,
+      skipKeys,
+      fulfilledKeys,
+    );
+    const latest = closes.history[0];
+    pulse = buildMonthPulse({
+      onHand: cash?.ok ? cash.total : null,
+      committed: upcoming.leaving,
+      arriving: upcoming.arriving,
+      flows,
+      openingBalance:
+        latest && latest.monthKey === previousMonthKey(monthKeyOf(year, month))
+          ? latest.closingBalance
+          : null,
+      cap: closes.settings.unrecordedCap,
+    });
+  }
+
+  const chargesUnconfirmed = await getFulfilmentProposals(
+    userId,
+    templates,
+    categories,
+    year,
+    month,
+  ).then(
+    (proposals) => proposals.length,
+    () => 0,
+  );
+
+  // Stopped where the web stops it, or the stored read's digest differs
+  // between the two clients.
+  const goalsAsOf = goalTotalsAsOf(year, month, today);
+  const goalStart = earliestGoalStart(goals);
+  const goalLedger =
+    goalStart && goalStart <= goalsAsOf
+      ? await getGoalLedger(userId, goalStart, goalsAsOf)
+      : EMPTY_GOAL_LEDGER;
+
+  const factsInput = {
+    year,
+    month,
+    isCurrentMonth,
+    summary,
+    comparison: buildMonthComparison({
+      current: currentTx,
+      previous: previousTx,
+      year,
+      month,
+      today,
+      locale,
+    }),
+    closes,
+    pulse,
+    budgets: buildBudgetProgress(
+      budgetRows,
+      summary.expenseBreakdown,
+      summary.expenses,
+      new Map(categories.map((category) => [category.id, category.name])),
+      locale,
+    ),
+    goals: buildSavingsGoalProgress(
+      goals,
+      buildGoalRunningTotals(goals, goalLedger, templates, goalsAsOf),
+    ),
+    investedValue: portfolio.totalMarketValue,
+    inboxPending,
+    chargesUnconfirmed,
+  };
+
+  const facts = monthFactsFromScreen({ ...factsInput, locale });
+
+  let stored: Awaited<ReturnType<typeof getMonthRead>> = {
+    view: null,
+    writesLeft: 0,
+    tracked: false,
+  };
+  try {
+    stored = await getMonthRead(userId, year, month, facts, locale);
+  } catch {
+    // A read that could not be fetched is not a reason to lose the card.
+  }
+
+  // A read stays in the language it was written in, so its figures have to
+  // be labelled in that language too.
+  const readLocale = stored.view?.locale ?? locale;
+  const readFacts =
+    readLocale === locale
+      ? facts
+      : monthFactsFromScreen({ ...factsInput, locale: readLocale });
+
+  return {
+    year,
+    month,
+    monthLabel: formatMonthLabel(year, month, locale),
+    read: stored.view?.read ?? null,
+    freshness: stored.view?.freshness ?? null,
+    facts,
+    readFacts,
+    readLocale,
+    writesLeft: stored.writesLeft,
+    configured: monthReadWritable(),
+    writerBrand: describeModel(DEFAULT_WRITER_MODEL).brand,
+    readModel: stored.view?.model ?? null,
+  };
+}

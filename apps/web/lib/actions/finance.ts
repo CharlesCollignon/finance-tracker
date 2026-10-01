@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { getLocale } from "@/lib/locale";
 
 import {
   revalidateEverySurface,
@@ -144,7 +145,7 @@ export async function signUp(
   if (data.user && !data.session) {
     return {
       success: true,
-      message: "Check your email to confirm your account, then sign in.",
+      message: "auth.confirmEmail",
     };
   }
 
@@ -157,7 +158,7 @@ export async function signUp(
 
 async function seedCategoriesSafely(userId: string): Promise<void> {
   try {
-    await seedDefaultCategories(userId);
+    await seedDefaultCategories(userId, await getLocale());
   } catch (error) {
     // Seeding must never block auth; missing defaults can be re-seeded
     // on the next sign-in.
@@ -296,7 +297,9 @@ export async function importTransactions(
 
   const parsed = importTransactionsSchema.safeParse({ rows });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid import" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const supabase = await createClient();
@@ -317,7 +320,7 @@ export async function importTransactions(
   }
 
   if ((owned?.length ?? 0) !== categoryIds.length) {
-    return { error: "One of the categories no longer exists" };
+    return { error: "actions.oneCategoryMissing" };
   }
 
   const { error } = await supabase.from("transactions").insert(
@@ -364,7 +367,7 @@ export async function getExistingKeysForRange(
     .safeParse({ from, to });
 
   if (!range.success) {
-    return { error: "Invalid date range" };
+    return { error: "actions.invalidDateRange" };
   }
 
   const supabase = await createClient();
@@ -404,7 +407,9 @@ export async function deleteTransactions(
 
   const parsed = deleteTransactionsSchema.safeParse({ ids });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid selection" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const supabase = await createClient();
@@ -457,7 +462,9 @@ export async function moveTransactions(
 
   const parsed = moveTransactionsSchema.safeParse({ ids, categoryId });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid selection" };
+    return {
+      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+    };
   }
 
   const supabase = await createClient();
@@ -473,7 +480,7 @@ export async function moveTransactions(
     return { error: categoryError.message };
   }
   if (!category) {
-    return { error: "That category does not exist." };
+    return { error: "actions.categoryMissing" };
   }
 
   const { error, count } = await supabase
@@ -591,7 +598,7 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
   }
 
   if (!parseUuid(id)) {
-    return { error: "Invalid transaction" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -682,10 +689,7 @@ export async function upsertRecurringTemplate(
       };
     } catch (error) {
       return {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Could not price this instrument.",
+        error: error instanceof Error ? error.message : "actions.couldNotPrice",
       };
     }
   } else {
@@ -805,7 +809,7 @@ export async function upsertRecurringTemplate(
       .single();
 
     if (error || !inserted) {
-      return { error: error?.message ?? "Could not save recurring item" };
+      return { error: error?.message ?? "actions.couldNotSaveRecurring" };
     }
 
     templateId = inserted.id;
@@ -888,7 +892,7 @@ export async function deleteRecurringTemplate(
   }
 
   if (!parseUuid(id)) {
-    return { error: "Invalid recurring template" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -1007,7 +1011,7 @@ export async function fillThisMonth(): Promise<{
     return {
       created: 0,
       error:
-        error instanceof Error ? error.message : "Could not fill this month.",
+        error instanceof Error ? error.message : "actions.couldNotFillMonth",
     };
   }
 }
@@ -1037,7 +1041,7 @@ export async function recordPlannedNow(
   const parsed = occurrenceInput.safeParse({ templateId, occurredOn });
   const today = todayIsoLocal();
   if (!parsed.success || parsed.data.occurredOn <= today) {
-    return { error: "Invalid occurrence" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -1050,7 +1054,7 @@ export async function recordPlannedNow(
     .maybeSingle();
 
   if (!template) {
-    return { error: "Recurring template not found" };
+    return { error: "actions.recurringNotFound" };
   }
 
   const skipError = await skipOccurrences(supabase, user.id, [
@@ -1074,7 +1078,7 @@ export async function recordPlannedNow(
     .single();
 
   if (error || !inserted) {
-    return { error: error?.message ?? "Could not record it" };
+    return { error: error?.message ?? "actions.couldNotRecord" };
   }
 
   revalidateEverySurface();
@@ -1094,7 +1098,7 @@ export async function undoRecordPlanned(
 
   const parsed = occurrenceInput.safeParse({ templateId, occurredOn });
   if (!parsed.success || !parseUuid(transactionId)) {
-    return { error: "Invalid occurrence" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -1136,7 +1140,7 @@ export async function skipPlannedOccurrence(
 
   const parsed = occurrenceInput.safeParse({ templateId, occurredOn });
   if (!parsed.success) {
-    return { error: "Invalid occurrence" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -1148,7 +1152,7 @@ export async function skipPlannedOccurrence(
     .maybeSingle();
 
   if (!template) {
-    return { error: "Recurring template not found" };
+    return { error: "actions.recurringNotFound" };
   }
 
   const skipError = await skipOccurrences(supabase, user.id, [
@@ -1175,7 +1179,7 @@ export async function unskipRecurringOccurrence(
     !/^[0-9a-f-]{36}$/i.test(templateId) ||
     !/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)
   ) {
-    return { error: "Invalid occurrence" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -1205,5 +1209,5 @@ export async function unskipRecurringOccurrence(
   }
 
   revalidateRecurringDependents();
-  return { success: true, message: "Skip removed" };
+  return { success: true, message: "actions.skipRemoved" };
 }

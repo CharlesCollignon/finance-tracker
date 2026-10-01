@@ -1,5 +1,8 @@
 import "server-only";
-import { BANK_CONSENT_VERSION, consentIsCurrent } from "@finance/core/bank-consent";
+import {
+  BANK_CONSENT_VERSION,
+  consentIsCurrent,
+} from "@finance/core/bank-consent";
 import type { Key } from "@finance/core/i18n/t";
 import {
   connectWithFile,

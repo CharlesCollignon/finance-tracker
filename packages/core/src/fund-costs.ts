@@ -12,6 +12,8 @@
  */
 
 import type { InvestmentWalletId } from "./investments";
+import { INTL_LOCALES, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 
 export interface CostedPosition {
   positionId: string;
@@ -155,7 +157,8 @@ export function buildFundCosts(
   // The envelope's own base: every position it holds that is worth something,
   // whether or not the fund's charge was ever entered.
   const enveloped = rows.filter(
-    (row) => row.wrapperFee !== null && row.wrapperFee > 0 && row.marketValue > 0,
+    (row) =>
+      row.wrapperFee !== null && row.wrapperFee > 0 && row.marketValue > 0,
   );
   const envelopeCoveredValue = enveloped.reduce(
     (sum, row) => sum + row.marketValue,
@@ -228,15 +231,17 @@ export function savingAtCheapest(summary: FundCostSummary): number | null {
   return saving > 0.5 ? saving : null;
 }
 
-/** "0.20%" from the stored fraction. */
-export function formatCharge(charge: number | null): string {
+/** "0.2%" / "0,2 %" from the stored fraction. */
+export function formatCharge(charge: number | null, locale: Locale): string {
   if (charge === null) {
     return "—";
   }
-  // Trailing zeros dropped: 0.20% reads better than 0.200%.
-  const percent = charge * 100;
-  const text = percent.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
-  return `${text}%`;
+  // Up to three decimals, trailing zeros dropped: 0.2% reads better than
+  // 0.200%. Through the locale, so French reads "0,2 %".
+  const value = new Intl.NumberFormat(INTL_LOCALES[locale], {
+    maximumFractionDigits: 3,
+  }).format(charge * 100);
+  return translator(locale)("units.percent", { value });
 }
 
 /** Parses "0,20", "0.20", "0.20%" into the stored fraction. */

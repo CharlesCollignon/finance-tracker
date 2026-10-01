@@ -27,7 +27,7 @@ import {
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
-import { useT } from "@/lib/locale-context";
+import { useT, useLocale } from "@/lib/locale-context";
 
 interface AllocationCardProps {
   portfolio: InvestmentPortfolioSummary;
@@ -320,9 +320,10 @@ function AllocationRowItem({
   monthly?: boolean;
 }) {
   const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
-  const share = formatWeight(row.currentWeight);
-  const target = formatWeight(row.targetWeight);
+  const share = formatWeight(row.currentWeight, locale);
+  const target = formatWeight(row.targetWeight, locale);
   const perMonth = monthly ? (
     <span className="text-xs text-muted-foreground">
       {t("charges.perMonthSuffix")}
@@ -418,6 +419,7 @@ function TargetEditor({
   onCancel: () => void;
 }) {
   const t = useT();
+  const locale = useLocale();
   const [draft, setDraft] = useState<Record<InvestmentWalletId, string>>(() =>
     toDraft(initial),
   );
@@ -445,7 +447,7 @@ function TargetEditor({
               </span>
               <span className="text-xs text-muted-foreground">
                 {t("position.targetNow", {
-                  share: formatWeight(row.currentWeight),
+                  share: formatWeight(row.currentWeight, locale),
                 })}
               </span>
             </span>

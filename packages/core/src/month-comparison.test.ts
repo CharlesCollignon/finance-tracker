@@ -56,6 +56,7 @@ describe("sumThroughDay", () => {
 describe("buildMonthComparison", () => {
   it("truncates the previous month to the same day mid-month", () => {
     const comparison = buildMonthComparison({
+      locale: "en",
       current: [tx("2026-09-01", 100), tx("2026-09-05", 50)],
       previous: [
         tx("2026-08-01", 80),
@@ -77,6 +78,7 @@ describe("buildMonthComparison", () => {
 
   it("compares whole months once the month being viewed is over", () => {
     const comparison = buildMonthComparison({
+      locale: "en",
       current: [tx("2026-08-25", 500)],
       previous: [tx("2026-07-30", 300)],
       year: 2026,
@@ -92,6 +94,7 @@ describe("buildMonthComparison", () => {
 
   it("does not let a 31-day month flatter a 28-day one", () => {
     const comparison = buildMonthComparison({
+      locale: "en",
       current: [tx("2026-03-30", 100)],
       previous: [tx("2026-02-27", 100)],
       year: 2026,
@@ -106,6 +109,7 @@ describe("buildMonthComparison", () => {
 
   it("crosses the year boundary to find the previous month", () => {
     const comparison = buildMonthComparison({
+      locale: "en",
       current: [tx("2026-01-05", 100)],
       previous: [tx("2025-12-05", 60)],
       year: 2026,
@@ -119,6 +123,7 @@ describe("buildMonthComparison", () => {
 
   it("reports a fall in spending", () => {
     const comparison = buildMonthComparison({
+      locale: "en",
       current: [tx("2026-09-01", 50)],
       previous: [tx("2026-08-01", 120)],
       year: 2026,
@@ -133,6 +138,7 @@ describe("buildMonthComparison", () => {
 
   it("calls a pennies-apart month flat", () => {
     const comparison = buildMonthComparison({
+      locale: "en",
       current: [tx("2026-09-01", 100)],
       previous: [tx("2026-08-01", 100)],
       year: 2026,
@@ -145,6 +151,7 @@ describe("buildMonthComparison", () => {
 
   it("is not comparable when the previous month is empty", () => {
     const comparison = buildMonthComparison({
+      locale: "en",
       current: [tx("2026-09-01", 100)],
       previous: [],
       year: 2026,
@@ -158,6 +165,7 @@ describe("buildMonthComparison", () => {
 
   it("counts nothing for a month that has not started", () => {
     const comparison = buildMonthComparison({
+      locale: "en",
       current: [],
       previous: [tx("2026-09-01", 100)],
       year: 2026,
@@ -171,6 +179,7 @@ describe("buildMonthComparison", () => {
 
   it("can compare a type other than expense", () => {
     const comparison = buildMonthComparison({
+      locale: "en",
       current: [tx("2026-09-01", 2400, "income")],
       previous: [tx("2026-08-01", 2300, "income")],
       year: 2026,
@@ -186,6 +195,7 @@ describe("buildMonthComparison", () => {
 describe("formatMonthComparison", () => {
   function build(current: number, previous: number, today = "2026-09-08") {
     return buildMonthComparison({
+      locale: "en",
       current: current > 0 ? [tx("2026-09-01", current)] : [],
       previous: previous > 0 ? [tx("2026-08-01", previous)] : [],
       year: 2026,
@@ -195,19 +205,20 @@ describe("formatMonthComparison", () => {
   }
 
   it("says how much more was spent, mid-month", () => {
-    expect(formatMonthComparison(build(300, 120), format)).toBe(
+    expect(formatMonthComparison(build(300, 120), format, "en")).toBe(
       "€180 more than this point in August 2026.",
     );
   });
 
   it("says how much less was spent", () => {
-    expect(formatMonthComparison(build(50, 120), format)).toBe(
+    expect(formatMonthComparison(build(50, 120), format, "en")).toBe(
       "€70 less than this point in August 2026.",
     );
   });
 
   it("drops the mid-month wording for a finished month", () => {
     const comparison = buildMonthComparison({
+      locale: "en",
       current: [tx("2026-08-01", 300)],
       previous: [tx("2026-07-01", 120)],
       year: 2026,
@@ -215,17 +226,17 @@ describe("formatMonthComparison", () => {
       today: "2026-09-08",
     });
 
-    expect(formatMonthComparison(comparison, format)).toBe(
+    expect(formatMonthComparison(comparison, format, "en")).toBe(
       "€180 more than July 2026.",
     );
   });
 
   it("says nothing when there is no history to compare with", () => {
-    expect(formatMonthComparison(build(300, 0), format)).toBeNull();
+    expect(formatMonthComparison(build(300, 0), format, "en")).toBeNull();
   });
 
   it("reports an unchanged month plainly", () => {
-    expect(formatMonthComparison(build(120, 120), format)).toBe(
+    expect(formatMonthComparison(build(120, 120), format, "en")).toBe(
       "About the same as this point in August 2026.",
     );
   });

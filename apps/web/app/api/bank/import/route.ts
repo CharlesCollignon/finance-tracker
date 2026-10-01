@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const session = await sessionFromBearer(request);
   if (!session) {
-    return Response.json({ error: "Not authenticated" }, { status: 401 });
+    return Response.json({ error: "errors.notAuthenticated" }, { status: 401 });
   }
   const result = await listAccountsToImport(session.userId);
   return Response.json(result, { status: result.error ? 502 : 200 });
@@ -28,14 +28,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await sessionFromBearer(request);
   if (!session) {
-    return Response.json({ error: "Not authenticated" }, { status: 401 });
+    return Response.json({ error: "errors.notAuthenticated" }, { status: 401 });
   }
   const body = (await request.json().catch(() => ({}))) as {
     accountId?: unknown;
   };
   const accountId = body.accountId;
   if (typeof accountId !== "string" || !accountId || accountId.length > 200) {
-    return Response.json({ error: "Invalid selection" }, { status: 400 });
+    return Response.json({ error: "errors.invalidInput" }, { status: 400 });
   }
   const result = await importOneAccount(
     session.supabase,

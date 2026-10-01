@@ -14,6 +14,7 @@ import { signInWithPasskeyCeremony } from "@/lib/passkeys";
 import { seedDefaultCategories } from "@/lib/seed-categories";
 import { supabase } from "@/lib/supabase";
 import { resetRequestErrorKey } from "@finance/core/auth-errors";
+import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -103,7 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // If email confirmation is on, there is no session yet.
         if (data.user && !data.session) {
           return {
-            error: "Check your email to confirm your account, then sign in.",
+            // A message key: the form resolves it to the reader's language.
+            error: "auth.confirmEmail",
           };
         }
         if (data.user) {
@@ -125,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: error.message };
         }
         if (!data.url) {
-          return { error: "Could not start Google sign-in." };
+          return { error: "auth.googleStartFailed" };
         }
 
         const result = await WebBrowser.openAuthSessionAsync(
@@ -134,12 +136,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
 
         if (result.type !== "success" || !result.url) {
-          return { error: "Google sign-in was cancelled." };
+          return { error: "auth.googleCancelled" };
         }
 
         const ok = await handleAuthUrl(result.url);
         if (!ok) {
-          return { error: "Could not complete Google sign-in." };
+          return { error: "auth.googleFailed" };
         }
         return {};
       },
@@ -176,7 +178,9 @@ export function useAuth(): AuthContextValue {
 
 async function seedCategoriesSafely(userId: string): Promise<void> {
   try {
-    await seedDefaultCategories(userId);
+    // Above LocaleProvider, so the reader's choice is not known yet: the
+    // default language, which is the one most accounts start in anyway.
+    await seedDefaultCategories(userId, DEFAULT_LOCALE);
   } catch (error) {
     console.error("Failed to seed default categories", error);
   }

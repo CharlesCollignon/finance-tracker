@@ -13,6 +13,14 @@ interface AnimatedAmountProps {
   className?: string;
   /** For the display sizes, which carry no text-* class. See TYPE in tokens. */
   style?: StyleProp<TextStyle>;
+  /**
+   * Where the first count starts. Left out, a figure appears at its value and
+   * only counts when it changes; a headline that should arrive counting — the
+   * Recurring screen's "left each month" — starts from 0.
+   */
+  startFrom?: number;
+  numberOfLines?: number;
+  adjustsFontSizeToFit?: boolean;
 }
 
 /**
@@ -32,11 +40,14 @@ export function AnimatedAmount({
   format,
   className,
   style,
+  startFrom,
+  numberOfLines,
+  adjustsFontSizeToFit,
 }: AnimatedAmountProps) {
   const { hidden } = usePrivacy();
   const reduce = useReducedMotion();
-  const [display, setDisplay] = useState(value);
-  const fromRef = useRef(value);
+  const [display, setDisplay] = useState(startFrom ?? value);
+  const fromRef = useRef(startFrom ?? value);
 
   useEffect(() => {
     const from = fromRef.current;
@@ -69,7 +80,12 @@ export function AnimatedAmount({
   }, [value, hidden, reduce]);
 
   return (
-    <PrivateAmount className={className} style={style}>
+    <PrivateAmount
+      className={className}
+      style={style}
+      numberOfLines={numberOfLines}
+      adjustsFontSizeToFit={adjustsFontSizeToFit}
+    >
       {format(display)}
     </PrivateAmount>
   );

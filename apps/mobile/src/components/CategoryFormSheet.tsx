@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import { categoryTypeLabels } from "@finance/core/category-styles";
 import type { Category, CategoryType } from "@finance/core/types/database";
 
 import { CATEGORY_ICONS, CategoryIcon } from "@/components/CategoryIcon";
+import { ChoiceChips } from "@/components/pickers/ChoiceChips";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
@@ -12,7 +14,9 @@ import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { cn } from "@/lib/cn";
 import { upsertCategory } from "@/lib/mutations";
 import { useToast } from "@/providers/ToastProvider";
-import { useT } from "@/providers/LocaleProvider";
+import { useLocale, useT } from "@/providers/LocaleProvider";
+import { ICON } from "@/theme/tokens";
+import { useThemeColors } from "@/theme/useThemeColors";
 
 interface CategoryFormSheetProps {
   open: boolean;
@@ -25,6 +29,41 @@ const TYPES: CategoryType[] = ["income", "expense", "savings", "investment"];
 
 const ICON_KEYS = Object.keys(CATEGORY_ICONS);
 
+/** What each icon shows, for a screen reader: the keys are code names. */
+const ICON_LABEL = {
+  wallet: "formPickers.iconWallet",
+  lightning: "formPickers.iconLightning",
+  wifi: "formPickers.iconWifi",
+  buildings: "formPickers.iconBuildings",
+  house: "formPickers.iconHouse",
+  bank: "formPickers.iconBank",
+  "credit-card": "formPickers.iconCreditCard",
+  shield: "formPickers.iconShield",
+  "shopping-cart": "formPickers.iconShoppingCart",
+  barbell: "formPickers.iconBarbell",
+  car: "formPickers.iconCar",
+  television: "formPickers.iconTelevision",
+  "dots-three": "formPickers.iconDotsThree",
+  "piggy-bank": "formPickers.iconPiggyBank",
+  "chart-line": "formPickers.iconChartLine",
+  "currency-btc": "formPickers.iconCurrencyBtc",
+  "trend-up": "formPickers.iconTrendUp",
+} as const satisfies Record<string, string>;
+
+function iconLabelKey(key: string) {
+  return key in ICON_LABEL
+    ? ICON_LABEL[key as keyof typeof ICON_LABEL]
+    : "formPickers.iconDotsThree";
+}
+
+/** What unticking "counts" means, which depends on the kind of money. */
+const COUNTS_HINT = {
+  income: "categories.countsHintIncome",
+  expense: "categories.countsHintExpense",
+  savings: "categories.countsHintSavings",
+  investment: "categories.countsHintInvestment",
+} as const satisfies Record<CategoryType, string>;
+
 /** Create or rename a category, pick its type, icon and summary behaviour. */
 export function CategoryFormSheet({
   open,
@@ -33,7 +72,9 @@ export function CategoryFormSheet({
   onSaved,
 }: CategoryFormSheetProps) {
   const t = useT();
+  const locale = useLocale();
   const { toast } = useToast();
+  const colors = useThemeColors();
   const isEditing = category !== null;
   const [name, setName] = useState(category?.name ?? "");
   const [type, setType] = useState<CategoryType>(category?.type ?? "expense");
@@ -116,34 +157,16 @@ export function CategoryFormSheet({
             <Text className="mb-2 text-sm font-medium">
               {t("categories.type")}
             </Text>
-            <View className="mb-4 flex-row flex-wrap gap-2">
-              {TYPES.map((value) => {
-                const selected = type === value;
-                return (
-                  <Pressable
-                    key={value}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    onPress={() => setType(value)}
-                    className={cn(
-                      "rounded-full border px-4 py-2",
-                      selected
-                        ? "border-foreground bg-foreground"
-                        : "border-border bg-background",
-                    )}
-                  >
-                    <Text
-                      className={cn(
-                        "text-sm font-semibold",
-                        selected ? "text-background" : "text-muted-foreground",
-                      )}
-                    >
-                      {categoryTypeLabels()[value]}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <ChoiceChips
+              label={t("categories.type")}
+              className="mb-4"
+              options={TYPES.map((value) => ({
+                value,
+                label: categoryTypeLabels(locale)[value],
+              }))}
+              value={type}
+              onChange={setType}
+            />
 
             <Text className="mb-2 text-sm font-medium">
               {t("categories.icon")}
@@ -154,13 +177,15 @@ export function CategoryFormSheet({
                 return (
                   <Pressable
                     key={key}
-                    accessibilityRole="button"
-                    accessibilityLabel={key}
+                    accessibilityRole="radio"
+                    accessibilityLabel={t(iconLabelKey(key))}
                     accessibilityState={{ selected }}
                     onPress={() => setIcon(selected ? null : key)}
                     className={cn(
-                      "rounded-control border",
-                      selected ? "border-primary" : "border-transparent",
+                      "h-12 w-12 items-center justify-center rounded-control border",
+                      selected
+                        ? "border-foreground bg-secondary"
+                        : "border-transparent",
                     )}
                   >
                     <CategoryIcon icon={key} />
@@ -173,22 +198,30 @@ export function CategoryFormSheet({
               accessibilityRole="checkbox"
               accessibilityState={{ checked: countsToward }}
               onPress={() => setCountsToward((value) => !value)}
-              className="mb-4 flex-row items-center gap-3 rounded-control border border-border px-3 py-3"
+              className="mb-4 min-h-12 flex-row items-center gap-3 rounded-control border border-border px-3 py-3"
             >
               <View
                 className={cn(
-                  "h-5 w-5 rounded-control border",
+                  "h-6 w-6 items-center justify-center rounded-control border",
                   countsToward
-                    ? "border-primary bg-primary"
+                    ? "border-foreground bg-foreground"
                     : "border-border bg-background",
                 )}
-              />
+              >
+                {countsToward ? (
+                  <Ionicons
+                    name="checkmark"
+                    size={ICON.sm}
+                    color={colors.background}
+                  />
+                ) : null}
+              </View>
               <View className="flex-1">
                 <Text className="text-sm font-medium">
-                  Counts toward totals
+                  {t("categories.countsTowardBudget")}
                 </Text>
                 <Text variant="muted" className="text-xs">
-                  Off for transfers you don&apos;t want in the monthly summary.
+                  {t(COUNTS_HINT[type])}
                 </Text>
               </View>
             </Pressable>

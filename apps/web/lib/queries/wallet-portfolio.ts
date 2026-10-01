@@ -11,6 +11,7 @@ import {
   getCachedHistoricalQuotes,
   getCachedLiveQuotes,
 } from "@/lib/queries/market-quotes";
+import { getLocale } from "@/lib/locale";
 
 function collectQuoteSymbols(
   positionRows: Awaited<ReturnType<typeof getInvestmentPositions>>,
@@ -59,9 +60,7 @@ export async function getWalletPortfolio(
   const symbols = collectQuoteSymbols(positionRows, recurringTemplates);
   const [liveQuotes, historicalQuotes] = await Promise.all([
     getCachedLiveQuotes(symbols),
-    includeHistory
-      ? getCachedHistoricalQuotes(symbols)
-      : Promise.resolve({}),
+    includeHistory ? getCachedHistoricalQuotes(symbols) : Promise.resolve({}),
   ]);
 
   return buildInvestmentPortfolio(
@@ -70,6 +69,7 @@ export async function getWalletPortfolio(
     positionRows,
     recurringTemplates,
     liveQuotes,
+    await getLocale(),
     todayIsoLocal(),
     historicalQuotes,
   );

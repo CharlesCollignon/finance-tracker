@@ -20,6 +20,7 @@ import { getBankBalanceSuggestion } from "@/lib/actions/bank";
 import { parseTypedAmount } from "@finance/core/amount-input";
 import { useLocale, useT } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
+import { formatPercentLabel } from "@finance/core/constants";
 
 interface MonthCloseSheetProps {
   open: boolean;
@@ -344,7 +345,9 @@ export function MonthCloseSheet({
                 </h3>
                 <Text className="mt-1 text-sm text-muted-foreground">
                   {result.keptRate !== null
-                    ? t("monthClose.keptRate", { rate: result.keptRate })
+                    ? t("monthClose.keptRate", {
+                        rate: formatPercentLabel(result.keptRate, locale),
+                      })
                     : t("monthClose.keptRateUnknown")}
                 </Text>
                 {days !== null && (

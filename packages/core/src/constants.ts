@@ -1,51 +1,140 @@
 import { calendarNames, monthLong, monthShort } from "./i18n/calendar-names";
-import { FALLBACK_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { INTL_LOCALES, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 
+/**
+ * The categories a new account starts with, named in both languages.
+ *
+ * A user is seeded in their own language and the rows are theirs from then
+ * on: renaming one is an edit like any other. Both names are kept here for
+ * the places that still match on a name — the re-seed below, which must not
+ * add "Courses" beside an account's existing "Groceries", and the card
+ * networks' merchant codes in `bank-mcc.ts`, which point at a default by its
+ * English name. The investment ones keep "PEA", "CTO" and "Bitstack" in both
+ * languages because `matchWalletId` reads the wallet from the name.
+ */
 export const DEFAULT_CATEGORIES = [
-  { name: "Salary", type: "income" as const, icon: "wallet" },
-  { name: "Electricity", type: "expense" as const, icon: "lightning" },
-  { name: "Internet", type: "expense" as const, icon: "wifi" },
-  { name: "Condo fees", type: "expense" as const, icon: "buildings" },
-  { name: "Loan repayment", type: "expense" as const, icon: "bank" },
-  { name: "Bank card fees", type: "expense" as const, icon: "credit-card" },
-  { name: "Insurance", type: "expense" as const, icon: "shield" },
-  { name: "Groceries", type: "expense" as const, icon: "shopping-cart" },
-  { name: "Sport", type: "expense" as const, icon: "barbell" },
-  { name: "Transportation", type: "expense" as const, icon: "car" },
   {
-    name: "Subscriptions",
+    names: { fr: "Salaire", en: "Salary" },
+    type: "income" as const,
+    icon: "wallet",
+  },
+  {
+    names: { fr: "Électricité", en: "Electricity" },
+    type: "expense" as const,
+    icon: "lightning",
+  },
+  {
+    names: { fr: "Internet", en: "Internet" },
+    type: "expense" as const,
+    icon: "wifi",
+  },
+  {
+    names: { fr: "Charges de copropriété", en: "Condo fees" },
+    type: "expense" as const,
+    icon: "buildings",
+  },
+  {
+    names: { fr: "Remboursement de prêt", en: "Loan repayment" },
+    type: "expense" as const,
+    icon: "bank",
+  },
+  {
+    names: { fr: "Frais bancaires", en: "Bank card fees" },
+    type: "expense" as const,
+    icon: "credit-card",
+  },
+  {
+    names: { fr: "Assurance", en: "Insurance" },
+    type: "expense" as const,
+    icon: "shield",
+  },
+  {
+    names: { fr: "Courses", en: "Groceries" },
+    type: "expense" as const,
+    icon: "shopping-cart",
+  },
+  {
+    names: { fr: "Sport", en: "Sport" },
+    type: "expense" as const,
+    icon: "barbell",
+  },
+  {
+    names: { fr: "Transports", en: "Transportation" },
+    type: "expense" as const,
+    icon: "car",
+  },
+  {
+    names: { fr: "Abonnements", en: "Subscriptions" },
     type: "expense" as const,
     icon: "television",
   },
-  { name: "Taxe Foncière", type: "expense" as const, icon: "house" },
-  { name: "Other", type: "expense" as const, icon: "dots-three" },
-  { name: "Savings account", type: "savings" as const, icon: "piggy-bank" },
   {
-    name: "Broker transfer",
+    names: { fr: "Taxe foncière", en: "Taxe Foncière" },
+    type: "expense" as const,
+    icon: "house",
+  },
+  {
+    names: { fr: "Autre", en: "Other" },
+    type: "expense" as const,
+    icon: "dots-three",
+  },
+  {
+    names: { fr: "Livret d'épargne", en: "Savings account" },
+    type: "savings" as const,
+    icon: "piggy-bank",
+  },
+  {
+    names: { fr: "Virement vers le courtier", en: "Broker transfer" },
     type: "investment" as const,
     icon: "bank",
     countsTowardSummary: true,
   },
   {
-    name: "CTO weekly DCA",
+    names: { fr: "Achat hebdomadaire CTO", en: "CTO weekly DCA" },
     type: "investment" as const,
     icon: "chart-line",
     countsTowardSummary: false,
   },
   {
-    name: "PEA monthly DCA",
+    names: { fr: "Versement mensuel PEA", en: "PEA monthly DCA" },
     type: "investment" as const,
     icon: "trend-up",
     countsTowardSummary: false,
   },
   {
-    name: "Bitstack weekly DCA",
+    names: { fr: "Achat hebdomadaire Bitstack", en: "Bitstack weekly DCA" },
     type: "investment" as const,
     icon: "currency-btc",
     countsTowardSummary: false,
   },
 ];
+
+/**
+ * Names the card networks' codes can point at that are not defaults, in both
+ * languages, so a user who made them in either is found.
+ */
+const SUGGESTED_CATEGORY_NAMES = [
+  { fr: "Restaurants", en: "Restaurants" },
+  { fr: "Bars", en: "Bars" },
+];
+
+/**
+ * Every name a default category goes by, for a name in either language:
+ * "Groceries" gives ["Groceries", "Courses"]. A name that is not a default
+ * comes back on its own.
+ */
+export function categoryNameVariants(name: string): string[] {
+  const lower = name.trim().toLowerCase();
+  const pair = [
+    ...DEFAULT_CATEGORIES.map((category) => category.names),
+    ...SUGGESTED_CATEGORY_NAMES,
+  ].find(
+    (names) =>
+      names.fr.toLowerCase() === lower || names.en.toLowerCase() === lower,
+  );
+  return pair ? [...new Set([name, pair.fr, pair.en])] : [name];
+}
 
 /**
  * Cash counted as invested for savings rate / Sankey:
@@ -76,10 +165,7 @@ export function savingsRatePercent(
   return Math.round(((savings + invested) / income) * 1000) / 10;
 }
 
-export function formatEuro(
-  amount: number,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+export function formatEuro(amount: number, locale: Locale): string {
   return new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: "currency",
     currency: "EUR",
@@ -99,13 +185,48 @@ export function formatEuro(
  * One decimal at most, matching `describeFact`: a savings rate of 11.4% is a
  * real distinction and 11.42% is noise.
  */
-export function formatPercent(
-  value: number,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+export function formatPercent(value: number, locale: Locale): string {
   return new Intl.NumberFormat(INTL_LOCALES[locale], {
     maximumFractionDigits: 1,
   }).format(value);
+}
+
+/**
+ * A percentage, ready to show: 35.7 → "35.7%" / "35,7 %". `value` is already
+ * in percent. The number goes through `formatPercent` and the sign through
+ * the `units.percent` message, so nothing anywhere glues a bare "%" on.
+ */
+export function formatPercentLabel(value: number, locale: Locale): string {
+  return translator(locale)("units.percent", {
+    value: formatPercent(value, locale),
+  });
+}
+
+/**
+ * A percentage with its sign: "+7.4%" / "+7,4 %", "-2.1%", "0.0%".
+ *
+ * `fraction` is the ratio (0.074 for 7.4%). The plus is added here rather than
+ * asked of Intl's `signDisplay`, because Hermes — the phone's JavaScript
+ * engine — renders `signDisplay: "exceptZero"` by copying the sign onto the
+ * suffix, which is how "+34.7+ a year" reached a French screen. Everything
+ * else is Intl's own: the locale's decimal mark, its spacing before the
+ * percent sign, and its minus. A value that rounds to zero carries no sign.
+ */
+export function formatSignedPercentOf(
+  fraction: number,
+  locale: Locale,
+  fractionDigits = 1,
+): string {
+  const format = new Intl.NumberFormat(INTL_LOCALES[locale], {
+    style: "percent",
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  });
+  if (Math.round(Math.abs(fraction) * 10 ** (2 + fractionDigits)) === 0) {
+    return format.format(0);
+  }
+  const text = format.format(fraction);
+  return fraction > 0 ? `+${text}` : text;
 }
 
 /** The two display currencies a user can pick between. Amounts are never
@@ -125,12 +246,15 @@ export const CURRENCY_LABELS: Record<CurrencyCode, string> = {
 export function formatCurrency(
   amount: number,
   currency: CurrencyCode = DEFAULT_CURRENCY,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
+  // Whole amounts stay whole ("3 440 €"); anything with cents shows both
+  // digits ("871,10 €", not "871,1 €"), the way a bank statement does.
+  const whole = Math.round(Math.abs(amount) * 100) % 100 === 0;
   return new Intl.NumberFormat(INTL_LOCALES[locale], {
     style: "currency",
     currency,
-    minimumFractionDigits: 0,
+    minimumFractionDigits: whole ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(amount);
 }
@@ -189,7 +313,7 @@ export function todayIsoLocal(): string {
 export function formatMonthShortYear(
   year: number,
   month: number,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   return `${monthShort(month, locale)} ${year}`;
 }
@@ -198,16 +322,13 @@ export function formatMonthShortYear(
 export function formatMonthCompact(
   year: number,
   month: number,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   return `${monthShort(month, locale)} ${String(year).slice(-2)}`;
 }
 
 /** "Tuesday 1 September" — the unhurried form, for a calendar heading. */
-export function formatLongDate(
-  isoDate: string,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+export function formatLongDate(isoDate: string, locale: Locale): string {
   const [year, month, day] = isoDate.split("-").map(Number);
   const weekday =
     calendarNames(locale).weekdayLong[
@@ -227,7 +348,7 @@ export function formatLongDate(
 export function relativeDayLabel(
   isoDate: string,
   fallback: (isoDate: string, locale: Locale) => string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   const t = translator(locale);
   const today = todayIsoLocal();
@@ -246,10 +367,7 @@ export function relativeDayLabel(
     : fallback(isoDate, locale);
 }
 
-export function formatShortDate(
-  isoDate: string,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+export function formatShortDate(isoDate: string, locale: Locale): string {
   const [year, month, day] = isoDate.split("-").map(Number);
   const weekday =
     calendarNames(locale).weekdayShort[
@@ -259,10 +377,7 @@ export function formatShortDate(
 }
 
 /** Compact day + month for toggles (e.g. "12 Aug"). */
-export function formatDayMonth(
-  isoDate: string,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+export function formatDayMonth(isoDate: string, locale: Locale): string {
   const [, month, day] = isoDate.split("-").map(Number);
   return `${day} ${monthShort(month!, locale)}`;
 }
@@ -312,7 +427,7 @@ export function shiftMonth(
 export function formatMonthLabel(
   year: number,
   month: number,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   return `${monthLong(month, locale)} ${year}`;
 }
@@ -328,7 +443,7 @@ export function budgetViewOptionLabel(
   mode: BudgetViewMode,
   year: number,
   month: number,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   const t = translator(locale);
   if (mode === "month_end") {
@@ -342,10 +457,7 @@ export function budgetViewOptionLabel(
   });
 }
 
-export function budgetViewHint(
-  view: BudgetViewMode,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+export function budgetViewHint(view: BudgetViewMode, locale: Locale): string {
   const t = translator(locale);
   return view === "month_end"
     ? t("budgetView.monthEndHint")

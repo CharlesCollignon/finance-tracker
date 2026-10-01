@@ -75,13 +75,14 @@ export function SelectionBar({
     return null;
   }
 
-  const groups = groupCategoriesByType(categories);
+  const groups = groupCategoriesByType(categories, { locale });
   const effect = target ? planMove(target) : null;
   const moveNote = effect
     ? describeSelectionMove(
         effect,
         summary,
         categories.find((category) => category.id === target)?.name ?? "",
+        locale,
       )
     : null;
   const needsConfirm = (effect?.typeChanges ?? 0) > 0;
@@ -106,14 +107,8 @@ export function SelectionBar({
         accessibilityLabel={t("selectionBar.regionMobile", {
           count: summary.count,
         })}
-        className="gap-3 rounded-card p-row border border-border bg-card"
-        style={{
-          shadowColor: "#000",
-          shadowOpacity: 0.2,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 6,
-        }}
+        // No shadow, as everywhere: the strong hairline lifts it instead.
+        className="gap-3 rounded-card p-row border border-hairline-strong bg-card"
       >
         {confirming ? (
           <>
@@ -224,14 +219,19 @@ export function SelectionBar({
               <Text className="text-sm font-semibold">
                 {`${t("selectionBar.countSelected", { count: summary.count })}`}
                 {summary.total > 0 ? (
-                  <Text variant="muted" className="font-mono text-xs">
+                  <Text
+                    variant="muted"
+                    className="font-sans tabular-nums text-xs"
+                  >
                     {`  ${formatEuro(summary.total)}`}
                   </Text>
                 ) : null}
               </Text>
               {summary.recurringCount > 0 ? (
                 <Text variant="muted" className="text-xs">
-                  {`${summary.recurringCount} from recurring`}
+                  {t("selectionBar.fromRecurring", {
+                    count: summary.recurringCount,
+                  })}
                 </Text>
               ) : null}
             </View>

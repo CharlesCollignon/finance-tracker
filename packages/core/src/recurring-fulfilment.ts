@@ -1,4 +1,4 @@
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * Which bank movement looks like the occurrence a template called for.
@@ -296,7 +296,7 @@ export function proposeFulfilments(
 export function describeFulfilment(
   proposal: FulfilmentProposal,
   formatMoney: (amount: number) => string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   const t = translator(locale);
 
@@ -477,7 +477,7 @@ export function explainFulfilmentMisses(
 export function describeMiss(
   miss: FulfilmentMiss,
   formatMoney: (amount: number) => string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   const t = translator(locale);
 

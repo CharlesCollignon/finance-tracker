@@ -60,7 +60,7 @@ export function monthFactsFromScreen(input: {
   inboxPending: number;
   chargesUnconfirmed: number;
   /** The language the labels are written in — the model's vocabulary too. */
-  locale?: Locale;
+  locale: Locale;
 }): MonthFacts {
   const monthKey = `${input.year}-${String(input.month).padStart(2, "0")}`;
   const closed =
@@ -128,6 +128,7 @@ export async function getMonthRead(
   year: number,
   month: number,
   currentFacts: MonthFacts,
+  locale: Locale,
 ): Promise<StoredMonthRead> {
   const { data, error } = await supabase
     .from("month_reads")
@@ -171,6 +172,7 @@ export async function getMonthRead(
       // app was English-only when it was written.
       locale: parseLocale(row.locale) ?? FALLBACK_LOCALE,
       freshness: describeReadFreshness({
+        locale: locale,
         storedFacts,
         currentFacts,
         footing: readFooting(read),
@@ -248,7 +250,8 @@ export async function writeMonthRead(
       // perfectly readable.
       return {
         written: false,
-        message: body?.error ?? "Could not write the read just now.",
+        // A message key; the toast resolves it to the reader's language.
+        message: body?.error ?? "monthRead.writeFailed",
         writesLeft: null,
       };
     }
@@ -261,7 +264,7 @@ export async function writeMonthRead(
   } catch {
     return {
       written: false,
-      message: "Could not write the read just now.",
+      message: "monthRead.writeFailed",
       writesLeft: null,
     };
   } finally {

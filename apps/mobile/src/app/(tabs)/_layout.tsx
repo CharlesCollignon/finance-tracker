@@ -3,9 +3,10 @@ import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
 import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTabBarHeight } from "@/theme/chrome";
+import { TAB_BAR_INSET, TAB_BAR_SIDE, useTabBarHeight } from "@/theme/chrome";
 
 import { Blur } from "@/components/ui/Blur";
+import { MonthProvider } from "@/providers/MonthProvider";
 import { QuickAddProvider } from "@/providers/QuickAddProvider";
 import { ReminderProvider } from "@/providers/ReminderProvider";
 
@@ -78,9 +79,10 @@ const TABS: TabConfig[] = [
 ];
 
 /*
- * Full-width bar on the bottom edge. Square corners, no inset. Its height now
- * comes from theme/chrome, which the screens also pad from, so the two cannot
- * drift apart.
+ * A glass pill floating above the bottom edge, as the web's bar is at phone
+ * width — it was a full-width bar docked to the edge, with square corners.
+ * Its height and inset come from theme/chrome, which the screens also pad
+ * from, so the two cannot drift apart.
  */
 export default function TabsLayout() {
   const t = useT();
@@ -94,74 +96,90 @@ export default function TabsLayout() {
 
   return (
     <ReminderProvider>
-      <QuickAddProvider>
-        <Tabs
-          screenOptions={{
-            headerShown: false,
-            tabBarActiveTintColor: colors.primary,
-            tabBarInactiveTintColor: colors.mutedForeground,
-            tabBarLabelStyle: { fontSize: 10, fontWeight: "500" },
-            tabBarItemStyle: { paddingVertical: 4, paddingHorizontal: 2 },
-            // Blur only means something if content passes beneath the bar, so it
-            // overlays rather than docks. Screens pad their scroll content to
-            // clear it.
-            tabBarBackground: () => <Blur style={StyleSheet.absoluteFill} />,
-            tabBarStyle: {
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: barHeight + insets.bottom,
-              paddingBottom: insets.bottom,
-              backgroundColor: "transparent",
-              borderTopWidth: StyleSheet.hairlineWidth,
-              borderTopColor: colors.border,
-              elevation: 0,
-              shadowOpacity: 0,
-            },
-            sceneStyle: { backgroundColor: colors.background },
-          }}
-        >
-          {TABS.map(({ name, titleKey, icon, iconInactive }) => (
-            <Tabs.Screen
-              key={name}
-              name={name}
-              options={{
-                title: t(titleKey),
-                tabBarIcon: ({ focused, color, size }) => (
-                  <Ionicons
-                    name={focused ? icon : iconInactive}
-                    size={size ?? 20}
-                    color={color}
-                  />
-                ),
-                // Both of the Ledger's open questions: charges the bank
-                // looks to have already paid, and bank rows still waiting for
-                // a category. A dot rather than a count: the bar is five
-                // targets across a phone, and the numbers are on the Bearing,
-                // one panel each.
-                ...(name === "transactions" && waiting > 0
-                  ? {
-                      tabBarBadge: "",
-                      tabBarBadgeStyle: {
-                        backgroundColor: colors.primary,
-                        minWidth: 8,
-                        maxWidth: 8,
-                        height: 8,
-                        borderRadius: RADIUS.pill,
-                        transform: [{ translateX: -2 }, { translateY: 2 }],
-                      },
-                    }
-                  : {}),
-              }}
-            />
-          ))}
-          {/* A view of the Ledger, not a destination of its own. */}
-          <Tabs.Screen name="calendar" options={{ href: null }} />
-          {/* Reachable from the header account menu, not the tab bar. */}
-          <Tabs.Screen name="profile" options={{ href: null }} />
-        </Tabs>
-      </QuickAddProvider>
+      <MonthProvider>
+        <QuickAddProvider>
+          <Tabs
+            screenOptions={{
+              headerShown: false,
+              // The active tab in foreground with its filled icon, as on the
+              // web's bar; gold stays for the add button.
+              tabBarActiveTintColor: colors.foreground,
+              tabBarInactiveTintColor: colors.mutedForeground,
+              tabBarLabelStyle: { fontSize: 10, fontWeight: "500" },
+              tabBarItemStyle: { paddingVertical: 4, paddingHorizontal: 2 },
+              // Blur only means something if content passes beneath the bar, so it
+              // overlays rather than docks. Screens pad their scroll content to
+              // clear it.
+              tabBarBackground: () => (
+                <Blur
+                  style={[
+                    StyleSheet.absoluteFill,
+                    { borderRadius: RADIUS.pill, overflow: "hidden" },
+                  ]}
+                />
+              ),
+              tabBarStyle: {
+                position: "absolute",
+                left: TAB_BAR_SIDE,
+                right: TAB_BAR_SIDE,
+                bottom: insets.bottom + TAB_BAR_INSET,
+                height: barHeight,
+                paddingBottom: 0,
+                borderRadius: RADIUS.pill,
+                backgroundColor: "transparent",
+                borderWidth: StyleSheet.hairlineWidth,
+                borderTopWidth: StyleSheet.hairlineWidth,
+                borderColor: colors.hairlineStrong,
+                borderTopColor: colors.hairlineStrong,
+                elevation: 0,
+                shadowOpacity: 0,
+              },
+              sceneStyle: { backgroundColor: colors.background },
+            }}
+          >
+            {TABS.map(({ name, titleKey, icon, iconInactive }) => (
+              <Tabs.Screen
+                key={name}
+                name={name}
+                options={{
+                  title: t(titleKey),
+                  tabBarIcon: ({ focused, color, size }) => (
+                    <Ionicons
+                      name={focused ? icon : iconInactive}
+                      size={size ?? 20}
+                      color={color}
+                    />
+                  ),
+                  // Both of the Ledger's open questions: charges the bank
+                  // looks to have already paid, and bank rows still waiting for
+                  // a category. A dot rather than a count: the bar is five
+                  // targets across a phone, and the numbers are on the Bearing,
+                  // one panel each.
+                  ...(name === "transactions" && waiting > 0
+                    ? {
+                        tabBarBadge: "",
+                        tabBarBadgeStyle: {
+                          backgroundColor: colors.foreground,
+                          minWidth: 8,
+                          maxWidth: 8,
+                          height: 8,
+                          borderRadius: RADIUS.pill,
+                          transform: [{ translateX: -2 }, { translateY: 2 }],
+                        },
+                      }
+                    : {}),
+                }}
+              />
+            ))}
+            {/* A view of the Ledger, not a destination of its own. */}
+            <Tabs.Screen name="calendar" options={{ href: null }} />
+            {/* And one of Placements: what the funds are made of. */}
+            <Tabs.Screen name="look-through" options={{ href: null }} />
+            {/* Reachable from the header account menu, not the tab bar. */}
+            <Tabs.Screen name="profile" options={{ href: null }} />
+          </Tabs>
+        </QuickAddProvider>
+      </MonthProvider>
     </ReminderProvider>
   );
 }

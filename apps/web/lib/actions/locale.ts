@@ -25,7 +25,7 @@ export async function setLocalePreference(
   locale: string,
 ): Promise<ActionResult> {
   if (!isLocale(locale)) {
-    return { error: "Unsupported language" };
+    return { error: "actions.unsupportedLanguage" };
   }
 
   await writeLocaleCookie(locale);

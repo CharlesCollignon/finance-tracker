@@ -23,7 +23,7 @@ import { TransactionForm } from "@/components/finance/TransactionForm";
 import { PlannedOccurrenceSheet } from "@/components/finance/PlannedOccurrenceSheet";
 import type { PlannedOccurrence } from "@finance/core/apply-recurring";
 import { useQuickAdd } from "@/components/layout/QuickAddProvider";
-import { amountSign } from "@/components/finance/amount-sign";
+import { amountSign } from "@finance/core/amount-sign";
 import {
   categoryTypeLabels,
   TYPE_AMOUNT_CLASS,

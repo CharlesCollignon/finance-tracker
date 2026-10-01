@@ -141,6 +141,20 @@ see `LEGAL_DRAFT` in `components/marketing/legal-copy.ts`).
 - Terminology is governed by the repository's `CONTEXT.md`, which fixes the
   name of every domain concept and lists the words each one must not be called.
   That document is authority for copy on any surface, marketing included.
+- The French is written for people who are not in finance: everyday verbs and
+  the words French banks use, never a finance noun where a verb will do. The
+  tabs are **Le point · Journal · Récurrents · Plan · Placements** (Overview ·
+  Ledger · Recurring · Plan · Investments). A movement is an _opération_, a
+  recurring template an _opération récurrente_; the ledger's figures are
+  _Entrées_, _Sorties_ and _Il restera en fin de mois_; committed is _Dépenses
+  fixes_, money set aside _Épargne et placements_, what a month leaves _Reste
+  à vivre_; a wallet reads _Valeur aujourd'hui_, _Versé_, _Gain ou perte_ and
+  _Rendement par an_, and its acronyms (PEA, CTO, AV, PER, DIC) are spelled
+  out where they first appear. French typography throughout: a no-break space
+  before « : ; ? ! % ».
+- What an action reports — a toast, an inline error — is a message key too
+  (`actions.*` and the existing groups), resolved by the toast in the reader's
+  language; only owner-facing setup errors stay in English.
 - A user can wipe every row and keep the account, or delete both. Figures on
   screen can be blurred with one tap.
 - **Open decision — monetisation.** There is no pricing anywhere in the product,

@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  createFakeQuoteSource,
-  createYahooQuoteSource,
-} from "./quote-source";
+import { createFakeQuoteSource, createYahooQuoteSource } from "./quote-source";
 import type { EurRates } from "./eur-rates";
 
 vi.mock("./yahoo", () => ({

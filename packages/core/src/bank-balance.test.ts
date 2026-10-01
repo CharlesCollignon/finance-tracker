@@ -48,7 +48,10 @@ describe("balanceAsOf", () => {
   });
 
   it("ignores movements after the date asked for", () => {
-    const rows = [...day("2026-09-02", [2093.13]), ...day("2026-08-31", [-395.63])];
+    const rows = [
+      ...day("2026-09-02", [2093.13]),
+      ...day("2026-08-31", [-395.63]),
+    ];
 
     const result = balanceAsOf(rows, "2026-08-31");
 
@@ -84,7 +87,11 @@ describe("cashBalanceAsOf", () => {
   it("sums the accounts it was told to count", () => {
     const result = cashBalanceAsOf(
       [
-        { accountId: "a", label: "Compte de Dépôt", rows: day("2026-08-31", [-395.63]) },
+        {
+          accountId: "a",
+          label: "Compte de Dépôt",
+          rows: day("2026-08-31", [-395.63]),
+        },
         { accountId: "b", label: "Livret", rows: day("2026-08-30", [5.75]) },
       ],
       "2026-08-31",
@@ -104,7 +111,11 @@ describe("cashBalanceAsOf", () => {
   it("refuses the sum when a counted account cannot be read", () => {
     const result = cashBalanceAsOf(
       [
-        { accountId: "a", label: "Compte de Dépôt", rows: day("2026-08-31", [2000]) },
+        {
+          accountId: "a",
+          label: "Compte de Dépôt",
+          rows: day("2026-08-31", [2000]),
+        },
         { accountId: "b", label: "Individual Space", rows: [] },
       ],
       "2026-08-31",

@@ -33,7 +33,7 @@ export async function savePushSubscription(input: {
 
   const parsed = subscriptionSchema.safeParse(input);
   if (!parsed.success) {
-    return { error: "Invalid subscription" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();

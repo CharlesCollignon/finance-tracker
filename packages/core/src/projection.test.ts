@@ -96,6 +96,7 @@ function project(
   overrides: Partial<Parameters<typeof buildForwardProjection>[0]> = {},
 ) {
   return buildForwardProjection({
+    locale: "en",
     templates,
     year: 2026,
     month: 10,
@@ -575,21 +576,21 @@ describe("buildRunway", () => {
 
 describe("formatRunway", () => {
   it("states the months covered", () => {
-    expect(formatRunway(buildRunway(4200, [rent], 2026, 10))).toBe(
+    expect(formatRunway(buildRunway(4200, [rent], 2026, 10), "en")).toBe(
       "4.2 months of committed costs.",
     );
   });
 
   it("says nothing when there is no reserve", () => {
-    expect(formatRunway(buildRunway(0, [rent], 2026, 10))).toBeNull();
+    expect(formatRunway(buildRunway(0, [rent], 2026, 10), "en")).toBeNull();
   });
 
   it("says nothing when nothing is committed", () => {
-    expect(formatRunway(buildRunway(5000, [], 2026, 10))).toBeNull();
+    expect(formatRunway(buildRunway(5000, [], 2026, 10), "en")).toBeNull();
   });
 
   it("handles less than a month plainly", () => {
-    expect(formatRunway(buildRunway(500, [rent], 2026, 10))).toBe(
+    expect(formatRunway(buildRunway(500, [rent], 2026, 10), "en")).toBe(
       "Under a month of committed costs.",
     );
   });

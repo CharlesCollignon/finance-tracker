@@ -63,7 +63,7 @@ export interface CategoryFactsInput {
    * `./category-read-prompt` lists each fact as "id | label | value" for the
    * model, so this is what decides which language the read comes back in.
    */
-  locale?: Locale;
+  locale: Locale;
 }
 
 export interface CategoryFacts extends FactPack {

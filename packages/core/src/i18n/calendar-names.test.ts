@@ -55,7 +55,7 @@ describe("monthLong / monthShort", () => {
   });
 
   it("default to English", () => {
-    expect(monthLong(1)).toBe("January");
+    expect(monthLong(1, "en")).toBe("January");
   });
 
   it("return nothing for a month that does not exist", () => {

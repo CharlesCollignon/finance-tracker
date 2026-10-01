@@ -23,7 +23,7 @@
  */
 
 import { describePullAge } from "./bank-pull";
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { factsDigest } from "./month-facts";
 import {
@@ -66,8 +66,7 @@ export function walletReadsRemaining(
 export type WalletWriteRefusal = WriteRefusal | { reason: "unchanged" };
 
 export type WalletWriteDecision =
-  | { write: true }
-  | ({ write: false } & WalletWriteRefusal);
+  { write: true } | ({ write: false } & WalletWriteRefusal);
 
 export interface WalletWriteQuestion {
   tally: MonthReadTally | null;
@@ -124,7 +123,7 @@ export function decideWalletReadWrite({
 /** A refusal in words, for a button's label or a route's answer. */
 export function explainWalletReadRefusal(
   refusal: WalletWriteRefusal,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   const t = translator(locale);
   switch (refusal.reason) {
@@ -162,6 +161,7 @@ export interface WalletReadFreshnessQuestion {
   cited: readonly string[];
   readAt: string;
   now: string;
+  locale: Locale;
 }
 
 /**
@@ -179,12 +179,13 @@ export function describeWalletReadFreshness({
   cited,
   readAt,
   now,
+  locale,
 }: WalletReadFreshnessQuestion): WalletReadFreshness {
   const moved = movedFacts(storedFacts, currentFacts, cited);
 
   return {
     standing: moved.length > 0 ? "moved" : "current",
-    age: describePullAge(readAt, now),
+    age: describePullAge(readAt, now, locale),
     moved,
   };
 }

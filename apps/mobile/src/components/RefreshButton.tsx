@@ -13,6 +13,7 @@ import Animated, {
 import { hapticLight } from "@/lib/haptics";
 import { useRefreshAll } from "@/providers/RefreshProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
+import { useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 
 /** A full turn takes this long, in ms. */
@@ -35,6 +36,7 @@ const SPIN_PERIOD = 900;
 export function RefreshButton() {
   const refresh = useRefreshAll();
   const colors = useThemeColors();
+  const t = useT();
   const reduce = useReducedMotion();
   const spin = useSharedValue(0);
 
@@ -65,10 +67,10 @@ export function RefreshButton() {
   }
 
   const label = running
-    ? "Asking your bank…"
+    ? t("refresh.askingBank")
     : refresh.known
-      ? `Refresh — last checked ${refresh.age}`
-      : "Ask your bank for anything new";
+      ? t("refresh.lastChecked", { age: refresh.age })
+      : t("refresh.askBank");
 
   return (
     <Pressable

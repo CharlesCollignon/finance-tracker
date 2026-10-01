@@ -11,6 +11,7 @@ import type { Database } from "@finance/core/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRecordedCashFlows } from "@/lib/queries/month-close";
 import { readCashBalance } from "@/lib/queries/bank-balance";
+import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 
 type Client = SupabaseClient<Database>;
 
@@ -85,7 +86,8 @@ export async function autoCloseMonths(
         ? monthKeyOfClose(closes[closes.length - 1]!.month)
         : null;
 
-    const next = closableMonth(today, closeDay, lastClosed);
+    // Only the month key is used here, never its label.
+    const next = closableMonth(today, closeDay, lastClosed, DEFAULT_LOCALE);
     if (!next) {
       outcome.blocked = outcome.blocked ?? { kind: "nothing-due" };
       return outcome;

@@ -11,7 +11,6 @@ import type {
   SavingsGoal,
   Tag,
   TransactionWithCategory,
-  WalletTransfer,
 } from "@finance/core/types/database";
 
 export async function getBudgets(userId: string): Promise<Budget[]> {
@@ -21,27 +20,6 @@ export async function getBudgets(userId: string): Promise<Budget[]> {
     .select("*")
     .eq("user_id", userId)
     .order("created_at");
-
-  if (error) {
-    throw error;
-  }
-  return data ?? [];
-}
-
-export async function getWalletTransfers(
-  userId: string,
-  year: number,
-  month: number,
-): Promise<WalletTransfer[]> {
-  const supabase = await createClient();
-  const { start, end } = getMonthBounds(year, month);
-  const { data, error } = await supabase
-    .from("wallet_transfers")
-    .select("*")
-    .eq("user_id", userId)
-    .gte("occurred_on", start)
-    .lte("occurred_on", end)
-    .order("occurred_on", { ascending: false });
 
   if (error) {
     throw error;

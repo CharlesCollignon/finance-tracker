@@ -76,7 +76,7 @@ export default function ProfileScreen() {
       toast(t("common.remindersOff"));
       return;
     }
-    const { granted, remoteReady } = await enableReminders();
+    const { granted, remoteReady } = await enableReminders(locale);
     setReminders(granted);
     if (!granted) {
       toast(t("common.remindersNeedPermission"), "error");
@@ -86,9 +86,7 @@ export default function ProfileScreen() {
     // success and the nudges never come, which is indistinguishable from the
     // app being broken.
     toast(
-      remoteReady
-        ? "Notifications on"
-        : "Reminders on. This build can't receive nudges from your bank.",
+      remoteReady ? t("profile.notificationsOn") : t("profile.remindersOnly"),
       remoteReady ? "success" : undefined,
     );
   }
@@ -117,7 +115,7 @@ export default function ProfileScreen() {
     const result = await updateProfile(fullName);
     setPending(false);
     toast(
-      result.error ?? result.message ?? "Saved",
+      result.error ?? result.message ?? t("profile.saved"),
       result.error ? "error" : "success",
     );
     if (!result.error) {
@@ -135,7 +133,7 @@ export default function ProfileScreen() {
     }
     setConfirmData("");
     setOpen(null);
-    toast(result.message ?? "Data deleted", "success");
+    toast(result.message ?? t("profile.dataDeleted"), "success");
   }
 
   async function handleDeleteAccount() {
@@ -161,13 +159,15 @@ export default function ProfileScreen() {
         throw error;
       }
       if (data?.error) {
-        throw new Error(data.error);
+        // The function's own answer, which is worth showing as it is.
+        toast(String(data.error), "error");
+        return;
       }
       await signOut();
-    } catch (err) {
-      const fallback =
-        "Account deletion needs the delete-account Edge Function. Delete your data above, then contact support.";
-      toast(err instanceof Error ? err.message : fallback, "error");
+    } catch {
+      // Supabase's own error ("Edge Function returned a non-2xx status
+      // code") tells a reader nothing they can act on.
+      toast(t("profile.deleteAccountUnavailable"), "error");
     } finally {
       setPending(false);
     }
@@ -175,9 +175,9 @@ export default function ProfileScreen() {
 
   const biometricsReady = biometrics.hardware && biometrics.enrolled;
   const biometricsNote = !biometrics.hardware
-    ? "Not on this device"
+    ? t("profile.biometricsUnavailable")
     : !biometrics.enrolled
-      ? "Set up in system settings"
+      ? t("profile.biometricsNeedsSetup")
       : undefined;
 
   return (
@@ -343,10 +343,7 @@ export default function ProfileScreen() {
             expanded={
               open === "wipe" ? (
                 <View className="gap-3">
-                  <Text variant="micro">
-                    Transactions, recurring, positions and categories. Your
-                    account stays.
-                  </Text>
+                  <Text variant="micro">{t("profile.wipeBlurb")}</Text>
                   <Input
                     value={confirmData}
                     onChangeText={setConfirmData}
@@ -372,9 +369,7 @@ export default function ProfileScreen() {
             expanded={
               open === "close" ? (
                 <View className="gap-3">
-                  <Text variant="micro">
-                    Permanent. Everything above goes with it.
-                  </Text>
+                  <Text variant="micro">{t("profile.closeBlurb")}</Text>
                   <Input
                     value={confirmAccount}
                     onChangeText={setConfirmAccount}

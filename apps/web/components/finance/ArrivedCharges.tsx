@@ -141,7 +141,11 @@ export function ArrivedCharges({
                     {`${income ? "+" : "−"}${formatMoney(proposal.actualAmount)}`}
                   </PrivateAmount>
                   <span className="text-muted-foreground">
-                    {relativeDayLabel(proposal.actualOn, formatShortDate)}
+                    {relativeDayLabel(
+                      proposal.actualOn,
+                      formatShortDate,
+                      locale,
+                    )}
                   </span>
                 </p>
                 {/* The bank's own words, so the row is recognisable as the
@@ -233,7 +237,7 @@ export function ArrivedCharges({
                   <PrivateAmount className="tabular-nums">
                     {formatMoney(miss.expectedAmount)}
                   </PrivateAmount>
-                  <span>{formatShortDate(miss.occurredOn)}</span>
+                  <span>{formatShortDate(miss.occurredOn, locale)}</span>
                   <span>·</span>
                   <span>{describeMiss(miss, formatMoney, locale)}</span>
                 </li>

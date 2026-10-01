@@ -19,6 +19,7 @@
 
 import { formatMonthLabel } from "./constants";
 import type { CategoryType, TransactionWithCategory } from "./types/database";
+import type { Locale } from "./i18n/locale";
 
 /* ------------------------------------------------------- the cash view */
 
@@ -432,13 +433,14 @@ function describeCloseable(
   monthKey: string,
   closeDay: number,
   isBaseline: boolean,
+  locale: Locale,
 ): CloseableMonth {
   const [year, month] = monthKey.split("-").map(Number);
   return {
     year: year!,
     month: month!,
     monthKey,
-    label: formatMonthLabel(year!, month!),
+    label: formatMonthLabel(year!, month!, locale),
     observeOn: observationDateFor(year!, month!, closeDay),
     isBaseline,
   };
@@ -462,6 +464,7 @@ export function closableMonth(
   today: string,
   closeDay: number,
   lastClosedMonthKey: string | null,
+  locale: Locale,
 ): CloseableMonth | null {
   if (lastClosedMonthKey === null) {
     let candidate = previousMonthKey(monthKeyOf(today));
@@ -469,7 +472,7 @@ export function closableMonth(
     if (today < observationDateFor(year!, month!, closeDay)) {
       candidate = previousMonthKey(candidate);
     }
-    return describeCloseable(candidate, closeDay, true);
+    return describeCloseable(candidate, closeDay, true, locale);
   }
 
   const candidate = nextMonthKey(lastClosedMonthKey);
@@ -478,7 +481,7 @@ export function closableMonth(
     return null;
   }
 
-  return describeCloseable(candidate, closeDay, false);
+  return describeCloseable(candidate, closeDay, false, locale);
 }
 
 /**

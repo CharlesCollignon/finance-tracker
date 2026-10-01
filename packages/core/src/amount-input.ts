@@ -1,4 +1,4 @@
-import { FALLBACK_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { INTL_LOCALES, type Locale } from "./i18n/locale";
 /**
  * Keypad-driven amount entry, shared by the web and mobile quick-add sheets.
  *
@@ -138,7 +138,7 @@ export interface AmountDisplay {
  */
 export function formatAmountInput(
   value: string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): AmountDisplay {
   const tag = INTL_LOCALES[locale];
   if (value === "") {

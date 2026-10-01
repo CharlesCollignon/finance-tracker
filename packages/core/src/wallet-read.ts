@@ -31,11 +31,16 @@
 
 import { z } from "zod";
 
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { ETF_SHORTLIST, shortlistEntry } from "./etf-shortlist";
 import { INVESTMENT_WALLET_IDS } from "./investments";
-import { factSegments, visibleLength, writesAFigure, citedIds } from "./month-read";
+import {
+  factSegments,
+  visibleLength,
+  writesAFigure,
+  citedIds,
+} from "./month-read";
 import type { ClaimTone, ReadSegment, SuggestionEffort } from "./month-read";
 import { factIds } from "./month-facts";
 import type { LookThroughFacts } from "./look-through-facts";
@@ -66,23 +71,27 @@ export const walletReadAnswerSchema = z
     headline: z.string().min(1).max(300),
     observations: z
       .array(
-        claimSchema.extend({
-          tone: z.enum(["good", "neutral", "watch"]),
-        }).strict(),
+        claimSchema
+          .extend({
+            tone: z.enum(["good", "neutral", "watch"]),
+          })
+          .strict(),
       )
       .min(1)
       .max(8),
     suggestions: z
       .array(
-        claimSchema.extend({
-          effort: z.enum(["now", "this-month", "habit"]),
-          /** From the catalogue handed over in the prompt. Never invented. */
-          isin: z.string().min(1).max(20),
-          role: z.enum(SUGGESTION_ROLES),
-          wallet: z.enum(INVESTMENT_WALLET_IDS as [string, ...string[]]),
-          /** How big, said without a number. */
-          weightClass: z.enum(WEIGHT_CLASSES),
-        }).strict(),
+        claimSchema
+          .extend({
+            effort: z.enum(["now", "this-month", "habit"]),
+            /** From the catalogue handed over in the prompt. Never invented. */
+            isin: z.string().min(1).max(20),
+            role: z.enum(SUGGESTION_ROLES),
+            wallet: z.enum(INVESTMENT_WALLET_IDS as [string, ...string[]]),
+            /** How big, said without a number. */
+            weightClass: z.enum(WEIGHT_CLASSES),
+          })
+          .strict(),
       )
       .max(8),
   })
@@ -136,7 +145,7 @@ const SCHEMA_WORDS: Record<
  * is read at the moment the field is written, which is exactly when a system
  * prompt three hundred lines up has stopped being persuasive.
  */
-export function walletReadJsonSchema(locale: Locale = FALLBACK_LOCALE) {
+export function walletReadJsonSchema(locale: Locale) {
   const words = SCHEMA_WORDS[locale];
   return {
     type: "json_schema",
@@ -262,7 +271,12 @@ export type WalletReadRefusal =
 export interface DroppedClaim {
   kind: "observation" | "suggestion";
   text: string;
-  why: "figure" | "unknown-datum" | "unbacked-placeholder" | "too-long" | "wrong-wrapper";
+  why:
+    | "figure"
+    | "unknown-datum"
+    | "unbacked-placeholder"
+    | "too-long"
+    | "wrong-wrapper";
 }
 
 export type WalletReadVerdict =
@@ -276,7 +290,7 @@ export type WalletReadVerdict =
 export function verifyWalletRead(
   raw: unknown,
   facts: LookThroughFacts,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): WalletReadVerdict {
   const t = translator(locale);
   const parsed = walletReadAnswerSchema.safeParse(raw);
@@ -390,7 +404,11 @@ export function verifyWalletRead(
     const wallet = row.wallet as RoleAssignment["wallet"];
 
     if (!entry.wrappers.includes(wallet)) {
-      dropped.push({ kind: "suggestion", text: row.text, why: "wrong-wrapper" });
+      dropped.push({
+        kind: "suggestion",
+        text: row.text,
+        why: "wrong-wrapper",
+      });
       continue;
     }
     if (seen.has(entry.isin)) {
@@ -514,7 +532,7 @@ export function renderWalletRead(
   read: WalletRead,
   facts: LookThroughFacts,
   formatMoney: (amount: number) => string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): RenderedWalletRead | null {
   const headline = factSegments(read.headline, facts, formatMoney, locale);
   if (!headline) {
@@ -589,7 +607,7 @@ export function targetFromWalletRead(read: WalletRead): TargetAllocation {
  */
 export function walletReadFooting(
   facts: LookThroughFacts,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string[] {
   const t = translator(locale);
   const lines = [t("walletRead.footing.notAdvice")];

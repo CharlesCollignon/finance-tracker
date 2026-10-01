@@ -37,6 +37,7 @@ function summary(partial: Partial<MonthlySummary> = {}): MonthlySummary {
 
 function pack(partial: Partial<BuildMonthFactsInput> = {}) {
   return buildMonthFacts({
+    locale: "en",
     year: 2026,
     month: 3,
     state: "closed",
@@ -58,7 +59,7 @@ function pack(partial: Partial<BuildMonthFactsInput> = {}) {
 describe("buildMonthReadPrompt", () => {
   it("lists every figure exactly once, by id", () => {
     const facts = pack();
-    const { user } = buildMonthReadPrompt(facts, { money });
+    const { user } = buildMonthReadPrompt(facts, { locale: "en", money });
 
     for (const fact of facts.facts) {
       const occurrences = user.split(fact.id).length - 1;
@@ -76,7 +77,7 @@ describe("buildMonthReadPrompt", () => {
     // through the injected formatter (French locale here, so "412,40 €") and
     // a percent keeps its sign ("6.3%"), which is how the rest of the app
     // renders one. Both are labelled quantities. A bare "6.3" would not be.
-    const { user } = buildMonthReadPrompt(pack(), { money });
+    const { user } = buildMonthReadPrompt(pack(), { locale: "en", money });
 
     for (const match of user.matchAll(/\d+\.\d+(.?)/g)) {
       expect(match[1], `"${match[0]}" should carry a unit`).toBe("%");
@@ -86,11 +87,12 @@ describe("buildMonthReadPrompt", () => {
 
   it("names what is not known, and why, in words", () => {
     const { user } = buildMonthReadPrompt(pack({ unrecordedCap: null }), {
+      locale: "en",
       money,
     });
 
     expect(user).toContain("Not known, and why");
-    expect(user).toContain("no cap has been set");
+    expect(user).toContain("no budget has been set");
   });
 
   it("leaves the absences section out when nothing is missing", () => {
@@ -116,16 +118,16 @@ describe("buildMonthReadPrompt", () => {
       },
     });
 
-    expect(buildMonthReadPrompt(complete, { money }).user).not.toContain(
-      "Not known",
-    );
+    expect(
+      buildMonthReadPrompt(complete, { locale: "en", money }).user,
+    ).not.toContain("Not known");
   });
 
   describe("the rules that are repeated", () => {
     it("states the figure rule first and again last", () => {
       // Instruction adherence decays across a long message, and this is the
       // one rule whose failure is expensive.
-      const { system } = buildMonthReadPrompt(pack(), { money });
+      const { system } = buildMonthReadPrompt(pack(), { locale: "en", money });
       const occurrences = system.split("{{fact:id}}").length - 1;
 
       expect(occurrences).toBeGreaterThanOrEqual(2);
@@ -136,7 +138,7 @@ describe("buildMonthReadPrompt", () => {
       // ignored it and wrote "{{fact:top-expense:c1}} rose" where a reader
       // needs "groceries rose". Position was what the figure rule had and it
       // did not.
-      const { system } = buildMonthReadPrompt(pack(), { money });
+      const { system } = buildMonthReadPrompt(pack(), { locale: "en", money });
       const occurrences = system.split("A placeholder is a number").length - 1;
 
       expect(occurrences).toBe(2);
@@ -149,7 +151,7 @@ describe("buildMonthReadPrompt", () => {
 
   describe("the vocabulary", () => {
     it("carries the app's own words", () => {
-      const { system } = buildMonthReadPrompt(pack(), { money });
+      const { system } = buildMonthReadPrompt(pack(), { locale: "en", money });
 
       expect(system).toContain("Unrecorded spending");
       expect(system).toContain("Kept");
@@ -160,7 +162,7 @@ describe("buildMonthReadPrompt", () => {
     it("forbids the words the app avoids", () => {
       // A read calling a month close a "reconciliation" contradicts every
       // label printed around it, and the reader cannot tell which is wrong.
-      const { system } = buildMonthReadPrompt(pack(), { money });
+      const { system } = buildMonthReadPrompt(pack(), { locale: "en", money });
 
       expect(system).toContain("reconciliation");
       expect(system).toContain("forecast");
@@ -172,14 +174,14 @@ describe("buildMonthReadPrompt", () => {
 
   describe("advice", () => {
     it("asks for it, and forbids congratulation", () => {
-      const { system } = buildMonthReadPrompt(pack(), { money });
+      const { system } = buildMonthReadPrompt(pack(), { locale: "en", money });
 
       expect(system).toContain("Say what to change");
       expect(system).toContain("Do not congratulate");
     });
 
     it("rules out advice the app has no basis for", () => {
-      const { system } = buildMonthReadPrompt(pack(), { money });
+      const { system } = buildMonthReadPrompt(pack(), { locale: "en", money });
 
       expect(system).toContain("no product, tax or investment advice");
       expect(system).toContain("risk tolerance");
@@ -189,6 +191,7 @@ describe("buildMonthReadPrompt", () => {
   describe("provisional months", () => {
     it('asks for "so far" while a month is running', () => {
       const { system } = buildMonthReadPrompt(pack({ state: "in-progress" }), {
+        locale: "en",
         money,
       });
 
@@ -198,6 +201,7 @@ describe("buildMonthReadPrompt", () => {
 
     it("says the figures are settled once it is over", () => {
       const { system } = buildMonthReadPrompt(pack({ state: "closed" }), {
+        locale: "en",
         money,
       });
 
@@ -207,6 +211,7 @@ describe("buildMonthReadPrompt", () => {
 
   it("admits an incomplete picture rather than writing over it", () => {
     const { system } = buildMonthReadPrompt(pack({ inboxPending: 4 }), {
+      locale: "en",
       money,
     });
 
@@ -234,9 +239,9 @@ describe("the reader's language", () => {
     // actually reaches for, and the words it requires have to be the ones the
     // card prints beside the prose.
     const { system } = french();
-    expect(system).toContain('"Dépenses non enregistrées"');
+    expect(system).toContain('"Dépenses non notées"');
     expect(system).toContain('"fuite"');
-    expect(system).toContain('"Gardé"');
+    expect(system).toContain('"Économisé"');
     expect(system).not.toContain('"Unrecorded spending"');
   });
 

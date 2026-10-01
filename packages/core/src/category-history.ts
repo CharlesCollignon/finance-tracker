@@ -1,5 +1,5 @@
 import { monthShort } from "./i18n/calendar-names";
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 /**
  * How one category has moved, month by month.
  *
@@ -81,7 +81,7 @@ function monthKeysEndingAt(
 export interface BuildCategoryHistoryOptions {
   months?: number;
   /** The language the month labels are written in. */
-  locale?: Locale;
+  locale: Locale;
 }
 
 /**
@@ -123,7 +123,7 @@ export function buildCategoryHistory(
   transactions: readonly TransactionWithCategory[],
   year: number,
   month: number,
-  { months = 12, locale = FALLBACK_LOCALE }: BuildCategoryHistoryOptions = {},
+  { months = 12, locale }: BuildCategoryHistoryOptions,
 ): CategoryHistory[] {
   const window = monthKeysEndingAt(year, month, months);
   const inWindow = new Set(window.map((entry) => entry.key));

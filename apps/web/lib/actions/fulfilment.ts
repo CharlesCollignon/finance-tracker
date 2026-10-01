@@ -42,8 +42,7 @@ function schemaMissing(error: { code?: string } | null): boolean {
   );
 }
 
-const SETUP_MESSAGE =
-  "Confirming charges needs migration 023 — run it and this will work.";
+const SETUP_MESSAGE = "actions.fulfilmentSetup";
 
 /** Yes: that movement is the occurrence this template called for. */
 export async function fulfilOccurrence(
@@ -58,7 +57,7 @@ export async function fulfilOccurrence(
 
   const parsed = input.safeParse({ templateId, occurredOn, transactionId });
   if (!parsed.success) {
-    return { error: "Invalid selection" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -83,7 +82,7 @@ export async function fulfilOccurrence(
   ]);
 
   if (!template || !transaction) {
-    return { error: "That charge is no longer here" };
+    return { error: "actions.recurringGone" };
   }
 
   const { error } = await supabase.from("recurring_fulfilments").upsert(
@@ -104,7 +103,7 @@ export async function fulfilOccurrence(
     // means this movement is already standing in for a different occurrence.
     if (error.code === "23505") {
       return {
-        error: "That movement is already accounted for by another charge",
+        error: "actions.movementTaken",
       };
     }
     return { error: error.message };
@@ -125,7 +124,7 @@ export async function fulfilOccurrence(
   }
 
   revalidateEverySurface();
-  return { success: true, message: "Counted — it is no longer forecast" };
+  return { success: true, message: "actions.counted" };
 }
 
 /** No: that is not what this charge was. */
@@ -141,7 +140,7 @@ export async function refuseFulfilment(
 
   const parsed = input.safeParse({ templateId, occurredOn, transactionId });
   if (!parsed.success) {
-    return { error: "Invalid selection" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -168,7 +167,7 @@ export async function refuseFulfilment(
   revalidateEverySurface();
   // Deliberately says what it will and will not do. The refusal names the
   // pair, so a better candidate for the same occurrence is still offered.
-  return { success: true, message: "Won't suggest that pairing again" };
+  return { success: true, message: "actions.pairingDismissed" };
 }
 
 /** Take a confirmation back, and put the occurrence back in the forecast. */
@@ -185,7 +184,7 @@ export async function undoFulfilment(
     !uuid.safeParse(templateId).success ||
     !isoDate.safeParse(occurredOn).success
   ) {
-    return { error: "Invalid selection" };
+    return { error: "errors.invalidInput" };
   }
 
   const supabase = await createClient();
@@ -204,5 +203,5 @@ export async function undoFulfilment(
   }
 
   revalidateEverySurface();
-  return { success: true, message: "Back in the forecast" };
+  return { success: true, message: "actions.backInForecast" };
 }

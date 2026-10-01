@@ -194,7 +194,7 @@ export interface BuildMonthFactsInput {
    * "id | label | value" for the model, so this is what decides which
    * language the read comes back in.
    */
-  locale?: Locale;
+  locale: Locale;
 }
 
 function round(value: number): number {
@@ -557,7 +557,7 @@ export function findFact<T extends MonthFact = MonthFact>(
 export function formatFact(
   fact: MonthFact,
   formatMoney: (amount: number) => string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   switch (fact.unit) {
     case "money":

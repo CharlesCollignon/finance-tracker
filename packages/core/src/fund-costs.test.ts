@@ -154,7 +154,9 @@ describe("savingAtCheapest", () => {
   });
 
   it("says nothing when there is no charge data", () => {
-    expect(savingAtCheapest(buildFundCosts([position("X", 100, null)]))).toBeNull();
+    expect(
+      savingAtCheapest(buildFundCosts([position("X", 100, null)])),
+    ).toBeNull();
   });
 });
 
@@ -166,14 +168,14 @@ describe("costOverYears", () => {
 
 describe("formatCharge", () => {
   it("renders a fraction as a trimmed percentage", () => {
-    expect(formatCharge(0.002)).toBe("0.2%");
-    expect(formatCharge(0.0038)).toBe("0.38%");
-    expect(formatCharge(0.00065)).toBe("0.065%");
+    expect(formatCharge(0.002, "en")).toBe("0.2%");
+    expect(formatCharge(0.0038, "en")).toBe("0.38%");
+    expect(formatCharge(0.00065, "en")).toBe("0.065%");
   });
 
   it("renders zero and absent distinctly", () => {
-    expect(formatCharge(0)).toBe("0%");
-    expect(formatCharge(null)).toBe("—");
+    expect(formatCharge(0, "en")).toBe("0%");
+    expect(formatCharge(null, "en")).toBe("—");
   });
 });
 

@@ -63,13 +63,13 @@ describe("translator", () => {
   it("selects the French plural, zero included", () => {
     const t = translator("fr");
     expect(t("monthFill.added", { count: 0 })).toBe(
-      "0 charge ajoutée à ce mois",
+      "0 opération récurrente ajoutée à ce mois",
     );
     expect(t("monthFill.added", { count: 1 })).toBe(
-      "1 charge ajoutée à ce mois",
+      "1 opération récurrente ajoutée à ce mois",
     );
     expect(t("monthFill.added", { count: 2 })).toBe(
-      "2 charges ajoutées à ce mois",
+      "2 opérations récurrentes ajoutées à ce mois",
     );
   });
 

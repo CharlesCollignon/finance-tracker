@@ -19,6 +19,7 @@ import type {
   Database,
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
+import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 
 /**
  * The reads and writes behind applying recurring templates.
@@ -318,7 +319,7 @@ export async function fillMonth(
     existingByKey,
     year,
     month,
-    { quotes: quoteSource, skippedKeys, today, dueBy },
+    { locale: DEFAULT_LOCALE, quotes: quoteSource, skippedKeys, today, dueBy },
   );
 
   let created = 0;
@@ -491,7 +492,7 @@ export async function followTemplate(
       existingByKey,
       year,
       month,
-      { quotes: quoteSource, skippedKeys, today },
+      { locale: DEFAULT_LOCALE, quotes: quoteSource, skippedKeys, today },
     );
 
     const updates = await writeReprices(

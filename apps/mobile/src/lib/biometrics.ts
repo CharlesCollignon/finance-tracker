@@ -35,29 +35,34 @@ export async function getBiometricAvailability(): Promise<BiometricAvailability>
   }
 }
 
+/**
+ * Errors come back as message keys (`biometric.*`), which the screen showing
+ * them resolves; the system's own warning text passes through as it is.
+ */
 export async function promptBiometric(
   promptMessage: string,
+  cancelLabel: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage,
-      cancelLabel: "Cancel",
+      cancelLabel,
       disableDeviceFallback: false,
     });
     if (result.success) {
       return { success: true };
     }
     if (result.error === "user_cancel" || result.error === "system_cancel") {
-      return { success: false, error: "Cancelled." };
+      return { success: false, error: "biometric.cancelled" };
     }
     return {
       success: false,
-      error: result.warning ?? "Biometric unlock failed.",
+      error: result.warning ?? "biometric.failed",
     };
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Biometric unlock failed.",
+      error: err instanceof Error ? err.message : "biometric.failed",
     };
   }
 }

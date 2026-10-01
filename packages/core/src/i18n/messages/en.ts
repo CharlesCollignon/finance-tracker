@@ -1,4 +1,10 @@
 import type { MessageTree } from "../t";
+import { moreScreensEn } from "./more-screens.en";
+import { formPickersEn } from "./form-pickers.en";
+import { reviewScreensEn } from "./review-screens.en";
+import { planScreenEn } from "./plan-screen.en";
+import { homeScreenEn } from "./home-screen.en";
+import { actionsEn } from "./actions.en";
 
 /**
  * What the app says, in English.
@@ -63,17 +69,17 @@ export const en = {
    * matching on the route finds nothing.
    */
   nav: {
-    bearing: "Bearing",
+    bearing: "Overview",
     ledger: "Ledger",
-    charges: "Charges",
+    charges: "Recurring",
     plan: "Plan",
-    wallets: "Wallets",
+    wallets: "Investments",
     profile: "Profile",
     ledgerList: "List",
     ledgerCalendar: "Calendar",
     ledgerByCategory: "By category",
     walletsPositions: "Positions",
-    walletsLookThrough: "Look-through",
+    walletsLookThrough: "What's inside",
 
     /** The count on a destination that has things waiting behind it. */
     waiting: "{count} waiting",
@@ -142,6 +148,14 @@ export const en = {
     deleteMyAccount: "Delete my account",
     /** What a server action that reported nothing in particular means. */
     saved: "Saved",
+    notificationsOn: "Notifications on",
+    remindersOnly:
+      "Reminders on. This build can't receive nudges from your bank.",
+    dataDeleted: "Data deleted",
+    deleteAccountUnavailable:
+      "Deleting the account is not possible from the phone yet. Delete your data above, then write to us.",
+    biometricsUnavailable: "Not on this device",
+    biometricsNeedsSetup: "Set up in system settings",
     /* What each of the two destructive rows takes with it. */
     wipeBlurb:
       "Transactions, recurring templates, positions and categories. Your account stays.",
@@ -164,12 +178,43 @@ export const en = {
    * only the words the list itself needs: what it looks like empty, what an
    * unnamed key is called, and when each one was added.
    */
+  biometric: {
+    unlockTitle: "Unlock",
+    unlockBody: "Use Face ID or your fingerprint to open Pluclair.",
+    unlockPrompt: "Unlock Pluclair",
+    enablePrompt: "Enable biometric unlock",
+    waiting: "Waiting…",
+    cancelLabel: "Cancel",
+    cancelled: "Cancelled.",
+    failed: "Biometric unlock failed.",
+    couldNotUnlock: "Could not unlock.",
+    needsSetup: "Set up Face ID or a fingerprint in system settings first.",
+    couldNotEnable: "Could not enable biometric unlock.",
+  },
+  reminders: {
+    channelName: "Reminders",
+    dueTomorrowTitle: "{name} tomorrow",
+    dueTodayTitle: "{name} today",
+    dueBody: "{amount} is due.",
+    monthOpenTitle: "A new month starts",
+    monthOpenBody: "Your recurring entries are already in it. See what's left.",
+    overCapOne: "{name} is over budget",
+    overCapMany: {
+      one: "{count} budget is over",
+      other: "{count} budgets are over",
+    },
+    overCapBody: "{spent} spent of {limit}.",
+  },
   passkeys: {
     none: "No passkeys yet.",
     unnamed: "Passkey",
     added: "Added {date}",
     working: "Please wait…",
     add: "Add passkey",
+    removeBody: "Remove {name}? You can add it again later.",
+    failed: "Passkey request failed.",
+    unsupported: "Passkeys are not available on this device.",
+    cancelled: "Passkey prompt was cancelled.",
   },
 
   /**
@@ -254,6 +299,13 @@ export const en = {
     clearSearch: "Clear search",
     allTypes: "All types",
     restore: "Restore",
+    restored: "{name} is back in the month",
+    addedForToday: "{name} added for today",
+    skippedCount: {
+      one: "{count} recurring entry skipped this month",
+      other: "{count} recurring entries skipped this month",
+    },
+    skippedBody: "Taken out of this month. Put one back to count it again.",
     review: "Review",
     fillThisMonth: "Fill this month",
     selectHint: "Tap to select · Done to leave",
@@ -274,7 +326,8 @@ export const en = {
      * than stored. A word as well as a muted row: the dimming alone does not
      * say which of the row's meanings it carries.
      */
-    planned: "Planned",
+    planned: "Coming up",
+    recurringEntry: "Recurring entry",
   },
 
   /** Bringing a bank statement in from a file, step by step. */
@@ -326,6 +379,11 @@ export const en = {
     dropFile: "Drop a .csv file here",
     fileTooLarge: "That file is larger than 5 MB — is it the right export?",
     fileNoRows: "That file has no rows in it.",
+    fileUnreadable: "That file could not be opened.",
+    introPhone:
+      "Export a CSV from your bank and pick it here. The file is read on your phone — nothing is uploaded, and nothing is saved until you have reviewed every row.",
+    firstRows: "First rows as read",
+    categoryForRow: "Category for {description}",
     noRowsRead: "No rows could be read from that file.",
     /* Mapping. `columnNumber` stands in for a column the file did not name. */
     columnNumber: "Column {number}",
@@ -343,14 +401,14 @@ export const en = {
   plan: {
     runwayLead: "Everything you have logged as savings covers",
     runwayRate: "at {amount} a month.",
-    capsHeading: "Spending caps",
-    addCap: "Add a cap",
-    addCapSubmit: "Add cap",
+    capsHeading: "Budgets",
+    addCap: "Add a budget",
+    addCapSubmit: "Add budget",
     update: "Update",
     cancel: "Cancel",
     monthlyLimit: "Monthly limit",
-    capSaved: "Cap saved",
-    capRemoved: "Cap removed",
+    capSaved: "Budget saved",
+    capRemoved: "Budget removed",
     goalsHeading: "Savings goals",
     addGoal: "Add a goal",
     addGoalSubmit: "Add goal",
@@ -388,7 +446,6 @@ export const en = {
     tagDeleted: "Tag deleted",
     /** The phone's tag sheet: its title, and the line that says chips open it. */
     editTag: "Edit tag",
-    tagManageHint: "Tap a tag to rename, merge or delete it.",
     goalName: "Goal name",
     deleteGoalTitle: "Delete this goal?",
     deleteCapTitle: "Delete this budget?",
@@ -396,7 +453,6 @@ export const en = {
     goalReached: "Goal reached!",
     goalOverdue: "Target date passed — {amount} still to save.",
     goalOnSchedule: "Save {amount}/month to reach this by {month}.",
-    globalMonthlyLimit: "Global monthly limit",
     goalTargetDateOptional: "Target date (optional)",
     goalStartsOn: "Counting from",
     goalStartsOnHint: "Savings from this day on count towards the goal.",
@@ -410,19 +466,15 @@ export const en = {
      * sentence is what stands in their place.
      */
     capsBlurb:
-      "A cap is a monthly ceiling — on one category, or on everything. Add one and you will see how close you are to it.",
+      "A budget is a monthly limit — on one category, or on everything. Add one and you will see how close you are to it.",
     goalsBlurb:
       "A goal is an amount to reach — a deposit, a trip, a buffer. Set aside money in a savings category and it fills.",
     /** Screen-reader labels for the rings, which are drawings otherwise. */
-    capOn: "Cap on {label}",
-    capRemoveHint: "Long press to remove this cap",
-    goalNamed: "Goal {name}",
-    goalRemoveHint: "Long press to remove this goal",
     amountOfTotal: "{amount} of {total}",
     /** Web's rings are buttons that open the form, so they name that. */
-    editCapOn: "Edit the cap on {label}",
+    editCapOn: "Edit the budget on {label}",
     editGoalNamed: "Edit the goal {name}",
-    capScope: "Scope",
+    capScope: "Applies to",
     trackCategoryOptional: "Track category (optional)",
   },
 
@@ -465,7 +517,6 @@ export const en = {
      * unlike the web's dropdown of real day names — so the label has to say
      * what the numbers mean.
      */
-    dayOfWeekNumeric: "Day of week (1=Mon … 7=Sun)",
     startsOn: "Starts on",
     endsOn: "Ends on",
     noStartDate: "No start date",
@@ -489,7 +540,6 @@ export const en = {
     descriptionOptional: "Description (optional)",
     monthOfYear: "Month",
     /** Same reasoning as `dayOfWeekNumeric`, for the phone's month field. */
-    monthOfYearNumeric: "Month (1–12)",
     activePeriod: "Active period (optional)",
     activePeriodNote:
       "Leave both empty to run until you stop it. Set both for a fixed instalment plan — a property tax spread over several months, say.",
@@ -533,7 +583,7 @@ export const en = {
     brokerDcaNote:
       "Buys at the broker are tracked for visibility but do not reduce your remaining budget.",
     bitstackNote:
-      "Fixed EUR weekly buy on Bitstack. Market value on Wallets uses your total BTC × live BTC/EUR price.",
+      "Fixed EUR weekly buy on Bitstack. Market value on Investments uses your total BTC × live BTC/EUR price.",
     sharesNote:
       "Pick your ETF and share count. Search by name or ISIN (e.g. LU1681043599). The app fetches the live price and computes the EUR amount when saving, and again each time the charge is written into a month.",
     yearlyNote:
@@ -549,10 +599,10 @@ export const en = {
      */
     trackedFund: "Tracked ETF / fund",
     trackedFundNote:
-      "A fixed euro charge: pick the ETF it buys. On Wallets, enter how many shares you hold altogether for a live market value.",
+      "A fixed euro charge: pick the ETF it buys. On Investments, enter how many shares you hold altogether for a live market value.",
     bitcoinTitle: "Bitcoin charge",
     bitcoinNote:
-      "Each buy converts your euro amount to BTC. Enter your total BTC balance on Wallets for a live value.",
+      "Each buy converts your euro amount to BTC. Enter your total BTC balance on Investments for a live value.",
   },
 
   /**
@@ -598,8 +648,6 @@ export const en = {
     editTitle: "Edit transaction",
     close: "Close",
     category: "Category",
-    filterCategories: "Filter categories",
-    filterCategoriesPlaceholder: "Filter categories…",
     amount: "Amount",
     date: "Date",
     note: "Note (optional)",
@@ -642,12 +690,10 @@ export const en = {
      * the same for all four and repeating it is the chrome this header was
      * asked to lose.
      */
-    tileIncome: "Income",
-    tileCommitted: "Committed",
-    tileSetAside: "Set aside",
     tileLeft: "Left",
     /** The web's summary card, which took the four tiles' place there. */
     leftEachMonth: "Left each month",
+    keptShare: "You keep {percent} of your income",
     ofIncomeBefore: "of",
     ofIncomeAfter: "income",
     perMonth: "Per month",
@@ -701,10 +747,10 @@ export const en = {
   add: {
     title: "Add",
     /** The "+" buttons' accessible name and tooltip. */
-    open: "Add a transaction or a charge",
+    open: "Add an entry",
     kind: "What you are adding",
-    transaction: "Transaction",
-    charge: "Charge",
+    transaction: "One-off",
+    charge: "Recurring",
     transactionHint: "Something that happened once.",
     chargeHint: "Something that repeats — rent, pay, a subscription.",
   },
@@ -737,8 +783,6 @@ export const en = {
     category: "Category",
     searchCategories: "Search categories",
     searchCategoriesPlaceholder: "Search categories…",
-    filterCategories: "Filter categories",
-    filterCategoriesPlaceholder: "Filter categories…",
     changeCategory: "{name} — change",
     notePlaceholder: "Where did it go?",
     saving: "Saving…",
@@ -750,6 +794,7 @@ export const en = {
     /* The three field names, one of which is only ever heard. */
     amount: "Amount",
     note: "Note",
+    anotherDay: "Another day",
     tags: "Tags",
     allCategories: "All categories",
     noCategoryMatch: "No category matches “{query}”.",
@@ -768,7 +813,7 @@ export const en = {
     progress: "Setup progress",
     welcomeTitle: "Welcome to Pluclair",
     welcomeBody:
-      "Two minutes now and the Bearing will have real numbers in it instead of zeros.",
+      "Two minutes now and the Overview will have real numbers in it instead of zeros.",
     currencyTitle: "Which currency do you think in?",
     currencyBody:
       "Every amount in the app is shown this way. You can change it later in Profile.",
@@ -780,10 +825,10 @@ export const en = {
       "Rent, subscriptions, bills — the charges you already know are coming. These are what make the forecast useful.",
     capTitle: "What would you rather not overspend?",
     capBody:
-      "Pick one category and a monthly cap. A panel on the Bearing will show a ring that fills as you spend against it. You can add more under Plan.",
+      "Pick one category and a monthly budget. A panel on the Overview will show a ring that fills as you spend against it. You can add more under Plan.",
     monthlyAmount: "Monthly amount",
     dayOfMonth: "Day of the month",
-    monthlyCap: "Monthly cap",
+    monthlyCap: "Monthly budget",
     category: "Category",
     continue: "Continue",
     /**
@@ -800,7 +845,7 @@ export const en = {
     incomeAdded: "Income added",
     adding: "Adding…",
     addThisOne: "Add this one",
-    setCapAndFinish: "Set the cap and finish",
+    setCapAndFinish: "Set the budget and finish",
     addedCount: {
       one: "{count} added — add another or finish below.",
       other: "{count} added — add another or finish below.",
@@ -862,6 +907,9 @@ export const en = {
       "Untick for money coming back out of savings — a transfer to your current account. It is subtracted from what you set aside, and comes off the reserve behind the runway.",
     countsHintInvestment:
       "Untick for wallet buys tracked outside the budget (e.g. buys funded by broker transfers).",
+    countsHintExpense:
+      "Off for transfers you don't want in the monthly summary.",
+    excludedFromTotals: "Excluded from totals",
     /**
      * The badge on a category that does not count toward the month.
      *
@@ -979,14 +1027,24 @@ export const en = {
     refreshQuotes: "Refresh prices",
     refreshingQuotes: "Refreshing…",
     quotesRefreshed: "Prices refreshed",
-    marketValue: "Market value",
+    marketValue: "Value today",
     value: "Value",
-    invested: "Invested",
-    market: "Market",
-    profitLoss: "P/L",
-    walletPicker: "Investment wallet",
+    invested: "Paid in",
+    market: "Today",
+    profitLoss: "Gain or loss",
+    walletPicker: "Investment account",
+    namePea: "French equity savings plan",
+    nameCto: "Ordinary brokerage account",
+    nameAv: "Life insurance savings",
+    namePer: "Retirement savings plan",
+    nameCrypto: "Crypto",
     /** The widest range of the price line. The others need no translation. */
     rangeAll: "All",
+    range1D: "1D",
+    range1W: "1W",
+    range1M: "1M",
+    range3M: "3M",
+    range1Y: "1Y",
     positions: "Positions",
     /**
      * How the holdings in a wallet are ordered.
@@ -999,9 +1057,11 @@ export const en = {
      */
     orderBy: "Order",
     orderByName: "Name",
-    orderByInvested: "Invested",
-    noItems: "No items yet in this wallet.",
+    orderByInvested: "Paid in",
+    noItems: "Nothing in this account yet.",
     editPosition: "Edit {name}",
+    showChart: "Show chart",
+    hideChart: "Hide chart",
     /**
      * Fragments, not sentences, wherever a figure sits inside one.
      *
@@ -1010,23 +1070,24 @@ export const en = {
      * around it too. Both languages put the figure in the same place in each
      * of these, which is what makes the split safe.
      */
-    investedSuffix: "invested",
+    investedSuffix: "paid in",
     fundingLabel: "Monthly contributions",
-    perMonth: "/mo",
+    perMonth: "a month",
     emptyTitle: "No investments tracked yet",
     emptyBody:
-      "Add items in each wallet to track what you already invested and your current market value.",
-    emptyTitleMobile: "Start a wallet",
-    emptyBodyMobile: "PEA, CTO and crypto land here.",
+      "Add what you hold in each account to follow what you paid in and what it is worth today.",
+    emptyTitleMobile: "Follow your investments",
+    emptyBodyMobile: "Your PEA, brokerage account and crypto, in one place.",
     trackTitle: "Track an investment",
-    trackBody: "A recurring contribution becomes a position.",
-    addBtcForValue: "Add total BTC for live market value",
-    addSharesForValue: "Add total shares for live market value",
-    transferAmountPlaceholder: "Amount",
-    addTransfer: "Add transfer",
-    deleteTransferTitle: "Delete this transfer?",
-    deleteTransferBody:
-      "The transfer record is removed; your transactions are not affected.",
+    trackBody:
+      "A recurring payment into an investment shows up here on its own.",
+    addBtcForValue: "Enter how much bitcoin you hold to see today's value",
+    addSharesForValue: "Enter how many shares you hold to see today's value",
+    returnTitle: "Return per year",
+    returnBody:
+      "Worked out over each payment on its own date, so paying in a little every month is compared fairly with one large payment.",
+    upcomingThisMonth: "{amount} still to pay in this month",
+    inWallet: "In your {wallet}",
   },
 
   /** The ongoing-charge card at the foot of the investments page. */
@@ -1067,7 +1128,7 @@ export const en = {
     somethingMissing: "Something is missing",
     youKept: "You kept {amount}",
     costMoreThanItBrought: "{month} cost more than it brought in",
-    keptRate: "{rate}% of what came in, counting what you set aside.",
+    keptRate: "{rate} of what came in, counting what you set aside.",
     keptRateUnknown: "Counting what you set aside.",
     cameIn: "Came in",
     recordedSpending: "Recorded spending",
@@ -1144,21 +1205,14 @@ export const en = {
     review: "Review",
     needsCategory: "Needs a category",
     nothingWaiting: "Nothing waiting",
-    thatsTheInbox: "That's the inbox",
     fetching: "Fetching…",
     fetchEverything: "Fetch everything",
     pickCategoryFirst: "Pick a category first",
-    adding: "Adding…",
     add: "Add",
-    later: "Decide this one later",
     done: "Done",
     close: "Close",
     filterCategories: "Filter categories",
     filterCategoriesPlaceholder: "Filter categories…",
-    leftForLater: {
-      one: "{count} left for later — it is still in the inbox.",
-      other: "{count} left for later — they are still in the inbox.",
-    },
     taughtIt:
       "Anything the app already recognised went straight in. Answering these teaches it for next time.",
     leaveOut: "Leave out",
@@ -1205,10 +1259,8 @@ export const en = {
     },
     allFiled: "Everything is filed.",
     /* The phone's review, one group at a time. */
-    later: "Later",
     whichCategory: "Which category?",
     recentCategories: "Recent",
-    decidedJustNow: "Decided just now",
     keyboardHint: "↑ ↓ to move · Enter to file · L to leave out",
   },
 
@@ -1294,6 +1346,11 @@ export const en = {
     signUpHeading: "Start tracking income and expenses",
     linkExpired: "Sign-in link expired or invalid. Please try again.",
     redirecting: "Redirecting…",
+    finishingSignIn: "Finishing sign-in…",
+    confirmEmail: "Check your email to confirm your account, then sign in.",
+    googleStartFailed: "Could not start Google sign-in.",
+    googleCancelled: "Google sign-in was cancelled.",
+    googleFailed: "Could not complete Google sign-in.",
     waitingForPasskey: "Waiting for passkey…",
     /**
      * Getting back in.
@@ -1420,19 +1477,19 @@ export const en = {
     fromRecurring: "From recurring",
     customHolding: "Custom holding",
     noRecurringAvailable:
-      "No recurring items available for this column. Add one on the Charges page or use a custom holding.",
+      "No recurring items available for this column. Add one on the Recurring page or use a custom holding.",
     nameLabel: "Name",
     namePlaceholder: "e.g. MSCI World ETF",
-    costBasis: "Total invested (cost basis)",
+    costBasis: "Total paid in (what it cost you)",
     costBasisHint:
-      "Your broker's total invested amount for this position. Used for P/L — not updated from recurring transactions.",
+      "The total your broker shows as paid in for this position. Used to work out the gain or loss — not updated from recurring entries.",
     /**
      * The link is the surface's own name, not the route's: the path is still
      * `/recurring` but the tab has been called Charges for two releases, and
      * this said "Recurring" — a page nobody can find in the nav.
      */
     changeFundPrefix: "Change the fund on the",
-    changeFundLink: "Charges",
+    changeFundLink: "Recurring",
     changeFundSuffix: " page.",
     /**
      * The other branch of the same sheet, pointing at the same page — which
@@ -1445,7 +1502,7 @@ export const en = {
      * French wants "d'abord" before it.
      */
     linkEtfPrefix: "Link your ETF under",
-    linkEtfLink: "Charges → {name}",
+    linkEtfLink: "Recurring → {name}",
     linkEtfSuffix: " first, then enter total shares below.",
     chargePlaceholder: "e.g. 0,20",
     /**
@@ -1458,14 +1515,14 @@ export const en = {
      */
     isinLabel: "ISIN (optional)",
     isinHint:
-      "Twelve characters, on the fund's KID or factsheet. The look-through needs it to read what the fund holds; equities and Bitcoin can be left empty.",
+      "Twelve characters, on the fund's KID (key information document) or factsheet. Pluclair needs it to read what the fund holds; equities and Bitcoin can be left empty.",
 
     /* The plan panel: the return, the split, and the PEA ceiling. */
-    moneyWeightedReturn: "Money-weighted return",
+    moneyWeightedReturn: "Return per year",
     amountIn: "in",
     amountNow: "now",
     returnExplainer:
-      "Annualised across every dated contribution, so paying in monthly is measured fairly against a lump sum. Absolute gain alone would flatter whichever had money in longest.",
+      "Worked out over each payment on its own date, so paying in a little every month is compared fairly with one large payment. The gain in euros alone would flatter whichever money had been invested longest.",
     /** The per-account returns line under the headline return. */
     returnByAccount: "By account",
     /** The Allocation card: what each account holds, against a target. */
@@ -1478,6 +1535,14 @@ export const en = {
     /** After an amount: "€1,240 above target". */
     aboveTarget: "above target",
     belowTarget: "below target",
+    pointsAbove: {
+      one: "{count} point above target",
+      other: "{count} points above target",
+    },
+    pointsBelow: {
+      one: "{count} point below target",
+      other: "{count} points below target",
+    },
     allOnTarget: "Every account is on target.",
     nextContributionBefore: "Put your next",
     nextContributionAfter:
@@ -1506,7 +1571,7 @@ export const en = {
     monthlyNoneTarget: "No monthly contribution · target {target}",
     monthlyOnTarget: "Your monthly contributions follow your target.",
     monthlyNothing:
-      "No recurring investment yet. Add one in Charges and its split will show here.",
+      "No recurring investment yet. Add one in Recurring and its split will show here.",
     peaPaidIn: "Paid in",
     peaOfCeiling: "of {ceiling}",
     peaRoomLeft: "of room left",
@@ -1546,14 +1611,19 @@ export const en = {
     pinValue: "Use this figure instead of the market price",
     pinValueHint:
       "Unpinned, your figure is only a fallback for when no price can be fetched.",
-    valuedLive: "Valued from the market",
+    manualValueHint:
+      "When filled in, this figure replaces the value worked out from today's price.",
+    removeConfirmBody:
+      "Remove this position? Its entries stay; only the tracked position is deleted.",
+    targetPercentFor: "Target share for {wallet}, in percent",
+    valuedLive: "Valued at today's price",
     valuedPinned: "Valued from your figure",
     valuedManual: "Valued from your figure — no market price available",
     valuedCost: "Valued at what it cost — add shares to follow the market",
     /** The fund's own charge, which is not the broker's. */
     ongoingChargeLabel: "The fund's ongoing charge (optional)",
     ongoingChargeHint:
-      "The fund's own yearly fee as a percentage — 0.20 for 0.20%. It is on the KID and never appears on a statement, because it comes out of the fund's value. This is not your broker's commission, which the app does not track.",
+      "The fund's own yearly fee as a percentage — 0.20 for 0.20%. It is on the KID (key information document) and never appears on a statement, because it comes out of the fund's value. This is not your broker's commission, which Pluclair does not track.",
     perYear: "% a year",
     lookUpCharge: "Look up the charge on justETF",
     saving: "Saving…",
@@ -1575,14 +1645,14 @@ export const en = {
     peaOpenedLabel: "Set the date the PEA was opened",
     peaOpenedHint: "Add the opening date to track the five-year mark.",
     chartRange: "Chart range",
-    totalInvested: "Total invested",
+    totalInvested: "Total paid in",
     averageBuyPrice: "Average buy price",
     averageSharePrice: "Average share price",
-    averageMonthly: "Average monthly contribution",
-    nextContribution: "Next contribution",
-    returnAmount: "Return",
-    returnPercent: "Return %",
-    noHistory: "No history for this wallet yet.",
+    averageMonthly: "Average paid in a month",
+    nextContribution: "Next payment",
+    returnAmount: "Gain or loss",
+    returnPercent: "Gain or loss in %",
+    noHistory: "No history for this account yet.",
     oneMonthOnly: "One month of history so far — a line needs at least two.",
   },
 
@@ -1595,19 +1665,10 @@ export const en = {
    * halves have to be written out per form.
    */
   month: {
-    inTheAccount: "In the account",
-    cameIn: "Came in",
-    wentOut: "Went out",
-    savingsRate: "Savings rate",
-    over: "Over by",
-    left: "Left",
-    today: "Today",
-    monthEnd: "Month end",
     setUpTitle: "Set up your month",
     setUpBody: "Add what repeats once. Every month is forecast from it.",
     setUpCharges: "Set up charges",
-    whereItWent: "Where it went",
-    capsAndGoals: "Caps and goals",
+    capsAndGoals: "Budgets and goals",
     moreThisMonth: "More this month",
     startingBalanceHint: "Set a starting balance to begin closing months",
     actionReopen: "Reopen",
@@ -1629,8 +1690,6 @@ export const en = {
       one: "{count} charge looks like it repeats",
       other: "{count} charges look like they repeat",
     },
-    /** What is invested, on the Wallets tile's own strip in a Bearing panel. */
-    invested: "Invested",
     /**
      * A closing streak, badged beside `MonthScore` and `MonthCloseHistory`'s
      * own headings. Not a plural message: the noun these describe ("in a
@@ -1655,6 +1714,9 @@ export const en = {
     /* The month picker's own grid: its year stepper, its shortcut, its key. */
     showYear: "Show {year}",
     thisMonth: "This month",
+    backToThisMonth: "Back to this month",
+    previousYear: "Previous year",
+    nextYear: "Next year",
     monthClosed: "closed",
     monthRecords: "records",
     close: "Close",
@@ -1665,6 +1727,9 @@ export const en = {
     closeAccountMenu: "Close account menu",
     view: "View",
     save: "Save",
+    loading: "Loading",
+    add: "Add",
+    change: "Change",
     remove: "Remove",
     cancel: "Cancel",
     delete: "Delete",
@@ -1684,19 +1749,16 @@ export const en = {
     marketing: "Marketing",
     nearbyPages: "Nearby pages",
     needsYou: "Needs you",
-    budgetView: "Budget view",
     arrivedCharges: "Charges that look like they arrived",
     closePopUp: "Close pop-up",
     clearInstrument: "Clear selected instrument",
     searchInstrument: "Search by name or ISIN…",
-    seeOnCalendar: "See the month on a calendar",
     clearDate: "Clear date",
     date: "Date",
     pickADate: "Pick a date",
     setUp: "Set up",
-    openWallets: "Open wallets",
     usePassword: "Use password",
-    capsAndNewMonths: "Caps and new months",
+    capsAndNewMonths: "Budgets and new months",
     browserNotifications: "Browser notifications",
     theRun: "The run",
     kept: "Kept",
@@ -1907,16 +1969,16 @@ export const en = {
     arriving: "Still to arrive",
     free: "Yours to spend",
     unrecordedAllowance: "Unrecorded allowance",
-    unrecordedAllowanceNote: "a cap set from this person's own history",
+    unrecordedAllowanceNote: "an allowance set from this person's own history",
     unrecordedOver: "Unrecorded spending over the allowance",
     unrecordedBaseline: "Usual unrecorded spending",
     unrecordedBaselineNote:
       "the median across closed months, so one holiday does not move it",
     streak: "Months in a row inside the allowance",
     bestStreak: "Best run so far",
-    budgetSpent: "{label} cap, spent",
-    budgetLeft: "{label} cap, left",
-    budgetOver: "{label} cap, gone over by",
+    budgetSpent: "{label} budget, spent",
+    budgetLeft: "{label} budget, left",
+    budgetOver: "{label} budget, gone over by",
     goalSaved: "{name}, saved",
     investedValue: "Invested value",
     inboxPending: "Transactions still waiting for a category",
@@ -1937,68 +1999,12 @@ export const en = {
    */
   bearingFacts: {
     netPosition: "Everything, added up",
-    netPositionNote: "accounts and investments only; this app records no debts",
-    onHand: "In the accounts",
-    invested: "Invested",
-    investedShare: "Share of it invested",
-    free: "Yours to spend this month",
     committed: "Still to leave this month",
     arriving: "Still to arrive this month",
     savingsRate: "Savings rate this month",
-    expensesVsPrevious: "Money out against {month}",
-    expensesVsPreviousNote:
-      "the same stretch of both months, not a whole month against a part",
-    unrecordedSoFar: "Unrecorded spending so far",
-    unrecordedSoFarNote: "measured, and not final until the month is closed",
-    unrecordedAllowance: "Unrecorded allowance",
-    unrecordedAllowanceNote: "a cap set from this person's own history",
-    unrecordedOver: "Unrecorded spending over the allowance",
     unrecordedBaseline: "Usual unrecorded spending",
-    unrecordedBaselineNote:
-      "the median across closed months, so one holiday does not move it",
-    streak: "Months in a row inside the allowance",
-    bestStreak: "Best run so far",
-    monthlyNetAverage: "What a month has typically kept, over {count} months",
-    projectedBalance: "Where the accounts land by {month}",
-    projectedBalanceNote:
-      "arithmetic on charges already scheduled, less what closed months measure a normal one costs unseen",
-    projectedBalanceNoteUnmeasured:
-      "arithmetic on charges already scheduled; everyday spending is not measured yet",
-    projectedAdded: {
-      one: "What the next month adds to the accounts",
-      other: "What the next {count} months add to the accounts",
-    },
     projectedBalanceBare: "Where the accounts land",
-    projectedKept: "Everything kept, by {month}",
-    projectedKeptAdded: {
-      one: "What the next month keeps altogether",
-      other: "What the next {count} months keep altogether",
-    },
-    projectedKeptBare: "Everything kept",
-    projectedKeptNote:
-      "the accounts plus everything set aside, counted at what was put in rather than at what it might grow to",
-    projectedMonthlyNet:
-      "What each month adds to the accounts, if nothing changes",
-    committedMonthly: "One month of committed costs",
-    runwayMonths: "Months the set-aside would cover",
     walletCost: "Put into the wallets",
-    walletGain: "Gain on what was put in",
-    walletReturn: "Return a year",
-    walletReturnNote: "money-weighted, so the timing of each purchase counts",
-    walletDrag: "What holding it costs a year",
-    walletDragNote:
-      "charged inside the funds, so it never appears as a transaction",
-    walletDragPartial: {
-      one: "partial — {count} holding has no charge recorded",
-      other: "partial — {count} holdings have no charge recorded",
-    },
-    walletDrift: "Furthest a wallet is from its target",
-    walletDriftNote: "in percentage points, whichever way it has drifted",
-    walletConcentration: "{name}, share of the wallets",
-    walletConcentrationNote:
-      "the largest single holding, weighed against what is invested rather than against cash",
-    contributionPace: "Going into the wallets each month",
-    inboxPending: "Transactions still waiting for a category",
   },
 
   /**
@@ -2027,15 +2033,15 @@ export const en = {
     oddMonth: "How far that month sat from a normal one",
     monthsActive: "Months with something recorded",
     shareOfMonth: "Share of everything that went out that month",
-    cap: "The cap on this category",
+    cap: "The budget on this category",
     /**
      * The two the cap is useless without, worded as `facts.budgetLeft` and
      * `facts.budgetOver` are. "Left" is unclamped and goes negative when the
      * cap is breached; "gone over by" is the same breach as a positive
      * figure, which is the one a read actually wants to quote.
      */
-    capLeft: "The cap, left that month",
-    capOver: "The cap, gone over by",
+    capLeft: "The budget, left that month",
+    capOver: "The budget, gone over by",
   },
 
   /**
@@ -2077,55 +2083,11 @@ export const en = {
    * `MoneyOnHand`'s own words, on both clients — the hero card the retired
    * Month screen used to lead with, now drawn inside a Bearing panel.
    */
-  moneyOnHand: {
-    /**
-     * The other two terms in the same row. "In the account" is
-     * `month.inTheAccount`, shared with this one rather than repeated here
-     * — the phone used to carry its own lower-cased copy of that label,
-     * which was the bug: two keys saying the same figure two different
-     * ways, not the casing itself.
-     */
-    stillToLeave: "still to leave",
-    stillToArrive: "still to arrive",
-    /** The progress bar's own accessible name; the line under it is separate. */
-    elapsedLabel: "{percent}% of the month elapsed",
-    elapsedGone: "{percent}% of {month} gone",
-    unreadableAccounts: {
-      one: "Could not read {accounts} — its balance is not counted above.",
-      other:
-        "Could not read {accounts} — their balances are not counted above.",
-    },
-    /** The phone's today/month-end toggle, its accessible hint. */
-    switchesTo: "Switches to {option}",
-  },
 
   /**
    * `MonthScore`'s own words, on both clients: how the month is going
    * against the unrecorded-spending target.
    */
-  monthScore: {
-    heading: "Unrecorded spending, so far",
-    overRecorded:
-      "Your account holds more than the ledger allows — income is missing, or something is recorded twice. Nothing to measure until that is sorted.",
-    /**
-     * The line above the meter reads "<prefix> <amount>[ <suffix>]" with the
-     * amount its own element so privacy mode can blur it — which is why this
-     * is two fragments either side of a figure rather than one template.
-     */
-    capPrefixChosen: "of your",
-    capSuffixChosen: "cap",
-    capPrefixUnchosen: "against a usual",
-    /** The meter bar's own accessible name. */
-    meterLabel: "{spent} of {target}",
-    noNormalYet:
-      "Close two months and the app will know what normal looks like for you.",
-    pastCap: "{amount} past it, with the month still running.",
-    roomLeft: "{amount} of room left this month.",
-    measuredNote:
-      "Measured against your last close, not remembered — so it moves when the bank does, and it is not final until the month is closed.",
-    notYetMeasured:
-      "Close a month against your bank balance and this fills in: the app works out what left the account that no transaction explains.",
-  },
 
   /**
    * `CashAccountsCard`'s own words — the web-only, editable list of which
@@ -2143,19 +2105,8 @@ export const en = {
   },
 
   /** `RecentOnAccount`'s own words, on both clients. */
-  recentOnAccount: {
-    title: "Last on your account",
-    toReview: "{count} to review",
-    waitingCategory: "waiting for a category",
-    leftOut: "left out",
-    inYourLedger: "in your ledger",
-  },
 
   /** `StillToCome`'s own words, on both clients. */
-  stillToCome: {
-    title: "Still to come",
-    arrivingNamed: "still to arrive, {name} on {when}",
-  },
 
   /** `MonthCloseHistory` / `MonthCloseHistoryCard`'s own words. */
   monthCloseHistory: {
@@ -2396,6 +2347,7 @@ export const en = {
     askTitle: { one: "Did this arrive?", other: "Did these arrive?" },
     thatsIt: "That's it",
     notIt: "Not it",
+    notThis: "No, that is not {name}",
     /** Fallback for a decision whose server action returned no message of its own. */
     done: "Done",
     /**
@@ -2466,6 +2418,7 @@ export const en = {
     noWriter: "No writer is configured.",
     noAnswer: "The writer did not answer just now.",
     unusable: "The writer's answer could not be used.",
+    writeFailed: "Could not write the read just now.",
     threwAway:
       "The writer used a figure the app did not give it, so the read was thrown away. ({detail})",
     /**
@@ -2598,7 +2551,7 @@ export const en = {
    * rather than abbreviated into a tooltip nobody opens.
    */
   lookThrough: {
-    title: "Look-through",
+    title: "What's inside",
     subtitle: "What your wallets are actually made of",
 
     /* The sections, in the order they appear. */
@@ -2890,7 +2843,8 @@ export const en = {
    */
   bankConnect: {
     sheetTitle: "Connect your bank",
-    sheetLead: "Your transactions and your real balance come straight from your bank each time you refresh. You set it up once, with your own open-banking.io account.",
+    sheetLead:
+      "Your transactions and your real balance come straight from your bank each time you refresh. You set it up once, with your own open-banking.io account.",
     step1Title: "Create your open-banking.io account",
     step1Body:
       "Sign up and top up its wallet. About €3 a month for one bank account and €1 for each extra one — paid to them, not to Pluclair.",
@@ -2910,12 +2864,15 @@ export const en = {
       "Your bank's consent lasts about 180 days. You renew it on open-banking.io, and you're reminded before it ends.",
     factHistory:
       "Past months are filled in from your bank, so their totals may change.",
-    notRegulated: "Pluclair is not a payment service provider: the regulated account information service is provided by Enable Banking Oy, through your open-banking.io account.",
+    notRegulated:
+      "Pluclair is not a payment service provider: the regulated account information service is provided by Enable Banking Oy, through your open-banking.io account.",
     privacyLink: "How your bank data is handled",
-    consentLabel: "I allow Pluclair to use my credentials file to read the accounts and transactions of my open-banking.io account — data my bank provides through Enable Banking Oy, a licensed account information service provider — in order to keep my budget. These transactions can reveal sensitive information (health, beliefs, union membership…), and I expressly agree to them being processed for this purpose alone. Pluclair contacts my bank only when I ask for a refresh. I can withdraw this consent at any time by disconnecting my bank.",
+    consentLabel:
+      "I allow Pluclair to use my credentials file to read the accounts and transactions of my open-banking.io account — data my bank provides through Enable Banking Oy, a licensed account information service provider — in order to keep my budget. These transactions can reveal sensitive information (health, beliefs, union membership…), and I expressly agree to them being processed for this purpose alone. Pluclair contacts my bank only when I ask for a refresh. I can withdraw this consent at any time by disconnecting my bank.",
     consentRequired: "Tick the consent box first.",
     consentMissingTitle: "Confirm your consent",
-    consentMissingBody: "Pluclair now records this consent before reading bank data. Please confirm it for your connection.",
+    consentMissingBody:
+      "Pluclair now records this consent before reading bank data. Please confirm it for your connection.",
     consentConfirm: "I agree",
     openSite: "Open open-banking.io",
     dropTitle: "Drop credentials.json here",
@@ -2978,7 +2935,7 @@ export const en = {
     errorBody: "It will be tried again at the next sync.",
     accounts: "Accounts",
     accountsBody:
-      "Choose which accounts hold your spending money. Their balance is the one on your Bearing.",
+      "Choose which accounts hold your spending money. Their balance is the one on your Overview.",
     disconnect: "Disconnect",
     disconnectTitle: "Disconnect your bank?",
     disconnectBody:
@@ -2993,14 +2950,16 @@ export const en = {
     disconnected: "Your bank is disconnected.",
     notConnectedBody:
       "See your real balance, let entries arrive on their own, and have months close themselves.",
-    unlockBalance: "Your real balance, read from your bank each time you refresh",
+    unlockBalance:
+      "Your real balance, read from your bank each time you refresh",
     unlockEntries:
       "Entries that arrive and file themselves from your own history",
     unlockArrived: "Charges confirmed as they arrive",
     unlockClose: "Months that close themselves on your reading day",
     profileLink: "Bank connection",
     /* What each invitation promises, on the surface it appears on. */
-    inviteBearing: "See your real balance, read from your bank each time you refresh.",
+    inviteBearing:
+      "See your real balance, read from your bank each time you refresh.",
     inviteWelcome: "Let your bank fill this in for you.",
     inviteLedger:
       "Stop typing: connect your bank and entries arrive on their own.",
@@ -3043,7 +3002,7 @@ export const en = {
     setBalanceBody:
       "Type what your account holds once, and this becomes your real balance.",
     spent: "Spent",
-    ofCap: "of a {amount} cap",
+    ofCap: "of a {amount} budget",
     spentLessSoFar: "{amount} less than {month} by now",
     spentMoreSoFar: "{amount} more than {month} by now",
     spentLess: "{amount} less than {month}",
@@ -3063,7 +3022,7 @@ export const en = {
     noRunYet: "Close a month under your allowance to start a run.",
     goals: "Goals",
     goalToGo: "{amount} to go",
-    invested: "Invested",
+    invested: "Your investments today",
   },
 
   /**
@@ -3082,7 +3041,6 @@ export const en = {
    * ranking or apologise for failing to produce one.
    */
   bearing: {
-    title: "Bearing",
     /**
      * The two figures at the top of the screen, and the fallback for the
      * second of them.
@@ -3102,12 +3060,6 @@ export const en = {
     headline: {
       onHand: "currently in your current account",
       free: "you'll finish the month at",
-      /**
-       * When no balance is readable to lead it — the ladder's fallback to
-       * what the ledger recorded rather than a confident zero. See
-       * `resolveSpine` in `packages/core/src/spine.ts`.
-       */
-      remaining: "recorded as left",
     },
     /** The five cards' names, in `CARD_ORDER`. */
     cards: {
@@ -3115,36 +3067,9 @@ export const en = {
       now: "The accounts",
       run: "Your run",
       ahead: "The year ahead",
-      wallet: "Wallets",
+      wallet: "Investments",
     },
-    empty:
-      "Once a month has been recorded there will be something to stand on.",
     panel: {
-      close: "Close",
-      open: "Show what this is made of",
-      footer: "See the full surface",
-      horizon: "How far ahead",
-      /** The run, in the streak chrome. */
-      streakMonths: {
-        one: "{count} month inside the allowance",
-        other: "{count} months inside the allowance",
-      },
-      streakNone:
-        "No run yet — close a month inside the allowance to start one.",
-      bestRun: "Best so far: {count}",
-      /** Block headings. The blocks themselves state figures, not what they are. */
-      comparisonHeading: "Against last month",
-      trendHeading: "Month by month",
-      /**
-       * Below `MIN_MONTHS_FOR_TREND` months with any activity, drawn as a
-       * list instead of bars — see `Trend` in `panel-blocks.tsx` for why.
-       */
-      trendThin: "Not enough months yet to call it a trend — {count} so far.",
-      holdingsHeading: "Biggest holdings",
-      moreHoldings: "{count} more",
-      /** When the detail could not be fetched. The figure above is still true. */
-      failed: "The detail could not be read just now.",
-      retry: "Try again",
       /**
        * The phone's `cash-accounts` block. Shared with the web's
        * `CashAccountsCard`, which said the same two lines in its own
@@ -3157,7 +3082,6 @@ export const en = {
       cashAccountsBody:
         "Closing a month compares what these held at the start and the end against what the ledger says happened.",
       cashAccountsLapsed: "Consent has lapsed — nothing can be read from it",
-      cashAccountsLastRead: "Read {when}",
     },
     /**
      * What the ring reads out — see `resolveSpine`'s doc comment in
@@ -3175,32 +3099,6 @@ export const en = {
      * clients, but nothing under `bearing.spine` reaches for them any more.
      */
     spine: {
-      /** The ring's `dark` state: something could be measured, nothing has. */
-      ringUnmeasured: "Not measured yet — no month has closed",
-      /** The ring's `arc` state: measuring has started, there is no cap. */
-      ringMeasuring: "Measuring your first month — no allowance set yet",
-      /**
-       * The ring's `proportion` state, said as two clauses joined by " · ".
-       *
-       * They were one sentence and could contradict itself. The percentage
-       * comes off `capRatio` — unrecorded spending against the cap — while
-       * the tone comes off `standing`, which compares what is left to spend
-       * against that same cap. Those are near-orthogonal, so the single
-       * sentence "100% of your allowance used, comfortably clear" was a
-       * routine output: a screen-reader user heard a verdict no sighted
-       * reader was shown, welded onto a figure it was not about.
-       *
-       * Now each clause states its own basis and neither qualifies the
-       * other. `ringUsed*` is the ring's fill and the overshoot lap; the
-       * `ringStanding*` line is the colour. Same two signals, same two spec
-       * rows, said separately because they measure separately.
-       */
-      ringUsed: "{percent}% of your allowance used",
-      /** The overshoot lap, in words. `{percent}` is the true ratio, not the fill's. */
-      ringUsedOver: "{percent}% of your allowance used, already past it",
-      ringStandingClear: "what is left to spend still covers a full allowance",
-      ringStandingTight: "less than a full allowance left to spend",
-      ringStandingShort: "the month is set to end short",
       /** The rest of the attention list, folded behind the one row shown. */
       moreWaiting: {
         one: "+{count} more waiting",
@@ -3226,6 +3124,7 @@ export const en = {
    */
   errorPage: {
     title: "Something went wrong",
+    appFailed: "App failed to start",
     body: "We couldn’t load this page. Your data is safe — try again, and if the problem persists, sign out and back in.",
     tryAgain: "Try again",
     notFoundTitle: "Page not found",
@@ -3245,6 +3144,21 @@ export const en = {
     askingBank: "Asking your bank…",
     lastChecked: "Refresh — last checked {age}",
     askBank: "Ask your bank for anything new",
+    unreachable: "Could not reach your bank just now.",
+    coolingDown: "Your bank was asked moments ago — try again in {seconds}s.",
+    allowanceSpent:
+      "Today's {allowance} automatic checks are used up. Pressing Refresh yourself still works.",
+    nothingToPull: "No connected account can be read right now.",
+    onlyWhenAsked: "Pluclair asks your bank only when you refresh.",
+    noBank: "No bank is connected to this account.",
+    bankDidNotAnswer: "Your bank did not answer just now.",
+    reloadedNoBank: "Reloaded — no bank is connected.",
+    reloadedRejected:
+      "Reloaded — open-banking.io no longer accepts your credentials file. Upload a new one to sync again.",
+    reloadedPaused:
+      "Reloaded — open-banking.io has paused syncing until its wallet is topped up.",
+    reloadedUnreachable:
+      "Reloaded — your bank could not be reached. It will be tried again.",
   },
 
   /** Sending again what is still only on this device. */
@@ -3298,14 +3212,14 @@ export const en = {
     nameRequiredCustom: "Name is required for custom holdings",
     shareCountRequired: "Share count is required",
     targetPositive: "Target must be positive",
-    capNotNegative: "A cap cannot be negative",
+    capNotNegative: "A budget cannot be negative",
     zeroOrMore: "Must be 0 or more",
     positiveNumber: "Enter a positive number (comma or dot for decimals)",
     chargeAsPercent: "Enter the charge as a percentage, e.g. 0.20",
     chargeTooHigh: "That looks too high — enter 0.20 for 0.20%, not 20",
     notAnIsin: "That does not look like an ISIN, e.g. IE00B4L5Y983",
     notABalance: "That does not look like a balance",
-    notACap: "That does not look like a cap",
+    notACap: "That does not look like a budget",
     nothingToImport: "Nothing to import",
     tooManyRows: "Import at most 2000 rows at a time",
     invalidInput: "Invalid input",
@@ -3317,6 +3231,12 @@ export const en = {
     tagNameTaken: "A tag with that name already exists.",
     tagMergeFailed: "Those tags could not be merged.",
   },
+  actions: actionsEn,
+  moreScreens: moreScreensEn,
+  formPickers: formPickersEn,
+  reviewScreens: reviewScreensEn,
+  planScreen: planScreenEn,
+  homeScreen: homeScreenEn,
 } satisfies MessageTree;
 
 export type Messages = typeof en;

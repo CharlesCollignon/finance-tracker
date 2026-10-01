@@ -1,4 +1,4 @@
-import { FALLBACK_LOCALE, type Locale } from "./i18n/locale";
+import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
  * This month against the last one.
@@ -76,7 +76,7 @@ export interface BuildMonthComparisonOptions {
   today: string;
   type?: CategoryType;
   /** The language the previous month is named in. */
-  locale?: Locale;
+  locale: Locale;
 }
 
 /**
@@ -90,7 +90,7 @@ export function buildMonthComparison({
   month,
   today,
   type = "expense",
-  locale = FALLBACK_LOCALE,
+  locale,
 }: BuildMonthComparisonOptions): MonthComparison {
   const [previousYear, previousMonthNumber] = previousMonth(year, month);
   const previousLabel = formatMonthLabel(
@@ -152,7 +152,7 @@ export function buildMonthComparison({
 export function formatMonthComparison(
   comparison: MonthComparison,
   formatAmount: (amount: number) => string,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string | null {
   if (!comparison.comparable) {
     return null;

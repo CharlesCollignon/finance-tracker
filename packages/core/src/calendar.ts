@@ -1,5 +1,5 @@
 import { weekdayShortMondayFirst } from "./i18n/calendar-names";
-import { FALLBACK_LOCALE, INTL_LOCALES, type Locale } from "./i18n/locale";
+import { INTL_LOCALES, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { formatLongDate, relativeDayLabel } from "./constants";
 import type { TransactionWithCategory } from "./types/database";
@@ -105,9 +105,7 @@ export function buildCalendarWeeks(
  * change with the language. `weekdayShortMondayFirst` owns the rotation, so
  * this is only here to keep the calendar's own import surface unchanged.
  */
-export function weekdayLabels(
-  locale: Locale = FALLBACK_LOCALE,
-): readonly string[] {
+export function weekdayLabels(locale: Locale): readonly string[] {
   return weekdayShortMondayFirst(locale);
 }
 
@@ -148,10 +146,7 @@ export function computeDayTotals(
   };
 }
 
-export function formatCalendarDate(
-  isoDate: string,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+export function formatCalendarDate(isoDate: string, locale: Locale): string {
   return relativeDayLabel(isoDate, formatLongDate, locale);
 }
 
@@ -162,10 +157,7 @@ export function formatCalendarDate(
  * the decimal separator comes from `Intl`, and whether a space precedes the
  * suffix comes from the `units.thousands` message.
  */
-export function formatShortAmount(
-  amount: number,
-  locale: Locale = FALLBACK_LOCALE,
-): string {
+export function formatShortAmount(amount: number, locale: Locale): string {
   const rounded = Math.round(amount);
   const format = (value: number) =>
     new Intl.NumberFormat(INTL_LOCALES[locale], {

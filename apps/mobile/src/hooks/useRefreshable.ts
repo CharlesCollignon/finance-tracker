@@ -55,7 +55,8 @@ export function useRefreshable<T>(
       setError(null);
       setData(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      // A message key when there is no error text; screens resolve it.
+      setError(err instanceof Error ? err.message : "errorPage.title");
     }
   }, []);
 
@@ -72,9 +73,7 @@ export function useRefreshable<T>(
         },
         (err: unknown) => {
           if (!cancelled) {
-            setError(
-              err instanceof Error ? err.message : "Something went wrong",
-            );
+            setError(err instanceof Error ? err.message : "errorPage.title");
           }
         },
       )

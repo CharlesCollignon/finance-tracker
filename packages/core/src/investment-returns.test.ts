@@ -214,14 +214,18 @@ describe("buildInvestmentReturns", () => {
 
 describe("returnUnavailableLabel", () => {
   it("explains each reason a rate is missing", () => {
-    expect(returnUnavailableLabel("no-contributions")).toBe(
+    expect(returnUnavailableLabel("no-contributions", "en")).toBe(
       "No contributions yet",
     );
-    expect(returnUnavailableLabel("too-short")).toBe("Too new to annualise");
-    expect(returnUnavailableLabel("not-solvable")).toBe("Not enough history");
+    expect(returnUnavailableLabel("too-short", "en")).toBe(
+      "Too new to annualise",
+    );
+    expect(returnUnavailableLabel("not-solvable", "en")).toBe(
+      "Not enough history",
+    );
   });
 
   it("says nothing when a rate is available", () => {
-    expect(returnUnavailableLabel(null)).toBeNull();
+    expect(returnUnavailableLabel(null, "en")).toBeNull();
   });
 });

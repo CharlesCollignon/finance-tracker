@@ -57,7 +57,7 @@ function run(
 
 function findingsFor(transactions: TransactionWithCategory[]) {
   return buildCategoryFindings(
-    buildCategoryHistory(transactions, 2026, 9, { months: 36 }),
+    buildCategoryHistory(transactions, 2026, 9, { locale: "en", months: 36 }),
   );
 }
 
@@ -67,7 +67,7 @@ describe("categoryNormal", () => {
       run([100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000]),
       2026,
       9,
-      { months: 36 },
+      { locale: "en", months: 36 },
     );
 
     const { normal } = categoryNormal(history!.points);
@@ -80,7 +80,7 @@ describe("categoryNormal", () => {
       run([null, null, null, 200, 200, 200]),
       2026,
       9,
-      { months: 36 },
+      { locale: "en", months: 36 },
     );
 
     expect(categoryNormal(history!.points).normal).toBe(200);
@@ -254,7 +254,7 @@ describe("buildCategoryFindings, gone quiet", () => {
         dates.map((date) => tx(date, 4500, "pay", "Salary", "income")),
         2026,
         9,
-        { months: 36 },
+        { locale: "en", months: 36 },
       ),
     );
 
@@ -328,7 +328,7 @@ describe("buildCategoryFindings, every year", () => {
     transactions.push(tx("2026-07-04", 900, "cat-energy", "Energy"));
 
     const findings = buildCategoryFindings(
-      buildCategoryHistory(transactions, 2026, 9, { months: 36 }),
+      buildCategoryHistory(transactions, 2026, 9, { locale: "en", months: 36 }),
     );
 
     const odd = findings.find((f) => f.kind === "odd-month");
@@ -339,7 +339,10 @@ describe("buildCategoryFindings, every year", () => {
     // Twelve months: this September is high, and there is no earlier one to
     // say it is high every year. One occurrence is a month, not a pattern.
     const findings = buildCategoryFindings(
-      buildCategoryHistory(seasonal(100, 400), 2026, 9, { months: 12 }),
+      buildCategoryHistory(seasonal(100, 400), 2026, 9, {
+        locale: "en",
+        months: 12,
+      }),
     );
 
     expect(findings.some((f) => f.kind === "every-year")).toBe(false);
@@ -388,8 +391,7 @@ describe("buildCategoryFindings, every year", () => {
     for (let back = 35; back >= 0; back -= 1) {
       const date = new Date(Date.UTC(2026, 8 - back, 4));
       const month = date.getUTCMonth() + 1;
-      const amount =
-        month === 9 ? 400 : month === 7 || month === 8 ? 300 : 100;
+      const amount = month === 9 ? 400 : month === 7 || month === 8 ? 300 : 100;
       out.push(
         tx(
           date.toISOString().slice(0, 10),
@@ -429,7 +431,7 @@ describe("buildCategoryFindings, every year", () => {
     }
 
     const findings = buildCategoryFindings(
-      buildCategoryHistory(out, 2026, 9, { months: 24 }),
+      buildCategoryHistory(out, 2026, 9, { locale: "en", months: 24 }),
     );
 
     expect(findings.filter((f) => f.kind === "odd-month")).toEqual([]);

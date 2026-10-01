@@ -1,5 +1,6 @@
 import { OpenBankingClient } from "@open-banking-io/client";
 import type { BankConnectionStatus } from "@finance/core/types/database";
+import type { Key } from "@finance/core/i18n/t";
 import {
   clientFor,
   credentialStore,
@@ -200,16 +201,17 @@ export async function bankFeedStatus(userId: string): Promise<BankFeedStatus> {
  */
 export function describeBankFeedStatus(
   status: Exclude<BankFeedStatus, "connected">,
-): string {
+): Key {
+  // Message keys, resolved by the toast on either client.
   switch (status) {
     case "unconfigured":
-      return "Reloaded — no bank is connected.";
+      return "refresh.reloadedNoBank";
     case "expired":
-      return "Reloaded — open-banking.io no longer accepts your credentials file. Upload a new one to sync again.";
+      return "refresh.reloadedRejected";
     case "paused":
-      return "Reloaded — open-banking.io has paused syncing until its wallet is topped up.";
+      return "refresh.reloadedPaused";
     case "error":
-      return "Reloaded — your bank could not be reached. It will be tried again.";
+      return "refresh.reloadedUnreachable";
   }
 }
 

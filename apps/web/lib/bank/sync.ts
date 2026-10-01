@@ -17,6 +17,7 @@ import type {
 import type { PullKind } from "@finance/core/bank-pull";
 import { getBankConnection } from "@/lib/bank/client";
 import { pullFromBank } from "@/lib/bank/pull";
+import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 
 type Client = SupabaseClient<Database>;
 
@@ -114,7 +115,7 @@ export async function syncBankFeed(
 ): Promise<SyncOutcome> {
   const connection = await getBankConnection(userId);
   if (!connection) {
-    throw new Error("No bank is connected to this account.");
+    throw new Error("refresh.noBank");
   }
 
   // Before the accounts are listed, so the balances and the statement below
@@ -262,7 +263,10 @@ export async function syncBankFeed(
       })),
     );
 
+    // Written into the stored rows (the note of a row with no description),
+    // so in the product's language: a sync often runs with nobody present.
     const plan = planFeed(items, {
+      locale: DEFAULT_LOCALE,
       merchants,
       bankMerchants,
       existing,

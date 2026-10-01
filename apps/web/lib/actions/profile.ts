@@ -45,7 +45,7 @@ export async function updateProfile(
   }
 
   revalidatePath("/profile");
-  return { success: true, message: "Profile updated" };
+  return { success: true, message: "actions.profileUpdated" };
 }
 
 export async function deleteAllData(
@@ -70,7 +70,7 @@ export async function deleteAllData(
   try {
     await deleteAllUserData(user.id, supabase);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Delete failed";
+    const message = err instanceof Error ? err.message : "actions.deleteFailed";
     return { error: message };
   }
 
@@ -82,8 +82,7 @@ export async function deleteAllData(
   revalidatePath("/profile");
   return {
     success: true,
-    message:
-      "All finance data deleted. Default categories will be restored on next visit.",
+    message: "actions.allDataDeleted",
   };
 }
 
@@ -120,7 +119,7 @@ export async function deleteAccount(
     await disconnectUserBank(user.id, { deleteImported: false });
     await deleteAllUserData(user.id, supabase);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Delete failed";
+    const message = err instanceof Error ? err.message : "actions.deleteFailed";
     return { error: message };
   }
 

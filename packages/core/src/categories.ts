@@ -18,7 +18,7 @@ export interface CategoryGroup {
 
 export function groupCategoriesByType(
   categories: Category[],
-  options?: { excludeTypes?: CategoryType[]; locale?: Locale },
+  options: { excludeTypes?: CategoryType[]; locale: Locale },
 ): CategoryGroup[] {
   const exclude = new Set(options?.excludeTypes ?? []);
   const labels = categoryTypeLabels(options?.locale ?? FALLBACK_LOCALE);
@@ -34,7 +34,7 @@ export function groupCategoriesByType(
 
 export function formatCategoryOptionLabel(
   category: Category,
-  locale: Locale = FALLBACK_LOCALE,
+  locale: Locale,
 ): string {
   if (
     category.type === "investment" &&

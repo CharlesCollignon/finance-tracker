@@ -394,8 +394,7 @@ describe("buildArbitrage", () => {
         isin: row.isin,
         name: row.name,
         walletId: "pea" as const,
-        marketValue:
-          row.weight * total + (index === 0 ? drift : -drift),
+        marketValue: row.weight * total + (index === 0 ? drift : -drift),
       })),
       total,
     );
