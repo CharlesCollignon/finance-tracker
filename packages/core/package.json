@@ -76,6 +76,7 @@
     "./paging": "./src/paging.ts",
     "./pea": "./src/pea.ts",
     "./projection": "./src/projection.ts",
+    "./push-messages": "./src/push-messages.ts",
     "./push-digest": "./src/push-digest.ts",
     "./push-routes": "./src/push-routes.ts",
     "./recurrence": "./src/recurrence.ts",

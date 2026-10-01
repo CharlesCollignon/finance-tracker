@@ -23,6 +23,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { defaultRecipient, readRecipients } from "@finance/data/preferences";
 import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
+import { closeReminder } from "@finance/core/push-messages";
+import { getMonthCloseOverview } from "@finance/data/month-close";
 
 /**
  * The daily notification run.
@@ -142,8 +144,15 @@ async function notificationsFor(
 
   // Ahead of the digest: a feed about to stop is the one thing here that
   // gets worse by waiting, and it applies to people with no templates at all.
-  const bank = await bankNotificationFor(supabase, userId, today, locale);
-  const lead = bank ? [bank] : [];
+  // So does the reading day, which belongs to anyone who closes their months.
+  const [bank, close] = await Promise.all([
+    bankNotificationFor(supabase, userId, today, locale),
+    closeReminderFor(supabase, userId, today, locale),
+  ]);
+  const lead = [bank, close].filter(
+    (notification): notification is PendingNotification =>
+      notification !== null,
+  );
 
   // Nothing else to say to someone with no templates.
   if (templateRows.length === 0) {
@@ -207,4 +216,35 @@ async function bankNotificationFor(
     },
   );
   return notification;
+}
+
+/**
+ * The reading day's reminder, when the month it asks about is not closed.
+ * A failure is not worth the rest of the digest: the Bearing asks the same
+ * question on every visit.
+ */
+async function closeReminderFor(
+  supabase: AdminClient,
+  userId: string,
+  today: string,
+  locale: Locale,
+): Promise<PendingNotification | null> {
+  try {
+    const overview = await getMonthCloseOverview(
+      supabase,
+      userId,
+      today,
+      locale,
+    );
+    return closeReminder({
+      next: overview.next,
+      today,
+      closesSoFar: overview.history.length,
+      streak: overview.summary.streak,
+      t: translator(locale),
+      locale,
+    });
+  } catch {
+    return null;
+  }
 }

@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { todayIsoLocal } from "@finance/core/constants";
 import { translator } from "@finance/core/i18n/t";
+import type { PendingNotification } from "@finance/core/push-digest";
+import { monthClosedByBank } from "@finance/core/push-messages";
 import { defaultRecipient, readRecipients } from "@finance/data/preferences";
 import { deliver } from "@/lib/push/deliver";
 import { reviewNotificationFor } from "@/lib/push/review";
@@ -195,10 +197,26 @@ export async function GET(request: NextRequest) {
       const closes = await autoCloseMonths(supabase, userId);
       monthsClosed += closes.closed.length;
 
+      const recipient = recipients.get(userId) ?? defaultRecipient();
+      const notices: PendingNotification[] = [];
+
+      // The latest month it closed, and only that: a new connection can close
+      // thirty months in one run, and thirty pushes would be a flood.
+      const latest = closes.closed.at(-1);
+      if (latest) {
+        notices.push(
+          monthClosedByBank({
+            monthKey: latest.monthKey,
+            result: latest.result,
+            t: translator(recipient.locale),
+            locale: recipient.locale,
+          }),
+        );
+      }
+
       // Asked every run rather than only when this sync added rows: rows
       // that came in during the quiet hours were held, and are announced the
       // first run after them.
-      const recipient = recipients.get(userId) ?? defaultRecipient();
       const review = await reviewNotificationFor(
         supabase,
         userId,
@@ -206,7 +224,10 @@ export async function GET(request: NextRequest) {
         translator(recipient.locale),
       );
       if (review) {
-        const delivery = await deliver(supabase, userId, recipient, [review], {
+        notices.push(review);
+      }
+      if (notices.length > 0) {
+        const delivery = await deliver(supabase, userId, recipient, notices, {
           webPushReady,
         });
         bank.notified += delivery.sent;

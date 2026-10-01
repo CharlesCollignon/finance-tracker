@@ -2136,6 +2136,26 @@ export const en = {
    * locale has to be stored per user and not only in a cookie.
    */
   push: {
+    close: {
+      title: "Close {month}",
+      body: "It is your reading day: note your account balance to see what {month} left you.",
+      bodyRun: {
+        one: "It is your reading day: note your account balance. Your run is at {count} month.",
+        other:
+          "It is your reading day: note your account balance. Your run is at {count} months.",
+      },
+    },
+    closed: {
+      title: "{month} is closed",
+      baseline:
+        "Your bank gave the balance: this is where the next closes will start from.",
+      overRecorded:
+        "Your bank gave the balance. There is more in the account than {month} recorded: open the close to see the gap.",
+      kept: "Your bank gave the balance: {month} left you {amount}.",
+      spentMore:
+        "Your bank gave the balance: {month} cost {amount} more than it brought in.",
+      unrecorded: "Unrecorded spending: {amount}.",
+    },
     monthOpen: {
       title: "A new month",
       idle: "Set up what repeats, and see what the month leaves you.",

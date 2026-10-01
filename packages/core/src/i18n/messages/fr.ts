@@ -1495,6 +1495,26 @@ export const fr: Messages = {
   },
 
   push: {
+    close: {
+      title: "Faites le bilan de {month}",
+      body: "C'est le jour de lecture\u00A0: notez le solde de votre compte pour voir ce que {month} vous a laissé.",
+      bodyRun: {
+        one: "C'est le jour de lecture\u00A0: notez le solde de votre compte. Votre série en est à {count} mois.",
+        other:
+          "C'est le jour de lecture\u00A0: notez le solde de votre compte. Votre série en est à {count} mois.",
+      },
+    },
+    closed: {
+      title: "Le bilan de {month} est fait",
+      baseline:
+        "Votre banque a donné le solde\u00A0: c'est le point de départ des prochains bilans.",
+      overRecorded:
+        "Votre banque a donné le solde. Il y a plus sur le compte que ce qui est noté pour {month}\u00A0: ouvrez le bilan pour voir l'écart.",
+      kept: "Votre banque a donné le solde\u00A0: {month} vous a laissé {amount}.",
+      spentMore:
+        "Votre banque a donné le solde\u00A0: {month} a coûté {amount} de plus qu'il n'a rapporté.",
+      unrecorded: "Dépenses non notées\u00A0: {amount}.",
+    },
     monthOpen: {
       title: "Un nouveau mois",
       idle: "Prévoyez ce qui revient, et voyez ce que le mois vous laisse.",
