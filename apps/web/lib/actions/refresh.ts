@@ -8,7 +8,7 @@ import { noteSyncFailure, noteSyncHealthy } from "@/lib/bank/health-note";
 import type { PullFreshness } from "@finance/core/bank-pull";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { syncBankFeed } from "@/lib/bank/sync";
-import { revalidateEverySurface } from "@/lib/revalidate-paths";
+import { revalidateApp } from "@/lib/revalidate-paths";
 import { getLocale, getT } from "@/lib/locale";
 
 /**
@@ -57,7 +57,7 @@ export async function refreshEverythingAction(): Promise<RefreshResult> {
   // or a paused wallet each have something the user can do about them.
   const status = await bankFeedStatus(user.id);
   if (status !== "connected") {
-    revalidateEverySurface();
+    revalidateApp();
     return { success: true, message: describeBankFeedStatus(status) };
   }
 
@@ -66,7 +66,7 @@ export async function refreshEverythingAction(): Promise<RefreshResult> {
     await noteSyncHealthy(user.id);
     const closes = await autoCloseMonths(supabase, user.id);
 
-    revalidateEverySurface();
+    revalidateApp();
 
     const parts: string[] = [];
 

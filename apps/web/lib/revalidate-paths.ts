@@ -1,65 +1,26 @@
 import { revalidatePath } from "next/cache";
 
-/** Pages that depend on recurring templates or derived transactions. */
-export function revalidateRecurringDependents(): void {
-  // First, because it is the landing page and every one of its figures moves
-  // when a template does — the projection and the runway are computed from
-  // nothing else.
-  revalidatePath("/bearing");
-  revalidatePath("/recurring");
-  revalidatePath("/transactions");
-  revalidatePath("/calendar");
-  revalidatePath("/investments");
-  revalidatePath("/investments/look-through");
-  revalidatePath("/investments/analysis");
-  revalidatePath("/plan");
-}
-
 /**
- * Pages that read the accounts a user keeps: Placements lists them, the Plan
- * projects them and Le point counts what they hold.
+ * After a write: every signed-in surface reads fresh.
+ *
+ * One call for every action, because the app's pages are not separate
+ * documents but views of one ledger. A transaction moves Le point's balance,
+ * the Journal, the calendar, the history, the Plan's projection and, when it
+ * is an investment, Placements; a template moves all of those and the
+ * recurring list; a bank sync moves everything at once. The lists this
+ * replaced named the pages each kind of write reached, by hand, and every one
+ * of them had fallen behind — `/history` was missing from all of them, a
+ * category change never reached `/import` or `/welcome`, and a savings
+ * account that created a category never told `/categories`.
+ *
+ * `/(app)` with `"layout"` is the route group itself: every page under it
+ * carries that layout's tag, so a page added there tomorrow is covered the day
+ * it is added, and the marketing pages — at `/`, in their own group, with
+ * nothing to do with a ledger — are left alone. It costs nothing extra: every
+ * app page reads cookies and so is rendered on request anyway; what this
+ * clears is the browser's copy of pages already visited, which is exactly
+ * what would otherwise show the figures from before the write.
  */
-export function revalidateAccountDependents(): void {
-  revalidatePath("/investments");
-  revalidatePath("/investments/look-through");
-  revalidatePath("/investments/analysis");
-  revalidatePath("/plan");
-  revalidatePath("/bearing");
-}
-
-/**
- * Every surface, for the refresh reachable from all of them.
- *
- * Enumerated rather than `revalidatePath("/", "layout")`, which would take
- * the marketing pages with it — they sit at `/` in their own route group and
- * have nothing to do with a bank statement.
- *
- * The list is deliberately the whole app rather than the current page: a pull
- * can add a transaction, close a month and move a wallet's value in one go,
- * and the point of a refresh button on every screen is that you do not have
- * to know which screens the answer touched.
- *
- * Which is why it has to be every surface and not most of them. A server
- * action updates the UI for the paths it names, so a page missing from this
- * list is a page where the control spins, reports what it did, and leaves
- * the figures exactly where they were — the button looking broken on the
- * one screen you happened to press it from. `/import`, `/profile` and
- * `/welcome` were missing, so they are here now, and anything added under
- * `(app)` belongs here the day it is added.
- */
-export function revalidateEverySurface(): void {
-  revalidatePath("/bearing");
-  revalidatePath("/transactions");
-  revalidatePath("/calendar");
-  revalidatePath("/history");
-  revalidatePath("/recurring");
-  revalidatePath("/plan");
-  revalidatePath("/investments");
-  revalidatePath("/investments/look-through");
-  revalidatePath("/investments/analysis");
-  revalidatePath("/categories");
-  revalidatePath("/import");
-  revalidatePath("/profile");
-  revalidatePath("/welcome");
-  revalidatePath("/bank");
+export function revalidateApp(): void {
+  revalidatePath("/(app)", "layout");
 }

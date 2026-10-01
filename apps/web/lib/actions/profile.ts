@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateApp } from "@/lib/revalidate-paths";
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
@@ -44,7 +44,7 @@ export async function updateProfile(
     return { error: error.message };
   }
 
-  revalidatePath("/profile");
+  revalidateApp();
   return { success: true, message: "actions.profileUpdated" };
 }
 
@@ -74,12 +74,7 @@ export async function deleteAllData(
     return { error: message };
   }
 
-  revalidatePath("/bearing");
-  revalidatePath("/transactions");
-  revalidatePath("/recurring");
-  revalidatePath("/calendar");
-  revalidatePath("/investments");
-  revalidatePath("/profile");
+  revalidateApp();
   return {
     success: true,
     message: "actions.allDataDeleted",

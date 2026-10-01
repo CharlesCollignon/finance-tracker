@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateApp } from "@/lib/revalidate-paths";
 
 import { getAuthUser } from "@/lib/auth/get-user";
 import {
@@ -35,7 +35,7 @@ export async function reviewWallets(): Promise<WalletReadActionResult> {
   const outcome = await writeWalletRead(user.id);
 
   if (outcome.read) {
-    revalidatePath("/investments/look-through");
+    revalidateApp();
   }
 
   return outcome;
@@ -129,8 +129,7 @@ export async function readNextInstrument(
   );
 
   if (outcome.status === "read" || outcome.status === "already-fresh") {
-    revalidatePath("/investments/look-through");
-    revalidatePath("/investments");
+    revalidateApp();
   }
 
   return {

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateApp } from "@/lib/revalidate-paths";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { formatLongDate, todayIsoLocal } from "@finance/core/constants";
@@ -21,11 +21,6 @@ import {
 } from "@/lib/queries/month-close";
 
 type ActionResult = { error?: string; success?: boolean; message?: string };
-
-function revalidateCloseDependents(): void {
-  revalidatePath("/bearing");
-  revalidatePath("/plan");
-}
 
 /**
  * What closing this month with this balance would say, without recording it.
@@ -128,7 +123,7 @@ export async function recordMonthClose(
       return { error: error.message };
     }
 
-    revalidateCloseDependents();
+    revalidateApp();
     return { success: true, result };
   } catch (error) {
     return {
@@ -168,7 +163,7 @@ export async function deleteMonthClose(
     return { error: error.message };
   }
 
-  revalidateCloseDependents();
+  revalidateApp();
   return { success: true, message: "actions.closeRemoved" };
 }
 
@@ -201,7 +196,7 @@ export async function updateUnrecordedCap(
     return { error: error.message };
   }
 
-  revalidateCloseDependents();
+  revalidateApp();
   return {
     success: true,
     message: parsed.data.cap === null ? "plan.capRemoved" : "actions.capSet",
@@ -235,6 +230,6 @@ export async function updateCloseDay(closeDay: number): Promise<ActionResult> {
     return { error: error.message };
   }
 
-  revalidateCloseDependents();
+  revalidateApp();
   return { success: true, message: "actions.readingDayUpdated" };
 }

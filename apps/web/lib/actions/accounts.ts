@@ -12,7 +12,7 @@ import { walletIdSchema } from "@finance/core/validations/investments";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getT } from "@/lib/locale";
 import { savingsSchemaMissing } from "@/lib/queries/savings-accounts";
-import { revalidateAccountDependents } from "@/lib/revalidate-paths";
+import { revalidateApp } from "@/lib/revalidate-paths";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -167,7 +167,7 @@ export async function addSavingsAccount(input: {
     return failure(error);
   }
 
-  revalidateAccountDependents();
+  revalidateApp();
   return {
     success: true,
     message: t("accounts.addedSavings", { name, category: name }),
@@ -196,7 +196,7 @@ export async function addWallet(wallet: string): Promise<ActionResult> {
   }
 
   const t = await getT();
-  revalidateAccountDependents();
+  revalidateApp();
   return {
     success: true,
     message: t("accounts.added", { name: t(ENVELOPE_SHORT_KEYS[parsed.data]) }),
@@ -233,7 +233,7 @@ export async function updateSavingsBalance(
     return failure(error);
   }
 
-  revalidateAccountDependents();
+  revalidateApp();
   return { success: true, message: "accounts.saved" };
 }
 
@@ -276,7 +276,7 @@ export async function updateSavingsRate(
     return failure(error);
   }
 
-  revalidateAccountDependents();
+  revalidateApp();
   return { success: true, message: "accounts.saved" };
 }
 
@@ -343,7 +343,7 @@ export async function linkSavingsBank(
     return failure(error);
   }
 
-  revalidateAccountDependents();
+  revalidateApp();
   return { success: true, message: "accounts.saved" };
 }
 
@@ -370,7 +370,7 @@ export async function removeSavingsAccount(id: string): Promise<ActionResult> {
   }
 
   const t = await getT();
-  revalidateAccountDependents();
+  revalidateApp();
   return {
     success: true,
     message: removed
@@ -415,7 +415,7 @@ export async function removeWallet(wallet: string): Promise<ActionResult> {
   }
 
   const t = await getT();
-  revalidateAccountDependents();
+  revalidateApp();
   return {
     success: true,
     message: t("accounts.removed", {

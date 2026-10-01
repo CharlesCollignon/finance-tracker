@@ -14,7 +14,7 @@ import {
 } from "@/lib/bank/service";
 import type { BankInviteSurface } from "@/lib/bank/invite";
 import { getLocale } from "@/lib/locale";
-import { revalidateEverySurface } from "@/lib/revalidate-paths";
+import { revalidateApp } from "@/lib/revalidate-paths";
 import { createClient } from "@/lib/supabase/server";
 
 type Result<T = object> = ({ error?: undefined } & T) | { error: string };
@@ -37,7 +37,7 @@ export async function connectBankFile(
   }
   const result = await connectUserBankFile(user.id, text, consentVersion);
   if (result.error === undefined) {
-    revalidateEverySurface();
+    revalidateApp();
   }
   return result;
 }
@@ -54,7 +54,7 @@ export async function confirmBankConsent(
   if (result.error !== undefined) {
     return { error: result.error };
   }
-  revalidateEverySurface();
+  revalidateApp();
   return {};
 }
 
@@ -69,7 +69,13 @@ export async function listImportAccounts(): Promise<
   return listAccountsToImport(user.id);
 }
 
-/** Bring in one account's whole history. */
+/**
+ * Bring in one account's whole history.
+ *
+ * Every surface is redrawn after each account rather than once at the end,
+ * so the rows appear as they land — and so a first import abandoned halfway
+ * still shows what it did bring in.
+ */
 export async function importAccountHistory(
   accountId: string,
 ): Promise<Result<{ imported: number; pending: number }>> {
@@ -77,7 +83,13 @@ export async function importAccountHistory(
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
-  return importOneAccount(await createClient(), user.id, accountId);
+  const result = await importOneAccount(
+    await createClient(),
+    user.id,
+    accountId,
+  );
+  revalidateApp();
+  return result;
 }
 
 /**
@@ -92,7 +104,7 @@ export async function finishBankImport(): Promise<
     return { error: "errors.notAuthenticated" };
   }
   const result = await finishFirstImport(await createClient(), user.id);
-  revalidateEverySurface();
+  revalidateApp();
   return result;
 }
 
@@ -105,7 +117,7 @@ export async function disconnectBank(
     return { error: "errors.notAuthenticated" };
   }
   const result = await disconnectUserBank(user.id, { deleteImported });
-  revalidateEverySurface();
+  revalidateApp();
   return result;
 }
 
@@ -145,5 +157,11 @@ export async function dismissBankInvite(
         locale: await getLocale(),
         dismissed_prompts: [...dismissed],
       });
-  return error ? { error: error.message } : {};
+  if (error) {
+    return { error: error.message };
+  }
+  // So going back to a page that showed the invitation does not show it
+  // again from the browser's copy.
+  revalidateApp();
+  return {};
 }
