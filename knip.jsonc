@@ -211,17 +211,11 @@
         // EAS Update and does not install the package. A knip heuristic, not
         // a finding.
         "expo-updates",
-
-        // DEBT: nothing imports `expo-blur` — the blur in use comes from
-        // `@sbaiahmed1/react-native-blur`. Delete the dependency and this line
-        // together.
-        "expo-blur",
       ],
       "ignoreIssues": {
         // DEBT — see the note on apps/web's list. Same shape, same intent,
         // same instruction: shrink it.
         "src/components/ui/Skeleton.tsx": ["exports"],
-        "src/components/charts/index.ts": ["types"],
         "src/lib/haptics.ts": ["exports"],
         "src/lib/mutations.ts": ["exports"],
         "src/lib/queries.ts": ["exports"],

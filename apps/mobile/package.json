@@ -13,7 +13,6 @@
     "@wuba/react-native-echarts": "^3.1.1",
     "echarts": "^6.1.0",
     "expo": "~57.0.12",
-    "expo-blur": "~57.0.2",
     "expo-constants": "~57.0.15",
     "expo-device": "~57.0.1",
     "expo-document-picker": "~57.0.1",
@@ -50,7 +49,6 @@
   },
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
