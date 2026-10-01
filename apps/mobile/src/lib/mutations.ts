@@ -19,8 +19,6 @@ import {
 } from "@finance/core/validations/investments";
 import { isSavingsAccountId, type AccountId } from "@finance/core/allocation";
 import {
-  getCurrentMonth,
-  getMonthBounds,
   shiftIsoDate,
   todayIsoLocal,
   formatLongDate,
@@ -46,27 +44,14 @@ import {
   previewMonthClose,
 } from "@/lib/queries";
 import { findLedgerMatch } from "@finance/core/bank-feed";
-import {
-  recurringOccurrenceKey,
-  scheduleDatesBefore,
-} from "@finance/core/apply-recurring";
-import { resolveRecurringAmount } from "@finance/core/recurring-shares";
-import { resolveWalletId } from "@finance/core/investments";
-import { displayNameForRecurringTemplate } from "@finance/core/investment-positions";
-import {
-  BITCOIN_INSTRUMENT,
-  isCryptoCategoryName,
-  isCryptoWallet,
-} from "@finance/core/crypto-holdings";
+import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import type {
   CategoryType,
-  Database,
-  RecurringTemplateWithCategory,
   SavingsAccountKind,
   WalletId,
 } from "@finance/core/types/database";
 
-import { quoteSource } from "@finance/data/quote-source";
+import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import {
   fillDue,
   fillMonth,
@@ -84,11 +69,6 @@ type ActionResult = {
   success?: boolean;
   message?: string;
 };
-
-type RecurringTemplateInsert =
-  Database["public"]["Tables"]["recurring_templates"]["Insert"];
-type RecurringTemplateUpdate =
-  Database["public"]["Tables"]["recurring_templates"]["Update"];
 
 async function requireUserId(): Promise<string | null> {
   const {
@@ -410,83 +390,6 @@ export async function unskipRecurringOccurrence(
   return { success: true };
 }
 
-async function syncInvestmentPositionFromRecurring(
-  userId: string,
-  templateId: string,
-): Promise<void> {
-  const { data: template, error } = await supabase
-    .from("recurring_templates")
-    .select("*, categories(name, type, icon, counts_toward_summary)")
-    .eq("id", templateId)
-    .eq("user_id", userId)
-    .single();
-
-  if (error || !template) {
-    return;
-  }
-
-  const row = template as RecurringTemplateWithCategory;
-  if (
-    row.categories.type !== "investment" ||
-    row.categories.counts_toward_summary !== false
-  ) {
-    return;
-  }
-
-  const wallet = resolveWalletId(row.categories.name);
-  const name = displayNameForRecurringTemplate(row);
-  const isCrypto = isCryptoWallet(wallet);
-  const hasInstrument =
-    isCrypto ||
-    (row.instrument_symbol !== null && row.instrument_name !== null);
-  const instrumentSymbol = isCrypto
-    ? BITCOIN_INSTRUMENT.symbol
-    : row.instrument_symbol;
-  const instrumentName = isCrypto
-    ? BITCOIN_INSTRUMENT.name
-    : row.instrument_name;
-
-  const { data: existing } = await supabase
-    .from("investment_positions")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("recurring_template_id", templateId)
-    .maybeSingle();
-
-  if (existing) {
-    await supabase
-      .from("investment_positions")
-      .update({
-        wallet,
-        name,
-        category_id: row.category_id,
-        updated_at: new Date().toISOString(),
-        ...(hasInstrument
-          ? {
-              instrument_symbol: instrumentSymbol,
-              instrument_name: instrumentName,
-            }
-          : {}),
-      })
-      .eq("id", existing.id)
-      .eq("user_id", userId);
-    return;
-  }
-
-  await supabase.from("investment_positions").insert({
-    user_id: userId,
-    wallet,
-    recurring_template_id: templateId,
-    name,
-    category_id: row.category_id,
-    initial_balance: 0,
-    current_value: null,
-    share_count: null,
-    instrument_symbol: hasInstrument ? instrumentSymbol : null,
-    instrument_name: hasInstrument ? instrumentName : null,
-  });
-}
-
 export async function upsertRecurringTemplate(
   input: Record<string, unknown>,
 ): Promise<ActionResult> {
@@ -500,218 +403,11 @@ export async function upsertRecurringTemplate(
     return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
-  const data = parsed.data;
-  let amount = data.amount ?? 0;
-  let pricingPayload: Pick<
-    RecurringTemplateInsert,
-    | "pricing_type"
-    | "share_count"
-    | "instrument_symbol"
-    | "instrument_name"
-    | "last_quote_price"
-    | "last_quote_at"
-  >;
-
-  if (data.pricingType === "shares") {
-    try {
-      const resolved = await resolveRecurringAmount(
-        {
-          pricing_type: "shares",
-          amount: 0,
-          share_count: data.shareCount ?? null,
-          instrument_symbol: data.instrumentSymbol ?? null,
-          instrument_name: data.instrumentName ?? null,
-          description: data.description ?? null,
-          last_quote_price: null,
-        },
-        quoteSource,
-      );
-      amount = resolved.amount;
-      pricingPayload = {
-        pricing_type: "shares",
-        share_count: data.shareCount ?? null,
-        instrument_symbol: data.instrumentSymbol ?? null,
-        instrument_name: data.instrumentName ?? null,
-        last_quote_price: resolved.quoteUpdate?.last_quote_price ?? null,
-        last_quote_at: resolved.quoteUpdate?.last_quote_at ?? null,
-      };
-    } catch (error) {
-      return {
-        error: error instanceof Error ? error.message : "actions.couldNotPrice",
-      };
-    }
-  } else {
-    pricingPayload = {
-      pricing_type: "fixed",
-      share_count: null,
-      instrument_symbol: data.instrumentSymbol?.trim() || null,
-      instrument_name: data.instrumentName?.trim() || null,
-      last_quote_price: null,
-      last_quote_at: null,
-    };
-  }
-
-  const { data: categoryRow } = await supabase
-    .from("categories")
-    .select("name")
-    .eq("id", data.categoryId)
-    .single();
-
-  if (
-    categoryRow &&
-    isCryptoCategoryName(categoryRow.name) &&
-    data.pricingType === "fixed"
-  ) {
-    pricingPayload.instrument_symbol = BITCOIN_INSTRUMENT.symbol;
-    pricingPayload.instrument_name = BITCOIN_INSTRUMENT.name;
-  }
-
-  const schedule =
-    data.recurrence === "monthly"
-      ? {
-          recurrence: "monthly" as const,
-          day_of_month: data.dayOfMonth,
-          day_of_week: null,
-          month_of_year: null,
-        }
-      : data.recurrence === "weekly"
-        ? {
-            recurrence: "weekly" as const,
-            day_of_month: null,
-            day_of_week: data.dayOfWeek,
-            month_of_year: null,
-          }
-        : {
-            recurrence: "yearly" as const,
-            month_of_year: data.monthOfYear,
-            day_of_month: data.dayOfMonth,
-            day_of_week: null,
-          };
-
-  const base = {
-    category_id: data.categoryId,
-    amount,
-    active: data.active ?? true,
-    description: data.description?.trim() || null,
-    starts_on: data.startsOn ?? null,
-    ends_on: data.endsOn ?? null,
-    ...pricingPayload,
-    ...schedule,
-  };
-
-  let templateId = data.id;
-
-  // What the template said before this save, so the rows it already wrote
-  // can tell whether they have been moved to another day or stopped.
-  const { data: previous } = data.id
-    ? await supabase
-        .from("recurring_templates")
-        .select(
-          "recurrence, day_of_month, day_of_week, month_of_year, starts_on, ends_on, active",
-        )
-        .eq("id", data.id)
-        .eq("user_id", userId)
-        .maybeSingle()
-    : { data: null };
-
-  if (data.id) {
-    const updatePayload: RecurringTemplateUpdate = base;
-    const { error } = await supabase
-      .from("recurring_templates")
-      .update(updatePayload)
-      .eq("id", data.id)
-      .eq("user_id", userId);
-    if (error) {
-      return { error: error.message };
-    }
-  } else {
-    const insertPayload: RecurringTemplateInsert = {
-      user_id: userId,
-      ...base,
-    };
-    const { data: inserted, error } = await supabase
-      .from("recurring_templates")
-      .insert(insertPayload)
-      .select("id")
-      .single();
-    if (error || !inserted) {
-      return { error: error?.message ?? "actions.couldNotSaveRecurring" };
-    }
-    templateId = inserted.id;
-  }
-
-  if (templateId) {
-    await syncInvestmentPositionFromRecurring(userId, templateId);
-  }
-
-  // The ledger follows the template straight away rather than on the next
-  // open. A failure here does not undo a save that worked: the month fills
-  // itself again the next time the app opens.
-  if (templateId && !(await hasBankFeed(userId))) {
-    const today = todayIsoLocal();
-    try {
-      if (previous === null) {
-        // New. It starts from the next date to come — `isDue` sees to that —
-        // unless the user said this month's had already happened.
-        if (input.startThisMonth === true) {
-          const { year, month } = getCurrentMonth();
-          const id = templateId;
-          await fillMonth(
-            supabase,
-            userId,
-            year,
-            month,
-            today,
-            new Set(
-              scheduleDatesBefore(
-                {
-                  recurrence: schedule.recurrence,
-                  day_of_month: schedule.day_of_month ?? null,
-                  day_of_week: schedule.day_of_week ?? null,
-                  month_of_year: schedule.month_of_year ?? null,
-                  starts_on: base.starts_on,
-                  ends_on: base.ends_on,
-                },
-                year,
-                month,
-                today,
-              ).map((date) => recurringOccurrenceKey(id, date)),
-            ),
-          );
-        }
-      } else {
-        const reschedule =
-          previous.recurrence !== schedule.recurrence ||
-          previous.day_of_month !== (schedule.day_of_month ?? null) ||
-          previous.day_of_week !== (schedule.day_of_week ?? null) ||
-          previous.month_of_year !== (schedule.month_of_year ?? null) ||
-          previous.starts_on !== base.starts_on ||
-          previous.ends_on !== base.ends_on ||
-          previous.active !== base.active;
-
-        // "Apply this change to": this month too reaches back to its first
-        // day, upcoming only starts tomorrow. Nothing reaches a past month.
-        await followTemplate(supabase, userId, templateId, {
-          today,
-          from:
-            input.applyToThisMonth === true
-              ? firstOfCurrentMonth()
-              : shiftIsoDate(today, 1),
-          reschedule,
-        });
-      }
-    } catch {
-      // See above.
-    }
-  }
-
-  return { success: true };
-}
-
-/** The first day of the month in progress. */
-function firstOfCurrentMonth(): string {
-  const { year, month } = getCurrentMonth();
-  return getMonthBounds(year, month).start;
+  const saved = await saveRecurringTemplate(supabase, userId, parsed.data, {
+    startThisMonth: input.startThisMonth === true,
+    applyToThisMonth: input.applyToThisMonth === true,
+  });
+  return "error" in saved ? { error: saved.error } : { success: true };
 }
 
 export async function deleteRecurringTemplate(

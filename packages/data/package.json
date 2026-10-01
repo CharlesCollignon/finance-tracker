@@ -8,6 +8,8 @@
     "./client": "./src/client.ts",
     "./quote-source": "./src/quote-source.ts",
     "./recurring-apply": "./src/recurring-apply.ts",
+    "./recurring-positions": "./src/recurring-positions.ts",
+    "./recurring-templates": "./src/recurring-templates.ts",
     "./schema": "./src/schema.ts"
   },
   "dependencies": {
