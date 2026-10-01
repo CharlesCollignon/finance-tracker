@@ -30,7 +30,7 @@ export interface ButtonProps extends PressableProps {
 
 // The rim on the gold variants matches the fill, and that is correct rather
 // than an oversight: the 1.7:1 this once guarded against was gold on the light
-// ground, which no longer exists. On today's ground the fill is ~11:1 and the
+// ground, which no longer exists. On today's ground the fill is ~10:1 and the
 // edge holds on its own. The token stays so the edge can be given contrast
 // again without touching a call site.
 const CONTAINER: Record<Variant, string> = {

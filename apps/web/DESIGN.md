@@ -13,8 +13,8 @@ colors:
   offstage-magenta: "rgba(232, 74, 178, 0.26)"
   rail-indigo: "rgba(88, 52, 196, 0.26)"
   bounce-purple: "rgba(84, 48, 160, 0.30)"
-  lamplit-gold: "#e0be7a"
-  lamplit-gold-hover: "#eacb8f"
+  lamplit-gold: "#ecb25e"
+  lamplit-gold-hover: "#f2c27a"
   foreground: "#ececf1"
   muted-foreground: "#9b9bad"
   success: "#34d399"
@@ -177,7 +177,7 @@ a purple bounce along the bottom, and the brand gold low and faint. Over it
 sits a WebGL veil, blurred past the point of structure, so the whole ground
 drifts slowly enough that nobody catches it moving. The surfaces above are
 translucent and quiet — a card is drawn at 60% over that light and blurs what
-shows through — so they are quiet *against* something they admit rather than
+shows through — so they are quiet _against_ something they admit rather than
 hide, which is what makes the restraint read as a decision rather than as the
 whole of the design. The same cards on an unlit near-black would read as
 printing.
@@ -220,11 +220,13 @@ the colour is in what it paints on.
 
 ### Primary
 
-- **Lamplit Gold** (`#e0be7a`): The only warm thing in the system and the only
-  colour permitted to carry emphasis. At 11:1 against the page it is legible as
-  text, not just as fill, so it serves as both the primary button's ground and
-  an emphatic figure's ink. Also the focus ring.
-- **Lamplit Gold Hover** (`#eacb8f`): The lift on a primary control's hover.
+- **Lamplit Gold** (`#ecb25e`): The only warm thing in the system and the only
+  colour permitted to carry emphasis — an orange-gold since October 2026,
+  moved with the orb so the accent and the mark read as one brand colour. At
+  10:1 against the page it is legible as text, not just as fill, so it serves
+  as both the primary button's ground and an emphatic figure's ink. Also the
+  focus ring.
+- **Lamplit Gold Hover** (`#f2c27a`): The lift on a primary control's hover.
   The only state change a primary button makes to its fill.
 
 ### Neutral
@@ -233,7 +235,7 @@ the colour is in what it paints on.
   the one surface darker than the page, so the page reads as a lit pane set
   into it.
 - **Cool Near-Black** (`#0a0a10`): The application page. Also the ink used
-  *on* the accent, since dark-on-gold is the only readable direction there.
+  _on_ the accent, since dark-on-gold is the only readable direction there.
 - **Marketing Ground** (`#06060a`): The public site, one step deeper than the
   app so a lit artefact over it reads as a thing giving off light.
 - **Sidebar Ground** (`#0d0d15`): The value step between the marketing ground
@@ -281,7 +283,7 @@ meant to reach for them.
   Without it the lower half of the page is dead black and the whole thing reads
   as a bloom pasted onto a void rather than as a lit room.
 
-**Lamplit Gold at 10%** (`rgba(224, 190, 122, 0.10)`) closes the stack, low and
+**Lamplit Gold at 10%** (`rgba(236, 178, 94, 0.10)`) closes the stack, low and
 faint in the bottom-left corner, so the palette still belongs to Pluclair
 rather than to the reference the bloom was drawn from. It is the accent's one
 non-semantic appearance, and at a tenth of an alpha over near-black it does not
@@ -318,7 +320,7 @@ is not purely decorative. An amount is coloured by what kind of money it is:
 
 - **Income** — Success green (`#34d399`)
 - **Expense** — Destructive salmon (`#f87171`)
-- **Savings** — Lamplit Gold (`#e0be7a`)
+- **Savings** — Lamplit Gold (`#ecb25e`)
 - **Investment** — Info cyan (`#22d3ee`)
 
 The same mapping drives allocation charts, so a slice and a row agree about
@@ -474,7 +476,7 @@ it belongs to no component, and nothing is nearer the viewer for sitting over a
 brighter part of it.
 
 The web and the phone are the same material, not two. Both answer that lit
-ground with translucency, and the phone is the *more* opaque of the pair: its
+ground with translucency, and the phone is the _more_ opaque of the pair: its
 cards are drawn at 70% (`rgba(19, 19, 32, 0.7)`) where the web's are at 60%.
 What differs is where the blur lives and what each pays for an edge. On the web
 the blur travels with the surface — every glass weight carries its own
@@ -580,20 +582,33 @@ the inset highlights that are neither — including the orb's, the one
   the underside of the sphere, sized in `cqw` so it scales with the mark rather
   than with the viewport. Interior modelling of a decoration, not a claim about
   where its box sits.
+- **Orb Glow** (`box-shadow: 0 0 calc(var(--orb-size) * (0.18 + 0.32 * var(--orb-pulse)) + 1px) calc(var(--orb-size) * 0.06 * var(--orb-pulse)) rgb(var(--orb-c2) / calc((0.2 + 0.3 * var(--orb-pulse)) * var(--orb-glow)))`):
+  `.pc-orb`, on both surfaces, and the one light the system casts outward. The
+  orb breathes: `--orb-pulse` rises from 0 to 1 and back over a little under
+  six seconds, and the halo swells with it while a warm light rises inside the
+  shell (the first gradient of `.pc-orb::after`). It is the brand's own light,
+  not elevation — it says nothing about where a box sits — and it stops at its
+  rest state under reduced motion. Sized off `--orb-size`, which `Orb` sets
+  from its `size`: on a query container's own box a `cqw` measures the
+  container above it, not the orb. The phone draws the same breath with a
+  halo view and an inner light layer in `Orb.tsx`.
 - **Orb Horizon Rim** (five insets on `.pc-orb-horizon::after`, each offset
   along `--orb-away-x/y`): the landing hero's horizon, the orb several
   viewports across and lit from behind. The filament, two bands and a thread,
   all drawn inside the disc and all in `cqw`; the light beyond the rim is two
   gradient discs behind the orb, not a shadow. Modelling, like the bounce.
 
-Six entries, and exactly two of them carry anything cast: the drop inside
-Marketing Panel Glass and the drop inside Marketing Menu Glass. Everything else
-here is an inset — light drawn on a surface, which is how a system that refuses
-elevation can hold this many and stay flat.
+Seven entries, and exactly two of them carry anything cast: the drop inside
+Marketing Panel Glass and the drop inside Marketing Menu Glass. The Orb Glow
+is outward too, but it is light, not shadow — the mark's own colour around the
+mark, never a surface sitting above another. Everything else here is an inset
+— light drawn on a surface, which is how a system that refuses elevation can
+hold this many and stay flat.
 
 ### Named Rules
 
-**The Flat-With-One-Exception Rule.** No element casts a shadow. The only
+**The Flat-With-One-Exception Rule.** No element casts a shadow (the orb's
+breathing glow is the brand's light, not a shadow, and lives on the orb alone). The only
 depth cue in the system is the bezel's inset highlight, and it describes a
 recess. If something needs to feel separate, step its surface value or give it
 a hairline — do not reach for a drop shadow, and do not add an elevation scale.
@@ -696,7 +711,7 @@ all; changing one alone breaks the frame.
 - **Shape:** Control radius (`0.625rem`), minimum height 44px on touch, relaxed
   on large screens.
 - **Primary:** Lamplit Gold ground with near-black ink, plus a 1px rim.
-  Hover raises the fill to `#eacb8f`.
+  Hover raises the fill to `#f2c27a`.
 - **Secondary:** Raised surface ground, foreground ink, hover to muted.
 - **Outline / Ghost:** Transparent ground — outline carries a hairline, ghost
   does not — both washing to muted on hover.

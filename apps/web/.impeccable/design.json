@@ -7,7 +7,7 @@
       "lamplit-gold": {
         "role": "primary",
         "displayName": "Lamplit Gold",
-        "canonical": "#e0be7a",
+        "canonical": "#ecb25e",
         "tonalRamp": [
           "#2a2113",
           "#453620",
@@ -15,7 +15,7 @@
           "#7f663d",
           "#9d7f4d",
           "#bc9a5e",
-          "#e0be7a",
+          "#ecb25e",
           "#f3ddb4"
         ]
       },
@@ -225,7 +225,7 @@
       "refersTo": "button-primary",
       "description": "The one gold control on a screen. Used for the single action that screen exists for.",
       "html": "<button class=\"ds-btn-primary\">Close the month</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: #e0be7a; color: #0a0a10; border: 1px solid #e0be7a; border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-primary:hover { background: #eacb8f; } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #e0be7a; }"
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: #ecb25e; color: #0a0a10; border: 1px solid #ecb25e; border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-primary:hover { background: #f2c27a; } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #ecb25e; }"
     },
     {
       "name": "Secondary Button",
@@ -233,7 +233,7 @@
       "refersTo": "button-secondary",
       "description": "The ordinary control. Everything that is an action but not the action.",
       "html": "<button class=\"ds-btn-secondary\">Skip this one</button>",
-      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: #1c1c2b; color: #ececf1; border: none; border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-secondary:hover { background: #262033; } .ds-btn-secondary:active { transform: scale(0.98); } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #e0be7a; }"
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: #1c1c2b; color: #ececf1; border: none; border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-secondary:hover { background: #262033; } .ds-btn-secondary:active { transform: scale(0.98); } .ds-btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #ecb25e; }"
     },
     {
       "name": "Outline Button",
@@ -241,7 +241,7 @@
       "refersTo": "button-outline",
       "description": "A hairline-bounded control for a secondary path that still needs an edge.",
       "html": "<button class=\"ds-btn-outline\">Review inbox</button>",
-      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: transparent; color: #ececf1; border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-outline:hover { background: #1c1c2b; } .ds-btn-outline:active { transform: scale(0.98); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #e0be7a; }"
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px; background: transparent; color: #ececf1; border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-outline:hover { background: #1c1c2b; } .ds-btn-outline:active { transform: scale(0.98); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #ecb25e; }"
     },
     {
       "name": "Pill Button with Nub",
@@ -249,7 +249,7 @@
       "refersTo": "button-pill",
       "description": "The marketing call to action. A circular nub nests flush inside the end padding and drifts up-and-right on hover.",
       "html": "<button class=\"ds-btn-pill\">Start with this month<span class=\"ds-btn-nub\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/><polyline points=\"12 5 19 12 12 19\"/></svg></span></button>",
-      "css": ".ds-btn-pill { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 6px 6px 20px; background: #e0be7a; color: #0a0a10; border: 1px solid #e0be7a; border-radius: 9999px; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-pill:hover { background: #eacb8f; } .ds-btn-pill:active { transform: scale(0.98); } .ds-btn-pill:focus-visible { outline: none; box-shadow: 0 0 0 2px #06060a, 0 0 0 4px #e0be7a; } .ds-btn-nub { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9999px; background: rgba(0, 0, 0, 0.1); transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-pill:hover .ds-btn-nub { transform: translate(2px, -2px); }"
+      "css": ".ds-btn-pill { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; padding: 6px 6px 6px 20px; background: #ecb25e; color: #0a0a10; border: 1px solid #ecb25e; border-radius: 9999px; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; cursor: pointer; transition: all 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-pill:hover { background: #f2c27a; } .ds-btn-pill:active { transform: scale(0.98); } .ds-btn-pill:focus-visible { outline: none; box-shadow: 0 0 0 2px #06060a, 0 0 0 4px #ecb25e; } .ds-btn-nub { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9999px; background: rgba(0, 0, 0, 0.1); transition: transform 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-btn-pill:hover .ds-btn-nub { transform: translate(2px, -2px); }"
     },
     {
       "name": "Text Input",
@@ -257,7 +257,7 @@
       "refersTo": "input",
       "description": "Card-surface ground with a hairline. Focus draws a gold ring; the border itself does not move.",
       "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Closing balance\" />",
-      "css": ".ds-input { width: 100%; min-height: 44px; padding: 8px 12px; background: #131320; color: #ececf1; border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; letter-spacing: -0.01em; transition: border-color 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-input::placeholder { color: #9b9bad; } .ds-input:focus-visible { outline: none; box-shadow: 0 0 0 2px #e0be7a; }"
+      "css": ".ds-input { width: 100%; min-height: 44px; padding: 8px 12px; background: #131320; color: #ececf1; border: 1px solid rgba(236, 236, 241, 0.1); border-radius: 0.625rem; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 0.875rem; letter-spacing: -0.01em; transition: border-color 200ms cubic-bezier(0.32, 0.72, 0, 1); } .ds-input::placeholder { color: #9b9bad; } .ds-input:focus-visible { outline: none; box-shadow: 0 0 0 2px #ecb25e; }"
     },
     {
       "name": "Card with Bezel",

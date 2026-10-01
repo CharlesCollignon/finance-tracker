@@ -52,7 +52,7 @@ const LIGHTS = [
     cx: "18%",
     cy: "96%",
     r: "70%",
-    color: "#e0be7a",
+    color: "#ecb25e",
     opacity: 0.1,
   },
 ] as const;

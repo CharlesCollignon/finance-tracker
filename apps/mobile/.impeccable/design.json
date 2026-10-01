@@ -7,8 +7,8 @@
       "lamplit-gold": {
         "role": "primary",
         "displayName": "Lamplit Gold",
-        "canonical": "#e0be7a",
-        "tonalRamp": ["#2a2113", "#453620", "#614d2e", "#7f663d", "#9d7f4d", "#bc9a5e", "#e0be7a", "#f3ddb4"]
+        "canonical": "#ecb25e",
+        "tonalRamp": ["#2a2113", "#453620", "#614d2e", "#7f663d", "#9d7f4d", "#bc9a5e", "#ecb25e", "#f3ddb4"]
       },
       "cool-near-black": {
         "role": "neutral",
@@ -64,7 +64,7 @@
       "refersTo": "button-primary",
       "description": "The gold control, with a rim. 48dp minimum so the Android floor is met on both platforms.",
       "html": "<button class=\"ds-m-btn\">Apply this month</button>",
-      "css": ".ds-m-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 10px 16px; background: #e0be7a; color: #0a0a10; border: 1px solid #e0be7a; border-radius: 10px; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 200ms ease; } .ds-m-btn:active { background: #eacb8f; transform: scale(0.98); } .ds-m-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #e0be7a; }"
+      "css": ".ds-m-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 10px 16px; background: #ecb25e; color: #0a0a10; border: 1px solid #ecb25e; border-radius: 10px; font-family: 'Instrument Sans', Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 200ms ease; } .ds-m-btn:active { background: #f2c27a; transform: scale(0.98); } .ds-m-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px #0a0a10, 0 0 0 4px #ecb25e; }"
     },
     {
       "name": "Secondary Button",

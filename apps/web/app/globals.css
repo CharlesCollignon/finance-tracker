@@ -53,6 +53,15 @@
   initial-value: 0%;
 }
 
+/* The orb's breath: 0 at rest, 1 at the top of the inhale. Registered so it
+   interpolates, and inherited so the halo on `.pc-orb` and the light inside
+   its `::after` rise and fall together from one animated value. */
+@property --orb-pulse {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
 @font-face {
   font-family: "Orbit";
   src: url("/fonts/OrbitMaxenceDuterne-Regular.otf") format("opentype");
@@ -76,10 +85,11 @@
  */
 :root,
 .dark {
-  /* Surfaces stay the cool near-black they were; only the accent turns gold.
-     At 11:1 on this ground it can be text as well as fill and needs no rim.
-     It is no longer the orb's colour — the mark went warmer and this did not
-     follow, deliberately; see `--orb-c1/2/3`. */
+  /* Surfaces stay the cool near-black they were; only the accent is warm.
+     An orange-gold since October 2026, moved with the orb so the brand reads
+     as one colour: 35° of hue, where it was a paler 40°. At 10:1 on this
+     ground it can be text as well as fill and needs no rim. The orb's own
+     family (`--orb-c1/2/3`) sits a step warmer still, as a lit body does. */
   --background: #0a0a10;
   --foreground: #ececf1;
   /* The desktop shell's bezel and the notch cut from it: the one surface
@@ -90,12 +100,12 @@
   --card-foreground: #ececf1;
   --popover: #131320;
   --popover-foreground: #ececf1;
-  --primary: #e0be7a;
-  --primary-hover: #eacb8f;
+  --primary: #ecb25e;
+  --primary-hover: #f2c27a;
   --primary-foreground: #0a0a10;
-  --primary-ink: #e0be7a;
-  /* No visible rim needed at 11:1; matching the fill keeps it out of the way. */
-  --primary-rim: #e0be7a;
+  --primary-ink: #ecb25e;
+  /* No visible rim needed at 10:1; matching the fill keeps it out of the way. */
+  --primary-rim: #ecb25e;
   --secondary: #1c1c2b;
   --secondary-foreground: #ececf1;
   --muted: #1c1c2b;
@@ -117,7 +127,7 @@
   --border: rgba(236, 236, 241, 0.1);
   --hairline-strong: rgba(236, 236, 241, 0.16);
   --input: #131320;
-  --ring: #e0be7a;
+  --ring: #ecb25e;
   --chart-1: #d8a041;
   --chart-2: #b05645;
   --chart-3: #9fd08b;
@@ -125,12 +135,12 @@
   --chart-5: #968d88;
   --sidebar: #0d0d15;
   --sidebar-foreground: #ececf1;
-  --sidebar-primary: #e0be7a;
+  --sidebar-primary: #ecb25e;
   --sidebar-primary-foreground: #0a0a10;
   --sidebar-accent: #1c1c2b;
   --sidebar-accent-foreground: #ececf1;
   --sidebar-border: rgba(236, 236, 241, 0.1);
-  --sidebar-ring: #e0be7a;
+  --sidebar-ring: #ecb25e;
   --shadow-bezel-inset: inset 0 1px 1px rgba(255, 246, 230, 0.08);
   color-scheme: dark;
 }
@@ -744,9 +754,9 @@ html:has(.marketing-shell) {
 .marketing-bloom {
   background: radial-gradient(
     closest-side,
-    rgba(240, 180, 90, 0.32) 0%,
-    rgba(240, 180, 90, 0.13) 42%,
-    rgba(240, 180, 90, 0.04) 64%,
+    rgba(244, 162, 58, 0.32) 0%,
+    rgba(244, 162, 58, 0.13) 42%,
+    rgba(244, 162, 58, 0.04) 64%,
     transparent 78%
   );
 }
@@ -881,19 +891,19 @@ html:has(.marketing-shell) {
      own family, which is what keeps the drifting light reading as one colour
      rather than as a second one crossing the sphere.
 
-     Warmer than the gold these replaced: c2 moved from 42° to 36° of hue and
-     gained chroma, c1 followed it to 42°, and c3 went further still to 28°,
-     because a warm body darkens towards red rather than towards its own hue.
-     The floor on all three is `--warning` at 27°, which marks a row waiting
-     on a decision: the body sits 9° off it, so an 8px dot in the app is
-     still its own colour next to the mark in the header.
+     Orange-gold since October 2026, at the owner's asking: c2 moved from
+     36° to 33.5° of hue and to 89% saturation, c1 followed it to 40°, and
+     c3 to 24°, because a warm body darkens towards red rather than towards
+     its own hue. The floor on all three is `--warning` at 27°, which marks a
+     row waiting on a decision: the body sits 6.5° off it and well below its
+     lightness, so an 8px dot in the app is still its own colour next to the
+     mark in the header.
 
-     `--primary` did not follow. The product's accent is still the gold
-     #e0be7a, and these are the orb alone — the sphere and the light it
-     throws, on both clients. */
-  --orb-c1: 255 231 174;
-  --orb-c2: 240 180 90;
-  --orb-c3: 92 52 16;
+     `--primary` moved with it, to #ecb25e, a step paler than the body so
+     that it still reads as the accent of an interface rather than as light. */
+  --orb-c1: 255 217 140;
+  --orb-c2: 244 162 58;
+  --orb-c3: 106 48 10;
   /* One churn of the interior, one turn of the near cloud layer, one of the
      far one against it. The interior walks `--angle` through five conic
      sweeps; each layer then carries its masses round bodily, in opposite
@@ -909,6 +919,21 @@ html:has(.marketing-shell) {
      multiplied by it, so one number moves the whole thing between
      near-transparent and near-solid. */
   --orb-glass: 1;
+  /* How strongly it glows. The breath below scales a halo outside the shell
+     and a warm light inside it; this scales both, per instance. */
+  --orb-glow: 1;
+  /* The halo the orb breathes out: soft, sized by its own box, and the only
+     light the mark casts. Read in the shadow vocabulary in DESIGN.md as
+     "Orb Glow". It rests at a faint ring and swells on each inhale.
+
+     Sized off `--orb-size`, which `Orb` sets from its `size`, rather than in
+     `cqw` like everything else here: a container's own properties resolve
+     container units against the container *above* it, so on this element a
+     `cqw` is a slice of the page, not of the orb. */
+  box-shadow: 0 0
+    calc(var(--orb-size, 24px) * (0.18 + 0.32 * var(--orb-pulse)) + 1px)
+    calc(var(--orb-size, 24px) * 0.06 * var(--orb-pulse))
+    rgb(var(--orb-c2) / calc((0.2 + 0.3 * var(--orb-pulse)) * var(--orb-glow)));
   /* The tint in the glass, not a body: a wash of amber that thickens towards
      the rim the way a shell does when you look through its edge. What makes
      this read as a sphere rather than as a tinted hole is the blurred ground
@@ -938,7 +963,11 @@ html:has(.marketing-shell) {
   animation:
     orb-drift-a 19s ease-in-out infinite alternate,
     orb-drift-b 27s ease-in-out infinite alternate,
-    orb-drift-c 34s ease-in-out infinite alternate;
+    orb-drift-c 34s ease-in-out infinite alternate,
+    orb-pulse var(--orb-breath) ease-in-out infinite alternate;
+  /* One inhale; the breath is two of these, a little under six seconds —
+     a resting breath, and slower than anything else on the page moves. */
+  --orb-breath: 2.8s;
 }
 
 /* The first cloud layer: three soft masses and five conic sweeps, blurred
@@ -1106,6 +1135,14 @@ html:has(.marketing-shell) {
   height: 100%;
   border-radius: 50%;
   background:
+    /* The light inside, rising with the breath: the clouds seem to brighten
+       from within rather than the shell from without. */
+    radial-gradient(
+      circle at 50% 56%,
+      rgb(var(--orb-c1) / calc(0.34 * var(--orb-pulse) * var(--orb-glow))) 0%,
+      rgb(var(--orb-c2) / calc(0.16 * var(--orb-pulse) * var(--orb-glow))) 34%,
+      transparent 66%
+    ),
     radial-gradient(
       ellipse 22% 16% at 63% 22%,
       rgb(255 253 246 / calc(0.72 * var(--orb-glass))) 0%,
@@ -1136,13 +1173,15 @@ html:has(.marketing-shell) {
 .pc-orb-mark {
   --orb-glass: 2.6;
   --orb-blur: 12cqw;
-  /* Both of the interior's newer motions are switched off at this size, and
-     the mark is back to exactly the composition it had before they existed.
-     Neither is a loss: a second cloud layer under a shell this dense is
-     invisible, and the wander is a few percent of 22px, which is under a
-     pixel — so both would be pure cost, repeated on every orb in every
-     header on every page. The hero is where they are worth paying for. */
-  animation: none;
+  /* A little more glow than the hero: at 22px the halo is a few pixels, and
+     it is most of what the breath has to show with. */
+  --orb-glow: 1.25;
+  /* The interior's wander is switched off at this size: a second cloud layer
+     under a shell this dense is invisible, and the wander is a few percent of
+     22px, which is under a pixel — pure cost, repeated on every orb in every
+     header on every page. The breath stays: a halo a few pixels wide is the
+     one motion that reads at mark size, and it is the mark's own. */
+  animation: orb-pulse var(--orb-breath) ease-in-out infinite alternate;
 }
 
 .pc-orb-mark .pc-orb-clouds {
@@ -1184,6 +1223,8 @@ html:has(.marketing-shell) {
   );
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+  /* A body in front of a light does not glow; its sky does. */
+  box-shadow: none;
   animation: none;
 }
 
@@ -1225,6 +1266,16 @@ html:has(.marketing-shell) {
   }
   to {
     rotate: 360deg;
+  }
+}
+
+/* The breath. Run `alternate`, so each half is one inhale or one exhale. */
+@keyframes orb-pulse {
+  from {
+    --orb-pulse: 0;
+  }
+  to {
+    --orb-pulse: 1;
   }
 }
 
@@ -1437,7 +1488,7 @@ html:has(.marketing-shell) {
     ),
     radial-gradient(
       60% 40% at 12% 100%,
-      rgba(224, 190, 122, 0.1) 0%,
+      rgba(236, 178, 94, 0.1) 0%,
       transparent 70%
     );
 }

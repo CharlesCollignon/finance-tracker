@@ -10,7 +10,7 @@ export const buttonVariants = cva(
       variant: {
         // The rim currently matches the fill, and that is correct rather
         // than an oversight: the 1.7:1 this once guarded against was gold on
-        // the paper theme, and on today's ground the fill is ~11:1, so the
+        // the paper theme, and on today's ground the fill is ~10:1, so the
         // edge holds on its own. It stays a token of its own so the edge can
         // be given contrast again without touching a call site.
         default:

@@ -64,6 +64,16 @@ const GLASS: Record<OrbSize, number> = {
   watermark: 1,
 };
 
+/**
+ * One inhale, in ms; the breath runs back and forth, so a whole breath is
+ * twice this — a little under six seconds, a resting breath. The same period
+ * as `--orb-breath` on the web.
+ */
+const INHALE = 2_800;
+
+/** How far the halo reaches, as a multiple of the orb's own box. */
+const HALO = 1.8;
+
 /** A full roll of the loading indicator, in ms. */
 const LOADING_PERIOD = 1600;
 
@@ -108,15 +118,15 @@ const WANDER = 0.055;
  * sit on an opaque ball; painted at low alpha over a near-black screen the
  * same colour comes out khaki.
  *
- * Warmer than the gold they were: the body moved from 42° of hue to 36°, the
- * light followed to 42°, and the shadow went to 28°, because a warm body
- * darkens towards red rather than towards its own hue. `theme/tokens.ts`
- * did not follow — `primary` is still #e0be7a and every accent in the app
- * with it. This is the sphere alone, on both clients.
+ * Orange-gold since October 2026: the body moved from 36° of hue to 33.5°
+ * and to 89% saturation, the light followed to 40°, and the shadow went to
+ * 24°, because a warm body darkens towards red rather than towards its own
+ * hue. `primary` in `theme/tokens.ts` moved with it, to #ecb25e, so the
+ * accent and the mark read as one brand colour.
  */
-const C1 = "#ffe7ae";
-const C2 = "#f0b45a";
-const C3 = "#5c3410";
+const C1 = "#ffd98c";
+const C2 = "#f4a23a";
+const C3 = "#6a300a";
 
 /** Alpha times glass, clamped — 2.6 × 0.72 would otherwise ask for 187%. */
 const a = (alpha: number, glass: number) => Math.min(1, alpha * glass);
@@ -243,6 +253,9 @@ export function Orb({
   const wander = useSharedValue(0);
   const counterWander = useSharedValue(0);
   const breathe = useSharedValue(0);
+  /* The glow's breath, 0 to 1 and back. Held at the middle under reduced
+     motion: a steady soft light rather than none. */
+  const pulse = useSharedValue(0.5);
 
   useEffect(() => {
     if (reduce) {
@@ -251,6 +264,7 @@ export function Orb({
       wander.value = 0;
       counterWander.value = 0;
       breathe.value = 0;
+      pulse.value = 0.5;
       return;
     }
     const turn = (period: number, to: number) =>
@@ -278,7 +292,15 @@ export function Orb({
     counterWander.value = sway(COUNTER_WANDER_PERIOD);
     breathe.value = -1;
     breathe.value = sway(BREATHE_PERIOD);
-  }, [reduce, drift, counterDrift, wander, counterWander, breathe]);
+    /* A sine in and out, so the light swells and settles like a breath
+       rather than ramping and stopping. */
+    pulse.value = 0;
+    pulse.value = withRepeat(
+      withTiming(1, { duration: INHALE, easing: Easing.inOut(Easing.sin) }),
+      -1,
+      true,
+    );
+  }, [reduce, drift, counterDrift, wander, counterWander, breathe, pulse]);
 
   useEffect(() => {
     if (!rolling) {
@@ -320,6 +342,16 @@ export function Orb({
   const rollStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${roll.value}deg` }],
   }));
+  /* The halo swells and brightens on the inhale; the light inside rises with
+     it, so the orb seems to glow from within rather than be lit from out. */
+  const haloStyle = useAnimatedStyle(() => ({
+    opacity: 0.45 + pulse.value * 0.55,
+    transform: [{ scale: 0.9 + pulse.value * 0.14 }],
+  }));
+  const innerStyle = useAnimatedStyle(() => ({
+    opacity: pulse.value,
+  }));
+  const halo = Math.round(box * HALO);
 
   const layer = { position: "absolute", width: box, height: box } as const;
 
@@ -331,6 +363,23 @@ export function Orb({
       style={[{ width: box, height: box }, style]}
       {...props}
     >
+      {/* Behind the glass, so the frost above blurs some of it in: the
+          light reads as coming through the shell as well as round it. */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          {
+            position: "absolute",
+            width: halo,
+            height: halo,
+            left: (box - halo) / 2,
+            top: (box - halo) / 2,
+          },
+          haloStyle,
+        ]}
+      >
+        <OrbHalo size={halo} id={`${uid}-halo`} />
+      </Animated.View>
       <Animated.View
         style={[{ width: box, height: box }, rollStyle]}
         pointerEvents="none"
@@ -372,6 +421,9 @@ export function Orb({
               { cx: 28, cy: 60, rx: 22, ry: 22, color: C2, alpha: 0.2 },
             ]}
           />
+        </Animated.View>
+        <Animated.View style={[layer, innerStyle]} pointerEvents="none">
+          <InnerLight box={box} id={`${uid}-inner`} />
         </Animated.View>
         <OrbOptics box={box} glass={glass} id={`${uid}-optics`} />
       </Animated.View>
@@ -440,6 +492,50 @@ function OrbOptics({
       <Ellipse cx="42" cy="86" rx="30" ry="14" fill={`url(#${id}-bounce)`} />
       <Ellipse cx="63" cy="22" rx="17" ry="12" fill={`url(#${id}-spec)`} />
       <Ellipse cx="37" cy="71" rx="7" ry="6" fill={`url(#${id}-spec2)`} />
+    </Svg>
+  );
+}
+
+/**
+ * The light the orb breathes out: a soft disc of the body colour, faint at
+ * the centre (the glass covers it) and strongest just past the rim, fading
+ * to nothing at the halo's edge. Drawn once; the breath is the opacity and
+ * scale of the view around it, which run on the UI thread.
+ */
+function OrbHalo({ size, id }: { size: number; id: string }) {
+  const rim = 1 / HALO;
+  return (
+    <Svg width={size} height={size} viewBox="0 0 100 100">
+      <Defs>
+        <RadialGradient id={`${id}-g`} cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor={C2} stopOpacity={0.22} />
+          <Stop offset={rim * 0.9} stopColor={C2} stopOpacity={0.3} />
+          <Stop offset={rim + 0.08} stopColor={C2} stopOpacity={0.14} />
+          <Stop offset={rim + 0.24} stopColor={C2} stopOpacity={0.04} />
+          <Stop offset="1" stopColor={C2} stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Ellipse cx="50" cy="50" rx="50" ry="50" fill={`url(#${id}-g)`} />
+    </Svg>
+  );
+}
+
+/**
+ * The warm light inside the shell that rises with each breath — the web
+ * orb's first `::after` gradient. Faded out well inside the rim, so it needs
+ * no clip.
+ */
+function InnerLight({ box, id }: { box: number; id: string }) {
+  return (
+    <Svg width={box} height={box} viewBox="0 0 100 100">
+      <Defs>
+        <RadialGradient id={`${id}-g`} cx="50%" cy="56%" r="50%">
+          <Stop offset="0" stopColor={C1} stopOpacity={0.34} />
+          <Stop offset="0.34" stopColor={C2} stopOpacity={0.16} />
+          <Stop offset="0.66" stopColor={C2} stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Ellipse cx="50" cy="56" rx="50" ry="50" fill={`url(#${id}-g)`} />
     </Svg>
   );
 }

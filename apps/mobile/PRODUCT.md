@@ -165,7 +165,7 @@ with the words swapped; copy is written whole in each language rather than
 concatenated from fragments.
 
 Identity assets already fixed: the splash and Android adaptive-icon background
-`#0a0a10`, and the notification accent `#e0be7a`.
+`#0a0a10`, and the notification accent `#ecb25e`.
 
 ## Evidence on Hand
 

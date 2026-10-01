@@ -15,16 +15,16 @@ import type { TextStyle } from "react-native";
  */
 export const COLORS = {
   // Surfaces stay the cool near-black they were; only the accent turns gold.
-  // At 11:1 on this ground the orb gold reads as text too, and needs no rim.
+  // At 10:1 on this ground the orange-gold reads as text too, and needs no rim.
   background: "#0a0a10",
   foreground: "#ececf1",
   card: "#131320",
   cardForeground: "#ececf1",
-  primary: "#e0be7a",
-  primaryHover: "#eacb8f",
+  primary: "#ecb25e",
+  primaryHover: "#f2c27a",
   primaryForeground: "#0a0a10",
-  primaryInk: "#e0be7a",
-  primaryRim: "#e0be7a",
+  primaryInk: "#ecb25e",
+  primaryRim: "#ecb25e",
   secondary: "#1c1c2b",
   secondaryForeground: "#ececf1",
   muted: "#1c1c2b",

@@ -56,7 +56,7 @@ const BLOOM = [
   "radial-gradient(95% 60% at var(--bloom-x) 82%, rgba(84,48,160,0.30) 0%, transparent 74%)",
   // The brand gold, low and faint, so the palette still belongs to Pluclair
   // rather than to the reference it was drawn from.
-  "radial-gradient(60% 40% at 12% 100%, rgba(224,190,122,0.10) 0%, transparent 70%)",
+  "radial-gradient(60% 40% at 12% 100%, rgba(236,178,94,0.10) 0%, transparent 70%)",
 ].join(", ");
 
 /** Rotates the shader's own palette toward the reference's violet. */

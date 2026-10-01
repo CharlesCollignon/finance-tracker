@@ -6,8 +6,8 @@ colors:
   card-surface: "#131320"
   raised-surface: "#1c1c2b"
   accent-wash: "#262015"
-  lamplit-gold: "#e0be7a"
-  lamplit-gold-hover: "#eacb8f"
+  lamplit-gold: "#ecb25e"
+  lamplit-gold-hover: "#f2c27a"
   foreground: "#ececf1"
   muted-foreground: "#9b9bad"
   success: "#34d399"
@@ -166,10 +166,10 @@ modifiers keep working, plus the mobile-only hairline weights.
 
 ### Primary
 
-- **Lamplit Gold** (`#e0be7a`): The accent, the primary button's fill, and the
-  colour of a savings amount. At 11:1 on this ground it reads as text as well
-  as fill.
-- **Lamplit Gold Hover** (`#eacb8f`): The pressed and hovered state of a gold
+- **Lamplit Gold** (`#ecb25e`): The accent, the primary button's fill, and the
+  colour of a savings amount — an orange-gold since October 2026, moved with
+  the orb. At 10:1 on this ground it reads as text as well as fill.
+- **Lamplit Gold Hover** (`#f2c27a`): The pressed and hovered state of a gold
   control.
 
 ### Neutral
@@ -193,7 +193,7 @@ purely decorative:
 
 - **Income** — Success green (`#34d399`)
 - **Expense** — Destructive salmon (`#f87171`)
-- **Savings** — Lamplit Gold (`#e0be7a`)
+- **Savings** — Lamplit Gold (`#ecb25e`)
 - **Investment** — Info cyan (`#22d3ee`)
 
 **Awaiting Orange** (`#fb923c`) is separate from all four. It marks a row
@@ -377,6 +377,17 @@ foreground with its filled icon, never gold. Screens pad their scroll content
 with `useTabBarClearance()`, which already counts the bar, its inset and the
 "+" above it. A view of a surface (the calendar, the look-through) is a hidden
 tab, so the bar stays on it.
+
+### The Orb
+
+The mark is a glass sphere with orange-gold clouds turning inside it
+(`components/Orb.tsx`, the twin of the web's `.pc-orb`), and it breathes: a
+halo of the body colour swells around it and a warm light rises inside the
+shell, in and out over a little under six seconds (`INHALE`, the web's
+`--orb-breath`). Both are opacity and scale on the UI thread. Under reduced
+motion the breath holds at its middle — a steady soft light, not none. The
+launcher icons are a still render of the same palette
+(`scripts/build-brand-icons.mjs`).
 
 ### Sheets and Modals
 

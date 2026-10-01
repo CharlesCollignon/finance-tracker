@@ -15,7 +15,7 @@ import { useLocale } from "@/lib/locale-context";
  *
  * Deliberately not the app's `buttonVariants`. Those are tuned for the paper
  * ground, where a gold fill is 1.9:1 and needs `--primary-rim` to keep an
- * edge at all. Here the ground is near-black, gold sits at 11:1, and the rim
+ * edge at all. Here the ground is near-black, gold sits at 10:1, and the rim
  * would only add a line the design does not want.
  */
 
@@ -41,8 +41,8 @@ const sizes = {
    button is neither glass nor a recess — it is a lens flare, which is what it
    already looked like at nav size.
 
-   Nothing is lost by it. The fill is Lamplit Gold, `--primary` at #e0be7a,
-   which this file's note above measures at 11:1 on the near-black marketing
+   Nothing is lost by it. The fill is Lamplit Gold, `--primary` at #ecb25e,
+   which this file's note above measures at 10:1 on the near-black marketing
    ground; the other button in the pair is a 6%-white pane behind a hairline.
    Which of the two is the primary action was never the halo's work. */
 const solid =

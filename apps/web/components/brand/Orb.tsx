@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -27,7 +28,8 @@ interface OrbProps {
 }
 
 /**
- * The Pluclair orb: a glass shell with warm clouds turning slowly inside it.
+ * The Pluclair orb: a glass shell with warm clouds turning slowly inside it,
+ * breathing a soft orange-gold light in and out.
  *
  * Two empty divs and a stylesheet, which is what keeps it a server component
  * — it can sit in the app header and the marketing footer without either of
@@ -55,7 +57,12 @@ export function Orb({ size, className, tone = "hero" }: OrbProps) {
         tone === "horizon" && "pc-orb-horizon",
         className,
       )}
-      style={{ width: size, height: size }}
+      // `--orb-size` sizes the halo the orb breathes out; see `.pc-orb`.
+      style={
+        size
+          ? ({ width: size, height: size, "--orb-size": size } as CSSProperties)
+          : undefined
+      }
       aria-hidden
     >
       <div className="pc-orb-clouds" />
