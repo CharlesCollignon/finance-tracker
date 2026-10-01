@@ -39,8 +39,8 @@ import {
 import { cn } from "@/lib/cn";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
+import { setAccountCountsAsCash } from "@/lib/mutations";
 import { getBankAccounts } from "@/lib/queries";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -469,14 +469,13 @@ function AccountsCard({
     }
     void hapticLight();
     setPending(true);
-    const { error } = await supabase
-      .from("bank_accounts")
-      .update({ counts_as_cash: next })
-      .eq("user_id", user.id)
-      .eq("provider_account_id", account.provider_account_id);
+    const result = await setAccountCountsAsCash(
+      account.provider_account_id,
+      next,
+    );
     setPending(false);
-    if (error) {
-      toast(error.message, "error");
+    if (result.error) {
+      toast(result.error, "error");
       return;
     }
     notifyDataChanged();

@@ -2538,3 +2538,33 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
 
   return { success: true, message: "actions.backInInbox" };
 }
+
+/* ------------------------------------------------- the bank's accounts */
+
+/**
+ * Whether one of the bank's accounts is spending money — counted in the
+ * balance Le point carries and the month close reads — or kept apart, as a
+ * savings account the bank happens to hold. The web's
+ * `setAccountCountsAsCash`; the phone writes it through Supabase like every
+ * other mutation here, rather than from the screen that shows the switch.
+ */
+export async function setAccountCountsAsCash(
+  providerAccountId: string,
+  counts: boolean,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "errors.notAuthenticated" };
+  }
+
+  const { error } = await supabase
+    .from("bank_accounts")
+    .update({ counts_as_cash: counts })
+    .eq("user_id", userId)
+    .eq("provider_account_id", providerAccountId);
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
+}
