@@ -24,3 +24,25 @@ import type { CategoryType } from "@finance/core/types/database";
 export function amountSign(type: CategoryType): "+" | "−" {
   return type === "income" ? "+" : "−";
 }
+
+/**
+ * A change, signed: "+120 €", "−35 €", or the bare figure for zero.
+ *
+ * For a gain or loss rather than a movement — there is no category to ask,
+ * only whether the figure went up or down — with the same U+2212 minus as
+ * `amountSign`. `format` is the caller's own formatter (euros, a percentage),
+ * handed the absolute value.
+ */
+export function formatSigned(
+  amount: number,
+  format: (value: number) => string,
+): string {
+  const formatted = format(Math.abs(amount));
+  if (amount > 0) {
+    return `+${formatted}`;
+  }
+  if (amount < 0) {
+    return `−${formatted}`;
+  }
+  return formatted;
+}

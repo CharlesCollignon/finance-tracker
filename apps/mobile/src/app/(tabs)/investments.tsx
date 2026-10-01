@@ -46,6 +46,7 @@ import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
+import { formatSigned } from "@finance/core/amount-sign";
 
 const ADD = "add" as const;
 
@@ -76,15 +77,14 @@ export default function InvestmentsScreen() {
   const [editingPosition, setEditingPosition] =
     useState<InvestmentPositionItem | null>(null);
 
-  const { data, loading, refreshing, onRefreshAll, error } =
-    useRefreshable(
-      async () =>
-        user
-          ? // History powers the per-position charts.
-            getPlacementsData(user.id, locale, { includeHistory: true })
-          : null,
-      [user?.id, locale],
-    );
+  const { data, loading, refreshing, onRefreshAll, error } = useRefreshable(
+    async () =>
+      user
+        ? // History powers the per-position charts.
+          getPlacementsData(user.id, locale, { includeHistory: true })
+        : null,
+    [user?.id, locale],
+  );
 
   const portfolio = data?.portfolio;
   const upcoming = data?.upcoming ?? [];
@@ -425,11 +425,4 @@ export default function InvestmentsScreen() {
       />
     </Screen>
   );
-}
-
-function formatSigned(amount: number, format: (v: number) => string): string {
-  const formatted = format(Math.abs(amount));
-  if (amount > 0) return `+${formatted}`;
-  if (amount < 0) return `−${formatted}`;
-  return formatted;
 }

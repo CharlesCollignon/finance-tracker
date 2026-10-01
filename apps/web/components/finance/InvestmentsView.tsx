@@ -58,6 +58,7 @@ import { useFormatCurrency } from "@/lib/use-currency";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
+import { formatSigned } from "@finance/core/amount-sign";
 
 interface InvestmentsViewProps {
   portfolio: InvestmentPortfolioSummary;
@@ -73,21 +74,6 @@ interface InvestmentsViewProps {
   savingsMonthly: Partial<Record<SavingsAccountKind, number>>;
   /** Each wallet's plan row: the PEA's opening date and ceiling live there. */
   plans: WalletPlan[];
-}
-
-/** Module-level (not a hook), so it takes the caller's already-bound formatter. */
-function formatSignedEuro(
-  amount: number,
-  format: (amount: number) => string,
-): string {
-  const formatted = format(Math.abs(amount));
-  if (amount > 0) {
-    return `+${formatted}`;
-  }
-  if (amount < 0) {
-    return `−${formatted}`;
-  }
-  return formatted;
 }
 
 /**
@@ -237,7 +223,7 @@ export function InvestmentsView({
                             : "text-destructive",
                         )}
                       >
-                        {formatSignedEuro(portfolio.totalGainLoss, formatEuro)}
+                        {formatSigned(portfolio.totalGainLoss, formatEuro)}
                       </span>
                     </>
                   ) : null}
@@ -507,7 +493,7 @@ function WalletPanel({
           <Metric
             label={t("wallets.profitLoss")}
             value={
-              showPl ? formatSignedEuro(column.totalGainLoss, formatEuro) : "—"
+              showPl ? formatSigned(column.totalGainLoss, formatEuro) : "—"
             }
             tone={
               showPl
@@ -688,7 +674,7 @@ function InvestmentPositionRow({
           />
           <InlineMetric
             label={t("wallets.profitLoss")}
-            value={formatSignedEuro(item.gainLoss, formatEuro)}
+            value={formatSigned(item.gainLoss, formatEuro)}
             suffix={
               returnPct === null
                 ? undefined

@@ -21,6 +21,7 @@ import { useThemeColors } from "@/theme/useThemeColors";
 import { useT, useLocale } from "@/providers/LocaleProvider";
 import { formatSignedPercentOf } from "@finance/core/constants";
 import { INTL_LOCALES } from "@finance/core/i18n/locale";
+import { formatSigned } from "@finance/core/amount-sign";
 
 interface WalletPerformanceProps {
   portfolio: InvestmentPortfolioSummary;
@@ -59,13 +60,6 @@ const RANGE_LABEL_KEY = {
 function slice(points: PositionChartPoint[], range: RangeKey) {
   const months = RANGE_MONTHS[range];
   return months >= points.length ? points : points.slice(-months);
-}
-
-function formatSigned(amount: number, format: (v: number) => string): string {
-  const formatted = format(Math.abs(amount));
-  if (amount > 0) return `+${formatted}`;
-  if (amount < 0) return `−${formatted}`;
-  return formatted;
 }
 
 /** Metric with the colour bar tying it to its line on the chart. */

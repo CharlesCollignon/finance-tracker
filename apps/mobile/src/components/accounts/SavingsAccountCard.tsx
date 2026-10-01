@@ -12,6 +12,7 @@ import {
   SAVINGS_KIND_RATE_KEYS,
   SAVINGS_KIND_TAX_KEYS,
   yearlyInterest,
+  formatRate,
 } from "@finance/core/savings-accounts";
 import type { BankAccount } from "@finance/core/types/database";
 
@@ -35,7 +36,6 @@ import { useToast } from "@/providers/ToastProvider";
 import { TYPE } from "@/theme/tokens";
 
 import { BankChoice } from "./AddAccountSheet";
-import { formatRate } from "./format";
 
 type Editing = "balance" | "rate" | "bank" | null;
 

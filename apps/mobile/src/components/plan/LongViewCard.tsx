@@ -13,9 +13,7 @@ import {
   type Envelope,
   type EnvelopeId,
 } from "@finance/core/future-plan";
-import { SAVINGS_KINDS } from "@finance/core/savings-accounts";
 import type { Translate } from "@finance/core/i18n/t";
-import type { SavingsAccountKind } from "@finance/core/types/database";
 
 import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -32,15 +30,12 @@ import { NumberField, Stepper } from "./Fields";
 import { usePlanMoney } from "./format";
 import { PlanCard } from "./PlanCard";
 import { LAYER_COLORS, YearsChart } from "./YearsChart";
+import { isSavingsKind } from "@finance/core/savings-accounts";
 
 export const MAX_YEARS = 40;
 
 export function envelopeName(id: EnvelopeId, t: Translate): string {
   return t(ENVELOPE_SHORT_KEYS[id]);
-}
-
-function isSavingsKind(id: EnvelopeId): id is SavingsAccountKind {
-  return SAVINGS_KINDS.includes(id as SavingsAccountKind);
 }
 
 /** Half a point at a time, kept to one decimal so 2.5% never reads 2.4999%. */

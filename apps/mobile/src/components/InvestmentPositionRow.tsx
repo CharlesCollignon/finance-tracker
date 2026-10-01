@@ -15,6 +15,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
 import { useT } from "@/providers/LocaleProvider";
+import { formatSigned } from "@finance/core/amount-sign";
 
 interface InvestmentPositionRowProps {
   item: InvestmentPositionItem;
@@ -47,13 +48,6 @@ function Metric({
       </PrivateAmount>
     </View>
   );
-}
-
-function formatSigned(amount: number, format: (v: number) => string): string {
-  const formatted = format(Math.abs(amount));
-  if (amount > 0) return `+${formatted}`;
-  if (amount < 0) return `−${formatted}`;
-  return formatted;
 }
 
 /** One wallet position: identity, the three metrics, and an optional chart. */
