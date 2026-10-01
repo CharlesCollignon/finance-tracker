@@ -53,8 +53,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setInitializing(false);
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
+    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
+      // A token refresh, about once an hour, changes nothing a screen reads
+      // from here — who is signed in, and since when they were last edited.
+      // The token itself is read fresh from the client by whatever sends it
+      // (`callWebApi`, the month read). Keeping the same object is what stops
+      // that hourly refresh re-rendering the thirty-odd components that
+      // only wanted the user.
+      setSession((previous) =>
+        event === "TOKEN_REFRESHED" &&
+        previous?.user.id === next?.user.id &&
+        previous?.user.updated_at === next?.user.updated_at
+          ? previous
+          : next,
+      );
     });
 
     const linkingSub = Linking.addEventListener("url", async ({ url }) => {
