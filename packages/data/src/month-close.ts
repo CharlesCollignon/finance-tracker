@@ -1,0 +1,346 @@
+import { cashDateOf, rowsByCashDate } from "@finance/core/cash-date";
+import { formatMonthLabel, getMonthBounds } from "@finance/core/constants";
+import type { Locale } from "@finance/core/i18n/locale";
+import {
+  buildMonthClose,
+  buildRecordedCashFlows,
+  closableMonth,
+  monthKeyOfClose,
+  summarizeCloseHistory,
+  type CloseableMonth,
+  type CloseHistorySummary,
+  type ClosedMonthOutcome,
+  type MonthCloseResult,
+  type RecordedCashFlows,
+} from "@finance/core/month-close";
+import { allRows } from "@finance/core/paging";
+import type {
+  MonthClose,
+  TransactionWithCategory,
+} from "@finance/core/types/database";
+
+import type { Db } from "./client";
+import { getMovedBetween } from "./moved-rows";
+
+/**
+ * The month close's reads, for both apps: the settings, every close, and
+ * each closed month replayed from the rows — so the history and the run come
+ * out of the same arithmetic as the reveal, never from figures frozen when a
+ * close was recorded.
+ */
+
+/** What the app assumes until the user says otherwise. */
+export const DEFAULT_CLOSE_DAY = 5;
+
+export interface CloseSettings {
+  closeDay: number;
+  unrecordedCap: number | null;
+}
+
+export async function getMonthCloseSettings(
+  db: Db,
+  userId: string,
+): Promise<CloseSettings> {
+  const { data, error } = await db
+    .from("month_close_settings")
+    .select("close_day, unrecorded_cap")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    closeDay: data?.close_day ?? DEFAULT_CLOSE_DAY,
+    unrecordedCap:
+      data?.unrecorded_cap === null || data?.unrecorded_cap === undefined
+        ? null
+        : Number(data.unrecorded_cap),
+  };
+}
+
+/** Every close, oldest first, which is the order the chain reads in. */
+export async function getMonthCloses(
+  db: Db,
+  userId: string,
+): Promise<MonthClose[]> {
+  const { data, error } = await db
+    .from("month_closes")
+    .select("*")
+    .eq("user_id", userId)
+    .order("month", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+  return data ?? [];
+}
+
+/**
+ * What the account actually saw in one month.
+ *
+ * Both halves are needed: cash leaves for a broker either as a transaction in
+ * a category that counts toward the summary, or as a wallet transfer in its
+ * own table, and a reconciliation that missed the second would report every
+ * transfer as unrecorded spending.
+ */
+export async function getRecordedCashFlows(
+  db: Db,
+  userId: string,
+  year: number,
+  month: number,
+): Promise<RecordedCashFlows> {
+  const { start, end } = getMonthBounds(year, month);
+
+  const [
+    { data: transactions, error: txError },
+    { data: transfers, error: trError },
+    moved,
+  ] = await Promise.all([
+    db
+      .from("transactions")
+      .select("*, categories(name, type, icon, counts_toward_summary)")
+      .eq("user_id", userId)
+      .gte("occurred_on", start)
+      .lte("occurred_on", end),
+    db
+      .from("wallet_transfers")
+      .select("amount")
+      .eq("user_id", userId)
+      .gte("occurred_on", start)
+      .lte("occurred_on", end),
+    // An income paid early for next month left its mark on this month's
+    // balance, whichever month it counts for.
+    getMovedBetween(db, userId, start, end),
+  ]);
+
+  if (txError) {
+    throw txError;
+  }
+  if (trError) {
+    throw trError;
+  }
+
+  // By the day the money moved: the close compares the ledger with what the
+  // account held, and the account received the October salary in September.
+  return buildRecordedCashFlows(
+    rowsByCashDate(
+      (transactions ?? []) as TransactionWithCategory[],
+      moved,
+      start,
+      end,
+    ),
+    transfers ?? [],
+  );
+}
+
+export interface ClosedMonthRow extends ClosedMonthOutcome {
+  label: string;
+  closingBalance: number;
+  observedOn: string;
+  status: MonthCloseResult["status"];
+  keptRate: number | null;
+  /**
+   * What the account actually moved over the month. Null on a baseline, which
+   * has nothing before it to have moved from.
+   */
+  cashChange: number | null;
+  /** Whether the figure was typed in or read off the statement. */
+  source: "manual" | "bank";
+}
+
+export interface MonthCloseOverview {
+  settings: CloseSettings;
+  /** Every closed month, newest first, with its reconciliation replayed. */
+  history: ClosedMonthRow[];
+  summary: CloseHistorySummary;
+  /** The month the user should be asked about, if any. */
+  next: CloseableMonth | null;
+}
+
+function monthKeyOfDate(isoDate: string): string {
+  return isoDate.slice(0, 7);
+}
+
+/**
+ * Every closed month's cash flows, in two queries rather than two per month.
+ *
+ * The range is bounded by the closes themselves, so a user with three closed
+ * months reads three months of transactions and not their whole history.
+ */
+async function cashFlowsByMonth(
+  db: Db,
+  userId: string,
+  monthKeys: readonly string[],
+): Promise<Map<string, RecordedCashFlows>> {
+  const byMonth = new Map<string, RecordedCashFlows>();
+  if (monthKeys.length === 0) {
+    return byMonth;
+  }
+
+  const sorted = [...monthKeys].sort();
+  const [firstYear, firstMonth] = sorted[0]!.split("-").map(Number);
+  const [lastYear, lastMonth] =
+    sorted[sorted.length - 1]!.split("-").map(Number);
+  const { start } = getMonthBounds(firstYear!, firstMonth!);
+  const { end } = getMonthBounds(lastYear!, lastMonth!);
+
+  const [transactions, { data: transfers, error: trError }, moved] =
+    await Promise.all([
+      // From the first close to the last, so a year of closes is a year of
+      // rows — past the server's cap, and paged for it.
+      allRows((from, to) =>
+        db
+          .from("transactions")
+          .select("*, categories(name, type, icon, counts_toward_summary)")
+          .eq("user_id", userId)
+          .gte("occurred_on", start)
+          .lte("occurred_on", end)
+          .order("id")
+          .range(from, to),
+      ),
+      db
+        .from("wallet_transfers")
+        .select("amount, occurred_on")
+        .eq("user_id", userId)
+        .gte("occurred_on", start)
+        .lte("occurred_on", end),
+      getMovedBetween(db, userId, start, end),
+    ]);
+
+  if (trError) {
+    throw trError;
+  }
+
+  // Each month by the day its money moved, as the close of one month does.
+  const txByMonth = new Map<string, TransactionWithCategory[]>();
+  for (const row of rowsByCashDate(
+    transactions as TransactionWithCategory[],
+    moved,
+    start,
+    end,
+  )) {
+    const key = monthKeyOfDate(cashDateOf(row));
+    txByMonth.set(key, [...(txByMonth.get(key) ?? []), row]);
+  }
+
+  const transferByMonth = new Map<string, { amount: number }[]>();
+  for (const row of transfers ?? []) {
+    const key = monthKeyOfDate(row.occurred_on as string);
+    transferByMonth.set(key, [
+      ...(transferByMonth.get(key) ?? []),
+      { amount: Number(row.amount) },
+    ]);
+  }
+
+  for (const key of sorted) {
+    byMonth.set(
+      key,
+      buildRecordedCashFlows(
+        txByMonth.get(key) ?? [],
+        transferByMonth.get(key) ?? [],
+      ),
+    );
+  }
+
+  return byMonth;
+}
+
+/**
+ * Replays every close in order so the history and the streak come out of the
+ * same arithmetic as the reveal, rather than from figures frozen when each
+ * close was recorded. A transaction entered late for a month already closed
+ * should move that month's unrecorded figure: the balance did not change, so
+ * what the app failed to account for genuinely shrank.
+ */
+export async function getMonthCloseOverview(
+  db: Db,
+  userId: string,
+  today: string,
+  locale: Locale,
+): Promise<MonthCloseOverview> {
+  const [settings, closes] = await Promise.all([
+    getMonthCloseSettings(db, userId),
+    getMonthCloses(db, userId),
+  ]);
+
+  const monthKeys = closes.map((close) => monthKeyOfClose(close.month));
+  const flowsByMonth = await cashFlowsByMonth(db, userId, monthKeys);
+
+  const emptyFlows: RecordedCashFlows = {
+    income: 0,
+    expenses: 0,
+    savings: 0,
+    transfers: 0,
+  };
+
+  const history: ClosedMonthRow[] = [];
+  let openingBalance: number | null = null;
+
+  for (const close of closes) {
+    const monthKey = monthKeyOfClose(close.month);
+    const [year, month] = monthKey.split("-").map(Number);
+    const closingBalance = Number(close.closing_balance);
+
+    const result = buildMonthClose({
+      openingBalance,
+      closingBalance,
+      flows: flowsByMonth.get(monthKey) ?? emptyFlows,
+    });
+
+    history.push({
+      monthKey,
+      label: formatMonthLabel(year!, month!, locale),
+      closingBalance,
+      observedOn: close.observed_on,
+      status: result.status,
+      unrecorded: result.unrecorded,
+      kept: result.kept,
+      keptRate: result.keptRate,
+      cashChange:
+        openingBalance === null ? null : closingBalance - openingBalance,
+      source: close.balance_source ?? "manual",
+    });
+
+    openingBalance = closingBalance;
+  }
+
+  const lastClosedMonthKey =
+    monthKeys.length > 0 ? monthKeys[monthKeys.length - 1]! : null;
+
+  return {
+    settings,
+    history: [...history].reverse(),
+    summary: summarizeCloseHistory(history, settings.unrecordedCap),
+    next: closableMonth(today, settings.closeDay, lastClosedMonthKey, locale),
+  };
+}
+
+/**
+ * A dry run of one month's close, so the sheet can show what it is about to
+ * reconcile before the user commits a figure.
+ */
+export async function previewMonthClose(
+  db: Db,
+  userId: string,
+  year: number,
+  month: number,
+  closingBalance: number,
+): Promise<MonthCloseResult> {
+  const [closes, flows] = await Promise.all([
+    getMonthCloses(db, userId),
+    getRecordedCashFlows(db, userId, year, month),
+  ]);
+
+  const monthKey = `${year}-${String(month).padStart(2, "0")}`;
+  const previous = closes.filter(
+    (close) => monthKeyOfClose(close.month) < monthKey,
+  );
+  const openingBalance =
+    previous.length > 0
+      ? Number(previous[previous.length - 1]!.closing_balance)
+      : null;
+
+  return buildMonthClose({ openingBalance, closingBalance, flows });
+}
