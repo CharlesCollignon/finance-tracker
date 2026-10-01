@@ -12,8 +12,6 @@ import {
 } from "@finance/core/validations/investments";
 import { isSavingsAccountId, type AccountId } from "@finance/core/allocation";
 import { type MonthCloseResult } from "@finance/core/month-close";
-import { ledgerRowsAround } from "@/lib/queries";
-import { findLedgerMatch } from "@finance/core/bank-feed";
 import type {
   SavingsAccountKind,
   WalletId,
@@ -22,6 +20,7 @@ import type {
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import * as categories from "@finance/data/categories";
 import * as closing from "@finance/data/closing";
+import * as feed from "@finance/data/feed-decisions";
 import * as decisions from "@finance/data/fulfilment-decisions";
 import * as ledger from "@finance/data/ledger";
 import * as occurrences from "@finance/data/occurrences";
@@ -631,242 +630,27 @@ export async function refuseFulfilment(
 /* ---------------------------------------------------- the review inbox */
 
 /**
- * Deciding what a bank row was.
- *
- * Three decisions, following the web server actions in `lib/actions/bank.ts`:
- * file it under a category, leave it out, or take the decision back. The
- * phone writes them through Supabase directly, under the same row-level
- * security every other mutation here relies on, because the web actions exist
- * only to give a browser a server — they hold no secret the phone lacks.
- *
- * Until now none of these existed on the phone at all, so a bank feed the
- * cron filled with six entries needing a category could only be answered on
- * the web app.
+ * Filing, leaving out and putting back one bank row —
+ * `@finance/data/feed-decisions`, the same rules as the web's and the
+ * group decisions the web's `/api/bank/feed` route takes.
  */
 
-/**
- * Accept one waiting row into the ledger, under the category the user picked.
- *
- * The same duplicate check the sync does, because pressing Add is no less
- * likely to double-record a movement: a card fee written by a recurring
- * template days earlier is still there whichever path the bank's copy arrives
- * by. `force` is how the user says they know better — two identical coffees
- * on the same day are two coffees.
- */
 export async function importFeedItem(
   itemId: string,
   categoryId: string,
   force = false,
-): Promise<ActionResult & { duplicateOf?: string }> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const { data: item } = await supabase
-    .from("bank_feed_items")
-    .select("id, occurred_on, amount, note, status, direction")
-    .eq("id", itemId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (!item) {
-    return { error: "actions.entryNoLongerWaiting" };
-  }
-  if (item.status !== "pending") {
-    return { error: "actions.entryAlreadyDealtWith" };
-  }
-
-  if (!force) {
-    const existing = await ledgerRowsAround(userId, item.occurred_on);
-    const already = findLedgerMatch(
-      {
-        providerId: "",
-        occurredOn: item.occurred_on,
-        amount: String(item.amount),
-        currency: "EUR",
-        direction: item.direction,
-        counterparty: null,
-        merchantCategoryCode: null,
-        balanceAfter: null,
-        note: item.note,
-      },
-      existing,
-    );
-
-    if (already) {
-      const { error: matchError } = await supabase
-        .from("bank_feed_items")
-        .update({
-          status: "imported",
-          transaction_id: already.transactionId,
-          // Recorded as a match, because that is what it is: this row was
-          // filed against a transaction that was already there rather than
-          // one it wrote. Undo reads this to decide whether the transaction
-          // is its to delete — see `undoFeedDecision`.
-          decided_by: "match:ledger",
-        })
-        .eq("id", itemId)
-        .eq("user_id", userId);
-      if (matchError) {
-        return { error: matchError.message };
-      }
-
-      return {
-        success: true,
-        duplicateOf: already.transactionId,
-        message: "actions.alreadyInLedger",
-      };
-    }
-  }
-
-  const { data: transaction, error } = await supabase
-    .from("transactions")
-    .insert({
-      user_id: userId,
-      category_id: categoryId,
-      occurred_on: item.occurred_on,
-      amount: item.amount,
-      note: item.note,
-    })
-    .select("id")
-    .single();
-
-  if (error || !transaction) {
-    return { error: error?.message ?? "actions.couldNotAddEntry" };
-  }
-
-  const { error: fileError } = await supabase
-    .from("bank_feed_items")
-    .update({ status: "imported", transaction_id: transaction.id })
-    .eq("id", itemId)
-    .eq("user_id", userId);
-  if (fileError) {
-    // Taken back, so the row and the ledger agree: a transaction whose bank
-    // row still waits would be filed a second time by the next answer.
-    await supabase
-      .from("transactions")
-      .delete()
-      .eq("id", transaction.id)
-      .eq("user_id", userId);
-    return { error: fileError.message };
-  }
-
-  return { success: true, message: "recurringProposals.added" };
+): Promise<ActionResult<{ duplicateOf?: string }>> {
+  return asUser((userId) =>
+    feed.importFeedItem(supabase, userId, itemId, categoryId, force),
+  );
 }
 
-/**
- * Leave one out of the ledger for good.
- *
- * Kept rather than deleted, so the next sync does not offer it again — the
- * provider keeps returning it for as long as it is in the statement window.
- */
 export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const { error } = await supabase
-    .from("bank_feed_items")
-    .update({ status: "ignored" })
-    .eq("id", itemId)
-    .eq("user_id", userId)
-    .eq("status", "pending");
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { success: true, message: "actions.leftOut" };
+  return asUser((userId) => feed.ignoreFeedItem(supabase, userId, itemId));
 }
 
-/**
- * Whether this row's transaction belongs to something else.
- *
- * `decided_by` records how the row was settled, and two of its three shapes
- * mean "filed against a transaction that was already there":
- * `match:recurring` when the sync paired it with a recurring charge, and
- * `match:ledger` when pressing Add found the movement already recorded. Only
- * `auto:` and a category picked by hand actually write a transaction.
- */
-function matchedExistingTransaction(decidedBy: string | null): boolean {
-  return decidedBy?.startsWith("match:") ?? false;
-}
-
-/**
- * Take back a decision and put the row back in the inbox.
- *
- * For something this row added, the ledger row it created goes with it:
- * leaving the transaction behind while the bank row returns to the inbox is
- * how the same expense gets recorded twice. For something left out there is
- * nothing to remove, and it simply comes back.
- *
- * But not every decided row wrote a transaction. A row can be filed *against*
- * one that was already there — the sync does it when a recurring charge looks
- * to be the same movement, and pressing Add does it when the duplicate check
- * finds the amount already recorded, which is the "Already in your ledger"
- * message. Deleting whatever `transaction_id` points at either way takes out
- * a transaction the user entered themselves and puts the bank row back to
- * pending, leaving the ledger quietly a row short with nothing to say it
- * happened. The web twin carries the same guard.
- *
- * There is no `recategoriseFeedItem` here, unlike the web. Its reason to
- * exist is that changing a filed row's category must not change the
- * transaction's id, since a tag or a closed month may already point at it.
- * The phone's inbox only offers Undo on rows decided seconds earlier in the
- * same sitting, where nothing can be pointing at them yet, and undoing puts
- * the row back at the front of the queue with the picker already open —
- * which reaches the same place in one tap.
- */
 export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const { data: item } = await supabase
-    .from("bank_feed_items")
-    .select("transaction_id, status, decided_by")
-    .eq("id", itemId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (!item) {
-    return { error: "actions.entryNoLongerHere" };
-  }
-  if (item.status === "pending") {
-    return { error: "actions.entryAlreadyWaiting" };
-  }
-
-  // The feed row first: if deleting the transaction succeeded and this then
-  // failed, the row would point at a transaction that no longer exists.
-  // `decided_by` goes too, as on the web: a row put back after a match must
-  // not carry `match:` into its next decision, where it would stop a later
-  // undo from deleting the transaction that decision wrote.
-  const { error } = await supabase
-    .from("bank_feed_items")
-    .update({ status: "pending", transaction_id: null, decided_by: null })
-    .eq("id", itemId)
-    .eq("user_id", userId);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  if (item.transaction_id && !matchedExistingTransaction(item.decided_by)) {
-    const { error: deleteError } = await supabase
-      .from("transactions")
-      .delete()
-      .eq("id", item.transaction_id)
-      .eq("user_id", userId);
-
-    if (deleteError) {
-      return { error: deleteError.message };
-    }
-  }
-
-  return { success: true, message: "actions.backInInbox" };
+  return asUser((userId) => feed.undoFeedDecision(supabase, userId, itemId));
 }
 
 /* ------------------------------------------------- the bank's accounts */
