@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
+import { LiveRefresh } from "@/components/layout/LiveRefresh";
 import { MonthFill } from "@/components/layout/MonthFill";
 import { OutboxBanner } from "@/components/layout/OutboxBanner";
 import { QuickAddProvider } from "@/components/layout/QuickAddProvider";
@@ -73,6 +74,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       : 0,
   ]);
 
+  // Different on every render, which is the point: `LiveRefresh` tells a
+  // render it asked for from one a write caused. A server component renders
+  // once per request, so the purity rule's concern — a value that changes
+  // between re-renders of the same tree — is the behaviour wanted here.
+  // eslint-disable-next-line react-hooks/purity
+  const renderedAt = Date.now();
+
   return (
     <ToastProvider>
       <RefreshProvider initial={freshness} connected={connected}>
@@ -83,6 +91,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         >
           <ServiceWorkerRegistration />
           {user ? <MonthFill /> : null}
+          {user ? <LiveRefresh renderedAt={renderedAt} /> : null}
           <OutboxBanner />
           <AppShell
             displayName={name}
