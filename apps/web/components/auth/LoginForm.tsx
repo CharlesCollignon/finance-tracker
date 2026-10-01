@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { FormLabel } from "@/components/ui/FormLabel";
 import { Text } from "@/components/ui/Text";
 import { signIn } from "@/lib/actions/finance";
+import { resolveMessage } from "@finance/core/i18n/t";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
@@ -87,7 +88,9 @@ export function LoginForm() {
         </div>
         {(state.error || authError) && (
           <Text className="text-center text-sm text-destructive">
-            {state.error ?? t("auth.linkExpired")}
+            {state.error
+              ? resolveMessage(t, state.error)
+              : t("auth.linkExpired")}
           </Text>
         )}
         <Button

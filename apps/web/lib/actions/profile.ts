@@ -11,15 +11,15 @@ import {
   deleteConfirmSchema,
   profileSchema,
 } from "@finance/core/validations/profile";
-
-type ActionResult = { error?: string; success?: boolean; message?: string };
+import { dbError } from "@finance/data/errors";
+import type { ActionResult, FormState } from "@finance/core/action-result";
 
 async function getUser() {
   return getAuthUser();
 }
 
 export async function updateProfile(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const user = await getUser();
@@ -41,7 +41,7 @@ export async function updateProfile(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   revalidateApp();
@@ -49,7 +49,7 @@ export async function updateProfile(
 }
 
 export async function deleteAllData(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const user = await getUser();
@@ -82,7 +82,7 @@ export async function deleteAllData(
 }
 
 export async function deleteAccount(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const user = await getUser();
@@ -121,7 +121,7 @@ export async function deleteAccount(
   const { error } = await admin.auth.admin.deleteUser(user.id);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   await supabase.auth.signOut();

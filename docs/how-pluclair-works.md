@@ -169,7 +169,6 @@ assertion script:
   session there, so a read asked for from the phone is likely written from
   empty figures. Only `readCashBalance` and `getFulfilledKeys` take the
   bearer client.
-- Sign-in and sign-up still show Supabase's own error text, which is English; the reset-request and new-password screens map error codes to catalogue keys (`packages/core/src/auth-errors.ts`, `apps/web/lib/auth/new-password-error.ts`).
 - `writesAFigure` (`packages/core/src/month-read.ts`) knows English number words only; a French spelled-out quantity would pass. Digits are always caught.
 - The Wallets page's fund-cost card and the look-through page can show different annual costs: only the look-through falls back to the shortlist's charge hints.
 - `packages/core/src/types/database.ts` is maintained by hand and does not list `deleted_at` (migration `036`).

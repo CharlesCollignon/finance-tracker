@@ -2,6 +2,7 @@ import type { BankFeedItem, CategoryType } from "@finance/core/types/database";
 
 import { supabase } from "@/lib/supabase";
 import { callWebApi, webApiAvailable } from "@/lib/web-api";
+import { dbError } from "@finance/data/errors";
 
 /**
  * What the review inbox needs beyond the pending rows themselves: what was
@@ -139,5 +140,5 @@ export async function recategoriseDecidedRows(
     .update({ category_id: categoryId })
     .in("id", transactionIds);
 
-  return error ? { error: error.message } : {};
+  return error ? { error: dbError(error) } : {};
 }

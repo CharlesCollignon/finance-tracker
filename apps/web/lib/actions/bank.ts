@@ -20,6 +20,7 @@ import { todayIsoLocal } from "@finance/core/constants";
 import { getT } from "@/lib/locale";
 
 import type { ActionResult } from "@finance/core/action-result";
+import { dbError } from "@finance/data/errors";
 
 const uuid = z.string().uuid();
 
@@ -206,7 +207,7 @@ export async function recategoriseFeedItem(
     .eq("user_id", user.id);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   revalidateApp();
@@ -329,7 +330,7 @@ export async function reopenSwallowedFeedItems(): Promise<
     .select("id");
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   revalidateApp();
@@ -382,7 +383,7 @@ export async function acceptRecurringProposal(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   revalidateApp();
@@ -414,7 +415,7 @@ export async function dismissRecurringProposal(
     );
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   revalidateApp();
@@ -446,7 +447,7 @@ export async function setAccountCountsAsCash(
     .eq("provider_account_id", providerAccountId);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   // Ticking an account can make a month closable that was not before.

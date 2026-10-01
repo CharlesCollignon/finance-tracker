@@ -2131,6 +2131,13 @@ export const fr: Messages = {
   },
 
   errors: {
+    emailNotConfirmed:
+      "Confirmez d'abord votre adresse\u00A0: ouvrez le lien reçu par e-mail.",
+    tooManyAttempts: "Trop d'essais. Attendez quelques minutes et réessayez.",
+    signInFailed: "La connexion n'a pas fonctionné. Réessayez.",
+    accountExists: "Un compte existe déjà avec cette adresse. Connectez-vous.",
+    signUpClosed: "Les inscriptions sont fermées pour l'instant.",
+    signUpFailed: "L'inscription n'a pas fonctionné. Réessayez.",
     alreadyThere: "C'est déjà enregistré.",
     stillInUse: "C'est encore utilisé ailleurs, donc rien n'a été supprimé.",
     notAllowed: "Vous n'avez pas accès à cet élément.",

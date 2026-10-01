@@ -21,6 +21,7 @@ import * as occurrences from "@finance/data/occurrences";
 import type { ActionResult } from "@finance/core/action-result";
 import { supabase } from "@/lib/supabase";
 import type { Locale } from "@finance/core/i18n/locale";
+import { dbError } from "@finance/data/errors";
 
 async function requireUserId(): Promise<string | null> {
   const {
@@ -98,7 +99,7 @@ export async function saveInvestmentPosition(input: {
     .eq("user_id", userId);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
   return { success: true };
 }
@@ -118,7 +119,7 @@ export async function removeInvestmentPosition(
     .eq("user_id", userId);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
   return { success: true };
 }
@@ -252,7 +253,7 @@ export async function updateProfile(fullName: string): Promise<ActionResult> {
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
   return { success: true, message: "actions.profileUpdated" };
 }
@@ -499,7 +500,7 @@ export async function setAccountCountsAsCash(
     .eq("provider_account_id", providerAccountId);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
   return { success: true };
 }

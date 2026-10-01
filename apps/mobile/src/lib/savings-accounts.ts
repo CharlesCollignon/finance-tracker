@@ -11,6 +11,7 @@ import { investmentPositionSchema } from "@finance/core/validations/investments"
 import * as savings from "@finance/data/savings-accounts";
 
 import { supabase } from "@/lib/supabase";
+import { dbError } from "@finance/data/errors";
 
 /**
  * The accounts a user keeps on Placements: their savings accounts (migration
@@ -210,7 +211,7 @@ export async function createInvestmentPosition(input: {
     updated_at: new Date().toISOString(),
   });
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
   return { success: true };
 }

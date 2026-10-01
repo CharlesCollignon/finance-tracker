@@ -7,6 +7,7 @@ import { revalidateApp } from "@/lib/revalidate-paths";
 import * as ledger from "@finance/data/ledger";
 import * as occurrences from "@finance/data/occurrences";
 import type { ActionResult, FormState } from "@finance/core/action-result";
+import { signInErrorKey, signUpErrorKey } from "@finance/core/auth-errors";
 import { asUser } from "@/lib/actions/as-user";
 import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
@@ -20,6 +21,7 @@ import {
   recurringTemplateSchema,
 } from "@finance/core/validations/finance";
 import { cashDateOf, movedBetween } from "@finance/core/cash-date";
+import { dbError } from "@finance/data/errors";
 
 async function getUser() {
   const user = await getAuthUser();
@@ -54,7 +56,7 @@ export async function signUp(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: signUpErrorKey(error.code) };
   }
 
   if (data.user && !data.session) {
@@ -98,7 +100,7 @@ export async function signIn(
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
-    return { error: error.message };
+    return { error: signInErrorKey(error.code) };
   }
 
   if (data.user) {
@@ -205,7 +207,7 @@ export async function getExistingKeysForRange(
     .map((row) => ({ ...row, occurred_on: cashDateOf(row) }));
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   return {

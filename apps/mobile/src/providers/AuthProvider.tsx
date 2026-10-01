@@ -13,7 +13,11 @@ import {
 import { signInWithPasskeyCeremony } from "@/lib/passkeys";
 import { categoryLocale, seedDefaultCategories } from "@/lib/seed-categories";
 import { supabase } from "@/lib/supabase";
-import { resetRequestErrorKey } from "@finance/core/auth-errors";
+import {
+  resetRequestErrorKey,
+  signInErrorKey,
+  signUpErrorKey,
+} from "@finance/core/auth-errors";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -80,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
         });
         if (error) {
-          return { error: error.message };
+          return { error: signInErrorKey(error.code) };
         }
         // Covers users who confirmed via email after signup (no seed yet).
         if (data.user) {
@@ -98,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
         });
         if (error) {
-          return { error: error.message };
+          return { error: signUpErrorKey(error.code) };
         }
         // If email confirmation is on, there is no session yet.
         if (data.user && !data.session) {

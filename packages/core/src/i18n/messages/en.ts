@@ -3034,6 +3034,13 @@ export const en = {
   },
 
   errors: {
+    emailNotConfirmed:
+      "Confirm your address first: open the link we sent you by email.",
+    tooManyAttempts: "Too many tries. Wait a few minutes and try again.",
+    signInFailed: "Signing in did not work. Try again.",
+    accountExists: "There is already an account with this address. Sign in.",
+    signUpClosed: "Sign-ups are closed for now.",
+    signUpFailed: "Signing up did not work. Try again.",
     alreadyThere: "That is already saved.",
     stillInUse: "It is still used elsewhere, so nothing was deleted.",
     notAllowed: "You do not have access to that.",

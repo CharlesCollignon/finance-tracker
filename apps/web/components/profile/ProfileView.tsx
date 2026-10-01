@@ -40,6 +40,7 @@ import {
   deleteAllData,
   updateProfile,
 } from "@/lib/actions/profile";
+import type { ActionResult, FormState } from "@finance/core/action-result";
 
 interface ProfileViewProps {
   email: string;
@@ -55,13 +56,6 @@ interface ProfileViewProps {
 
 /** Which row is showing its editor. One at a time, as on the phone. */
 type OpenRow = "name" | "passkeys" | "wipe" | "close" | null;
-
-/** What every action in lib/actions/profile.ts resolves to. */
-type ProfileActionResult = {
-  error?: string;
-  success?: boolean;
-  message?: string;
-};
 
 /**
  * Settings, as rows.
@@ -121,10 +115,7 @@ export function ProfileView({
    * where the answer already is.
    */
   async function run(
-    action: (
-      prev: ProfileActionResult,
-      data: FormData,
-    ) => Promise<ProfileActionResult>,
+    action: (prev: FormState, data: FormData) => Promise<ActionResult>,
     formData: FormData,
   ) {
     setPending(true);
