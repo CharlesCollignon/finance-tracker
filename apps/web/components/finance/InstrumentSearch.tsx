@@ -9,7 +9,7 @@ import {
 } from "react";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
 import { searchInstrumentsAction } from "@/lib/actions/market";
-import { FormLabel } from "@/components/layout/FormLabel";
+import { FormLabel } from "@/components/ui/FormLabel";
 import { InstrumentLogo } from "@/components/finance/InstrumentLogo";
 import { canSearchInstruments } from "@finance/core/market/yahoo";
 import { cn } from "@/lib/utils";

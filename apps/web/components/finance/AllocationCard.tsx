@@ -11,8 +11,8 @@ import {
   type AccountTarget,
   type AllocationRow,
 } from "@finance/core/allocation";
-import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/layout/ToastProvider";
 import { accountShortName } from "@/components/finance/accounts/account-format";
 import {

@@ -1656,7 +1656,6 @@ export const en = {
     nearbyPages: "Nearby pages",
     needsYou: "Needs you",
     arrivedCharges: "Charges that look like they arrived",
-    closePopUp: "Close pop-up",
     clearInstrument: "Clear selected instrument",
     searchInstrument: "Search by name or ISIN…",
     clearDate: "Clear date",
@@ -3024,7 +3023,7 @@ export const en = {
     retry: "Retry",
   },
 
-  /** The panel that replaces every dropdown: `components/layout/Picker`. */
+  /** The panel that replaces every dropdown: `components/ui/Picker`. */
   picker: {
     choose: "Choose",
     search: "Search",

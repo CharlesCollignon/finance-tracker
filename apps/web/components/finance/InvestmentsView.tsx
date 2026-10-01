@@ -2,13 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { PencilSimple, Plus } from "@phosphor-icons/react";
-import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
 import { RefreshQuotesButton } from "@/components/finance/RefreshQuotesButton";
-import { EmptyState } from "@/components/layout/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { InstrumentLogo } from "@/components/finance/InstrumentLogo";
 import { Sparkline } from "@/components/finance/charts";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";

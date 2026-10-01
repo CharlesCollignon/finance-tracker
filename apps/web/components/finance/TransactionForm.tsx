@@ -7,12 +7,12 @@ import {
   useState,
   useTransition,
 } from "react";
-import { Button } from "@/components/retroui/Button";
-import { Input } from "@/components/retroui/Input";
-import { FormLabel } from "@/components/layout/FormLabel";
-import { Text } from "@/components/retroui/Text";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { FormLabel } from "@/components/ui/FormLabel";
+import { Text } from "@/components/ui/Text";
 import { useToast } from "@/components/layout/ToastProvider";
-import { MobileSheet } from "@/components/layout/MobileSheet";
+import { MobileSheet } from "@/components/ui/MobileSheet";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import {
   deleteTransaction,

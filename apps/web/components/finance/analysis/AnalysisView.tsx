@@ -19,11 +19,11 @@ import {
   accountShortName,
   formatRate,
 } from "@/components/finance/accounts/account-format";
-import { EmptyState } from "@/components/layout/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/layout/ToastProvider";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
-import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { saveWalletPlan } from "@/lib/actions/investments";
 import type { SavingsAccountView } from "@/lib/queries/savings-accounts";
 import { useFormatCurrency } from "@/lib/use-currency";

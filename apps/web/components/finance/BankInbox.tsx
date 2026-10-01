@@ -13,8 +13,8 @@ import {
   CaretRight,
   CheckCircle,
 } from "@phosphor-icons/react";
-import { Button } from "@/components/retroui/Button";
-import { MobileSheet } from "@/components/layout/MobileSheet";
+import { Button } from "@/components/ui/Button";
+import { MobileSheet } from "@/components/ui/MobileSheet";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import { useToast } from "@/components/layout/ToastProvider";
 import { cn } from "@/lib/utils";

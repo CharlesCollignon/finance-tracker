@@ -10,13 +10,13 @@ import {
   useTransition,
 } from "react";
 import { Plus } from "@phosphor-icons/react";
-import { Button, ButtonNub } from "@/components/retroui/Button";
-import { Badge } from "@/components/retroui/Badge";
+import { Button, ButtonNub } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { RecurringProposals } from "@/components/finance/RecurringProposals";
 import type { RecurringProposal } from "@finance/core/recurring-detection";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { EmptyState } from "@/components/layout/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/layout/ToastProvider";
 import { RecurringForm } from "@/components/finance/RecurringForm";
 import { useQuickAdd } from "@/components/layout/QuickAddProvider";

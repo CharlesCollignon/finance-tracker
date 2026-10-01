@@ -12,7 +12,7 @@ import type { ReadFreshness } from "@finance/core/month-read-budget";
 import { writeMonthReadAction } from "@/lib/actions/month-read";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useToast } from "@/components/layout/ToastProvider";
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";

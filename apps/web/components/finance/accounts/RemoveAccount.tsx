@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Trash } from "@phosphor-icons/react";
 import { useToast } from "@/components/layout/ToastProvider";
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 

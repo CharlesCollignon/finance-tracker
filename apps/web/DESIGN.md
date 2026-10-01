@@ -545,7 +545,7 @@ while it is rare. Being a pseudo-element gradient and not a `box-shadow`, it
 costs the flatness rule nothing.
 
 Glass is not the only surface in the app, and that is the state of things
-rather than a plan. The `Card` component in `components/retroui/Card.tsx`
+rather than a plan. The `Card` component in `components/ui/Card.tsx`
 paints an opaque `bg-card`, and twenty files import it against ten that import
 `GLASS_CARD`: the glass weights are what the Operate-mode screens sitting
 directly over the backdrop use, and the opaque card is what everything else

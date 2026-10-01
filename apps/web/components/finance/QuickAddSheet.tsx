@@ -19,9 +19,9 @@ import {
   type MerchantRule,
 } from "@finance/core/merchant-memory";
 import type { Category } from "@finance/core/types/database";
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
-import { MobileSheet } from "@/components/layout/MobileSheet";
+import { MobileSheet } from "@/components/ui/MobileSheet";
 import { RecurringFormBody } from "@/components/finance/RecurringForm";
 import { useToast } from "@/components/layout/ToastProvider";
 import { saveWithOutbox } from "@/lib/offline-outbox";

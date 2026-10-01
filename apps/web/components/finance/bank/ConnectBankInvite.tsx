@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Bank, X } from "@phosphor-icons/react";
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { ConnectBankSheet } from "@/components/finance/bank/ConnectBankSheet";
 import { dismissBankInvite } from "@/lib/actions/bank-connect";
 import type { BankInviteSurface } from "@/lib/bank/invite";

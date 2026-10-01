@@ -15,7 +15,7 @@ import { formatMonthCompact } from "@finance/core/constants";
 import { withExtraSaving, type WhatIfPoint } from "@finance/core/future-plan";
 import type { ForwardProjection } from "@finance/core/projection";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
-import { Button, ButtonNub } from "@/components/retroui/Button";
+import { Button, ButtonNub } from "@/components/ui/Button";
 import { GLASS_HERO } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";

@@ -13,7 +13,7 @@ import { LOCALE_LABELS } from "@finance/core/i18n/locale";
 import { writeCategoryReadAction } from "@/lib/actions/category-read";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useToast } from "@/components/layout/ToastProvider";
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";

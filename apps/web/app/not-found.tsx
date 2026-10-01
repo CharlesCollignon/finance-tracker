@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { getT } from "@/lib/locale";
 
 /**

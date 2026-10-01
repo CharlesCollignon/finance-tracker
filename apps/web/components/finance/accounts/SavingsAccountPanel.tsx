@@ -13,9 +13,9 @@ import {
   yearlyInterest,
 } from "@finance/core/savings-accounts";
 import { useToast } from "@/components/layout/ToastProvider";
-import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
-import { Input } from "@/components/retroui/Input";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
 import {
   linkSavingsBank,
   removeSavingsAccount,

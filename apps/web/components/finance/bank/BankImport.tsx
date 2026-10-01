@@ -9,7 +9,7 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { resolveMessage } from "@finance/core/i18n/t";
-import { Button, buttonVariants } from "@/components/retroui/Button";
+import { Button, buttonVariants } from "@/components/ui/Button";
 import {
   finishBankImport,
   importAccountHistory,

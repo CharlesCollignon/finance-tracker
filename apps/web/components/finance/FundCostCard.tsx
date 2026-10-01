@@ -9,7 +9,7 @@ import {
 } from "@finance/core/fund-costs";
 import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
-import { Card } from "@/components/retroui/Card";
+import { Card } from "@/components/ui/Card";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { useT, useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";

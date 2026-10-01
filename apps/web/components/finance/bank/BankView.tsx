@@ -18,9 +18,9 @@ import type {
   BankAccount,
   BankConnectionStatus,
 } from "@finance/core/types/database";
-import { Button, buttonVariants } from "@/components/retroui/Button";
+import { Button, buttonVariants } from "@/components/ui/Button";
 import { CashAccountsCard } from "@/components/finance/CashAccountsCard";
-import { MobileSheet } from "@/components/layout/MobileSheet";
+import { MobileSheet } from "@/components/ui/MobileSheet";
 import { useToast } from "@/components/layout/ToastProvider";
 import { BankImport } from "@/components/finance/bank/BankImport";
 import { ConnectBankSheet } from "@/components/finance/bank/ConnectBankSheet";

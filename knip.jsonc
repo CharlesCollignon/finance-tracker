@@ -169,10 +169,6 @@
         // Each line is either a deletion or a restoration waiting for an
         // owner's decision. None of them is a permanent exemption.
         // ---------------------------------------------------------------
-        "components/finance/CategoryTypeBadge.tsx",
-        "components/retroui/Dialog.tsx",
-        "components/retroui/Label.tsx",
-        "components/retroui/Select.tsx",
         "lib/css-var.ts",
       ],
     },

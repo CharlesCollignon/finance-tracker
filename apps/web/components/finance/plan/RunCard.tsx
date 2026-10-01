@@ -6,7 +6,7 @@ import { formatMonthCompact } from "@finance/core/constants";
 import { monthShort } from "@finance/core/i18n/calendar-names";
 import { closeInvitation, monthWasWon } from "@finance/core/month-close";
 import { MonthCloseSheet } from "@/components/finance/MonthCloseSheet";
-import { Button, ButtonNub } from "@/components/retroui/Button";
+import { Button, ButtonNub } from "@/components/ui/Button";
 import type {
   ClosedMonthRow,
   MonthCloseOverview,

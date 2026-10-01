@@ -1217,7 +1217,6 @@ export const fr: Messages = {
     nearbyPages: "Pages voisines",
     needsYou: "À votre attention",
     arrivedCharges: "Opérations récurrentes qui semblent arrivées",
-    closePopUp: "Fermer la fenêtre",
     clearInstrument: "Retirer l'instrument sélectionné",
     searchInstrument: "Chercher par nom ou ISIN…",
     clearDate: "Effacer la date",
