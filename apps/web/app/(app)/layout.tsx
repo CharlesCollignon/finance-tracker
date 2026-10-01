@@ -18,57 +18,60 @@ import { readPullFreshness } from "@/lib/bank/pull";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/locale";
 
+const NO_QUICK_ENTRY = {
+  categories: [],
+  recentCategoryIds: [],
+  merchants: [],
+} satisfies Awaited<ReturnType<typeof getQuickEntryContext>>;
+
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await getAuthUser();
   const { name, initial } = accountLabel(user ?? {});
-  // Per user, not per deployment. This flag decides what the refresh control
-  // promises, and the action behind it gates on whether *this* user has a
-  // bank — so a deployment-wide answer here is what let the button offer to
-  // ask your bank and then report back without having asked anything.
-  const connected = user ? await bankFeedBelongsTo(user.id) : false;
 
-  // Fetched here rather than per page so the quick-add sheet — reachable from
-  // every screen — opens with no loading state.
-  const quickEntry = user
-    ? await getQuickEntryContext(user.id)
-    : { categories: [], recentCategoryIds: [], merchants: [] };
+  // Two stages rather than six reads in a row. This layout renders again
+  // after every write, before the page's own reads start, so each read here
+  // that waited on the one before was a delay every save paid.
+  const [connected, quickEntry, templates] = user
+    ? await Promise.all([
+        // Per user, not per deployment. This flag decides what the refresh
+        // control promises, and the action behind it gates on whether *this*
+        // user has a bank — so a deployment-wide answer here is what let the
+        // button offer to ask your bank and then report back without having
+        // asked anything.
+        bankFeedBelongsTo(user.id),
+        // Fetched here rather than per page so the quick-add sheet —
+        // reachable from every screen — opens with no loading state.
+        getQuickEntryContext(user.id),
+        // Only for the badge below, which is not worth the whole shell.
+        getRecurringTemplates(user.id).catch(() => null),
+      ])
+    : [false, NO_QUICK_ENTRY, null];
 
-  // One small read for a control on every surface, and only where there is a
-  // bank for it to describe. A failure here would take down every app page to
-  // report the age of a figure, which is a poor trade: the control falls back
-  // to saying nothing about freshness.
-  let freshness: PullFreshness | null = null;
-  if (user && connected) {
-    try {
-      freshness = await readPullFreshness(
-        await createClient(),
-        user.id,
-        await getLocale(),
-      );
-    } catch {
-      freshness = null;
-    }
-  }
-
-  // Charges the bank looks to have already paid, for a badge on the Ledger.
-  // Always this month: a question about a month that has ended is not one the
-  // nav should be nagging about. Wrapped, because a badge is not worth the
-  // whole shell.
-  let arrivedCount = 0;
-  if (user) {
-    try {
-      const now = getCurrentMonth();
-      arrivedCount = await countFulfilmentProposals(
-        user.id,
-        await getRecurringTemplates(user.id),
-        quickEntry.categories,
-        now.year,
-        now.month,
-      );
-    } catch {
-      arrivedCount = 0;
-    }
-  }
+  const [freshness, arrivedCount] = await Promise.all([
+    // One small read for a control on every surface, and only where there is
+    // a bank for it to describe. A failure here would take down every app
+    // page to report the age of a figure, which is a poor trade: the control
+    // falls back to saying nothing about freshness.
+    user && connected
+      ? createClient()
+          .then(async (supabase) =>
+            readPullFreshness(supabase, user.id, await getLocale()),
+          )
+          .catch((): PullFreshness | null => null)
+      : null,
+    // Charges the bank looks to have already paid, for a badge on the Ledger.
+    // Always this month: a question about a month that has ended is not one
+    // the nav should be nagging about.
+    user && templates
+      ? countFulfilmentProposals(
+          user.id,
+          templates,
+          quickEntry.categories,
+          getCurrentMonth().year,
+          getCurrentMonth().month,
+        ).catch(() => 0)
+      : 0,
+  ]);
 
   return (
     <ToastProvider>
