@@ -1,4 +1,5 @@
 import { hasBankFeed as bankFeeds } from "@finance/data/bank-feed";
+import * as fulfilment from "@finance/data/fulfilment";
 import { isMissingSchema } from "@finance/data/schema";
 import {
   formatMonthLabel,
@@ -21,18 +22,7 @@ import {
   type RecurringProposal,
 } from "@finance/core/recurring-detection";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
-import {
-  explainFulfilmentMisses,
-  proposeFulfilments,
-  fulfilmentOccurrences,
-  fulfilmentScope,
-  proposalsForMonth,
-  refusalKey,
-  type FulfilmentMiss,
-  type FulfilmentMovement,
-  type FulfilmentProposal,
-  type ProposeOptions,
-} from "@finance/core/recurring-fulfilment";
+import { type FulfilmentProposal } from "@finance/core/recurring-fulfilment";
 import { buildMonthlySummary } from "@finance/core/monthly-summary";
 import {
   buildMonthClose,
@@ -970,266 +960,58 @@ export async function getRecentBankMovements(
 /* ------------------------------------------ charges the bank already paid */
 
 /**
- * Which recurring charges the bank looks to have already delivered.
- *
- * The rules live in `@finance/core/recurring-fulfilment` and are tested
- * there; this is the plumbing. See the web twin for the whole story — in
- * short, a bank-imported transaction carries no template link, so every
- * recurring charge the bank delivers was counted twice, once as money that
- * moved and once as money still forecast to move.
+ * Which recurring charges the bank looks to have already delivered — the
+ * reads are `@finance/data/fulfilment`, the same as the web's, with the
+ * phone's client.
  */
 
-/** Occurrences already fulfilled, as occurrence keys. */
-export async function getFulfilledKeys(userId: string): Promise<Set<string>> {
-  const { data, error } = await supabase
-    .from("recurring_fulfilments")
-    .select("template_id, occurred_on")
-    .eq("user_id", userId);
+export type { FulfilmentReport } from "@finance/data/fulfilment";
 
-  if (error) {
-    if (isMissingSchema(error)) {
-      return new Set();
-    }
-    throw error;
-  }
-
-  return new Set(
-    (data ?? []).map((row) =>
-      recurringOccurrenceKey(row.template_id, row.occurred_on),
-    ),
-  );
+export function getFulfilledKeys(userId: string): Promise<Set<string>> {
+  return fulfilment.getFulfilledKeys(supabase, userId);
 }
 
-/**
- * Which ledger rows stand in for an occurrence, by transaction id.
- *
- * The same table as `getFulfilledKeys` read down its other axis: that one
- * answers "is this occurrence settled?" for the forecast, this one answers
- * "does this row settle something?" for a row on screen. Cheap either way —
- * `recurring_fulfilments` holds one row per confirmed occurrence, so a decade
- * of a dozen charges is a few thousand rows of three columns.
- *
- * Deliberately not month-scoped, and it must stay that way.
- * `recurring_fulfilments.occurred_on` is the date of the *occurrence*, not of
- * the movement — that separation is the whole point of the table — so a
- * payment on the 31st can settle an occurrence dated the 1st. Filtering this
- * by the month on screen would take the mark off the very row that earned it.
- *
- * Separate from the fulfilment report rather than folded into it because the
- * report gives up early when a month generates no occurrences, which happens
- * whenever a template is inactive or outside its date range. Sourced from
- * there, a confirmation would disappear the moment its template was switched
- * off — retroactively, across every month.
- */
-export async function getConfirmedTransactionIds(
+export function getConfirmedTransactionIds(
   userId: string,
 ): Promise<Set<string>> {
-  const { data, error } = await supabase
-    .from("recurring_fulfilments")
-    .select("transaction_id")
-    .eq("user_id", userId);
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return new Set();
-    }
-    throw error;
-  }
-
-  // `transaction_id` is `not null` in migration 023, so nothing can slip in.
-  return new Set((data ?? []).map((row) => row.transaction_id as string));
+  return fulfilment.getConfirmedTransactionIds(supabase, userId);
 }
 
-function shiftDays(iso: string, days: number): string {
-  const [year, month, day] = iso.split("-").map(Number);
-  return new Date(Date.UTC(year!, month! - 1, day! + days))
-    .toISOString()
-    .slice(0, 10);
-}
-
-/**
- * The proposals, and why every other charge was not one.
- *
- * Mirrors the web twin. The two halves account for every occurrence the month
- * called for exactly once, which is what makes the pair worth reading: a
- * matcher that offers two of five charges and says nothing about the other
- * three looks broken rather than narrow.
- */
-export interface FulfilmentReport {
-  proposals: FulfilmentProposal[];
-  misses: FulfilmentMiss[];
-}
-
-/**
- * The movements that could fulfil something this month, and what the user has
- * already decided about them.
- *
- * Split out so the report and the bare proposals share one round trip without
- * either paying for the other's work — the tab bar's count asks for proposals
- * on every data-version bump and has no use for the misses.
- */
-async function readCandidates(
-  userId: string,
-  from: string,
-  to: string,
-): Promise<{ movements: FulfilmentMovement[]; options: ProposeOptions }> {
-  const [
-    { data: transactions, error: txError },
-    { data: fulfilments, error: fulfilError },
-    { data: refusals, error: refusalError },
-  ] = await Promise.all([
-    // Only rows no template wrote. A row a template wrote is already the
-    // occurrence; asking whether it fulfils one would be asking whether it is
-    // itself.
-    supabase
-      .from("transactions")
-      .select("id, occurred_on, amount, category_id, note")
-      .eq("user_id", userId)
-      .is("recurring_template_id", null)
-      .gte("occurred_on", from)
-      .lte("occurred_on", to),
-    supabase
-      .from("recurring_fulfilments")
-      .select("template_id, occurred_on, transaction_id")
-      .eq("user_id", userId),
-    supabase
-      .from("recurring_fulfilment_refusals")
-      .select("template_id, occurred_on, transaction_id")
-      .eq("user_id", userId),
-  ]);
-
-  if (txError) {
-    throw txError;
-  }
-  // The two decision tables are the optional half. Without them every
-  // proposal simply looks undecided, which is the right failure: the user is
-  // asked again rather than having a confirmation silently forgotten.
-  if (fulfilError && !isMissingSchema(fulfilError)) {
-    throw fulfilError;
-  }
-  if (refusalError && !isMissingSchema(refusalError)) {
-    throw refusalError;
-  }
-
-  const movements: FulfilmentMovement[] = (transactions ?? []).map((row) => ({
-    transactionId: row.id as string,
-    occurredOn: row.occurred_on as string,
-    amount: Number(row.amount),
-    categoryId: row.category_id as string,
-    note: (row.note as string | null) ?? null,
-  }));
-
-  return {
-    movements,
-    options: {
-      // A movement dated after today has not arrived, whatever else matches.
-      today: todayIsoLocal(),
-      fulfilledKeys: new Set(
-        (fulfilments ?? []).map((row) =>
-          recurringOccurrenceKey(row.template_id, row.occurred_on),
-        ),
-      ),
-      claimedTransactionIds: new Set(
-        (fulfilments ?? []).map((row) => row.transaction_id as string),
-      ),
-      refusedPairs: new Set(
-        (refusals ?? []).map((row) =>
-          refusalKey(row.template_id, row.occurred_on, row.transaction_id),
-        ),
-      ),
-    },
-  };
-}
-
-/**
- * A month's questions: the pairings planned in it, and the ones whose money
- * moved in it — the October salary paid on 22 September is asked about in
- * September as well as October (`fulfilmentScope`). The web twin's
- * `monthQuestions`; matched across three months at once so one payment is
- * never offered for two of them.
- */
-async function monthQuestions(
+export function getFulfilmentReport(
   userId: string,
   templates: readonly RecurringTemplateWithCategory[],
   categories: readonly Category[],
   year: number,
   month: number,
-) {
-  const scope = fulfilmentScope(year, month);
-  const occurrences = fulfilmentOccurrences(
-    templates,
-    categories,
-    scope.months,
-  );
-  if (occurrences.length === 0) {
-    return null;
-  }
-  const { movements, options } = await readCandidates(
-    userId,
-    scope.from,
-    scope.to,
-  );
-  const all = proposeFulfilments(occurrences, movements, options);
-  return { occurrences, movements, options, all };
-}
-
-export async function getFulfilmentReport(
-  userId: string,
-  templates: readonly RecurringTemplateWithCategory[],
-  categories: readonly Category[],
-  year: number,
-  month: number,
-): Promise<FulfilmentReport> {
-  const asked = await monthQuestions(
+): Promise<fulfilment.FulfilmentReport> {
+  return fulfilment.getFulfilmentReport(
+    supabase,
     userId,
     templates,
     categories,
     year,
     month,
   );
-  if (!asked) {
-    return { proposals: [], misses: [] };
-  }
-  const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-  return {
-    proposals: proposalsForMonth(asked.all, year, month),
-    // Only this month's occurrences can be missing from it.
-    misses: explainFulfilmentMisses(
-      asked.occurrences.filter((occurrence) =>
-        occurrence.occurredOn.startsWith(monthKey),
-      ),
-      asked.movements,
-      asked.all,
-      asked.options,
-    ),
-  };
 }
 
-/**
- * The proposals alone, for a caller with no use for an absence.
- *
- * The tab bar's count asks this on every data-version bump; running
- * `explainFulfilmentMisses` there and discarding it would be work done for
- * nobody.
- */
-export async function getFulfilmentProposals(
+export function getFulfilmentProposals(
   userId: string,
   templates: readonly RecurringTemplateWithCategory[],
   categories: readonly Category[],
   year: number,
   month: number,
 ): Promise<FulfilmentProposal[]> {
-  const asked = await monthQuestions(
+  return fulfilment.getFulfilmentProposals(
+    supabase,
     userId,
     templates,
     categories,
     year,
     month,
   );
-  return asked ? proposalsForMonth(asked.all, year, month) : [];
 }
 
-/** How many are waiting, for the tab bar's badge. */
+/** How many are waiting, for the Journal's badge. */
 export async function countFulfilmentProposals(
   userId: string,
   year: number,
@@ -1239,14 +1021,14 @@ export async function countFulfilmentProposals(
     getRecurringTemplates(userId),
     getCategories(userId),
   ]);
-  const proposals = await getFulfilmentProposals(
+  return fulfilment.countFulfilmentProposals(
+    supabase,
     userId,
     templates,
     categories,
     year,
     month,
   );
-  return proposals.length;
 }
 
 /* ------------------------------------------------------ the review inbox */
@@ -1428,8 +1210,8 @@ export async function ledgerRowsAround(
         "id, occurred_on, amount, recurring_template_id, categories!inner(type)",
       )
       .eq("user_id", userId)
-      .gte("occurred_on", shiftDays(isoDate, -MATCH_WINDOW_DAYS))
-      .lte("occurred_on", shiftDays(isoDate, MATCH_WINDOW_DAYS)),
+      .gte("occurred_on", shiftIsoDate(isoDate, -MATCH_WINDOW_DAYS))
+      .lte("occurred_on", shiftIsoDate(isoDate, MATCH_WINDOW_DAYS)),
     supabase
       .from("bank_feed_items")
       .select("transaction_id")

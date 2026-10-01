@@ -7,6 +7,7 @@
     "./bank-feed": "./src/bank-feed.ts",
     "./categories": "./src/categories.ts",
     "./client": "./src/client.ts",
+    "./fulfilment": "./src/fulfilment.ts",
     "./ledger": "./src/ledger.ts",
     "./occurrences": "./src/occurrences.ts",
     "./quote-source": "./src/quote-source.ts",
