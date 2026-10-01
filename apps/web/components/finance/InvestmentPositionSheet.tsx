@@ -35,6 +35,7 @@ import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { Key } from "@finance/core/i18n/t";
+import type { FormState } from "@finance/core/action-result";
 
 interface InvestmentPositionSheetProps {
   item: InvestmentPositionItem | null;
@@ -87,7 +88,10 @@ function InvestmentPositionForm({
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
-  const [state, action, pending] = useActionState(saveInvestmentPosition, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    saveInvestmentPosition,
+    {},
+  );
   const [deletePending, startDelete] = useTransition();
   const [sourceType, setSourceType] = useState<"recurring" | "custom">(
     item?.recurringTemplateId ? "recurring" : "custom",

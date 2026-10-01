@@ -6,16 +6,8 @@ import {
   profileSchema,
   deleteConfirmSchema,
 } from "@finance/core/validations/profile";
-import {
-  walletPlanSchema,
-  walletTargetsSchema,
-} from "@finance/core/validations/investments";
-import { isSavingsAccountId, type AccountId } from "@finance/core/allocation";
+import { type AccountId } from "@finance/core/allocation";
 import { type MonthCloseResult } from "@finance/core/month-close";
-import type {
-  SavingsAccountKind,
-  WalletId,
-} from "@finance/core/types/database";
 
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import * as categories from "@finance/data/categories";
@@ -24,6 +16,7 @@ import * as closing from "@finance/data/closing";
 import * as feed from "@finance/data/feed-decisions";
 import * as decisions from "@finance/data/fulfilment-decisions";
 import * as ledger from "@finance/data/ledger";
+import * as plans from "@finance/data/wallet-plans";
 import * as occurrences from "@finance/data/occurrences";
 import type { ActionResult } from "@finance/core/action-result";
 import { supabase } from "@/lib/supabase";
@@ -289,125 +282,23 @@ export function validateAuthInput(email: string, password: string) {
 }
 
 /**
- * Saves one wallet's plan — its target share of the portfolio, when the
- * wrapper was opened, and any non-standard contribution ceiling.
- *
- * Upserted per wallet rather than as a set, so setting a PEA's opening date
- * does not require having decided on target weights first.
+ * One wallet's intent, a field at a time — `@finance/data/wallet-plans`,
+ * which writes only the fields sent. The phone's own copy wrote every
+ * column, so setting the PEA's opening date here wiped its target.
  */
-export async function saveWalletPlan(input: {
-  wallet: WalletId;
-  targetWeight?: string | number;
-  openedOn?: string;
-  contributionCeiling?: string | number;
-}): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = walletPlanSchema.safeParse(input);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const { error } = await supabase.from("wallet_plans").upsert(
-    {
-      user_id: userId,
-      wallet: parsed.data.wallet,
-      target_weight: parsed.data.targetWeight,
-      opened_on: parsed.data.openedOn,
-      contribution_ceiling: parsed.data.contributionCeiling,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,wallet" },
-  );
-
-  if (error) {
-    return { error: error.message };
-  }
-  return { success: true };
+export async function saveWalletPlan(
+  input: plans.WalletPlanChange,
+): Promise<ActionResult> {
+  return asUser((userId) => plans.saveWalletPlan(supabase, userId, input));
 }
 
-/**
- * Saves every target at once, across the accounts kept: the wallets' in
- * `wallet_plans`, the savings accounts' in `savings_accounts` (migration 047).
- *
- * Drift is only reported when the targets cover the whole split, so the UI
- * edits them as a set and this writes them as one.
- */
+/** Every target at once, across savings accounts and wallets. */
 export async function saveAccountTargets(
   targets: { accountId: AccountId; targetWeight: number }[],
 ): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const wallets = targets.filter((row) => !isSavingsAccountId(row.accountId));
-  const savings = targets.filter((row) => isSavingsAccountId(row.accountId));
-
-  const parsed = walletTargetsSchema.safeParse({
-    targets: wallets.map((row) => ({
-      wallet: row.accountId,
-      targetWeight: row.targetWeight,
-    })),
-  });
-  if (
-    !parsed.success ||
-    savings.some(
-      (row) =>
-        !Number.isFinite(row.targetWeight) ||
-        row.targetWeight < 0 ||
-        row.targetWeight > 1,
-    )
-  ) {
-    return {
-      error: parsed.error?.issues[0]?.message ?? "errors.invalidInput",
-    };
-  }
-
-  const total = targets.reduce((sum, row) => sum + row.targetWeight, 0);
-
-  // Anything else would make every account look permanently off-target.
-  if (targets.length > 0 && Math.abs(total - 1) > 0.005) {
-    return { error: "errors.targetsMustTotal100" };
-  }
-
-  if (parsed.data.targets.length > 0) {
-    const { error } = await supabase.from("wallet_plans").upsert(
-      parsed.data.targets.map((row) => ({
-        user_id: userId,
-        wallet: row.wallet,
-        target_weight: row.targetWeight,
-        updated_at: new Date().toISOString(),
-      })),
-      { onConflict: "user_id,wallet" },
-    );
-    if (error) {
-      return { error: error.message };
-    }
-  }
-
-  for (const row of savings) {
-    const { error } = await supabase
-      .from("savings_accounts")
-      .update({
-        target_weight: row.targetWeight,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId)
-      .eq("kind", row.accountId as SavingsAccountKind);
-    if (error) {
-      return {
-        error:
-          error.code === "42703"
-            ? "placementsPhone.targetsSetup"
-            : error.message,
-      };
-    }
-  }
-  return { success: true };
+  return asUser((userId) =>
+    plans.saveAccountTargets(supabase, userId, targets),
+  );
 }
 
 /**

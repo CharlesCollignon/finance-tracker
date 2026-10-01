@@ -4,6 +4,4 @@ import type { placementsPhoneEn } from "./placements-phone.en";
 export const placementsPhoneFr: typeof placementsPhoneEn = {
   breakdownOthers: "Autres",
   bankAccountOption: "{name} · {amount}",
-  targetsSetup:
-    "Une cible pour un compte d'épargne demande la migration 047 — lancez-la et cela fonctionnera.",
 };

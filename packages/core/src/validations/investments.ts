@@ -252,15 +252,3 @@ export const walletPlanSchema = z.object({
    */
   wrapperFee: optionalCharge,
 });
-
-/** Targets are set together, so they can be checked as a set. */
-export const walletTargetsSchema = z.object({
-  targets: z
-    .array(
-      z.object({
-        wallet: walletIdSchema,
-        targetWeight: z.coerce.number().min(0).max(1),
-      }),
-    )
-    .max(5),
-});

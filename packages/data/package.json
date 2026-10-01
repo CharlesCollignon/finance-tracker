@@ -22,7 +22,8 @@
     "./recurring-positions": "./src/recurring-positions.ts",
     "./recurring-templates": "./src/recurring-templates.ts",
     "./savings-accounts": "./src/savings-accounts.ts",
-    "./schema": "./src/schema.ts"
+    "./schema": "./src/schema.ts",
+    "./wallet-plans": "./src/wallet-plans.ts"
   },
   "dependencies": {
     "@finance/core": "workspace:*",
