@@ -141,6 +141,19 @@ export function BankInboxSheet({
   // Rows answered here, hidden at once rather than when the screen's reload
   // arrives. By row, so an undo puts back exactly what it took.
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
+  // Only until the screen's next read says the row is gone. Kept for good, a
+  // row put back somewhere else — undone on the web — would stay invisible
+  // here for as long as the Journal stayed open. Adjusted while rendering,
+  // the pattern React documents for "reset state when an input changes".
+  const [readItems, setReadItems] = useState(items);
+  if (readItems !== items) {
+    setReadItems(items);
+    const present = new Set(items.map((item) => item.id));
+    setHidden((current) => {
+      const kept = [...current].filter((id) => present.has(id));
+      return kept.length === current.size ? current : new Set(kept);
+    });
+  }
   // Opened or shut by hand; otherwise a mixed group is open and the rest shut.
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
   const [choosing, setChoosing] = useState<Choosing | null>(null);

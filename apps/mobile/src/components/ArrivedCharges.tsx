@@ -66,6 +66,22 @@ export function ArrivedCharges({
   const [answered, setAnswered] = useState<Set<string>>(new Set());
   const [showMisses, setShowMisses] = useState(false);
 
+  // An answer only hides its proposal until the screen's next read says it
+  // is gone. Kept for good, a proposal reopened somewhere else — undone on
+  // the web, a moved income put back — would stay invisible here until the
+  // screen remounted. Adjusted while rendering, the pattern React documents
+  // for "reset state when an input changes".
+  const [offered, setOffered] = useState(proposals);
+  if (offered !== proposals) {
+    setOffered(proposals);
+    const present = new Set(proposals.map((proposal) => proposal.key));
+    setAnswered((current) => {
+      const kept = [...current].filter((key) => present.has(key));
+      return kept.length === current.size ? current : new Set(kept);
+    });
+  }
+
+
   const waiting = proposals.filter((proposal) => !answered.has(proposal.key));
 
   // This used to return on `waiting.length === 0` alone, on the reasoning that

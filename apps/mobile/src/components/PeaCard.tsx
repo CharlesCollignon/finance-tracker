@@ -157,7 +157,12 @@ function PeaOpenedField({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t("position.peaOpenedLabel")}
-          onPress={() => setEditing(true)}
+          onPress={() => {
+            // From the date saved now, which may have changed on another
+            // device since this field was last opened.
+            setValue(openedOn ?? todayIsoLocal());
+            setEditing(true);
+          }}
         >
           <Text variant="muted" className="text-sm">
             {hint ?? t("position.peaOpenedHint")}
