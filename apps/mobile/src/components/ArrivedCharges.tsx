@@ -140,6 +140,7 @@ export function ArrivedCharges({
           proposal.templateId,
           proposal.occurredOn,
           proposal.transactionId,
+          locale,
         );
         if (result.error) {
           failed.push(proposal.key);
@@ -251,6 +252,7 @@ export function ArrivedCharges({
                         proposal.templateId,
                         proposal.occurredOn,
                         proposal.transactionId,
+                        locale,
                       ),
                     true,
                   );

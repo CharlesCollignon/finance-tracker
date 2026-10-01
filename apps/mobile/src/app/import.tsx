@@ -241,7 +241,7 @@ export default function ImportScreen() {
 
     void hapticSuccess();
     notifyDataChanged();
-    toast(`Imported ${result.imported} transactions`, "success");
+    toast(t("importer.imported", { count: result.imported ?? 0 }), "success");
     router.back();
   }
 

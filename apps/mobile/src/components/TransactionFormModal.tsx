@@ -106,7 +106,7 @@ export function TransactionFormModal({
   async function handleMoveBack() {
     setPending(true);
     setError(null);
-    const result = await moveBackEarlyIncome(transaction.id);
+    const result = await moveBackEarlyIncome(transaction.id, locale);
     setPending(false);
     if (result.error) {
       setError(result.error);

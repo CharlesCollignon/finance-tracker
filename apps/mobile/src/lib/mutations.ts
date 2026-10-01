@@ -74,7 +74,7 @@ import type {
 
 import { quoteSource } from "@/lib/quote-source";
 import { supabase } from "@/lib/supabase";
-import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
+import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
 
 type ActionResult = {
@@ -1871,6 +1871,8 @@ export async function recordMonthClose(
   year: number,
   month: number,
   closingBalance: number,
+  /** The reader's, for the one refusal that carries a date. */
+  locale: Locale,
 ): Promise<ActionResult & { result?: MonthCloseResult }> {
   const userId = await requireUserId();
   if (!userId) {
@@ -1896,10 +1898,10 @@ export async function recordMonthClose(
   // window that has not finished.
   if (todayIsoLocal() < observeOn) {
     return {
-      // The phone's mutations have no reader's language to hand, so a
-      // message with a date in it is composed in the default one.
-      error: translator(DEFAULT_LOCALE)("actions.closeTooEarly", {
-        date: formatLongDate(observeOn, DEFAULT_LOCALE),
+      // Composed here, in the reader's language, because it carries a date
+      // and a toast can only translate a bare key.
+      error: translator(locale)("actions.closeTooEarly", {
+        date: formatLongDate(observeOn, locale),
       }),
     };
   }
@@ -2061,6 +2063,8 @@ export async function fulfilOccurrence(
   templateId: string,
   occurredOn: string,
   transactionId: string,
+  /** The reader's, for the message that names the month it now counts for. */
+  locale: Locale,
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
@@ -2143,12 +2147,12 @@ export async function fulfilOccurrence(
           : moveError.message,
       };
     }
-    // The phone's mutations have no reader's locale; the default language,
-    // as the other worded messages here.
+    // Composed here, in the reader's language, because it names a month
+    // and a toast can only translate a bare key.
     return {
       success: true,
-      message: translator(DEFAULT_LOCALE)("actions.countedForMonth", {
-        month: monthLong(Number(countsFor.slice(5, 7)), DEFAULT_LOCALE),
+      message: translator(locale)("actions.countedForMonth", {
+        month: monthLong(Number(countsFor.slice(5, 7)), locale),
       }),
     };
   }
@@ -2162,6 +2166,8 @@ export async function fulfilOccurrence(
  */
 export async function moveBackEarlyIncome(
   transactionId: string,
+  /** The reader's, for the message that names the day it went back to. */
+  locale: Locale,
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
@@ -2198,8 +2204,8 @@ export async function moveBackEarlyIncome(
 
   return {
     success: true,
-    message: translator(DEFAULT_LOCALE)("actions.movedBack", {
-      date: formatShortDate(transaction.cash_on, DEFAULT_LOCALE),
+    message: translator(locale)("actions.movedBack", {
+      date: formatShortDate(transaction.cash_on, locale),
     }),
   };
 }

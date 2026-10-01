@@ -163,7 +163,12 @@ export function MonthCloseSheet({
 
   async function confirm() {
     setPending(true);
-    const response = await recordMonthClose(year, month, parsedBalance);
+    const response = await recordMonthClose(
+      year,
+      month,
+      parsedBalance,
+      locale,
+    );
     setPending(false);
 
     if (response.error || !response.result) {
