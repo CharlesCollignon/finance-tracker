@@ -2135,6 +2135,26 @@ export const en = {
    * The one place a browser preference is no use at all, which is why the
    * locale has to be stored per user and not only in a cookie.
    */
+  /** The Monday recap: the push and the card on Le point say the same lines. */
+  recap: {
+    title: "Your week",
+    lastWeek: "{amount} spent last week.",
+    noSpending: "No spending recorded last week.",
+    monthSame: "Since the 1st: {amount}, the same as by this date in {month}.",
+    monthLess:
+      "Since the 1st: {amount}, {delta} less than by this date in {month}.",
+    monthMore:
+      "Since the 1st: {amount}, {delta} more than by this date in {month}.",
+    stillToCome: {
+      one: "Still to come this month: {amount}, in {count} payment.",
+      other: "Still to come this month: {amount}, in {count} payments.",
+    },
+    aboveNormal: "{name} is already above a normal month (around {normal}).",
+    waiting: {
+      one: "{count} transaction from your bank needs a category.",
+      other: "{count} transactions from your bank need a category.",
+    },
+  },
   push: {
     bigCharge: {
       title: "Tomorrow: {name}",

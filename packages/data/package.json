@@ -26,7 +26,8 @@
     "./savings-accounts": "./src/savings-accounts.ts",
     "./schema": "./src/schema.ts",
     "./templates": "./src/templates.ts",
-    "./wallet-plans": "./src/wallet-plans.ts"
+    "./wallet-plans": "./src/wallet-plans.ts",
+    "./weekly-recap": "./src/weekly-recap.ts"
   },
   "dependencies": {
     "@finance/core": "workspace:*",

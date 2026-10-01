@@ -1494,6 +1494,27 @@ export const fr: Messages = {
       "Inclut toutes les échéances dues ce mois-ci, achats de placements compris.",
   },
 
+  recap: {
+    title: "Votre semaine",
+    lastWeek: "{amount} dépensés la semaine dernière.",
+    noSpending: "Aucune dépense notée la semaine dernière.",
+    monthSame:
+      "Depuis le 1er\u00A0: {amount}, comme à la même date en {month}.",
+    monthLess:
+      "Depuis le 1er\u00A0: {amount}, {delta} de moins qu'à la même date en {month}.",
+    monthMore:
+      "Depuis le 1er\u00A0: {amount}, {delta} de plus qu'à la même date en {month}.",
+    stillToCome: {
+      one: "Encore à venir ce mois-ci\u00A0: {amount}, en {count} opération.",
+      other:
+        "Encore à venir ce mois-ci\u00A0: {amount}, en {count} opérations.",
+    },
+    aboveNormal: "{name} dépasse déjà un mois normal (autour de {normal}).",
+    waiting: {
+      one: "{count} opération de votre banque attend sa catégorie.",
+      other: "{count} opérations de votre banque attendent leur catégorie.",
+    },
+  },
   push: {
     bigCharge: {
       title: "Demain\u00A0: {name}",

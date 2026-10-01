@@ -97,6 +97,7 @@
     "./wallet-read": "./src/wallet-read.ts",
     "./wallet-read-budget": "./src/wallet-read-budget.ts",
     "./wallet-read-prompt": "./src/wallet-read-prompt.ts",
+    "./weekly-recap": "./src/weekly-recap.ts",
     "./xirr": "./src/xirr.ts"
   },
   "dependencies": {

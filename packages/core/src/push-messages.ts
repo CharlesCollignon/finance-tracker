@@ -25,6 +25,7 @@ import {
   occurrenceWithinSchedule,
 } from "./recurrence";
 import type { RecurringTemplateWithCategory } from "./types/database";
+import { weeklyRecapLines, type WeeklyRecap } from "./weekly-recap";
 
 interface Voice {
   t: Translate;
@@ -251,5 +252,24 @@ export function bigChargeHeadsUp({
     body: charges
       .map((charge) => `${charge.name} ${formatEuro(charge.amount, locale)}`)
       .join(" · "),
+  };
+}
+
+/** The Monday recap, as one push: the card's lines, joined. */
+export function weeklyRecapNotification({
+  recap,
+  t,
+  locale,
+}: Voice & { recap: WeeklyRecap }): PendingNotification {
+  return {
+    kind: "recap",
+    key: `recap:${recap.weekOf}`,
+    title: t("recap.title"),
+    body: weeklyRecapLines(recap, {
+      t,
+      formatMoney: (amount) => formatEuro(amount, locale),
+      previousMonthName: monthLong(recap.monthSoFar.previousMonth, locale),
+    }).join(" "),
+    url: "/bearing",
   };
 }

@@ -30,7 +30,10 @@ import {
   closeReminder,
   plannedChargesOn,
   usualChargeAmount,
+  weeklyRecapNotification,
 } from "@finance/core/push-messages";
+import { mondayOf } from "@finance/core/weekly-recap";
+import { getWeeklyRecap } from "@finance/data/weekly-recap";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { getFulfilledKeys } from "@finance/data/fulfilment";
 import { getMonthCloseOverview } from "@finance/data/month-close";
@@ -153,12 +156,14 @@ async function notificationsFor(
 
   // Ahead of the digest: a feed about to stop is the one thing here that
   // gets worse by waiting, and it applies to people with no templates at all.
-  // So does the reading day, which belongs to anyone who closes their months.
-  const [bank, close] = await Promise.all([
+  // So does the reading day, which belongs to anyone who closes their months,
+  // and the Monday recap, which belongs to anyone with a ledger.
+  const [bank, close, recap] = await Promise.all([
     bankNotificationFor(supabase, userId, today, locale),
     closeReminderFor(supabase, userId, today, locale),
+    recapFor(supabase, userId, today, locale),
   ]);
-  const lead = [bank, close].filter(
+  const lead = [bank, close, recap].filter(
     (notification): notification is PendingNotification =>
       notification !== null,
   );
@@ -275,6 +280,29 @@ async function bankNotificationFor(
     },
   );
   return notification;
+}
+
+/**
+ * Monday's recap of the week before. Only on a Monday: the recap is a state
+ * rather than a change, and once a week is the whole of the exception.
+ */
+async function recapFor(
+  supabase: AdminClient,
+  userId: string,
+  today: string,
+  locale: Locale,
+): Promise<PendingNotification | null> {
+  if (mondayOf(today) !== today) {
+    return null;
+  }
+  try {
+    const recap = await getWeeklyRecap(supabase, userId, today, locale);
+    return recap
+      ? weeklyRecapNotification({ recap, t: translator(locale), locale })
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
