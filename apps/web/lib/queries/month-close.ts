@@ -1,9 +1,6 @@
 import type { Db } from "@finance/data/client";
 import * as closes from "@finance/data/month-close";
-import type {
-  MonthCloseResult,
-  RecordedCashFlows,
-} from "@finance/core/month-close";
+import type { RecordedCashFlows } from "@finance/core/month-close";
 import { getLocale } from "@/lib/locale";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,12 +14,6 @@ export type {
   ClosedMonthRow,
   MonthCloseOverview,
 } from "@finance/data/month-close";
-
-export async function getMonthCloseSettings(
-  userId: string,
-): Promise<closes.CloseSettings> {
-  return closes.getMonthCloseSettings(await createClient(), userId);
-}
 
 export async function getRecordedCashFlows(
   userId: string,
@@ -47,20 +38,5 @@ export async function getMonthCloseOverview(
     userId,
     today,
     await getLocale(),
-  );
-}
-
-export async function previewMonthClose(
-  userId: string,
-  year: number,
-  month: number,
-  closingBalance: number,
-): Promise<MonthCloseResult> {
-  return closes.previewMonthClose(
-    await createClient(),
-    userId,
-    year,
-    month,
-    closingBalance,
   );
 }
