@@ -5,11 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { bankFeedStatus, describeBankFeedStatus } from "@/lib/bank/client";
 import { noteSyncFailure, noteSyncHealthy } from "@/lib/bank/health-note";
-import type { PullFreshness } from "@finance/core/bank-pull";
-import { readPullFreshness } from "@/lib/bank/pull";
 import { syncBankFeed } from "@/lib/bank/sync";
 import { revalidateApp } from "@/lib/revalidate-paths";
-import { getLocale, getT } from "@/lib/locale";
+import { getT } from "@/lib/locale";
 
 /**
  * Bring everything up to date, from wherever the user happens to be.
@@ -32,8 +30,6 @@ export interface RefreshResult {
   error?: string;
   success?: boolean;
   message?: string;
-  /** How old the data is now, for the control that triggered this. */
-  freshness?: PullFreshness;
 }
 
 export async function refreshEverythingAction(): Promise<RefreshResult> {
@@ -73,15 +69,7 @@ export async function refreshEverythingAction(): Promise<RefreshResult> {
     if (outcome.pull && !outcome.pull.pulled && outcome.pull.why) {
       // The refusal is the message. Reporting "nothing new" after a cooldown
       // refusal would be a claim about the bank we have not earned.
-      return {
-        success: true,
-        message: outcome.pull.why,
-        freshness: await readPullFreshness(
-          supabase,
-          user.id,
-          await getLocale(),
-        ),
-      };
+      return { success: true, message: outcome.pull.why };
     }
 
     const t = await getT();
@@ -105,7 +93,6 @@ export async function refreshEverythingAction(): Promise<RefreshResult> {
     return {
       success: true,
       message: parts.length > 0 ? parts.join(", ") : "actions.nothingNew",
-      freshness: await readPullFreshness(supabase, user.id, await getLocale()),
     };
   } catch (error) {
     // The words, not the error: an SDK failure carries the API path it hit.
