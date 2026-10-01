@@ -18,6 +18,7 @@
     "./month-close": "./src/month-close.ts",
     "./moved-rows": "./src/moved-rows.ts",
     "./occurrences": "./src/occurrences.ts",
+    "./preferences": "./src/preferences.ts",
     "./quote-source": "./src/quote-source.ts",
     "./recurring-apply": "./src/recurring-apply.ts",
     "./recurring-positions": "./src/recurring-positions.ts",

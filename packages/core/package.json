@@ -68,6 +68,7 @@
     "./month-memory": "./src/month-memory.ts",
     "./month-pulse": "./src/month-pulse.ts",
     "./month-read": "./src/month-read.ts",
+    "./notification-kinds": "./src/notification-kinds.ts",
     "./month-read-budget": "./src/month-read-budget.ts",
     "./month-read-prompt": "./src/month-read-prompt.ts",
     "./motion": "./src/motion.ts",

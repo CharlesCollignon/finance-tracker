@@ -11,8 +11,11 @@
  */
 
 import type { Translate } from "./i18n/t";
+import type { NotificationKind } from "./notification-kinds";
 
 export interface PendingNotification {
+  /** Which switch in the settings governs it. */
+  kind: NotificationKind;
   /** Dedupe key, checked against what has already been sent. */
   key: string;
   title: string;
@@ -73,6 +76,7 @@ export function buildDueNotifications({
     const key = `month-open:${monthKey}`;
     if (!alreadySent.has(key)) {
       due.push({
+        kind: "monthOpen",
         key,
         title: t("push.monthOpen.title"),
         body:
@@ -92,6 +96,7 @@ export function buildDueNotifications({
     const key = `arrived:${today}`;
     if (!alreadySent.has(key)) {
       due.push({
+        kind: "arrived",
         key,
         title: t("push.arrived.title", { count: arrivedCharges }),
         body: t("push.arrived.body", { count: arrivedCharges }),

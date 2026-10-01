@@ -116,6 +116,7 @@ export function bankAttentionNotification(
         return null;
       }
       return {
+        kind: "bank",
         key: `bank-consent:${attention.validUntil}`,
         title: t("push.bankRenew.title"),
         body:
@@ -131,6 +132,7 @@ export function bankAttentionNotification(
       };
     case "expired":
       return {
+        kind: "bank",
         key: `bank-expired:${since.slice(0, 10)}`,
         title: t("push.bankExpired.title"),
         body: t("push.bankExpired.body"),
@@ -138,6 +140,7 @@ export function bankAttentionNotification(
       };
     case "paused":
       return {
+        kind: "bank",
         key: `bank-paused:${since.slice(0, 10)}`,
         title: t("push.bankPaused.title"),
         body: t("push.bankPaused.body"),

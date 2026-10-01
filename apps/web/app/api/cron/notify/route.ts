@@ -4,12 +4,8 @@ import {
   buildDueNotifications,
   type PendingNotification,
 } from "@finance/core/push-digest";
-import {
-  configureWebPush,
-  fanOut,
-  readDevices,
-  type UserDevices,
-} from "@/lib/push/send";
+import { configureWebPush, readDevices } from "@/lib/push/send";
+import { deliver } from "@/lib/push/deliver";
 import {
   bankAttention,
   bankAttentionNotification,
@@ -24,8 +20,8 @@ import type {
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { readLocales } from "@/lib/push/locale";
-import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
+import { defaultRecipient, readRecipients } from "@finance/data/preferences";
+import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
 
 /**
@@ -83,59 +79,36 @@ export async function GET(request: NextRequest) {
   // that granted permission, a phone that registered a token, or both.
   const byUser = await readDevices(supabase);
 
-  // One query for everybody's language, rather than one per user inside the
-  // loop below. This is the query the whole `user_preferences` table exists
-  // for: there is no browser in a cron request and no session either, so the
-  // row is the only place the reader's language can come from.
-  const localeByUser = await readLocales(supabase, [...byUser.keys()]);
+  // One read for everybody's language and choices, rather than one per user
+  // inside the loop below. There is no browser in a cron request and no
+  // session either, so the preferences row is the only place either can come
+  // from.
+  const recipients = await readRecipients(supabase, [...byUser.keys()]);
 
-  const queue: { devices: UserDevices; notification: PendingNotification }[] =
-    [];
-  const logged: { user_id: string; key: string }[] = [];
+  let sent = 0;
+  let held = 0;
 
   for (const [userId, devices] of byUser) {
+    const recipient = recipients.get(userId) ?? defaultRecipient();
     const due = await notificationsFor(
       supabase,
       userId,
       today,
       monthKey,
-      localeByUser.get(userId) ?? DEFAULT_LOCALE,
+      recipient.locale,
     );
-    for (const notification of due) {
-      logged.push({ user_id: userId, key: notification.key });
-      queue.push({ devices, notification });
-    }
-  }
-
-  // Written before sending, not after. A duplicate notification is a worse
-  // outcome than a missed one, and a crash mid-send would otherwise repeat
-  // everything tomorrow. One row per user rather than per device, which is
-  // what makes "said once" mean once across a laptop and a phone.
-  if (logged.length > 0) {
-    await supabase.from("notification_log").upsert(logged, {
-      onConflict: "user_id,key",
-      ignoreDuplicates: true,
-    });
-  }
-
-  let sent = 0;
-  let removed = 0;
-
-  for (const item of queue) {
-    const result = await fanOut(
-      supabase,
-      item.devices,
-      item.notification,
+    const delivery = await deliver(supabase, userId, recipient, due, {
+      devices,
       webPushReady,
-    );
-    sent += result.sent;
-    removed += result.removed;
+    });
+    sent += delivery.sent;
+    held += delivery.held;
   }
 
   return Response.json({
     users: byUser.size,
     sent,
-    removed,
+    held,
     ...(webPushReady
       ? {}
       : { note: "Web Push is not configured; phones only." }),
@@ -154,18 +127,13 @@ async function notificationsFor(
 ): Promise<PendingNotification[]> {
   const [year, month] = monthKey.split("-").map(Number);
 
-  const [categories, templates, alreadySent] = await Promise.all([
+  const [categories, templates] = await Promise.all([
     supabase.from("categories").select("*").eq("user_id", userId),
     supabase
       .from("recurring_templates")
       .select("*, categories(name, type, icon, counts_toward_summary)")
       .eq("user_id", userId)
       .eq("active", true),
-    supabase
-      .from("notification_log")
-      .select("key")
-      .eq("user_id", userId)
-      .like("key", `%${monthKey}%`),
   ]);
 
   const categoryRows = (categories.data ?? []) as Category[];
@@ -202,9 +170,8 @@ async function notificationsFor(
   const digest = buildDueNotifications({
     today,
     arrivedCharges,
-    alreadySent: new Set(
-      ((alreadySent.data ?? []) as { key: string }[]).map((row) => row.key),
-    ),
+    // What was already said is `deliver`'s to filter, by exact key.
+    alreadySent: new Set(),
     pendingRecurring: templateRows.length,
     // Stored per user precisely so that this line can be right: there is no
     // browser in a cron request to ask.
@@ -214,11 +181,8 @@ async function notificationsFor(
 }
 
 /**
- * The reminder a connected bank earns today, if it has not been sent.
- *
- * Asked apart from the month's log read above, which only fetches keys that
- * mention the month: a consent key names the day it ends, which is as often
- * next month as this one.
+ * The reminder a connected bank earns today. Whether it was already sent is
+ * `deliver`'s to decide, by its exact key.
  */
 async function bankNotificationFor(
   supabase: AdminClient,
@@ -242,14 +206,5 @@ async function bankNotificationFor(
       t: translator(locale),
     },
   );
-  if (!notification) {
-    return null;
-  }
-  const { data: sent } = await supabase
-    .from("notification_log")
-    .select("key")
-    .eq("user_id", userId)
-    .eq("key", notification.key)
-    .maybeSingle();
-  return sent ? null : notification;
+  return notification;
 }

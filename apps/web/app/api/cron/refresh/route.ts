@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { todayIsoLocal } from "@finance/core/constants";
 import { translator } from "@finance/core/i18n/t";
-import { configureWebPush, fanOut, readDevicesFor } from "@/lib/push/send";
-import { readLocale } from "@/lib/push/locale";
+import { defaultRecipient, readRecipients } from "@finance/data/preferences";
+import { deliver } from "@/lib/push/deliver";
+import { reviewNotificationFor } from "@/lib/push/review";
+import { configureWebPush } from "@/lib/push/send";
 import { getBankConnection, syncableUserIds } from "@/lib/bank/client";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { recordFailure, recordHealthy } from "@/lib/bank/health";
@@ -149,6 +151,11 @@ export async function GET(request: NextRequest) {
   // own try: one person's lapsed consent must not cost everyone else their
   // sync.
   const userIds = await syncableUserIds();
+  // Who wants what, and in which language, for everyone at once. Web Push
+  // needs VAPID keys this deployment may not have; Expo needs none, so a
+  // phone can be told on a deployment where a browser cannot.
+  const recipients = await readRecipients(supabase, userIds);
+  const webPushReady = configureWebPush();
   const bank = {
     users: userIds.length,
     synced: 0,
@@ -188,13 +195,21 @@ export async function GET(request: NextRequest) {
       const closes = await autoCloseMonths(supabase, userId);
       monthsClosed += closes.closed.length;
 
-      if (outcome.pending > 0) {
-        bank.notified += await notifyPendingReview(
-          supabase,
-          userId,
-          outcome.pending,
-          today,
-        );
+      // Asked every run rather than only when this sync added rows: rows
+      // that came in during the quiet hours were held, and are announced the
+      // first run after them.
+      const recipient = recipients.get(userId) ?? defaultRecipient();
+      const review = await reviewNotificationFor(
+        supabase,
+        userId,
+        today,
+        translator(recipient.locale),
+      );
+      if (review) {
+        const delivery = await deliver(supabase, userId, recipient, [review], {
+          webPushReady,
+        });
+        bank.notified += delivery.sent;
       }
     } catch (error) {
       // A bank that cannot be reached today is an ordinary outcome, not an
@@ -213,71 +228,4 @@ export async function GET(request: NextRequest) {
     monthsClosed,
     ...(failures.length > 0 ? { failures } : {}),
   });
-}
-
-type AdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
-
-/**
- * Say that something needs a category, once.
- *
- * Keyed by the day, so a run that finds nothing new says nothing and one that
- * does says it a single time. A notification that arrives whether or not
- * anything happened is how people learn to ignore notifications.
- */
-async function notifyPendingReview(
-  supabase: AdminClient,
-  userId: string,
-  pending: number,
-  today: string,
-): Promise<number> {
-  const key = `bank-review:${today}`;
-
-  const { data: already } = await supabase
-    .from("notification_log")
-    .select("key")
-    .eq("user_id", userId)
-    .eq("key", key)
-    .maybeSingle();
-
-  if (already) {
-    return 0;
-  }
-
-  // Both, and either alone is enough to be worth going on. Web Push needs
-  // VAPID keys this deployment may not have; Expo needs none, so a phone can
-  // be told on a deployment where a browser cannot.
-  const webPushReady = configureWebPush();
-  const devices = await readDevicesFor(supabase, userId);
-  if (devices.browsers.length === 0 && devices.phones.length === 0) {
-    return 0;
-  }
-
-  // Written before sending: a duplicate notification is a worse outcome than
-  // a missed one, and a crash mid-send would otherwise repeat it tomorrow.
-  // One row per user, not per device, which is what makes "said once" mean
-  // once across a laptop and a phone rather than once each.
-  await supabase
-    .from("notification_log")
-    .upsert(
-      { user_id: userId, key },
-      { onConflict: "user_id,key", ignoreDuplicates: true },
-    );
-
-  const t = translator(await readLocale(supabase, userId));
-  const { sent } = await fanOut(
-    supabase,
-    devices,
-    {
-      key,
-      title: t("push.review.title"),
-      body: t("push.review.body", { count: pending }),
-      // Straight into the review, not onto the Ledger with it shut. A push
-      // tapped at breakfast should put the decision in front of the person
-      // who tapped it.
-      url: "/transactions?review=inbox",
-    },
-    webPushReady,
-  );
-
-  return sent;
 }
