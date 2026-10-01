@@ -213,10 +213,7 @@ function applyConstraints(
           capped.set(isin, (capped.get(isin) ?? 0) * scale);
         }
         for (const isin of leads) {
-          capped.set(
-            isin,
-            (capped.get(isin) ?? 0) + shortfall / leads.length,
-          );
+          capped.set(isin, (capped.get(isin) ?? 0) + shortfall / leads.length);
         }
       }
     }

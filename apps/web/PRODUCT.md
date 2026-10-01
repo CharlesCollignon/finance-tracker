@@ -98,7 +98,8 @@ the owner's account alone, so anything written for a general audience
 describes the first three.
 
 Surfaces in this app: the Bearing, the Ledger (list, calendar, by category),
-transactions, budgets, recurring, categories, investments and look-through,
+transactions, the Plan (`/plan`), recurring, categories, investments and
+look-through,
 history, import, welcome, profile and its Bank page (`/bank`: connect, the
 first import, status and renewal, disconnect), plus a public marketing site at
 pluclair.com with its own feature pages and, once signed off, the privacy
@@ -208,7 +209,10 @@ placeholder content on any surface.
 ## Product Principles
 
 1. **Measure, do not guess.** A figure the app can prove beats one it can infer;
-   where nothing can be measured, say so rather than estimate.
+   where nothing can be measured, say so rather than estimate. The Plan's long
+   view is the one estimate on purpose — returns are the user's assumption, and
+   the French tax a simplified rate per account — so it is labelled as one,
+   starts from measured figures, and never feeds back into them.
 2. **Nothing happens that the user did not ask for.** Filing, fulfilling and
    writing are acts the user initiates. Applying is the one the app carries
    out on its own, because a recurring template already is the user asking —

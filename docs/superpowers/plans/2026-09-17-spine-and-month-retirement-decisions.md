@@ -32,7 +32,7 @@ not a git worktree** — the same reasoning as the predecessor plan (a worktree
 forces a second `pnpm install` of a 700-package workspace for no isolation
 gain, and the branch is not `main`), plus a second reason this time: the user
 had a dev server running against this checkout, and a worktree would have
-left them watching a tree nothing was changing. *Cost if wrong:* the user
+left them watching a tree nothing was changing. _Cost if wrong:_ the user
 cannot run the app on another branch while this executes.
 
 A pre-flight conflict scan produced four rulings before Task 1 was dispatched:
@@ -41,8 +41,8 @@ A pre-flight conflict scan produced four rulings before Task 1 was dispatched:
 already means "fewer closes than the cap needs"; re-deriving that threshold
 in the spine would be a second expression of one rule — the exact shape of
 defect that produced the predecessor plan's C1, where a test and its
-implementation shared one premise instead of two independent ones. *Cost if
-wrong:* a slightly less explicit link between the module and the constant it
+implementation shared one premise instead of two independent ones. _Cost if
+wrong:_ a slightly less explicit link between the module and the constant it
 depends on indirectly.
 
 **Deleting the Month screen must update `PHONE_PATHS`, and this was made a
@@ -53,25 +53,25 @@ predecessor plan's most visible defect — a dead link — on the very tiles thi
 merge is about. Both entries were mapped to `null` (no footer link) rather
 than to some replacement screen, because the panel that now explains a tile
 already contains what that screen used to say, and a link to the screen you
-are standing on is not a destination. *Cost if wrong:* three tiles lose a
+are standing on is not a destination. _Cost if wrong:_ three tiles lose a
 phone footer link some reader wanted; the alternative — a link that reloads
 the screen you are on — is worse.
 
 **`phoneHref` was NOT assumed to already cover the attention list's hrefs.**
-It translates *bearing tile* paths and is documented as such; the attention
+It translates _bearing tile_ paths and is documented as such; the attention
 list uses a different set (`/transactions?review=inbox`, the close route, the
 proposals route). The task that builds the spine's attention row was told to
 check every attention href against the real phone route tree and treat an
-unmapped one as a blocking finding, not a silent passthrough. *Cost if
-wrong:* a check that finds nothing — cheap, against shipping a dead link in
+unmapped one as a blocking finding, not a silent passthrough. _Cost if
+wrong:_ a check that finds nothing — cheap, against shipping a dead link in
 the one row the spine always shows.
 
 **The `month.attention*` translation keys stay under that namespace** even
 after the screen they were named for is gone. Renaming the namespace would
 touch every catalogue consumer for no user-visible gain, in the same commit
 range as the screen's deletion — making that diff much harder to review. The
-namespace outliving the screen is a recorded cosmetic wart, not a fix. *Cost
-if wrong:* a future reader wonders why home-screen copy lives under `month.`;
+namespace outliving the screen is a recorded cosmetic wart, not a fix. _Cost
+if wrong:_ a future reader wonders why home-screen copy lives under `month.`;
 this document answers them.
 
 ---
@@ -86,7 +86,7 @@ because the wrong version would have shipped clean.
 lived in was reopened to do it.** Task 1 shipped a ring state machine that
 told "no close yet" from "measuring" apart using the number of closes. A
 later review, checking the same boundary from the spec's own wording, found
-the spec's actual test is different: whether a measurement *exists*
+the spec's actual test is different: whether a measurement _exists_
 (`unrecordedSoFar`), not how many closes have happened. The two disagree
 exactly after a baseline-only close — a close that sets an opening balance
 without being a reconciled one — where the spec wants an arc and the shipped
@@ -100,11 +100,11 @@ lesson recorded in the ledger: a review had already flagged `sample` as
 harmless — it was the fingerprint of a module built around a proxy for the
 signal the spec actually names, and a field that exists and is never read
 deserved more suspicion than it got. One more subtlety survived into the
-redesign: the boundary is *not* keyed on `unrecordedSoFar !== null`, even
+redesign: the boundary is _not_ keyed on `unrecordedSoFar !== null`, even
 though that reads as the literal condition, because `overRecorded` forces
 `unrecordedSoFar` to null — keying on it would tell an over-recorded month it
 had never closed anything and invite it to close a month it already closed.
-*Cost if wrong:* a completed, reviewed task reopened — cheaper than a wrong
+_Cost if wrong:_ a completed, reviewed task reopened — cheaper than a wrong
 ring on the plan's only new screen.
 
 **The ring's over-cap signal was first folded into an existing channel, then
@@ -113,7 +113,7 @@ produced an invisible bug.** The original ruling was that colour comes from
 `tone` unconditionally, and `over` needs no channel of its own because the
 existing fill clamp already draws a full circle for an over-cap ratio — which
 reads, correctly, as "overCap fills it." What that ruling missed: a full
-circle is *also* exactly what 100%-and-healthy looks like, and the tone
+circle is _also_ exactly what 100%-and-healthy looks like, and the tone
 function returns "clear" whenever free balance is at or above the cap. So the
 ordinary rendering of a month that had blown its entire unrecorded allowance
 was a full **green** ring — pixel-identical to a healthy month at exactly the
@@ -121,7 +121,7 @@ cap. The final whole-branch review caught it by asking the human checklist to
 confirm an over-cap marker that did not exist: a reader comparing a healthy
 account to a short one would see green versus red, tick the box, and never
 notice the two states nobody could tell apart. The fix wave gave `over` its
-own visual channel. *Cost if wrong (of the original ruling):* the plan's
+own visual channel. _Cost if wrong (of the original ruling):_ the plan's
 central new screen silently agreeing "everything is fine" on the one month
 where it most needed to say otherwise.
 
@@ -129,10 +129,10 @@ where it most needed to say otherwise.
 it.** The pre-flight ruling read as "the shared translator must also cover
 attention hrefs." What actually resolved the type hazard at the boundary
 between the two was narrower and better: export the constant read-only from
-core, and let each client keep its own hand-verified judgement about *which*
+core, and let each client keep its own hand-verified judgement about _which_
 hrefs get redirected. Shared facts belong in core; client-specific judgement
 belongs in the client — and the original framing had collapsed the two.
-*Cost if wrong:* `PHONE_PATHS` becomes public API for one consumer.
+_Cost if wrong:_ `PHONE_PATHS` becomes public API for one consumer.
 
 ---
 
@@ -143,7 +143,7 @@ only the lit one.** The spec's sentence is unconditional — "when
 `pulse.overRecorded` is true the ring is absent" — and a records gap is a
 records gap at every rung of the ladder. Scoping the override to only the lit
 step would let a reader with both an unreadable balance and a records gap see
-a dark ring implying a measurement that does not exist. *Cost if wrong:* the
+a dark ring implying a measurement that does not exist. _Cost if wrong:_ the
 ring disappears in an early-ladder state where a darker ring might have read
 better; no figure is ever misstated either way.
 
@@ -157,7 +157,7 @@ accepted as in scope though it went beyond the brief's stated interface.**
 Deciding that a baseline close needs "Start" and a reconciled one needs
 "Close" is exactly the judgement this module exists to centralise; leaving it
 out would license each client to re-derive the mapping, recreating the
-duplication the module was written to remove. *Cost if wrong:* one field more
+duplication the module was written to remove. _Cost if wrong:_ one field more
 than the brief asked for, in a module whose entire purpose is to be the one
 place this gets decided.
 
@@ -168,10 +168,10 @@ catalogue key entirely — a genuine "shows English to a French reader" bug,
 today. The project's standing rule is that pre-existing hardcoded English on
 a touched surface goes through the catalogues, but this surface is deleted
 two tasks later, and translating strings in a file already condemned ships
-nothing. What mattered instead was that the bug not *survive* the move: the
+nothing. What mattered instead was that the bug not _survive_ the move: the
 task that rebuilds the attention list on the spine was given a hard
 constraint that every row renders through `t()` with no template-string
-fallback. *Cost if wrong:* the untranslated strings lived on in the doomed
+fallback. _Cost if wrong:_ the untranslated strings lived on in the doomed
 screen for exactly as long as they would have anyway.
 
 **Each client's gatherer widens its return type to carry the spine's
@@ -179,7 +179,7 @@ inputs**, rather than the page re-computing the month pulse a second time or
 core's shared fact-builder changing its return shape for two callers' sake.
 Both clients already hold these values in scope at the call site and were
 discarding them, so the widening adds no query on either client and keeps the
-two symmetric. *Cost if wrong:* two gatherer signatures grow by three fields.
+two symmetric. _Cost if wrong:_ two gatherer signatures grow by three fields.
 
 **The spine's action row is exempt from the plan's "no new query" rule — and
 this corrects the spec's own claim, not just the plan's.** The spec asserted
@@ -194,8 +194,8 @@ to carry, would silently drop conditions a reader sees today: exactly the
 The cost was quantified before the work started (three fetches, not five —
 two of the five conditions were already fetched for other reasons) and the
 tasks that added them were told to report the number so the final review
-could check it against a number written down in advance. It matched. *Cost
-if wrong:* the home does a little work Month used to do, for a few tasks
+could check it against a number written down in advance. It matched. _Cost
+if wrong:_ the home does a little work Month used to do, for a few tasks
 until Month is gone, and none after.
 
 **An "Approved" review verdict does not close a task if it carries Important
@@ -218,7 +218,7 @@ started, so it absorbed the fix — and was reframed to **fix the class, not
 the line**: sweep for any user-facing copy naming a surface that no longer
 exists, and decide what the sentence should say now that the screen is gone,
 which is a copy decision the sweep has to answer rather than route mechanics
-it can shortcut. *Cost if wrong:* that task's diff is slightly broader than
+it can shortcut. _Cost if wrong:_ that task's diff is slightly broader than
 "clean up the predecessor plan's debts."
 
 **A branch that removes a core capability does not merge, whatever a later
@@ -229,11 +229,11 @@ area to a later plan, but a new task was added to this one anyway and the
 capability restored before merge — deferring it would have shipped a branch
 that regresses the ritual the entire app is built around. The controller also
 recorded a fault one level up, in the spec itself: it retires Month "once
-every block has a panel," but closing a month was never a *block* on that
-screen — it was an *action* — so "every block has a panel" was satisfied
+every block has a panel," but closing a month was never a _block_ on that
+screen — it was an _action_ — so "every block has a panel" was satisfied
 while the phone's only entry point to that action was deleted. Any future
-plan retiring a surface needs to inventory what that surface *did*, not only
-what it *showed*. *Cost if wrong:* a later plan rewrites the entry point
+plan retiring a surface needs to inventory what that surface _did_, not only
+what it _showed_. _Cost if wrong:_ a later plan rewrites the entry point
 added here, having lost nothing.
 
 **The restored close-sheet trigger deliberately does not reproduce the
@@ -248,7 +248,7 @@ inherited hardcoded English — technically outside a "do not rewrite the
 sheet" instruction — was ruled in scope under the same standing i18n rule
 that governs everywhere else, and turned up a real bug: a baseline reveal
 date rendered in English for French readers because a date formatter was
-called without a locale argument. *Cost if wrong:* a larger diff than the
+called without a locale argument. _Cost if wrong:_ a larger diff than the
 task implied, visible plainly to the review.
 
 **A copy sweep that also changes the code it verifies is circular, so it got
@@ -278,15 +278,15 @@ inactive-month filter that the deleted component's own doc comment had
 argued for. Those two were rebuilt as a tested pure function, because they
 are a documented correctness-of-presentation decision rather than chrome, and
 losing them would regress the users least equipped to notice (a two-month-old
-account showing a fake two-bar trend). *Cost if wrong (of not fixing
-`ArrivedCharges` immediately on discovery):* it stayed unreachable slightly
+account showing a fake two-bar trend). _Cost if wrong (of not fixing
+`ArrivedCharges` immediately on discovery):_ it stayed unreachable slightly
 longer, on a branch that was not merged yet.
 
 **No separate task review was spent on the verification task that produced
 the human checklist**, matching the precedent the predecessor plan set for
 its equivalent task. Its deliverables are a documentation file and command
 output the controller verified directly, and its commit falls inside the
-final whole-branch review's range regardless. *Cost if wrong:* the
+final whole-branch review's range regardless. _Cost if wrong:_ the
 checklist's wording reached the user unreviewed by anyone but its only
 audience — which is also the argument for why that is fine.
 
@@ -320,7 +320,7 @@ authored by this branch, so both were owned by it rather than pushed further
 downstream. Item 13 on the deferred list (marketing still depicting the
 retired tab) was held rather than fixed, and item 1 was found stale.
 
-**`previewApplyRecurringForMonth` was replaced by a pure `countRecurringToApply`** 
+**`previewApplyRecurringForMonth` was replaced by a pure `countRecurringToApply`**
 that shares its occurrence logic with the plan builder, verified as a net
 improvement rather than a mitigation: three queries and every outbound quote
 fetch came off the landing page, and the new count is more honest than the
@@ -338,7 +338,7 @@ discipline the rest of the plan applied to every other fix loop.
 
 **The CI reachability gate the final reviewer recommended was not built,
 despite the controller agreeing with its diagnosis completely.** The same
-review that recommended it also found six web files orphaned since *before*
+review that recommended it also found six web files orphaned since _before_
 this plan started and roughly twenty never-referenced exports in
 `packages/core`. A gate added now goes red on day one, and closing that
 would mean either a large cleanup unrelated to this plan's goal or a baseline
@@ -347,7 +347,7 @@ an infrastructure decision that belongs to the user, not to a plan about a
 spine. This is recorded as the single highest-value follow-up the plan
 produced, with the tools named for whoever picks it up: `knip` or `ts-prune`
 over `apps/` and `packages/core`, plus an unused-key assertion on the
-translation catalogues. *Cost if wrong:* the next deletion in this codebase
+translation catalogues. _Cost if wrong:_ the next deletion in this codebase
 reopens this exact class of defect on exactly the same terms.
 
 **Several judgement calls were routed to the human checklist rather than
@@ -385,8 +385,8 @@ screen" or "the dashboard," mostly correctly historical.
 "Month" strings in the marketing copy file, were deliberately left alone.**
 They describe a tab the app no longer has, which is a real inconsistency —
 but it is a marketing-site design decision (what should the mockups depict
-instead?) outside this plan's scope, not a find-and-replace. *Cost if
-wrong:* the landing page depicts a retired tab until someone redraws it.
+instead?) outside this plan's scope, not a find-and-replace. _Cost if
+wrong:_ the landing page depicts a retired tab until someone redraws it.
 
 ---
 
@@ -422,9 +422,9 @@ The twelve, in the order they surfaced:
    after.
 
 3. **A data-flow constraint that was unsatisfiable as written**, because it
-   named the fact-builder's *input* type instead of its *output* type. The
+   named the fact-builder's _input_ type instead of its _output_ type. The
    plan asserted a screen could reach certain values because the function
-   that builds its data pack *takes* them as arguments — but that function
+   that builds its data pack _takes_ them as arguments — but that function
    consumes and discards them; its return type never carries them forward.
    The constraint was corrected before the task that depended on it was
    dispatched.
@@ -450,7 +450,7 @@ The twelve, in the order they surfaced:
 
 7. **A wrong citation for a deleted entry point.** The plan named a specific
    line as the lost trigger for the phone's month-close flow; that line was
-   actually where the closing *sheet* mounted, not where the user's tap that
+   actually where the closing _sheet_ mounted, not where the user's tap that
    opened it lived. The distinction mattered: what got built was new design
    restoring a lost capability, not a faithful restoration of the old call
    site, and it had to be reviewed as such.
@@ -494,7 +494,7 @@ The twelve, in the order they surfaced:
     stayed green through it. The second moved the padding onto the
     component's own root view, keyed correctly to the case where the banner
     actually renders, and passed review. The final whole-branch review then
-    found that the controller's own explanation for *why* the first fix was
+    found that the controller's own explanation for _why_ the first fix was
     necessary — that every screen "pads `insets.top` again from context" —
     was itself false: the safe-area view every screen already uses is a
     native view that takes its insets from wherever it physically sits in
@@ -515,7 +515,7 @@ times inside implementation and a fourth caught only by the final review:
 the phone's only way to close a month (the close sheet was complete and
 compiled, but its one caller had been deleted, and nothing greps for a
 component with zero callers); the "did this arrive?" fulfilment confirmation
-on *both* clients (the same shape of orphan, found by accident during an
+on _both_ clients (the same shape of orphan, found by accident during an
 unrelated copy sweep); the phone's locale suggestion banner (same shape
 again, this time caught by the dedicated orphan audit this plan added
 specifically because the first two were found by accident); and web's only

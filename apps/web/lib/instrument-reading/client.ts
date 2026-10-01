@@ -227,7 +227,8 @@ async function post(
  */
 function notesFromConversation(raw: unknown): string {
   const outputs =
-    (raw as { outputs?: { type?: string; content?: unknown }[] })?.outputs ?? [];
+    (raw as { outputs?: { type?: string; content?: unknown }[] })?.outputs ??
+    [];
 
   const text: string[] = [];
   const sources: string[] = [];
@@ -344,8 +345,7 @@ async function defaultTranscribe(
         { role: "system", content: TRANSCRIBE_INSTRUCTIONS },
         {
           role: "user",
-          content:
-            `The instrument asked about was ISIN ${request.isin}.\n\nNotes:\n${notes}`,
+          content: `The instrument asked about was ISIN ${request.isin}.\n\nNotes:\n${notes}`,
         },
       ],
     },
@@ -354,9 +354,8 @@ async function defaultTranscribe(
     "completions",
   );
 
-  const content = (
-    raw as { choices?: { message?: { content?: unknown } }[] }
-  )?.choices?.[0]?.message?.content;
+  const content = (raw as { choices?: { message?: { content?: unknown } }[] })
+    ?.choices?.[0]?.message?.content;
 
   if (typeof content !== "string") {
     return null;

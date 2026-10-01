@@ -9,6 +9,10 @@ export type PricingType = "fixed" | "shares";
 
 export type WalletId = "pea" | "cto" | "av" | "per" | "crypto";
 
+/** A kind of savings account — see migration 046. */
+export type SavingsAccountKind =
+  "livret_a" | "ldds" | "lep" | "pel" | "cel" | "livret";
+
 /** Where a user's bank connection stands — see migration 041. */
 export type BankConnectionStatus =
   "active" | "expired" | "paused" | "revoked" | "error";
@@ -1116,6 +1120,7 @@ export interface Database {
           opened_on: string | null;
           contribution_ceiling: number | null;
           wrapper_fee: number | null;
+          shown: boolean;
           updated_at: string;
         };
         Insert: {
@@ -1125,6 +1130,7 @@ export interface Database {
           opened_on?: string | null;
           contribution_ceiling?: number | null;
           wrapper_fee?: number | null;
+          shown?: boolean;
           updated_at?: string;
         };
         Update: {
@@ -1134,6 +1140,45 @@ export interface Database {
           opened_on?: string | null;
           contribution_ceiling?: number | null;
           wrapper_fee?: number | null;
+          shown?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      savings_accounts: {
+        Row: {
+          id: string;
+          user_id: string;
+          kind: SavingsAccountKind;
+          balance: number;
+          balance_on: string;
+          annual_rate: number | null;
+          category_id: string | null;
+          bank_account_id: string | null;
+          target_weight: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          kind: SavingsAccountKind;
+          balance?: number;
+          balance_on?: string;
+          annual_rate?: number | null;
+          category_id?: string | null;
+          bank_account_id?: string | null;
+          target_weight?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          balance?: number;
+          balance_on?: string;
+          annual_rate?: number | null;
+          category_id?: string | null;
+          bank_account_id?: string | null;
+          target_weight?: number | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -1632,12 +1677,11 @@ export type RecurringSkip =
 export type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
 export type InvestmentPosition =
   Database["public"]["Tables"]["investment_positions"]["Row"];
-export type Budget = Database["public"]["Tables"]["budgets"]["Row"];
 export type WalletTransfer =
   Database["public"]["Tables"]["wallet_transfers"]["Row"];
-export type Tag = Database["public"]["Tables"]["tags"]["Row"];
-export type SavingsGoal = Database["public"]["Tables"]["savings_goals"]["Row"];
 export type WalletPlan = Database["public"]["Tables"]["wallet_plans"]["Row"];
+export type SavingsAccount =
+  Database["public"]["Tables"]["savings_accounts"]["Row"];
 export type PushSubscriptionRow =
   Database["public"]["Tables"]["push_subscriptions"]["Row"];
 export type ExpoPushTokenRow =

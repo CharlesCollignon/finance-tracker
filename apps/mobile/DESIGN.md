@@ -324,6 +324,13 @@ that wants a decision — the review inbox bar, a primary button. A selected
 chip, an active tab, a success toast and a list icon are the foreground, not
 gold; the phone had 89 gold references against the web's 12.
 
+One exception, and only one: **Plan celebrates.** A milestone reached, the
+flame of a run still alive, the best month among the bars and the rungs of a
+cushion passed may take the accent, and the orb's warm light behind them
+(`components/plan/Glow.tsx`: a radial wash of the orb's body colour breathing
+on its period — light, not a shadow). Nowhere else does, and nothing on Plan
+that is merely selected or pressed does either.
+
 ## Shapes
 
 Four radius roles, named by what they hold rather than by size: **control**
@@ -388,6 +395,68 @@ shell, in and out over a little under six seconds (`INHALE`, the web's
 motion the breath holds at its middle — a steady soft light, not none. The
 launcher icons are a still render of the same palette
 (`scripts/build-brand-icons.mjs`).
+
+### Plan
+
+The one screen made to come back to: where the money is heading rather than
+where it went (`app/(tabs)/planning.tsx`, the twin of the web's Plan, every
+figure from `@finance/core/future-plan`). Top to bottom:
+
+- **A year from now** — the hero. What is kept in twelve months counts up
+  over a curve that draws itself in; a finger along it reads each month out
+  in the line above, with a selection tick per month. Under it, **What if…**:
+  a 0–500 € slider in 25 € steps (`ExtraSlider`, the whole 48pt row takes
+  the finger, adjustable for a screen reader) and three chips, drawing the
+  same year with that much more as a dashed line, and saying how much sooner
+  the next milestone comes — with a tick the moment sliding brings it closer.
+- **Milestones** — the last two passed as badges that spring in with the
+  glow behind them, the next three with when and how far along. One passed
+  since the last visit says "New milestone!", once, with a success haptic.
+- **Cushion** — months of fixed costs the savings at hand cover (every
+  savings account but a PEL, which a withdrawal closes), as a gauge whose 1,
+  3 and 6 month rungs light up.
+- **The long view** — the net value after French tax in N years, what that
+  is in today's euros and the income it could pay; under it, quietly, which
+  account each part is in — a thin bar split by account (2pt gaps, the chart
+  palette without its gold, four accounts then "Others") and one muted line
+  naming them, following the year under the finger. Then a stacked chart that
+  grows up from its baseline and reads out per year, and the knobs: steppers for
+  the horizon, inflation and withdrawal rate, and one row per account
+  prefilled from the user's figures. Edits are remembered on the phone until
+  "Back to my figures".
+- **The run** — the month-end streak as a flickering flame, the record, and
+  the close one press away; then **the months**, bars growing in one after
+  another with the best one lit, and behind a disclosure the close's history
+  and its two settings.
+
+Reduced motion turns every draw, grow, spring, flicker and breath into a cut.
+
+### Placements
+
+What the user owns, one account at a time (`app/(tabs)/investments.tsx`).
+The hero is everything together, savings and investments, with the split
+under it. **Your accounts** is the `ChipRow`: the savings accounts declared
+(Livret A, LDDS, LEP, CEL, PEL, another livret), then the wallets kept — the
+ones with positions or that the user added — and a last chip, "+ Add an
+account", which opens the add sheet rather than selecting anything. The
+sheet offers only the kinds not there yet, each short name over its full
+one; a savings account then asks what is in it, or which bank account to
+read it from. A savings account's card is its balance and the day it was
+true, its rate and a year's interest after tax, how full it is against its
+ceiling, what goes in each month — and a row of quiet outline buttons to
+update it. A wallet's card is its holdings, with "Add a holding" and
+"Remove this account" under them. Removing asks first, in a `ConfirmSheet`.
+
+Three views under one strip, **Accounts · Analysis · What's inside**
+(`investments.tsx`, `analysis.tsx`, `look-through.tsx`). Accounts is the
+hero, one row of "€X / month" tags — the wallets, then each savings account
+with something planned, after Crypto — the chips and the selected account;
+the PEA's ceiling and five-year clock sit under the PEA itself (`PeaCard`).
+Analysis is what used to trail under it: the return per year of every
+account (a savings account's is its rate after tax, said as such), the
+split across every account kept with its targets, and the fees, where a
+savings account reads "No fees". An account is named by its short name
+(`ENVELOPE_SHORT_KEYS`) everywhere — "Life insurance", never "AV".
 
 ### Sheets and Modals
 

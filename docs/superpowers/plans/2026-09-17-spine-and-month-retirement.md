@@ -22,7 +22,7 @@
 - Before writing any Next.js code, read the relevant guide under `node_modules/next/dist/docs/` — per `AGENTS.md`, this version differs from training data. Heed deprecation notices.
 - Tests run with `pnpm test` (vitest in `@finance/core`).
 - **Verification baseline**, established at `aa5a162`. Any deviation is a regression except where you fixed something: `pnpm test` → 1 failed (`still-to-come.test.ts`, pre-existing) / 1207 passed; `@finance/core` tsc → one pre-existing error in `push-routes.test.ts(89,15)`; web tsc → empty; mobile tsc → empty; `pnpm --filter web lint` → 9 errors / 2 warnings; `pnpm --filter mobile lint` → 42 problems (11 errors, 31 warnings).
-- **The headline, ring and flame cost no new query.** Each client's gatherer already computes `pulse`, `summary` and `closes.summary` and passes them into `buildBearingFacts` (`apps/web/lib/bearing/facts.ts:210-216`, `apps/mobile/src/lib/bearing.ts:150-187`) — but `BearingFacts`, the pack's *output*, returns only `{asOf, facts, missing, thin}`, so they are computed and then discarded. Widen each gatherer's return to carry them. Do not re-derive them on the page, and do not add a query for them.
+- **The headline, ring and flame cost no new query.** Each client's gatherer already computes `pulse`, `summary` and `closes.summary` and passes them into `buildBearingFacts` (`apps/web/lib/bearing/facts.ts:210-216`, `apps/mobile/src/lib/bearing.ts:150-187`) — but `BearingFacts`, the pack's _output_, returns only `{asOf, facts, missing, thin}`, so they are computed and then discarded. Widen each gatherer's return to carry them. Do not re-derive them on the page, and do not add a query for them.
 - **The action row is the exception, and it is allowed one.** Its inputs (swallowed entries, recurring to apply, proposals) are gathered today by the Month screen, not by the Bearing pack. Moving them is not adding them: once Task 5 deletes Month, those queries run on one screen instead of the other. Scoping the action row down to what the pack happens to hold would silently drop conditions a reader sees today, which is worse than one honest fetch.
 
 ---
@@ -56,9 +56,11 @@
 ## Task 1: The ignition ladder, as a union
 
 **Files:**
+
 - Create: `packages/core/src/spine.ts`, `packages/core/src/spine.test.ts`
 
 **Interfaces:**
+
 - Consumes: `MonthPulse` and `MonthStanding` from `./month-pulse`; `MIN_CLOSES_FOR_CAP` from `./month-close`.
 - Produces: `resolveSpine(input: SpineInput): SpineState`, plus the exported types `SpineInput`, `SpineState`, `SpineRing`.
 
@@ -157,7 +159,7 @@ Expected: FAIL — `Failed to resolve import "./spine"`.
 
 - [ ] **Step 3: Write `spine.ts`**
 
-Write the module with a doc comment explaining *why* the arc has no tone (a measurement with no target cannot be a verdict) and why `overRecorded` removes rather than darkens the ring (a records gap is a different finding from spending, and `month-pulse.ts` is emphatic that these are not the same). The union:
+Write the module with a doc comment explaining _why_ the arc has no tone (a measurement with no target cannot be a verdict) and why `overRecorded` removes rather than darkens the ring (a records gap is a different finding from spending, and `month-pulse.ts` is emphatic that these are not the same). The union:
 
 ```ts
 export type SpineRing =
@@ -193,13 +195,15 @@ git commit -m "Say which rung of the ladder a reader is standing on"
 ## Task 2: What is waiting, said once instead of twice
 
 **Files:**
+
 - Create: `packages/core/src/attention.ts`, `packages/core/src/attention.test.ts`
 - Modify: `packages/core/src/i18n/messages/en.ts`, `packages/core/src/i18n/messages/fr.ts`
 
 **Interfaces:**
+
 - Produces: `buildAttention(input: AttentionInput): AttentionItem[]`, and the types `AttentionItem`, `AttentionId`, `AttentionInput`.
 
-**Why this task exists.** The two clients build this list independently today — `apps/web/app/(app)/dashboard/page.tsx:136-190` pushes five kinds of item, `apps/mobile/src/app/(tabs)/month.tsx:474-520` pushes three. They disagree about what deserves attention, which is a bug nobody has noticed because the two screens are never seen side by side. The spine shows the first item and `+N` for the rest, so *which* item is first becomes load-bearing and the disagreement stops being survivable.
+**Why this task exists.** The two clients build this list independently today — `apps/web/app/(app)/dashboard/page.tsx:136-190` pushes five kinds of item, `apps/mobile/src/app/(tabs)/month.tsx:474-520` pushes three. They disagree about what deserves attention, which is a bug nobody has noticed because the two screens are never seen side by side. The spine shows the first item and `+N` for the rest, so _which_ item is first becomes load-bearing and the disagreement stops being survivable.
 
 Items carry i18n **keys and params**, never rendered text — the clients call `t()`. This is what lets one module serve both.
 
@@ -291,10 +295,12 @@ git commit -m "Agree, once, on what is actually waiting"
 ## Task 3: The spine on the web
 
 **Files:**
+
 - Create: `apps/web/components/finance/bearing/Spine.tsx`
 - Modify: `apps/web/app/(app)/bearing/page.tsx`, `packages/core/src/i18n/messages/en.ts`, `fr.ts`
 
 **Interfaces:**
+
 - Consumes: `resolveSpine`, `SpineState` (Task 1); `buildAttention`, `AttentionItem` (Task 2).
 
 Fixed, always at the top, never reordered — it is not a tile and must not enter `BearingGrid`'s `order`. Render it between the `PageHeader` and the existing `<div>` that carries the as-of line, so it sits above the bento without disturbing the drag surface.
@@ -323,17 +329,19 @@ git commit -m "Stand the spine at the top of the web home"
 ## Task 4: The spine on the phone
 
 **Files:**
+
 - Create: `apps/mobile/src/components/bearing/Spine.tsx`
 - Modify: `apps/mobile/src/app/(tabs)/index.tsx`
 
 **Interfaces:**
+
 - Consumes: the same `SpineState` and `AttentionItem` as Task 3. The union is the contract; the two components share no code and must agree on nothing else.
 
 The spine sits **above** the `ReorderableList`, outside it — not as a list header that scrolls into the reorder surface. Opening a panel must not move it, and dragging a tile must not be able to displace it.
 
 Panel **footer** links go through `phoneHref` from `@finance/core/bearing-tiles`, added by Plan 1 for exactly this reason — 15 of 26 web routes do not exist on the phone.
 
-**Attention-row links are a different set and `phoneHref` does not cover them.** It translates bearing *tile* paths and is documented as such. An attention item's `href` is a web route: check each one against the real phone route tree under `apps/mobile/src/app/` and map the ones that do not resolve. An href you cannot resolve to a real phone screen is a blocking finding to report, not something to pass through raw or to invent a screen for.
+**Attention-row links are a different set and `phoneHref` does not cover them.** It translates bearing _tile_ paths and is documented as such. An attention item's `href` is a web route: check each one against the real phone route tree under `apps/mobile/src/app/` and map the ones that do not resolve. An href you cannot resolve to a real phone screen is a blocking finding to report, not something to pass through raw or to invent a screen for.
 
 - [ ] **Step 1: Build the component**
 - [ ] **Step 2: Mount it above the list**
@@ -355,6 +363,7 @@ git commit -m "Stand the same spine on the phone"
 **Do not start this task until Tasks 3 and 4 are reviewed and complete.** Month is the fallback while the spine is unproven; deleting it first removes the thing a reader would fall back to.
 
 **Files:**
+
 - Delete: `apps/web/app/(app)/dashboard/page.tsx`, `apps/web/app/(app)/dashboard/loading.tsx`, `apps/mobile/src/app/(tabs)/month.tsx`, `apps/web/components/finance/MonthAttention.tsx`, `apps/mobile/src/components/MonthAttention.tsx`
 - Modify, all verified present at `aa5a162`:
   - 8 × `revalidatePath("/dashboard")` across `apps/web/lib/revalidate-paths.ts` (2, lines 14 and 39), `lib/actions/phase4.ts`, `lib/actions/profile.ts`, `lib/actions/bank.ts`, `lib/actions/month-read.ts`, `lib/actions/month-close.ts`
@@ -431,11 +440,12 @@ git commit -m "Pay the small debts in the code this plan already had open"
 
 `apps/mobile/src/components/MonthCloseSheet.tsx` is complete and working, and has **zero callers**. Its only caller was `apps/mobile/src/app/(tabs)/month.tsx:760`, deleted in `45962d9`. So a phone reader can no longer close a month at all — and closing a month is the ritual this entire app is built around: the streak, the cap, the unrecorded allowance and every ignition rung above the first all derive from closes. A phone-only user is now locked out of the loop.
 
-It is invisible to every check this plan ran. The sheet still exists, still compiles, and is still referenced by nothing — an orphaned component is exactly what a grep for the *deleted* file cannot find, which is why Task 5's review answered "did anything silently stop working?" with no.
+It is invisible to every check this plan ran. The sheet still exists, still compiles, and is still referenced by nothing — an orphaned component is exactly what a grep for the _deleted_ file cannot find, which is why Task 5's review answered "did anything silently stop working?" with no.
 
 Task 6 also made it user-visible: the empty-history copy now reads "Close a month from Plan", which is an instruction a phone reader cannot follow.
 
 **Files:**
+
 - Modify: `apps/mobile/src/app/(tabs)/planning.tsx` — give it the entry point
 - Reference: `apps/web/components/finance/MonthCloseCard.tsx` — the web twin that opens the sheet
 
@@ -468,7 +478,7 @@ A key grep cannot find a literal. A literal grep cannot find a key reference. Ne
 
 **Files:** whatever the sweep finds. Start from `packages/core/src/i18n/messages/en.ts` and `fr.ts`, then `apps/web` and `apps/mobile` for bare literals.
 
-- [ ] **Step 1: Sweep the catalogue values**, not the keys. Read `en.ts` for any string whose *text* names a surface, screen or tab — "Month", "Home", "the dashboard", "the month screen". Check each against the app's five real surfaces in `apps/web/lib/navigation.ts`. A doc comment naming a retired screen (e.g. `en.ts:890`, "the Month screen's own strip") is not user-facing but is still wrong; fix it in passing.
+- [ ] **Step 1: Sweep the catalogue values**, not the keys. Read `en.ts` for any string whose _text_ names a surface, screen or tab — "Month", "Home", "the dashboard", "the month screen". Check each against the app's five real surfaces in `apps/web/lib/navigation.ts`. A doc comment naming a retired screen (e.g. `en.ts:890`, "the Month screen's own strip") is not user-facing but is still wrong; fix it in passing.
 
 - [ ] **Step 2: Sweep the clients for bare user-facing literals** that name a surface. `BudgetsView.tsx:216` is one and is known; find the rest. Anything user-facing goes through `en.ts`/`fr.ts` per the standing rule, so a literal found here is two defects, not one.
 
@@ -500,7 +510,7 @@ A crude scan then found at least four orphaned on web alone: `ArrivedCharges`, `
 - [ ] **Step 2: For each, determine whether anything still imports it**, anywhere in either app. Beware partial-name matches: a scan for `GLASS` matching `GLASS_CARD` is a false positive, and a component used under an alias is a false negative.
 
 - [ ] **Step 3: For each genuine orphan, decide and record which it is.** There are only two answers and the distinction is the whole task:
-  - **A capability the app lost.** Something a reader could do and now cannot. It must be re-homed on a surface that still exists. `ArrivedCharges` is known to be one: confirming an expected charge arrived is a thing people did, and the spec lists fulfilment as *out of scope* — meaning unchanged, not removed.
+  - **A capability the app lost.** Something a reader could do and now cannot. It must be re-homed on a surface that still exists. `ArrivedCharges` is known to be one: confirming an expected charge arrived is a thing people did, and the spec lists fulfilment as _out of scope_ — meaning unchanged, not removed.
   - **Chrome that belonged to the deleted screen.** Something that only ever existed to dress Month. It should be **deleted**, not re-homed — carrying it forward leaves dead code that the next person mistakes for a feature. `MonthFirstRun` and `MonthClosedRecap` are candidates; check whether the panel system already covers what they did before concluding either way, since the `run` family panel already has a `ClosedRecap` block.
 
 - [ ] **Step 4: Re-home the capabilities.** For `ArrivedCharges`, note that the spec describes it precisely: it was the slot in the attention list for "rows that ask a question rather than send you somewhere … which needs buttons and therefore a client component — so it arrives as a slot rather than as an item." The attention list is now the spine's action row. Judge whether the spine is the right home or whether a panel serves it better, and say why.
@@ -522,7 +532,7 @@ A crude scan then found at least four orphaned on web alone: `ArrivedCharges`, `
 
 To `docs/superpowers/plans/2026-09-17-spine-and-month-retirement-human-checks.md`, in the voice of its predecessor: background, what to do, what you should see, what it would mean otherwise. It must cover, at minimum: all four ignition states and how to reach each; the ring being **absent** rather than dark when over-recorded; the flame against a best streak; the action row's first item and its `+N`; `/dashboard` redirecting rather than 404ing; every phone attention link landing on a real screen; and both languages on the whole spine.
 
-State plainly which claims you did not verify yourself. Plan 1's most serious defect was invisible to a green suite *and* to a checklist that asked the reader to look for the wrong thing.
+State plainly which claims you did not verify yourself. Plan 1's most serious defect was invisible to a green suite _and_ to a checklist that asked the reader to look for the wrong thing.
 
 - [ ] **Step 5: Commit**
 

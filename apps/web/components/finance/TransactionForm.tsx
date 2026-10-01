@@ -14,7 +14,6 @@ import { Text } from "@/components/retroui/Text";
 import { useToast } from "@/components/layout/ToastProvider";
 import { MobileSheet } from "@/components/layout/MobileSheet";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
-import { TAGS_FIELD_MARKER } from "@/lib/actions/tag-field";
 import {
   deleteTransaction,
   saveQuickTransaction,
@@ -24,14 +23,12 @@ import { formatShortDate, todayIsoLocal } from "@finance/core/constants";
 import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
 import { monthLong } from "@finance/core/i18n/calendar-names";
 import { moveBackEarlyIncome } from "@/lib/actions/fulfilment";
-import type { Category, Tag, Transaction } from "@finance/core/types/database";
+import type { Category, Transaction } from "@finance/core/types/database";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
 
 interface TransactionFormProps {
   categories: Category[];
-  tags?: Tag[];
-  selectedTagIds?: string[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** The transaction being edited. */
@@ -48,8 +45,6 @@ interface TransactionFormProps {
  */
 export function TransactionForm({
   categories,
-  tags = [],
-  selectedTagIds = [],
   open,
   onOpenChange,
   transaction,
@@ -63,8 +58,6 @@ export function TransactionForm({
     <TransactionFormFields
       key={transaction.id}
       categories={categories}
-      tags={tags}
-      selectedTagIds={selectedTagIds}
       open={open}
       onOpenChange={onOpenChange}
       transaction={transaction}
@@ -75,8 +68,6 @@ export function TransactionForm({
 
 interface TransactionFormFieldsProps {
   categories: Category[];
-  tags: Tag[];
-  selectedTagIds: string[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   transaction: Transaction;
@@ -85,8 +76,6 @@ interface TransactionFormFieldsProps {
 
 function TransactionFormFields({
   categories,
-  tags,
-  selectedTagIds,
   open,
   onOpenChange,
   transaction,
@@ -133,7 +122,6 @@ function TransactionFormFields({
         // Today, not the original date: a copy is a new occurrence.
         occurredOn: todayIsoLocal(),
         note: transaction.note ?? undefined,
-        tagIds: selectedTagIds,
       });
 
       if (result.error) {
@@ -267,32 +255,6 @@ function TransactionFormFields({
             defaultValue={transaction.note ?? undefined}
           />
         </div>
-        {tags.length > 0 && (
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm font-medium">
-              {t("transaction.tags")}
-            </legend>
-            {/* Says "the tags were on screen", so an empty selection means
-                none rather than "not asked". */}
-            <input type="hidden" name={TAGS_FIELD_MARKER} value="1" />
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <label
-                  key={tag.id}
-                  className="inline-flex items-center gap-2 border border-border px-3 py-2 text-sm"
-                >
-                  <input
-                    type="checkbox"
-                    name="tagIds"
-                    value={tag.id}
-                    defaultChecked={selectedTagIds.includes(tag.id)}
-                  />
-                  {tag.name}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        )}
         {state.error && (
           <Text className="text-sm text-destructive">
             {resolveMessage(t, state.error)}

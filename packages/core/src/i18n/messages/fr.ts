@@ -1,4 +1,11 @@
 import type { Messages } from "./en";
+import { removalFr } from "./removal.fr";
+import { planPhoneFr } from "./plan-phone.fr";
+import { planWebFr } from "./plan-web.fr";
+import { futurePlanFr } from "./future-plan.fr";
+import { accountsFr } from "./accounts.fr";
+import { placementsWebFr } from "./placements-web.fr";
+import { placementsPhoneFr } from "./placements-phone.fr";
 import { moreScreensFr } from "./more-screens.fr";
 import { formPickersFr } from "./form-pickers.fr";
 import { reviewScreensFr } from "./review-screens.fr";
@@ -38,7 +45,8 @@ export const fr: Messages = {
     ledgerList: "Liste",
     ledgerCalendar: "Calendrier",
     ledgerByCategory: "Par catégorie",
-    walletsPositions: "Positions",
+    walletsPositions: "Comptes",
+    walletsAnalysis: "Analyse",
     walletsLookThrough: "Composition",
 
     waiting: "{count} en attente",
@@ -64,7 +72,6 @@ export const fr: Messages = {
     moneySection: "Argent",
     moneyFooter: "La devise change le symbole, pas les montants.",
     categories: "Catégories",
-    budgetsAndGoals: "Budgets et objectifs",
     currency: "Devise",
     securitySection: "Sécurité",
     securityFooterWeb:
@@ -124,12 +131,6 @@ export const fr: Messages = {
     monthOpenTitle: "Un nouveau mois commence",
     monthOpenBody:
       "Vos opérations récurrentes y sont déjà. Voyez ce qu'il vous restera.",
-    overCapOne: "{name} a dépassé son budget",
-    overCapMany: {
-      one: "{count} budget dépassé",
-      other: "{count} budgets dépassés",
-    },
-    overCapBody: "{spent} dépensés sur {limit}.",
   },
   passkeys: {
     none: "Aucune clé d'accès pour l'instant.",
@@ -151,10 +152,8 @@ export const fr: Messages = {
     searchPlaceholder: "Chercher une catégorie ou une note…",
     searchLabel: "Chercher dans les opérations",
     filterByCategory: "Filtrer par catégorie",
-    filterByTag: "Filtrer par étiquette",
     filterTransactions: "Filtrer les opérations",
     allCategories: "Toutes les catégories",
-    allTags: "Toutes les étiquettes",
     selectDone: "Terminé",
     select: "Sélectionner",
     clearAll: "Tout désélectionner",
@@ -297,76 +296,7 @@ export const fr: Messages = {
   },
 
   plan: {
-    runwayLead: "Tout ce que vous avez enregistré comme épargne couvre",
-    runwayRate: "à {amount} par mois.",
-    capsHeading: "Budgets",
-    addCap: "Ajouter un budget",
-    addCapSubmit: "Ajouter le budget",
-    update: "Mettre à jour",
-    cancel: "Annuler",
-    monthlyLimit: "Budget mensuel",
-    capSaved: "Budget enregistré",
     capRemoved: "Budget supprimé",
-    goalsHeading: "Objectifs d'épargne",
-    addGoal: "Ajouter un objectif",
-    addGoalSubmit: "Ajouter l'objectif",
-    updateGoal: "Mettre à jour l'objectif",
-    goalTarget: "Objectif",
-    goalTargetDate: "Date cible",
-    goalSaved: "Objectif enregistré",
-    goalRemoved: "Objectif supprimé",
-    allSavings: "Toute l'épargne",
-    tagsHeading: "Étiquettes",
-    tagsBlurb:
-      "Une deuxième façon de regrouper une opération, en travers des catégories — des vacances, un colocataire, un projet à côté.",
-    newTag: "Nouvelle étiquette",
-    addTag: "Ajouter l'étiquette",
-    tagAdded: "Étiquette ajoutée",
-    editTagNamed: "Modifier l'étiquette {name}",
-    tagName: "Nom",
-    renameTag: "Renommer",
-    tagRenamed: "Étiquette renommée",
-    tagNameExists: "{name} existe déjà.",
-    mergeIntoNamed: "Fusionner avec {name}",
-    mergeTagInto: "Fusionner avec",
-    chooseTag: "Choisir une étiquette",
-    mergeTag: "Fusionner",
-    mergeTagHint:
-      "Ses opérations prennent l'étiquette choisie, et {name} disparaît.",
-    tagMerged: "Étiquettes fusionnées",
-    deleteTag: "Supprimer l'étiquette",
-    deleteTagUses: {
-      one: "Elle sera retirée de {count} opération\u00A0; l'opération reste.",
-      other:
-        "Elle sera retirée de {count} opérations\u00A0; les opérations restent.",
-    },
-    deleteTagUnused: "Aucune opération ne la porte.",
-    confirmDeleteTag: "Oui, supprimer",
-    tagDeleted: "Étiquette supprimée",
-    editTag: "Modifier l'étiquette",
-    goalName: "Nom de l'objectif",
-    deleteGoalTitle: "Supprimer cet objectif\u00A0?",
-    deleteCapTitle: "Supprimer ce budget\u00A0?",
-    deleteWarning: "C'est irréversible. Vos opérations ne sont pas touchées.",
-    goalReached: "Objectif atteint\u00A0!",
-    goalOverdue: "Date cible dépassée — {amount} encore à épargner.",
-    goalOnSchedule: "Épargnez {amount}/mois pour y arriver avant {month}.",
-    goalTargetDateOptional: "Date cible (facultative)",
-    goalStartsOn: "Compter à partir du",
-    goalStartsOnHint: "L'épargne à partir de ce jour compte pour l'objectif.",
-    linkCategoriesTitle: "Catégories",
-    linkCategoriesHint: "Là où l'argent a le droit d'aller",
-    linkImportTitle: "Importer un relevé",
-    linkImportHint: "Un CSV, quand il n'y a pas de connexion bancaire",
-    capsBlurb:
-      "Un budget est un maximum mensuel — sur une catégorie, ou sur tout. Ajoutez-en un et vous verrez où vous en êtes.",
-    goalsBlurb:
-      "Un objectif est un montant à atteindre — un apport, un voyage, une réserve. Mettez de l'argent de côté dans une catégorie d'épargne et il se remplit.",
-    amountOfTotal: "{amount} sur {total}",
-    editCapOn: "Modifier le budget sur {label}",
-    editGoalNamed: "Modifier l'objectif {name}",
-    capScope: "Sur quelles dépenses",
-    trackCategoryOptional: "Catégorie suivie (facultative)",
   },
 
   recurring: {
@@ -479,7 +409,6 @@ export const fr: Messages = {
     note: "Note (facultatif)",
     notePlaceholder: "Libellé",
     selectCategory: "Choisir une catégorie",
-    tags: "Étiquettes",
     saving: "Enregistrement…",
     saveTransaction: "Enregistrer l'opération",
     saved: "Opération enregistrée",
@@ -579,7 +508,6 @@ export const fr: Messages = {
     amount: "Montant",
     note: "Note",
     anotherDay: "Un autre jour",
-    tags: "Étiquettes",
     allCategories: "Toutes les catégories",
     noCategoryMatch: "Aucune catégorie ne correspond à «\u00A0{query}\u00A0».",
     savedKeepGoing: {
@@ -602,12 +530,8 @@ export const fr: Messages = {
     expensesTitle: "Qu'est-ce qui sort\u00A0?",
     expensesBody:
       "Loyer, abonnements, factures — ce que vous savez déjà devoir payer. C'est ce qui rend la projection utile.",
-    capTitle: "Sur quoi préférez-vous ne pas déraper\u00A0?",
-    capBody:
-      "Choisissez une catégorie et un budget mensuel. Le point affichera un anneau qui se remplit à mesure que vous dépensez. Vous pourrez en ajouter d'autres dans Plan.",
     monthlyAmount: "Montant mensuel",
     dayOfMonth: "Jour du mois",
-    monthlyCap: "Budget mensuel",
     category: "Catégorie",
     continue: "Continuer",
     back: "Retour",
@@ -617,7 +541,6 @@ export const fr: Messages = {
     incomeAdded: "Revenu ajouté",
     adding: "Ajout…",
     addThisOne: "Ajouter celle-ci",
-    setCapAndFinish: "Fixer le budget et terminer",
     addedCount: {
       one: "{count} ajoutée — ajoutez-en une autre ou terminez ci-dessous.",
       other: "{count} ajoutées — ajoutez-en une autre ou terminez ci-dessous.",
@@ -740,7 +663,6 @@ export const fr: Messages = {
     invested: "Versé",
     market: "Aujourd'hui",
     profitLoss: "Gain ou perte",
-    walletPicker: "Compte de placement",
     namePea: "Plan d'épargne en actions",
     nameCto: "Compte-titres ordinaire",
     nameAv: "Assurance vie",
@@ -769,7 +691,6 @@ export const fr: Messages = {
     emptyTitleMobile: "Suivez vos placements",
     emptyBodyMobile:
       "Votre PEA, votre compte-titres et vos cryptos, au même endroit.",
-    trackTitle: "Suivre un placement",
     trackBody:
       "Un versement récurrent vers un placement apparaît ici tout seul.",
     addBtcForValue:
@@ -854,10 +775,6 @@ export const fr: Messages = {
     inviteBare:
       "Un seul solde, et l'application peut calculer ce qu'elle n'a jamais vu.",
     closeTheMonth: "Faire le bilan du mois",
-    monthsInARow: {
-      one: "{count} mois d'affilée",
-      other: "{count} mois d'affilée",
-    },
     filledFromBank:
       "Rempli depuis votre banque. Modifiez-le si le jour de lecture n'est pas aujourd'hui.",
     balanceUnreadable:
@@ -1045,10 +962,6 @@ export const fr: Messages = {
     expectedImpact: "Impact prévu",
     expectedImpactPerMonth: "Impact prévu par mois",
     portfolioValue: "Valeur des placements",
-    monthlyBudgets: "Budgets mensuels",
-    savingsGoals: "Objectifs d'épargne",
-    sampleHousing: "Logement",
-    sampleEverythingElse: "Tout le reste",
     oneShare: "1 part",
     oneShareAtQuote: "1 part au cours actuel",
     sharePriced: "Au cours",
@@ -1106,11 +1019,8 @@ export const fr: Messages = {
     returnExplainer:
       "Calculé sur chacun de vos versements, à sa date\u00A0: verser un peu chaque mois est comparé équitablement à un gros versement unique. Le gain en euros seul avantagerait l'argent resté placé le plus longtemps.",
     returnByAccount: "Par compte",
-    allocationIntro:
-      "Comment vos placements se répartissent entre vos comptes.",
     allocationIntroTargets:
       "Chaque barre est la part d'un compte aujourd'hui\u00A0; le trait marque la part visée.",
-    shareOfInvestments: "{share} de vos placements",
     shareNowTarget: "{share} aujourd'hui · cible {target}",
     onTarget: "Dans la cible",
     aboveTarget: "au-dessus de la cible",
@@ -1131,8 +1041,6 @@ export const fr: Messages = {
     noTargetHint:
       "Choisissez la répartition voulue\u00A0: vous verrez l'écart de chaque compte et où placer votre prochain versement.",
     editTargets: "Modifier les cibles",
-    targetEditorIntro:
-      "Choisissez la part de vos placements que chaque compte doit détenir. Le total doit faire 100\u00A0%.",
     targetNow: "aujourd'hui {share}",
     targetTotalComplete: "Total 100\u00A0%",
     targetTotalShort: "{left}\u00A0% restant à répartir",
@@ -1466,10 +1374,6 @@ export const fr: Messages = {
       "la médiane de vos bilans passés, pour qu'un seul voyage ne la déplace pas",
     streak: "Mois d'affilée dans la marge",
     bestStreak: "Meilleure série à ce jour",
-    budgetSpent: "Budget {label}, dépensé",
-    budgetLeft: "Budget {label}, restant",
-    budgetOver: "Budget {label}, dépassé de",
-    goalSaved: "{name}, épargné",
     investedValue: "Valeur investie",
     inboxPending: "Opérations encore sans catégorie",
     chargesUnconfirmed: "Opérations récurrentes pas encore confirmées",
@@ -1492,9 +1396,6 @@ export const fr: Messages = {
     oddMonth: "De combien ce mois s'écarte d'un mois normal",
     monthsActive: "Mois où quelque chose est enregistré",
     shareOfMonth: "Part de tout ce qui est sorti ce mois-là",
-    cap: "Le budget de cette catégorie",
-    capLeft: "Le budget, restant ce mois-là",
-    capOver: "Le budget, dépassé de",
   },
 
   pulse: {
@@ -1544,54 +1445,9 @@ export const fr: Messages = {
   },
 
   projection: {
-    heading: "Si rien ne change",
-    window: {
-      one: "Le mois prochain",
-      other: "Les {count} prochains mois",
-    },
-
-    inAccounts: "Sur les comptes",
-    kept: "Tout ce qui est économisé",
-    by: "d'ici {month}",
-    added: {
-      one: "ajouté sur {count} mois",
-      other: "ajouté sur {count} mois",
-    },
-    noOpeningBalance:
-      "Aucun solde de compte comme point de départ\u00A0: ce sont donc les montants que les mois ajoutent, et non là où ils vous laissent.",
-
-    perMonth: "{amount} par mois en moyenne",
-    shrinking: "Il sort plus qu'il n'entre, mois après mois.",
-    accountsFalling:
-      "Les comptes baissent parce que {amount} par mois partent en épargne et en placements. Cet argent reste le vôtre — il est sur l'autre courbe.",
-
-    madeOf: "Ce qui compose ce chiffre",
-    income: "Revenus",
-    committed: "Dépenses fixes",
-    setAside: "Épargne et placements",
-    deployed: "Investi depuis un compte de placement",
-    unrecorded: "Dépenses courantes",
-    charges: {
-      one: "{count} opération récurrente",
-      other: "{count} opérations récurrentes",
-    },
-    noCharges: "rien de programmé",
-    setAsideNote: "Sort du compte, reste à vous.",
-    deployedNote:
-      "Déjà sur un compte de placement\u00A0: aucune des deux courbes ne bouge.",
-    unrecordedMeasured: {
-      one: "la médiane de {count} bilan",
-      other: "la médiane de {count} bilans",
-    },
-    unrecordedNotYet:
-      "Pas encore compté — faites le bilan de deux mois et ce sera le cas.",
     noIncomeCharge:
       "Aucune opération récurrente n'apporte de revenu\u00A0: votre salaire n'entre dans aucun de ces chiffres. Ajoutez-le dans Récurrents et tout change ici.",
     noIncomeCta: "Ajouter un revenu récurrent",
-    sparklineLabel: {
-      one: "Comptes projetés et total économisé sur {count} mois",
-      other: "Comptes projetés et total économisé sur {count} mois",
-    },
   },
 
   runway: {
@@ -1607,8 +1463,6 @@ export const fr: Messages = {
     remaining: "Reste",
     available: "Disponible",
     other: "Autre",
-    allExpenses: "Toutes les dépenses",
-    uncategorised: "Catégorie",
   },
 
   pea: {
@@ -1661,10 +1515,6 @@ export const fr: Messages = {
         other:
           "{count} opérations récurrentes semblent déjà payées par votre banque.",
       },
-    },
-    breach: {
-      title: "{label} dépasse son budget",
-      body: "{spent} dépensés sur {limit}.",
     },
     bankRenew: {
       title: "Gardez votre banque synchronisée",
@@ -2177,7 +2027,6 @@ export const fr: Messages = {
     setBalanceBody:
       "Saisissez une fois ce que contient votre compte, et ceci devient votre vrai solde.",
     spent: "Dépensé",
-    ofCap: "sur un budget de {amount}",
     spentLessSoFar: "{amount} de moins qu'en {month} à ce stade",
     spentMoreSoFar: "{amount} de plus qu'en {month} à ce stade",
     spentLess: "{amount} de moins qu'en {month}",
@@ -2190,14 +2039,11 @@ export const fr: Messages = {
     seeInLedger: "Voir dans le Journal",
     whereItWent: "Où c'est parti",
     everythingElse: "Tout le reste",
-    capOf: "{spent} sur {cap}",
     run: { one: "{count} mois d'affilée", other: "{count} mois d'affilée" },
     runBody: "Bilans d'affilée sous votre marge.",
     bestRun: "Record\u00A0: {count}",
     noRunYet:
       "Faites le bilan d'un mois sous votre marge pour lancer une série.",
-    goals: "Objectifs",
-    goalToGo: "Encore {amount}",
     invested: "Valeur de vos placements",
   },
 
@@ -2298,10 +2144,8 @@ export const fr: Messages = {
     resetNotSent: "Le lien n'a pas pu être envoyé. Réessayez dans un instant.",
     descriptionTooLong: "Le libellé doit faire 500 caractères ou moins",
     nameTooLong100: "Le nom doit faire 100 caractères ou moins",
-    nameTooLong40: "Le nom doit faire 40 caractères ou moins",
     nameRequiredCustom: "Le nom est obligatoire pour une ligne personnalisée",
     shareCountRequired: "Le nombre de parts est obligatoire",
-    targetPositive: "L'objectif doit être positif",
     capNotNegative: "Un budget ne peut pas être négatif",
     zeroOrMore: "Doit être 0 ou plus",
     positiveNumber:
@@ -2324,10 +2168,15 @@ export const fr: Messages = {
     // French readers out of their own account deletion.
     deleteConfirmation: "Tapez DELETE pour confirmer",
     targetsMustTotal100: "Les cibles doivent totaliser 100\u00A0%.",
-    tagNameTaken: "Une étiquette porte déjà ce nom.",
-    tagMergeFailed: "Ces étiquettes n'ont pas pu être fusionnées.",
   },
   actions: actionsFr,
+  removal: removalFr,
+  planPhone: planPhoneFr,
+  planWeb: planWebFr,
+  futurePlan: futurePlanFr,
+  accounts: accountsFr,
+  placementsWeb: placementsWebFr,
+  placementsPhone: placementsPhoneFr,
   moreScreens: moreScreensFr,
   formPickers: formPickersFr,
   reviewScreens: reviewScreensFr,

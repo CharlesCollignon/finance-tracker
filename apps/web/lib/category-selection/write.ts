@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatCurrency, formatMonthLabel, getCurrentMonth } from "@finance/core/constants";
+import {
+  formatCurrency,
+  formatMonthLabel,
+  getCurrentMonth,
+} from "@finance/core/constants";
 import {
   CATEGORY_SELECTION_COOLDOWN_SECONDS,
   CATEGORY_SELECTION_RESERVATION_SECONDS,

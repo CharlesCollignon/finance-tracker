@@ -15,15 +15,15 @@ connection for every user) follows.
 
 ## 1. Decisions
 
-| # | Question | Decision |
-|---|---|---|
+| #    | Question                                                                     | Decision                                                                                                                                                                                                                                                                                                                     |
+| ---- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | D0.1 | Does the upgrade plan supersede the roadmap given earlier in September 2026? | **Yes**, wherever the two conflict: tiers 0–5 instead of levels L0–L3, goals-first priority, EUR default with USD supported, three proposed promises, no payload contents in operational AI logs, WCAG 2.2 AA. Reference keys carry a jurisdiction prefix (`fr.*`) so France-first never hard-codes France as the only case. |
-| D0.2 | Where does a savings goal's running total start? | A new `starts_on` date, backfilled to the goal's creation date and editable by the user. The total runs across every month from `starts_on` to today. |
-| D0.3 | Do the four bug fixes ship behind flags? | **No.** The fixes restore intended behaviour; flagging them off for existing users would keep those users on the bugs. New features (tag management, provenance lines) are flagged. |
-| D0.4 | Where does tag management live? | On the Plan page's Tags card, where tags are created today on both clients. It moves with the rest of tags in Phase 3. |
-| D0.5 | The month read sends the current-account balance to Mistral. | Keep it (Phase 0 changes no AI behaviour). Correct the comment that says balances are never sent. Revisit in Phase 4 with the narration contract. |
-| D0.6 | Analytics without a chosen vendor. | Build the event catalogue, the consent setting and `track()`, with a sink that sends nothing until the vendor is chosen (plan open question 8). |
-| D0.7 | Lint to zero in this phase? | **Yes**, web and mobile, then gate CI on it. A finding that is a deliberate choice may be suppressed inline with a one-line reason; nothing is suppressed wholesale. |
+| D0.2 | Where does a savings goal's running total start?                             | A new `starts_on` date, backfilled to the goal's creation date and editable by the user. The total runs across every month from `starts_on` to today.                                                                                                                                                                        |
+| D0.3 | Do the four bug fixes ship behind flags?                                     | **No.** The fixes restore intended behaviour; flagging them off for existing users would keep those users on the bugs. New features (tag management, provenance lines) are flagged.                                                                                                                                          |
+| D0.4 | Where does tag management live?                                              | On the Plan page's Tags card, where tags are created today on both clients. It moves with the rest of tags in Phase 3.                                                                                                                                                                                                       |
+| D0.5 | The month read sends the current-account balance to Mistral.                 | Keep it (Phase 0 changes no AI behaviour). Correct the comment that says balances are never sent. Revisit in Phase 4 with the narration contract.                                                                                                                                                                            |
+| D0.6 | Analytics without a chosen vendor.                                           | Build the event catalogue, the consent setting and `track()`, with a sink that sends nothing until the vendor is chosen (plan open question 8).                                                                                                                                                                              |
+| D0.7 | Lint to zero in this phase?                                                  | **Yes**, web and mobile, then gate CI on it. A finding that is a deliberate choice may be suppressed inline with a one-line reason; nothing is suppressed wholesale.                                                                                                                                                         |
 
 ## 2. Corrections to the parent plan
 
@@ -66,18 +66,18 @@ plan's intent; they change its size or its assumptions.
 
 ## 3. Scope and parity
 
-| Task | Web | Mobile |
-|---|---|---|
-| T1 Calendar keeps tags | fixed | calendar gains tag editing (it never deleted them) |
-| T2 Goals running total | yes | yes |
-| T3 Income charges editable | yes | yes |
-| T4 Password reset | request, and set the new password | request; the new password is set on the web page the email opens |
-| T5 Feature flags | read on the server | read at session start, last value cached |
-| T6 Tag rename, delete, merge | yes (flagged) | yes (flagged) |
-| T7 Reference registry | yes | yes, cached for offline |
-| T8 AiProvider | server only | unchanged (already goes through the web API) |
-| T9 Analytics layer | yes | yes |
-| T10 Personas | n/a (core tests) | n/a |
+| Task                         | Web                               | Mobile                                                           |
+| ---------------------------- | --------------------------------- | ---------------------------------------------------------------- |
+| T1 Calendar keeps tags       | fixed                             | calendar gains tag editing (it never deleted them)               |
+| T2 Goals running total       | yes                               | yes                                                              |
+| T3 Income charges editable   | yes                               | yes                                                              |
+| T4 Password reset            | request, and set the new password | request; the new password is set on the web page the email opens |
+| T5 Feature flags             | read on the server                | read at session start, last value cached                         |
+| T6 Tag rename, delete, merge | yes (flagged)                     | yes (flagged)                                                    |
+| T7 Reference registry        | yes                               | yes, cached for offline                                          |
+| T8 AiProvider                | server only                       | unchanged (already goes through the web API)                     |
+| T9 Analytics layer           | yes                               | yes                                                              |
+| T10 Personas                 | n/a (core tests)                  | n/a                                                              |
 
 **Not in Phase 0:** per-feature AI consent toggles (4.8), the narration
 validator (4.3), the insight and recommendation contracts (4.1, 4.2), any
@@ -94,7 +94,7 @@ the dead `bearing_pins` column and `bearing_arrangements` table.
   accent, the Semantic Amount Rule, the privacy blur on every rendered amount.
 - WCAG 2.2 AA: contrast, visible focus, 44 px targets (56 px list rows),
   labelled figures, reduced motion honoured.
-- `CONTEXT.md` vocabulary: *recurring template*, *savings goal*, *tag*.
+- `CONTEXT.md` vocabulary: _recurring template_, _savings goal_, _tag_.
 - Migrations additive and reversible, RLS on every new table, each proven
   with `supabase db reset` against a local stack and an assertion script in
   `supabase/tests/`.
@@ -129,6 +129,7 @@ Ordered. T0, T1, T3 and T4 need no migration.
 none. Duplicating from the calendar drops tags the same way.
 
 **Fix.**
+
 - The form posts a hidden marker field whenever it renders the tags control.
   `updateTransaction` replaces tags only when the marker is present; without
   it, tags are untouched. The decision is a small pure function next to the
@@ -154,12 +155,14 @@ mobile Plan (`(tabs)/planning.tsx:224`).
 **Rule (D0.2).** A goal's saved amount is what the monthly summary's `current`
 view counts for it, summed over every month from `starts_on` to today, with
 the first month counted from `starts_on`:
+
 - a goal linked to a category counts that category;
 - a goal with no category counts all savings, with withdrawal categories
   (savings categories whose `counts_toward_summary` is false) subtracting, the
   same rule `getSavingsReserve` uses.
 
 **Change.**
+
 - Migration `038`: `savings_goals.starts_on date not null`, backfilled from
   `created_at` (in `Europe/Paris`), default the insert date.
 - Core: `buildGoalRunningTotals(goals, transactions, templates, skips, today)`
@@ -201,6 +204,7 @@ code verifier lives in the browser that asked, so opening the email elsewhere
 likely fails. Mobile has no reset flow.
 
 **Fix.**
+
 - **Web confirm route** `app/auth/confirm/route.ts`: verifies a
   `token_hash` of type `recovery` with `verifyOtp`, then redirects to a
   sanitised `next`. This works from any device.
@@ -281,13 +285,13 @@ session, cached in AsyncStorage for offline use.
 **Seeded and migrated** (status `active`, because they reproduce today's
 figures; sources and effective dates listed in the migration for review):
 
-| Key | Value | Replaces |
-|---|---|---|
-| `fr.pea.ceiling` | 150000 EUR | `PEA_CONTRIBUTION_CEILING` |
-| `fr.pea.min_years` | 5 years | `PEA_MATURITY_YEARS` and "five years" / "cinq ans" in copy (placeholder `{years}`) |
-| `fr.av.fee_typical` | `{ "min": 0.005, "max": 0.008 }` per year | the envelope-fee hint copy (placeholders) |
-| `fund.<ISIN>.ongoing_charge` | nine values | `etf-shortlist.ts` hints (ANX has none) |
-| `bench.world_equity.weight.{fr,europe,us}` | 0.03, 0.15, 0.64 | `WORLD_EQUITY_REFERENCE`; the unused `eurozone` weight is dropped |
+| Key                                        | Value                                     | Replaces                                                                           |
+| ------------------------------------------ | ----------------------------------------- | ---------------------------------------------------------------------------------- |
+| `fr.pea.ceiling`                           | 150000 EUR                                | `PEA_CONTRIBUTION_CEILING`                                                         |
+| `fr.pea.min_years`                         | 5 years                                   | `PEA_MATURITY_YEARS` and "five years" / "cinq ans" in copy (placeholder `{years}`) |
+| `fr.av.fee_typical`                        | `{ "min": 0.005, "max": 0.008 }` per year | the envelope-fee hint copy (placeholders)                                          |
+| `fund.<ISIN>.ongoing_charge`               | nine values                               | `etf-shortlist.ts` hints (ANX has none)                                            |
+| `bench.world_equity.weight.{fr,europe,us}` | 0.03, 0.15, 0.64                          | `WORLD_EQUITY_REFERENCE`; the unused `eurozone` weight is dropped                  |
 
 The 10-year fee horizon, defined three times, becomes one core constant: it is
 a presentation choice, not a financial fact. The per-user
@@ -359,29 +363,29 @@ changes, tests added, flags created, what comes next.
 
 ## 6. Data model
 
-| Migration | Change | RLS |
-|---|---|---|
-| `038_goal_start` | `savings_goals.starts_on date not null`, backfilled | existing policies |
-| `039_feature_flags` | `feature_flags`, `user_feature_flags`, `evaluated_feature_flags()` | flags readable by authenticated users; overrides readable by their owner; writes by service role only |
-| `040_merge_tags` | `merge_tags(source, target)` | existing tag policies (security invoker) |
-| `041_reference_values` | `reference_values` with non-overlap constraint, seeded | active rows readable by authenticated users; writes by service role only |
-| `042_ai_calls` | `ai_calls`, index on `(user_id, created_at)` | owner reads; owner inserts; service role inserts |
-| `043_analytics_consent` | `user_preferences.analytics_consent boolean not null default false` | existing policies |
+| Migration               | Change                                                              | RLS                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `038_goal_start`        | `savings_goals.starts_on date not null`, backfilled                 | existing policies                                                                                     |
+| `039_feature_flags`     | `feature_flags`, `user_feature_flags`, `evaluated_feature_flags()`  | flags readable by authenticated users; overrides readable by their owner; writes by service role only |
+| `040_merge_tags`        | `merge_tags(source, target)`                                        | existing tag policies (security invoker)                                                              |
+| `041_reference_values`  | `reference_values` with non-overlap constraint, seeded              | active rows readable by authenticated users; writes by service role only                              |
+| `042_ai_calls`          | `ai_calls`, index on `(user_id, created_at)`                        | owner reads; owner inserts; service role inserts                                                      |
+| `043_analytics_consent` | `user_preferences.analytics_consent boolean not null default false` | existing policies                                                                                     |
 
 Each has a `supabase/tests/<n>.test.sql` assertion script in the style of
 `036_soft_delete.test.sql`, run after `supabase db reset` replays the chain.
 
 ## 7. Risks and tests
 
-| Risk | Mitigation |
-|---|---|
-| Goal figures change for every existing user (D0.2) | Core tests for the rule; personas carry goals with golden totals; stored month reads keep the figures they were written from |
-| Tag merge or delete loses data | Atomic function; SQL assertions including soft-deleted rows and cross-user refusal; confirmation states the count |
-| The AI refactor changes behaviour silently | Characterisation tests first; one feature per commit; the cron path and the instrument quota's release-on-reject tested explicitly |
-| Registry values shift a figure | Snapshot-equality test against today's outputs; missing value shown as unavailable, never guessed |
-| Reset email template and deploy out of step | The confirm route and the callback both lead to `/reset/new`, so either link works during the switch |
-| Flags add latency | One database call per request on web, one per session on mobile |
-| Lint fixes touch unrelated files | Separate commits, no behaviour change, typecheck and tests after each |
+| Risk                                               | Mitigation                                                                                                                         |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Goal figures change for every existing user (D0.2) | Core tests for the rule; personas carry goals with golden totals; stored month reads keep the figures they were written from       |
+| Tag merge or delete loses data                     | Atomic function; SQL assertions including soft-deleted rows and cross-user refusal; confirmation states the count                  |
+| The AI refactor changes behaviour silently         | Characterisation tests first; one feature per commit; the cron path and the instrument quota's release-on-reject tested explicitly |
+| Registry values shift a figure                     | Snapshot-equality test against today's outputs; missing value shown as unavailable, never guessed                                  |
+| Reset email template and deploy out of step        | The confirm route and the callback both lead to `/reset/new`, so either link works during the switch                               |
+| Flags add latency                                  | One database call per request on web, one per session on mobile                                                                    |
+| Lint fixes touch unrelated files                   | Separate commits, no behaviour change, typecheck and tests after each                                                              |
 
 **Test inventory:** core unit tests for every new pure function; web vitest for
 the tag-update decision and the AI adapters; one SQL assertion script per

@@ -23,25 +23,25 @@ reversal is usually the more interesting half.
 **The work ran on `merge-bearing-and-month` in the main checkout, not in a git
 worktree.** The branch was not `main`, the tree was clean, and the plan touches
 both apps plus core — a worktree would have forced a second install of a
-700-package workspace for no isolation gain. *Cost if wrong:* nobody can run
+700-package workspace for no isolation gain. _Cost if wrong:_ nobody can run
 the app on another branch while this is in flight.
 
 **`rowEndIndex` takes the column count as a parameter rather than assuming
 four.** The bento is four columns on a desktop and two on a phone, and the two
 counts disagree about where a row ends. The alternative on offer was to hardcode
 four and "make it conditional later", which is how an untested branch ships.
-*Cost if wrong:* a slightly wider signature than strictly needed. (This turned
+_Cost if wrong:_ a slightly wider signature than strictly needed. (This turned
 out to matter for a different reason — see the row-span defect below.)
 
 **The catalogue task moved ahead of the two client tasks.** Its message keys
 are independent of everything else, and leaving it last would have meant the
 panels referencing `bearing.panel.*` keys that did not exist yet — a type
 error, since `fr.ts` is typed against `en.ts`. Execution order became
-1, 2, 3, 7, 4, 5, 6, 8. *Cost if wrong:* none identified.
+1, 2, 3, 7, 4, 5, 6, 8. _Cost if wrong:_ none identified.
 
 **The panel's block-fallback test uses a tile with no per-tile entry.** A test
 that happens to pick a tile with its own `TILE_BLOCKS` entry never exercises
-the family fallback at all. *Cost if wrong:* the fallback path ships untested.
+the family fallback at all. _Cost if wrong:_ the fallback path ships untested.
 
 ---
 
@@ -58,7 +58,7 @@ into core first — three Supabase-row-shaped types that are query concerns, not
 domain concerns, and a task of their own rather than a rider on the largest
 task in the plan. The web app's copy is spelled
 `Awaited<ReturnType<typeof query>>` throughout so it cannot drift from the
-queries it wraps. *Cost if wrong:* the phone declares the same shape a second
+queries it wraps. _Cost if wrong:_ the phone declares the same shape a second
 time.
 
 **The phone does not fetch panel detail through the web app.** The plan had it
@@ -69,7 +69,7 @@ the read through the web app would have cost the phone its offline reading for
 no gain. This also dissolved a "duplication risk" the ledger had been carrying:
 with each client gathering its own detail there is no wire contract to share.
 The shared truth is `bearing-panels.ts` — which blocks a tile shows — and that
-was always in core and always tested. *Cost if wrong:* none identified; it
+was always in core and always tested. _Cost if wrong:_ none identified; it
 removes a round trip, a route and an auth path.
 
 ---
@@ -78,7 +78,7 @@ removes a round trip, a route and an auth path.
 
 **The drag handle is inert while that tile's own panel is open.** This is the
 one that looks most like a bug and is not. `react-native-reorderable-list`
-measures a row's height and its neighbours' shift distance *synchronously*,
+measures a row's height and its neighbours' shift distance _synchronously_,
 before our code gets a chance to close the panel in response to a drag
 starting. A live handle on an open tile would size the whole gesture to the
 panel-open height while the tile shrank back underneath it. Two other options
@@ -86,7 +86,7 @@ were considered and rejected: patching inside the vendored library (which we do
 not own and would lose on upgrade), and documenting a glitch we know how to
 avoid. It is also the right product call on its own terms — opening a panel is
 "I am reading this", dragging is "I am arranging", and a tile being read is not
-one you are also reordering. *Cost if wrong:* a reader must collapse a panel
+one you are also reordering. _Cost if wrong:_ a reader must collapse a panel
 before dragging that one tile, on the tile they are already touching.
 
 **The panel's close is a hard jump cut.** Opening animates; closing just
@@ -95,13 +95,13 @@ zero-height grid child with the bento's gap on either side of it — a seam that
 outlives the panel — and two live panel rows would fight the single-seam model
 in `bearing-grid.ts`. The suggested improvement, if this reads as unfinished, is
 a short opacity fade on the row before unmount, which needs no second live row.
-*Cost if wrong:* a reader who watches a smooth open and gets an instant vanish
+_Cost if wrong:_ a reader who watches a smooth open and gets an instant vanish
 reads it as unfinished. This is on the human checklist as a judgment call.
 
 **`now` panels ignore the month entirely.** "Now" is today and a balance is only
 ever true now; showing a live balance beside March's totals would invite
 arithmetic across two different moments. The budget-view toggle is a different
-axis and is *not* covered by this decision — see the Plan 2 list.
+axis and is _not_ covered by this decision — see the Plan 2 list.
 
 **A panel explains its own tile, not its whole family.** `month` is the fattest
 family and a panel rendering all of it would have been the Month screen in an
@@ -121,7 +121,7 @@ mid-plan.** `MonthScore`, `CashAccountsCard`, `RecentOnAccount`, `StillToCome`,
 ever been on Month; the panels put them on the Bearing, and the standing rule is
 that every user-facing string on a surface we touch goes through the
 catalogues — including English we merely inherited. This is why the diff is much
-wider than "add a panel". *Cost if wrong:* a larger diff than the feature needs,
+wider than "add a panel". _Cost if wrong:_ a larger diff than the feature needs,
 against a rule the project applies deliberately.
 
 **The dead `ingredients` block was removed rather than kept as a null arm.** It
@@ -157,7 +157,7 @@ Two riders travelled with that fix and are worth knowing about:
   reason the row model was written as a column sum in the first place.
 
 **The phone's panel footers got their own path table.** `BEARING_TILES` records
-the *web* router's paths, and the phone forwarded them to `router.push` behind
+the _web_ router's paths, and the phone forwarded them to `router.push` behind
 an `as never` cast that suppressed exactly the check that would have caught the
 problem: fifteen of the twenty-six tiles with a footer link named a screen Expo
 Router has never had. The phone's translation lives in `phoneHref` in core, with
@@ -172,7 +172,7 @@ a test walking every tile against the phone's route list.
 - `/history` → `/month`. The web's `/history` is the Ledger's by-category view
   and the phone's Ledger has only the list and the calendar. Month draws the
   month-against-previous comparison and the net-per-month trend that those two
-  tiles *are*, so it is the nearest thing that answers what they ask. Building a
+  tiles _are_, so it is the nearest thing that answers what they ask. Building a
   by-category screen for the phone would have been new UI this plan did not
   scope.
 
@@ -185,10 +185,10 @@ deliberate.** Those panels render `MonthScore`, which carries its own "set this
 up" link, above the panel's generic footer link — and on all four tiles both
 currently point at `/budgets`, which reads as redundant. They are not: the footer
 is the panel's fixed contract (where the tile used to lead), while `MonthScore`'s
-link is a state-dependent call to action whose destination *changes* with state —
+link is a state-dependent call to action whose destination _changes_ with state —
 an over-recorded month is sent to `/transactions` to find the missing entry, an
 unconfigured one to `/budgets`. Suppressing either would delete a destination the
-other never offers. *Cost if wrong:* four web panels carry two links where a
+other never offers. _Cost if wrong:_ four web panels carry two links where a
 reader might expect one; the human checklist asks the user to judge whether it
 reads as clutter.
 
@@ -203,7 +203,7 @@ is the same rule that keeps a spinner off the headline.
 
 **A write made inside a panel clears the panel cache itself.** It used to rely
 on the Bearing screen's `dataVersion` effect to do it. React flushes passive
-effects child-first, so the panel's own refetch ran *before* that clear and read
+effects child-first, so the panel's own refetch ran _before_ that clear and read
 back the entry it had just written over. Relying on a parent's effect to
 invalidate something a child is about to read is the shape of the bug, not the
 timing; the clear now happens where the write does.
@@ -219,17 +219,17 @@ already in this code.
 phone lets the reader flip between "as of today" and "as of month end" inside
 the card; web's `MoneyOnHand` only displays which view is in force, and web's
 `gatherNow` hardcodes `"current"` rather than reading the scope. Closing this
-means *adding a control* to a web panel — new UI needing its own design and
+means _adding a control_ to a web panel — new UI needing its own design and
 review, not a fix-wave edit, and the finding that raised it could not be tied to
 a confirmed review item. On the human checklist so the divergence gets a human
-ruling. *Cost if wrong:* the two clients keep offering different controls for
+ruling. _Cost if wrong:_ the two clients keep offering different controls for
 the same panel for one more plan.
 
 **The phone's `MonthScore` has no internal call to action at all.** This is the
 mirror image of the two-links decision above: a phone reader cannot reach "find
 the missing entry" for an over-recorded month, because that destination only
 exists inside web's `MonthScore` link. A genuine parity gap, but closing it is
-new mobile UI. *Cost if wrong:* phone users keep missing an action web has had
+new mobile UI. _Cost if wrong:_ phone users keep missing an action web has had
 all along — a pre-existing gap, not one this plan created.
 
 **Web and mobile stagger differently past the eighth item in a list.** Mobile

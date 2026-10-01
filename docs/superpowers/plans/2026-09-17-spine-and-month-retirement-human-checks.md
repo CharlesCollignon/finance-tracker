@@ -144,12 +144,12 @@ screenshot the spine before making the next one.
    rung.
 4. **`lit`** — now set an unrecorded allowance in Plan, above zero, and
    reload. `capRatio` needs three things at once: a readable balance, a close
-   of the month *immediately* before this one (that is what supplies the
+   of the month _immediately_ before this one (that is what supplies the
    opening balance the unrecorded figure is measured from), and an allowance
    above zero. If you set an allowance and still see the blue arc, the most
    likely reason is the third: the close you made is not last month's.
 
-One rung is deliberately unreachable this way: if the account holds *more*
+One rung is deliberately unreachable this way: if the account holds _more_
 than the ledger says it should, the ring is withdrawn entirely whatever rung
 you are on. That is item 4.
 
@@ -176,7 +176,7 @@ of both rungs side by side.
 should (a records gap — a deposit or transaction that was never entered),
 the ring doesn't dim or darken. It disappears entirely (`{ kind: "absent" }`
 in `spine.ts`). This is deliberate: a records gap is a different finding from
-overspending, and the code is emphatic that showing *any* ring here would be
+overspending, and the code is emphatic that showing _any_ ring here would be
 drawing a measurement the app has no grounds to make.
 
 **What to do:** get an account into an over-recorded state (the bank balance
@@ -227,7 +227,7 @@ for nearly every solvent month, including one that has blown its allowance —
 so neither can stand in for the other.
 
 Until this fix `over` had no channel of its own. The reasoning was that an
-over-cap ratio already fills the ring completely, so the fill *was* the
+over-cap ratio already fills the ring completely, so the fill _was_ the
 signal. That was wrong in a specific way: a complete circle is also exactly
 what 100% looks like. A month at 250% of its allowance drew as a full green
 ring, pixel for pixel identical to one that had just reached it, and the
@@ -315,7 +315,7 @@ redirect exists to prevent.
 ## 9. Home-screen latency, and the count that used to depend on the market
 
 **Background:** the Bearing built a full recurring-apply plan on every load
-purely to find out *how many* charges were waiting. Building that plan
+purely to find out _how many_ charges were waiting. Building that plan
 resolves a live market quote for every share-priced recurring occurrence — on
 the landing page, on every load. It was paid twice when a stored
 arrangement's language differed from the reader's, and a third time by every
@@ -334,7 +334,7 @@ and not yet applied:
    times.
 2. Compare the action row's count against the number of rows the Ledger's
    apply sheet actually offers.
-3. Do it again with the machine's network cut *at the server* — if you are
+3. Do it again with the machine's network cut _at the server_ — if you are
    running locally, that is the same machine, so pull the network or point
    the quote host at nothing.
 
@@ -345,7 +345,7 @@ times. With the network up, the count and the apply sheet agree.
 **What it would mean otherwise:** a Bearing that is visibly slower than the
 other surfaces, or a count that changes when the network goes, means the
 cheap path is not the one being taken. One legitimate disagreement: with the
-network down, the apply sheet may offer *fewer* rows than the spine counted,
+network down, the apply sheet may offer _fewer_ rows than the spine counted,
 because pricing is what it cannot do. The spine's number is the honest one
 there; the sheet's shortfall is pre-existing behaviour and not this item's
 concern.
@@ -450,9 +450,9 @@ off screen.
 **Your call:** this is a known cosmetic cost, not a hidden bug — the question
 is whether it reads as sloppy enough to fix. If it bothers you, the
 suggested fix (already known, not yet done) is to reset the form on the
-*open* transition instead of inside `dismiss()`.
+_open_ transition instead of inside `dismiss()`.
 
-**While you are here**, check the other end of the same flow, which *was* a
+**While you are here**, check the other end of the same flow, which _was_ a
 bug and is fixed: complete a close for real and dismiss the sheet. It should
 slide out exactly as the cancel path does. It used to vanish on the frame you
 tapped, because recording a close empties the very prompt the sheet was
@@ -462,7 +462,7 @@ being driven from.
 
 ## 14. The phone's language suggestion, and the layout above every screen
 
-**Background:** this is the one change on the branch that sits above *every*
+**Background:** this is the one change on the branch that sits above _every_
 phone screen, and nothing in the automated suite renders React Native layout.
 The language suggestion — "Lire Pluclair en français ?" — used to live only on
 the Month screen and was orphaned when that screen went. It is now mounted
@@ -666,7 +666,7 @@ whole design bet rests on the former reading being obvious.
 
 **Background:** both clients' `SegmentedControl` now guard against
 re-firing `onChange` when you tap the segment that's already selected — and
-on the phone, the haptic tap sits *inside* that same guard, so tapping an
+on the phone, the haptic tap sits _inside_ that same guard, so tapping an
 already-selected segment produces no haptic at all, not even an
 acknowledgment tap.
 

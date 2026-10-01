@@ -18,7 +18,7 @@ import {
   suggestMerchants,
   type MerchantRule,
 } from "@finance/core/merchant-memory";
-import type { Category, Tag } from "@finance/core/types/database";
+import type { Category } from "@finance/core/types/database";
 import { Button } from "@/components/retroui/Button";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { MobileSheet } from "@/components/layout/MobileSheet";
@@ -51,7 +51,6 @@ interface QuickAddSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categories: Category[];
-  tags: Tag[];
   recentCategoryIds: string[];
   merchants: MerchantRule[];
   /** Prefills the date — the calendar opens the sheet on the day being viewed. */
@@ -151,7 +150,6 @@ function AddSheet({
 
 interface QuickAddFieldsProps {
   categories: Category[];
-  tags: Tag[];
   recentCategoryIds: string[];
   merchants: MerchantRule[];
   defaultDate?: string;
@@ -169,7 +167,6 @@ interface QuickAddFieldsProps {
  */
 function QuickAddFields({
   categories,
-  tags,
   recentCategoryIds,
   merchants,
   defaultDate,
@@ -184,7 +181,6 @@ function QuickAddFields({
   const [categoryId, setCategoryId] = useState("");
   const [occurredOn, setOccurredOn] = useState(defaultDate ?? today);
   const [note, setNote] = useState("");
-  const [tagIds, setTagIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [noteFocused, setNoteFocused] = useState(false);
@@ -281,7 +277,6 @@ function QuickAddFields({
       amount: amountInputToNumber(amount),
       occurredOn,
       note: note.trim() || undefined,
-      tagIds,
     });
 
     setPending(false);
@@ -305,7 +300,6 @@ function QuickAddFields({
     setSavedCount((count) => count + 1);
     setAmount("");
     setNote("");
-    setTagIds([]);
     amountRef.current?.focus();
   }
 
@@ -548,40 +542,6 @@ function QuickAddFields({
           </ul>
         ) : null}
       </div>
-
-      {/* ---- tags --------------------------------------------------- */}
-      {tags.length > 0 ? (
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-medium">{t("quickAdd.tags")}</legend>
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => {
-              const on = tagIds.includes(tag.id);
-              return (
-                <button
-                  key={tag.id}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() =>
-                    setTagIds((current) =>
-                      current.includes(tag.id)
-                        ? current.filter((id) => id !== tag.id)
-                        : [...current, tag.id],
-                    )
-                  }
-                  className={cn(
-                    "min-h-9 rounded-full border px-3 text-sm transition-colors",
-                    on
-                      ? "border-foreground bg-secondary font-medium text-foreground"
-                      : "border-border text-muted-foreground hover:bg-muted",
-                  )}
-                >
-                  {tag.name}
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-      ) : null}
 
       {error ? (
         <p className="text-sm text-destructive">{resolveMessage(t, error)}</p>

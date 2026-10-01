@@ -169,7 +169,10 @@ export async function writeCategoryRead(
         verdict.reason === "unknown-datum"
           ? t("monthRead.threwAway", { detail: verdict.detail })
           : t("monthRead.unusable"),
-      writesLeft: writesRemaining(reserved.tally, CATEGORY_READ_WRITES_PER_MONTH),
+      writesLeft: writesRemaining(
+        reserved.tally,
+        CATEGORY_READ_WRITES_PER_MONTH,
+      ),
     };
   }
 

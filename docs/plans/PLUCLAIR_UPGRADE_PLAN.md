@@ -1,9 +1,10 @@
 # Pluclair upgrade plan — master prompt for Claude Code
 
 > **How to use this file**
+>
 > 1. Save it in the repo as `docs/plans/PLUCLAIR_UPGRADE_PLAN.md`.
 > 2. Start each Claude Code session with:
->    *"Read `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` in full. We are working on Phase N. Start with the Phase plan (section 1.2) and wait for my go."*
+>    _"Read `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` in full. We are working on Phase N. Start with the Phase plan (section 1.2) and wait for my go."_
 > 3. Run one phase per session (or per series of sessions). Every phase ends with a checkpoint where I review before we continue.
 > 4. Sections 1 to 5 apply to every phase. Section 6 lists the phases. Section 7 is work only I (the human) can do; never pretend it is done.
 
@@ -66,14 +67,14 @@ Pluclair tracks one person's money (EUR by default, USD supported): what came in
 
 **D1. Personal recommendations, delivered through a tier ladder.** Pluclair moves from "never gives advice" to personal recommendations. Because investment and insurance advice are regulated in France, every insight and recommendation carries a tier, and each tier is enabled by configuration:
 
-| Tier | What it is | Example | Enabled |
-|---|---|---|---|
-| 0 | Fact about the user's own data | "Your subscriptions cost €1,140 a year." | Always |
-| 1 | What-if simulation | "At +€100/month, the goal lands in March instead of June." | Always |
-| 2 | General rule of thumb, labelled as such | "A common buffer is 3 to 6 months of essential spending." | Always |
-| 3 | Personal recommendation on budgeting and saving behaviour (no product) | "Raise your Holidays contribution to €180/month to reach it on time." | From Phase 4 |
-| 4 | Personal recommendation on product *types* or allocation | "Money for a goal 8 years away could be invested rather than held as cash." | Only after legal opinion (H1) |
-| 5 | Personal recommendation on a specific instrument, contract or provider | "Switch fund A for ETF B in your PEA." | Only with regulatory status (H1); crypto instruments never |
+| Tier | What it is                                                             | Example                                                                     | Enabled                                                    |
+| ---- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 0    | Fact about the user's own data                                         | "Your subscriptions cost €1,140 a year."                                    | Always                                                     |
+| 1    | What-if simulation                                                     | "At +€100/month, the goal lands in March instead of June."                  | Always                                                     |
+| 2    | General rule of thumb, labelled as such                                | "A common buffer is 3 to 6 months of essential spending."                   | Always                                                     |
+| 3    | Personal recommendation on budgeting and saving behaviour (no product) | "Raise your Holidays contribution to €180/month to reach it on time."       | From Phase 4                                               |
+| 4    | Personal recommendation on product _types_ or allocation               | "Money for a goal 8 years away could be invested rather than held as cash." | Only after legal opinion (H1)                              |
+| 5    | Personal recommendation on a specific instrument, contract or provider | "Switch fund A for ETF B in your PEA."                                      | Only with regulatory status (H1); crypto instruments never |
 
 Build the full pipeline (suitability profile, rulesets, records, disclosures) now, so Tiers 4 and 5 can be switched on without re-architecture. Until switched on, the same engine shows Tier 0 to 3 content.
 
@@ -86,6 +87,7 @@ Build the full pipeline (suitability profile, rulesets, records, disclosures) no
 **D5. Mistral stays the AI provider** (EU), behind an `AiProvider` interface so models can be swapped or pinned per feature.
 
 **D6. Brand promises change (needs my sign-off before any copy ships).** Proposed replacement for the three promises:
+
 1. It never moves money.
 2. It never acts on a rule you didn't write.
 3. It shows its work: every figure and every recommendation says where it comes from, and you decide.
@@ -101,49 +103,87 @@ These contracts are used by several phases. Implement them in `packages/core` wi
 ### 4.1 Insight contract
 
 ```ts
-export type Area = 'goals' | 'forecast' | 'investments' | 'fees' | 'spending' | 'cash' | 'envelopes';
+export type Area =
+  | "goals"
+  | "forecast"
+  | "investments"
+  | "fees"
+  | "spending"
+  | "cash"
+  | "envelopes";
 export type Tier = 0 | 1 | 2 | 3 | 4 | 5;
-export type Unit = 'EUR' | 'PCT' | 'MONTHS' | 'DAYS' | 'COUNT' | 'PROB';
+export type Unit = "EUR" | "PCT" | "MONTHS" | "DAYS" | "COUNT" | "PROB";
 
 export interface SourceRef {
-  kind: 'transaction' | 'close' | 'charge' | 'goal' | 'holding' | 'account' | 'reference' | 'price_series';
+  kind:
+    | "transaction"
+    | "close"
+    | "charge"
+    | "goal"
+    | "holding"
+    | "account"
+    | "reference"
+    | "price_series";
   id: string;
 }
 
 export interface Fact {
-  key: string;                 // e.g. 'required_monthly_eur'
+  key: string; // e.g. 'required_monthly_eur'
   value: number;
   unit: Unit;
-  formulaKey: string;          // i18n key describing the calculation in plain words
-  period?: { from: string; to: string };  // ISO dates
+  formulaKey: string; // i18n key describing the calculation in plain words
+  period?: { from: string; to: string }; // ISO dates
   sources: SourceRef[];
 }
 
 export type FactRef = { fact: string };
 
 export type InAppAction =
-  | { type: 'edit_goal'; goalId: string; patch: Record<string, FactRef | string> }
-  | { type: 'create_goal'; template: string; target: FactRef; date?: string }
-  | { type: 'create_cap'; categoryId: string | 'all'; amount: FactRef }
-  | { type: 'edit_charge'; chargeId: string; amount: FactRef }
-  | { type: 'create_charge'; categoryId: string; amount: FactRef; schedule: 'monthly' | 'yearly' }
-  | { type: 'open_simulator'; simulator: string; params: Record<string, FactRef | string> }
-  | { type: 'open_page'; route: string }
-  | { type: 'mark_known' };
+  | {
+      type: "edit_goal";
+      goalId: string;
+      patch: Record<string, FactRef | string>;
+    }
+  | { type: "create_goal"; template: string; target: FactRef; date?: string }
+  | { type: "create_cap"; categoryId: string | "all"; amount: FactRef }
+  | { type: "edit_charge"; chargeId: string; amount: FactRef }
+  | {
+      type: "create_charge";
+      categoryId: string;
+      amount: FactRef;
+      schedule: "monthly" | "yearly";
+    }
+  | {
+      type: "open_simulator";
+      simulator: string;
+      params: Record<string, FactRef | string>;
+    }
+  | { type: "open_page"; route: string }
+  | { type: "mark_known" };
 
 export interface Insight {
-  id: string;                  // stable hash of (detector, subject, period)
-  detector: string;            // 'goals.feasibility@1' (name@version)
+  id: string; // stable hash of (detector, subject, period)
+  detector: string; // 'goals.feasibility@1' (name@version)
   area: Area;
   tier: Tier;
-  subject: { type: 'goal' | 'category' | 'charge' | 'holding' | 'wallet' | 'account' | 'global'; id?: string };
+  subject: {
+    type:
+      | "goal"
+      | "category"
+      | "charge"
+      | "holding"
+      | "wallet"
+      | "account"
+      | "global";
+    id?: string;
+  };
   facts: Record<string, Fact>;
   impact: { annualEur?: number; probabilityDelta?: number };
-  confidence: number;          // 0..1, driven by data sufficiency, never by the LLM
-  urgency: 'none' | 'this_month' | 'deadline';
+  confidence: number; // 0..1, driven by data sufficiency, never by the LLM
+  urgency: "none" | "this_month" | "deadline";
   deadline?: string;
-  actions: InAppAction[];      // in-app only; Pluclair never moves money
-  copy: { titleKey: string; bodyKey: string };  // deterministic fallback copy
+  actions: InAppAction[]; // in-app only; Pluclair never moves money
+  copy: { titleKey: string; bodyKey: string }; // deterministic fallback copy
   createdAt: string;
   expiresAt?: string;
 }
@@ -155,7 +195,7 @@ Rules: detectors are pure functions `(ctx: FinanceContext) => Insight[]`; the sa
 
 ```ts
 export interface RecommendationOption {
-  key: string;                 // 'raise_contribution' | 'move_date' | 'do_nothing' ...
+  key: string; // 'raise_contribution' | 'move_date' | 'do_nothing' ...
   labelKey: string;
   facts: Record<string, Fact>; // consequences of choosing this option
   actions: InAppAction[];
@@ -163,18 +203,23 @@ export interface RecommendationOption {
 
 export interface Recommendation extends Insight {
   tier: 3 | 4 | 5;
-  rulesetVersion: string;      // versioned, reviewed rules that produced it
+  rulesetVersion: string; // versioned, reviewed rules that produced it
   basis: {
     goalIds: string[];
-    profileVersion?: string;   // required for tier >= 4
+    profileVersion?: string; // required for tier >= 4
     referenceVersions: string[];
-    assumptions: { key: string; value: number; unit: Unit; sourceKey: string }[];
+    assumptions: {
+      key: string;
+      value: number;
+      unit: Unit;
+      sourceKey: string;
+    }[];
   };
-  options: RecommendationOption[];  // at least 2, always including 'do_nothing'
-  risks: string[];             // i18n keys
+  options: RecommendationOption[]; // at least 2, always including 'do_nothing'
+  risks: string[]; // i18n keys
   costs: Fact[];
-  disclosures: string[];       // i18n keys, mandatory for tier >= 4
-  requiresStatus: null | 'LEGAL_OPINION' | 'CIF' | 'INSURANCE_INTERMEDIARY';
+  disclosures: string[]; // i18n keys, mandatory for tier >= 4
+  requiresStatus: null | "LEGAL_OPINION" | "CIF" | "INSURANCE_INTERMEDIARY";
 }
 ```
 
@@ -193,6 +238,7 @@ Output: JSON validated against a schema.
 ```
 
 Validator (reject and fall back to deterministic copy on any failure, then log the reason):
+
 - Numbers appear only as placeholders `{{f.<factKey>}}` or dates as `{{d.<key>}}`; any digit outside a placeholder fails.
 - Every placeholder must exist in the input facts.
 - Banned wording per tier (e.g. for tiers 0 to 3: imperative buy or sell verbs, product or provider names not already held by the user, guarantees such as "risk-free", "sure", "guaranteed").
@@ -203,15 +249,15 @@ Validator (reject and fall back to deterministic copy on any failure, then log t
 
 Table `reference_values`:
 
-| Column | Notes |
-|---|---|
-| `key` | e.g. `fr.livret_a.rate`, `fr.ldds.rate`, `fr.lep.rate`, `fr.livret_a.ceiling`, `fr.lep.income_ceiling`, `fr.pea.ceiling`, `fr.pea.min_years`, `fr.av.min_years`, `fr.av.allowance_single`, `fr.pfu.rate`, `fr.social_charges.rate`, `fr.ir.brackets`, `fr.per.ceiling_rules`, `insee.cpi.<coicop>`, `ecb.fx.<ccy>`, `bench.<index>.return_assumption`, `bench.<index>.drawdowns` |
-| `value` | number or JSON |
-| `unit` | |
-| `effective_from`, `effective_to` | values change over time (regulated savings rates move twice a year) |
-| `source_label`, `source_url` | official source first (Banque de France, service-public, Légifrance, INSEE, ECB) |
-| `status` | `draft` or `active`; fetchers write drafts, I activate |
-| `fetched_at`, `reviewed_by` | |
+| Column                           | Notes                                                                                                                                                                                                                                                                                                                                                                            |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key`                            | e.g. `fr.livret_a.rate`, `fr.ldds.rate`, `fr.lep.rate`, `fr.livret_a.ceiling`, `fr.lep.income_ceiling`, `fr.pea.ceiling`, `fr.pea.min_years`, `fr.av.min_years`, `fr.av.allowance_single`, `fr.pfu.rate`, `fr.social_charges.rate`, `fr.ir.brackets`, `fr.per.ceiling_rules`, `insee.cpi.<coicop>`, `ecb.fx.<ccy>`, `bench.<index>.return_assumption`, `bench.<index>.drawdowns` |
+| `value`                          | number or JSON                                                                                                                                                                                                                                                                                                                                                                   |
+| `unit`                           |                                                                                                                                                                                                                                                                                                                                                                                  |
+| `effective_from`, `effective_to` | values change over time (regulated savings rates move twice a year)                                                                                                                                                                                                                                                                                                              |
+| `source_label`, `source_url`     | official source first (Banque de France, service-public, Légifrance, INSEE, ECB)                                                                                                                                                                                                                                                                                                 |
+| `status`                         | `draft` or `active`; fetchers write drafts, I activate                                                                                                                                                                                                                                                                                                                           |
+| `fetched_at`, `reviewed_by`      |                                                                                                                                                                                                                                                                                                                                                                                  |
 
 - A lookup always takes a date: `ref('fr.livret_a.rate', onDate)`.
 - The UI shows provenance next to any figure that uses reference data ("Source: …, effective …").
@@ -275,16 +321,16 @@ Privacy-friendly, EU-hosted tool (I will choose). Never send amounts, merchant n
 
 Apply in both languages in Phase 3. French labels marked "to confirm" need my validation.
 
-| Today | New | Note |
-|---|---|---|
-| Bearing | Bearing, with "Where do I stand?" as visible subtitle | Keep brand voice, show the question |
-| Ledger | Ledger + "What happened?" | |
-| Charges | Recurring (FR: Récurrents, to confirm) + "What repeats?" | Salary is not a "charge" |
-| Apply | removed | Charges post themselves (Phase 3) |
-| Close the month | Month review | The close becomes the first step of the review |
-| Look-through | Inside your funds (FR to confirm) | |
-| Plan | Plan + "What does it add up to?" | Holds caps, goals, projection only |
-| Kept, Unrecorded spending, Reading day | unchanged | Each gets a "How is this calculated?" sheet |
+| Today                                  | New                                                      | Note                                           |
+| -------------------------------------- | -------------------------------------------------------- | ---------------------------------------------- |
+| Bearing                                | Bearing, with "Where do I stand?" as visible subtitle    | Keep brand voice, show the question            |
+| Ledger                                 | Ledger + "What happened?"                                |                                                |
+| Charges                                | Recurring (FR: Récurrents, to confirm) + "What repeats?" | Salary is not a "charge"                       |
+| Apply                                  | removed                                                  | Charges post themselves (Phase 3)              |
+| Close the month                        | Month review                                             | The close becomes the first step of the review |
+| Look-through                           | Inside your funds (FR to confirm)                        |                                                |
+| Plan                                   | Plan + "What does it add up to?"                         | Holds caps, goals, projection only             |
+| Kept, Unrecorded spending, Reading day | unchanged                                                | Each gets a "How is this calculated?" sheet    |
 
 ---
 
@@ -308,6 +354,7 @@ Sizes are rough (S = days, M = 1 to 2 weeks, L = 3+ weeks of focused work). Each
 **Goal:** fix what breaks trust and lay the infrastructure every later phase needs.
 
 Tasks:
+
 1. **Bug: Calendar edit deletes tags** (`components/finance/CalendarView.tsx:526`, `lib/actions/finance.ts:524`). Pass existing tags to the Calendar edit form, and make the save action change tags only when the tags field is present in the payload. Add a regression test.
 2. **Bug: savings goals only count this month** (`app/(app)/budgets/page.tsx:76`). Compute the running total from the goal's start date across all months; move the calculation to `packages/core`; test with multi-month fixtures.
 3. **Gap: income charges not editable** (`components/finance/RecurringView.tsx:49`). List and edit income charges in Charges.
@@ -328,6 +375,7 @@ Acceptance: the four known issues are closed with tests; all existing AI feature
 **Goal:** any user can connect their banks through an aggregator; the owner-only feed disappears.
 
 Tasks:
+
 1. **Discovery (checkpoint).** Document how the current owner feed works (provider, tables, sync, merge logic, "rows merged away by mistake"). Then write a `BankProvider` interface: `createConnectSession`, `handleCallback`, `listAccounts`, `fetchBalances`, `fetchTransactions(since)`, `getConnectionStatus`, `renewConsent`, `revoke`, optional `listHoldings` for savings and investment accounts. Build a fake provider for dev and tests. Do not integrate a real vendor until I confirm the choice (H2) and give you docs and sandbox keys.
 2. **Data model:** `bank_connections`, `bank_accounts` (type: current, savings, card, investment, loan; `is_cash` flag), `raw_bank_transactions` (immutable, provider ids, pending vs booked), link table to ledger transactions. Provider tokens encrypted, server-side only, never sent to clients. RLS everywhere.
 3. **Sync pipeline:** server jobs, idempotent, incremental, retry with backoff, webhook handler if the provider has one. Deduplicate against manual and imported rows using the existing merge logic, and add tests for the "merged away by mistake" case.
@@ -347,6 +395,7 @@ Acceptance: end-to-end connection with the sandbox on web and mobile; history ba
 Principle: ask only what the app can't infer, show something useful after each answer, postpone the rest.
 
 Flow (web and mobile, resumable, every step skippable):
+
 1. **Intent, one tap:** "What do you want most?" — know where my money goes, spend less, save for something, grow my investments. Stored; weights Bearing ordering and insight ranking. A "Try with sample data" link opens a read-only demo workspace built from persona 1, with a permanent "Sample data" banner and one-click exit. Demo data never mixes with real data.
 2. **Bring your money in:** primary "Connect your bank"; secondary "Import statements" (CSV with presets for major French banks and neobanks, or PDF statements read with Mistral OCR: transactions plus opening and closing balances, low-confidence rows sent to review, files discarded after extraction unless I decide otherwise); tertiary "Start manually" with tappable chips for common fixed costs (rent, electricity, internet box, phone plan, mutuelle, transport, insurance).
 3. **What we found:** one confirmation screen listing detected income (amount, day), recurring payments (reuse the statement-suggestion logic on the backfilled history), cash accounts, savings and investment accounts. Each item can be toggled or edited. Unknown merchants are categorised with AI (4.8 rules) and low-confidence ones go to the Review inbox.
@@ -362,6 +411,7 @@ Acceptance: median time to a populated Bearing under 3 minutes on the persona da
 **Goal:** the monthly cycle becomes two actions: record during the month, review on the 5th.
 
 Tasks:
+
 1. **Month review:** full-screen flow, web and mobile, under two minutes, opened from the reading-day notification or the Bearing attention row, resumable. Steps: confirm balance (auto when connected) → Kept and Unrecorded vs allowance, streak → what moved (existing findings) → up to three opportunities (Phase 4 onward; empty-safe before that) → next month (confirm charges, adjust caps and goals) → AI month summary (numbers by placeholder). The existing close logic is reused, not rewritten.
 2. **Retire "Apply":** charges post themselves as "expected" on their due date, get matched to bank rows or confirmed via "Did these arrive?", and can always be undone. Default on for new users; existing users get an in-app choice. Keep a manual-mode setting.
 3. **Declutter Plan:** Plan keeps caps, goals and projection. The close moves into the Month review (history stays reachable), tags move to Categories ("Categories and tags"), reading day and cash accounts move to Profile → Money.
@@ -376,6 +426,7 @@ Acceptance: a persona can complete a Month review in under two minutes on mobile
 **Goal:** one engine that produces, ranks, explains, gates and records every insight and recommendation.
 
 Tasks:
+
 1. `packages/core/insights`: detector registry, contracts 4.1 and 4.2, ranking score = impact × confidence × intent weight × novelty (deterministic, documented), deduplication, expiry, lifecycle (new, seen, actioned, dismissed with reason), per-user threshold learning from dismissals.
 2. Storage: `insights` (per user, per period) and `recommendation_records` (4.7).
 3. Surfaces: Bearing attention row (with explicit priority rules against existing items), Month review opportunities (max three), contextual slots on pages, notifications only for `urgency !== 'none'`.
@@ -391,6 +442,7 @@ Acceptance: a dummy detector flows end to end on web and mobile; gating tests pr
 **Goal:** users know if they will reach their goals, with honest ranges, and get personal recommendations to get there.
 
 Tasks:
+
 1. **Goals v2:** types (emergency fund, purchase or project, travel, home deposit, retirement), target, date, priority, starting amount, linked accounts or categories, running total (from Phase 0), optional linked contribution charge.
 2. **Emergency fund template:** target = N × median monthly essential spending (N chosen by the user, default 3), shown as a tier 2 rule of thumb.
 3. **Forecast engine v2** (4.5): ranges on Bearing "The year ahead" and in Plan; "risk of dipping below your floor before your next income" in the This month card; floor setting in Plan.
@@ -406,6 +458,7 @@ Acceptance: calibration test passes on personas; goal probabilities are reproduc
 **Goal:** users see what their investments really cost, how they really performed, and what to change.
 
 Tasks:
+
 1. **Fee audit:** all-in cost per holding and per wallet (fund ongoing charges from KID/PRIIPs documents where available, envelope fees, transaction fees); cost over the user's horizon compared with a sourced low-cost reference level.
 2. **Honest benchmark:** replay the user's actual cash flows (dates and amounts) into a user-selectable benchmark (default a broad world equity index proxy, or a blend matching their target allocation); compare money-weighted returns; methodology visible.
 3. **Risk and concentration:** existing overlap detection, plus single-line concentration, currency exposure, crypto share, country and sector vs market; stress test with historical drawdown scenarios from the registry.
@@ -420,6 +473,7 @@ Acceptance: persona 4 surfaces overlap, fee drag and benchmark gap with sources;
 ### Phase 7 — Everyday spending and cash (priority 3) (M)
 
 Detectors (all tier 0 to 3):
+
 - **Subscriptions:** creep, duplicates, price increases (merchant normalisation), yearly total.
 - **Idle cash:** daily balance curve rebuilt from the feed (or closes plus ledger); buffer = N months of essential spending; forgone interest at current regulated rates from the registry. Tier 3: "Move €X to savings" (the user does it; Pluclair never moves money).
 - **Seasonal provisioning** (12+ months): recurring peaks become a suggested monthly provision charge.
@@ -454,7 +508,7 @@ Acceptance: 100% of numbers in answers trace to tool results on the eval set; re
 ## 7. Human-only track (I do these; you prepare material when asked)
 
 - **H1. Regulatory path for tiers 4 and 5.** Legal opinion on the tier 3/4 boundary. For instrument-level advice: CIF status (ORIAS registration, membership of an AMF-approved association, certification, professional liability insurance, engagement letter and written suitability report) or a partnership with a licensed firm. For AV and PER contract recommendations: insurance intermediary registration. Crypto instrument advice stays excluded (MiCA requires a CASP authorisation). Records retention period.
-- **H2. Aggregator choice** — *answered 30 Sep 2026: open-banking.io via Partner Connect, user-paid (see `BANK_CONNECT_PLAN.md`); applying for partner access is step P0 there.* Original brief: coverage of French banks, neobanks and deferred debit cards; savings and investment coverage; consent duration and renewal; pricing; contract model; sandbox; data residency. Candidates: Powens, Bridge, Linxo Connect, Tink.
+- **H2. Aggregator choice** — _answered 30 Sep 2026: open-banking.io via Partner Connect, user-paid (see `BANK_CONNECT_PLAN.md`); applying for partner access is step P0 there._ Original brief: coverage of French banks, neobanks and deferred debit cards; savings and investment coverage; consent duration and renewal; pricing; contract model; sandbox; data residency. Candidates: Powens, Bridge, Linxo Connect, Tink.
 - **H3. GDPR:** DPIA (financial data plus profiling), processing register, data processing agreements with the aggregator and Mistral, retention policy, privacy policy and terms updates, AI transparency labels.
 - **H4. Brand promises (D6)** on the marketing site, feature pages and onboarding.
 - **H5. Business model:** aggregator and AI costs per active user, pricing (free vs premium), quotas.
@@ -477,15 +531,15 @@ Acceptance: 100% of numbers in answers trace to tool results on the eval set; re
 
 ## 9. Success metrics (initial targets, to adjust with real data)
 
-| Metric | Initial target |
-|---|---|
-| Signups reaching a populated Bearing within 24 h | > 70% |
-| Median time from signup to populated Bearing (excluding bank auth) | < 3 min |
-| Bank connection success rate | > 85% of attempts |
-| First Month review completed | > 60% of activated users |
-| Second Month review completed | > 45% of activated users |
-| Insight action rate | > 15% of insights shown |
-| Insights dismissed as "Wrong" | < 5% |
-| Forecast P10–P90 coverage (backtest) | 75–85% |
-| Narration validator pass rate | > 98%, zero raw numbers shipped |
-| AI cost per active user per month | tracked from Phase 0, budget set in H5 |
+| Metric                                                             | Initial target                         |
+| ------------------------------------------------------------------ | -------------------------------------- |
+| Signups reaching a populated Bearing within 24 h                   | > 70%                                  |
+| Median time from signup to populated Bearing (excluding bank auth) | < 3 min                                |
+| Bank connection success rate                                       | > 85% of attempts                      |
+| First Month review completed                                       | > 60% of activated users               |
+| Second Month review completed                                      | > 45% of activated users               |
+| Insight action rate                                                | > 15% of insights shown                |
+| Insights dismissed as "Wrong"                                      | < 5%                                   |
+| Forecast P10–P90 coverage (backtest)                               | 75–85%                                 |
+| Narration validator pass rate                                      | > 98%, zero raw numbers shipped        |
+| AI cost per active user per month                                  | tracked from Phase 0, budget set in H5 |

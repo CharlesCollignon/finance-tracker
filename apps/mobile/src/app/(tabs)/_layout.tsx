@@ -173,7 +173,9 @@ export default function TabsLayout() {
             ))}
             {/* A view of the Ledger, not a destination of its own. */}
             <Tabs.Screen name="calendar" options={{ href: null }} />
-            {/* And one of Placements: what the funds are made of. */}
+            {/* And two of Placements: what the accounts earn, how the money
+                is spread and what it costs; and what the funds are made of. */}
+            <Tabs.Screen name="analysis" options={{ href: null }} />
             <Tabs.Screen name="look-through" options={{ href: null }} />
             {/* Reachable from the header account menu, not the tab bar. */}
             <Tabs.Screen name="profile" options={{ href: null }} />

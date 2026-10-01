@@ -57,8 +57,6 @@ function pack(partial: Partial<BuildMonthFactsInput> = {}) {
     pulse: null,
     closeSummary: null,
     unrecordedCap: null,
-    budgets: [],
-    goals: [],
     investedValue: null,
     inboxPending: 0,
     chargesUnconfirmed: 0,

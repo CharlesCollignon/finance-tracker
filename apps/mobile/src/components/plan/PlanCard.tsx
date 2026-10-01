@@ -1,64 +1,56 @@
 import type { ReactNode } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 
+import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
-import { cn } from "@/lib/cn";
 
 /**
- * One section of the Plan screen: the web's `rounded-card p-card` surface
- * with a hairline, no bezel and no shadow.
+ * One section of the Plan: the translucent card with a hairline, no shadow,
+ * and a bezel for the hero only.
  */
 export function PlanCard({
   children,
-  className,
+  bezel,
 }: {
   children: ReactNode;
-  className?: string;
+  bezel?: boolean;
 }) {
-  return (
-    <View
-      className={cn(
-        "gap-4 rounded-card border border-border bg-card p-card",
-        className,
-      )}
-    >
+  return bezel ? (
+    <Card bezel innerClassName="gap-4 p-5">
       {children}
-    </View>
+    </Card>
+  ) : (
+    <Card className="gap-4 p-5">{children}</Card>
   );
 }
 
-/**
- * The section's name, and on the right the quiet link that opens its form —
- * "Ajouter un budget", which turns into "Annuler" while the form is open.
- * A link rather than a button, as on the web: adding is not what the section
- * is for, reading it is.
- */
+/** The section's name, the line under it, and anything at its right. */
 export function PlanCardHeader({
   title,
-  action,
-  onAction,
+  subtitle,
+  right,
 }: {
   title: string;
-  action?: string;
-  onAction?: () => void;
+  subtitle?: string;
+  right?: ReactNode;
 }) {
   return (
-    <View className="flex-row items-center justify-between gap-3">
-      <Text accessibilityRole="header" className="text-sm font-medium">
-        {title}
-      </Text>
-      {action && onAction ? (
-        <Pressable
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={onAction}
-          className="min-h-11 justify-center px-1"
+    <View className="flex-row items-start justify-between gap-3">
+      <View className="min-w-0 flex-1 gap-0.5">
+        <Text
+          accessibilityRole="header"
+          className="font-semibold"
+          style={{ fontSize: 16 }}
         >
-          <Text className="text-sm font-medium text-foreground underline">
-            {action}
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text variant="muted" className="text-xs">
+            {subtitle}
           </Text>
-        </Pressable>
-      ) : null}
+        ) : null}
+      </View>
+      {right}
     </View>
   );
 }

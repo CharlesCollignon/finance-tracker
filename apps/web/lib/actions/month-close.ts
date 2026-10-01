@@ -24,7 +24,7 @@ type ActionResult = { error?: string; success?: boolean; message?: string };
 
 function revalidateCloseDependents(): void {
   revalidatePath("/bearing");
-  revalidatePath("/budgets");
+  revalidatePath("/plan");
 }
 
 /**

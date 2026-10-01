@@ -11,7 +11,7 @@ import {
 } from "react";
 import { Plus } from "@phosphor-icons/react";
 import type { MerchantRule } from "@finance/core/merchant-memory";
-import type { Category, Tag } from "@finance/core/types/database";
+import type { Category } from "@finance/core/types/database";
 import {
   QuickAddSheet,
   type AddKind,
@@ -47,13 +47,11 @@ const QuickAddContext = createContext<QuickAddValue | null>(null);
 export function QuickAddProvider({
   children,
   categories,
-  tags,
   recentCategoryIds,
   merchants,
 }: {
   children: ReactNode;
   categories: Category[];
-  tags: Tag[];
   recentCategoryIds: string[];
   merchants: MerchantRule[];
 }) {
@@ -136,7 +134,6 @@ export function QuickAddProvider({
         open={isOpen}
         onOpenChange={setIsOpen}
         categories={categories}
-        tags={tags}
         recentCategoryIds={recentCategoryIds}
         merchants={merchants}
         defaultDate={date}

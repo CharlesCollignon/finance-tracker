@@ -16,11 +16,7 @@ import {
   walletPlanSchema,
   walletTargetsSchema,
 } from "@finance/core/validations/investments";
-import {
-  budgetSchema,
-  savingsGoalSchema,
-  tagSchema,
-} from "@finance/core/validations/phase4";
+import { isSavingsAccountId, type AccountId } from "@finance/core/allocation";
 import {
   getCurrentMonth,
   getMonthBounds,
@@ -72,6 +68,7 @@ import type {
   CategoryType,
   Database,
   RecurringTemplateWithCategory,
+  SavingsAccountKind,
   WalletId,
 } from "@finance/core/types/database";
 
@@ -84,8 +81,6 @@ type ActionResult = {
   error?: string;
   success?: boolean;
   message?: string;
-  /** Set by creates, so callers can write related rows (tags). */
-  id?: string;
 };
 
 type RecurringTemplateInsert =
@@ -113,22 +108,18 @@ export async function createTransaction(
     return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
-  const { data, error } = await supabase
-    .from("transactions")
-    .insert({
-      user_id: userId,
-      category_id: parsed.data.categoryId,
-      amount: parsed.data.amount,
-      occurred_on: parsed.data.occurredOn,
-      note: parsed.data.note ?? null,
-    })
-    .select("id")
-    .single();
+  const { error } = await supabase.from("transactions").insert({
+    user_id: userId,
+    category_id: parsed.data.categoryId,
+    amount: parsed.data.amount,
+    occurred_on: parsed.data.occurredOn,
+    note: parsed.data.note ?? null,
+  });
 
   if (error) {
     return { error: error.message };
   }
-  return { success: true, id: data?.id as string | undefined };
+  return { success: true };
 }
 
 export async function updateTransaction(
@@ -411,47 +402,6 @@ export async function unskipRecurringOccurrence(
       todayIsoLocal(),
       new Set([recurringOccurrenceKey(templateId, occurredOn)]),
     );
-  }
-
-  return { success: true };
-}
-
-/** Replaces a transaction's tags wholesale, mirroring the web action. */
-export async function setTransactionTags(
-  transactionId: string,
-  tagIds: string[],
-): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const { data: tx } = await supabase
-    .from("transactions")
-    .select("id")
-    .eq("id", transactionId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (!tx) {
-    return { error: "actions.transactionNotFound" };
-  }
-
-  await supabase
-    .from("transaction_tags")
-    .delete()
-    .eq("transaction_id", transactionId);
-
-  if (tagIds.length > 0) {
-    const { error } = await supabase.from("transaction_tags").insert(
-      tagIds.map((tagId) => ({
-        transaction_id: transactionId,
-        tag_id: tagId,
-      })),
-    );
-    if (error) {
-      return { error: error.message };
-    }
   }
 
   return { success: true };
@@ -1589,6 +1539,20 @@ export async function deleteAllUserData(
     return { error: positionsError.message };
   }
 
+  // Apart from the list above, because the table only exists once migration
+  // 046 has run, and a missing table is nothing left to delete.
+  const { error: savingsError } = await supabase
+    .from("savings_accounts")
+    .delete()
+    .eq("user_id", userId);
+  if (
+    savingsError &&
+    savingsError.code !== "PGRST205" &&
+    savingsError.code !== "42P01"
+  ) {
+    return { error: savingsError.message };
+  }
+
   const { error: recurringError } = await supabase
     .from("recurring_templates")
     .delete()
@@ -1606,211 +1570,6 @@ export async function deleteAllUserData(
   }
 
   return { success: true, message: "profile.dataDeleted" };
-}
-
-export async function upsertBudget(input: {
-  id?: string;
-  categoryId?: string | null;
-  amount: number;
-}): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = budgetSchema.safeParse(input);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const payload = {
-    category_id: parsed.data.categoryId ?? null,
-    amount: parsed.data.amount,
-  };
-
-  if (parsed.data.id) {
-    const { error } = await supabase
-      .from("budgets")
-      .update(payload)
-      .eq("id", parsed.data.id)
-      .eq("user_id", userId);
-    if (error) {
-      return { error: error.message };
-    }
-  } else {
-    const { error } = await supabase.from("budgets").insert({
-      user_id: userId,
-      ...payload,
-    });
-    if (error) {
-      return { error: error.message };
-    }
-  }
-  return { success: true };
-}
-
-export async function deleteBudget(id: string): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-  const { error } = await supabase
-    .from("budgets")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", userId);
-  if (error) {
-    return { error: error.message };
-  }
-  return { success: true };
-}
-
-/** A duplicate name, from `unique (user_id, name)` in 012, in the catalogue's words. */
-function tagWriteError(error: { code?: string; message: string }): string {
-  return error.code === "23505" ? "errors.tagNameTaken" : error.message;
-}
-
-export async function upsertTag(name: string): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-  const parsed = tagSchema.safeParse({ name });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-  const { error } = await supabase.from("tags").insert({
-    user_id: userId,
-    name: parsed.data.name,
-  });
-  if (error) {
-    return { error: tagWriteError(error) };
-  }
-  return { success: true };
-}
-
-export async function renameTag(
-  id: string,
-  name: string,
-): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-  const parsed = tagSchema.safeParse({ id, name });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-  const { error } = await supabase
-    .from("tags")
-    .update({ name: parsed.data.name })
-    .eq("id", id)
-    .eq("user_id", userId);
-  if (error) {
-    return { error: tagWriteError(error) };
-  }
-  return { success: true };
-}
-
-/** Deletes a tag; `transaction_tags` cascades, and the transactions stay. */
-export async function deleteTag(id: string): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-  const { error } = await supabase
-    .from("tags")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", userId);
-  if (error) {
-    return { error: error.message };
-  }
-  return { success: true };
-}
-
-/** Moves every transaction from one tag to another, then deletes the first (040). */
-export async function mergeTags(
-  fromId: string,
-  intoId: string,
-): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-  const { error } = await supabase.rpc("merge_tags", {
-    target_user: userId,
-    from_tag: fromId,
-    into_tag: intoId,
-  });
-  if (error) {
-    return { error: "errors.tagMergeFailed" };
-  }
-  return { success: true };
-}
-
-export async function upsertSavingsGoal(input: {
-  id?: string;
-  name: string;
-  targetAmount: number;
-  targetDate?: string;
-  startsOn?: string;
-  categoryId?: string | null;
-}): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = savingsGoalSchema.safeParse(input);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const payload = {
-    name: parsed.data.name,
-    target_amount: parsed.data.targetAmount,
-    target_date: parsed.data.targetDate || null,
-    category_id: parsed.data.categoryId ?? null,
-    // Absent means "keep what it was" on an edit and "today" on a new goal.
-    ...(parsed.data.startsOn ? { starts_on: parsed.data.startsOn } : {}),
-  };
-
-  if (parsed.data.id) {
-    const { error } = await supabase
-      .from("savings_goals")
-      .update(payload)
-      .eq("id", parsed.data.id)
-      .eq("user_id", userId);
-    if (error) {
-      return { error: error.message };
-    }
-  } else {
-    const { error } = await supabase.from("savings_goals").insert({
-      user_id: userId,
-      ...payload,
-    });
-    if (error) {
-      return { error: error.message };
-    }
-  }
-  return { success: true };
-}
-
-export async function deleteSavingsGoal(id: string): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-  const { error } = await supabase
-    .from("savings_goals")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", userId);
-  if (error) {
-    return { error: error.message };
-  }
-  return { success: true };
 }
 
 /** Validate credentials shape for forms that don't go through AuthProvider. */
@@ -1860,48 +1619,82 @@ export async function saveWalletPlan(input: {
 }
 
 /**
- * Saves every target at once.
+ * Saves every target at once, across the accounts kept: the wallets' in
+ * `wallet_plans`, the savings accounts' in `savings_accounts` (migration 047).
  *
- * Drift is only reported when the targets cover the whole portfolio, so the
- * UI edits them as a set and this writes them as one.
+ * Drift is only reported when the targets cover the whole split, so the UI
+ * edits them as a set and this writes them as one.
  */
-export async function saveWalletTargets(
-  targets: { wallet: WalletId; targetWeight: number }[],
+export async function saveAccountTargets(
+  targets: { accountId: AccountId; targetWeight: number }[],
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
     return { error: "errors.notAuthenticated" };
   }
 
-  const parsed = walletTargetsSchema.safeParse({ targets });
-  if (!parsed.success) {
+  const wallets = targets.filter((row) => !isSavingsAccountId(row.accountId));
+  const savings = targets.filter((row) => isSavingsAccountId(row.accountId));
+
+  const parsed = walletTargetsSchema.safeParse({
+    targets: wallets.map((row) => ({
+      wallet: row.accountId,
+      targetWeight: row.targetWeight,
+    })),
+  });
+  if (
+    !parsed.success ||
+    savings.some(
+      (row) =>
+        !Number.isFinite(row.targetWeight) ||
+        row.targetWeight < 0 ||
+        row.targetWeight > 1,
+    )
+  ) {
     return {
-      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
+      error: parsed.error?.issues[0]?.message ?? "errors.invalidInput",
     };
   }
 
-  const total = parsed.data.targets.reduce(
-    (sum, row) => sum + row.targetWeight,
-    0,
-  );
+  const total = targets.reduce((sum, row) => sum + row.targetWeight, 0);
 
-  // Anything else would make every wallet look permanently off-target.
-  if (parsed.data.targets.length > 0 && Math.abs(total - 1) > 0.005) {
+  // Anything else would make every account look permanently off-target.
+  if (targets.length > 0 && Math.abs(total - 1) > 0.005) {
     return { error: "errors.targetsMustTotal100" };
   }
 
-  const { error } = await supabase.from("wallet_plans").upsert(
-    parsed.data.targets.map((row) => ({
-      user_id: userId,
-      wallet: row.wallet,
-      target_weight: row.targetWeight,
-      updated_at: new Date().toISOString(),
-    })),
-    { onConflict: "user_id,wallet" },
-  );
+  if (parsed.data.targets.length > 0) {
+    const { error } = await supabase.from("wallet_plans").upsert(
+      parsed.data.targets.map((row) => ({
+        user_id: userId,
+        wallet: row.wallet,
+        target_weight: row.targetWeight,
+        updated_at: new Date().toISOString(),
+      })),
+      { onConflict: "user_id,wallet" },
+    );
+    if (error) {
+      return { error: error.message };
+    }
+  }
 
-  if (error) {
-    return { error: error.message };
+  for (const row of savings) {
+    const { error } = await supabase
+      .from("savings_accounts")
+      .update({
+        target_weight: row.targetWeight,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .eq("kind", row.accountId as SavingsAccountKind);
+    if (error) {
+      return {
+        error:
+          error.code === "42703"
+            ? "placementsPhone.targetsSetup"
+            : error.message,
+      };
+    }
   }
   return { success: true };
 }

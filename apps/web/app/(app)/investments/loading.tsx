@@ -21,6 +21,7 @@ export default function InvestmentsLoading() {
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex gap-1">
             <Bone className="h-8 w-24 rounded-full" />
+            <Bone className="h-8 w-24 rounded-full" />
             <Bone className="h-8 w-28 rounded-full" />
           </div>
           <Bone className="h-8 w-36 rounded-control" />

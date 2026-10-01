@@ -20,14 +20,6 @@ export const updateTransactionSchema = transactionSchema.extend({
 });
 
 /**
- * The quick-add sheet posts an object rather than a FormData, because it stays
- * open across saves and never navigates.
- */
-export const quickTransactionSchema = transactionSchema.extend({
-  tagIds: z.array(z.string().uuid()).optional(),
-});
-
-/**
  * Bulk delete. Capped so one request cannot ask for an unbounded delete, and
  * because a selection larger than this is really "clear the month", which is
  * a different feature with different consequences.

@@ -44,13 +44,13 @@ only where the app can print a true sentence about a real month.
 
 Fixed, always at the top, never reordered — so muscle memory works.
 
-| Element | Source |
-| --- | --- |
-| Headline figure | `pulse.free` |
-| Ring | `pulse.capRatio` as a proportion; `pulse.overCap` fills it |
-| Ring colour | `pulse.standing` |
-| Flame | `closeSummary.streak`, against `bestStreak` |
-| Action row | The first `AttentionItem`, with `+N` for the rest |
+| Element         | Source                                                     |
+| --------------- | ---------------------------------------------------------- |
+| Headline figure | `pulse.free`                                               |
+| Ring            | `pulse.capRatio` as a proportion; `pulse.overCap` fills it |
+| Ring colour     | `pulse.standing`                                           |
+| Flame           | `closeSummary.streak`, against `bestStreak`                |
+| Action row      | The first `AttentionItem`, with `+N` for the rest          |
 
 `pulse.free` leads because `month-pulse.ts` already argues that it should:
 it is "the only number on the Month screen worth reading first", and it is
@@ -88,20 +88,20 @@ Two edges the implementation must hold:
 
 Pressing a tile stops navigating and starts expanding. `BEARING_TILES.href`
 is not removed — it demotes from "what the press does" to "where the panel's
-footer link goes", so *Open the Ledger ›* still exists.
+footer link goes", so _Open the Ledger ›_ still exists.
 
 There are **five panel chromes, not twenty-nine expansions**. A tile's
 `family` — already carried on every datum in `bearing-facts.ts`, explicitly so
 that "the surface groups by it" — decides the chrome. The tile decides which
 blocks fill it.
 
-| Family | Chrome | Blocks available |
-| --- | --- | --- |
-| `now` | none — a bearing is taken on a date | `MoneyOnHand`, `CashAccounts`, `RecentOnAccount` |
-| `month` | month picker, budget-view toggle | `SpendStrip`, `StillToCome`, `MonthRead`, `BudgetProgress` |
-| `run` | streak header | `MonthScore`, `CloseHistory`, `ClosedRecap`, `TrendCard` |
-| `ahead` | how far ahead the projection runs | `ProjectionCard`, `Ingredients` |
-| `wallet` | none | `MonthWallets`, `WeightBars`, `FundCost` |
+| Family   | Chrome                              | Blocks available                                           |
+| -------- | ----------------------------------- | ---------------------------------------------------------- |
+| `now`    | none — a bearing is taken on a date | `MoneyOnHand`, `CashAccounts`, `RecentOnAccount`           |
+| `month`  | month picker, budget-view toggle    | `SpendStrip`, `StillToCome`, `MonthRead`, `BudgetProgress` |
+| `run`    | streak header                       | `MonthScore`, `CloseHistory`, `ClosedRecap`, `TrendCard`   |
+| `ahead`  | how far ahead the projection runs   | `ProjectionCard`, `Ingredients`                            |
+| `wallet` | none                                | `MonthWallets`, `WeightBars`, `FundCost`                   |
 
 This is where the month picker and the budget-view toggle belong. They are
 currently page furniture above content that mostly ignores them; as chrome on
@@ -113,14 +113,14 @@ This rule is load-bearing. The `month` family is the fattest, and a panel that
 dumped the whole family would mean Month had been hidden in an accordion
 rather than dissolved. Each panel explains **one figure**:
 
-| Tile | Blocks |
-| --- | --- |
-| `free` | `SpendStrip`, `StillToCome` |
-| `savings-rate` | in/out/kept bars, `MonthComparison` |
-| `unrecorded-over` / `unrecorded-allowance` | allowance detail, `BudgetProgress` |
-| `inbox-pending` | the review list itself — actionable in place |
-| `streak` / `best-streak` | the close shelf |
-| `projected-kept` / `projected-balance` | two-track projection, ingredients |
+| Tile                                       | Blocks                                       |
+| ------------------------------------------ | -------------------------------------------- |
+| `free`                                     | `SpendStrip`, `StillToCome`                  |
+| `savings-rate`                             | in/out/kept bars, `MonthComparison`          |
+| `unrecorded-over` / `unrecorded-allowance` | allowance detail, `BudgetProgress`           |
+| `inbox-pending`                            | the review list itself — actionable in place |
+| `streak` / `best-streak`                   | the close shelf                              |
+| `projected-kept` / `projected-balance`     | two-track projection, ingredients            |
 
 Tiles without a specific mapping fall back to their family's canonical block
 set, so all 29 ids work without 29 entries.
@@ -155,7 +155,7 @@ month. It takes over the screen and lands in four beats:
 
 ### No "seen" state
 
-The recap is the close action's own result screen — the user pressed *Record*,
+The recap is the close action's own result screen — the user pressed _Record_,
 this is what came back. It is never shown by the home on load. So there is no
 dismissal flag, no per-user seen state, and no possibility of re-congratulating
 someone who merely reopened the app. Revisiting happens through the shelf.
@@ -241,7 +241,7 @@ The fact pack already holds every figure the spine needs —
 `projection`, `runway`, `allocation` and `returns`. The spine costs no new
 query; it is a different reading of a pack the Bearing already gathers.
 
-**Panels open instantly and stream their detail.** A panel's headline *is* its
+**Panels open instantly and stream their detail.** A panel's headline _is_ its
 tile's figure, already loaded, so the accordion opens with correct content on
 the first frame. Only the detail beneath it — category rows, close history,
 positions — is fetched on expand, and it arrives under a headline that is
@@ -255,12 +255,12 @@ mechanisms (`dataVersion` on mobile, revalidation on web).
 All new judgement is pure and tested, matching this repo's existing
 architecture. The clients only render.
 
-| Module | Responsibility |
-| --- | --- |
-| `motion.ts` | Shared easing, durations and stagger step |
-| `spine.ts` | Which ignition state applies, as a discriminated union |
-| `bearing-panels.ts` | Which blocks a tile's panel shows |
-| `year-review.ts` | Assembling a year, including the six-close refusal |
+| Module              | Responsibility                                         |
+| ------------------- | ------------------------------------------------------ |
+| `motion.ts`         | Shared easing, durations and stagger step              |
+| `spine.ts`          | Which ignition state applies, as a discriminated union |
+| `bearing-panels.ts` | Which blocks a tile's panel shows                      |
+| `year-review.ts`    | Assembling a year, including the six-close refusal     |
 
 Each gets a `.test.ts` beside it, run by `pnpm test` (vitest in
 `@finance/core`). The rolling-twelve-then-calendar trigger rule is tested for

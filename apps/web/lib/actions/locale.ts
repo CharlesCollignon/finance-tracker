@@ -5,6 +5,7 @@ import { isLocale } from "@finance/core/i18n/locale";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { writeLocaleAsked, writeLocaleCookie } from "@/lib/locale-cookies";
+import { renameDefaultCategories } from "@/lib/queries/categories";
 
 type ActionResult = { error?: string; success?: boolean };
 
@@ -43,6 +44,15 @@ export async function setLocalePreference(
 
     if (error) {
       return { error: error.message };
+    }
+
+    // The default categories follow the language: "Courses" on a French
+    // app, "Groceries" on an English one. Never fatal — a name left in the
+    // other language is where it already was.
+    try {
+      await renameDefaultCategories(user.id, locale);
+    } catch (renameError) {
+      console.error("Category rename on language change failed", renameError);
     }
   }
 

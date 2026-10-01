@@ -161,10 +161,7 @@ export default function HomeScreen() {
               </StaggerItem>
             ) : null}
 
-            {current &&
-            (data.run !== null ||
-              data.goals.length > 0 ||
-              data.invested !== null) ? (
+            {current && (data.run !== null || data.invested !== null) ? (
               <StaggerItem index={next()}>
                 <MomentumCard data={data} />
               </StaggerItem>

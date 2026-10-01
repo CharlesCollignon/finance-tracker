@@ -29,7 +29,7 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 | Ledger — calendar      | `/calendar`                             | `(tabs)/calendar`                                                        |
 | Ledger — by category   | `/history`                              | none                                                                     |
 | Charges                | `/recurring`                            | `(tabs)/recurring`                                                       |
-| Plan                   | `/budgets`                              | `(tabs)/planning`                                                        |
+| Plan                   | `/plan`                                 | `(tabs)/planning`                                                        |
 | Wallets — positions    | `/investments`                          | `(tabs)/investments`                                                     |
 | Wallets — look-through | `/investments/look-through`             | none                                                                     |
 | Categories             | `/categories`                           | `categories`                                                             |
@@ -41,18 +41,18 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 
 ## Where each figure is computed
 
-| Figure                                                | Core module                                                                                                                                  |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Monthly summary and its `current` / `month_end` views | `monthly-summary.ts`, `budget.ts`                                                                                                            |
-| Month close, Kept, Unrecorded spending                | `month-close.ts` (closes in `month_closes`; reading day in `month_close_settings.close_day`, default 5)                                      |
-| Forward projection, runway                            | `projection.ts`                                                                                                                              |
-| Bearing cards and tiles                               | `bearing-cards.ts`, `bearing-tiles.ts`, `bearing-facts.ts`                                                                                   |
-| Savings goal progress                                 | `savings-goals.ts` — a running total from the goal's `starts_on` to today, by the same counting rule as the monthly summary's `current` view |
-| Spending caps                                         | `budget-limits.ts`                                                                                                                           |
-| Category findings                                     | `category-findings.ts`                                                                                                                       |
-| PEA ceiling and five-year date                        | `pea.ts`                                                                                                                                     |
-| Fund costs, look-through, target trades               | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                                                                 |
-| Money-weighted return                                 | `xirr.ts`, `investment-returns.ts`                                                                                                           |
+| Figure                                                          | Core module                                                                                             |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Monthly summary and its `current` / `month_end` views           | `monthly-summary.ts`, `budget.ts`                                                                       |
+| Month close, Kept, Unrecorded spending                          | `month-close.ts` (closes in `month_closes`; reading day in `month_close_settings.close_day`, default 5) |
+| Forward projection, runway                                      | `projection.ts`                                                                                         |
+| Plan: what if, milestones, cushion, long view (2026 French tax) | `future-plan.ts` (rates in `FRENCH_TAX_2026`; revisit each January and August)                          |
+| Savings accounts: balance, rate, interest, ceilings (2026)      | `savings-accounts.ts` (rates in `FRENCH_SAVINGS_2026`; revisit each February and August)                |
+| Bearing cards and tiles                                         | `bearing-cards.ts`, `bearing-tiles.ts`, `bearing-facts.ts`                                              |
+| Category findings                                               | `category-findings.ts`                                                                                  |
+| PEA ceiling and five-year date                                  | `pea.ts`                                                                                                |
+| Fund costs, look-through, target trades                         | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                            |
+| Money-weighted return                                           | `xirr.ts`, `investment-returns.ts`                                                                      |
 
 ## AI features
 
@@ -70,8 +70,8 @@ anything else. One model for every feature (`MISTRAL_MODEL`, else
 | Wallet read                                         | `lib/wallet-read/`                      | 5 per calendar month, refused when nothing changed |
 | Instrument reading (web search, then transcription) | `lib/instrument-reading/`, nightly cron | 40 per calendar month                              |
 
-What goes over the wire: aggregates and names the user typed (category,
-budget, goal and holding names), the month's category totals, and for the
+What goes over the wire: aggregates and names the user typed (category and
+holding names), the month's category totals, and for the
 month in progress the total the day-to-day accounts hold. Never merchants or
 individual payments. Instrument reading sends the name, symbol and ISIN of a
 held instrument.
@@ -89,28 +89,29 @@ Evaluated in Postgres by `evaluated_feature_flags()` (migration `039`), so
 both clients get the same answer: an account's override wins; otherwise a
 flag is on when `enabled_by_default` is true or the account was created at or
 after `enabled_from`. No session can read the flag tables. The web asks once
-per request (`apps/web/lib/flags.ts`); the phone asks once per session and
-keeps the last answer per account (`apps/mobile/src/lib/flags.ts`,
-`FlagsProvider`). A flag the database does not return, or a key this build
+per request (`apps/web/lib/flags.ts`); the phone reads no flag of its own
+today (its bank invitation asks the web, which checks `bank.connect`), so it
+has no flag reader — add one beside the first flag it needs. A flag the
+database does not return, or a key this build
 does not list (`packages/core/src/flags.ts`), is off.
 
-| Flag          | Gates                                          | Default |
-| ------------- | ---------------------------------------------- | ------- |
-| `tags.manage` | Rename, merge and delete tags on the Plan page | off     |
+| Flag           | Gates                                                      | Default |
+| -------------- | ---------------------------------------------------------- | ------- |
+| `bank.connect` | Connecting a bank with an open-banking.io credentials file | off     |
 
 Switched with SQL (the dashboard's SQL editor, or the service role):
 
 ```sql
 -- On for one account
 insert into user_feature_flags (user_id, flag_key, enabled)
-values ('<account id>', 'tags.manage', true)
+values ('<account id>', 'bank.connect', true)
 on conflict (user_id, flag_key) do update set enabled = excluded.enabled;
 
 -- On for every account created from now on
-update feature_flags set enabled_from = now() where key = 'tags.manage';
+update feature_flags set enabled_from = now() where key = 'bank.connect';
 
 -- On for everyone
-update feature_flags set enabled_by_default = true where key = 'tags.manage';
+update feature_flags set enabled_by_default = true where key = 'bank.connect';
 ```
 
 ## Gates
@@ -140,8 +141,8 @@ assertion script:
 - On the phone's month-read route (`POST /api/month-read`, bearer token),
   `gatherMonthFacts` reads most facts with the cookie client, which has no
   session there, so a read asked for from the phone is likely written from
-  empty figures. Only `getGoalLedger`, `readCashBalance` and
-  `getFulfilledKeys` take the bearer client.
+  empty figures. Only `readCashBalance` and `getFulfilledKeys` take the
+  bearer client.
 - Sign-in and sign-up still show Supabase's own error text, which is English; the reset-request and new-password screens map error codes to catalogue keys (`packages/core/src/auth-errors.ts`, `apps/web/lib/auth/new-password-error.ts`).
 - `writesAFigure` (`packages/core/src/month-read.ts`) knows English number words only; a French spelled-out quantity would pass. Digits are always caught.
 - The Wallets page's fund-cost card and the look-through page can show different annual costs: only the look-through falls back to the shortlist's charge hints.
@@ -149,11 +150,10 @@ assertion script:
 - Dead schema: `user_preferences.bearing_pins` and the `bearing_arrangements` table have no readers.
 - The `delete-account` edge function deletes a fixed list of older tables and relies on `on delete cascade` for the rest.
 - The phone has no By category view, no look-through and no wallet read.
-- The phone cannot edit a savings goal (only add or remove), so a goal's
-  start date can be moved on the web only.
-- After this plan deploys, stored month reads that cite goal figures will
-  show those figures as moved, because goals now count from their start
-  date.
+- Budgets, savings goals and tags were removed from both apps in October
+  2026; the `budgets`, `savings_goals`, `tags` and `transaction_tags` tables
+  and the `tags.manage` flag row stay, unread. Stored month and category
+  reads that cited a budget or goal figure show it as gone.
 - `/auth/confirm` verifies the recovery token on GET, so a mail provider's
   link scanner can use it up before the reader clicks (Supabase's documented
   pattern; a "Continue" interstitial is the known fix).
@@ -162,9 +162,3 @@ assertion script:
   would truncate silently.
 - The SQL assertion scripts in `supabase/tests/` are run by hand against a
   local stack; CI does not run them.
-- The phone reads flags once per session, so a switched flag reaches it at
-  its next launch or sign-in.
-- A web quick-add queued offline whose tag is deleted before it is sent is
-  saved with no tags: the tag insert fails after the transaction is written,
-  and the outbox drops the error (`saveQuickTransaction`,
-  `lib/offline-outbox.ts`).

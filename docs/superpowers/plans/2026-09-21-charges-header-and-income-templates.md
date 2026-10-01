@@ -13,7 +13,7 @@
 ## Decisions already taken
 
 1. **Income comes from recurring templates.** Not an average of past salaries, not a typed-in figure. A salary becomes a template like rent, so it obeys start and end dates, skips, and amount changes, and the existing engine reads it with no new plumbing.
-2. **What's left = Income − Committed.** Strictly the two figures beside it, so the row reads as one checkable sentence. Unrecorded spending is *not* folded in.
+2. **What's left = Income − Committed.** Strictly the two figures beside it, so the row reads as one checkable sentence. Unrecorded spending is _not_ folded in.
 3. **Plan only.** No code is written from this document until it has been reviewed.
 
 ## Global Constraints
@@ -21,7 +21,7 @@
 - **Every user-facing string goes through the `en`/`fr` catalogues** in `packages/core/src/i18n/messages/`. `fr.ts` is typed as `typeof en`, so a missing French key is a compile error. `aria-label`, `title` and `placeholder` included.
 - **WCAG 2.1 AA is a hard requirement.** Contrast, focus order, target size and reduced-motion failures block. Body text ≥ 4.5:1.
 - **Every rendered money figure must carry the privacy blur** — `PrivateAmount`, `.privacy-amount` or `.privacy-sensitive`. `DESIGN.md` calls it a first-class state of the design system.
-- **The Semantic Amount Rule:** an amount's colour says what *kind* of money it is (income / expense / savings / investment), never whether it is positive or negative, and never good or bad. Direction is carried by a sign, via `components/finance/amount-sign.ts`.
+- **The Semantic Amount Rule:** an amount's colour says what _kind_ of money it is (income / expense / savings / investment), never whether it is positive or negative, and never good or bad. Direction is carried by a sign, via `components/finance/amount-sign.ts`.
 - **The Rare Accent Rule:** Lamplit Gold has exactly four homes — the primary action, the focus ring, a figure that leads a screen, and a savings amount. Adding a fifth means changing the rule's paragraph in `DESIGN.md` first.
 - **CONTEXT.md governs vocabulary.** The domain word is **recurring template**, never "rule" or "subscription". Income arriving on a schedule is still a recurring template. Do not introduce the word "salary" as a domain term — it is an example of an income template, not a concept.
 - **Tokens only.** No hard-coded hex, no alpha literal where a token exists, no arbitrary `duration-[…]`.
@@ -34,34 +34,37 @@
 - `apps/web/components/finance/RecurringView.tsx:292-298`
 - `apps/mobile/src/app/(tabs)/recurring.tsx:122`
 
-Unblocking income templates without fixing those reducers would add a salary *into* the figure labelled "Committed every month" on both clients. Task 1 exists to make that impossible before Task 2 makes it reachable. **Do not reorder these tasks.**
+Unblocking income templates without fixing those reducers would add a salary _into_ the figure labelled "Committed every month" on both clients. Task 1 exists to make that impossible before Task 2 makes it reachable. **Do not reorder these tasks.**
 
 ---
 
 ## File Structure
 
-| File | Responsibility |
-|---|---|
-| `packages/core/src/recurring-rollup.ts` | **Create.** One type-aware monthly rollup, used by both clients. The single place that decides what "committed" and "income" mean. |
-| `packages/core/src/recurring-rollup.test.ts` | **Create.** Proves the split, including the regression this plan prevents. |
-| `apps/web/components/finance/RecurringForm.tsx` | **Modify.** Stop excluding income categories. |
-| `apps/web/components/finance/RecurringView.tsx` | **Modify.** Three-part header; consume the rollup. |
-| `apps/mobile/src/app/(tabs)/recurring.tsx` | **Modify.** Consume the rollup so the phone's figure does not silently gain the salary. |
-| `packages/core/src/i18n/messages/en.ts`, `fr.ts` | **Modify.** Three header labels plus the empty-income line. |
+| File                                             | Responsibility                                                                                                                     |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/core/src/recurring-rollup.ts`          | **Create.** One type-aware monthly rollup, used by both clients. The single place that decides what "committed" and "income" mean. |
+| `packages/core/src/recurring-rollup.test.ts`     | **Create.** Proves the split, including the regression this plan prevents.                                                         |
+| `apps/web/components/finance/RecurringForm.tsx`  | **Modify.** Stop excluding income categories.                                                                                      |
+| `apps/web/components/finance/RecurringView.tsx`  | **Modify.** Three-part header; consume the rollup.                                                                                 |
+| `apps/mobile/src/app/(tabs)/recurring.tsx`       | **Modify.** Consume the rollup so the phone's figure does not silently gain the salary.                                            |
+| `packages/core/src/i18n/messages/en.ts`, `fr.ts` | **Modify.** Three header labels plus the empty-income line.                                                                        |
 
 ---
 
 ### Task 1: A type-aware monthly rollup in core
 
 **Files:**
+
 - Create: `packages/core/src/recurring-rollup.ts`
 - Create: `packages/core/src/recurring-rollup.test.ts`
 
 **Interfaces:**
+
 - Consumes: `estimateMonthlyAmount` from `./recurrence`, `RecurringTemplateWithCategory` from `./types/database`.
 - Produces: `interface RecurringRollup { income: number; committed: number; setAside: number; deployed: number; left: number }` and `export function rollUpRecurring(templates: RecurringTemplateWithCategory[], year?: number, month?: number): RecurringRollup`. Tasks 3 and 4 both call this.
 
 **Definitions, fixed here so the two clients cannot disagree:**
+
 - `income` — active templates whose category type is `income` and which count toward the summary.
 - `committed` — active templates whose category type is `expense` and which count toward the summary. Savings and investments are excluded on purpose: `buildRunway`'s doc already states that committed means recurring expenses only, "not savings or investment contributions, which a person under pressure would stop making".
 - `setAside` — active `savings` and `investment` templates that count toward the summary.
@@ -272,9 +275,11 @@ git commit -m "Split the monthly rollup by what kind of money it is"
 ### Task 2: Let a salary be a recurring template
 
 **Files:**
+
 - Modify: `apps/web/components/finance/RecurringForm.tsx:136` and `:213`
 
 **Interfaces:**
+
 - Consumes: `CategorySelect`'s existing `excludeTypes?: CategoryType[]` prop (`apps/web/components/finance/CategorySelect.tsx:19`). Passing nothing shows every type.
 - Produces: nothing new. Income templates begin to exist in the database; `projection.ts:416` already handles them.
 
@@ -313,10 +318,12 @@ git commit -m "Let an income category carry a recurring template"
 ### Task 3: The three-part header on Charges
 
 **Files:**
+
 - Modify: `apps/web/components/finance/RecurringView.tsx:292-298` (the reducers) and `:361-378` (the header section)
 - Modify: `packages/core/src/i18n/messages/en.ts`, `packages/core/src/i18n/messages/fr.ts`
 
 **Interfaces:**
+
 - Consumes: `rollUpRecurring` from Task 1.
 - Produces: nothing other tasks read.
 
@@ -353,7 +360,7 @@ Each cell is a label in `text-sm text-muted-foreground` over a figure in `privac
 
 Delete `budgetMonthly` and `deploymentMonthly` at `:292-298` and call `rollUpRecurring(templates)` once. Map `rollup.committed` to where `budgetMonthly` was used and `rollup.deployed` to where `deploymentMonthly` was.
 
-**Note the behaviour change and check it is wanted:** `budgetMonthly` previously summed expenses *and* savings *and* investments. `rollup.committed` is expenses only. If the existing figure was meant to include contributions, use `rollup.committed + rollup.setAside` and say so in a comment — but read `buildRunway`'s doc first, because the rest of the app draws the line at expenses.
+**Note the behaviour change and check it is wanted:** `budgetMonthly` previously summed expenses _and_ savings _and_ investments. `rollup.committed` is expenses only. If the existing figure was meant to include contributions, use `rollup.committed + rollup.setAside` and say so in a comment — but read `buildRunway`'s doc first, because the rest of the app draws the line at expenses.
 
 - [x] **Step 2: Add the catalogue keys**
 
@@ -385,9 +392,11 @@ git commit -m "Say what comes in, what is committed, and what that leaves"
 ### Task 4: Keep the phone honest
 
 **Files:**
+
 - Modify: `apps/mobile/src/app/(tabs)/recurring.tsx:122`
 
 **Interfaces:**
+
 - Consumes: `rollUpRecurring` from Task 1.
 
 **Why this is its own task:** the phone runs the same reducer against the same data. The moment Task 2 ships, a salary exists; if the phone still sums every counting template, its figure gains the salary and disagrees with the web's. `CONTEXT.md`'s whole premise is that the clients share one ledger — a figure that differs by client is the failure that premise exists to prevent.
@@ -421,9 +430,11 @@ git commit -m "Give the phone the same split the web now draws"
 ### Task 5: Make the projection's invitation true
 
 **Files:**
+
 - Modify: `packages/core/src/i18n/messages/en.ts`, `fr.ts` — whichever key `ProjectionCard` renders for an income ingredient with zero charges.
 
 **Interfaces:**
+
 - Consumes: nothing. This is copy.
 
 **Why:** `ProjectionCard` renders an income ingredient and links it to `/recurring`. Before Task 2 that link led to a form that would not let you comply. It does now, so read the current wording and check it still says the right thing — it may have been written to hedge around the fact that the destination did not work.
@@ -449,7 +460,7 @@ git commit -m "Say plainly where an income figure comes from"
 
 ## Out of scope, deliberately
 
-- **Averaging past salaries.** Decision 1 chose templates. An average is a reasonable later addition as a *suggestion* when no income template exists, but it is a second source of truth and does not belong in the first pass.
+- **Averaging past salaries.** Decision 1 chose templates. An average is a reasonable later addition as a _suggestion_ when no income template exists, but it is a second source of truth and does not belong in the first pass.
 - **Subtracting unrecorded spending from What's left.** Decision 2. The measured figure already has a home on the Plan page.
 - **The Plan page's own layout.** This plan changes what Charges shows and what core exposes. The Plan page reads the projection, which already had income in it.
 - **A `salary` concept.** `CONTEXT.md` has no such term and this plan does not add one.
@@ -462,20 +473,19 @@ git commit -m "Say plainly where an income figure comes from"
 - Every string added is in both catalogues, in the same position.
 - No task adds a fifth home for the accent, and no figure is coloured by sign or by outcome.
 
-
 ---
 
 ## Execution record
 
 All five tasks executed 2026-09-21. Commits on `plan-income-header`:
 
-| Task | Commit | Note |
-|---|---|---|
-| 1 | `1572f5d` | `rollUpRecurring` + 5 tests. Landed before Task 2, as required. |
-| 2 | `5db9dee` | Income unblocked. Both flagged questions answered from the code — see below. |
-| 3 | `b6e3759` | Three-part header, plus a set-aside line the plan did not anticipate. |
-| 4 | `c4be70e` | Phone rollup, plus a hardcoded English label the plan did not know about. |
-| 5 | — | **No change needed.** See below. |
+| Task | Commit    | Note                                                                         |
+| ---- | --------- | ---------------------------------------------------------------------------- |
+| 1    | `1572f5d` | `rollUpRecurring` + 5 tests. Landed before Task 2, as required.              |
+| 2    | `5db9dee` | Income unblocked. Both flagged questions answered from the code — see below. |
+| 3    | `b6e3759` | Three-part header, plus a set-aside line the plan did not anticipate.        |
+| 4    | `c4be70e` | Phone rollup, plus a hardcoded English label the plan did not know about.    |
+| 5    | —         | **No change needed.** See below.                                             |
 
 ### What the plan got wrong, and what it missed
 
@@ -512,7 +522,6 @@ churn.
 - `packages/core` gained an exports entry for the new module. No other
   packaging changed.
 
-
 ---
 
 ## Decision 2 reversed, same day
@@ -538,7 +547,6 @@ because the figure it named now has a tile of its own.
 The phone keeps its single committed figure and its set-aside line. Four
 tiles do not fit its column, and it does not render `left`, so the arithmetic
 change does not reach it.
-
 
 ### And again: `Left` is the account, not the free budget
 

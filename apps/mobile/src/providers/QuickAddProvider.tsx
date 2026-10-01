@@ -29,7 +29,6 @@ import { DURATION } from "@finance/core/motion";
 
 const EMPTY: QuickEntryContext = {
   categories: [],
-  tags: [],
   recentCategoryIds: [],
   merchants: [],
 };
@@ -102,7 +101,6 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
           void reload();
         }}
         categories={context.categories}
-        tags={context.tags}
         recentCategoryIds={context.recentCategoryIds}
         merchants={context.merchants}
         defaultDate={date}

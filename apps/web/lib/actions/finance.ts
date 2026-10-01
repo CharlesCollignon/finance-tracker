@@ -7,7 +7,6 @@ import {
   revalidateEverySurface,
   revalidateRecurringDependents,
 } from "@/lib/revalidate-paths";
-import { readSubmittedTagIds } from "@/lib/actions/tag-field";
 import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
 import { getAuthUser } from "@/lib/auth/get-user";
@@ -48,8 +47,8 @@ import {
   moveTransactionsSchema,
   importTransactionsSchema,
   parseUuid,
-  quickTransactionSchema,
   recurringTemplateSchema,
+  transactionSchema,
   updateTransactionSchema,
 } from "@finance/core/validations/finance";
 import { cashDateOf, movedBetween } from "@finance/core/cash-date";
@@ -213,7 +212,6 @@ export interface QuickTransactionInput {
   amount: string | number;
   occurredOn: string;
   note?: string;
-  tagIds?: string[];
 }
 
 /**
@@ -225,18 +223,17 @@ export interface QuickTransactionInput {
  */
 export async function saveQuickTransaction(
   input: QuickTransactionInput,
-): Promise<{ error?: string; id?: string }> {
+): Promise<{ error?: string }> {
   const user = await getUser();
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
 
-  const parsed = quickTransactionSchema.safeParse({
+  const parsed = transactionSchema.safeParse({
     categoryId: input.categoryId,
     amount: input.amount,
     occurredOn: input.occurredOn,
     note: input.note?.trim() || undefined,
-    tagIds: input.tagIds ?? [],
   });
 
   if (!parsed.success) {
@@ -244,36 +241,20 @@ export async function saveQuickTransaction(
   }
 
   const supabase = await createClient();
-  const { data: created, error } = await supabase
-    .from("transactions")
-    .insert({
-      user_id: user.id,
-      category_id: parsed.data.categoryId,
-      amount: parsed.data.amount,
-      occurred_on: parsed.data.occurredOn,
-      note: parsed.data.note ?? null,
-    })
-    .select("id")
-    .single();
+  const { error } = await supabase.from("transactions").insert({
+    user_id: user.id,
+    category_id: parsed.data.categoryId,
+    amount: parsed.data.amount,
+    occurred_on: parsed.data.occurredOn,
+    note: parsed.data.note ?? null,
+  });
 
   if (error) {
     return { error: error.message };
   }
 
-  const tagIds = parsed.data.tagIds ?? [];
-  if (created && tagIds.length > 0) {
-    const { error: tagError } = await supabase
-      .from("transaction_tags")
-      .insert(
-        tagIds.map((tagId) => ({ transaction_id: created.id, tag_id: tagId })),
-      );
-    if (tagError) {
-      return { error: tagError.message };
-    }
-  }
-
   revalidateRecurringDependents();
-  return { id: created?.id };
+  return {};
 }
 
 /**
@@ -526,9 +507,6 @@ export async function updateTransaction(
     return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
-  // Null when the form never showed the tags control: leave them alone.
-  const tagIds = readSubmittedTagIds(formData);
-
   const supabase = await createClient();
 
   // A row a template wrote, moved to another day, leaves the day it came
@@ -569,30 +547,6 @@ export async function updateTransaction(
 
   if (error) {
     return { error: error.message };
-  }
-
-  if (tagIds !== null) {
-    const { error: clearError } = await supabase
-      .from("transaction_tags")
-      .delete()
-      .eq("transaction_id", parsed.data.id);
-    if (clearError) {
-      return { error: clearError.message };
-    }
-
-    if (tagIds.length > 0) {
-      const { error: tagError } = await supabase
-        .from("transaction_tags")
-        .insert(
-          tagIds.map((tagId) => ({
-            transaction_id: parsed.data.id,
-            tag_id: tagId,
-          })),
-        );
-      if (tagError) {
-        return { error: tagError.message };
-      }
-    }
   }
 
   revalidateRecurringDependents();

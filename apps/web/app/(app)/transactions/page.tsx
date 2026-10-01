@@ -6,7 +6,6 @@ import {
   getRecurringTemplates,
   getTransactions,
 } from "@/lib/queries/finance";
-import { getTags, getTransactionTagMap } from "@/lib/queries/phase4";
 import {
   getConfirmedTransactionIds,
   getFulfilledKeys,
@@ -56,8 +55,6 @@ export default async function TransactionsPage({
     transactions,
     categories,
     recurringTemplates,
-    tags,
-    transactionTags,
     skippedKeys,
     confirmedTransactionIds,
     fulfilledKeys,
@@ -65,8 +62,6 @@ export default async function TransactionsPage({
     getTransactions(user.id, year, month),
     getCategories(user.id),
     getRecurringTemplates(user.id),
-    getTags(user.id),
-    getTransactionTagMap(user.id, year, month),
     getRecurringSkipKeys(user.id, year, month),
     // Which rows settle a recurring charge. Needs nothing else this batch
     // fetches, so it rides along rather than costing a second round trip.
@@ -145,8 +140,6 @@ export default async function TransactionsPage({
       proposedTransactionIds={proposals.map(
         (proposal) => proposal.transactionId,
       )}
-      tags={tags}
-      transactionTags={transactionTags}
       year={year}
       month={month}
       defaultDate={defaultDate}

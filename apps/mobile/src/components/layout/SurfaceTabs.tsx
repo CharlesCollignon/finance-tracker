@@ -82,11 +82,13 @@ export const LEDGER_TABS: SurfaceTab[] = [
 ];
 
 /**
- * Placements' views: what is held, and what it is made of. Both live inside
- * the tabs, as the Ledger's do, so the tab bar stays on the second one too.
+ * Placements' views: the accounts; what they earn, how the money is spread
+ * and what it costs; and what the funds are made of. All live inside the
+ * tabs, as the Ledger's do, so the tab bar stays on every one.
  */
 export const WALLET_TABS: SurfaceTab[] = [
   { href: "/investments", labelKey: "nav.walletsPositions" },
-  // Cast until the typed-routes list next regenerates with the moved file.
+  // Cast until the typed-routes list next regenerates with the new files.
+  { href: "/analysis" as Href, labelKey: "nav.walletsAnalysis" },
   { href: "/look-through" as Href, labelKey: "nav.walletsLookThrough" },
 ];

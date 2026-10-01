@@ -4,33 +4,38 @@ import { Pressable, View } from "react-native";
 import {
   buildAllocation,
   formatWeight,
+  isSavingsAccountId,
   suggestContributionSplit,
-  type WalletTarget,
+  type AccountId,
+  type AccountTarget,
 } from "@finance/core/allocation";
-import { todayIsoLocal } from "@finance/core/constants";
-import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
+import { ENVELOPE_SHORT_KEYS } from "@finance/core/future-plan";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
-import { buildPeaStatus, peaMaturityHint } from "@finance/core/pea";
 import type { InvestmentReturns } from "@finance/core/investment-returns";
+import { FRENCH_SAVINGS_2026 } from "@finance/core/savings-accounts";
 import { formatAnnualRate } from "@finance/core/xirr";
 import type { WalletPlan } from "@finance/core/types/database";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
-import { saveWalletPlan, saveWalletTargets } from "@/lib/mutations";
+import { saveAccountTargets } from "@/lib/mutations";
+import type { SavingsAccountView } from "@/lib/savings-accounts";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { RADIUS } from "@/theme/tokens";
+import { resolveMessage } from "@finance/core/i18n/t";
 
 interface WalletPlanPanelProps {
+  /** The wallets kept, and only them. */
   portfolio: InvestmentPortfolioSummary;
+  /** The savings accounts declared. */
+  savings: readonly SavingsAccountView[];
   returns: InvestmentReturns | null;
   plans: WalletPlan[];
   /** Typical monthly contribution, so the split is in real money. */
@@ -39,15 +44,17 @@ interface WalletPlanPanelProps {
 }
 
 /**
- * The part of Wallets that says what to do, rather than what is.
+ * The part of Placements that says what to do, rather than what is.
  *
- * Mirrors the web panel: how far the split has drifted from what the user
+ * Mirrors the web panel: how far the split across every account kept — the
+ * savings accounts beside the wallets — has drifted from what the user
  * intended, where the next contribution should go to close the gap without
- * selling anything, and — for a PEA — the room left under the ceiling and the
- * five-year clock.
+ * selling anything. The PEA's ceiling and five-year clock are about that one
+ * account, so they sit under it on the accounts view (`PeaCard`).
  */
 export function WalletPlanPanel({
   portfolio,
+  savings,
   returns,
   plans,
   monthlyContribution,
@@ -64,29 +71,53 @@ export function WalletPlanPanel({
     [plans],
   );
 
-  const targets: WalletTarget[] = useMemo(
-    () =>
-      portfolio.columns.map((column) => {
+  const accounts: AccountId[] = useMemo(
+    () => [
+      ...savings.map((view) => view.account.kind),
+      ...portfolio.columns.map((column) => column.walletId),
+    ],
+    [savings, portfolio.columns],
+  );
+
+  const targets: AccountTarget[] = useMemo(
+    () => [
+      ...savings.map((view) => ({
+        accountId: view.account.kind as AccountId,
+        targetWeight:
+          view.account.target_weight === null ||
+          view.account.target_weight === undefined
+            ? null
+            : Number(view.account.target_weight),
+      })),
+      ...portfolio.columns.map((column) => {
         const weight = planByWallet.get(column.walletId)?.target_weight;
         return {
-          walletId: column.walletId,
+          accountId: column.walletId as AccountId,
           targetWeight:
             weight === null || weight === undefined ? null : Number(weight),
         };
       }),
-    [portfolio.columns, planByWallet],
+    ],
+    [savings, portfolio.columns, planByWallet],
   );
 
   const allocation = useMemo(
     () =>
       buildAllocation(
-        portfolio.columns.map((column) => ({
-          walletId: column.walletId,
-          value: column.totalMarketValue,
-        })),
+        [
+          ...savings.map((view) => ({
+            accountId: view.account.kind as AccountId,
+            value: view.balance.balance,
+          })),
+          ...portfolio.columns.map((column) => ({
+            accountId: column.walletId as AccountId,
+            value: column.totalMarketValue,
+          })),
+        ],
         targets,
+        accounts,
       ),
-    [portfolio.columns, targets],
+    [savings, portfolio.columns, targets, accounts],
   );
 
   const split = useMemo(
@@ -99,194 +130,134 @@ export function WalletPlanPanel({
     [returns],
   );
 
-  const peaPlan = planByWallet.get("pea");
-  const peaColumn = portfolio.columns.find((c) => c.walletId === "pea");
-  const peaStatus = peaColumn
-    ? buildPeaStatus(
-        peaColumn.totalInvested,
-        peaPlan?.opened_on ?? null,
-        todayIsoLocal(),
-        peaPlan?.contribution_ceiling
-          ? Number(peaPlan.contribution_ceiling)
-          : undefined,
-      )
-    : null;
+  // A wallet's return is measured; a savings account's is its rate, net of
+  // the tax on its interest.
+  function rateOf(id: AccountId): number | null {
+    if (isSavingsAccountId(id)) {
+      const view = savings.find((entry) => entry.account.kind === id);
+      return view
+        ? view.rate * (1 - FRENCH_SAVINGS_2026[id].taxOnInterest)
+        : null;
+    }
+    return returnByWallet.get(id)?.rate ?? null;
+  }
 
   return (
-    <>
-      <Card bezel innerClassName="gap-3 p-5">
-        <View className="flex-row items-center justify-between">
-          <Text className="font-bold">{t("position.allocation")}</Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setEditing((value) => !value)}
-            hitSlop={8}
-          >
-            <Text className="text-sm font-medium text-primary-ink">
-              {editing ? t("position.cancel") : t("position.setTargets")}
-            </Text>
-          </Pressable>
-        </View>
+    <Card bezel innerClassName="gap-3 p-5">
+      <View className="flex-row items-center justify-between">
+        <Text className="font-bold">{t("position.allocation")}</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setEditing((value) => !value)}
+          hitSlop={8}
+        >
+          <Text className="text-sm font-medium text-primary-ink">
+            {editing ? t("position.cancel") : t("position.setTargets")}
+          </Text>
+        </Pressable>
+      </View>
 
-        {editing ? (
-          <TargetEditor
-            initial={targets}
-            onSaved={() => {
-              setEditing(false);
-              onSaved();
-            }}
-          />
-        ) : (
-          <View className="gap-3">
-            {allocation.rows.map((row) => {
-              const rate = formatAnnualRate(
-                returnByWallet.get(row.walletId)?.rate ?? null,
-                locale,
-              );
+      {editing ? (
+        <TargetEditor
+          initial={targets}
+          onSaved={() => {
+            setEditing(false);
+            onSaved();
+          }}
+        />
+      ) : (
+        <View className="gap-3">
+          {allocation.rows.map((row) => {
+            const rate = formatAnnualRate(rateOf(row.accountId), locale);
 
-              return (
-                <View key={row.walletId} className="gap-1.5">
-                  <View className="flex-row items-baseline justify-between gap-3">
-                    <Text className="text-sm font-medium">
-                      {INVESTMENT_WALLET_LABELS[row.walletId]}
-                    </Text>
-                    <PrivateAmount className="font-sans tabular-nums text-sm">
-                      {formatEuro(row.value)}
-                    </PrivateAmount>
-                  </View>
-
-                  <View
-                    className="h-2 w-full overflow-hidden rounded-full"
-                    style={{ backgroundColor: colors.muted }}
-                  >
-                    <View
-                      style={{
-                        height: "100%",
-                        borderRadius: RADIUS.pill,
-                        backgroundColor: colors.primary,
-                        width: `${Math.round(row.currentWeight * 100)}%`,
-                      }}
-                    />
-                  </View>
-
-                  <View className="flex-row flex-wrap items-center justify-between gap-x-3">
-                    <Text variant="muted" className="text-xs">
-                      {row.targetWeight !== null
-                        ? t("position.shareNowTarget", {
-                            share: formatWeight(row.currentWeight, locale),
-                            target: formatWeight(row.targetWeight, locale),
-                          })
-                        : formatWeight(row.currentWeight, locale)}
-                      {rate ? ` · ${rate}` : ""}
-                    </Text>
-                    {row.status === "over" || row.status === "under" ? (
-                      <Text
-                        className={cn(
-                          "text-xs",
-                          row.status === "over"
-                            ? "text-destructive"
-                            : "text-muted-foreground",
-                        )}
-                      >
-                        {t(
-                          row.status === "over"
-                            ? "position.pointsAbove"
-                            : "position.pointsBelow",
-                          { count: Math.abs(Math.round(row.driftPoints ?? 0)) },
-                        )}
-                      </Text>
-                    ) : null}
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
-
-        {!editing && allocation.needsRebalance && split.length > 0 ? (
-          <View className="border-t border-border pt-3">
-            <Text variant="muted" className="text-sm">
-              {`${t("position.nextContributionBefore")} `}
-              <PrivateAmount className="text-sm text-foreground">
-                {formatEuro(monthlyContribution)}
-              </PrivateAmount>
-              {` ${t("position.nextContributionAfter")} `}
-              {split.map((row, index) => (
-                <Text key={row.walletId} className="text-sm">
-                  {index > 0 ? ", " : ""}
-                  <PrivateAmount className="text-sm font-semibold text-foreground">
-                    {formatEuro(row.amount)}
+            return (
+              <View key={row.accountId} className="gap-1.5">
+                <View className="flex-row items-baseline justify-between gap-3">
+                  <Text className="text-sm font-medium">
+                    {t(ENVELOPE_SHORT_KEYS[row.accountId])}
+                  </Text>
+                  <PrivateAmount className="font-sans tabular-nums text-sm">
+                    {formatEuro(row.value)}
                   </PrivateAmount>
-                  {` ${t("position.splitItemTo", {
-                    wallet: INVESTMENT_WALLET_LABELS[row.walletId],
-                  })}`}
-                </Text>
-              ))}
-            </Text>
-          </View>
-        ) : null}
+                </View>
 
-        {!editing && allocation.targetCoverage === 0 ? (
-          <Text variant="muted" className="border-t border-border pt-3 text-sm">
-            {t("position.noTargetHint")}
+                <View
+                  className="h-2 w-full overflow-hidden rounded-full"
+                  style={{ backgroundColor: colors.muted }}
+                >
+                  <View
+                    style={{
+                      height: "100%",
+                      borderRadius: RADIUS.pill,
+                      backgroundColor: colors.primary,
+                      width: `${Math.round(row.currentWeight * 100)}%`,
+                    }}
+                  />
+                </View>
+
+                <View className="flex-row flex-wrap items-center justify-between gap-x-3">
+                  <Text variant="muted" className="text-xs">
+                    {row.targetWeight !== null
+                      ? t("position.shareNowTarget", {
+                          share: formatWeight(row.currentWeight, locale),
+                          target: formatWeight(row.targetWeight, locale),
+                        })
+                      : formatWeight(row.currentWeight, locale)}
+                    {rate ? ` · ${rate}` : ""}
+                  </Text>
+                  {row.status === "over" || row.status === "under" ? (
+                    <Text
+                      className={cn(
+                        "text-xs",
+                        row.status === "over"
+                          ? "text-destructive"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      {t(
+                        row.status === "over"
+                          ? "position.pointsAbove"
+                          : "position.pointsBelow",
+                        { count: Math.abs(Math.round(row.driftPoints ?? 0)) },
+                      )}
+                    </Text>
+                  ) : null}
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
+      {!editing && allocation.needsRebalance && split.length > 0 ? (
+        <View className="border-t border-border pt-3">
+          <Text variant="muted" className="text-sm">
+            {`${t("position.nextContributionBefore")} `}
+            <PrivateAmount className="text-sm text-foreground">
+              {formatEuro(monthlyContribution)}
+            </PrivateAmount>
+            {` ${t("position.nextContributionAfter")} `}
+            {split.map((row, index) => (
+              <Text key={row.accountId} className="text-sm">
+                {index > 0 ? ", " : ""}
+                <PrivateAmount className="text-sm font-semibold text-foreground">
+                  {formatEuro(row.amount)}
+                </PrivateAmount>
+                {` ${t("position.splitItemTo", {
+                  wallet: t(ENVELOPE_SHORT_KEYS[row.accountId]),
+                })}`}
+              </Text>
+            ))}
           </Text>
-        ) : null}
-      </Card>
-
-      {peaStatus ? (
-        <Card bezel innerClassName="gap-3 p-5">
-          <Text className="font-bold">PEA</Text>
-
-          <View className="flex-row flex-wrap items-baseline justify-between gap-2">
-            <Text variant="muted" className="text-sm">
-              {`${t("position.peaPaidIn")} `}
-              <PrivateAmount className="text-sm text-foreground">
-                {formatEuro(peaStatus.contributed)}
-              </PrivateAmount>
-              {` ${t("position.peaOfCeiling", {
-                ceiling: formatEuro(peaStatus.ceiling),
-              })}`}
-            </Text>
-            <Text
-              className={cn(
-                "font-sans tabular-nums text-sm",
-                peaStatus.nearCeiling
-                  ? "text-destructive"
-                  : "text-muted-foreground",
-              )}
-            >
-              {`${formatEuro(peaStatus.headroom)} ${t("position.peaRoomLeft")}`}
-            </Text>
-          </View>
-
-          <View
-            className="h-2 w-full overflow-hidden rounded-full"
-            style={{ backgroundColor: colors.muted }}
-          >
-            <View
-              style={{
-                height: "100%",
-                borderRadius: RADIUS.pill,
-                backgroundColor: peaStatus.nearCeiling
-                  ? colors.destructive
-                  : colors.primary,
-                width: `${Math.min(100, Math.round(peaStatus.ratio * 100))}%`,
-              }}
-            />
-          </View>
-
-          <Text variant="muted" className="text-xs">
-            {t("position.peaCashOnly")}
-          </Text>
-
-          <PeaOpenedField
-            openedOn={peaPlan?.opened_on ?? null}
-            hint={peaMaturityHint(peaStatus, locale)}
-            onSaved={onSaved}
-          />
-        </Card>
+        </View>
       ) : null}
-    </>
+
+      {!editing && allocation.targetCoverage === 0 ? (
+        <Text variant="muted" className="border-t border-border pt-3 text-sm">
+          {t("position.noTargetHint")}
+        </Text>
+      ) : null}
+    </Card>
   );
 }
 
@@ -294,7 +265,7 @@ function TargetEditor({
   initial,
   onSaved,
 }: {
-  initial: WalletTarget[];
+  initial: AccountTarget[];
   onSaved: () => void;
 }) {
   const t = useT();
@@ -302,7 +273,7 @@ function TargetEditor({
   const [pending, setPending] = useState(false);
   const [draft, setDraft] = useState(() =>
     initial.map((target) => ({
-      walletId: target.walletId,
+      accountId: target.accountId,
       percent: String(Math.round((target.targetWeight ?? 0) * 100)),
     })),
   );
@@ -311,16 +282,16 @@ function TargetEditor({
 
   async function save() {
     setPending(true);
-    const result = await saveWalletTargets(
+    const result = await saveAccountTargets(
       draft.map((row) => ({
-        wallet: row.walletId,
+        accountId: row.accountId,
         targetWeight: (Number(row.percent) || 0) / 100,
       })),
     );
     setPending(false);
 
     if (result.error) {
-      toast(result.error, "error");
+      toast(resolveMessage(t, result.error), "error");
       return;
     }
     toast(t("position.targetsSaved"), "success");
@@ -331,11 +302,11 @@ function TargetEditor({
     <View className="gap-3">
       {draft.map((row) => (
         <View
-          key={row.walletId}
+          key={row.accountId}
           className="flex-row items-center justify-between gap-3"
         >
           <Text className="text-sm">
-            {INVESTMENT_WALLET_LABELS[row.walletId]}
+            {t(ENVELOPE_SHORT_KEYS[row.accountId])}
           </Text>
           <View className="w-24 flex-row items-center gap-2">
             <Input
@@ -343,7 +314,7 @@ function TargetEditor({
               onChangeText={(value) =>
                 setDraft((current) =>
                   current.map((item) =>
-                    item.walletId === row.walletId
+                    item.accountId === row.accountId
                       ? { ...item, percent: value.replace(/[^0-9]/g, "") }
                       : item,
                   ),
@@ -351,7 +322,7 @@ function TargetEditor({
               }
               keyboardType="number-pad"
               accessibilityLabel={t("position.targetPercentFor", {
-                wallet: INVESTMENT_WALLET_LABELS[row.walletId],
+                wallet: t(ENVELOPE_SHORT_KEYS[row.accountId]),
               })}
               className="flex-1 text-right"
             />
@@ -380,78 +351,6 @@ function TargetEditor({
         disabled={pending || total !== 100}
         onPress={() => void save()}
       />
-    </View>
-  );
-}
-
-/** The one date that starts a PEA's five-year clock. */
-function PeaOpenedField({
-  openedOn,
-  hint,
-  onSaved,
-}: {
-  openedOn: string | null;
-  hint: string | null;
-  onSaved: () => void;
-}) {
-  const t = useT();
-  const { toast } = useToast();
-  const [value, setValue] = useState(openedOn ?? todayIsoLocal());
-  const [editing, setEditing] = useState(false);
-  const [pending, setPending] = useState(false);
-
-  async function save() {
-    setPending(true);
-    const result = await saveWalletPlan({ wallet: "pea", openedOn: value });
-    setPending(false);
-
-    if (result.error) {
-      toast(result.error, "error");
-      return;
-    }
-    toast(t("position.saved"), "success");
-    setEditing(false);
-    onSaved();
-  }
-
-  return (
-    <View className="gap-2 border-t border-border pt-3">
-      {editing ? (
-        <>
-          <Text className="text-sm font-medium">{t("position.openedOn")}</Text>
-          <DateField value={value} onChange={setValue} />
-          <View className="flex-row gap-2">
-            <Button
-              label={pending ? t("position.saving") : t("position.save")}
-              size="sm"
-              className="flex-1"
-              disabled={pending}
-              onPress={() => void save()}
-            />
-            <Button
-              label={t("position.cancel")}
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              disabled={pending}
-              onPress={() => setEditing(false)}
-            />
-          </View>
-        </>
-      ) : (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t("position.peaOpenedLabel")}
-          onPress={() => setEditing(true)}
-        >
-          <Text variant="muted" className="text-sm">
-            {hint ?? t("position.peaOpenedHint")}
-            <Text className="text-sm font-medium text-primary-ink">
-              {`  ${openedOn ? t("common.change") : t("common.add")}`}
-            </Text>
-          </Text>
-        </Pressable>
-      )}
     </View>
   );
 }

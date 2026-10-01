@@ -1,15 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 
 import { INTL_LOCALES } from "@finance/core/i18n/locale";
 import type {
   Category,
-  Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
 import { CategoryPicker } from "@/components/pickers/CategoryPicker";
-import { MultiChips } from "@/components/pickers/MultiChips";
 import { Button } from "@/components/ui/Button";
 import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
@@ -18,10 +16,8 @@ import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import {
   deleteTransaction,
   moveBackEarlyIncome,
-  setTransactionTags,
   updateTransaction,
 } from "@/lib/mutations";
-import { getTransactionTagIds } from "@/lib/queries";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
 import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
@@ -38,7 +34,6 @@ interface TransactionFormModalProps {
   transaction: TransactionWithCategory;
   /** Most-recently-used category ids, newest first. */
   recentCategoryIds?: string[];
-  tags?: Tag[];
 }
 
 /**
@@ -58,7 +53,6 @@ export function TransactionFormModal({
   categories,
   transaction,
   recentCategoryIds = [],
-  tags = [],
 }: TransactionFormModalProps) {
   const locale = useLocale();
   const t = useT();
@@ -69,32 +63,6 @@ export function TransactionFormModal({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [tagIds, setTagIds] = useState<string[]>([]);
-  // Whether the edited transaction's existing tags finished loading. Saving
-  // before this resolves — or after it fails — must not overwrite the row's
-  // tags with an empty list, so the write below checks this rather than
-  // assuming an empty `tagIds` means "no tags".
-  const [tagsLoaded, setTagsLoaded] = useState(false);
-
-  // Existing tags load once per edited transaction.
-  useEffect(() => {
-    let active = true;
-    void getTransactionTagIds(transaction.id)
-      .then((ids) => {
-        if (active) {
-          setTagIds(ids);
-          setTagsLoaded(true);
-        }
-      })
-      .catch(() => {
-        // Leave tagsLoaded false: a failed load must block the tag write on
-        // save rather than silently clearing the transaction's tags.
-      });
-    return () => {
-      active = false;
-    };
-  }, [transaction]);
-
   // "0,00" in French: the placeholder shows the separator to type.
   const amountPlaceholder = new Intl.NumberFormat(INTL_LOCALES[locale], {
     minimumFractionDigits: 2,
@@ -119,12 +87,6 @@ export function TransactionFormModal({
     if (result.error) {
       setError(result.error);
       return;
-    }
-    // Tags are a separate table, so they are written after the row. Only
-    // once the existing tags have loaded — writing before or after a failed
-    // load would clear the transaction's tags.
-    if (tags.length > 0 && tagsLoaded) {
-      await setTransactionTags(transaction.id, tagIds);
     }
     onSaved();
     onClose();
@@ -266,24 +228,6 @@ export function TransactionFormModal({
               placeholder={t("transaction.notePlaceholder")}
               className="mb-4"
             />
-
-            {tags.length > 0 ? (
-              <>
-                <Text className="mb-2 text-sm font-medium">
-                  {t("transaction.tags")}
-                </Text>
-                <MultiChips
-                  label={t("transaction.tags")}
-                  className="mb-4"
-                  options={tags.map((tag) => ({
-                    value: tag.id,
-                    label: tag.name,
-                  }))}
-                  values={tagIds}
-                  onChange={setTagIds}
-                />
-              </>
-            ) : null}
 
             {error ? (
               <Text className="mb-3 text-sm text-destructive">

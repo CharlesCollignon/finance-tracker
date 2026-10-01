@@ -11,7 +11,10 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-import { BANK_CONSENT_VERSION, consentIsCurrent } from "@finance/core/bank-consent";
+import {
+  BANK_CONSENT_VERSION,
+  consentIsCurrent,
+} from "@finance/core/bank-consent";
 import { formatShortDate } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { BankAccount } from "@finance/core/types/database";

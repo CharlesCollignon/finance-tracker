@@ -57,8 +57,7 @@ export type BalanceMiss =
   | "day-incomplete";
 
 export type BalanceLookup =
-  | { ok: true; reading: BalanceReading }
-  | { ok: false; reason: BalanceMiss };
+  { ok: true; reading: BalanceReading } | { ok: false; reason: BalanceMiss };
 
 function daysBetween(from: string, to: string): number {
   const [fy, fm, fd] = from.split("-").map(Number);

@@ -1,74 +1,61 @@
-import { useState } from "react";
-import { Pressable, RefreshControl, ScrollView, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter, type Href } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { RefreshControl, ScrollView } from "react-native";
 
-import { buildBudgetProgress } from "@finance/core/budget-limits";
-import type { CloseableMonth } from "@finance/core/month-close";
 import {
-  buildForwardProjection,
-  buildRunway,
-  type ForwardProjection,
-  type Runway,
-} from "@finance/core/projection";
-import {
-  buildGoalRunningTotals,
-  buildSavingsGoalProgress,
-  earliestGoalStart,
-  EMPTY_GOAL_LEDGER,
-} from "@finance/core/savings-goals";
-import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
-import type {
-  BankAccount,
-  Budget,
-  Category,
-  SavingsGoal,
-} from "@finance/core/types/database";
-import type { TagUsage } from "@finance/core/tags";
+  buildCushion,
+  buildMilestones,
+  cushionSavings,
+  MILESTONE_TIERS,
+  monthsUntil,
+  projectEnvelopes,
+  type Envelope,
+} from "@finance/core/future-plan";
 import { resolveMessage } from "@finance/core/i18n/t";
+import type { CloseableMonth } from "@finance/core/month-close";
+import { buildRunway } from "@finance/core/projection";
 
 import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
 import { MonthCloseHistoryCard } from "@/components/MonthCloseHistoryCard";
 import { MonthCloseSheet } from "@/components/MonthCloseSheet";
 import { StaggerItem } from "@/components/motion/Stagger";
-import { BudgetsCard } from "@/components/plan/BudgetsCard";
-import { CashAccountsCard } from "@/components/plan/CashAccountsCard";
-import { GoalsCard } from "@/components/plan/GoalsCard";
-import { MonthCloseCard } from "@/components/plan/MonthCloseCard";
-import { TagsCard } from "@/components/plan/TagsCard";
-import { ProjectionCard } from "@/components/ProjectionCard";
+import { CushionCard } from "@/components/plan/CushionCard";
+import { LongViewCard, MAX_YEARS } from "@/components/plan/LongViewCard";
+import { MilestonesCard } from "@/components/plan/MilestonesCard";
+import { MonthsCard } from "@/components/plan/MonthsCard";
+import { RunCard } from "@/components/plan/RunCard";
+import {
+  YearAheadCard,
+  type MilestoneSooner,
+} from "@/components/plan/YearAheadCard";
 import { Screen } from "@/components/ui/Screen";
-import { ScreenSkeleton } from "@/components/ui/Skeleton";
+import { ScreenSkeleton, Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
-import { hapticLight } from "@/lib/haptics";
+import { hapticSuccess } from "@/lib/haptics";
 import {
-  getBankAccounts,
-  getBudgets,
-  getCategories,
-  getGoalLedger,
-  getMonthCloseOverview,
-  getMonthlySummary,
-  getRecurringTemplates,
-  getSavingsGoals,
-  getSavingsReserve,
-  getTagUsage,
-  readCashBalance,
-  type MonthCloseOverview,
-} from "@/lib/queries";
+  DEFAULT_PLAN_SETTINGS,
+  gatherPlanBase,
+  gatherPlanWealth,
+  loadPlanSettings,
+  loadSeenMilestone,
+  planEnvelopes,
+  savePlanSettings,
+  saveSeenMilestone,
+  type PlanSettings,
+} from "@/lib/plan-future-data";
 import { useAuth } from "@/providers/AuthProvider";
-import { useFlag } from "@/providers/FlagsProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useTabBarClearance } from "@/theme/chrome";
-import { ICON } from "@/theme/tokens";
-import { useThemeColors } from "@/theme/useThemeColors";
 
 /**
  * One close, and every figure the sheet reads while it is open. Assembled
- * from live data to render the trigger, and frozen into state the moment the
- * trigger is pressed — see `closing` below for why the freeze matters.
+ * from live data to render the trigger, and frozen the moment it is pressed:
+ * recording a close rewrites the very figures the open sheet is showing —
+ * `closes.next` usually empties, and the baseline is a median the new close
+ * is one of — and driving the mounted sheet off them would tear it away,
+ * reveal and undo included, the instant the refresh landed.
  */
 interface ClosePrompt {
   month: CloseableMonth;
@@ -77,274 +64,280 @@ interface ClosePrompt {
   baseline: number | null;
 }
 
+function sumInitial(envelopes: readonly Envelope[]): number {
+  return envelopes.reduce((sum, envelope) => sum + envelope.initial, 0);
+}
+
 /**
- * Plan, in the web's order: what the month may spend (budgets), what is being
- * saved towards (goals), the tags; then the footer the web keeps under them —
- * which accounts hold spending money, the month's close, the projection, the
- * way to categories and import, and the history of closes.
+ * Plan: where the money is heading, and the reasons to come back and look.
  *
- * It was the other way round on the phone: the projection and the close first,
- * the budgets fourth, and every form open at all times, so the screen was
- * mostly empty fields. A budget could only be set on all spending, and
- * nothing could be edited once made.
+ * A year from now first, counting up over the curve that gets there, with a
+ * "what if" to slide; then the milestones on the way and the cushion the
+ * savings make; then the long view after French tax, prefilled from the
+ * user's own figures; and last the run of month-ends, with the close that
+ * keeps it going and the months it is made of.
+ *
+ * Every figure comes from `@finance/core/future-plan` and the projection,
+ * the same arithmetic as the web's Plan, so both clients show one future.
+ * It replaces a screen of budgets, goals and tags: forms to fill in, where
+ * this is a picture to look at.
  */
 export default function PlanningScreen() {
   const t = useT();
   const locale = useLocale();
-  const router = useRouter();
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
-  const current = getCurrentMonth();
-  const manageTags = useFlag("tags.manage");
-  /**
-   * Everything the sheet is working from, held rather than read live.
-   *
-   * Recording a close rewrites the very figures the sheet is still showing.
-   * `closes.next` usually empties, because the following month's reading day
-   * has not arrived — driving the mounted sheet off it would tear the sheet
-   * away the instant the refresh landed, taking the reveal and its undo with
-   * it, and the reveal is the entire reason the sheet asks before it commits.
-   * `summary.baseline` moves too: it is the median of the reconciled closes,
-   * so the close just written is one of the numbers it is a median of, and
-   * the sentence under the figures would swap wording mid-read.
-   *
-   * So all four travel together. Web does not have to think about any of
-   * this: its page is server-rendered and none of it moves under an open
-   * sheet.
-   */
-  const [closing, setClosing] = useState<ClosePrompt | null>(null);
-  /**
-   * Whether the sheet is showing, kept apart from *what* it is showing, so
-   * the month just closed stays on the sheet while it animates away — see
-   * `closing` above.
-   */
-  const [sheetOpen, setSheetOpen] = useState(false);
-
-  const dataVersion = useDataVersion();
-  const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
-    useRefreshable(async () => {
-      if (!user) {
-        return {
-          budgets: [] as Budget[],
-          goals: [] as SavingsGoal[],
-          tags: [] as TagUsage[],
-          categories: [] as Category[],
-          accounts: [] as BankAccount[],
-          budgetProgress: [] as ReturnType<typeof buildBudgetProgress>,
-          goalProgress: [] as ReturnType<typeof buildSavingsGoalProgress>,
-          projection: null as ForwardProjection | null,
-          runway: null as Runway | null,
-          closes: null as MonthCloseOverview | null,
-        };
-      }
-
-      const today = todayIsoLocal();
-
-      const [
-        budgets,
-        goals,
-        tags,
-        categories,
-        summary,
-        templates,
-        reserve,
-        closes,
-        // What the projection starts from. Two indexed reads and no network:
-        // it reads the stored statement, which is why the phone can answer
-        // at all. Null when no account is ticked, which is ordinary.
-        cash,
-        // Empty for anyone who has not connected a bank, which hides the
-        // card that lists them.
-        accounts,
-      ] = await Promise.all([
-        getBudgets(user.id),
-        getSavingsGoals(user.id),
-        getTagUsage(user.id),
-        getCategories(user.id),
-        getMonthlySummary(user.id, current.year, current.month),
-        getRecurringTemplates(user.id),
-        getSavingsReserve(user.id),
-        getMonthCloseOverview(user.id, today, locale),
-        readCashBalance(user.id, today),
-        getBankAccounts(user.id),
-      ]);
-
-      // A running total from each goal's start. Asked for after the batch
-      // because the window depends on the goals it fetched.
-      const goalStart = earliestGoalStart(goals);
-      const goalLedger = goalStart
-        ? await getGoalLedger(user.id, goalStart, today)
-        : EMPTY_GOAL_LEDGER;
-
-      const categoryNames = new Map(
-        categories.map((c) => [c.id, c.name] as const),
-      );
-
-      return {
-        budgets,
-        goals,
-        tags,
-        categories,
-        accounts,
-        budgetProgress: buildBudgetProgress(
-          budgets,
-          summary.expenseBreakdown,
-          summary.expenses,
-          categoryNames,
-          locale,
-        ),
-        goalProgress: buildSavingsGoalProgress(
-          goals,
-          buildGoalRunningTotals(goals, goalLedger, templates, today),
-        ),
-        projection: buildForwardProjection({
-          templates,
-          year: current.year,
-          month: current.month,
-          today,
-          months: 12,
-          // Never a partial sum: a reading missing an account is short by
-          // whatever that account holds, so it is not a balance.
-          onHand: cash?.ok ? cash.total : null,
-          closes: closes.summary,
-          locale,
-        }),
-        runway: buildRunway(reserve, templates, current.year, current.month),
-        closes,
-      };
-    }, [user?.id, current.year, current.month, dataVersion, locale]);
   const { bank } = useBankState();
+  const dataVersion = useDataVersion();
 
-  /** Every screen, not just this one: budgets and goals sit on Le point too. */
-  function changed() {
-    notifyDataChanged();
-    void onRefresh();
+  const base = useRefreshable(
+    async () => (user ? await gatherPlanBase(user.id, locale) : null),
+    [user?.id, locale, dataVersion],
+  );
+  // Apart, because it asks the market for prices; the rest of the screen
+  // does not wait on it.
+  const wealth = useRefreshable(
+    async () => (user ? await gatherPlanWealth(user.id, locale) : null),
+    [user?.id, locale, dataVersion],
+  );
+  // A failed price fetch leaves the long view on the savings it can see.
+  const wealthSettled = !wealth.loading || wealth.data !== null;
+
+  const [settings, setSettings] = useState<PlanSettings>(DEFAULT_PLAN_SETTINGS);
+  const [settingsUser, setSettingsUser] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+    let cancelled = false;
+    void loadPlanSettings(user.id).then((stored) => {
+      if (!cancelled) {
+        setSettings(stored);
+        setSettingsUser(user.id);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+  const settingsReady = user !== null && settingsUser === user.id;
+
+  function changeSettings(next: PlanSettings) {
+    setSettings(next);
+    if (user) {
+      void savePlanSettings(user.id, next);
+    }
   }
 
-  const categories = (data?.categories ?? []).filter((c) => !c.archived);
+  const [extra, setExtra] = useState(0);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [closing, setClosing] = useState<ClosePrompt | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const data = base.data;
+  const dataEnvelopes = useMemo(
+    () => (data ? planEnvelopes(data, wealth.data) : []),
+    [data, wealth.data],
+  );
+  const envelopes = settings.envelopes ?? dataEnvelopes;
+
+  // The milestones look as far ahead as the long view can, whatever its
+  // horizon is set to, so moving the horizon does not move them; and they
+  // are the user's own figures, never an edit in the long view — typing a
+  // bigger number is not progress. The web reads them the same way.
+  const milestoneSeries = useMemo(
+    () =>
+      projectEnvelopes({
+        envelopes: dataEnvelopes,
+        years: MAX_YEARS,
+        inflation: 0,
+        withdrawalRate: 0,
+      }).monthly,
+    [dataEnvelopes],
+  );
+  const current = sumInitial(dataEnvelopes);
+  const milestones = useMemo(
+    () => buildMilestones(current, milestoneSeries),
+    [current, milestoneSeries],
+  );
+  const nextMilestone = milestones.find((milestone) => !milestone.reached);
+  const sooner: MilestoneSooner | null =
+    nextMilestone && wealthSettled
+      ? {
+          amount: nextMilestone.amount,
+          without: monthsUntil(nextMilestone.amount, milestoneSeries),
+          with: monthsUntil(nextMilestone.amount, milestoneSeries, extra),
+        }
+      : null;
+
+  // A milestone passed since the last visit, celebrated once. Judged on the
+  // user's own figures, not on an edit in the long view — typing a bigger
+  // number is not progress.
+  const reachedOnData =
+    MILESTONE_TIERS.filter((tier) => tier <= sumInitial(dataEnvelopes)).at(
+      -1,
+    ) ?? 0;
+  const hasData = data !== null;
+  const [freshAmount, setFreshAmount] = useState<number | null>(null);
+  useEffect(() => {
+    if (!user || !hasData || !wealthSettled) {
+      return;
+    }
+    let cancelled = false;
+    void loadSeenMilestone(user.id).then((seen) => {
+      if (cancelled) {
+        return;
+      }
+      if (seen === null || reachedOnData > seen) {
+        void saveSeenMilestone(user.id, reachedOnData);
+      }
+      // A first visit records where things stand rather than celebrating
+      // everything already behind the user.
+      if (seen !== null && reachedOnData > seen) {
+        setFreshAmount(reachedOnData);
+        void hapticSuccess();
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, hasData, wealthSettled, reachedOnData]);
+
+  // The cushion is the savings at hand — every savings account but a PEL,
+  // the user's corrections in the long view included — against the fixed
+  // costs. The web reads it the same way.
+  const runway = data
+    ? buildRunway(
+        cushionSavings(envelopes),
+        data.templates,
+        data.year,
+        data.month,
+      )
+    : null;
+  const cushion = buildCushion(runway?.months ?? null);
+
   const closes = data?.closes ?? null;
-  // What the app is currently asking about, if anything. Null once the latest
-  // month is closed and the next one's reading day has not arrived.
   const prompt: ClosePrompt | null =
-    closes && closes.next
+    closes?.next && runway
       ? {
           month: closes.next,
-          // Committed outgoings for the month in progress, which is what
-          // turns a month's saving into days of runway. `buildRunway` derives
-          // it from the templates alone, so the reserve this screen passes it
-          // does not touch the figure.
-          monthlyCommitted: data?.runway?.monthlyCommitted ?? 0,
+          monthlyCommitted: runway.monthlyCommitted,
           unrecordedCap: closes.settings.unrecordedCap,
           baseline: closes.summary.baseline,
         }
       : null;
-
-  /**
-   * The snapshot once one has been taken, the live prompt before that, so the
-   * sheet can be mounted hidden and then toggled rather than appearing
-   * already open on the frame it first exists.
-   */
   const sheet = closing ?? prompt;
+
+  function changed() {
+    notifyDataChanged();
+    void base.onRefresh();
+  }
 
   return (
     <Screen title={t("nav.plan")} className="pb-0">
-      {loading && !data ? (
+      {base.loading && !data ? (
         <ScreenSkeleton rows={4} />
-      ) : error ? (
-        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
-      ) : (
+      ) : base.error && !data ? (
+        <Text className="text-destructive">
+          {resolveMessage(t, base.error)}
+        </Text>
+      ) : data ? (
         <ScrollView
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />
-          }
-          contentContainerClassName="gap-4 pt-1"
-          contentContainerStyle={{ paddingBottom: tabBarClearance }}
-        >
-          <StaggerItem index={0}>
-            <BudgetsCard
-              budgets={data?.budgets ?? []}
-              progress={data?.budgetProgress ?? []}
-              categories={categories.filter((c) => c.type === "expense")}
-              onChanged={changed}
-            />
-          </StaggerItem>
-
-          <StaggerItem index={1}>
-            <GoalsCard
-              goals={data?.goals ?? []}
-              progress={data?.goalProgress ?? []}
-              categories={categories.filter((c) => c.type === "savings")}
-              onChanged={changed}
-            />
-          </StaggerItem>
-
-          <StaggerItem index={2}>
-            <TagsCard
-              tags={data?.tags ?? []}
-              manage={manageTags}
-              onChanged={changed}
-            />
-          </StaggerItem>
-
-          {/* The footer, as on the web. Which accounts hold spending money
-              comes first: ticked and readable, they close months on their
-              own, and the card below then never appears. */}
-          <CashAccountsCard
-            accounts={data?.accounts ?? []}
-            onChanged={changed}
-          />
-
-          {/* Beside the close, because a connected bank is what closes
-              months without being asked. */}
-          <ConnectBankInvite surface="plan" bank={bank} />
-
-          {/* Still here when the statement cannot answer: a lapsed consent, a
-              month the provider no longer covers, or no bank at all. Le
-              point's "ready to close" row sends people here. */}
-          {prompt && closes ? (
-            <MonthCloseCard
-              monthLabel={prompt.month.label}
-              isBaseline={prompt.month.isBaseline}
-              unrecordedCap={prompt.unrecordedCap}
-              baseline={prompt.baseline}
-              streak={closes.summary.streak}
-              onOpen={() => {
-                setClosing(prompt);
-                setSheetOpen(true);
+            <RefreshControl
+              refreshing={base.refreshing}
+              onRefresh={() => {
+                base.onRefreshAll();
+                wealth.onRefresh();
               }}
             />
-          ) : null}
+          }
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          contentContainerClassName="gap-4 pt-1"
+          contentContainerStyle={{ paddingBottom: tabBarClearance }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text variant="muted" className="text-sm">
+            {t("futurePlan.intro")}
+          </Text>
 
-          <ProjectionCard
-            projection={data?.projection ?? null}
-            runway={data?.runway ?? null}
-          />
+          <StaggerItem index={0}>
+            <YearAheadCard
+              projection={data.projection}
+              year={data.year}
+              month={data.month}
+              extra={extra}
+              onExtraChange={setExtra}
+              sooner={sooner}
+            />
+          </StaggerItem>
 
-          <View className="gap-3">
-            {(
-              [
-                {
-                  href: "/categories",
-                  title: t("plan.linkCategoriesTitle"),
-                  hint: t("plan.linkCategoriesHint"),
-                },
-                {
-                  href: "/import",
-                  title: t("plan.linkImportTitle"),
-                  hint: t("plan.linkImportHint"),
-                },
-              ] as const
-            ).map((link) => (
-              <PlanLink
-                key={link.href}
-                title={link.title}
-                hint={link.hint}
-                onPress={() => router.push(link.href as Href)}
+          {wealthSettled && settingsReady ? (
+            <StaggerItem index={1}>
+              <MilestonesCard
+                milestones={milestones}
+                current={current}
+                freshAmount={freshAmount}
+                year={data.year}
+                month={data.month}
+                horizonYears={MAX_YEARS}
               />
-            ))}
-          </View>
+            </StaggerItem>
+          ) : (
+            <Skeleton className="h-48 rounded-card" />
+          )}
+
+          <StaggerItem index={2}>
+            <CushionCard cushion={cushion} />
+          </StaggerItem>
+
+          {wealthSettled && settingsReady ? (
+            <StaggerItem index={3}>
+              <LongViewCard
+                settings={settings}
+                envelopes={envelopes}
+                declaredSavings={data.savings.length > 0}
+                custom={settings.envelopes !== null}
+                onSettingsChange={(patch) =>
+                  changeSettings({ ...settings, ...patch })
+                }
+                onEnvelopesChange={(next) =>
+                  changeSettings({ ...settings, envelopes: next })
+                }
+                onReset={() => changeSettings({ ...settings, envelopes: null })}
+              />
+            </StaggerItem>
+          ) : (
+            <Skeleton className="h-96 rounded-card" />
+          )}
 
           {closes ? (
+            <StaggerItem index={4}>
+              <RunCard
+                summary={closes.summary}
+                next={closes.next}
+                onOpen={() => {
+                  if (prompt) {
+                    setClosing(prompt);
+                    setSheetOpen(true);
+                  }
+                }}
+              />
+            </StaggerItem>
+          ) : null}
+
+          {closes ? (
+            <StaggerItem index={5}>
+              <MonthsCard
+                history={closes.history}
+                detailsOpen={detailsOpen}
+                onToggleDetails={() => setDetailsOpen((open) => !open)}
+              />
+            </StaggerItem>
+          ) : null}
+
+          {closes && detailsOpen ? (
             <MonthCloseHistoryCard
               history={closes.history}
               summary={closes.summary}
@@ -353,8 +346,12 @@ export default function PlanningScreen() {
               onChanged={changed}
             />
           ) : null}
+
+          {/* Beside the run, because a connected bank is what closes
+              months without being asked. */}
+          <ConnectBankInvite surface="plan" bank={bank} />
         </ScrollView>
-      )}
+      ) : null}
 
       {sheet ? (
         <MonthCloseSheet
@@ -376,38 +373,5 @@ export default function PlanningScreen() {
         />
       ) : null}
     </Screen>
-  );
-}
-
-/** One of the footer's ways out, as the web's linked cards. */
-function PlanLink({
-  title,
-  hint,
-  onPress,
-}: {
-  title: string;
-  hint: string;
-  onPress: () => void;
-}) {
-  const colors = useThemeColors();
-  return (
-    <Pressable
-      accessibilityRole="link"
-      accessibilityLabel={title}
-      accessibilityHint={hint}
-      onPress={() => {
-        void hapticLight();
-        onPress();
-      }}
-      className="min-h-14 flex-row items-center justify-between gap-3 rounded-card border border-border bg-card px-4 py-3"
-    >
-      <View className="min-w-0 flex-1">
-        <Text className="text-sm font-medium">{title}</Text>
-        <Text variant="muted" className="text-xs">
-          {hint}
-        </Text>
-      </View>
-      <Ionicons name="arrow-forward" size={ICON.md} color={colors.foreground} />
-    </Pressable>
   );
 }

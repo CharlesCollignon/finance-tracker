@@ -269,11 +269,6 @@ export default function ProfileScreen() {
             />
           ) : null}
           <ListRow
-            icon="flag-outline"
-            label={t("profile.budgetsAndGoals")}
-            onPress={() => router.push("/planning" as Href)}
-          />
-          <ListRow
             icon="cash-outline"
             label={t("profile.currency")}
             value={CURRENCY_LABELS[currency]}

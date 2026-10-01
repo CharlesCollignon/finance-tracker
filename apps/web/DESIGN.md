@@ -340,8 +340,9 @@ Do not introduce a light theme, a light-mode token pair, or a `light:` variant.
 
 **The Rare Accent Rule.** Lamplit Gold earns attention by being scarce. Its
 places are the primary action, the focus ring, a figure that genuinely leads a
-screen, and — systematically — a savings amount. Outside those, a surface that
-reaches for it in three unrelated places has spent it. The semantic use is not
+screen, a savings amount (systematically), and celebration on Plan: a
+milestone reached, a cushion rung lit, a run of month-ends still alive. Outside
+those, a surface that reaches for it in three unrelated places has spent it. The semantic use is not
 an exception to this rule so much as the proof of it: gold means something
 specific, which is why scattering it elsewhere costs so much.
 
@@ -352,9 +353,15 @@ and inline links — and every one outside the four above was taken off. What
 replaced them is the token that already carried the meaning: foreground against
 muted for an active state, a hairline or a surface step for a selection, a chart
 colour for a chart. Two decorative glows that ringed every card on the Bearing
-went to foreground for the same reason. Read the four homes as a description of
-the code, not a wish about it, and add a fifth only by changing this paragraph
+went to foreground for the same reason. Read the homes as a description of
+the code, not a wish about it, and add another only by changing this paragraph
 first.
+
+The fifth, celebration, was added in October 2026 with the Plan page, and it is
+held to one surface on purpose. There, gold means _done_: a milestone passed is
+the orb in its warm light, a milestone ahead is a neutral bar; a lit rung is
+gold, an unlit one a hairline ring; the flame is gold while the run lasts and
+grey when it ends. A celebration anywhere else in the app is the accent spent.
 
 **The Semantic Amount Rule.** An amount's colour says what kind of money it is —
 income, expense, savings or investment — never whether it is positive or
@@ -783,6 +790,63 @@ all; changing one alone breaks the frame.
 - On small screens a bottom bar at `3.5rem` with a `0.75rem` inset, inside the
   safe area. There, active state is carried by foreground colour and the
   icon's fill, not by a pill or an underline.
+
+### Plan: The Celebration Surface
+
+Plan (`components/finance/plan/`) is where the money is heading: a year from
+now with an "Et si…" slider, the milestones and the cushion, the long view
+after French tax, and the run of month-ends with what each one saved. It is the
+one surface allowed to feel like a reward, and the allowance is specific:
+
+- **Gold means done.** Reached milestones (the orb, `tone="mark"`, in a glow of
+  `--primary` drawn as a radial light, never a shadow), lit cushion rungs, the
+  live flame, and the savings bars, which are gold because they are savings.
+  Everything still ahead is neutral.
+- **Motion arrives, then rests.** Curves draw in once (`balance-curve-draw`),
+  the long view's stack rises from its baseline once, bars grow in one after
+  another, badges pop past their size and settle — all on the one curve, in
+  `plan.module.css`. The only loops are the flame's sway and the glow's
+  breath, both in place, and both switched off under reduced motion.
+- **Play answers at once.** The slider, the horizon and every field of the
+  long view redraw immediately; a calculator that animates between answers is
+  one you wait for. The headline figures count to their new value.
+- **The long view is a calculator, and says so.** It opens on the user's own
+  figures and the 2026 French rates, every input is theirs to change, the
+  edits stay in this browser, and "Revenir à mes chiffres" goes back. The
+  milestones never read those edits: they are about money that exists.
+- **What the future is made of, quietly.** Under the long view's net value, a
+  1.5px bar of each account's share (2px seams, chart tokens in the accounts'
+  order, never gold) and one muted line naming them, four at most and the rest
+  as "Autres". It follows the year the chart is being read at; which accounts
+  are named, and so their colours, is decided at the horizon and held while
+  the chart is scrubbed — a colour follows its account, never its rank.
+
+### Placements: The User's Own Accounts
+
+Placements lists the accounts the user keeps — declared savings accounts
+first (Livret A, LDDS, LEP, CEL, PEL, another livret), then the wallets with
+holdings or that they added — as one row of chips ending in "+ Ajouter un
+compte". Nobody is shown an account they do not have. The hero is the whole
+patrimoine, savings and investments, with the split under it.
+
+- A savings account's panel is a balance and four plain facts (rate, tax,
+  ceiling, each month), not a list of holdings; its few editable things open
+  in place, one field and a save.
+- Removing an account asks in place, with the sentence that says what goes,
+  then a destructive outline button. No dialog: the question is about the
+  panel it sits in.
+- The add sheet adds a wallet on the press; a savings account asks one
+  question — its balance, or the bank account that reports it — and a rate
+  only for the two accounts whose rate is not fixed by law.
+- Three tabs: **Comptes** (one account at a time: its panel, and the PEA's
+  ceiling and five-year card under the PEA), **Analyse** (all accounts at
+  once: the yearly return — a savings account's is its rate after tax — the
+  split with its targets, and the fees) and **Composition**. A question asked
+  of every account belongs on Analyse, never under one account's panel.
+- The monthly tags under the hero cover every account something goes into
+  each month, wallets then savings accounts, in the same pill.
+- The split covers every account kept, savings accounts included; its bars
+  are one colour, and the label says which account.
 
 ### Signature: The Privacy Blur
 

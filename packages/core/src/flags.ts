@@ -13,8 +13,6 @@
  */
 
 const FLAG_KEYS = [
-  /** Rename, merge and delete tags on the Plan page (Phase 0, T6). */
-  "tags.manage",
   /**
    * Connecting a bank by uploading an open-banking.io credentials file: the
    * Bank page's setup, and every invitation to it (migration 042).
@@ -56,31 +54,4 @@ export function flagsFromRows(rows: unknown): FlagSet {
 
 export function isFlagOn(flags: FlagSet, key: FlagKey): boolean {
   return flags.has(key);
-}
-
-/** The phone keeps the last answer between launches: the keys that are on. */
-export function serializeFlags(flags: FlagSet): string {
-  return JSON.stringify([...flags].sort());
-}
-
-/**
- * The cached answer, or null when there is none worth trusting.
- *
- * Null rather than "no flags" for a damaged entry, so the caller can tell
- * "nothing cached" from "cached, and everything was off".
- */
-export function parseStoredFlags(raw: string | null): FlagSet | null {
-  if (raw === null) {
-    return null;
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return null;
-  }
-  if (!Array.isArray(parsed)) {
-    return null;
-  }
-  return new Set(parsed.filter(isFlagKey));
 }

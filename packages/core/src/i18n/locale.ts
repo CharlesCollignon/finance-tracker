@@ -76,7 +76,9 @@ export const INTL_LOCALES: Record<Locale, string> = {
 };
 
 export function isLocale(value: unknown): value is Locale {
-  return typeof value === "string" && (LOCALES as readonly string[]).includes(value);
+  return (
+    typeof value === "string" && (LOCALES as readonly string[]).includes(value)
+  );
 }
 
 /**
@@ -176,4 +178,3 @@ export function preferredLocale(
 
   return null;
 }
-

@@ -49,12 +49,22 @@ const nextConfig: NextConfig = {
         destination: "/bearing",
         permanent: true,
       },
+      // Plan was served at `/budgets`, after the budgets it opened with.
+      // Budgets are gone and the page is about where the money is heading,
+      // so it took its own name — and links still naming the old path (a
+      // bookmark, a delivered notification, a card not yet re-pointed) land
+      // on it rather than on a 404.
+      {
+        source: "/budgets",
+        destination: "/plan",
+        permanent: true,
+      },
       // The feature pages were named after the app's routes rather than
       // after its surfaces, so `/features/home` described the Bearing and
       // `/features/planning` described Plan. These are public URLs people
       // read and share, which is the difference from the app's own paths —
-      // those kept their old names on purpose, because nobody reads
-      // `/budgets` in an installed app. `/features/calendar` has no
+      // those mostly kept their old names on purpose, because nobody reads
+      // `/transactions` in an installed app. `/features/calendar` has no
       // successor of its own: the calendar is a view of the Ledger now, and
       // the Ledger's page is where it is described.
       ...[

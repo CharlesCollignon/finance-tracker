@@ -5,7 +5,6 @@ import {
   Bank,
   CreditCard,
   EnvelopeSimple,
-  Flag,
   Globe,
   Key,
   SignIn,
@@ -236,11 +235,6 @@ export function ProfileView({
             icon={Tag}
             label={t("profile.categories")}
             href="/categories"
-          />
-          <ListRow
-            icon={Flag}
-            label={t("profile.budgetsAndGoals")}
-            href="/budgets"
           />
           {showBank ? (
             <ListRow

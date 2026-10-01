@@ -18,6 +18,10 @@ describe("mobileRouteForPushUrl", () => {
       pathname: "/",
       params: {},
     });
+    expect(mobileRouteForPushUrl("/plan")).toEqual({
+      pathname: "/planning",
+      params: {},
+    });
     expect(mobileRouteForPushUrl("/budgets")).toEqual({
       pathname: "/planning",
       params: {},
@@ -79,22 +83,9 @@ describe("mobileRouteForPushUrl", () => {
       for (const arrivedCharges of [0, 2]) {
         const due = buildDueNotifications({
           today,
-          budgetProgress: [
-            {
-              budgetId: "b1",
-              categoryId: "c1",
-              label: "Groceries",
-              spent: 420,
-              limit: 300,
-              remaining: -120,
-              ratio: 1.4,
-              over: true,
-            },
-          ],
           alreadySent: new Set(),
           pendingRecurring: 3,
           arrivedCharges,
-          formatAmount: (amount) => `${amount} €`,
           t: translator("en"),
         });
         for (const notification of due) {

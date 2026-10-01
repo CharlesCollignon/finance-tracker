@@ -10,6 +10,8 @@ import {
 import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
 import { translator, type Translate } from "@finance/core/i18n/t";
 
+import { notifyDataChanged } from "@/lib/data-version";
+import { renameDefaultCategories } from "@/lib/seed-categories";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   fetchStoredLocale,
@@ -102,6 +104,17 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       void saveLocale(next);
       if (userId) {
         void pushStoredLocale(userId, next);
+        // The defaults follow the language: "Courses" on a French app,
+        // "Groceries" on an English one. Names the user chose stay.
+        void renameDefaultCategories(userId, next)
+          .then((renamed) => {
+            if (renamed > 0) {
+              notifyDataChanged();
+            }
+          })
+          .catch(() => {
+            // Offline: the next sign-in renames them.
+          });
       }
     },
     [userId],

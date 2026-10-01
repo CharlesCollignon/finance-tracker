@@ -34,7 +34,7 @@ import {
 import { type Locale } from "./i18n/locale";
 import type { MonthReadRequest } from "./month-read";
 
-export const MONTH_READ_PROMPT_VERSION = 3;
+export const MONTH_READ_PROMPT_VERSION = 4;
 
 const FIGURE_RULE_EN =
   "Every figure you mention must be written as {{fact:id}}, using an id from " +
@@ -48,7 +48,7 @@ const FIGURE_RULE_EN =
  *
  * Told to write every figure as a placeholder, a model starts using the
  * placeholder *as the name of the thing* — "cut {{fact:top-expense:c4}} by
- * {{fact:budget-left:b2}}", which renders as "cut 340,00 € by 60,00 €" and
+ * {{fact:unrecorded-over}}", which renders as "cut 340,00 € by 60,00 €" and
  * tells the reader nothing about which category to cut. Observed, not
  * imagined: it is what the first live answers did.
  *
@@ -65,8 +65,8 @@ const FIGURE_RULE_EN =
  * braces — the pack cannot anticipate every relationship a model might want.
  */
 const NAMING_RULE_EN =
-  "A placeholder is a number, not a name. Name the category, the budget or the " +
-  'month in words, and put the figure beside it: "you spent ' +
+  "A placeholder is a number, not a name. Name the category or the month in " +
+  'words, and put the figure beside it: "you spent ' +
   '{{fact:expenses}}", never "the {{fact:expenses}} was high". Each figure\'s ' +
   "label is in the list; use those words for the name. And use each figure " +
   'for what its label says it is: "exceeded the allowance by ' +
@@ -93,8 +93,8 @@ const BASIS_RULE_EN =
  * Lifted from CONTEXT.md rather than paraphrased. Each pairing is there
  * because the wrong word is actively misleading, not merely off-brand:
  * "forecast" implies a prediction where the app means a projection of things
- * already scheduled, and "budget" for the allowance collides with the
- * per-category budgets, which are a different feature.
+ * already scheduled, and "budget" for the allowance implies a plan the person
+ * drew up, where the allowance is measured from their own history.
  */
 const VOCABULARY_EN = [
   '"Unrecorded spending" — what a balance proves left the account that no ' +
@@ -167,15 +167,10 @@ export function factLines(
 const MISSING_WORDS_EN: Record<MissingReason, string> = {
   "no-bank": "no bank is connected, so this cannot be known",
   "no-close": "no month has been closed yet, so this cannot be measured",
-  // "no cap", not "no allowance". A clause describes the reason, not the
-  // surface that went looking — the same argument `month-facts.ts` makes for
-  // keeping the reasons themselves in one enum. `category-facts.ts` emits
-  // `no-cap` for a category's own cap, whose glossary forbids the word
-  // "allowance" precisely because the unrecorded allowance is a different
-  // feature; the French clause used to print that forbidden word two
-  // paragraphs under the line forbidding it. The label beside each line says
-  // which cap is meant, so nothing is lost here.
-  "no-cap": "no budget has been set",
+  // "limit", the glossary's own word for the allowance: a clause that said
+  // "budget" here would print, in the absences block, a word the vocabulary
+  // above forbids for the very figure it is about.
+  "no-cap": "no limit has been set",
   "month-unfinished": "the month is not over yet",
   "not-recorded": "nothing was recorded for it",
   "no-target": "no target allocation has been set",
@@ -233,8 +228,8 @@ const FIGURE_RULE_FR =
   "le chiffre, ou ne le dites pas.";
 
 const NAMING_RULE_FR =
-  "Un substitut est un nombre, pas un nom. Nommez la catégorie, le budget " +
-  'ou le mois en mots, et mettez le chiffre à côté : "vous avez dépensé ' +
+  "Un substitut est un nombre, pas un nom. Nommez la catégorie ou le mois " +
+  'en mots, et mettez le chiffre à côté : "vous avez dépensé ' +
   '{{fact:expenses}}", jamais "le {{fact:expenses}} était élevé". Le libellé ' +
   "de chaque chiffre figure dans la liste ; utilisez ces mots comme nom. Et " +
   "employez chaque chiffre pour ce que son libellé dit qu'il est : " +
@@ -253,9 +248,8 @@ const BASIS_RULE_FR =
  * Each entry names the term the card prints and the words to refuse, exactly
  * as the English block does. The refused words are the French ones a model
  * actually reaches for: "fuite" for unrecorded spending, "gardé" for what
- * the card now calls "Économisé", "budget" for the allowance — that last one
- * colliding with the per-category budgets the same way the English "budget"
- * does.
+ * the card now calls "Économisé", "budget" for the allowance — for the same
+ * reason the English block refuses it.
  */
 const VOCABULARY_FR = [
   '"Dépenses non notées" — ce qu\'un solde prouve être sorti du compte et ' +
@@ -277,7 +271,7 @@ const MISSING_WORDS_FR: Record<MissingReason, string> = {
   "no-bank": "aucune banque n'est connectée, cela ne peut donc pas être su",
   "no-close":
     "aucun bilan de mois n'a encore été fait, cela ne peut donc pas être mesuré",
-  "no-cap": "aucun budget n'a été fixé",
+  "no-cap": "aucune limite n'a été fixée",
   "month-unfinished": "le mois n'est pas terminé",
   "not-recorded": "rien n'a été enregistré pour cela",
   "no-target": "aucune répartition cible n'a été fixée",
@@ -338,8 +332,8 @@ const PROMPT: Record<Locale, PromptText> = {
     ],
     vocabularyHeading: "Use these words exactly, and avoid the ones marked:",
     suggestions: [
-      "Say what to change. Name a cut, a budget, a habit or something to check.",
-      "Every suggestion must point at a category, a budget or one of the figures",
+      "Say what to change. Name a cut, a habit or something to check.",
+      "Every suggestion must point at a category or one of the figures",
       "you were given — advice that would fit anyone's month is not worth the",
       "space. Do not congratulate; a suggestion is advice, not encouragement.",
     ],
@@ -385,9 +379,9 @@ const PROMPT: Record<Locale, PromptText> = {
     vocabularyHeading:
       "Employez ces mots exactement, et évitez ceux qui sont signalés :",
     suggestions: [
-      "Dites quoi changer. Nommez une coupe, un budget, une habitude ou",
-      "quelque chose à vérifier. Chaque suggestion doit désigner une",
-      "catégorie, un budget ou l'un des chiffres qui vous ont été donnés — un",
+      "Dites quoi changer. Nommez une coupe, une habitude ou quelque chose à",
+      "vérifier. Chaque suggestion doit désigner une catégorie ou l'un des",
+      "chiffres qui vous ont été donnés — un",
       "conseil qui conviendrait au mois de n'importe qui ne vaut pas la place.",
       "Ne félicitez pas ; une suggestion est un conseil, pas un encouragement.",
     ],

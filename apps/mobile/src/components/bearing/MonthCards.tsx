@@ -4,20 +4,17 @@ import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   Easing,
-  useAnimatedProps,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withDelay,
   withTiming,
 } from "react-native-reanimated";
-import Svg, { Circle } from "react-native-svg";
 
 import { amountSign } from "@finance/core/amount-sign";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import {
   formatMonthLabel,
-  formatPercentLabel,
   formatShortDate,
   shiftMonth,
 } from "@finance/core/constants";
@@ -36,7 +33,6 @@ import { shouldInvite } from "@/lib/bank-connect";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import type { HomeMonth } from "@/lib/home-data";
-import { progressTone } from "@/lib/progress-tone";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { usePrivacy } from "@/providers/PrivacyProvider";
@@ -430,79 +426,6 @@ export function BalanceCard({
 
 /* ------------------------------------------------------------ the spending */
 
-/** A small ring for a cap: how much of it the month has spent. */
-function CapRing({ ratio, over }: { ratio: number; over: boolean }) {
-  const colors = useThemeColors();
-  const locale = useLocale();
-  const reduce = useReducedMotion();
-  const { hidden } = usePrivacy();
-  const SIZE = 64;
-  const STROKE = 6;
-  const RADIUS = (SIZE - STROKE) / 2;
-  const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-  const clamped = Math.max(0, Math.min(1, ratio));
-  const danger = progressTone(clamped, over) === "danger";
-  const progress = useSharedValue(reduce ? clamped : 0);
-
-  useEffect(() => {
-    progress.value = reduce
-      ? clamped
-      : withDelay(
-          GROW_DELAY_MS,
-          withTiming(clamped, { duration: GROW_MS, easing: EASING }),
-        );
-  }, [clamped, reduce, progress]);
-
-  const animatedProps = useAnimatedProps(() => ({
-    strokeDashoffset: CIRCUMFERENCE * (1 - progress.value),
-  }));
-
-  return (
-    <View
-      className="items-center justify-center"
-      style={{ width: SIZE, height: SIZE }}
-    >
-      <Svg
-        width={SIZE}
-        height={SIZE}
-        style={{ position: "absolute", transform: [{ rotate: "-90deg" }] }}
-      >
-        <Circle
-          cx={SIZE / 2}
-          cy={SIZE / 2}
-          r={RADIUS}
-          stroke={colors.hairlineStrong}
-          strokeWidth={STROKE}
-          fill="none"
-        />
-        <AnimatedRingCircle
-          cx={SIZE / 2}
-          cy={SIZE / 2}
-          r={RADIUS}
-          stroke={danger ? colors.destructive : colors.primary}
-          strokeWidth={STROKE}
-          strokeLinecap="round"
-          fill="none"
-          strokeDasharray={`${CIRCUMFERENCE} ${CIRCUMFERENCE}`}
-          animatedProps={animatedProps}
-        />
-      </Svg>
-      <Text
-        className={cn(
-          "text-xs font-semibold tabular-nums",
-          danger ? "text-destructive" : "text-foreground",
-        )}
-      >
-        {hidden
-          ? "••"
-          : formatPercentLabel(Math.round(Math.min(ratio, 9.99) * 100), locale)}
-      </Text>
-    </View>
-  );
-}
-
-const AnimatedRingCircle = Animated.createAnimatedComponent(Circle);
-
 export function SpentCard({ data }: { data: HomeMonth }) {
   const t = useT();
   const locale = useLocale();
@@ -545,29 +468,14 @@ export function SpentCard({ data }: { data: HomeMonth }) {
       href="/transactions"
       hrefLabel={t("bearingMonth.seeInLedger")}
     >
-      <View className="flex-row items-center justify-between gap-4">
-        <View className="min-w-0 flex-1">
-          <AnimatedAmount
-            value={spent.total}
-            startFrom={0}
-            format={format}
-            style={TYPE.figure}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-          />
-          {spent.cap !== null ? (
-            <PrivateAmount className="mt-1 text-xs text-muted-foreground">
-              {t("bearingMonth.ofCap", { amount: format(spent.cap) })}
-            </PrivateAmount>
-          ) : null}
-        </View>
-        {spent.cap !== null && spent.cap > 0 ? (
-          <CapRing
-            ratio={spent.total / spent.cap}
-            over={spent.total > spent.cap}
-          />
-        ) : null}
-      </View>
+      <AnimatedAmount
+        value={spent.total}
+        startFrom={0}
+        format={format}
+        style={TYPE.figure}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      />
 
       {comparison ? (
         <PrivateAmount
@@ -689,16 +597,8 @@ export function WhereItWentCard({ data }: { data: HomeMonth }) {
     >
       <View className="gap-4">
         {spending.top.map((entry) => {
-          // Against its cap where it has one — which is the question a cap
-          // exists to answer — and against the month's largest otherwise.
-          const ratio =
-            entry.cap !== null && entry.cap > 0
-              ? entry.total / entry.cap
-              : entry.total / peak;
-          const over = entry.cap !== null && entry.total > entry.cap;
-          const danger =
-            entry.cap !== null &&
-            progressTone(Math.min(1, ratio), over) === "danger";
+          // Against the month's largest, so the bars rank the categories.
+          const ratio = entry.total / peak;
           return (
             <View
               key={entry.categoryId}
@@ -714,24 +614,10 @@ export function WhereItWentCard({ data }: { data: HomeMonth }) {
                     {entry.name}
                   </Text>
                   <PrivateAmount className="text-sm">
-                    {entry.cap !== null
-                      ? t("bearingMonth.capOf", {
-                          spent: format(entry.total),
-                          cap: format(entry.cap),
-                        })
-                      : format(entry.total)}
+                    {format(entry.total)}
                   </PrivateAmount>
                 </View>
-                <GrowBar
-                  ratio={ratio}
-                  color={
-                    danger
-                      ? colors.destructive
-                      : entry.cap !== null
-                        ? colors.primary
-                        : colors.mutedForeground
-                  }
-                />
+                <GrowBar ratio={ratio} color={colors.mutedForeground} />
               </View>
             </View>
           );
@@ -817,21 +703,20 @@ export function UpcomingCard({ data }: { data: HomeMonth }) {
 
 /**
  * What the month is adding up to beyond itself: the run of months closed
- * under the allowance, the goals being saved toward, and what is invested.
+ * under the allowance, and what is invested.
  * The one card on the screen that keeps score, so it is the one that is
  * allowed to feel like it.
  */
 export function MomentumCard({ data }: { data: HomeMonth }) {
   const t = useT();
-  const locale = useLocale();
   const format = useFormatCurrency();
   const colors = useThemeColors();
   const router = useRouter();
 
   return (
     <HomeCard
-      icon="flag-outline"
-      title={t("bearingMonth.goals")}
+      icon="flame-outline"
+      title={t("removal.momentumTitle")}
       href="/planning"
     >
       {data.run ? (
@@ -865,29 +750,6 @@ export function MomentumCard({ data }: { data: HomeMonth }) {
                 : ""}
             </Text>
           </View>
-        </View>
-      ) : null}
-
-      {data.goals.length > 0 ? (
-        <View className="gap-3">
-          {data.goals.map((goal) => (
-            <View key={goal.id} className="gap-1.5">
-              <View className="flex-row items-baseline justify-between gap-3">
-                <Text numberOfLines={1} className="shrink text-sm font-medium">
-                  {goal.name}
-                </Text>
-                <Text variant="muted" className="text-sm tabular-nums">
-                  {formatPercentLabel(Math.round(goal.ratio * 100), locale)}
-                </Text>
-              </View>
-              <GrowBar ratio={goal.ratio} color={colors.primary} />
-              <PrivateAmount className="text-xs text-muted-foreground">
-                {t("bearingMonth.goalToGo", {
-                  amount: format(Math.max(0, goal.target - goal.saved)),
-                })}
-              </PrivateAmount>
-            </View>
-          ))}
         </View>
       ) : null}
 

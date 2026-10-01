@@ -99,8 +99,8 @@ export function GlassStat({
           "A figure that leads a screen" is singular, and there are five of
           these — two in the hero, three beside the close. One component cannot
           hold a distinction it has no way to defend, and a `lead` flag would
-          be set everywhere within a release. The app's own sweep left
-          `text-primary-ink` at exactly one call site, in `ProjectionCard`.
+          be set everywhere within a release. The app's own sweep keeps
+          `text-primary-ink` to the Plan, the one page allowed to celebrate.
 
           And the hero's gold is spoken for: `LandingCtas` is a gold fill
           sitting a few rems above these cards. Two golds in one viewport, one

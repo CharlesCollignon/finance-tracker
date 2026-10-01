@@ -1,5 +1,4 @@
 import type { NextRequest } from "next/server";
-import { buildBudgetProgress } from "@finance/core/budget-limits";
 import { countFulfilmentProposals } from "@/lib/queries/fulfilment";
 import {
   buildDueNotifications,
@@ -16,18 +15,13 @@ import {
   bankAttentionNotification,
 } from "@finance/core/bank-attention";
 import {
-  formatCurrency,
   formatShortDate,
   getCurrentMonth,
-  getMonthBounds,
   todayIsoLocal,
 } from "@finance/core/constants";
-import { buildMonthlySummary } from "@finance/core/monthly-summary";
 import type {
-  Budget,
   Category,
   RecurringTemplateWithCategory,
-  TransactionWithCategory,
 } from "@finance/core/types/database";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -47,8 +41,8 @@ import { translator } from "@finance/core/i18n/t";
  * It used to say, here, that "mobile schedules its reminders on the device;
  * the web cannot" — and so only browsers were sent to. Half right. The phone
  * can schedule a reminder, because a reminder is something it already knows;
- * it cannot know that a cap was breached overnight or that the bank left six
- * entries needing a category. Those are the things this run says, and the
+ * it cannot know that the bank delivered the salary overnight or that a
+ * connection is about to stop. Those are the things this run says, and the
  * phone was the one place they were never said. It now gets them too.
  *
  * Runs under the service role, so it sees every user. It is reachable only
@@ -192,61 +186,34 @@ async function notificationsFor(
   locale: Locale,
 ): Promise<PendingNotification[]> {
   const [year, month] = monthKey.split("-").map(Number);
-  const { start, end } = getMonthBounds(year!, month!);
 
-  const [budgets, categories, transactions, templates, alreadySent] =
-    await Promise.all([
-      supabase.from("budgets").select("*").eq("user_id", userId),
-      supabase.from("categories").select("*").eq("user_id", userId),
-      supabase
-        .from("transactions")
-        .select("*, categories(name, type, icon, counts_toward_summary)")
-        .eq("user_id", userId)
-        .gte("occurred_on", start)
-        .lte("occurred_on", end),
-      supabase
-        .from("recurring_templates")
-        .select("*, categories(name, type, icon, counts_toward_summary)")
-        .eq("user_id", userId)
-        .eq("active", true),
-      supabase
-        .from("notification_log")
-        .select("key")
-        .eq("user_id", userId)
-        .like("key", `%${monthKey}%`),
-    ]);
+  const [categories, templates, alreadySent] = await Promise.all([
+    supabase.from("categories").select("*").eq("user_id", userId),
+    supabase
+      .from("recurring_templates")
+      .select("*, categories(name, type, icon, counts_toward_summary)")
+      .eq("user_id", userId)
+      .eq("active", true),
+    supabase
+      .from("notification_log")
+      .select("key")
+      .eq("user_id", userId)
+      .like("key", `%${monthKey}%`),
+  ]);
 
-  const budgetRows = (budgets.data ?? []) as Budget[];
   const categoryRows = (categories.data ?? []) as Category[];
   const templateRows = (templates.data ??
     []) as RecurringTemplateWithCategory[];
 
-  // Ahead of the digest and outside its cap on how many one run sends: a
-  // feed about to stop is the one thing here that gets worse by waiting, and
-  // it applies to people with no caps or templates at all.
+  // Ahead of the digest: a feed about to stop is the one thing here that
+  // gets worse by waiting, and it applies to people with no templates at all.
   const bank = await bankNotificationFor(supabase, userId, today, locale);
   const lead = bank ? [bank] : [];
 
-  // Nothing else to say to someone with no caps and no templates.
-  if (budgetRows.length === 0 && templateRows.length === 0) {
+  // Nothing else to say to someone with no templates.
+  if (templateRows.length === 0) {
     return lead;
   }
-
-  const summary = buildMonthlySummary(
-    (transactions.data ?? []) as TransactionWithCategory[],
-    templateRows,
-    year!,
-    month!,
-    "current",
-  );
-
-  const progress = buildBudgetProgress(
-    budgetRows,
-    summary.expenseBreakdown,
-    summary.expenses,
-    new Map(categoryRows.map((row) => [row.id, row.name] as const)),
-    locale,
-  );
 
   // Asked here rather than in `buildDueNotifications`, which is deliberately
   // free of database concerns. A failure is not worth losing the rest of the
@@ -267,17 +234,13 @@ async function notificationsFor(
 
   const digest = buildDueNotifications({
     today,
-    budgetProgress: progress,
     arrivedCharges,
     alreadySent: new Set(
       ((alreadySent.data ?? []) as { key: string }[]).map((row) => row.key),
     ),
     pendingRecurring: templateRows.length,
-    // The cron has no access to a browser's currency preference, and EUR is
-    // the app's default; a notification is not the place to get precious
-    // about a display setting. The language is a different matter — it is
-    // stored per user precisely so that this line can be right.
-    formatAmount: (amount: number) => formatCurrency(amount, "EUR", locale),
+    // Stored per user precisely so that this line can be right: there is no
+    // browser in a cron request to ask.
     t: translator(locale),
   });
   return [...lead, ...digest];

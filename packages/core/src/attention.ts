@@ -112,7 +112,7 @@ export function buildAttention(input: AttentionInput): AttentionItem[] {
             id: "close",
             tone: "waiting",
             messageKey: "month.attentionBaseline",
-            href: "/budgets",
+            href: "/plan",
             actionKey: "month.actionStart",
           }
         : {
@@ -120,7 +120,7 @@ export function buildAttention(input: AttentionInput): AttentionItem[] {
             tone: "waiting",
             messageKey: "month.attentionReadyToClose",
             params: { month: monthLabel },
-            href: "/budgets",
+            href: "/plan",
             actionKey: "month.actionClose",
           },
     );

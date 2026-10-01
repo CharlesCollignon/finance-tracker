@@ -497,8 +497,8 @@ export function closableMonth(
  * that one is its own case and comes before all of them.
  *
  * Judgement, not layout, which is why it is here: the phone and the web are
- * two renderings of one decision, and the web's `MonthCloseCard` currently
- * makes the same choice inline, which is exactly how the two drift.
+ * two renderings of one decision, and a card that makes the same choice
+ * inline is exactly how the two drift.
  *
  * Amounts come back raw. Only the client knows what currency the reader
  * counts in, so formatting them here would be an answer given in the wrong

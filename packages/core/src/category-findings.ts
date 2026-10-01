@@ -245,19 +245,13 @@ function oddMonthFinding(history: CategoryHistory): CategoryFinding | null {
 function goneQuietFinding(history: CategoryHistory): CategoryFinding | null {
   const points = history.points;
   const recent = points.slice(-QUIET_SILENT_MONTHS);
-  const before = points.slice(
-    -(QUIET_SILENT_MONTHS + 6),
-    -QUIET_SILENT_MONTHS,
-  );
+  const before = points.slice(-(QUIET_SILENT_MONTHS + 6), -QUIET_SILENT_MONTHS);
 
   const recentActive = recent.filter((point) => !point.empty);
   const beforeActive = before.filter((point) => !point.empty);
 
   // Stopped: a run, then nothing.
-  if (
-    recentActive.length === 0 &&
-    beforeActive.length >= QUIET_ACTIVE_OF_SIX
-  ) {
+  if (recentActive.length === 0 && beforeActive.length >= QUIET_ACTIVE_OF_SIX) {
     return {
       id: `gone-quiet:${history.categoryId}`,
       kind: "gone-quiet",

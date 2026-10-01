@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatMonthLabel, getCurrentMonth, shiftMonth } from "@finance/core/constants";
+import {
+  formatMonthLabel,
+  getCurrentMonth,
+  shiftMonth,
+} from "@finance/core/constants";
 import {
   buildCategoryFacts,
   MIN_MONTHS_FOR_CATEGORY_READ,
@@ -12,7 +16,10 @@ import {
   type CategoryFinding,
   type FindingKind,
 } from "@finance/core/category-findings";
-import { buildCategoryHistory, type CategoryHistory } from "@finance/core/category-history";
+import {
+  buildCategoryHistory,
+  type CategoryHistory,
+} from "@finance/core/category-history";
 import type { Locale } from "@finance/core/i18n/locale";
 import type {
   CategoryType,
@@ -21,7 +28,6 @@ import type {
 } from "@finance/core/types/database";
 import { getCategories } from "@/lib/queries/categories";
 import { getMonthlySummary } from "@/lib/queries/finance";
-import { getBudgets } from "@/lib/queries/phase4";
 import { getLocale } from "@/lib/locale";
 import { createClient } from "@/lib/supabase/server";
 
@@ -67,8 +73,6 @@ export interface CurrentCategoryFactsInput {
   findings: readonly CategoryFinding[];
   /** The month on screen's total expenses, for `share-of-month`. */
   monthExpenses: number;
-  /** This category's cap, or null when it has none. */
-  cap: number | null;
   monthLabel: string;
   locale: Locale;
 }
@@ -94,12 +98,13 @@ function monthsActiveCount(history: CategoryHistory | undefined): number {
  * Whether a category has too little history to be worth a read — the one
  * thing every card on the by-category screen needs, whether or not it has a
  * stored read to render. Split out from `currentCategoryFacts` because it
- * needs neither `monthExpenses` nor `cap`: those feed `share-of-month` and
- * `cap-left`/`cap-over`, datums a reader only ever sees inside a rendered
- * read, so a screen with nothing yet written for any category has no reason
- * to have fetched either.
+ * does not need `monthExpenses`: that feeds `share-of-month`, a datum a
+ * reader only ever sees inside a rendered read, so a screen with nothing yet
+ * written for any category has no reason to have fetched it.
  */
-export function categoryReadIsThin(history: CategoryHistory | undefined): boolean {
+export function categoryReadIsThin(
+  history: CategoryHistory | undefined,
+): boolean {
   return monthsActiveCount(history) < MIN_MONTHS_FOR_CATEGORY_READ;
 }
 
@@ -113,7 +118,9 @@ export function categoryReadIsThin(history: CategoryHistory | undefined): boolea
  * change to what "normal" or "share of month" means cannot drift between the
  * two callers.
  */
-export function currentCategoryFacts(input: CurrentCategoryFactsInput): CategoryFacts {
+export function currentCategoryFacts(
+  input: CurrentCategoryFactsInput,
+): CategoryFacts {
   const points = input.history?.points ?? [];
   const { normal } = categoryNormal(points);
   const last = points[points.length - 1];
@@ -135,7 +142,6 @@ export function currentCategoryFacts(input: CurrentCategoryFactsInput): Category
     drift: signedSeverity(input.findings, "drift"),
     oddMonth: signedSeverity(input.findings, "odd-month"),
     shareOfMonth,
-    cap: input.cap,
     locale: input.locale,
   });
 }
@@ -170,10 +176,14 @@ export async function gatherCategoryFacts(
     return null;
   }
 
-  const oldest = shiftMonth(current.year, current.month, -(CATEGORY_MONTHS_READ - 1));
+  const oldest = shiftMonth(
+    current.year,
+    current.month,
+    -(CATEGORY_MONTHS_READ - 1),
+  );
   const from = `${oldest.year}-${String(oldest.month).padStart(2, "0")}-01`;
 
-  const [{ data, error }, summary, budgets] = await Promise.all([
+  const [{ data, error }, summary] = await Promise.all([
     supabase
       .from("transactions")
       .select("*, categories(name, type, icon, counts_toward_summary)")
@@ -182,7 +192,6 @@ export async function gatherCategoryFacts(
       .gte("occurred_on", from)
       .order("occurred_on", { ascending: false }),
     getMonthlySummary(userId, current.year, current.month, "current"),
-    getBudgets(userId),
   ]);
 
   if (error) {
@@ -196,7 +205,6 @@ export async function gatherCategoryFacts(
   });
   const history = histories.find((row) => row.categoryId === categoryId);
   const findings = history ? buildCategoryFindings([history]) : [];
-  const cap = budgets.find((row) => row.category_id === categoryId);
 
   return currentCategoryFacts({
     categoryId,
@@ -205,7 +213,6 @@ export async function gatherCategoryFacts(
     history,
     findings,
     monthExpenses: summary.expenses,
-    cap: cap ? Number(cap.amount) : null,
     monthLabel: formatMonthLabel(current.year, current.month, locale),
     locale,
   });

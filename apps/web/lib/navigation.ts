@@ -80,7 +80,7 @@ export const APP_NAV_ITEMS = [
     children: [] as NavChild[],
   },
   {
-    href: "/budgets",
+    href: "/plan",
     labelKey: "nav.plan" satisfies Key,
     icon: Target,
     children: [] as NavChild[],

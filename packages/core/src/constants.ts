@@ -90,25 +90,42 @@ export const DEFAULT_CATEGORIES = [
     icon: "bank",
     countsTowardSummary: true,
   },
+  // How often a purchase is made is the recurring entry's business, so the
+  // names no longer say "weekly" or "monthly"; the old ones are kept, so an
+  // account seeded under them is renamed rather than seeded twice.
   {
-    names: { fr: "Achat hebdomadaire CTO", en: "CTO weekly DCA" },
+    names: { fr: "DCA CTO", en: "CTO DCA" },
+    formerly: ["Achat hebdomadaire CTO", "CTO weekly DCA"],
     type: "investment" as const,
     icon: "chart-line",
     countsTowardSummary: false,
   },
   {
-    names: { fr: "Versement mensuel PEA", en: "PEA monthly DCA" },
+    names: { fr: "DCA PEA", en: "PEA DCA" },
+    formerly: ["Versement mensuel PEA", "PEA monthly DCA"],
     type: "investment" as const,
     icon: "trend-up",
     countsTowardSummary: false,
   },
   {
-    names: { fr: "Achat hebdomadaire Bitstack", en: "Bitstack weekly DCA" },
+    names: { fr: "DCA Bitstack", en: "Bitstack DCA" },
+    formerly: ["Achat hebdomadaire Bitstack", "Bitstack weekly DCA"],
     type: "investment" as const,
     icon: "currency-btc",
     countsTowardSummary: false,
   },
 ];
+
+/** Every name a default category has gone by, current ones first. */
+export function defaultCategoryNames(
+  category: (typeof DEFAULT_CATEGORIES)[number],
+): string[] {
+  return [
+    category.names.fr,
+    category.names.en,
+    ...(("formerly" in category ? category.formerly : undefined) ?? []),
+  ];
+}
 
 /**
  * Names the card networks' codes can point at that are not defaults, in both
@@ -126,14 +143,11 @@ const SUGGESTED_CATEGORY_NAMES = [
  */
 export function categoryNameVariants(name: string): string[] {
   const lower = name.trim().toLowerCase();
-  const pair = [
-    ...DEFAULT_CATEGORIES.map((category) => category.names),
-    ...SUGGESTED_CATEGORY_NAMES,
-  ].find(
-    (names) =>
-      names.fr.toLowerCase() === lower || names.en.toLowerCase() === lower,
-  );
-  return pair ? [...new Set([name, pair.fr, pair.en])] : [name];
+  const names = [
+    ...DEFAULT_CATEGORIES.map(defaultCategoryNames),
+    ...SUGGESTED_CATEGORY_NAMES.map((pair) => [pair.fr, pair.en]),
+  ].find((list) => list.some((known) => known.toLowerCase() === lower));
+  return names ? [...new Set([name, ...names])] : [name];
 }
 
 /**

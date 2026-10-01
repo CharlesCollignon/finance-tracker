@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { categoryNameVariants } from "./constants";
-import { buildMissingCategorySeeds } from "./seed-categories";
+import {
+  buildCategoryRenames,
+  buildMissingCategorySeeds,
+} from "./seed-categories";
 
 describe("default categories", () => {
   it("seeds a new account in its own language", () => {
@@ -39,5 +42,58 @@ describe("default categories", () => {
     expect(categoryNameVariants("Groceries")).toEqual(["Groceries", "Courses"]);
     expect(categoryNameVariants("courses")).toContain("Groceries");
     expect(categoryNameVariants("Vacances")).toEqual(["Vacances"]);
+  });
+
+  it("does not seed a DCA again under its new name", () => {
+    const missing = buildMissingCategorySeeds(
+      "u",
+      [{ name: "PEA monthly DCA", type: "investment" }],
+      "fr",
+    ).map((row) => row.name);
+    expect(missing).not.toContain("DCA PEA");
+  });
+});
+
+describe("renaming the defaults into the reader's language", () => {
+  it("renames English defaults and old DCA names for a French reader", () => {
+    expect(
+      buildCategoryRenames(
+        [
+          { id: "1", name: "Groceries", type: "expense" },
+          { id: "2", name: "PEA monthly DCA", type: "investment" },
+          { id: "3", name: "Achat hebdomadaire CTO", type: "investment" },
+          { id: "4", name: "Vacances", type: "expense" },
+          { id: "5", name: "Salaire", type: "income" },
+        ],
+        "fr",
+      ),
+    ).toEqual([
+      { id: "1", name: "Courses" },
+      { id: "2", name: "DCA PEA" },
+      { id: "3", name: "DCA CTO" },
+    ]);
+  });
+
+  it("renames French defaults back for an English reader", () => {
+    expect(
+      buildCategoryRenames(
+        [{ id: "1", name: "Courses", type: "expense" }],
+        "en",
+      ),
+    ).toEqual([{ id: "1", name: "Groceries" }]);
+  });
+
+  it("never takes a name another category already has", () => {
+    expect(
+      buildCategoryRenames(
+        [
+          { id: "1", name: "Groceries", type: "expense" },
+          { id: "2", name: "Courses", type: "expense" },
+          { id: "3", name: "CTO weekly DCA", type: "investment" },
+          { id: "4", name: "Achat hebdomadaire CTO", type: "investment" },
+        ],
+        "fr",
+      ),
+    ).toEqual([{ id: "3", name: "DCA CTO" }]);
   });
 });

@@ -20,7 +20,6 @@ const facts = buildCategoryFacts({
   drift: 74,
   oddMonth: null,
   shareOfMonth: 0.19,
-  cap: null,
 });
 
 function answer(overrides: Record<string, unknown> = {}) {
@@ -214,7 +213,6 @@ function input(overrides: Partial<CategoryFactsInput> = {}) {
     drift: 74,
     oddMonth: null,
     shareOfMonth: 0.19,
-    cap: null,
     ...overrides,
   } satisfies CategoryFactsInput;
 }
@@ -226,11 +224,10 @@ function ids(pack: { facts: readonly { id: string }[] }) {
 describe("buildCategoryFacts", () => {
   it("names an absent figure with a reason rather than handing over a zero", () => {
     const pack = buildCategoryFacts(
-      input({ latest: null, oddMonth: null, cap: null, shareOfMonth: null }),
+      input({ latest: null, oddMonth: null, shareOfMonth: null }),
     );
 
     expect(ids(pack)).not.toContain("latest");
-    expect(ids(pack)).not.toContain("cap");
     expect(pack.facts.every((fact) => fact.value !== 0)).toBe(true);
     expect(
       Object.fromEntries(pack.missing.map((row) => [row.id, row.why])),
@@ -238,7 +235,6 @@ describe("buildCategoryFacts", () => {
       latest: "not-recorded",
       "odd-month": "nothing-found",
       "share-of-month": "not-recorded",
-      cap: "no-cap",
     });
   });
 
@@ -282,42 +278,6 @@ describe("buildCategoryFacts", () => {
 
     expect(ids(buildCategoryFacts(input({ shareOfMonth: 0.19 })))).toContain(
       "share-of-month",
-    );
-  });
-
-  it("works out what is left of a cap, and by how much it was passed", () => {
-    const under = buildCategoryFacts(input({ cap: 500, latest: 486 }));
-    const over = buildCategoryFacts(input({ cap: 450, latest: 486 }));
-
-    expect(under.facts.find((fact) => fact.id === "cap-left")).toMatchObject({
-      value: 14,
-      sense: "up-is-good",
-    });
-    expect(ids(under)).not.toContain("cap-over");
-
-    // Unclamped, so the breach is visible in "left" as well — a model reading
-    // it as a floor of zero would miss it entirely.
-    expect(over.facts.find((fact) => fact.id === "cap-left")?.value).toBe(-36);
-    expect(over.facts.find((fact) => fact.id === "cap-over")).toMatchObject({
-      value: 36,
-      sense: "up-is-bad",
-    });
-  });
-
-  it("says once that there is no cap, rather than three times", () => {
-    const pack = buildCategoryFacts(input({ cap: null }));
-
-    expect(pack.missing.filter((row) => row.why === "no-cap")).toHaveLength(1);
-    expect(pack.missing.map((row) => row.id)).not.toContain("cap-left");
-  });
-
-  it("cannot say what is left of a cap nothing was recorded against", () => {
-    const pack = buildCategoryFacts(input({ cap: 500, latest: null }));
-
-    expect(ids(pack)).toContain("cap");
-    expect(ids(pack)).not.toContain("cap-left");
-    expect(pack.missing.find((row) => row.id === "cap-left")?.why).toBe(
-      "not-recorded",
     );
   });
 });
@@ -371,15 +331,20 @@ describe("renderCategoryRead", () => {
   });
 
   it("shows nothing at all once every observation has lost its figure", () => {
-    const capped: CategoryRead = {
+    const stale: CategoryRead = {
       observations: [
-        { text: "Under {{fact:cap}}.", basis: ["cap"], tone: "good" },
+        { text: "Above {{fact:drift}}.", basis: ["drift"], tone: "watch" },
       ],
       suggestions: [],
     };
 
     expect(
-      renderCategoryRead(capped, buildCategoryFacts(input()), money, "en"),
+      renderCategoryRead(
+        stale,
+        buildCategoryFacts(input({ drift: null })),
+        money,
+        "en",
+      ),
     ).toBe(null);
   });
 });
@@ -421,28 +386,5 @@ describe("buildCategoryReadPrompt", () => {
     expect(user).toContain(
       "  odd-month | How far that month sat from a normal one | this was looked for and there is none",
     );
-  });
-
-  /**
-   * The contradiction this prompt walked into once, in French only.
-   *
-   * `no-cap` is shared with the month read, where it meant the unrecorded
-   * allowance, so its French clause said "aucune enveloppe n'a été fixée" —
-   * printed in the absences block two paragraphs under the vocabulary line
-   * forbidding exactly that word for a category's cap. Nothing but this test
-   * stops it drifting back: the clause lives in another module, and the
-   * glossary that forbids the word lives here.
-   */
-  it("does not name a category's cap with the word it forbids, in French", () => {
-    const french = buildCategoryReadPrompt(
-      buildCategoryFacts({ ...input(), locale: "fr" }),
-      { money, locale: "fr" },
-    );
-
-    expect(french.system).toContain('ni une "enveloppe"');
-    expect(french.user).toContain(
-      "  cap | Le budget de cette catégorie | aucun budget n'a été fixé",
-    );
-    expect(french.user).not.toContain("enveloppe");
   });
 });

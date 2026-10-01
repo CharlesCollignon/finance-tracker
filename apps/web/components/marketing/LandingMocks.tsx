@@ -25,7 +25,6 @@ import {
   TOPBAR_START_CLASS,
 } from "@/lib/nav-notch";
 import { NotchWing } from "@/components/layout/NotchWing";
-import { progressTone } from "@/lib/progress-tone";
 import type { LandingPageId } from "@/components/marketing/landing-copy";
 import {
   landingSampleFor,
@@ -78,14 +77,13 @@ type Variant = "web" | "mobile";
 // whole thing like an image. Every class below is therefore a fixed size chosen
 // for that design width, and none of them are responsive on purpose.
 //
-// It does not rule out the app's own marks, though it used to. ProgressRing was
-// an echarts gauge that read its colours from document.documentElement — a
-// charting runtime on the marketing critical path, keyed to whatever theme the
-// *app* was set to rather than the dark one this shell scopes — so there was a
-// hand-drawn twin here to avoid it. The app's ring is plain SVG now, coloured
-// through CSS tokens, and carries no breakpoints, so the twin is gone. Nothing
-// here draws a ring at the moment — Month did, and Month was retired — but the
-// rule stands: the app's own component, not a picture of it.
+// It does not rule out the app's own marks, though it used to. The old
+// progress ring was an echarts gauge that read its colours from
+// document.documentElement — a charting runtime on the marketing critical
+// path, keyed to whatever theme the *app* was set to rather than the dark one
+// this shell scopes — so there was a hand-drawn twin here to avoid it. The
+// ring and its twin are both gone now, but the rule stands: the app's own
+// component, not a picture of it.
 //
 // The orb in both shells is the real `Orb` for the same reason. It used to be
 // a flat gold radial-gradient disc, which was a second mark nobody would have
@@ -1087,40 +1085,59 @@ export function WalletsMock({ variant = "web" }: { variant?: Variant }) {
 
 /* ---------------------------------------------------------------- planning */
 
-function GoalBar({
-  label,
-  spent,
-  limit,
-  over = false,
-}: {
-  label: string;
-  spent: number;
-  limit: number;
-  over?: boolean;
-}) {
+/** The Plan page's milestones: what is reached, and when the next ones are. */
+function MilestoneList() {
+  const sample = landingSampleFor(useLocale());
+  const t = useT();
   const euro = useEuro();
-  const ratio = Math.min(1, spent / limit);
-  const tone = progressTone(ratio, over);
+  return (
+    <ul className="flex flex-col gap-3">
+      {sample.plan.milestones.map((milestone) => (
+        <li
+          key={milestone.amount}
+          className="flex items-center justify-between gap-3 text-sm"
+        >
+          <span className="flex items-center gap-2 font-medium">
+            <span
+              aria-hidden
+              className={cn(
+                "size-2.5 rounded-full",
+                milestone.monthsAway === 0
+                  ? "bg-primary"
+                  : "border border-[var(--hairline-strong)]",
+              )}
+            />
+            <span className="font-mono tabular-nums">
+              {euro(milestone.amount)}
+            </span>
+          </span>
+          <span className="text-muted-foreground">
+            {milestone.monthsAway === 0
+              ? t("futurePlan.milestoneReached")
+              : t("futurePlan.milestoneIn", { count: milestone.monthsAway })}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** The cushion: months of fixed costs covered, against the six to aim for. */
+function CushionBar() {
+  const sample = landingSampleFor(useLocale());
+  const t = useT();
+  const months = t("futurePlan.cushionMonths", {
+    count: sample.plan.cushionMonths,
+  });
   return (
     <div>
-      <div className="flex justify-between text-sm font-medium">
-        <span>{label}</span>
-        <span
-          className={cn(
-            "font-mono tabular-nums",
-            tone === "danger" && "text-destructive",
-          )}
-        >
-          {euro(spent)} / {euro(limit)}
-        </span>
-      </div>
+      <p className="text-sm font-medium">
+        {t("futurePlan.cushionBody", { months })}
+      </p>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--hairline-strong)]">
         <div
-          className={cn(
-            "h-full rounded-full",
-            tone === "danger" ? "bg-destructive" : "bg-primary",
-          )}
-          style={{ width: `${ratio * 100}%` }}
+          className="h-full rounded-full bg-primary"
+          style={{ width: `${(sample.plan.cushionMonths / 6) * 100}%` }}
         />
       </div>
     </div>
@@ -1131,38 +1148,32 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
   const sample = landingSampleFor(useLocale());
   const t = useT();
   const euro = useEuro();
-  const { budget, goal } = sample;
+  const { plan } = sample;
+
+  const yearAhead = (
+    <>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {t("futurePlan.yearTitle")}
+      </p>
+      <p className="mt-2 font-mono text-3xl font-bold tabular-nums">
+        {euro(plan.yearAhead)}
+      </p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {t("futurePlan.yearGrounded", { month: plan.byLabel })}
+      </p>
+    </>
+  );
 
   if (variant === "mobile") {
     return (
       <MobileShell active="nav.plan">
-        <MockCard innerClassName="p-4">
-          <p className="text-sm font-bold">
-            {t("marketingMock.monthlyBudgets")}
-          </p>
-          <div className="mt-3">
-            <GoalBar
-              label={budget.label}
-              spent={budget.spent}
-              limit={budget.limit}
-            />
-          </div>
+        <MockCard innerClassName="p-4">{yearAhead}</MockCard>
+        <MockCard innerClassName="flex flex-col gap-3 p-4">
+          <p className="text-sm font-bold">{t("futurePlan.milestonesTitle")}</p>
+          <MilestoneList />
         </MockCard>
         <MockCard innerClassName="p-4">
-          <p className="text-sm font-bold">{t("marketingMock.savingsGoals")}</p>
-          <div className="mt-3">
-            <GoalBar
-              label={goal.label}
-              spent={goal.saved}
-              limit={goal.target}
-            />
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {t("plan.goalOnSchedule", {
-              amount: euro(goal.monthlyPace),
-              month: goal.targetLabel,
-            })}
-          </p>
+          <CushionBar />
         </MockCard>
       </MobileShell>
     );
@@ -1171,45 +1182,15 @@ export function PlanningMock({ variant = "web" }: { variant?: Variant }) {
   return (
     <WebShell active="nav.plan">
       <div className="grid grid-cols-2 gap-4">
-        <MockCard innerClassName="flex h-full flex-col px-6 py-5">
-          <p className="font-head text-base">
-            {t("marketingMock.monthlyBudgets")}
-          </p>
-          <div className="mt-4 flex flex-col gap-4">
-            <GoalBar
-              label={budget.label}
-              spent={budget.spent}
-              limit={budget.limit}
-            />
-            <GoalBar
-              label={t("marketingMock.sampleHousing")}
-              spent={850}
-              limit={900}
-            />
-            <GoalBar
-              label={t("marketingMock.sampleEverythingElse")}
-              spent={185}
-              limit={400}
-            />
-          </div>
+        <MockCard innerClassName="flex h-full flex-col justify-between gap-5 px-6 py-5">
+          <div>{yearAhead}</div>
+          <CushionBar />
         </MockCard>
-        <MockCard innerClassName="flex h-full flex-col px-6 py-5">
+        <MockCard innerClassName="flex h-full flex-col gap-4 px-6 py-5">
           <p className="font-head text-base">
-            {t("marketingMock.savingsGoals")}
+            {t("futurePlan.milestonesTitle")}
           </p>
-          <div className="mt-4">
-            <GoalBar
-              label={goal.label}
-              spent={goal.saved}
-              limit={goal.target}
-            />
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            {t("plan.goalOnSchedule", {
-              amount: euro(goal.monthlyPace),
-              month: goal.targetLabel,
-            })}
-          </p>
+          <MilestoneList />
         </MockCard>
       </div>
     </WebShell>
@@ -1360,7 +1341,7 @@ export function MonthCloseMock({ variant = "web" }: { variant?: Variant }) {
      and `CalendarView` are the two `MonthPicker` call sites — and a stepper
      reading March above a card offering to close February was the loudest
      half of that collision. The card names its own month now, which is what
-     `MonthCloseCard` does: you close February from inside March, and the only
+     the Plan's `RunCard` does: you close February from inside March, and the only
      month worth printing here is the one being closed. */
   return (
     <WebShell active={ACTIVE_NAV["month-close"]}>

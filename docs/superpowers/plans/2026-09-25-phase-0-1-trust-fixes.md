@@ -21,7 +21,7 @@
 - A new module in `packages/core/src` needs an entry in `packages/core/package.json` `"exports"` before either app can import it.
 - `apps/web/DESIGN.md`: dark only; tokens only (no hex, no alpha literals, no arbitrary durations); gold accent only in its four homes; every rendered amount carries `.privacy-amount` / `PrivateAmount`.
 - WCAG 2.2 AA: 44 px targets (56 px list rows), visible focus, labelled controls, reduced motion honoured.
-- `CONTEXT.md` vocabulary: *recurring template* (never "rule" or "subscription"), *savings goal*, *tag*, *transaction*.
+- `CONTEXT.md` vocabulary: _recurring template_ (never "rule" or "subscription"), _savings goal_, _tag_, _transaction_.
 - Migrations are additive and reversible, RLS on every table, and each is executed with `supabase db reset` on a local stack plus an assertion script before it is committed.
 - Before writing a Next.js route, page or server action, read the matching guide under `node_modules/next/dist/docs/01-app/` (this Next.js has breaking changes; route handlers: `01-getting-started/15-route-handlers.md`).
 - Gates before any task is called done: `pnpm --filter @finance/core exec tsc --noEmit`, `pnpm --filter web exec tsc --noEmit`, `pnpm --filter mobile exec tsc --noEmit`, `pnpm --filter @finance/core test`, `pnpm --filter web test`, and (from Task 3 on) both lint commands with `--max-warnings 0`.
@@ -41,48 +41,50 @@
 
 ## File Structure
 
-| File | Responsibility | Task |
-|---|---|---|
-| `.github/workflows/ci.yml` | Full core suite, then lint for both apps | 1, 2, 3 |
-| `apps/web/.env.local.example` | Truthful comment on what the month read sends | 1 |
-| `docs/how-pluclair-works.md` | **Create.** The app guide every phase updates | 1, 12 |
-| web lint sites (7 files) | React Compiler rule fixes, no behaviour change | 2 |
-| mobile lint sites (13 files) | Same, plus mechanical warnings | 3 |
-| `apps/web/lib/actions/tag-field.ts` (+ test) | **Create.** Decides whether a form submission carries tags | 4 |
-| `apps/web/lib/actions/finance.ts` | `updateTransaction` replaces tags only when the form carries them | 4 |
-| `apps/web/components/finance/TransactionForm.tsx` | Posts the tags marker with the tags control | 4 |
-| `apps/web/app/(app)/calendar/page.tsx`, `CalendarView.tsx` | Loads and passes tags | 4 |
-| `apps/mobile/src/app/(tabs)/calendar.tsx` | Loads and passes tags | 4 |
-| `supabase/migrations/038_goal_start.sql` (+ test) | **Create.** `savings_goals.starts_on` | 5 |
-| `packages/core/src/types/database.ts` | `starts_on` on `savings_goals` | 5 |
-| `packages/core/src/paging.ts` (+ test) | **Create.** Read every page of a capped query | 6 |
-| `packages/core/src/savings-goals.ts` (+ test) | Running totals, as-of date, progress | 6 |
-| `packages/core/src/validations/phase4.ts` | `startsOn` on the goal schema | 7 |
-| `apps/web/lib/queries/phase4.ts` | `getGoalLedger` | 7 |
-| `apps/web/app/(app)/budgets/page.tsx`, `BudgetsView.tsx` | Running totals, start-date field, translated link cards | 7 |
-| `apps/web/lib/actions/phase4.ts` | Saves `starts_on` | 7 |
-| `apps/web/lib/month-read/facts.ts` | Goal figures as of the month read | 7 |
-| `apps/mobile/src/lib/queries.ts`, `mutations.ts` | `getGoalLedger`, `startsOn` | 8 |
-| `apps/mobile/src/app/(tabs)/planning.tsx`, `lib/bearing-panel.ts` | Running totals, start-date field | 8 |
-| `apps/web/components/finance/RecurringView.tsx` | Income group | 9 |
-| `apps/mobile/src/app/(tabs)/recurring.tsx`, `components/RecurringFormModal.tsx` | Income group, income selectable | 9 |
-| `apps/web/lib/auth/next-path.ts` (+ test) | **Create.** Safe `next` paths and the confirm redirect | 10 |
-| `apps/web/app/auth/confirm/route.ts` | **Create.** Verifies a recovery token hash | 10 |
-| `apps/web/app/(auth)/reset/new/page.tsx`, `components/auth/NewPasswordForm.tsx` | **Create.** Choose a new password | 10 |
-| `packages/core/src/validations/finance.ts` (+ test) | `newPasswordSchema`, `resetRequestSchema` | 10 |
-| `apps/mobile/src/app/(auth)/reset.tsx` | **Create.** Ask for a reset link | 11 |
-| `apps/mobile/src/providers/AuthProvider.tsx`, `components/auth/AuthForm.tsx`, `app/(auth)/login.tsx` | Reset request and the "Forgot password?" link | 11 |
+| File                                                                                                 | Responsibility                                                    | Task    |
+| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------- |
+| `.github/workflows/ci.yml`                                                                           | Full core suite, then lint for both apps                          | 1, 2, 3 |
+| `apps/web/.env.local.example`                                                                        | Truthful comment on what the month read sends                     | 1       |
+| `docs/how-pluclair-works.md`                                                                         | **Create.** The app guide every phase updates                     | 1, 12   |
+| web lint sites (7 files)                                                                             | React Compiler rule fixes, no behaviour change                    | 2       |
+| mobile lint sites (13 files)                                                                         | Same, plus mechanical warnings                                    | 3       |
+| `apps/web/lib/actions/tag-field.ts` (+ test)                                                         | **Create.** Decides whether a form submission carries tags        | 4       |
+| `apps/web/lib/actions/finance.ts`                                                                    | `updateTransaction` replaces tags only when the form carries them | 4       |
+| `apps/web/components/finance/TransactionForm.tsx`                                                    | Posts the tags marker with the tags control                       | 4       |
+| `apps/web/app/(app)/calendar/page.tsx`, `CalendarView.tsx`                                           | Loads and passes tags                                             | 4       |
+| `apps/mobile/src/app/(tabs)/calendar.tsx`                                                            | Loads and passes tags                                             | 4       |
+| `supabase/migrations/038_goal_start.sql` (+ test)                                                    | **Create.** `savings_goals.starts_on`                             | 5       |
+| `packages/core/src/types/database.ts`                                                                | `starts_on` on `savings_goals`                                    | 5       |
+| `packages/core/src/paging.ts` (+ test)                                                               | **Create.** Read every page of a capped query                     | 6       |
+| `packages/core/src/savings-goals.ts` (+ test)                                                        | Running totals, as-of date, progress                              | 6       |
+| `packages/core/src/validations/phase4.ts`                                                            | `startsOn` on the goal schema                                     | 7       |
+| `apps/web/lib/queries/phase4.ts`                                                                     | `getGoalLedger`                                                   | 7       |
+| `apps/web/app/(app)/budgets/page.tsx`, `BudgetsView.tsx`                                             | Running totals, start-date field, translated link cards           | 7       |
+| `apps/web/lib/actions/phase4.ts`                                                                     | Saves `starts_on`                                                 | 7       |
+| `apps/web/lib/month-read/facts.ts`                                                                   | Goal figures as of the month read                                 | 7       |
+| `apps/mobile/src/lib/queries.ts`, `mutations.ts`                                                     | `getGoalLedger`, `startsOn`                                       | 8       |
+| `apps/mobile/src/app/(tabs)/planning.tsx`, `lib/bearing-panel.ts`                                    | Running totals, start-date field                                  | 8       |
+| `apps/web/components/finance/RecurringView.tsx`                                                      | Income group                                                      | 9       |
+| `apps/mobile/src/app/(tabs)/recurring.tsx`, `components/RecurringFormModal.tsx`                      | Income group, income selectable                                   | 9       |
+| `apps/web/lib/auth/next-path.ts` (+ test)                                                            | **Create.** Safe `next` paths and the confirm redirect            | 10      |
+| `apps/web/app/auth/confirm/route.ts`                                                                 | **Create.** Verifies a recovery token hash                        | 10      |
+| `apps/web/app/(auth)/reset/new/page.tsx`, `components/auth/NewPasswordForm.tsx`                      | **Create.** Choose a new password                                 | 10      |
+| `packages/core/src/validations/finance.ts` (+ test)                                                  | `newPasswordSchema`, `resetRequestSchema`                         | 10      |
+| `apps/mobile/src/app/(auth)/reset.tsx`                                                               | **Create.** Ask for a reset link                                  | 11      |
+| `apps/mobile/src/providers/AuthProvider.tsx`, `components/auth/AuthForm.tsx`, `app/(auth)/login.tsx` | Reset request and the "Forgot password?" link                     | 11      |
 
 ---
 
 ### Task 1: Housekeeping — full test suite in CI, a truthful env comment, the app guide
 
 **Files:**
+
 - Modify: `.github/workflows/ci.yml:71-90` and `:115-117`
 - Modify: `apps/web/.env.local.example:51-54`
 - Create: `docs/how-pluclair-works.md`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `docs/how-pluclair-works.md`, which Task 12 and every later plan update.
 
@@ -107,8 +109,8 @@ In `.github/workflows/ci.yml`, replace the comment block that starts `# Test sui
 with:
 
 ```yaml
-      - name: Test (packages/core)
-        run: pnpm --filter @finance/core test
+- name: Test (packages/core)
+  run: pnpm --filter @finance/core test
 ```
 
 and delete item 3 from the trailing `# Gates NOT run by this workflow` comment (the three lines starting `# 3. The one excluded test file`). Change that comment's closing paragraph, `# None of these are fixed here: this workflow only wires up gates that already pass, plus the test suite minus its one known-failing file, so`, to:
@@ -159,12 +161,12 @@ Last updated: Phase 0, Plan 0.1 (2026-09-25).
 
 ## Shape
 
-| Part | What it is |
-|---|---|
-| `apps/web` | Next.js 16.2 App Router. Server components read Supabase with the user's cookie session; server actions write. |
-| `apps/mobile` | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token. |
-| `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`). |
-| `supabase/` | Migrations `001`–`038`, assertion scripts in `tests/`, one edge function (`delete-account`). |
+| Part            | What it is                                                                                                                                                                                                                         |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web`      | Next.js 16.2 App Router. Server components read Supabase with the user's cookie session; server actions write.                                                                                                                     |
+| `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token. |
+| `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                         |
+| `supabase/`     | Migrations `001`–`038`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                       |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -172,37 +174,37 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 
 ## Sections
 
-| Section | Web route | Phone screen |
-|---|---|---|
-| Bearing | `/bearing` | `(tabs)/index` |
-| Ledger — list | `/transactions` | `(tabs)/transactions` |
-| Ledger — calendar | `/calendar` | `(tabs)/calendar` |
-| Ledger — by category | `/history` | none |
-| Charges | `/recurring` | `(tabs)/recurring` |
-| Plan | `/budgets` | `(tabs)/planning` |
-| Wallets — positions | `/investments` | `(tabs)/investments` |
-| Wallets — look-through | `/investments/look-through` | none |
-| Categories | `/categories` | `categories` |
-| Import (CSV) | `/import` | `import` |
-| Welcome | `/welcome` | `onboarding` |
-| Profile | `/profile` | `(tabs)/profile` |
-| Sign in, sign up | `/login`, `/signup` | `(auth)/login`, `(auth)/signup` |
-| Password reset | `/reset`, `/auth/confirm`, `/reset/new` | `(auth)/reset` (the new password is set on the web page the email opens) |
+| Section                | Web route                               | Phone screen                                                             |
+| ---------------------- | --------------------------------------- | ------------------------------------------------------------------------ |
+| Bearing                | `/bearing`                              | `(tabs)/index`                                                           |
+| Ledger — list          | `/transactions`                         | `(tabs)/transactions`                                                    |
+| Ledger — calendar      | `/calendar`                             | `(tabs)/calendar`                                                        |
+| Ledger — by category   | `/history`                              | none                                                                     |
+| Charges                | `/recurring`                            | `(tabs)/recurring`                                                       |
+| Plan                   | `/budgets`                              | `(tabs)/planning`                                                        |
+| Wallets — positions    | `/investments`                          | `(tabs)/investments`                                                     |
+| Wallets — look-through | `/investments/look-through`             | none                                                                     |
+| Categories             | `/categories`                           | `categories`                                                             |
+| Import (CSV)           | `/import`                               | `import`                                                                 |
+| Welcome                | `/welcome`                              | `onboarding`                                                             |
+| Profile                | `/profile`                              | `(tabs)/profile`                                                         |
+| Sign in, sign up       | `/login`, `/signup`                     | `(auth)/login`, `(auth)/signup`                                          |
+| Password reset         | `/reset`, `/auth/confirm`, `/reset/new` | `(auth)/reset` (the new password is set on the web page the email opens) |
 
 ## Where each figure is computed
 
-| Figure | Core module |
-|---|---|
-| Monthly summary and its `current` / `month_end` views | `monthly-summary.ts`, `budget.ts` |
-| Month close, Kept, Unrecorded spending | `month-close.ts` (closes in `month_closes`; reading day in `month_close_settings.close_day`, default 5) |
-| Forward projection, runway | `projection.ts` |
-| Bearing cards and tiles | `bearing-cards.ts`, `bearing-tiles.ts`, `bearing-facts.ts` |
-| Savings goal progress | `savings-goals.ts` — a running total from the goal's `starts_on` to today, by the same counting rule as the monthly summary's `current` view |
-| Spending caps | `budget-limits.ts` |
-| Category findings | `category-findings.ts` |
-| PEA ceiling and five-year date | `pea.ts` |
-| Fund costs, look-through, target trades | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts` |
-| Money-weighted return | `xirr.ts`, `investment-returns.ts` |
+| Figure                                                | Core module                                                                                                                                  |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monthly summary and its `current` / `month_end` views | `monthly-summary.ts`, `budget.ts`                                                                                                            |
+| Month close, Kept, Unrecorded spending                | `month-close.ts` (closes in `month_closes`; reading day in `month_close_settings.close_day`, default 5)                                      |
+| Forward projection, runway                            | `projection.ts`                                                                                                                              |
+| Bearing cards and tiles                               | `bearing-cards.ts`, `bearing-tiles.ts`, `bearing-facts.ts`                                                                                   |
+| Savings goal progress                                 | `savings-goals.ts` — a running total from the goal's `starts_on` to today, by the same counting rule as the monthly summary's `current` view |
+| Spending caps                                         | `budget-limits.ts`                                                                                                                           |
+| Category findings                                     | `category-findings.ts`                                                                                                                       |
+| PEA ceiling and five-year date                        | `pea.ts`                                                                                                                                     |
+| Fund costs, look-through, target trades               | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                                                                 |
+| Money-weighted return                                 | `xirr.ts`, `investment-returns.ts`                                                                                                           |
 
 ## AI features
 
@@ -212,13 +214,13 @@ the app substitutes its own value; `verify*` functions in core reject or trim
 anything else. One model for every feature (`MISTRAL_MODEL`, else
 `mistral-medium-latest`).
 
-| Feature | Web entry | Quota |
-|---|---|---|
-| Month read | `lib/month-read/` | 5 per month written about |
-| Category read | `lib/category-read/` | 10 per calendar month |
-| Finding ordering | `lib/category-selection/` | 5 per calendar month |
-| Wallet read | `lib/wallet-read/` | 5 per calendar month, refused when nothing changed |
-| Instrument reading (web search, then transcription) | `lib/instrument-reading/`, nightly cron | 40 per calendar month |
+| Feature                                             | Web entry                               | Quota                                              |
+| --------------------------------------------------- | --------------------------------------- | -------------------------------------------------- |
+| Month read                                          | `lib/month-read/`                       | 5 per month written about                          |
+| Category read                                       | `lib/category-read/`                    | 10 per calendar month                              |
+| Finding ordering                                    | `lib/category-selection/`               | 5 per calendar month                               |
+| Wallet read                                         | `lib/wallet-read/`                      | 5 per calendar month, refused when nothing changed |
+| Instrument reading (web search, then transcription) | `lib/instrument-reading/`, nightly cron | 40 per calendar month                              |
 
 What goes over the wire: aggregates and names the user typed (category,
 budget, goal and holding names), the month's category totals, and for the
@@ -287,6 +289,7 @@ EOF
 ### Task 2: Web lint to zero, gated in CI
 
 **Files:**
+
 - Modify: `apps/web/app/(app)/budgets/BudgetsView.tsx:3,115-163`
 - Modify: `apps/web/components/finance/ApplyRecurringSheet.tsx:3,106-123`
 - Modify: `apps/web/components/finance/RecurringView.tsx:293-310,473`
@@ -296,6 +299,7 @@ EOF
 - Modify: `.github/workflows/ci.yml`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: no API change. `RecurringView` now keeps `tabOverride` state (Task 9 extends its type).
 
@@ -315,63 +319,63 @@ type PlanActionResult = { error?: string; success?: boolean };
 Replace the three `useActionState` calls (lines 115–123):
 
 ```tsx
-  const [budgetState, budgetAction, budgetPending] = useActionState(
-    upsertBudget,
-    {},
-  );
-  const [goalState, goalAction, goalPending] = useActionState(
-    upsertSavingsGoal,
-    {},
-  );
-  const [tagState, tagAction, tagPending] = useActionState(upsertTag, {});
+const [budgetState, budgetAction, budgetPending] = useActionState(
+  upsertBudget,
+  {},
+);
+const [goalState, goalAction, goalPending] = useActionState(
+  upsertSavingsGoal,
+  {},
+);
+const [tagState, tagAction, tagPending] = useActionState(upsertTag, {});
 ```
 
 with actions that react to their own result, so nothing has to watch the state in an effect:
 
 ```tsx
-  // Each action says what happened itself, once, when it returns. The three
-  // effects that used to watch the returned state set state inside an
-  // effect, which re-rendered the page a second time for every save.
-  const [, budgetAction, budgetPending] = useActionState(
-    async (previous: PlanActionResult, formData: FormData) => {
-      const result = await upsertBudget(previous, formData);
-      if (result.success) {
-        toast(t("plan.capSaved"), "success");
-        setEditingBudget(null);
-        setBudgetFormOpen(false);
-      } else if (result.error) {
-        toast(result.error, "error");
-      }
-      return result;
-    },
-    {},
-  );
-  const [, goalAction, goalPending] = useActionState(
-    async (previous: PlanActionResult, formData: FormData) => {
-      const result = await upsertSavingsGoal(previous, formData);
-      if (result.success) {
-        toast(t("plan.goalSaved"), "success");
-        setEditingGoal(null);
-        setGoalFormOpen(false);
-      } else if (result.error) {
-        toast(result.error, "error");
-      }
-      return result;
-    },
-    {},
-  );
-  const [, tagAction, tagPending] = useActionState(
-    async (previous: PlanActionResult, formData: FormData) => {
-      const result = await upsertTag(previous, formData);
-      if (result.success) {
-        toast(t("plan.tagAdded"), "success");
-      } else if (result.error) {
-        toast(result.error, "error");
-      }
-      return result;
-    },
-    {},
-  );
+// Each action says what happened itself, once, when it returns. The three
+// effects that used to watch the returned state set state inside an
+// effect, which re-rendered the page a second time for every save.
+const [, budgetAction, budgetPending] = useActionState(
+  async (previous: PlanActionResult, formData: FormData) => {
+    const result = await upsertBudget(previous, formData);
+    if (result.success) {
+      toast(t("plan.capSaved"), "success");
+      setEditingBudget(null);
+      setBudgetFormOpen(false);
+    } else if (result.error) {
+      toast(result.error, "error");
+    }
+    return result;
+  },
+  {},
+);
+const [, goalAction, goalPending] = useActionState(
+  async (previous: PlanActionResult, formData: FormData) => {
+    const result = await upsertSavingsGoal(previous, formData);
+    if (result.success) {
+      toast(t("plan.goalSaved"), "success");
+      setEditingGoal(null);
+      setGoalFormOpen(false);
+    } else if (result.error) {
+      toast(result.error, "error");
+    }
+    return result;
+  },
+  {},
+);
+const [, tagAction, tagPending] = useActionState(
+  async (previous: PlanActionResult, formData: FormData) => {
+    const result = await upsertTag(previous, formData);
+    if (result.success) {
+      toast(t("plan.tagAdded"), "success");
+    } else if (result.error) {
+      toast(result.error, "error");
+    }
+    return result;
+  },
+  {},
+);
 ```
 
 Delete the three `useEffect` blocks that watched `budgetState`, `goalState` and `tagState`. Run `grep -n useEffect "apps/web/app/(app)/budgets/BudgetsView.tsx"`; if only the import line remains, remove `useEffect` from the `react` import.
@@ -389,52 +393,52 @@ const NOTHING_DESELECTED: ReadonlySet<string> = new Set();
 Replace:
 
 ```tsx
-  // Everything starts selected; deselecting is the exception.
-  const [deselected, setDeselected] = useState<Set<string>>(new Set());
+// Everything starts selected; deselecting is the exception.
+const [deselected, setDeselected] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    setDeselected(new Set());
-  }, [allKeys]);
+useEffect(() => {
+  setDeselected(new Set());
+}, [allKeys]);
 
-  const isSelected = (key: string) => !deselected.has(key);
-  const toggle = (key: string) =>
-    setDeselected((current) => {
-      const next = new Set(current);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
+const isSelected = (key: string) => !deselected.has(key);
+const toggle = (key: string) =>
+  setDeselected((current) => {
+    const next = new Set(current);
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+    }
+    return next;
+  });
 ```
 
 with:
 
 ```tsx
-  // Everything starts selected; deselecting is the exception. The choice is
-  // remembered against the list it was made on, so a new plan starts fully
-  // selected by derivation rather than through an effect that clears it.
-  const [deselection, setDeselection] = useState<{
-    keys: string[];
-    off: ReadonlySet<string>;
-  }>({ keys: allKeys, off: NOTHING_DESELECTED });
-  const deselected =
-    deselection.keys === allKeys ? deselection.off : NOTHING_DESELECTED;
+// Everything starts selected; deselecting is the exception. The choice is
+// remembered against the list it was made on, so a new plan starts fully
+// selected by derivation rather than through an effect that clears it.
+const [deselection, setDeselection] = useState<{
+  keys: string[];
+  off: ReadonlySet<string>;
+}>({ keys: allKeys, off: NOTHING_DESELECTED });
+const deselected =
+  deselection.keys === allKeys ? deselection.off : NOTHING_DESELECTED;
 
-  const isSelected = (key: string) => !deselected.has(key);
-  const toggle = (key: string) =>
-    setDeselection((current) => {
-      const next = new Set(
-        current.keys === allKeys ? current.off : NOTHING_DESELECTED,
-      );
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return { keys: allKeys, off: next };
-    });
+const isSelected = (key: string) => !deselected.has(key);
+const toggle = (key: string) =>
+  setDeselection((current) => {
+    const next = new Set(
+      current.keys === allKeys ? current.off : NOTHING_DESELECTED,
+    );
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+    }
+    return { keys: allKeys, off: next };
+  });
 ```
 
 Remove `useEffect` from the `react` import if `grep -n useEffect` shows no other use.
@@ -444,20 +448,20 @@ Remove `useEffect` from the `react` import if `grep -n useEffect` shows no other
 In `apps/web/components/finance/RecurringView.tsx`, replace:
 
 ```tsx
-  const [activeTab, setActiveTab] = useState<AllocType>(defaultTab);
+const [activeTab, setActiveTab] = useState<AllocType>(defaultTab);
 
-  useEffect(() => {
-    setActiveTab(defaultTab);
-  }, [defaultTab]);
+useEffect(() => {
+  setActiveTab(defaultTab);
+}, [defaultTab]);
 ```
 
 with (the phone's `recurring.tsx` already does exactly this):
 
 ```tsx
-  // Derived rather than synced through an effect: the tab follows the first
-  // non-empty group until the user picks one, as on the phone.
-  const [tabOverride, setTabOverride] = useState<AllocType | null>(null);
-  const activeTab = tabOverride ?? defaultTab;
+// Derived rather than synced through an effect: the tab follows the first
+// non-empty group until the user picks one, as on the phone.
+const [tabOverride, setTabOverride] = useState<AllocType | null>(null);
+const activeTab = tabOverride ?? defaultTab;
 ```
 
 and change the toggle button's `onClick={() => setActiveTab(type)}` to `onClick={() => setTabOverride(type)}`.
@@ -465,29 +469,29 @@ and change the toggle button's `onClick={() => setActiveTab(type)}` to `onClick=
 Replace:
 
 ```tsx
-  useEffect(() => {
-    void refreshApplyPending();
-  }, [refreshApplyPending, templates]);
+useEffect(() => {
+  void refreshApplyPending();
+}, [refreshApplyPending, templates]);
 ```
 
 with:
 
 ```tsx
-  // Asked again whenever the templates change. The answer is set in the
-  // promise's callback, so the effect itself never sets state.
-  useEffect(() => {
-    let cancelled = false;
-    void previewApplyRecurringForMonth(year, month).then((result) => {
-      if (cancelled || result.error || !result.plan) {
-        return;
-      }
-      const counts = applyRecurringPlanCounts(result.plan);
-      setApplyPending(counts.creates + counts.updates > 0);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [month, year, templates]);
+// Asked again whenever the templates change. The answer is set in the
+// promise's callback, so the effect itself never sets state.
+useEffect(() => {
+  let cancelled = false;
+  void previewApplyRecurringForMonth(year, month).then((result) => {
+    if (cancelled || result.error || !result.plan) {
+      return;
+    }
+    const counts = applyRecurringPlanCounts(result.plan);
+    setApplyPending(counts.creates + counts.updates > 0);
+  });
+  return () => {
+    cancelled = true;
+  };
+}, [month, year, templates]);
 ```
 
 Keep `refreshApplyPending`: the handler at line 347 still calls it after an apply.
@@ -497,29 +501,29 @@ Keep `refreshApplyPending`: the handler at line 347 still calls it after an appl
 In `apps/web/components/finance/TransactionsView.tsx`, replace:
 
 ```tsx
-  useEffect(() => {
-    void refreshApplyPending();
-  }, [refreshApplyPending, transactions]);
+useEffect(() => {
+  void refreshApplyPending();
+}, [refreshApplyPending, transactions]);
 ```
 
 with:
 
 ```tsx
-  // Asked again whenever the month's transactions change. The answer is set
-  // in the promise's callback, so the effect itself never sets state.
-  useEffect(() => {
-    let cancelled = false;
-    void previewApplyRecurringForMonth(year, month).then((result) => {
-      if (cancelled || result.error || !result.plan) {
-        return;
-      }
-      const counts = applyRecurringPlanCounts(result.plan);
-      setApplyPending(counts.creates + counts.updates > 0);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [month, year, transactions]);
+// Asked again whenever the month's transactions change. The answer is set
+// in the promise's callback, so the effect itself never sets state.
+useEffect(() => {
+  let cancelled = false;
+  void previewApplyRecurringForMonth(year, month).then((result) => {
+    if (cancelled || result.error || !result.plan) {
+      return;
+    }
+    const counts = applyRecurringPlanCounts(result.plan);
+    setApplyPending(counts.creates + counts.updates > 0);
+  });
+  return () => {
+    cancelled = true;
+  };
+}, [month, year, transactions]);
 ```
 
 Keep `refreshApplyPending` for its call at line 371.
@@ -553,50 +557,50 @@ function subscribeToNothing() {
 Replace:
 
 ```tsx
-  const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+const [open, setOpen] = useState(false);
+const [mounted, setMounted] = useState(false);
 ```
 
 with:
 
 ```tsx
-  // The page the menu was opened on. Open only while still on that page, so
-  // navigating closes it by derivation rather than through an effect.
-  const [openAt, setOpenAt] = useState<string | null>(null);
-  const open = openAt === pathname;
-  // Measured when the menu opens, in the press handler, because reading the
-  // trigger's box during render reads a ref during render.
-  const [panelStyle, setPanelStyle] = useState<CSSProperties | undefined>();
-  // False on the server and during hydration, true after: the portal needs
-  // `document.body`, which only exists on the client.
-  const mounted = useSyncExternalStore(
-    subscribeToNothing,
-    () => true,
-    () => false,
-  );
+// The page the menu was opened on. Open only while still on that page, so
+// navigating closes it by derivation rather than through an effect.
+const [openAt, setOpenAt] = useState<string | null>(null);
+const open = openAt === pathname;
+// Measured when the menu opens, in the press handler, because reading the
+// trigger's box during render reads a ref during render.
+const [panelStyle, setPanelStyle] = useState<CSSProperties | undefined>();
+// False on the server and during hydration, true after: the portal needs
+// `document.body`, which only exists on the client.
+const mounted = useSyncExternalStore(
+  subscribeToNothing,
+  () => true,
+  () => false,
+);
 
-  function toggle() {
-    if (open) {
-      setOpenAt(null);
-      return;
-    }
-    setPanelStyle(
-      variant === "side" ? sidePanelStyle(triggerRef.current) : undefined,
-    );
-    setOpenAt(pathname);
+function toggle() {
+  if (open) {
+    setOpenAt(null);
+    return;
   }
+  setPanelStyle(
+    variant === "side" ? sidePanelStyle(triggerRef.current) : undefined,
+  );
+  setOpenAt(pathname);
+}
 ```
 
 Delete both effects:
 
 ```tsx
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+useEffect(() => {
+  setMounted(true);
+}, []);
 
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+useEffect(() => {
+  setOpen(false);
+}, [pathname]);
 ```
 
 Replace every remaining `setOpen(false)` in the file (the Escape handler, the `close` resize handler, the backdrop button, the two `Link` rows) with `setOpenAt(null)`. Replace both `onClick={() => setOpen((value) => !value)}` with `onClick={toggle}`. Replace:
@@ -619,19 +623,25 @@ Expected: no output.
 In `apps/web/components/finance/InstrumentLogo.tsx`, directly above `<img` (line 42), replace the comment line `{/* External brand marks 404 often; img + onError is the fallback path. */}` with:
 
 ```tsx
-      {/* External brand marks 404 often; img + onError is the fallback path.
+{
+  /* External brand marks 404 often; img + onError is the fallback path.
           next/image would need every logo host allow-listed and cannot fall
-          back when one fails. */}
-      {/* eslint-disable-next-line @next/next/no-img-element -- see above */}
+          back when one fails. */
+}
+{
+  /* eslint-disable-next-line @next/next/no-img-element -- see above */
+}
 ```
 
 In `apps/web/components/magicui/safari.tsx`, directly above `<img` (line 79), add:
 
 ```tsx
-          {/* eslint-disable-next-line @next/next/no-img-element -- vendored
+{
+  /* eslint-disable-next-line @next/next/no-img-element -- vendored
               marketing frame; the screenshot inside is decorative and sized
               by its container, which next/image cannot do without fixed
-              dimensions */}
+              dimensions */
+}
 ```
 
 - [ ] **Step 8: Lint and typecheck pass**
@@ -644,6 +654,7 @@ Expected: exit 0.
 - [ ] **Step 9: Check behaviour in the browser**
 
 Start the dev server bound to all interfaces: `pnpm --filter web exec next dev -H 0.0.0.0` and open `http://$(hostname -I | awk '{print $1}'):3000`. Verify, signed in:
+
 - The account menu opens from the sidebar above its trigger, closes on Escape, on the backdrop, on resizing, and on navigating to another page.
 - Plan: saving a cap, a goal and a tag each shows one toast and closes its form.
 - Charges on a phone-width window: the kind toggles switch the list, and the first non-empty kind is selected on load.
@@ -654,11 +665,11 @@ Start the dev server bound to all interfaces: `pnpm --filter web exec next dev -
 In `.github/workflows/ci.yml`, after the `Typecheck web` step, add:
 
 ```yaml
-      - name: Lint web
-        run: pnpm --filter web exec eslint --max-warnings 0 .
+- name: Lint web
+  run: pnpm --filter web exec eslint --max-warnings 0 .
 ```
 
-and delete item 1 (`# 1. \`pnpm --filter web lint\`` and its lines) from the `# Gates NOT run by this workflow` comment.
+and delete item 1 (`# 1. \`pnpm --filter web lint\``and its lines) from the`# Gates NOT run by this workflow` comment.
 
 - [ ] **Step 11: Commit**
 
@@ -685,6 +696,7 @@ EOF
 ### Task 3: Mobile lint to zero, gated in CI
 
 **Files:**
+
 - Modify: `apps/mobile/src/hooks/useRefreshable.ts`
 - Modify: `apps/mobile/src/providers/BiometricLockProvider.tsx:46-80`
 - Modify: `apps/mobile/src/providers/QuickAddProvider.tsx:119,139,142`
@@ -698,6 +710,7 @@ EOF
 - Modify: `.github/workflows/ci.yml`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `useRefreshable(loader, deps)` keeps its exact signature and return shape; `reload` becomes stable across renders.
 
@@ -797,45 +810,45 @@ This keeps the previous month's data on screen while the next month loads (as be
 In `apps/mobile/src/providers/BiometricLockProvider.tsx`, delete `const restoredRef = useRef(false);` and replace the two effects:
 
 ```tsx
-  useEffect(() => {
-    if (!session) {
-      setLocked(false);
-    }
-  }, [session]);
+useEffect(() => {
+  if (!session) {
+    setLocked(false);
+  }
+}, [session]);
 
-  useEffect(() => {
-    if (initializing || !ready || restoredRef.current) {
-      return;
-    }
-    restoredRef.current = true;
-    if (session && enabled && hardware && enrolled) {
-      setLocked(true);
-    }
-  }, [initializing, ready, session, enabled, hardware, enrolled]);
+useEffect(() => {
+  if (initializing || !ready || restoredRef.current) {
+    return;
+  }
+  restoredRef.current = true;
+  if (session && enabled && hardware && enrolled) {
+    setLocked(true);
+  }
+}, [initializing, ready, session, enabled, hardware, enrolled]);
 ```
 
 with:
 
 ```tsx
-  // Signing out unlocks. Adjusted while rendering, the pattern React
-  // documents for "reset state when an input changes", instead of an effect
-  // that renders twice.
-  const [previousSession, setPreviousSession] = useState(session);
-  if (session !== previousSession) {
-    setPreviousSession(session);
-    if (!session) {
-      setLocked(false);
-    }
+// Signing out unlocks. Adjusted while rendering, the pattern React
+// documents for "reset state when an input changes", instead of an effect
+// that renders twice.
+const [previousSession, setPreviousSession] = useState(session);
+if (session !== previousSession) {
+  setPreviousSession(session);
+  if (!session) {
+    setLocked(false);
   }
+}
 
-  // Lock once at launch, as soon as everything the decision needs is known.
-  const [restored, setRestored] = useState(false);
-  if (!restored && !initializing && ready) {
-    setRestored(true);
-    if (session && enabled && hardware && enrolled) {
-      setLocked(true);
-    }
+// Lock once at launch, as soon as everything the decision needs is known.
+const [restored, setRestored] = useState(false);
+if (!restored && !initializing && ready) {
+  setRestored(true);
+  if (session && enabled && hardware && enrolled) {
+    setLocked(true);
   }
+}
 ```
 
 Run: `grep -n "restoredRef" apps/mobile/src/providers/BiometricLockProvider.tsx`
@@ -854,31 +867,31 @@ In `apps/mobile/src/providers/QuickAddProvider.tsx` make the same three replacem
 In `apps/mobile/src/components/profile/SecurityCards.tsx` replace:
 
 ```tsx
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+useEffect(() => {
+  void refresh();
+}, [refresh]);
 ```
 
 with:
 
 ```tsx
-  // The first read sets state in the promise's callback, so the effect itself
-  // never does. `refresh` stays for after an add or a delete.
-  useEffect(() => {
-    let cancelled = false;
-    void listPasskeys().then((result) => {
-      if (cancelled) {
-        return;
-      }
-      setPasskeys(result.passkeys);
-      if (result.error) {
-        setMessage(result.error);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+// The first read sets state in the promise's callback, so the effect itself
+// never does. `refresh` stays for after an add or a delete.
+useEffect(() => {
+  let cancelled = false;
+  void listPasskeys().then((result) => {
+    if (cancelled) {
+      return;
+    }
+    setPasskeys(result.passkeys);
+    if (result.error) {
+      setMessage(result.error);
+    }
+  });
+  return () => {
+    cancelled = true;
+  };
+}, []);
 ```
 
 - [ ] **Step 6: Charges and Ledger — stable arrays and the Apply-count effect**
@@ -886,48 +899,45 @@ with:
 In `apps/mobile/src/app/(tabs)/recurring.tsx` replace:
 
 ```tsx
-  const templates = data?.templates ?? [];
-  const categories = data?.categories ?? [];
+const templates = data?.templates ?? [];
+const categories = data?.categories ?? [];
 ```
 
 with:
 
 ```tsx
-  // Memoised so a render without new data keeps the same arrays, and the
-  // memos and effects below do not re-run for nothing.
-  const templates = useMemo(() => data?.templates ?? [], [data?.templates]);
-  const categories = useMemo(
-    () => data?.categories ?? [],
-    [data?.categories],
-  );
+// Memoised so a render without new data keeps the same arrays, and the
+// memos and effects below do not re-run for nothing.
+const templates = useMemo(() => data?.templates ?? [], [data?.templates]);
+const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
 ```
 
 and replace:
 
 ```tsx
-  useEffect(() => {
-    void refreshApplyPending();
-  }, [refreshApplyPending, templates]);
+useEffect(() => {
+  void refreshApplyPending();
+}, [refreshApplyPending, templates]);
 ```
 
 with:
 
 ```tsx
-  // Asked again whenever the templates change. The answer is set in the
-  // promise's callback, so the effect itself never sets state.
-  useEffect(() => {
-    let cancelled = false;
-    void previewApplyRecurringForMonth(year, month).then((result) => {
-      if (cancelled || result.error || !result.plan) {
-        return;
-      }
-      const counts = applyRecurringPlanCounts(result.plan);
-      setApplyPending(counts.creates + counts.updates > 0);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [month, year, templates]);
+// Asked again whenever the templates change. The answer is set in the
+// promise's callback, so the effect itself never sets state.
+useEffect(() => {
+  let cancelled = false;
+  void previewApplyRecurringForMonth(year, month).then((result) => {
+    if (cancelled || result.error || !result.plan) {
+      return;
+    }
+    const counts = applyRecurringPlanCounts(result.plan);
+    setApplyPending(counts.creates + counts.updates > 0);
+  });
+  return () => {
+    cancelled = true;
+  };
+}, [month, year, templates]);
 ```
 
 Keep `refreshApplyPending`: the apply handlers at lines 446 and 472 still await it.
@@ -939,32 +949,26 @@ In `apps/mobile/src/app/(tabs)/transactions.tsx` replace the effect `useEffect((
 In `apps/mobile/src/app/(tabs)/calendar.tsx` replace:
 
 ```tsx
-  const transactions = data?.transactions ?? [];
-  const categories = data?.categories ?? [];
-  const templates = data?.templates ?? [];
+const transactions = data?.transactions ?? [];
+const categories = data?.categories ?? [];
+const templates = data?.templates ?? [];
 ```
 
 with:
 
 ```tsx
-  const transactions = useMemo(
-    () => data?.transactions ?? [],
-    [data?.transactions],
-  );
-  const categories = useMemo(
-    () => data?.categories ?? [],
-    [data?.categories],
-  );
-  const templates = useMemo(() => data?.templates ?? [], [data?.templates]);
+const transactions = useMemo(
+  () => data?.transactions ?? [],
+  [data?.transactions],
+);
+const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
+const templates = useMemo(() => data?.templates ?? [], [data?.templates]);
 ```
 
 In `apps/mobile/src/app/onboarding.tsx` replace `const categories = data?.categories ?? [];` with:
 
 ```tsx
-  const categories = useMemo(
-    () => data?.categories ?? [],
-    [data?.categories],
-  );
+const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
 ```
 
 - [ ] **Step 8: Mechanical warnings**
@@ -999,6 +1003,7 @@ Expected: exit 0.
 - [ ] **Step 10: Check behaviour on a phone**
 
 Start Metro with `pnpm dev:mobile` and open the app in Expo Go or a dev build. Verify:
+
 - Every tab loads on first open and after changing month. The previous month stays on screen until the next one arrives.
 - Pull to refresh spins and settles.
 - With biometric unlock on: backgrounding and returning locks, launching locks once, signing out unlocks.
@@ -1010,8 +1015,8 @@ Start Metro with `pnpm dev:mobile` and open the app in Expo Go or a dev build. V
 In `.github/workflows/ci.yml`, after the `Typecheck mobile` step, add:
 
 ```yaml
-      - name: Lint mobile
-        run: pnpm --filter mobile exec expo lint --max-warnings 0
+- name: Lint mobile
+  run: pnpm --filter mobile exec expo lint --max-warnings 0
 ```
 
 Delete the now-empty `# Gates NOT run by this workflow` comment block entirely.
@@ -1041,6 +1046,7 @@ EOF
 ### Task 4: Editing from the Calendar keeps tags
 
 **Files:**
+
 - Create: `apps/web/lib/actions/tag-field.ts`
 - Test: `apps/web/lib/actions/tag-field.test.ts`
 - Modify: `apps/web/lib/actions/finance.ts:483-536`
@@ -1050,6 +1056,7 @@ EOF
 - Modify: `apps/mobile/src/app/(tabs)/calendar.tsx`
 
 **Interfaces:**
+
 - Consumes: `getTags(userId): Promise<Tag[]>` and `getTransactionTagMap(userId, year, month): Promise<Record<string, Tag[]>>` from `apps/web/lib/queries/phase4.ts`; mobile `getTags(userId)` from `apps/mobile/src/lib/queries.ts`.
 - Produces: `TAGS_FIELD_MARKER: "tagsField"` and `readSubmittedTagIds(formData: FormData): string[] | null` from `apps/web/lib/actions/tag-field.ts`. `CalendarView` gains required props `tags: Tag[]` and `transactionTags: Record<string, Tag[]>`.
 
@@ -1149,44 +1156,42 @@ import { readSubmittedTagIds } from "@/lib/actions/tag-field";
 In `updateTransaction`, replace:
 
 ```ts
-  const tagIds = formData
-    .getAll("tagIds")
-    .filter((value): value is string => typeof value === "string");
+const tagIds = formData
+  .getAll("tagIds")
+  .filter((value): value is string => typeof value === "string");
 ```
 
 with:
 
 ```ts
-  // Null when the form never showed the tags control: leave them alone.
-  const tagIds = readSubmittedTagIds(formData);
+// Null when the form never showed the tags control: leave them alone.
+const tagIds = readSubmittedTagIds(formData);
 ```
 
 and replace the block from `await supabase.from("transaction_tags").delete()` through the closing `}` of `if (tagIds.length > 0) { … }` with:
 
 ```ts
-  if (tagIds !== null) {
-    const { error: clearError } = await supabase
-      .from("transaction_tags")
-      .delete()
-      .eq("transaction_id", parsed.data.id);
-    if (clearError) {
-      return { error: clearError.message };
-    }
+if (tagIds !== null) {
+  const { error: clearError } = await supabase
+    .from("transaction_tags")
+    .delete()
+    .eq("transaction_id", parsed.data.id);
+  if (clearError) {
+    return { error: clearError.message };
+  }
 
-    if (tagIds.length > 0) {
-      const { error: tagError } = await supabase
-        .from("transaction_tags")
-        .insert(
-          tagIds.map((tagId) => ({
-            transaction_id: parsed.data.id,
-            tag_id: tagId,
-          })),
-        );
-      if (tagError) {
-        return { error: tagError.message };
-      }
+  if (tagIds.length > 0) {
+    const { error: tagError } = await supabase.from("transaction_tags").insert(
+      tagIds.map((tagId) => ({
+        transaction_id: parsed.data.id,
+        tag_id: tagId,
+      })),
+    );
+    if (tagError) {
+      return { error: tagError.message };
     }
   }
+}
 ```
 
 - [ ] **Step 6: The form posts the marker with the control**
@@ -1194,9 +1199,11 @@ and replace the block from `await supabase.from("transaction_tags").delete()` th
 In `apps/web/components/finance/TransactionForm.tsx` add `import { TAGS_FIELD_MARKER } from "@/lib/actions/tag-field";`. Inside `{tags.length > 0 && (` … `<fieldset className="flex flex-col gap-2">`, add as the fieldset's first child:
 
 ```tsx
-            {/* Says "the tags were on screen", so an empty selection means
-                none rather than "not asked". */}
-            <input type="hidden" name={TAGS_FIELD_MARKER} value="1" />
+{
+  /* Says "the tags were on screen", so an empty selection means
+                none rather than "not asked". */
+}
+<input type="hidden" name={TAGS_FIELD_MARKER} value="1" />;
 ```
 
 - [ ] **Step 7: The Calendar page loads tags**
@@ -1204,25 +1211,25 @@ In `apps/web/components/finance/TransactionForm.tsx` add `import { TAGS_FIELD_MA
 In `apps/web/app/(app)/calendar/page.tsx` add `import { getTags, getTransactionTagMap } from "@/lib/queries/phase4";`, and extend the batch:
 
 ```tsx
-  const [
-    transactions,
-    categories,
-    recurringTemplates,
-    confirmedTransactionIds,
-    tags,
-    transactionTags,
-  ] = await Promise.all([
-    getTransactions(user.id, year, month),
-    getCategories(user.id),
-    getRecurringTemplates(user.id),
-    // Which rows settle a recurring charge. Needs nothing else this batch
-    // fetches, so it rides along rather than costing a second round trip.
-    getConfirmedTransactionIds(user.id),
-    // The edit form needs them, or saving an edit from here cannot show,
-    // keep or change a transaction's tags.
-    getTags(user.id),
-    getTransactionTagMap(user.id, year, month),
-  ]);
+const [
+  transactions,
+  categories,
+  recurringTemplates,
+  confirmedTransactionIds,
+  tags,
+  transactionTags,
+] = await Promise.all([
+  getTransactions(user.id, year, month),
+  getCategories(user.id),
+  getRecurringTemplates(user.id),
+  // Which rows settle a recurring charge. Needs nothing else this batch
+  // fetches, so it rides along rather than costing a second round trip.
+  getConfirmedTransactionIds(user.id),
+  // The edit form needs them, or saving an edit from here cannot show,
+  // keep or change a transaction's tags.
+  getTags(user.id),
+  getTransactionTagMap(user.id, year, month),
+]);
 ```
 
 and pass `tags={tags}` and `transactionTags={transactionTags}` to `<CalendarView`.
@@ -1274,17 +1281,17 @@ Duplicate now keeps tags too: `handleDuplicate` sends `selectedTagIds`, which th
 In `apps/mobile/src/app/(tabs)/calendar.tsx`: add `getTags,` to the `@/lib/queries` import and `Tag,` to the `@finance/core/types/database` type import; add at module level `const NO_TAGS: Tag[] = [];`. In the loader, add `tags: [] as Tag[],` to the signed-out object, change the batch to:
 
 ```tsx
-      const [transactions, categories, templates, confirmed, tags] =
-        await Promise.all([
-          getTransactions(user.id, year, month),
-          getCategories(user.id),
-          getRecurringTemplates(user.id),
-          // Which rows settle a charge. Needs nothing else the batch fetches,
-          // so it rides along rather than costing a second hop.
-          getConfirmedTransactionIds(user.id),
-          // So a transaction's tags can be changed from here, as on the web.
-          getTags(user.id),
-        ]);
+const [transactions, categories, templates, confirmed, tags] =
+  await Promise.all([
+    getTransactions(user.id, year, month),
+    getCategories(user.id),
+    getRecurringTemplates(user.id),
+    // Which rows settle a charge. Needs nothing else the batch fetches,
+    // so it rides along rather than costing a second hop.
+    getConfirmedTransactionIds(user.id),
+    // So a transaction's tags can be changed from here, as on the web.
+    getTags(user.id),
+  ]);
 ```
 
 and add `tags` to the returned object. Pass `tags={data?.tags ?? NO_TAGS}` to both `<TransactionFormModal`.
@@ -1325,11 +1332,13 @@ EOF
 ### Task 5: Local Supabase stack, and `savings_goals.starts_on`
 
 **Files:**
+
 - Create: `supabase/migrations/038_goal_start.sql`
 - Create: `supabase/tests/038_goal_start.test.sql`
 - Modify: `packages/core/src/types/database.ts:515-542`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: column `savings_goals.starts_on date not null` (default: today in Europe/Paris); `SavingsGoal["starts_on"]: string`; Insert/Update accept optional `starts_on?: string`.
 
@@ -1512,6 +1521,7 @@ EOF
 ### Task 6: Core — goal running totals, as-of date, paging
 
 **Files:**
+
 - Create: `packages/core/src/paging.ts`
 - Test: `packages/core/src/paging.test.ts`
 - Modify: `packages/core/src/savings-goals.ts`
@@ -1519,6 +1529,7 @@ EOF
 - Modify: `packages/core/package.json` (`"exports"`)
 
 **Interfaces:**
+
 - Consumes: `templateOccurrenceDates(template, year, month, asOfDate): string[]` from `./budget`; `recurringOccurrenceKey(templateId, occurredOn): string` from `./apply-recurring`; `lastDayIsoOfMonth(year, month): string` and `formatMonthLabel` from `./constants`.
 - Produces (all exported):
   - `PAGE_SIZE = 1000`; `allRows<T>(page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>): Promise<T[]>` from `@finance/core/paging`.
@@ -1700,7 +1711,12 @@ function tx({
     amount,
     note: null,
     created_at: `${on}T10:00:00.000Z`,
-    categories: { name: categoryId, type, icon: null, counts_toward_summary: counts },
+    categories: {
+      name: categoryId,
+      type,
+      icon: null,
+      counts_toward_summary: counts,
+    },
   };
 }
 
@@ -1810,9 +1826,19 @@ describe("buildGoalRunningTotals", () => {
         tx({ on: "2026-01-10", amount: 300, categoryId: "cat-a" }),
         tx({ on: "2026-02-10", amount: 200, categoryId: "cat-b" }),
         // A savings category marked as not counting is money coming back out.
-        tx({ on: "2026-02-20", amount: 120, categoryId: "cat-out", counts: false }),
+        tx({
+          on: "2026-02-20",
+          amount: 120,
+          categoryId: "cat-out",
+          counts: false,
+        }),
         // Not savings at all.
-        tx({ on: "2026-02-21", amount: 70, categoryId: "cat-food", type: "expense" }),
+        tx({
+          on: "2026-02-21",
+          amount: 70,
+          categoryId: "cat-food",
+          type: "expense",
+        }),
       ]),
       [],
       "2026-02-28",
@@ -1844,7 +1870,14 @@ describe("buildGoalRunningTotals", () => {
     const totals = buildGoalRunningTotals(
       [buffer],
       ledger([]),
-      [template({ id: "tpl-out", amount: 40, categoryId: "cat-out", counts: false })],
+      [
+        template({
+          id: "tpl-out",
+          amount: 40,
+          categoryId: "cat-out",
+          counts: false,
+        }),
+      ],
       "2026-01-31",
     );
     expect(totals.get(buffer.id)).toBe(0);
@@ -1881,15 +1914,38 @@ describe("buildGoalRunningTotals", () => {
     const rows = [
       tx({ on: "2026-03-02", amount: 120, categoryId: "cat-holidays" }),
       tx({ on: "2026-03-08", amount: 30, categoryId: "cat-other" }),
-      tx({ on: "2026-03-09", amount: 25, categoryId: "cat-out", counts: false }),
-      tx({ on: "2026-03-05", amount: 50, categoryId: "cat-holidays", templateId: "tpl-1" }),
+      tx({
+        on: "2026-03-09",
+        amount: 25,
+        categoryId: "cat-out",
+        counts: false,
+      }),
+      tx({
+        on: "2026-03-05",
+        amount: 50,
+        categoryId: "cat-holidays",
+        templateId: "tpl-1",
+      }),
     ];
     const templates = [
       template({ id: "tpl-1", amount: 50, dayOfMonth: 5 }),
-      template({ id: "tpl-2", amount: 70, categoryId: "cat-other", dayOfMonth: 15 }),
-      template({ id: "tpl-3", amount: 90, categoryId: "cat-other", dayOfMonth: 25 }),
+      template({
+        id: "tpl-2",
+        amount: 70,
+        categoryId: "cat-other",
+        dayOfMonth: 15,
+      }),
+      template({
+        id: "tpl-3",
+        amount: 90,
+        categoryId: "cat-other",
+        dayOfMonth: 25,
+      }),
     ];
-    const linked = goal({ starts_on: "2026-03-01", category_id: "cat-holidays" });
+    const linked = goal({
+      starts_on: "2026-03-01",
+      category_id: "cat-holidays",
+    });
     const everything = goal({ starts_on: "2026-03-01", category_id: null });
 
     const totals = buildGoalRunningTotals(
@@ -1963,7 +2019,10 @@ describe("buildSavingsGoalProgress", () => {
 
   it("never draws a negative bar when withdrawals outweigh deposits", () => {
     const buffer = goal({ category_id: null, target_amount: 500 });
-    const [row] = buildSavingsGoalProgress([buffer], new Map([[buffer.id, -80]]));
+    const [row] = buildSavingsGoalProgress(
+      [buffer],
+      new Map([[buffer.id, -80]]),
+    );
     expect(row.ratio).toBe(0);
     expect(row.remaining).toBe(500);
     expect(row.complete).toBe(false);
@@ -1977,7 +2036,10 @@ describe("buildSavingsGoalProgress", () => {
 
   it("is complete at the target", () => {
     const holidays = goal({ target_amount: 300 });
-    const [row] = buildSavingsGoalProgress([holidays], new Map([[holidays.id, 300]]));
+    const [row] = buildSavingsGoalProgress(
+      [holidays],
+      new Map([[holidays.id, 300]]),
+    );
     expect(row.complete).toBe(true);
     expect(row.ratio).toBe(1);
   });
@@ -1987,9 +2049,12 @@ describe("EMPTY_GOAL_LEDGER", () => {
   it("gives every goal zero", () => {
     const holidays = goal();
     expect(
-      buildGoalRunningTotals([holidays], EMPTY_GOAL_LEDGER, [], "2026-09-25").get(
-        holidays.id,
-      ),
+      buildGoalRunningTotals(
+        [holidays],
+        EMPTY_GOAL_LEDGER,
+        [],
+        "2026-09-25",
+      ).get(holidays.id),
     ).toBe(0);
   });
 });
@@ -2248,6 +2313,7 @@ EOF
 ### Task 7: Web — goals show their running total, and a start date
 
 **Files:**
+
 - Modify: `packages/core/src/validations/phase4.ts:34-48`
 - Modify: `apps/web/lib/queries/phase4.ts`
 - Modify: `apps/web/app/(app)/budgets/page.tsx`
@@ -2257,6 +2323,7 @@ EOF
 - Modify: `packages/core/src/i18n/messages/en.ts`, `fr.ts` (`plan` block)
 
 **Interfaces:**
+
 - Consumes: `allRows` (`@finance/core/paging`); `GoalLedger`, `EMPTY_GOAL_LEDGER`, `earliestGoalStart`, `goalTotalsAsOf`, `buildGoalRunningTotals`, `buildSavingsGoalProgress` (`@finance/core/savings-goals`); `recurringOccurrenceKey` (`@finance/core/apply-recurring`); `getT()` (`@/lib/locale`).
 - Produces: `getGoalLedger(userId: string, from: string, to: string): Promise<GoalLedger>` from `apps/web/lib/queries/phase4.ts`; `savingsGoalSchema` gains `startsOn?: string | ""`; i18n keys `plan.goalStartsOn`, `plan.goalStartsOnHint`, `plan.linkCategoriesTitle`, `plan.linkCategoriesHint`, `plan.linkImportTitle`, `plan.linkImportHint`.
 
@@ -2490,24 +2557,19 @@ with:
 In `apps/web/app/(app)/budgets/BudgetsView.tsx` add `import { todayIsoLocal } from "@finance/core/constants";`. In the goal form, directly after the `goal-date` field's `<div className="flex flex-col gap-2">…</div>`, add:
 
 ```tsx
-              <div className="flex flex-col gap-2">
-                <FormLabel htmlFor="goal-starts">
-                  {t("plan.goalStartsOn")}
-                </FormLabel>
-                <Input
-                  id="goal-starts"
-                  name="startsOn"
-                  type="date"
-                  aria-describedby="goal-starts-hint"
-                  defaultValue={editingGoal?.starts_on ?? todayIsoLocal()}
-                />
-                <p
-                  id="goal-starts-hint"
-                  className="text-xs text-muted-foreground"
-                >
-                  {t("plan.goalStartsOnHint")}
-                </p>
-              </div>
+<div className="flex flex-col gap-2">
+  <FormLabel htmlFor="goal-starts">{t("plan.goalStartsOn")}</FormLabel>
+  <Input
+    id="goal-starts"
+    name="startsOn"
+    type="date"
+    aria-describedby="goal-starts-hint"
+    defaultValue={editingGoal?.starts_on ?? todayIsoLocal()}
+  />
+  <p id="goal-starts-hint" className="text-xs text-muted-foreground">
+    {t("plan.goalStartsOnHint")}
+  </p>
+</div>
 ```
 
 - [ ] **Step 6: The action saves it**
@@ -2521,15 +2583,15 @@ In `apps/web/lib/actions/phase4.ts` `upsertSavingsGoal`, add to the `safeParse` 
 and replace the `payload` object with:
 
 ```ts
-  const payload = {
-    name: parsed.data.name,
-    target_amount: parsed.data.targetAmount,
-    target_date: parsed.data.targetDate || null,
-    category_id: parsed.data.categoryId ?? null,
-    // Absent means "keep what it was" on an edit and "today" on a new goal,
-    // which is the column's default.
-    ...(parsed.data.startsOn ? { starts_on: parsed.data.startsOn } : {}),
-  };
+const payload = {
+  name: parsed.data.name,
+  target_amount: parsed.data.targetAmount,
+  target_date: parsed.data.targetDate || null,
+  category_id: parsed.data.categoryId ?? null,
+  // Absent means "keep what it was" on an edit and "today" on a new goal,
+  // which is the column's default.
+  ...(parsed.data.startsOn ? { starts_on: parsed.data.startsOn } : {}),
+};
 ```
 
 - [ ] **Step 7: The month read's goal figures stop at the month it reads**
@@ -2562,14 +2624,14 @@ In the doc comment above `gatherMonthFacts`, replace the paragraph starting `No 
 After the line `const cash = isCurrentMonth ? … : null;` block, add:
 
 ```ts
-  // Goal progress as it stood at the end of this month, or today for the
-  // month in progress. The phone computes the same figure the same way.
-  const goalsAsOf = goalTotalsAsOf(year, month, today);
-  const goalStart = earliestGoalStart(goals);
-  const goalLedger =
-    goalStart && goalStart <= goalsAsOf
-      ? await getGoalLedger(userId, goalStart, goalsAsOf, client)
-      : EMPTY_GOAL_LEDGER;
+// Goal progress as it stood at the end of this month, or today for the
+// month in progress. The phone computes the same figure the same way.
+const goalsAsOf = goalTotalsAsOf(year, month, today);
+const goalStart = earliestGoalStart(goals);
+const goalLedger =
+  goalStart && goalStart <= goalsAsOf
+    ? await getGoalLedger(userId, goalStart, goalsAsOf, client)
+    : EMPTY_GOAL_LEDGER;
 ```
 
 and replace:
@@ -2601,6 +2663,7 @@ Expected: all pass. (`check:reachability` fails if a new key is unused.)
 - [ ] **Step 9: Check in the browser against the local stack**
 
 Point the dev server at the local stack: in `apps/web/.env.local` temporarily set `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to the `anon key` from `npx supabase status`. Keep a copy of the original values and restore them after this step. Start `pnpm --filter web exec next dev -H 0.0.0.0` and open `http://$(hostname -I | awk '{print $1}'):3000`. Sign up, create a savings category, add savings transactions in three different months, and add a goal on that category starting before the first one. Expected:
+
 - Plan shows the sum of all three.
 - Moving the start date past the first transaction lowers it by that amount.
 - The two link cards read in French when the language is French.
@@ -2629,12 +2692,14 @@ EOF
 ### Task 8: Phone — goals show their running total, and a start date
 
 **Files:**
+
 - Modify: `apps/mobile/src/lib/queries.ts` (after `getSavingsGoals`, line ~459)
 - Modify: `apps/mobile/src/lib/mutations.ts:1241-1281`
 - Modify: `apps/mobile/src/app/(tabs)/planning.tsx:126-128,180-230,261-277,535-556`
 - Modify: `apps/mobile/src/lib/bearing-panel.ts:520-551`
 
 **Interfaces:**
+
 - Consumes: everything Task 6 produces; `plan.goalStartsOn`, `plan.goalStartsOnHint` from Task 7.
 - Produces: mobile `getGoalLedger(userId: string, from: string, to: string): Promise<GoalLedger>`; mobile `upsertSavingsGoal` input gains `startsOn?: string`.
 
@@ -2724,30 +2789,31 @@ export async function getGoalLedger(
 In `apps/mobile/src/lib/mutations.ts` `upsertSavingsGoal`, add `startsOn?: string;` to the input type and replace `payload` with:
 
 ```ts
-  const payload = {
-    name: parsed.data.name,
-    target_amount: parsed.data.targetAmount,
-    target_date: parsed.data.targetDate || null,
-    category_id: parsed.data.categoryId ?? null,
-    // Absent means "keep what it was" on an edit and "today" on a new goal.
-    ...(parsed.data.startsOn ? { starts_on: parsed.data.startsOn } : {}),
-  };
+const payload = {
+  name: parsed.data.name,
+  target_amount: parsed.data.targetAmount,
+  target_date: parsed.data.targetDate || null,
+  category_id: parsed.data.categoryId ?? null,
+  // Absent means "keep what it was" on an edit and "today" on a new goal.
+  ...(parsed.data.startsOn ? { starts_on: parsed.data.startsOn } : {}),
+};
 ```
 
 - [ ] **Step 3: Plan on the phone computes running totals**
 
 In `apps/mobile/src/app/(tabs)/planning.tsx`:
+
 - Extend the `@finance/core/savings-goals` import with `buildGoalRunningTotals, earliestGoalStart, EMPTY_GOAL_LEDGER`.
 - Add `getGoalLedger,` to the `@/lib/queries` import.
 - Directly after the `await Promise.all([...])` batch, add:
 
 ```tsx
-      // A running total from each goal's start. Asked for after the batch
-      // because the window depends on the goals it fetched.
-      const goalStart = earliestGoalStart(goals);
-      const goalLedger = goalStart
-        ? await getGoalLedger(user.id, goalStart, today)
-        : EMPTY_GOAL_LEDGER;
+// A running total from each goal's start. Asked for after the batch
+// because the window depends on the goals it fetched.
+const goalStart = earliestGoalStart(goals);
+const goalLedger = goalStart
+  ? await getGoalLedger(user.id, goalStart, today)
+  : EMPTY_GOAL_LEDGER;
 ```
 
 - Replace:
@@ -2774,7 +2840,7 @@ with:
 In `planning.tsx`, below `const [goalTargetDate, setGoalTargetDate] = useState("");` add:
 
 ```tsx
-  const [goalStartsOn, setGoalStartsOn] = useState(() => todayIsoLocal());
+const [goalStartsOn, setGoalStartsOn] = useState(() => todayIsoLocal());
 ```
 
 (`todayIsoLocal` is already imported.) In `handleAddGoal`, add `startsOn: goalStartsOn,` to the `upsertSavingsGoal({ … })` argument, and after `setGoalTargetDate("");` add `setGoalStartsOn(todayIsoLocal());`. In the form, directly after the target-date field (the `DateField` bound to `goalTargetDate`), add:
@@ -2792,20 +2858,21 @@ In `planning.tsx`, below `const [goalTargetDate, setGoalTargetDate] = useState("
 - [ ] **Step 5: The phone's month read uses the same as-of day**
 
 In `apps/mobile/src/lib/bearing-panel.ts`:
+
 - Extend the `@finance/core/savings-goals` import with `buildGoalRunningTotals, earliestGoalStart, EMPTY_GOAL_LEDGER, goalTotalsAsOf`.
 - Add `getGoalLedger,` to its `@/lib/queries` import.
 - Ensure `todayIsoLocal` is imported from `@finance/core/constants`.
 - In the month-read detail function, after the `await Promise.all([...])` that fetches `goals`, add:
 
 ```ts
-  // Stopped where the web stops it, or the stored read's digest differs
-  // between the two clients.
-  const goalsAsOf = goalTotalsAsOf(year, month, todayIsoLocal());
-  const goalStart = earliestGoalStart(goals);
-  const goalLedger =
-    goalStart && goalStart <= goalsAsOf
-      ? await getGoalLedger(userId, goalStart, goalsAsOf)
-      : EMPTY_GOAL_LEDGER;
+// Stopped where the web stops it, or the stored read's digest differs
+// between the two clients.
+const goalsAsOf = goalTotalsAsOf(year, month, todayIsoLocal());
+const goalStart = earliestGoalStart(goals);
+const goalLedger =
+  goalStart && goalStart <= goalsAsOf
+    ? await getGoalLedger(userId, goalStart, goalsAsOf)
+    : EMPTY_GOAL_LEDGER;
 ```
 
 - Replace:
@@ -2835,6 +2902,7 @@ Expected: both pass.
 - [ ] **Step 7: Check on a phone against the local stack**
 
 Point the app at the local stack: `EXPO_PUBLIC_SUPABASE_URL=http://<WSL IP>:54321` and `EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon key>` in `apps/mobile/.env.local`, restoring the originals afterwards. Use the account from Task 7. Expected:
+
 - Plan's goal ring shows the same total as the web.
 - A goal added on the phone with a start date in the past counts savings since then.
 - Open this month's read panel on the Bearing: it does not say the stored read is out of date when the web wrote it.
@@ -2861,12 +2929,14 @@ EOF
 ### Task 9: Income recurring templates can be opened from Charges
 
 **Files:**
+
 - Modify: `apps/web/components/finance/RecurringView.tsx:47-64,213,232,489`
 - Modify: `apps/mobile/src/app/(tabs)/recurring.tsx:51-68`
 - Modify: `apps/mobile/src/components/RecurringFormModal.tsx:68-71`
 - Modify: `packages/core/src/i18n/messages/en.ts`, `fr.ts` (`charges` block)
 
 **Interfaces:**
+
 - Consumes: `allocation.income` (exists), `rollUpRecurring` (unchanged).
 - Produces: i18n key `charges.perMonthSuffix`. Group type is now `CategoryType` on both clients.
 
@@ -2913,7 +2983,7 @@ const GROUP_ORDER: CategoryType[] = [
 Change `groupLabels` to return `Record<CategoryType, string>` with an added first entry `income: t("allocation.income"),`, and update its doc comment's "three kinds" to "four kinds". Replace every remaining `AllocType` in the file with `CategoryType` (`GroupCard`'s `type` prop, `defaultTab`, `tabOverride`). In `GroupCard`, replace `<span className="text-xs"> / mo</span>` with:
 
 ```tsx
-            <span className="text-xs">{t("charges.perMonthSuffix")}</span>
+<span className="text-xs">{t("charges.perMonthSuffix")}</span>
 ```
 
 and add `const t = useT();` at the top of `GroupCard`. On the desktop grid, change `md:grid-cols-2 lg:grid-cols-3` to `md:grid-cols-2`, so four groups sit two by two.
@@ -2946,21 +3016,18 @@ Give `groupLabels` the return type `Record<CategoryType, string>` and add `incom
 In `apps/mobile/src/components/RecurringFormModal.tsx` replace:
 
 ```tsx
-  const groups = useMemo(
-    () => groupCategoriesByType(categories, { excludeTypes: ["income"] }),
-    [categories],
-  );
+const groups = useMemo(
+  () => groupCategoriesByType(categories, { excludeTypes: ["income"] }),
+  [categories],
+);
 ```
 
 with:
 
 ```tsx
-  // Income included, as on the web: a salary is a recurring template too,
-  // and one opened from the Income group has to find its category here.
-  const groups = useMemo(
-    () => groupCategoriesByType(categories),
-    [categories],
-  );
+// Income included, as on the web: a salary is a recurring template too,
+// and one opened from the Income group has to find its category here.
+const groups = useMemo(() => groupCategoriesByType(categories), [categories]);
 ```
 
 - [ ] **Step 4: Gates**
@@ -2996,6 +3063,7 @@ EOF
 ### Task 10: Web — a reset link leads to choosing a new password
 
 **Files:**
+
 - Create: `apps/web/lib/auth/next-path.ts`
 - Test: `apps/web/lib/auth/next-path.test.ts`
 - Modify: `apps/web/app/auth/callback/route.ts:9-21`
@@ -3008,6 +3076,7 @@ EOF
 - Modify: `packages/core/src/i18n/messages/en.ts`, `fr.ts` (`auth` and `errors` blocks)
 
 **Interfaces:**
+
 - Consumes: `createClient()` (`@/lib/supabase/server`, server) and `createClient()` (`@/lib/supabase/client`, browser); `getAuthUser()` (`@/lib/auth/get-user`); `supabase.auth.verifyOtp({ type: "recovery", token_hash })` (supabase-js 2.108, `VerifyTokenHashParams`); `supabase.auth.updateUser({ password })`.
 - Produces:
   - `sanitizeNextPath(raw: string | null, fallback: string): string` and `confirmRedirect(input: { verified: boolean; next: string | null }): string` from `apps/web/lib/auth/next-path.ts`.
@@ -3463,7 +3532,10 @@ export function NewPasswordForm({ signedIn }: { signedIn: boolean }) {
               />
             </div>
             {error ? (
-              <Text role="alert" className="text-center text-sm text-destructive">
+              <Text
+                role="alert"
+                className="text-center text-sm text-destructive"
+              >
                 {resolveMessage(t, error)}
               </Text>
             ) : null}
@@ -3474,7 +3546,9 @@ export function NewPasswordForm({ signedIn }: { signedIn: boolean }) {
               className="w-full justify-between"
               disabled={pending}
             >
-              {pending ? t("auth.savingNewPassword") : t("auth.saveNewPassword")}
+              {pending
+                ? t("auth.savingNewPassword")
+                : t("auth.saveNewPassword")}
               <ButtonNub>
                 <ArrowRight size={ICON.md} weight="bold" />
               </ButtonNub>
@@ -3492,24 +3566,27 @@ export function NewPasswordForm({ signedIn }: { signedIn: boolean }) {
 - [ ] **Step 10: The reset form says when a link has expired, and asks to come back to the new page**
 
 In `apps/web/components/auth/ResetPasswordForm.tsx`:
+
 - Add `import { useSearchParams } from "next/navigation";`.
 - Inside the component add `const expired = useSearchParams().get("error") === "link_expired";`.
 - Change the `redirectTo` to `` `${window.location.origin}/auth/callback?next=/reset/new` `` and replace the comment above it with:
 
 ```tsx
-      // The confirm route (token hash) is where the email template sends
-      // people; until the template changes, the callback forwards to the same
-      // new-password page when the link is opened in this browser.
+// The confirm route (token hash) is where the email template sends
+// people; until the template changes, the callback forwards to the same
+// new-password page when the link is opened in this browser.
 ```
 
 - Directly above the `{sent ? (` block, add:
 
 ```tsx
-      {expired && !sent ? (
-        <Text role="alert" className="mt-4 text-center text-sm text-destructive">
-          {t("auth.resetLinkExpired")}
-        </Text>
-      ) : null}
+{
+  expired && !sent ? (
+    <Text role="alert" className="mt-4 text-center text-sm text-destructive">
+      {t("auth.resetLinkExpired")}
+    </Text>
+  ) : null;
+}
 ```
 
 In `apps/web/app/(auth)/reset/page.tsx`, wrap the form in `Suspense` (`useSearchParams` needs a boundary), matching the login page:
@@ -3549,16 +3626,19 @@ and create `supabase/templates/recovery.html`:
 ```html
 <h2>Reset your password</h2>
 <p>
-  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset/new">
+  <a
+    href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset/new"
+  >
     Choose a new password
   </a>
 </p>
 ```
 
 Then:
+
 1. Run `npx supabase stop && npx supabase start`.
 2. With the web dev server on the local stack (Task 7 Step 9), request a reset for the test account.
-3. Open the email in Mailpit, copy the link, and open it in a *different* browser. Expected: `/reset/new` shows the form. Mismatched passwords show "The two passwords are not the same". Saving shows the success state, and signing in with the new password works.
+3. Open the email in Mailpit, copy the link, and open it in a _different_ browser. Expected: `/reset/new` shows the form. Mismatched passwords show "The two passwords are not the same". Saving shows the success state, and signing in with the new password works.
 4. Open the same link again. Expected: `/reset` with "That link has expired or was already used".
 5. Open `/reset/new` signed out. Expected: the "opens from the link" sentence and a link to `/reset`.
 
@@ -3588,12 +3668,14 @@ EOF
 ### Task 11: Phone — "Forgot password?"
 
 **Files:**
+
 - Modify: `apps/mobile/src/providers/AuthProvider.tsx:21-31,64-…`
 - Modify: `apps/mobile/src/components/auth/AuthForm.tsx:26-50,~186`
 - Modify: `apps/mobile/src/app/(auth)/login.tsx`
 - Create: `apps/mobile/src/app/(auth)/reset.tsx`
 
 **Interfaces:**
+
 - Consumes: `resetRequestSchema` (`@finance/core/validations/finance`); i18n `auth.forgotPassword`, `auth.resetHeading`, `auth.resetBody`, `auth.sendResetLink`, `auth.sendingResetLink`, `auth.resetSent`, `auth.resetFinishOnWeb`, `auth.backToSignIn`, `auth.email`, `auth.emailAddress`.
 - Produces: `AuthContextValue.requestPasswordReset(email: string): Promise<{ error?: string }>`; `AuthFormProps.forgotHref?: Href`; route `(auth)/reset`.
 
@@ -3602,12 +3684,12 @@ EOF
 In `apps/mobile/src/providers/AuthProvider.tsx`, add to `AuthContextValue`:
 
 ```tsx
-  /**
-   * Sends the reset email. The link opens the web page that sets the new
-   * password; the phone's PKCE verifier could never reach that browser, so
-   * the email carries a token hash instead (see the web's /auth/confirm).
-   */
-  requestPasswordReset: (email: string) => Promise<AuthResult>;
+/**
+ * Sends the reset email. The link opens the web page that sets the new
+ * password; the phone's PKCE verifier could never reach that browser, so
+ * the email carries a token hash instead (see the web's /auth/confirm).
+ */
+requestPasswordReset: (email: string) => Promise<AuthResult>;
 ```
 
 and to the `useMemo` value object, next to `signIn`:
@@ -3631,19 +3713,19 @@ In `apps/mobile/src/components/auth/AuthForm.tsx`, add to `AuthFormProps`:
 and to the destructured props. Directly after the password field's closing `</View>` (the `<View className="gap-1.5">` wrapping label, input and reveal button), add:
 
 ```tsx
-            {forgotHref ? (
-              <Link href={forgotHref} asChild>
-                <Pressable
-                  accessibilityRole="link"
-                  hitSlop={8}
-                  className="min-h-11 justify-center self-end"
-                >
-                  <Text className="text-sm underline">
-                    {t("auth.forgotPassword")}
-                  </Text>
-                </Pressable>
-              </Link>
-            ) : null}
+{
+  forgotHref ? (
+    <Link href={forgotHref} asChild>
+      <Pressable
+        accessibilityRole="link"
+        hitSlop={8}
+        className="min-h-11 justify-center self-end"
+      >
+        <Text className="text-sm underline">{t("auth.forgotPassword")}</Text>
+      </Pressable>
+    </Link>
+  ) : null;
+}
 ```
 
 In `apps/mobile/src/app/(auth)/login.tsx`, add `forgotHref="/reset"` to `<AuthForm`.
@@ -3723,7 +3805,10 @@ export default function ResetScreen() {
           }}
         >
           <View className="items-stretch gap-4 p-5">
-            <Text accessibilityRole="header" className="text-center text-2xl font-bold">
+            <Text
+              accessibilityRole="header"
+              className="text-center text-2xl font-bold"
+            >
               {t("auth.resetHeading")}
             </Text>
 
@@ -3770,7 +3855,11 @@ export default function ResetScreen() {
                   </Text>
                 ) : null}
                 <Button
-                  label={pending ? t("auth.sendingResetLink") : t("auth.sendResetLink")}
+                  label={
+                    pending
+                      ? t("auth.sendingResetLink")
+                      : t("auth.sendResetLink")
+                  }
                   disabled={pending || !email}
                   onPress={send}
                 />
@@ -3804,6 +3893,7 @@ Expected: all pass (`auth.resetFinishOnWeb` is now read).
 - [ ] **Step 5: Check on a phone against the local stack**
 
 Signed out, open the app. Expected:
+
 - "Forgot password?" sits under the password field and is easy to hit.
 - It opens the reset screen. An invalid address shows "That is not an email address".
 - A real one shows the neutral confirmation and the "open the link on any device" line.
@@ -3832,9 +3922,11 @@ EOF
 ### Task 12: Close Plan 0.1
 
 **Files:**
+
 - Modify: `docs/how-pluclair-works.md` (Known issues, Last updated)
 
 **Interfaces:**
+
 - Consumes: everything above.
 - Produces: an up-to-date app guide and a green branch.
 
@@ -3894,12 +3986,14 @@ EOF
 - [ ] **Step 4: Hand back**
 
 Report to the user, leading with what they will see:
+
 - Calendar edits keep tags, and the phone calendar edits them.
 - Goals show running totals and have a start date.
 - Salary-type templates appear first in Charges.
 - A reset link asks for a new password, and the phone has "Forgot password?".
 
 Say what is deliberately unchanged: every other figure, every AI output, no flags yet. Then give:
+
 - **The dashboard step only they can do:** in Supabase → Authentication → Emails → "Reset password", set the link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset/new`, and add `https://pluclair.com/auth/confirm` to Redirect URLs.
 - That migration `038` must be applied to the hosted project when merging.
 - That Plan 0.2 (feature flags and tag management) is next.

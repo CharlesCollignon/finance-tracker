@@ -28,7 +28,6 @@ import {
 import type {
   Category,
   RecurringTemplateWithCategory,
-  Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
@@ -74,14 +73,12 @@ import {
   getFulfilmentProposals,
   getRecurringTemplates,
   getSkippedOccurrences,
-  getTags,
   getTransactions,
 } from "@/lib/queries";
 import { useScreenMonth } from "@/providers/MonthProvider";
 
 /** Stable identity, so the derived selection keeps a steady reference. */
 const EMPTY_SELECTION: ReadonlySet<string> = new Set();
-const NO_TAGS: Tag[] = [];
 
 export default function CalendarScreen() {
   const t = useT();
@@ -117,7 +114,6 @@ export default function CalendarScreen() {
           templates: [] as RecurringTemplateWithCategory[],
           confirmed: new Set<string>(),
           proposals: [] as FulfilmentProposal[],
-          tags: [] as Tag[],
           notPlanned: new Set<string>(),
         };
       }
@@ -126,7 +122,6 @@ export default function CalendarScreen() {
         categories,
         templates,
         confirmed,
-        tags,
         skipped,
         fulfilled,
       ] = await Promise.all([
@@ -136,8 +131,6 @@ export default function CalendarScreen() {
         // Which rows settle a charge. Needs nothing else the batch fetches,
         // so it rides along rather than costing a second hop.
         getConfirmedTransactionIds(user.id),
-        // So a transaction's tags can be changed from here, as on the web.
-        getTags(user.id),
         // What is not planned although a charge calls for it: taken out of
         // the month, or already stood for by another row.
         getSkippedOccurrences(user.id, year, month),
@@ -158,7 +151,6 @@ export default function CalendarScreen() {
         templates,
         confirmed,
         proposals,
-        tags,
         notPlanned: new Set([
           ...skipped.map((entry) =>
             recurringOccurrenceKey(entry.templateId, entry.occurredOn),
@@ -628,7 +620,6 @@ export default function CalendarScreen() {
           onSaved={reload}
           onDeleted={reload}
           categories={categories}
-          tags={data?.tags ?? NO_TAGS}
           transaction={editing}
         />
       ) : null}

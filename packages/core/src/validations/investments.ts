@@ -160,7 +160,9 @@ export const investmentPositionSchema = z
     valuePinned: z
       .union([z.boolean(), z.literal("on"), z.literal("true"), z.literal("")])
       .optional()
-      .transform((value) => value === true || value === "on" || value === "true"),
+      .transform(
+        (value) => value === true || value === "on" || value === "true",
+      ),
   })
   .superRefine((data, ctx) => {
     if (data.sourceType === "recurring") {

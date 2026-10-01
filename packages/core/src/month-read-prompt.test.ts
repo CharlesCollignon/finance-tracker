@@ -47,8 +47,6 @@ function pack(partial: Partial<BuildMonthFactsInput> = {}) {
     pulse: null,
     closeSummary: null,
     unrecordedCap: null,
-    budgets: [],
-    goals: [],
     investedValue: null,
     inboxPending: 0,
     chargesUnconfirmed: 0,
@@ -63,7 +61,7 @@ describe("buildMonthReadPrompt", () => {
 
     for (const fact of facts.facts) {
       const occurrences = user.split(fact.id).length - 1;
-      // Some ids are prefixes of others ("budget" / "budget-left"), so this
+      // Some ids sit inside others ("streak" / "best-streak"), so this
       // asserts at least one mention rather than exactly one.
       expect(occurrences, `${fact.id} should appear`).toBeGreaterThan(0);
     }
@@ -92,7 +90,7 @@ describe("buildMonthReadPrompt", () => {
     });
 
     expect(user).toContain("Not known, and why");
-    expect(user).toContain("no budget has been set");
+    expect(user).toContain("no limit has been set");
   });
 
   it("leaves the absences section out when nothing is missing", () => {

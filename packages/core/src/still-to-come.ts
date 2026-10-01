@@ -19,6 +19,12 @@ export interface UpcomingCharge {
   type: CategoryType;
   /** A row that already exists, as against one a template still owes. */
   recorded: boolean;
+  /**
+   * A purchase inside a wallet, in a category that does not count toward the
+   * summary: it is tracked, and moves no money on the account, because the
+   * transfer to the broker that paid for it already did.
+   */
+  tracked?: boolean;
 }
 
 export interface StillToCome {
@@ -102,6 +108,9 @@ export function buildStillToCome(
   // about the template or the category it came from, and that is only in hand
   // here.
   function file(charge: UpcomingCharge, counts: boolean): void {
+    if (charge.type === "investment" && !counts) {
+      charge.tracked = true;
+    }
     if (charge.type === "income") {
       incoming.push(charge);
       arriving += charge.amount;

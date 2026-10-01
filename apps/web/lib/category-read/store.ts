@@ -11,7 +11,11 @@ import { getCurrentMonth } from "@finance/core/constants";
 import { monthColumnValue } from "@finance/core/month-close";
 import type { CategoryReadRow, Database } from "@finance/core/types/database";
 import { createClient } from "@/lib/supabase/server";
-import { FALLBACK_LOCALE, parseLocale, type Locale } from "@finance/core/i18n/locale";
+import {
+  FALLBACK_LOCALE,
+  parseLocale,
+  type Locale,
+} from "@finance/core/i18n/locale";
 
 type Client = SupabaseClient<Database>;
 
@@ -93,7 +97,9 @@ function isLockContention(error: { code?: string } | null): boolean {
   return error?.code === "40P01" || error?.code === "40001";
 }
 
-function toleratedRpcFailure(error: { code?: string; message?: string } | null): boolean {
+function toleratedRpcFailure(
+  error: { code?: string; message?: string } | null,
+): boolean {
   return (
     isMissingSchema(error) || isGoneCategory(error) || isLockContention(error)
   );

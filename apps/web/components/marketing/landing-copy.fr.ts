@@ -82,7 +82,7 @@ export const landingCopyFr: LandingCopySections & {
       },
       {
         label: "La série",
-        body: "Les mois d'affilée sous votre propre enveloppe, fixée d'après votre historique plutôt que d'après un chiffre rond.",
+        body: "Les mois d'affilée sous votre propre marge, fixée d'après votre historique plutôt que d'après un chiffre rond.",
       },
     ],
     footnote:
@@ -94,7 +94,7 @@ export const landingCopyFr: LandingCopySections & {
   monthRead: {
     heading: "Les mots sont écrits pour vous. Pas les chiffres.",
     body: [
-      "Demandez une lecture et un modèle de langage écrit quelques phrases sur le mois que vous regardez. Il ne saisit jamais un nombre. Il désigne un chiffre par son nom — dépenses non enregistrées, ce que vous avez gardé, le plafond que vous avez fixé — et l'application y substitue sa propre valeur avant que la phrase ne vous parvienne. Une phrase qui repose sur un chiffre que l'application n'a pas calculé est écartée ; si c'est le titre qui a cassé, toute la lecture est jetée et rien n'est enregistré.",
+      "Demandez une lecture et un modèle de langage écrit quelques phrases sur le mois que vous regardez. Il ne saisit jamais un nombre. Il désigne un chiffre par son nom — dépenses non enregistrées, ce que vous avez gardé, votre marge — et l'application y substitue sa propre valeur avant que la phrase ne vous parvienne. Une phrase qui repose sur un chiffre que l'application n'a pas calculé est écartée ; si c'est le titre qui a cassé, toute la lecture est jetée et rien n'est enregistré.",
       "Cela corrige l'arithmétique, pas l'opinion. « Vous dépensez nettement plus en courses » ne contient aucun chiffre, donc rien au-dessus ne peut le vérifier — c'est un jugement, et il est du modèle. C'est un deuxième regard sur le mois, pas un verdict, et c'est le seul endroit de l'application où quoi que ce soit est écrit pour vous.",
     ],
     outcomes: [
@@ -108,7 +108,7 @@ export const landingCopyFr: LandingCopySections & {
       },
       {
         label: "Elle vieillit",
-        body: "Les chiffres à l'écran sont toujours à jour. Le jugement, non : « confortablement dans votre enveloppe » cesse d'être vrai quand cela cesse d'être vrai, alors une lecture est signalée dès que les chiffres qui la portent ont bougé.",
+        body: "Les chiffres à l'écran sont toujours à jour. Le jugement, non : « confortablement dans votre marge » cesse d'être vrai quand cela cesse d'être vrai, alors une lecture est signalée dès que les chiffres qui la portent ont bougé.",
       },
     ],
     footnote:
@@ -216,17 +216,17 @@ export const landingCopyFr: LandingCopySections & {
     },
     plan: {
       title: "Plan",
-      body: "Des plafonds, des objectifs, les mois à venir, et le solde qui les vérifie.",
+      body: "Où va votre argent, les paliers sur le chemin, et le solde qui le vérifie.",
       utility:
-        "Ce que vous avez décidé au sujet de l'argent, et ce que ces décisions donnent mises bout à bout. Un plafond sur une catégorie, une somme à accumuler, les mois vers lesquels mènent vos charges, et le solde unique contre lequel un mois est clôturé. Rien ici n'impose quoi que ce soit ni ne déplace quoi que ce soit.",
+        "Ce que vos propres chiffres donnent si les choses continuent ainsi : une année à venir d'après les opérations que vous avez déjà prévues, les paliers que votre épargne franchira et quand, un coussin compté en mois de charges fixes, et la vue longue de chaque compte après impôts français. Rien ici n'impose quoi que ce soit ni ne déplace quoi que ce soit.",
       steps: [
         {
-          title: "Fixez un plafond, fixez un objectif",
-          body: "Une limite mensuelle sur une catégorie, et une somme à accumuler avec le rythme qu'il faudrait pour y arriver à la date que vous avez nommée. Les deux se remplissent à mesure que le journal court dessus, et les deux changent de teinte avant que vous les atteigniez, pas après.",
+          title: "Voyez l'année à venir, et essayez un peu plus",
+          body: "Vos comptes et ce que vous mettez de côté, mois par mois sur les douze prochains, d'après les opérations que vous avez déjà prévues. Faites glisser pour mettre un peu plus de côté chaque mois : l'année finit plus haut, et le prochain palier arrive plus tôt.",
         },
         {
-          title: "Voyez vers quoi mènent les mois, et décomposez-le",
-          body: "Deux courbes, pas une : ce que contiennent les comptes de dépense, et cela plus tout ce qui a été mis de côté en chemin. Il y en a deux parce qu'une seule était un mensonge — une courbe unique qui comptait l'argent viré en épargne comme de l'argent parti faisait voir à un épargnant appliqué sa position s'enfoncer. Les deux se décomposent : les revenus des charges, ce qui est engagé, ce qui est mis de côté, et ce qu'un mois normal coûte sans qu'on le voie, chacun avec les charges qui le portent et un moyen d'aller le changer.",
+          title: "Des paliers, un coussin, et la vue longue",
+          body: "Les sommes rondes que votre épargne et vos placements franchiront, et quand. Combien de mois de charges fixes votre épargne couvrirait. Et ce que chaque compte — Livret A, PEA, assurance vie, CTO, PER, crypto — pourrait valoir dans dix ou vingt ans, après l'impôt que chacun paie en France.",
         },
         {
           title: "Clôturez le mois contre la banque",
@@ -270,7 +270,7 @@ export const landingCopyFr: LandingCopySections & {
         },
         {
           title: "Lisez ce qu'elle a trouvé",
-          body: "Les dépenses non enregistrées, ce que vous avez gardé, et si le mois est resté dans votre propre enveloppe — fixée d'après votre historique, pas d'après un chiffre rond avec lequel vous ne feriez que discuter.",
+          body: "Les dépenses non enregistrées, ce que vous avez gardé, et si le mois est resté dans votre propre marge — fixée d'après votre historique, pas d'après un chiffre rond avec lequel vous ne feriez que discuter.",
         },
       ],
     },

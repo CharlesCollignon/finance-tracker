@@ -15,6 +15,7 @@ import {
   relativeDayLabel,
   todayIsoLocal,
 } from "@finance/core/constants";
+import { leftAtMonthEnd } from "@finance/core/month-balance";
 import { buildStillToCome } from "@finance/core/still-to-come";
 import {
   FULFILMENT_STATE_KEY,
@@ -34,7 +35,6 @@ import {
 import type {
   Category,
   CategoryType,
-  Tag,
   RecurringTemplateWithCategory,
   TransactionWithCategory,
 } from "@finance/core/types/database";
@@ -88,7 +88,6 @@ import {
   getPendingFeedItems,
   getRecurringTemplates,
   getSkippedOccurrences,
-  getTags,
   getTransactions,
   type PendingFeedRow,
   type SkippedOccurrence,
@@ -187,7 +186,6 @@ export default function TransactionsScreen() {
           transactions: [] as TransactionWithCategory[],
           categories: [] as Category[],
           skipped: [] as SkippedOccurrence[],
-          tags: [] as Tag[],
           templates: [] as RecurringTemplateWithCategory[],
           inbox: [] as PendingFeedRow[],
           confirmed: new Set<string>(),
@@ -199,7 +197,6 @@ export default function TransactionsScreen() {
         transactions,
         categories,
         skipped,
-        tags,
         templates,
         inbox,
         confirmed,
@@ -208,7 +205,6 @@ export default function TransactionsScreen() {
         getTransactions(user.id, year, month),
         getCategories(user.id),
         getSkippedOccurrences(user.id, year, month),
-        getTags(user.id),
         // For "left at month end": what the rest of the month still owes.
         getRecurringTemplates(user.id),
         // Not scoped to the month on screen. The inbox is a queue of
@@ -236,7 +232,6 @@ export default function TransactionsScreen() {
         transactions,
         categories,
         skipped,
-        tags,
         templates,
         inbox,
         confirmed,
@@ -254,7 +249,6 @@ export default function TransactionsScreen() {
   const categories = data?.categories ?? [];
 
   const skipped = data?.skipped ?? [];
-  const tags = data?.tags ?? [];
 
   /**
    * What each row can say about itself, by transaction id.
@@ -394,9 +388,10 @@ export default function TransactionsScreen() {
 
   // What the month ends at, which is a fact about the whole month and does
   // not move with the filters beside it — hence its own label rather than a
-  // third figure in the In / Out pair.
+  // third figure in the In / Out pair. By the account's own rule: a purchase
+  // inside a wallet moves nothing (the transfer that paid for it did), and a
+  // savings withdrawal comes back.
   const monthEnd = useMemo(() => {
-    const all = computeTypeTotals(transactions);
     const upcoming = buildStillToCome(
       transactions,
       data?.templates ?? [],
@@ -412,11 +407,7 @@ export default function TransactionsScreen() {
       // this a salary the bank had paid counted twice in the month's end.
       data?.fulfilled,
     );
-    return (
-      all.income +
-      upcoming.arriving -
-      (all.expense + all.savings + all.investment + upcoming.budgetedOutflow)
-    );
+    return leftAtMonthEnd(transactions, upcoming);
   }, [
     transactions,
     data?.templates,
@@ -1117,7 +1108,6 @@ export default function TransactionsScreen() {
           categories={categories}
           transaction={editing}
           recentCategoryIds={recentCategoryIds}
-          tags={tags}
         />
       ) : null}
 

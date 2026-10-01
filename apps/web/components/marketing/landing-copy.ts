@@ -91,7 +91,7 @@ export const landingCopy = {
   monthRead: {
     heading: "The words are written for you. The figures are not.",
     body: [
-      "Ask for a read and a language model writes a few sentences about the month you are looking at. It never types a number. It refers to a figure by name — unrecorded spending, what you kept, the cap you set — and the app substitutes its own value before the sentence reaches you. A sentence resting on a figure the app did not compute is dropped; if the headline is the one that broke, the whole read is thrown away and nothing is stored.",
+      "Ask for a read and a language model writes a few sentences about the month you are looking at. It never types a number. It refers to a figure by name — unrecorded spending, what you kept, your allowance — and the app substitutes its own value before the sentence reaches you. A sentence resting on a figure the app did not compute is dropped; if the headline is the one that broke, the whole read is thrown away and nothing is stored.",
       "That fixes the arithmetic, not the opinion. “You are spending noticeably more on groceries” contains no figure, so nothing above can check it — it is a judgement, and it is the model's. This is a second pair of eyes on the month, not a verdict on it, and it is the only place in the app where anything is written for you.",
     ],
     outcomes: [
@@ -217,17 +217,17 @@ export const landingCopy = {
     {
       id: "plan",
       title: "Plan",
-      body: "Caps, targets, the months ahead, and the balance that checks them.",
+      body: "Where your money is heading, the milestones on the way, and the balance that checks it.",
       utility:
-        "What you have decided about money, and what those decisions add up to. A cap on a category, an amount to accumulate, the months your standing charges lead to, and the one balance a month is closed against. Nothing here enforces anything or moves anything.",
+        "What your own figures add up to if things carry on as they are: a year ahead from the payments you already planned, the milestones your savings will pass and when, a cushion counted in months of fixed costs, and the long view of every account after French tax. Nothing here enforces anything or moves anything.",
       steps: [
         {
-          title: "Set a cap, set a target",
-          body: "A monthly limit on a category, and an amount to accumulate with the pace it would take to arrive by the date you named. Both fill as the ledger runs against them, and both change tone before you reach them rather than after.",
+          title: "See a year ahead, and try a little more",
+          body: "Your accounts and what you put aside, month by month for the next twelve, from the payments you already planned. Slide to put a little more aside each month and watch the year end higher and the next milestone come sooner.",
         },
         {
-          title: "See where the months lead, and take it apart",
-          body: "Two lines, not one: what the spending accounts hold, and that plus everything set aside along the way. There are two because one was a lie — a single line counting money moved into savings as money gone had a diligent saver watching their position sink. Both come apart into what they are made of: income from charges, what is committed, what is set aside, and what a normal month costs unseen, each with the charges backing it and a way to go and change it.",
+          title: "Milestones, a cushion, and the long view",
+          body: "The round figures your savings and investments will pass, and when. How many months of fixed costs your savings would cover. And what each account — Livret A, PEA, life insurance, CTO, PER, crypto — could be worth in ten or twenty years, after the tax each one pays in France.",
         },
         {
           title: "Close the month against the bank",

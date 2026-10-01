@@ -38,16 +38,19 @@ describe("translator", () => {
 
   it("fills in variables", () => {
     expect(
-      translator("en")("push.breach.body", { spent: "€420", limit: "€400" }),
-    ).toBe("€420 spent of €400.");
+      translator("en")("ledger.repeatBody", {
+        category: "Groceries",
+        amount: "€42",
+      }),
+    ).toBe("Adds another Groceries of €42 dated today.");
   });
 
   it("leaves an unfilled placeholder visible rather than blanking it", () => {
     // A gap that names the missing variable is a bug report; a gap that
     // silently closes up is a sentence with a word missing.
-    expect(translator("en")("push.breach.body", { spent: "€420" })).toBe(
-      "€420 spent of {limit}.",
-    );
+    expect(
+      translator("en")("ledger.repeatBody", { category: "Groceries" }),
+    ).toBe("Adds another Groceries of {amount} dated today.");
   });
 
   it("selects the plural form from the count", () => {

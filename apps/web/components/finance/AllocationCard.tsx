@@ -7,22 +7,17 @@ import {
   currentSplitPercents,
   formatWeight,
   suggestContributionSplit,
+  type AccountId,
+  type AccountTarget,
   type AllocationRow,
-  type WalletTarget,
 } from "@finance/core/allocation";
-import {
-  INVESTMENT_WALLET_LABELS,
-  type InvestmentWalletId,
-} from "@finance/core/investments";
-import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
-import type { WalletFundingNeed } from "@finance/core/investment-upcoming";
-import type { WalletPlan } from "@finance/core/types/database";
 import { Button } from "@/components/retroui/Button";
 import { Card } from "@/components/retroui/Card";
 import { useToast } from "@/components/layout/ToastProvider";
+import { accountShortName } from "@/components/finance/accounts/account-format";
 import {
-  clearWalletTargets,
-  saveWalletTargets,
+  clearAccountTargets,
+  saveAccountTargets,
 } from "@/lib/actions/investments";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
@@ -30,19 +25,25 @@ import { ICON } from "@/lib/icon-scale";
 import { useT, useLocale } from "@/lib/locale-context";
 
 interface AllocationCardProps {
-  portfolio: InvestmentPortfolioSummary;
-  plans: WalletPlan[];
+  /** Every account kept — savings accounts and wallets — in the usual order. */
+  accounts: readonly AccountId[];
+  /** What each holds today: a savings balance, a wallet's market value. */
+  values: Partial<Record<AccountId, number>>;
+  /** What the recurring templates put into each account in a month. */
+  monthly: Partial<Record<AccountId, number>>;
+  /** The share each account was given, or null. */
+  targets: readonly AccountTarget[];
   /** Typical monthly contribution, used to suggest where the next one goes. */
   monthlyContribution: number;
-  /** What the recurring templates put into each account in a month. */
-  fundingNeeds: WalletFundingNeed[];
 }
+
+type Percents = Partial<Record<AccountId, number>>;
 
 type AllocationView = "total" | "monthly";
 
 /**
- * How the portfolio is split across accounts, against the split the reader
- * chose.
+ * How the reader's money is split across every account they keep — a Livret
+ * A beside a PEA — against the split they chose.
  *
  * Every row says it in words and in euros: a share today, a share aimed for,
  * and how many euros above or below that the account sits. Drift used to be
@@ -50,7 +51,7 @@ type AllocationView = "total" | "monthly";
  * question nobody asks. The bar under each row is the same fact drawn, the
  * share filled and the target marked, so the page reads at a glance.
  *
- * The bars are all investment cyan: every one of them is investment money,
+ * The bars are all one colour, the same for an account wherever it appears,
  * and the label beside each says which account it is.
  *
  * The Monthly view asks the same question of the standing orders instead of
@@ -60,52 +61,44 @@ type AllocationView = "total" | "monthly";
  * in that view is euros a month.
  */
 export function AllocationCard({
-  portfolio,
-  plans,
+  accounts,
+  values,
+  monthly: monthlyValues,
+  targets,
   monthlyContribution,
-  fundingNeeds,
 }: AllocationCardProps) {
   const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [view, setView] = useState<AllocationView>("total");
   const [pending, startTransition] = useTransition();
 
-  const targets: WalletTarget[] = useMemo(() => {
-    const byWallet = new Map(plans.map((plan) => [plan.wallet, plan]));
-    return portfolio.columns.map((column) => {
-      const weight = byWallet.get(column.walletId)?.target_weight;
-      return {
-        walletId: column.walletId,
-        targetWeight:
-          weight === null || weight === undefined ? null : Number(weight),
-      };
-    });
-  }, [portfolio.columns, plans]);
-
   const allocation = useMemo(
     () =>
       buildAllocation(
-        portfolio.columns.map((column) => ({
-          walletId: column.walletId,
-          value: column.totalMarketValue,
+        accounts.map((accountId) => ({
+          accountId,
+          value: values[accountId] ?? 0,
         })),
         targets,
+        accounts,
       ),
-    [portfolio.columns, targets],
+    [accounts, values, targets],
   );
 
   const monthly = useMemo(
     () =>
       buildAllocation(
-        fundingNeeds.map((need) => ({
-          walletId: need.walletId,
-          value: need.monthlyTotal,
+        accounts.map((accountId) => ({
+          accountId,
+          value: monthlyValues[accountId] ?? 0,
         })),
         targets,
+        accounts,
       ),
-    [fundingNeeds, targets],
+    [accounts, monthlyValues, targets],
   );
 
   const split = useMemo(
@@ -126,12 +119,12 @@ export function AllocationCard({
     (row) => row.value > 0 || (row.targetWeight ?? 0) > 0,
   );
 
-  function save(percents: Record<InvestmentWalletId, number>) {
+  function save(percents: Percents) {
     startTransition(async () => {
-      const result = await saveWalletTargets(
+      const result = await saveAccountTargets(
         allocation.rows.map((row) => ({
-          wallet: row.walletId,
-          targetWeight: percents[row.walletId] / 100,
+          accountId: row.accountId,
+          targetWeight: (percents[row.accountId] ?? 0) / 100,
         })),
       );
       if (result.error) {
@@ -145,7 +138,7 @@ export function AllocationCard({
 
   function remove() {
     startTransition(async () => {
-      const result = await clearWalletTargets();
+      const result = await clearAccountTargets();
       if (result.error) {
         toast(result.error, "error");
         return;
@@ -203,12 +196,12 @@ export function AllocationCard({
           rows={allocation.rows}
           initial={
             targetsMeasured
-              ? (Object.fromEntries(
+              ? Object.fromEntries(
                   allocation.rows.map((row) => [
-                    row.walletId,
+                    row.accountId,
                     Math.round((row.targetWeight ?? 0) * 100),
                   ]),
-                ) as Record<InvestmentWalletId, number>)
+                )
               : currentSplitPercents(allocation)
           }
           current={currentSplitPercents(allocation)}
@@ -231,7 +224,7 @@ export function AllocationCard({
 
             <ul className="mt-4 flex flex-col gap-4">
               {monthlyShown.map((row) => (
-                <AllocationRowItem key={row.walletId} row={row} monthly />
+                <AllocationRowItem key={row.accountId} row={row} monthly />
               ))}
             </ul>
 
@@ -257,12 +250,12 @@ export function AllocationCard({
           <p className="mt-1 text-sm text-muted-foreground">
             {targetsMeasured
               ? t("position.allocationIntroTargets")
-              : t("position.allocationIntro")}
+              : t("placementsWeb.allocationIntro")}
           </p>
 
           <ul className="mt-4 flex flex-col gap-4">
             {shown.map((row) => (
-              <AllocationRowItem key={row.walletId} row={row} />
+              <AllocationRowItem key={row.accountId} row={row} />
             ))}
           </ul>
 
@@ -277,12 +270,12 @@ export function AllocationCard({
               </p>
               <ul className="flex flex-wrap gap-x-5 gap-y-1">
                 {split.map((row) => (
-                  <li key={row.walletId}>
+                  <li key={row.accountId}>
                     <span className="privacy-amount font-medium tabular-nums">
                       {formatEuro(row.amount)}
                     </span>{" "}
                     {t("position.splitItemTo", {
-                      wallet: INVESTMENT_WALLET_LABELS[row.walletId],
+                      wallet: accountShortName(row.accountId, locale),
                     })}
                   </li>
                 ))}
@@ -334,7 +327,7 @@ function AllocationRowItem({
     <li className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-3 text-sm">
         <span className="font-medium">
-          {INVESTMENT_WALLET_LABELS[row.walletId]}
+          {accountShortName(row.accountId, locale)}
         </span>
         <span className="privacy-amount tabular-nums">
           {formatEuro(row.value)}
@@ -369,7 +362,7 @@ function AllocationRowItem({
                 ? t("position.shareOfEachMonth", { share })
                 : t("position.shareOfEachMonthTarget", { share, target })
             : row.targetWeight === null
-              ? t("position.shareOfInvestments", { share })
+              ? t("placementsWeb.shareOfMoney", { share })
               : t("position.shareNowTarget", { share, target })}
         </span>
         {row.status === "on-target" ? (
@@ -410,40 +403,43 @@ function TargetEditor({
   onCancel,
 }: {
   rows: AllocationRow[];
-  initial: Record<InvestmentWalletId, number>;
-  current: Record<InvestmentWalletId, number>;
+  initial: Percents;
+  current: Percents;
   pending: boolean;
   canRemove: boolean;
-  onSave: (percents: Record<InvestmentWalletId, number>) => void;
+  onSave: (percents: Percents) => void;
   onRemove: () => void;
   onCancel: () => void;
 }) {
   const t = useT();
   const locale = useLocale();
-  const [draft, setDraft] = useState<Record<InvestmentWalletId, string>>(() =>
+  const [draft, setDraft] = useState<Partial<Record<AccountId, string>>>(() =>
     toDraft(initial),
   );
 
-  const percents = Object.fromEntries(
-    rows.map((row) => [row.walletId, readPercent(draft[row.walletId])]),
-  ) as Record<InvestmentWalletId, number>;
-  const total = Object.values(percents).reduce((sum, value) => sum + value, 0);
+  const percents: Percents = Object.fromEntries(
+    rows.map((row) => [row.accountId, readPercent(draft[row.accountId])]),
+  );
+  const total = Object.values(percents).reduce(
+    (sum: number, value) => sum + (value ?? 0),
+    0,
+  );
 
   return (
     <div className="mt-2 flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        {t("position.targetEditorIntro")}
+        {t("placementsWeb.targetEditorIntro")}
       </p>
 
       <div className="flex flex-col gap-2">
         {rows.map((row) => (
           <label
-            key={row.walletId}
+            key={row.accountId}
             className="flex items-center justify-between gap-3 text-sm"
           >
             <span className="flex items-baseline gap-2">
               <span className="font-medium">
-                {INVESTMENT_WALLET_LABELS[row.walletId]}
+                {accountShortName(row.accountId, locale)}
               </span>
               <span className="text-xs text-muted-foreground">
                 {t("position.targetNow", {
@@ -458,11 +454,11 @@ function TargetEditor({
                 min={0}
                 max={100}
                 step={1}
-                value={draft[row.walletId]}
+                value={draft[row.accountId] ?? ""}
                 onChange={(event) =>
                   setDraft((previous) => ({
                     ...previous,
-                    [row.walletId]: event.target.value,
+                    [row.accountId]: event.target.value,
                   }))
                 }
                 className="h-10 min-h-11 lg:min-h-0 w-20 rounded-control border border-border bg-background px-2 text-right tabular-nums"
@@ -520,15 +516,13 @@ function TargetEditor({
   );
 }
 
-function toDraft(
-  percents: Record<InvestmentWalletId, number>,
-): Record<InvestmentWalletId, string> {
+function toDraft(percents: Percents): Partial<Record<AccountId, string>> {
   return Object.fromEntries(
-    Object.entries(percents).map(([walletId, value]) => [
-      walletId,
-      String(value),
+    Object.entries(percents).map(([accountId, value]) => [
+      accountId,
+      String(value ?? 0),
     ]),
-  ) as Record<InvestmentWalletId, string>;
+  );
 }
 
 /** An empty or unreadable box counts as 0, and a share stays within 0–100. */

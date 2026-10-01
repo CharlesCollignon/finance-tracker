@@ -27,11 +27,9 @@ import { translator } from "./i18n/t";
  * a network or a model.
  */
 
-import type { BudgetProgress } from "./budget-limits";
 import type { MonthComparison } from "./month-comparison";
 import type { CloseHistorySummary, ClosedMonthOutcome } from "./month-close";
 import type { MonthPulse } from "./month-pulse";
-import type { SavingsGoalProgress } from "./savings-goals";
 import type { CategoryBreakdown, MonthlySummary } from "./types/database";
 import { formatMonthLabel, formatPercent } from "./constants";
 
@@ -157,8 +155,6 @@ export interface MonthFacts {
  * grows with it, for figures nobody would mention in four sentences anyway.
  */
 export const MAX_TOP_EXPENSES = 5;
-export const MAX_BUDGETS = 4;
-export const MAX_GOALS = 3;
 
 export interface BuildMonthFactsInput {
   year: number;
@@ -178,8 +174,6 @@ export interface BuildMonthFactsInput {
   closeSummary: CloseHistorySummary | null;
   /** The user's cap on unrecorded spending, when they have set one. */
   unrecordedCap: number | null;
-  budgets: readonly BudgetProgress[];
-  goals: readonly SavingsGoalProgress[];
   /** Total market value across wallets, when there is any. */
   investedValue: number | null;
   /** Bank rows still waiting for a category. */
@@ -212,8 +206,6 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
     pulse,
     closeSummary,
     unrecordedCap,
-    budgets,
-    goals,
     investedValue,
     inboxPending,
     chargesUnconfirmed,
@@ -361,9 +353,17 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
       t("facts.unrecordedAllowanceNote"),
     );
 
-    // How far over, when it is over. Same reasoning as the cap overshoot
-    // above: without it a model writes "exceeded the allowance by 240,00 €",
-    // which is the allowance itself rather than the amount it was exceeded by.
+    // How far over, positive, as a figure of its own. Without it a model
+    // writes "exceeded the allowance by 240,00 €", which is the allowance
+    // itself rather than the amount it was exceeded by.
+    //
+    // This is the general lesson of the first live reads: a model asked to
+    // write only figures it has been given will, when the figure it wants is
+    // missing, reach for the nearest one it has and assert a relationship that
+    // is not true. A note telling it not to did not help, and should not have
+    // been expected to — the model was not confused, it was making do. The
+    // fix is arithmetic on this side of the line, where it can be tested,
+    // rather than an instruction not to do arithmetic on the other.
     const measured = close?.unrecorded ?? pulse?.unrecordedSoFar ?? null;
     if (measured !== null && measured > unrecordedCap) {
       money(
@@ -419,54 +419,6 @@ export function buildMonthFacts(input: BuildMonthFactsInput): MonthFacts {
 
   for (const row of top as CategoryBreakdown[]) {
     money(`top-expense:${row.categoryId}`, row.name, row.total, "up-is-bad");
-  }
-
-  for (const row of budgets.slice(0, MAX_BUDGETS)) {
-    money(
-      `budget:${row.budgetId}`,
-      t("facts.budgetSpent", { label: row.label }),
-      row.spent,
-      "up-is-bad",
-    );
-    // `remaining` from `buildBudgetProgress` is deliberately unclamped, so it
-    // goes negative when the cap is breached. That sign is the whole point: a
-    // model reading "left" as a floor of zero would miss the breach entirely.
-    money(
-      `budget-left:${row.budgetId}`,
-      t("facts.budgetLeft", { label: row.label }),
-      row.remaining,
-      "up-is-good",
-    );
-    // The overshoot, positive, as a figure of its own.
-    //
-    // Every model tried wrote "overshooting the cap by -62,40 €": it saw the
-    // breach correctly and then quoted the negative balance as the size of it,
-    // because that was the only figure it had. A note telling it to drop the
-    // minus sign did not help, and should not have been expected to — the
-    // model was not confused, it was making do.
-    //
-    // This is the general lesson of the first live reads: a model asked to
-    // write only figures it has been given will, when the figure it wants is
-    // missing, reach for the nearest one it has and assert a relationship that
-    // is not true. The fix is arithmetic on this side of the line, where it can
-    // be tested, rather than an instruction not to do arithmetic on the other.
-    if (row.over) {
-      money(
-        `budget-over:${row.budgetId}`,
-        t("facts.budgetOver", { label: row.label }),
-        -row.remaining,
-        "up-is-bad",
-      );
-    }
-  }
-
-  for (const row of goals.slice(0, MAX_GOALS)) {
-    money(
-      `goal:${row.goal.id}`,
-      t("facts.goalSaved", { name: row.goal.name }),
-      row.saved,
-      "up-is-good",
-    );
   }
 
   if (investedValue !== null && investedValue > 0) {

@@ -36,6 +36,7 @@ import {
   relativeDayLabel,
   todayIsoLocal,
 } from "@finance/core/constants";
+import { leftAtMonthEnd } from "@finance/core/month-balance";
 import { buildStillToCome } from "@finance/core/still-to-come";
 import {
   FULFILMENT_STATE_KEY,
@@ -44,7 +45,6 @@ import {
 import { deleteTransactions, moveTransactions } from "@/lib/actions/finance";
 import { RowCheckbox, SelectionBar } from "@/components/finance/SelectionBar";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
-import { OptionPicker } from "@/components/layout/Picker";
 import {
   planSelectionMove,
   pruneSelection,
@@ -57,7 +57,6 @@ import type {
   Category,
   CategoryType,
   RecurringTemplateWithCategory,
-  Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
@@ -88,8 +87,6 @@ interface TransactionsViewProps {
   confirmedTransactionIds?: string[];
   /** Rows the matcher has offered as settling one, awaiting a press. */
   proposedTransactionIds?: string[];
-  tags: Tag[];
-  transactionTags: Record<string, Tag[]>;
   year: number;
   month: number;
   defaultDate: string;
@@ -130,13 +127,12 @@ function downloadCsv(filename: string, csv: string): void {
 }
 
 /**
- * The Ledger's desktop columns: category, note, tags, amount.
+ * The Ledger's desktop columns: category, note, amount.
  *
  * Above xl a row stops being "name on the left, amount far right with a
- * screen of nothing between them" and becomes four aligned columns. The note
- * and the tags were already on the row — the note under the name, the tags
- * only in the filter — and at this width there is room to show both without
- * pushing the amount around.
+ * screen of nothing between them" and becomes three aligned columns. The
+ * note was already on the row, under the name, and at this width there is
+ * room to give it a column without pushing the amount around.
  *
  * Shared by the day header so its net lands in the amount column. Kept as one
  * constant because two copies of a grid template is two things to keep in
@@ -148,7 +144,7 @@ function downloadCsv(filename: string, csv: string): void {
  * wrapping a `<tr>` in something that is not allowed to contain it.
  */
 const LEDGER_COLUMNS =
-  "xl:grid xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_minmax(0,12rem)_7rem] xl:items-center xl:gap-4";
+  "xl:grid xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_7rem] xl:items-center xl:gap-4";
 
 function computeTypeTotals(transactions: TransactionWithCategory[]) {
   const totals = {
@@ -174,8 +170,6 @@ export function TransactionsView({
   fulfilledKeys,
   confirmedTransactionIds,
   proposedTransactionIds,
-  tags,
-  transactionTags,
   year,
   month,
   defaultDate,
@@ -271,7 +265,6 @@ export function TransactionsView({
   );
   const [deletePending, startDelete] = useTransition();
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [tagFilter, setTagFilter] = useState<string>("all");
   // The phone's filters-and-actions panel. On a wider screen everything in it
   // sits in the toolbar, so the flag only means anything below `md`.
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -288,19 +281,8 @@ export function TransactionsView({
         return false;
       }
 
-      if (tagFilter !== "all") {
-        const txTags = transactionTags[tx.id] ?? [];
-        if (!txTags.some((tag) => tag.id === tagFilter)) {
-          return false;
-        }
-      }
-
       if (query.length > 0) {
-        const tagNames = (transactionTags[tx.id] ?? [])
-          .map((tag) => tag.name)
-          .join(" ");
-        const haystack =
-          `${tx.categories.name} ${tx.note ?? ""} ${tagNames}`.toLowerCase();
+        const haystack = `${tx.categories.name} ${tx.note ?? ""}`.toLowerCase();
         if (!haystack.includes(query)) {
           return false;
         }
@@ -308,17 +290,9 @@ export function TransactionsView({
 
       return true;
     });
-  }, [
-    transactions,
-    filter,
-    categoryFilter,
-    tagFilter,
-    search,
-    transactionTags,
-  ]);
+  }, [transactions, filter, categoryFilter, search]);
 
   // The same filters, so a planned rent does not survive an "Income" chip.
-  // A tag filter hides every planned row: nothing planned carries a tag yet.
   const filteredPlanned = useMemo(() => {
     const query = search.trim().toLowerCase();
 
@@ -332,9 +306,6 @@ export function TransactionsView({
       ) {
         return false;
       }
-      if (tagFilter !== "all") {
-        return false;
-      }
       if (query.length > 0) {
         const haystack =
           `${occurrence.categoryName} ${occurrence.name} ${occurrence.note ?? ""}`.toLowerCase();
@@ -344,7 +315,7 @@ export function TransactionsView({
       }
       return true;
     });
-  }, [planned, filter, categoryFilter, tagFilter, search]);
+  }, [planned, filter, categoryFilter, search]);
 
   const sortedRows = useMemo(
     () =>
@@ -352,13 +323,9 @@ export function TransactionsView({
     [filtered],
   );
 
-  const dropdownFilters =
-    (categoryFilter !== "all" ? 1 : 0) + (tagFilter !== "all" ? 1 : 0);
+  const dropdownFilters = categoryFilter !== "all" ? 1 : 0;
   const hasActiveFilters =
-    filter !== "all" ||
-    categoryFilter !== "all" ||
-    tagFilter !== "all" ||
-    search.trim().length > 0;
+    filter !== "all" || categoryFilter !== "all" || search.trim().length > 0;
 
   const visibleIds = useMemo(() => sortedRows.map((tx) => tx.id), [sortedRows]);
   // A filter can hide rows that are still in the stored set. Pruning here
@@ -474,9 +441,11 @@ export function TransactionsView({
 
   // What the month ends at, which is a fact about the whole month and does
   // not move with the filters beside it — hence its own label rather than a
-  // third figure in the In / Out pair.
+  // third figure in the In / Out pair. Counted by the account's own rule
+  // (`leftAtMonthEnd`): a purchase inside a wallet moves no money twice — the
+  // transfer to the broker that paid for it already left — and a savings
+  // withdrawal comes back.
   const monthEnd = useMemo(() => {
-    const all = computeTypeTotals(transactions);
     const upcoming = buildStillToCome(
       transactions,
       recurringTemplates,
@@ -486,10 +455,7 @@ export function TransactionsView({
       new Set(skippedKeys ?? []),
       new Set(fulfilledKeys ?? []),
     );
-    const inflow = all.income + upcoming.arriving;
-    const outflow =
-      all.expense + all.savings + all.investment + upcoming.budgetedOutflow;
-    return inflow - outflow;
+    return leftAtMonthEnd(transactions, upcoming);
   }, [
     transactions,
     recurringTemplates,
@@ -500,44 +466,27 @@ export function TransactionsView({
   ]);
 
   /**
-   * The category and tag dropdowns, drawn in the toolbar on a wide screen and
-   * full width in the phone's panel. One definition, so the two can never
-   * filter differently.
+   * The category dropdown, drawn in the toolbar on a wide screen and full
+   * width in the phone's panel. One definition, so the two can never filter
+   * differently.
    */
-  function renderFilterSelects(stacked: boolean) {
+  function renderCategoryFilter(stacked: boolean) {
     // Distinct ids: at phone width both copies are in the document at once,
     // the toolbar's hidden by CSS and the panel's showing.
     const suffix = stacked ? "-panel" : "";
     const triggerClass = "h-9 min-h-11 rounded-full px-3.5 text-sm lg:min-h-0";
     return (
-      <>
-        <CategoryPicker
-          id={`ledger-category-filter${suffix}`}
-          name="categoryFilter"
-          categories={categories}
-          value={categoryFilter === "all" ? "" : categoryFilter}
-          onValueChange={(categoryId) => setCategoryFilter(categoryId || "all")}
-          allLabel={t("ledger.allCategories")}
-          label={t("ledger.filterByCategory")}
-          className={stacked ? "w-full" : "w-44 flex-none"}
-          triggerClassName={triggerClass}
-        />
-        {tags.length > 0 ? (
-          <OptionPicker
-            id={`ledger-tag-filter${suffix}`}
-            panelLabel={t("ledger.filterByTag")}
-            label={t("ledger.filterByTag")}
-            options={[
-              { value: "all", label: t("ledger.allTags") },
-              ...tags.map((tag) => ({ value: tag.id, label: tag.name })),
-            ]}
-            value={tagFilter}
-            onValueChange={setTagFilter}
-            className={stacked ? "w-full" : "w-36 flex-none"}
-            triggerClassName={triggerClass}
-          />
-        ) : null}
-      </>
+      <CategoryPicker
+        id={`ledger-category-filter${suffix}`}
+        name="categoryFilter"
+        categories={categories}
+        value={categoryFilter === "all" ? "" : categoryFilter}
+        onValueChange={(categoryId) => setCategoryFilter(categoryId || "all")}
+        allLabel={t("ledger.allCategories")}
+        label={t("ledger.filterByCategory")}
+        className={stacked ? "w-full" : "w-44 flex-none"}
+        triggerClassName={triggerClass}
+      />
     );
   }
 
@@ -645,7 +594,7 @@ export function TransactionsView({
                 </button>
 
                 <div className="hidden shrink-0 gap-2 md:flex">
-                  {renderFilterSelects(false)}
+                  {renderCategoryFilter(false)}
                 </div>
               </div>
 
@@ -750,7 +699,7 @@ export function TransactionsView({
                   id="ledger-options"
                   className="flex flex-col gap-2 md:hidden"
                 >
-                  {renderFilterSelects(true)}
+                  {renderCategoryFilter(true)}
                   <div className="flex flex-wrap gap-2">
                     {selectMode ? null : (
                       <Button
@@ -857,7 +806,6 @@ export function TransactionsView({
                     onClick={() => {
                       setFilter("all");
                       setCategoryFilter("all");
-                      setTagFilter("all");
                       setSearch("");
                     }}
                   >
@@ -879,7 +827,7 @@ export function TransactionsView({
                         {relativeDayLabel(day.date, formatShortDate, locale)}
                       </h3>
                       {day.rows.length > 0 ? (
-                        <span className="privacy-amount text-xs tabular-nums text-muted-foreground xl:col-start-4 xl:text-right">
+                        <span className="privacy-amount text-xs tabular-nums text-muted-foreground xl:col-start-3 xl:text-right">
                           {day.net >= 0 ? "+" : "−"}
                           {formatEuro(Math.abs(day.net))}
                         </span>
@@ -968,21 +916,6 @@ export function TransactionsView({
                             {rowSubtitle(tx)}
                           </span>
 
-                          {/* Three at most: past that the column starts
-                              deciding the row's width. */}
-                          <span className="hidden min-w-0 items-center gap-1 overflow-hidden xl:flex">
-                            {(transactionTags[tx.id] ?? [])
-                              .slice(0, 3)
-                              .map((tag) => (
-                                <span
-                                  key={tag.id}
-                                  className="truncate rounded-full bg-secondary px-2 py-0.5 text-[0.6875rem] text-muted-foreground"
-                                >
-                                  {tag.name}
-                                </span>
-                              ))}
-                          </span>
-
                           {/* The sign is the second channel, and the row had
                               only one. Amounts are stored positive, so
                               `TYPE_AMOUNT_CLASS` alone had to say both what
@@ -1021,12 +954,6 @@ export function TransactionsView({
 
       <TransactionForm
         categories={categories}
-        tags={tags}
-        selectedTagIds={
-          editTransaction
-            ? (transactionTags[editTransaction.id] ?? []).map((t) => t.id)
-            : []
-        }
         open={editTransaction !== null}
         onOpenChange={(open) => {
           if (!open) {
@@ -1113,8 +1040,6 @@ function PlannedRow({
       <span className="hidden min-w-0 truncate text-sm text-muted-foreground xl:block">
         {subtitle}
       </span>
-
-      <span className="hidden xl:block" />
 
       <span className="privacy-amount shrink-0 whitespace-nowrap text-sm tabular-nums text-muted-foreground xl:text-right">
         {amountSign(occurrence.categoryType)}

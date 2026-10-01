@@ -6,10 +6,8 @@ import {
 } from "@finance/core/month-read-budget";
 import { readFooting, type MonthRead } from "@finance/core/month-read";
 import { buildMonthFacts, type MonthFacts } from "@finance/core/month-facts";
-import type { BudgetProgress } from "@finance/core/budget-limits";
 import type { MonthComparison } from "@finance/core/month-comparison";
 import type { buildMonthPulse } from "@finance/core/month-pulse";
-import type { SavingsGoalProgress } from "@finance/core/savings-goals";
 import type {
   MonthlySummary,
   MonthReadRow,
@@ -54,8 +52,6 @@ export function monthFactsFromScreen(input: {
   comparison: MonthComparison | null;
   closes: MonthCloseOverview;
   pulse: ReturnType<typeof buildMonthPulse> | null;
-  budgets: readonly BudgetProgress[];
-  goals: readonly SavingsGoalProgress[];
   investedValue: number;
   inboxPending: number;
   chargesUnconfirmed: number;
@@ -88,8 +84,6 @@ export function monthFactsFromScreen(input: {
     pulse: input.pulse,
     closeSummary: input.closes.summary,
     unrecordedCap: input.closes.settings.unrecordedCap,
-    budgets: input.budgets,
-    goals: input.goals,
     investedValue: input.investedValue,
     inboxPending: input.inboxPending,
     chargesUnconfirmed: input.chargesUnconfirmed,

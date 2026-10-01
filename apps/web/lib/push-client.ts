@@ -15,8 +15,7 @@ import {
  */
 
 export type PushSupport =
-  | { supported: true }
-  | { supported: false; reason: string };
+  { supported: true } | { supported: false; reason: string };
 
 export function checkPushSupport(): PushSupport {
   if (typeof window === "undefined") {

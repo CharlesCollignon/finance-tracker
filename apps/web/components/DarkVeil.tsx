@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useRef, useEffect } from 'react';
-import { Renderer, Program, Mesh, Triangle, Vec2 } from 'ogl';
+import { useRef, useEffect } from "react";
+import { Renderer, Program, Mesh, Triangle, Vec2 } from "ogl";
 
 const vertex = `
 attribute vec2 position;
@@ -105,16 +105,16 @@ type Props = {
 };
 
 export default function DarkVeil({
-                                   onUnavailable,
-                                   hueShift = 0,
-                                   noiseIntensity = 0,
-                                   scanlineIntensity = 0,
-                                   speed = 0.5,
-                                   scanlineFrequency = 0,
-                                   warpAmount = 0,
-                                   resolutionScale = 1,
-                                   lightMode = false
-                                 }: Props) {
+  onUnavailable,
+  hueShift = 0,
+  noiseIntensity = 0,
+  scanlineIntensity = 0,
+  speed = 0.5,
+  scanlineFrequency = 0,
+  warpAmount = 0,
+  resolutionScale = 1,
+  lightMode = false,
+}: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -125,7 +125,7 @@ export default function DarkVeil({
     try {
       renderer = new Renderer({
         dpr: Math.min(window.devicePixelRatio, 2),
-        canvas
+        canvas,
       });
     } catch {
       onUnavailable?.();
@@ -146,8 +146,8 @@ export default function DarkVeil({
         uScan: { value: scanlineIntensity },
         uScanFreq: { value: scanlineFrequency },
         uWarp: { value: warpAmount },
-        uLightMode: { value: lightMode ? 1 : 0 }
-      }
+        uLightMode: { value: lightMode ? 1 : 0 },
+      },
     });
 
     // OGL's `setShaders` returns early when the program fails to link, which
@@ -158,7 +158,7 @@ export default function DarkVeil({
       (program as unknown as { attributeLocations?: unknown })
         .attributeLocations !== undefined;
     if (!linked) {
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
       onUnavailable?.();
       return;
     }
@@ -168,8 +168,8 @@ export default function DarkVeil({
     // Someone who has asked for less motion gets the veil as a still frame
     // rather than nothing: the colour is the point, the drift is the garnish.
     const still =
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const resize = () => {
       const w = parent.clientWidth,
@@ -178,7 +178,7 @@ export default function DarkVeil({
       program.uniforms.uResolution.value.set(w, h);
     };
 
-    window.addEventListener('resize', resize);
+    window.addEventListener("resize", resize);
     resize();
 
     const start = performance.now();
@@ -205,13 +205,23 @@ export default function DarkVeil({
 
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener('resize', resize);
+      window.removeEventListener("resize", resize);
       // Browsers cap the number of live WebGL contexts (Chrome at 16) and
       // drop the oldest when a new one is created. Without this, navigating
       // between routes that mount a veil silently kills earlier canvases.
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [onUnavailable, hueShift, noiseIntensity, scanlineIntensity, speed, scanlineFrequency, warpAmount, resolutionScale, lightMode]);
+  }, [
+    onUnavailable,
+    hueShift,
+    noiseIntensity,
+    scanlineIntensity,
+    speed,
+    scanlineFrequency,
+    warpAmount,
+    resolutionScale,
+    lightMode,
+  ]);
 
   return <canvas ref={ref} className="w-full h-full block" />;
 }

@@ -7,27 +7,31 @@ import {
   defaultTargets,
   formatWeight,
   suggestContributionSplit,
-  type WalletTarget,
+  type AccountTarget,
 } from "./allocation";
 
-const BALANCED: WalletTarget[] = [
-  { walletId: "pea", targetWeight: 0.6 },
-  { walletId: "cto", targetWeight: 0.3 },
-  { walletId: "crypto", targetWeight: 0.1 },
+const BALANCED: AccountTarget[] = [
+  { accountId: "pea", targetWeight: 0.6 },
+  { accountId: "cto", targetWeight: 0.3 },
+  { accountId: "crypto", targetWeight: 0.1 },
 ];
 
 function values(pea: number, cto: number, crypto: number) {
   return [
-    { walletId: "pea" as const, value: pea },
-    { walletId: "cto" as const, value: cto },
-    { walletId: "crypto" as const, value: crypto },
+    { accountId: "pea" as const, value: pea },
+    { accountId: "cto" as const, value: cto },
+    { accountId: "crypto" as const, value: crypto },
   ];
 }
 
 describe("buildAllocation", () => {
   it("reports weights against targets", () => {
-    const summary = buildAllocation(values(6000, 3000, 1000), BALANCED);
-    const pea = summary.rows.find((row) => row.walletId === "pea")!;
+    const summary = buildAllocation(
+      values(6000, 3000, 1000),
+      BALANCED,
+      INVESTMENT_WALLET_IDS,
+    );
+    const pea = summary.rows.find((row) => row.accountId === "pea")!;
 
     expect(summary.total).toBe(10000);
     expect(pea.currentWeight).toBeCloseTo(0.6, 6);
@@ -38,9 +42,13 @@ describe("buildAllocation", () => {
 
   it("flags the drifted wallets from the audit's example", () => {
     // 52 / 28 / 20 against a 60 / 30 / 10 target.
-    const summary = buildAllocation(values(5200, 2800, 2000), BALANCED);
+    const summary = buildAllocation(
+      values(5200, 2800, 2000),
+      BALANCED,
+      INVESTMENT_WALLET_IDS,
+    );
 
-    const byWallet = new Map(summary.rows.map((row) => [row.walletId, row]));
+    const byWallet = new Map(summary.rows.map((row) => [row.accountId, row]));
     expect(byWallet.get("pea")!.status).toBe("under");
     expect(byWallet.get("pea")!.driftPoints).toBeCloseTo(-8, 6);
     expect(byWallet.get("crypto")!.status).toBe("over");
@@ -50,21 +58,31 @@ describe("buildAllocation", () => {
 
   it("treats a small drift as on-target", () => {
     // 62 / 29 / 9 is within the tolerance band everywhere.
-    const summary = buildAllocation(values(6200, 2900, 900), BALANCED);
+    const summary = buildAllocation(
+      values(6200, 2900, 900),
+      BALANCED,
+      INVESTMENT_WALLET_IDS,
+    );
     expect(summary.needsRebalance).toBe(false);
   });
 
   it("reports the euros needed to sit exactly on target", () => {
-    const summary = buildAllocation(values(5200, 2800, 2000), BALANCED);
-    const pea = summary.rows.find((row) => row.walletId === "pea")!;
+    const summary = buildAllocation(
+      values(5200, 2800, 2000),
+      BALANCED,
+      INVESTMENT_WALLET_IDS,
+    );
+    const pea = summary.rows.find((row) => row.accountId === "pea")!;
     // 60% of 10,000 is 6,000, so 800 short.
     expect(pea.gap).toBeCloseTo(800, 6);
   });
 
   it("refuses to report drift against half-specified targets", () => {
-    const summary = buildAllocation(values(6000, 3000, 1000), [
-      { walletId: "pea", targetWeight: 0.6 },
-    ]);
+    const summary = buildAllocation(
+      values(6000, 3000, 1000),
+      [{ accountId: "pea", targetWeight: 0.6 }],
+      INVESTMENT_WALLET_IDS,
+    );
 
     expect(summary.rows.every((row) => row.status === "no-target")).toBe(true);
     expect(summary.needsRebalance).toBe(false);
@@ -72,18 +90,23 @@ describe("buildAllocation", () => {
   });
 
   it("handles an empty portfolio without dividing by zero", () => {
-    const summary = buildAllocation(values(0, 0, 0), BALANCED);
+    const summary = buildAllocation(
+      values(0, 0, 0),
+      BALANCED,
+      INVESTMENT_WALLET_IDS,
+    );
     expect(summary.total).toBe(0);
     expect(summary.rows.every((row) => row.currentWeight === 0)).toBe(true);
   });
 
   it("includes a wallet the caller did not mention", () => {
     const summary = buildAllocation(
-      [{ walletId: "pea", value: 100 }],
+      [{ accountId: "pea", value: 100 }],
       BALANCED,
+      INVESTMENT_WALLET_IDS,
     );
     expect(summary.rows).toHaveLength(INVESTMENT_WALLET_IDS.length);
-    expect(summary.rows.find((row) => row.walletId === "crypto")!.value).toBe(
+    expect(summary.rows.find((row) => row.accountId === "crypto")!.value).toBe(
       0,
     );
   });
@@ -91,17 +114,25 @@ describe("buildAllocation", () => {
 
 describe("suggestContributionSplit", () => {
   it("sends new money to the underweight wallet", () => {
-    const summary = buildAllocation(values(5200, 2800, 2000), BALANCED);
+    const summary = buildAllocation(
+      values(5200, 2800, 2000),
+      BALANCED,
+      INVESTMENT_WALLET_IDS,
+    );
     const split = suggestContributionSplit(summary, 500);
 
-    const pea = split.find((row) => row.walletId === "pea");
+    const pea = split.find((row) => row.accountId === "pea");
     expect(pea).toBeDefined();
     // Crypto is overweight, so nothing should go there.
-    expect(split.find((row) => row.walletId === "crypto")).toBeUndefined();
+    expect(split.find((row) => row.accountId === "crypto")).toBeUndefined();
   });
 
   it("allocates the whole contribution", () => {
-    const summary = buildAllocation(values(5200, 2800, 2000), BALANCED);
+    const summary = buildAllocation(
+      values(5200, 2800, 2000),
+      BALANCED,
+      INVESTMENT_WALLET_IDS,
+    );
     const split = suggestContributionSplit(summary, 500);
     const total = split.reduce((sum, row) => sum + row.amount, 0);
 
@@ -109,9 +140,13 @@ describe("suggestContributionSplit", () => {
   });
 
   it("splits by target weight when the portfolio is already balanced", () => {
-    const summary = buildAllocation(values(6000, 3000, 1000), BALANCED);
+    const summary = buildAllocation(
+      values(6000, 3000, 1000),
+      BALANCED,
+      INVESTMENT_WALLET_IDS,
+    );
     const split = suggestContributionSplit(summary, 1000);
-    const byWallet = new Map(split.map((row) => [row.walletId, row.amount]));
+    const byWallet = new Map(split.map((row) => [row.accountId, row.amount]));
 
     expect(byWallet.get("pea")).toBeCloseTo(600, 1);
     expect(byWallet.get("cto")).toBeCloseTo(300, 1);
@@ -119,18 +154,26 @@ describe("suggestContributionSplit", () => {
   });
 
   it("splits by target weight for a first contribution into nothing", () => {
-    const summary = buildAllocation(values(0, 0, 0), BALANCED);
+    const summary = buildAllocation(
+      values(0, 0, 0),
+      BALANCED,
+      INVESTMENT_WALLET_IDS,
+    );
     const split = suggestContributionSplit(summary, 1000);
-    const byWallet = new Map(split.map((row) => [row.walletId, row.amount]));
+    const byWallet = new Map(split.map((row) => [row.accountId, row.amount]));
 
     expect(byWallet.get("pea")).toBeCloseTo(600, 1);
   });
 
   it("fills the shortfall proportionally when money is short", () => {
     // PEA is 800 short, CTO 200 short, but only 500 is available.
-    const summary = buildAllocation(values(5200, 2800, 2000), BALANCED);
+    const summary = buildAllocation(
+      values(5200, 2800, 2000),
+      BALANCED,
+      INVESTMENT_WALLET_IDS,
+    );
     const split = suggestContributionSplit(summary, 500);
-    const byWallet = new Map(split.map((row) => [row.walletId, row.amount]));
+    const byWallet = new Map(split.map((row) => [row.accountId, row.amount]));
 
     const pea = byWallet.get("pea") ?? 0;
     const cto = byWallet.get("cto") ?? 0;
@@ -139,13 +182,21 @@ describe("suggestContributionSplit", () => {
   });
 
   it("returns nothing for a non-positive contribution", () => {
-    const summary = buildAllocation(values(6000, 3000, 1000), BALANCED);
+    const summary = buildAllocation(
+      values(6000, 3000, 1000),
+      BALANCED,
+      INVESTMENT_WALLET_IDS,
+    );
     expect(suggestContributionSplit(summary, 0)).toEqual([]);
     expect(suggestContributionSplit(summary, -100)).toEqual([]);
   });
 
   it("returns nothing when no targets are set", () => {
-    const summary = buildAllocation(values(6000, 3000, 1000), []);
+    const summary = buildAllocation(
+      values(6000, 3000, 1000),
+      [],
+      INVESTMENT_WALLET_IDS,
+    );
     expect(suggestContributionSplit(summary, 500)).toEqual([]);
   });
 });
@@ -153,14 +204,14 @@ describe("suggestContributionSplit", () => {
 describe("currentSplitPercents", () => {
   it("starts the editor from today's split", () => {
     const percents = currentSplitPercents(
-      buildAllocation(values(6000, 3000, 1000), []),
+      buildAllocation(values(6000, 3000, 1000), [], INVESTMENT_WALLET_IDS),
     );
     expect(percents).toEqual({ pea: 60, cto: 30, av: 0, per: 0, crypto: 10 });
   });
 
   it("rounds so the shares add up to exactly 100", () => {
     const percents = currentSplitPercents(
-      buildAllocation(values(1000, 1000, 1000), []),
+      buildAllocation(values(1000, 1000, 1000), [], INVESTMENT_WALLET_IDS),
     );
     expect(Object.values(percents).reduce((sum, value) => sum + value, 0)).toBe(
       100,
@@ -171,14 +222,16 @@ describe("currentSplitPercents", () => {
   });
 
   it("starts every wallet at 0 when nothing is held", () => {
-    const percents = currentSplitPercents(buildAllocation(values(0, 0, 0), []));
+    const percents = currentSplitPercents(
+      buildAllocation(values(0, 0, 0), [], INVESTMENT_WALLET_IDS),
+    );
     expect(Object.values(percents).every((value) => value === 0)).toBe(true);
   });
 });
 
 describe("defaultTargets", () => {
   it("offers an even split across every wallet", () => {
-    const targets = defaultTargets();
+    const targets = defaultTargets(INVESTMENT_WALLET_IDS);
     expect(targets).toHaveLength(INVESTMENT_WALLET_IDS.length);
 
     const [first] = targets;
@@ -201,7 +254,7 @@ describe("defaultTargets", () => {
    * rather than left to be rediscovered by whoever adds the sixth.
    */
   it("offers targets buildAllocation will actually measure against", () => {
-    const targets = defaultTargets();
+    const targets = defaultTargets(INVESTMENT_WALLET_IDS);
     const coverage = targets.reduce(
       (sum, target) => sum + (target.targetWeight ?? 0),
       0,
@@ -209,8 +262,9 @@ describe("defaultTargets", () => {
     expect(coverage).toBeCloseTo(1, 6);
 
     const summary = buildAllocation(
-      INVESTMENT_WALLET_IDS.map((walletId) => ({ walletId, value: 100 })),
+      INVESTMENT_WALLET_IDS.map((accountId) => ({ accountId, value: 100 })),
       targets,
+      INVESTMENT_WALLET_IDS,
     );
     expect(summary.rows.every((row) => row.status !== "no-target")).toBe(true);
   });
@@ -223,5 +277,32 @@ describe("formatWeight", () => {
 
   it("renders an absent target as a dash", () => {
     expect(formatWeight(null, "en")).toBe("—");
+  });
+});
+
+describe("savings accounts in the split", () => {
+  it("weighs a Livret A beside the wallets, and only the accounts kept", () => {
+    const summary = buildAllocation(
+      [
+        { accountId: "livret_a", value: 5_000 },
+        { accountId: "pea", value: 15_000 },
+        { accountId: "cto", value: 99_000 },
+      ],
+      [],
+      ["pea", "livret_a"],
+    );
+    expect(summary.rows.map((row) => row.accountId)).toEqual([
+      "livret_a",
+      "pea",
+    ]);
+    expect(summary.total).toBe(20_000);
+    expect(summary.rows[0].currentWeight).toBe(0.25);
+  });
+
+  it("offers even targets that add up for any number of accounts", () => {
+    const targets = defaultTargets(["livret_a", "pel", "pea"]);
+    expect(targets.map((target) => target.targetWeight)).toEqual([
+      0.34, 0.33, 0.33,
+    ]);
   });
 });

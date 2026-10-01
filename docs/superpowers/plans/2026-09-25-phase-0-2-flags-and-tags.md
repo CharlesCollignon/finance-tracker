@@ -26,14 +26,14 @@ Found while reading the code for this plan. Where the code contradicts the spec,
 ## Global Constraints
 
 - Domain logic lives in `packages/core` as pure, tested functions; UI layers stay thin.
-- Every user-facing string goes through `packages/core/src/i18n/messages/en.ts` and `fr.ts`. `fr.ts` is typed `Messages`, so `pnpm --filter @finance/core exec tsc --noEmit` is the parity check. French typography: a no-break space, written ` ` in `fr.ts`, before `? ! : ;`. French for *tag* is *étiquette* (feminine).
+- Every user-facing string goes through `packages/core/src/i18n/messages/en.ts` and `fr.ts`. `fr.ts` is typed `Messages`, so `pnpm --filter @finance/core exec tsc --noEmit` is the parity check. French typography: a no-break space, written ` ` in `fr.ts`, before `? ! : ;`. French for _tag_ is _étiquette_ (feminine).
 - On any screen whose behaviour or UI this plan changes, inherited hard-coded English moves into the catalogues too.
 - `packages/core/src/i18n/unused-keys.test.ts` fails on a key that no source file reads as a literal, so every new key must be used, and is added in the task that uses it.
 - A new module in `packages/core/src` needs an entry in `packages/core/package.json` `"exports"` (flat map, alphabetical) before either app can import it.
 - `knip` (`pnpm check:reachability`) fails on a file nothing imports and on a `packages/core` export neither app uses. The flag modules are consumed only once the tag screens read them, so **reachability is part of the gates from Task 7 on**; before that it is expected to report the new, not-yet-consumed exports.
 - `apps/web/DESIGN.md`: dark only; tokens only (no hex, no alpha literals, no arbitrary durations); gold accent only in its four homes; every rendered amount carries `.privacy-amount` / `PrivateAmount`. No amount is rendered in this plan.
 - WCAG 2.2 AA: 44 px targets (56 px list rows), visible focus, labelled controls, reduced motion honoured.
-- `CONTEXT.md` vocabulary: *tag* (never "label" or "group"), *transaction*.
+- `CONTEXT.md` vocabulary: _tag_ (never "label" or "group"), _transaction_.
 - Migrations are additive and reversible, RLS on every table, and each is executed with `npx supabase db reset` on a local stack, plus its assertion script, before it is committed. If `docker` reports `permission denied` on `/var/run/docker.sock` in a shell older than your `docker` group membership, run the command as `sg docker -c "<command>"`.
 - Before writing a Next.js route, page or server action, read the matching guide under `node_modules/next/dist/docs/01-app/` (this Next.js has breaking changes; data and `React.cache`: `01-getting-started/06-fetching-data.md`; server functions: `01-getting-started/07-mutating-data.md`).
 - Gates before any task is called done: `pnpm --filter @finance/core exec tsc --noEmit`, `pnpm --filter web exec tsc --noEmit`, `pnpm --filter mobile exec tsc --noEmit`, `pnpm --filter @finance/core test`, `pnpm --filter web test`, `pnpm --filter web exec eslint --max-warnings 0 .`, `pnpm --filter mobile exec expo lint --max-warnings 0`, and (from Task 7 on) `pnpm check:reachability`.
@@ -53,43 +53,45 @@ Found while reading the code for this plan. Where the code contradicts the spec,
 
 ## File Structure
 
-| File | Responsibility | Task |
-|---|---|---|
-| `supabase/migrations/039_feature_flags.sql` | **Create.** `feature_flags`, `user_feature_flags`, `evaluated_feature_flags()`, flag `tags.manage` | 1 |
-| `supabase/tests/039_feature_flags.test.sql` | **Create.** What 039 must be true for | 1 |
-| `packages/core/src/types/database.ts` | `evaluated_feature_flags` and `merge_tags` in `Functions` | 1, 5 |
-| `packages/core/src/flags.ts` (+ test) | **Create.** Typed flag keys, the answer as a set, the phone's cache format | 2 |
-| `packages/core/package.json` | `"./flags"`, `"./tags"` exports | 2, 6 |
-| `apps/web/lib/flags.ts` | **Create.** `getFlags()`, once per request | 3 |
-| `apps/mobile/src/lib/flags.ts` | **Create.** Read, fetch and cache the flags per account | 4 |
-| `apps/mobile/src/providers/FlagsProvider.tsx` | **Create.** Flags for the signed-in account; `useFlag` | 4 |
-| `apps/mobile/src/app/_layout.tsx` | Mounts `FlagsProvider` | 4 |
-| `supabase/migrations/040_merge_tags.sql` | **Create.** `merge_tags(target_user, from_tag, into_tag)` | 5 |
-| `supabase/tests/040_merge_tags.test.sql` | **Create.** Merge, bin, overlap, refusals, delete cascade | 5 |
-| `packages/core/src/tags.ts` (+ test) | **Create.** `TagUsage`, `tagUsageFromRows`, `findRenameConflict` | 6 |
-| `packages/core/src/i18n/messages/en.ts`, `fr.ts` | Tag management, errors, the confirm sheet's own labels | 7, 8 |
-| `apps/web/lib/queries/phase4.ts` | `getTagUsage` | 7 |
-| `apps/web/lib/actions/phase4.ts` | `renameTag`, `deleteTag`, `mergeTags`; duplicate names in the catalogue's words | 7 |
-| `apps/web/components/finance/TagsCard.tsx` | **Create.** The Plan page's Tags card, managed when the flag is on | 7 |
-| `apps/web/app/(app)/budgets/BudgetsView.tsx` | Renders `TagsCard` | 7 |
-| `apps/web/app/(app)/budgets/page.tsx` | Reads the flag and the usage counts | 7 |
-| `apps/mobile/src/lib/queries.ts` | `getTagUsage` | 8 |
-| `apps/mobile/src/lib/mutations.ts` | `renameTag`, `deleteTag`, `mergeTags`; duplicate names in the catalogue's words | 8 |
-| `apps/mobile/src/components/TagEditSheet.tsx` | **Create.** Rename, merge, delete one tag | 8 |
-| `apps/mobile/src/components/ui/ConfirmSheet.tsx` | Default labels from the catalogue | 8 |
-| `apps/mobile/src/app/(tabs)/planning.tsx` | Tags open the sheet when the flag is on | 8 |
-| `docs/how-pluclair-works.md` | Feature flags section, known issues | 9 |
+| File                                             | Responsibility                                                                                     | Task |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------- | ---- |
+| `supabase/migrations/039_feature_flags.sql`      | **Create.** `feature_flags`, `user_feature_flags`, `evaluated_feature_flags()`, flag `tags.manage` | 1    |
+| `supabase/tests/039_feature_flags.test.sql`      | **Create.** What 039 must be true for                                                              | 1    |
+| `packages/core/src/types/database.ts`            | `evaluated_feature_flags` and `merge_tags` in `Functions`                                          | 1, 5 |
+| `packages/core/src/flags.ts` (+ test)            | **Create.** Typed flag keys, the answer as a set, the phone's cache format                         | 2    |
+| `packages/core/package.json`                     | `"./flags"`, `"./tags"` exports                                                                    | 2, 6 |
+| `apps/web/lib/flags.ts`                          | **Create.** `getFlags()`, once per request                                                         | 3    |
+| `apps/mobile/src/lib/flags.ts`                   | **Create.** Read, fetch and cache the flags per account                                            | 4    |
+| `apps/mobile/src/providers/FlagsProvider.tsx`    | **Create.** Flags for the signed-in account; `useFlag`                                             | 4    |
+| `apps/mobile/src/app/_layout.tsx`                | Mounts `FlagsProvider`                                                                             | 4    |
+| `supabase/migrations/040_merge_tags.sql`         | **Create.** `merge_tags(target_user, from_tag, into_tag)`                                          | 5    |
+| `supabase/tests/040_merge_tags.test.sql`         | **Create.** Merge, bin, overlap, refusals, delete cascade                                          | 5    |
+| `packages/core/src/tags.ts` (+ test)             | **Create.** `TagUsage`, `tagUsageFromRows`, `findRenameConflict`                                   | 6    |
+| `packages/core/src/i18n/messages/en.ts`, `fr.ts` | Tag management, errors, the confirm sheet's own labels                                             | 7, 8 |
+| `apps/web/lib/queries/phase4.ts`                 | `getTagUsage`                                                                                      | 7    |
+| `apps/web/lib/actions/phase4.ts`                 | `renameTag`, `deleteTag`, `mergeTags`; duplicate names in the catalogue's words                    | 7    |
+| `apps/web/components/finance/TagsCard.tsx`       | **Create.** The Plan page's Tags card, managed when the flag is on                                 | 7    |
+| `apps/web/app/(app)/budgets/BudgetsView.tsx`     | Renders `TagsCard`                                                                                 | 7    |
+| `apps/web/app/(app)/budgets/page.tsx`            | Reads the flag and the usage counts                                                                | 7    |
+| `apps/mobile/src/lib/queries.ts`                 | `getTagUsage`                                                                                      | 8    |
+| `apps/mobile/src/lib/mutations.ts`               | `renameTag`, `deleteTag`, `mergeTags`; duplicate names in the catalogue's words                    | 8    |
+| `apps/mobile/src/components/TagEditSheet.tsx`    | **Create.** Rename, merge, delete one tag                                                          | 8    |
+| `apps/mobile/src/components/ui/ConfirmSheet.tsx` | Default labels from the catalogue                                                                  | 8    |
+| `apps/mobile/src/app/(tabs)/planning.tsx`        | Tags open the sheet when the flag is on                                                            | 8    |
+| `docs/how-pluclair-works.md`                     | Feature flags section, known issues                                                                | 9    |
 
 ---
 
 ### Task 1: Migration 039 — feature flags, evaluated in the database
 
 **Files:**
+
 - Create: `supabase/migrations/039_feature_flags.sql`
 - Create: `supabase/tests/039_feature_flags.test.sql`
 - Modify: `packages/core/src/types/database.ts` (`Functions`, before `refund_category_selection`)
 
 **Interfaces:**
+
 - Consumes: `auth.users`.
 - Produces: tables `feature_flags(key, description, enabled_by_default, enabled_from, created_at)` and `user_feature_flags(user_id, flag_key, enabled, created_at)`, with RLS and no policies; function `evaluated_feature_flags() returns table (key text, enabled boolean)`, executable by `authenticated` and `service_role`; seeded flag `tags.manage`, off. Type `Database["public"]["Functions"]["evaluated_feature_flags"]`.
 
@@ -389,14 +391,18 @@ Expected: the reset ends `Finished supabase db reset`; each script ends with its
 In `packages/core/src/types/database.ts`, inside `Functions`, immediately before the doc comment `/** Hand back an attempt that never reached the provider. */` that opens `refund_category_selection`, add:
 
 ```ts
-      /**
-       * Every feature flag with its answer for the caller (039). A flag the
-       * database does not hold has no row; a caller with no session gets none.
-       */
-      evaluated_feature_flags: {
-        Args: Record<PropertyKey, never>;
-        Returns: { key: string; enabled: boolean }[];
-      };
+/**
+ * Every feature flag with its answer for the caller (039). A flag the
+ * database does not hold has no row; a caller with no session gets none.
+ */
+evaluated_feature_flags: {
+  Args: Record<PropertyKey, never>;
+  Returns: {
+    key: string;
+    enabled: boolean;
+  }
+  [];
+}
 ```
 
 - [ ] **Step 6: Gates**
@@ -430,11 +436,13 @@ EOF
 ### Task 2: Core — flags as a typed set
 
 **Files:**
+
 - Create: `packages/core/src/flags.ts`
 - Create: `packages/core/src/flags.test.ts`
 - Modify: `packages/core/package.json` (`"exports"`)
 
 **Interfaces:**
+
 - Consumes: the rows of `evaluated_feature_flags()`, typed `unknown` so a malformed answer cannot throw.
 - Produces: `type FlagKey = "tags.manage"`; `type FlagSet = ReadonlySet<FlagKey>`; `NO_FLAGS: FlagSet`; `flagsFromRows(rows: unknown): FlagSet`; `isFlagOn(flags: FlagSet, key: FlagKey): boolean`; `serializeFlags(flags: FlagSet): string`; `parseStoredFlags(raw: string | null): FlagSet | null`.
 
@@ -649,9 +657,11 @@ EOF
 ### Task 3: Web — flags once per request
 
 **Files:**
+
 - Create: `apps/web/lib/flags.ts`
 
 **Interfaces:**
+
 - Consumes: `evaluated_feature_flags` (Task 1), `flagsFromRows`, `NO_FLAGS`, `FlagSet` (Task 2), `createClient` (`apps/web/lib/supabase/server.ts`).
 - Produces: `getFlags(): Promise<FlagSet>`, memoised per request. Read by the Plan page in Task 7.
 
@@ -723,11 +733,13 @@ EOF
 ### Task 4: Phone — flags once per session, the last answer kept per account
 
 **Files:**
+
 - Create: `apps/mobile/src/lib/flags.ts`
 - Create: `apps/mobile/src/providers/FlagsProvider.tsx`
 - Modify: `apps/mobile/src/app/_layout.tsx:23-26,178-180`
 
 **Interfaces:**
+
 - Consumes: `evaluated_feature_flags` (Task 1), `flagsFromRows`, `parseStoredFlags`, `serializeFlags`, `isFlagOn`, `NO_FLAGS`, `FlagKey`, `FlagSet` (Task 2), `useAuth` (`providers/AuthProvider.tsx`), `supabase` (`lib/supabase.ts`).
 - Produces: `FlagsProvider`; `useFlag(key: FlagKey): boolean`. Read by the Plan screen in Task 8.
 
@@ -881,21 +893,21 @@ import { FlagsProvider } from "@/providers/FlagsProvider";
 and replace:
 
 ```tsx
-                        <OnboardingProvider>
-                          <RootNavigator fontsReady={fontsReady} />
-                        </OnboardingProvider>
+<OnboardingProvider>
+  <RootNavigator fontsReady={fontsReady} />
+</OnboardingProvider>
 ```
 
 with:
 
 ```tsx
-                        <OnboardingProvider>
-                          {/* Below AuthProvider, whose user it asks for; around
+<OnboardingProvider>
+  {/* Below AuthProvider, whose user it asks for; around
                               the navigator, so every screen reads one answer. */}
-                          <FlagsProvider>
-                            <RootNavigator fontsReady={fontsReady} />
-                          </FlagsProvider>
-                        </OnboardingProvider>
+  <FlagsProvider>
+    <RootNavigator fontsReady={fontsReady} />
+  </FlagsProvider>
+</OnboardingProvider>
 ```
 
 - [ ] **Step 4: Gates**
@@ -926,11 +938,13 @@ EOF
 ### Task 5: Migration 040 — merge one tag into another
 
 **Files:**
+
 - Create: `supabase/migrations/040_merge_tags.sql`
 - Create: `supabase/tests/040_merge_tags.test.sql`
 - Modify: `packages/core/src/types/database.ts` (`Functions`, after `evaluated_feature_flags`)
 
 **Interfaces:**
+
 - Consumes: `tags`, `transaction_tags` (012), `acting_for` (025), `transactions.deleted_at` (036).
 - Produces: `merge_tags(target_user uuid, from_tag uuid, into_tag uuid) returns integer` (how many transactions gained `into_tag`), executable by `authenticated` and `service_role`. It raises `insufficient_privilege` when the caller may not act for `target_user` or either tag is not theirs, and `invalid_parameter_value` for a tag merged into itself. Type `Database["public"]["Functions"]["merge_tags"]`.
 
@@ -1274,15 +1288,19 @@ Expected: every script ends with its passing line, `migration 040: all checks pa
 In `packages/core/src/types/database.ts`, directly after the `evaluated_feature_flags` entry added in Task 1, add:
 
 ```ts
-      /**
-       * Move every transaction from one tag to another, those in the bin
-       * included, then delete the first (040). Returns how many transactions
-       * gained the second.
-       */
-      merge_tags: {
-        Args: { target_user: string; from_tag: string; into_tag: string };
-        Returns: number;
-      };
+/**
+ * Move every transaction from one tag to another, those in the bin
+ * included, then delete the first (040). Returns how many transactions
+ * gained the second.
+ */
+merge_tags: {
+  Args: {
+    target_user: string;
+    from_tag: string;
+    into_tag: string;
+  }
+  Returns: number;
+}
 ```
 
 - [ ] **Step 6: Gates**
@@ -1315,11 +1333,13 @@ EOF
 ### Task 6: Core — tags with their usage, and the rename clash
 
 **Files:**
+
 - Create: `packages/core/src/tags.ts`
 - Create: `packages/core/src/tags.test.ts`
 - Modify: `packages/core/package.json` (`"exports"`)
 
 **Interfaces:**
+
 - Consumes: `Tag` (`types/database.ts`).
 - Produces: `type TagUsage = { id: string; name: string; uses: number }`; `tagUsageFromRows(rows: readonly { id: string; name: string; transaction_tags: { count: number }[] }[]): TagUsage[]`; `findRenameConflict(tags: readonly TagUsage[], tagId: string, name: string): TagUsage | null`.
 
@@ -1471,6 +1491,7 @@ EOF
 ### Task 7: Web — rename, merge and delete on the Plan page's Tags card
 
 **Files:**
+
 - Modify: `packages/core/src/i18n/messages/en.ts`, `fr.ts` (`plan`, `errors`)
 - Modify: `apps/web/lib/queries/phase4.ts:1-14,51-63`
 - Modify: `apps/web/lib/actions/phase4.ts:179-219` (and append)
@@ -1479,6 +1500,7 @@ EOF
 - Modify: `apps/web/app/(app)/budgets/page.tsx:11-16,48-72,124-130`
 
 **Interfaces:**
+
 - Consumes: `getFlags` (Task 3), `isFlagOn` (Task 2), `merge_tags` (Task 5), `tagUsageFromRows`, `findRenameConflict`, `TagUsage` (Task 6), `ledger.entryCount` (exists).
 - Produces: `getTagUsage(userId): Promise<TagUsage[]>`; server actions `renameTag(id, name)`, `deleteTag(id)`, `mergeTags(fromId, intoId)`, each returning `{ error?: string; success?: boolean }`; `TagsCard({ tags, manage })`; `BudgetsView` props `tags: TagUsage[]` and `manageTags: boolean`. Message keys listed in Step 1, reused by Task 8.
 
@@ -1598,7 +1620,7 @@ function tagWriteError(error: { code?: string; message: string }): string {
 In `upsertTag`, replace both `return { error: error.message };` with:
 
 ```ts
-        return { error: tagWriteError(error) };
+return { error: tagWriteError(error) };
 ```
 
 After `upsertTag`, add:
@@ -1964,9 +1986,7 @@ function TagEditor({
               variant="outline"
               className="border-destructive text-destructive"
               disabled={pending}
-              onClick={() =>
-                run(() => deleteTag(tag.id), t("plan.tagDeleted"))
-              }
+              onClick={() => run(() => deleteTag(tag.id), t("plan.tagDeleted"))}
             >
               {t("plan.confirmDeleteTag")}
             </Button>
@@ -2027,7 +2047,7 @@ import type { TagUsage } from "@finance/core/tags";
 - Replace the whole Tags `<section>` (lines 534-561) with:
 
 ```tsx
-        <TagsCard tags={tags} manage={manageTags} />
+<TagsCard tags={tags} manage={manageTags} />
 ```
 
 `useActionState` is still used by the budget and goal forms; leave the React import as it is.
@@ -2093,6 +2113,7 @@ EOF
 ### Task 8: Phone — rename, merge and delete from the Plan screen
 
 **Files:**
+
 - Modify: `packages/core/src/i18n/messages/en.ts`, `fr.ts` (`plan`, `common`)
 - Modify: `apps/mobile/src/lib/queries.ts:451-460` (and imports)
 - Modify: `apps/mobile/src/lib/mutations.ts:1222-1238` (and append)
@@ -2101,6 +2122,7 @@ EOF
 - Modify: `apps/mobile/src/app/(tabs)/planning.tsx:24-29,55-72,124-135,176,188-227,293-303,583-606`
 
 **Interfaces:**
+
 - Consumes: `useFlag` (Task 4), `merge_tags` (Task 5), `tagUsageFromRows`, `findRenameConflict`, `TagUsage` (Task 6), the Task 7 message keys, `notifyDataChanged` (`lib/data-version.ts`).
 - Produces: `getTagUsage(userId): Promise<TagUsage[]>`; mutations `renameTag(id, name)`, `deleteTag(id)`, `mergeTags(fromId, intoId)`; `TagEditSheet({ tag, tags, onClose, onChanged })`; message keys `plan.editTag`, `plan.tagManageHint`, `common.delete`, `common.working`.
 
@@ -2363,10 +2385,7 @@ function TagEditor({
   const others = tags.filter((other) => other.id !== tag.id);
   const into = others.find((other) => other.id === intoId) ?? null;
 
-  async function run(
-    action: () => Promise<{ error?: string }>,
-    done: string,
-  ) {
+  async function run(action: () => Promise<{ error?: string }>, done: string) {
     setPending(true);
     const result = await action();
     setPending(false);
@@ -2556,66 +2575,68 @@ import { useFlag } from "@/providers/FlagsProvider";
 - After `const [pending, setPending] = useState(false);` add:
 
 ```tsx
-  const manageTags = useFlag("tags.manage");
-  const [editingTag, setEditingTag] = useState<TagUsage | null>(null);
+const manageTags = useFlag("tags.manage");
+const [editingTag, setEditingTag] = useState<TagUsage | null>(null);
 ```
 
 - In the signed-out default, replace `tags: [] as Tag[],` with `tags: [] as TagUsage[],`; in the `Promise.all`, replace `getTags(user.id),` with `getTagUsage(user.id),`.
 - In `handleAddTag`, replace the final `await onRefresh();` with:
 
 ```tsx
-    // Other screens list tags too (the quick-add sheet, the calendar's
-    // forms); until now a new tag reached them only when they reloaded.
-    notifyDataChanged();
-    await onRefresh();
+// Other screens list tags too (the quick-add sheet, the calendar's
+// forms); until now a new tag reached them only when they reloaded.
+notifyDataChanged();
+await onRefresh();
 ```
 
 - Replace the tag chips (the `<View className="mt-3 flex-row flex-wrap gap-2">` block and the `.map((t) => …)` inside it, which also shadowed the translator) with:
 
 ```tsx
-            <View className="mt-3 flex-row flex-wrap gap-2">
-              {(data?.tags ?? []).map((tag) =>
-                manageTags ? (
-                  <Pressable
-                    key={tag.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={t("plan.editTagNamed", {
-                      name: tag.name,
-                    })}
-                    onPress={() => setEditingTag(tag)}
-                    className="min-h-11 justify-center rounded-full border border-border bg-muted px-4"
-                  >
-                    <Text className="text-sm font-semibold">{tag.name}</Text>
-                  </Pressable>
-                ) : (
-                  <View
-                    key={tag.id}
-                    className="rounded-full border border-border bg-muted px-3 py-1"
-                  >
-                    <Text className="text-xs font-semibold">{tag.name}</Text>
-                  </View>
-                ),
-              )}
-            </View>
-            {manageTags && (data?.tags.length ?? 0) > 0 ? (
-              <Text variant="muted" className="mt-2 text-xs">
-                {t("plan.tagManageHint")}
-              </Text>
-            ) : null}
+<View className="mt-3 flex-row flex-wrap gap-2">
+  {(data?.tags ?? []).map((tag) =>
+    manageTags ? (
+      <Pressable
+        key={tag.id}
+        accessibilityRole="button"
+        accessibilityLabel={t("plan.editTagNamed", {
+          name: tag.name,
+        })}
+        onPress={() => setEditingTag(tag)}
+        className="min-h-11 justify-center rounded-full border border-border bg-muted px-4"
+      >
+        <Text className="text-sm font-semibold">{tag.name}</Text>
+      </Pressable>
+    ) : (
+      <View
+        key={tag.id}
+        className="rounded-full border border-border bg-muted px-3 py-1"
+      >
+        <Text className="text-xs font-semibold">{tag.name}</Text>
+      </View>
+    ),
+  )}
+</View>;
+{
+  manageTags && (data?.tags.length ?? 0) > 0 ? (
+    <Text variant="muted" className="mt-2 text-xs">
+      {t("plan.tagManageHint")}
+    </Text>
+  ) : null;
+}
 ```
 
 - Directly before `<ConfirmSheet` near the end of the screen, add:
 
 ```tsx
-      <TagEditSheet
-        tag={editingTag}
-        tags={data?.tags ?? []}
-        onClose={() => setEditingTag(null)}
-        onChanged={() => {
-          notifyDataChanged();
-          void onRefresh();
-        }}
-      />
+<TagEditSheet
+  tag={editingTag}
+  tags={data?.tags ?? []}
+  onClose={() => setEditingTag(null)}
+  onChanged={() => {
+    notifyDataChanged();
+    void onRefresh();
+  }}
+/>
 ```
 
 - [ ] **Step 7: Gates, reachability included from here**
@@ -2660,9 +2681,11 @@ EOF
 ### Task 9: Close Plan 0.2
 
 **Files:**
+
 - Modify: `docs/how-pluclair-works.md`
 
 **Interfaces:**
+
 - Consumes: everything above.
 - Produces: an up-to-date app guide and a green `main`.
 
@@ -2690,7 +2713,7 @@ Expected: every command exits 0.
 In `docs/how-pluclair-works.md`:
 
 - Change `Last updated:` to `Phase 0, Plan 0.2 — closed (<today's date>).`
-- In **Shape**, change `Migrations \`001\`–\`038\`` to `Migrations \`001\`–\`040\``.
+- In **Shape**, change `Migrations \`001\`–\`038\``to`Migrations \`001\`–\`040\``.
 - In **Gates**, replace the migrations sentence with:
 
 ```markdown
@@ -2713,9 +2736,9 @@ keeps the last answer per account (`apps/mobile/src/lib/flags.ts`,
 `FlagsProvider`). A flag the database does not return, or a key this build
 does not list (`packages/core/src/flags.ts`), is off.
 
-| Flag          | Gates                                           | Default |
-| ------------- | ----------------------------------------------- | ------- |
-| `tags.manage` | Rename, merge and delete tags on the Plan page  | off     |
+| Flag          | Gates                                          | Default |
+| ------------- | ---------------------------------------------- | ------- |
+| `tags.manage` | Rename, merge and delete tags on the Plan page | off     |
 
 Switched with SQL (the dashboard's SQL editor, or the service role):
 

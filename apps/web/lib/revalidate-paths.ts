@@ -11,6 +11,20 @@ export function revalidateRecurringDependents(): void {
   revalidatePath("/calendar");
   revalidatePath("/investments");
   revalidatePath("/investments/look-through");
+  revalidatePath("/investments/analysis");
+  revalidatePath("/plan");
+}
+
+/**
+ * Pages that read the accounts a user keeps: Placements lists them, the Plan
+ * projects them and Le point counts what they hold.
+ */
+export function revalidateAccountDependents(): void {
+  revalidatePath("/investments");
+  revalidatePath("/investments/look-through");
+  revalidatePath("/investments/analysis");
+  revalidatePath("/plan");
+  revalidatePath("/bearing");
 }
 
 /**
@@ -39,9 +53,10 @@ export function revalidateEverySurface(): void {
   revalidatePath("/calendar");
   revalidatePath("/history");
   revalidatePath("/recurring");
-  revalidatePath("/budgets");
+  revalidatePath("/plan");
   revalidatePath("/investments");
   revalidatePath("/investments/look-through");
+  revalidatePath("/investments/analysis");
   revalidatePath("/categories");
   revalidatePath("/import");
   revalidatePath("/profile");

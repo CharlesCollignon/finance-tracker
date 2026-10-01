@@ -28,39 +28,39 @@
 
 **Created**
 
-| File | Responsibility |
-| --- | --- |
-| `packages/core/src/category-findings.ts` | Pure. Turns `CategoryHistory[]` into `CategoryFinding[]`. |
-| `packages/core/src/category-findings.test.ts` | Its tests. |
-| `packages/core/src/category-facts.ts` | The datum pack for one category. |
-| `packages/core/src/category-read.ts` | The read's shape, JSON schema and verification. |
-| `packages/core/src/category-read.test.ts` | Its tests. |
-| `packages/core/src/category-read-prompt.ts` | What the writer is asked, per language. |
-| `packages/core/src/category-selection.ts` | The selection's shape and verification. |
-| `packages/core/src/category-selection.test.ts` | Its tests. |
-| `packages/core/src/category-selection-prompt.ts` | What the ranker is asked. |
-| `apps/web/components/finance/category/FindingBand.tsx` | Layer 1: the strip and the finding rows. |
-| `apps/web/components/finance/category/FindingRow.tsx` | One finding, its sentence and its figure. |
-| `apps/web/components/finance/category/CategoryGrid.tsx` | Layer 2: the grouped grid and the open-panel slot. |
-| `apps/web/components/finance/category/CategoryTile.tsx` | One tile. |
-| `apps/web/components/finance/category/CategoryPanel.tsx` | Layer 3: the in-place panel. |
-| `apps/web/components/finance/category/CategoryRead.tsx` | The prose inside the panel. |
-| `apps/web/lib/category-read/{facts,store,write,client,source}.ts` | The read's plumbing, mirroring `lib/month-read/`. |
-| `apps/web/lib/actions/category-read.ts` | The two server actions. |
-| `supabase/migrations/035_category_findings.sql` | `category_reads`, `category_selections` and their functions. |
+| File                                                              | Responsibility                                               |
+| ----------------------------------------------------------------- | ------------------------------------------------------------ |
+| `packages/core/src/category-findings.ts`                          | Pure. Turns `CategoryHistory[]` into `CategoryFinding[]`.    |
+| `packages/core/src/category-findings.test.ts`                     | Its tests.                                                   |
+| `packages/core/src/category-facts.ts`                             | The datum pack for one category.                             |
+| `packages/core/src/category-read.ts`                              | The read's shape, JSON schema and verification.              |
+| `packages/core/src/category-read.test.ts`                         | Its tests.                                                   |
+| `packages/core/src/category-read-prompt.ts`                       | What the writer is asked, per language.                      |
+| `packages/core/src/category-selection.ts`                         | The selection's shape and verification.                      |
+| `packages/core/src/category-selection.test.ts`                    | Its tests.                                                   |
+| `packages/core/src/category-selection-prompt.ts`                  | What the ranker is asked.                                    |
+| `apps/web/components/finance/category/FindingBand.tsx`            | Layer 1: the strip and the finding rows.                     |
+| `apps/web/components/finance/category/FindingRow.tsx`             | One finding, its sentence and its figure.                    |
+| `apps/web/components/finance/category/CategoryGrid.tsx`           | Layer 2: the grouped grid and the open-panel slot.           |
+| `apps/web/components/finance/category/CategoryTile.tsx`           | One tile.                                                    |
+| `apps/web/components/finance/category/CategoryPanel.tsx`          | Layer 3: the in-place panel.                                 |
+| `apps/web/components/finance/category/CategoryRead.tsx`           | The prose inside the panel.                                  |
+| `apps/web/lib/category-read/{facts,store,write,client,source}.ts` | The read's plumbing, mirroring `lib/month-read/`.            |
+| `apps/web/lib/actions/category-read.ts`                           | The two server actions.                                      |
+| `supabase/migrations/035_category_findings.sql`                   | `category_reads`, `category_selections` and their functions. |
 
 **Modified**
 
-| File | Change |
-| --- | --- |
-| `packages/core/src/category-history.ts` | Window becomes genuinely variable; `trend` deleted. |
-| `packages/core/src/category-history.test.ts` | Drop the `trend` tests; keep the rest. |
-| `packages/core/src/i18n/messages/{en,fr}.ts` | A `categoryFindings` group and a `categoryScreen` group. |
-| `packages/core/package.json` | Five new entries in `exports`. |
-| `packages/core/src/types/database.ts` | `CategoryReadRow`, `CategorySelectionRow`, and the two tables on `Database`. |
-| `apps/web/app/(app)/history/page.tsx` | Reads 36 months, computes findings, loads stored reads. |
-| `apps/web/components/finance/CategoryHistoryView.tsx` | Moves to `category/`, becomes orchestration only. |
-| `CONTEXT.md` | Two new entries. |
+| File                                                  | Change                                                                       |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `packages/core/src/category-history.ts`               | Window becomes genuinely variable; `trend` deleted.                          |
+| `packages/core/src/category-history.test.ts`          | Drop the `trend` tests; keep the rest.                                       |
+| `packages/core/src/i18n/messages/{en,fr}.ts`          | A `categoryFindings` group and a `categoryScreen` group.                     |
+| `packages/core/package.json`                          | Five new entries in `exports`.                                               |
+| `packages/core/src/types/database.ts`                 | `CategoryReadRow`, `CategorySelectionRow`, and the two tables on `Database`. |
+| `apps/web/app/(app)/history/page.tsx`                 | Reads 36 months, computes findings, loads stored reads.                      |
+| `apps/web/components/finance/CategoryHistoryView.tsx` | Moves to `category/`, becomes orchestration only.                            |
+| `CONTEXT.md`                                          | Two new entries.                                                             |
 
 ---
 
@@ -69,11 +69,13 @@
 Everything downstream needs these keys to exist, because `Key` is derived from `en.ts` and a finding naming a key that is not there is a type error.
 
 **Files:**
+
 - Modify: `CONTEXT.md`
 - Modify: `packages/core/src/i18n/messages/en.ts`
 - Modify: `packages/core/src/i18n/messages/fr.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: the message keys `categoryFindings.*` and `categoryScreen.*`, usable as `Key`.
 
@@ -238,11 +240,13 @@ git commit -m "Name findings and a normal, and give them words in both languages
 ### Task 2: A normal, a spread, and the `drift` species
 
 **Files:**
+
 - Create: `packages/core/src/category-findings.ts`
 - Create: `packages/core/src/category-findings.test.ts`
 - Modify: `packages/core/package.json`
 
 **Interfaces:**
+
 - Consumes: `CategoryHistory` and `buildCategoryHistory` from `./category-history`; `Key`, `Vars` from `./i18n/t`; `CategoryType` from `./types/database`.
 - Produces:
   - `type FindingKind = "drift" | "odd-month" | "gone-quiet" | "every-year"`
@@ -610,10 +614,12 @@ git commit -m "Measure a category's normal, and the drift away from it"
 ### Task 3: The `odd-month` species
 
 **Files:**
+
 - Modify: `packages/core/src/category-findings.ts`
 - Modify: `packages/core/src/category-findings.test.ts`
 
 **Interfaces:**
+
 - Consumes: `categoryNormal`, `CategoryFinding` from Task 2.
 - Produces: `ODD_MONTH_SPREADS`, `ODD_MONTH_ABSOLUTE_FLOOR`; findings with `kind: "odd-month"` whose `months` holds exactly one key.
 
@@ -754,10 +760,10 @@ function oddMonthFinding(history: CategoryHistory): CategoryFinding | null {
 In `buildCategoryFindings`, after the drift push:
 
 ```ts
-    const odd = oddMonthFinding(history);
-    if (odd) {
-      findings.push(odd);
-    }
+const odd = oddMonthFinding(history);
+if (odd) {
+  findings.push(odd);
+}
 ```
 
 - [ ] **Step 4: Run the tests to verify they pass**
@@ -777,10 +783,12 @@ git commit -m "Name the one month that stands apart from a category's normal"
 ### Task 4: The `gone-quiet` species
 
 **Files:**
+
 - Modify: `packages/core/src/category-findings.ts`
 - Modify: `packages/core/src/category-findings.test.ts`
 
 **Interfaces:**
+
 - Produces: `QUIET_ACTIVE_OF_SIX`, `QUIET_SILENT_MONTHS`; findings with `kind: "gone-quiet"` and `messageKey` of `categoryFindings.goneQuiet` or `categoryFindings.appeared`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -879,19 +887,13 @@ Function and call:
 function goneQuietFinding(history: CategoryHistory): CategoryFinding | null {
   const points = history.points;
   const recent = points.slice(-QUIET_SILENT_MONTHS);
-  const before = points.slice(
-    -(QUIET_SILENT_MONTHS + 6),
-    -QUIET_SILENT_MONTHS,
-  );
+  const before = points.slice(-(QUIET_SILENT_MONTHS + 6), -QUIET_SILENT_MONTHS);
 
   const recentActive = recent.filter((point) => !point.empty);
   const beforeActive = before.filter((point) => !point.empty);
 
   // Stopped: a run, then nothing.
-  if (
-    recentActive.length === 0 &&
-    beforeActive.length >= QUIET_ACTIVE_OF_SIX
-  ) {
+  if (recentActive.length === 0 && beforeActive.length >= QUIET_ACTIVE_OF_SIX) {
     return {
       id: `gone-quiet:${history.categoryId}`,
       kind: "gone-quiet",
@@ -933,10 +935,10 @@ function goneQuietFinding(history: CategoryHistory): CategoryFinding | null {
 In `buildCategoryFindings`:
 
 ```ts
-    const quiet = goneQuietFinding(history);
-    if (quiet) {
-      findings.push(quiet);
-    }
+const quiet = goneQuietFinding(history);
+if (quiet) {
+  findings.push(quiet);
+}
 ```
 
 - [ ] **Step 4: Run the tests to verify they pass**
@@ -958,10 +960,12 @@ git commit -m "Say when a steady charge stopped, and when one appeared"
 This is the task the module is for. Without it the screen cries drift about the energy bill every December, and a screen that cries wolf on schedule is one the reader learns to skip.
 
 **Files:**
+
 - Modify: `packages/core/src/category-findings.ts`
 - Modify: `packages/core/src/category-findings.test.ts`
 
 **Interfaces:**
+
 - Produces: `SEASON_YEARS`; `kind: "every-year"` findings, and the demotion rule applied inside `buildCategoryFindings`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -1180,15 +1184,18 @@ git commit -m "Let a yearly pattern silence the findings it explains"
 **Run this task after Task 7, not before it.** `trend`'s only reader is the old `CategoryHistoryView.tsx`, which Task 7 deletes. Deleting the field first would leave the web app failing typecheck for the length of one task, against this plan's promise that every task ends somewhere the screen still works.
 
 **Files:**
+
 - Modify: `packages/core/src/category-history.ts`
 - Modify: `packages/core/src/category-history.test.ts`
 
 **Interfaces:**
+
 - Produces: `CategoryHistory` without `trend`. `average` and `peak` stay; the screen stops using `average` in favour of `categoryNormal`.
 
 - [ ] **Step 1: Delete the `trend` tests**
 
 Remove these two tests from `category-history.test.ts`:
+
 - `"reads the latest month against the ones before it"`
 - `"says nothing about a trend it cannot support"`
 
@@ -1234,6 +1241,7 @@ git commit -m "Retire trend, whose question findings now answer properly"
 The screen becomes usable in this task even though no model is involved yet: findings ordered by the app, every category visible at once.
 
 **Files:**
+
 - Create: `apps/web/components/finance/category/CategoryGrid.tsx`
 - Create: `apps/web/components/finance/category/CategoryTile.tsx`
 - Create: `apps/web/components/finance/category/CategoryHistoryView.tsx`
@@ -1241,6 +1249,7 @@ The screen becomes usable in this task even though no model is involved yet: fin
 - Modify: `apps/web/app/(app)/history/page.tsx`
 
 **Interfaces:**
+
 - Consumes: `buildCategoryFindings`, `categoryNormal`, `CategoryFinding` from `@finance/core/category-findings`; `buildCategoryHistory`, `CategoryHistory` from `@finance/core/category-history`; `BarSeries` from `@/components/finance/charts`.
 - Produces:
   - `interface CategoryCard { history: CategoryHistory; normal: number; drawn: CategoryMonthPoint[]; findings: CategoryFinding[] }`
@@ -1611,12 +1620,14 @@ git commit -m "Show every category at once, grouped, with its own twelve months"
 ### Task 8: The findings band
 
 **Files:**
+
 - Create: `apps/web/components/finance/category/FindingRow.tsx`
 - Create: `apps/web/components/finance/category/FindingBand.tsx`
 - Modify: `apps/web/components/finance/category/CategoryHistoryView.tsx`
 - Modify: `apps/web/app/(app)/history/page.tsx`
 
 **Interfaces:**
+
 - Consumes: `CategoryFinding`; `SpendStrip` from `@/components/finance/charts`; `CategoryBreakdown` from `@finance/core/types/database`.
 - Produces: `<FindingBand findings rows total onOpen openId panelId />`, `<FindingRow finding onOpen ... />`.
 
@@ -1625,20 +1636,19 @@ git commit -m "Show every category at once, grouped, with its own twelve months"
 In `page.tsx`, after `cards`, add:
 
 ```tsx
-  /** This month's expense composition, for the strip. `SpendStrip` sorts. */
-  const latestKey = `${current.year}-${String(current.month).padStart(2, "0")}`;
-  const breakdown = histories
-    .filter((history) => history.type === "expense")
-    .map((history) => ({
-      categoryId: history.categoryId,
-      name: history.name,
-      total:
-        history.points.find((point) => point.monthKey === latestKey)?.total ??
-        0,
-      icon: null,
-    }))
-    .filter((row) => row.total > 0);
-  const breakdownTotal = breakdown.reduce((sum, row) => sum + row.total, 0);
+/** This month's expense composition, for the strip. `SpendStrip` sorts. */
+const latestKey = `${current.year}-${String(current.month).padStart(2, "0")}`;
+const breakdown = histories
+  .filter((history) => history.type === "expense")
+  .map((history) => ({
+    categoryId: history.categoryId,
+    name: history.name,
+    total:
+      history.points.find((point) => point.monthKey === latestKey)?.total ?? 0,
+    icon: null,
+  }))
+  .filter((row) => row.total > 0);
+const breakdownTotal = breakdown.reduce((sum, row) => sum + row.total, 0);
 ```
 
 Pass `breakdown={breakdown}` and `breakdownTotal={breakdownTotal}` to `CategoryHistoryView`. Check `CategoryBreakdown` in `packages/core/src/types/database.ts` and match its fields exactly — drop `icon` if it is not part of the type.
@@ -1808,11 +1818,13 @@ git commit -m "Say what moved, above the grid, in sentences with no figures in t
 ### Task 9: The panel
 
 **Files:**
+
 - Create: `apps/web/components/finance/category/CategoryPanel.tsx`
 - Modify: `apps/web/components/finance/category/CategoryHistoryView.tsx`
 - Modify: `apps/web/app/(app)/history/page.tsx`
 
 **Interfaces:**
+
 - Consumes: `BarSeries` from `@/components/finance/charts`; `CategoryCard`; `CategoryFinding`.
 - Produces: `<CategoryPanel card behind={PanelTransaction[]} onClose />` and `interface PanelTransaction { id: string; occurredOn: string; note: string | null; amount: number }`.
 
@@ -1821,45 +1833,45 @@ git commit -m "Say what moved, above the grid, in sentences with no figures in t
 In `page.tsx`, build a map from category id to the transactions of the month its findings point at — the latest month when they point at none:
 
 ```tsx
-  const rows = (data ?? []) as TransactionWithCategory[];
+const rows = (data ?? []) as TransactionWithCategory[];
 
-  /** The month a category's panel explains, and the entries inside it. */
-  const behind = new Map<string, TransactionWithCategory[]>();
-  for (const card of cards) {
-    const target =
-      card.findings[0]?.months[card.findings[0].months.length - 1] ??
-      card.drawn[card.drawn.length - 1]?.monthKey;
-    if (!target) {
-      continue;
-    }
-    behind.set(
-      card.history.categoryId,
-      rows
-        .filter(
-          (row) =>
-            row.category_id === card.history.categoryId &&
-            row.occurred_on.startsWith(target),
-        )
-        .sort((a, b) => Number(b.amount) - Number(a.amount))
-        .slice(0, 5),
-    );
+/** The month a category's panel explains, and the entries inside it. */
+const behind = new Map<string, TransactionWithCategory[]>();
+for (const card of cards) {
+  const target =
+    card.findings[0]?.months[card.findings[0].months.length - 1] ??
+    card.drawn[card.drawn.length - 1]?.monthKey;
+  if (!target) {
+    continue;
   }
-
-  /**
-   * A `Map` does not cross the server-component boundary, and neither does a
-   * database row shape the panel has no use for. Both are flattened here.
-   */
-  const behindByCategory = Object.fromEntries(
-    [...behind].map(([categoryId, entries]) => [
-      categoryId,
-      entries.map((entry) => ({
-        id: entry.id,
-        occurredOn: entry.occurred_on,
-        note: entry.note,
-        amount: Number(entry.amount),
-      })),
-    ]),
+  behind.set(
+    card.history.categoryId,
+    rows
+      .filter(
+        (row) =>
+          row.category_id === card.history.categoryId &&
+          row.occurred_on.startsWith(target),
+      )
+      .sort((a, b) => Number(b.amount) - Number(a.amount))
+      .slice(0, 5),
   );
+}
+
+/**
+ * A `Map` does not cross the server-component boundary, and neither does a
+ * database row shape the panel has no use for. Both are flattened here.
+ */
+const behindByCategory = Object.fromEntries(
+  [...behind].map(([categoryId, entries]) => [
+    categoryId,
+    entries.map((entry) => ({
+      id: entry.id,
+      occurredOn: entry.occurred_on,
+      note: entry.note,
+      amount: Number(entry.amount),
+    })),
+  ]),
+);
 ```
 
 Pass `behind={behindByCategory}` to `CategoryHistoryView`, along with a `behindMonthLabel` map built from the same target months through `formatMonthLabel`.
@@ -2021,7 +2033,7 @@ import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 and inside the component:
 
 ```tsx
-  const reducedMotion = usePrefersReducedMotion();
+const reducedMotion = usePrefersReducedMotion();
 ```
 
 then on the `<section>`'s `className`, add:
@@ -2052,10 +2064,12 @@ git commit -m "Open a category in place, with the months and the entries behind 
 ### Task 10: The two tables
 
 **Files:**
+
 - Create: `supabase/migrations/035_category_findings.sql`
 - Modify: `packages/core/src/types/database.ts`
 
 **Interfaces:**
+
 - Produces: tables `category_reads`, `category_read_tallies` and `category_selections`; functions `reserve_category_read`, `store_category_read`, `refund_category_read`, `reserve_category_selection`, `store_category_selection`; types `CategoryReadRow`, `CategoryReadTallyRow`, `CategorySelectionRow` on `Database`.
 
 **Divergence from the spec, deliberate.** The spec's table lists two tables. There are three, because the spec also says the allowance is one for all the reads on the screen rather than five per category — and an allowance counted across categories cannot live in a table keyed by category. `category_read_tallies` is where "how many times this month" is counted. Nothing else about the spec changes; update the spec's table when this lands.
@@ -2181,6 +2195,7 @@ Verify the grant was actually removed:
 ```sql
 select proname, proacl from pg_proc where proname like 'reserve_category%';
 ```
+
 Expected: no `=X/` entry for PUBLIC.
 
 - [ ] **Step 4: Typecheck**
@@ -2200,6 +2215,7 @@ git commit -m "Store a category read and a model-chosen order, each capped separ
 ### Task 11: The category read
 
 **Files:**
+
 - Create: `packages/core/src/category-facts.ts`
 - Create: `packages/core/src/category-read.ts`
 - Create: `packages/core/src/category-read.test.ts`
@@ -2210,6 +2226,7 @@ git commit -m "Store a category read and a model-chosen order, each capped separ
 - Modify: `packages/core/package.json`, `apps/web/components/finance/category/CategoryPanel.tsx`
 
 **Interfaces:**
+
 - Consumes: `factLines` from `./month-read-prompt`; `MonthFact`, `MissingFact`, `FactPack`, `formatFact`, `factsDigest` from `./month-facts`; `verifyMonthRead`'s structure as the model for `verifyCategoryRead`.
 - Produces:
   - `function buildCategoryFacts(input: CategoryFactsInput): CategoryFacts`
@@ -2255,15 +2272,15 @@ export interface CategoryFacts extends FactPack {
 
 `CategoryFacts` extends `FactPack` rather than paralleling it, so `factLines` accepts it unchanged. The datums, each with `id`, `label`, `unit`, `value`, `sense`:
 
-| id | what | unit | sense |
-| --- | --- | --- | --- |
-| `normal` | the median month | money | neutral |
-| `latest` | the month on screen | money | up-is-bad for expense, up-is-good for income and savings |
-| `drift` | the size of the drift, when there is one | money | as above |
-| `odd-month` | the flagged month's distance from normal | money | as above |
-| `months-active` | non-empty months in the window | count | neutral |
-| `share-of-month` | this category's share of the month's expenses | percent | up-is-bad |
-| `cap` | the category's budget cap, through `budget-limits.ts` | money | neutral |
+| id               | what                                                  | unit    | sense                                                    |
+| ---------------- | ----------------------------------------------------- | ------- | -------------------------------------------------------- |
+| `normal`         | the median month                                      | money   | neutral                                                  |
+| `latest`         | the month on screen                                   | money   | up-is-bad for expense, up-is-good for income and savings |
+| `drift`          | the size of the drift, when there is one              | money   | as above                                                 |
+| `odd-month`      | the flagged month's distance from normal              | money   | as above                                                 |
+| `months-active`  | non-empty months in the window                        | count   | neutral                                                  |
+| `share-of-month` | this category's share of the month's expenses         | percent | up-is-bad                                                |
+| `cap`            | the category's budget cap, through `budget-limits.ts` | money   | neutral                                                  |
 
 Absent values become `MissingFact` with a reason — `no-cap` where there is no cap, `not-recorded` where the month is empty. Never a zero: "you spent 0 € on groceries" from a user who simply has not recorded any is the exact failure `month-facts.ts` exists to avoid.
 
@@ -2401,7 +2418,7 @@ Copy the five files under `apps/web/lib/month-read/` into `apps/web/lib/category
 
 - [ ] **Step 8: Write `CategoryRead.tsx` and put it in the panel**
 
-Mirror `components/finance/MonthRead.tsx`: the `Sparkle` heading that says plainly a model wrote this, the write button with its remaining-writes count, the `useTransition` pending state, the "written in another language" notice, and `renderCategoryRead` against the *current* facts so a figure here can never contradict the bars above it. Render it at the bottom of `CategoryPanel`.
+Mirror `components/finance/MonthRead.tsx`: the `Sparkle` heading that says plainly a model wrote this, the write button with its remaining-writes count, the `useTransition` pending state, the "written in another language" notice, and `renderCategoryRead` against the _current_ facts so a figure here can never contradict the bars above it. Render it at the bottom of `CategoryPanel`.
 
 - [ ] **Step 9: Add the three modules to the exports map**
 
@@ -2431,12 +2448,14 @@ git commit -m "Write a read for one category, with the app's figures and the mod
 ### Task 12: The model's order
 
 **Files:**
+
 - Create: `packages/core/src/category-selection.ts`
 - Create: `packages/core/src/category-selection.test.ts`
 - Create: `packages/core/src/category-selection-prompt.ts`
 - Modify: `apps/web/lib/actions/category-read.ts`, `FindingBand.tsx`, `page.tsx`, `packages/core/package.json`
 
 **Interfaces:**
+
 - Produces:
   - `function findingsDigest(findings: readonly CategoryFinding[]): string`
   - `function verifyCategorySelection(raw: unknown, findings: readonly CategoryFinding[]): CategorySelectionVerdict`
@@ -2448,10 +2467,7 @@ git commit -m "Write a read for one category, with the app's figures and the mod
 ```ts
 import { describe, expect, it } from "vitest";
 
-import {
-  applySelection,
-  verifyCategorySelection,
-} from "./category-selection";
+import { applySelection, verifyCategorySelection } from "./category-selection";
 import type { CategoryFinding } from "./category-findings";
 
 const findings: CategoryFinding[] = [

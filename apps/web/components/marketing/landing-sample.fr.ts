@@ -18,12 +18,7 @@
  */
 export const landingSampleFr = {
   monthLabel: "mars 2026",
-  onBudgetLabel: "Dans les clous",
-
-  budgetLabel: "Courses",
-
-  goalLabel: "Fonds d'urgence",
-  goalTargetLabel: "décembre 2026",
+  planByLabel: "mars 2027",
 
   /** In the order `landingSample.transactions` holds them. */
   transactions: [
@@ -62,11 +57,11 @@ export const landingSampleFr = {
       "Mars tient, et la part qui ne tient pas est celle que vous n'avez pas enregistrée.",
     observations: [
       "Il vous reste 1 247 € à douze jours de la fin, soit devant là où février en était le même jour.",
-      "Les dépenses non enregistrées de février se montent à 218 € — dans votre enveloppe de 260 €, mais c'est la plus grosse ligne pour laquelle vous n'avez aucune écriture.",
+      "Les dépenses non enregistrées de février se montent à 218 € — dans votre marge de 260 €, mais c'est la plus grosse ligne pour laquelle vous n'avez aucune écriture.",
       "Le logement, à 850 €, est inchangé pour le quatrième mois et représente maintenant 44 % de ce que vous dépensez.",
     ],
     suggestions: [
-      "Les courses sont sous leur plafond de 600 € tous les mois depuis décembre. Un plafond plus bas vous dirait quelque chose que celui-ci ne peut pas dire.",
+      "Les courses en sont à 218 € à douze jours de la fin. Noter les petits achats cette semaine montrerait si la ligne non enregistrée, c'est aussi les courses.",
     ],
     standing: "Écrit aujourd'hui. Rien n'a bougé depuis.",
   },

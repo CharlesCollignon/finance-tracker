@@ -15,13 +15,12 @@ import {
   suggestMerchants,
   type MerchantRule,
 } from "@finance/core/merchant-memory";
-import type { Category, Tag } from "@finance/core/types/database";
+import type { Category } from "@finance/core/types/database";
 
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { RecurringFormBody } from "@/components/RecurringFormModal";
 import { CategoryPicker } from "@/components/pickers/CategoryPicker";
 import { ChoiceChips } from "@/components/pickers/ChoiceChips";
-import { MultiChips } from "@/components/pickers/MultiChips";
 import { Button } from "@/components/ui/Button";
 import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
@@ -29,7 +28,7 @@ import { Text } from "@/components/ui/Text";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
-import { createTransaction, setTransactionTags } from "@/lib/mutations";
+import { createTransaction } from "@/lib/mutations";
 import { useCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
@@ -64,7 +63,6 @@ interface QuickAddSheetProps {
   onClose: () => void;
   onSaved: () => void;
   categories: Category[];
-  tags: Tag[];
   recentCategoryIds: string[];
   merchants: MerchantRule[];
   defaultDate?: string;
@@ -111,7 +109,6 @@ export function QuickAddSheet(props: QuickAddSheetProps) {
           onClose={props.onClose}
           onSaved={props.onSaved}
           categories={props.categories}
-          tags={props.tags}
           recentCategoryIds={props.recentCategoryIds}
           merchants={props.merchants}
           defaultDate={props.defaultDate}
@@ -196,7 +193,6 @@ interface QuickAddFieldsProps {
   onSaved: () => void;
   onDone: () => void;
   categories: Category[];
-  tags: Tag[];
   recentCategoryIds: string[];
   merchants: MerchantRule[];
   defaultDate?: string;
@@ -215,7 +211,6 @@ function QuickAddFields({
   onDone,
   onSaved,
   categories,
-  tags,
   recentCategoryIds,
   merchants,
   defaultDate,
@@ -229,7 +224,6 @@ function QuickAddFields({
   const [categoryId, setCategoryId] = useState("");
   const [occurredOn, setOccurredOn] = useState(defaultDate ?? today);
   const [note, setNote] = useState("");
-  const [tagIds, setTagIds] = useState<string[]>([]);
   // Open from the start when the sheet arrives on a day that is neither
   // today nor yesterday — the first of another month, opened from there —
   // so the date it will save under is on screen rather than implied.
@@ -323,10 +317,6 @@ function QuickAddFields({
       return;
     }
 
-    if (result.id && tagIds.length > 0) {
-      await setTransactionTags(result.id, tagIds);
-    }
-
     setPending(false);
     void hapticSuccess();
     onSaved();
@@ -341,7 +331,6 @@ function QuickAddFields({
     setSavedCount((count) => count + 1);
     setAmount("");
     setNote("");
-    setTagIds([]);
   }
 
   return (
@@ -535,20 +524,6 @@ function QuickAddFields({
             </Pressable>
           ))}
         </View>
-      ) : null}
-
-      {/* ---- tags ----------------------------------------------- */}
-      {tags.length > 0 ? (
-        <>
-          <Text className="mb-2 text-sm font-medium">{t("quickAdd.tags")}</Text>
-          <MultiChips
-            label={t("quickAdd.tags")}
-            className="mb-4"
-            options={tags.map((tag) => ({ value: tag.id, label: tag.name }))}
-            values={tagIds}
-            onChange={setTagIds}
-          />
-        </>
       ) : null}
 
       {error ? (

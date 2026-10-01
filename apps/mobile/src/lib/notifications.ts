@@ -16,7 +16,6 @@ import { supabase } from "@/lib/supabase";
 
 const ENABLED_KEY = "notifications.reminders.enabled";
 const ASKED_KEY = "notifications.reminders.asked";
-const BREACH_KEY = "notifications.breach.lastNotified";
 
 /** Reminders fire the evening before, which is when they are still actionable. */
 const REMIND_HOUR = 19;
@@ -493,96 +492,4 @@ async function scheduleMonthOpenReminder(locale: Locale): Promise<void> {
       channelId,
     },
   });
-}
-
-/* --------------------------------------------------------------- breaches */
-
-export interface BudgetBreach {
-  /** Stable id for the cap, so one breach is announced once per month. */
-  budgetId: string;
-  label: string;
-  spent: number;
-  limit: number;
-}
-
-function breachKey(monthKey: string, budgetId: string): string {
-  return `${monthKey}:${budgetId}`;
-}
-
-async function readNotifiedBreaches(): Promise<Set<string>> {
-  try {
-    const raw = await AsyncStorage.getItem(BREACH_KEY);
-    return new Set<string>(raw ? (JSON.parse(raw) as string[]) : []);
-  } catch {
-    // A lost record means at worst one repeated notification.
-    return new Set<string>();
-  }
-}
-
-async function writeNotifiedBreaches(keys: Set<string>): Promise<void> {
-  try {
-    await AsyncStorage.setItem(BREACH_KEY, JSON.stringify([...keys]));
-  } catch {
-    // Ignored.
-  }
-}
-
-/**
- * Tells the user a spending cap has been crossed.
- *
- * This cannot be a scheduled notification — it depends on data the app only
- * knows once it has loaded — so it fires when the app next has the figures in
- * hand. Each cap is announced at most once per month, because the interesting
- * event is crossing the line, not remaining over it.
- */
-export async function notifyBudgetBreaches(
-  breaches: BudgetBreach[],
-  monthKey: string,
-  formatAmount: (amount: number) => string,
-  locale: Locale,
-): Promise<void> {
-  if (breaches.length === 0 || !(await remindersEnabled())) {
-    return;
-  }
-
-  const notified = await readNotifiedBreaches();
-  // Only this month's records are worth keeping, so old months fall away.
-  const kept = new Set(
-    [...notified].filter((key) => key.startsWith(`${monthKey}:`)),
-  );
-
-  const fresh = breaches.filter(
-    (breach) => !kept.has(breachKey(monthKey, breach.budgetId)),
-  );
-
-  if (fresh.length === 0) {
-    await writeNotifiedBreaches(kept);
-    return;
-  }
-
-  await ensureChannel(locale);
-
-  const t = translator(locale);
-  const [first] = fresh;
-  const title =
-    fresh.length === 1
-      ? t("reminders.overCapOne", { name: first!.label })
-      : t("reminders.overCapMany", { count: fresh.length });
-  const body =
-    fresh.length === 1
-      ? t("reminders.overCapBody", {
-          spent: formatAmount(first!.spent),
-          limit: formatAmount(first!.limit),
-        })
-      : fresh.map((breach) => breach.label).join(", ");
-
-  await Notifications.scheduleNotificationAsync({
-    content: { title, body },
-    trigger: null,
-  });
-
-  for (const breach of fresh) {
-    kept.add(breachKey(monthKey, breach.budgetId));
-  }
-  await writeNotifiedBreaches(kept);
 }

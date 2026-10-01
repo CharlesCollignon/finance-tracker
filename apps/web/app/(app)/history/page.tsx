@@ -49,7 +49,6 @@ import {
 } from "@/lib/category-read/store";
 import { readCategorySelectionState } from "@/lib/category-selection/store";
 import { getMonthlySummary } from "@/lib/queries/finance";
-import { getBudgets } from "@/lib/queries/phase4";
 
 /**
  * How far back the page reads, and how far back it draws.
@@ -263,12 +262,11 @@ export default async function HistoryPage() {
    * this way, findings and all.
    *
    * `thin` needs nothing beyond `history`, so it is computed for every card
-   * from data already in hand. `getMonthlySummary` and `getBudgets` feed only
-   * `share-of-month` and `cap`, and those reach a screen only inside a
-   * rendered read — so they are fetched, as one further round-trip stage,
-   * only when there is at least one stored read for them to feed. On every
-   * load before anyone has ever pressed the button, that stage does not run
-   * at all.
+   * from data already in hand. `getMonthlySummary` feeds only
+   * `share-of-month`, and that reaches a screen only inside a rendered read —
+   * so it is fetched, as one further round-trip stage, only when there is at
+   * least one stored read for it to feed. On every load before anyone has
+   * ever pressed the button, that stage does not run at all.
    */
   const readMonthLabel = formatMonthLabel(current.year, current.month, locale);
   /**
@@ -286,7 +284,12 @@ export default async function HistoryPage() {
   const readConfigured = categoryReadConfigured() && tally.tracked;
   const readWritesLeft = tally.tracked
     ? writesRemaining(
-        { writes: tally.writes, refused: 0, lastWrittenAt: null, pendingSince: null },
+        {
+          writes: tally.writes,
+          refused: 0,
+          lastWrittenAt: null,
+          pendingSince: null,
+        },
         CATEGORY_READ_WRITES_PER_MONTH,
       )
     : 0;
@@ -311,19 +314,12 @@ export default async function HistoryPage() {
     ? writesRemaining(selectionState.tally, CATEGORY_SELECTION_WRITES_PER_MONTH)
     : 0;
 
-  const hasStoredRead = [...storedReads.values()].some((row) => row.read !== null);
-  const [summary, budgets] = hasStoredRead
-    ? await Promise.all([
-        getMonthlySummary(user.id, current.year, current.month, "current"),
-        getBudgets(user.id),
-      ])
-    : [null, []];
-
-  const capByCategory = new Map(
-    budgets
-      .filter((row) => row.category_id !== null)
-      .map((row) => [row.category_id as string, Number(row.amount)] as const),
+  const hasStoredRead = [...storedReads.values()].some(
+    (row) => row.read !== null,
   );
+  const summary = hasStoredRead
+    ? await getMonthlySummary(user.id, current.year, current.month, "current")
+    : null;
 
   const readsByCategory: Record<string, CategoryReadValue | null> = {};
   const readFactsByCategory: Record<string, CategoryFacts | null> = {};
@@ -352,7 +348,6 @@ export default async function HistoryPage() {
             history: card.history,
             findings: card.findings,
             monthExpenses: summary.expenses,
-            cap: capByCategory.get(categoryId) ?? null,
             monthLabel: readMonthLabel,
             locale: readLocale,
           })

@@ -61,6 +61,19 @@ export const INVESTMENT_WALLET_IDS: WalletId[] = [
   "crypto",
 ];
 
+/**
+ * The wallets a user keeps on Placements, in the usual order: those with a
+ * position, and those they added (`wallet_plans.shown`). A wallet with
+ * positions cannot be hidden without removing them, so it is always kept.
+ */
+export function keptWallets(input: {
+  withPositions: Iterable<WalletId>;
+  shown: Iterable<WalletId>;
+}): WalletId[] {
+  const kept = new Set<WalletId>([...input.withPositions, ...input.shown]);
+  return INVESTMENT_WALLET_IDS.filter((wallet) => kept.has(wallet));
+}
+
 /** A figure per wallet, plus their sum. */
 export type WalletTotals = Record<WalletId, number> & { total: number };
 

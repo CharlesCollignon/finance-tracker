@@ -1,4 +1,11 @@
 import type { MessageTree } from "../t";
+import { removalEn } from "./removal.en";
+import { planPhoneEn } from "./plan-phone.en";
+import { planWebEn } from "./plan-web.en";
+import { futurePlanEn } from "./future-plan.en";
+import { accountsEn } from "./accounts.en";
+import { placementsWebEn } from "./placements-web.en";
+import { placementsPhoneEn } from "./placements-phone.en";
 import { moreScreensEn } from "./more-screens.en";
 import { formPickersEn } from "./form-pickers.en";
 import { reviewScreensEn } from "./review-screens.en";
@@ -78,7 +85,8 @@ export const en = {
     ledgerList: "List",
     ledgerCalendar: "Calendar",
     ledgerByCategory: "By category",
-    walletsPositions: "Positions",
+    walletsPositions: "Accounts",
+    walletsAnalysis: "Analysis",
     walletsLookThrough: "What's inside",
 
     /** The count on a destination that has things waiting behind it. */
@@ -124,7 +132,6 @@ export const en = {
     moneySection: "Money",
     moneyFooter: "Currency changes the symbol, not the amounts.",
     categories: "Categories",
-    budgetsAndGoals: "Budgets & goals",
     currency: "Currency",
     securitySection: "Security",
     securityFooterWeb:
@@ -198,12 +205,6 @@ export const en = {
     dueBody: "{amount} is due.",
     monthOpenTitle: "A new month starts",
     monthOpenBody: "Your recurring entries are already in it. See what's left.",
-    overCapOne: "{name} is over budget",
-    overCapMany: {
-      one: "{count} budget is over",
-      other: "{count} budgets are over",
-    },
-    overCapBody: "{spent} spent of {limit}.",
   },
   passkeys: {
     none: "No passkeys yet.",
@@ -232,10 +233,8 @@ export const en = {
     searchPlaceholder: "Search category or note…",
     searchLabel: "Search transactions",
     filterByCategory: "Filter by category",
-    filterByTag: "Filter by tag",
     filterTransactions: "Filter transactions",
     allCategories: "All categories",
-    allTags: "All tags",
     selectDone: "Done",
     select: "Select",
     clearAll: "Clear all",
@@ -401,83 +400,7 @@ export const en = {
 
   /** The Plan surface: spending caps, savings goals and tags. */
   plan: {
-    runwayLead: "Everything you have logged as savings covers",
-    runwayRate: "at {amount} a month.",
-    capsHeading: "Budgets",
-    addCap: "Add a budget",
-    addCapSubmit: "Add budget",
-    update: "Update",
-    cancel: "Cancel",
-    monthlyLimit: "Monthly limit",
-    capSaved: "Budget saved",
     capRemoved: "Budget removed",
-    goalsHeading: "Savings goals",
-    addGoal: "Add a goal",
-    addGoalSubmit: "Add goal",
-    updateGoal: "Update goal",
-    goalTarget: "Target",
-    goalTargetDate: "Target date",
-    goalSaved: "Goal saved",
-    goalRemoved: "Goal removed",
-    allSavings: "All savings",
-    tagsHeading: "Tags",
-    tagsBlurb:
-      "A second way to group a transaction, cutting across categories — a holiday, a flatmate, a side project.",
-    newTag: "New tag",
-    addTag: "Add tag",
-    tagAdded: "Tag added",
-    /** Tag management (`tags.manage`). */
-    editTagNamed: "Edit the tag {name}",
-    tagName: "Name",
-    renameTag: "Rename",
-    tagRenamed: "Tag renamed",
-    tagNameExists: "{name} already exists.",
-    mergeIntoNamed: "Merge into {name}",
-    mergeTagInto: "Merge into",
-    chooseTag: "Choose a tag",
-    mergeTag: "Merge",
-    mergeTagHint: "Its transactions take the tag you choose, and {name} goes.",
-    tagMerged: "Tags merged",
-    deleteTag: "Delete tag",
-    deleteTagUses: {
-      one: "It comes off {count} transaction; the transaction stays.",
-      other: "It comes off {count} transactions; the transactions stay.",
-    },
-    deleteTagUnused: "No transaction carries it.",
-    confirmDeleteTag: "Yes, delete",
-    tagDeleted: "Tag deleted",
-    /** The phone's tag sheet: its title, and the line that says chips open it. */
-    editTag: "Edit tag",
-    goalName: "Goal name",
-    deleteGoalTitle: "Delete this goal?",
-    deleteCapTitle: "Delete this budget?",
-    deleteWarning: "This cannot be undone. Your transactions are not affected.",
-    goalReached: "Goal reached!",
-    goalOverdue: "Target date passed — {amount} still to save.",
-    goalOnSchedule: "Save {amount}/month to reach this by {month}.",
-    goalTargetDateOptional: "Target date (optional)",
-    goalStartsOn: "Counting from",
-    goalStartsOnHint: "Savings from this day on count towards the goal.",
-    linkCategoriesTitle: "Categories",
-    linkCategoriesHint: "Where money is allowed to go",
-    linkImportTitle: "Import a statement",
-    linkImportHint: "A CSV, when there is no bank feed",
-    /**
-     * Said only when there is nothing to show yet, which is why neither
-     * blurb points at the rings: on the screen that renders them, this
-     * sentence is what stands in their place.
-     */
-    capsBlurb:
-      "A budget is a monthly limit — on one category, or on everything. Add one and you will see how close you are to it.",
-    goalsBlurb:
-      "A goal is an amount to reach — a deposit, a trip, a buffer. Set aside money in a savings category and it fills.",
-    /** Screen-reader labels for the rings, which are drawings otherwise. */
-    amountOfTotal: "{amount} of {total}",
-    /** Web's rings are buttons that open the form, so they name that. */
-    editCapOn: "Edit the budget on {label}",
-    editGoalNamed: "Edit the goal {name}",
-    capScope: "Applies to",
-    trackCategoryOptional: "Track category (optional)",
   },
 
   /**
@@ -656,7 +579,6 @@ export const en = {
     notePlaceholder: "Description",
     /** The disabled first option of every category picker. */
     selectCategory: "Select category",
-    tags: "Tags",
     saving: "Saving…",
     saveTransaction: "Save transaction",
     saved: "Transaction saved",
@@ -800,7 +722,6 @@ export const en = {
     amount: "Amount",
     note: "Note",
     anotherDay: "Another day",
-    tags: "Tags",
     allCategories: "All categories",
     noCategoryMatch: "No category matches “{query}”.",
     /**
@@ -828,12 +749,8 @@ export const en = {
     expensesTitle: "What goes out?",
     expensesBody:
       "Rent, subscriptions, bills — the charges you already know are coming. These are what make the forecast useful.",
-    capTitle: "What would you rather not overspend?",
-    capBody:
-      "Pick one category and a monthly budget. A panel on the Overview will show a ring that fills as you spend against it. You can add more under Plan.",
     monthlyAmount: "Monthly amount",
     dayOfMonth: "Day of the month",
-    monthlyCap: "Monthly budget",
     category: "Category",
     continue: "Continue",
     /**
@@ -850,7 +767,6 @@ export const en = {
     incomeAdded: "Income added",
     adding: "Adding…",
     addThisOne: "Add this one",
-    setCapAndFinish: "Set the budget and finish",
     addedCount: {
       one: "{count} added — add another or finish below.",
       other: "{count} added — add another or finish below.",
@@ -1037,7 +953,6 @@ export const en = {
     invested: "Paid in",
     market: "Today",
     profitLoss: "Gain or loss",
-    walletPicker: "Investment account",
     namePea: "French equity savings plan",
     nameCto: "Ordinary brokerage account",
     nameAv: "Life insurance savings",
@@ -1083,7 +998,6 @@ export const en = {
       "Add what you hold in each account to follow what you paid in and what it is worth today.",
     emptyTitleMobile: "Follow your investments",
     emptyBodyMobile: "Your PEA, brokerage account and crypto, in one place.",
-    trackTitle: "Track an investment",
     trackBody:
       "A recurring payment into an investment shows up here on its own.",
     addBtcForValue: "Enter how much bitcoin you hold to see today's value",
@@ -1178,10 +1092,6 @@ export const en = {
     inviteBare: "One balance, and the app can work out what it never saw.",
     /** The card's own button, which names no month — the heading above it does. */
     closeTheMonth: "Close the month",
-    monthsInARow: {
-      one: "{count} month in a row",
-      other: "{count} months in a row",
-    },
     filledFromBank:
       "Filled in from your bank. Change it if the reading day differs from today.",
     /**
@@ -1422,10 +1332,6 @@ export const en = {
     expectedImpact: "Expected impact",
     expectedImpactPerMonth: "Expected impact per month",
     portfolioValue: "Portfolio value",
-    monthlyBudgets: "Monthly budgets",
-    savingsGoals: "Savings goals",
-    sampleHousing: "Housing",
-    sampleEverythingElse: "Everything else",
     /** The Charges mock's share-priced template, which the other three are
      * not: its amount is a quote times a quantity rather than a figure
      * anybody typed. */
@@ -1530,11 +1436,8 @@ export const en = {
       "Worked out over each payment on its own date, so paying in a little every month is compared fairly with one large payment. The gain in euros alone would flatter whichever money had been invested longest.",
     /** The per-account returns line under the headline return. */
     returnByAccount: "By account",
-    /** The Allocation card: what each account holds, against a target. */
-    allocationIntro: "How your investments are split across your accounts.",
     allocationIntroTargets:
       "Each bar is an account's share today; the line marks the share you aim for.",
-    shareOfInvestments: "{share} of your investments",
     shareNowTarget: "{share} now · target {target}",
     onTarget: "On target",
     /** After an amount: "€1,240 above target". */
@@ -1556,8 +1459,6 @@ export const en = {
     noTargetHint:
       "Choose the split you want, and this will show how far each account is from it and where your next contribution should go.",
     editTargets: "Edit targets",
-    targetEditorIntro:
-      "Choose the share of your investments each account should hold. Together they must make 100%.",
     targetNow: "now {share}",
     targetTotalComplete: "Total 100%",
     targetTotalShort: "{left}% left to assign",
@@ -1981,10 +1882,6 @@ export const en = {
       "the median across closed months, so one holiday does not move it",
     streak: "Months in a row inside the allowance",
     bestStreak: "Best run so far",
-    budgetSpent: "{label} budget, spent",
-    budgetLeft: "{label} budget, left",
-    budgetOver: "{label} budget, gone over by",
-    goalSaved: "{name}, saved",
     investedValue: "Invested value",
     inboxPending: "Transactions still waiting for a category",
     chargesUnconfirmed: "Recurring charges not yet confirmed",
@@ -2038,15 +1935,6 @@ export const en = {
     oddMonth: "How far that month sat from a normal one",
     monthsActive: "Months with something recorded",
     shareOfMonth: "Share of everything that went out that month",
-    cap: "The budget on this category",
-    /**
-     * The two the cap is useless without, worded as `facts.budgetLeft` and
-     * `facts.budgetOver` are. "Left" is unclamped and goes negative when the
-     * cap is breached; "gone over by" is the same breach as a positive
-     * figure, which is the one a read actually wants to quote.
-     */
-    capLeft: "The budget, left that month",
-    capOver: "The budget, gone over by",
   },
 
   /**
@@ -2136,9 +2024,9 @@ export const en = {
      * this app has used and dropped.
      *
      * `nav.plan` because that is `navigation.ts`'s own `labelKey` for
-     * `/budgets`, which is where web's `MonthCloseCard` opens the close
+     * `/plan`, which is where web's `RunCard` opens the close
      * sheet, and which the phone answers from `planning.tsx` — the route
-     * `PHONE_PATHS["/budgets"]` and the Bearing spine both already point at
+     * `PHONE_PATHS["/plan"]` and the Bearing spine both already point at
      * for the close. The word is therefore right on both, and the phone's
      * `MonthCloseSheet` is now mounted there too — it had lost its only
      * caller when the Month tab was deleted, which made this sentence an
@@ -2174,53 +2062,9 @@ export const en = {
    * on two surfaces.
    */
   projection: {
-    heading: "If nothing changes",
-    window: {
-      one: "Next month",
-      other: "Next {count} months",
-    },
-
-    inAccounts: "In the accounts",
-    kept: "Everything kept",
-    by: "by {month}",
-    added: {
-      one: "added over {count} month",
-      other: "added over {count} months",
-    },
-    noOpeningBalance:
-      "No account balance to start from, so these are what the months add rather than where they leave you.",
-
-    perMonth: "{amount} a month on average",
-    shrinking: "More leaves than arrives, month after month.",
-    accountsFalling:
-      "The accounts fall because {amount} a month goes into savings and wallets. That money is still yours — it is on the other line.",
-
-    madeOf: "What this is made of",
-    income: "Income",
-    committed: "Committed costs",
-    setAside: "Set aside",
-    deployed: "Put to work inside a wallet",
-    unrecorded: "Everyday spending",
-    charges: {
-      one: "{count} charge",
-      other: "{count} charges",
-    },
-    noCharges: "nothing scheduled",
-    setAsideNote: "Leaves the account, stays yours.",
-    deployedNote: "Already inside a wallet, so neither line moves.",
-    unrecordedMeasured: {
-      one: "the median of {count} closed month",
-      other: "the median of {count} closed months",
-    },
-    unrecordedNotYet: "Not counted yet — close two months and it will be.",
     noIncomeCharge:
       "No charge brings money in, so your pay is in none of this. Add it under Charges and every figure here changes.",
     noIncomeCta: "Add a charge",
-    /** The web sparkline's own accessible name; the phone draws no equivalent. */
-    sparklineLabel: {
-      one: "Projected accounts and total kept over {count} month",
-      other: "Projected accounts and total kept over {count} months",
-    },
   },
 
   /** How long the reserve covers the committed costs. */
@@ -2238,8 +2082,6 @@ export const en = {
     remaining: "Remaining",
     available: "Available",
     other: "Other",
-    allExpenses: "All expenses",
-    uncategorised: "Category",
   },
 
   /**
@@ -2313,10 +2155,6 @@ export const en = {
         other:
           "{count} recurring charges look like your bank already paid them.",
       },
-    },
-    breach: {
-      title: "{label} is over budget",
-      body: "{spent} spent of {limit}.",
     },
     bankRenew: {
       title: "Keep your bank syncing",
@@ -3014,7 +2852,6 @@ export const en = {
     setBalanceBody:
       "Type what your account holds once, and this becomes your real balance.",
     spent: "Spent",
-    ofCap: "of a {amount} budget",
     spentLessSoFar: "{amount} less than {month} by now",
     spentMoreSoFar: "{amount} more than {month} by now",
     spentLess: "{amount} less than {month}",
@@ -3027,13 +2864,10 @@ export const en = {
     seeInLedger: "See in the Ledger",
     whereItWent: "Where it went",
     everythingElse: "Everything else",
-    capOf: "{spent} of {cap}",
     run: { one: "{count}-month run", other: "{count}-month run" },
     runBody: "Months in a row closed under your allowance.",
     bestRun: "Best: {count}",
     noRunYet: "Close a month under your allowance to start a run.",
-    goals: "Goals",
-    goalToGo: "{amount} to go",
     invested: "Your investments today",
   },
 
@@ -3220,10 +3054,8 @@ export const en = {
     resetNotSent: "The link could not be sent. Try again in a moment.",
     descriptionTooLong: "Description must be 500 characters or less",
     nameTooLong100: "Name must be 100 characters or less",
-    nameTooLong40: "Name must be 40 characters or less",
     nameRequiredCustom: "Name is required for custom holdings",
     shareCountRequired: "Share count is required",
-    targetPositive: "Target must be positive",
     capNotNegative: "A budget cannot be negative",
     zeroOrMore: "Must be 0 or more",
     positiveNumber: "Enter a positive number (comma or dot for decimals)",
@@ -3240,10 +3072,15 @@ export const en = {
     nameTooLong: "Name is too long",
     deleteConfirmation: "Type DELETE to confirm",
     targetsMustTotal100: "Targets must add up to 100%.",
-    tagNameTaken: "A tag with that name already exists.",
-    tagMergeFailed: "Those tags could not be merged.",
   },
   actions: actionsEn,
+  removal: removalEn,
+  planPhone: planPhoneEn,
+  planWeb: planWebEn,
+  futurePlan: futurePlanEn,
+  accounts: accountsEn,
+  placementsWeb: placementsWebEn,
+  placementsPhone: placementsPhoneEn,
   moreScreens: moreScreensEn,
   formPickers: formPickersEn,
   reviewScreens: reviewScreensEn,

@@ -33,7 +33,7 @@ positionally. That is what this check is now for: confirming the fix, by
 looking at position rather than at holes.
 
 **What to do:** open `/bearing` at a normal desktop width. Pick a **wide** tile
-— one that spans two columns and is *not* the big one at the top left — from
+— one that spans two columns and is _not_ the big one at the top left — from
 somewhere in the middle of the grid, and press it. Then do the same for a wide
 tile near the end of the grid, and for one of the small square tiles.
 
@@ -82,7 +82,7 @@ panel's height change and `ReorderableList`'s own layout animation.
 handle on a tile is now deliberately switched off while that same tile's own
 panel is open. This isn't an oversight. The reordering library
 (`react-native-reorderable-list`) measures the row's height and the
-neighbours' shift distance *synchronously*, before it gives our code a
+neighbours' shift distance _synchronously_, before it gives our code a
 chance to close the panel in response to the drag starting. If the handle
 stayed live, starting a drag on an open tile would size the whole gesture to
 the panel-open height while the tile visually shrank back down underneath
@@ -91,7 +91,7 @@ own panel is open is never wired to start a drag at all.
 
 **What to do:** open a panel on any tile, then try pressing and dragging that
 same tile's drag handle. Then, with that panel still open, try dragging a
-*different* tile's handle.
+_different_ tile's handle.
 
 **What you should see:** the open tile's handle does nothing when you try to
 drag it, and looks visibly dimmed/disabled rather than just unresponsive (it
@@ -101,7 +101,7 @@ tile's panel is open.
 
 **Then, the tile switch.** With one tile's panel open, step its month back a
 few months using the arrows at the top of the panel. Now — without closing
-anything — press a *different* tile that sits beside it in the same visible
+anything — press a _different_ tile that sits beside it in the same visible
 row. Do this on both clients; on web it is easiest with two small square tiles
 side by side.
 
@@ -110,7 +110,7 @@ side by side.
 to, and it visibly animates open rather than appearing already unfolded.
 
 **What it would mean otherwise:** if the open tile's handle still starts a
-drag, that's the exact race described above resurfacing. If dragging *other*
+drag, that's the exact race described above resurfacing. If dragging _other_
 tiles doesn't work while a panel is open elsewhere, that's a separate
 regression — the inertness is supposed to be scoped to the one open tile. And
 if the second tile's panel opens already scrolled back in time, or snaps open
@@ -212,7 +212,7 @@ phone, step back to a month you have already looked at this session and note
 the difference.
 
 **What you should see:** the moment the month name changes, the blocks below
-it are either the *new* month's figures or grey placeholder bars — never the
+it are either the _new_ month's figures or grey placeholder bars — never the
 previous month's numbers sitting under the new month's name. On the phone, a
 month you have already visited comes straight back with no placeholders at
 all, because it is still cached.
@@ -306,7 +306,7 @@ can be rewritten.
 
 **Background:** the phone's `on-hand` panel lets you flip the figures between
 "as of today" and "as of month end" with a control inside the card. The web
-app's identical panel has no such control — it only *states* which view is in
+app's identical panel has no such control — it only _states_ which view is in
 force. This was found late, is genuinely a divergence rather than an oversight
 in this plan's code, and closing it means designing a new control for web. It
 was left for the next plan so that you could rule on it first.

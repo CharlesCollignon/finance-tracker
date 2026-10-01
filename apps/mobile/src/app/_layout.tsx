@@ -19,7 +19,6 @@ import { LocaleSuggestion } from "@/components/LocaleSuggestion";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { BiometricLockProvider } from "@/providers/BiometricLockProvider";
 import { CurrencyProvider } from "@/providers/CurrencyProvider";
-import { FlagsProvider } from "@/providers/FlagsProvider";
 import { LocaleProvider } from "@/providers/LocaleProvider";
 import {
   OnboardingProvider,
@@ -182,11 +181,7 @@ export default function RootLayout() {
                           is in flight at a time whichever screen is showing. */}
                       <RefreshProvider>
                         <OnboardingProvider>
-                          {/* Below AuthProvider, whose user it asks for; around
-                              the navigator, so every screen reads one answer. */}
-                          <FlagsProvider>
-                            <RootNavigator fontsReady={fontsReady} />
-                          </FlagsProvider>
+                          <RootNavigator fontsReady={fontsReady} />
                         </OnboardingProvider>
                       </RefreshProvider>
                     </ToastProvider>

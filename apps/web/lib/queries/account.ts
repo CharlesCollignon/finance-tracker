@@ -89,6 +89,19 @@ export async function deleteAllUserData(
     throw recurringError;
   }
 
+  // Absent until migration 046 has run, which must not stop the rest.
+  const { error: savingsError } = await supabase
+    .from("savings_accounts")
+    .delete()
+    .eq("user_id", userId);
+  if (
+    savingsError &&
+    savingsError.code !== "42P01" &&
+    savingsError.code !== "PGRST205"
+  ) {
+    throw savingsError;
+  }
+
   const { error: categoriesError } = await supabase
     .from("categories")
     .delete()

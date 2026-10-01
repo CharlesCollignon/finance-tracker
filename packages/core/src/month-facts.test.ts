@@ -6,7 +6,6 @@ import {
   factsDigest,
   findFact,
   formatFact,
-  MAX_BUDGETS,
   MAX_TOP_EXPENSES,
   type BuildMonthFactsInput,
   type MonthFact,
@@ -46,8 +45,6 @@ function input(
     pulse: null,
     closeSummary: null,
     unrecordedCap: null,
-    budgets: [],
-    goals: [],
     investedValue: null,
     inboxPending: 0,
     chargesUnconfirmed: 0,
@@ -161,81 +158,11 @@ describe("buildMonthFacts", () => {
     });
   });
 
-  describe("caps", () => {
-    it("keeps a budget's overspend negative", () => {
-      const pack = buildMonthFacts(
-        input({
-          budgets: [
-            {
-              budgetId: "b1",
-              categoryId: "c1",
-              label: "Groceries",
-              limit: 450,
-              spent: 512.4,
-              remaining: -62.4,
-              ratio: 1.14,
-              over: true,
-            },
-          ],
-        }),
-      );
-
-      expect(findFact(pack, "budget:b1")!.value).toBe(512.4);
-      // A model reading "left" as a floor of zero would miss the breach.
-      expect(findFact(pack, "budget-left:b1")!.value).toBe(-62.4);
-    });
-
-    it("gives the overshoot as its own positive figure", () => {
-      // Without it a model writes "overshooting the cap by -62,40 €": it has
-      // the breach right and the only figure it holds is the negative balance.
-      // Supplying the subtraction is cheaper and safer than forbidding it.
-      const pack = buildMonthFacts(
-        input({
-          budgets: [
-            {
-              budgetId: "b1",
-              categoryId: "c1",
-              label: "Groceries",
-              limit: 450,
-              spent: 512.4,
-              remaining: -62.4,
-              ratio: 1.14,
-              over: true,
-            },
-          ],
-        }),
-      );
-
-      expect(findFact(pack, "budget-over:b1")).toMatchObject({
-        value: 62.4,
-        sense: "up-is-bad",
-      });
-    });
-
-    it("offers no overshoot for a cap that holds", () => {
-      const pack = buildMonthFacts(
-        input({
-          budgets: [
-            {
-              budgetId: "b1",
-              categoryId: "c1",
-              label: "Groceries",
-              limit: 450,
-              spent: 300,
-              remaining: 150,
-              ratio: 0.67,
-              over: false,
-            },
-          ],
-        }),
-      );
-
-      expect(factIds(pack).has("budget-over:b1")).toBe(false);
-    });
-
+  describe("the allowance", () => {
     it("says how far unrecorded spending went past the allowance", () => {
-      // Same failure, different figure: "exceeded the allowance by 240,00 €"
-      // is the allowance itself, quoted for want of the difference.
+      // Without it a model writes "exceeded the allowance by 240,00 €": the
+      // allowance itself, quoted for want of the difference. Supplying the
+      // subtraction is cheaper and safer than forbidding it.
       const pack = buildMonthFacts(
         input({
           unrecordedCap: 240,
@@ -271,8 +198,10 @@ describe("buildMonthFacts", () => {
 
       expect(factIds(pack).has("unrecorded-over")).toBe(false);
     });
+  });
 
-    it("bounds the per-entity families so the prompt cannot grow with a category list", () => {
+  describe("where it went", () => {
+    it("bounds the top expenses so the prompt cannot grow with a category list", () => {
       const pack = buildMonthFacts(
         input({
           summary: summary({
@@ -280,25 +209,12 @@ describe("buildMonthFacts", () => {
               category(`c${index}`, `Cat ${index}`, 100 - index),
             ),
           }),
-          budgets: Array.from({ length: 9 }, (_, index) => ({
-            budgetId: `b${index}`,
-            categoryId: `c${index}`,
-            label: `Cap ${index}`,
-            limit: 100,
-            spent: 50,
-            remaining: 50,
-            ratio: 0.5,
-            over: false,
-          })),
         }),
       );
 
       const ids = [...factIds(pack)];
       expect(ids.filter((id) => id.startsWith("top-expense:"))).toHaveLength(
         MAX_TOP_EXPENSES,
-      );
-      expect(ids.filter((id) => id.startsWith("budget:"))).toHaveLength(
-        MAX_BUDGETS,
       );
     });
 

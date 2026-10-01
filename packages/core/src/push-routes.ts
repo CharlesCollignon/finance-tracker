@@ -5,8 +5,8 @@
  * device, which means one `url` for every device — and it writes it in web
  * paths, because that is the app the daily job runs in. The two apps do not
  * agree on every address: the Bearing is `/bearing` on the web and `/` on
- * the phone, and caps and goals are `/budgets` there and `/planning` here. So
- * the phone translates rather than follows.
+ * the phone, and the Plan is `/plan` there and `/planning` here. So the
+ * phone translates rather than follows.
  *
  * Both halves of that contract live here, next to the digest that writes the
  * paths, so a route renamed on one side and not the other is a failing test
@@ -36,6 +36,8 @@ const MOBILE_ROUTES = [
 /** Web path → the phone's name for the same surface. */
 const RENAMED: Record<string, string> = {
   "/bearing": "/",
+  "/plan": "/planning",
+  // The Plan's old web address, for a notification sent before it moved.
   "/budgets": "/planning",
 };
 

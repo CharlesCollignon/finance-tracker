@@ -31,7 +31,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // every screen — opens with no loading state.
   const quickEntry = user
     ? await getQuickEntryContext(user.id)
-    : { categories: [], tags: [], recentCategoryIds: [], merchants: [] };
+    : { categories: [], recentCategoryIds: [], merchants: [] };
 
   // One small read for a control on every surface, and only where there is a
   // bank for it to describe. A failure here would take down every app page to
@@ -75,7 +75,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <RefreshProvider initial={freshness} connected={connected}>
         <QuickAddProvider
           categories={quickEntry.categories}
-          tags={quickEntry.tags}
           recentCategoryIds={quickEntry.recentCategoryIds}
           merchants={quickEntry.merchants}
         >

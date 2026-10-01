@@ -69,15 +69,18 @@ export const LEDGER_TABS: SurfaceTab[] = [
 ];
 
 /**
- * Wallets' views: where the value sits, and what it is made of.
+ * Placements' views: the accounts one at a time, all of them at once, and
+ * what they are made of.
  *
- * The positions list answers "what do I hold and what is it worth". The
- * look-through answers "what is it actually made of" — the same holdings
- * resolved to their constituents. Two views of one body of data, so they are
- * tabs on the surface rather than a second entry in a nav bar that is already
- * at its ceiling of five.
+ * Comptes answers "what do I hold in this account and what is it worth".
+ * Analyse asks of every account together what it earns, how the money is
+ * spread and what it costs. The look-through answers "what is it actually
+ * made of" — the same holdings resolved to their constituents. Views of one
+ * body of data, so they are tabs on the surface rather than more entries in
+ * a nav bar that is already at its ceiling of five.
  */
 export const WALLET_TABS: SurfaceTab[] = [
   { href: "/investments", labelKey: "nav.walletsPositions" },
+  { href: "/investments/analysis", labelKey: "nav.walletsAnalysis" },
   { href: "/investments/look-through", labelKey: "nav.walletsLookThrough" },
 ];

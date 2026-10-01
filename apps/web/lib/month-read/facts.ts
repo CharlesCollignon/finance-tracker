@@ -1,14 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
-import { buildBudgetProgress } from "@finance/core/budget-limits";
 import { buildMonthPulse } from "@finance/core/month-pulse";
-import {
-  buildGoalRunningTotals,
-  buildSavingsGoalProgress,
-  earliestGoalStart,
-  EMPTY_GOAL_LEDGER,
-  goalTotalsAsOf,
-} from "@finance/core/savings-goals";
 import { buildStillToCome } from "@finance/core/still-to-come";
 import { previousMonthKey } from "@finance/core/month-close";
 import {
@@ -25,11 +17,6 @@ import {
   getRecurringTemplates,
   getTransactions,
 } from "@/lib/queries/finance";
-import {
-  getBudgets,
-  getGoalLedger,
-  getSavingsGoals,
-} from "@/lib/queries/phase4";
 import {
   getMonthCloseOverview,
   getRecordedCashFlows,
@@ -50,10 +37,9 @@ type Client = SupabaseClient<Database>;
  * Everything a month read may refer to, gathered from what the app already
  * computes.
  *
- * Every figure here is one another surface already has on screen — goal
- * progress is the Plan page's running total, stopped at the end of the month
- * being read — which is the property that makes the read checkable: a
- * reader can look at that surface and see the same number.
+ * Every figure here is one another surface already has on screen, which is
+ * the property that makes the read checkable: a reader can look at that
+ * surface and see the same number.
  *
  * Recomputed server-side on every write, and deliberately not accepted from
  * the client. The Month page already holds most of this and passing it in
@@ -84,8 +70,6 @@ export async function gatherMonthFacts(
     summary,
     comparison,
     closes,
-    budgets,
-    goals,
     categories,
     templates,
     monthTransactions,
@@ -97,8 +81,6 @@ export async function gatherMonthFacts(
     getMonthlySummary(userId, year, month, "current"),
     getMonthComparison(userId, year, month),
     getMonthCloseOverview(userId, today),
-    getBudgets(userId),
-    getSavingsGoals(userId),
     getCategories(userId),
     getRecurringTemplates(userId),
     getTransactions(userId, year, month),
@@ -114,15 +96,6 @@ export async function gatherMonthFacts(
   const cash = isCurrentMonth
     ? await readCashBalance(userId, today, client)
     : null;
-
-  // Goal progress as it stood at the end of this month, or today for the
-  // month in progress. The phone computes the same figure the same way.
-  const goalsAsOf = goalTotalsAsOf(year, month, today);
-  const goalStart = earliestGoalStart(goals);
-  const goalLedger =
-    goalStart && goalStart <= goalsAsOf
-      ? await getGoalLedger(userId, goalStart, goalsAsOf, client)
-      : EMPTY_GOAL_LEDGER;
 
   const monthKey = `${year}-${String(month).padStart(2, "0")}`;
   const closed =
@@ -200,17 +173,6 @@ export async function gatherMonthFacts(
     pulse,
     closeSummary: closes.summary,
     unrecordedCap: closes.settings.unrecordedCap,
-    budgets: buildBudgetProgress(
-      budgets,
-      summary.expenseBreakdown,
-      summary.expenses,
-      new Map(categories.map((row) => [row.id, row.name] as const)),
-      locale,
-    ),
-    goals: buildSavingsGoalProgress(
-      goals,
-      buildGoalRunningTotals(goals, goalLedger, templates, goalsAsOf),
-    ),
     // Always a number, so zero is the "nothing invested" case rather than
     // null. `buildMonthFacts` drops a zero here for exactly that reason.
     investedValue: portfolio.totalMarketValue,

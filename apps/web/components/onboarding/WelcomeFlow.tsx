@@ -19,7 +19,6 @@ import { ConnectBankSheet } from "@/components/finance/bank/ConnectBankSheet";
 import { FormLabel } from "@/components/layout/FormLabel";
 import { Logo } from "@/components/layout/Logo";
 import { useToast } from "@/components/layout/ToastProvider";
-import { upsertBudget } from "@/lib/actions/phase4";
 import { upsertRecurringTemplate } from "@/lib/actions/finance";
 import { setCurrencyPreference, useCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
@@ -28,17 +27,17 @@ import { useT } from "@/lib/locale-context";
 
 const CURRENCIES: CurrencyCode[] = ["EUR", "USD"];
 
-type Step = "currency" | "income" | "recurring" | "bank" | "cap";
+type Step = "currency" | "income" | "recurring" | "bank";
 
 /**
- * The bank step sits after the charges and only where connecting one is
- * possible: by then the reader has seen what the app does by hand, which is
- * what makes "let your bank do this" mean something.
+ * The bank step sits last and only where connecting one is possible: by then
+ * the reader has seen what the app does by hand, which is what makes "let
+ * your bank do this" mean something.
  */
 function stepsFor(offerBank: boolean): Step[] {
   return offerBank
-    ? ["currency", "income", "recurring", "bank", "cap"]
-    : ["currency", "income", "recurring", "cap"];
+    ? ["currency", "income", "recurring", "bank"]
+    : ["currency", "income", "recurring"];
 }
 
 /** The query key the step is carried in, and what a history entry remembers. */
@@ -62,8 +61,8 @@ interface WelcomeFlowProps {
  *
  * Until now this existed only on mobile, so anyone who signed up on a desktop
  * landed on an empty dashboard with nothing to react to. The steps mirror the
- * mobile flow deliberately — the same four questions in the same order — so
- * the two clients teach the app the same way.
+ * mobile flow deliberately — the same questions in the same order — so the
+ * two clients teach the app the same way.
  *
  * Everything after the currency is skippable. Forcing setup is a reliable way
  * to lose a first session, and all of it is reachable later.
@@ -72,10 +71,10 @@ interface WelcomeFlowProps {
  *
  * The step is pushed onto the history stack as `?step=`, through the native
  * History API the Next.js guide documents for exactly this — `pushState`
- * integrates with the router without re-running the route, so the four steps
- * cost no server round trip and, crucially, the typed amounts in this
+ * integrates with the router without re-running the route, so the steps cost
+ * no server round trip and, crucially, the typed amounts in this
  * component's state survive the move. It was plain `useState`, which meant the
- * browser's Back button left the wizard altogether from step four: a reader
+ * browser's Back button left the wizard altogether from the last step: a reader
  * who wanted to correct the currency they had picked thirty seconds earlier
  * was thrown out onto the Bearing with no way back in but the account menu.
  *
@@ -102,9 +101,6 @@ export function WelcomeFlow({
   const STEPS = useMemo(() => stepsFor(offerBank), [offerBank]);
   const [step, setStep] = useState<Step>("currency");
   const [bankOpen, setBankOpen] = useState(false);
-  const [bankConnected, setBankConnected] = useState(false);
-  // What follows the charges: the bank step where there is one.
-  const afterCharges: Step = offerBank ? "bank" : "cap";
   const [pending, startTransition] = useTransition();
 
   const [incomeAmount, setIncomeAmount] = useState("");
@@ -113,8 +109,6 @@ export function WelcomeFlow({
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseDay, setExpenseDay] = useState("1");
   const [added, setAdded] = useState(0);
-  const [capCategory, setCapCategory] = useState<string | null>(null);
-  const [capAmount, setCapAmount] = useState("");
 
   const incomeCategory = categories.find((c) => c.type === "income") ?? null;
   const expenseCategories = categories.filter((c) => c.type === "expense");
@@ -156,10 +150,18 @@ export function WelcomeFlow({
     window.history.back();
   }
 
+  /** Where the month is read. */
   function finish() {
-    // A bank connected on the way ends setup on the Bank page, where its
-    // history is brought in; otherwise, where the month is read.
-    router.push(bankConnected ? "/bank" : "/bearing");
+    router.push("/bearing");
+  }
+
+  /** What follows the charges: the bank step where there is one. */
+  function afterCharges() {
+    if (offerBank) {
+      goTo("bank");
+    } else {
+      finish();
+    }
   }
 
   /** Both actions take FormData, so the wizard builds one rather than
@@ -225,7 +227,7 @@ export function WelcomeFlow({
   function handleRecurringContinue() {
     const category = expenseCategories.find((c) => c.id === expenseCategory);
     if (!category || !expenseAmount.trim()) {
-      goTo(afterCharges);
+      afterCharges();
       return;
     }
     startTransition(async () => {
@@ -235,27 +237,8 @@ export function WelcomeFlow({
           t("onboarding.templateAdded", { name: category.name }),
           "success",
         );
-        goTo(afterCharges);
+        afterCharges();
       }
-    });
-  }
-
-  function handleCap() {
-    if (!capCategory || !capAmount.trim()) {
-      finish();
-      return;
-    }
-    startTransition(async () => {
-      const form = new FormData();
-      form.set("categoryId", capCategory);
-      form.set("amount", capAmount);
-
-      const result = await upsertBudget({}, form);
-      if (result.error) {
-        toast(result.error, "error");
-        return;
-      }
-      finish();
     });
   }
 
@@ -478,13 +461,13 @@ export function WelcomeFlow({
               disabled={pending}
               onClick={handleRecurringContinue}
             >
-              {pending ? t("onboarding.saving") : t("onboarding.continue")}
+              {pending
+                ? t("onboarding.saving")
+                : offerBank
+                  ? t("onboarding.continue")
+                  : t("removal.onboardingFinish")}
             </Button>
-            <Button
-              variant="ghost"
-              disabled={pending}
-              onClick={() => goTo(afterCharges)}
-            >
+            <Button variant="ghost" disabled={pending} onClick={afterCharges}>
               {t("onboarding.skipForNow")}
             </Button>
           </div>
@@ -511,66 +494,16 @@ export function WelcomeFlow({
             <Button size="lg" onClick={() => setBankOpen(true)}>
               {t("bankConnect.sheetTitle")}
             </Button>
-            <Button variant="ghost" onClick={() => goTo("cap")}>
+            <Button variant="ghost" onClick={finish}>
               {t("onboarding.skipForNow")}
             </Button>
           </div>
           <ConnectBankSheet
             open={bankOpen}
             onOpenChange={setBankOpen}
-            onConnected={() => {
-              setBankConnected(true);
-              goTo("cap");
-            }}
+            // Setup ends on the Bank page, where its history is brought in.
+            onConnected={() => router.push("/bank")}
           />
-        </div>
-      ) : null}
-
-      {step === "cap" ? (
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <h1 className="font-head text-2xl">{t("onboarding.capTitle")}</h1>
-            <p className="text-muted-foreground">{t("onboarding.capBody")}</p>
-          </div>
-
-          <Card.Bezel innerClassName="flex flex-col gap-3 p-5">
-            <span className="text-sm font-medium">
-              {t("onboarding.category")}
-            </span>
-            <CategoryChips
-              categories={expenseCategories.slice(0, 8)}
-              selected={capCategory}
-              onSelect={setCapCategory}
-            />
-            <FormLabel htmlFor="cap-amount">
-              {t("onboarding.monthlyCap")}
-            </FormLabel>
-            <Input
-              id="cap-amount"
-              type="number"
-              step="0.01"
-              min="0.01"
-              inputMode="decimal"
-              placeholder="0.00"
-              value={capAmount}
-              onChange={(event) => setCapAmount(event.target.value)}
-            />
-          </Card.Bezel>
-
-          <div className="flex flex-col gap-2">
-            <Button
-              size="lg"
-              disabled={pending || !capCategory || !capAmount.trim()}
-              onClick={handleCap}
-            >
-              {pending
-                ? t("onboarding.saving")
-                : t("onboarding.setCapAndFinish")}
-            </Button>
-            <Button variant="ghost" disabled={pending} onClick={finish}>
-              {t("onboarding.skipForNow")}
-            </Button>
-          </div>
         </div>
       ) : null}
     </div>

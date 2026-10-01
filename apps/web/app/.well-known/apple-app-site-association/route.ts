@@ -1,4 +1,8 @@
-import { appleTeamId, IOS_BUNDLE_ID, wellKnownJsonResponse } from "@/lib/mobile-app";
+import {
+  appleTeamId,
+  IOS_BUNDLE_ID,
+  wellKnownJsonResponse,
+} from "@/lib/mobile-app";
 
 export const dynamic = "force-dynamic";
 

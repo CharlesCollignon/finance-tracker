@@ -8,10 +8,17 @@ import {
   upsertInvestmentPosition,
 } from "@/lib/queries/investments";
 import { displayNameForRecurringTemplate } from "@finance/core/investment-positions";
+import { z } from "zod";
+import {
+  ACCOUNT_IDS,
+  isSavingsAccountId,
+  type AccountId,
+} from "@finance/core/allocation";
+import type { InvestmentWalletId } from "@finance/core/investments";
+import type { SavingsAccountKind } from "@finance/core/types/database";
 import {
   investmentPositionSchema,
   walletPlanSchema,
-  walletTargetsSchema,
 } from "@finance/core/validations/investments";
 import {
   BITCOIN_INSTRUMENT,
@@ -207,23 +214,40 @@ export async function saveWalletPlan(input: {
   return { success: true };
 }
 
+const accountTargetsInput = z.object({
+  targets: z
+    .array(
+      z.object({
+        accountId: z.enum(ACCOUNT_IDS as [AccountId, ...AccountId[]]),
+        targetWeight: z.coerce.number().min(0).max(1),
+      }),
+    )
+    .max(ACCOUNT_IDS.length),
+});
+
+/** Whether an error means migration 047 (savings targets) has not run. */
+function savingsTargetsMissing(error: { code?: string } | null): boolean {
+  return error?.code === "42703" || error?.code === "PGRST204";
+}
+
 /**
- * Saves every target at once.
+ * Saves every target at once, across the savings accounts and the wallets.
  *
- * Drift is only reported when the targets cover the whole portfolio, so the
- * UI edits them as a set and this writes them as one.
+ * Drift is only reported when the targets cover everything kept, so the UI
+ * edits them as a set and this writes them as one: a wallet's on its plan
+ * row, a savings account's on the account itself.
  */
-export async function saveWalletTargets(
-  targets: { wallet: string; targetWeight: number }[],
+export async function saveAccountTargets(
+  targets: { accountId: string; targetWeight: number }[],
 ): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
 
-  const parsed = walletTargetsSchema.safeParse({ targets });
+  const parsed = accountTargetsInput.safeParse({ targets });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
+    return { error: "errors.invalidInput" };
   }
 
   const total = parsed.data.targets.reduce(
@@ -231,24 +255,48 @@ export async function saveWalletTargets(
     0,
   );
 
-  // Anything else would make every wallet look permanently off-target.
+  // Anything else would make every account look permanently off-target.
   if (parsed.data.targets.length > 0 && Math.abs(total - 1) > 0.005) {
     return { error: "errors.targetsMustTotal100" };
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("wallet_plans").upsert(
-    parsed.data.targets.map((row) => ({
-      user_id: user.id,
-      wallet: row.wallet,
-      target_weight: row.targetWeight,
-      updated_at: new Date().toISOString(),
-    })),
-    { onConflict: "user_id,wallet" },
+  const now = new Date().toISOString();
+  const wallets = parsed.data.targets.filter(
+    (row) => !isSavingsAccountId(row.accountId),
+  );
+  const savings = parsed.data.targets.filter((row) =>
+    isSavingsAccountId(row.accountId),
   );
 
-  if (error) {
-    return { error: error.message };
+  for (const row of savings) {
+    const { error } = await supabase
+      .from("savings_accounts")
+      .update({ target_weight: row.targetWeight, updated_at: now })
+      .eq("user_id", user.id)
+      .eq("kind", row.accountId as SavingsAccountKind);
+    if (error) {
+      return {
+        error: savingsTargetsMissing(error)
+          ? "placementsWeb.targetsSetup"
+          : error.message,
+      };
+    }
+  }
+
+  if (wallets.length > 0) {
+    const { error } = await supabase.from("wallet_plans").upsert(
+      wallets.map((row) => ({
+        user_id: user.id,
+        wallet: row.accountId as InvestmentWalletId,
+        target_weight: row.targetWeight,
+        updated_at: now,
+      })),
+      { onConflict: "user_id,wallet" },
+    );
+    if (error) {
+      return { error: error.message };
+    }
   }
 
   revalidateRecurringDependents();
@@ -256,24 +304,33 @@ export async function saveWalletTargets(
 }
 
 /**
- * Takes every target off, so the Allocation card goes back to showing the
- * split alone. The rest of each wallet's plan (the PEA's opening date, a
- * ceiling, an envelope fee) lives on the same rows and is left as it was.
+ * Takes every target off, so the split goes back to showing what is alone.
+ * The rest of each wallet's plan (the PEA's opening date, a ceiling, an
+ * envelope fee) lives on the same rows and is left as it was.
  */
-export async function clearWalletTargets(): Promise<ActionResult> {
+export async function clearAccountTargets(): Promise<ActionResult> {
   const user = await getUser();
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
 
   const supabase = await createClient();
+  const now = new Date().toISOString();
   const { error } = await supabase
     .from("wallet_plans")
-    .update({ target_weight: null, updated_at: new Date().toISOString() })
+    .update({ target_weight: null, updated_at: now })
     .eq("user_id", user.id);
-
   if (error) {
     return { error: error.message };
+  }
+
+  // Before 047 no savings account can hold a target, so there is none to take off.
+  const { error: savingsError } = await supabase
+    .from("savings_accounts")
+    .update({ target_weight: null, updated_at: now })
+    .eq("user_id", user.id);
+  if (savingsError && !savingsTargetsMissing(savingsError)) {
+    return { error: savingsError.message };
   }
 
   revalidateRecurringDependents();

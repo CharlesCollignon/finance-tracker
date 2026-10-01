@@ -13,7 +13,10 @@ import {
 } from "@finance/core/i18n/locale";
 import type { MonthReadTally } from "@finance/core/month-read-budget";
 import { monthColumnValue } from "@finance/core/month-close";
-import type { CategorySelectionRow, Database } from "@finance/core/types/database";
+import type {
+  CategorySelectionRow,
+  Database,
+} from "@finance/core/types/database";
 import { createClient } from "@/lib/supabase/server";
 
 type Client = SupabaseClient<Database>;

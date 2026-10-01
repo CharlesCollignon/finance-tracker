@@ -63,7 +63,8 @@ export function createYahooQuoteSource(
   const rates = options.rates ?? createEurRates({ ttlMs, now });
   const staleMs = options.staleMs ?? DEFAULT_STALE_MS;
   const cooldownMs = options.cooldownMs ?? DEFAULT_COOLDOWN_MS;
-  const failureThreshold = options.failureThreshold ?? DEFAULT_FAILURE_THRESHOLD;
+  const failureThreshold =
+    options.failureThreshold ?? DEFAULT_FAILURE_THRESHOLD;
   const fetchQuote = options.fetchQuote ?? fetchInstrumentQuote;
 
   const cache = new Map<string, { quote: Quote; fetchedAt: number }>();

@@ -18,11 +18,6 @@ import {
   getRecurringProposals,
   hasBankFeed,
 } from "@/lib/queries/bank";
-import {
-  getBudgets,
-  getGoalLedger,
-  getSavingsGoals,
-} from "@/lib/queries/phase4";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { getLocale } from "@/lib/locale";
 import { buildAttention, type AttentionItem } from "@finance/core/attention";
@@ -49,12 +44,6 @@ import {
   buildStillToCome,
   type UpcomingCharge,
 } from "@finance/core/still-to-come";
-import {
-  buildGoalRunningTotals,
-  buildSavingsGoalProgress,
-  earliestGoalStart,
-  EMPTY_GOAL_LEDGER,
-} from "@finance/core/savings-goals";
 import type { TransactionWithCategory } from "@finance/core/types/database";
 
 /** How many months the spending bars look back over, the month shown included. */
@@ -77,12 +66,10 @@ export interface BearingMonth {
      * three weeks against four would make every month look like a win.
      */
     previous: number | null;
-    /** The cap on all spending, when one is set. */
-    cap: number | null;
     trend: { monthKey: string; label: string; total: number }[];
   };
   spending: {
-    top: (CategorySpend & { cap: number | null })[];
+    top: CategorySpend[];
     rest: number;
     total: number;
   };
@@ -92,14 +79,7 @@ export interface BearingMonth {
     leaving: number;
     arriving: number;
   } | null;
-  /** The month in progress only — goals, the run and wallets are about now. */
-  goals: {
-    id: string;
-    name: string;
-    saved: number;
-    target: number;
-    ratio: number;
-  }[];
+  /** The month in progress only — the run and wallets are about now. */
   run: { streak: number; best: number } | null;
   invested: number | null;
   attention: AttentionItem[];
@@ -167,14 +147,12 @@ export async function gatherBearingMonth(
   const previousMonth = shiftMonth(year, month, -1);
   const locale = await getLocale();
 
-  const [templates, fulfilledKeys, closes, bankFed, budgets] =
-    await Promise.all([
-      getRecurringTemplates(userId),
-      getFulfilledKeys(userId),
-      getMonthCloseOverview(userId, today),
-      hasBankFeed(userId),
-      getBudgets(userId),
-    ]);
+  const [templates, fulfilledKeys, closes, bankFed] = await Promise.all([
+    getRecurringTemplates(userId),
+    getFulfilledKeys(userId),
+    getMonthCloseOverview(userId, today),
+    hasBankFeed(userId),
+  ]);
 
   /* ------------------------------------------------------------ the anchor */
 
@@ -313,26 +291,16 @@ export async function gatherBearingMonth(
     : byMonth.get(previousKey);
 
   const spending = topSpending(inMonth, 4);
-  const capByCategory = new Map(
-    budgets
-      .filter((budget) => budget.category_id !== null)
-      .map((budget) => [budget.category_id!, Number(budget.amount)]),
-  );
-  const overallCap = budgets.find((budget) => budget.category_id === null);
 
   /* --------------------------------------- what only the present has */
 
-  let goals: BearingMonth["goals"] = [];
   let run: BearingMonth["run"] = null;
   let invested: number | null = null;
   let attention: AttentionItem[] = [];
   let arrived: FulfilmentReport | null = null;
 
   if (isCurrent) {
-    const [savingsGoals, categories] = await Promise.all([
-      getSavingsGoals(userId),
-      getCategories(userId),
-    ]);
+    const categories = await getCategories(userId);
     arrived = await getFulfilmentReport(
       userId,
       templates,
@@ -340,31 +308,12 @@ export async function gatherBearingMonth(
       year,
       month,
     );
-    const goalStart = earliestGoalStart(savingsGoals);
-    const [goalLedger, portfolio, pending, swallowed, proposals] =
-      await Promise.all([
-        goalStart
-          ? getGoalLedger(userId, goalStart, today)
-          : Promise.resolve(EMPTY_GOAL_LEDGER),
-        getWalletPortfolio(userId, { includeHistory: false }),
-        bankFed ? getPendingFeedItems(userId, locale) : Promise.resolve([]),
-        bankFed ? countSwallowedFeedItems(userId) : Promise.resolve(0),
-        bankFed ? getRecurringProposals(userId, today) : Promise.resolve([]),
-      ]);
-
-    goals = buildSavingsGoalProgress(
-      savingsGoals,
-      buildGoalRunningTotals(savingsGoals, goalLedger, templates, today),
-    )
-      .filter((row) => !row.complete)
-      .slice(0, 3)
-      .map((row) => ({
-        id: row.goal.id,
-        name: row.goal.name,
-        saved: row.saved,
-        target: Number(row.goal.target_amount),
-        ratio: row.ratio,
-      }));
+    const [portfolio, pending, swallowed, proposals] = await Promise.all([
+      getWalletPortfolio(userId, { includeHistory: false }),
+      bankFed ? getPendingFeedItems(userId, locale) : Promise.resolve([]),
+      bankFed ? countSwallowedFeedItems(userId) : Promise.resolve(0),
+      bankFed ? getRecurringProposals(userId, today) : Promise.resolve([]),
+    ]);
 
     if (closes.summary.sample > 0) {
       run = {
@@ -403,7 +352,6 @@ export async function gatherBearingMonth(
     spent: {
       total: byMonth.get(monthKeyOf(year, month)) ?? 0,
       previous: previousSoFar ?? null,
-      cap: overallCap ? Number(overallCap.amount) : null,
       trend: trendKeys.map((entry) => ({
         monthKey: entry.key,
         label: formatMonthLabel(entry.year, entry.month, locale),
@@ -411,15 +359,11 @@ export async function gatherBearingMonth(
       })),
     },
     spending: {
-      top: spending.top.map((entry) => ({
-        ...entry,
-        cap: capByCategory.get(entry.categoryId) ?? null,
-      })),
+      top: spending.top,
       rest: spending.rest,
       total: spending.total,
     },
     upcoming: shownUpcoming,
-    goals,
     run,
     invested,
     attention,

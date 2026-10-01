@@ -1,141 +1,176 @@
 import { useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
 
-import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
-import {
-  buildInvestmentReturns,
-  returnUnavailableLabel,
-} from "@finance/core/investment-returns";
-import { formatAnnualRate } from "@finance/core/xirr";
+import { ENVELOPE_SHORT_KEYS } from "@finance/core/future-plan";
 import {
   INVESTMENT_WALLET_IDS,
-  INVESTMENT_WALLET_LABELS,
   INVESTMENT_WALLET_NAME_KEYS,
   type InvestmentWalletId,
 } from "@finance/core/investments";
 import {
-  buildUpcomingInvestments,
-  buildWalletFundingNeeds,
   nextUpcomingByWallet,
   sumUpcomingAmount,
-  type WalletFundingNeed,
 } from "@finance/core/investment-upcoming";
-import type {
-  InvestmentPortfolioSummary,
-  InvestmentPositionItem,
-} from "@finance/core/investment-positions";
-import type {
-  RecurringTemplateWithCategory,
-  TransactionWithCategory,
-  WalletPlan,
-} from "@finance/core/types/database";
+import type { InvestmentPositionItem } from "@finance/core/investment-positions";
+import type { SavingsAccountKind } from "@finance/core/types/database";
 
+import {
+  AddAccountSheet,
+  type AccountKey,
+} from "@/components/accounts/AddAccountSheet";
+import { NewPositionSheet } from "@/components/accounts/NewPositionSheet";
+import { PeaCard } from "@/components/PeaCard";
+import { SavingsAccountCard } from "@/components/accounts/SavingsAccountCard";
 import { InvestmentPositionRow } from "@/components/InvestmentPositionRow";
 import { WalletPerformance } from "@/components/WalletPerformance";
 import { InvestmentPositionSheet } from "@/components/InvestmentPositionSheet";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ChipRow } from "@/components/ui/ChipRow";
+import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
-import { FundCostCard } from "@/components/FundCostCard";
 import { StatHero } from "@/components/StatHero";
-import { WalletPlanPanel } from "@/components/WalletPlanPanel";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
-import { useDataVersion } from "@/lib/data-version";
+import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
+import { hapticSuccess } from "@/lib/haptics";
+import { getPlacementsData, keptAccounts } from "@/lib/placements-data";
+import { linkableBankAccounts, removeWallet } from "@/lib/savings-accounts";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useTabBarClearance } from "@/theme/chrome";
 import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
-import {
-  getInvestmentTransactions,
-  getRecurringTemplates,
-  getWalletPortfolio,
-  getWalletPlans,
-} from "@/lib/queries";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useToast } from "@/providers/ToastProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
 
+const ADD = "add" as const;
+
+function isSavingsKey(key: AccountKey): key is SavingsAccountKind {
+  return !INVESTMENT_WALLET_IDS.includes(key as InvestmentWalletId);
+}
+
+/**
+ * Placements' first view: what each account holds. What they earn, how the
+ * money is spread and what it costs are the Analyse view's
+ * (`analysis.tsx`), so this one stays the accounts themselves.
+ */
 export default function InvestmentsScreen() {
   const t = useT();
   const locale = useLocale();
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
-  const current = getCurrentMonth();
-  const [activeWallet, setActiveWallet] = useState<InvestmentWalletId>("pea");
+  const { toast } = useToast();
+  const [chosen, setChosen] = useState<AccountKey | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [newPositionIn, setNewPositionIn] = useState<InvestmentWalletId | null>(
+    null,
+  );
+  const [removingWallet, setRemovingWallet] =
+    useState<InvestmentWalletId | null>(null);
+  const [removePending, setRemovePending] = useState(false);
   const [editingPosition, setEditingPosition] =
     useState<InvestmentPositionItem | null>(null);
 
   const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
-    useRefreshable(async () => {
-      if (!user) {
-        return {
-          portfolio: null as InvestmentPortfolioSummary | null,
-          upcoming: [] as ReturnType<typeof buildUpcomingInvestments>,
-          fundingNeeds: [] as WalletFundingNeed[],
-          returns: null as ReturnType<typeof buildInvestmentReturns> | null,
-          plans: [] as WalletPlan[],
-        };
-      }
-      const [portfolio, templates, transactions, plans] = await Promise.all([
-        // History powers the per-position charts.
-        getWalletPortfolio(user.id, locale, { includeHistory: true }),
-        getRecurringTemplates(user.id),
-        getInvestmentTransactions(user.id),
-        getWalletPlans(user.id),
-      ]);
-      const investmentTemplates = (
-        templates as RecurringTemplateWithCategory[]
-      ).filter((template) => template.categories.type === "investment");
-      const upcoming = buildUpcomingInvestments(
-        investmentTemplates,
-        transactions as TransactionWithCategory[],
-        todayIsoLocal(),
-        locale,
-      );
-      const fundingNeeds = buildWalletFundingNeeds(
-        investmentTemplates,
-        current.year,
-        current.month,
-      );
-      const returns = buildInvestmentReturns(
-        transactions as TransactionWithCategory[],
-        portfolio,
-        todayIsoLocal(),
-      );
-      return { portfolio, upcoming, fundingNeeds, returns, plans };
-    }, [user?.id, current.year, current.month, dataVersion]);
+    useRefreshable(
+      async () =>
+        user
+          ? // History powers the per-position charts.
+            getPlacementsData(user.id, locale, { includeHistory: true })
+          : null,
+      [user?.id, locale, dataVersion],
+    );
 
   const portfolio = data?.portfolio;
-  const returns = data?.returns ?? null;
-  const plans = data?.plans ?? [];
   const upcoming = data?.upcoming ?? [];
   const nextByWallet = nextUpcomingByWallet(upcoming);
   const fundingNeeds = (data?.fundingNeeds ?? []).filter(
     (need) => need.monthlyTotal > 0,
   );
-  const activeItems =
-    portfolio?.columns.find((entry) => entry.walletId === activeWallet)
-      ?.items ?? [];
-  const hasData =
-    portfolio &&
-    portfolio.columns.some(
-      (column) => column.items.length > 0 || column.totalInvested > 0,
-    );
 
-  const walletOptions = INVESTMENT_WALLET_IDS.map((id) => ({
-    value: id,
-    label: INVESTMENT_WALLET_LABELS[id],
-  }));
+  // The accounts the user keeps: their savings accounts, then the wallets
+  // with positions or that they added.
+  const kept = data ? keptAccounts(data) : null;
+  const savings = data?.savings ?? { accounts: [], bankAccounts: [] };
+  const wallets = kept?.wallets ?? [];
+  const savingsKinds = kept?.savingsKinds ?? [];
+  const accounts: AccountKey[] = [...savingsKinds, ...wallets];
+  const active: AccountKey | null =
+    chosen && accounts.includes(chosen) ? chosen : (accounts[0] ?? null);
+  const activeWallet =
+    active && !isSavingsKey(active) ? (active as InvestmentWalletId) : null;
+  const activeSavings = active
+    ? savings.accounts.find((view) => view.account.kind === active)
+    : undefined;
+  const activeItems = activeWallet
+    ? (portfolio?.columns.find((entry) => entry.walletId === activeWallet)
+        ?.items ?? [])
+    : [];
+
+  const keptPortfolio = kept?.keptPortfolio ?? null;
+  const savingsTotal = kept?.savingsTotal ?? 0;
+  const investedValue = portfolio?.totalMarketValue ?? 0;
+  const savingsMonthly = kept?.savingsMonthly ?? {};
+
+  // What goes in each month, wallets then savings accounts, so the savings
+  // accounts added sit after Crypto as their own tags.
+  const monthlyTags = [
+    ...fundingNeeds.map((need) => ({
+      key: need.walletId as string,
+      label: t(ENVELOPE_SHORT_KEYS[need.walletId]),
+      amount: need.monthlyTotal,
+    })),
+    ...savingsKinds.flatMap((kind) => {
+      const amount = savingsMonthly[kind] ?? 0;
+      return amount > 0
+        ? [{ key: kind as string, label: t(ENVELOPE_SHORT_KEYS[kind]), amount }]
+        : [];
+    }),
+  ];
+
+  const accountOptions = [
+    ...accounts.map((id) => ({
+      value: id as AccountKey | typeof ADD,
+      label: t(ENVELOPE_SHORT_KEYS[id]),
+    })),
+    { value: ADD as AccountKey | typeof ADD, label: `+ ${t("accounts.add")}` },
+  ];
+
+  function changed() {
+    notifyDataChanged();
+    void onRefresh();
+  }
+
+  async function confirmRemoveWallet() {
+    if (!removingWallet) {
+      return;
+    }
+    const wallet = removingWallet;
+    setRemovePending(true);
+    const result = await removeWallet(wallet);
+    setRemovePending(false);
+    setRemovingWallet(null);
+    if (result.error) {
+      toast(resolveMessage(t, result.error), "error");
+      return;
+    }
+    void hapticSuccess();
+    toast(t("accounts.removed", { name: t(ENVELOPE_SHORT_KEYS[wallet]) }));
+    setChosen(null);
+    changed();
+  }
 
   return (
     <Screen title={t("nav.wallets")} className="pb-0">
-      {/* Positions and what they are made of, as the web's strip. */}
+      {/* The accounts, their analysis and what the funds are made of, as
+          the web's strip. */}
       <SurfaceTabs tabs={WALLET_TABS} className="mb-3" />
       {loading && !portfolio ? (
         <ScreenSkeleton rows={3} />
@@ -149,10 +184,7 @@ export default function InvestmentsScreen() {
       ) : (
         /*
          * In the web's order: what it is all worth, what goes in each month,
-         * then one account and what it holds. The positions used to come
-         * eighth, under the return, the fees, the plan, one card per
-         * account to fund and the performance chart; the reasons to open
-         * this screen were the last thing on it.
+         * then one account and what it holds.
          */
         <ScrollView
           refreshControl={
@@ -162,30 +194,45 @@ export default function InvestmentsScreen() {
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
           <StatHero
-            label={t("wallets.marketValue")}
-            amount={formatEuro(portfolio.totalMarketValue)}
-            animateValue={portfolio.totalMarketValue}
+            label={t("accounts.total")}
+            amount={formatEuro(savingsTotal + investedValue)}
+            animateValue={savingsTotal + investedValue}
             format={formatEuro}
             subtitle={
               <>
-                <PrivateAmount className="text-sm text-muted-foreground">
-                  {formatEuro(portfolio.totalInvested)}
-                </PrivateAmount>
-                {` ${t("wallets.investedSuffix")}`}
-                {portfolio.hasMarketSnapshot &&
-                portfolio.totalGainLoss !== 0 ? (
+                {savings.accounts.length > 0 ? (
                   <>
-                    {" · "}
-                    <PrivateAmount
-                      className={cn(
-                        "text-sm font-medium",
-                        portfolio.totalGainLoss > 0
-                          ? "text-success"
-                          : "text-destructive",
-                      )}
-                    >
-                      {formatSigned(portfolio.totalGainLoss, formatEuro)}
+                    <PrivateAmount className="text-sm text-muted-foreground">
+                      {t("accounts.split", {
+                        savings: formatEuro(savingsTotal),
+                        investments: formatEuro(investedValue),
+                      })}
                     </PrivateAmount>
+                    {wallets.length > 0 ? "\n" : null}
+                  </>
+                ) : null}
+                {wallets.length > 0 ? (
+                  <>
+                    <PrivateAmount className="text-sm text-muted-foreground">
+                      {formatEuro(portfolio.totalInvested)}
+                    </PrivateAmount>
+                    {` ${t("wallets.investedSuffix")}`}
+                    {portfolio.hasMarketSnapshot &&
+                    portfolio.totalGainLoss !== 0 ? (
+                      <>
+                        {" · "}
+                        <PrivateAmount
+                          className={cn(
+                            "text-sm font-medium",
+                            portfolio.totalGainLoss > 0
+                              ? "text-success"
+                              : "text-destructive",
+                          )}
+                        >
+                          {formatSigned(portfolio.totalGainLoss, formatEuro)}
+                        </PrivateAmount>
+                      </>
+                    ) : null}
                   </>
                 ) : null}
               </>
@@ -195,23 +242,23 @@ export default function InvestmentsScreen() {
           {/* One row of tags rather than one card per account: three cards
               of "Send to X €Y / month" were three cards of height for three
               numbers, and the account's name is label enough. */}
-          {fundingNeeds.length > 0 || upcoming.length > 0 ? (
+          {monthlyTags.length > 0 || upcoming.length > 0 ? (
             <View className="items-center gap-2">
-              {fundingNeeds.length > 0 ? (
+              {monthlyTags.length > 0 ? (
                 <View
                   accessibilityLabel={t("wallets.fundingLabel")}
                   className="flex-row flex-wrap justify-center gap-2"
                 >
-                  {fundingNeeds.map((need) => (
+                  {monthlyTags.map((tag) => (
                     <View
-                      key={need.walletId}
+                      key={tag.key}
                       className="flex-row items-baseline gap-1.5 rounded-full border border-border px-3 py-1"
                     >
                       <Text variant="muted" className="text-xs">
-                        {INVESTMENT_WALLET_LABELS[need.walletId]}
+                        {tag.label}
                       </Text>
                       <PrivateAmount className="text-xs font-medium">
-                        {formatEuro(need.monthlyTotal)}
+                        {formatEuro(tag.amount)}
                       </PrivateAmount>
                       <Text variant="muted" className="text-xs">
                         {t("wallets.perMonth")}
@@ -230,103 +277,122 @@ export default function InvestmentsScreen() {
             </View>
           ) : null}
 
-          {!hasData ? (
-            <EmptyState
-              title={t("wallets.trackTitle")}
-              description={t("wallets.trackBody")}
-            />
-          ) : null}
-
-          <View className="gap-2">
-            <ChipRow
-              label={t("wallets.walletPicker")}
-              options={walletOptions}
-              value={activeWallet}
-              onChange={setActiveWallet}
-            />
-            {/* The acronym spelled out, once, under the chip that uses it. */}
-            <Text variant="muted" className="px-1 text-xs">
-              {t(INVESTMENT_WALLET_NAME_KEYS[activeWallet])}
-            </Text>
-          </View>
-
-          <View>
-            <Text className="mb-2 text-base font-medium">
-              {t("wallets.inWallet", {
-                wallet: INVESTMENT_WALLET_LABELS[activeWallet],
-              })}
-            </Text>
-            <Card bezel innerClassName="px-4 py-1">
-              {activeItems.length === 0 ? (
-                <Text variant="muted" className="py-4 text-sm">
-                  {t("wallets.noItems")}
+          {accounts.length === 0 ? (
+            <View className="gap-3">
+              <EmptyState
+                title={t("accounts.emptyTitle")}
+                description={t("accounts.emptyBody")}
+              />
+              <Button
+                label={t("accounts.add")}
+                size="lg"
+                onPress={() => setAdding(true)}
+              />
+            </View>
+          ) : (
+            <View className="gap-2">
+              <ChipRow
+                label={t("accounts.yourAccounts")}
+                options={accountOptions}
+                value={active ?? ADD}
+                onChange={(next) => {
+                  if (next === ADD) {
+                    setAdding(true);
+                    return;
+                  }
+                  setChosen(next);
+                }}
+              />
+              {/* The acronym spelled out, once, under the chip that uses it. */}
+              {activeWallet ? (
+                <Text variant="muted" className="px-1 text-xs">
+                  {t(INVESTMENT_WALLET_NAME_KEYS[activeWallet])}
                 </Text>
-              ) : (
-                activeItems.map((item, index) => (
-                  <View
-                    key={item.id}
-                    className={index > 0 ? "border-t border-border" : ""}
-                  >
-                    <InvestmentPositionRow
-                      item={item}
-                      onEdit={() => setEditingPosition(item)}
-                    />
-                  </View>
-                ))
+              ) : null}
+            </View>
+          )}
+
+          {activeSavings ? (
+            <SavingsAccountCard
+              key={activeSavings.account.id}
+              view={activeSavings}
+              monthly={savingsMonthly[activeSavings.account.kind] ?? 0}
+              bankAccounts={linkableBankAccounts(
+                savings,
+                activeSavings.account.bank_account_id ?? undefined,
               )}
-            </Card>
-          </View>
-
-          <WalletPerformance
-            portfolio={portfolio}
-            activeWallet={activeWallet}
-            nextByWallet={nextByWallet}
-          />
-
-          {returns ? (
-            <Card bezel innerClassName="p-5">
-              <View className="flex-row items-baseline justify-between gap-3">
-                <Text variant="muted" className="text-sm">
-                  {t("wallets.returnTitle")}
-                </Text>
-                <Text
-                  className={cn(
-                    "font-sans tabular-nums font-bold",
-                    returns.total.rate === null
-                      ? "text-muted-foreground"
-                      : returns.total.rate >= 0
-                        ? "text-success"
-                        : "text-destructive",
-                  )}
-                  style={{ fontSize: 18 }}
-                >
-                  {formatAnnualRate(returns.total.rate, locale) ??
-                    returnUnavailableLabel(
-                      returns.total.unavailableReason,
-                      locale,
-                    )}
-                </Text>
-              </View>
-              <Text variant="muted" className="mt-2 text-xs">
-                {t("wallets.returnBody")}
-              </Text>
-            </Card>
+              onChanged={changed}
+            />
           ) : null}
 
-          <WalletPlanPanel
-            portfolio={portfolio}
-            returns={returns}
-            plans={plans}
-            monthlyContribution={fundingNeeds.reduce(
-              (sum, need) => sum + need.monthlyTotal,
-              0,
-            )}
-            onSaved={onRefresh}
-          />
+          {activeWallet ? (
+            <View>
+              <Text className="mb-2 text-base font-medium">
+                {t("wallets.inWallet", {
+                  wallet: t(ENVELOPE_SHORT_KEYS[activeWallet]),
+                })}
+              </Text>
+              <Card bezel innerClassName="px-4 py-1">
+                {activeItems.length === 0 ? (
+                  <View className="gap-1 py-4">
+                    <Text variant="muted" className="text-sm">
+                      {t("wallets.noItems")}
+                    </Text>
+                    <Text variant="muted" className="text-xs">
+                      {t("wallets.trackBody")}
+                    </Text>
+                  </View>
+                ) : (
+                  activeItems.map((item, index) => (
+                    <View
+                      key={item.id}
+                      className={index > 0 ? "border-t border-border" : ""}
+                    >
+                      <InvestmentPositionRow
+                        item={item}
+                        onEdit={() => setEditingPosition(item)}
+                      />
+                    </View>
+                  ))
+                )}
+              </Card>
+              <View className="mt-3 flex-row flex-wrap gap-2">
+                <Button
+                  label={t("position.addItem")}
+                  variant="outline"
+                  size="sm"
+                  onPress={() => setNewPositionIn(activeWallet)}
+                />
+                <Button
+                  label={t("accounts.remove")}
+                  variant="ghost"
+                  size="sm"
+                  onPress={() => setRemovingWallet(activeWallet)}
+                />
+              </View>
+            </View>
+          ) : null}
 
-          {/* Fees last: a figure worth checking once a year, not on every
-              visit. */}
-          <FundCostCard portfolio={portfolio} />
+          {/* The PEA's ceiling and five-year clock are about this one
+              account, so they sit under it rather than in the analysis. */}
+          {activeWallet === "pea" && data ? (
+            <PeaCard
+              invested={
+                portfolio?.columns.find((column) => column.walletId === "pea")
+                  ?.totalInvested ?? 0
+              }
+              plan={data.plans.find((plan) => plan.wallet === "pea")}
+              onSaved={onRefresh}
+            />
+          ) : null}
+
+          {activeWallet && keptPortfolio ? (
+            <WalletPerformance
+              portfolio={keptPortfolio}
+              activeWallet={activeWallet}
+              nextByWallet={nextByWallet}
+            />
+          ) : null}
         </ScrollView>
       )}
 
@@ -334,6 +400,40 @@ export default function InvestmentsScreen() {
         item={editingPosition}
         onClose={() => setEditingPosition(null)}
         onSaved={onRefresh}
+      />
+      <NewPositionSheet
+        wallet={newPositionIn}
+        onClose={() => setNewPositionIn(null)}
+        onSaved={changed}
+      />
+      <AddAccountSheet
+        open={adding}
+        takenSavings={savingsKinds}
+        takenWallets={wallets}
+        bankAccounts={linkableBankAccounts(savings)}
+        onClose={() => setAdding(false)}
+        onAdded={(key) => {
+          setChosen(key);
+          changed();
+        }}
+      />
+      <ConfirmSheet
+        open={removingWallet !== null}
+        title={
+          removingWallet
+            ? t("accounts.removeWalletConfirm", {
+                name: t(ENVELOPE_SHORT_KEYS[removingWallet]),
+                count:
+                  portfolio?.columns.find(
+                    (column) => column.walletId === removingWallet,
+                  )?.items.length ?? 0,
+              })
+            : ""
+        }
+        confirmLabel={t("accounts.remove")}
+        pending={removePending}
+        onCancel={() => setRemovingWallet(null)}
+        onConfirm={() => void confirmRemoveWallet()}
       />
     </Screen>
   );

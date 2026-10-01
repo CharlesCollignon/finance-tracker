@@ -11,16 +11,13 @@
  * `FactPack` rather than starting a parallel vocabulary.
  *
  * What is different is how few figures there are. A month pack runs to thirty
- * datums across a dozen families; a category has nine at most, and the read on
+ * datums across a dozen families; a category has six at most, and the read on
  * the other side of them is two sentences long. That changes what the pack
- * owes the model: with thirty figures a missing one is noise, with nine it is
+ * owes the model: with thirty figures a missing one is noise, with six it is
  * a hole the model will fill by inference. Hence `nothing-found` — a drift
  * that did not clear its floor is handed over as an absence with a reason,
  * because a model given a normal and a latest that differ will otherwise
- * announce a drift nobody measured. Hence, too, `cap-left` and `cap-over`:
- * a model that wants the overshoot and holds only the cap will point at the
- * cap and call it the overshoot, which is the failure `month-facts.ts`
- * documents having already paid for.
+ * announce a drift nobody measured.
  *
  * Pure, and deliberately so: everything here is testable without a database,
  * a network or a model.
@@ -53,8 +50,6 @@ export interface CategoryFactsInput {
   oddMonth: number | null;
   /** This category's share of the month's expenses, 0 to 1. */
   shareOfMonth: number | null;
-  /** The category's cap, or null when it has none. */
-  cap: number | null;
   /**
    * The language the labels are written in.
    *
@@ -218,73 +213,6 @@ export function buildCategoryFacts(input: CategoryFactsInput): CategoryFacts {
         value: points(input.shareOfMonth),
         sense: "up-is-bad",
       });
-    }
-  }
-
-  /* ------------------------------------------------------------ the cap */
-
-  // A cap and a month's spending, with nothing derived from the two, is the
-  // shape `month-facts.ts` already paid to learn about. Every model tried
-  // wrote "overshooting the cap by −62,40 €": it saw the breach correctly and
-  // quoted the nearest figure it had as the size of it, because that was the
-  // only figure it had. A note telling it not to did not help, "and should
-  // not have been expected to — the model was not confused, it was making
-  // do". So the arithmetic is done here, where it can be tested, rather than
-  // forbidden over there.
-  //
-  // `cap-left` earns its place separately: "you have this much left this
-  // month" is the most useful sentence a cap makes possible, and it cannot be
-  // written at all from a cap and a total.
-  if (input.cap === null) {
-    // One absence, one line. The two derived figures do not exist without a
-    // cap, and three lines saying "no cap has been set" is noise — the same
-    // judgement `month-facts.ts` makes for `unrecorded-over`.
-    missing.push({
-      id: "cap",
-      label: t("categoryFacts.cap"),
-      why: "no-cap",
-    });
-  } else {
-    facts.push({
-      id: "cap",
-      label: t("categoryFacts.cap"),
-      unit: "money",
-      value: round(input.cap),
-      sense: "neutral",
-    });
-
-    if (input.latest === null) {
-      // The cap stands, but nothing was recorded against it, so what is left
-      // of it is genuinely unknown rather than the whole cap.
-      missing.push({
-        id: "cap-left",
-        label: t("categoryFacts.capLeft"),
-        why: "not-recorded",
-      });
-    } else {
-      // Unclamped, so it goes negative when the cap is breached. That sign is
-      // the point: a model reading "left" as a floor of zero would miss the
-      // breach entirely.
-      const left = round(input.cap - input.latest);
-      facts.push({
-        id: "cap-left",
-        label: t("categoryFacts.capLeft"),
-        unit: "money",
-        value: left,
-        sense: "up-is-good",
-      });
-
-      // The overshoot, positive, as a figure of its own — only when there is
-      // one, exactly as `budget-over` appears only when `row.over`.
-      if (left < 0) {
-        facts.push({
-          id: "cap-over",
-          label: t("categoryFacts.capOver"),
-          unit: "money",
-          value: -left,
-          sense: "up-is-bad",
-        });
-      }
     }
   }
 

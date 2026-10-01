@@ -77,12 +77,11 @@ export function AttentionRow({
  * Where an attention row's action leads, on the phone.
  *
  * `buildAttention`'s `href`s are web routes from a closed set of five
- * (`/transactions`, `/transactions?review=inbox`, `/budgets` twice,
+ * (`/transactions`, `/transactions?review=inbox`, `/plan` twice,
  * `/recurring`). `transactions.tsx` and `recurring.tsx` are real tabs and
- * answer three of them unchanged; there is no `budgets` route on the phone,
- * and its answer — the caps, the close and the ready-to-close prompt — lives
- * on `planning.tsx`.
+ * answer three of them unchanged; the phone's Plan is `planning.tsx`, where
+ * the close and the ready-to-close prompt live.
  */
 function attentionHref(href: string): string {
-  return href === "/budgets" ? "/planning" : href;
+  return href === "/plan" ? "/planning" : href;
 }

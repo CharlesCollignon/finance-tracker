@@ -27,33 +27,33 @@
 
 **Created:**
 
-| File | Responsibility |
-| --- | --- |
-| `packages/core/src/motion.ts` | The shared motion vocabulary: easing, durations, stagger |
-| `packages/core/src/motion.test.ts` | Its tests |
-| `packages/core/src/bearing-panels.ts` | Which chrome and blocks a tile's panel shows |
-| `packages/core/src/bearing-panels.test.ts` | Its tests |
-| `apps/web/components/finance/bearing/Panel.tsx` | The web panel shell — chrome, blocks, footer link |
-| `apps/web/components/finance/bearing/panel-blocks.tsx` | Maps a `PanelBlock` to a web component |
-| `apps/web/lib/actions/bearing-panel.ts` | Server function returning one family's detail |
-| `apps/web/lib/bearing/panel-detail.ts` | Gathering that detail, per family |
-| `apps/mobile/src/components/bearing/Panel.tsx` | The phone panel shell |
-| `apps/mobile/src/components/bearing/panel-blocks.tsx` | Maps a `PanelBlock` to a phone component |
-| `apps/mobile/src/lib/bearing-panel.ts` | Fetching panel detail on the phone |
+| File                                                   | Responsibility                                           |
+| ------------------------------------------------------ | -------------------------------------------------------- |
+| `packages/core/src/motion.ts`                          | The shared motion vocabulary: easing, durations, stagger |
+| `packages/core/src/motion.test.ts`                     | Its tests                                                |
+| `packages/core/src/bearing-panels.ts`                  | Which chrome and blocks a tile's panel shows             |
+| `packages/core/src/bearing-panels.test.ts`             | Its tests                                                |
+| `apps/web/components/finance/bearing/Panel.tsx`        | The web panel shell — chrome, blocks, footer link        |
+| `apps/web/components/finance/bearing/panel-blocks.tsx` | Maps a `PanelBlock` to a web component                   |
+| `apps/web/lib/actions/bearing-panel.ts`                | Server function returning one family's detail            |
+| `apps/web/lib/bearing/panel-detail.ts`                 | Gathering that detail, per family                        |
+| `apps/mobile/src/components/bearing/Panel.tsx`         | The phone panel shell                                    |
+| `apps/mobile/src/components/bearing/panel-blocks.tsx`  | Maps a `PanelBlock` to a phone component                 |
+| `apps/mobile/src/lib/bearing-panel.ts`                 | Fetching panel detail on the phone                       |
 
 **Modified:**
 
-| File | Change |
-| --- | --- |
-| `packages/core/src/bearing-read.ts` | `RenderedTile` gains `family` |
-| `packages/core/src/bearing-read.test.ts` | Covers the new field |
-| `packages/core/src/i18n/messages/en.ts`, `fr.ts` | Panel strings |
-| `apps/web/components/finance/bearing/BearingGrid.tsx` | Open state, panel row insertion |
-| `apps/web/components/finance/bearing/Tile.tsx` | Press expands instead of navigating |
-| `apps/web/components/motion/Stagger.tsx` | Reads constants from core |
-| `apps/mobile/src/app/(tabs)/index.tsx` | Open state, passes it down |
-| `apps/mobile/src/components/bearing/BearingTile.tsx` | Press expands; renders the panel |
-| `apps/mobile/src/components/motion/FadeIn.tsx`, `Stagger.tsx` | Read constants from core |
+| File                                                          | Change                              |
+| ------------------------------------------------------------- | ----------------------------------- |
+| `packages/core/src/bearing-read.ts`                           | `RenderedTile` gains `family`       |
+| `packages/core/src/bearing-read.test.ts`                      | Covers the new field                |
+| `packages/core/src/i18n/messages/en.ts`, `fr.ts`              | Panel strings                       |
+| `apps/web/components/finance/bearing/BearingGrid.tsx`         | Open state, panel row insertion     |
+| `apps/web/components/finance/bearing/Tile.tsx`                | Press expands instead of navigating |
+| `apps/web/components/motion/Stagger.tsx`                      | Reads constants from core           |
+| `apps/mobile/src/app/(tabs)/index.tsx`                        | Open state, passes it down          |
+| `apps/mobile/src/components/bearing/BearingTile.tsx`          | Press expands; renders the panel    |
+| `apps/mobile/src/components/motion/FadeIn.tsx`, `Stagger.tsx` | Read constants from core            |
 
 ---
 
@@ -62,10 +62,12 @@
 The two clients currently keep their motion in step by comment — mobile's `Stagger.tsx` says "Matches the web Stagger's 40ms cadence" and `AnimatedAmount` is duplicated at 650ms on both. This task makes that a shared fact.
 
 **Files:**
+
 - Create: `packages/core/src/motion.ts`
 - Test: `packages/core/src/motion.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `EASE_STANDARD: readonly [number, number, number, number]`, `DURATION: { enter: 500; count: 650; panel: 420 }`, `STAGGER_STEP_MS: 40`, `STAGGER_MAX_STEPS: 8`, `staggerDelay(index: number): number`, `cssEasing(points?): string`, `easeOutCubic(t: number): number`.
 
@@ -192,9 +194,7 @@ export function staggerDelay(index: number): number {
 }
 
 /** The curve as a CSS `cubic-bezier()` value. */
-export function cssEasing(
-  points: readonly number[] = EASE_STANDARD,
-): string {
+export function cssEasing(points: readonly number[] = EASE_STANDARD): string {
   return `cubic-bezier(${points.join(", ")})`;
 }
 
@@ -267,10 +267,12 @@ git commit -m "Keep the two apps moving alike by saying how, once"
 `panelFor` needs a tile's family, and `RenderedTile` does not have it — the family lives on the datum in the pack. This is a two-line change that Task 3 depends on entirely.
 
 **Files:**
+
 - Modify: `packages/core/src/bearing-read.ts:319-390`
 - Test: `packages/core/src/bearing-read.test.ts`
 
 **Interfaces:**
+
 - Consumes: `BearingFact.family` from `bearing-facts.ts`.
 - Produces: `RenderedTile.family: FactFamily`.
 
@@ -304,15 +306,15 @@ Expected: FAIL — `family` is `undefined`, and TypeScript reports it is not a p
 In `packages/core/src/bearing-read.ts`, add to the `RenderedTile` interface, after `id`:
 
 ```ts
-  /**
-   * Which horizon this figure belongs to.
-   *
-   * Copied from the datum rather than looked up from the id, for the reason
-   * `bearing-facts.ts` gives for carrying it there: two apps deriving the
-   * same grouping from a naming convention is two places for that convention
-   * to rot. The panel system groups by this.
-   */
-  family: FactFamily;
+/**
+ * Which horizon this figure belongs to.
+ *
+ * Copied from the datum rather than looked up from the id, for the reason
+ * `bearing-facts.ts` gives for carrying it there: two apps deriving the
+ * same grouping from a naming convention is two places for that convention
+ * to rot. The panel system groups by this.
+ */
+family: FactFamily;
 ```
 
 Import the type at the top:
@@ -346,10 +348,12 @@ git commit -m "Let a rendered tile say which horizon it belongs to"
 The rule the spec calls load-bearing: blocks are chosen **per tile, not per family**, because a panel that dumped its whole family would mean Month had been hidden in an accordion rather than dissolved.
 
 **Files:**
+
 - Create: `packages/core/src/bearing-panels.ts`
 - Test: `packages/core/src/bearing-panels.test.ts`
 
 **Interfaces:**
+
 - Consumes: `FactFamily` from `bearing-facts.ts`; `TileId`, `BEARING_TILES` from `bearing-tiles.ts`.
 - Produces: `PanelBlock`, `PanelChrome`, `PanelSpec`, `panelFor(id: TileId, family: FactFamily): PanelSpec`.
 
@@ -565,10 +569,12 @@ git commit -m "Say what opens under a tile, one figure at a time"
 The spec names this the harder half: a full-width panel has to enter a four-column grid without leaving the holes `HEAD` and `REPEAT` were chosen to avoid. Prove the mechanism before building any panel content.
 
 **Files:**
+
 - Modify: `apps/web/components/finance/bearing/BearingGrid.tsx`
 - Modify: `apps/web/components/finance/bearing/Tile.tsx`
 
 **Interfaces:**
+
 - Consumes: `panelFor` (Task 3), `RenderedTile.family` (Task 2), `cssEasing`/`DURATION` (Task 1).
 - Produces: `BearingGrid` holding `openTile: TileId | null`; a `<div data-panel-row>` rendered at `grid-column: 1 / -1` after the open tile's row.
 
@@ -672,12 +678,14 @@ git commit -m "Open a row under the tile, without punching a hole in the bento"
 ## Task 5: The web panel — chrome, blocks, footer
 
 **Files:**
+
 - Create: `apps/web/components/finance/bearing/Panel.tsx`
 - Create: `apps/web/components/finance/bearing/panel-blocks.tsx`
 - Create: `apps/web/lib/bearing/panel-detail.ts`
 - Create: `apps/web/lib/actions/bearing-panel.ts`
 
 **Interfaces:**
+
 - Consumes: `panelFor`, `PanelBlock`, `PanelChrome` (Task 3); the stub slot from Task 4.
 - Produces: `<Panel tile={RenderedTile} />`; `bearingPanelAction(family: FactFamily, scope: { year: number; month: number }): Promise<PanelDetail>`.
 
@@ -694,7 +702,10 @@ Create `apps/web/lib/actions/bearing-panel.ts`, following `bearing.ts` exactly �
 
 import type { FactFamily } from "@finance/core/bearing-facts";
 import { getAuthUser } from "@/lib/auth/get-user";
-import { gatherPanelDetail, type PanelDetail } from "@/lib/bearing/panel-detail";
+import {
+  gatherPanelDetail,
+  type PanelDetail,
+} from "@/lib/bearing/panel-detail";
 
 /**
  * The detail under a tile's figure.
@@ -737,8 +748,17 @@ import type { InvestmentPortfolioSummary } from "./investment-positions";
  */
 export type PanelDetail =
   | { family: "now"; movements: BankMovement[]; inbox: FeedItem[] }
-  | { family: "month"; summary: MonthlySummary; comparison: MonthComparison | null; upcoming: StillToCome }
-  | { family: "run"; closes: { history: CloseHistoryRow[]; summary: CloseHistorySummary }; trend: number[] }
+  | {
+      family: "month";
+      summary: MonthlySummary;
+      comparison: MonthComparison | null;
+      upcoming: StillToCome;
+    }
+  | {
+      family: "run";
+      closes: { history: CloseHistoryRow[]; summary: CloseHistorySummary };
+      trend: number[];
+    }
   | { family: "ahead"; trend: number[] }
   | { family: "wallet"; portfolio: InvestmentPortfolioSummary };
 ```
@@ -755,7 +775,10 @@ import { getMonthlySummary, getMonthlyTrend } from "@/lib/queries/finance";
 import { getMonthComparison } from "@/lib/queries/finance";
 import { getMonthCloseOverview } from "@/lib/queries/month-close";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
-import { getRecentBankMovements, getPendingFeedItems } from "@/lib/queries/bank";
+import {
+  getRecentBankMovements,
+  getPendingFeedItems,
+} from "@/lib/queries/bank";
 
 /**
  * What sits under a figure, fetched only when somebody asks to see it.
@@ -783,7 +806,12 @@ export async function gatherPanelDetail(
         getMonthlySummary(userId, scope.year, scope.month),
         getMonthComparison(userId, scope.year, scope.month),
       ]);
-      return { family, summary, comparison, upcoming: buildStillToCome(summary) };
+      return {
+        family,
+        summary,
+        comparison,
+        upcoming: buildStillToCome(summary),
+      };
     }
     case "run": {
       const [closes, trend] = await Promise.all([
@@ -849,7 +877,9 @@ export function PanelBlockView({
         <StillToCome {...detail.upcoming} />
       ) : null;
     case "review-inbox":
-      return detail.family === "now" ? <BankInbox items={detail.inbox} /> : null;
+      return detail.family === "now" ? (
+        <BankInbox items={detail.inbox} />
+      ) : null;
     case "recent-on-account":
       return detail.family === "now" ? (
         <RecentOnAccount movements={detail.movements} />
@@ -896,6 +926,7 @@ git commit -m "Fill the row under a tile with what explains its figure"
 Easier than the web's, for the reason `BearingTile.tsx` records: the phone is deliberately a single column, so an open row simply grows.
 
 **Files:**
+
 - Modify: `apps/mobile/src/app/(tabs)/index.tsx:243-258`
 - Modify: `apps/mobile/src/components/bearing/BearingTile.tsx`
 - Create: `apps/mobile/src/components/bearing/Panel.tsx`
@@ -903,6 +934,7 @@ Easier than the web's, for the reason `BearingTile.tsx` records: the phone is de
 - Create: `apps/mobile/src/lib/bearing-panel.ts`
 
 **Interfaces:**
+
 - Consumes: `panelFor`, `RenderedTile.family`, `DURATION`, `EASE_STANDARD`.
 - Produces: `BearingTile` gaining `open: boolean` and `onToggle: () => void`.
 
@@ -921,17 +953,26 @@ Pass `open={item.id === openTile}` and `onToggle={() => setOpenTile((c) => (c ==
 In `BearingTile.tsx`, wrap the card body so the panel is a sibling inside the same `Card`, and animate its height with Reanimated's layout transition rather than a measured height:
 
 ```tsx
-import Animated, { LinearTransition, useReducedMotion } from "react-native-reanimated";
+import Animated, {
+  LinearTransition,
+  useReducedMotion,
+} from "react-native-reanimated";
 import { DURATION, EASE_STANDARD } from "@finance/core/motion";
 
 const reduce = useReducedMotion();
 
 <Animated.View
-  layout={reduce ? undefined : LinearTransition.duration(DURATION.panel).easing(Easing.bezier(...EASE_STANDARD))}
+  layout={
+    reduce
+      ? undefined
+      : LinearTransition.duration(DURATION.panel).easing(
+          Easing.bezier(...EASE_STANDARD),
+        )
+  }
 >
   {/* existing figure */}
   {open ? <Panel tile={tile} /> : null}
-</Animated.View>
+</Animated.View>;
 ```
 
 `ReorderableList` already supports variable item heights, so nothing about the list needs changing.
@@ -1008,10 +1049,12 @@ git commit -m "Grow the row on the phone, where the column was always single"
 ## Task 7: Say it in both languages
 
 **Files:**
+
 - Modify: `packages/core/src/i18n/messages/en.ts` (the `bearing` group, from line 1626)
 - Modify: `packages/core/src/i18n/messages/fr.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `bearing.panel.*` keys used by both clients' `Panel.tsx`.
 

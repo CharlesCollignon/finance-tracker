@@ -6,7 +6,6 @@ import {
 } from "@finance/core/merchant-memory";
 import type {
   Category,
-  Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 
@@ -22,7 +21,6 @@ const RECENT_CATEGORY_COUNT = 4;
 
 export interface QuickEntryContext {
   categories: Category[];
-  tags: Tag[];
   /** Most recently used category ids, newest first. */
   recentCategoryIds: string[];
   /** Merchant rules as an array — Maps do not survive the RSC boundary well. */
@@ -40,14 +38,13 @@ export const getQuickEntryContext = cache(
   async (userId: string): Promise<QuickEntryContext> => {
     const supabase = await createClient();
 
-    const [categoriesResult, tagsResult, historyResult] = await Promise.all([
+    const [categoriesResult, historyResult] = await Promise.all([
       supabase
         .from("categories")
         .select("*")
         .eq("user_id", userId)
         .eq("archived", false)
         .order("name"),
-      supabase.from("tags").select("*").eq("user_id", userId).order("name"),
       supabase
         .from("transactions")
         .select("*, categories(name, type, icon, counts_toward_summary)")
@@ -59,9 +56,6 @@ export const getQuickEntryContext = cache(
 
     if (categoriesResult.error) {
       throw categoriesResult.error;
-    }
-    if (tagsResult.error) {
-      throw tagsResult.error;
     }
     if (historyResult.error) {
       throw historyResult.error;
@@ -81,7 +75,6 @@ export const getQuickEntryContext = cache(
 
     return {
       categories: (categoriesResult.data ?? []) as Category[],
-      tags: (tagsResult.data ?? []) as Tag[],
       recentCategoryIds,
       merchants: [...buildMerchantIndex(history).values()],
     };

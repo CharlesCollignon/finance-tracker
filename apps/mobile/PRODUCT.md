@@ -182,7 +182,10 @@ dressed up as placeholder content on any surface, including store listings.
 ## Product Principles
 
 1. **Measure, do not guess.** A figure the app can prove beats one it can infer;
-   where nothing can be measured, say so rather than estimate.
+   where nothing can be measured, say so rather than estimate. The Plan's long
+   view is the one estimate on purpose — returns are the user's assumption, and
+   the French tax a simplified rate per account — so it is labelled as one,
+   starts from measured figures, and never feeds back into them.
 2. **Nothing happens that the user did not ask for.** Filing, fulfilling and
    writing are acts the user initiates. Applying is the one the app carries
    out on its own, because a recurring template already is the user asking —

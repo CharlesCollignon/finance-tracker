@@ -24,12 +24,6 @@ A user-owned label carrying a type — income, expense, savings or investment �
 which decides how its transactions are summarised.
 _Avoid_: bucket, envelope
 
-**Tag**:
-_En français_ : étiquette
-A free-form label attached to transactions for filtering. Distinct from a
-category: a transaction has exactly one category and any number of tags.
-_Avoid_: label, group
-
 **Review inbox**:
 _En français_ : à vérifier
 The bank rows the app would not file on its own, waiting for the user to say
@@ -172,7 +166,7 @@ _Avoid_: match, settle, reconcile, link
 **Cash date**:
 _En français_ : date d'arrivée (« Arrivé le 22 sept. »)
 The day a transaction's money actually moved, when it is not the day the
-transaction counts for (`cash_on`, set only then). Every month view, budget,
+transaction counts for (`cash_on`, set only then). Every month view,
 summary and read goes by the day a row counts for; only what pairs the
 ledger with a balance the bank reported reads the cash date — the month
 close, the balance curve on Le point, and the unrecorded spending so far —
@@ -256,18 +250,40 @@ pay is not a charge has to be able to see that from the card rather than
 guess it.
 _Avoid_: breakdown, component, driver
 
-### Caps and targets
+**What if**:
+_En français_ : Et si…
+An extra amount a month, chosen on a slider on the Plan, added to the
+_everything kept_ track and to the long view's monthly payments, so the user
+sees what it would change: a year from now, and how much sooner a milestone
+comes. Never saved anywhere; it is a question, not an instruction.
+_Avoid_: scenario, simulation, goal
 
-**Budget**:
-_En français_ : budget
-A cap on what one category may spend in a month.
-_Avoid_: limit, allowance, target
+**Milestone**:
+_En français_ : palier
+A round amount of savings and investments together (1 000 €, 5 000 €,
+10 000 € … 1 M€), celebrated when reached, with how many months the next
+ones are at today's pace. Judged on the user's real figures, never on what
+they typed into the long view, so a milestone cannot be reached by editing.
+Distinct from a savings goal, which was retired: nobody sets a milestone.
+_Avoid_: goal, target, badge, level
 
-**Savings goal**:
-_En français_ : objectif d'épargne
-An amount the user intends to accumulate, tracked against savings
-transactions.
-_Avoid_: target, pot, sinking fund
+**Cushion**:
+_En français_ : coussin de sécurité
+How many months of fixed costs what is in the savings accounts would cover,
+with rungs at 1, 3 and 6 months.
+_Avoid_: emergency fund, runway, buffer
+
+**Long view**:
+_En français_ : votre patrimoine dans N ans
+What the savings accounts and each wallet could be worth in 1 to 40 years,
+from today's value, the monthly payments the recurring templates make, a
+yearly return the user can change, and the 2026 French tax on gains for that
+kind of account. Shown after tax, in today's euros, and as the monthly income
+a withdrawal rate would give. Unlike the forward projection it is an
+estimate and says so: returns are assumptions. In code each row is an
+`Envelope` (_enveloppe fiscale_) — a wallet or the savings accounts — never a
+category.
+_Avoid_: forecast, simulation, prediction
 
 ### Investing
 
@@ -275,8 +291,32 @@ _Avoid_: target, pot, sinking fund
 _En français_ : compte de placement (PEA, compte-titres, assurance vie, PER, crypto) ; l'onglet : Placements
 Where invested value sits: `pea`, `cto`, `av`, `per` or `crypto`. A wallet is
 an account-shaped home for positions, not a category. There is one of each at
-most, so two assurance-vie contracts are one wallet.
+most, so two assurance-vie contracts are one wallet. Placements lists only the
+wallets the user keeps: those with a position and those they added
+(`wallet_plans.shown`); removing one removes its positions.
 _Avoid_: account, portfolio, broker
+
+**Savings account**:
+_En français_ : compte d'épargne (Livret A, LDDS, LEP, CEL, PEL, autre livret)
+One of the user's savings accounts, declared on Placements, with its own
+rate, tax on interest, ceiling and balance (`savings_accounts`, migration
+046). The balance is the one the user gave on the day they gave it, plus what
+they logged in the account's own savings category since — or the balance
+their bank reports, when it is linked to a bank account. Savings logged in no
+account's category go to the Livret A, else the first account at hand. A PEL
+is not at hand: a withdrawal closes it, so the cushion leaves it out. With no
+account declared, everything logged as savings stands in as one.
+_Avoid_: livret (for any of them), pot, envelope
+
+**Purchase inside a wallet**:
+_En français_ : achat dans le compte (un DCA PEA, un DCA CTO)
+An investment logged in a category that does not count toward the summary
+(the app's "suivi" categories): a purchase made inside a wallet with money
+already sent to it. It moves nothing on the bank account — the transfer to
+the broker did — so no balance, month-end rest or curve counts it, recorded
+or planned. Counting both would take the same euros out twice, which is what
+happens to an October DCA funded on 22 September if it is.
+_Avoid_: deployment, buy, outflow
 
 **Investment position**:
 _En français_ : ligne
@@ -423,3 +463,15 @@ where the figure came from, fetched only when someone asks for them. Distinct
 from the card, which is the name and the figure that are true whether or not
 anyone opens it.
 _Avoid_: drawer, expander, detail view
+
+### Retired
+
+Terms the app no longer has, kept here so an old row, migration or commit
+still reads. Their tables stay in the database; nothing reads or writes them.
+
+**Budget** (_budget_): a cap on what one category may spend in a month.
+**Savings goal** (_objectif d'épargne_): an amount to accumulate, tracked
+against savings transactions. **Tag** (_étiquette_): a free-form label on
+transactions, beside their one category. All three went in October 2026: the
+Plan now projects where the money is heading from what the user already
+records, rather than asking them to keep limits and targets up to date.

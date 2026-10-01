@@ -28,18 +28,17 @@ export const landingSample = {
   remaining: 1247,
   income: 3200,
   spent: 1953,
-  onBudgetLabel: "On track",
-  budget: {
-    label: "Groceries",
-    spent: 420,
-    limit: 600,
-  },
-  goal: {
-    label: "Emergency fund",
-    saved: 1800,
-    target: 3000,
-    targetLabel: "December 2026",
-    monthlyPace: 133,
+  /** The Plan page: a year ahead, the milestones on the way, the cushion. */
+  plan: {
+    yearAhead: 14850,
+    byLabel: "March 2027",
+    milestones: [
+      { amount: 5000, monthsAway: 0 },
+      { amount: 10000, monthsAway: 4 },
+      { amount: 25000, monthsAway: 26 },
+    ],
+    /** Months of fixed costs the savings cover, out of the six to aim for. */
+    cushionMonths: 3,
   },
   transactions: [
     {
@@ -260,7 +259,7 @@ export const landingSample = {
       },
     ],
     suggestions: [
-      "Groceries has been under its €600 cap every month since December. A lower cap would tell you something the current one cannot.",
+      "Groceries are at €218 with twelve days to go. Writing down the small shops this week would show whether the unrecorded line is groceries too.",
     ],
     standing: "Written today. Nothing has moved since.",
   },
@@ -295,13 +294,7 @@ export function landingSampleFor(locale: Locale) {
   return {
     ...landingSample,
     monthLabel: fr.monthLabel,
-    onBudgetLabel: fr.onBudgetLabel,
-    budget: { ...landingSample.budget, label: fr.budgetLabel },
-    goal: {
-      ...landingSample.goal,
-      label: fr.goalLabel,
-      targetLabel: fr.goalTargetLabel,
-    },
+    plan: { ...landingSample.plan, byLabel: fr.planByLabel },
     transactions: landingSample.transactions.map((row, index) => ({
       ...row,
       ...fr.transactions[index],

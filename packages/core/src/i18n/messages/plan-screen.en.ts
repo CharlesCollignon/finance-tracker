@@ -4,8 +4,6 @@
  * alongside others; `en.ts` mounts it as `planScreen`.
  */
 export const planScreenEn = {
-  /** A goal's date field while it is empty. */
-  noTargetDate: "No target date",
   /**
    * Under the balance field of a month's close, when the phone filled it in
    * from the stored statement. The web reads the bank live and says

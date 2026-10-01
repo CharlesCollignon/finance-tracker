@@ -26,7 +26,7 @@ lead, one that writes a category read.
 The screen today asks you to click one category, scroll back up to see its
 chart, then scroll down and click the next. Twenty categories is twenty round
 trips, and at no point does the screen show you the thing you came for, which
-is *which* category to look at. `category-history.ts` says the single-category
+is _which_ category to look at. `category-history.ts` says the single-category
 view is deliberate — "a chart of every category at once shows the total and
 hides the thing you came to find out" — and that argument is right about
 stacking every category into one chart. It is not an argument for showing one
@@ -44,8 +44,8 @@ month".
 > **Finding**
 > One thing the app noticed in a category's run of months that is worth
 > saying out loud. Four species only, and each is a measurement rather than
-> an impression: what has *drifted*, a *month apart*, a category *gone
-> quiet*, and what happens *every year*. A finding carries an i18n key and
+> an impression: what has _drifted_, a _month apart_, a category _gone
+> quiet_, and what happens _every year_. A finding carries an i18n key and
 > its parameters, never a sentence — the wording belongs to the client
 > drawing it, in the reader's language.
 > _Avoid_: insight, alert, anomaly, signal
@@ -109,7 +109,7 @@ in euros. The absolute floor is what stops "your bank fees have exploded by
 lets small categories shout, an absolute one lets large ones hide.
 
 Severity is the monthly euro gap. Direction comes from the sign, and what the
-sign *means* comes from the category type — a rise in income is not a rise in
+sign _means_ comes from the category type — a rise in income is not a rise in
 spending, and the i18n key differs accordingly.
 
 ### `odd-month`
@@ -323,11 +323,11 @@ Migration `035_category_findings.sql`, two tables, written against
 `acting_for()` from migration 025 from the start rather than correcting it
 later.
 
-| Table | Key | Holds |
-| --- | --- | --- |
-| `category_reads` | (user, category) | the read, the facts, the instant, the model, the prompt version, the refused count, the locale |
-| `category_read_tallies` | (user, month) | how many reads have been written this month, across every category |
-| `category_selections` | user | the selection, its digest, and the month's tally |
+| Table                   | Key              | Holds                                                                                          |
+| ----------------------- | ---------------- | ---------------------------------------------------------------------------------------------- |
+| `category_reads`        | (user, category) | the read, the facts, the instant, the model, the prompt version, the refused count, the locale |
+| `category_read_tallies` | (user, month)    | how many reads have been written this month, across every category                             |
+| `category_selections`   | user             | the selection, its digest, and the month's tally                                               |
 
 Three tables rather than two, and the third is what the allowance forces. One
 allowance for all the reads on this screen cannot be counted in a table keyed

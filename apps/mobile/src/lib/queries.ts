@@ -19,9 +19,6 @@ import {
   type RecurringProposal,
 } from "@finance/core/recurring-detection";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
-import { allRows } from "@finance/core/paging";
-import type { GoalLedger } from "@finance/core/savings-goals";
-import { tagUsageFromRows, type TagUsage } from "@finance/core/tags";
 import {
   explainFulfilmentMisses,
   proposeFulfilments,
@@ -76,7 +73,6 @@ import type {
   MonthClose,
   MonthlySummary,
   RecurringTemplateWithCategory,
-  Tag,
   TransactionWithCategory,
   WalletPlan,
 } from "@finance/core/types/database";
@@ -221,21 +217,6 @@ export async function getSkippedOccurrences(
     // Empty rather than an English word; the screen names it.
     name: row.recurring_templates?.categories?.name ?? "",
   }));
-}
-
-/** Tag ids already attached to a transaction. */
-export async function getTransactionTagIds(
-  transactionId: string,
-): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("transaction_tags")
-    .select("tag_id")
-    .eq("transaction_id", transactionId);
-
-  if (error) {
-    throw error;
-  }
-  return (data ?? []).map((row) => row.tag_id as string);
 }
 
 async function getRecurringSkipKeys(
@@ -417,123 +398,6 @@ export async function getWalletPortfolio(
   );
 }
 
-export async function getBudgets(userId: string) {
-  const { data, error } = await supabase
-    .from("budgets")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at");
-  if (error) {
-    throw error;
-  }
-  return data ?? [];
-}
-
-export async function getTags(userId: string) {
-  const { data, error } = await supabase
-    .from("tags")
-    .select("*")
-    .eq("user_id", userId)
-    .order("name");
-  if (error) {
-    throw error;
-  }
-  return data ?? [];
-}
-
-/** Every tag with how many transactions carry it, for the Plan screen. */
-export async function getTagUsage(userId: string): Promise<TagUsage[]> {
-  const { data, error } = await supabase
-    .from("tags")
-    .select("id, name, transaction_tags(count)")
-    .eq("user_id", userId)
-    .order("name");
-  if (error) {
-    throw error;
-  }
-  return tagUsageFromRows(data ?? []);
-}
-
-export async function getSavingsGoals(userId: string) {
-  const { data, error } = await supabase
-    .from("savings_goals")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at");
-  if (error) {
-    throw error;
-  }
-  return data ?? [];
-}
-
-/**
- * Everything a goal's running total is counted from, between two days.
- *
- * The web's `getGoalLedger`, read the same way, because the month read
- * compares the two clients' facts by digest.
- */
-export async function getGoalLedger(
-  userId: string,
-  from: string,
-  to: string,
-): Promise<GoalLedger> {
-  const [transactions, applied, skipped] = await Promise.all([
-    allRows<TransactionWithCategory>((start, end) =>
-      supabase
-        .from("transactions")
-        .select("*, categories!inner(name, type, icon, counts_toward_summary)")
-        .eq("user_id", userId)
-        .eq("categories.type", "savings")
-        .gte("occurred_on", from)
-        .lte("occurred_on", to)
-        .order("id")
-        .range(start, end)
-        .then(({ data, error }) => ({
-          data: data as TransactionWithCategory[] | null,
-          error,
-        })),
-    ),
-    allRows<{ recurring_template_id: string | null; occurred_on: string }>(
-      (start, end) =>
-        supabase
-          .from("transactions")
-          .select("recurring_template_id, occurred_on")
-          .eq("user_id", userId)
-          .not("recurring_template_id", "is", null)
-          .gte("occurred_on", from)
-          .lte("occurred_on", to)
-          .order("id")
-          .range(start, end),
-    ),
-    allRows<{ template_id: string; occurred_on: string }>((start, end) =>
-      supabase
-        .from("recurring_skips")
-        .select("template_id, occurred_on")
-        .eq("user_id", userId)
-        .gte("occurred_on", from)
-        .lte("occurred_on", to)
-        .order("id")
-        .range(start, end),
-    ),
-  ]);
-
-  return {
-    transactions,
-    appliedKeys: new Set(
-      applied.flatMap((row) =>
-        row.recurring_template_id
-          ? [recurringOccurrenceKey(row.recurring_template_id, row.occurred_on)]
-          : [],
-      ),
-    ),
-    skippedKeys: new Set(
-      skipped.map((row) =>
-        recurringOccurrenceKey(row.template_id, row.occurred_on),
-      ),
-    ),
-  };
-}
-
 /**
  * How far back the app looks to learn habits — far enough that a monthly
  * merchant is seen several times, short enough that a year-old choice does not
@@ -546,7 +410,6 @@ const RECENT_CATEGORY_COUNT = 4;
 
 export interface QuickEntryContext {
   categories: Category[];
-  tags: Tag[];
   /** Most recently used category ids, newest first. */
   recentCategoryIds: string[];
   merchants: MerchantRule[];
@@ -556,9 +419,8 @@ export interface QuickEntryContext {
 export async function getQuickEntryContext(
   userId: string,
 ): Promise<QuickEntryContext> {
-  const [categories, tags, history] = await Promise.all([
+  const [categories, history] = await Promise.all([
     getCategories(userId),
-    getTags(userId),
     supabase
       .from("transactions")
       .select("*, categories(name, type, icon, counts_toward_summary)")
@@ -586,7 +448,6 @@ export async function getQuickEntryContext(
 
   return {
     categories,
-    tags,
     recentCategoryIds,
     merchants: [...buildMerchantIndex(rows).values()],
   };

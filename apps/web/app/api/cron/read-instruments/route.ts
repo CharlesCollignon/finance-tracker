@@ -48,8 +48,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     return Response.json(
       {
-        error:
-          error instanceof Error ? error.message : "Reading run failed",
+        error: error instanceof Error ? error.message : "Reading run failed",
       },
       { status: 502 },
     );

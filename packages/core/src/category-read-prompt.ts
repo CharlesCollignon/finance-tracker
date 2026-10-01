@@ -43,7 +43,7 @@ import type { MonthReadRequest } from "./month-read";
 import { factLines, missingLines } from "./month-read-prompt";
 import type { CategoryType } from "./types/database";
 
-export const CATEGORY_READ_PROMPT_VERSION = 1;
+export const CATEGORY_READ_PROMPT_VERSION = 2;
 
 /* -------------------------------------------------------------- English */
 
@@ -72,9 +72,9 @@ const FIGURE_RULE_EN =
  * refused the read.
  */
 const NAMING_RULE_EN =
-  "A placeholder is a number, not a name. Name the category, the month or " +
-  'the budget in words, and put the figure beside it: "an ordinary month costs ' +
-  'you {{fact:normal}}", never "the {{fact:normal}} has gone up". Each ' +
+  "A placeholder is a number, not a name. Name the category or the month in " +
+  'words, and put the figure beside it: "an ordinary month costs you ' +
+  '{{fact:normal}}", never "the {{fact:normal}} has gone up". Each ' +
   "figure's label is in the list; use those words for the name. And use each " +
   'figure for what its label says it is: "{{fact:normal}} above what you ' +
   'usually spend" points at a normal month and calls it the distance from ' +
@@ -94,13 +94,10 @@ const BASIS_RULE_EN =
  * about months being closed, and the terms it must not reach for are the same
  * terms.
  *
- * The last three are this surface's. The first two are the ones it cannot do
- * without — the app has a word for the median month and a word for a run
- * going one way, and a model left to its own devices will write "average" and
- * "anomaly" beside labels that say neither. The third is a collision rather
- * than a preference: this app already has an "allowance", it is a limit on
- * unrecorded spending, and it is not this. Both directions are pinned, here
- * and in the entry above.
+ * The last two are this surface's, and the ones it cannot do without — the
+ * app has a word for the median month and a word for a run going one way,
+ * and a model left to its own devices will write "average" and "anomaly"
+ * beside labels that say neither.
  */
 const VOCABULARY_EN = [
   '"Unrecorded spending" — what a balance proves left the account that no ' +
@@ -119,9 +116,6 @@ const VOCABULARY_EN = [
   'Nothing here is an "anomaly", an "alert", an "outlier" or a "spike". A ' +
     "month sitting far from normal is an unusual month, and a run that has " +
     'been going one way has "drifted".',
-  '"Budget" — a monthly limit set on this one category. Never call it a ' +
-    '"cap", a "target" or an "allowance"; the unrecorded allowance is a ' +
-    "different feature.",
 ];
 
 /**
@@ -142,8 +136,8 @@ const PANEL_RULE_EN = [
 ];
 
 const SUGGESTIONS_EN = [
-  "Say what to change about this category. Name a cut, a budget, a habit or",
-  "something to check, and point at one of the figures you were given —",
+  "Say what to change about this category. Name a cut, a habit or something",
+  "to check, and point at one of the figures you were given —",
   "advice that would fit anyone's category is not worth the space. Do not",
   "congratulate; a suggestion is advice, not encouragement. If there is",
   "nothing worth changing, write no suggestions at all.",
@@ -197,9 +191,9 @@ const FIGURE_RULE_FR =
   "le chiffre, ou ne le dites pas.";
 
 const NAMING_RULE_FR =
-  "Un substitut est un nombre, pas un nom. Nommez la catégorie, le mois ou " +
-  'le budget en mots, et mettez le chiffre à côté : "un mois ordinaire ' +
-  'vous coûte {{fact:normal}}", jamais "le {{fact:normal}} a augmenté". Le ' +
+  "Un substitut est un nombre, pas un nom. Nommez la catégorie ou le mois " +
+  'en mots, et mettez le chiffre à côté : "un mois ordinaire vous coûte ' +
+  '{{fact:normal}}", jamais "le {{fact:normal}} a augmenté". Le ' +
   "libellé de chaque chiffre figure dans la liste ; utilisez ces mots comme " +
   "nom. Et employez chaque chiffre pour ce que son libellé dit qu'il est : " +
   '"{{fact:normal}} de plus que d\'habitude" désigne un mois normal et ' +
@@ -231,9 +225,6 @@ const VOCABULARY_FR = [
   'Rien ici n\'est une "anomalie", une "alerte", une "valeur aberrante" ' +
     'ni un "pic". Un mois éloigné du normal est un mois inhabituel, et une ' +
     'série qui va dans le même sens a "dérivé".',
-  '"Budget" — une limite mensuelle posée sur cette seule catégorie. Ne ' +
-    'l\'appelez jamais un "plafond", un "objectif" ni une "enveloppe" ; la ' +
-    "marge pour les dépenses non notées est une autre fonctionnalité.",
 ];
 
 const PANEL_RULE_FR = [
@@ -244,8 +235,8 @@ const PANEL_RULE_FR = [
 ];
 
 const SUGGESTIONS_FR = [
-  "Dites quoi changer dans cette catégorie. Nommez une coupe, un budget,",
-  "une habitude ou quelque chose à vérifier, et désignez l'un des chiffres",
+  "Dites quoi changer dans cette catégorie. Nommez une coupe, une habitude",
+  "ou quelque chose à vérifier, et désignez l'un des chiffres",
   "qui vous ont été donnés — un conseil qui conviendrait à n'importe quelle",
   "catégorie ne vaut pas la place. Ne félicitez pas ; une suggestion est un",
   "conseil, pas un encouragement. S'il n'y a rien à changer, n'écrivez",

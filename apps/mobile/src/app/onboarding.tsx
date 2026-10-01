@@ -22,7 +22,7 @@ import { shouldInvite } from "@/lib/bank-connect";
 import { cn } from "@/lib/cn";
 import { hapticLight } from "@/lib/haptics";
 import { useOnboarding } from "@/providers/OnboardingProvider";
-import { upsertBudget, upsertRecurringTemplate } from "@/lib/mutations";
+import { upsertRecurringTemplate } from "@/lib/mutations";
 import { getCategories } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCurrency } from "@/providers/CurrencyProvider";
@@ -33,18 +33,18 @@ import { useThemeColors } from "@/theme/useThemeColors";
 
 const CURRENCIES: CurrencyCode[] = ["EUR", "USD"];
 
-type Step = "currency" | "income" | "recurring" | "bank" | "cap";
+type Step = "currency" | "income" | "recurring" | "bank";
 
 /**
- * The bank step sits after the charges and only where connecting one is
- * possible, as on the web: after typing a charge or two by hand is when
- * "let your bank do this" means something. There is no "done" step: the cap
- * step finishes, as on the web, and the meter counted a step nobody saw.
+ * The bank step sits last and only where connecting one is possible, as on
+ * the web: after typing a charge or two by hand is when "let your bank do
+ * this" means something. There is no "done" step: the last one finishes, as
+ * on the web, and the meter counted a step nobody saw.
  */
 function stepsFor(offerBank: boolean): Step[] {
   return offerBank
-    ? ["currency", "income", "recurring", "bank", "cap"]
-    : ["currency", "income", "recurring", "cap"];
+    ? ["currency", "income", "recurring", "bank"]
+    : ["currency", "income", "recurring"];
 }
 
 /**
@@ -67,8 +67,7 @@ export default function OnboardingScreen() {
 
   /*
    * The steps walked so far, so Back returns to the one before rather than
-   * to a fixed predecessor: with the bank step optional, "the step before the
-   * cap" depends on the way the reader came. The web keeps the same stack in
+   * to a fixed predecessor, whichever way the reader came. The web keeps the same stack in
    * the browser's history; here it is state, and Android's back button walks
    * it too.
    */
@@ -81,8 +80,6 @@ export default function OnboardingScreen() {
   const [expenseDay, setExpenseDay] = useState("1");
   const [pending, setPending] = useState(false);
   const [added, setAdded] = useState(0);
-  const [capCategory, setCapCategory] = useState<string | null>(null);
-  const [capAmount, setCapAmount] = useState("");
 
   const { data } = useRefreshable(async () => {
     if (!user) {
@@ -127,18 +124,22 @@ export default function OnboardingScreen() {
     );
     return () => subscription.remove();
   }, [canGoBack]);
-  // What follows the charges: the bank step where there is one.
-  const afterCharges: Step = offerBank ? "bank" : "cap";
   const [bankOpen, setBankOpen] = useState(false);
-  // Connected during setup: setup then ends on the Bank screen, where the
-  // history comes in, rather than on a Bearing still waiting for it.
-  const [bankConnected, setBankConnected] = useState(false);
 
-  async function finish() {
+  async function finish(to: Href = "/") {
     // Update shared state before navigating, or the navigator still reads
     // "incomplete" and sends us straight back here.
     await markComplete();
-    router.replace((bankConnected ? "/bank" : "/") as Href);
+    router.replace(to);
+  }
+
+  /** What follows the charges: the bank step where there is one. */
+  function afterCharges() {
+    if (offerBank) {
+      goTo("bank");
+    } else {
+      void finish();
+    }
   }
 
   async function saveMonthly(
@@ -203,7 +204,7 @@ export default function OnboardingScreen() {
   async function handleRecurringContinue() {
     const category = expenseCategories.find((c) => c.id === expenseName);
     if (!category || !expenseAmount.trim()) {
-      goTo(afterCharges);
+      afterCharges();
       return;
     }
     setPending(true);
@@ -212,31 +213,8 @@ export default function OnboardingScreen() {
     if (ok) {
       setAdded((count) => count + 1);
       toast(t("onboarding.templateAdded", { name: category.name }), "success");
-      goTo(afterCharges);
+      afterCharges();
     }
-  }
-
-  /**
-   * One spending cap, so the dashboard's rings have something to draw.
-   * Without this every new user's dashboard is half empty, which reads as a
-   * feature that does not work rather than one not set up yet.
-   */
-  async function handleCap() {
-    if (!capCategory || !capAmount.trim()) {
-      await finish();
-      return;
-    }
-    setPending(true);
-    const result = await upsertBudget({
-      amount: Number(capAmount),
-      categoryId: capCategory,
-    });
-    setPending(false);
-    if (result.error) {
-      toast(result.error, "error");
-      return;
-    }
-    await finish();
   }
 
   return (
@@ -487,7 +465,11 @@ export default function OnboardingScreen() {
             <View className="gap-2">
               <Button
                 label={
-                  pending ? t("onboarding.saving") : t("onboarding.continue")
+                  pending
+                    ? t("onboarding.saving")
+                    : offerBank
+                      ? t("onboarding.continue")
+                      : t("removal.onboardingFinish")
                 }
                 size="lg"
                 disabled={pending}
@@ -499,7 +481,7 @@ export default function OnboardingScreen() {
                 label={t("onboarding.skipForNow")}
                 variant="ghost"
                 disabled={pending}
-                onPress={() => goTo(afterCharges)}
+                onPress={afterCharges}
               />
             </View>
           </FadeIn>
@@ -530,7 +512,9 @@ export default function OnboardingScreen() {
               <Button
                 label={t("onboarding.skipForNow")}
                 variant="ghost"
-                onPress={() => goTo("cap")}
+                onPress={() => {
+                  void finish();
+                }}
               />
             </View>
 
@@ -539,85 +523,11 @@ export default function OnboardingScreen() {
               onOpenChange={setBankOpen}
               onConnected={() => {
                 toast(t("bankConnect.connected"), "success");
-                setBankConnected(true);
-                goTo("cap");
+                // Setup ends on the Bank screen, where the history comes
+                // in, rather than on a Bearing still waiting for it.
+                void finish("/bank" as Href);
               }}
             />
-          </FadeIn>
-        ) : null}
-
-        {step === "cap" ? (
-          <FadeIn className="gap-6">
-            <View className="gap-2">
-              <Text className="text-2xl font-bold">
-                {t("onboarding.capTitle")}
-              </Text>
-              <Text variant="muted">{t("onboarding.capBody")}</Text>
-            </View>
-
-            <Card bezel innerClassName="gap-3 p-5">
-              <Text className="text-sm font-medium">
-                {t("onboarding.category")}
-              </Text>
-              <View className="flex-row flex-wrap gap-2">
-                {expenseCategories.slice(0, 8).map((category) => {
-                  const selected = capCategory === category.id;
-                  return (
-                    <Pressable
-                      key={category.id}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      onPress={() => {
-                        void hapticLight();
-                        setCapCategory(category.id);
-                      }}
-                      className={cn(
-                        "flex-row items-center gap-2 rounded-full border px-3 py-2",
-                        selected
-                          ? "border-foreground bg-secondary"
-                          : "border-border bg-background",
-                      )}
-                    >
-                      <CategoryIcon icon={category.icon} className="h-6 w-6" />
-                      <Text className="text-sm">{category.name}</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              <Text className="mt-2 text-sm font-medium">
-                {t("onboarding.monthlyCap")}
-              </Text>
-              <Input
-                value={capAmount}
-                onChangeText={setCapAmount}
-                keyboardType="decimal-pad"
-                placeholder="0.00"
-              />
-            </Card>
-
-            <View className="gap-2">
-              <Button
-                label={
-                  pending
-                    ? t("onboarding.saving")
-                    : t("onboarding.setCapAndFinish")
-                }
-                size="lg"
-                disabled={pending || !capCategory || !capAmount.trim()}
-                onPress={() => {
-                  void handleCap();
-                }}
-              />
-              <Button
-                label={t("onboarding.skipForNow")}
-                variant="ghost"
-                disabled={pending}
-                onPress={() => {
-                  void finish();
-                }}
-              />
-            </View>
           </FadeIn>
         ) : null}
       </ScrollView>

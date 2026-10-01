@@ -20,7 +20,6 @@ export interface OutboxEntry {
     amount: number;
     occurredOn: string;
     note?: string;
-    tagIds?: string[];
   };
   /** Epoch millis the entry was queued. */
   queuedAt: number;

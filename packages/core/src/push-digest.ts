@@ -2,15 +2,14 @@
  * What is worth telling someone today.
  *
  * A daily job asks this once per user. The rule throughout is that the
- * interesting event is a change, not a state: being over a cap on the 14th is
- * only news once, and repeating it every morning is how a notification
- * permission gets revoked.
+ * interesting event is a change, not a state: a new month is only news once,
+ * and repeating it every morning is how a notification permission gets
+ * revoked.
  *
  * Kept free of database and network concerns so the decisions are testable
  * without either.
  */
 
-import type { BudgetProgress } from "./budget-limits";
 import type { Translate } from "./i18n/t";
 
 export interface PendingNotification {
@@ -25,8 +24,6 @@ export interface PendingNotification {
 export interface BuildDigestOptions {
   /** Today, ISO. */
   today: string;
-  /** Caps and what has been spent against them. */
-  budgetProgress: readonly BudgetProgress[];
   /** Keys already sent to this user, so nothing repeats. */
   alreadySent: ReadonlySet<string>;
   /** How many charges the new month starts with. */
@@ -35,17 +32,15 @@ export interface BuildDigestOptions {
    * How many charges look as though the bank already delivered them and are
    * waiting to be confirmed.
    *
-   * Worth a notification because it is time-sensitive in a way a cap breach
-   * is not: until the salary is confirmed, every figure that answers "what
-   * can I spend" is overstated by a month's pay, and the person reading it
-   * has no way of knowing.
+   * Worth a notification because it is time-sensitive: until the salary is
+   * confirmed, every figure that answers "what can I spend" is overstated by
+   * a month's pay, and the person reading it has no way of knowing.
    */
   arrivedCharges?: number;
-  formatAmount: (amount: number) => string;
   /**
-   * The reader's language, injected the same way the money formatter is and
-   * for the same reason: this module decides what is worth saying and must
-   * stay testable without a locale, a database or a network.
+   * The reader's language, injected because this module decides what is
+   * worth saying and must stay testable without a locale, a database or a
+   * network.
    *
    * The digest is the one surface where the language cannot come from a
    * browser — it is composed on a server for somebody who is asleep — so the
@@ -53,9 +48,6 @@ export interface BuildDigestOptions {
    */
   t: Translate;
 }
-
-/** At most this many in one run — a wall of notifications is noise. */
-const MAX_PER_RUN = 3;
 
 function monthKeyOf(isoDate: string): string {
   return isoDate.slice(0, 7);
@@ -67,11 +59,9 @@ function dayOf(isoDate: string): number {
 
 export function buildDueNotifications({
   today,
-  budgetProgress,
   alreadySent,
   pendingRecurring = 0,
   arrivedCharges = 0,
-  formatAmount,
   t,
 }: BuildDigestOptions): PendingNotification[] {
   const monthKey = monthKeyOf(today);
@@ -95,7 +85,7 @@ export function buildDueNotifications({
   }
 
   // Charges the bank appears to have delivered. Keyed by the day rather than
-  // the month: unlike a cap breach this recurs legitimately — a salary one
+  // the month: unlike the month's opening this recurs legitimately — a salary one
   // week, a subscription the next — and it stops as soon as the answer is
   // given, so a daily nudge cannot become a permanent one.
   if (arrivedCharges > 0) {
@@ -110,30 +100,7 @@ export function buildDueNotifications({
     }
   }
 
-  // Crossing a cap. Sorted by how far over, so if the cap is reached on the
-  // limit of what one run will send, the worst one is what gets said.
-  const over = budgetProgress
-    .filter((row) => row.over)
-    .slice()
-    .sort((left, right) => right.ratio - left.ratio);
-
-  for (const row of over) {
-    const key = `breach:${monthKey}:${row.budgetId}`;
-    if (alreadySent.has(key)) {
-      continue;
-    }
-    due.push({
-      key,
-      title: t("push.breach.title", { label: row.label }),
-      body: t("push.breach.body", {
-        spent: formatAmount(row.spent),
-        limit: formatAmount(row.limit),
-      }),
-      url: "/budgets",
-    });
-  }
-
-  return due.slice(0, MAX_PER_RUN);
+  return due;
 }
 
 /**

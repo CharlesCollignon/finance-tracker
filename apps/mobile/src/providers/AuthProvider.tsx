@@ -11,10 +11,9 @@ import {
 } from "react";
 
 import { signInWithPasskeyCeremony } from "@/lib/passkeys";
-import { seedDefaultCategories } from "@/lib/seed-categories";
+import { categoryLocale, seedDefaultCategories } from "@/lib/seed-categories";
 import { supabase } from "@/lib/supabase";
 import { resetRequestErrorKey } from "@finance/core/auth-errors";
-import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -178,9 +177,9 @@ export function useAuth(): AuthContextValue {
 
 async function seedCategoriesSafely(userId: string): Promise<void> {
   try {
-    // Above LocaleProvider, so the reader's choice is not known yet: the
-    // default language, which is the one most accounts start in anyway.
-    await seedDefaultCategories(userId, DEFAULT_LOCALE);
+    // Above LocaleProvider, so the reader's choice is read from where it is
+    // kept: the account, else this device, else French.
+    await seedDefaultCategories(userId, await categoryLocale(userId));
   } catch (error) {
     console.error("Failed to seed default categories", error);
   }

@@ -48,7 +48,6 @@ import { useFormatCurrency } from "@/lib/use-currency";
 import type {
   Category,
   RecurringTemplateWithCategory,
-  Tag,
   TransactionWithCategory,
 } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
@@ -67,9 +66,6 @@ interface CalendarViewProps {
   confirmedTransactionIds?: string[];
   /** Rows the matcher has offered as settling one, awaiting a press. */
   proposedTransactionIds?: string[];
-  tags: Tag[];
-  /** Each transaction's tags, by transaction id, for this month. */
-  transactionTags: Record<string, Tag[]>;
   year: number;
   month: number;
 }
@@ -81,8 +77,6 @@ export function CalendarView({
   recurringTemplates,
   confirmedTransactionIds,
   proposedTransactionIds,
-  tags,
-  transactionTags,
   year,
   month,
 }: CalendarViewProps) {
@@ -615,12 +609,6 @@ export function CalendarView({
 
       <TransactionForm
         categories={categories}
-        tags={tags}
-        selectedTagIds={
-          editTransaction
-            ? (transactionTags[editTransaction.id] ?? []).map((tag) => tag.id)
-            : []
-        }
         open={editTransaction !== null}
         onOpenChange={(open) => {
           if (!open) {

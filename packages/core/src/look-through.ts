@@ -29,8 +29,16 @@
  * the constituent figure follows it as a footnote rather than a headline.
  */
 
-import { shortlistEntry, indexesOverlap, type AssetClass } from "./etf-shortlist";
-import { buildFundCosts, type FundCostSummary, type WrapperFees } from "./fund-costs";
+import {
+  shortlistEntry,
+  indexesOverlap,
+  type AssetClass,
+} from "./etf-shortlist";
+import {
+  buildFundCosts,
+  type FundCostSummary,
+  type WrapperFees,
+} from "./fund-costs";
 import type { InvestmentWalletId } from "./investments";
 import { isCryptoWallet } from "./crypto-holdings";
 import {
@@ -72,13 +80,42 @@ export const WORLD_EQUITY_REFERENCE = {
 export const AXIS_COVERAGE_FLOOR = 0.8;
 
 const EUROZONE = new Set([
-  "AT", "BE", "CY", "DE", "EE", "ES", "FI", "FR", "GR", "HR",
-  "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PT", "SI", "SK",
+  "AT",
+  "BE",
+  "CY",
+  "DE",
+  "EE",
+  "ES",
+  "FI",
+  "FR",
+  "GR",
+  "HR",
+  "IE",
+  "IT",
+  "LT",
+  "LU",
+  "LV",
+  "MT",
+  "NL",
+  "PT",
+  "SI",
+  "SK",
 ]);
 
 const EUROPE_NON_EUROZONE = new Set([
-  "BG", "CH", "CZ", "DK", "GB", "HU", "IS", "LI", "NO", "PL",
-  "RO", "SE", "UA",
+  "BG",
+  "CH",
+  "CZ",
+  "DK",
+  "GB",
+  "HU",
+  "IS",
+  "LI",
+  "NO",
+  "PL",
+  "RO",
+  "SE",
+  "UA",
 ]);
 
 /**

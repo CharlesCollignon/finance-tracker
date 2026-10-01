@@ -10,7 +10,6 @@ import {
   ChartPieSlice,
   Fire,
   Receipt,
-  Target,
   TrendUp,
 } from "@phosphor-icons/react";
 import {
@@ -25,7 +24,6 @@ import type { BankAttention } from "@finance/core/bank-attention";
 import type { BearingMonth } from "@/lib/bearing/month";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
-import { ProgressRing } from "@/components/finance/ProgressRing";
 import { amountSign } from "@finance/core/amount-sign";
 import { AttentionRow } from "@/components/finance/bearing/AttentionRow";
 import { ArrivedCharges } from "@/components/finance/ArrivedCharges";
@@ -38,7 +36,6 @@ import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { buttonVariants } from "@/components/retroui/Button";
 import { GLASS_CARD, GLASS_HERO } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
-import { progressTone } from "@/lib/progress-tone";
 import { FIGURE, FIGURE_HERO } from "@/lib/type-scale";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
@@ -82,9 +79,7 @@ export function BearingMonthView({
   const current = data.balance.period === "current";
   const past = data.balance.period === "past";
   const hasSpending = data.spending.total > 0;
-  const hasMomentum =
-    current &&
-    (data.run !== null || data.goals.length > 0 || data.invested !== null);
+  const hasMomentum = current && (data.run !== null || data.invested !== null);
 
   return (
     <div className="flex min-w-0 flex-col gap-4 md:gap-5">
@@ -448,7 +443,7 @@ function BalanceCard({
           <ConnectBankInvite surface="bearing" variant="card" />
           {net ? (
             <Link
-              href="/budgets"
+              href="/plan"
               className="self-start text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
             >
               {t("bankConnect.orEnterBalance")}
@@ -461,7 +456,7 @@ function BalanceCard({
             {t("bearingMonth.setBalanceBody")}
           </p>
           <Link
-            href="/budgets"
+            href="/plan"
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             {t("bearingMonth.setBalance")}
@@ -523,32 +518,11 @@ function SpentCard({ data }: { data: BearingMonth }) {
       href={`/transactions${monthSearchParams(data.year, data.month)}`}
       hrefLabel={t("bearingMonth.seeInLedger")}
     >
-      <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <AnimatedAmount
-            value={spent.total}
-            format={format}
-            className={cn(FIGURE, "block")}
-          />
-          {spent.cap !== null ? (
-            <p className="mt-1 text-xs text-muted-foreground">
-              <PrivateAmount>
-                {t("bearingMonth.ofCap", { amount: format(spent.cap) })}
-              </PrivateAmount>
-            </p>
-          ) : null}
-        </div>
-        {spent.cap !== null && spent.cap > 0 ? (
-          <ProgressRing
-            ratio={spent.total / spent.cap}
-            over={spent.total > spent.cap}
-            label=""
-            detail=""
-            size={72}
-            className="shrink-0 [&>span:empty]:hidden"
-          />
-        ) : null}
-      </div>
+      <AnimatedAmount
+        value={spent.total}
+        format={format}
+        className={cn(FIGURE, "block")}
+      />
 
       {comparison ? (
         <p
@@ -627,16 +601,8 @@ function WhereItWentCard({ data }: { data: BearingMonth }) {
     >
       <ul className="flex flex-col gap-4">
         {spending.top.map((entry) => {
-          // Against its cap where it has one — which is the question a cap
-          // exists to answer — and against the month's largest otherwise.
-          const ratio =
-            entry.cap !== null && entry.cap > 0
-              ? entry.total / entry.cap
-              : entry.total / peak;
-          const over = entry.cap !== null && entry.total > entry.cap;
-          const danger =
-            entry.cap !== null &&
-            progressTone(Math.min(1, ratio), over) === "danger";
+          // Against the month's largest, so the bars rank the categories.
+          const ratio = entry.total / peak;
           return (
             <li key={entry.categoryId} className="flex items-center gap-3">
               <CategoryIcon
@@ -649,24 +615,12 @@ function WhereItWentCard({ data }: { data: BearingMonth }) {
                     {entry.name}
                   </span>
                   <PrivateAmount className="shrink-0 text-sm tabular-nums">
-                    {entry.cap !== null
-                      ? t("bearingMonth.capOf", {
-                          spent: format(entry.total),
-                          cap: format(entry.cap),
-                        })
-                      : format(entry.total)}
+                    {format(entry.total)}
                   </PrivateAmount>
                 </div>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-foreground/10">
                   <div
-                    className={cn(
-                      "grow-in h-full rounded-full",
-                      danger
-                        ? "bg-destructive"
-                        : entry.cap !== null
-                          ? "bg-primary"
-                          : "bg-foreground/40",
-                    )}
+                    className="grow-in h-full rounded-full bg-foreground/40"
                     style={{ width: `${Math.min(100, ratio * 100)}%` }}
                   />
                 </div>
@@ -752,7 +706,7 @@ function UpcomingCard({ data }: { data: BearingMonth }) {
 
 /**
  * What the month is adding up to beyond itself: the run of months closed
- * under the allowance, the goals being saved toward, and what is invested.
+ * under the allowance, and what is invested.
  * The one card on the screen that keeps score, so it is the one that is
  * allowed to feel like it.
  */
@@ -762,9 +716,9 @@ function MomentumCard({ data }: { data: BearingMonth }) {
 
   return (
     <Card
-      icon={<Target size={ICON.sm} weight="bold" />}
-      title={t("bearingMonth.goals")}
-      href="/budgets"
+      icon={<Fire size={ICON.sm} weight="bold" />}
+      title={t("removal.momentumTitle")}
+      href="/plan"
     >
       {data.run ? (
         <div className="flex items-center gap-3 rounded-control bg-accent px-3 py-2.5">
@@ -792,34 +746,6 @@ function MomentumCard({ data }: { data: BearingMonth }) {
             </p>
           </div>
         </div>
-      ) : null}
-
-      {data.goals.length > 0 ? (
-        <ul className="flex flex-col gap-3">
-          {data.goals.map((goal) => (
-            <li key={goal.id}>
-              <div className="flex items-baseline justify-between gap-3 text-sm">
-                <span className="truncate font-medium">{goal.name}</span>
-                <span className="shrink-0 tabular-nums text-muted-foreground">
-                  {Math.round(goal.ratio * 100)}%
-                </span>
-              </div>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-foreground/10">
-                <div
-                  className="grow-in h-full rounded-full bg-primary"
-                  style={{ width: `${goal.ratio * 100}%` }}
-                />
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                <PrivateAmount>
-                  {t("bearingMonth.goalToGo", {
-                    amount: format(Math.max(0, goal.target - goal.saved)),
-                  })}
-                </PrivateAmount>
-              </p>
-            </li>
-          ))}
-        </ul>
       ) : null}
 
       {data.invested !== null ? (

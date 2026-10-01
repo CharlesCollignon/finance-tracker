@@ -41,9 +41,7 @@ export type MessageTree = { [key: string]: Leaf | MessageTree };
 
 /** Every dotted path that reaches a message, so a typo is a type error. */
 export type MessageKey<T> = {
-  [K in keyof T & string]: T[K] extends Leaf
-    ? K
-    : `${K}.${MessageKey<T[K]>}`;
+  [K in keyof T & string]: T[K] extends Leaf ? K : `${K}.${MessageKey<T[K]>}`;
 }[keyof T & string];
 
 export type Key = MessageKey<Messages>;
@@ -62,10 +60,7 @@ type PluralCategory = "one" | "other" | "many";
  * not "0 charges" — which is the whole reason a `count === 1` ternary cannot
  * be translated, and the reason this function exists.
  */
-export function pluralCategory(
-  locale: Locale,
-  count: number,
-): PluralCategory {
+export function pluralCategory(locale: Locale, count: number): PluralCategory {
   if (locale === "fr") {
     if (count === 0 || count === 1 || count === -1) {
       return "one";

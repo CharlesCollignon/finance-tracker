@@ -28,7 +28,7 @@ function revalidateFeedDependents(): void {
   revalidatePath("/transactions");
   revalidatePath("/bearing");
   revalidatePath("/calendar");
-  revalidatePath("/budgets");
+  revalidatePath("/plan");
 }
 
 export async function syncBankFeedAction(
@@ -632,7 +632,7 @@ export async function setAccountCountsAsCash(
     // A close that cannot be worked out is not a reason to reject the tick.
   }
 
-  revalidatePath("/budgets");
+  revalidatePath("/plan");
   revalidatePath("/bearing");
   return { success: true };
 }

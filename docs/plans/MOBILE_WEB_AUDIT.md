@@ -257,3 +257,9 @@ Then, in a second pass:
 - **Removed**: the phone's transfers form, at the owner's request, with the
   create/delete code behind it on both apps. The month close still counts
   transfers already recorded.
+- **Removed**: budgets, savings goals and tags, at the owner's request, from
+  both apps — the Plan's cards, the cap ring and the goal bars on Le point,
+  the welcome flow's cap step, the tag chips in the add sheet and the edit
+  forms, the Journal's tag filter, the cap-breach notifications, and the
+  budget and goal figures the AI reads were handed. Their tables stay in the
+  database, unread; deleting an account still empties them.
