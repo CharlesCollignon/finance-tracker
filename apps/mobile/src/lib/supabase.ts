@@ -6,12 +6,16 @@ import { createClient } from "@supabase/supabase-js";
 import { AppState } from "react-native";
 
 import type { Database } from "@finance/core/types/database";
+import { announcingFetch } from "@/lib/data-version";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/env";
 
 export const supabase = createClient<Database>(
   SUPABASE_URL,
   SUPABASE_ANON_KEY,
   {
+    // Every write tells the screens that read what it wrote — see
+    // `lib/data-version.ts` for why this is the one place that happens.
+    global: { fetch: announcingFetch },
     auth: {
       experimental: { passkey: true },
       // AsyncStorage (not SecureStore) because Supabase sessions can exceed

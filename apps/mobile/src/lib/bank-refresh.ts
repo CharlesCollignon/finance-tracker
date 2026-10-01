@@ -2,6 +2,7 @@ import type { PullFreshness } from "@finance/core/bank-pull";
 
 import { WEB_APP_URL } from "@/lib/env";
 import { supabase } from "@/lib/supabase";
+import { announcingFetch } from "@/lib/data-version";
 
 /**
  * Asking the bank, through the only thing that can.
@@ -86,7 +87,7 @@ export async function refreshFromBank(): Promise<BankRefreshOutcome> {
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${WEB_APP_URL}/api/bank/refresh`, {
+    const response = await announcingFetch(`${WEB_APP_URL}/api/bank/refresh`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       signal: controller.signal,
