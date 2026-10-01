@@ -15,6 +15,7 @@ import { AuthDivider } from "@/components/auth/AuthDivider";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
+import type { FormState } from "@finance/core/action-result";
 
 /**
  * The acceptance line, with its two document names as links.
@@ -63,7 +64,10 @@ export function SignupForm({
 }) {
   const t = useT();
   const router = useRouter();
-  const [state, action, pending] = useActionState(signUp, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    signUp,
+    {},
+  );
 
   useEffect(() => {
     if (state.success && !state.message) {

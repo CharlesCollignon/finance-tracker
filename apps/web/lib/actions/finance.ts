@@ -4,6 +4,9 @@ import { z } from "zod";
 import { getLocale } from "@/lib/locale";
 
 import { revalidateApp } from "@/lib/revalidate-paths";
+import * as ledger from "@finance/data/ledger";
+import type { ActionResult, FormState } from "@finance/core/action-result";
+import { asUser } from "@/lib/actions/as-user";
 import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
 import { getAuthUser } from "@/lib/auth/get-user";
@@ -17,24 +20,16 @@ import {
   followTemplate,
   removeTemplateForecasts,
   skipOccurrences,
-  skipWhatTemplatesWrote,
 } from "@finance/data/recurring-apply";
 import { hasBankFeed } from "@/lib/queries/bank";
 import { removeInvestmentPositionForRecurring } from "@finance/data/recurring-positions";
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import {
   authSchema,
-  deleteTransactionsSchema,
-  moveTransactionsSchema,
-  importTransactionsSchema,
   parseUuid,
   recurringTemplateSchema,
-  transactionSchema,
-  updateTransactionSchema,
 } from "@finance/core/validations/finance";
 import { cashDateOf, movedBetween } from "@finance/core/cash-date";
-
-type ActionResult = { error?: string; success?: boolean; message?: string };
 
 async function getUser() {
   const user = await getAuthUser();
@@ -47,7 +42,7 @@ async function getUser() {
 }
 
 export async function signUp(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const parsed = authSchema.safeParse({
@@ -97,7 +92,7 @@ async function seedCategoriesSafely(userId: string): Promise<void> {
 }
 
 export async function signIn(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const parsed = authSchema.safeParse({
@@ -153,38 +148,8 @@ export interface QuickTransactionInput {
  */
 export async function saveQuickTransaction(
   input: QuickTransactionInput,
-): Promise<{ error?: string }> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = transactionSchema.safeParse({
-    categoryId: input.categoryId,
-    amount: input.amount,
-    occurredOn: input.occurredOn,
-    note: input.note?.trim() || undefined,
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.from("transactions").insert({
-    user_id: user.id,
-    category_id: parsed.data.categoryId,
-    amount: parsed.data.amount,
-    occurred_on: parsed.data.occurredOn,
-    note: parsed.data.note ?? null,
-  });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return {};
+): Promise<ActionResult> {
+  return asUser((db, userId) => ledger.createTransaction(db, userId, input));
 }
 
 /**
@@ -201,56 +166,8 @@ export async function importTransactions(
     occurredOn: string;
     note?: string;
   }[],
-): Promise<{ error?: string; imported?: number }> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = importTransactionsSchema.safeParse({ rows });
-  if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
-    };
-  }
-
-  const supabase = await createClient();
-
-  // Every row must belong to one of the user's own categories; RLS covers the
-  // insert, but checking here turns a database error into a clear message.
-  const categoryIds = [
-    ...new Set(parsed.data.rows.map((row) => row.categoryId)),
-  ];
-  const { data: owned, error: categoryError } = await supabase
-    .from("categories")
-    .select("id")
-    .eq("user_id", user.id)
-    .in("id", categoryIds);
-
-  if (categoryError) {
-    return { error: categoryError.message };
-  }
-
-  if ((owned?.length ?? 0) !== categoryIds.length) {
-    return { error: "actions.oneCategoryMissing" };
-  }
-
-  const { error } = await supabase.from("transactions").insert(
-    parsed.data.rows.map((row) => ({
-      user_id: user.id,
-      category_id: row.categoryId,
-      amount: row.amount,
-      occurred_on: row.occurredOn,
-      note: row.note?.trim() || null,
-    })),
-  );
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { imported: parsed.data.rows.length };
+): Promise<ActionResult<{ imported: number }>> {
+  return asUser((db, userId) => ledger.importTransactions(db, userId, rows));
 }
 
 /**
@@ -318,41 +235,8 @@ export async function getExistingKeysForRange(
  */
 export async function deleteTransactions(
   ids: string[],
-): Promise<{ error?: string; deleted?: number }> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = deleteTransactionsSchema.safeParse({ ids });
-  if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
-    };
-  }
-
-  const supabase = await createClient();
-  const skipError = await skipWhatTemplatesWrote(
-    supabase,
-    user.id,
-    parsed.data.ids,
-  );
-  if (skipError) {
-    return { error: skipError };
-  }
-
-  const { error, count } = await supabase
-    .from("transactions")
-    .delete({ count: "exact" })
-    .eq("user_id", user.id)
-    .in("id", parsed.data.ids);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { deleted: count ?? parsed.data.ids.length };
+): Promise<ActionResult<{ deleted: number }>> {
+  return asUser((db, userId) => ledger.deleteTransactions(db, userId, ids));
 }
 
 /**
@@ -373,148 +257,33 @@ export async function deleteTransactions(
 export async function moveTransactions(
   ids: string[],
   categoryId: string,
-): Promise<{ error?: string; moved?: number }> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = moveTransactionsSchema.safeParse({ ids, categoryId });
-  if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
-    };
-  }
-
-  const supabase = await createClient();
-
-  const { data: category, error: categoryError } = await supabase
-    .from("categories")
-    .select("id")
-    .eq("id", parsed.data.categoryId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (categoryError) {
-    return { error: categoryError.message };
-  }
-  if (!category) {
-    return { error: "actions.categoryMissing" };
-  }
-
-  const { error, count } = await supabase
-    .from("transactions")
-    .update({ category_id: parsed.data.categoryId }, { count: "exact" })
-    .eq("user_id", user.id)
-    .in("id", parsed.data.ids);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { moved: count ?? parsed.data.ids.length };
+): Promise<ActionResult<{ moved: number }>> {
+  return asUser((db, userId) =>
+    ledger.moveTransactions(db, userId, ids, categoryId),
+  );
 }
 
 export async function updateTransaction(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = updateTransactionSchema.safeParse({
-    id: formData.get("id"),
-    categoryId: formData.get("categoryId"),
-    amount: formData.get("amount"),
-    occurredOn: formData.get("occurredOn"),
-    note: formData.get("note") || undefined,
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-
-  // A row a template wrote, moved to another day, leaves the day it came
-  // from unwritten — and the month fills itself, so that day would be written
-  // again. Skipping it is what makes the move stick.
-  const { data: before } = await supabase
-    .from("transactions")
-    .select("recurring_template_id, occurred_on")
-    .eq("id", parsed.data.id)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (
-    before?.recurring_template_id &&
-    before.occurred_on !== parsed.data.occurredOn
-  ) {
-    const skipError = await skipOccurrences(supabase, user.id, [
-      {
-        templateId: before.recurring_template_id,
-        occurredOn: before.occurred_on,
-      },
-    ]);
-    if (skipError) {
-      return { error: skipError };
-    }
-  }
-
-  const { error } = await supabase
-    .from("transactions")
-    .update({
-      category_id: parsed.data.categoryId,
-      amount: parsed.data.amount,
-      occurred_on: parsed.data.occurredOn,
-      note: parsed.data.note ?? null,
-    })
-    .eq("id", parsed.data.id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) =>
+    ledger.updateTransaction(db, userId, {
+      id: String(formData.get("id") ?? ""),
+      categoryId: String(formData.get("categoryId") ?? ""),
+      amount: String(formData.get("amount") ?? ""),
+      occurredOn: String(formData.get("occurredOn") ?? ""),
+      note: (formData.get("note") as string | null) || undefined,
+    }),
+  );
 }
 
 export async function deleteTransaction(id: string): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  if (!parseUuid(id)) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const skipError = await skipWhatTemplatesWrote(supabase, user.id, [id]);
-  if (skipError) {
-    return { error: skipError };
-  }
-
-  const { error } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) => ledger.deleteTransaction(db, userId, id));
 }
 
 export async function upsertRecurringTemplate(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const user = await getUser();

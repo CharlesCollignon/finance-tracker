@@ -43,6 +43,7 @@ import type {
 import type { InstrumentSearchResult } from "@finance/core/market/yahoo";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
+import type { FormState } from "@finance/core/action-result";
 
 interface RecurringFormProps {
   categories: Category[];
@@ -115,7 +116,10 @@ export function RecurringFormBody({
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
   const t = useT();
-  const [state, action, pending] = useActionState(upsertRecurringTemplate, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    upsertRecurringTemplate,
+    {},
+  );
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletePending, startDeleteTransition] = useTransition();
   const [recurrence, setRecurrence] = useState<Recurrence>(

@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./action-result": "./src/action-result.ts",
     "./allocation": "./src/allocation.ts",
     "./amount-input": "./src/amount-input.ts",
     "./amount-sign": "./src/amount-sign.ts",

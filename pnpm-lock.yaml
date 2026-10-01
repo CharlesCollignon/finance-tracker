@@ -255,6 +255,9 @@ importers:
       '@finance/core':
         specifier: workspace:*
         version: link:../core
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@supabase/supabase-js':
         specifier: 2.108.2

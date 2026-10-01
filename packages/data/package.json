@@ -6,6 +6,7 @@
   "exports": {
     "./bank-feed": "./src/bank-feed.ts",
     "./client": "./src/client.ts",
+    "./ledger": "./src/ledger.ts",
     "./quote-source": "./src/quote-source.ts",
     "./recurring-apply": "./src/recurring-apply.ts",
     "./recurring-positions": "./src/recurring-positions.ts",
@@ -13,7 +14,8 @@
     "./schema": "./src/schema.ts"
   },
   "dependencies": {
-    "@finance/core": "workspace:*"
+    "@finance/core": "workspace:*",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "@supabase/supabase-js": "^2.108.2"

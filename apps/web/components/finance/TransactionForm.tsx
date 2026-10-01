@@ -26,6 +26,7 @@ import { moveBackEarlyIncome } from "@/lib/actions/fulfilment";
 import type { Category, Transaction } from "@finance/core/types/database";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
+import type { FormState } from "@finance/core/action-result";
 
 interface TransactionFormProps {
   categories: Category[];
@@ -87,7 +88,10 @@ function TransactionFormFields({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletePending, startDelete] = useTransition();
   const [duplicatePending, startDuplicate] = useTransition();
-  const [state, action, pending] = useActionState(updateTransaction, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    updateTransaction,
+    {},
+  );
   // A charge's row. Deleting it takes that occurrence out of its month —
   // which is what skipping used to be a separate button for — so the month
   // filling itself does not write it straight back.

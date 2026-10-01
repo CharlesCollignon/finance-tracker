@@ -2,12 +2,7 @@ import { isMissingSchema } from "@finance/data/schema";
 import {
   authSchema,
   categorySchema,
-  deleteTransactionsSchema,
-  moveTransactionsSchema,
-  importTransactionsSchema,
   recurringTemplateSchema,
-  transactionSchema,
-  updateTransactionSchema,
 } from "@finance/core/validations/finance";
 import {
   profileSchema,
@@ -52,23 +47,18 @@ import type {
 } from "@finance/core/types/database";
 
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
+import * as ledger from "@finance/data/ledger";
+import type { ActionResult } from "@finance/core/action-result";
 import {
   fillDue,
   fillMonth,
   followTemplate,
   removeTemplateForecasts,
   skipOccurrences,
-  skipWhatTemplatesWrote,
 } from "@finance/data/recurring-apply";
 import { supabase } from "@/lib/supabase";
 import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
-
-type ActionResult = {
-  error?: string;
-  success?: boolean;
-  message?: string;
-};
 
 async function requireUserId(): Promise<string | null> {
   const {
@@ -77,111 +67,35 @@ async function requireUserId(): Promise<string | null> {
   return user?.id ?? null;
 }
 
-export async function createTransaction(
-  input: Record<string, unknown>,
-): Promise<ActionResult> {
+/**
+ * Run a write as the signed-in user: the phone's counterpart of the web's
+ * `asUser`. No redraw to ask for — the client's fetch has already announced
+ * the write to every screen that reads it.
+ */
+async function asUser<T extends object>(
+  work: (userId: string) => Promise<ActionResult<T>>,
+): Promise<ActionResult<T>> {
   const userId = await requireUserId();
   if (!userId) {
-    return { error: "errors.notAuthenticated" };
+    return { error: "errors.notAuthenticated" } as ActionResult<T>;
   }
+  return work(userId);
+}
 
-  const parsed = transactionSchema.safeParse(input);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const { error } = await supabase.from("transactions").insert({
-    user_id: userId,
-    category_id: parsed.data.categoryId,
-    amount: parsed.data.amount,
-    occurred_on: parsed.data.occurredOn,
-    note: parsed.data.note ?? null,
-  });
-
-  if (error) {
-    return { error: error.message };
-  }
-  return { success: true };
+export async function createTransaction(
+  input: ledger.NewTransaction,
+): Promise<ActionResult> {
+  return asUser((userId) => ledger.createTransaction(supabase, userId, input));
 }
 
 export async function updateTransaction(
-  input: Record<string, unknown>,
+  input: ledger.TransactionChange,
 ): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = updateTransactionSchema.safeParse(input);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  // A row a template wrote, moved to another day, leaves the day it came
-  // from unwritten — and the month fills itself, so that day would be written
-  // again. Skipping it is what makes the move stick.
-  const { data: before } = await supabase
-    .from("transactions")
-    .select("recurring_template_id, occurred_on")
-    .eq("id", parsed.data.id)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (
-    before?.recurring_template_id &&
-    before.occurred_on !== parsed.data.occurredOn
-  ) {
-    const skipError = await skipOccurrences(supabase, userId, [
-      {
-        templateId: before.recurring_template_id as string,
-        occurredOn: before.occurred_on as string,
-      },
-    ]);
-    if (skipError) {
-      return { error: skipError };
-    }
-  }
-
-  const { error } = await supabase
-    .from("transactions")
-    .update({
-      category_id: parsed.data.categoryId,
-      amount: parsed.data.amount,
-      occurred_on: parsed.data.occurredOn,
-      note: parsed.data.note ?? null,
-    })
-    .eq("id", parsed.data.id)
-    .eq("user_id", userId);
-
-  if (error) {
-    return { error: error.message };
-  }
-  return { success: true };
+  return asUser((userId) => ledger.updateTransaction(supabase, userId, input));
 }
 
 export async function deleteTransaction(id: string): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  // A charge's row: deleting it takes that occurrence out of its month, so
-  // the month filling itself does not write it straight back.
-  const skipError = await skipWhatTemplatesWrote(supabase, userId, [id]);
-  if (skipError) {
-    return { error: skipError };
-  }
-
-  const { error } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", userId);
-
-  if (error) {
-    return { error: error.message };
-  }
-  return { success: true };
+  return asUser((userId) => ledger.deleteTransaction(supabase, userId, id));
 }
 
 /**
@@ -912,39 +826,9 @@ export async function saveAccountTargets(
  * that has not been through the schema.
  */
 export async function importTransactions(
-  rows: {
-    categoryId: string;
-    amount: number;
-    occurredOn: string;
-    note?: string;
-  }[],
-): Promise<ActionResult & { imported?: number }> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = importTransactionsSchema.safeParse({ rows });
-  if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
-    };
-  }
-
-  const { error } = await supabase.from("transactions").insert(
-    parsed.data.rows.map((row) => ({
-      user_id: userId,
-      category_id: row.categoryId,
-      amount: row.amount,
-      occurred_on: row.occurredOn,
-      note: row.note?.trim() || null,
-    })),
-  );
-
-  if (error) {
-    return { error: error.message };
-  }
-  return { success: true, imported: parsed.data.rows.length };
+  rows: ledger.ImportedRow[],
+): Promise<ActionResult<{ imported: number }>> {
+  return asUser((userId) => ledger.importTransactions(supabase, userId, rows));
 }
 
 /**
@@ -955,39 +839,8 @@ export async function importTransactions(
  */
 export async function deleteTransactions(
   ids: string[],
-): Promise<ActionResult & { deleted?: number }> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = deleteTransactionsSchema.safeParse({ ids });
-  if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
-    };
-  }
-
-  const skipError = await skipWhatTemplatesWrote(
-    supabase,
-    userId,
-    parsed.data.ids,
-  );
-  if (skipError) {
-    return { error: skipError };
-  }
-
-  const { error, count } = await supabase
-    .from("transactions")
-    .delete({ count: "exact" })
-    .eq("user_id", userId)
-    .in("id", parsed.data.ids);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { success: true, deleted: count ?? parsed.data.ids.length };
+): Promise<ActionResult<{ deleted: number }>> {
+  return asUser((userId) => ledger.deleteTransactions(supabase, userId, ids));
 }
 
 /**
@@ -1001,44 +854,10 @@ export async function deleteTransactions(
 export async function moveTransactions(
   ids: string[],
   categoryId: string,
-): Promise<ActionResult & { moved?: number }> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = moveTransactionsSchema.safeParse({ ids, categoryId });
-  if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
-    };
-  }
-
-  const { data: category, error: categoryError } = await supabase
-    .from("categories")
-    .select("id")
-    .eq("id", parsed.data.categoryId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (categoryError) {
-    return { error: categoryError.message };
-  }
-  if (!category) {
-    return { error: "actions.categoryMissing" };
-  }
-
-  const { error, count } = await supabase
-    .from("transactions")
-    .update({ category_id: parsed.data.categoryId }, { count: "exact" })
-    .eq("user_id", userId)
-    .in("id", parsed.data.ids);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { success: true, moved: count ?? parsed.data.ids.length };
+): Promise<ActionResult<{ moved: number }>> {
+  return asUser((userId) =>
+    ledger.moveTransactions(supabase, userId, ids, categoryId),
+  );
 }
 
 /* ------------------------------------------------------------ closing a month */

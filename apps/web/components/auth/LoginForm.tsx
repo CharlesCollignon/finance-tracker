@@ -16,13 +16,17 @@ import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
+import type { FormState } from "@finance/core/action-result";
 
 export function LoginForm() {
   const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const authError = searchParams.get("error");
-  const [state, action, pending] = useActionState(signIn, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    signIn,
+    {},
+  );
 
   useEffect(() => {
     if (state.success) {
