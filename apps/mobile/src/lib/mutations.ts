@@ -2365,7 +2365,7 @@ export async function importFeedItem(
     );
 
     if (already) {
-      await supabase
+      const { error: matchError } = await supabase
         .from("bank_feed_items")
         .update({
           status: "imported",
@@ -2378,6 +2378,9 @@ export async function importFeedItem(
         })
         .eq("id", itemId)
         .eq("user_id", userId);
+      if (matchError) {
+        return { error: matchError.message };
+      }
 
       return {
         success: true,
@@ -2403,11 +2406,21 @@ export async function importFeedItem(
     return { error: error?.message ?? "actions.couldNotAddEntry" };
   }
 
-  await supabase
+  const { error: fileError } = await supabase
     .from("bank_feed_items")
     .update({ status: "imported", transaction_id: transaction.id })
     .eq("id", itemId)
     .eq("user_id", userId);
+  if (fileError) {
+    // Taken back, so the row and the ledger agree: a transaction whose bank
+    // row still waits would be filed a second time by the next answer.
+    await supabase
+      .from("transactions")
+      .delete()
+      .eq("id", transaction.id)
+      .eq("user_id", userId);
+    return { error: fileError.message };
+  }
 
   return { success: true, message: "recurringProposals.added" };
 }
