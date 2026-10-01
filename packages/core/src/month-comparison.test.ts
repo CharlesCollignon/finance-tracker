@@ -25,6 +25,8 @@ function tx(
     amount,
     note: null,
     created_at: `${occurredOn}T10:00:00.000Z`,
+    cash_on: null,
+    deleted_at: null,
     categories: {
       name: "Groceries",
       type,

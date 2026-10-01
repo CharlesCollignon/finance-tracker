@@ -87,11 +87,6 @@
         ".agents/skills/**",
       ],
       "ignoreDependencies": [
-        // The formatter. Invoked from editors and `pnpm exec prettier`, and
-        // the repo carries no `.prettierrc` for knip's prettier plugin to find,
-        // so there is nothing for it to hang a reference on.
-        "prettier",
-
         // `scripts/build-brand-icons.mjs` imports sharp and the root manifest
         // does not declare it — the script is run with `pnpm dlx`. DEBT: either
         // declare sharp as a root devDependency or make the script's `pnpm dlx`
@@ -292,6 +287,10 @@
         // line here. A file listed here reports no unused exports at all, so
         // every line left standing is a hole in the gate.
         // ---------------------------------------------------------------
+        // Not debt: what `supabase gen types` writes, helpers included.
+        // Editing the generated file to drop them would be undone by the
+        // next `pnpm gen:types`.
+        "src/types/database.generated.ts": ["exports", "types"],
         "src/bank-feed.ts": ["exports"],
         "src/budget.ts": ["exports"],
         "src/category-styles.ts": ["exports"],
