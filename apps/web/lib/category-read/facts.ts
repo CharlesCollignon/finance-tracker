@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { allRows } from "@finance/core/paging";
 import {
   formatMonthLabel,
   getCurrentMonth,
@@ -183,22 +184,22 @@ export async function gatherCategoryFacts(
   );
   const from = `${oldest.year}-${String(oldest.month).padStart(2, "0")}-01`;
 
-  const [{ data, error }, summary] = await Promise.all([
-    supabase
-      .from("transactions")
-      .select("*, categories(name, type, icon, counts_toward_summary)")
-      .eq("user_id", userId)
-      .eq("category_id", categoryId)
-      .gte("occurred_on", from)
-      .order("occurred_on", { ascending: false }),
+  const [data, summary] = await Promise.all([
+    allRows((start, end) =>
+      supabase
+        .from("transactions")
+        .select("*, categories(name, type, icon, counts_toward_summary)")
+        .eq("user_id", userId)
+        .eq("category_id", categoryId)
+        .gte("occurred_on", from)
+        .order("occurred_on", { ascending: false })
+        .order("id")
+        .range(start, end),
+    ),
     getMonthlySummary(userId, current.year, current.month, "current"),
   ]);
 
-  if (error) {
-    throw error;
-  }
-
-  const rows = (data ?? []) as TransactionWithCategory[];
+  const rows = data as TransactionWithCategory[];
   const histories = buildCategoryHistory(rows, current.year, current.month, {
     months: CATEGORY_MONTHS_READ,
     locale,

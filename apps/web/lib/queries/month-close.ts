@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { allRows } from "@finance/core/paging";
 import { formatMonthLabel, getMonthBounds } from "@finance/core/constants";
 import {
   buildMonthClose,
@@ -183,29 +184,29 @@ async function cashFlowsByMonth(
   const { end } = getMonthBounds(lastYear!, lastMonth!);
 
   const supabase = await createClient();
-  const [
-    { data: transactions, error: txError },
-    { data: transfers, error: trError },
-    moved,
-  ] = await Promise.all([
-    supabase
-      .from("transactions")
-      .select("*, categories(name, type, icon, counts_toward_summary)")
-      .eq("user_id", userId)
-      .gte("occurred_on", start)
-      .lte("occurred_on", end),
-    supabase
-      .from("wallet_transfers")
-      .select("amount, occurred_on")
-      .eq("user_id", userId)
-      .gte("occurred_on", start)
-      .lte("occurred_on", end),
-    getMovedBetween(userId, start, end, supabase),
-  ]);
+  const [transactions, { data: transfers, error: trError }, moved] =
+    await Promise.all([
+      // From the first close to the last, so a year of closes is a year of
+      // rows — past the server's cap, and paged for it.
+      allRows((from, to) =>
+        supabase
+          .from("transactions")
+          .select("*, categories(name, type, icon, counts_toward_summary)")
+          .eq("user_id", userId)
+          .gte("occurred_on", start)
+          .lte("occurred_on", end)
+          .order("id")
+          .range(from, to),
+      ),
+      supabase
+        .from("wallet_transfers")
+        .select("amount, occurred_on")
+        .eq("user_id", userId)
+        .gte("occurred_on", start)
+        .lte("occurred_on", end),
+      getMovedBetween(userId, start, end, supabase),
+    ]);
 
-  if (txError) {
-    throw txError;
-  }
   if (trError) {
     throw trError;
   }
@@ -213,7 +214,7 @@ async function cashFlowsByMonth(
   // Each month by the day its money moved, as the close of one month does.
   const txByMonth = new Map<string, TransactionWithCategory[]>();
   for (const row of rowsByCashDate(
-    (transactions ?? []) as TransactionWithCategory[],
+    transactions as TransactionWithCategory[],
     moved,
     start,
     end,

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { allRows } from "@finance/core/paging";
 import {
   buildCategoryFindings,
   type CategoryFinding,
@@ -44,19 +45,20 @@ export async function gatherCategoryFindings(
   );
   const from = `${oldest.year}-${String(oldest.month).padStart(2, "0")}-01`;
 
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*, categories(name, type, icon, counts_toward_summary)")
-    .eq("user_id", userId)
-    .gte("occurred_on", from)
-    .order("occurred_on", { ascending: false });
-
-  if (error) {
-    throw error;
-  }
+  // Months of every category at once, so paged past the row cap.
+  const data = await allRows((start, end) =>
+    supabase
+      .from("transactions")
+      .select("*, categories(name, type, icon, counts_toward_summary)")
+      .eq("user_id", userId)
+      .gte("occurred_on", from)
+      .order("occurred_on", { ascending: false })
+      .order("id")
+      .range(start, end),
+  );
 
   const histories = buildCategoryHistory(
-    (data ?? []) as TransactionWithCategory[],
+    data as TransactionWithCategory[],
     current.year,
     current.month,
     {

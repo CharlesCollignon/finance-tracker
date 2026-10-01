@@ -12,6 +12,7 @@ import {
   type MonthComparison,
 } from "@finance/core/month-comparison";
 import { buildMonthlySummary } from "@finance/core/monthly-summary";
+import { allRows } from "@finance/core/paging";
 import type {
   CategoryType,
   MonthlySummary,
@@ -47,18 +48,22 @@ export const getInvestmentTransactions = cache(
   async (userId: string): Promise<TransactionWithCategory[]> => {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("*, categories!inner(name, type, icon, counts_toward_summary)")
-      .eq("user_id", userId)
-      .eq("categories.type", "investment")
-      .order("occurred_on", { ascending: true });
+    // Every investment row ever, so past the server's 1,000-row cap within
+    // a few years of weekly purchases. Read oldest first, the order the
+    // returns are computed in — unpaged, it was the newest rows that fell
+    // off the end.
+    const rows = await allRows((from, to) =>
+      supabase
+        .from("transactions")
+        .select("*, categories!inner(name, type, icon, counts_toward_summary)")
+        .eq("user_id", userId)
+        .eq("categories.type", "investment")
+        .order("occurred_on", { ascending: true })
+        .order("id")
+        .range(from, to),
+    );
 
-    if (error) {
-      throw error;
-    }
-
-    return (data ?? []) as TransactionWithCategory[];
+    return rows as TransactionWithCategory[];
   },
 );
 
@@ -206,20 +211,21 @@ export async function getMonthComparison(
 export async function getSavingsReserve(userId: string): Promise<number> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("amount, categories!inner(type, counts_toward_summary)")
-    .eq("user_id", userId)
-    .eq("categories.type", "savings");
-
-  if (error) {
-    throw error;
-  }
+  // All of history, so paged past the server's row cap.
+  const rows = await allRows((from, to) =>
+    supabase
+      .from("transactions")
+      .select("amount, categories!inner(type, counts_toward_summary)")
+      .eq("user_id", userId)
+      .eq("categories.type", "savings")
+      .order("id")
+      .range(from, to),
+  );
 
   // A savings category marked as not counting is a withdrawal, so it comes
   // off the reserve rather than being skipped. Skipping it was what made the
   // reserve only ever grow, and the runway it feeds only ever flatter.
-  return (data ?? []).reduce((sum, row) => {
+  return rows.reduce((sum, row) => {
     const withdrawal =
       (row.categories as unknown as { counts_toward_summary: boolean })
         .counts_toward_summary === false;

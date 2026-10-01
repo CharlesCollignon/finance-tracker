@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { allRows } from "@finance/core/paging";
 import {
   indexCategoriesByName,
   planFeed,
@@ -144,26 +145,39 @@ export async function syncBankFeed(
 
   // The user's own answers are what make a sync mostly automatic, and the
   // categories are what an MCC has to resolve against.
-  const [{ data: history }, { data: categories }, { data: seen }] =
-    await Promise.all([
-      supabase
-        .from("transactions")
-        .select("*, categories(name, type, icon, counts_toward_summary)")
-        .eq("user_id", userId)
-        .order("occurred_on", { ascending: false })
-        .limit(2000),
-      supabase
-        .from("categories")
-        .select("id, name")
-        .eq("user_id", userId)
-        .eq("archived", false),
+  //
+  // Both lists are paged: the server stops at 1,000 rows without saying so,
+  // which left a `.limit(2000)` at half of what it asked for, and every bank
+  // row past the thousandth looking unseen — its balance never refreshed and
+  // the ledger row it had claimed free to be claimed again.
+  const [history, { data: categories }, seen] = await Promise.all([
+    allRows(
+      (from, to) =>
+        supabase
+          .from("transactions")
+          .select("*, categories(name, type, icon, counts_toward_summary)")
+          .eq("user_id", userId)
+          .order("occurred_on", { ascending: false })
+          .order("id")
+          .range(from, to),
+      { max: 2000 },
+    ),
+    supabase
+      .from("categories")
+      .select("id, name")
+      .eq("user_id", userId)
+      .eq("archived", false),
+    allRows((from, to) =>
       supabase
         .from("bank_feed_items")
         .select("provider_id, transaction_id")
-        .eq("user_id", userId),
-    ]);
+        .eq("user_id", userId)
+        .order("id")
+        .range(from, to),
+    ),
+  ]);
 
-  const past = (history ?? []) as TransactionWithCategory[];
+  const past = history as TransactionWithCategory[];
   const merchants = buildMerchantIndex(past);
   // Measured on a real Crédit Agricole statement, the coarse key answers for
   // 85% of card payments against 65% for exact matching: the same shop split
@@ -174,8 +188,8 @@ export async function syncBankFeed(
   // points at a transaction has claimed it, so a later sync cannot file a
   // second bank row against the same one.
   const claimedIds = new Set(
-    (seen ?? [])
-      .map((row) => (row as { transaction_id?: string | null }).transaction_id)
+    seen
+      .map((row) => row.transaction_id)
       .filter((id): id is string => Boolean(id)),
   );
   const existing: ExistingLedgerRow[] = past.map((tx) => ({
@@ -189,9 +203,7 @@ export async function syncBankFeed(
     alreadyClaimed: claimedIds.has(tx.id),
   }));
   const categoryIdsByName = indexCategoriesByName(categories ?? []);
-  const seenProviderIds = new Set(
-    (seen ?? []).map((row) => row.provider_id as string),
-  );
+  const seenProviderIds = new Set(seen.map((row) => row.provider_id as string));
   const ownIbans = new Set(
     accounts
       .map((account) => account.iban?.replace(/\s+/g, "").toUpperCase())
