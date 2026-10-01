@@ -162,7 +162,7 @@ export default function TransactionsScreen() {
    * state rather than consulted every render, so closing the sheet closes it:
    * the param is still in the address until the next navigation.
    */
-  const params = useLocalSearchParams<{ review?: string }>();
+  const params = useLocalSearchParams<{ review?: string; at?: string }>();
   const wantsInbox = params.review === "inbox";
   /*
    * Null until somebody says otherwise, then whatever they said. Derived
@@ -174,6 +174,18 @@ export default function TransactionsScreen() {
    * navigation, so consulting it every render would reopen the sheet.
    */
   const [inboxChoice, setInboxChoice] = useState<boolean | null>(null);
+  /*
+   * Every way in stamps its ask with `at` — a tapped notification, the
+   * Bearing's row, the end of a bank import — and a new stamp is a new
+   * question. Without it, a review closed once stayed closed: the Journal is
+   * a tab, it stays mounted, and the second "6 entries need a category"
+   * landed on the same address the first had, onto an answer of "closed".
+   */
+  const [askedAt, setAskedAt] = useState(params.at);
+  if (askedAt !== params.at) {
+    setAskedAt(params.at);
+    setInboxChoice(null);
+  }
   const dataVersion = useDataVersion();
   const [selectMode, setSelectMode] = useState(false);
   const [storedSelection, setSelected] =

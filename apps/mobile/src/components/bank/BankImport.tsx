@@ -16,6 +16,7 @@ import {
 } from "@/lib/bank-connect";
 import { notifyDataChanged } from "@/lib/data-version";
 import { hapticSuccess } from "@/lib/haptics";
+import { reviewAsk } from "@/lib/review-ask";
 import { useT } from "@/providers/LocaleProvider";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
@@ -212,7 +213,7 @@ export function BankImport({ onFinished }: { onFinished: () => void }) {
               onPress={() =>
                 router.navigate({
                   pathname: "/transactions",
-                  params: { review: "inbox" },
+                  params: reviewAsk(),
                 } as Href)
               }
             />

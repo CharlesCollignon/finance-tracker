@@ -4,6 +4,8 @@ import { useRouter, type Href } from "expo-router";
 
 import { mobileRouteForPushUrl } from "@finance/core/push-routes";
 
+import { stampReviewAsk } from "@/lib/review-ask";
+
 /**
  * Takes the user where a tapped notification pointed.
  *
@@ -38,12 +40,14 @@ export function useNotificationRouting(ready: boolean): void {
     // The Bearing when the path cannot be placed — a web-only surface such
     // as /history, or a payload from a build older than the route it names.
     // Opening the app somewhere plausible is a small failure; pushing a route
-    // the navigator has never heard of is a crash.
+    // the navigator has never heard of is a crash. A review asked for is
+    // stamped, so it opens even on a Journal where it was closed earlier
+    // (`lib/review-ask.ts`).
     router.push(
       (route === null
         ? "/"
         : Object.keys(route.params).length > 0
-          ? { pathname: route.pathname, params: route.params }
+          ? { pathname: route.pathname, params: stampReviewAsk(route.params) }
           : route.pathname) as Href,
     );
 

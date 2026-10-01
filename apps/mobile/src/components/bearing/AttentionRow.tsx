@@ -6,6 +6,7 @@ import type { AttentionItem } from "@finance/core/attention";
 
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
+import { reviewAsk } from "@/lib/review-ask";
 import { useT } from "@/providers/LocaleProvider";
 import { ICON, TYPE } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
@@ -39,7 +40,7 @@ export function AttentionRow({
 
   return (
     <Pressable
-      onPress={() => router.push(attentionHref(top.href) as Href)}
+      onPress={() => router.push(attentionHref(top.href))}
       accessibilityRole="button"
       accessibilityLabel={`${t(top.messageKey, top.params)}. ${t(top.actionKey)}`}
       className={cn("flex-row items-center gap-3 py-1", className)}
@@ -80,8 +81,12 @@ export function AttentionRow({
  * (`/transactions`, `/transactions?review=inbox`, `/plan` twice,
  * `/recurring`). `transactions.tsx` and `recurring.tsx` are real tabs and
  * answer three of them unchanged; the phone's Plan is `planning.tsx`, where
- * the close and the ready-to-close prompt live.
+ * the close and the ready-to-close prompt live. The review is asked for with
+ * a fresh stamp (`reviewAsk`), so it opens even after it was closed once.
  */
-function attentionHref(href: string): string {
-  return href === "/plan" ? "/planning" : href;
+function attentionHref(href: string): Href {
+  if (href === "/transactions?review=inbox") {
+    return { pathname: "/transactions", params: reviewAsk() } as Href;
+  }
+  return (href === "/plan" ? "/planning" : href) as Href;
 }
