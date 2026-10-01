@@ -2,10 +2,8 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 import {
-  describeOutbox,
   enqueue,
   isRetryableError,
-  outboxStatus,
   recordFailure,
   removeEntry,
   type OutboxEntry,
@@ -29,6 +27,25 @@ let loaded = false;
 let draining = false;
 const listeners = new Set<() => void>();
 
+/** Held by whichever tab is sending, so two tabs never send the same entry. */
+const DRAIN_LOCK = "outbox.transactions.drain";
+
+/**
+ * The queue as it stands in storage, which another tab may have changed since
+ * this one last looked. Every change starts from here rather than from this
+ * tab's copy: writing the copy back is how one tab used to erase an entry
+ * another had just queued.
+ */
+function stored(): OutboxEntry[] {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as OutboxEntry[]) : [];
+  } catch {
+    // A blocked store: this tab's memory is the only copy there is.
+    return queue;
+  }
+}
+
 function persist(): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
@@ -42,26 +59,42 @@ function load(): void {
     return;
   }
   loaded = true;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    queue = raw ? (JSON.parse(raw) as OutboxEntry[]) : [];
-  } catch {
-    queue = [];
-  }
+  queue = stored();
 }
 
-function emit(): void {
-  persist();
+function notify(): void {
   for (const listener of listeners) {
     listener();
   }
 }
 
+/** Changes the queue as storage holds it now, and tells this tab. */
+function update(change: (entries: OutboxEntry[]) => OutboxEntry[]): void {
+  queue = change(stored());
+  persist();
+  notify();
+}
+
+/** Another tab queued or sent something: show what storage now says. */
+function onStorage(event: StorageEvent): void {
+  if (event.key !== STORAGE_KEY && event.key !== null) {
+    return;
+  }
+  queue = stored();
+  notify();
+}
+
 function subscribe(listener: () => void): () => void {
   load();
+  if (listeners.size === 0) {
+    window.addEventListener("storage", onStorage);
+  }
   listeners.add(listener);
   return () => {
     listeners.delete(listener);
+    if (listeners.size === 0) {
+      window.removeEventListener("storage", onStorage);
+    }
   };
 }
 
@@ -116,13 +149,14 @@ export async function saveWithOutbox(
 }
 
 function push(payload: OutboxEntry["payload"]): void {
-  queue = enqueue(queue, {
-    id: crypto.randomUUID(),
-    payload,
-    queuedAt: Date.now(),
-    attempts: 0,
-  });
-  emit();
+  update((entries) =>
+    enqueue(entries, {
+      id: crypto.randomUUID(),
+      payload,
+      queuedAt: Date.now(),
+      attempts: 0,
+    }),
+  );
 }
 
 /**
@@ -130,34 +164,53 @@ function push(payload: OutboxEntry["payload"]): void {
  *
  * Sequential rather than parallel: the queue is short, and a burst of writes
  * from a connection that has only just come back tends to fail together.
+ *
+ * One tab at a time. Every open tab drains when the connection returns, and
+ * two of them walking the same queue sent each entry twice — two identical
+ * transactions from one purchase. The lock is skipped rather than waited for:
+ * the tab holding it is already sending, and reads the queue afresh before
+ * each entry, so whatever this tab queued goes with it.
  */
 export async function drainOutbox(): Promise<void> {
   load();
-  if (draining || queue.length === 0) {
+  if (draining || stored().length === 0) {
     return;
   }
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     return;
   }
 
+  const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
+  if (!locks) {
+    await drainHeld();
+    return;
+  }
+  await locks.request(DRAIN_LOCK, { ifAvailable: true }, async (lock) => {
+    if (lock) {
+      await drainHeld();
+    }
+  });
+}
+
+async function drainHeld(): Promise<void> {
   draining = true;
   try {
-    for (const entry of [...queue]) {
+    // The oldest entry storage holds, read again each time round: another
+    // tab may have queued one since, and an entry already sent is gone.
+    for (let entry = stored()[0]; entry; entry = stored()[0]) {
+      const { id, payload } = entry;
       try {
-        const result = await saveQuickTransaction(entry.payload);
+        const result = await saveQuickTransaction(payload);
         if (result.error && isRetryableError(result.error)) {
-          queue = recordFailure(queue, entry.id, result.error);
-          emit();
+          update((entries) => recordFailure(entries, id, result.error!));
           // The network is still bad; stop rather than burn the retry budget.
           break;
         }
         // Sent, or rejected for a reason retrying will not change.
-        queue = removeEntry(queue, entry.id);
-        emit();
+        update((entries) => removeEntry(entries, id));
       } catch (error) {
         const message = error instanceof Error ? error.message : "Send failed";
-        queue = recordFailure(queue, entry.id, message);
-        emit();
+        update((entries) => recordFailure(entries, id, message));
         break;
       }
     }
@@ -178,7 +231,6 @@ export function watchConnection(): () => void {
 
 export function useOutbox(): {
   entries: OutboxEntry[];
-  label: string | null;
   retry: () => void;
 } {
   const entries = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
@@ -186,9 +238,5 @@ export function useOutbox(): {
     void drainOutbox();
   }, []);
 
-  return {
-    entries,
-    label: describeOutbox(outboxStatus(entries)),
-    retry,
-  };
+  return { entries, retry };
 }

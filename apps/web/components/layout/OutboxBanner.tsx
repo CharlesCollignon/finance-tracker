@@ -18,7 +18,7 @@ import { useT } from "@/lib/locale-context";
  */
 export function OutboxBanner() {
   const t = useT();
-  const { entries, label, retry } = useOutbox();
+  const { entries, retry } = useOutbox();
 
   // Draining is driven by the browser's own online event rather than polling.
   useEffect(() => watchConnection(), []);
@@ -35,7 +35,7 @@ export function OutboxBanner() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, []);
 
-  if (!label) {
+  if (entries.length === 0) {
     return null;
   }
 
@@ -55,7 +55,9 @@ export function OutboxBanner() {
       )}
     >
       <CloudArrowUp size={ICON.md} className="shrink-0 text-muted-foreground" />
-      <span className="truncate text-sm">{label}</span>
+      <span className="truncate text-sm">
+        {t("outbox.waiting", { count: entries.length })}
+      </span>
       <button
         type="button"
         onClick={retry}

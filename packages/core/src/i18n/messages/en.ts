@@ -3009,6 +3009,10 @@ export const en = {
 
   /** Sending again what is still only on this device. */
   outbox: {
+    waiting: {
+      one: "{count} entry waiting to sync",
+      other: "{count} entries waiting to sync",
+    },
     retry: "Retry",
   },
 

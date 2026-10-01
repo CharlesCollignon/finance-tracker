@@ -101,15 +101,6 @@ export function outboxStatus(queue: readonly OutboxEntry[]): OutboxStatus {
   };
 }
 
-/** "2 waiting to sync" — or null when there is nothing to say. */
-export function describeOutbox(status: OutboxStatus): string | null {
-  if (status.pending === 0) {
-    return null;
-  }
-  const noun = status.pending === 1 ? "entry" : "entries";
-  return `${status.pending} ${noun} waiting to sync`;
-}
-
 /**
  * Whether a failure looks like "no network" rather than "the server said no".
  *

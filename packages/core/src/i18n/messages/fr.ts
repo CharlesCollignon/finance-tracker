@@ -2108,6 +2108,10 @@ export const fr: Messages = {
   },
 
   outbox: {
+    waiting: {
+      one: "{count} opération pas encore envoyée",
+      other: "{count} opérations pas encore envoyées",
+    },
     retry: "Réessayer",
   },
 
