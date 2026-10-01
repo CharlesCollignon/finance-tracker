@@ -59,8 +59,6 @@ interface BankInboxSheetProps {
   categories: Category[];
   /** Most-recently-used category ids, newest first. */
   recentCategoryIds?: string[];
-  /** After each decision and each undo, so the screen reads its figures again. */
-  onDecided: () => void;
 }
 
 type Group = FeedGroup<PendingFeedRow>;
@@ -124,7 +122,6 @@ export function BankInboxSheet({
   items,
   categories,
   recentCategoryIds = [],
-  onDecided,
 }: BankInboxSheetProps) {
   const t = useT();
   const colors = useThemeColors();
@@ -230,11 +227,14 @@ export function BankInboxSheet({
     });
   }
 
-  /** Every surface moves with a decision: totals, the statement, the tab dot. */
+  /**
+   * Every surface moves with a decision — totals, the statement, the tab dot
+   * — because the write announces itself; this sheet only has its own list
+   * of what was decided to read again.
+   */
   function settled() {
     setAnswered(true);
     void readDecided();
-    onDecided();
   }
 
   function decide(
@@ -352,7 +352,6 @@ export function BankInboxSheet({
       if (userId) {
         setBackfill(await wholeStatementWorthFetching(userId));
       }
-      onDecided();
     })();
   }
 

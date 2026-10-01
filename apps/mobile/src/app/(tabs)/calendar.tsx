@@ -58,7 +58,6 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQuickAdd } from "@/providers/QuickAddProvider";
 import { useToast } from "@/providers/ToastProvider";
@@ -104,8 +103,7 @@ export default function CalendarScreen() {
     null,
   );
 
-  const dataVersion = useDataVersion();
-  const { data, loading, refreshing, onRefresh, onRefreshAll, reload, error } =
+  const { data, loading, refreshing, onRefreshAll, error } =
     useRefreshable(async () => {
       if (!user) {
         return {
@@ -158,7 +156,9 @@ export default function CalendarScreen() {
           ...fulfilled,
         ]),
       };
-    }, [user?.id, year, month, dataVersion]);
+    }, [user?.id, year, month], {
+      reads: ["transactions", "templates", "categories", "bank"],
+    });
 
   const transactions = useMemo(
     () => data?.transactions ?? [],
@@ -265,10 +265,8 @@ export default function CalendarScreen() {
     }
 
     void hapticSuccess();
-    notifyDataChanged();
     toast(t("ledger.deleted", { count: result.deleted ?? 0 }), "success");
     leaveSelectMode();
-    void onRefresh();
   }
 
   function planMove(categoryId: string) {
@@ -294,13 +292,11 @@ export default function CalendarScreen() {
     }
 
     void hapticSuccess();
-    notifyDataChanged();
     const name =
       categories.find((category) => category.id === categoryId)?.name ??
       t("ledger.theNewCategory");
     toast(t("ledger.moved", { count: result.moved ?? 0, name }), "success");
     leaveSelectMode();
-    void onRefresh();
   }
 
   return (
@@ -607,18 +603,12 @@ export default function CalendarScreen() {
       <PlannedOccurrenceSheet
         occurrence={openPlanned}
         onClose={() => setOpenPlanned(null)}
-        onChanged={() => {
-          notifyDataChanged();
-          void reload();
-        }}
       />
 
       {editing ? (
         <TransactionFormModal
           open
           onClose={() => setEditing(null)}
-          onSaved={reload}
-          onDeleted={reload}
           categories={categories}
           transaction={editing}
         />

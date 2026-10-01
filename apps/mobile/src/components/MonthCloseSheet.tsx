@@ -40,7 +40,6 @@ interface MonthCloseSheetProps {
   unrecordedCap: number | null;
   /** What a normal month's unrecorded spending has been, if known yet. */
   baseline: number | null;
-  onClosed: () => void;
 }
 
 type Stage = "entering" | "checked" | "closed";
@@ -83,7 +82,6 @@ export function MonthCloseSheet({
   monthlyCommitted,
   unrecordedCap,
   baseline,
-  onClosed,
 }: MonthCloseSheetProps) {
   const locale = useLocale();
   const t = useT();
@@ -178,7 +176,6 @@ export function MonthCloseSheet({
     void hapticSuccess();
     setResult(response.result);
     setStage("closed");
-    onClosed();
   }
 
   async function undo() {
@@ -191,7 +188,6 @@ export function MonthCloseSheet({
       return;
     }
     toast(t("monthClose.reopened", { month: monthLabel }), "success");
-    onClosed();
     dismiss();
   }
 

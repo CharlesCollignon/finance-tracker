@@ -47,14 +47,12 @@ export function SavingsAccountCard({
   view,
   monthly,
   bankAccounts,
-  onChanged,
 }: {
   view: SavingsAccountView;
   /** What the recurring entries put into it each month. */
   monthly: number;
   /** The bank accounts it could read its balance from. */
   bankAccounts: readonly BankAccount[];
-  onChanged: () => void;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -101,7 +99,6 @@ export function SavingsAccountCard({
     void hapticSuccess();
     toast(message);
     setEditing(null);
-    onChanged();
     return true;
   }
 

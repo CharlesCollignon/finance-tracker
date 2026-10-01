@@ -36,7 +36,6 @@ import { resolveMessage } from "@finance/core/i18n/t";
 interface RecurringFormModalProps {
   open: boolean;
   onClose: () => void;
-  onSaved: () => void;
   categories: Category[];
   template?: RecurringTemplateWithCategory | null;
   /** The days this charge has been recorded on this month, today included. */
@@ -52,7 +51,6 @@ interface RecurringFormModalProps {
 export function RecurringFormModal({
   open,
   onClose,
-  onSaved,
   categories,
   template = null,
   recordedThisMonth = [],
@@ -100,7 +98,6 @@ export function RecurringFormModal({
               categories={categories}
               template={template}
               recordedThisMonth={recordedThisMonth}
-              onSaved={onSaved}
               onDone={onClose}
             />
           </ScrollView>
@@ -118,8 +115,6 @@ interface RecurringFormBodyProps {
    * When there are any, saving an edit asks whether they change too.
    */
   recordedThisMonth?: string[];
-  /** Called after a save or a delete, so screens can reload. */
-  onSaved: () => void;
   /** Called once the sheet around these fields should close. */
   onDone: () => void;
 }
@@ -133,7 +128,6 @@ export function RecurringFormBody({
   categories,
   template = null,
   recordedThisMonth = [],
-  onSaved,
   onDone,
 }: RecurringFormBodyProps) {
   const locale = useLocale();
@@ -309,7 +303,6 @@ export function RecurringFormBody({
       isEditing ? t("recurring.updatedHint") : t("recurring.savedHint"),
       "success",
     );
-    onSaved();
     onDone();
   }
 
@@ -325,7 +318,6 @@ export function RecurringFormBody({
       return;
     }
     toast(t("recurring.deletedHint"));
-    onSaved();
     onDone();
   }
 

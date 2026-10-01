@@ -11,7 +11,6 @@ import {
   readDismissedPrompts,
   type BankConnectionRow,
 } from "@/lib/bank-connect";
-import { useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 
 export interface BankState {
@@ -31,16 +30,15 @@ export interface BankState {
  * Where this user's bank stands, for a screen that says so.
  *
  * One read per screen, shared by that screen's banner and invitation, so
- * the Bearing does not ask the same three questions twice. Follows the data
- * version like every screen's own data does: a connection made or ended
- * anywhere in the app redraws what depends on it.
+ * the Bearing does not ask the same three questions twice. Reloads with the
+ * bank and the dismissed invitations, like every screen's own data does: a
+ * connection made or ended anywhere in the app redraws what depends on it.
  */
 export function useBankState(): {
   bank: BankState | null;
   reload: () => Promise<void>;
 } {
   const { user } = useAuth();
-  const dataVersion = useDataVersion();
   const { data, reload } = useRefreshable(async () => {
     if (!user) {
       return null;
@@ -58,7 +56,7 @@ export function useBankState(): {
       // never says "renew" on a morning the web says nothing.
       attention: bankAttention(connection, todayIsoLocal()),
     } satisfies BankState;
-  }, [user?.id, dataVersion]);
+  }, [user?.id], { reads: ["bank", "preferences"] });
 
   return { bank: data, reload };
 }

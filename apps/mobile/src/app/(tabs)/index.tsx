@@ -22,7 +22,6 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { gatherHomeMonth, gatherHomeRead } from "@/lib/home-data";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -55,14 +54,13 @@ export default function HomeScreen() {
   const locale = useLocale();
   const colors = useThemeColors();
   const bottom = useTabBarClearance();
-  const dataVersion = useDataVersion();
   // Shared with the Journal and its calendar, so changing tab keeps the month.
   const { year, month, setMonth } = useScreenMonth();
 
-  const { data, error, refreshing, onRefreshAll, reload } = useRefreshable(
+  const { data, error, refreshing, onRefreshAll } = useRefreshable(
     async () =>
       user ? await gatherHomeMonth(user.id, year, month, locale) : null,
-    [user?.id, year, month, locale, dataVersion],
+    [user?.id, year, month, locale],
   );
 
   // A month ahead has nothing to read yet: nothing has happened in it.
@@ -74,7 +72,7 @@ export default function HomeScreen() {
       user && readable
         ? await gatherHomeRead(user.id, year, month, locale)
         : null,
-    [user?.id, year, month, locale, readable, dataVersion],
+    [user?.id, year, month, locale, readable],
   );
 
   // Whether a bank can be connected here at all is the deployment's to say.
@@ -131,10 +129,6 @@ export default function HomeScreen() {
                 <ArrivedCharges
                   proposals={data.arrived.proposals}
                   misses={data.arrived.misses}
-                  onDecided={() => {
-                    notifyDataChanged();
-                    void reload();
-                  }}
                 />
               </View>
             ) : null}

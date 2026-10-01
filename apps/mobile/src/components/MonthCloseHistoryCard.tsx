@@ -29,7 +29,6 @@ interface MonthCloseHistoryCardProps {
   summary: CloseHistorySummary;
   unrecordedCap: number | null;
   closeDay: number;
-  onChanged: () => void;
 }
 
 const READING_DAYS = [1, 3, 5, 10, 15];
@@ -45,7 +44,6 @@ export function MonthCloseHistoryCard({
   summary,
   unrecordedCap,
   closeDay,
-  onChanged,
 }: MonthCloseHistoryCardProps) {
   const t = useT();
   const locale = useLocale();
@@ -73,7 +71,6 @@ export function MonthCloseHistoryCard({
     }
     setCapDraft(value === null ? "" : toTypedAmount(value, locale));
     toast(response.message ?? t("monthCloseHistory.saved"), "success");
-    onChanged();
   }
 
   async function saveCloseDay(day: number) {
@@ -85,7 +82,6 @@ export function MonthCloseHistoryCard({
       return;
     }
     toast(response.message ?? t("monthCloseHistory.saved"), "success");
-    onChanged();
   }
 
   return (

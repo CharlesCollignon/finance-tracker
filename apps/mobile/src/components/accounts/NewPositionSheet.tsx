@@ -23,12 +23,10 @@ import { useT } from "@/providers/LocaleProvider";
 export function NewPositionSheet({
   wallet,
   onClose,
-  onSaved,
 }: {
   /** The account it goes in; null keeps the sheet closed. */
   wallet: WalletId | null;
   onClose: () => void;
-  onSaved: () => void;
 }) {
   const t = useT();
   const [name, setName] = useState("");
@@ -67,7 +65,6 @@ export function NewPositionSheet({
       return;
     }
     void hapticSuccess();
-    onSaved();
     close();
   }
 

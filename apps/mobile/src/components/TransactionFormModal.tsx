@@ -29,8 +29,6 @@ import { monthLong } from "@finance/core/i18n/calendar-names";
 interface TransactionFormModalProps {
   open: boolean;
   onClose: () => void;
-  onSaved: () => void;
-  onDeleted?: () => void;
   categories: Category[];
   /** The transaction being edited. */
   transaction: TransactionWithCategory;
@@ -50,8 +48,6 @@ interface TransactionFormModalProps {
 export function TransactionFormModal({
   open,
   onClose,
-  onSaved,
-  onDeleted,
   categories,
   transaction,
   recentCategoryIds = [],
@@ -95,7 +91,6 @@ export function TransactionFormModal({
       setError(result.error);
       return;
     }
-    onSaved();
     onClose();
   }
 
@@ -112,7 +107,6 @@ export function TransactionFormModal({
       setError(result.error);
       return;
     }
-    onSaved();
     onClose();
   }
 
@@ -125,7 +119,6 @@ export function TransactionFormModal({
       setError(result.error);
       return;
     }
-    (onDeleted ?? onSaved)();
     onClose();
   }
 

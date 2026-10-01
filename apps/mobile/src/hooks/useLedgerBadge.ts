@@ -6,6 +6,9 @@ import { countFulfilmentProposals, countPendingFeedItems } from "@/lib/queries";
 import { useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 
+/** What the two counts are drawn from. */
+const BADGE_READS = ["transactions", "templates", "bank"] as const;
+
 /**
  * How many things are waiting behind the Ledger tab.
  *
@@ -22,15 +25,16 @@ import { useAuth } from "@/providers/AuthProvider";
  * month-scoped at all: it is a queue of decisions, and a coffee from the 29th
  * of last month still needs a category.
  *
- * Re-read on `useDataVersion`, which is what every screen already uses to
- * notice a write that happened somewhere else — so answering a question in
- * the inbox clears the badge without the bar knowing why.
+ * Re-read whenever the ledger, the charges or the bank's rows change, which
+ * is how every screen notices a write that happened somewhere else — so
+ * answering a question in the inbox clears the badge without the bar knowing
+ * why.
  */
 export function useLedgerBadge(): number {
   // The id rather than the user object, so the guard and the dependency list
   // name the same thing and the effect does not re-run on an identical user.
   const userId = useAuth().user?.id;
-  const dataVersion = useDataVersion();
+  const dataVersion = useDataVersion(BADGE_READS);
   const [count, setCount] = useState(0);
 
   useEffect(() => {

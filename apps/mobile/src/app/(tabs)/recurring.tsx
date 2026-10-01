@@ -36,7 +36,6 @@ import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -95,7 +94,6 @@ export default function RecurringScreen() {
     null,
   );
 
-  const dataVersion = useDataVersion();
   const { data, loading, refreshing, onRefreshAll, error } =
     useRefreshable(async () => {
       if (!user) {
@@ -113,7 +111,7 @@ export default function RecurringScreen() {
         getRecordedChargeDates(user.id),
       ]);
       return { templates, categories, recorded };
-    }, [user?.id, dataVersion]);
+    }, [user?.id], { reads: ["templates", "categories", "transactions"] });
 
   // Memoised so a render without new data keeps the same arrays, and the
   // memos and effects below do not re-run for nothing.
@@ -217,11 +215,7 @@ export default function RecurringScreen() {
     const result = await toggleRecurringActive(item.id, !item.active);
     if (result.error) {
       toast(result.error, "error");
-      return;
     }
-    // Every screen, not just this one: switching a charge on writes this
-    // month's rows, and off removes the ones still ahead.
-    notifyDataChanged();
   }
 
   const activeGroup = groups.find((group) => group.type === activeTab);
@@ -341,8 +335,6 @@ export default function RecurringScreen() {
         <RecurringFormModal
           open
           onClose={closeEditor}
-          // Every screen: a saved charge moves the ledger's rows with it.
-          onSaved={notifyDataChanged}
           categories={categories}
           template={editing}
           recordedThisMonth={data?.recorded.get(editing.id) ?? []}

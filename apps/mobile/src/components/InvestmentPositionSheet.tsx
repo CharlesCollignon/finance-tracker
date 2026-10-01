@@ -31,7 +31,6 @@ interface InvestmentPositionSheetProps {
    */
   item: InvestmentPositionItem;
   onClose: () => void;
-  onSaved: () => void;
 }
 
 
@@ -53,7 +52,6 @@ function parseShareCount(value: string): number | null {
 export function InvestmentPositionSheet({
   item,
   onClose,
-  onSaved,
 }: InvestmentPositionSheetProps) {
   const t = useT();
   const locale = useLocale();
@@ -97,7 +95,6 @@ export function InvestmentPositionSheet({
       setError(result.error);
       return;
     }
-    onSaved();
     onClose();
   }
 
@@ -110,7 +107,6 @@ export function InvestmentPositionSheet({
       setError(result.error);
       return;
     }
-    onSaved();
     onClose();
   }
 

@@ -14,7 +14,6 @@ import {
   importAccountHistory,
   listImportAccounts,
 } from "@/lib/bank-connect";
-import { notifyDataChanged } from "@/lib/data-version";
 import { hapticSuccess } from "@/lib/haptics";
 import { reviewAsk } from "@/lib/review-ask";
 import { useT } from "@/providers/LocaleProvider";
@@ -37,7 +36,7 @@ type AccountState =
  * open-banking.io account with no bank connected yet — waits rather than
  * finishing, for the reason the web's walk gives.
  */
-export function BankImport({ onFinished }: { onFinished: () => void }) {
+export function BankImport() {
   const t = useT();
   const router = useRouter();
   const colors = useThemeColors();
@@ -104,11 +103,10 @@ export function BankImport({ onFinished }: { onFinished: () => void }) {
       await finishBankImport();
       void hapticSuccess();
       setDone(true);
-      // Every screen's figures just changed under it.
-      notifyDataChanged();
-      onFinished();
     }
-  }, [onFinished]);
+    // Every account that came in announced itself as it landed, so every
+    // screen's figures follow — those of a walk that stopped half-way too.
+  }, []);
 
   useEffect(() => {
     if (started.current) {

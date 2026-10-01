@@ -33,8 +33,6 @@ interface ArrivedChargesProps {
    * at all. This is the only place that absence is visible.
    */
   misses?: FulfilmentMiss[];
-  /** Called after a decision sticks, so the screen can reload its figures. */
-  onDecided: () => void;
 }
 
 /**
@@ -55,7 +53,6 @@ interface ArrivedChargesProps {
 export function ArrivedCharges({
   proposals,
   misses = [],
-  onDecided,
 }: ArrivedChargesProps) {
   const t = useT();
   const locale = useLocale();
@@ -80,7 +77,6 @@ export function ArrivedCharges({
       return kept.length === current.size ? current : new Set(kept);
     });
   }
-
 
   const waiting = proposals.filter((proposal) => !answered.has(proposal.key));
 
@@ -125,7 +121,6 @@ export function ArrivedCharges({
         void hapticSuccess();
       }
       toast(result.message ?? t("fulfilment.done"), "success");
-      onDecided();
     })();
   }
 
@@ -177,7 +172,6 @@ export function ArrivedCharges({
       if (confirmed > 0) {
         void hapticSuccess();
         toast(t("fulfilment.allConfirmed", { count: confirmed }), "success");
-        onDecided();
       }
     })();
   }

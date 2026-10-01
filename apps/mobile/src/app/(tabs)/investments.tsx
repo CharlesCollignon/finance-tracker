@@ -36,7 +36,6 @@ import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
-import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { hapticSuccess } from "@/lib/haptics";
 import { getPlacementsData, keptAccounts } from "@/lib/placements-data";
 import { linkableBankAccounts, removeWallet } from "@/lib/savings-accounts";
@@ -77,15 +76,14 @@ export default function InvestmentsScreen() {
   const [editingPosition, setEditingPosition] =
     useState<InvestmentPositionItem | null>(null);
 
-  const dataVersion = useDataVersion();
-  const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
+  const { data, loading, refreshing, onRefreshAll, error } =
     useRefreshable(
       async () =>
         user
           ? // History powers the per-position charts.
             getPlacementsData(user.id, locale, { includeHistory: true })
           : null,
-      [user?.id, locale, dataVersion],
+      [user?.id, locale],
     );
 
   const portfolio = data?.portfolio;
@@ -143,11 +141,6 @@ export default function InvestmentsScreen() {
     { value: ADD as AccountKey | typeof ADD, label: `+ ${t("accounts.add")}` },
   ];
 
-  function changed() {
-    notifyDataChanged();
-    void onRefresh();
-  }
-
   async function confirmRemoveWallet() {
     if (!removingWallet) {
       return;
@@ -164,7 +157,6 @@ export default function InvestmentsScreen() {
     void hapticSuccess();
     toast(t("accounts.removed", { name: t(ENVELOPE_SHORT_KEYS[wallet]) }));
     setChosen(null);
-    changed();
   }
 
   return (
@@ -321,7 +313,6 @@ export default function InvestmentsScreen() {
                 savings,
                 activeSavings.account.bank_account_id ?? undefined,
               )}
-              onChanged={changed}
             />
           ) : null}
 
@@ -382,7 +373,6 @@ export default function InvestmentsScreen() {
                   ?.totalInvested ?? 0
               }
               plan={data.plans.find((plan) => plan.wallet === "pea")}
-              onSaved={onRefresh}
             />
           ) : null}
 
@@ -401,13 +391,11 @@ export default function InvestmentsScreen() {
           key={editingPosition.id}
           item={editingPosition}
           onClose={() => setEditingPosition(null)}
-          onSaved={onRefresh}
         />
       ) : null}
       <NewPositionSheet
         wallet={newPositionIn}
         onClose={() => setNewPositionIn(null)}
-        onSaved={changed}
       />
       <AddAccountSheet
         open={adding}
@@ -415,10 +403,7 @@ export default function InvestmentsScreen() {
         takenWallets={wallets}
         bankAccounts={linkableBankAccounts(savings)}
         onClose={() => setAdding(false)}
-        onAdded={(key) => {
-          setChosen(key);
-          changed();
-        }}
+        onAdded={setChosen}
       />
       <ConfirmSheet
         open={removingWallet !== null}

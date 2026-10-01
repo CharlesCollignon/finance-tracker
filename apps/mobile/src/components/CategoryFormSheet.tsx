@@ -22,7 +22,6 @@ interface CategoryFormSheetProps {
   open: boolean;
   category: Category | null;
   onClose: () => void;
-  onSaved: () => void;
 }
 
 const TYPES: CategoryType[] = ["income", "expense", "savings", "investment"];
@@ -69,7 +68,6 @@ export function CategoryFormSheet({
   open,
   category,
   onClose,
-  onSaved,
 }: CategoryFormSheetProps) {
   const t = useT();
   const locale = useLocale();
@@ -102,7 +100,6 @@ export function CategoryFormSheet({
       isEditing ? t("categories.updated") : t("categories.added"),
       "success",
     );
-    onSaved();
     onClose();
   }
 

@@ -86,7 +86,7 @@ export default function OnboardingScreen() {
       return { categories: [] as Category[] };
     }
     return { categories: await getCategories(user.id) };
-  }, [user?.id]);
+  }, [user?.id], { reads: ["categories"] });
 
   const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
   const groups = useMemo(

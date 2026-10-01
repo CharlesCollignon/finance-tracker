@@ -4,7 +4,6 @@ import { AppState } from "react-native";
 import { getCurrentMonth } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 
-import { notifyDataChanged } from "@/lib/data-version";
 import { fillThisMonth } from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
 import { useT } from "@/providers/LocaleProvider";
@@ -64,9 +63,8 @@ export function useMonthFill(): void {
             "error",
           );
         } else if (result.created > 0) {
-          // Every screen, not just the one on top: the new rows move the
-          // Bearing, the Ledger and the Calendar alike.
-          notifyDataChanged();
+          // The rows announced themselves on the way in, so every screen —
+          // the Bearing, the Ledger, the Calendar — has them already.
           notify.current(
             translate.current("monthFill.added", { count: result.created }),
             "success",

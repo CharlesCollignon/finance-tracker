@@ -67,7 +67,6 @@ import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQuickAdd } from "@/providers/QuickAddProvider";
 import { useScreenMonth } from "@/providers/MonthProvider";
@@ -186,12 +185,11 @@ export default function TransactionsScreen() {
     setAskedAt(params.at);
     setInboxChoice(null);
   }
-  const dataVersion = useDataVersion();
   const [selectMode, setSelectMode] = useState(false);
   const [storedSelection, setSelected] =
     useState<ReadonlySet<string>>(EMPTY_SELECTION);
   const [deletePending, setDeletePending] = useState(false);
-  const { data, loading, refreshing, onRefresh, onRefreshAll, reload, error } =
+  const { data, loading, refreshing, onRefreshAll, error } =
     useRefreshable(async () => {
       if (!user) {
         return {
@@ -250,7 +248,9 @@ export default function TransactionsScreen() {
         fulfilled,
         proposals,
       };
-    }, [user?.id, year, month, dataVersion]);
+    }, [user?.id, year, month], {
+      reads: ["transactions", "templates", "categories", "bank"],
+    });
 
   // Memoised because every derived memo below depends on it; a fresh array
   // each render would recompute the whole screen's derivations.
@@ -510,10 +510,8 @@ export default function TransactionsScreen() {
     }
 
     void hapticSuccess();
-    notifyDataChanged();
     toast(t("ledger.deleted", { count: result.deleted ?? 0 }), "success");
     leaveSelectMode();
-    void onRefresh();
   }
 
   function planMove(categoryId: string) {
@@ -539,13 +537,11 @@ export default function TransactionsScreen() {
     }
 
     void hapticSuccess();
-    notifyDataChanged();
     const name =
       categories.find((category) => category.id === categoryId)?.name ??
       t("ledger.theNewCategory");
     toast(t("ledger.moved", { count: result.moved ?? 0, name }), "success");
     leaveSelectMode();
-    void onRefresh();
   }
 
   async function handleDuplicate() {
@@ -568,7 +564,6 @@ export default function TransactionsScreen() {
       t("ledger.addedForToday", { name: source.categories.name }),
       "success",
     );
-    await reload();
   }
 
   async function handleRestore(entry: SkippedOccurrence) {
@@ -585,7 +580,6 @@ export default function TransactionsScreen() {
       t("ledger.restored", { name: entry.name || t("ledger.recurringEntry") }),
       "success",
     );
-    notifyDataChanged();
   }
 
   // Today while reading this month; the month's first day while reading
@@ -1114,9 +1108,7 @@ export default function TransactionsScreen() {
       {editing ? (
         <TransactionFormModal
           open
-          onDeleted={reload}
           onClose={() => setEditing(null)}
-          onSaved={reload}
           categories={categories}
           transaction={editing}
           recentCategoryIds={recentCategoryIds}
@@ -1153,10 +1145,6 @@ export default function TransactionsScreen() {
       <PlannedOccurrenceSheet
         occurrence={openPlanned}
         onClose={() => setOpenPlanned(null)}
-        onChanged={() => {
-          notifyDataChanged();
-          void reload();
-        }}
       />
 
       <BankInboxSheet
@@ -1165,12 +1153,6 @@ export default function TransactionsScreen() {
         items={inbox}
         categories={categories}
         recentCategoryIds={recentCategoryIds}
-        onDecided={() => {
-          // Every surface, not just this one: a categorised entry moves the
-          // month's totals, the statement card and the tab bar's dot.
-          notifyDataChanged();
-          void reload();
-        }}
       />
     </Screen>
   );
