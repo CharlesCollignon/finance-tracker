@@ -396,11 +396,14 @@ export default function InvestmentsScreen() {
         </ScrollView>
       )}
 
-      <InvestmentPositionSheet
-        item={editingPosition}
-        onClose={() => setEditingPosition(null)}
-        onSaved={onRefresh}
-      />
+      {editingPosition ? (
+        <InvestmentPositionSheet
+          key={editingPosition.id}
+          item={editingPosition}
+          onClose={() => setEditingPosition(null)}
+          onSaved={onRefresh}
+        />
+      ) : null}
       <NewPositionSheet
         wallet={newPositionIn}
         onClose={() => setNewPositionIn(null)}

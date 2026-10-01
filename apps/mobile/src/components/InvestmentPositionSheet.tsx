@@ -3,6 +3,7 @@ import { Linking, Modal, Pressable, ScrollView, View } from "react-native";
 
 import type { InvestmentPositionItem } from "@finance/core/investment-positions";
 import { isCryptoWallet } from "@finance/core/crypto-holdings";
+import { parseTypedAmount } from "@finance/core/amount-input";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -13,7 +14,8 @@ import {
 } from "@finance/core/fund-costs";
 import { Text } from "@/components/ui/Text";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
-import { useT } from "@/providers/LocaleProvider";
+import { toTypedAmount } from "@/lib/typed-amount";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
 import {
   removeInvestmentPosition,
@@ -21,13 +23,25 @@ import {
 } from "@/lib/mutations";
 
 interface InvestmentPositionSheetProps {
-  item: InvestmentPositionItem | null;
+  /**
+   * The position being edited. Mount the sheet only while there is one, and
+   * keyed by its id: the fields are seeded from it once, and a sheet that
+   * stayed mounted while closed seeded them from nothing — so opening a
+   * position showed empty fields, and Save wrote 0 as what was put in.
+   */
+  item: InvestmentPositionItem;
   onClose: () => void;
   onSaved: () => void;
 }
 
-function toNumberOrNull(value: string): number | null {
-  const trimmed = value.trim();
+
+/**
+ * A share count, which is not money: "0,005" bitcoin is five thousandths,
+ * where `parseTypedAmount` would read three digits after a separator as a
+ * thousands group. So the comma is only ever a decimal point here.
+ */
+function parseShareCount(value: string): number | null {
+  const trimmed = value.replace(/\s/g, "");
   if (!trimmed) {
     return null;
   }
@@ -42,43 +56,40 @@ export function InvestmentPositionSheet({
   onSaved,
 }: InvestmentPositionSheetProps) {
   const t = useT();
-  const [initialBalance, setInitialBalance] = useState(
-    item ? String(item.initialBalance) : "",
+  const locale = useLocale();
+  // In the reader's own shape — "1500,5" in French — so `parseTypedAmount`
+  // reads back exactly what was put in.
+  const [initialBalance, setInitialBalance] = useState(() =>
+    toTypedAmount(item.initialBalance, locale),
   );
-  const [currentValue, setCurrentValue] = useState(
-    item?.currentValue != null ? String(item.currentValue) : "",
+  const [currentValue, setCurrentValue] = useState(() =>
+    item.currentValue != null ? toTypedAmount(item.currentValue, locale) : "",
   );
   const [shareCount, setShareCount] = useState(
-    item?.shareCount != null ? String(item.shareCount) : "",
+    item.shareCount != null ? String(item.shareCount) : "",
   );
   const [ongoingCharge, setOngoingCharge] = useState(
-    chargeToInput(item?.ongoingCharge ?? null),
+    chargeToInput(item.ongoingCharge ?? null),
   );
   const lookupUrl = chargeLookupUrl(
-    item?.instrumentSymbol ?? null,
-    item?.instrumentName ?? null,
+    item.instrumentSymbol ?? null,
+    item.instrumentName ?? null,
   );
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  if (!item) {
-    return null;
-  }
-
   const isCrypto = isCryptoWallet(item.walletId);
 
   async function handleSave() {
-    if (!item) {
-      return;
-    }
     setPending(true);
     setError(null);
     const result = await saveInvestmentPosition({
       positionId: item.id,
-      initialBalance: Number(initialBalance.replace(",", ".")) || 0,
-      currentValue: toNumberOrNull(currentValue),
-      shareCount: toNumberOrNull(shareCount),
+      // « 1 234,56 » as well as "1234.56". Empty is nothing put in yet.
+      initialBalance: parseTypedAmount(initialBalance) ?? 0,
+      currentValue: parseTypedAmount(currentValue),
+      shareCount: parseShareCount(shareCount),
       ongoingCharge: parseChargeInput(ongoingCharge),
     });
     setPending(false);
@@ -91,9 +102,6 @@ export function InvestmentPositionSheet({
   }
 
   async function handleDelete() {
-    if (!item) {
-      return;
-    }
     setPending(true);
     setError(null);
     const result = await removeInvestmentPosition(item.id);
