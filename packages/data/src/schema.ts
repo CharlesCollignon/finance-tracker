@@ -16,3 +16,14 @@ export function isMissingSchema(error: { code?: string } | null): boolean {
     error?.code === "42703"
   );
 }
+
+/**
+ * The same, or a database function that is not there yet — the
+ * migration-not-run case for an RPC, which Postgres reports as "no such
+ * function" (42883) rather than as a missing table.
+ */
+export function isMissingSchemaOrFunction(
+  error: { code?: string } | null,
+): boolean {
+  return isMissingSchema(error) || error?.code === "42883";
+}

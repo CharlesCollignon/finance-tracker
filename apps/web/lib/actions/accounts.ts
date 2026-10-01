@@ -11,7 +11,7 @@ import type { SavingsAccountKind } from "@finance/core/types/database";
 import { walletIdSchema } from "@finance/core/validations/investments";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getT } from "@/lib/locale";
-import { savingsSchemaMissing } from "@/lib/queries/savings-accounts";
+import { isMissingSchema } from "@finance/data/schema";
 import { revalidateApp } from "@/lib/revalidate-paths";
 import { createClient } from "@/lib/supabase/server";
 
@@ -57,7 +57,7 @@ function ownRate(kind: SavingsAccountKind, rate: number | null | undefined) {
 }
 
 function failure(error: { code?: string; message: string }): ActionResult {
-  return { error: savingsSchemaMissing(error) ? SETUP : error.message };
+  return { error: isMissingSchema(error) ? SETUP : error.message };
 }
 
 /** The savings category an account is fed by: its own name, made if missing. */

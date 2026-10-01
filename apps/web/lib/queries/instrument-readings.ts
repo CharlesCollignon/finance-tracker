@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { isMissingSchema } from "@finance/data/schema";
 import {
   ASSET_KINDS,
   type AssetKind,
@@ -13,22 +14,6 @@ import type {
 import { createClient } from "@/lib/supabase/server";
 
 type Client = SupabaseClient<Database>;
-
-/**
- * What this person's instruments are made of.
- *
- * Tolerant of migration 032 not having run: an empty map is a portfolio
- * nothing is known about, which the look-through already renders honestly as
- * an unclassified share. A surface whose whole job is to say what it cannot
- * see must not fall over when the answer is "all of it".
- */
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703"
-  );
-}
 
 function isAssetKind(value: string | null): value is AssetKind {
   return value !== null && (ASSET_KINDS as readonly string[]).includes(value);

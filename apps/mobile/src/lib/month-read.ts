@@ -1,3 +1,4 @@
+import { isMissingSchema } from "@finance/data/schema";
 import { monthColumnValue } from "@finance/core/month-close";
 import {
   describeReadFreshness,
@@ -100,15 +101,6 @@ export interface MonthReadView {
   /** The language the prose is in, which may not be the reader's. */
   locale: Locale;
   freshness: ReadFreshness;
-}
-
-/** Whether an error means migration 024 has not run. */
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703"
-  );
 }
 
 export interface StoredMonthRead {

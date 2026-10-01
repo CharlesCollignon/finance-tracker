@@ -1,3 +1,4 @@
+import { isMissingSchema } from "@finance/data/schema";
 import {
   explainFulfilmentMisses,
   fulfilmentOccurrences,
@@ -35,21 +36,6 @@ type Client = SupabaseClient<Database>;
  * as an occurrence this month, what counts as a movement that could fulfil
  * one, and what the user has already decided.
  */
-
-/**
- * Whether an error means "this feature's schema is not here yet".
- *
- * Same three codes as the other optional features. Before migration 023 the
- * tables do not exist, and a screen people use every day must not fall over
- * because an enhancement's migration has not been run.
- */
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703"
-  );
-}
 
 /** Occurrences already fulfilled, as occurrence keys. */
 export async function getFulfilledKeys(

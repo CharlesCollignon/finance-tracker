@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { isMissingSchema } from "@finance/data/schema";
 import { cashDateOf } from "@finance/core/cash-date";
 import {
   SAVINGS_KINDS,
@@ -49,15 +50,6 @@ export interface SavingsAccountsRead {
   available: boolean;
 }
 
-/** Whether an error means migration 046 has not run. */
-export function savingsSchemaMissing(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703"
-  );
-}
-
 /**
  * The earliest day a movement could still count, given the balances' dates.
  * A row's money can move up to a fortnight before the day it counts for (an
@@ -88,7 +80,7 @@ export const getSavingsAccounts = cache(
     ]);
 
     if (error) {
-      if (savingsSchemaMissing(error)) {
+      if (isMissingSchema(error)) {
         return { accounts: [], linkable: [], available: false };
       }
       throw error;

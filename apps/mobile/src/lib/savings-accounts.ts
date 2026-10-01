@@ -1,3 +1,4 @@
+import { isMissingSchema } from "@finance/data/schema";
 import { cashDateOf } from "@finance/core/cash-date";
 import { shiftIsoDate, todayIsoLocal } from "@finance/core/constants";
 import {
@@ -32,15 +33,6 @@ import { supabase } from "@/lib/supabase";
  */
 
 type ActionResult = { error?: string; success?: boolean };
-
-/** The table only exists once 046 has run; until then there is none. */
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703"
-  );
-}
 
 async function requireUserId(): Promise<string | null> {
   const {

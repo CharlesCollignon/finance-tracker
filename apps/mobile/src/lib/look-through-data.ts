@@ -1,3 +1,4 @@
+import { isMissingSchema } from "@finance/data/schema";
 import {
   INVESTMENT_WALLET_IDS,
   type InvestmentWalletId,
@@ -59,14 +60,6 @@ import { announcingFetch } from "@/lib/data-version";
  * Tolerant of migrations 032 and 033 not having run, as the web is: a missing
  * table is a portfolio nothing is known about, and the surface says so.
  */
-
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703"
-  );
-}
 
 function isAssetKind(value: string | null): value is AssetKind {
   return value !== null && (ASSET_KINDS as readonly string[]).includes(value);

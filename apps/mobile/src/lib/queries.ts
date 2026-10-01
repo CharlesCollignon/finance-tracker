@@ -1,4 +1,5 @@
 import { hasBankFeed as bankFeeds } from "@finance/data/bank-feed";
+import { isMissingSchema } from "@finance/data/schema";
 import {
   formatMonthLabel,
   getCurrentMonth,
@@ -825,22 +826,6 @@ export async function getRecordedCashFlows(
 }
 
 /* --------------------------------------------------------- the bank feed */
-
-/**
- * Whether an error means "this feature's schema is not here yet".
- *
- * PGRST205 is PostgREST's missing table, 42P01 is Postgres', and 42703 a
- * missing column. Every other error still throws: swallowing them all would
- * turn a permissions mistake into a screen that quietly shows nothing, which
- * is how a wrong balance gets believed.
- */
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703"
-  );
-}
 
 /** Every account the connection has ever shown, ticked or not. */
 export async function getBankAccounts(userId: string): Promise<BankAccount[]> {

@@ -1,3 +1,4 @@
+import { isMissingSchema } from "@finance/data/schema";
 import {
   authSchema,
   categorySchema,
@@ -1559,15 +1560,6 @@ export async function updateCloseDay(closeDay: number): Promise<ActionResult> {
  * holds no service-role key with which to reach past it.
  */
 
-/** Whether an error means migration 023 has not run. */
-function fulfilmentSchemaMissing(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703"
-  );
-}
-
 const FULFILMENT_SETUP_MESSAGE = "actions.fulfilmentSetup";
 
 /** Yes: that movement is the occurrence this template called for. */
@@ -1612,7 +1604,7 @@ export async function fulfilOccurrence(
   );
 
   if (error) {
-    if (fulfilmentSchemaMissing(error)) {
+    if (isMissingSchema(error)) {
       return { error: FULFILMENT_SETUP_MESSAGE };
     }
     // The unique index on transaction_id is the one worth translating: it
@@ -1654,7 +1646,7 @@ export async function fulfilOccurrence(
       .eq("user_id", userId);
     if (moveError) {
       return {
-        error: fulfilmentSchemaMissing(moveError)
+        error: isMissingSchema(moveError)
           ? "actions.cashDateSetup"
           : moveError.message,
       };
@@ -1701,7 +1693,7 @@ export async function moveBackEarlyIncome(
     .delete()
     .eq("user_id", userId)
     .eq("transaction_id", transactionId);
-  if (unlinkError && !fulfilmentSchemaMissing(unlinkError)) {
+  if (unlinkError && !isMissingSchema(unlinkError)) {
     return { error: unlinkError.message };
   }
 
@@ -1747,7 +1739,7 @@ export async function refuseFulfilment(
   );
 
   if (error) {
-    if (fulfilmentSchemaMissing(error)) {
+    if (isMissingSchema(error)) {
       return { error: FULFILMENT_SETUP_MESSAGE };
     }
     return { error: error.message };
@@ -1785,7 +1777,7 @@ export async function undoFulfilment(
     .eq("occurred_on", occurredOn);
 
   if (error) {
-    if (fulfilmentSchemaMissing(error)) {
+    if (isMissingSchema(error)) {
       return { error: FULFILMENT_SETUP_MESSAGE };
     }
     return { error: error.message };

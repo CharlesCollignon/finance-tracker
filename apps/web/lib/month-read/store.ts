@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isMissingSchemaOrFunction } from "@finance/data/schema";
 import {
   MONTH_READ_COOLDOWN_SECONDS,
   MONTH_READ_RESERVATION_SECONDS,
@@ -32,16 +33,6 @@ type Client = SupabaseClient<Database>;
  * `tracked: false` here *stops the writer being asked at all* — a call that
  * cannot be counted is a call that is not capped.
  */
-
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703" ||
-    // No such function: the migration-not-run case for an RPC.
-    error?.code === "42883"
-  );
-}
 
 export interface StoredMonthRead {
   read: MonthRead | null;
@@ -101,7 +92,7 @@ export async function readMonthReadState(
     .maybeSingle();
 
   if (error) {
-    if (isMissingSchema(error)) {
+    if (isMissingSchemaOrFunction(error)) {
       return { stored: null, tracked: false };
     }
     throw error;
@@ -137,7 +128,7 @@ export async function reserveWrite(
   });
 
   if (error) {
-    if (isMissingSchema(error)) {
+    if (isMissingSchemaOrFunction(error)) {
       return null;
     }
     throw error;
@@ -179,7 +170,7 @@ export async function storeWrite(
     new_locale: payload.locale,
   });
 
-  if (error && !isMissingSchema(error)) {
+  if (error && !isMissingSchemaOrFunction(error)) {
     throw error;
   }
 }
