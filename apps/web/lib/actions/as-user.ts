@@ -18,13 +18,22 @@ import { createClient } from "@/lib/supabase/server";
  */
 export async function asUser<T extends object>(
   work: (db: Db, userId: string) => Promise<ActionResult<T>>,
+  options: {
+    /**
+     * Redraw even when the write reports an error: for the few that can
+     * fail halfway, after something has already changed — a confirmation
+     * recorded whose row could not then be moved, an undo whose row went
+     * but whose skip stayed.
+     */
+    redraw?: "on-success" | "always";
+  } = {},
 ): Promise<ActionResult<T>> {
   const user = await getAuthUser();
   if (!user) {
     return { error: "errors.notAuthenticated" } as ActionResult<T>;
   }
   const result = await work(await createClient(), user.id);
-  if (result.success) {
+  if (result.success || options.redraw === "always") {
     revalidateApp();
   }
   return result;

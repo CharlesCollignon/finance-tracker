@@ -8,6 +8,7 @@
     "./categories": "./src/categories.ts",
     "./client": "./src/client.ts",
     "./fulfilment": "./src/fulfilment.ts",
+    "./fulfilment-decisions": "./src/fulfilment-decisions.ts",
     "./ledger": "./src/ledger.ts",
     "./occurrences": "./src/occurrences.ts",
     "./quote-source": "./src/quote-source.ts",

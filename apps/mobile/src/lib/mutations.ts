@@ -1,4 +1,3 @@
-import { isMissingSchema } from "@finance/data/schema";
 import {
   authSchema,
   recurringTemplateSchema,
@@ -12,14 +11,7 @@ import {
   walletTargetsSchema,
 } from "@finance/core/validations/investments";
 import { isSavingsAccountId, type AccountId } from "@finance/core/allocation";
-import {
-  todayIsoLocal,
-  formatLongDate,
-  formatShortDate,
-} from "@finance/core/constants";
-import { cashDateOf } from "@finance/core/cash-date";
-import { monthLong } from "@finance/core/i18n/calendar-names";
-import { countsForMonthOf } from "@finance/core/recurring-fulfilment";
+import { todayIsoLocal, formatLongDate } from "@finance/core/constants";
 import {
   monthColumnValue,
   observationDateFor,
@@ -43,6 +35,7 @@ import type {
 
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import * as categories from "@finance/data/categories";
+import * as decisions from "@finance/data/fulfilment-decisions";
 import * as ledger from "@finance/data/ledger";
 import * as occurrences from "@finance/data/occurrences";
 import type { ActionResult } from "@finance/core/action-result";
@@ -745,172 +738,38 @@ export async function updateCloseDay(closeDay: number): Promise<ActionResult> {
 /* ------------------------------------------ charges the bank already paid */
 
 /**
- * Confirming, refusing and undoing a fulfilment.
- *
- * Nothing here ever runs on its own. An earlier version of this app matched
- * bank rows to recurring templates automatically, on amount and a five-day
- * window, and had to grow a recovery action for the ones it swallowed — so
- * every one of these is the direct result of a press, and the undo is a
- * first-class action rather than an afterthought.
- *
- * The web twin validates the template and the transaction belong to the
- * caller before writing. Here that check is the database's: row level
- * security scopes every one of these tables to `auth.uid()`, and the phone
- * holds no service-role key with which to reach past it.
+ * Confirming, refusing and undoing a fulfilment —
+ * `@finance/data/fulfilment-decisions`, the same writes as the web's.
+ * Nothing here runs on its own: every one is the direct result of a press.
  */
-
-const FULFILMENT_SETUP_MESSAGE = "actions.fulfilmentSetup";
 
 /** Yes: that movement is the occurrence this template called for. */
 export async function fulfilOccurrence(
   templateId: string,
   occurredOn: string,
   transactionId: string,
-  /** The reader's, for the message that names the month it now counts for. */
   locale: Locale,
 ): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const [{ data: template }, { data: transaction }] = await Promise.all([
-    supabase
-      .from("recurring_templates")
-      .select("id")
-      .eq("id", templateId)
-      .eq("user_id", userId)
-      .maybeSingle(),
-    supabase
-      .from("transactions")
-      .select("*")
-      .eq("id", transactionId)
-      .eq("user_id", userId)
-      .maybeSingle(),
-  ]);
-  if (!template || !transaction) {
-    return { error: "actions.recurringGone" };
-  }
-
-  const { error } = await supabase.from("recurring_fulfilments").upsert(
-    {
-      user_id: userId,
-      template_id: templateId,
-      occurred_on: occurredOn,
-      transaction_id: transactionId,
-    },
-    { onConflict: "user_id,template_id,occurred_on" },
+  return asUser((userId) =>
+    decisions.fulfilOccurrence(
+      supabase,
+      userId,
+      templateId,
+      occurredOn,
+      transactionId,
+      locale,
+    ),
   );
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return { error: FULFILMENT_SETUP_MESSAGE };
-    }
-    // The unique index on transaction_id is the one worth translating: it
-    // means this movement is already standing in for a different occurrence.
-    if (error.code === "23505") {
-      return {
-        error: "actions.movementTaken",
-      };
-    }
-    return { error: error.message };
-  }
-
-  // The month fills itself from its charges, so this occurrence may already
-  // have a row the template wrote. The movement just confirmed is the real
-  // one; the template's row would count the same rent twice.
-  const { error: duplicateError } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("user_id", userId)
-    .eq("recurring_template_id", templateId)
-    .eq("occurred_on", occurredOn);
-
-  if (duplicateError) {
-    return { error: duplicateError.message };
-  }
-
-  // A planned item counts in the month it was planned for, as on the web
-  // (`fulfilOccurrence` there): a payment whose money moved in another month,
-  // early or late, moves to the occurrence's day and keeps the day its money
-  // moved as `cash_on`.
-  const movedOn = cashDateOf(transaction);
-  const countsFor = countsForMonthOf({ occurredOn }, movedOn);
-
-  if (countsFor) {
-    const { error: moveError } = await supabase
-      .from("transactions")
-      .update({ occurred_on: occurredOn, cash_on: movedOn })
-      .eq("id", transactionId)
-      .eq("user_id", userId);
-    if (moveError) {
-      return {
-        error: isMissingSchema(moveError)
-          ? "actions.cashDateSetup"
-          : moveError.message,
-      };
-    }
-    // Composed here, in the reader's language, because it names a month
-    // and a toast can only translate a bare key.
-    return {
-      success: true,
-      message: translator(locale)("actions.countedForMonth", {
-        month: monthLong(Number(countsFor.slice(5, 7)), locale),
-      }),
-    };
-  }
-
-  return { success: true, message: "actions.counted" };
 }
 
-/**
- * Put an income counted for next month back on the day its money arrived,
- * and undo the confirmation that moved it — the web's `moveBackEarlyIncome`.
- */
+/** Put an income counted for next month back on the day it arrived. */
 export async function moveBackEarlyIncome(
   transactionId: string,
-  /** The reader's, for the message that names the day it went back to. */
   locale: Locale,
 ): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const { data: transaction } = await supabase
-    .from("transactions")
-    .select("*")
-    .eq("id", transactionId)
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (!transaction?.cash_on) {
-    return { error: "actions.transactionNotFound" };
-  }
-
-  const { error: unlinkError } = await supabase
-    .from("recurring_fulfilments")
-    .delete()
-    .eq("user_id", userId)
-    .eq("transaction_id", transactionId);
-  if (unlinkError && !isMissingSchema(unlinkError)) {
-    return { error: unlinkError.message };
-  }
-
-  const { error } = await supabase
-    .from("transactions")
-    .update({ occurred_on: transaction.cash_on, cash_on: null })
-    .eq("id", transactionId)
-    .eq("user_id", userId);
-  if (error) {
-    return { error: error.message };
-  }
-
-  return {
-    success: true,
-    message: translator(locale)("actions.movedBack", {
-      date: formatShortDate(transaction.cash_on, locale),
-    }),
-  };
+  return asUser((userId) =>
+    decisions.moveBackEarlyIncome(supabase, userId, transactionId, locale),
+  );
 }
 
 /** No: that is not what this charge was. */
@@ -919,86 +778,15 @@ export async function refuseFulfilment(
   occurredOn: string,
   transactionId: string,
 ): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const { error } = await supabase.from("recurring_fulfilment_refusals").upsert(
-    {
-      user_id: userId,
-      template_id: templateId,
-      occurred_on: occurredOn,
-      transaction_id: transactionId,
-    },
-    {
-      onConflict: "user_id,template_id,occurred_on,transaction_id",
-      ignoreDuplicates: true,
-    },
+  return asUser((userId) =>
+    decisions.refuseFulfilment(
+      supabase,
+      userId,
+      templateId,
+      occurredOn,
+      transactionId,
+    ),
   );
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return { error: FULFILMENT_SETUP_MESSAGE };
-    }
-    return { error: error.message };
-  }
-
-  // Deliberately says what it will and will not do. The refusal names the
-  // pair, so a better candidate for the same occurrence is still offered.
-  return { success: true, message: "actions.pairingDismissed" };
-}
-
-/** Take a confirmation back, and put the occurrence back in the forecast. */
-export async function undoFulfilment(
-  templateId: string,
-  occurredOn: string,
-): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  // The row this confirmation moved, if it moved one, goes back too.
-  const { data: fulfilment } = await supabase
-    .from("recurring_fulfilments")
-    .select("transaction_id")
-    .eq("user_id", userId)
-    .eq("template_id", templateId)
-    .eq("occurred_on", occurredOn)
-    .maybeSingle();
-
-  const { error } = await supabase
-    .from("recurring_fulfilments")
-    .delete()
-    .eq("user_id", userId)
-    .eq("template_id", templateId)
-    .eq("occurred_on", occurredOn);
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return { error: FULFILMENT_SETUP_MESSAGE };
-    }
-    return { error: error.message };
-  }
-
-  if (fulfilment?.transaction_id) {
-    const { data: moved } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("id", fulfilment.transaction_id)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (moved?.cash_on && moved.occurred_on === occurredOn) {
-      await supabase
-        .from("transactions")
-        .update({ occurred_on: moved.cash_on, cash_on: null })
-        .eq("id", moved.id)
-        .eq("user_id", userId);
-    }
-  }
-
-  return { success: true, message: "actions.backInForecast" };
 }
 
 /* ---------------------------------------------------- the review inbox */
