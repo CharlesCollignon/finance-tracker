@@ -1,3 +1,4 @@
+import { hasBankFeed as bankFeeds } from "@finance/data/bank-feed";
 import {
   formatMonthLabel,
   getCurrentMonth,
@@ -1488,16 +1489,11 @@ export async function countPendingFeedItems(userId: string): Promise<number> {
 }
 
 /**
- * Whether this user's ledger is fed by a bank. See the web twin for why this
- * is a fact about the data rather than about configuration.
+ * Whether this user's ledger is fed by a bank — `@finance/data/bank-feed`,
+ * with the phone's client.
  */
-export async function hasBankFeed(userId: string): Promise<boolean> {
-  const { count } = await supabase
-    .from("bank_feed_items")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
-
-  return (count ?? 0) > 0;
+export function hasBankFeed(userId: string): Promise<boolean> {
+  return bankFeeds(supabase, userId);
 }
 
 /** How many bank rows an earlier sync merged away without asking. */

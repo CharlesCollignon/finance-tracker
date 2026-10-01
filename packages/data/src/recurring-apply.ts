@@ -1,4 +1,3 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   buildApplyRecurringPlan,
   calledForKeys,
@@ -10,33 +9,30 @@ import {
   type RecurringOccurrenceUpdate,
 } from "@finance/core/apply-recurring";
 import { getCurrentMonth, getMonthBounds } from "@finance/core/constants";
+import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 import {
   isQuotePriced,
   resolveRecurringAmount,
 } from "@finance/core/recurring-shares";
-import { quoteSource } from "@/lib/quote-source";
-import type {
-  Database,
-  RecurringTemplateWithCategory,
-} from "@finance/core/types/database";
-import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
+import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
+
+import type { Db } from "./client";
+import { quoteSource } from "./quote-source";
+import { isMissingSchema } from "./schema";
 
 /**
- * The reads and writes behind applying recurring templates.
+ * The reads and writes behind applying recurring templates, for both apps.
  *
- * Kept out of the server-action module because the daily run needs the same
- * steps under the service role, and a `"use server"` file cannot export a
- * helper without also publishing it as an action.
+ * The web's server actions and daily run and the phone's month fill used to
+ * carry a copy each, the phone's commented as the web's "twin" — and twins
+ * drift: one priced fixed templates against the market for nothing, one
+ * counted what it repriced and one did not. Written once here, each app hands
+ * in its own client (`./client`).
  *
  * Every query filters on `user_id`, so these work identically under RLS with
  * the caller's own client and under the service role with a user id chosen by
  * the cron.
  */
-
-type Client = SupabaseClient<Database>;
-
-/** PostgREST's and PostgreSQL's ways of saying a table is not there yet. */
-const MISSING_SCHEMA = new Set(["PGRST205", "42P01", "42703"]);
 
 export interface ExistingRecurringTx {
   id: string;
@@ -46,7 +42,7 @@ export interface ExistingRecurringTx {
 }
 
 export async function loadApplyRecurringData(
-  supabase: Client,
+  db: Db,
   userId: string,
   year: number,
   month: number,
@@ -59,12 +55,12 @@ export async function loadApplyRecurringData(
     { data: skips, error: skipError },
     { data: fulfilments, error: fulfilmentError },
   ] = await Promise.all([
-    supabase
+    db
       .from("recurring_templates")
       .select("*, categories(name, type, icon, counts_toward_summary)")
       .eq("user_id", userId)
       .eq("active", true),
-    supabase
+    db
       .from("transactions")
       .select(
         "id, amount, note, category_id, recurring_template_id, occurred_on",
@@ -73,13 +69,13 @@ export async function loadApplyRecurringData(
       .not("recurring_template_id", "is", null)
       .gte("occurred_on", start)
       .lte("occurred_on", end),
-    supabase
+    db
       .from("recurring_skips")
       .select("template_id, occurred_on")
       .eq("user_id", userId)
       .gte("occurred_on", start)
       .lte("occurred_on", end),
-    supabase
+    db
       .from("recurring_fulfilments")
       .select("template_id, occurred_on")
       .eq("user_id", userId)
@@ -100,7 +96,7 @@ export async function loadApplyRecurringData(
   }
 
   // Missing only before migration 023, where nothing can have been fulfilled.
-  if (fulfilmentError && !MISSING_SCHEMA.has(fulfilmentError.code)) {
+  if (fulfilmentError && !isMissingSchema(fulfilmentError)) {
     throw new Error(fulfilmentError.message);
   }
 
@@ -143,7 +139,7 @@ export async function loadApplyRecurringData(
  * line, category included. There is nothing here the user typed to preserve.
  */
 export async function writeReprices(
-  supabase: Client,
+  db: Db,
   userId: string,
   reprices: readonly RecurringOccurrenceUpdate[],
 ): Promise<{ repriced: number; failures: string[] }> {
@@ -151,7 +147,7 @@ export async function writeReprices(
   const failures: string[] = [];
 
   for (const item of reprices) {
-    const { error } = await supabase
+    const { error } = await db
       .from("transactions")
       .update({
         amount: item.amount,
@@ -182,7 +178,7 @@ export async function writeReprices(
  * applied.
  */
 export async function refreshTemplateQuotes(
-  supabase: Client,
+  db: Db,
   userId: string,
   templates: readonly RecurringTemplateWithCategory[],
 ): Promise<number> {
@@ -229,7 +225,7 @@ export async function refreshTemplateQuotes(
       continue;
     }
 
-    const { error } = await supabase
+    const { error } = await db
       .from("recurring_templates")
       .update(quoteUpdate)
       .eq("id", template.id)
@@ -241,23 +237,6 @@ export async function refreshTemplateQuotes(
   }
 
   return refreshed;
-}
-
-/**
- * Whether this user's ledger is fed by a bank — `hasBankFeed`, for a client
- * that is not the request's own. The daily run asks it of every user under
- * the service role, where the request-scoped query has nobody to ask about.
- */
-export async function isBankFed(
-  supabase: Client,
-  userId: string,
-): Promise<boolean> {
-  const { count } = await supabase
-    .from("bank_feed_items")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
-
-  return (count ?? 0) > 0;
 }
 
 /** PostgreSQL's unique-violation code: the row is already there. */
@@ -289,7 +268,7 @@ const ALREADY_WRITTEN = "23505";
  * the ledger they only forecast — see `hasBankFeed`.
  */
 export async function fillMonth(
-  supabase: Client,
+  db: Db,
   userId: string,
   year: number,
   month: number,
@@ -297,7 +276,7 @@ export async function fillMonth(
   only?: ReadonlySet<string>,
 ): Promise<{ created: number; failures: string[] }> {
   const { templates, existingByKey, skippedKeys } =
-    await loadApplyRecurringData(supabase, userId, year, month);
+    await loadApplyRecurringData(db, userId, year, month);
 
   // Named occurrences are checked against today only; the rest must be due.
   const dueBy = only ? undefined : today;
@@ -335,7 +314,7 @@ export async function fillMonth(
       continue;
     }
 
-    const { error } = await supabase.from("transactions").insert({
+    const { error } = await db.from("transactions").insert({
       user_id: userId,
       category_id: item.categoryId,
       recurring_template_id: item.templateId,
@@ -361,13 +340,13 @@ export async function fillMonth(
   // so a month whose quote cannot be fetched is priced from the latest one.
   if (priced.size > 0) {
     await refreshTemplateQuotes(
-      supabase,
+      db,
       userId,
       templates.filter((template) => priced.has(template.id)),
     );
   }
 
-  const reprices = await writeReprices(supabase, userId, plan.toReprice);
+  const reprices = await writeReprices(db, userId, plan.toReprice);
   failures.push(...reprices.failures);
 
   return { created, failures };
@@ -393,7 +372,7 @@ function fillWindow(): { year: number; month: number }[] {
  * before a charge was set up, and nothing a skip has taken out.
  */
 export async function fillDue(
-  supabase: Client,
+  db: Db,
   userId: string,
   today: string,
 ): Promise<{ created: number; failures: string[] }> {
@@ -401,7 +380,7 @@ export async function fillDue(
   const failures: string[] = [];
 
   for (const { year, month } of fillWindow()) {
-    const result = await fillMonth(supabase, userId, year, month, today);
+    const result = await fillMonth(db, userId, year, month, today);
     created += result.created;
     failures.push(...result.failures);
   }
@@ -431,7 +410,7 @@ export async function fillDue(
  * own schedule is a reason to take it away.
  */
 export async function followTemplate(
-  supabase: Client,
+  db: Db,
   userId: string,
   templateId: string,
   options: { today: string; from: string; reschedule: boolean },
@@ -442,9 +421,9 @@ export async function followTemplate(
   if (reschedule) {
     for (const { year, month } of fillWindow()) {
       const { templates, existingByKey, skippedKeys } =
-        await loadApplyRecurringData(supabase, userId, year, month);
+        await loadApplyRecurringData(db, userId, year, month);
       const skipError = await skipOccurrences(
-        supabase,
+        db,
         userId,
         pastOccurrencesNotWritten(
           templates.filter((template) => template.id === templateId),
@@ -461,10 +440,10 @@ export async function followTemplate(
     }
   }
 
-  const filled = await fillDue(supabase, userId, today);
+  const filled = await fillDue(db, userId, today);
   failures.push(...filled.failures);
 
-  const { data: rows, error } = await supabase
+  const { data: rows, error } = await db
     .from("transactions")
     .select("id, occurred_on")
     .eq("user_id", userId)
@@ -486,7 +465,7 @@ export async function followTemplate(
     }
 
     const { templates, existingByKey, skippedKeys } =
-      await loadApplyRecurringData(supabase, userId, year, month);
+      await loadApplyRecurringData(db, userId, year, month);
     const plan = await buildApplyRecurringPlan(
       templates,
       existingByKey,
@@ -496,7 +475,7 @@ export async function followTemplate(
     );
 
     const updates = await writeReprices(
-      supabase,
+      db,
       userId,
       followTemplateUpdates(plan, templateId, from),
     );
@@ -519,7 +498,7 @@ export async function followTemplate(
     );
 
     if (stale.length > 0) {
-      const { error: removeError } = await supabase
+      const { error: removeError } = await db
         .from("transactions")
         .delete()
         .eq("user_id", userId)
@@ -543,12 +522,12 @@ export async function followTemplate(
  * can be there at all.
  */
 export async function removeTemplateForecasts(
-  supabase: Client,
+  db: Db,
   userId: string,
   templateId: string,
   today: string,
 ): Promise<string | null> {
-  const { error } = await supabase
+  const { error } = await db
     .from("transactions")
     .delete()
     .eq("user_id", userId)
@@ -568,7 +547,7 @@ export async function removeTemplateForecasts(
  * stick, the same way Skip always did.
  */
 export async function skipOccurrences(
-  supabase: Client,
+  db: Db,
   userId: string,
   occurrences: readonly { templateId: string; occurredOn: string }[],
 ): Promise<string | null> {
@@ -576,7 +555,7 @@ export async function skipOccurrences(
     return null;
   }
 
-  const { error } = await supabase.from("recurring_skips").upsert(
+  const { error } = await db.from("recurring_skips").upsert(
     occurrences.map((occurrence) => ({
       user_id: userId,
       template_id: occurrence.templateId,
@@ -588,4 +567,44 @@ export async function skipOccurrences(
   );
 
   return error?.message ?? null;
+}
+
+/**
+ * Record a skip for every row in `ids` that a template wrote, before those
+ * rows are deleted.
+ *
+ * The month fills itself from its templates, so deleting a charge's row
+ * without this would only last until the app next opened. Deleting it is the
+ * user saying that occurrence should not exist, which is what a skip is.
+ */
+export async function skipWhatTemplatesWrote(
+  db: Db,
+  userId: string,
+  ids: readonly string[],
+): Promise<string | null> {
+  const { data: rows, error } = await db
+    .from("transactions")
+    .select("recurring_template_id, occurred_on")
+    .eq("user_id", userId)
+    .in("id", ids)
+    .not("recurring_template_id", "is", null);
+
+  if (error) {
+    return error.message;
+  }
+
+  return skipOccurrences(
+    db,
+    userId,
+    (rows ?? []).flatMap((row) =>
+      row.recurring_template_id
+        ? [
+            {
+              templateId: row.recurring_template_id,
+              occurredOn: row.occurred_on,
+            },
+          ]
+        : [],
+    ),
+  );
 }

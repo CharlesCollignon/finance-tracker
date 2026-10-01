@@ -15,7 +15,8 @@ Last updated: quality plan Phase 1, correct and in sync (2026-10-01;
 | `apps/web`      | Next.js 16.2 App Router. Server components read Supabase with the user's cookie session; server actions write.                                                                                                                     |
 | `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token. |
 | `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                         |
-| `supabase/`     | Migrations `001`–`040`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                       |
+| `packages/data` | The Supabase reads and writes both apps make, written once and handed each app's client (`Db`): the recurring fill, follow and skips, the bank-feed check, the live quote source.                                                  |
+| `supabase/`     | Migrations `001`–`047`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                       |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and

@@ -71,6 +71,9 @@ jobs:
       - name: Typecheck core
         run: pnpm --filter @finance/core exec tsc --noEmit
 
+      - name: Typecheck data
+        run: pnpm --filter @finance/data exec tsc --noEmit
+
       - name: Reachability check
         run: pnpm check:reachability
 

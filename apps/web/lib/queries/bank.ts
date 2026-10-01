@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { hasBankFeed as bankFeeds } from "@finance/data/bank-feed";
 import { allRows } from "@finance/core/paging";
 import {
   describeReviewReason,
@@ -219,13 +220,7 @@ export async function countSwallowedFeedItems(userId: string): Promise<number> {
  * environment. Having synced once is the fact that matters.
  */
 export async function hasBankFeed(userId: string): Promise<boolean> {
-  const supabase = await createClient();
-  const { count } = await supabase
-    .from("bank_feed_items")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
-
-  return (count ?? 0) > 0;
+  return bankFeeds(await createClient(), userId);
 }
 
 /* -------------------------------------------------- standing charges seen */

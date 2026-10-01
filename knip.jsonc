@@ -244,6 +244,11 @@
     // is also why `rules.exports` is an error and not a warning: for this
     // workspace it is the signal that catches dead exports hiding behind a
     // reachable file.
+    // The reads and writes both apps share. Same rule as core: its only
+    // consumers are the two apps here, so an export neither calls is dead.
+    "packages/data": {
+      "includeEntryExports": true,
+    },
     "packages/core": {
       "includeEntryExports": true,
       "ignore": [

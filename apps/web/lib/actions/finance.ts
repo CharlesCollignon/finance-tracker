@@ -16,7 +16,7 @@ import {
   todayIsoLocal,
 } from "@finance/core/constants";
 import { resolveRecurringAmount } from "@finance/core/recurring-shares";
-import { quoteSource } from "@/lib/quote-source";
+import { quoteSource } from "@finance/data/quote-source";
 import {
   recurringOccurrenceKey,
   scheduleDatesBefore,
@@ -27,7 +27,8 @@ import {
   followTemplate,
   removeTemplateForecasts,
   skipOccurrences,
-} from "@/lib/recurring-apply";
+  skipWhatTemplatesWrote,
+} from "@finance/data/recurring-apply";
 import { hasBankFeed } from "@/lib/queries/bank";
 import {
   removeInvestmentPositionForRecurring,
@@ -60,46 +61,6 @@ async function getUser() {
   }
 
   return user;
-}
-
-/**
- * Record a skip for every row in `ids` that a template wrote, before those
- * rows are deleted.
- *
- * The month fills itself from its templates, so deleting a charge's row
- * without this would only last until the app next opened. Deleting it is the
- * user saying that occurrence should not exist, which is what a skip is.
- */
-async function skipWhatTemplatesWrote(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  ids: string[],
-): Promise<string | null> {
-  const { data: rows, error } = await supabase
-    .from("transactions")
-    .select("recurring_template_id, occurred_on")
-    .eq("user_id", userId)
-    .in("id", ids)
-    .not("recurring_template_id", "is", null);
-
-  if (error) {
-    return error.message;
-  }
-
-  return skipOccurrences(
-    supabase,
-    userId,
-    (rows ?? []).flatMap((row) =>
-      row.recurring_template_id
-        ? [
-            {
-              templateId: row.recurring_template_id,
-              occurredOn: row.occurred_on,
-            },
-          ]
-        : [],
-    ),
-  );
 }
 
 /** The first day of the month in progress. */

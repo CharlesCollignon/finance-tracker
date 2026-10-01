@@ -1,0 +1,23 @@
+{
+  "name": "@finance/data",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./bank-feed": "./src/bank-feed.ts",
+    "./client": "./src/client.ts",
+    "./quote-source": "./src/quote-source.ts",
+    "./recurring-apply": "./src/recurring-apply.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "dependencies": {
+    "@finance/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.108.2"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.108.2",
+    "typescript": "^5"
+  }
+}
