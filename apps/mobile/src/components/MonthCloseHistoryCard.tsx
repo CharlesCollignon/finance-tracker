@@ -2,6 +2,7 @@ import { useState } from "react";
 import { View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { parseTypedAmount } from "@finance/core/amount-input";
 import {
   MIN_CLOSES_FOR_CAP,
   monthWasWon,
@@ -16,11 +17,12 @@ import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import { updateCloseDay, updateUnrecordedCap } from "@/lib/mutations";
 import type { ClosedMonthRow } from "@/lib/queries";
+import { toTypedAmount } from "@/lib/typed-amount";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
-import { useT } from "@/providers/LocaleProvider";
+import { useLocale, useT } from "@/providers/LocaleProvider";
 
 interface MonthCloseHistoryCardProps {
   history: ClosedMonthRow[];
@@ -46,17 +48,20 @@ export function MonthCloseHistoryCard({
   onChanged,
 }: MonthCloseHistoryCardProps) {
   const t = useT();
+  const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const palette = useThemeColors();
   const { toast } = useToast();
-  const [capDraft, setCapDraft] = useState(
-    unrecordedCap === null ? "" : String(unrecordedCap),
+  const [capDraft, setCapDraft] = useState(() =>
+    unrecordedCap === null ? "" : toTypedAmount(unrecordedCap, locale),
   );
   const [pending, setPending] = useState(false);
 
   const suggested = suggestUnrecordedCap(summary);
-  const parsedCap = Number(capDraft.replace(",", "."));
-  const capIsUsable = capDraft.trim() !== "" && Number.isFinite(parsedCap);
+  // « 1 200 » and « 1 200,50 » as well as "1200": the shapes the app's
+  // own figures are printed in.
+  const parsedCap = parseTypedAmount(capDraft);
+  const capIsUsable = parsedCap !== null;
 
   async function saveCap(value: number | null) {
     setPending(true);
@@ -66,7 +71,7 @@ export function MonthCloseHistoryCard({
       toast(response.error, "error");
       return;
     }
-    setCapDraft(value === null ? "" : String(value));
+    setCapDraft(value === null ? "" : toTypedAmount(value, locale));
     toast(response.message ?? t("monthCloseHistory.saved"), "success");
     onChanged();
   }
@@ -162,7 +167,11 @@ export function MonthCloseHistoryCard({
               label={t("common.save")}
               size="sm"
               disabled={pending || !capIsUsable}
-              onPress={() => void saveCap(parsedCap)}
+              onPress={() => {
+                if (parsedCap !== null) {
+                  void saveCap(parsedCap);
+                }
+              }}
             />
             {suggested !== null && suggested !== unrecordedCap ? (
               <Button

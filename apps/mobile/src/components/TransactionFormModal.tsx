@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 
+import { parseTypedAmount } from "@finance/core/amount-input";
 import { INTL_LOCALES } from "@finance/core/i18n/locale";
 import type {
   Category,
@@ -13,6 +14,7 @@ import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
+import { toTypedAmount } from "@/lib/typed-amount";
 import {
   deleteTransaction,
   moveBackEarlyIncome,
@@ -57,7 +59,11 @@ export function TransactionFormModal({
   const locale = useLocale();
   const t = useT();
   const [categoryId, setCategoryId] = useState(transaction.category_id);
-  const [amount, setAmount] = useState(String(Number(transaction.amount)));
+  // In the reader's own shape — "12,5" in French — so the field reads back
+  // exactly what it was given.
+  const [amount, setAmount] = useState(() =>
+    toTypedAmount(Number(transaction.amount), locale),
+  );
   const [occurredOn, setOccurredOn] = useState(transaction.occurred_on);
   const [note, setNote] = useState(transaction.note ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -78,8 +84,9 @@ export function TransactionFormModal({
     const result = await updateTransaction({
       id: transaction.id,
       categoryId,
-      // A French keypad types a comma; the schema reads a point.
-      amount: amount.replace(",", ".").trim(),
+      // Whichever shape it was typed in, « 1 234,56 » included. Unreadable
+      // is sent as nothing, which the schema answers with its own message.
+      amount: parseTypedAmount(amount) ?? 0,
       occurredOn,
       note: note || undefined,
     });

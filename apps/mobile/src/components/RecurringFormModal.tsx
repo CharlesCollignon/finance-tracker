@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 
+import { parseTypedAmount } from "@finance/core/amount-input";
 import {
   formatOccurrenceDates,
   scheduleDatesBefore,
@@ -27,6 +28,7 @@ import {
   upsertRecurringTemplate,
 } from "@/lib/mutations";
 import { cn } from "@/lib/cn";
+import { toTypedAmount } from "@/lib/typed-amount";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
@@ -140,8 +142,10 @@ export function RecurringFormBody({
   const { toast } = useToast();
   const isEditing = template !== null;
   const [categoryId, setCategoryId] = useState(template?.category_id ?? "");
-  const [amount, setAmount] = useState(
-    template ? String(Number(template.amount)) : "",
+  // In the reader's own shape — "12,5" in French — so the field reads back
+  // exactly what it was given.
+  const [amount, setAmount] = useState(() =>
+    template ? toTypedAmount(Number(template.amount), locale) : "",
   );
   // A charge priced in shares keeps its pricing when edited here: the share
   // count is editable, the fund is shown, and nothing is quietly turned into
@@ -264,8 +268,10 @@ export function RecurringFormBody({
           }
         : {
             pricingType: "fixed",
-            // A French keypad types a comma; the schema reads a point.
-            amount: amount.replace(",", ".").trim(),
+            // Whichever shape it was typed in, « 1 234,56 » included.
+            // Unreadable is sent as nothing, which the schema answers with
+            // its own message.
+            amount: parseTypedAmount(amount) ?? 0,
             instrumentSymbol: template?.instrument_symbol ?? undefined,
             instrumentName: template?.instrument_name ?? undefined,
           }),
