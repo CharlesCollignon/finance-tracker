@@ -77,6 +77,18 @@ export function ArrivedCharges({
   const locale = useLocale();
   const [pending, startTransition] = useTransition();
   const [answered, setAnswered] = useState<Set<string>>(new Set());
+  // An answer is held only until the server stops offering that pairing. Held
+  // longer, it hid the same question when it came back — an early salary
+  // moved back to the day it was paid reopens it, and so does an undo on the
+  // phone — and the card stayed empty until the page was left.
+  const [seenProposals, setSeenProposals] = useState(proposals);
+  if (proposals !== seenProposals) {
+    setSeenProposals(proposals);
+    const offered = new Set(proposals.map((proposal) => proposal.key));
+    setAnswered(
+      (current) => new Set([...current].filter((key) => offered.has(key))),
+    );
+  }
 
   const [showMisses, setShowMisses] = useState(false);
   const waiting = proposals.filter((proposal) => !answered.has(proposal.key));

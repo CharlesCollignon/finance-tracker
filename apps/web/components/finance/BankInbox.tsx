@@ -175,6 +175,25 @@ export function BankInbox({
   // arrives. By row rather than by group, so an undo puts back exactly what
   // it took and a shop that turns up again in a later sync is not hidden.
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
+  // Whether anything was answered while the sheet was up, for "all filed".
+  // Not `hidden.size`: a row leaves `hidden` once the server agrees it is
+  // gone, below.
+  const [answered, setAnswered] = useState(false);
+  // A row stays hidden only while the server still lists it as pending. Once
+  // the redrawn page leaves it out, the decision has landed and the hiding
+  // has done its job; keeping it would hide the row again when an undo — from
+  // "Recently decided", or from another device — brings it back, which is how
+  // an undone row used to stay invisible until the sheet was reopened.
+  const [seenGroups, setSeenGroups] = useState(groups);
+  if (groups !== seenGroups) {
+    setSeenGroups(groups);
+    const pending = new Set(
+      groups.flatMap((group) => group.rows.map((row) => row.id)),
+    );
+    setHidden(
+      (current) => new Set([...current].filter((id) => pending.has(id))),
+    );
+  }
   const [leaving, setLeaving] = useState<ReadonlySet<string>>(new Set());
   // Opened or shut by hand; otherwise a mixed group is open and the rest shut.
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
@@ -204,9 +223,9 @@ export function BankInbox({
     ];
   });
   const remaining = visible.reduce((sum, group) => sum + group.count, 0);
-  const shownGroups = useTweenedCount(visible.length);
+  const tweenedGroups = useTweenedCount(visible.length);
   const shownEntries = useTweenedCount(remaining);
-  const done = visible.length === 0 && hidden.size > 0;
+  const done = visible.length === 0 && answered;
 
   function run(work: () => Promise<{ error?: string; message?: string }>) {
     startTransition(async () => {
@@ -219,6 +238,7 @@ export function BankInbox({
   }
 
   function hide(ids: readonly string[]) {
+    setAnswered(true);
     setHidden((current) => new Set([...current, ...ids]));
   }
 
@@ -518,7 +538,7 @@ export function BankInbox({
                   aria-hidden
                   className="text-sm font-medium tabular-nums text-foreground"
                 >
-                  {t("inboxGroups.groups", { count: shownGroups })}
+                  {t("inboxGroups.groups", { count: tweenedGroups })}
                   {" · "}
                   {t("inboxGroups.entries", { count: shownEntries })}
                 </p>
@@ -840,7 +860,10 @@ export function BankInbox({
                           size="sm"
                           className="h-7 gap-1 px-2 text-muted-foreground"
                           disabled={pending}
-                          onClick={() => run(() => undoFeedDecision(row.id))}
+                          onClick={() => {
+                            unhide([row.id]);
+                            run(() => undoFeedDecision(row.id));
+                          }}
                         >
                           <ArrowCounterClockwise size={ICON.sm} />
                           {t("inbox.undo")}

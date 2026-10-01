@@ -48,6 +48,10 @@ export async function MonthReadSlot({
   return (
     <section className={cn(GLASS_CARD, "rounded-card p-card")}>
       <MonthRead
+        // Remounted per month: the writes left are counted per month, and a
+        // count carried over from the month switched away from was the one
+        // shown under the next.
+        key={`${year}-${month}`}
         year={year}
         month={month}
         monthLabel={formatMonthLabel(year, month, locale)}
