@@ -5,6 +5,7 @@ import { getLocale } from "@/lib/locale";
 
 import { revalidateApp } from "@/lib/revalidate-paths";
 import * as ledger from "@finance/data/ledger";
+import * as occurrences from "@finance/data/occurrences";
 import type { ActionResult, FormState } from "@finance/core/action-result";
 import { asUser } from "@/lib/actions/as-user";
 import { redirect } from "next/navigation";
@@ -12,21 +13,10 @@ import { getSiteUrl } from "@/lib/supabase/env";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
-import { shiftIsoDate, todayIsoLocal } from "@finance/core/constants";
-import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
-import {
-  fillDue,
-  fillMonth,
-  followTemplate,
-  removeTemplateForecasts,
-  skipOccurrences,
-} from "@finance/data/recurring-apply";
-import { hasBankFeed } from "@/lib/queries/bank";
-import { removeInvestmentPositionForRecurring } from "@finance/data/recurring-positions";
+import { shiftIsoDate } from "@finance/core/constants";
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import {
   authSchema,
-  parseUuid,
   recurringTemplateSchema,
 } from "@finance/core/validations/finance";
 import { cashDateOf, movedBetween } from "@finance/core/cash-date";
@@ -333,98 +323,24 @@ export async function upsertRecurringTemplate(
 export async function deleteRecurringTemplate(
   id: string,
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  if (!parseUuid(id)) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-
-  // Before the template goes, while its rows still say where they came from.
-  if (!(await hasBankFeed(user.id))) {
-    const removeError = await removeTemplateForecasts(
-      supabase,
-      user.id,
-      id,
-      todayIsoLocal(),
-    );
-    if (removeError) {
-      return { error: removeError };
-    }
-  }
-
-  await removeInvestmentPositionForRecurring(supabase, user.id, id);
-
-  const { error } = await supabase
-    .from("recurring_templates")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) =>
+    occurrences.deleteRecurringTemplate(db, userId, id),
+  );
 }
 
 export async function toggleRecurringActive(
   id: string,
   active: boolean,
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("recurring_templates")
-    .update({ active })
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  // Either way it starts again, or stops, from tomorrow: switched on, the
-  // days it missed while off are not written after the fact; switched off,
-  // its rows written ahead go with it. What it recorded before stays.
-  if (!(await hasBankFeed(user.id))) {
-    const today = todayIsoLocal();
-    try {
-      await followTemplate(supabase, user.id, id, {
-        today,
-        from: shiftIsoDate(today, 1),
-        reschedule: true,
-      });
-    } catch {
-      // The switch itself worked, and the next visit fills the month.
-    }
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) =>
+    occurrences.toggleRecurringActive(db, userId, id, active),
+  );
 }
 
 /**
- * Write the charges whose day has come.
- *
- * There is no button for this any more. The app calls it once when it opens,
- * and again when a tab left open comes back into view on another day, so the
- * charges the user set up are simply there on their day — and the days ahead
- * show them as planned until then. Most calls find nothing to write and cost
- * a few small reads.
- *
- * When something was written, every surface is revalidated: the new rows
- * move figures on all of them, and the page on screen redraws with them in
- * the same response.
+ * Write the charges whose day has come — see `fillThisMonth` in
+ * `@finance/data/occurrences`. Every surface is revalidated only when
+ * something was written: the new rows move figures on all of them.
  */
 export async function fillThisMonth(): Promise<{
   created: number;
@@ -435,104 +351,26 @@ export async function fillThisMonth(): Promise<{
     return { created: 0 };
   }
 
-  // With a bank feeding the ledger, templates do not write: the account is
-  // the record of what happened and a template only says what is coming.
-  if (await hasBankFeed(user.id)) {
-    return { created: 0 };
+  const result = await occurrences.fillThisMonth(await createClient(), user.id);
+  if (result.created > 0) {
+    revalidateApp();
   }
-
-  try {
-    const supabase = await createClient();
-    const { created, failures } = await fillDue(
-      supabase,
-      user.id,
-      todayIsoLocal(),
-    );
-
-    if (created > 0) {
-      revalidateApp();
-    }
-
-    return failures.length > 0 ? { created, error: failures[0] } : { created };
-  } catch (error) {
-    return {
-      created: 0,
-      error:
-        error instanceof Error ? error.message : "actions.couldNotFillMonth",
-    };
-  }
+  return result;
 }
 
-const occurrenceInput = z.object({
-  templateId: z.string().uuid(),
-  occurredOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-});
-
-/**
- * A planned occurrence that has already happened, recorded today.
- *
- * The salary due on the 28th that arrived on the 27th: written now, dated
- * today, at the charge's amount — the row can be corrected like any other —
- * and the planned day is skipped, so the day it was due does not write it a
- * second time.
- */
 export async function recordPlannedNow(
   templateId: string,
   occurredOn: string,
-): Promise<ActionResult & { transactionId?: string }> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = occurrenceInput.safeParse({ templateId, occurredOn });
-  const today = todayIsoLocal();
-  if (!parsed.success || parsed.data.occurredOn <= today) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { data: template } = await supabase
-    .from("recurring_templates")
-    .select("id, category_id, amount, description")
-    .eq("id", parsed.data.templateId)
-    .eq("user_id", user.id)
-    .eq("active", true)
-    .maybeSingle();
-
-  if (!template) {
-    return { error: "actions.recurringNotFound" };
-  }
-
-  const skipError = await skipOccurrences(supabase, user.id, [
-    { templateId: template.id, occurredOn: parsed.data.occurredOn },
-  ]);
-  if (skipError) {
-    return { error: skipError };
-  }
-
-  const { data: inserted, error } = await supabase
-    .from("transactions")
-    .insert({
-      user_id: user.id,
-      category_id: template.category_id,
-      recurring_template_id: template.id,
-      occurred_on: today,
-      amount: Number(template.amount),
-      note: template.description?.trim() || null,
-    })
-    .select("id")
-    .single();
-
-  if (error || !inserted) {
-    return { error: error?.message ?? "actions.couldNotRecord" };
-  }
-
-  revalidateApp();
-  return { success: true, transactionId: inserted.id };
+): Promise<ActionResult<{ transactionId: string }>> {
+  return asUser((db, userId) =>
+    occurrences.recordPlannedNow(db, userId, templateId, occurredOn),
+  );
 }
 
-/** Take back "record it now": the row goes and the planned day returns. */
+/**
+ * Take back "record it now". Redrawn whatever came of it: if only the skip
+ * failed to go, the row is gone all the same and the page should say so.
+ */
 export async function undoRecordPlanned(
   transactionId: string,
   templateId: string,
@@ -543,125 +381,31 @@ export async function undoRecordPlanned(
     return { error: "errors.notAuthenticated" };
   }
 
-  const parsed = occurrenceInput.safeParse({ templateId, occurredOn });
-  if (!parsed.success || !parseUuid(transactionId)) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("id", transactionId)
-    .eq("user_id", user.id)
-    .eq("recurring_template_id", parsed.data.templateId);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  // Recording it now skipped its planned day, so that day would not be
-  // written a second time; without taking the skip away the occurrence would
-  // not come back as planned. A failure here used to be ignored and the undo
-  // reported as done, with the occurrence gone from the month.
-  const { error: skipError } = await supabase
-    .from("recurring_skips")
-    .delete()
-    .eq("user_id", user.id)
-    .eq("template_id", parsed.data.templateId)
-    .eq("occurred_on", parsed.data.occurredOn);
-
+  const result = await occurrences.undoRecordPlanned(
+    await createClient(),
+    user.id,
+    transactionId,
+    templateId,
+    occurredOn,
+  );
   revalidateApp();
-  if (skipError) {
-    return { error: skipError.message };
-  }
-  return { success: true };
+  return result;
 }
 
-/**
- * Take one planned occurrence out of its month. Nothing is stored for a
- * planned row, so this is only the skip; `unskipRecurringOccurrence` puts it
- * back.
- */
 export async function skipPlannedOccurrence(
   templateId: string,
   occurredOn: string,
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = occurrenceInput.safeParse({ templateId, occurredOn });
-  if (!parsed.success) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { data: template } = await supabase
-    .from("recurring_templates")
-    .select("id")
-    .eq("id", parsed.data.templateId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!template) {
-    return { error: "actions.recurringNotFound" };
-  }
-
-  const skipError = await skipOccurrences(supabase, user.id, [
-    { templateId: template.id, occurredOn: parsed.data.occurredOn },
-  ]);
-  if (skipError) {
-    return { error: skipError };
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) =>
+    occurrences.skipPlannedOccurrence(db, userId, templateId, occurredOn),
+  );
 }
 
 export async function unskipRecurringOccurrence(
   templateId: string,
   occurredOn: string,
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  if (
-    !/^[0-9a-f-]{36}$/i.test(templateId) ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)
-  ) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("recurring_skips")
-    .delete()
-    .eq("user_id", user.id)
-    .eq("template_id", templateId)
-    .eq("occurred_on", occurredOn);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  // Written straight back, and only this one: restoring an occurrence in a
-  // past month is not a reason to fill the rest of that month.
-  if (!(await hasBankFeed(user.id))) {
-    const [year, month] = occurredOn.split("-").map(Number);
-    await fillMonth(
-      supabase,
-      user.id,
-      year!,
-      month!,
-      todayIsoLocal(),
-      new Set([recurringOccurrenceKey(templateId, occurredOn)]),
-    );
-  }
-
-  revalidateApp();
-  return { success: true, message: "actions.skipRemoved" };
+  return asUser((db, userId) =>
+    occurrences.unskipRecurringOccurrence(db, userId, templateId, occurredOn),
+  );
 }

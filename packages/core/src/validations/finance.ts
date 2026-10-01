@@ -213,3 +213,13 @@ export function parseUuid(id: string): string | null {
   const parsed = uuidSchema.safeParse(id);
   return parsed.success ? parsed.data : null;
 }
+
+/**
+ * One occurrence of a recurring template: which template, and the day it is
+ * for. What every action on a planned row takes — record it now, skip it,
+ * bring it back.
+ */
+export const occurrenceSchema = z.object({
+  templateId: z.string().uuid(),
+  occurredOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});

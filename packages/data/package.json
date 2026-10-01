@@ -7,6 +7,7 @@
     "./bank-feed": "./src/bank-feed.ts",
     "./client": "./src/client.ts",
     "./ledger": "./src/ledger.ts",
+    "./occurrences": "./src/occurrences.ts",
     "./quote-source": "./src/quote-source.ts",
     "./recurring-apply": "./src/recurring-apply.ts",
     "./recurring-positions": "./src/recurring-positions.ts",
