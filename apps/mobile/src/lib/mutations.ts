@@ -19,6 +19,7 @@ import type {
 
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import * as categories from "@finance/data/categories";
+import * as account from "@finance/data/account";
 import * as closing from "@finance/data/closing";
 import * as feed from "@finance/data/feed-decisions";
 import * as decisions from "@finance/data/fulfilment-decisions";
@@ -266,91 +267,20 @@ export async function updateProfile(fullName: string): Promise<ActionResult> {
 export async function deleteAllUserData(
   confirmation: string,
 ): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = deleteConfirmSchema.safeParse({ confirmation });
-  if (!parsed.success) {
-    return { error: "errors.deleteConfirmation" };
-  }
-
-  const { data: txs } = await supabase
-    .from("transactions")
-    .select("id")
-    .eq("user_id", userId);
-  const txIds = (txs ?? []).map((t) => t.id);
-  if (txIds.length > 0) {
-    const { error } = await supabase
-      .from("transaction_tags")
-      .delete()
-      .in("transaction_id", txIds);
-    if (error) {
-      return { error: error.message };
+  return asUser(async (userId): Promise<ActionResult> => {
+    const parsed = deleteConfirmSchema.safeParse({ confirmation });
+    if (!parsed.success) {
+      return { error: "errors.deleteConfirmation" };
     }
-  }
-
-  for (const table of [
-    "tags",
-    "budgets",
-    "wallet_transfers",
-    "savings_goals",
-    "recurring_skips",
-  ] as const) {
-    const { error } = await supabase.from(table).delete().eq("user_id", userId);
-    if (error) {
-      return { error: error.message };
+    try {
+      await account.deleteAllUserData(supabase, userId);
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : "errors.invalidInput",
+      };
     }
-  }
-
-  const { error: txError } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("user_id", userId);
-  if (txError) {
-    return { error: txError.message };
-  }
-
-  const { error: positionsError } = await supabase
-    .from("investment_positions")
-    .delete()
-    .eq("user_id", userId);
-  if (positionsError) {
-    return { error: positionsError.message };
-  }
-
-  // Apart from the list above, because the table only exists once migration
-  // 046 has run, and a missing table is nothing left to delete.
-  const { error: savingsError } = await supabase
-    .from("savings_accounts")
-    .delete()
-    .eq("user_id", userId);
-  if (
-    savingsError &&
-    savingsError.code !== "PGRST205" &&
-    savingsError.code !== "42P01"
-  ) {
-    return { error: savingsError.message };
-  }
-
-  const { error: recurringError } = await supabase
-    .from("recurring_templates")
-    .delete()
-    .eq("user_id", userId);
-  if (recurringError) {
-    return { error: recurringError.message };
-  }
-
-  const { error: categoriesError } = await supabase
-    .from("categories")
-    .delete()
-    .eq("user_id", userId);
-  if (categoriesError) {
-    return { error: categoriesError.message };
-  }
-
-  return { success: true, message: "profile.dataDeleted" };
+    return { success: true, message: "profile.dataDeleted" };
+  });
 }
 
 /** Validate credentials shape for forms that don't go through AuthProvider. */

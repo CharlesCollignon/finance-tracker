@@ -6,7 +6,7 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { disconnectUserBank } from "@/lib/bank/service";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { deleteAllUserData } from "@/lib/queries/account";
+import { deleteAllUserData } from "@finance/data/account";
 import {
   deleteConfirmSchema,
   profileSchema,
@@ -68,7 +68,7 @@ export async function deleteAllData(
   const supabase = await createClient();
 
   try {
-    await deleteAllUserData(user.id, supabase);
+    await deleteAllUserData(supabase, user.id);
   } catch (err) {
     const message = err instanceof Error ? err.message : "actions.deleteFailed";
     return { error: message };
@@ -112,7 +112,7 @@ export async function deleteAccount(
     // First, while the key still opens: revoked at open-banking.io so the
     // delegated access dies with the account rather than outliving it there.
     await disconnectUserBank(user.id, { deleteImported: false });
-    await deleteAllUserData(user.id, supabase);
+    await deleteAllUserData(supabase, user.id);
   } catch (err) {
     const message = err instanceof Error ? err.message : "actions.deleteFailed";
     return { error: message };

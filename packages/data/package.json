@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./account": "./src/account.ts",
     "./bank-feed": "./src/bank-feed.ts",
     "./categories": "./src/categories.ts",
     "./client": "./src/client.ts",
