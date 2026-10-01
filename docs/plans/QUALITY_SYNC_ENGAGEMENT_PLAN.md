@@ -74,44 +74,51 @@ back "record it now" says so when only half of it worked; a push with no
 address opens `/bearing` rather than the retired `/dashboard`; a phone's
 review link opens the review every time it is followed.
 
-## Phase 2 — One codebase, not two (branch `phase-2/refactor`)
+## Phase 2 — One codebase, not two (branch `phase-2/refactor`) — done, with the rest below deferred
 
-- [ ] `packages/data`: Supabase reads and writes taking the client as a
-      parameter, shared by both apps.
-  - [x] Recurring apply/fill/follow/skip, the bank-feed check, the quote
-        source, `isMissingSchema` ×15.
-  - [x] Template save and the position it syncs; template delete/pause,
-        the month fill, record/skip/restore an occurrence.
-  - [x] Transaction writes (`ledger`), with the phone's import now checking
-        category ownership; category writes.
-  - [x] Fulfilment reads and decisions; month close reads and writes;
-        moved rows; review-inbox decisions and the duplicate lookup.
-  - [ ] Savings accounts, the bearing month (pure part to core), plan
-        future data, delete-all, investment positions, wallet plans and
-        targets, profile.
-- [ ] Pure helpers to core: ledger totals and filters, signed formatting,
-      rate formatting, `monthKeyOf`, the count-up easing.
-- [ ] Split the big files: web `TransactionsView`, `LookThroughView` (both
-      apps), `BankInbox`, `InvestmentsView`, `RecurringForm`,
-      `BearingMonthView`, `LandingMocks`; phone `transactions.tsx` +
-      `calendar.tsx` (shared ledger hooks), `MonthCards`, `import.tsx`,
-      `bank.tsx`. (`actions/finance.ts` 1 175 → 422 lines and the phone's
-      `mutations.ts` 2 521 → 684 by the moves above.)
-- [~] One result type: `ActionResult`/`FormState` in core and `asUser` on the
-  web are in; the remaining local `ActionResult`s, zod on every input,
-  no swallowed errors and no raw Postgres text in a toast are not.
+Done:
+
+- [x] `packages/data`: the Supabase reads and writes both apps make, each
+      handed the caller's client. Recurring fill/follow/skips and templates,
+      occurrences, transactions (`ledger`), categories, fulfilment reads and
+      decisions, the month close and its writes, moved rows, review-inbox
+      decisions and the duplicate lookup, savings accounts, wallet plans and
+      targets, delete-all. Every copy that had drifted now runs the stricter
+      rules: the phone's import checks category ownership, its savings writes
+      read the linked bank's balance and un-archive a category, its PEA date
+      no longer wipes the target, and a whole inbox group rolls back a
+      transaction whose bank row could not be marked filed.
+- [x] One result type (`ActionResult`/`FormState` in core), `asUser` on the
+      web and its twin on the phone; database refusals and auth failures
+      reach a reader as catalogue keys (`dbError`, `signInErrorKey`,
+      `signUpErrorKey`), never as Postgres' or Supabase's English.
 - [x] Generated database types (`pnpm gen:types`), narrowed in
-      `types/database.ts`; the remaining casts go as the files are touched.
+      `types/database.ts`.
 - [x] One web component kit, `components/ui`, linted.
-- [ ] Bundle: `LandingMocks` as a server component, gsap replaced by motion,
-      `DarkVeil` loaded lazily, currency in a cookie so amounts render on the
-      server.
-- [~] Phone: Expo template leftovers deleted. Still to do: stable provider
-  values (refresh, auth), orbs paused off screen, counters on the UI
-  thread, `useEffectEvent` for the ref-syncing pattern, an error boundary
-  per route group.
-- [ ] Batch the per-row round trips in bank sync, feed decisions and
-      reprices.
+- [x] gsap gone; `DarkVeil` loaded after the page.
+- [x] Phone: Expo template leftovers deleted; the refresh clock and token
+      refreshes no longer re-render every screen; orbs pause off screen.
+- [x] `formatSigned`, `formatRate`, `isSavingsKind` in core.
+- [x] `actions/finance.ts` 1 175 → ~420 lines, the phone's `mutations.ts`
+      2 521 → ~500, `queries.ts` 1 592 → ~1 060.
+
+Deferred (worth doing, none of it a bug):
+
+- [ ] The screen loaders — the bearing month (the phone still draws the
+      earlier five-card Bearing, so this waits on that screen's parity),
+      the Plan's and Placements' — and the position writes, which do
+      different jobs on each app.
+- [ ] Splitting the big screen components: web `TransactionsView`,
+      `LookThroughView`, `BankInbox`, `InvestmentsView`, `RecurringForm`,
+      `BearingMonthView`, `LandingMocks` (and rendering it on the server);
+      phone `transactions.tsx` + `calendar.tsx`, `MonthCards`, `import.tsx`,
+      `bank.tsx`, `LookThroughView`.
+- [ ] Currency in a cookie, so amounts render on the server.
+- [ ] Phone: counters on the UI thread, `useEffectEvent` for the
+      ref-syncing pattern, an error boundary per route group, one
+      `ScreenError` with a retry.
+- [ ] Batch the per-row round trips in the bank sync and reprices.
+- [ ] The casts the generated types make unnecessary, as files are touched.
 
 Working note: the machine has ~7.8 GiB; two parallel agents running
 typechecks and builds crashed the terminal twice. Work sequentially.
