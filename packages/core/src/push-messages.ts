@@ -13,12 +13,18 @@
  * their money.
  */
 
+import { recurringOccurrenceKey } from "./apply-recurring";
 import { formatEuro } from "./constants";
 import { monthLong } from "./i18n/calendar-names";
 import type { Locale } from "./i18n/locale";
 import type { Translate } from "./i18n/t";
 import type { CloseableMonth, MonthCloseResult } from "./month-close";
 import type { PendingNotification } from "./push-digest";
+import {
+  getRecurringOccurrenceDates,
+  occurrenceWithinSchedule,
+} from "./recurrence";
+import type { RecurringTemplateWithCategory } from "./types/database";
 
 interface Voice {
   t: Translate;
@@ -108,4 +114,142 @@ export function monthClosedByBank({
         })}`,
       }
     : { ...base, body };
+}
+
+/** A charge planned for a day, as the heads-up names it. */
+export interface PlannedCharge {
+  templateId: string;
+  name: string;
+  amount: number;
+  /** Once a year: worth a word whatever its size. */
+  yearly: boolean;
+}
+
+/**
+ * The money leaving by template on one day: what the charges call for, less
+ * any occurrence skipped or already confirmed as arrived. Income is not a
+ * charge, and a purchase inside a wallet moves nothing on the bank account
+ * (the transfer to the broker did), so neither is counted.
+ */
+export function plannedChargesOn(
+  templates: readonly RecurringTemplateWithCategory[],
+  date: string,
+  excludedKeys: ReadonlySet<string>,
+): PlannedCharge[] {
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7));
+  return templates.flatMap((template) => {
+    if (
+      !template.active ||
+      template.categories.type === "income" ||
+      template.categories.counts_toward_summary === false ||
+      Number(template.amount) <= 0 ||
+      !occurrenceWithinSchedule(date, template.starts_on, template.ends_on) ||
+      !getRecurringOccurrenceDates(template, year, month).includes(date) ||
+      excludedKeys.has(recurringOccurrenceKey(template.id, date))
+    ) {
+      return [];
+    }
+    return [
+      {
+        templateId: template.id,
+        name: template.description?.trim() || template.categories.name,
+        amount: Number(template.amount),
+        yearly: template.recurrence === "yearly",
+      },
+    ];
+  });
+}
+
+/** Never "large" below this, whatever the reader's usual charge is. */
+const BIG_CHARGE_FLOOR = 100;
+
+/** How many times the usual charge a charge has to be to count as large. */
+const BIG_CHARGE_FACTOR = 2;
+
+/**
+ * What one of the reader's recurring charges usually comes to: the median of
+ * the money that leaves the account by template. The median rather than the
+ * mean, so one large insurance premium does not raise the bar for everything.
+ */
+export function usualChargeAmount(
+  templates: readonly {
+    amount: number | string;
+    categories: { type: string; counts_toward_summary: boolean };
+  }[],
+): number | null {
+  const amounts = templates
+    .filter(
+      (template) =>
+        template.categories.type !== "income" &&
+        template.categories.counts_toward_summary !== false,
+    )
+    .map((template) => Number(template.amount))
+    .filter((amount) => amount > 0)
+    .sort((a, b) => a - b);
+  if (amounts.length === 0) {
+    return null;
+  }
+  const middle = Math.floor(amounts.length / 2);
+  return amounts.length % 2 === 1
+    ? amounts[middle]!
+    : (amounts[middle - 1]! + amounts[middle]!) / 2;
+}
+
+/**
+ * Which of a day's charges are worth a heads-up: the yearly ones, and the
+ * ones at least twice the reader's usual charge (never under 100 €).
+ * Everything else is the ordinary month, and saying so the evening before
+ * every time is how a reminder becomes noise.
+ */
+export function bigCharges(
+  charges: readonly PlannedCharge[],
+  usual: number | null,
+): PlannedCharge[] {
+  const bar = Math.max(BIG_CHARGE_FLOOR, (usual ?? 0) * BIG_CHARGE_FACTOR);
+  return charges.filter((charge) => charge.yearly || charge.amount >= bar);
+}
+
+/**
+ * Tomorrow, a charge larger than usual — or one that comes once a year, the
+ * kind a month forgets is coming. Sent the morning before, so there is a day
+ * to make sure the money is there.
+ */
+export function bigChargeHeadsUp({
+  charges,
+  tomorrow,
+  t,
+  locale,
+}: Voice & {
+  charges: readonly PlannedCharge[];
+  tomorrow: string;
+}): PendingNotification | null {
+  if (charges.length === 0) {
+    return null;
+  }
+  const base = {
+    kind: "bigCharge" as const,
+    key: `big-charge:${tomorrow}`,
+    url: "/bearing",
+  };
+  if (charges.length === 1) {
+    const [charge] = charges;
+    return {
+      ...base,
+      title: t("push.bigCharge.title", { name: charge!.name }),
+      body: t(
+        charge!.yearly ? "push.bigCharge.yearly" : "push.bigCharge.body",
+        {
+          amount: formatEuro(charge!.amount, locale),
+        },
+      ),
+    };
+  }
+  return {
+    ...base,
+    title: t("push.bigCharge.titleSeveral", { count: charges.length }),
+    body: charges
+      .map((charge) => `${charge.name} ${formatEuro(charge.amount, locale)}`)
+      .join(" · "),
+  };
 }

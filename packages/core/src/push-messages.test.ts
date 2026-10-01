@@ -2,7 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import { translator } from "./i18n/t";
 import type { CloseableMonth, MonthCloseResult } from "./month-close";
-import { closeReminder, monthClosedByBank } from "./push-messages";
+import type { RecurringTemplateWithCategory } from "./types/database";
+import {
+  bigChargeHeadsUp,
+  bigCharges,
+  closeReminder,
+  monthClosedByBank,
+  plannedChargesOn,
+  usualChargeAmount,
+} from "./push-messages";
 
 const fr = { t: translator("fr"), locale: "fr" as const };
 
@@ -119,5 +127,166 @@ describe("monthClosedByBank", () => {
       result: result({ status: "baseline", kept: null, unrecorded: null }),
     });
     expect(push.body).toContain("point de départ");
+  });
+});
+
+describe("bigCharges", () => {
+  const charge = (amount: number, yearly = false) => ({
+    templateId: `t${amount}`,
+    name: `Charge ${amount}`,
+    amount,
+    yearly,
+  });
+
+  it("keeps the yearly ones and those at least twice the usual", () => {
+    const picked = bigCharges(
+      [charge(60), charge(130), charge(260), charge(40, true)],
+      120,
+    );
+    expect(picked.map((row) => row.amount)).toEqual([260, 40]);
+  });
+
+  it("never calls anything under 100 € large", () => {
+    expect(bigCharges([charge(90)], 20)).toEqual([]);
+    expect(bigCharges([charge(100)], 20).map((row) => row.amount)).toEqual([
+      100,
+    ]);
+  });
+});
+
+describe("usualChargeAmount", () => {
+  const template = (amount: number, type = "expense", counts = true) => ({
+    amount,
+    categories: { type, counts_toward_summary: counts },
+  });
+
+  it("is the median of the money that leaves by template", () => {
+    expect(
+      usualChargeAmount([
+        template(10),
+        template(50),
+        template(900),
+        template(3000, "income"),
+        template(500, "investment", false),
+      ]),
+    ).toBe(50);
+  });
+
+  it("is null with nothing leaving", () => {
+    expect(usualChargeAmount([template(3000, "income")])).toBeNull();
+  });
+});
+
+describe("bigChargeHeadsUp", () => {
+  it("names one charge, and lists several", () => {
+    const one = bigChargeHeadsUp({
+      ...fr,
+      tomorrow: "2026-10-06",
+      charges: [
+        { templateId: "a", name: "Assurance auto", amount: 480, yearly: true },
+      ],
+    });
+    expect(one?.key).toBe("big-charge:2026-10-06");
+    expect(one?.title).toContain("Assurance auto");
+    expect(one?.body).toContain("une fois par an");
+
+    const several = bigChargeHeadsUp({
+      ...fr,
+      tomorrow: "2026-10-06",
+      charges: [
+        { templateId: "a", name: "Assurance auto", amount: 480, yearly: true },
+        { templateId: "b", name: "Taxe foncière", amount: 900, yearly: true },
+      ],
+    });
+    expect(several?.title).toContain("2 grosses opérations");
+    expect(several?.body).toContain("Taxe foncière");
+  });
+
+  it("says nothing with nothing large", () => {
+    expect(
+      bigChargeHeadsUp({ ...fr, tomorrow: "2026-10-06", charges: [] }),
+    ).toBeNull();
+  });
+});
+
+describe("plannedChargesOn", () => {
+  const template = (
+    overrides: Partial<RecurringTemplateWithCategory>,
+  ): RecurringTemplateWithCategory =>
+    ({
+      id: "t1",
+      user_id: "u",
+      category_id: "c",
+      amount: 480,
+      description: "Assurance auto",
+      recurrence: "monthly",
+      day_of_month: 6,
+      day_of_week: null,
+      month_of_year: null,
+      starts_on: null,
+      ends_on: null,
+      active: true,
+      pricing_type: "fixed",
+      share_count: null,
+      instrument_symbol: null,
+      instrument_name: null,
+      last_quote_price: null,
+      last_quote_at: null,
+      created_at: "2026-01-01T00:00:00Z",
+      categories: {
+        name: "Assurance",
+        type: "expense",
+        icon: null,
+        counts_toward_summary: true,
+      },
+      ...overrides,
+    }) as RecurringTemplateWithCategory;
+
+  it("finds the charges due that day", () => {
+    expect(
+      plannedChargesOn([template({})], "2026-10-06", new Set()).map(
+        (row) => row.name,
+      ),
+    ).toEqual(["Assurance auto"]);
+  });
+
+  it("leaves out income, wallet purchases, skips and other days", () => {
+    const skipped = new Set(["t1:2026-10-06"]);
+    expect(plannedChargesOn([template({})], "2026-10-06", skipped)).toEqual([]);
+    expect(
+      plannedChargesOn(
+        [
+          template({
+            categories: {
+              name: "Salaire",
+              type: "income",
+              icon: null,
+              counts_toward_summary: true,
+            },
+          }),
+        ],
+        "2026-10-06",
+        new Set(),
+      ),
+    ).toEqual([]);
+    expect(
+      plannedChargesOn(
+        [
+          template({
+            categories: {
+              name: "DCA PEA",
+              type: "investment",
+              icon: null,
+              counts_toward_summary: false,
+            },
+          }),
+        ],
+        "2026-10-06",
+        new Set(),
+      ),
+    ).toEqual([]);
+    expect(plannedChargesOn([template({})], "2026-10-07", new Set())).toEqual(
+      [],
+    );
   });
 });

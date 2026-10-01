@@ -13,6 +13,7 @@ import {
 import {
   formatShortDate,
   getCurrentMonth,
+  shiftIsoDate,
   todayIsoLocal,
 } from "@finance/core/constants";
 import type {
@@ -23,7 +24,15 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { defaultRecipient, readRecipients } from "@finance/data/preferences";
 import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
-import { closeReminder } from "@finance/core/push-messages";
+import {
+  bigChargeHeadsUp,
+  bigCharges,
+  closeReminder,
+  plannedChargesOn,
+  usualChargeAmount,
+} from "@finance/core/push-messages";
+import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
+import { getFulfilledKeys } from "@finance/data/fulfilment";
 import { getMonthCloseOverview } from "@finance/data/month-close";
 
 /**
@@ -186,7 +195,57 @@ async function notificationsFor(
     // browser in a cron request to ask.
     t: translator(locale),
   });
-  return [...lead, ...digest];
+
+  const heads = await bigChargeFor(
+    supabase,
+    userId,
+    today,
+    templateRows,
+    locale,
+  );
+  return [...lead, ...digest, ...(heads ? [heads] : [])];
+}
+
+/**
+ * Tomorrow's large or yearly charges, the morning before. Leaves out an
+ * occurrence skipped, or one the bank has already been confirmed to have
+ * paid, so nobody is warned about money that already left.
+ */
+async function bigChargeFor(
+  supabase: AdminClient,
+  userId: string,
+  today: string,
+  templates: readonly RecurringTemplateWithCategory[],
+  locale: Locale,
+): Promise<PendingNotification | null> {
+  const tomorrow = shiftIsoDate(today, 1);
+  try {
+    const [{ data: skips }, fulfilled] = await Promise.all([
+      supabase
+        .from("recurring_skips")
+        .select("template_id, occurred_on")
+        .eq("user_id", userId)
+        .eq("occurred_on", tomorrow),
+      getFulfilledKeys(supabase, userId),
+    ]);
+    const excluded = new Set([
+      ...fulfilled,
+      ...(skips ?? []).map((row) =>
+        recurringOccurrenceKey(row.template_id, row.occurred_on),
+      ),
+    ]);
+    return bigChargeHeadsUp({
+      charges: bigCharges(
+        plannedChargesOn(templates, tomorrow, excluded),
+        usualChargeAmount(templates),
+      ),
+      tomorrow,
+      t: translator(locale),
+      locale,
+    });
+  } catch {
+    return null;
+  }
 }
 
 /**

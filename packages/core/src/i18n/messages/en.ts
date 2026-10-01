@@ -653,13 +653,13 @@ export const en = {
       "Rent, subscriptions, a monthly transfer into savings — anything you already know is coming.",
     emptyTitleMobile: "What repeats each month?",
     emptyBodyMobile: "Rent, salary, subscriptions, a monthly ETF buy.",
-    remindTitle: "Want a nudge before these post?",
+    remindTitle: "Hear about large payments before they go?",
     remindBody:
-      "One reminder the evening before each item is due, so nothing lands unnoticed. Entirely on your device.",
+      "The day before a large or yearly payment, on your reading day, and a recap on Mondays. Nothing at night, and each kind can be turned off in your profile.",
     remindYes: "Remind me",
     remindNo: "No thanks",
     remindNeedsPermission: "Reminders need notification permission",
-    remindOn: "Reminders on — you'll hear the evening before",
+    remindOn: "Notifications on",
   },
 
   /**
@@ -2136,6 +2136,15 @@ export const en = {
    * locale has to be stored per user and not only in a cookie.
    */
   push: {
+    bigCharge: {
+      title: "Tomorrow: {name}",
+      body: "{amount} to have ready, more than your usual recurring payments.",
+      yearly: "{amount} to have ready — it only comes once a year.",
+      titleSeveral: {
+        one: "Tomorrow: {count} large payment",
+        other: "Tomorrow: {count} large payments",
+      },
+    },
     close: {
       title: "Close {month}",
       body: "It is your reading day: note your account balance to see what {month} left you.",

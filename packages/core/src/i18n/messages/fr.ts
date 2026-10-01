@@ -453,13 +453,13 @@ export const fr: Messages = {
       "Loyer, abonnements, un virement mensuel vers l'épargne — tout ce que vous savez déjà à venir.",
     emptyTitleMobile: "Qu'est-ce qui revient chaque mois\u00A0?",
     emptyBodyMobile: "Loyer, salaire, abonnements, un achat d'ETF mensuel.",
-    remindTitle: "Un rappel avant qu'elles ne passent\u00A0?",
+    remindTitle: "Être prévenu avant les grosses dépenses\u00A0?",
     remindBody:
-      "Un rappel la veille de chaque échéance, pour que rien ne passe inaperçu. Entièrement sur votre appareil.",
+      "La veille d'une grosse opération ou d'une annuelle, le jour du bilan, et un récap le lundi. Rien la nuit, et chaque type se coupe dans le profil.",
     remindYes: "Me rappeler",
     remindNo: "Non merci",
     remindNeedsPermission: "Les rappels demandent l'autorisation de notifier",
-    remindOn: "Rappels activés — vous serez prévenu la veille",
+    remindOn: "Notifications activées",
   },
 
   add: {
@@ -1495,6 +1495,15 @@ export const fr: Messages = {
   },
 
   push: {
+    bigCharge: {
+      title: "Demain\u00A0: {name}",
+      body: "{amount} à prévoir, plus que vos opérations récurrentes habituelles.",
+      yearly: "{amount} à prévoir — elle ne revient qu'une fois par an.",
+      titleSeveral: {
+        one: "Demain\u00A0: {count} grosse opération",
+        other: "Demain\u00A0: {count} grosses opérations",
+      },
+    },
     close: {
       title: "Faites le bilan de {month}",
       body: "C'est le jour de lecture\u00A0: notez le solde de votre compte pour voir ce que {month} vous a laissé.",
