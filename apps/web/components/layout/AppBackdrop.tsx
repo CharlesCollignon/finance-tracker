@@ -1,8 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
-import DarkVeil from "@/components/DarkVeil";
 import { cn } from "@/lib/utils";
+
+/**
+ * The shader, loaded after the page rather than with it. ogl and the
+ * program are only the drift on top of the bloom, and the bloom underneath
+ * is the finished design (see below), so the page lands complete and the
+ * light starts moving a moment later — without the shader's code in the
+ * bundle every app page waits for.
+ */
+const DarkVeil = dynamic(() => import("@/components/DarkVeil"), {
+  ssr: false,
+});
 
 /**
  * The ground the whole app sits on.
