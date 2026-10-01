@@ -24,11 +24,8 @@ import type {
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  DEFAULT_LOCALE,
-  parseLocale,
-  type Locale,
-} from "@finance/core/i18n/locale";
+import { readLocales } from "@/lib/push/locale";
+import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
 
 /**
@@ -146,36 +143,6 @@ export async function GET(request: NextRequest) {
 }
 
 type AdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
-
-/**
- * What language each of these users reads in.
- *
- * Users with no row are simply absent from the map and fall back to the
- * default, which is the right reading of an absent row: it means nobody has
- * ever chosen, not that they chose English.
- */
-async function readLocales(
-  supabase: AdminClient,
-  userIds: string[],
-): Promise<Map<string, Locale>> {
-  if (userIds.length === 0) {
-    return new Map();
-  }
-
-  const { data } = await supabase
-    .from("user_preferences")
-    .select("user_id, locale")
-    .in("user_id", userIds);
-
-  const byUser = new Map<string, Locale>();
-  for (const row of (data ?? []) as { user_id: string; locale: string }[]) {
-    const locale = parseLocale(row.locale);
-    if (locale) {
-      byUser.set(row.user_id, locale);
-    }
-  }
-  return byUser;
-}
 
 /** What this one user should hear about today. */
 async function notificationsFor(
