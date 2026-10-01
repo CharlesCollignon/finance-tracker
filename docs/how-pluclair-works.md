@@ -5,7 +5,8 @@ figure is computed, and what is known to be wrong. Written for whoever works
 on the repository next, human or agent. Every phase of
 `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` updates it before it closes.
 
-Last updated: Phase 0, Plan 0.2 — closed (2026-09-26).
+Last updated: quality plan Phase 1, correct and in sync (2026-10-01;
+`docs/plans/QUALITY_SYNC_ENGAGEMENT_PLAN.md`).
 
 ## Shape
 
@@ -38,6 +39,30 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 | Profile                | `/profile`                              | `(tabs)/profile`                                                         |
 | Sign in, sign up       | `/login`, `/signup`                     | `(auth)/login`, `(auth)/signup`                                          |
 | Password reset         | `/reset`, `/auth/confirm`, `/reset/new` | `(auth)/reset` (the new password is set on the web page the email opens) |
+
+## How every surface stays current
+
+Neither app keeps a client cache; each screen reads what it shows, and a
+write anywhere has to reach every screen that shows it.
+
+- **Web.** Every server action ends in `revalidateApp()`
+  (`lib/revalidate-paths.ts`), which revalidates the `(app)` route group as a
+  layout: every app page, including ones added later, and none of the
+  marketing pages. `LiveRefresh` in the app layout covers writes made
+  elsewhere: a layout render it did not ask for means this tab wrote, which it
+  announces on a BroadcastChannel so other tabs redraw; and a tab coming back
+  into view or focus after more than a minute away redraws, which is how the
+  phone's and the bank cron's writes reach an open browser.
+- **Phone.** The Supabase client and `callWebApi` go through
+  `announcingFetch` (`lib/data-version.ts`): a successful write announces the
+  data area of the table or route it wrote to. Screens load with
+  `useRefreshable(loader, deps, { reads })`; a write to an area a screen reads
+  reloads it in place if it is in view, and marks it stale otherwise until it
+  is shown again. Coming back from the background, a notification arriving or
+  tapped, and the month turning over reload what is in view
+  (`hooks/useAppForeground.ts`, `MonthProvider`).
+- **Both.** Every query that can pass the server's 1,000-row cap goes through
+  `allRows` (`packages/core/src/paging.ts`).
 
 ## Where each figure is computed
 
@@ -160,5 +185,8 @@ assertion script:
 - `allRows` (`packages/core/src/paging.ts`) assumes the server's `max_rows`
   is at least 1,000 (the local config and the hosted default); a lower cap
   would truncate silently.
+- The web's offline outbox sends one tab at a time, but the server has no
+  idempotency key: a tab closed between a save succeeding and the entry
+  leaving the queue would send it again on the next drain.
 - The SQL assertion scripts in `supabase/tests/` are run by hand against a
   local stack; CI does not run them.

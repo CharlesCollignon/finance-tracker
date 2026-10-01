@@ -25,49 +25,54 @@ owner merges.
   every-charge reminders), and spending above normal (inside the recap, a
   _constat_, never its own push).
 
-## Phase 1 — Correct and in sync (branch `phase-1/sync-and-fixes`)
+## Phase 1 — Correct and in sync (branch `phase-1/sync-and-fixes`) — done
 
 Bugs found by the audits:
 
-- [ ] Phone: the position sheet seeds its fields once and never resyncs, so
+- [x] Phone: the position sheet seeds its fields once and never resyncs, so
       Save can write 0 as the amount put in (`InvestmentPositionSheet`).
-- [ ] Phone: five amount fields parse with `.replace(",", ".")`, which breaks
+- [x] Phone: five amount fields parse with `.replace(",", ".")`, which breaks
       on « 1 234,56 »; use `parseTypedAmount`.
-- [ ] Phone: three mutations build sentences in the default locale, so an
+- [x] Phone: three mutations build sentences in the default locale, so an
       English reader gets French; return a key and its params.
-- [ ] Phone: reminders take today from `toISOString()` (UTC).
-- [ ] Phone: `importFeedItem` ignores a failed feed-row update.
-- [ ] Phone: the month-open message arrives twice (local 09:00 + server).
-- [ ] Web: queries stop at 1 000 rows (`max_rows`) and the web never pages;
+- [x] Phone: reminders take today from `toISOString()` (UTC).
+- [x] Phone: `importFeedItem` ignores a failed feed-row update.
+- [x] Phone: the month-open message arrives twice (local 09:00 + server).
+- [x] Web: queries stop at 1 000 rows (`max_rows`) and the web never pages;
       the newest investment rows are the ones lost.
-- [ ] Web: "refresh quotes" serves the stale entry (`revalidateTag(…, "max")`
+- [x] Web: "refresh quotes" serves the stale entry (`revalidateTag(…, "max")`
       is stale-while-revalidate); use `updateTag`.
-- [ ] Web: the offline outbox overwrites and double-drains across tabs.
-- [ ] Server: the review-inbox push is hard-coded English.
+- [x] Web: the offline outbox overwrites and double-drains across tabs.
+- [x] Server: the review-inbox push is hard-coded English.
 
 Sync, phone:
 
-- [ ] Writes announce themselves: the write layer notifies, not each caller,
+- [x] Writes announce themselves: the write layer notifies, not each caller,
       scoped by data area so a screen reloads only for what it reads.
-- [ ] A screen that is not in view marks itself stale and reloads when it
+- [x] A screen that is not in view marks itself stale and reloads when it
       comes back into view, instead of every visited tab refetching on every
       write (~130 requests a tap today).
-- [ ] Coming back to the app, a notification arriving or being tapped, and the
+- [x] Coming back to the app, a notification arriving or being tapped, and the
       month turning over all reload what is in view.
-- [ ] Stale local copies: the inbox sheet's hidden rows, the PEA date field.
+- [x] Stale local copies: the inbox sheet's hidden rows, the PEA date field.
 
 Sync, web:
 
-- [ ] One revalidation for every `(app)` surface instead of hand-kept path
+- [x] One revalidation for every `(app)` surface instead of hand-kept path
       lists (`revalidatePath("/(app)", "layout")`), so a new page cannot be
       forgotten.
-- [ ] Live refresh: a tab coming back into view, and a write in another tab
+- [x] Live refresh: a tab coming back into view, and a write in another tab
       (BroadcastChannel), refresh the page in view — which is also how the
       phone's and the bank cron's writes reach an open browser.
-- [ ] Stale local copies: the refresh label, the inbox's hidden rows,
+- [x] Stale local copies: the refresh label, the inbox's hidden rows,
       arrived charges' answered set, the month read's quota.
-- [ ] The app layout's six sequential reads run together.
-- [ ] Recurring on/off is optimistic and cannot be double-sent.
+- [x] The app layout's six sequential reads run together.
+- [x] Recurring on/off is optimistic and cannot be double-sent.
+
+Also done on the way: the Journal loads in two stages rather than four; taking
+back "record it now" says so when only half of it worked; a push with no
+address opens `/bearing` rather than the retired `/dashboard`; a phone's
+review link opens the review every time it is followed.
 
 ## Phase 2 — One codebase, not two (branch `phase-2/refactor`)
 
