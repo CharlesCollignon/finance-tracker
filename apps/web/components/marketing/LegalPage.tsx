@@ -3,7 +3,9 @@ import { Fragment } from "react";
 import { getLocale } from "@/lib/locale";
 import {
   LEGAL_DRAFT,
+  LEGAL_PATHS,
   legalCopyFor,
+  type LegalDocumentId,
   type LegalSection,
 } from "@/components/marketing/legal-copy";
 import { marketingFocus } from "@/components/marketing/marketing-focus";
@@ -17,11 +19,11 @@ import { cn } from "@/lib/utils";
  * what they agreed to, and a paragraph that fades in is a paragraph that was
  * briefly not there to read.
  */
-export async function LegalPage({ doc }: { doc: "privacy" | "terms" }) {
+export async function LegalPage({ doc }: { doc: LegalDocumentId }) {
   const locale = await getLocale();
   const copy = legalCopyFor(locale);
   const page = copy[doc];
-  const other = doc === "privacy" ? "terms" : "privacy";
+  const other: LegalDocumentId = doc === "privacy" ? "terms" : "privacy";
   const updated = new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(
     new Date(`${copy.updated}T12:00:00Z`),
   );
@@ -79,7 +81,7 @@ export async function LegalPage({ doc }: { doc: "privacy" | "terms" }) {
 
       <p className="mt-16 border-t border-white/10 pt-6 text-sm text-marketing-muted">
         <Link
-          href={`/${other}`}
+          href={LEGAL_PATHS[other]}
           className={cn(
             "rounded-control underline decoration-white/30 underline-offset-4 transition-colors duration-hover hover:text-white",
             marketingFocus,

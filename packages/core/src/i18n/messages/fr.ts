@@ -2041,8 +2041,7 @@ export const fr: Messages = {
 
   bankConnect: {
     sheetTitle: "Connecter votre banque",
-    sheetLead:
-      "Vos transactions arrivent toutes seules, et votre vrai solde est lu quatre fois par jour. Vous le mettez en place une fois, avec votre propre compte open-banking.io.",
+    sheetLead: "Vos transactions et votre vrai solde viennent directement de votre banque à chaque actualisation. Vous le mettez en place une fois, avec votre propre compte open-banking.io.",
     step1Title: "Créez votre compte open-banking.io",
     step1Body:
       "Inscrivez-vous et approvisionnez son portefeuille. Environ 3\u00A0€ par mois pour un compte bancaire et 1\u00A0€ par compte supplémentaire — payés à eux, pas à Pluclair.",
@@ -2062,7 +2061,13 @@ export const fr: Messages = {
       "Le consentement de votre banque dure environ 180 jours. Vous le renouvelez sur open-banking.io, et vous êtes prévenu avant la fin.",
     factHistory:
       "Les mois passés sont complétés depuis votre banque, leurs totaux peuvent donc changer.",
+    notRegulated: "Pluclair n'est pas un prestataire de services de paiement\u00A0: le service réglementé d'information sur les comptes est fourni par Enable Banking Oy, via votre compte open-banking.io.",
     privacyLink: "Comment vos données bancaires sont traitées",
+    consentLabel: "J'autorise Pluclair à utiliser mon fichier d'identifiants pour lire les comptes et les opérations de mon compte open-banking.io — des données que ma banque fournit via Enable Banking Oy, prestataire agréé de services d'information sur les comptes — afin de tenir mon budget. Ces opérations peuvent révéler des informations sensibles (santé, convictions, appartenance syndicale…), et j'accepte expressément qu'elles soient traitées dans ce seul but. Pluclair ne sollicite ma banque que lorsque je demande une actualisation. Je peux retirer ce consentement à tout moment en déconnectant ma banque.",
+    consentRequired: "Cochez d'abord la case de consentement.",
+    consentMissingTitle: "Confirmez votre consentement",
+    consentMissingBody: "Pluclair enregistre désormais ce consentement avant de lire des données bancaires. Merci de le confirmer pour votre connexion.",
+    consentConfirm: "J'accepte",
     openSite: "Ouvrir open-banking.io",
     dropTitle: "Déposez credentials.json ici",
     dropHint:
@@ -2144,15 +2149,13 @@ export const fr: Messages = {
     disconnected: "Votre banque est déconnectée.",
     notConnectedBody:
       "Voyez votre vrai solde, laissez les lignes arriver toutes seules et les mois se clôturer d'eux-mêmes.",
-    unlockBalance:
-      "Votre vrai solde, lu depuis votre banque quatre fois par jour",
+    unlockBalance: "Votre vrai solde, lu depuis votre banque à chaque actualisation",
     unlockEntries:
       "Des lignes qui arrivent et se classent d'après votre propre historique",
     unlockArrived: "Des charges confirmées à leur arrivée",
     unlockClose: "Des mois qui se clôturent d'eux-mêmes le jour du relevé",
     profileLink: "Connexion bancaire",
-    inviteBearing:
-      "Voyez votre vrai solde, lu depuis votre banque quatre fois par jour.",
+    inviteBearing: "Voyez votre vrai solde, lu depuis votre banque à chaque actualisation.",
     inviteWelcome: "Laissez votre banque remplir tout cela pour vous.",
     inviteLedger:
       "Arrêtez de tout saisir : connectez votre banque et les lignes arrivent toutes seules.",

@@ -199,8 +199,8 @@ price. It never touches a date that has passed and never creates a
 transaction. This is what keeps a DCA written ahead of time at the price it
 will actually cost.
 
-_The bank sync_ asks the bank for anything new, then reads the statement,
-files what the user's own history already answers for, and leaves the rest in
+_The bank sync_ reads the statement open-banking.io already holds (it never
+asks the bank itself; see _Pulling_ below), files what the user's own history already answers for, and leaves the rest in
 the review inbox. It pushes only when the run left something needing a
 decision, keyed by the day so it is said once. It runs for every
 connected user, stalest first, inside a 40-second share of the run, and
@@ -255,19 +255,22 @@ limit.
 
 Reading open-banking.io's stored statement (`getAccounts`, `getTransactions`)
 is a read of our own copy. It reaches no bank, costs nothing, and can be done
-as often as anyone likes — but it is only as current as whatever the provider
-last fetched on its own schedule.
+as often as anyone likes — but it is only as current as the last sync, and
+open-banking.io never syncs on its own: the bank identifier is sealed under
+the user's key, so a sync happens only in their browser, their own client, or
+when they press Refresh in Pluclair.
 
-_Pulling_ — the SDK's `syncAll` — is the call that reaches the bank. Its
-ceiling is regulatory rather than commercial: under PSD2 an account
-information service may read an account **four times a day when the user is
-not present**, and **without limit when they are**. So the two kinds are
-counted separately:
+_Pulling_ — the SDK's `syncAll` — is the call that reaches the bank, and
+Pluclair makes it **only when the user presses Refresh**. PSD2 reserves
+scheduled, unattended access (four reads a day per account) to the licensed
+account information provider, which Pluclair is not, so `pullFromBank`
+refuses an unattended pull outright and the cron only reads (October 2026,
+see `docs/legal/AIPD.md`):
 
 | Kind       | Who                     | Limit                                                                    |
 | ---------- | ----------------------- | ------------------------------------------------------------------------ |
 | Attended   | Someone pressed refresh | None, beyond a 90-second cooldown so a double-tap is not two round trips |
-| Unattended | The cron                | Four a day, which is why there are four refresh schedules                |
+| Unattended | Nobody                  | Refused — the cron reads what is already synced                          |
 
 The tally lives in `bank_pulls` (migration 022), one row per user per day,
 because a serverless function remembers nothing between invocations and an
@@ -277,8 +280,7 @@ is the plumbing around it.
 
 A refused pull is an ordinary outcome, not an error: the stored statement is
 still read, and every screen says how old the figures are. Without migration
-022 applied, attended refreshes still work and the unattended run simply does
-not pull — which is exactly what it did before any of this existed.
+022 applied, attended refreshes still work.
 
 ### Closing a month
 

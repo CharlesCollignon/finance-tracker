@@ -774,6 +774,8 @@ export interface Database {
           last_synced_at: string | null;
           last_error: string | null;
           backfilled_at: string | null;
+          consent_version: string | null;
+          consent_given_at: string | null;
           updated_at: string;
         };
         Insert: {
@@ -785,6 +787,8 @@ export interface Database {
           last_synced_at?: string | null;
           last_error?: string | null;
           backfilled_at?: string | null;
+          consent_version?: string | null;
+          consent_given_at?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -796,6 +800,8 @@ export interface Database {
           last_synced_at?: string | null;
           last_error?: string | null;
           backfilled_at?: string | null;
+          consent_version?: string | null;
+          consent_given_at?: string | null;
           updated_at?: string;
         };
         Relationships: [];

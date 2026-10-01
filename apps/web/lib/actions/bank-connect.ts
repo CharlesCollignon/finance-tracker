@@ -7,7 +7,11 @@ import {
   listAccountsToImport,
 } from "@/lib/bank/first-import";
 import { bankSetupOffered } from "@/lib/bank/offer";
-import { connectUserBankFile, disconnectUserBank } from "@/lib/bank/service";
+import {
+  connectUserBankFile,
+  disconnectUserBank,
+  recordUserBankConsent,
+} from "@/lib/bank/service";
 import type { BankInviteSurface } from "@/lib/bank/invite";
 import { getLocale } from "@/lib/locale";
 import { revalidateEverySurface } from "@/lib/revalidate-paths";
@@ -22,6 +26,7 @@ type Result<T = object> = ({ error?: undefined } & T) | { error: string };
  */
 export async function connectBankFile(
   text: string,
+  consentVersion: string,
 ): Promise<Result<{ outcome: "connected" | "paused"; accounts: number }>> {
   const user = await getAuthUser();
   if (!user) {
@@ -30,11 +35,27 @@ export async function connectBankFile(
   if (!(await bankSetupOffered())) {
     return { error: "bankConnect.unavailable" };
   }
-  const result = await connectUserBankFile(user.id, text);
+  const result = await connectUserBankFile(user.id, text, consentVersion);
   if (result.error === undefined) {
     revalidateEverySurface();
   }
   return result;
+}
+
+/** Give today's consent on a connection that has none on record. */
+export async function confirmBankConsent(
+  consentVersion: string,
+): Promise<Result> {
+  const user = await getAuthUser();
+  if (!user) {
+    return { error: "errors.notAuthenticated" };
+  }
+  const result = await recordUserBankConsent(user.id, consentVersion);
+  if (result.error !== undefined) {
+    return { error: result.error };
+  }
+  revalidateEverySurface();
+  return {};
 }
 
 /** The accounts a first import walks. See `listAccountsToImport`. */

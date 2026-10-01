@@ -10,6 +10,7 @@ const {
   readCredentials,
 } = await import("./credentials");
 import type {
+  ConsentRecord,
   CredentialStore,
   StartingStatus,
   StoredCredentials,
@@ -17,6 +18,11 @@ import type {
 import type { Sealed } from "./secrets";
 
 const PRIVATE_KEY = randomBytes(138).toString("base64");
+
+const CONSENT: ConsentRecord = {
+  version: "2026-10-01",
+  givenAt: "2026-10-01T09:00:00.000Z",
+};
 
 function file(overrides: Record<string, unknown> = {}): string {
   return JSON.stringify({
@@ -38,10 +44,12 @@ function file(overrides: Record<string, unknown> = {}): string {
 function memoryStore() {
   const secrets = new Map<string, Sealed>();
   const statuses = new Map<string, StartingStatus | "revoked">();
+  const consents = new Map<string, ConsentRecord>();
   const store: CredentialStore = {
-    async saveConnection(userId, sealed, status) {
+    async saveConnection(userId, sealed, status, consent) {
       secrets.set(userId, sealed);
       statuses.set(userId, status);
+      consents.set(userId, consent);
     },
     async readSecret(userId) {
       return secrets.get(userId) ?? null;
@@ -54,7 +62,7 @@ function memoryStore() {
       statuses.set(userId, "revoked");
     },
   };
-  return { store, secrets, statuses };
+  return { store, secrets, statuses, consents };
 }
 
 /** A client that answers the way open-banking.io would. */
@@ -149,13 +157,14 @@ describe("reading a credentials file", () => {
 
 describe("connecting with a file", () => {
   it("tries the keys, then keeps them sealed", async () => {
-    const { store, secrets, statuses } = memoryStore();
+    const { store, secrets, statuses, consents } = memoryStore();
     const { open, seen } = answering("accounts");
 
-    const result = await connectWithFile({ store, open }, "user-1", file());
+    const result = await connectWithFile({ store, open }, "user-1", file(), CONSENT);
 
     expect(result).toEqual({ outcome: "connected", accounts: 2 });
     expect(seen).toHaveLength(1);
+    expect(consents.get("user-1")).toEqual(CONSENT);
     expect(statuses.get("user-1")).toBe("active");
     const sealed = secrets.get("user-1")!;
     expect(sealed.ciphertext).not.toContain(PRIVATE_KEY);
@@ -175,7 +184,7 @@ describe("connecting with a file", () => {
     ] as const) {
       const { store, secrets } = memoryStore();
       const { open } = answering(answer);
-      expect(await connectWithFile({ store, open }, "user-1", file())).toEqual({
+      expect(await connectWithFile({ store, open }, "user-1", file(), CONSENT)).toEqual({
         problem,
       });
       expect(secrets.size).toBe(0);
@@ -185,7 +194,7 @@ describe("connecting with a file", () => {
   it("keeps a good key on an empty wallet, as paused", async () => {
     const { store, statuses } = memoryStore();
     const { open } = answering(402);
-    expect(await connectWithFile({ store, open }, "user-1", file())).toEqual({
+    expect(await connectWithFile({ store, open }, "user-1", file(), CONSENT)).toEqual({
       outcome: "paused",
       accounts: 0,
     });
@@ -195,7 +204,7 @@ describe("connecting with a file", () => {
   it("never tries a file it could not read", async () => {
     const { store } = memoryStore();
     const { open, seen } = answering("accounts");
-    await connectWithFile({ store, open }, "user-1", "{}");
+    await connectWithFile({ store, open }, "user-1", "{}", CONSENT);
     expect(seen).toHaveLength(0);
   });
 });
@@ -204,7 +213,7 @@ describe("reading stored credentials", () => {
   it("re-seals under the new key while a rotation is under way", async () => {
     const { store, secrets } = memoryStore();
     const { open } = answering("accounts");
-    await connectWithFile({ store, open }, "user-1", file());
+    await connectWithFile({ store, open }, "user-1", file(), CONSENT);
     const before = secrets.get("user-1")!;
 
     process.env.BANK_SECRETS_KEY_PREVIOUS = process.env.BANK_SECRETS_KEY;
@@ -220,7 +229,7 @@ describe("reading stored credentials", () => {
   it("finds nothing once the connection is forgotten", async () => {
     const { store } = memoryStore();
     const { open } = answering("accounts");
-    await connectWithFile({ store, open }, "user-1", file());
+    await connectWithFile({ store, open }, "user-1", file(), CONSENT);
     await store.forgetConnection("user-1");
     expect(await readCredentials(store, "user-1")).toBeNull();
   });

@@ -40,6 +40,19 @@ What that changed in the code:
 - Setup is offered only where `BANK_SECRETS_KEY` is set **and** the
   `bank.connect` flag is on for the account (migration 042, off by default).
 
+**Legal footing (1 October 2026).** Researched for French law: the model is
+grey rather than clearly illegal — reading data the user exported is the
+defensible part, and the ACPR's own fintech page names budgeting apps reading
+accounts through an API as needing a status. Done in response: Pluclair no
+longer refreshes from the bank on a schedule (only when the user presses
+Refresh); a dated, versioned consent is required before a file is accepted
+(migration 044); server functions run in Paris; a legal notice
+(`/mentions-legales`) joins the privacy policy and terms; and French drafts of
+the AIPD and the record of processing are in `docs/legal/`. Still the owner's:
+ask the ACPR (`fintech-innovation@acpr.banque-france.fr`), get open-banking.io's
+written agreement (ideally a read-only key), and a French fintech lawyer's
+review — before opening `bank.connect` to everyone.
+
 What only you can do, in order:
 
 1. **Apply `042_bank_credentials_file.sql`.**

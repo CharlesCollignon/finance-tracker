@@ -12,6 +12,8 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { bankAttention } from "@finance/core/bank-attention";
+import { BANK_CONSENT_VERSION } from "@finance/core/bank-consent";
+import { resolveMessage } from "@finance/core/i18n/t";
 import { formatShortDate, todayIsoLocal } from "@finance/core/constants";
 import type {
   BankAccount,
@@ -23,7 +25,7 @@ import { MobileSheet } from "@/components/layout/MobileSheet";
 import { useToast } from "@/components/layout/ToastProvider";
 import { BankImport } from "@/components/finance/bank/BankImport";
 import { ConnectBankSheet } from "@/components/finance/bank/ConnectBankSheet";
-import { disconnectBank } from "@/lib/actions/bank-connect";
+import { confirmBankConsent, disconnectBank } from "@/lib/actions/bank-connect";
 import { GLASS_CARD, GLASS_HERO } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { cn } from "@/lib/utils";
@@ -41,6 +43,8 @@ export interface BankViewProps {
     lastSyncedAt: string | null;
     consentValidUntil: string | null;
     backfilled: boolean;
+    /** Whether today's consent text is on record for this connection. */
+    consentCurrent: boolean;
   } | null;
   /** The owner still on the deployment's own credentials: syncing, no row. */
   ownerCredentials: boolean;
@@ -74,6 +78,8 @@ export function BankView({
           onConnect={() => setConnectOpen(true)}
         />
       ) : null}
+
+      {live && !connection.consentCurrent ? <ConsentCard /> : null}
 
       {live && connection.status !== "active" ? (
         <ProblemCard
@@ -189,6 +195,53 @@ function Invitation({
           {t("bankConnect.unavailable")}
         </p>
       )}
+    </section>
+  );
+}
+
+/**
+ * Today's consent, for a connection that has none on record — one made
+ * before consent was asked at upload, or under words that have since
+ * changed. The same text the upload shows, and the same version stored.
+ */
+function ConsentCard() {
+  const t = useT();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [pending, startTransition] = useTransition();
+
+  function agree() {
+    startTransition(async () => {
+      const result = await confirmBankConsent(BANK_CONSENT_VERSION);
+      if (result.error !== undefined) {
+        toast(resolveMessage(t, result.error), "error");
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  return (
+    <section
+      className={cn(
+        GLASS_CARD,
+        "flex flex-col gap-3 rounded-card border-primary/40 p-card",
+      )}
+    >
+      <h2 className="text-base font-semibold">
+        {t("bankConnect.consentMissingTitle")}
+      </h2>
+      <p className="text-sm text-muted-foreground">
+        {t("bankConnect.consentMissingBody")}
+      </p>
+      <p className="rounded-control border border-border p-3 text-xs leading-relaxed">
+        {t("bankConnect.consentLabel")}
+      </p>
+      <div>
+        <Button type="button" disabled={pending} onClick={agree}>
+          {t("bankConnect.consentConfirm")}
+        </Button>
+      </div>
     </section>
   );
 }

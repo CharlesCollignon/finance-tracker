@@ -36,8 +36,19 @@ export interface LegalDocument {
   sections: LegalSection[];
 }
 
+/** The three documents, and where each is served. */
+export type LegalDocumentId = "privacy" | "terms" | "notice";
+
+export const LEGAL_PATHS: Record<LegalDocumentId, string> = {
+  privacy: "/privacy",
+  terms: "/terms",
+  // French, because the obligation is French (LCEN art. 1-1) and so is the
+  // name everyone looks for.
+  notice: "/mentions-legales",
+};
+
 export interface LegalCopy {
-  nav: { privacy: string; terms: string };
+  nav: Record<LegalDocumentId, string>;
   updatedLabel: string;
   /** ISO date the text last changed. */
   updated: string;
@@ -45,10 +56,15 @@ export interface LegalCopy {
   draftNotice: string;
   privacy: LegalDocument;
   terms: LegalDocument;
+  notice: LegalDocument;
 }
 
 export const legalCopy: LegalCopy = {
-  nav: { privacy: "Privacy policy", terms: "Terms of use" },
+  nav: {
+    privacy: "Privacy policy",
+    terms: "Terms of use",
+    notice: "Legal notice",
+  },
   updatedLabel: "Last updated:",
   updated: "2026-09-30",
   contents: "On this page",
@@ -95,7 +111,7 @@ export const legalCopy: LegalCopy = {
         id: "bank",
         heading: "Connecting a bank",
         body: [
-          "Connecting a bank is optional. It works through your own open-banking.io account: you sign up there and pay them directly (at the time of writing, about €3 a month for the first account and €1 for each extra one), and your bank asks for your consent on its own pages, through Enable Banking, a licensed account information service provider. Pluclair never sees your bank login, and never collects or handles that payment.",
+          "Connecting a bank is optional. It works through your own open-banking.io account: you sign up there and pay them directly (at the time of writing, about €3 a month for the first account and €1 for each extra one), and your bank asks for your consent on its own pages, through Enable Banking Oy, a licensed account information service provider. Pluclair never sees your bank login, never collects or handles that payment, and is not itself a licensed or registered payment service provider.",
           "open-banking.io, Enable Banking and your bank process your data under their own privacy policies, as [[independent controllers — confirm with open-banking.io how they describe the roles]].",
           "To let Pluclair read that account, you give it the credentials file open-banking.io lets you download (credentials.json): an API key that reads your open-banking.io account, and the private key that decrypts what it returns. What Pluclair then receives:",
         ],
@@ -106,7 +122,7 @@ export const legalCopy: LegalCopy = {
         ],
         after: [
           "Of that file we keep only the two keys, sealed with AES-256-GCM under a key that only our server holds. No app can read that table — not even for your own account — and the keys are never sent back to a browser or phone, or written to a log. Your browser or phone carries the file once, to our server, and does not keep it.",
-          "We read your accounts up to four times a day, which is the most the European rules (PSD2) allow without you present, plus whenever you ask for a refresh. Your bank's consent lasts about 180 days; you renew it on open-banking.io, and we remind you before it ends.",
+          "Pluclair asks your bank for new data only when you ask for a refresh; the rest of the time it reads what your open-banking.io account already holds. Your bank's consent lasts about 180 days; you renew it on open-banking.io, and we remind you before it ends.",
           "You can disconnect at any time from Profile → Bank. We delete the file straight away. Its API key keeps existing at open-banking.io until you delete it there, which the Bank page reminds you to do. You choose whether the entries your bank brought in stay in your records or are removed; they stay unless you say otherwise. Closing your open-banking.io account is done with them.",
         ],
       },
@@ -116,7 +132,7 @@ export const legalCopy: LegalCopy = {
         body: [],
         points: [
           "To provide the service you signed up for: storing your records, working out your figures, showing them to you, and syncing your bank if you connected one. The legal basis is the contract between us (GDPR, article 6(1)(b)).",
-          "For the bank connection, also on the consent you give in the app and at your bank. You withdraw it by disconnecting (article 6(1)(a)).",
+          "For the bank connection, on the consent you give on screen when you upload your credentials file, and at your bank. It covers the sensitive information your transactions can reveal — health, beliefs, union membership — which is processed only on that explicit consent (articles 6(1)(a) and 9(2)(a)). We keep the date and the version of the words you accepted, and you withdraw it by disconnecting.",
           "To send notifications, only when you turn them on. Turning them off on your device or in your browser stops them.",
           "To keep the service secure and working: our host keeps short-lived technical logs of requests, and we look at them only to fix a fault or stop an abuse. The basis is our legitimate interest in running a safe service (article 6(1)(f)).",
         ],
@@ -131,15 +147,15 @@ export const legalCopy: LegalCopy = {
           "These companies process data on our behalf, only to run Pluclair, and under a data processing agreement:",
         ],
         points: [
-          "Supabase: the database and sign-in. [[Region of the Supabase project]].",
-          "Vercel: hosting for the website and the server. [[Region of the Vercel functions]].",
+          "Supabase: the database and sign-in, in the European Union ([[the exact EU region of the Supabase project]]).",
+          "Vercel: hosting for the website and the server, with the server functions running in Paris, France.",
           "Mistral AI (France): writes the short reads of your month and of your wallets. It receives only the figures a read is written from — category names and monthly totals, or the funds in a wallet and their values — and never your name, your email or your individual entries.",
           "Google: only if you sign in with Google.",
           "Notification delivery: web notifications are encrypted so that your browser's push service (Apple, Google, Microsoft or Mozilla, depending on the browser) cannot read them. Phone notifications go through Expo's push service and then Apple or Google.",
           "Market prices: to value your funds, we look up their prices from Yahoo Finance and from fund publishers' pages (justETF, iShares). We send only the fund's identifier, never anything about you.",
         ],
         after: [
-          "[[If any of these stores or reaches data outside the European Economic Area, name the safeguard here — the European Commission's standard contractual clauses, or the EU–US Data Privacy Framework — after checking each provider's region.]]",
+          "Vercel Inc. is a US company certified under the EU–US Data Privacy Framework, on which any transfer to it relies. Supabase and Mistral AI keep the data in the European Union, and Supabase relies on the European Commission's standard contractual clauses for any access from outside it. [[Confirm each provider's current data processing agreement.]]",
         ],
       },
       {
@@ -225,7 +241,7 @@ export const legalCopy: LegalCopy = {
         id: "bank",
         heading: "Connecting a bank",
         body: [
-          "Connecting a bank is optional and goes through your own open-banking.io account, a separate service. You sign up with them, accept their terms and pay them directly; Pluclair is not part of that contract and never takes or handles that payment. You connect it by giving Pluclair the credentials file of that account: keep the file private, and delete its API key at open-banking.io if you think it has been exposed.",
+          "Connecting a bank is optional and goes through your own open-banking.io account, a separate service. You sign up with them, accept their terms and pay them directly; Pluclair is not part of that contract, never takes or handles that payment, and is not a licensed or registered payment service provider — the account information service is provided by Enable Banking Oy. You connect it by giving Pluclair the credentials file of that account and consenting on screen: keep the file private, and delete its API key at open-banking.io if you think it has been exposed.",
           "The connection is read-only: nothing in Pluclair can move money. Syncing depends on open-banking.io, Enable Banking and your bank, and it can be late, incomplete, or stop — when your bank's consent ends, when your open-banking.io wallet runs out, or when a bank is unavailable. We tell you when syncing stops, and your records stay yours whatever happens to the connection.",
         ],
       },
@@ -289,6 +305,48 @@ export const legalCopy: LegalCopy = {
         heading: "Contact",
         body: [
           "[[The operator's legal name and postal address]]. Email: [[the support contact address]].",
+        ],
+      },
+    ],
+  },
+
+  notice: {
+    title: "Legal notice",
+    summary:
+      "Who publishes Pluclair, who hosts it, and who provides the regulated part of the bank connection.",
+    sections: [
+      {
+        id: "publisher",
+        heading: "Publisher",
+        body: [
+          "The pluclair.com website and the Pluclair apps are published by [[the publisher's full name — or, for a company, its name, legal form and share capital]], [[home address or registered office]], telephone [[a telephone number]], email [[a contact email address]]. [[Registration number (SIREN / RCS) if the publisher is registered; otherwise remove this sentence]].",
+        ],
+      },
+      {
+        id: "director",
+        heading: "Publication director",
+        body: ["[[Name of the publication director — usually the publisher]]."],
+      },
+      {
+        id: "hosting",
+        heading: "Hosting",
+        body: [
+          "The website and its servers are hosted by Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, United States, telephone [[Vercel's telephone number]]. Pluclair's server functions run in Paris, France.",
+          "The app's data is stored by [[Supabase's legal name and address]], in the European Union ([[the exact EU region of the Supabase project]]).",
+        ],
+      },
+      {
+        id: "payments",
+        heading: "Payment services",
+        body: [
+          "Pluclair is not a licensed or registered payment service provider. The optional bank connection goes through the user's own open-banking.io account (Tatic ApS, Denmark), and the account information service is provided by Enable Banking Oy, registered with the Finnish Financial Supervisory Authority (FIN-FSA).",
+        ],
+      },
+      {
+        id: "data",
+        heading: "Personal data",
+        body: [
+          "How Pluclair handles personal data, and how to exercise your rights, is set out in the privacy policy.",
         ],
       },
     ],

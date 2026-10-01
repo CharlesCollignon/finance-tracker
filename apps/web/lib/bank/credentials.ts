@@ -142,12 +142,19 @@ export function clientFor(credentials: StoredCredentials): OpenBankingClient {
 /** The status a freshly accepted file starts in. */
 export type StartingStatus = "active" | "paused";
 
+/** The consent accepted with the file: which words, and when. */
+export interface ConsentRecord {
+  version: string;
+  givenAt: string;
+}
+
 /** Where credentials are kept — the database in the app, memory in tests. */
 export interface CredentialStore {
   saveConnection(
     userId: string,
     sealed: Sealed,
     status: StartingStatus,
+    consent: ConsentRecord,
   ): Promise<void>;
   readSecret(userId: string): Promise<Sealed | null>;
   replaceSecret(userId: string, sealed: Sealed): Promise<void>;
@@ -180,6 +187,7 @@ export async function connectWithFile(
   deps: CredentialDeps,
   userId: string,
   text: string,
+  consent: ConsentRecord,
 ): Promise<ConnectResult> {
   const parsed = parseCredentialsFile(text);
   if ("problem" in parsed) {
@@ -217,6 +225,7 @@ export async function connectWithFile(
     userId,
     sealSecret(JSON.stringify(parsed.credentials)),
     status,
+    consent,
   );
   return { outcome: status === "active" ? "connected" : "paused", accounts };
 }
@@ -248,7 +257,7 @@ export async function readCredentials(
 /** The database's side of it, through the service role only. */
 export function credentialStore(admin: Client): CredentialStore {
   return {
-    async saveConnection(userId, sealed, status) {
+    async saveConnection(userId, sealed, status, consent) {
       const { data: existing } = await admin
         .from("bank_connections")
         .select("status, connected_at, backfilled_at")
@@ -277,6 +286,8 @@ export function credentialStore(admin: Client): CredentialStore {
         status,
         connected_at: continuing ? existing.connected_at : now,
         backfilled_at: continuing ? existing.backfilled_at : null,
+        consent_version: consent.version,
+        consent_given_at: consent.givenAt,
         last_error: null,
         updated_at: now,
       });

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { consentIsCurrent } from "@finance/core/bank-consent";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { bankFeedStatus } from "@/lib/bank/client";
 import { bankSetupOffered } from "@/lib/bank/offer";
@@ -30,7 +31,9 @@ export default async function BankPage({ searchParams }: BankPageProps) {
   const [{ data: row }, accounts, status, params, offered] = await Promise.all([
     supabase
       .from("bank_connections")
-      .select("status, last_synced_at, consent_valid_until, backfilled_at")
+      .select(
+        "status, last_synced_at, consent_valid_until, backfilled_at, consent_version",
+      )
       .eq("user_id", user.id)
       .maybeSingle(),
     getBankAccounts(user.id),
@@ -45,6 +48,7 @@ export default async function BankPage({ searchParams }: BankPageProps) {
         lastSyncedAt: row.last_synced_at,
         consentValidUntil: row.consent_valid_until,
         backfilled: row.backfilled_at !== null,
+        consentCurrent: consentIsCurrent(row.consent_version),
       }
     : null;
 

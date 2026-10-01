@@ -119,6 +119,11 @@ export async function LandingFooter({ isLoggedIn }: { isLoggedIn: boolean }) {
                       {legal.terms}
                     </Link>
                   </li>
+                  <li>
+                    <Link href="/mentions-legales" className={footerLink}>
+                      {legal.notice}
+                    </Link>
+                  </li>
                 </>
               ) : null}
             </ul>

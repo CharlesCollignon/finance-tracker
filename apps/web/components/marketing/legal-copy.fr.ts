@@ -12,6 +12,7 @@ export const legalCopyFr: LegalCopy = {
   nav: {
     privacy: "Politique de confidentialité",
     terms: "Conditions d'utilisation",
+    notice: "Mentions légales",
   },
   updatedLabel: "Dernière mise à jour\u00A0:",
   updated: "2026-09-30",
@@ -59,7 +60,7 @@ export const legalCopyFr: LegalCopy = {
         id: "bank",
         heading: "Connecter une banque",
         body: [
-          "Connecter une banque est facultatif. Cela passe par votre propre compte open-banking.io\u00A0: vous vous y inscrivez et le payez directement (à ce jour, environ 3\u00A0€ par mois pour le premier compte et 1\u00A0€ par compte supplémentaire), et c'est votre banque qui recueille votre consentement, sur ses propres pages, par l'intermédiaire d'Enable Banking, prestataire de services d'information sur les comptes agréé. Pluclair ne voit jamais vos identifiants bancaires, et n'encaisse ni ne manipule jamais ce paiement.",
+          "Connecter une banque est facultatif. Cela passe par votre propre compte open-banking.io\u00A0: vous vous y inscrivez et le payez directement (à ce jour, environ 3\u00A0€ par mois pour le premier compte et 1\u00A0€ par compte supplémentaire), et c'est votre banque qui recueille votre consentement, sur ses propres pages, par l'intermédiaire d'Enable Banking Oy, prestataire de services d'information sur les comptes agréé. Pluclair ne voit jamais vos identifiants bancaires, n'encaisse ni ne manipule jamais ce paiement, et n'est pas lui-même un prestataire de services de paiement agréé ou enregistré.",
           "open-banking.io, Enable Banking et votre banque traitent vos données selon leurs propres politiques de confidentialité, en tant que [[responsables de traitement distincts — à confirmer avec open-banking.io]].",
           "Pour que Pluclair puisse lire ce compte, vous lui confiez le fichier d'identifiants qu'open-banking.io vous permet de télécharger (credentials.json)\u00A0: une clé API qui lit votre compte open-banking.io, et la clé privée qui déchiffre ce qu'il renvoie. Ce que Pluclair reçoit alors\u00A0:",
         ],
@@ -70,7 +71,7 @@ export const legalCopyFr: LegalCopy = {
         ],
         after: [
           "De ce fichier, nous ne conservons que les deux clés, scellées en AES-256-GCM sous une clé que seul notre serveur détient. Aucune application ne peut lire cette table — pas même pour votre propre compte — et ces clés ne sont jamais renvoyées à un navigateur ou à un téléphone, ni écrites dans un journal. Votre navigateur ou votre téléphone transmet le fichier une seule fois, à notre serveur, et ne le conserve pas.",
-          "Nous lisons vos comptes jusqu'à quatre fois par jour, le maximum que la réglementation européenne (DSP2) autorise en votre absence, et chaque fois que vous demandez une actualisation. Le consentement donné à votre banque dure environ 180 jours\u00A0; vous le renouvelez sur open-banking.io, et nous vous prévenons avant qu'il se termine.",
+          "Pluclair ne demande de nouvelles données à votre banque que lorsque vous demandez une actualisation\u00A0; le reste du temps, il lit ce que votre compte open-banking.io contient déjà. Le consentement donné à votre banque dure environ 180 jours\u00A0; vous le renouvelez sur open-banking.io, et nous vous prévenons avant qu'il se termine.",
           "Vous pouvez déconnecter votre banque à tout moment depuis Profil → Banque. Nous supprimons aussitôt le fichier. Sa clé API continue d'exister chez open-banking.io jusqu'à ce que vous la supprimiez là-bas, ce que la page Banque vous rappelle de faire. Vous choisissez si les écritures apportées par votre banque restent dans vos comptes ou sont retirées\u00A0; elles restent, sauf si vous en décidez autrement. La fermeture de votre compte open-banking.io se fait auprès d'eux.",
         ],
       },
@@ -80,7 +81,7 @@ export const legalCopyFr: LegalCopy = {
         body: [],
         points: [
           "Pour fournir le service auquel vous vous êtes inscrit : conserver vos écritures, calculer vos chiffres, vous les montrer, et synchroniser votre banque si vous l'avez connectée. La base légale est le contrat qui nous lie (RGPD, article 6.1.b).",
-          "Pour la connexion bancaire, également sur le consentement que vous donnez dans l'application et auprès de votre banque. Vous le retirez en déconnectant la banque (article 6.1.a).",
+          "Pour la connexion bancaire, sur le consentement que vous donnez à l'écran en déposant votre fichier d'identifiants, et auprès de votre banque. Il couvre les informations sensibles que vos opérations peuvent révéler — santé, convictions, appartenance syndicale —, qui ne sont traitées que sur ce consentement explicite (articles 6.1.a et 9.2.a). Nous conservons la date et la version du texte accepté, et vous le retirez en déconnectant votre banque.",
           "Pour envoyer des notifications, seulement si vous les activez. Les désactiver sur votre appareil ou dans votre navigateur les arrête.",
           "Pour garder le service sûr et en état de marche : notre hébergeur conserve brièvement des journaux techniques des requêtes, que nous ne consultons que pour corriger une panne ou arrêter un abus. La base est notre intérêt légitime à faire fonctionner un service sûr (article 6.1.f).",
         ],
@@ -95,15 +96,15 @@ export const legalCopyFr: LegalCopy = {
           "Ces sociétés traitent des données pour notre compte, uniquement pour faire fonctionner Pluclair, dans le cadre d'un accord de sous-traitance :",
         ],
         points: [
-          "Supabase : la base de données et la connexion. [[Région du projet Supabase]].",
-          "Vercel : l'hébergement du site et du serveur. [[Région des fonctions Vercel]].",
+          "Supabase\u00A0: la base de données et la connexion, dans l'Union européenne ([[la région exacte du projet Supabase dans l'UE]]).",
+          "Vercel\u00A0: l'hébergement du site et du serveur, les fonctions serveur s'exécutant à Paris, en France.",
           "Mistral AI (France) : rédige les courtes lectures de votre mois et de vos portefeuilles. Elle ne reçoit que les chiffres à partir desquels une lecture est écrite — noms de catégories et totaux du mois, ou fonds d'un portefeuille et leurs valeurs — et jamais votre nom, votre e-mail ni vos écritures une à une.",
           "Google : seulement si vous vous connectez avec Google.",
           "La distribution des notifications : les notifications web sont chiffrées, si bien que le service push de votre navigateur (Apple, Google, Microsoft ou Mozilla selon le navigateur) ne peut pas les lire. Les notifications sur téléphone passent par le service push d'Expo, puis par Apple ou Google.",
           "Les cours de marché : pour valoriser vos fonds, nous consultons leurs cours sur Yahoo Finance et sur les pages des émetteurs (justETF, iShares). Nous n'envoyons que l'identifiant du fonds, jamais rien vous concernant.",
         ],
         after: [
-          "[[Si l'un d'eux conserve ou consulte des données hors de l'Espace économique européen, indiquer ici la garantie — clauses contractuelles types de la Commission européenne, ou cadre de protection des données UE–États-Unis — après avoir vérifié la région de chaque prestataire.]]",
+          "Vercel Inc. est une société américaine certifiée au titre du cadre de protection des données UE–États-Unis, sur lequel repose tout transfert vers elle. Supabase et Mistral AI conservent les données dans l'Union européenne, et Supabase s'appuie sur les clauses contractuelles types de la Commission européenne pour tout accès depuis l'extérieur. [[Vérifier l'accord de sous-traitance en vigueur de chaque prestataire.]]",
         ],
       },
       {
@@ -189,7 +190,7 @@ export const legalCopyFr: LegalCopy = {
         id: "bank",
         heading: "Connecter une banque",
         body: [
-          "Connecter une banque est facultatif et passe par votre propre compte open-banking.io, un service distinct. Vous vous y inscrivez, acceptez ses conditions et le payez directement\u00A0; Pluclair n'est pas partie à ce contrat et n'encaisse ni ne manipule jamais ce paiement. Vous le connectez en confiant à Pluclair le fichier d'identifiants de ce compte\u00A0: gardez ce fichier pour vous, et supprimez sa clé API chez open-banking.io si vous pensez qu'il a été exposé.",
+          "Connecter une banque est facultatif et passe par votre propre compte open-banking.io, un service distinct. Vous vous y inscrivez, acceptez ses conditions et le payez directement\u00A0; Pluclair n'est pas partie à ce contrat, n'encaisse ni ne manipule jamais ce paiement, et n'est pas un prestataire de services de paiement agréé ou enregistré — le service d'information sur les comptes est fourni par Enable Banking Oy. Vous le connectez en confiant à Pluclair le fichier d'identifiants de ce compte et en donnant votre consentement à l'écran\u00A0: gardez ce fichier pour vous, et supprimez sa clé API chez open-banking.io si vous pensez qu'il a été exposé.",
           "La connexion est en lecture seule : rien dans Pluclair ne peut déplacer d'argent. La synchronisation dépend d'open-banking.io, d'Enable Banking et de votre banque, et elle peut être en retard, incomplète, ou s'arrêter — quand le consentement donné à votre banque prend fin, quand votre portefeuille open-banking.io est vide, ou quand une banque est indisponible. Nous vous prévenons quand la synchronisation s'arrête, et vos écritures restent les vôtres quoi qu'il arrive à la connexion.",
         ],
       },
@@ -253,6 +254,50 @@ export const legalCopyFr: LegalCopy = {
         heading: "Contact",
         body: [
           "[[Le nom légal et l'adresse postale de l'éditeur]]. E-mail : [[l'adresse de contact assistance]].",
+        ],
+      },
+    ],
+  },
+
+  notice: {
+    title: "Mentions légales",
+    summary:
+      "Qui édite Pluclair, qui l'héberge, et qui fournit la partie réglementée de la connexion bancaire.",
+    sections: [
+      {
+        id: "publisher",
+        heading: "Éditeur",
+        body: [
+          "Le site pluclair.com et les applications Pluclair sont édités par [[les nom et prénoms de l'éditeur — ou, pour une société, sa dénomination, sa forme juridique et son capital social]], [[adresse du domicile ou du siège social]], téléphone [[un numéro de téléphone]], e-mail [[une adresse e-mail de contact]]. [[Numéro d'immatriculation (SIREN / RCS) si l'éditeur est immatriculé\u00A0; sinon, supprimer cette phrase]].",
+        ],
+      },
+      {
+        id: "director",
+        heading: "Directeur de la publication",
+        body: [
+          "[[Nom du directeur de la publication — en général l'éditeur lui-même]].",
+        ],
+      },
+      {
+        id: "hosting",
+        heading: "Hébergement",
+        body: [
+          "Le site et ses serveurs sont hébergés par Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis, téléphone [[numéro de téléphone de Vercel]]. Les fonctions serveur de Pluclair s'exécutent à Paris, en France.",
+          "Les données de l'application sont stockées par [[dénomination et adresse de Supabase]], dans l'Union européenne ([[région exacte du projet Supabase dans l'UE]]).",
+        ],
+      },
+      {
+        id: "payments",
+        heading: "Services de paiement",
+        body: [
+          "Pluclair n'est pas un prestataire de services de paiement agréé ou enregistré. La connexion bancaire, facultative, passe par le compte open-banking.io de l'utilisateur (Tatic ApS, Danemark), et le service d'information sur les comptes est fourni par Enable Banking Oy, enregistrée auprès de l'autorité finlandaise de surveillance financière (FIN-FSA).",
+        ],
+      },
+      {
+        id: "data",
+        heading: "Données personnelles",
+        body: [
+          "La manière dont Pluclair traite les données personnelles, et dont exercer vos droits, est décrite dans la politique de confidentialité.",
         ],
       },
     ],

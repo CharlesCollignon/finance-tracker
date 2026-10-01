@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { Ionicons } from "@expo/vector-icons";
 
 import { Button } from "@/components/ui/Button";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
@@ -13,9 +14,12 @@ import {
 } from "@/lib/bank-connect";
 import { notifyDataChanged } from "@/lib/data-version";
 import { hapticSuccess, hapticWarning } from "@/lib/haptics";
+import { BANK_CONSENT_VERSION } from "@finance/core/bank-consent";
 import { resolveMessage } from "@finance/core/i18n/t";
 import { useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
+import { ICON } from "@/theme/tokens";
+import { useThemeColors } from "@/theme/useThemeColors";
 
 interface ConnectBankSheetProps {
   open: boolean;
@@ -51,14 +55,20 @@ export function ConnectBankSheet({
   const { toast } = useToast();
   const [pending, setPending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [consented, setConsented] = useState(false);
+  const colors = useThemeColors();
 
   async function choose() {
     if (pending) {
       return;
     }
+    if (!consented) {
+      setProblem(t("bankConnect.consentRequired"));
+      return;
+    }
     setProblem(null);
     setPending(true);
-    const result = await connectBankFromFile();
+    const result = await connectBankFromFile(BANK_CONSENT_VERSION);
     setPending(false);
 
     if ("canceled" in result) {
@@ -171,12 +181,33 @@ export function ConnectBankSheet({
                 t("bankConnect.factKey"),
                 t("bankConnect.factConsent"),
                 t("bankConnect.factHistory"),
+                t("bankConnect.notRegulated"),
               ].map((fact) => (
                 <Text key={fact} variant="muted" className="text-xs">
                   {fact}
                 </Text>
               ))}
             </View>
+            {/* Last before the file goes: who the data comes from, what is done
+                with it, how it is withdrawn. Its version is stored. */}
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: consented }}
+              onPress={() => {
+                setConsented((value) => !value);
+                setProblem(null);
+              }}
+              className="flex-row gap-3 rounded-control border border-border p-3"
+            >
+              <Ionicons
+                name={consented ? "checkbox" : "square-outline"}
+                size={ICON.lg}
+                color={consented ? colors.primaryInk : colors.mutedForeground}
+              />
+              <Text className="min-w-0 flex-1 text-xs leading-relaxed">
+                {t("bankConnect.consentLabel")}
+              </Text>
+            </Pressable>
           </ScrollView>
 
           {problem ? (
@@ -194,7 +225,7 @@ export function ConnectBankSheet({
             }
             size="lg"
             className="mt-4"
-            disabled={pending}
+            disabled={pending || !consented}
             onPress={() => void choose()}
           />
         </View>

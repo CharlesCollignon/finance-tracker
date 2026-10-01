@@ -12,6 +12,7 @@
     "./bank-balance": "./src/bank-balance.ts",
     "./bank-feed": "./src/bank-feed.ts",
     "./bank-attention": "./src/bank-attention.ts",
+    "./bank-consent": "./src/bank-consent.ts",
     "./bank-inbox-groups": "./src/bank-inbox-groups.ts",
     "./bank-merchant": "./src/bank-merchant.ts",
     "./bank-pull": "./src/bank-pull.ts",

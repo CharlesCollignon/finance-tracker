@@ -4,6 +4,7 @@ import { useId, useState, useTransition, type DragEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowSquareOut, FileArrowUp } from "@phosphor-icons/react";
+import { BANK_CONSENT_VERSION } from "@finance/core/bank-consent";
 import { resolveMessage } from "@finance/core/i18n/t";
 import { buttonVariants } from "@/components/retroui/Button";
 import { MobileSheet } from "@/components/layout/MobileSheet";
@@ -55,11 +56,16 @@ export function ConnectBankSheet({
   const { toast } = useToast();
   const inputId = useId();
   const [dragging, setDragging] = useState(false);
+  const [consented, setConsented] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function send(file: File | undefined) {
     if (!file || pending) {
+      return;
+    }
+    if (!consented) {
+      setProblem(t("bankConnect.consentRequired"));
       return;
     }
     setProblem(null);
@@ -68,7 +74,10 @@ export function ConnectBankSheet({
       return;
     }
     startTransition(async () => {
-      const result = await connectBankFile(await file.text());
+      const result = await connectBankFile(
+        await file.text(),
+        BANK_CONSENT_VERSION,
+      );
       if (result.error !== undefined) {
         setProblem(resolveMessage(t, result.error));
         return;
@@ -161,8 +170,25 @@ export function ConnectBankSheet({
           ))}
         </ol>
 
+        {/* The consent is the last thing read before the file goes: it names
+            who the data comes from, what Pluclair does with it, and how it is
+            withdrawn, and its version is stored with the connection. */}
+        <label className="flex cursor-pointer gap-3 rounded-control border border-border p-3 text-xs leading-relaxed has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring">
+          <input
+            type="checkbox"
+            checked={consented}
+            onChange={(event) => {
+              setConsented(event.currentTarget.checked);
+              setProblem(null);
+            }}
+            className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
+          />
+          <span>{t("bankConnect.consentLabel")}</span>
+        </label>
+
         <label
           htmlFor={inputId}
+          aria-disabled={!consented}
           onDragOver={(event) => {
             event.preventDefault();
             setDragging(true);
@@ -176,6 +202,7 @@ export function ConnectBankSheet({
             dragging
               ? "border-primary bg-accent"
               : "border-border hover:border-primary/60",
+            !consented && "cursor-not-allowed opacity-50",
             pending && "cursor-progress opacity-70",
           )}
         >
@@ -202,7 +229,7 @@ export function ConnectBankSheet({
             type="file"
             accept=".json,application/json"
             className="sr-only"
-            disabled={pending}
+            disabled={pending || !consented}
             onChange={(event) => {
               send(event.currentTarget.files?.[0]);
               // So choosing the same file again, after fixing it, fires.
@@ -225,6 +252,7 @@ export function ConnectBankSheet({
           <li>{t("bankConnect.factKey")}</li>
           <li>{t("bankConnect.factConsent")}</li>
           <li>{t("bankConnect.factHistory")}</li>
+          <li>{t("bankConnect.notRegulated")}</li>
         </ul>
 
         {/* Only once the policy is final: a client component cannot tell a

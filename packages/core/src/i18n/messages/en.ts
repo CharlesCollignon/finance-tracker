@@ -2890,8 +2890,7 @@ export const en = {
    */
   bankConnect: {
     sheetTitle: "Connect your bank",
-    sheetLead:
-      "Your transactions arrive on their own, and your real balance is read four times a day. You set it up once, with your own open-banking.io account.",
+    sheetLead: "Your transactions and your real balance come straight from your bank each time you refresh. You set it up once, with your own open-banking.io account.",
     step1Title: "Create your open-banking.io account",
     step1Body:
       "Sign up and top up its wallet. About €3 a month for one bank account and €1 for each extra one — paid to them, not to Pluclair.",
@@ -2911,7 +2910,13 @@ export const en = {
       "Your bank's consent lasts about 180 days. You renew it on open-banking.io, and you're reminded before it ends.",
     factHistory:
       "Past months are filled in from your bank, so their totals may change.",
+    notRegulated: "Pluclair is not a payment service provider: the regulated account information service is provided by Enable Banking Oy, through your open-banking.io account.",
     privacyLink: "How your bank data is handled",
+    consentLabel: "I allow Pluclair to use my credentials file to read the accounts and transactions of my open-banking.io account — data my bank provides through Enable Banking Oy, a licensed account information service provider — in order to keep my budget. These transactions can reveal sensitive information (health, beliefs, union membership…), and I expressly agree to them being processed for this purpose alone. Pluclair contacts my bank only when I ask for a refresh. I can withdraw this consent at any time by disconnecting my bank.",
+    consentRequired: "Tick the consent box first.",
+    consentMissingTitle: "Confirm your consent",
+    consentMissingBody: "Pluclair now records this consent before reading bank data. Please confirm it for your connection.",
+    consentConfirm: "I agree",
     openSite: "Open open-banking.io",
     dropTitle: "Drop credentials.json here",
     dropHint: "Any name works — the file you download may carry a date.",
@@ -2988,15 +2993,14 @@ export const en = {
     disconnected: "Your bank is disconnected.",
     notConnectedBody:
       "See your real balance, let entries arrive on their own, and have months close themselves.",
-    unlockBalance: "Your real balance, read from your bank four times a day",
+    unlockBalance: "Your real balance, read from your bank each time you refresh",
     unlockEntries:
       "Entries that arrive and file themselves from your own history",
     unlockArrived: "Charges confirmed as they arrive",
     unlockClose: "Months that close themselves on your reading day",
     profileLink: "Bank connection",
     /* What each invitation promises, on the surface it appears on. */
-    inviteBearing:
-      "See your real balance, read from your bank four times a day.",
+    inviteBearing: "See your real balance, read from your bank each time you refresh.",
     inviteWelcome: "Let your bank fill this in for you.",
     inviteLedger:
       "Stop typing: connect your bank and entries arrive on their own.",

@@ -118,10 +118,18 @@ see `LEGAL_DRAFT` in `components/marketing/legal-copy.ts`).
   month-close section of `landing-copy.ts`), and its privacy points stay true
   of the app as a visitor can have it. Launching changes both, with the
   owner's sign-off on the brand promises.
-- A connected bank is read at most four times a day unattended (PSD2's limit,
-  counted in `bank_pulls`), and the refresh cron gives every connected user a
-  share of one 40-second budget inside its 60-second run, stalest first; whoever
-  does not fit is read on the next run.
+- Pluclair asks a bank for new data only when the user presses Refresh. The
+  refresh cron never reaches a bank: it reads what open-banking.io already
+  holds, giving every connected user a share of one 40-second budget inside
+  its 60-second run, stalest first. Scheduled bank access is the licensed
+  provider's to make, not Pluclair's (`lib/bank/pull.ts`, `docs/legal/AIPD.md`).
+- Before a credentials file is accepted, the user gives a dated, versioned
+  consent naming the chain (Enable Banking Oy, open-banking.io, Pluclair) and
+  covering the sensitive data transactions reveal (GDPR art. 9); it is stored
+  on the connection (migration 044, `BANK_CONSENT_VERSION`).
+- Server functions run in Paris (`vercel.json`, `cdg1`) and the data stays in
+  the EU. The legal notice, privacy policy and terms are drafts, and the AIPD
+  and the record of processing are in `docs/legal/`.
 - French by default: everyone starts in French whatever their browser says
   (`DEFAULT_LOCALE`), and English is the back-up — offered once to a browser
   that prefers it, chosen any time from the profile, and the catalogue a

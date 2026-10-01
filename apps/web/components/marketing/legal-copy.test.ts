@@ -9,7 +9,7 @@ function blanks(value: unknown): string[] {
 
 describe("legal copy", () => {
   it("has the same sections, in the same order, in both languages", () => {
-    for (const doc of ["privacy", "terms"] as const) {
+    for (const doc of ["privacy", "terms", "notice"] as const) {
       expect(legalCopyFr[doc].sections.map((section) => section.id)).toEqual(
         legalCopy[doc].sections.map((section) => section.id),
       );

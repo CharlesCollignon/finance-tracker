@@ -35,6 +35,7 @@ export type BankInviteSurface = "bearing" | "welcome" | "ledger" | "plan";
 
 export interface BankConnectionRow {
   status: BankConnectionStatus;
+  consent_version: string | null;
   connected_at: string;
   last_synced_at: string | null;
   consent_valid_until: string | null;
@@ -48,7 +49,7 @@ export async function readBankConnection(
   const { data, error } = await supabase
     .from("bank_connections")
     .select(
-      "status, connected_at, last_synced_at, consent_valid_until, backfilled_at",
+      "status, connected_at, last_synced_at, consent_valid_until, backfilled_at, consent_version",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -193,7 +194,9 @@ export type FileConnectResult =
  * copy is a key to someone's bank history, so it is deleted as soon as it has
  * been read, whatever happens next.
  */
-export async function connectBankFromFile(): Promise<FileConnectResult> {
+export async function connectBankFromFile(
+  consentVersion: string,
+): Promise<FileConnectResult> {
   const picked = await DocumentPicker.getDocumentAsync({
     // Providers label JSON inconsistently, and some give no type at all, so
     // the filter stays wide and the server decides.
@@ -223,7 +226,7 @@ export async function connectBankFromFile(): Promise<FileConnectResult> {
 
   const sent = await callWebApi<{ outcome?: unknown; accounts?: unknown }>(
     "/api/bank/credentials",
-    { body: { text } },
+    { body: { text, consentVersion } },
   );
   if (!sent.ok) {
     return { error: sent.error };
@@ -382,4 +385,14 @@ export async function reopenFeedGroup(
   return result.ok
     ? { reopened: result.reopened ?? ids.length }
     : { error: result.error };
+}
+
+/** Give today's consent on an existing connection (`/api/bank/consent`). */
+export async function confirmBankConsent(
+  consentVersion: string,
+): Promise<{ error?: string }> {
+  const sent = await callWebApi<object>("/api/bank/consent", {
+    body: { consentVersion },
+  });
+  return sent.ok ? {} : { error: sent.error };
 }

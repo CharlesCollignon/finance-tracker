@@ -11,7 +11,9 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
+import { BANK_CONSENT_VERSION, consentIsCurrent } from "@finance/core/bank-consent";
 import { formatShortDate } from "@finance/core/constants";
+import { resolveMessage } from "@finance/core/i18n/t";
 import type { BankAccount } from "@finance/core/types/database";
 
 import { BankImport } from "@/components/bank/BankImport";
@@ -26,6 +28,7 @@ import { Text } from "@/components/ui/Text";
 import { useBankState, type BankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import {
+  confirmBankConsent,
   disconnectBank,
   OPEN_BANKING_APP,
   readBankServerFacts,
@@ -136,6 +139,10 @@ export default function BankScreen() {
             />
           ) : null}
 
+          {live && !consentIsCurrent(connection.consent_version) ? (
+            <ConsentCard onConfirmed={() => void reload()} />
+          ) : null}
+
           {live && connection.status !== "active" ? (
             <ProblemCard
               status={connection.status}
@@ -243,6 +250,51 @@ function Invitation({
           {t("bankConnect.unavailable")}
         </Text>
       )}
+    </Card>
+  );
+}
+
+/**
+ * Today's consent, for a connection with none on record — the web's card,
+ * the same words and the same stored version.
+ */
+function ConsentCard({ onConfirmed }: { onConfirmed: () => void }) {
+  const t = useT();
+  const { toast } = useToast();
+  const [pending, setPending] = useState(false);
+
+  async function agree() {
+    if (pending) {
+      return;
+    }
+    setPending(true);
+    const result = await confirmBankConsent(BANK_CONSENT_VERSION);
+    setPending(false);
+    if (result.error) {
+      toast(resolveMessage(t, result.error), "error");
+      return;
+    }
+    void hapticSuccess();
+    onConfirmed();
+  }
+
+  return (
+    <Card className="gap-3">
+      <Text className="text-base font-semibold">
+        {t("bankConnect.consentMissingTitle")}
+      </Text>
+      <Text variant="muted" className="text-sm">
+        {t("bankConnect.consentMissingBody")}
+      </Text>
+      <Text className="rounded-control border border-border p-3 text-xs leading-relaxed">
+        {t("bankConnect.consentLabel")}
+      </Text>
+      <Button
+        label={t("bankConnect.consentConfirm")}
+        className="self-start"
+        disabled={pending}
+        onPress={() => void agree()}
+      />
     </Card>
   );
 }

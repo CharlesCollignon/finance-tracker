@@ -1,0 +1,133 @@
+# Registre des activités de traitement — Pluclair
+
+> **Projet à relire** (1ᵉʳ octobre 2026). Tenu au titre de l'article 30 du RGPD :
+> l'exemption des structures de moins de 250 personnes ne s'applique pas,
+> parce que les traitements ci-dessous ne sont pas occasionnels et portent sur
+> des données bancaires. Rédigé d'après ce que l'application fait réellement ;
+> à mettre à jour dans le même temps que le code. Les `[[…]]` sont à compléter
+> par le responsable du traitement. Ce document n'est pas un avis juridique.
+
+## Responsable du traitement
+
+- **Identité** : [[nom et prénoms de l'éditeur, ou dénomination de la société]]
+- **Adresse** : [[adresse]]
+- **Contact pour les données personnelles** : [[adresse e-mail]]
+- **Délégué à la protection des données** : aucun désigné (non obligatoire pour
+  ce traitement) — [[à confirmer]]
+
+## Sous-traitants et destinataires communs
+
+| Acteur                                  | Rôle                                                                    | Lieu des données                                    | Garantie                                                                                                |
+| --------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Supabase                                | Base de données, authentification                                       | Union européenne — [[région exacte]]                | Accord de sous-traitance (DPA v1, 1ᵉʳ août 2026) ; clauses contractuelles types pour tout accès hors UE |
+| Vercel Inc.                             | Hébergement du site et des fonctions serveur                            | Fonctions à Paris (`cdg1`) ; société aux États-Unis | Certification au cadre UE–États-Unis (Data Privacy Framework) ; DPA                                     |
+| Mistral AI                              | Rédaction des « lectures » du mois, des catégories et des portefeuilles | France                                              | [[DPA à signer / vérifier]]                                                                             |
+| Expo, Apple, Google, Mozilla, Microsoft | Acheminement des notifications                                          | Selon le service                                    | Notifications web chiffrées de bout en bout ; [[vérifier les conditions d'Expo]]                        |
+| Google                                  | Connexion « Se connecter avec Google », si l'utilisateur la choisit     | Selon Google                                        | Responsable de traitement distinct                                                                      |
+
+Hors de ce tableau, et responsables de leur propre traitement : **Tatic ApS
+(open-banking.io, Danemark)** et **Enable Banking Oy (Finlande, prestataire de
+services d'information sur les comptes enregistré auprès de la FIN-FSA)**,
+auprès desquels l'utilisateur a lui-même ouvert un compte.
+
+---
+
+## 1. Comptes utilisateurs
+
+- **Finalité** : créer et sécuriser le compte, se connecter, retenir les préférences.
+- **Base légale** : exécution du contrat (art. 6.1.b).
+- **Personnes concernées** : les utilisateurs.
+- **Données** : adresse e-mail ; nom et identifiant fournis par Google en cas de
+  connexion Google ; clés publiques des clés d'accès (passkeys) ; sessions ;
+  préférences (langue, devise, invitations écartées).
+- **Destinataires** : Supabase, Vercel ; Google si l'utilisateur l'a choisi.
+- **Durée** : tant que le compte existe ; suppression immédiate à la
+  suppression du compte (Profil → Supprimer le compte), sauvegardes écrasées
+  sous [[durée de conservation des sauvegardes Supabase]].
+- **Sécurité** : sécurité au niveau des lignes (RLS) ; TLS ; mots de passe
+  gérés par Supabase Auth.
+
+## 2. Tenue du budget
+
+- **Finalité** : tenir les comptes de l'utilisateur — opérations, catégories,
+  charges récurrentes, plafonds, objectifs, portefeuilles et positions,
+  clôtures de mois, étiquettes et notes.
+- **Base légale** : exécution du contrat (art. 6.1.b).
+- **Données** : ce que l'utilisateur saisit ou importe (relevés CSV : seules
+  les lignes conservées sont enregistrées, pas le fichier).
+- **Destinataires** : Supabase, Vercel.
+- **Durée** : tant que le compte existe. Une écriture supprimée est conservée
+    pour permettre l'annulation ; **la tâche qui l'efface définitivement n'est
+    pas encore programmée** — [[durée retenue, 30 jours proposés, et date de mise
+    en place]].
+- **Sécurité** : RLS ; chaque ligne rattachée à son compte.
+
+## 3. Connexion bancaire
+
+- **Finalité** : afficher dans le budget les comptes, soldes et opérations
+  bancaires de l'utilisateur, et classer ces opérations.
+- **Base légale** : consentement (art. 6.1.a), recueilli à l'écran au dépôt du
+  fichier d'identifiants, daté et versionné (`bank_connections.consent_version`,
+  `consent_given_at`) ; **consentement explicite au titre de l'article 9.2.a**
+  pour les catégories particulières que les opérations peuvent révéler (santé,
+  convictions, appartenance syndicale…). Retrait à tout moment par la
+  déconnexion.
+- **Source des données** : le compte open-banking.io de l'utilisateur, que
+  celui-ci alimente via Enable Banking Oy avec le consentement donné à sa banque.
+- **Données** : le fichier d'identifiants (clé API et clé privée — **seules ces
+  deux valeurs sont conservées**) ; par compte : nom, devise, solde déclaré ;
+  par opération : date, montant, devise, sens, libellé, contrepartie, code
+  catégorie commerçant ; état de la connexion et date de fin du consentement
+  bancaire.
+- **Accès à la banque** : uniquement lorsque l'utilisateur demande une
+  actualisation ; les traitements programmés lisent seulement ce que le compte
+  open-banking.io contient déjà.
+- **Destinataires** : Supabase, Vercel. Aucun identifiant bancaire n'est jamais reçu.
+- **Durée** : fichier d'identifiants — jusqu'à la déconnexion, son
+  remplacement ou la suppression du compte ; opérations importées — durée du
+  compte, ou suppression à la déconnexion si l'utilisateur le choisit.
+- **Sécurité** : chiffrement AES-256-GCM sous une clé détenue hors de la base
+  (`BANK_SECRETS_KEY`, rotation prévue) ; table inaccessible aux deux
+  applications ; jamais renvoyé au navigateur ni au téléphone, jamais
+  journalisé ; adresse de l'API figée pour qu'un fichier ne puisse détourner la
+  clé ; ouverture par indicateur (`bank.connect`), compte par compte.
+
+## 4. Notifications
+
+- **Finalité** : envoyer les rappels (nouveau mois, plafond dépassé, charges
+  arrivées, consentement bancaire à renouveler).
+- **Base légale** : consentement donné par l'autorisation de notification de
+  l'appareil ou du navigateur (art. 6.1.a) — [[à confirmer : ou exécution du contrat]].
+- **Données** : abonnement push ou jeton Expo, agent utilisateur du
+  navigateur, journal des rappels envoyés.
+- **Destinataires** : Vercel, Supabase, services push (voir tableau).
+- **Durée** : jusqu'au retrait de l'autorisation ou à la suppression du
+  compte ; journal des rappels — durée du compte.
+
+## 5. Lectures rédigées par un modèle d'IA
+
+- **Finalité** : rédiger les courtes lectures du mois, d'une catégorie ou d'un
+  portefeuille.
+- **Base légale** : exécution du contrat (art. 6.1.b) — [[à confirmer]].
+- **Données transmises à Mistral AI** : noms des catégories et totaux du mois,
+  ou fonds d'un portefeuille et leurs valeurs ; jamais le nom, l'e-mail ni les
+  opérations une à une.
+- **Durée** : lectures conservées [[durée de conservation des lectures]].
+
+## 6. Journaux techniques
+
+- **Finalité** : sécurité et diagnostic des pannes.
+- **Base légale** : intérêt légitime (art. 6.1.f).
+- **Données** : journaux de requêtes de l'hébergeur.
+- **Durée** : [[durée de conservation des journaux Vercel]].
+
+## Hors registre : cours de marché
+
+Les cours des fonds sont consultés sur Yahoo Finance et sur les pages des
+émetteurs (justETF, iShares) à partir du seul identifiant du fonds : aucune
+donnée personnelle n'est transmise.
+
+---
+
+**Validation** : [[nom, date]] — à revoir à chaque changement de traitement et
+au moins une fois par an.

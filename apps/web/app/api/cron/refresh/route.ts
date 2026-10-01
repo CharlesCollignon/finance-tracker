@@ -163,12 +163,13 @@ export async function GET(request: NextRequest) {
       continue;
     }
     try {
-      // Unattended: nobody is watching, so this spends from the four-a-day
-      // allowance. When it is spent the sync still runs and reads the stored
-      // statement, which is what every run did before pulling existed.
-      const outcome = await syncBankFeed(supabase, userId, {
-        pull: "unattended",
-      });
+      // A read of what open-banking.io already holds, never a request to the
+      // bank. Scheduled bank access is what the regulation reserves to the
+      // licensed provider, so Pluclair asks the bank only when the user asks
+      // it to (`pull: "attended"`, from the Refresh button). What this run
+      // files is whatever the user's own syncs — in Pluclair or in
+      // open-banking.io's app — have brought in since the last run.
+      const outcome = await syncBankFeed(supabase, userId);
       bank.synced += 1;
       bank.imported += outcome.imported;
       bank.pending += outcome.pending;

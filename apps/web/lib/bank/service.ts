@@ -1,4 +1,5 @@
 import "server-only";
+import { BANK_CONSENT_VERSION, consentIsCurrent } from "@finance/core/bank-consent";
 import type { Key } from "@finance/core/i18n/t";
 import {
   connectWithFile,
@@ -23,12 +24,15 @@ const PROBLEM_MESSAGE: Record<CredentialsProblem, Key> = {
  * Take a user's credentials file, from either app.
  *
  * The caller has already decided the user may (`bankSetupOffered` on the
- * web, the same flag through the bearer session on the phone). What comes
- * back is an outcome or a message key — never anything read from the file.
+ * web, the same flag through the bearer session on the phone). The consent
+ * shown beside the upload must come back with it, at today's version, or the
+ * file is not even read. What comes back is an outcome or a message key —
+ * never anything read from the file.
  */
 export async function connectUserBankFile(
   userId: string,
   text: unknown,
+  consentVersion: unknown,
 ): Promise<
   | { outcome: "connected" | "paused"; accounts: number; error?: undefined }
   | { error: Key }
@@ -36,6 +40,9 @@ export async function connectUserBankFile(
   const admin = createAdminClient();
   if (!admin) {
     return { error: "bankConnect.unavailable" };
+  }
+  if (typeof consentVersion !== "string" || !consentIsCurrent(consentVersion)) {
+    return { error: "bankConnect.consentRequired" };
   }
   if (typeof text !== "string") {
     return { error: "bankConnect.fileNotCredentials" };
@@ -45,6 +52,7 @@ export async function connectUserBankFile(
       { store: credentialStore(admin) },
       userId,
       text,
+      { version: BANK_CONSENT_VERSION, givenAt: new Date().toISOString() },
     );
     return "problem" in result
       ? { error: PROBLEM_MESSAGE[result.problem] }
@@ -109,4 +117,31 @@ export async function disconnectUserBank(
   await admin.from("bank_accounts").delete().eq("user_id", userId);
 
   return { removed };
+}
+
+/**
+ * Record today's consent on an existing connection — one made before the
+ * consent was asked at upload, or under words that have since changed.
+ */
+export async function recordUserBankConsent(
+  userId: string,
+  consentVersion: unknown,
+): Promise<{ error?: Key }> {
+  const admin = createAdminClient();
+  if (!admin) {
+    return { error: "bankConnect.unavailable" };
+  }
+  if (typeof consentVersion !== "string" || !consentIsCurrent(consentVersion)) {
+    return { error: "bankConnect.consentRequired" };
+  }
+  const { error } = await admin
+    .from("bank_connections")
+    .update({
+      consent_version: BANK_CONSENT_VERSION,
+      consent_given_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+    .neq("status", "revoked");
+  return error ? { error: "bankConnect.saveFailed" } : {};
 }

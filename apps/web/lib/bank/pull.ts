@@ -27,10 +27,12 @@ type Client = SupabaseClient<Database>;
  * pressing "Sync" twice returned the same rows twice and there was no way for
  * the app to be more up to date than it already was.
  *
- * `syncAll` is the call that reaches the bank. It is the one thing here with
- * a real ceiling, and the ceiling is regulatory: PSD2 allows an account
- * information service four reads a day per account with nobody present, and
- * unlimited reads when the user is. So the decision of whether to make the
+ * `syncAll` is the call that reaches the bank, and Pluclair makes it only
+ * with the user present — when they press Refresh. PSD2 reserves scheduled,
+ * unattended access (four reads a day per account) to the licensed account
+ * information provider, and Pluclair is not one: `pullFromBank` refuses an
+ * unattended pull outright, so no scheduled caller can reach a bank through
+ * it, whatever it asks for. So the decision of whether to make the
  * call lives in `@finance/core/bank-pull` where it is tested, this module is
  * the plumbing around it, and the two kinds of caller are named rather than
  * inferred — a run that guessed wrong would either waste the day's allowance
@@ -208,6 +210,14 @@ export async function pullFromBank(
   userId: string,
   kind: PullKind,
 ): Promise<PullOutcome> {
+  // Never with nobody present: see the module comment.
+  if (kind === "unattended") {
+    return {
+      pulled: false,
+      why: "Pluclair asks your bank only when you refresh.",
+    };
+  }
+
   const connection = await getBankConnection(userId);
   if (!connection) {
     return { pulled: false, why: "No bank is connected to this account." };
@@ -228,18 +238,6 @@ export async function pullFromBank(
   }
 
   const state = await readPullState(supabase, userId);
-
-  // An unattended pull that cannot be counted must not happen. The allowance
-  // is the whole reason the tally exists, and a store that cannot be written
-  // never fills up — so every scheduled run would be permitted and none
-  // recorded, which is precisely the state the allowance guards against.
-  // Attended access has no allowance to exceed, so it is unaffected.
-  if (kind === "unattended" && !state.tracked) {
-    return {
-      pulled: false,
-      why: "Pull tracking is not set up (migration 022), so unattended checks are held back.",
-    };
-  }
 
   const decision = decideBankPull({
     kind,
