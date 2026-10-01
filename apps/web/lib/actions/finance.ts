@@ -1072,7 +1072,11 @@ export async function undoRecordPlanned(
     return { error: error.message };
   }
 
-  await supabase
+  // Recording it now skipped its planned day, so that day would not be
+  // written a second time; without taking the skip away the occurrence would
+  // not come back as planned. A failure here used to be ignored and the undo
+  // reported as done, with the occurrence gone from the month.
+  const { error: skipError } = await supabase
     .from("recurring_skips")
     .delete()
     .eq("user_id", user.id)
@@ -1080,6 +1084,9 @@ export async function undoRecordPlanned(
     .eq("occurred_on", parsed.data.occurredOn);
 
   revalidateApp();
+  if (skipError) {
+    return { error: skipError.message };
+  }
   return { success: true };
 }
 
