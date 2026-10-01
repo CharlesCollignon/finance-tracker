@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage, type Key } from "@finance/core/i18n/t";
+import type { FormState } from "@finance/core/action-result";
 
 const ICON_KEYS = Object.keys(CATEGORY_ICONS);
 
@@ -302,7 +303,10 @@ function CategoryFormSheet({
   const locale = useLocale();
   const { toast } = useToast();
   const isEditing = category !== null;
-  const [state, action, pending] = useActionState(upsertCategory, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    upsertCategory,
+    {},
+  );
   const [type, setType] = useState<CategoryType>(category?.type ?? "expense");
   const [icon, setIcon] = useState<string>(category?.icon ?? "dots-three");
   const [countsTowardSummary, setCountsTowardSummary] = useState(

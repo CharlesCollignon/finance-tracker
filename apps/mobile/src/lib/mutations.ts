@@ -1,7 +1,6 @@
 import { isMissingSchema } from "@finance/data/schema";
 import {
   authSchema,
-  categorySchema,
   recurringTemplateSchema,
 } from "@finance/core/validations/finance";
 import {
@@ -38,12 +37,12 @@ import {
 } from "@/lib/queries";
 import { findLedgerMatch } from "@finance/core/bank-feed";
 import type {
-  CategoryType,
   SavingsAccountKind,
   WalletId,
 } from "@finance/core/types/database";
 
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
+import * as categories from "@finance/data/categories";
 import * as ledger from "@finance/data/ledger";
 import * as occurrences from "@finance/data/occurrences";
 import type { ActionResult } from "@finance/core/action-result";
@@ -152,99 +151,28 @@ export async function removeInvestmentPosition(
   return { success: true };
 }
 
-/** Maps Postgres constraint failures onto something a user can act on. */
-function friendlyCategoryError(message: string): string {
-  if (message.includes("foreign key")) {
-    return "actions.categoryInUse";
-  }
-  if (message.includes("duplicate key")) {
-    return "actions.categoryExists";
-  }
-  return message;
-}
-
-export async function upsertCategory(input: {
-  id?: string;
-  name: string;
-  type: CategoryType;
-  icon?: string | null;
-  countsTowardSummary?: boolean;
-}): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = categorySchema.safeParse({
-    id: input.id,
-    name: input.name,
-    type: input.type,
-    icon: input.icon ?? undefined,
-    countsTowardSummary: input.countsTowardSummary ?? true,
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const payload = {
-    name: parsed.data.name,
-    type: parsed.data.type,
-    icon: parsed.data.icon ?? null,
-    counts_toward_summary: parsed.data.countsTowardSummary ?? true,
-  };
-
-  const { error } = parsed.data.id
-    ? await supabase
-        .from("categories")
-        .update(payload)
-        .eq("id", parsed.data.id)
-        .eq("user_id", userId)
-    : await supabase.from("categories").insert({ user_id: userId, ...payload });
-
-  if (error) {
-    return { error: friendlyCategoryError(error.message) };
-  }
-  return { success: true };
+export async function upsertCategory(
+  input: Omit<categories.CategoryChange, "icon"> & { icon?: string | null },
+): Promise<ActionResult> {
+  return asUser((userId) =>
+    categories.upsertCategory(supabase, userId, {
+      ...input,
+      icon: input.icon ?? undefined,
+    }),
+  );
 }
 
 export async function setCategoryArchived(
   id: string,
   archived: boolean,
 ): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const { error } = await supabase
-    .from("categories")
-    .update({ archived })
-    .eq("id", id)
-    .eq("user_id", userId);
-
-  if (error) {
-    return { error: error.message };
-  }
-  return { success: true };
+  return asUser((userId) =>
+    categories.setCategoryArchived(supabase, userId, id, archived),
+  );
 }
 
 export async function deleteCategory(id: string): Promise<ActionResult> {
-  const userId = await requireUserId();
-  if (!userId) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const { error } = await supabase
-    .from("categories")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", userId);
-
-  if (error) {
-    return { error: friendlyCategoryError(error.message) };
-  }
-  return { success: true };
+  return asUser((userId) => categories.deleteCategory(supabase, userId, id));
 }
 
 export async function unskipRecurringOccurrence(

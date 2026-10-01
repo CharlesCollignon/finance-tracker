@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./bank-feed": "./src/bank-feed.ts",
+    "./categories": "./src/categories.ts",
     "./client": "./src/client.ts",
     "./ledger": "./src/ledger.ts",
     "./occurrences": "./src/occurrences.ts",
