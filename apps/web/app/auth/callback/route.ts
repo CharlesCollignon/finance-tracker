@@ -34,6 +34,15 @@ export async function GET(request: Request) {
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
+    if (error) {
+      // Said in the server log, because the page can only say "the link
+      // expired": a missing PKCE verifier cookie, a code already used and a
+      // redirect URL Supabase does not allow all end on the same screen.
+      console.error(
+        `[auth/callback] code exchange failed: ${error.code ?? error.name} — ${error.message}`,
+      );
+    }
+
     if (!error && data.user) {
       try {
         await seedDefaultCategories(data.user.id, await getLocale());
@@ -60,6 +69,14 @@ export async function GET(request: Request) {
       }
       return NextResponse.redirect(`${origin}${next}`);
     }
+  }
+
+  if (!code) {
+    // Supabase sends the reason back in the address instead of a code when
+    // the provider or its own settings refused the sign-in.
+    console.error(
+      `[auth/callback] no code: ${searchParams.get("error_code") ?? searchParams.get("error") ?? "none"} — ${searchParams.get("error_description") ?? "no description"}`,
+    );
   }
 
   return NextResponse.redirect(

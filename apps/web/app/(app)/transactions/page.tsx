@@ -140,6 +140,7 @@ export default async function TransactionsPage({
       categories={categories}
       recurringTemplates={recurringTemplates}
       skippedKeys={[...skippedKeys]}
+      fulfilledKeys={[...fulfilledKeys]}
       confirmedTransactionIds={[...confirmedTransactionIds]}
       proposedTransactionIds={proposals.map(
         (proposal) => proposal.transactionId,

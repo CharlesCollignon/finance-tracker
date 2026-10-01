@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getMovedBetween } from "@/lib/queries/moved-rows";
 import {
   getRecurringSkipKeys,
   getRecurringTemplates,
@@ -35,9 +36,9 @@ import {
 } from "@finance/core/constants";
 import {
   buildMonthBalance,
+  recordedDeltas,
   spendingByMonth,
   topSpending,
-  transactionDelta,
   upcomingDelta,
   type BalanceAnchor,
   type CategorySpend,
@@ -226,15 +227,21 @@ export async function gatherBearingMonth(
   const trendFrom = shiftMonth(year, month, -(TREND_MONTHS - 1));
   const trendStart = getMonthBounds(trendFrom.year, trendFrom.month).start;
 
-  const rows = await getTransactionsBetween(
-    userId,
-    rangeStart < trendStart ? rangeStart : trendStart,
-    rangeEnd,
-  );
+  const [rows, moved] = await Promise.all([
+    getTransactionsBetween(
+      userId,
+      rangeStart < trendStart ? rangeStart : trendStart,
+      rangeEnd,
+    ),
+    anchor ? getMovedBetween(userId, rangeStart, rangeEnd) : [],
+  ]);
 
-  const recorded: DatedDelta[] = rows
-    .filter((tx) => tx.occurred_on >= rangeStart && tx.occurred_on <= today)
-    .map((tx) => ({ date: tx.occurred_on, delta: transactionDelta(tx) }));
+  const recorded: DatedDelta[] = recordedDeltas(rows, {
+    from: rangeStart,
+    today,
+    anchored: anchor !== null,
+    moved,
+  });
 
   // What the charges still call for, month by month from this one to the
   // end of the range — never a month that has ended.

@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   amountsMatch,
+  confirmLabel,
+  countsForMonthOf,
   describeFulfilment,
+  fulfilmentScope,
+  proposalsForMonth,
+  type FulfilmentProposal,
   describeMiss,
   explainFulfilmentMisses,
   proposeFulfilments,
@@ -523,5 +528,198 @@ describe("explainFulfilmentMisses", () => {
         fulfilledKeys,
       }),
     ).toEqual([]);
+  });
+});
+
+describe("money that moves on payday, early or late", () => {
+  // A salary due on the 1st of October, paid on 22 September.
+  const salary = occurrence({
+    templateId: "tpl-salary",
+    occurredOn: "2026-10-01",
+    amount: 2400,
+    categoryId: SALARY_CATEGORY,
+    categoryType: "income",
+    label: "Salaire",
+    recurrence: "monthly",
+  });
+  const paid = movement({
+    transactionId: "tx-salary",
+    occurredOn: "2026-09-22",
+    amount: 2400,
+    categoryId: SALARY_CATEGORY,
+    note: "VIR SALAIRE",
+  });
+
+  it("offers a salary paid nine days early for the month it pays", () => {
+    const [proposal] = proposeFulfilments([salary], [paid], { today: TODAY });
+    expect(proposal).toMatchObject({
+      occurredOn: "2026-10-01",
+      transactionId: "tx-salary",
+      daysApart: 9,
+      countsForMonth: "2026-10",
+    });
+  });
+
+  it("says where it will count, and the button says so too", () => {
+    const [proposal] = proposeFulfilments([salary], [paid], { today: TODAY });
+    expect(describeFulfilment(proposal!, money, "fr")).toBe(
+      "Au centime près, 9 jours d'avance — à compter pour octobre",
+    );
+    expect(confirmLabel(proposal!, "fr")).toBe("Compter pour octobre");
+    expect(confirmLabel(proposal!, "en")).toBe("Count it for October");
+  });
+
+  it("moves the savings and the broker transfer put by the same day", () => {
+    const savings = occurrence({
+      templateId: "tpl-livret",
+      occurredOn: "2026-10-02",
+      amount: 300,
+      categoryId: "cat-livret",
+      categoryType: "savings",
+      recurrence: "monthly",
+    });
+    const broker = occurrence({
+      templateId: "tpl-broker",
+      occurredOn: "2026-10-03",
+      amount: 500,
+      categoryId: "cat-broker",
+      categoryType: "investment",
+      recurrence: "monthly",
+    });
+    const proposals = proposeFulfilments(
+      [salary, savings, broker],
+      [
+        paid,
+        movement({
+          transactionId: "tx-livret",
+          occurredOn: "2026-09-23",
+          amount: 300,
+          categoryId: "cat-livret",
+        }),
+        movement({
+          transactionId: "tx-broker",
+          occurredOn: "2026-09-23",
+          amount: 500,
+          categoryId: "cat-broker",
+        }),
+      ],
+      { today: TODAY },
+    );
+    expect(proposals.map((proposal) => proposal.countsForMonth)).toEqual([
+      "2026-10",
+      "2026-10",
+      "2026-10",
+    ]);
+  });
+
+  it("brings a late salary back to the month it was planned for", () => {
+    const [proposal] = proposeFulfilments(
+      [{ ...salary, occurredOn: "2026-10-31" }],
+      [{ ...paid, occurredOn: "2026-11-02" }],
+      { today: "2026-11-05" },
+    );
+    expect(proposal).toMatchObject({ daysApart: 2, countsForMonth: "2026-10" });
+    expect(describeFulfilment(proposal!, money, "fr")).toBe(
+      "Au centime près, 2 jours de retard — à compter pour octobre",
+    );
+  });
+
+  it("stays in its month when it is early inside it", () => {
+    const [proposal] = proposeFulfilments(
+      [{ ...salary, occurredOn: "2026-09-28" }],
+      [paid],
+      { today: TODAY },
+    );
+    expect(proposal).toMatchObject({ daysApart: 6, countsForMonth: null });
+    expect(confirmLabel(proposal!, "fr")).toBe("C'est ça");
+  });
+
+  it("gives fifteen days before and ten after, no more", () => {
+    const early = (on: string) =>
+      proposeFulfilments([salary], [{ ...paid, occurredOn: on }], {
+        today: "2026-11-30",
+      });
+    expect(early("2026-09-16")).toHaveLength(1);
+    expect(early("2026-09-15")).toEqual([]);
+    expect(early("2026-10-11")).toHaveLength(1);
+    expect(early("2026-10-12")).toEqual([]);
+  });
+
+  it("keeps a rent to four days either way, and moves it across a month", () => {
+    const rent = occurrence({ occurredOn: "2026-10-01" });
+    expect(
+      proposeFulfilments([rent], [movement({ occurredOn: "2026-09-22" })], {
+        today: TODAY,
+      }),
+    ).toEqual([]);
+    const [proposal] = proposeFulfilments(
+      [rent],
+      [movement({ occurredOn: "2026-09-29" })],
+      { today: TODAY },
+    );
+    expect(proposal?.countsForMonth).toBe("2026-10");
+  });
+
+  it("never widens a weekly template, which would reach two occurrences", () => {
+    expect(
+      proposeFulfilments([{ ...salary, recurrence: "weekly" }], [paid], {
+        today: TODAY,
+      }),
+    ).toEqual([]);
+  });
+
+  it("reports the wider window when it is still too early", () => {
+    const [miss] = explainFulfilmentMisses(
+      [salary],
+      [{ ...paid, occurredOn: "2026-09-10" }],
+      [],
+      { today: TODAY },
+    );
+    expect(miss).toMatchObject({ reason: "date" });
+    expect(miss!.nearest).toMatchObject({ daysApart: 21, window: 15 });
+  });
+
+  it("names the month a pairing moves to only when the months differ", () => {
+    expect(countsForMonthOf({ occurredOn: "2026-10-01" }, "2026-09-22")).toBe(
+      "2026-10",
+    );
+    expect(countsForMonthOf({ occurredOn: "2026-10-31" }, "2026-11-02")).toBe(
+      "2026-10",
+    );
+    expect(
+      countsForMonthOf({ occurredOn: "2026-09-28" }, "2026-09-22"),
+    ).toBeNull();
+  });
+});
+
+describe("which month asks", () => {
+  it("draws on the neighbouring months and reads around them", () => {
+    expect(fulfilmentScope(2026, 10)).toEqual({
+      months: [
+        { year: 2026, month: 9 },
+        { year: 2026, month: 10 },
+        { year: 2026, month: 11 },
+      ],
+      from: "2026-08-17",
+      to: "2026-12-10",
+    });
+    expect(fulfilmentScope(2026, 1).months[0]).toEqual({
+      year: 2025,
+      month: 12,
+    });
+  });
+
+  it("asks in the month the money moved and the month it was planned for", () => {
+    const early = {
+      occurredOn: "2026-10-01",
+      actualOn: "2026-09-22",
+    } as FulfilmentProposal;
+    const elsewhere = {
+      occurredOn: "2026-08-01",
+      actualOn: "2026-08-01",
+    } as FulfilmentProposal;
+    expect(proposalsForMonth([early, elsewhere], 2026, 9)).toEqual([early]);
+    expect(proposalsForMonth([early, elsewhere], 2026, 10)).toEqual([early]);
+    expect(proposalsForMonth([early, elsewhere], 2026, 11)).toEqual([]);
   });
 });

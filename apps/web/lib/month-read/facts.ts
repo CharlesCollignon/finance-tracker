@@ -30,7 +30,10 @@ import {
   getGoalLedger,
   getSavingsGoals,
 } from "@/lib/queries/phase4";
-import { getMonthCloseOverview } from "@/lib/queries/month-close";
+import {
+  getMonthCloseOverview,
+  getRecordedCashFlows,
+} from "@/lib/queries/month-close";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { readCashBalance } from "@/lib/queries/bank-balance";
 import { getPendingFeedItems, hasBankFeed } from "@/lib/queries/bank";
@@ -144,21 +147,24 @@ export async function gatherMonthFacts(
     fulfilledKeys,
   );
 
-  const pulse = isCurrentMonth
-    ? buildMonthPulse({
-        onHand: cash?.ok ? cash.total : null,
-        committed: upcoming.leaving,
-        arriving: upcoming.arriving,
-        flows: {
-          income: summary.income,
-          expenses: summary.expenses,
-          savings: summary.savings,
-          transfers: summary.investmentDeployments,
-        },
-        openingBalance,
-        cap: closes.settings.unrecordedCap,
-      })
+  // Measured against the balance, so by the day money moved, as the close
+  // measures it and as the phone already did: the month's summary counts an
+  // October salary paid in September as October's, and the October balance
+  // never saw it, which read as a month's pay of unrecorded spending.
+  const flows = isCurrentMonth
+    ? await getRecordedCashFlows(userId, year, month, client)
     : null;
+  const pulse =
+    isCurrentMonth && flows
+      ? buildMonthPulse({
+          onHand: cash?.ok ? cash.total : null,
+          committed: upcoming.leaving,
+          arriving: upcoming.arriving,
+          flows,
+          openingBalance,
+          cap: closes.settings.unrecordedCap,
+        })
+      : null;
 
   const state: MonthState = isCurrentMonth
     ? "in-progress"

@@ -99,6 +99,7 @@ import { ICON } from "@/theme/tokens";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
+import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
 
 type FilterType = "all" | CategoryType;
 
@@ -407,13 +408,23 @@ export default function TransactionsScreen() {
           (entry) => `${entry.templateId}:${entry.occurredOn}`,
         ),
       ),
+      // Settled by a bank movement already, so not still to come: without
+      // this a salary the bank had paid counted twice in the month's end.
+      data?.fulfilled,
     );
     return (
       all.income +
       upcoming.arriving -
       (all.expense + all.savings + all.investment + upcoming.budgetedOutflow)
     );
-  }, [transactions, data?.templates, data?.skipped, year, month]);
+  }, [
+    transactions,
+    data?.templates,
+    data?.skipped,
+    data?.fulfilled,
+    year,
+    month,
+  ]);
 
   // A ledger is read a day at a time, not as one unbroken column. Grouping
   // here keeps a heading and its rows in the same object, so the list can
@@ -993,6 +1004,16 @@ export default function TransactionsScreen() {
           // glance; this is what makes it mean something.
           const subtitle = [
             fulfilment ? t(FULFILMENT_STATE_KEY[fulfilment]) : null,
+            // An income counted for this month whose money came in the last
+            // one says when it arrived: the date above it is the day it counts.
+            isMovedRow(item)
+              ? t(
+                  bringsMoneyIn(item.categories)
+                    ? "ledger.receivedOn"
+                    : "ledger.paidOn",
+                  { date: formatShortDate(item.cash_on!, locale) },
+                )
+              : null,
             item.note,
           ]
             .filter(Boolean)

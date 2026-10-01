@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Check, X } from "@phosphor-icons/react";
 import {
+  confirmLabel,
   describeFulfilment,
   describeMiss,
   type FulfilmentMiss,
@@ -113,12 +114,72 @@ export function ArrivedCharges({
     });
   }
 
+  /**
+   * Every waiting pairing at once. A salary paid early usually brings its
+   * savings and its broker transfer with it, and three presses of "Compter
+   * pour octobre" in a row is one decision asked three times. One at a time,
+   * so two confirmations never race for the same row.
+   */
+  function confirmAll() {
+    const batch = waiting;
+    setAnswered((current) => {
+      const next = new Set(current);
+      batch.forEach((proposal) => next.add(proposal.key));
+      return next;
+    });
+    startTransition(async () => {
+      let confirmed = 0;
+      let firstError: string | null = null;
+      const failed: string[] = [];
+      for (const proposal of batch) {
+        const result = await fulfilOccurrence(
+          proposal.templateId,
+          proposal.occurredOn,
+          proposal.transactionId,
+        );
+        if (result.error) {
+          failed.push(proposal.key);
+          firstError ??= result.error;
+        } else {
+          confirmed += 1;
+        }
+      }
+      if (failed.length > 0) {
+        setAnswered((current) => {
+          const next = new Set(current);
+          failed.forEach((key) => next.delete(key));
+          return next;
+        });
+        toast(firstError!, "error");
+      }
+      if (confirmed > 0) {
+        toast(t("fulfilment.allConfirmed", { count: confirmed }), "success");
+        onDecided?.();
+      }
+    });
+  }
+
   return (
     <section aria-label={t("common.arrivedCharges")} className="flex flex-col">
       {waiting.length > 0 ? (
-        <h3 className="border-b border-foreground/10 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {t("fulfilment.askTitle", { count: waiting.length })}
-        </h3>
+        <div className="flex items-center justify-between gap-3 border-b border-foreground/10 px-4 py-2">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {t("fulfilment.askTitle", { count: waiting.length })}
+          </h3>
+          {waiting.length > 1 ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={pending}
+              onClick={confirmAll}
+              className="gap-1.5 rounded-full"
+            >
+              <Check size={ICON.sm} weight="bold" />
+              {t("fulfilment.confirmAll")}
+            </Button>
+          ) : null}
+        </div>
       ) : null}
 
       <ul className="flex flex-col">
@@ -177,7 +238,9 @@ export function ArrivedCharges({
                   className="gap-1.5 rounded-full"
                 >
                   <Check size={ICON.sm} weight="bold" />
-                  {t("fulfilment.thatsIt")}
+                  {/* "Compter pour octobre" for a salary paid early for next
+                      month, since that is what pressing it does. */}
+                  {confirmLabel(proposal, locale)}
                 </Button>
                 <button
                   type="button"

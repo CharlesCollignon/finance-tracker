@@ -13,9 +13,9 @@ import type { Locale } from "@finance/core/i18n/locale";
 import { DEFAULT_WRITER_MODEL, describeModel } from "@finance/core/model-name";
 import {
   buildMonthBalance,
+  recordedDeltas,
   spendingByMonth,
   topSpending,
-  transactionDelta,
   upcomingDelta,
   type BalanceAnchor,
   type CategorySpend,
@@ -70,6 +70,7 @@ import {
   type FulfilmentReport,
 } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
+import { getMovedBetween } from "@/lib/moved-rows";
 
 /**
  * Le point on the phone: one month, as the web's Bearing tells it.
@@ -270,15 +271,21 @@ export async function gatherHomeMonth(
   const trendFrom = shiftMonth(year, month, -(TREND_MONTHS - 1));
   const trendStart = getMonthBounds(trendFrom.year, trendFrom.month).start;
 
-  const rows = await getTransactionsBetween(
-    userId,
-    rangeStart < trendStart ? rangeStart : trendStart,
-    rangeEnd,
-  );
+  const [rows, moved] = await Promise.all([
+    getTransactionsBetween(
+      userId,
+      rangeStart < trendStart ? rangeStart : trendStart,
+      rangeEnd,
+    ),
+    anchor ? getMovedBetween(userId, rangeStart, rangeEnd) : [],
+  ]);
 
-  const recorded: DatedDelta[] = rows
-    .filter((tx) => tx.occurred_on >= rangeStart && tx.occurred_on <= today)
-    .map((tx) => ({ date: tx.occurred_on, delta: transactionDelta(tx) }));
+  const recorded: DatedDelta[] = recordedDeltas(rows, {
+    from: rangeStart,
+    today,
+    anchored: anchor !== null,
+    moved,
+  });
 
   // What the charges still call for, month by month from this one to the
   // end of the range — never a month that has ended.

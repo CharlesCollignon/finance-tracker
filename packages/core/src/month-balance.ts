@@ -21,6 +21,7 @@
 import { getMonthBounds, shiftIsoDate } from "./constants";
 import type { UpcomingCharge } from "./still-to-come";
 import type { TransactionWithCategory } from "./types/database";
+import { cashDateOf } from "./cash-date";
 
 /** Sub-cent differences are rounding, not findings. */
 function roundMoney(value: number): number {
@@ -58,6 +59,46 @@ export function transactionDelta(tx: TransactionWithCategory): number {
     default:
       return -amount;
   }
+}
+
+/**
+ * What has happened, as movements on the account.
+ *
+ * Against a balance the bank reported (`anchored`), a row goes on the day its
+ * money moved — an October salary paid on 22 September lifted the account on
+ * the 22nd, and the curve has to rise there or every day before it is off by
+ * a month's pay. `moved` brings in the rows whose money moved in the range
+ * but that count for a day outside it, which a fetch by `occurred_on` cannot
+ * see. Without an anchor the curve is the month's own net, which is a budget
+ * and goes by the day each row counts for, so the October salary lifts
+ * October.
+ */
+export function recordedDeltas(
+  rows: readonly TransactionWithCategory[],
+  {
+    from,
+    today,
+    anchored,
+    moved = [],
+  }: {
+    from: string;
+    today: string;
+    anchored: boolean;
+    moved?: readonly TransactionWithCategory[];
+  },
+): DatedDelta[] {
+  const byId = new Map(rows.map((row) => [row.id, row] as const));
+  if (anchored) {
+    for (const row of moved) {
+      byId.set(row.id, row);
+    }
+  }
+  const dateOf = anchored
+    ? cashDateOf
+    : (row: TransactionWithCategory) => row.occurred_on;
+  return [...byId.values()]
+    .filter((row) => dateOf(row) >= from && dateOf(row) <= today)
+    .map((row) => ({ date: dateOf(row), delta: transactionDelta(row) }));
 }
 
 /**

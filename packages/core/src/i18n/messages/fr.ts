@@ -228,6 +228,8 @@ export const fr: Messages = {
     repeatBody: "Ajoute un autre {category} de {amount} daté d'aujourd'hui.",
     repeatConfirm: "Ajouter pour aujourd'hui",
     planned: "À venir",
+    receivedOn: "Reçu le {date}",
+    paidOn: "Payé le {date}",
     recurringEntry: "Opération récurrente",
   },
 
@@ -488,6 +490,9 @@ export const fr: Messages = {
     deleting: "Suppression…",
     confirmDelete: "Oui, supprimer",
     deleted: "Opération supprimée",
+    moveBack: "Le remettre au {date}",
+    countsForReceived: "Compte pour {month} — reçu le {date}.",
+    countsForPaid: "Compte pour {month} — payé le {date}.",
     deleteExplanation: "Supprimer définitivement cette opération\u00A0?",
     deleteChargeExplanation:
       "Supprimer cette ligne\u00A0? Elle vient d'une opération récurrente et ne sera pas rajoutée ce mois-ci. L'opération récurrente continue les mois suivants.",
@@ -1696,6 +1701,13 @@ export const fr: Messages = {
     },
     thatsIt: "C'est ça",
     notIt: "Ce n'est pas ça",
+    countsFor: "à compter pour {month}",
+    countFor: "Compter pour {month}",
+    confirmAll: "Tout confirmer",
+    allConfirmed: {
+      one: "{count} opération confirmée",
+      other: "{count} opérations confirmées",
+    },
     notThis: "Non, ce n'est pas {name}",
     done: "Terminé",
     state: {

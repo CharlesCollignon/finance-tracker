@@ -2,6 +2,7 @@ import {
   formatMonthLabel,
   getCurrentMonth,
   getMonthBounds,
+  shiftIsoDate,
   type BudgetViewMode,
 } from "@finance/core/constants";
 
@@ -22,16 +23,14 @@ import { allRows } from "@finance/core/paging";
 import type { GoalLedger } from "@finance/core/savings-goals";
 import { tagUsageFromRows, type TagUsage } from "@finance/core/tags";
 import {
-  filterDatesBySchedule,
-  getRecurringOccurrenceDates,
-} from "@finance/core/recurrence";
-import {
   explainFulfilmentMisses,
   proposeFulfilments,
+  fulfilmentOccurrences,
+  fulfilmentScope,
+  proposalsForMonth,
   refusalKey,
   type FulfilmentMiss,
   type FulfilmentMovement,
-  type FulfilmentOccurrence,
   type FulfilmentProposal,
   type ProposeOptions,
 } from "@finance/core/recurring-fulfilment";
@@ -87,6 +86,8 @@ import type {
 } from "@finance/core/investment-positions";
 
 import { supabase } from "@/lib/supabase";
+import { cashDateOf, movedBetween } from "@finance/core/cash-date";
+import { getMovedBetween, rowsByCashDate } from "@/lib/moved-rows";
 
 export async function getCategories(
   userId: string,
@@ -619,22 +620,27 @@ export async function getExistingKeysForRange(
   from: string,
   to: string,
 ): Promise<{ occurredOn: string; amount: number; note: string | null }[]> {
+  // By the day the money moved, as a statement dates it; a row counted for
+  // next month sits up to a month after that day, hence the wider read.
+  // `*` rather than naming `cash_on`, which does not exist before 045.
   const { data, error } = await supabase
     .from("transactions")
-    .select("occurred_on, amount, note")
+    .select("*")
     .eq("user_id", userId)
     .gte("occurred_on", from)
-    .lte("occurred_on", to);
+    .lte("occurred_on", shiftIsoDate(to, 31));
 
   if (error) {
     throw error;
   }
 
-  return (data ?? []).map((row) => ({
-    occurredOn: row.occurred_on as string,
-    amount: Number(row.amount),
-    note: (row.note as string | null) ?? null,
-  }));
+  return (data ?? [])
+    .filter((row) => movedBetween(row, from, to))
+    .map((row) => ({
+      occurredOn: cashDateOf(row),
+      amount: Number(row.amount),
+      note: (row.note as string | null) ?? null,
+    }));
 }
 
 /**
@@ -743,6 +749,7 @@ async function cashFlowsByMonth(
   const [
     { data: transactions, error: txError },
     { data: transfers, error: trError },
+    moved,
   ] = await Promise.all([
     supabase
       .from("transactions")
@@ -756,6 +763,9 @@ async function cashFlowsByMonth(
       .eq("user_id", userId)
       .gte("occurred_on", start)
       .lte("occurred_on", end),
+    // An income paid early for next month left its mark on the balance of
+    // the month its money arrived in, whichever month it counts for.
+    getMovedBetween(userId, start, end),
   ]);
 
   if (txError) {
@@ -765,9 +775,16 @@ async function cashFlowsByMonth(
     throw trError;
   }
 
+  // Each month by the day its money moved: the close compares the ledger
+  // with what the account held.
   const txByMonth = new Map<string, TransactionWithCategory[]>();
-  for (const row of (transactions ?? []) as TransactionWithCategory[]) {
-    const key = monthKeyOfDate(row.occurred_on);
+  for (const row of rowsByCashDate(
+    (transactions ?? []) as TransactionWithCategory[],
+    moved,
+    start,
+    end,
+  )) {
+    const key = monthKeyOfDate(cashDateOf(row));
     txByMonth.set(key, [...(txByMonth.get(key) ?? []), row]);
   }
 
@@ -1176,56 +1193,6 @@ export async function getConfirmedTransactionIds(
   return new Set((data ?? []).map((row) => row.transaction_id as string));
 }
 
-/** Every occurrence a month's active templates call for. */
-function occurrencesFor(
-  templates: readonly RecurringTemplateWithCategory[],
-  categories: readonly Category[],
-  year: number,
-  month: number,
-): FulfilmentOccurrence[] {
-  const byId = new Map(categories.map((c) => [c.id, c] as const));
-  const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
-  const out: FulfilmentOccurrence[] = [];
-
-  for (const template of templates) {
-    if (!template.active) {
-      continue;
-    }
-    const category = byId.get(template.category_id);
-    if (!category) {
-      continue;
-    }
-
-    const dates = filterDatesBySchedule(
-      getRecurringOccurrenceDates(
-        {
-          recurrence: template.recurrence ?? "monthly",
-          day_of_month: template.day_of_month,
-          day_of_week: template.day_of_week,
-          month_of_year: template.month_of_year,
-        },
-        year,
-        month,
-      ),
-      template.starts_on,
-      template.ends_on,
-    ).filter((date) => date.startsWith(monthPrefix));
-
-    for (const date of dates) {
-      out.push({
-        templateId: template.id,
-        occurredOn: date,
-        amount: Number(template.amount),
-        categoryId: template.category_id,
-        categoryType: category.type,
-        label: template.description?.trim() || category.name,
-      });
-    }
-  }
-
-  return out;
-}
-
 function shiftDays(iso: string, days: number): string {
   const [year, month, day] = iso.split("-").map(Number);
   return new Date(Date.UTC(year!, month! - 1, day! + days))
@@ -1256,16 +1223,9 @@ export interface FulfilmentReport {
  */
 async function readCandidates(
   userId: string,
-  year: number,
-  month: number,
+  from: string,
+  to: string,
 ): Promise<{ movements: FulfilmentMovement[]; options: ProposeOptions }> {
-  const { start, end } = getMonthBounds(year, month);
-  // A window either side of the month, because a charge due on the 1st can be
-  // paid on the last day of the previous month and one due on the 31st on the
-  // 2nd of the next.
-  const from = shiftDays(start, -5);
-  const to = shiftDays(end, 5);
-
   const [
     { data: transactions, error: txError },
     { data: fulfilments, error: fulfilError },
@@ -1334,6 +1294,38 @@ async function readCandidates(
   };
 }
 
+/**
+ * A month's questions: the pairings planned in it, and the ones whose money
+ * moved in it — the October salary paid on 22 September is asked about in
+ * September as well as October (`fulfilmentScope`). The web twin's
+ * `monthQuestions`; matched across three months at once so one payment is
+ * never offered for two of them.
+ */
+async function monthQuestions(
+  userId: string,
+  templates: readonly RecurringTemplateWithCategory[],
+  categories: readonly Category[],
+  year: number,
+  month: number,
+) {
+  const scope = fulfilmentScope(year, month);
+  const occurrences = fulfilmentOccurrences(
+    templates,
+    categories,
+    scope.months,
+  );
+  if (occurrences.length === 0) {
+    return null;
+  }
+  const { movements, options } = await readCandidates(
+    userId,
+    scope.from,
+    scope.to,
+  );
+  const all = proposeFulfilments(occurrences, movements, options);
+  return { occurrences, movements, options, all };
+}
+
 export async function getFulfilmentReport(
   userId: string,
   templates: readonly RecurringTemplateWithCategory[],
@@ -1341,17 +1333,28 @@ export async function getFulfilmentReport(
   year: number,
   month: number,
 ): Promise<FulfilmentReport> {
-  const occurrences = occurrencesFor(templates, categories, year, month);
-  if (occurrences.length === 0) {
+  const asked = await monthQuestions(
+    userId,
+    templates,
+    categories,
+    year,
+    month,
+  );
+  if (!asked) {
     return { proposals: [], misses: [] };
   }
-
-  const { movements, options } = await readCandidates(userId, year, month);
-  const proposals = proposeFulfilments(occurrences, movements, options);
-
+  const monthKey = `${year}-${String(month).padStart(2, "0")}`;
   return {
-    proposals,
-    misses: explainFulfilmentMisses(occurrences, movements, proposals, options),
+    proposals: proposalsForMonth(asked.all, year, month),
+    // Only this month's occurrences can be missing from it.
+    misses: explainFulfilmentMisses(
+      asked.occurrences.filter((occurrence) =>
+        occurrence.occurredOn.startsWith(monthKey),
+      ),
+      asked.movements,
+      asked.all,
+      asked.options,
+    ),
   };
 }
 
@@ -1369,13 +1372,14 @@ export async function getFulfilmentProposals(
   year: number,
   month: number,
 ): Promise<FulfilmentProposal[]> {
-  const occurrences = occurrencesFor(templates, categories, year, month);
-  if (occurrences.length === 0) {
-    return [];
-  }
-
-  const { movements, options } = await readCandidates(userId, year, month);
-  return proposeFulfilments(occurrences, movements, options);
+  const asked = await monthQuestions(
+    userId,
+    templates,
+    categories,
+    year,
+    month,
+  );
+  return asked ? proposalsForMonth(asked.all, year, month) : [];
 }
 
 /** How many are waiting, for the tab bar's badge. */

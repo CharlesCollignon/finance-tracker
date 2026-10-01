@@ -1,19 +1,17 @@
 import {
   explainFulfilmentMisses,
+  fulfilmentOccurrences,
+  fulfilmentScope,
+  proposalsForMonth,
   proposeFulfilments,
   refusalKey,
   type FulfilmentMiss,
   type FulfilmentMovement,
-  type FulfilmentOccurrence,
   type FulfilmentProposal,
   type ProposeOptions,
 } from "@finance/core/recurring-fulfilment";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
-import {
-  filterDatesBySchedule,
-  getRecurringOccurrenceDates,
-} from "@finance/core/recurrence";
-import { getMonthBounds, todayIsoLocal } from "@finance/core/constants";
+import { todayIsoLocal } from "@finance/core/constants";
 import type {
   Category,
   RecurringTemplateWithCategory,
@@ -118,63 +116,6 @@ export async function getConfirmedTransactionIds(
   return new Set((data ?? []).map((row) => row.transaction_id as string));
 }
 
-/**
- * Every occurrence a month's active templates call for.
- *
- * The whole month rather than only the past: a charge due on the 5th that the
- * bank paid on the 3rd is still a future occurrence on the 4th, and it is
- * exactly the one worth asking about. The date window in
- * `proposeFulfilments` is what keeps that honest.
- */
-function occurrencesFor(
-  templates: readonly RecurringTemplateWithCategory[],
-  categories: readonly Category[],
-  year: number,
-  month: number,
-): FulfilmentOccurrence[] {
-  const byId = new Map(categories.map((c) => [c.id, c] as const));
-  const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
-  const out: FulfilmentOccurrence[] = [];
-
-  for (const template of templates) {
-    if (!template.active) {
-      continue;
-    }
-    const category = byId.get(template.category_id);
-    if (!category) {
-      continue;
-    }
-
-    const dates = filterDatesBySchedule(
-      getRecurringOccurrenceDates(
-        {
-          recurrence: template.recurrence ?? "monthly",
-          day_of_month: template.day_of_month,
-          day_of_week: template.day_of_week,
-          month_of_year: template.month_of_year,
-        },
-        year,
-        month,
-      ),
-      template.starts_on,
-      template.ends_on,
-    ).filter((date) => date.startsWith(monthPrefix));
-
-    for (const date of dates) {
-      out.push({
-        templateId: template.id,
-        occurredOn: date,
-        amount: Number(template.amount),
-        categoryId: template.category_id,
-        categoryType: category.type,
-        label: template.description?.trim() || category.name,
-      });
-    }
-  }
-
-  return out;
-}
-
 export interface FulfilmentReport {
   proposals: FulfilmentProposal[];
   /**
@@ -185,6 +126,40 @@ export interface FulfilmentReport {
   misses: FulfilmentMiss[];
 }
 
+/**
+ * A month's questions: the pairings planned in it, and the ones whose money
+ * moved in it — the October salary paid on 22 September is asked about in
+ * September as well as in October (`fulfilmentScope`). Matched across the
+ * three months at once, so one payment is never offered for two of them.
+ */
+async function monthQuestions(
+  userId: string,
+  templates: readonly RecurringTemplateWithCategory[],
+  categories: readonly Category[],
+  year: number,
+  month: number,
+  client?: Client,
+) {
+  const scope = fulfilmentScope(year, month);
+  const occurrences = fulfilmentOccurrences(
+    templates,
+    categories,
+    scope.months,
+  );
+  if (occurrences.length === 0) {
+    return null;
+  }
+
+  const { movements, options } = await readCandidates(
+    userId,
+    scope.from,
+    scope.to,
+    client,
+  );
+  const all = proposeFulfilments(occurrences, movements, options);
+  return { occurrences, movements, options, all };
+}
+
 export async function getFulfilmentReport(
   userId: string,
   templates: readonly RecurringTemplateWithCategory[],
@@ -193,22 +168,30 @@ export async function getFulfilmentReport(
   month: number,
   client?: Client,
 ): Promise<FulfilmentReport> {
-  const occurrences = occurrencesFor(templates, categories, year, month);
-  if (occurrences.length === 0) {
-    return { proposals: [], misses: [] };
-  }
-
-  const { movements, options } = await readCandidates(
+  const asked = await monthQuestions(
     userId,
+    templates,
+    categories,
     year,
     month,
     client,
   );
-  const proposals = proposeFulfilments(occurrences, movements, options);
+  if (!asked) {
+    return { proposals: [], misses: [] };
+  }
 
+  const monthKey = `${year}-${String(month).padStart(2, "0")}`;
   return {
-    proposals,
-    misses: explainFulfilmentMisses(occurrences, movements, proposals, options),
+    proposals: proposalsForMonth(asked.all, year, month),
+    // Only this month's occurrences can be missing from it.
+    misses: explainFulfilmentMisses(
+      asked.occurrences.filter((occurrence) =>
+        occurrence.occurredOn.startsWith(monthKey),
+      ),
+      asked.movements,
+      asked.all,
+      asked.options,
+    ),
   };
 }
 
@@ -220,38 +203,28 @@ export async function getFulfilmentProposals(
   month: number,
   client?: Client,
 ): Promise<FulfilmentProposal[]> {
-  const occurrences = occurrencesFor(templates, categories, year, month);
-  if (occurrences.length === 0) {
-    return [];
-  }
-
-  const { movements, options } = await readCandidates(
+  const asked = await monthQuestions(
     userId,
+    templates,
+    categories,
     year,
     month,
     client,
   );
-  return proposeFulfilments(occurrences, movements, options);
+  return asked ? proposalsForMonth(asked.all, year, month) : [];
 }
 
 /**
- * The movements that could fulfil something this month, and what the user has
- * already decided about them.
+ * The movements that could fulfil something between two days, and what the
+ * user has already decided about them.
  */
 async function readCandidates(
   userId: string,
-  year: number,
-  month: number,
+  from: string,
+  to: string,
   client?: Client,
 ): Promise<{ movements: FulfilmentMovement[]; options: ProposeOptions }> {
   const supabase = client ?? (await createClient());
-  const { start, end } = getMonthBounds(year, month);
-
-  // A window either side of the month, because a charge due on the 1st can be
-  // paid on the last day of the previous month and one due on the 31st on the
-  // 2nd of the next.
-  const from = shiftDays(start, -5);
-  const to = shiftDays(end, 5);
 
   const [
     { data: transactions, error: txError },
@@ -346,10 +319,4 @@ export async function countFulfilmentProposals(
     client,
   );
   return proposals.length;
-}
-
-function shiftDays(iso: string, days: number): string {
-  const [year, month, day] = iso.split("-").map(Number);
-  const date = new Date(Date.UTC(year!, month! - 1, day! + days));
-  return date.toISOString().slice(0, 10);
 }

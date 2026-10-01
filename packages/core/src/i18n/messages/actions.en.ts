@@ -61,6 +61,10 @@ export const actionsEn = {
   counted: "Counted — it is no longer forecast",
   pairingDismissed: "Won't suggest that pairing again",
   backInForecast: "Back in the forecast",
+  countedForMonth: "Counted for {month}",
+  movedBack: "Moved back to {date}",
+  cashDateSetup:
+    "Counting an income for next month needs migration 045 — run it and this will work.",
 
   /* The bank inbox. */
   entryNoLongerWaiting: "That entry is no longer waiting",

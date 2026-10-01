@@ -27,7 +27,11 @@ import {
   shiftIsoDate,
   todayIsoLocal,
   formatLongDate,
+  formatShortDate,
 } from "@finance/core/constants";
+import { cashDateOf } from "@finance/core/cash-date";
+import { monthLong } from "@finance/core/i18n/calendar-names";
+import { countsForMonthOf } from "@finance/core/recurring-fulfilment";
 import {
   monthColumnValue,
   observationDateFor,
@@ -2270,6 +2274,24 @@ export async function fulfilOccurrence(
     return { error: "errors.notAuthenticated" };
   }
 
+  const [{ data: template }, { data: transaction }] = await Promise.all([
+    supabase
+      .from("recurring_templates")
+      .select("id")
+      .eq("id", templateId)
+      .eq("user_id", userId)
+      .maybeSingle(),
+    supabase
+      .from("transactions")
+      .select("*")
+      .eq("id", transactionId)
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  if (!template || !transaction) {
+    return { error: "actions.recurringGone" };
+  }
+
   const { error } = await supabase.from("recurring_fulfilments").upsert(
     {
       user_id: userId,
@@ -2308,7 +2330,85 @@ export async function fulfilOccurrence(
     return { error: duplicateError.message };
   }
 
+  // A planned item counts in the month it was planned for, as on the web
+  // (`fulfilOccurrence` there): a payment whose money moved in another month,
+  // early or late, moves to the occurrence's day and keeps the day its money
+  // moved as `cash_on`.
+  const movedOn = cashDateOf(transaction);
+  const countsFor = countsForMonthOf({ occurredOn }, movedOn);
+
+  if (countsFor) {
+    const { error: moveError } = await supabase
+      .from("transactions")
+      .update({ occurred_on: occurredOn, cash_on: movedOn })
+      .eq("id", transactionId)
+      .eq("user_id", userId);
+    if (moveError) {
+      return {
+        error: fulfilmentSchemaMissing(moveError)
+          ? "actions.cashDateSetup"
+          : moveError.message,
+      };
+    }
+    // The phone's mutations have no reader's locale; the default language,
+    // as the other worded messages here.
+    return {
+      success: true,
+      message: translator(DEFAULT_LOCALE)("actions.countedForMonth", {
+        month: monthLong(Number(countsFor.slice(5, 7)), DEFAULT_LOCALE),
+      }),
+    };
+  }
+
   return { success: true, message: "actions.counted" };
+}
+
+/**
+ * Put an income counted for next month back on the day its money arrived,
+ * and undo the confirmation that moved it — the web's `moveBackEarlyIncome`.
+ */
+export async function moveBackEarlyIncome(
+  transactionId: string,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "errors.notAuthenticated" };
+  }
+
+  const { data: transaction } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("id", transactionId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!transaction?.cash_on) {
+    return { error: "actions.transactionNotFound" };
+  }
+
+  const { error: unlinkError } = await supabase
+    .from("recurring_fulfilments")
+    .delete()
+    .eq("user_id", userId)
+    .eq("transaction_id", transactionId);
+  if (unlinkError && !fulfilmentSchemaMissing(unlinkError)) {
+    return { error: unlinkError.message };
+  }
+
+  const { error } = await supabase
+    .from("transactions")
+    .update({ occurred_on: transaction.cash_on, cash_on: null })
+    .eq("id", transactionId)
+    .eq("user_id", userId);
+  if (error) {
+    return { error: error.message };
+  }
+
+  return {
+    success: true,
+    message: translator(DEFAULT_LOCALE)("actions.movedBack", {
+      date: formatShortDate(transaction.cash_on, DEFAULT_LOCALE),
+    }),
+  };
 }
 
 /** No: that is not what this charge was. */
@@ -2357,6 +2457,15 @@ export async function undoFulfilment(
     return { error: "errors.notAuthenticated" };
   }
 
+  // The row this confirmation moved, if it moved one, goes back too.
+  const { data: fulfilment } = await supabase
+    .from("recurring_fulfilments")
+    .select("transaction_id")
+    .eq("user_id", userId)
+    .eq("template_id", templateId)
+    .eq("occurred_on", occurredOn)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("recurring_fulfilments")
     .delete()
@@ -2369,6 +2478,22 @@ export async function undoFulfilment(
       return { error: FULFILMENT_SETUP_MESSAGE };
     }
     return { error: error.message };
+  }
+
+  if (fulfilment?.transaction_id) {
+    const { data: moved } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("id", fulfilment.transaction_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (moved?.cash_on && moved.occurred_on === occurredOn) {
+      await supabase
+        .from("transactions")
+        .update({ occurred_on: moved.cash_on, cash_on: null })
+        .eq("id", moved.id)
+        .eq("user_id", userId);
+    }
   }
 
   return { success: true, message: "actions.backInForecast" };

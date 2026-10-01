@@ -18,6 +18,7 @@ import type { PullKind } from "@finance/core/bank-pull";
 import { getBankConnection } from "@/lib/bank/client";
 import { pullFromBank } from "@/lib/bank/pull";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
+import { cashDateOf } from "@finance/core/cash-date";
 
 type Client = SupabaseClient<Database>;
 
@@ -179,7 +180,9 @@ export async function syncBankFeed(
   );
   const existing: ExistingLedgerRow[] = past.map((tx) => ({
     transactionId: tx.id,
-    occurredOn: tx.occurred_on,
+    // The bank dates a row by the day its money moved, so a copy is looked
+    // for on that day — not the day an early salary was moved to count for.
+    occurredOn: cashDateOf(tx),
     amount: Number(tx.amount),
     isIncome: tx.categories.type === "income",
     fromRecurringTemplate: tx.recurring_template_id !== null,

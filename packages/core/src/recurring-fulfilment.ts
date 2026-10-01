@@ -1,3 +1,4 @@
+import { monthLong } from "./i18n/calendar-names";
 import { type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 /**
@@ -22,7 +23,15 @@ import { translator } from "./i18n/t";
  */
 
 import { recurringOccurrenceKey } from "./apply-recurring";
-import type { CategoryType } from "./types/database";
+import {
+  filterDatesBySchedule,
+  getRecurringOccurrenceDates,
+} from "./recurrence";
+import type {
+  Category,
+  CategoryType,
+  RecurringTemplateWithCategory,
+} from "./types/database";
 
 /**
  * How far the amount may differ, as a fraction of what was expected.
@@ -52,6 +61,28 @@ export const MIN_AMOUNT_TOLERANCE = 1.5;
  */
 export const MAX_DAYS_APART = 4;
 
+/**
+ * How far from its day money moved on payday may be: a salary, the savings
+ * put by out of it, the transfer to a broker. These follow the pay, and the
+ * pay moves — an employer paying on the 22nd before a holiday, or a few days
+ * late — so they get this much room, and the savings and the broker transfer
+ * move with the salary they came out of. Anything else, a rent or a
+ * subscription, keeps `MAX_DAYS_APART` either way. Monthly and yearly
+ * templates only: a weekly one would have two occurrences inside the room.
+ *
+ * Fifteen plus ten is under the 28 days between two monthly occurrences, so
+ * a movement can never sit inside the room of two of them.
+ */
+export const PAYDAY_EARLY_DAYS = 15;
+export const PAYDAY_LATE_DAYS = 10;
+
+/** The kinds of money that move on payday. */
+const PAYDAY_TYPES: ReadonlySet<CategoryType> = new Set([
+  "income",
+  "savings",
+  "investment",
+]);
+
 export interface FulfilmentOccurrence {
   templateId: string;
   /** The date the template calls for. */
@@ -62,6 +93,8 @@ export interface FulfilmentOccurrence {
   categoryType: CategoryType;
   /** What to call it on screen. */
   label: string;
+  /** The template's rhythm; a weekly one never gets the early window. */
+  recurrence?: "monthly" | "weekly" | "yearly";
 }
 
 export interface FulfilmentMovement {
@@ -91,6 +124,165 @@ export interface FulfilmentProposal {
   difference: number;
   /** Whole days between the occurrence and the movement, unsigned. */
   daysApart: number;
+  /**
+   * The month the movement will count for once confirmed, as YYYY-MM, when
+   * its money moved in another month than the occurrence's — early or late.
+   * Confirming moves the row there and keeps the day the money moved as its
+   * cash date (`cash_on`). Null when both are in the same month.
+   */
+  countsForMonth: string | null;
+}
+
+/**
+ * How far from its occurrence a movement may be: four days either way, and
+ * for money that moves on payday `PAYDAY_EARLY_DAYS` before and
+ * `PAYDAY_LATE_DAYS` after.
+ */
+export function windowFor(
+  occurrence: Pick<
+    FulfilmentOccurrence,
+    "categoryType" | "recurrence" | "occurredOn"
+  >,
+  movementOn: string,
+): number {
+  if (
+    !PAYDAY_TYPES.has(occurrence.categoryType) ||
+    occurrence.recurrence === "weekly"
+  ) {
+    return MAX_DAYS_APART;
+  }
+  return movementOn < occurrence.occurredOn
+    ? PAYDAY_EARLY_DAYS
+    : PAYDAY_LATE_DAYS;
+}
+
+/**
+ * The month a confirmed pairing moves its movement to, or null when the two
+ * are in the same month.
+ *
+ * A planned item counts in the month it was planned for, whenever its money
+ * moved: the October salary paid on 22 September, the savings put by the
+ * same day, the rent taken on 29 September for 1 October, the October salary
+ * that only arrived on 2 November. Confirming one moves the row to its
+ * occurrence's day and keeps the day the money moved as its cash date, so the
+ * balance and the month close still see it where the bank did.
+ */
+export function countsForMonthOf(
+  occurrence: Pick<FulfilmentOccurrence, "occurredOn">,
+  movementOn: string,
+): string | null {
+  const occurrenceMonth = occurrence.occurredOn.slice(0, 7);
+  return movementOn.slice(0, 7) !== occurrenceMonth ? occurrenceMonth : null;
+}
+
+/**
+ * The months a month's questions are drawn from, and the days to read
+ * movements over.
+ *
+ * Asked in the month the money moved as well as the month it was planned
+ * for: the October salary paid on 22 September is a question in September,
+ * not something to wait a week for; the October one paid on 2 November is a
+ * question in November. So a month's occurrences are taken with its
+ * neighbours', and `proposalsForMonth` keeps the pairings that touch it.
+ */
+export function fulfilmentScope(
+  year: number,
+  month: number,
+): { months: { year: number; month: number }[]; from: string; to: string } {
+  const shift = (delta: number) => {
+    const date = new Date(year, month - 1 + delta, 1);
+    return { year: date.getFullYear(), month: date.getMonth() + 1 };
+  };
+  const previous = shift(-1);
+  const next = shift(1);
+  return {
+    months: [previous, { year, month }, next],
+    from: shiftIso(firstOf(previous), -PAYDAY_EARLY_DAYS),
+    to: shiftIso(lastOf(next), PAYDAY_LATE_DAYS),
+  };
+}
+
+/** The pairings a month has to ask about: planned in it, or moved in it. */
+export function proposalsForMonth(
+  proposals: readonly FulfilmentProposal[],
+  year: number,
+  month: number,
+): FulfilmentProposal[] {
+  const key = `${year}-${String(month).padStart(2, "0")}`;
+  return proposals.filter(
+    (proposal) =>
+      proposal.occurredOn.startsWith(key) || proposal.actualOn.startsWith(key),
+  );
+}
+
+function firstOf({ year, month }: { year: number; month: number }): string {
+  return `${year}-${String(month).padStart(2, "0")}-01`;
+}
+
+function lastOf({ year, month }: { year: number; month: number }): string {
+  const day = new Date(year, month, 0).getDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function shiftIso(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y!, m! - 1, d! + days)).toISOString().slice(0, 10);
+}
+
+/**
+ * Every occurrence some months' active templates call for, as the matcher
+ * takes them. The whole of each month rather than only the past: a charge
+ * due on the 5th that the bank paid on the 3rd is still a future occurrence
+ * on the 4th, and it is exactly the one worth asking about.
+ */
+export function fulfilmentOccurrences(
+  templates: readonly RecurringTemplateWithCategory[],
+  categories: readonly Pick<Category, "id" | "type" | "name">[],
+  months: readonly { year: number; month: number }[],
+): FulfilmentOccurrence[] {
+  const byId = new Map(categories.map((c) => [c.id, c] as const));
+  const out: FulfilmentOccurrence[] = [];
+
+  for (const template of templates) {
+    if (!template.active) {
+      continue;
+    }
+    const category = byId.get(template.category_id);
+    if (!category) {
+      continue;
+    }
+    for (const { year, month } of months) {
+      const monthPrefix = `${year}-${String(month).padStart(2, "0")}`;
+      const dates = filterDatesBySchedule(
+        getRecurringOccurrenceDates(
+          {
+            recurrence: template.recurrence ?? "monthly",
+            day_of_month: template.day_of_month,
+            day_of_week: template.day_of_week,
+            month_of_year: template.month_of_year,
+          },
+          year,
+          month,
+        ),
+        template.starts_on,
+        template.ends_on,
+      ).filter((date) => date.startsWith(monthPrefix));
+
+      for (const date of dates) {
+        out.push({
+          templateId: template.id,
+          occurredOn: date,
+          amount: Number(template.amount),
+          categoryId: template.category_id,
+          categoryType: category.type,
+          label: template.description?.trim() || category.name,
+          recurrence: template.recurrence ?? "monthly",
+        });
+      }
+    }
+  }
+
+  return out;
 }
 
 function daysBetween(from: string, to: string): number {
@@ -215,7 +407,8 @@ export function proposeFulfilments(
         continue;
       }
       if (
-        daysBetween(occurrence.occurredOn, movement.occurredOn) > MAX_DAYS_APART
+        daysBetween(occurrence.occurredOn, movement.occurredOn) >
+        windowFor(occurrence, movement.occurredOn)
       ) {
         continue;
       }
@@ -272,6 +465,7 @@ export function proposeFulfilments(
       actualNote: movement.note,
       difference: roundMoney(movement.amount - occurrence.amount),
       daysApart: daysBetween(occurrence.occurredOn, movement.occurredOn),
+      countsForMonth: countsForMonthOf(occurrence, movement.occurredOn),
     });
   }
 
@@ -316,14 +510,44 @@ export function describeFulfilment(
           { count: proposal.daysApart },
         );
 
-  if (Math.abs(proposal.difference) < 0.005) {
-    return t("fulfilment.exact", { when });
-  }
+  const line =
+    Math.abs(proposal.difference) < 0.005
+      ? t("fulfilment.exact", { when })
+      : t(proposal.difference > 0 ? "fulfilment.more" : "fulfilment.less", {
+          amount: formatMoney(Math.abs(proposal.difference)),
+          when,
+        });
 
-  return t(proposal.difference > 0 ? "fulfilment.more" : "fulfilment.less", {
-    amount: formatMoney(Math.abs(proposal.difference)),
-    when,
-  });
+  // An income paid early for next month says where it will go, because
+  // confirming it moves it there: "9 jours d'avance — il comptera pour
+  // octobre".
+  const month = countsForMonthName(proposal, locale);
+  return month ? `${line} — ${t("fulfilment.countsFor", { month })}` : line;
+}
+
+/** The month a proposal will count for, named, or null when it stays put. */
+export function countsForMonthName(
+  proposal: Pick<FulfilmentProposal, "countsForMonth">,
+  locale: Locale,
+): string | null {
+  if (!proposal.countsForMonth) {
+    return null;
+  }
+  return monthLong(Number(proposal.countsForMonth.slice(5, 7)), locale);
+}
+
+/**
+ * What the confirm button says. "C'est ça" for an ordinary pairing; for an
+ * income paid early for next month, what pressing it does: "Compter pour
+ * octobre".
+ */
+export function confirmLabel(
+  proposal: Pick<FulfilmentProposal, "countsForMonth">,
+  locale: Locale,
+): string {
+  const t = translator(locale);
+  const month = countsForMonthName(proposal, locale);
+  return month ? t("fulfilment.countFor", { month }) : t("fulfilment.thatsIt");
 }
 
 /* ------------------------------------------------------- why not, though */
@@ -367,6 +591,8 @@ export interface FulfilmentMiss {
     occurredOn: string;
     note: string | null;
     daysApart: number;
+    /** The window that applied to it, which an early income widens. */
+    window: number;
   } | null;
 }
 
@@ -439,7 +665,7 @@ export function explainFulfilmentMisses(
         ? "not-arrived"
         : !amountsMatch(occurrence.amount, nearest.amount)
           ? "amount"
-          : daysApart > MAX_DAYS_APART
+          : daysApart > windowFor(occurrence, nearest.occurredOn)
             ? "date"
             : // Every rule passed, so the only thing left is that some other
               // occurrence claimed this movement first.
@@ -457,6 +683,7 @@ export function explainFulfilmentMisses(
         occurredOn: nearest.occurredOn,
         note: nearest.note,
         daysApart,
+        window: windowFor(occurrence, nearest.occurredOn),
       },
     });
   }
@@ -499,7 +726,7 @@ export function describeMiss(
       return miss.nearest
         ? t("fulfilment.misses.dateNear", {
             count: miss.nearest.daysApart,
-            window: MAX_DAYS_APART,
+            window: miss.nearest.window,
           })
         : t("fulfilment.misses.dateNone");
   }

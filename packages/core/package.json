@@ -29,6 +29,7 @@
     "./category-read-prompt": "./src/category-read-prompt.ts",
     "./category-selection": "./src/category-selection.ts",
     "./category-selection-prompt": "./src/category-selection-prompt.ts",
+    "./cash-date": "./src/cash-date.ts",
     "./category-styles": "./src/category-styles.ts",
     "./constants": "./src/constants.ts",
     "./country-names": "./src/country-names.ts",

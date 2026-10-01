@@ -17,12 +17,16 @@ import { Text } from "@/components/ui/Text";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
 import {
   deleteTransaction,
+  moveBackEarlyIncome,
   setTransactionTags,
   updateTransaction,
 } from "@/lib/mutations";
 import { getTransactionTagIds } from "@/lib/queries";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
+import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
+import { formatShortDate } from "@finance/core/constants";
+import { monthLong } from "@finance/core/i18n/calendar-names";
 
 interface TransactionFormModalProps {
   open: boolean;
@@ -126,6 +130,23 @@ export function TransactionFormModal({
     onClose();
   }
 
+  // An income counted for this month whose money arrived in the last one
+  // (`cash_on`): it says so, and offers to put it back on the day it came.
+  const arrivedOn = isMovedRow(transaction) ? transaction.cash_on! : null;
+
+  async function handleMoveBack() {
+    setPending(true);
+    setError(null);
+    const result = await moveBackEarlyIncome(transaction.id);
+    setPending(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    onSaved();
+    onClose();
+  }
+
   async function handleDelete() {
     setPending(true);
     setError(null);
@@ -208,8 +229,33 @@ export function TransactionFormModal({
             <DateField
               value={occurredOn}
               onChange={setOccurredOn}
-              className="mb-4"
+              className={arrivedOn ? "mb-2" : "mb-4"}
             />
+            {arrivedOn ? (
+              <View className="mb-4 gap-2 rounded-control border border-border px-3 py-2.5">
+                <Text variant="muted" className="text-xs">
+                  {t(
+                    bringsMoneyIn(transaction.categories)
+                      ? "transaction.countsForReceived"
+                      : "transaction.countsForPaid",
+                    {
+                      month: monthLong(Number(occurredOn.slice(5, 7)), locale),
+                      date: formatShortDate(arrivedOn, locale),
+                    },
+                  )}
+                </Text>
+                <Button
+                  label={t("transaction.moveBack", {
+                    date: formatShortDate(arrivedOn, locale),
+                  })}
+                  variant="outline"
+                  size="sm"
+                  className="self-start"
+                  disabled={pending}
+                  onPress={() => void handleMoveBack()}
+                />
+              </View>
+            ) : null}
 
             <Text className="mb-2 text-sm font-medium">
               {t("transaction.note")}

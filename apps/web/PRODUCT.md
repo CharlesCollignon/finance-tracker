@@ -152,6 +152,14 @@ see `LEGAL_DRAFT` in `components/marketing/legal-copy.ts`).
   _Rendement par an_, and its acronyms (PEA, CTO, AV, PER, DIC) are spelled
   out where they first appear. French typography throughout: a no-break space
   before « : ; ? ! % ».
+- A planned item counts in the month it was planned for, whenever the bank
+  says its money moved. The "did this arrive?" card offers a salary, its
+  savings and its broker transfer from fifteen days early to ten late (other
+  items four days either way), in the month the money moved as well as the
+  month it was planned for. Confirming one paid in another month ("Compter
+  pour octobre", or "Tout confirmer" for the lot) moves it to its planned
+  day, while the balance and the month close keep the day the money moved
+  (the cash date, `CONTEXT.md`).
 - What an action reports — a toast, an inline error — is a message key too
   (`actions.*` and the existing groups), resolved by the toast in the reader's
   language; only owner-facing setup errors stay in English.

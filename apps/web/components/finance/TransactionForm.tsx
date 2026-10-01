@@ -20,9 +20,12 @@ import {
   saveQuickTransaction,
   updateTransaction,
 } from "@/lib/actions/finance";
-import { todayIsoLocal } from "@finance/core/constants";
+import { formatShortDate, todayIsoLocal } from "@finance/core/constants";
+import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
+import { monthLong } from "@finance/core/i18n/calendar-names";
+import { moveBackEarlyIncome } from "@/lib/actions/fulfilment";
 import type { Category, Tag, Transaction } from "@finance/core/types/database";
-import { useT } from "@/lib/locale-context";
+import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
 
 interface TransactionFormProps {
@@ -91,6 +94,7 @@ function TransactionFormFields({
 }: TransactionFormFieldsProps) {
   const { toast } = useToast();
   const t = useT();
+  const locale = useLocale();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletePending, startDelete] = useTransition();
   const [duplicatePending, startDuplicate] = useTransition();
@@ -138,6 +142,23 @@ function TransactionFormFields({
       }
 
       toast(t("transaction.duplicated"), "success");
+      onOpenChange(false);
+    });
+  }
+
+  // An income counted for this month whose money arrived in the last one
+  // (`cash_on`): the sheet says so, and offers to put it back on its day.
+  const arrivedOn = isMovedRow(transaction) ? transaction.cash_on! : null;
+  const [moveBackPending, startMoveBack] = useTransition();
+
+  function handleMoveBack() {
+    startMoveBack(async () => {
+      const result = await moveBackEarlyIncome(transaction.id);
+      if (result.error) {
+        toast(result.error, "error");
+        return;
+      }
+      toast(result.message ?? t("transaction.saved"), "success");
       onOpenChange(false);
     });
   }
@@ -199,6 +220,41 @@ function TransactionFormFields({
             defaultValue={transaction.occurred_on}
             className="text-base"
           />
+          {arrivedOn ? (
+            <div className="flex flex-col items-start gap-2 rounded-control border border-border px-3 py-2.5">
+              <p className="text-xs text-muted-foreground">
+                {t(
+                  bringsMoneyIn(
+                    categories.find(
+                      (c) => c.id === transaction.category_id,
+                    ) ?? {
+                      type: "expense",
+                    },
+                  )
+                    ? "transaction.countsForReceived"
+                    : "transaction.countsForPaid",
+                  {
+                    month: monthLong(
+                      Number(transaction.occurred_on.slice(5, 7)),
+                      locale,
+                    ),
+                    date: formatShortDate(arrivedOn, locale),
+                  },
+                )}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={moveBackPending}
+                onClick={handleMoveBack}
+              >
+                {t("transaction.moveBack", {
+                  date: formatShortDate(arrivedOn, locale),
+                })}
+              </Button>
+            </div>
+          ) : null}
         </div>
         <div className="flex flex-col gap-2">
           <FormLabel htmlFor="note">{t("transaction.note")}</FormLabel>

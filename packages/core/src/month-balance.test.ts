@@ -6,6 +6,7 @@ import {
   topSpending,
   transactionDelta,
   upcomingDelta,
+  recordedDeltas,
 } from "./month-balance";
 import type { TransactionWithCategory } from "./types/database";
 
@@ -228,5 +229,58 @@ describe("topSpending", () => {
     ]);
     expect(rest).toBe(40);
     expect(total).toBe(1190);
+  });
+});
+
+describe("recordedDeltas", () => {
+  // An October salary paid on 22 September, and a September grocery bill.
+  const salary = tx({
+    id: "tx-salary",
+    type: "income",
+    name: "Salaire",
+    amount: 2400,
+    occurred_on: "2026-10-01",
+    cash_on: "2026-09-22",
+  });
+  const groceries = tx({
+    id: "tx-food",
+    occurred_on: "2026-09-12",
+    amount: 80,
+  });
+
+  it("puts a moved row on the day its money moved, against a balance", () => {
+    expect(
+      recordedDeltas([groceries], {
+        from: "2026-09-01",
+        today: "2026-09-30",
+        anchored: true,
+        moved: [salary],
+      }),
+    ).toEqual([
+      { date: "2026-09-12", delta: -80 },
+      { date: "2026-09-22", delta: 2400 },
+    ]);
+  });
+
+  it("counts it once when both reads bring it", () => {
+    expect(
+      recordedDeltas([salary], {
+        from: "2026-09-01",
+        today: "2026-10-05",
+        anchored: true,
+        moved: [salary],
+      }),
+    ).toEqual([{ date: "2026-09-22", delta: 2400 }]);
+  });
+
+  it("goes by the day a row counts for when there is no balance", () => {
+    expect(
+      recordedDeltas([salary], {
+        from: "2026-10-01",
+        today: "2026-10-05",
+        anchored: false,
+        moved: [salary],
+      }),
+    ).toEqual([{ date: "2026-10-01", delta: 2400 }]);
   });
 });

@@ -154,8 +154,31 @@ a template called for. Distinct from applying, which writes a transaction the
 bank never saw, and from skipping, which says the occurrence should not exist:
 fulfilling says it already happened and here is the proof. Never inferred —
 an earlier version matched these automatically and had to grow a recovery
-action for the ones it got wrong.
+action for the ones it got wrong. A movement is offered within four days of
+its occurrence, and money that moves on payday — an income, the savings put
+by from it, a transfer to a broker — from fifteen days before to ten after
+(monthly and yearly templates), because the pay moves and those follow it. A
+planned item counts in the month it was planned for: confirming a movement
+whose money moved in another month — the October salary paid on 22
+September, the savings put by the same day, the October salary that only
+arrived on 2 November — moves it to the occurrence's day and keeps the day
+the money moved as its cash date. It is asked about in the month the money
+moved as well as the month it was planned for, the button says what it does
+("Compter pour octobre"), several can be confirmed at once ("Tout
+confirmer"), and undoing it, or "Le remettre au 22 sept." on the row, puts
+it back.
 _Avoid_: match, settle, reconcile, link
+
+**Cash date**:
+_En français_ : date d'arrivée (« Arrivé le 22 sept. »)
+The day a transaction's money actually moved, when it is not the day the
+transaction counts for (`cash_on`, set only then). Every month view, budget,
+summary and read goes by the day a row counts for; only what pairs the
+ledger with a balance the bank reported reads the cash date — the month
+close, the balance curve on Le point, and the unrecorded spending so far —
+because the account received or paid it on its own day. A row that has one
+says so: "Reçu le 22 sept." for money in, "Payé le 22 sept." for money out.
+_Avoid_: value date, booking date, real date
 
 ### Closing the books
 

@@ -62,6 +62,7 @@ import type {
 } from "@finance/core/types/database";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
+import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
 
 type FilterType = "all" | CategoryType;
 
@@ -77,6 +78,12 @@ interface TransactionsViewProps {
   recurringTemplates: RecurringTemplateWithCategory[];
   /** Occurrences waved off for this month, so they are not counted as owed. */
   skippedKeys?: string[];
+  /**
+   * Occurrences a bank movement has been confirmed to settle. Not owed any
+   * more either: without them the month-end figure counted a salary the bank
+   * had already paid, once as received and once as still to come.
+   */
+  fulfilledKeys?: string[];
   /** Rows the user has confirmed settle a recurring charge. */
   confirmedTransactionIds?: string[];
   /** Rows the matcher has offered as settling one, awaiting a press. */
@@ -164,6 +171,7 @@ export function TransactionsView({
   categories,
   recurringTemplates,
   skippedKeys,
+  fulfilledKeys,
   confirmedTransactionIds,
   proposedTransactionIds,
   tags,
@@ -231,11 +239,24 @@ export function TransactionsView({
   const rowSubtitle = useCallback(
     (tx: TransactionWithCategory) => {
       const state = fulfilmentStates.get(tx.id);
-      return [state ? t(FULFILMENT_STATE_KEY[state]) : null, tx.note]
+      return [
+        state ? t(FULFILMENT_STATE_KEY[state]) : null,
+        // A row counted for another day than its money moved says when that
+        // was, since the date beside it is the day it counts for.
+        isMovedRow(tx)
+          ? t(
+              bringsMoneyIn(tx.categories)
+                ? "ledger.receivedOn"
+                : "ledger.paidOn",
+              { date: formatShortDate(tx.cash_on!, locale) },
+            )
+          : null,
+        tx.note,
+      ]
         .filter(Boolean)
         .join(" · ");
     },
-    [fulfilmentStates, t],
+    [fulfilmentStates, t, locale],
   );
   const [editTransaction, setEditTransaction] =
     useState<TransactionWithCategory | null>(null);
@@ -463,12 +484,20 @@ export function TransactionsView({
       month,
       todayIsoLocal(),
       new Set(skippedKeys ?? []),
+      new Set(fulfilledKeys ?? []),
     );
     const inflow = all.income + upcoming.arriving;
     const outflow =
       all.expense + all.savings + all.investment + upcoming.budgetedOutflow;
     return inflow - outflow;
-  }, [transactions, recurringTemplates, year, month, skippedKeys]);
+  }, [
+    transactions,
+    recurringTemplates,
+    year,
+    month,
+    skippedKeys,
+    fulfilledKeys,
+  ]);
 
   /**
    * The category and tag dropdowns, drawn in the toolbar on a wide screen and

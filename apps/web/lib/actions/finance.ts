@@ -52,6 +52,7 @@ import {
   recurringTemplateSchema,
   updateTransactionSchema,
 } from "@finance/core/validations/finance";
+import { cashDateOf, movedBetween } from "@finance/core/cash-date";
 
 type ActionResult = { error?: string; success?: boolean; message?: string };
 
@@ -370,13 +371,20 @@ export async function getExistingKeysForRange(
     return { error: "actions.invalidDateRange" };
   }
 
+  // A statement dates each line by the day its money moved, so the check
+  // does too (`cashDateOf`). An income counted for next month sits up to a
+  // month after that day, hence the wider read before the filter below.
+  // `*` rather than naming `cash_on`, which does not exist before 045.
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data: rows, error } = await supabase
     .from("transactions")
-    .select("occurred_on, amount, note")
+    .select("*")
     .eq("user_id", user.id)
     .gte("occurred_on", range.data.from)
-    .lte("occurred_on", range.data.to);
+    .lte("occurred_on", shiftIsoDate(range.data.to, 31));
+  const data = (rows ?? [])
+    .filter((row) => movedBetween(row, range.data.from, range.data.to))
+    .map((row) => ({ ...row, occurred_on: cashDateOf(row) }));
 
   if (error) {
     return { error: error.message };

@@ -327,6 +327,8 @@ export const en = {
      * say which of the row's meanings it carries.
      */
     planned: "Coming up",
+    receivedOn: "Received on {date}",
+    paidOn: "Paid on {date}",
     recurringEntry: "Recurring entry",
   },
 
@@ -665,6 +667,9 @@ export const en = {
     deleting: "Deleting…",
     confirmDelete: "Yes, delete",
     deleted: "Transaction deleted",
+    moveBack: "Move it back to {date}",
+    countsForReceived: "Counts for {month} — received on {date}.",
+    countsForPaid: "Counts for {month} — paid on {date}.",
     deleteExplanation: "Delete this transaction permanently?",
     /**
      * The same button on a row a charge wrote. Deleting it also takes that
@@ -2347,6 +2352,13 @@ export const en = {
     askTitle: { one: "Did this arrive?", other: "Did these arrive?" },
     thatsIt: "That's it",
     notIt: "Not it",
+    countsFor: "counts for {month}",
+    countFor: "Count it for {month}",
+    confirmAll: "Confirm all",
+    allConfirmed: {
+      one: "{count} entry confirmed",
+      other: "{count} entries confirmed",
+    },
     notThis: "No, that is not {name}",
     /** Fallback for a decision whose server action returned no message of its own. */
     done: "Done",

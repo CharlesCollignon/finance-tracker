@@ -256,7 +256,15 @@ export interface Database {
           user_id: string;
           category_id: string;
           recurring_template_id: string | null;
+          /** The day the row counts for: every month view reads this one. */
           occurred_on: string;
+          /**
+           * The day the money moved, when it is not `occurred_on` — a salary
+           * paid early for next month (migration 045). Read only by what pairs
+           * the ledger with a balance; see `cashDateOf`. Optional because no
+           * row written before 045 has it, and neither does any fixture.
+           */
+          cash_on?: string | null;
           amount: number;
           note: string | null;
           created_at: string;
@@ -267,6 +275,7 @@ export interface Database {
           category_id: string;
           recurring_template_id?: string | null;
           occurred_on: string;
+          cash_on?: string | null;
           /**
            * A decimal string is accepted so a bank's own figure can be written
            * through without a float ever touching it.
@@ -281,6 +290,7 @@ export interface Database {
           category_id?: string;
           recurring_template_id?: string | null;
           occurred_on?: string;
+          cash_on?: string | null;
           amount?: number;
           note?: string | null;
           created_at?: string;

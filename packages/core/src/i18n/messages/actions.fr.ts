@@ -48,6 +48,10 @@ export const actionsFr: typeof actionsEn = {
   counted: "Comptée — elle n'est plus prévue",
   pairingDismissed: "Ce rapprochement ne sera plus proposé",
   backInForecast: "De retour dans les prévisions",
+  countedForMonth: "Compté pour {month}",
+  movedBack: "Remis au {date}",
+  cashDateSetup:
+    "Compter un revenu pour le mois suivant demande la migration 045 — lancez-la et cela fonctionnera.",
 
   entryNoLongerWaiting: "Cette opération n'attend plus",
   entryAlreadyDealtWith: "Cette opération a déjà été traitée",

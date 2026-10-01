@@ -19,6 +19,8 @@ import type {
   TransactionWithCategory,
 } from "@finance/core/types/database";
 import { getLocale } from "@/lib/locale";
+import { cashDateOf } from "@finance/core/cash-date";
+import { getMovedBetween, rowsByCashDate } from "@/lib/queries/moved-rows";
 
 /** What the app assumes until the user says otherwise. */
 export const DEFAULT_CLOSE_DAY = 5;
@@ -91,6 +93,7 @@ export async function getRecordedCashFlows(
   const [
     { data: transactions, error: txError },
     { data: transfers, error: trError },
+    moved,
   ] = await Promise.all([
     supabase
       .from("transactions")
@@ -104,6 +107,9 @@ export async function getRecordedCashFlows(
       .eq("user_id", userId)
       .gte("occurred_on", start)
       .lte("occurred_on", end),
+    // An income paid early for next month left its mark on this month's
+    // balance, whichever month it counts for.
+    getMovedBetween(userId, start, end, supabase),
   ]);
 
   if (txError) {
@@ -113,8 +119,15 @@ export async function getRecordedCashFlows(
     throw trError;
   }
 
+  // By the day the money moved: the close compares the ledger with what the
+  // account held, and the account received the October salary in September.
   return buildRecordedCashFlows(
-    (transactions ?? []) as TransactionWithCategory[],
+    rowsByCashDate(
+      (transactions ?? []) as TransactionWithCategory[],
+      moved,
+      start,
+      end,
+    ),
     transfers ?? [],
   );
 }
@@ -173,6 +186,7 @@ async function cashFlowsByMonth(
   const [
     { data: transactions, error: txError },
     { data: transfers, error: trError },
+    moved,
   ] = await Promise.all([
     supabase
       .from("transactions")
@@ -186,6 +200,7 @@ async function cashFlowsByMonth(
       .eq("user_id", userId)
       .gte("occurred_on", start)
       .lte("occurred_on", end),
+    getMovedBetween(userId, start, end, supabase),
   ]);
 
   if (txError) {
@@ -195,9 +210,15 @@ async function cashFlowsByMonth(
     throw trError;
   }
 
+  // Each month by the day its money moved, as the close of one month does.
   const txByMonth = new Map<string, TransactionWithCategory[]>();
-  for (const row of (transactions ?? []) as TransactionWithCategory[]) {
-    const key = monthKeyOfDate(row.occurred_on);
+  for (const row of rowsByCashDate(
+    (transactions ?? []) as TransactionWithCategory[],
+    moved,
+    start,
+    end,
+  )) {
+    const key = monthKeyOfDate(cashDateOf(row));
     txByMonth.set(key, [...(txByMonth.get(key) ?? []), row]);
   }
 
