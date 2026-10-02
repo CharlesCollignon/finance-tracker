@@ -1453,8 +1453,147 @@ html:has(.marketing-shell) {
   }
 }
 
+/* The three depths. Each layer reaches past the sky on every side, so a
+   drift never pulls an empty edge into view. The far layer holds still; the
+   middle and near ones drift a little, up-left and back over two minutes or
+   so, the near one further — the parallax of something closer moving more —
+   which carries some stars behind the rim and brings them back out. */
+.marketing-stars-layer {
+  position: absolute;
+  inset: -8%;
+}
+
+.marketing-stars-drift {
+  position: absolute;
+  inset: 0;
+}
+
+.marketing-stars-mid .marketing-stars-drift {
+  animation: marketing-stars-drift-mid 140s ease-in-out infinite alternate;
+}
+
+.marketing-stars-near .marketing-stars-drift {
+  animation: marketing-stars-drift-near 95s ease-in-out infinite alternate;
+}
+
+@keyframes marketing-stars-drift-mid {
+  to {
+    transform: translate3d(-2.5%, 1%, 0);
+  }
+}
+
+@keyframes marketing-stars-drift-near {
+  to {
+    transform: translate3d(-5%, 2%, 0);
+  }
+}
+
+/* And on scroll, where the browser can tie an animation to it: as the hero
+   leaves, the far stars lag most and the near ones least, so the planet
+   rises over the sky rather than the sky being painted on it. A browser
+   without scroll-driven animations keeps the layers where they are. */
+@supports (animation-timeline: scroll()) {
+  .marketing-stars-layer {
+    animation: marketing-stars-scroll linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 100vh;
+  }
+
+  .marketing-stars-far {
+    --stars-lag: 30vh;
+  }
+
+  .marketing-stars-mid {
+    --stars-lag: 20vh;
+  }
+
+  .marketing-stars-near {
+    --stars-lag: 10vh;
+  }
+}
+
+@keyframes marketing-stars-scroll {
+  to {
+    transform: translate3d(0, var(--stars-lag, 0), 0);
+  }
+}
+
+/* The aurora (`LandingAurora`): three narrow bands, high in the sky and
+   tilted the way the rim falls, each drifting, stretching and brightening on
+   its own slow cycle. Faint at their brightest — a fifth of their colour at
+   the core — and added to the sky rather than painted over it. */
+.marketing-aurora {
+  position: absolute;
+  border-radius: 9999px;
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+
+.marketing-aurora-violet {
+  top: 5%;
+  left: 14%;
+  width: 66%;
+  height: 17%;
+  rotate: -9deg;
+  background: radial-gradient(
+    closest-side,
+    rgba(124, 108, 255, 0.2) 0%,
+    rgba(124, 108, 255, 0.07) 55%,
+    transparent 100%
+  );
+  animation: marketing-aurora-sway 52s ease-in-out infinite alternate;
+}
+
+.marketing-aurora-magenta {
+  top: 15%;
+  left: 44%;
+  width: 52%;
+  height: 11%;
+  rotate: -15deg;
+  background: radial-gradient(
+    closest-side,
+    rgba(214, 92, 196, 0.15) 0%,
+    rgba(214, 92, 196, 0.05) 60%,
+    transparent 100%
+  );
+  animation: marketing-aurora-sway 66s ease-in-out -20s infinite
+    alternate-reverse;
+}
+
+.marketing-aurora-indigo {
+  top: 1%;
+  left: -8%;
+  width: 48%;
+  height: 15%;
+  rotate: -5deg;
+  background: radial-gradient(
+    closest-side,
+    rgba(88, 116, 255, 0.15) 0%,
+    rgba(88, 116, 255, 0.05) 55%,
+    transparent 100%
+  );
+  animation: marketing-aurora-sway 58s ease-in-out -35s infinite alternate;
+}
+
+@keyframes marketing-aurora-sway {
+  0% {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0) scale(1, 1);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+    transform: translate3d(7%, 3%, 0) scale(1.14, 0.88);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .marketing-star-twinkle {
+  .marketing-star-twinkle,
+  .marketing-stars-drift,
+  .marketing-stars-layer,
+  .marketing-aurora {
     animation: none;
   }
 }

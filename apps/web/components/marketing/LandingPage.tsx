@@ -14,6 +14,7 @@ import {
   LandingHorizon,
 } from "@/components/marketing/LandingOrb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
+import { LandingAurora } from "@/components/marketing/LandingAurora";
 import { LandingStars } from "@/components/marketing/LandingStars";
 import { LandingDeviceStack } from "@/components/marketing/LandingDeviceStack";
 import { Reveal, Rise } from "@/components/marketing/LandingReveal";
@@ -123,8 +124,10 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
               only greyed the violet out. The horizon is opaque, so the stars
               behind it show only in the sky beyond the rim — a planet in
               front of the stars hides them, and that is half of what makes it
-              read as one. */}
+              read as one. The aurora sits between the two, faint, for the
+              same reason. */}
           <LandingStars className="absolute inset-x-0 top-0 h-[70%]" />
+          <LandingAurora className="h-[60%]" />
           <LandingHorizon />
         </div>
 
