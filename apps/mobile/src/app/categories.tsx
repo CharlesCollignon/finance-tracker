@@ -18,6 +18,7 @@ import { ConfirmSheet } from "@/components/ui/ConfirmSheet";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
+import { ScreenError } from "@/components/ScreenError";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
@@ -30,7 +31,6 @@ import { useToast } from "@/providers/ToastProvider";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
 import { useLocale, useT } from "@/providers/LocaleProvider";
-import { resolveMessage } from "@finance/core/i18n/t";
 
 /**
  * What a category that does not count is, by its kind — the web's badge.
@@ -74,7 +74,7 @@ export default function CategoriesScreen() {
   const [editing, setEditing] = useState<Category | null>(null);
   const [confirming, setConfirming] = useState<Category | null>(null);
 
-  const { data, loading, refreshing, onRefreshAll, error } =
+  const { data, loading, refreshing, onRefreshAll, onRefresh, error } =
     useRefreshable(async () => {
       if (!user) {
         return { categories: [] as Category[] };
@@ -138,7 +138,7 @@ export default function CategoriesScreen() {
       {loading && categories.length === 0 ? (
         <ScreenSkeleton rows={6} />
       ) : error ? (
-        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
+        <ScreenError message={error} onRetry={onRefresh} />
       ) : (
         <ScrollView
           refreshControl={

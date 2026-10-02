@@ -33,6 +33,7 @@ import { PrivateAmount } from "@/components/PrivateAmount";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
+import { ScreenError } from "@/components/ScreenError";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
@@ -77,7 +78,7 @@ export default function InvestmentsScreen() {
   const [editingPosition, setEditingPosition] =
     useState<InvestmentPositionItem | null>(null);
 
-  const { data, loading, refreshing, onRefreshAll, error } = useRefreshable(
+  const { data, loading, refreshing, onRefreshAll, onRefresh, error } = useRefreshable(
     async () =>
       user
         ? // History powers the per-position charts.
@@ -167,7 +168,7 @@ export default function InvestmentsScreen() {
       {loading && !portfolio ? (
         <ScreenSkeleton rows={3} />
       ) : error ? (
-        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
+        <ScreenError message={error} onRetry={onRefresh} />
       ) : !portfolio ? (
         <EmptyState
           title={t("wallets.emptyTitleMobile")}

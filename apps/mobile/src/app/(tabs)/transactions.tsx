@@ -65,6 +65,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
+import { ScreenError } from "@/components/ScreenError";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
@@ -97,7 +98,6 @@ import { hapticLight, hapticSuccess, hapticWarning } from "@/lib/haptics";
 import { ICON } from "@/theme/tokens";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
-import { resolveMessage } from "@finance/core/i18n/t";
 import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
 
 type FilterType = "all" | CategoryType;
@@ -191,7 +191,7 @@ export default function TransactionsScreen() {
   const [storedSelection, setSelected] =
     useState<ReadonlySet<string>>(EMPTY_SELECTION);
   const [deletePending, setDeletePending] = useState(false);
-  const { data, loading, refreshing, onRefreshAll, error } =
+  const { data, loading, refreshing, onRefreshAll, onRefresh, error } =
     useRefreshable(async () => {
       if (!user) {
         return {
@@ -911,9 +911,9 @@ export default function TransactionsScreen() {
               <ScreenSkeleton rows={5} />
             </View>
           ) : error ? (
-            <Text className="pt-4 text-destructive">
-              {resolveMessage(t, error)}
-            </Text>
+            <View className="pt-4">
+              <ScreenError message={error} onRetry={onRefresh} />
+            </View>
           ) : nothingAtAll ? (
             <EmptyState
               title={t("ledger.fillThisMonth")}

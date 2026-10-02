@@ -54,6 +54,7 @@ import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
+import { ScreenError } from "@/components/ScreenError";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { useDeletedToast } from "@/hooks/useDeletedToast";
@@ -65,7 +66,6 @@ import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
-import { resolveMessage } from "@finance/core/i18n/t";
 import {
   getCategories,
   getConfirmedTransactionIds,
@@ -105,7 +105,7 @@ export default function CalendarScreen() {
     null,
   );
 
-  const { data, loading, refreshing, onRefreshAll, error } =
+  const { data, loading, refreshing, onRefreshAll, onRefresh, error } =
     useRefreshable(async () => {
       if (!user) {
         return {
@@ -334,7 +334,7 @@ export default function CalendarScreen() {
       {loading && !data ? (
         <ScreenSkeleton rows={4} />
       ) : error ? (
-        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
+        <ScreenError message={error} onRetry={onRefresh} />
       ) : (
         <ScrollView
           refreshControl={

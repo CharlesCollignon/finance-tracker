@@ -4,12 +4,11 @@ import { LookThroughView } from "@/components/look-through/LookThroughView";
 import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
-import { Text } from "@/components/ui/Text";
+import { ScreenError } from "@/components/ScreenError";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { getLookThroughData } from "@/lib/look-through-data";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
-import { resolveMessage } from "@finance/core/i18n/t";
 import { useTabBarClearance } from "@/theme/chrome";
 
 /**
@@ -27,7 +26,7 @@ export default function LookThroughScreen() {
   // Above the tabs, so no tab bar to clear: the home indicator only.
   const tabBarClearance = useTabBarClearance();
 
-  const { data, loading, refreshing, onRefreshAll, error } =
+  const { data, loading, refreshing, onRefreshAll, onRefresh, error } =
     useRefreshable(
       async () => (user ? getLookThroughData(user.id, locale) : null),
       [user?.id, locale],
@@ -40,7 +39,7 @@ export default function LookThroughScreen() {
       {loading && !data ? (
         <ScreenSkeleton rows={4} />
       ) : error ? (
-        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
+        <ScreenError message={error} onRetry={onRefresh} />
       ) : data ? (
         <ScrollView
           refreshControl={

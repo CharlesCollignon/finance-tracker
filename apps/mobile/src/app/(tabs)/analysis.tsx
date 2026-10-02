@@ -9,7 +9,6 @@ import {
   formatRate,
 } from "@finance/core/savings-accounts";
 import { formatAnnualRate } from "@finance/core/xirr";
-import { resolveMessage } from "@finance/core/i18n/t";
 
 import { FundCostCard } from "@/components/FundCostCard";
 import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
@@ -19,6 +18,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
+import { ScreenError } from "@/components/ScreenError";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
@@ -43,7 +43,7 @@ export default function AnalysisScreen() {
   const { user } = useAuth();
   const tabBarClearance = useTabBarClearance();
 
-  const { data, loading, refreshing, onRefreshAll, error } = useRefreshable(
+  const { data, loading, refreshing, onRefreshAll, onRefresh, error } = useRefreshable(
     async () => (user ? getPlacementsData(user.id, locale) : null),
     [user?.id, locale],
   );
@@ -98,7 +98,7 @@ export default function AnalysisScreen() {
       {loading && !data ? (
         <ScreenSkeleton rows={4} />
       ) : error ? (
-        <Text className="text-destructive">{resolveMessage(t, error)}</Text>
+        <ScreenError message={error} onRetry={onRefresh} />
       ) : !hasAccounts ? (
         <View className="gap-3 pt-2">
           <EmptyState
