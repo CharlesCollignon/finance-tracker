@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AccessibilityInfo, Platform, View } from "react-native";
+import { AccessibilityInfo, Platform, Pressable, View } from "react-native";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -18,19 +18,36 @@ import { useT } from "@/providers/LocaleProvider";
 
 type ToastVariant = "default" | "success" | "error";
 
+/** A button on the toast — Undo, mostly. Without a label there is none. */
+export interface ToastAction {
+  actionLabel: string;
+  onAction: () => void;
+}
+
 interface Toast {
   id: number;
   message: string;
   variant: ToastVariant;
+  action?: ToastAction;
 }
 
 interface ToastContextValue {
-  toast: (message: string, variant?: ToastVariant) => void;
+  toast: (
+    message: string,
+    variant?: ToastVariant,
+    action?: ToastAction,
+  ) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const VISIBLE_MS = 3500;
+
+/**
+ * Longer when there is something to press: an Undo the reader cannot reach
+ * in time reports that the thing was reversible and then takes it away.
+ */
+const ACTIONABLE_MS = 8000;
 
 const SURFACE: Record<ToastVariant, string> = {
   default: "bg-card",
@@ -58,7 +75,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const t = useT();
 
   const toast = useCallback(
-    (rawMessage: string, variant: ToastVariant = "default") => {
+    (
+      rawMessage: string,
+      variant: ToastVariant = "default",
+      action?: ToastAction,
+    ) => {
       const id = nextId.current++;
       // Resolved here, and here only.
       //
@@ -70,16 +91,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       // hands back anything it has no message for. See its comment for why
       // that is by design rather than by luck.
       const message = resolveMessage(t, rawMessage);
-      setToasts((prev) => [...prev, { id, message, variant }]);
+      setToasts((prev) => [...prev, { id, message, variant, action }]);
       // Android speaks the live region on the toast itself; iOS has no
       // equivalent, so it is announced explicitly there. Doing both on one
       // platform would say the message twice.
       if (Platform.OS === "ios") {
         AccessibilityInfo.announceForAccessibility(message);
       }
-      setTimeout(() => {
-        setToasts((prev) => prev.filter((entry) => entry.id !== id));
-      }, VISIBLE_MS);
+      setTimeout(
+        () => {
+          setToasts((prev) => prev.filter((entry) => entry.id !== id));
+        },
+        action ? ACTIONABLE_MS : VISIBLE_MS,
+      );
     },
     [t],
   );
@@ -90,7 +114,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <View
-        pointerEvents="none"
+        // Touches pass through to the screen, except on a toast's button.
+        pointerEvents="box-none"
         className="absolute inset-x-0 top-0 items-center gap-2 px-4"
         style={{ paddingTop: insets.top + 12 }}
       >
@@ -101,14 +126,36 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             accessibilityLiveRegion="polite"
             entering={FadeInUp.duration(220)}
             exiting={FadeOutUp.duration(180)}
+            pointerEvents={entry.action ? "box-none" : "none"}
             className={cn(
-              "w-full max-w-sm rounded-card border border-border px-4 py-3",
+              "w-full max-w-sm flex-row items-center gap-3 rounded-card border border-border px-4 py-3",
               SURFACE[entry.variant],
             )}
           >
-            <Text className={cn("text-sm font-medium", LABEL[entry.variant])}>
+            <Text
+              className={cn("flex-1 text-sm font-medium", LABEL[entry.variant])}
+            >
               {entry.message}
             </Text>
+            {entry.action ? (
+              <Pressable
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={() => {
+                  setToasts((prev) =>
+                    prev.filter((shown) => shown.id !== entry.id),
+                  );
+                  entry.action?.onAction();
+                }}
+                className="min-h-9 justify-center rounded-full px-3"
+              >
+                <Text
+                  className={cn("text-sm font-semibold", LABEL[entry.variant])}
+                >
+                  {entry.action.actionLabel}
+                </Text>
+              </Pressable>
+            ) : null}
           </Animated.View>
         ))}
       </View>

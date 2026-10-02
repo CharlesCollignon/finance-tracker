@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useMemo,
+  useOptimistic,
+  useState,
+  useTransition,
+} from "react";
 import Link from "next/link";
 import {
   DownloadSimple,
@@ -17,6 +23,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useDeletedToast } from "@/lib/use-deleted-toast";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { useToast } from "@/components/layout/ToastProvider";
 import { TransactionForm } from "@/components/finance/TransactionForm";
@@ -161,8 +168,11 @@ function computeTypeTotals(transactions: TransactionWithCategory[]) {
   return totals;
 }
 
+/** Nothing deleted yet: the optimistic set's resting state. */
+const NONE_DELETED: ReadonlySet<string> = new Set();
+
 export function TransactionsView({
-  transactions,
+  transactions: loaded,
   planned = [],
   categories,
   recurringTemplates,
@@ -176,6 +186,20 @@ export function TransactionsView({
   bankSlot,
 }: TransactionsViewProps) {
   const { toast } = useToast();
+  const toastDeleted = useDeletedToast();
+  // Rows deleted leave at once, not when the server has answered; a failed
+  // delete ends the transition and brings them back.
+  const [deletedIds, markDeleted] = useOptimistic(
+    NONE_DELETED,
+    (current, ids: readonly string[]) => new Set([...current, ...ids]),
+  );
+  const transactions = useMemo(
+    () =>
+      deletedIds.size === 0
+        ? loaded
+        : loaded.filter((tx) => !deletedIds.has(tx.id)),
+    [loaded, deletedIds],
+  );
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
   const t = useT();
@@ -348,13 +372,15 @@ export function TransactionsView({
 
   function handleBulkDelete() {
     startDelete(async () => {
-      const result = await deleteTransactions([...selected]);
-      if (result.error) {
+      const ids = [...selected];
+      markDeleted(ids);
+      leaveSelectMode();
+      const result = await deleteTransactions(ids);
+      if (!result.success) {
         toast(result.error, "error");
         return;
       }
-      toast(t("ledger.deleted", { count: result.deleted ?? 0 }), "success");
-      leaveSelectMode();
+      toastDeleted(t("ledger.deleted", { count: result.deleted }), result.undo);
     });
   }
 
@@ -961,6 +987,7 @@ export function TransactionsView({
           }
         }}
         transaction={editTransaction}
+        onDeleting={(id) => markDeleted([id])}
       />
 
       <PlannedOccurrenceSheet

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getLocale } from "@/lib/locale";
 
 import { revalidateApp } from "@/lib/revalidate-paths";
+import * as deletions from "@finance/data/deletions";
 import * as ledger from "@finance/data/ledger";
 import * as occurrences from "@finance/data/occurrences";
 import type { ActionResult, FormState } from "@finance/core/action-result";
@@ -227,7 +228,7 @@ export async function getExistingKeysForRange(
  */
 export async function deleteTransactions(
   ids: string[],
-): Promise<ActionResult<{ deleted: number }>> {
+): Promise<ActionResult<{ deleted: number; undo: deletions.UndoToken }>> {
   return asUser((db, userId) => ledger.deleteTransactions(db, userId, ids));
 }
 
@@ -270,8 +271,17 @@ export async function updateTransaction(
   );
 }
 
-export async function deleteTransaction(id: string): Promise<ActionResult> {
+export async function deleteTransaction(
+  id: string,
+): Promise<ActionResult<{ undo: deletions.UndoToken }>> {
   return asUser((db, userId) => ledger.deleteTransaction(db, userId, id));
+}
+
+/** Take back one delete — transactions or a category — by its token. */
+export async function restoreDeletion(
+  token: string,
+): Promise<ActionResult<{ restored: number }>> {
+  return asUser((db, userId) => deletions.restoreDeletion(db, userId, token));
 }
 
 export async function upsertRecurringTemplate(

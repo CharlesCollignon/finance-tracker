@@ -92,7 +92,8 @@ import {
   type SkippedOccurrence,
 } from "@/lib/queries";
 import { cn } from "@/lib/cn";
-import { hapticLight, hapticSuccess } from "@/lib/haptics";
+import { useDeletedToast } from "@/hooks/useDeletedToast";
+import { hapticLight, hapticSuccess, hapticWarning } from "@/lib/haptics";
 import { ICON } from "@/theme/tokens";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -137,6 +138,7 @@ export default function TransactionsScreen() {
   const { user } = useAuth();
   const formatEuro = useFormatCurrency();
   const { toast } = useToast();
+  const toastDeleted = useDeletedToast();
   const colors = useThemeColors();
   // Shared with the calendar and Le point, so switching view keeps the month.
   const { year, month, setMonth } = useScreenMonth();
@@ -504,13 +506,13 @@ export default function TransactionsScreen() {
     const result = await deleteTransactions([...selected]);
     setDeletePending(false);
 
-    if (result.error) {
+    if (!result.success) {
       toast(result.error, "error");
       return;
     }
 
-    void hapticSuccess();
-    toast(t("ledger.deleted", { count: result.deleted ?? 0 }), "success");
+    void hapticWarning();
+    toastDeleted(t("ledger.deleted", { count: result.deleted }), result.undo);
     leaveSelectMode();
   }
 

@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import Animated, { useReducedMotion, ZoomIn } from "react-native-reanimated";
 
 import { parseTypedAmount } from "@finance/core/amount-input";
 import { formatPercentLabel, formatShortDate } from "@finance/core/constants";
+import { DURATION } from "@finance/core/motion";
 import {
   runwayDaysAdded,
   type MonthCloseResult,
+  type RunMoment,
 } from "@finance/core/month-close";
 
+import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -25,6 +30,8 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { ICON, TYPE } from "@/theme/tokens";
+import { useThemeColors } from "@/theme/useThemeColors";
 
 interface MonthCloseSheetProps {
   open: boolean;
@@ -91,6 +98,10 @@ export function MonthCloseSheet({
   const [balance, setBalance] = useState("");
   const [stage, setStage] = useState<Stage>("entering");
   const [result, setResult] = useState<MonthCloseResult | null>(null);
+  // What the close did to the run, once recorded; null when it is not news.
+  const [run, setRun] = useState<RunMoment | null>(null);
+  const colors = useThemeColors();
+  const reduceMotion = useReducedMotion();
   const [pending, setPending] = useState(false);
   const [fromStatement, setFromStatement] = useState(false);
   // Whether the reader has typed anything since the sheet opened, which a
@@ -131,6 +142,7 @@ export function MonthCloseSheet({
     setBalance("");
     setStage("entering");
     setResult(null);
+    setRun(null);
     setFromStatement(false);
     typed.current = false;
   }
@@ -175,6 +187,7 @@ export function MonthCloseSheet({
     }
     void hapticSuccess();
     setResult(response.result);
+    setRun(response.run);
     setStage("closed");
   }
 
@@ -285,6 +298,64 @@ export function MonthCloseSheet({
 
             {stage !== "entering" && result ? (
               <View className="gap-4">
+                {stage === "closed" &&
+                result.kept !== null &&
+                result.kept > 0 ? (
+                  // The moment: what the month kept, counting up in the gold
+                  // a moment is allowed, and the run if the close extended it.
+                  <View className="items-start gap-1">
+                    <Text variant="muted" className="text-sm">
+                      {t("monthClose.keptIn", { month: monthLabel })}
+                    </Text>
+                    <AnimatedAmount
+                      value={result.kept}
+                      startFrom={0}
+                      format={formatEuro}
+                      className="text-primary"
+                      style={TYPE.figure}
+                    />
+                    <Text variant="muted" className="text-sm">
+                      {result.keptRate !== null
+                        ? t("monthClose.keptRate", {
+                            rate: formatPercentLabel(result.keptRate, locale),
+                          })
+                        : t("monthClose.keptRateUnknown")}
+                    </Text>
+                    {run ? (
+                      <Animated.View
+                        // After the count has landed.
+                        entering={
+                          reduceMotion
+                            ? undefined
+                            : ZoomIn.duration(DURATION.enter).delay(
+                                DURATION.count,
+                              )
+                        }
+                        className="mt-2 flex-row items-center gap-1.5 rounded-full border px-3 py-1.5"
+                        style={{ borderColor: colors.primaryRim }}
+                      >
+                        <Ionicons
+                          name="flame"
+                          size={ICON.sm}
+                          color={colors.primary}
+                        />
+                        <Text className="text-sm font-medium text-primary">
+                          {t(
+                            run.record
+                              ? "monthClose.runRecord"
+                              : "monthClose.runExtended",
+                            { count: run.streak },
+                          )}
+                        </Text>
+                      </Animated.View>
+                    ) : null}
+                    {days !== null ? (
+                      <Text variant="muted" className="mt-1 text-sm">
+                        {t("monthClose.runwayBought", { count: days })}
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : (
                 <View>
                   <Text className="font-semibold" style={{ fontSize: 17 }}>
                     {result.status === "baseline"
@@ -321,6 +392,7 @@ export function MonthCloseSheet({
                     </Text>
                   ) : null}
                 </View>
+                )}
 
                 <View className="rounded-control border border-border p-3">
                   <Figure

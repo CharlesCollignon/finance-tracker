@@ -56,7 +56,8 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { StatHero } from "@/components/StatHero";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
-import { hapticLight, hapticSuccess } from "@/lib/haptics";
+import { useDeletedToast } from "@/hooks/useDeletedToast";
+import { hapticLight, hapticSuccess, hapticWarning } from "@/lib/haptics";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQuickAdd } from "@/providers/QuickAddProvider";
@@ -85,6 +86,7 @@ export default function CalendarScreen() {
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const { toast } = useToast();
+  const toastDeleted = useDeletedToast();
   const formatEuro = useFormatCurrency();
   // Shared with the list and Le point, so switching view keeps the month.
   const { year, month, setMonth } = useScreenMonth();
@@ -259,13 +261,13 @@ export default function CalendarScreen() {
     const result = await deleteTransactions([...selectedIds]);
     setDeletePending(false);
 
-    if (result.error) {
+    if (!result.success) {
       toast(result.error, "error");
       return;
     }
 
-    void hapticSuccess();
-    toast(t("ledger.deleted", { count: result.deleted ?? 0 }), "success");
+    void hapticWarning();
+    toastDeleted(t("ledger.deleted", { count: result.deleted }), result.undo);
     leaveSelectMode();
   }
 

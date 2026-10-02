@@ -11,6 +11,7 @@ import type { z } from "zod";
 
 import type { Db } from "./client";
 import { skipOccurrences, skipWhatTemplatesWrote } from "./recurring-apply";
+import { markTransactionsDeleted, type UndoToken } from "./deletions";
 import { dbError } from "./errors";
 
 /**
@@ -109,14 +110,15 @@ export async function updateTransaction(
 }
 
 /**
- * Delete one transaction. A charge's row first records a skip, so the month
- * filling itself does not write that occurrence straight back.
+ * Delete one transaction, with a token to take it back. A charge's row first
+ * records a skip, so the month filling itself does not write that occurrence
+ * straight back; taking the delete back lifts it again.
  */
 export async function deleteTransaction(
   db: Db,
   userId: string,
   id: string,
-): Promise<ActionResult> {
+): Promise<ActionResult<{ undo: UndoToken }>> {
   if (!parseUuid(id)) {
     return { error: "errors.invalidInput" };
   }
@@ -126,21 +128,27 @@ export async function deleteTransaction(
     return { error: skipError };
   }
 
+  const marked = await markTransactionsDeleted(db, userId, [id]);
+  if (marked !== "unsupported") {
+    return "error" in marked ? marked : { success: true, undo: marked.undo };
+  }
+
+  // Before migration 036: for good, with nothing to take back.
   const { error } = await db
     .from("transactions")
     .delete()
     .eq("id", id)
     .eq("user_id", userId);
 
-  return error ? { error: dbError(error) } : { success: true };
+  return error ? { error: dbError(error) } : { success: true, undo: null };
 }
 
-/** Delete several at once, with the same skips as one at a time. */
+/** Delete several at once, with the same skips and one token for them all. */
 export async function deleteTransactions(
   db: Db,
   userId: string,
   ids: readonly string[],
-): Promise<ActionResult<{ deleted: number }>> {
+): Promise<ActionResult<{ deleted: number; undo: UndoToken }>> {
   const parsed = deleteTransactionsSchema.safeParse({ ids });
   if (!parsed.success) {
     return { error: firstIssue(parsed.error) };
@@ -151,6 +159,13 @@ export async function deleteTransactions(
     return { error: skipError };
   }
 
+  const marked = await markTransactionsDeleted(db, userId, parsed.data.ids);
+  if (marked !== "unsupported") {
+    return "error" in marked
+      ? marked
+      : { success: true, deleted: parsed.data.ids.length, undo: marked.undo };
+  }
+
   const { error, count } = await db
     .from("transactions")
     .delete({ count: "exact" })
@@ -159,7 +174,7 @@ export async function deleteTransactions(
 
   return error
     ? { error: dbError(error) }
-    : { success: true, deleted: count ?? parsed.data.ids.length };
+    : { success: true, deleted: count ?? parsed.data.ids.length, undo: null };
 }
 
 /**

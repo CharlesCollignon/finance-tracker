@@ -651,8 +651,8 @@ export const en = {
      * covering the sentence around it.
      */
     ofWhichMovedBefore: "of which",
-    ofWhichMovedAfter: "moved into the broker — tracked, but not spent.",
-    nothingHereYet: "Nothing here yet.",
+    ofWhichMovedAfter: "paid into your investments — tracked, but not spent.",
+    nothingHereYet: "Nothing here yet: “Add charge” creates one.",
     editNamed: "Edit {name}",
     addCharge: "Add charge",
     kindOfCharge: "Kind of charge",
@@ -990,7 +990,8 @@ export const en = {
     orderBy: "Order",
     orderByName: "Name",
     orderByInvested: "Paid in",
-    noItems: "Nothing in this account yet.",
+    noItems:
+      "Nothing in this account yet. Add what you hold in it to follow what you put in and what it is worth.",
     editPosition: "Edit {name}",
     showChart: "Show chart",
     hideChart: "Hide chart",
@@ -1043,6 +1044,15 @@ export const en = {
 
   /** Closing a month: reading the balance, and what follows from it. */
   monthClose: {
+    keptIn: "Kept in {month}",
+    runExtended: {
+      one: "Run extended: {count} month in a row",
+      other: "Run extended: {count} months in a row",
+    },
+    runRecord: {
+      one: "New record: {count} month in a row",
+      other: "New record: {count} months in a row",
+    },
     closeMonth: "Close {month}",
     balance: "Balance",
     balancePrompt:
@@ -1056,7 +1066,7 @@ export const en = {
     couldNotWorkOut: "Could not work that out.",
     couldNotClose: "Could not close the month.",
     startingPointSet: "Starting point set",
-    somethingMissing: "Something is missing",
+    somethingMissing: "The account holds more than expected",
     youKept: "You kept {amount}",
     costMoreThanItBrought: "{month} cost more than it brought in",
     keptRate: "{rate} of what came in, counting what you set aside.",
@@ -1078,10 +1088,10 @@ export const en = {
     close: "Close",
     balanceOn: "Balance on {date}",
     unexplainedCredit:
-      "The account holds {amount} more than the recorded movements allow. Usually that means income that was never entered — or an expense entered twice, or a broker transfer recorded both as a transaction and as a transfer.",
+      "The account holds {amount} more than your transactions explain. Often an income not entered yet — or an expense, or a payment into your investments, entered twice.",
     runwayBought: {
-      one: "That is {count} day of runway bought.",
-      other: "That is {count} days of runway bought.",
+      one: "Enough to cover {count} day of your fixed costs.",
+      other: "Enough to cover {count} days of your fixed costs.",
     },
     /**
      * The card that offers the close, before the sheet opens. Which of the
@@ -1183,6 +1193,10 @@ export const en = {
     putBack: {
       one: "{count} entry is back in the review",
       other: "{count} entries are back in the review",
+    },
+    taught: {
+      one: "{count} shop learned for next time.",
+      other: "{count} shops learned for next time.",
     },
     allFiled: "Everything is filed.",
     /* The phone's review, one group at a time. */
@@ -1626,6 +1640,8 @@ export const en = {
    * reader in French cannot skip hearing "Previous month" in English.
    */
   common: {
+    undo: "Undo",
+    putBack: "Put back",
     previousMonth: "Previous month",
     nextMonth: "Next month",
     pickAMonth: "Pick a month",
@@ -1877,7 +1893,7 @@ export const en = {
     keptRate: "Kept, as a share of what came in",
     unrecorded: "Unrecorded spending",
     unrecordedNote: "measured against the account balance, not estimated",
-    cashChange: "What the account moved",
+    cashChange: "How much the account changed",
     unrecordedSoFar: "Unrecorded spending so far",
     unrecordedSoFarNote: "measured, and not final until the month is closed",
     onHand: "What the accounts hold",
@@ -1910,12 +1926,12 @@ export const en = {
    * nothing but figures.
    */
   bearingFacts: {
-    netPosition: "Everything, added up",
+    netPosition: "Everything you have, added up",
     committed: "Still to leave this month",
     arriving: "Still to arrive this month",
     savingsRate: "Savings rate this month",
     unrecordedBaseline: "Usual unrecorded spending",
-    projectedBalanceBare: "Where the accounts land",
+    projectedBalanceBare: "Expected balance",
     walletCost: "Put into the wallets",
   },
 
@@ -1941,7 +1957,7 @@ export const en = {
      * "{amount} a month" for the same number, and a label that dropped the
      * "a month" would invite a read calling a monthly drift a total.
      */
-    drift: "What the drift is worth in a month",
+    drift: "The gap from its earlier months, in a month",
     oddMonth: "How far that month sat from a normal one",
     monthsActive: "Months with something recorded",
     shareOfMonth: "Share of everything that went out that month",
@@ -1975,7 +1991,7 @@ export const en = {
     headlineLeft: "Left this month",
     headlineShort: "Short by",
     headlineFree: "Yours to spend",
-    noBalance: "Connect a bank to see what is actually in your account.",
+    noBalance: "Close a month to see what is actually in your account.",
     nothingDue: "Nothing else is due this month.",
     afterLeaving: "After everything still due to leave.",
     includingArriving: "Including what is still due to arrive.",
@@ -2252,9 +2268,9 @@ export const en = {
         other: "Did these arrive?",
       },
       body: {
-        one: "One recurring charge looks like your bank already paid it.",
+        one: "One recurring charge looks like it has already gone through your account.",
         other:
-          "{count} recurring charges look like your bank already paid them.",
+          "{count} recurring charges look like they have already gone through your account.",
       },
     },
     bankRenew: {
@@ -2340,8 +2356,9 @@ export const en = {
       amountNear: "nearest was {amount}, too far from {expected}",
       amountNone: "no movement of the right size",
       dateNear: {
-        one: "nearest was {count} day away, beyond the {window}-day window",
-        other: "nearest was {count} days away, beyond the {window}-day window",
+        one: "nearest was {count} day from the planned date, more than the {window} days it looks within",
+        other:
+          "nearest was {count} days from the planned date, more than the {window} days it looks within",
       },
       dateNone: "no movement near enough in time",
     },
@@ -2372,7 +2389,7 @@ export const en = {
     coolingDown: "One was just written — try again in {seconds}s.",
     inFlight: "A read is already being written.",
     nothingToSay: "There is not enough in {month} to write about yet.",
-    untracked: "Monthly reads are not set up yet (migration 024).",
+    untracked: "Monthly reads are not available here yet.",
     /* What a press comes back with when there is no read to show. */
     noWriter: "No writer is configured.",
     noAnswer: "The writer did not answer just now.",
@@ -2419,7 +2436,7 @@ export const en = {
     subtitleMobile:
       "Written by {model}, from the figures on this screen. It cannot see your accounts.",
     empty: "Nothing has been written about {month} yet.",
-    suggestionsHeading: "What to change",
+    suggestionsHeading: "Worth a closer look",
     writing: "Writing…",
     noReadsLeft: "No reads left for {month}",
     noReadsLeftGeneric: "No reads left this month",
@@ -2570,8 +2587,8 @@ export const en = {
     franceShare: "France",
     europeShare: "Europe",
     usShare: "United States",
-    marketWeight: "Market weighs it {weight}",
-    timesMarket: "{factor}× the market's weight",
+    marketWeight: "Its share of the market: {weight}",
+    timesMarket: "{factor}× its share of the market",
     inLineWithMarket: "In line with the market",
 
     /* Charges. */
@@ -2587,7 +2604,7 @@ export const en = {
     noChargeRecorded: "No charge recorded",
 
     /* Doubling up. */
-    sameIndex: "Both track {index}",
+    sameIndex: "Both copy the same index, {index}",
     nestedIndex: "{outer} contains {inner}",
     sharedCompanies: "Shares {count} of its largest holdings with {other}",
     overlapAtLeast: "At least {share} the same companies",
@@ -2603,10 +2620,10 @@ export const en = {
     sell: "Sell {amount}",
     noMoveNeeded: "Already where it should be",
     rebalanceNote:
-      "These are moves between holdings, not new money. Redirecting a monthly transfer gets to the same place without selling, which inside a PEA is usually the better answer.",
+      "These are moves between holdings, not new money. Redirecting a monthly transfer gets to the same place without selling anything.",
 
     /* What the app could not see. */
-    readCoverage: "{share} of your value has been read",
+    readCoverage: "{share} of what you hold has been read",
     notRead: "Not yet read",
     notReadBody:
       "{count} holdings have not been read, so what they contain is unknown rather than empty. The shares above are worked out over the rest.",
@@ -2767,7 +2784,7 @@ export const en = {
     nothingToSay:
       "Not enough has been read yet to say anything about the whole portfolio.",
     unchanged: "Nothing has moved since the last read.",
-    untracked: "Wallet reads are not set up yet (migration 033).",
+    untracked: "Wallet reads are not available here yet.",
     noWriter: "No writer is configured.",
     noAnswer: "The writer did not answer just now.",
     unusable: "The writer's answer could not be used.",
@@ -2945,6 +2962,15 @@ export const en = {
     netSoFar: "This month so far",
     netByEnd: "By month end",
     netMonth: "This month",
+    how: {
+      title: "How is this worked out?",
+      net: "With no starting balance, the month counts from zero: what came in minus what went out. Close a month to see a real balance.",
+      planned:
+        "A month ahead counts your recurring entries only, from the balance expected at its start. Everyday spending is not in it.",
+      bank: "The balance comes from your bank. For the rest of the month, the app adds what your recurring entries still have to bring in or take out. Everyday spending not done yet is not in it.",
+      close:
+        "It starts from the balance you noted at your last month review. The app adds the transactions recorded since, then what your recurring entries still have to bring in or take out.",
+    },
     netCaption: "What came in, minus what went out.",
     fromBank: "Today, from your bank",
     fromClose: "From your last close, plus what you have recorded since",
@@ -3192,6 +3218,7 @@ export const en = {
     notACap: "That does not look like a budget",
     nothingToImport: "Nothing to import",
     tooManyRows: "Import at most 2000 rows at a time",
+    undoGone: "This deletion can no longer be undone.",
     invalidInput: "Invalid input",
     notAuthenticated: "Not authenticated",
     nameRequired: "Name is required",

@@ -12,6 +12,7 @@ import {
   observationDateFor,
   previousMonthKey,
   recordedOutflow,
+  runMoment,
   runwayDaysAdded,
   suggestUnrecordedCap,
   summarizeCloseHistory,
@@ -531,5 +532,28 @@ describe("closeInvitation", () => {
         baseline: 140,
       }),
     ).toEqual({ kind: "allowance", cap: 0 });
+  });
+});
+
+describe("runMoment", () => {
+  it("says nothing of a first won month, or a run that did not grow", () => {
+    expect(runMoment({ streak: 0, bestStreak: 0 }, { streak: 1 })).toBeNull();
+    expect(runMoment({ streak: 3, bestStreak: 3 }, { streak: 0 })).toBeNull();
+    expect(runMoment({ streak: 2, bestStreak: 2 }, { streak: 2 })).toBeNull();
+  });
+
+  it("tells a run extended, and a record only when one is beaten", () => {
+    expect(runMoment({ streak: 1, bestStreak: 1 }, { streak: 2 })).toEqual({
+      streak: 2,
+      record: false,
+    });
+    expect(runMoment({ streak: 2, bestStreak: 4 }, { streak: 3 })).toEqual({
+      streak: 3,
+      record: false,
+    });
+    expect(runMoment({ streak: 4, bestStreak: 4 }, { streak: 5 })).toEqual({
+      streak: 5,
+      record: true,
+    });
   });
 });

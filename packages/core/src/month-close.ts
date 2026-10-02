@@ -332,6 +332,33 @@ export function summarizeCloseHistory(
   };
 }
 
+/** What closing a month did to the run, when that is news. */
+export interface RunMoment {
+  /** Months in a row now, this one included. */
+  streak: number;
+  /** Longer than any run before it — and there was one before it. */
+  record: boolean;
+}
+
+/**
+ * The run's news from one close: extended past a single month, and whether
+ * that beat the best run so far. Null when the run did not grow — a first
+ * won month is the start of something, not yet a run to celebrate, and a
+ * month that broke it is told by the close itself.
+ */
+export function runMoment(
+  before: Pick<CloseHistorySummary, "streak" | "bestStreak">,
+  after: Pick<CloseHistorySummary, "streak">,
+): RunMoment | null {
+  if (after.streak < 2 || after.streak <= before.streak) {
+    return null;
+  }
+  return {
+    streak: after.streak,
+    record: before.bestStreak >= 2 && after.streak > before.bestStreak,
+  };
+}
+
 /** Closes worth setting a cap from. Fewer than this and it is guesswork. */
 export const MIN_CLOSES_FOR_CAP = 2;
 

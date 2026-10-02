@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -15,6 +15,7 @@ import type { PlannedOccurrence } from "@finance/core/apply-recurring";
 import { useQuickAdd } from "@/components/layout/QuickAddProvider";
 import { RowCheckbox, SelectionBar } from "@/components/finance/SelectionBar";
 import { useToast } from "@/components/layout/ToastProvider";
+import { useDeletedToast } from "@/lib/use-deleted-toast";
 import { FulfilmentDot } from "@/components/finance/FulfilmentDot";
 import { deleteTransactions, moveTransactions } from "@/lib/actions/finance";
 import {
@@ -70,8 +71,11 @@ interface CalendarViewProps {
   month: number;
 }
 
+/** Nothing deleted yet: the optimistic set's resting state. */
+const NONE_DELETED: ReadonlySet<string> = new Set();
+
 export function CalendarView({
-  transactions,
+  transactions: loaded,
   planned = [],
   categories,
   recurringTemplates,
@@ -98,6 +102,19 @@ export function CalendarView({
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
   const { toast } = useToast();
+  const toastDeleted = useDeletedToast();
+  // Rows deleted leave the day at once; a failed delete brings them back.
+  const [deletedIds, markDeleted] = useOptimistic(
+    NONE_DELETED,
+    (current, ids: readonly string[]) => new Set([...current, ...ids]),
+  );
+  const transactions = useMemo(
+    () =>
+      deletedIds.size === 0
+        ? loaded
+        : loaded.filter((tx) => !deletedIds.has(tx.id)),
+    [loaded, deletedIds],
+  );
 
   /** What each row can say about itself, by transaction id. */
   const fulfilmentStates = useMemo(
@@ -172,13 +189,15 @@ export function CalendarView({
 
   function handleBulkDelete() {
     startDelete(async () => {
-      const result = await deleteTransactions([...selected]);
-      if (result.error) {
+      const ids = [...selected];
+      markDeleted(ids);
+      leaveSelectMode();
+      const result = await deleteTransactions(ids);
+      if (!result.success) {
         toast(result.error, "error");
         return;
       }
-      toast(t("ledger.deleted", { count: result.deleted ?? 0 }), "success");
-      leaveSelectMode();
+      toastDeleted(t("ledger.deleted", { count: result.deleted }), result.undo);
     });
   }
 
@@ -616,6 +635,7 @@ export function CalendarView({
           }
         }}
         transaction={editTransaction}
+        onDeleting={(id) => markDeleted([id])}
       />
     </>
   );

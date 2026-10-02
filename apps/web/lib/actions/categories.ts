@@ -28,6 +28,8 @@ export async function setCategoryArchived(
   );
 }
 
-export async function deleteCategory(id: string): Promise<ActionResult> {
+export async function deleteCategory(
+  id: string,
+): Promise<ActionResult<{ undo: string | null }>> {
   return asUser((db, userId) => categories.deleteCategory(db, userId, id));
 }

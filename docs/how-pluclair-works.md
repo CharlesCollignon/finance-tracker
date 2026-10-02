@@ -60,6 +60,16 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 - **Types.** The schema's types are generated (`pnpm gen:types` after a
   migration is applied locally) and narrowed in
   `packages/core/src/types/database.ts`.
+- **Deletes can be taken back.** A transaction or a category deleted is
+  marked (`deleted_at`, migration `036`) and the select policies hide it;
+  the delete returns an undo token (`@finance/data/deletions`) that the toast's
+  Undo spends through `restore_deletion`, on both apps
+  (`useDeletedToast`). Undo also lifts the skip a charge's delete wrote. The
+  nightly `/api/cron/sweep` deletes for good what is still marked after 30
+  days. Without migration `036` a delete is final and no Undo is offered.
+- **Feedback.** Every committed write answers: a toast, and on the phone a
+  haptic — success for a save, warning for a delete. Rows a web delete
+  removes leave at once (`useOptimistic`) and come back if it fails.
 
 ## How every surface stays current
 
@@ -227,7 +237,6 @@ assertion script:
   bearer client.
 - `writesAFigure` (`packages/core/src/month-read.ts`) knows English number words only; a French spelled-out quantity would pass. Digits are always caught.
 - The Wallets page's fund-cost card and the look-through page can show different annual costs: only the look-through falls back to the shortlist's charge hints.
-- `packages/core/src/types/database.ts` is maintained by hand and does not list `deleted_at` (migration `036`).
 - Dead schema: `user_preferences.bearing_pins` and the `bearing_arrangements` table have no readers.
 - The `delete-account` edge function deletes a fixed list of older tables and relies on `on delete cascade` for the rest.
 - The phone has no By category view, no look-through and no wallet read.
@@ -244,7 +253,8 @@ assertion script:
 - The web's offline outbox sends one tab at a time, but the server has no
   idempotency key: a tab closed between a save succeeding and the entry
   leaving the queue would send it again on the next drain.
-- "Delete all data" deletes transactions, templates, categories, positions,
+- "Delete all data" first restores every pending deletion (a hidden
+  transaction would otherwise keep its category from going), then deletes transactions, templates, categories, positions,
   savings accounts, skips, tags, budgets, goals and wallet transfers. It
   leaves month closes and their settings, the review inbox's bank rows,
   confirmed and refused fulfilments, wallet plans, AI reads and proposal

@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  balanceExplanation,
   buildMonthBalance,
   leftAtMonthEnd,
+  recordedDeltas,
   spendingByMonth,
   topSpending,
   transactionDelta,
   upcomingDelta,
-  recordedDeltas,
 } from "./month-balance";
 import type { TransactionWithCategory } from "./types/database";
 
@@ -322,5 +323,21 @@ describe("recordedDeltas", () => {
         moved: [salary],
       }),
     ).toEqual([{ date: "2026-10-01", delta: 2400 }]);
+  });
+});
+
+describe("balanceExplanation", () => {
+  it("explains a net, a month ahead, and each source of a balance", () => {
+    const current = { basis: "balance", period: "current" } as const;
+    expect(balanceExplanation({ ...current, basis: "net" }, "none")).toBe(
+      "net",
+    );
+    expect(balanceExplanation({ ...current, period: "future" }, "bank")).toBe(
+      "planned",
+    );
+    expect(balanceExplanation(current, "bank")).toBe("bank");
+    expect(balanceExplanation({ ...current, period: "past" }, "close")).toBe(
+      "close",
+    );
   });
 });

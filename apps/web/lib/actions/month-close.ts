@@ -1,7 +1,7 @@
 "use server";
 
 import type { ActionResult } from "@finance/core/action-result";
-import type { MonthCloseResult } from "@finance/core/month-close";
+import type { MonthCloseResult, RunMoment } from "@finance/core/month-close";
 import * as closing from "@finance/data/closing";
 import { asUser } from "@/lib/actions/as-user";
 import { getAuthUser } from "@/lib/auth/get-user";
@@ -35,7 +35,7 @@ export async function recordMonthClose(
   year: number,
   month: number,
   closingBalance: number,
-): Promise<ActionResult<{ result: MonthCloseResult }>> {
+): Promise<ActionResult<{ result: MonthCloseResult; run: RunMoment | null }>> {
   const locale = await getLocale();
   return asUser((db, userId) =>
     closing.recordMonthClose(db, userId, year, month, closingBalance, locale),

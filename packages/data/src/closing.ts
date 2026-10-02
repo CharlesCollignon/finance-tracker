@@ -4,8 +4,12 @@ import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
 import {
   monthColumnValue,
+  monthKeyOfClose,
   observationDateFor,
+  runMoment,
+  summarizeCloseHistory,
   type MonthCloseResult,
+  type RunMoment,
 } from "@finance/core/month-close";
 import {
   closeDaySchema,
@@ -14,7 +18,11 @@ import {
 } from "@finance/core/validations/month-close";
 
 import type { Db } from "./client";
-import { getMonthCloseSettings, previewMonthClose } from "./month-close";
+import {
+  getMonthCloseOverview,
+  getMonthCloseSettings,
+  previewMonthClose,
+} from "./month-close";
 import { dbError } from "./errors";
 
 /**
@@ -73,7 +81,7 @@ export async function recordMonthClose(
   month: number,
   closingBalance: number,
   locale: Locale,
-): Promise<ActionResult<{ result: MonthCloseResult }>> {
+): Promise<ActionResult<{ result: MonthCloseResult; run: RunMoment | null }>> {
   const parsed = monthCloseSchema.safeParse({ year, month, closingBalance });
   if (!parsed.success) {
     return { error: firstIssue(parsed.error) };
@@ -113,12 +121,52 @@ export async function recordMonthClose(
       { onConflict: "user_id,month" },
     );
 
-    return error ? { error: dbError(error) } : { success: true, result };
+    return error
+      ? { error: dbError(error) }
+      : {
+          success: true,
+          result,
+          run: await runAfterClose(
+            db,
+            userId,
+            monthColumnValue(parsed.data.year, parsed.data.month),
+            locale,
+          ),
+        };
   } catch (error) {
     return {
       error:
         error instanceof Error ? error.message : "monthClose.couldNotClose",
     };
+  }
+}
+
+/**
+ * What the close just recorded did to the run, for the sheet to say:
+ * the history replayed with and without this month. A failure here costs the
+ * moment, never the close.
+ */
+async function runAfterClose(
+  db: Db,
+  userId: string,
+  monthColumn: string,
+  locale: Locale,
+): Promise<RunMoment | null> {
+  try {
+    const overview = await getMonthCloseOverview(
+      db,
+      userId,
+      todayIsoLocal(),
+      locale,
+    );
+    const key = monthKeyOfClose(monthColumn);
+    const before = summarizeCloseHistory(
+      overview.history.filter((row) => row.monthKey !== key),
+      overview.settings.unrecordedCap,
+    );
+    return runMoment(before, overview.summary);
+  } catch {
+    return null;
   }
 }
 

@@ -1,4 +1,9 @@
-import { useEffect, type ComponentProps, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { Pressable, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +24,7 @@ import {
   shiftMonth,
 } from "@finance/core/constants";
 import { monthShort } from "@finance/core/i18n/calendar-names";
+import { balanceExplanation } from "@finance/core/month-balance";
 import { EASE_STANDARD } from "@finance/core/motion";
 
 import { AnimatedAmount } from "@/components/AnimatedAmount";
@@ -225,6 +231,7 @@ export function BalanceCard({
   const { balance, source, upcoming } = data;
   const net = balance.basis === "net";
   const monthLabel = formatMonthLabel(data.year, data.month, locale);
+  const [howOpen, setHowOpen] = useState(false);
 
   // The two figures, named by what they can claim.
   const figures = ((): {
@@ -316,6 +323,22 @@ export function BalanceCard({
         <Text variant="muted" className="text-xs">
           {caption}
         </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: howOpen }}
+          hitSlop={8}
+          onPress={() => setHowOpen((open) => !open)}
+          className="self-start"
+        >
+          <Text variant="muted" className="text-xs underline">
+            {t("bearingMonth.how.title")}
+          </Text>
+        </Pressable>
+        {howOpen ? (
+          <Text variant="muted" className="text-xs leading-relaxed">
+            {t(`bearingMonth.how.${balanceExplanation(balance, source)}`)}
+          </Text>
+        ) : null}
       </View>
 
       {figures.right ? (

@@ -451,8 +451,9 @@ export const fr: Messages = {
     perMonthSuffix: " / mois",
     noIncomeYet: "Aucun revenu récurrent — ajoutez-en un et ceci se remplira.",
     ofWhichMovedBefore: "dont",
-    ofWhichMovedAfter: "déplacés chez le courtier — suivis, mais pas dépensés.",
-    nothingHereYet: "Rien ici pour l'instant.",
+    ofWhichMovedAfter: "versés sur vos placements — suivis, mais pas dépensés.",
+    nothingHereYet:
+      "Rien ici pour l'instant\u00A0: « Ajouter une opération récurrente » en crée une.",
     editNamed: "Modifier {name}",
     addCharge: "Ajouter une opération récurrente",
     kindOfCharge: "Type d'opération récurrente",
@@ -643,7 +644,7 @@ export const fr: Messages = {
     normal: "{amount} dans un mois normal",
     normalShifted: "{amount} par période de paie",
     periodShifted:
-      "Ces mouvements tombent de part et d'autre d'une fin de mois\u00A0: chacun est compté dans la période à laquelle il appartient. Un mois ici peut différer du même mois dans le Ledger.",
+      "Ces mouvements tombent de part et d'autre d'une fin de mois\u00A0: chacun est compté dans la période à laquelle il appartient. Un mois ici peut différer du même mois dans le Journal.",
     groupExpense: "Ce qui sort",
     groupIncome: "Ce qui entre",
     groupSavings: "Épargne et placements",
@@ -690,7 +691,8 @@ export const fr: Messages = {
     orderBy: "Trier",
     orderByName: "Nom",
     orderByInvested: "Versé",
-    noItems: "Rien dans ce compte pour l'instant.",
+    noItems:
+      "Rien dans ce compte pour l'instant. Ajoutez ce que vous y détenez pour suivre ce que vous avez versé et ce que ça vaut.",
     editPosition: "Modifier {name}",
     showChart: "Voir la courbe",
     hideChart: "Masquer la courbe",
@@ -720,7 +722,7 @@ export const fr: Messages = {
     title: "Frais des fonds",
     weightedSuffix: "par an, en moyenne",
     emptyBody:
-      "Renseignez les frais courants de chaque ligne — la commission annuelle indiquée sur son DIC — et ceci devient un montant en euros. C'est le premier poste de coût de la plupart des portefeuilles, et le seul qui n'apparaît sur aucun relevé.",
+      "Indiquez les frais annuels de chaque fonds — le pourcentage « frais courants » de sa fiche d'information, le DIC — et ceci devient un montant en euros. Ce sont souvent les frais les plus lourds d'un portefeuille, et ils n'apparaissent sur aucun relevé.",
     aYearOn: "par an sur",
     overYears: "sur {years} ans à ce montant",
     cheapestPrefix: "Votre ligne la moins chère est",
@@ -736,6 +738,15 @@ export const fr: Messages = {
   },
 
   monthClose: {
+    keptIn: "Économisé en {month}",
+    runExtended: {
+      one: "Série prolongée\u00A0: {count} mois d'affilée",
+      other: "Série prolongée\u00A0: {count} mois d'affilée",
+    },
+    runRecord: {
+      one: "Nouveau record\u00A0: {count} mois d'affilée",
+      other: "Nouveau record\u00A0: {count} mois d'affilée",
+    },
     closeMonth: "Faire le bilan de {month}",
     balance: "Solde",
     balancePrompt:
@@ -749,7 +760,7 @@ export const fr: Messages = {
     couldNotWorkOut: "Impossible de calculer cela.",
     couldNotClose: "Impossible de faire le bilan du mois.",
     startingPointSet: "Point de départ fixé",
-    somethingMissing: "Il manque quelque chose",
+    somethingMissing: "Le compte contient plus que prévu",
     youKept: "Vous avez économisé {amount}",
     costMoreThanItBrought: "{month} a coûté plus qu'il n'a rapporté",
     keptRate:
@@ -772,10 +783,10 @@ export const fr: Messages = {
     close: "Fermer",
     balanceOn: "Solde au {date}",
     unexplainedCredit:
-      "Le compte contient {amount} de plus que les mouvements enregistrés ne le permettent. En général cela veut dire un revenu jamais saisi — ou une dépense saisie deux fois, ou un virement chez le courtier enregistré à la fois comme opération et comme virement.",
+      "Le compte contient {amount} de plus que vos opérations ne l'expliquent. Souvent, un revenu pas encore noté — ou une dépense, ou un versement sur vos placements, noté deux fois.",
     runwayBought: {
-      one: "Cela fait {count} jour d'autonomie gagné.",
-      other: "Cela fait {count} jours d'autonomie gagnés.",
+      one: "De quoi couvrir {count} jour de vos dépenses fixes.",
+      other: "De quoi couvrir {count} jours de vos dépenses fixes.",
     },
     setStartingBalance: "Fixez votre solde de départ",
     inviteBaseline:
@@ -848,6 +859,10 @@ export const fr: Messages = {
     putBack: {
       one: "{count} ligne est de nouveau à vérifier",
       other: "{count} lignes sont de nouveau à vérifier",
+    },
+    taught: {
+      one: "{count} commerce appris pour la prochaine fois.",
+      other: "{count} commerces appris pour la prochaine fois.",
     },
     allFiled: "Tout est classé.",
     /* The phone's review, one group at a time. */
@@ -1149,7 +1164,7 @@ export const fr: Messages = {
     averageMonthly: "Versement moyen par mois",
     nextContribution: "Prochain versement",
     returnAmount: "Gain ou perte",
-    returnPercent: "Gain ou perte en %",
+    returnPercent: "Gain ou perte en\u00A0%",
     noHistory: "Pas encore d'historique pour ce compte.",
     oneMonthOnly:
       "Un seul mois d'historique pour l'instant — une courbe en demande deux.",
@@ -1189,6 +1204,8 @@ export const fr: Messages = {
   },
 
   common: {
+    undo: "Annuler",
+    putBack: "Remis en place",
     previousMonth: "Mois précédent",
     nextMonth: "Mois suivant",
     pickAMonth: "Choisir un mois",
@@ -1369,7 +1386,7 @@ export const fr: Messages = {
     keptRate: "Économisé, en part de ce qui est entré",
     unrecorded: "Dépenses non notées",
     unrecordedNote: "mesuré sur le solde du compte, pas estimé",
-    cashChange: "Ce que le compte a bougé",
+    cashChange: "De combien le compte a varié",
     unrecordedSoFar: "Dépenses non notées à ce jour",
     unrecordedSoFarNote: "mesuré, et pas définitif avant le bilan du mois",
     onHand: "Ce que les comptes contiennent",
@@ -1390,19 +1407,19 @@ export const fr: Messages = {
   },
 
   bearingFacts: {
-    netPosition: "Tout, additionné",
+    netPosition: "Tout ce que vous avez, additionné",
     committed: "Reste à partir ce mois-ci",
     arriving: "Reste à arriver ce mois-ci",
     savingsRate: "Taux d'épargne ce mois-ci",
     unrecordedBaseline: "Dépenses non notées habituelles",
-    projectedBalanceBare: "Où les comptes arrivent",
+    projectedBalanceBare: "Solde prévu",
     walletCost: "Versé sur vos placements",
   },
 
   categoryFacts: {
     normal: "Un mois normal",
     latest: "En {month}",
-    drift: "Ce que la dérive vaut sur un mois",
+    drift: "L'écart avec ses mois d'avant, sur un mois",
     oddMonth: "De combien ce mois s'écarte d'un mois normal",
     monthsActive: "Mois où quelque chose est enregistré",
     shareOfMonth: "Part de tout ce qui est sorti ce mois-là",
@@ -1413,7 +1430,7 @@ export const fr: Messages = {
     headlineShort: "Il manque",
     headlineFree: "À vous de dépenser",
     noBalance:
-      "Connectez une banque pour voir ce qu'il y a vraiment sur le compte.",
+      "Faites le bilan d'un mois pour voir ce qu'il y a vraiment sur le compte.",
     nothingDue: "Plus rien n'est prévu ce mois-ci.",
     afterLeaving: "Après tout ce qui doit encore partir.",
     includingArriving: "Y compris ce qui doit encore arriver.",
@@ -1613,9 +1630,9 @@ export const fr: Messages = {
         other: "Sont-ils bien arrivés\u00A0?",
       },
       body: {
-        one: "Une opération récurrente semble déjà payée par votre banque.",
+        one: "Une opération récurrente semble déjà passée sur votre compte.",
         other:
-          "{count} opérations récurrentes semblent déjà payées par votre banque.",
+          "{count} opérations récurrentes semblent déjà passées sur votre compte.",
       },
     },
     bankRenew: {
@@ -1687,9 +1704,9 @@ export const fr: Messages = {
       amountNear: "le plus proche était {amount}, trop loin de {expected}",
       amountNone: "aucun mouvement du bon montant",
       dateNear: {
-        one: "le plus proche était à {count} jour, au-delà de la fenêtre de {window} jours",
+        one: "le plus proche était à {count} jour de la date prévue, plus loin que les {window} jours où l'on cherche",
         other:
-          "le plus proche était à {count} jours, au-delà de la fenêtre de {window} jours",
+          "le plus proche était à {count} jours de la date prévue, plus loin que les {window} jours où l'on cherche",
       },
       dateNone: "aucun mouvement assez proche dans le temps",
     },
@@ -1713,8 +1730,7 @@ export const fr: Messages = {
     coolingDown: "Une vient d'être écrite — réessayez dans {seconds} s.",
     inFlight: "Une lecture est déjà en cours d'écriture.",
     nothingToSay: "Il n'y a pas encore assez dans {month} pour en écrire.",
-    untracked:
-      "Les lectures mensuelles ne sont pas encore en place (migration 024).",
+    untracked: "Les lectures mensuelles ne sont pas encore disponibles ici.",
     noWriter: "Aucun rédacteur n'est configuré.",
     noAnswer: "Le rédacteur n'a pas répondu à l'instant.",
     unusable: "La réponse du rédacteur n'était pas utilisable.",
@@ -1736,7 +1752,7 @@ export const fr: Messages = {
     subtitleMobile:
       "Écrit par {model}, à partir des chiffres de cet écran. Il ne voit pas vos comptes.",
     empty: "Rien n'a encore été écrit sur {month}.",
-    suggestionsHeading: "Ce qu'il faut changer",
+    suggestionsHeading: "À regarder de plus près",
     writing: "Écriture…",
     noReadsLeft: "Plus de lecture pour {month}",
     noReadsLeftGeneric: "Plus de lecture ce mois-ci",
@@ -1796,7 +1812,7 @@ export const fr: Messages = {
       energy: "Énergie",
       materials: "Matériaux",
       industrials: "Industrie",
-      "consumer-discretionary": "Consommation discrétionnaire",
+      "consumer-discretionary": "Consommation non essentielle",
       "consumer-staples": "Consommation de base",
       "health-care": "Santé",
       financials: "Finance",
@@ -1824,8 +1840,8 @@ export const fr: Messages = {
     franceShare: "France",
     europeShare: "Europe",
     usShare: "États-Unis",
-    marketWeight: "Le marché lui donne {weight}",
-    timesMarket: "{factor}× le poids du marché",
+    marketWeight: "Sa part dans le marché\u00A0: {weight}",
+    timesMarket: "{factor}× sa part dans le marché",
     inLineWithMarket: "Conforme au marché",
 
     fundCharges: "Les frais propres aux fonds",
@@ -1839,7 +1855,7 @@ export const fr: Messages = {
     overYears: "{amount} sur {years} ans",
     noChargeRecorded: "Aucuns frais renseignés",
 
-    sameIndex: "Les deux suivent {index}",
+    sameIndex: "Les deux reproduisent le même indice, {index}",
     nestedIndex: "{outer} contient {inner}",
     sharedCompanies: "Partage {count} de ses plus grosses lignes avec {other}",
     overlapAtLeast: "Au moins {share} des mêmes sociétés",
@@ -1853,9 +1869,9 @@ export const fr: Messages = {
     sell: "Vendre {amount}",
     noMoveNeeded: "Déjà à sa place",
     rebalanceNote:
-      "Ce sont des mouvements entre lignes, pas de l'argent frais. Réorienter un virement mensuel arrive au même endroit sans vendre, ce qui dans un PEA est généralement la meilleure réponse.",
+      "Ce sont des mouvements entre lignes, pas de l'argent frais. Réorienter un virement mensuel mène au même endroit sans rien vendre.",
 
-    readCoverage: "{share} de votre encours a été lu",
+    readCoverage: "{share} de ce que vous détenez a été lu",
     notRead: "Pas encore lu",
     notReadBody:
       "{count} lignes n'ont pas été lues\u00A0: leur composition est donc inconnue, et non vide. Les parts ci-dessus sont calculées sur le reste.",
@@ -1952,8 +1968,7 @@ export const fr: Messages = {
     nothingToSay:
       "Trop peu a été lu pour dire quoi que ce soit de l'ensemble de vos placements.",
     unchanged: "Rien n'a bougé depuis la dernière revue.",
-    untracked:
-      "Les revues de placements ne sont pas encore en place (migration 033).",
+    untracked: "Les revues de placements ne sont pas encore disponibles ici.",
     noWriter: "Aucun rédacteur n'est configuré.",
     noAnswer: "Le rédacteur n'a pas répondu à l'instant.",
     unusable: "La réponse du rédacteur n'a pas pu être utilisée.",
@@ -2119,6 +2134,15 @@ export const fr: Messages = {
     netSoFar: "Ce mois-ci à ce jour",
     netByEnd: "D'ici la fin du mois",
     netMonth: "Ce mois-ci",
+    how: {
+      title: "Comment c'est calculé\u00A0?",
+      net: "Sans solde de départ, le mois est compté à partir de zéro\u00A0: ce qui est entré moins ce qui est sorti. Faites le bilan d'un mois pour voir un vrai solde.",
+      planned:
+        "Un mois à venir ne compte que vos opérations récurrentes, à partir du solde prévu au début du mois. Les dépenses du quotidien n'y sont pas.",
+      bank: "Le solde vient de votre banque. Pour le reste du mois, l'application y ajoute ce que vos opérations récurrentes doivent encore faire entrer ou sortir. Les dépenses du quotidien pas encore faites n'y sont pas.",
+      close:
+        "Le départ est le solde que vous avez noté au dernier bilan de mois. L'application y ajoute les opérations enregistrées depuis, puis ce que vos opérations récurrentes doivent encore faire entrer ou sortir.",
+    },
     netCaption: "Ce qui est entré, moins ce qui est sorti.",
     fromBank: "Aujourd'hui, d'après votre banque",
     fromClose: "D'après votre dernier bilan, plus ce que vous avez noté depuis",
@@ -2164,7 +2188,7 @@ export const fr: Messages = {
     cards: {
       month: "Ce mois-ci",
       now: "Les comptes",
-      run: "Votre régularité",
+      run: "Votre série",
       ahead: "L'année à venir",
       wallet: "Placements",
     },
@@ -2278,12 +2302,13 @@ export const fr: Messages = {
       "Saisissez un nombre positif (virgule ou point pour les décimales)",
     chargeAsPercent: "Saisissez les frais en pourcentage, par exemple 0,20",
     chargeTooHigh:
-      "Cela semble trop élevé — saisissez 0,20 pour 0,20 %, pas 20",
+      "Cela semble trop élevé — saisissez 0,20 pour 0,20\u00A0%, pas 20",
     notAnIsin: "Cela ne ressemble pas à un ISIN, par exemple IE00B4L5Y983",
     notABalance: "Cela ne ressemble pas à un solde",
     notACap: "Cela ne ressemble pas à un budget",
     nothingToImport: "Rien à importer",
     tooManyRows: "Importez au plus 2000 lignes à la fois",
+    undoGone: "Cette suppression ne peut plus être annulée.",
     invalidInput: "Saisie invalide",
     notAuthenticated: "Non authentifié",
     nameRequired: "Le nom est obligatoire",

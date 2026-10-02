@@ -11,6 +11,7 @@ import Animated, {
   FadeOutRight,
   LinearTransition,
   useReducedMotion,
+  ZoomIn,
 } from "react-native-reanimated";
 
 import {
@@ -155,6 +156,11 @@ export function BankInboxSheet({
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
   const [choosing, setChoosing] = useState<Choosing | null>(null);
   const [answered, setAnswered] = useState(false);
+  // The shops filed under a category here, by group, for what emptying the
+  // inbox taught the app: filing is what the next sync learns from.
+  const [taught, setTaught] = useState<ReadonlyMap<string, readonly string[]>>(
+    new Map(),
+  );
   const [pending, setPending] = useState(false);
   const [fetching, setFetching] = useState(false);
 
@@ -279,9 +285,18 @@ export function BankInboxSheet({
       toast(t("inbox.pickCategoryFirst"), "error");
       return;
     }
+    const key =
+      visible.find((group) => group.rows.some((row) => row.id === ids[0]))
+        ?.key ?? ids[0]!;
     decide(
       ids,
-      () => fileFeedGroup(ids, categoryId),
+      async () => {
+        const result = await fileFeedGroup(ids, categoryId);
+        if (!("error" in result)) {
+          setTaught((current) => new Map(current).set(key, ids));
+        }
+        return result;
+      },
       (decision) => filedSummary(decision, categoryId),
       true,
     );
@@ -310,6 +325,14 @@ export function BankInboxSheet({
         return;
       }
       unhide(ids);
+      setTaught(
+        (current) =>
+          new Map(
+            [...current].filter(
+              ([, filed]) => !filed.some((id) => ids.includes(id)),
+            ),
+          ),
+      );
       toast(
         t("inboxGroups.putBack", { count: result.reopened || ids.length }),
         "success",
@@ -418,16 +441,27 @@ export function BankInboxSheet({
             </Text>
           </>
         ) : answered ? (
-          <View className="flex-row items-center gap-2">
-            <Ionicons
-              name="checkmark-circle"
-              size={ICON.md}
-              color={colors.success}
-            />
-            <Text className="text-sm text-success">
-              {t("inboxGroups.allFiled")}
-            </Text>
-          </View>
+          // The moment: the pile is gone, and what that taught the app.
+          <Animated.View
+            entering={reduceMotion ? undefined : ZoomIn.duration(500)}
+            className="gap-1"
+          >
+            <View className="flex-row items-center gap-2">
+              <Ionicons
+                name="checkmark-circle"
+                size={ICON.md}
+                color={colors.primary}
+              />
+              <Text className="text-sm font-medium">
+                {t("inboxGroups.allFiled")}
+              </Text>
+            </View>
+            {taught.size > 0 ? (
+              <Text variant="muted" className="text-sm">
+                {t("inboxGroups.taught", { count: taught.size })}
+              </Text>
+            ) : null}
+          </Animated.View>
         ) : null}
         {/* The whole statement rather than the recent window: a different
             job from the header's refresh, and worth its own button. */}
