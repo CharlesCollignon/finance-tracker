@@ -16,8 +16,16 @@
 Pluclair est une application gratuite de suivi du budget personnel (web et
 téléphone), destinée aux particuliers en France. Le traitement étudié ici est
 la **connexion bancaire** ; les autres traitements (compte, budget saisi,
-notifications, lectures par IA) sont décrits au registre et présentent un
-risque moindre.
+biens immobiliers et prêts, notifications, lectures par IA) sont décrits au
+registre et présentent un risque moindre.
+
+Les biens immobiliers ajoutent une donnée de localisation : le point de
+l'adresse d'un logement, souvent le domicile. Elle est réduite à la commune et
+à ce point (l'adresse écrite n'est gardée qu'à la demande de l'utilisateur),
+protégée comme le reste par la sécurité au niveau des lignes, et l'adresse
+n'est envoyée au service de géocodage de l'IGN que depuis le serveur, sans
+l'adresse IP ni l'identité de l'utilisateur. [[Confirmer que ce traitement ne
+justifie pas d'analyse distincte.]]
 
 - **Responsable** : [[identité de l'éditeur]].
 - **Personnes concernées** : utilisateurs de Pluclair ayant choisi de
@@ -126,6 +134,8 @@ d'open-banking.io.
 | Procédure de violation de données (notification CNIL sous 72 h) | [[date]]                                       | À rédiger                               |
 | Accords de sous-traitance vérifiés                              | [[date]]                                       | À faire                                 |
 | Question à l'ACPR et accord d'open-banking.io                   | [[date]]                                       | À envoyer                               |
+| Biens immobiliers : adresse réduite à la commune et au point    | —                                              | Fait                                    |
+| Conditions de la Géoplateforme de l'IGN vérifiées               | [[date]]                                       | À faire                                 |
 | Revue de cette AIPD                                             | Annuelle, et à chaque changement du traitement | —                                       |
 
 ## 5. Validation
@@ -133,4 +143,4 @@ d'open-banking.io.
 - **Avis du délégué à la protection des données** : sans objet — [[à confirmer]].
 - **Avis des personnes concernées** : [[recueilli ou non, et comment]].
 - **Décision du responsable du traitement** : [[mise en œuvre acceptée / sous
-    conditions]], le [[date]], [[nom]].
+        conditions]], le [[date]], [[nom]].

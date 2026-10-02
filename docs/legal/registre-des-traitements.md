@@ -57,9 +57,9 @@ auprès desquels l'utilisateur a lui-même ouvert un compte.
   les lignes conservées sont enregistrées, pas le fichier).
 - **Destinataires** : Supabase, Vercel.
 - **Durée** : tant que le compte existe. Une écriture supprimée est conservée
-    pour permettre l'annulation ; **la tâche qui l'efface définitivement n'est
-    pas encore programmée** — [[durée retenue, 30 jours proposés, et date de mise
-    en place]].
+        pour permettre l'annulation ; **la tâche qui l'efface définitivement n'est
+        pas encore programmée** — [[durée retenue, 30 jours proposés, et date de mise
+        en place]].
 - **Sécurité** : RLS ; chaque ligne rattachée à son compte.
 
 ## 3. Connexion bancaire
@@ -121,11 +121,47 @@ auprès desquels l'utilisateur a lui-même ouvert un compte.
 - **Données** : journaux de requêtes de l'hébergeur.
 - **Durée** : [[durée de conservation des journaux Vercel]].
 
-## Hors registre : cours de marché
+## 7. Biens immobiliers et prêts
+
+- **Finalité** : suivre les biens que l'utilisateur possède — ce qu'ils ont
+  coûté, les prêts qui les ont financés et leurs mensualités, ce qu'ils valent
+  d'après les ventes alentour (onglet Immobilier, ouvert compte par compte).
+- **Base légale** : exécution du contrat (art. 6.1.b).
+- **Données** : nom du bien, type et usage, commune (code INSEE), code postal,
+  coordonnées du point de l'adresse, surface, pièces, part détenue, prix
+  d'achat, frais et travaux, estimation de l'utilisateur ; pour chaque prêt :
+  montant, taux, durée, dates, assurance, frais, part empruntée, capital
+  restant dû indiqué par la banque ; le relevé du marché calculé pour le bien.
+  **L'adresse complète n'est conservée que si l'utilisateur le demande** ; par
+  défaut seuls la commune et le point sont gardés, pour comparer le bien aux
+  ventes dans un rayon de 500 m.
+- **Destinataires** : Supabase, Vercel ; l'**IGN (Géoplateforme)** reçoit le
+      texte de l'adresse au moment où l'utilisateur la saisit, pour la retrouver.
+      La requête part du serveur de Pluclair : l'IGN ne reçoit ni l'adresse IP de
+      l'utilisateur, ni son identité, ni aucune autre donnée du compte —
+      [[vérifier les conditions d'utilisation de la Géoplateforme et la durée de
+      conservation de ses journaux]].
+- **Durée** : tant que le compte existe ; supprimer un bien supprime ses prêts
+  et son relevé du marché, et « Supprimer toutes mes données » les supprime
+  tous.
+- **Sécurité** : RLS sur les biens, les prêts et les relevés ; chaque ligne
+  rattachée à son compte, et aucune lisible par un autre compte. Le relevé
+  est rangé avec le bien plutôt que dans une table commune par lieu, qui
+  aurait laissé voir à tout compte les quartiers où des utilisateurs
+  possèdent un logement.
+
+## Hors registre : cours de marché, ventes immobilières et indices
 
 Les cours des fonds sont consultés sur Yahoo Finance et sur les pages des
 émetteurs (justETF, iShares) à partir du seul identifiant du fonds : aucune
 donnée personnelle n'est transmise.
+
+Les ventes immobilières (fichiers DVF publiés par Etalab, données publiques)
+sont téléchargées par commune, et l'indice des prix des logements anciens
+Notaires-INSEE par série : la requête ne porte que sur un code de commune ou
+un identifiant de série, le même pour tout utilisateur, et aucune donnée
+personnelle n'est transmise. Pluclair n'en conserve que des agrégats (médiane
+et quartiles par bien) et l'indice publié.
 
 ---
 
