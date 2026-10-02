@@ -3,6 +3,8 @@ import * as fulfilment from "@finance/data/fulfilment";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
 import * as templates from "@finance/data/templates";
+import * as inbox from "@finance/data/bank-inbox";
+import type { PendingFeedRow } from "@finance/data/bank-inbox";
 import * as bankBalance from "@finance/data/bank-balance";
 import * as preferences from "@finance/data/preferences";
 import {
@@ -13,17 +15,8 @@ import {
 } from "@finance/core/constants";
 
 import type { Locale } from "@finance/core/i18n/locale";
-import { translator } from "@finance/core/i18n/t";
-import {
-  bankMerchantKey,
-  buildBankMerchantIndex,
-  type BankMerchantIndex,
-} from "@finance/core/bank-merchant";
-import {
-  detectRecurring,
-  filterLiveProposals,
-  type RecurringProposal,
-} from "@finance/core/recurring-detection";
+import type { BankMerchantIndex } from "@finance/core/bank-merchant";
+import type { RecurringProposal } from "@finance/core/recurring-detection";
 import { type FulfilmentProposal } from "@finance/core/recurring-fulfilment";
 import { buildMonthlySummary } from "@finance/core/monthly-summary";
 import {
@@ -41,15 +34,10 @@ import {
   type MerchantRule,
 } from "@finance/core/merchant-memory";
 import type { CashBalance } from "@finance/core/bank-balance";
-import {
-  describeReviewReason,
-  type ReviewReason,
-} from "@finance/core/bank-feed";
 import type {
   BankAccount,
   BankFeedItem,
   Category,
-  CategoryType,
   MonthClose,
   MonthlySummary,
   RecurringTemplateWithCategory,
@@ -63,6 +51,8 @@ import type {
 
 import { supabase } from "@/lib/supabase";
 import { cashDateOf, movedBetween } from "@finance/core/cash-date";
+
+export type { PendingFeedRow } from "@finance/data/bank-inbox";
 
 export async function getCategories(
   userId: string,
@@ -688,180 +678,27 @@ export async function countFulfilmentProposals(
 
 /* ------------------------------------------------------ the review inbox */
 
-/**
- * A bank row still waiting for a category, and why it is waiting.
- *
- * Mirrors the web `PendingFeedRow`. The reason is stored packed into
- * `decided_by` as `review:<reason>` and unpacked here, so both apps say the
- * same sentence about the same row — the sentences themselves live in
- * `@finance/core/bank-feed`.
- */
-export interface PendingFeedRow {
-  id: string;
-  occurredOn: string;
-  amount: number;
-  direction: "in" | "out";
-  counterparty: string | null;
-  note: string;
-  /** Why it is waiting, in words. */
-  why: string;
-}
 
-/** Parses `review:<reason>` back out of `decided_by`. */
-function reasonOf(decidedBy: string | null, locale: Locale): string {
-  const why = decidedBy?.startsWith("review:")
-    ? (decidedBy.slice("review:".length) as ReviewReason)
-    : null;
-  return why
-    ? describeReviewReason(why, locale)
-    : translator(locale)("bankReview.waiting");
-}
 
-export async function getPendingFeedItems(
+
+export function getPendingFeedItems(
   userId: string,
   locale: Locale,
 ): Promise<PendingFeedRow[]> {
-  const { data, error } = await supabase
-    .from("bank_feed_items")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("status", "pending")
-    .order("occurred_on", { ascending: false })
-    // As many as the web's grouped review holds: grouping only works when a
-    // shop's rows are all here, and a year of weekly shopping is past 100.
-    .limit(1000);
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return [];
-    }
-    throw error;
-  }
-
-  return ((data ?? []) as BankFeedItem[]).map((row) => ({
-    id: row.id,
-    occurredOn: row.occurred_on,
-    amount: Number(row.amount),
-    direction: row.direction,
-    counterparty: row.counterparty,
-    note: row.note,
-    why: reasonOf(row.decided_by, locale),
-  }));
+  return inbox.getPendingFeedItems(supabase, userId, locale);
 }
 
-/**
- * The user's history keyed the way the bank matcher keys it — what the
- * grouped review suggests a shop's category from. The web's
- * `getBankMerchantIndex`, bounded the same way.
- */
-export async function getBankMerchantIndex(
+/** The history a review group takes its suggested category from. */
+export function getBankMerchantIndex(
   userId: string,
 ): Promise<BankMerchantIndex> {
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("note, category_id, occurred_on, categories(name, type)")
-    .eq("user_id", userId)
-    .order("occurred_on", { ascending: false })
-    .limit(2000);
-
-  if (error) {
-    // A suggestion is a convenience: without one, the review still works.
-    return new Map();
-  }
-
-  type Row = {
-    note: string | null;
-    category_id: string;
-    occurred_on: string;
-    categories: { name: string; type: string } | null;
-  };
-
-  return buildBankMerchantIndex(
-    ((data ?? []) as unknown as Row[]).flatMap((row) =>
-      row.categories ? [{ ...row, categories: row.categories }] : [],
-    ),
-  );
+  return inbox.getBankMerchantIndex(supabase, userId);
 }
 
-export interface DecidedFeedRow {
-  id: string;
-  occurredOn: string;
-  amount: number;
-  direction: "in" | "out";
-  counterparty: string | null;
-  note: string;
-  /** Where it landed, or null when it was left out. */
-  categoryId: string | null;
-  categoryName: string | null;
-  transactionId: string | null;
-  status: "imported" | "ignored";
-}
-
-/**
- * What was decided recently, so a decision can be taken back.
- *
- * Filing a card payment under the wrong category is the easiest mistake to
- * make in this flow — the labels are bank shorthand and the list is long —
- * and without this the row vanishes from the only screen that knows which
- * bank line it came from. Bounded rather than complete: this is how you undo
- * what you just did, and the ledger is the archive.
- */
-export async function getDecidedFeedItems(
-  userId: string,
-  limit = 20,
-): Promise<DecidedFeedRow[]> {
-  const { data, error } = await supabase
-    .from("bank_feed_items")
-    .select("*, transactions(category_id, categories(name))")
-    .eq("user_id", userId)
-    .in("status", ["imported", "ignored"])
-    .order("occurred_on", { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return [];
-    }
-    throw error;
-  }
-
-  type Joined = BankFeedItem & {
-    transactions: {
-      category_id: string;
-      categories: { name: string } | null;
-    } | null;
-  };
-
-  return ((data ?? []) as Joined[]).map((row) => ({
-    id: row.id,
-    occurredOn: row.occurred_on,
-    amount: Number(row.amount),
-    direction: row.direction,
-    counterparty: row.counterparty,
-    note: row.note,
-    categoryId: row.transactions?.category_id ?? null,
-    categoryName: row.transactions?.categories?.name ?? null,
-    transactionId: row.transaction_id,
-    status: row.status === "ignored" ? "ignored" : "imported",
-  }));
-}
 
 /** How many bank rows are still waiting for a category. */
-export async function countPendingFeedItems(userId: string): Promise<number> {
-  const { count, error } = await supabase
-    .from("bank_feed_items")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("status", "pending");
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return 0;
-    }
-    throw error;
-  }
-
-  return count ?? 0;
+export function countPendingFeedItems(userId: string): Promise<number> {
+  return inbox.countPendingFeedItems(supabase, userId);
 }
 
 /**
@@ -873,94 +710,16 @@ export function hasBankFeed(userId: string): Promise<boolean> {
 }
 
 /** How many bank rows an earlier sync merged away without asking. */
-export async function countSwallowedFeedItems(userId: string): Promise<number> {
-  const { count, error } = await supabase
-    .from("bank_feed_items")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("decided_by", "match:recurring");
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return 0;
-    }
-    throw error;
-  }
-
-  return count ?? 0;
+export function countSwallowedFeedItems(userId: string): Promise<number> {
+  return inbox.countSwallowedFeedItems(supabase, userId);
 }
 
-/**
- * Standing charges the statement implies but no template covers.
- *
- * The phone's twin of the web's `getRecurringProposals` in
- * `apps/web/lib/queries/bank.ts` — read from transactions rather than the raw
- * feed, so it works the same whether the rows came from a bank or a CSV, and
- * guarded with `isMissingSchema` like every other bank-feed-adjacent read
- * here, since `recurring_proposal_dismissals` ships in the same migration.
- */
-export async function getRecurringProposals(
+/** Standing charges the statement implies but no template covers. */
+export function getRecurringProposals(
   userId: string,
   today: string,
 ): Promise<RecurringProposal[]> {
-  const [txResult, templatesResult, dismissalsResult] = await Promise.all([
-    supabase
-      .from("transactions")
-      .select(
-        "occurred_on, amount, note, category_id, categories!inner(name, type)",
-      )
-      .eq("user_id", userId)
-      .order("occurred_on", { ascending: false })
-      .limit(3000),
-    supabase
-      .from("recurring_templates")
-      .select("description, instrument_name")
-      .eq("user_id", userId),
-    supabase
-      .from("recurring_proposal_dismissals")
-      .select("merchant_key")
-      .eq("user_id", userId),
-  ]);
-
-  for (const { error } of [txResult, templatesResult, dismissalsResult]) {
-    if (error) {
-      if (isMissingSchema(error)) {
-        return [];
-      }
-      throw error;
-    }
-  }
-
-  // Covered either by a template that already exists, or by the user having
-  // looked at the suggestion and said no. A refusal that does not stick is
-  // not a refusal.
-  const covered = new Set([
-    ...(templatesResult.data ?? []).flatMap((row) =>
-      [row.description, row.instrument_name]
-        .map((value) => bankMerchantKey(value as string | null))
-        .filter((key) => key !== ""),
-    ),
-    ...(dismissalsResult.data ?? []).map((row) => row.merchant_key as string),
-  ]);
-
-  const proposals = detectRecurring(
-    (txResult.data ?? []).map((row) => {
-      const category = row.categories as unknown as {
-        name: string;
-        type: CategoryType;
-      };
-      return {
-        occurredOn: row.occurred_on as string,
-        amount: Number(row.amount),
-        note: row.note as string | null,
-        categoryId: row.category_id as string,
-        categoryName: category.name,
-        categoryType: category.type,
-      };
-    }),
-  );
-
-  return filterLiveProposals(proposals, today, covered);
+  return inbox.getRecurringProposals(supabase, userId, today);
 }
 
 /** Which kinds of notification the account has turned off. */
