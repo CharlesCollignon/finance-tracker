@@ -422,6 +422,13 @@ it: the user gives the figure their bank shows, and the schedule carries on
 from there.
 _Avoid_: balance, remaining debt, CRD
 
+**Principal repaid**:
+_En français_ : capital remboursé
+The part of the loan payments that paid a loan down rather than the bank:
+what they added to the user's net value. Never counted as kept, which is
+measured from the account's balance and what was set aside.
+_Avoid_: forced saving, equity built
+
 **Price index**:
 _En français_ : indice des prix des logements
 How the price of existing homes has moved, quarter by quarter, in one area —
