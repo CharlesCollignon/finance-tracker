@@ -9,6 +9,7 @@ import { formatEuro } from "@finance/core/constants";
 import { loanPaymentCategoryName } from "@finance/core/property";
 import * as properties from "@finance/data/properties";
 import { asUser } from "@/lib/actions/as-user";
+import { readPropertyMarketSoon } from "@/lib/property-market/read";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getLocale, getT } from "@/lib/locale";
 
@@ -53,6 +54,8 @@ export async function addProperty(input: {
     if (!result.success) {
       return { error: result.error };
     }
+    // What the market says, while the sheet waits — or the cron's to read.
+    await readPropertyMarketSoon(db, userId, result.propertyId);
     const name = String(input.property.name).trim();
     return {
       success: true,
@@ -159,9 +162,12 @@ export async function updateProperty(
   const t = await getT();
   return asUser(async (db, userId): Promise<ActionResult> => {
     const result = await properties.saveProperty(db, userId, input);
-    return result.success
-      ? { success: true, message: t("property.saved") }
-      : { error: result.error };
+    if (!result.success) {
+      return { error: result.error };
+    }
+    // A new place, kind or area is a new reading.
+    await readPropertyMarketSoon(db, userId, result.propertyId);
+    return { success: true, message: t("property.saved") };
   });
 }
 

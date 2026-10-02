@@ -133,3 +133,19 @@ export function syncLoanPayment(loanId: string) {
 export function removeLoan(loanId: string) {
   return asUser((userId) => properties.deleteLoan(supabase, userId, loanId));
 }
+
+/**
+ * Ask the web server what the market says about a property — the DVF files
+ * are megabytes the phone has no business downloading. Not awaited by the
+ * sheets: the answer, when it comes, reloads the screens that read
+ * properties, through the route's data area.
+ */
+export async function requestMarketReading(propertyId: string): Promise<void> {
+  if (!webApiAvailable()) {
+    return;
+  }
+  await callWebApi<{ status: string }>("/api/property/market", {
+    body: { propertyId },
+    timeoutMs: 65_000,
+  });
+}

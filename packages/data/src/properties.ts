@@ -6,7 +6,17 @@ import {
   monthlyOutlay,
   regularPayment,
 } from "@finance/core/loan-schedule";
-import { loanTermsFromRow } from "@finance/core/property";
+import type { MarketReading } from "@finance/core/market-reading";
+import { allRows } from "@finance/core/paging";
+import {
+  carryToLatest,
+  priceIndexFromRows,
+  quarterOf,
+  seriesFor,
+  type IndexKind,
+  type PriceIndex,
+} from "@finance/core/price-index";
+import { loanTermsFromRow, type MarketContext } from "@finance/core/property";
 import type {
   CategoryType,
   Property,
@@ -63,6 +73,8 @@ export interface PropertyRead {
   property: Property;
   loans: PropertyLoan[];
   templates: AttachedTemplate[];
+  /** Its market reading and how the index moves its price (migration 050). */
+  market: MarketContext;
 }
 
 export interface PropertiesState {
@@ -102,6 +114,40 @@ function loanFromRow(row: PropertyLoan): PropertyLoan {
     known_outstanding:
       row.known_outstanding === null ? null : Number(row.known_outstanding),
   };
+}
+
+/** The index series a property's kind is carried by. */
+export function indexKindOf(kind: Property["kind"]): IndexKind {
+  return kind === "other" ? "all" : kind;
+}
+
+/** The index for these series, or none before migration 050. */
+export async function getPriceIndex(
+  db: Db,
+  series: readonly string[],
+): Promise<PriceIndex> {
+  if (series.length === 0) {
+    return new Map();
+  }
+  const rows = await allRows<{
+    series: string;
+    quarter: string;
+    value: number;
+  }>((from, to) =>
+    db
+      .from("housing_price_index")
+      .select("series, quarter, value")
+      .in("series", [...series])
+      .order("series")
+      .order("quarter")
+      .range(from, to),
+  ).catch((error: { code?: string }) => {
+    if (isMissingSchema(error)) {
+      return [];
+    }
+    throw error;
+  });
+  return priceIndexFromRows(rows);
 }
 
 /* ------------------------------------------------------------------ reading */
@@ -162,16 +208,57 @@ export async function getProperties(
     throw templatesError;
   }
 
+  const { data: readingRows, error: readingsError } = await db
+    .from("property_market_readings")
+    .select("*")
+    .eq("user_id", userId)
+    .in("property_id", ids);
+  if (readingsError && !isMissingSchema(readingsError)) {
+    throw readingsError;
+  }
+  const candidates = new Map(
+    properties.map((property) => [
+      property.id,
+      seriesFor(property.citycode, indexKindOf(property.kind)),
+    ]),
+  );
+  const index = await getPriceIndex(db, [
+    ...new Set([...candidates.values()].flat()),
+  ]);
+
   return {
     available: true,
     properties: properties.map((property) => {
       const own = loans.filter((loan) => loan.property_id === property.id);
+      const reading = (readingRows ?? []).find(
+        (row) => row.property_id === property.id,
+      );
+      const market: MarketContext = {
+        reading: reading
+          ? {
+              scope: reading.scope,
+              medianM2: Number(reading.median_m2),
+              q1M2: Number(reading.q1_m2),
+              q3M2: Number(reading.q3_m2),
+              sales: reading.sales,
+              periodFrom: reading.period_from,
+              periodTo: reading.period_to,
+              quarter: reading.quarter,
+            }
+          : null,
+        purchaseCarry: carryToLatest(
+          index,
+          candidates.get(property.id) ?? [],
+          quarterOf(property.purchased_on),
+        ),
+      };
       const paidThrough = new Set(
         own.map((loan) => loan.recurring_template_id),
       );
       return {
         property,
         loans: own,
+        market,
         templates: (templateRows ?? [])
           .filter(
             (template) =>
@@ -688,4 +775,62 @@ export async function deleteLoan(
     .eq("id", loanId)
     .eq("user_id", userId);
   return error ? { error: dbError(error) } : { success: true };
+}
+
+/* ------------------------------------------------------------ the market */
+
+/**
+ * Keep what the market says about a property, carried to `quarter` — or,
+ * with no reading, forget an old one, so the value falls back to the
+ * purchase price carried rather than to a reading the market no longer
+ * bears out. The user's client under RLS, or the service role from the
+ * market cron.
+ */
+export async function saveMarketReading(
+  db: Db,
+  userId: string,
+  propertyId: string,
+  reading: (MarketReading & { quarter: string }) | null,
+): Promise<ActionResult> {
+  const { error } = reading
+    ? await db.from("property_market_readings").upsert({
+        property_id: propertyId,
+        user_id: userId,
+        scope: reading.scope,
+        median_m2: reading.medianM2,
+        q1_m2: reading.q1M2,
+        q3_m2: reading.q3M2,
+        sales: reading.sales,
+        period_from: reading.periodFrom,
+        period_to: reading.periodTo,
+        quarter: reading.quarter,
+        read_at: new Date().toISOString(),
+      })
+    : await db
+        .from("property_market_readings")
+        .delete()
+        .eq("property_id", propertyId)
+        .eq("user_id", userId);
+  return error ? { error: dbError(error) } : { success: true };
+}
+
+/** Write the price index INSEE answered. The service role only. */
+export async function savePriceIndex(
+  db: Db,
+  rows: readonly { series: string; quarter: string; value: number }[],
+): Promise<ActionResult<{ saved: number }>> {
+  const now = new Date().toISOString();
+  for (let start = 0; start < rows.length; start += 500) {
+    const { error } = await db
+      .from("housing_price_index")
+      .upsert(
+        rows
+          .slice(start, start + 500)
+          .map((row) => ({ ...row, updated_at: now })),
+      );
+    if (error) {
+      return { error: dbError(error) };
+    }
+  }
+  return { success: true, saved: rows.length };
 }

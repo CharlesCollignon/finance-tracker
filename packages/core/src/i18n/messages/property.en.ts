@@ -169,4 +169,16 @@ export const propertyEn = {
   loanAdded: "Loan added",
   loanAddedWithPayment: "Loan added; its payment joins your recurring entries",
   loanSaved: "Loan saved",
+  quarter: "Q{quarter} {year}",
+  sourceMarketRadius:
+    "From {count} sales within 500 m, {from}–{to} (DVF), carried to {quarter}",
+  sourceMarketCommune:
+    "From {count} sales in the town, {from}–{to} (DVF), carried to {quarter}",
+  sourceMarketShort: "Market estimate (DVF), {quarter}",
+  sourceIndexed:
+    "Purchase price carried by the Notaires–INSEE index, {from} → {to}",
+  sourceIndexedShort: "Purchase price carried to {quarter}",
+  valueRange: "Between {low} and {high}",
+  pricePerM2: "Price per m² around it",
+  pricePerM2Line: "{median} · {low} to {high}",
 };

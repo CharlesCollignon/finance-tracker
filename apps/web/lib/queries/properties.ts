@@ -38,7 +38,7 @@ export const getPropertiesView = cache(
     const state = await properties.getProperties(await createClient(), userId);
     const today = todayIsoLocal();
     const summaries = state.properties.map(
-      ({ property, loans }): PropertySummary => ({
+      ({ property, loans, market }): PropertySummary => ({
         id: property.id,
         name: property.name,
         kind: property.kind,
@@ -46,7 +46,7 @@ export const getPropertiesView = cache(
         postcode: property.postcode,
         ownershipShare: property.ownership_share,
         loanCount: loans.length,
-        position: propertyPosition(property, loans, today),
+        position: propertyPosition(property, loans, today, market),
       }),
     );
     const sum = (pick: (position: PropertyPosition) => number) =>

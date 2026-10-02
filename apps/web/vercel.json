@@ -1,8 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": [
-    "cdg1"
-  ],
+  "regions": ["cdg1"],
   "crons": [
     {
       "path": "/api/cron/refresh",
@@ -31,6 +29,10 @@
     {
       "path": "/api/cron/sweep",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/market",
+      "schedule": "0 5 * * 1"
     }
   ]
 }

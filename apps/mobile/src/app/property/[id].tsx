@@ -23,6 +23,7 @@ import {
   loanTermsFromRow,
   paymentShare,
   propertyPosition,
+  valueSourceLine,
 } from "@finance/core/property";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
 import { formatRate } from "@finance/core/savings-accounts";
@@ -150,7 +151,8 @@ export default function PropertyDetailScreen() {
   }
 
   const { property, loans, templates } = detail;
-  const position = propertyPosition(property, loans, today);
+  const position = propertyPosition(property, loans, today, detail.market);
+  const reading = detail.market.reading;
   const source = position.estimate.source;
   const partOwned = property.ownership_share < 1;
   const attached = templates.filter((template) => template.attached);
@@ -193,12 +195,29 @@ export default function PropertyDetailScreen() {
               <PrivateAmount className="text-sm font-medium">
                 {format(position.estimate.value)}
               </PrivateAmount>
+              {position.estimate.low !== null && position.estimate.high !== null ? (
+                <PrivateAmount className="text-xs">
+                  {t("property.valueRange", {
+                    low: format(position.estimate.low),
+                    high: format(position.estimate.high),
+                  })}
+                </PrivateAmount>
+              ) : null}
               <Text variant="muted" className="text-xs">
-                {source.kind === "own"
-                  ? t("property.sourceOwn", { date: monthAndYear(source.on, locale) })
-                  : t("property.sourcePurchase", { date: monthAndYear(source.on, locale) })}
+                {valueSourceLine(source, locale)}
               </Text>
             </Fact>
+            {reading ? (
+              <Fact label={t("property.pricePerM2")}>
+                <PrivateAmount className="text-sm font-medium">
+                  {t("property.pricePerM2Line", {
+                    median: format(reading.medianM2),
+                    low: format(reading.q1M2),
+                    high: format(reading.q3M2),
+                  })}
+                </PrivateAmount>
+              </Fact>
+            ) : null}
             {partOwned ? (
               <Fact label={t("property.yourValue")}>
                 <PrivateAmount className="text-sm font-medium">

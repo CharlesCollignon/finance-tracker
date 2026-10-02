@@ -170,4 +170,16 @@ export const propertyFr: typeof propertyEn = {
   loanAddedWithPayment:
     "Prêt ajouté\u00A0; sa mensualité rejoint vos opérations récurrentes",
   loanSaved: "Prêt enregistré",
+  quarter: "T{quarter} {year}",
+  sourceMarketRadius:
+    "D'après {count} ventes à moins de 500 m, {from}–{to} (DVF), ramenées au {quarter}",
+  sourceMarketCommune:
+    "D'après {count} ventes dans la commune, {from}–{to} (DVF), ramenées au {quarter}",
+  sourceMarketShort: "Estimation d'après les ventes (DVF), {quarter}",
+  sourceIndexed:
+    "Prix d'achat actualisé par l'indice Notaires-INSEE, {from} → {to}",
+  sourceIndexedShort: "Prix d'achat actualisé au {quarter}",
+  valueRange: "Entre {low} et {high}",
+  pricePerM2: "Prix au m² alentour",
+  pricePerM2Line: "{median} · de {low} à {high}",
 };

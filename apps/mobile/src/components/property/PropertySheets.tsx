@@ -21,6 +21,7 @@ import { Text } from "@/components/ui/Text";
 import { hapticSuccess, hapticWarning } from "@/lib/haptics";
 import {
   addPropertyWithLoan,
+  requestMarketReading,
   saveLoan,
   updateProperty,
 } from "@/lib/properties";
@@ -208,6 +209,7 @@ function AddPropertyFlow({ onClose }: { onClose: () => void }) {
       return;
     }
     void hapticSuccess();
+    void requestMarketReading(result.propertyId);
     const name = property.name.trim();
     toast(
       result.paymentAmount === null
@@ -316,6 +318,8 @@ function EditPropertyForm({
       return;
     }
     void hapticSuccess();
+    // A new place, kind or area is a new reading.
+    void requestMarketReading(result.propertyId);
     toast(t("property.saved"));
     onClose();
   }
