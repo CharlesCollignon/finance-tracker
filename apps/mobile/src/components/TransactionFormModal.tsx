@@ -20,7 +20,10 @@ import {
   moveBackEarlyIncome,
   updateTransaction,
 } from "@/lib/mutations";
+import { useDeletedToast } from "@/hooks/useDeletedToast";
+import { hapticSuccess, hapticWarning } from "@/lib/haptics";
 import { useLocale, useT } from "@/providers/LocaleProvider";
+import { useToast } from "@/providers/ToastProvider";
 import { resolveMessage } from "@finance/core/i18n/t";
 import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
 import { formatShortDate } from "@finance/core/constants";
@@ -54,6 +57,8 @@ export function TransactionFormModal({
 }: TransactionFormModalProps) {
   const locale = useLocale();
   const t = useT();
+  const { toast } = useToast();
+  const toastDeleted = useDeletedToast();
   const [categoryId, setCategoryId] = useState(transaction.category_id);
   // In the reader's own shape — "12,5" in French — so the field reads back
   // exactly what it was given.
@@ -91,6 +96,8 @@ export function TransactionFormModal({
       setError(result.error);
       return;
     }
+    void hapticSuccess();
+    toast(t("transaction.saved"), "success");
     onClose();
   }
 
@@ -115,10 +122,12 @@ export function TransactionFormModal({
     setError(null);
     const result = await deleteTransaction(transaction.id);
     setPending(false);
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
       return;
     }
+    void hapticWarning();
+    toastDeleted(t("transaction.deleted"), result.undo);
     onClose();
   }
 

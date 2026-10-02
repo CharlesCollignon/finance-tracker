@@ -22,6 +22,7 @@ import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
+import { hapticSuccess, hapticWarning } from "@/lib/haptics";
 import { useToast } from "@/providers/ToastProvider";
 import {
   deleteRecurringTemplate,
@@ -299,6 +300,7 @@ export function RecurringFormBody({
       setError(result.error);
       return;
     }
+    void hapticSuccess();
     toast(
       isEditing ? t("recurring.updatedHint") : t("recurring.savedHint"),
       "success",
@@ -317,6 +319,7 @@ export function RecurringFormBody({
       setError(result.error);
       return;
     }
+    void hapticWarning();
     toast(t("recurring.deletedHint"));
     onDone();
   }

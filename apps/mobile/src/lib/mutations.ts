@@ -15,6 +15,7 @@ import * as account from "@finance/data/account";
 import * as closing from "@finance/data/closing";
 import * as feed from "@finance/data/feed-decisions";
 import * as decisions from "@finance/data/fulfilment-decisions";
+import * as deletions from "@finance/data/deletions";
 import * as ledger from "@finance/data/ledger";
 import * as plans from "@finance/data/wallet-plans";
 import * as occurrences from "@finance/data/occurrences";
@@ -60,8 +61,17 @@ export async function updateTransaction(
   return asUser((userId) => ledger.updateTransaction(supabase, userId, input));
 }
 
-export async function deleteTransaction(id: string): Promise<ActionResult> {
+export async function deleteTransaction(
+  id: string,
+): Promise<ActionResult<{ undo: deletions.UndoToken }>> {
   return asUser((userId) => ledger.deleteTransaction(supabase, userId, id));
+}
+
+/** Take back one delete — transactions or a category — by its token. */
+export async function restoreDeletion(
+  token: string,
+): Promise<ActionResult<{ restored: number }>> {
+  return asUser((userId) => deletions.restoreDeletion(supabase, userId, token));
 }
 
 /**
@@ -147,7 +157,9 @@ export async function setCategoryArchived(
   );
 }
 
-export async function deleteCategory(id: string): Promise<ActionResult> {
+export async function deleteCategory(
+  id: string,
+): Promise<ActionResult<{ undo: deletions.UndoToken }>> {
   return asUser((userId) => categories.deleteCategory(supabase, userId, id));
 }
 
@@ -326,7 +338,7 @@ export async function importTransactions(
  */
 export async function deleteTransactions(
   ids: string[],
-): Promise<ActionResult<{ deleted: number }>> {
+): Promise<ActionResult<{ deleted: number; undo: deletions.UndoToken }>> {
   return asUser((userId) => ledger.deleteTransactions(supabase, userId, ids));
 }
 

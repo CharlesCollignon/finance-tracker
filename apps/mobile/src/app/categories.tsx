@@ -21,7 +21,8 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
-import { hapticLight } from "@/lib/haptics";
+import { useDeletedToast } from "@/hooks/useDeletedToast";
+import { hapticLight, hapticWarning } from "@/lib/haptics";
 import { deleteCategory, setCategoryArchived } from "@/lib/mutations";
 import { getCategories } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
@@ -68,6 +69,7 @@ export default function CategoriesScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const { toast } = useToast();
+  const toastDeleted = useDeletedToast();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [confirming, setConfirming] = useState<Category | null>(null);
@@ -105,11 +107,12 @@ export default function CategoriesScreen() {
     }
     const result = await deleteCategory(confirming.id);
     setConfirming(null);
-    if (result.error) {
+    if (!result.success) {
       toast(result.error, "error");
       return;
     }
-    toast(t("categories.deleted"));
+    void hapticWarning();
+    toastDeleted(t("categories.deleted"), result.undo);
   }
 
   return (
