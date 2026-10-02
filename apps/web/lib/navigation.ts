@@ -129,7 +129,8 @@ export function activeNavHref(pathname: string): string | null {
 }
 
 /**
- * The phone's bottom bar. Five destinations and the account trigger, which is
- * the most the bar holds before the labels start truncating.
+ * The phone's bottom bar: the surfaces alone. The account trigger is in the
+ * page header (`HeaderAccountMenu`), and the labels shrink to fit their slot
+ * rather than truncate (`BottomNav`).
  */
 export const BOTTOM_NAV_ITEMS = APP_NAV_ITEMS;

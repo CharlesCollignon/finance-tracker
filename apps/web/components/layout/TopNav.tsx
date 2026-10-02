@@ -292,11 +292,7 @@ export function TopNav({
               anything every page shares: the blur is for the whole app, so
               it sits with the other controls for the whole app. */}
           <PrivacyToggle tone="bar" />
-          <AccountMenu
-            variant="top"
-            displayName={displayName}
-            initial={initial}
-          />
+          <AccountMenu displayName={displayName} initial={initial} />
         </div>
       </header>
     </div>

@@ -7,6 +7,7 @@ import {
   SHELL_HEADER_INNER_CLASS,
 } from "@/lib/layout-shell";
 import type { Key } from "@finance/core/i18n/t";
+import { HeaderAccountMenu } from "@/components/layout/AccountLabel";
 import { PageTitle } from "@/components/layout/PageTitle";
 import { PrivacyToggle } from "@/components/layout/PrivacyToggle";
 import { RefreshButton } from "@/components/layout/RefreshButton";
@@ -26,8 +27,8 @@ interface PageHeaderProps {
 
 /**
  * The band at the top of a page: on a phone, the only bar at the top of the
- * screen — the orb, the page's title, its controls, the refresh and the
- * privacy blur — sticky on the chrome glass.
+ * screen — the orb, the page's title, its controls, the refresh, the
+ * privacy blur and the account menu — sticky on the chrome glass.
  *
  * From `md` the notch is the chrome and says where you are, and the top bar
  * beside it holds the refresh and the blur, so this band keeps only what is
@@ -76,12 +77,13 @@ export function PageHeader({ titleKey, children, className }: PageHeaderProps) {
         </div>
         <div className={SHELL_HEADER_ACTIONS_CLASS}>
           {children}
-          {/* Both phone only: from `md` the top bar carries them, and these
-              would be second buttons saying the same thing. The refresh
-              renders nothing outside the app shell, so the auth and
-              marketing headers are unaffected. */}
+          {/* All three phone only: from `md` the top bar carries them, and
+              these would be second buttons saying the same thing. The
+              refresh and the account menu render nothing outside the app
+              shell, so the auth and marketing headers are unaffected. */}
           <RefreshButton className="md:hidden" />
           <PrivacyToggle className="md:hidden" />
+          <HeaderAccountMenu />
         </div>
       </div>
     </header>

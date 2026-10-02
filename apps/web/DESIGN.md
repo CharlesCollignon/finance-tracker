@@ -783,12 +783,14 @@ all; changing one alone breaks the frame.
   at the top of the surface, at every width; the nav names only surfaces.
 - The page header at `3.25rem`: on a phone, sticky, on Chrome glass with a
   hairline beneath, holding the orb, the title, the page's controls, the
-  refresh and the blur. From `md`, only the page's own controls, static and
+  refresh, the blur and the account menu. From `md`, only the page's own controls, static and
   bare; the title stays in the document as the page's `h1` for screen readers
   but is not drawn, and a page with no controls draws no band at all.
 - On small screens a bottom bar at `3.5rem` with a `0.75rem` inset, inside the
-  safe area. There, active state is carried by foreground colour and the
-  icon's fill, not by a pill or an underline.
+  safe area, holding the surfaces and nothing else. There, active state is
+  carried by foreground colour and the icon's fill, not by a pill or an
+  underline, and a label shrinks with its slot, from 10px down to 8.5px,
+  rather than lose its end.
 
 ### Moments
 

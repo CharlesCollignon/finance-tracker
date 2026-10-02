@@ -2,22 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AccountMenu } from "@/components/layout/AccountMenu";
 import { cn } from "@/lib/utils";
 import { activeNavHref, BOTTOM_NAV_ITEMS } from "@/lib/navigation";
 import { GLASS_PANEL } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 
-export function BottomNav({
-  displayName,
-  initial,
-  ledgerBadge = 0,
-}: {
-  displayName: string;
-  initial: string;
-  ledgerBadge?: number;
-}) {
+/**
+ * The surfaces, at phone width. The account menu is in the page header, as
+ * on the phone app, so every target here is a surface.
+ */
+export function BottomNav({ ledgerBadge = 0 }: { ledgerBadge?: number }) {
   const t = useT();
   const pathname = usePathname();
 
@@ -44,9 +39,10 @@ export function BottomNav({
               key={href}
               href={href}
               className={cn(
-                "relative flex min-w-[44px] flex-1 flex-col items-center",
+                // A container, so its label can size itself to the slot.
+                "@container relative flex min-w-[44px] flex-1 flex-col items-center",
                 "justify-center gap-0.5 rounded-full mx-0.5 my-1 px-0.5 py-1",
-                "text-[10px] font-medium sm:text-xs",
+                "font-medium",
                 "transition-colors duration-hover",
                 // Foreground colour and a filled glyph, not a pill. The
                 // Navigation section of DESIGN.md says the active state is
@@ -60,24 +56,25 @@ export function BottomNav({
               )}
             >
               <Icon size={ICON.xl} weight={active ? "fill" : "light"} />
-              {/* A dot rather than a count down here. The bar is six targets
-                  across a phone; a numeral beside a 10px label is unreadable
-                  and the number is on the Bearing anyway. */}
+              {/* A dot rather than a count down here. The bar is five or six
+                  targets across a phone; a numeral beside a 10px label is
+                  unreadable and the number is on the Bearing anyway. */}
               {href === "/transactions" && ledgerBadge > 0 ? (
                 <span
                   aria-label={t("nav.waiting", { count: ledgerBadge })}
                   className="absolute right-1.5 top-1 size-1.5 rounded-full bg-foreground"
                 />
               ) : null}
-              <span className="truncate">{t(labelKey)}</span>
+              {/* 10px where the slot allows it, down to 8.5px rather than
+                  cutting « Placements » to « Placeme… » on a 360px phone:
+                  17cqi is the size at which the longest label, « Investments »,
+                  just fits its slot. Truncating stays as the last resort. */}
+              <span className="max-w-full truncate text-[clamp(8.5px,17cqi,10px)] sm:text-xs">
+                {t(labelKey)}
+              </span>
             </Link>
           );
         })}
-        <AccountMenu
-          variant="bottom"
-          displayName={displayName}
-          initial={initial}
-        />
       </div>
     </nav>
   );
