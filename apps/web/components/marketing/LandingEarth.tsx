@@ -557,9 +557,9 @@ function visibleArc(
 }
 
 /**
- * Where the black hole sits: on the rim, a third of the way from its upper
- * end toward the sun, so above the headline and between it and the nav on
- * every screen, and as far from the sun as the light can come. Its centre is
+ * Where the black hole sits: on the rim, a little over a third of the way
+ * from its upper end toward the sun, so above the headline and below the nav
+ * on every screen, and further from the sun than the light can come. Its centre is
  * a little over half its shadow's radius above the rim, so the planet cuts
  * off the foot of the shadow; its disk is tilted a little off the rim, so one
  * end clears the horizon and the other goes behind it. Smaller on a portrait
@@ -572,8 +572,8 @@ function holePlace(
   rest: number,
   aspect: number,
 ): [number, number, number, number] {
-  const size = 0.018 * clamp(aspect, 0.75, 1);
-  const angle = low + (rest - low) * 0.3;
+  const size = 0.036 * clamp(aspect, 0.75, 1);
+  const angle = low + (rest - low) * 0.36;
   const lift = radius + size * 0.6;
   return [
     center[0] + Math.cos(angle) * lift,
