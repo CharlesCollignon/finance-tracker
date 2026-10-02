@@ -7,6 +7,9 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { getFlags } from "@/lib/flags";
 import { getPropertiesView } from "@/lib/queries/properties";
 
+// The actions on this page read the market, and finish a slow reading after
+// the response (`readPropertyMarketSoon`): a minute is what that may take.
+export const maxDuration = 60;
 /**
  * Immobilier: the homes a user owns, what each is worth to them once its
  * loans are counted, and the way to add one. Only for an account with

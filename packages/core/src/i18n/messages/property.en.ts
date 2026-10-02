@@ -255,4 +255,6 @@ export const propertyEn = {
   lettingSource: "Loi Climat et Résilience, the calendar in force in 2026.",
   momentHalf: "Half repaid",
   momentLast: "Loan repaid",
+  readingNow: "Reading the sales around it…",
+  netWorthOpen: "See your property",
 };

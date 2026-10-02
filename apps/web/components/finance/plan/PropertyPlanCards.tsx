@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { House, Scales } from "@phosphor-icons/react";
+import Link from "next/link";
+import { CaretRight, House, Scales } from "@phosphor-icons/react";
 import { propertyPosition } from "@finance/core/property";
 import {
   DEFAULT_PROPERTY_GROWTH,
@@ -71,6 +72,15 @@ export function NetWorthCard({
     <PlanCard
       icon={<Scales size={ICON.sm} weight="fill" />}
       title={t("property.netWorthTitle")}
+      aside={
+        <Link
+          href="/property"
+          className="inline-flex items-center gap-1 rounded-control text-sm text-muted-foreground transition-colors duration-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {t("property.netWorthOpen")}
+          <CaretRight size={ICON.xs} aria-hidden />
+        </Link>
+      }
     >
       <div className="grid gap-5 md:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-3">
@@ -94,7 +104,10 @@ export function NetWorthCard({
         </div>
         <div className="flex min-w-0 flex-col gap-2 text-sm">
           {endings.map((ending) => (
-            <p key={`${ending.label}-${ending.endsOn}`} className="privacy-sensitive">
+            <p
+              key={`${ending.label}-${ending.endsOn}`}
+              className="privacy-sensitive"
+            >
               {t("property.loanEndFrees", {
                 label: ending.label,
                 date: monthAndYear(ending.endsOn, locale),
@@ -162,7 +175,9 @@ export function PropertyLongViewCard({
       ? DEFAULT_PROPERTY_GROWTH
       : Number(read.property.yearly_growth);
   const [growth, setGrowthFor] = useState<Record<string, number>>(() =>
-    Object.fromEntries(properties.map((read) => [read.property.id, saved(read)])),
+    Object.fromEntries(
+      properties.map((read) => [read.property.id, saved(read)]),
+    ),
   );
   const [kept, setKept] = useState(growth);
 

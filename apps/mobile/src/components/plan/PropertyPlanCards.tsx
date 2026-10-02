@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
+import { useRouter } from "expo-router";
 
 import { resolveMessage } from "@finance/core/i18n/t";
 import { propertyPosition } from "@finance/core/property";
@@ -47,6 +48,7 @@ export function NetWorthCard({
 }) {
   const t = useT();
   const locale = useLocale();
+  const router = useRouter();
   const { whole, shown } = usePlanMoney();
 
   const worth = useMemo(
@@ -72,7 +74,20 @@ export function NetWorthCard({
 
   return (
     <PlanCard>
-      <PlanCardHeader title={t("property.netWorthTitle")} />
+      <PlanCardHeader
+        title={t("property.netWorthTitle")}
+        right={
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => router.push("/property")}
+            hitSlop={8}
+          >
+            <Text variant="muted" className="text-sm">
+              {t("property.netWorthOpen")}
+            </Text>
+          </Pressable>
+        }
+      />
       <View className="gap-1">
         <PrivateAmount style={TYPE.figure} numberOfLines={1} adjustsFontSizeToFit>
           {whole(worth.net)}

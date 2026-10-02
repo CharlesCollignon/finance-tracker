@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   aMonthAfter,
   errorsByField,
@@ -61,6 +62,7 @@ export function AddPropertySheet({
 }
 
 function AddPropertyForm({ onDone }: { onDone: () => void }) {
+  const router = useRouter();
   const t = useT();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
@@ -118,6 +120,10 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
       }
       toast(result.message ?? t("property.add"), "success");
       onDone();
+      // Its page, where the estimate arrives — still on its way, it says so.
+      router.push(
+        `/property/${result.propertyId}${result.reading === "later" ? "?lecture=1" : ""}`,
+      );
     });
   }
 

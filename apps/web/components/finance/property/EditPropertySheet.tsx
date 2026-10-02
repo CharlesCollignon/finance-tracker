@@ -25,10 +25,13 @@ export function EditPropertySheet({
   property,
   open,
   onOpenChange,
+  onReading,
 }: {
   property: Property;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** The market is still being read, after the response: wait for it. */
+  onReading?: () => void;
 }) {
   const t = useT();
   if (!open) {
@@ -42,7 +45,12 @@ export function EditPropertySheet({
     >
       <EditPropertyForm
         property={property}
-        onDone={() => onOpenChange(false)}
+        onDone={(reading) => {
+          onOpenChange(false);
+          if (reading === "later") {
+            onReading?.();
+          }
+        }}
       />
     </MobileSheet>
   );
@@ -53,7 +61,7 @@ function EditPropertyForm({
   onDone,
 }: {
   property: Property;
-  onDone: () => void;
+  onDone: (reading: string | undefined) => void;
 }) {
   const t = useT();
   const { toast } = useToast();
@@ -81,7 +89,7 @@ function EditPropertyForm({
             return;
           }
           toast(result.message ?? t("property.saved"), "success");
-          onDone();
+          onDone(result.reading);
         });
       }}
     >

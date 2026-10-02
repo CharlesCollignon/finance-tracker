@@ -3,7 +3,12 @@
 import { useId, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, PencilSimple, Plus } from "@phosphor-icons/react";
+import {
+  ArrowLeft,
+  CaretRight,
+  PencilSimple,
+  Plus,
+} from "@phosphor-icons/react";
 import { parseTypedAmount } from "@finance/core/amount-input";
 import { formatPercentLabel, formatShortDate } from "@finance/core/constants";
 import {
@@ -27,6 +32,7 @@ import { formatRate } from "@finance/core/savings-accounts";
 import type { PropertyLoan } from "@finance/core/types/database";
 import type { AttachedTemplate, PropertyRead } from "@finance/data/properties";
 import { RemoveAccount } from "@/components/finance/accounts/RemoveAccount";
+import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
 import { useToast } from "@/components/layout/ToastProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -49,6 +55,7 @@ import { useMomentSeen } from "@/components/motion/use-moment-seen";
 import { cn } from "@/lib/utils";
 import { AmountEditor, Fact } from "./property-controls";
 import { RentalSection } from "./RentalSection";
+import { useReadingWait } from "./use-reading-wait";
 import { LoanSheet } from "./LoanSheet";
 import {
   monthAndYear,
@@ -65,9 +72,12 @@ import {
 export function PropertyDetail({
   detail,
   today,
+  readingPending = false,
 }: {
   detail: PropertyRead;
   today: string;
+  /** Just added, its market still being read after the response. */
+  readingPending?: boolean;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -82,6 +92,11 @@ export function PropertyDetail({
   } | null>(null);
   const position = propertyPosition(property, loans, today, detail.market);
   const reading = detail.market.reading;
+  // Any change in what the page shows of the market ends the wait.
+  const { waiting, start: waitForReading } = useReadingWait(
+    JSON.stringify([reading, detail.rent]),
+    readingPending,
+  );
   const source = position.estimate.source;
   const partOwned = property.ownership_share < 1;
 
@@ -114,8 +129,12 @@ export function PropertyDetail({
           <p className="mt-3 text-xs font-medium text-muted-foreground">
             {t("property.netValue")}
           </p>
-          <p className="privacy-amount font-serif text-4xl font-semibold tabular-nums">
-            {format(position.netValue)}
+          <p>
+            <AnimatedAmount
+              value={position.netValue}
+              format={format}
+              className="font-serif text-4xl font-semibold"
+            />
           </p>
           {partOwned ? (
             <p className="text-xs text-muted-foreground">
@@ -131,8 +150,8 @@ export function PropertyDetail({
 
         <dl className="grid min-w-0 gap-4 sm:grid-cols-2">
           <Fact label={t("property.estimatedValue")}>
-            <p className="privacy-sensitive text-sm font-medium tabular-nums">
-              {format(position.estimate.value)}
+            <p className="text-sm font-medium">
+              <AnimatedAmount value={position.estimate.value} format={format} />
             </p>
             {position.estimate.low !== null &&
             position.estimate.high !== null ? (
@@ -143,9 +162,22 @@ export function PropertyDetail({
                 })}
               </p>
             ) : null}
-            <p className="text-xs text-muted-foreground">
-              {valueSourceLine(source, locale)}
-            </p>
+            {waiting ? (
+              <p
+                role="status"
+                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+              >
+                <span
+                  aria-hidden
+                  className="size-1.5 animate-pulse rounded-full bg-primary motion-reduce:animate-none"
+                />
+                {t("property.readingNow")}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {valueSourceLine(source, locale)}
+              </p>
+            )}
           </Fact>
           {reading ? (
             <Fact label={t("property.pricePerM2")}>
@@ -300,6 +332,7 @@ export function PropertyDetail({
         property={property}
         open={editing}
         onOpenChange={setEditing}
+        onReading={waitForReading}
       />
       <LoanSheet
         key={loanSheet?.loan?.id ?? "new"}
@@ -436,9 +469,13 @@ function LoanCard({
 
       <div className="flex flex-col gap-2 rounded-control border border-border p-3">
         {template ? (
-          <p className="privacy-sensitive text-sm tabular-nums">
+          <Link
+            href={`/recurring?edit=${template.id}`}
+            className="privacy-sensitive inline-flex items-center gap-1 self-start text-sm tabular-nums underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             {t("property.paymentLinked", { amount: format(template.amount) })}
-          </p>
+            <CaretRight size={ICON.xs} aria-hidden />
+          </Link>
         ) : (
           <p className="text-sm text-muted-foreground">
             {t("property.paymentNotLinked")}
@@ -743,32 +780,45 @@ function ScheduleTable({ schedule }: { schedule: readonly LoanPayment[] }) {
   );
 }
 
+/** An entry attached to the property, opening it in Récurrents. */
 function TemplateRow({ template }: { template: AttachedTemplate }) {
   const locale = useLocale();
   const format = useFormatCurrency();
   return (
-    <li className="flex min-w-0 items-center justify-between gap-3 px-4 py-3">
-      <div className="min-w-0">
-        <p className="truncate text-sm">
-          {template.description || template.categoryName}
-        </p>
-        <p className="truncate text-xs text-muted-foreground">
-          {formatRecurrenceSchedule(
-            {
-              recurrence: template.recurrence,
-              day_of_month: template.dayOfMonth,
-              day_of_week: template.dayOfWeek,
-              month_of_year: template.monthOfYear,
-              starts_on: template.startsOn,
-              ends_on: template.endsOn,
-            },
-            locale,
-          )}
-        </p>
-      </div>
-      <p className="privacy-sensitive shrink-0 text-sm tabular-nums">
-        {format(template.amount)}
-      </p>
+    <li>
+      <Link
+        href={`/recurring?edit=${template.id}`}
+        className="flex min-w-0 items-center justify-between gap-3 px-4 py-3 transition-colors duration-hover hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      >
+        <div className="min-w-0">
+          <p className="truncate text-sm">
+            {template.description || template.categoryName}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {formatRecurrenceSchedule(
+              {
+                recurrence: template.recurrence,
+                day_of_month: template.dayOfMonth,
+                day_of_week: template.dayOfWeek,
+                month_of_year: template.monthOfYear,
+                starts_on: template.startsOn,
+                ends_on: template.endsOn,
+              },
+              locale,
+            )}
+          </p>
+        </div>
+        <span className="flex shrink-0 items-center gap-1.5">
+          <span className="privacy-sensitive text-sm tabular-nums">
+            {format(template.amount)}
+          </span>
+          <CaretRight
+            size={ICON.xs}
+            aria-hidden
+            className="text-muted-foreground"
+          />
+        </span>
+      </Link>
     </li>
   );
 }

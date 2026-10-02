@@ -258,4 +258,6 @@ export const propertyFr: typeof propertyEn = {
   lettingSource: "Loi Climat et Résilience, calendrier en vigueur en 2026.",
   momentHalf: "La moitié est remboursée",
   momentLast: "Prêt remboursé",
+  readingNow: "Lecture des ventes alentour…",
+  netWorthOpen: "Voir l'immobilier",
 };
