@@ -796,6 +796,171 @@ export type Database = {
         };
         Relationships: [];
       };
+      properties: {
+        Row: {
+          address_label: string | null;
+          agency_fees: number;
+          citycode: string | null;
+          created_at: string;
+          id: string;
+          kind: string;
+          latitude: number | null;
+          living_area: number | null;
+          longitude: number | null;
+          name: string;
+          notary_fees: number;
+          ownership_share: number;
+          postcode: string | null;
+          purchase_price: number;
+          purchased_on: string;
+          rooms: number | null;
+          updated_at: string;
+          usage: string;
+          user_id: string;
+          value_pinned: number | null;
+          value_pinned_on: string | null;
+          works: number;
+          yearly_growth: number | null;
+        };
+        Insert: {
+          address_label?: string | null;
+          agency_fees?: number;
+          citycode?: string | null;
+          created_at?: string;
+          id?: string;
+          kind: string;
+          latitude?: number | null;
+          living_area?: number | null;
+          longitude?: number | null;
+          name: string;
+          notary_fees?: number;
+          ownership_share?: number;
+          postcode?: string | null;
+          purchase_price: number;
+          purchased_on: string;
+          rooms?: number | null;
+          updated_at?: string;
+          usage?: string;
+          user_id: string;
+          value_pinned?: number | null;
+          value_pinned_on?: string | null;
+          works?: number;
+          yearly_growth?: number | null;
+        };
+        Update: {
+          address_label?: string | null;
+          agency_fees?: number;
+          citycode?: string | null;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          latitude?: number | null;
+          living_area?: number | null;
+          longitude?: number | null;
+          name?: string;
+          notary_fees?: number;
+          ownership_share?: number;
+          postcode?: string | null;
+          purchase_price?: number;
+          purchased_on?: string;
+          rooms?: number | null;
+          updated_at?: string;
+          usage?: string;
+          user_id?: string;
+          value_pinned?: number | null;
+          value_pinned_on?: string | null;
+          works?: number;
+          yearly_growth?: number | null;
+        };
+        Relationships: [];
+      };
+      property_loans: {
+        Row: {
+          annual_rate: number;
+          borrower_share: number;
+          created_at: string;
+          deferral_kind: string;
+          deferral_months: number;
+          fees: number;
+          first_payment_on: string;
+          id: string;
+          insurance_monthly: number;
+          insurance_rate: number | null;
+          kind: string;
+          known_keeps: string | null;
+          known_outstanding: number | null;
+          known_outstanding_on: string | null;
+          label: string;
+          months: number;
+          principal: number;
+          property_id: string;
+          recurring_template_id: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          annual_rate: number;
+          borrower_share?: number;
+          created_at?: string;
+          deferral_kind?: string;
+          deferral_months?: number;
+          fees?: number;
+          first_payment_on: string;
+          id?: string;
+          insurance_monthly?: number;
+          insurance_rate?: number | null;
+          kind?: string;
+          known_keeps?: string | null;
+          known_outstanding?: number | null;
+          known_outstanding_on?: string | null;
+          label: string;
+          months: number;
+          principal: number;
+          property_id: string;
+          recurring_template_id?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          annual_rate?: number;
+          borrower_share?: number;
+          created_at?: string;
+          deferral_kind?: string;
+          deferral_months?: number;
+          fees?: number;
+          first_payment_on?: string;
+          id?: string;
+          insurance_monthly?: number;
+          insurance_rate?: number | null;
+          kind?: string;
+          known_keeps?: string | null;
+          known_outstanding?: number | null;
+          known_outstanding_on?: string | null;
+          label?: string;
+          months?: number;
+          principal?: number;
+          property_id?: string;
+          recurring_template_id?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "property_loans_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "property_loans_recurring_template_id_fkey";
+            columns: ["recurring_template_id"];
+            isOneToOne: false;
+            referencedRelation: "recurring_templates";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       push_subscriptions: {
         Row: {
           auth: string;
@@ -974,6 +1139,7 @@ export type Database = {
           last_quote_price: number | null;
           month_of_year: number | null;
           pricing_type: Database["public"]["Enums"]["pricing_type"];
+          property_id: string | null;
           recurrence: Database["public"]["Enums"]["recurrence_type"];
           share_count: number | null;
           starts_on: string | null;
@@ -995,6 +1161,7 @@ export type Database = {
           last_quote_price?: number | null;
           month_of_year?: number | null;
           pricing_type?: Database["public"]["Enums"]["pricing_type"];
+          property_id?: string | null;
           recurrence?: Database["public"]["Enums"]["recurrence_type"];
           share_count?: number | null;
           starts_on?: string | null;
@@ -1016,6 +1183,7 @@ export type Database = {
           last_quote_price?: number | null;
           month_of_year?: number | null;
           pricing_type?: Database["public"]["Enums"]["pricing_type"];
+          property_id?: string | null;
           recurrence?: Database["public"]["Enums"]["recurrence_type"];
           share_count?: number | null;
           starts_on?: string | null;
@@ -1027,6 +1195,13 @@ export type Database = {
             columns: ["category_id"];
             isOneToOne: false;
             referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recurring_templates_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
             referencedColumns: ["id"];
           },
         ];

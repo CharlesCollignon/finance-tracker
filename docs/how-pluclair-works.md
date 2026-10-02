@@ -16,7 +16,7 @@ Last updated: quality plan Phase 2, one codebase (2026-10-02;
 | `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token.                                                                                                                                                                                                                                                                                      |
 | `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                                                                                                                                                                                                                                                                                                              |
 | `packages/data` | The Supabase reads and writes both apps make, written once and handed the caller's client (`Db`): recurring templates and occurrences, transactions (`ledger`, `month-ledger`, `history`), deletes and their undo (`deletions`), categories and their seeding, fulfilment, the month close, the month's balance, the bank's balance, the review inbox (`bank-inbox`), positions and wallet plans, instrument readings, savings accounts, preferences, the weekly recap, delete-all. `pnpm --filter @finance/data test`. |
-| `supabase/`     | Migrations `001`–`048`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `supabase/`     | Migrations `001`–`049`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -259,7 +259,8 @@ assertion script:
   leaving the queue would send it again on the next drain.
 - "Delete all data" first restores every pending deletion (a hidden
   transaction would otherwise keep its category from going), then deletes transactions, templates, categories, positions,
-  savings accounts, skips, tags, budgets, goals and wallet transfers. It
+  savings accounts, properties and their loans, skips, tags, budgets, goals
+  and wallet transfers. It
   leaves month closes and their settings, the review inbox's bank rows,
   confirmed and refused fulfilments, wallet plans, AI reads and proposal
   dismissals. Whether a wipe should take those too is the owner's call.
