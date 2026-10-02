@@ -30,6 +30,10 @@ import { cn } from "@/lib/utils";
  *   pointer moved them.
  * - The light follows the pointer partway and slowly (`LIGHT_FOLLOW`), and
  *   the pointer pulls the sky half as far.
+ * - A black hole hangs far off in the sky, behind the planet, small and
+ *   faint, its disk turning slowly and the nebula and the starlight bending
+ *   round it (`distantHole`). It is ours, not the original's, and does not
+ *   follow the pointer.
  *
  * Imagery: NASA Blue Marble Next Generation, by Reto Stöckli (NASA Earth
  * Observatory), used without endorsement; credited in the landing footer.
@@ -80,6 +84,8 @@ type Geometry = {
   low: number;
   high: number;
   rest: number;
+  /** The distant black hole: its centre, and its shadow's radius. */
+  hole: [number, number, number];
 };
 const clamp = (n: number, min: number, max: number) =>
   Math.max(min, Math.min(max, n));
@@ -213,6 +219,7 @@ const fragment = `
     uniform float pulseAngle;
     uniform float still;
     uniform vec2 drift;
+    uniform vec3 hole;
     uniform sampler2D earth;
     uniform sampler2D cosmos;
     const float PI = 3.141592653589793;
@@ -235,6 +242,38 @@ const fragment = `
     vec3 recolor(vec3 source, vec4 tint) {
       return mix(source, tint.rgb * max(source.r, max(source.g, source.b)), tint.a);
     }
+
+    // A black hole far off in the galaxy, in units of its shadow's radius:
+    // the shadow, the thin ring of light bent round it, the far half of its
+    // disk lensed into an arc over the top, and the near half across the
+    // front, turning slowly, its approaching side the brighter. Fixed in the
+    // sky — it does not follow the pointer — and faint, paled by the
+    // distance. Returns its light, and what is left of the sky behind it.
+    vec4 distantHole(vec2 p, float pixel) {
+      vec2 b = rotate(.25) * (p - hole.xy) / hole.z;
+      float r = length(b);
+      if (r > 9.) return vec4(0., 0., 0., 1.);
+      float soft = max(.06, pixel / hole.z * 1.5);
+      float shadow = smoothstep(1. - soft, 1. + soft, r);
+      vec2 d = vec2(b.x, b.y / .2);
+      float rd = max(length(d), .001);
+      float turn = atan(d.y, d.x);
+      float spin = clock * .08;
+      float swirl = .72 + .18 * sin(turn * 2. + log(rd) * 6. + spin * 2.) + .10 * sin(turn * 5. - log(rd) * 9. + spin * 5.);
+      float profile = smoothstep(1.35, 1.9, rd) * exp(-max(rd - 1.9, 0.) / 1.3);
+      profile *= mix(shadow, 1., step(0., b.y));
+      float approach = -d.x / rd;
+      vec3 hot = mix(vec3(.92, .46, .22), vec3(1., .86, .70), min(1., exp(-(rd - 1.6) / 1.1)));
+      vec3 light = mix(hot, vec3(.80, .86, 1.), max(approach, 0.) * .25) * profile * swirl * (1. + .6 * approach) * .9;
+      float up = -b.y / max(r, .001);
+      float arc = exp(-pow((r - 1.22) / .22, 2.)) * (.3 + .7 * smoothstep(-.6, .9, up)) * shadow;
+      light += vec3(1., .78, .58) * arc * .95 * (1. - .35 * b.x / max(r, .001));
+      light += vec3(1., .90, .80) * exp(-pow((r - 1.04) / max(.05, soft), 2.)) * shadow * .5;
+      light += vec3(.10, .06, .07) * exp(-r * r / 30.);
+      light = mix(light, vec3(dot(light, vec3(.2126, .7152, .0722))), .3) * .26;
+      return vec4(light, shadow);
+    }
+
     void main() {
       vec2 p = vec2(gl_FragCoord.x, resolution.y - gl_FragCoord.y) / resolution.y;
       vec2 q = p - center;
@@ -258,11 +297,16 @@ const fragment = `
       float bloom = smoothstep(0., .32, event) * (1. - smoothstep(1.4, 4.8, event)) * step(0., pulse);
       bloom = max(max(bloom, charge * still * .65), auroraPreview * .75);
       vec2 sky = p - drift * .0035;
+      vec2 fromHole = p - hole.xy;
+      float einstein = hole.z * 1.7;
+      sky -= fromHole * einstein * einstein / max(dot(fromHole, fromHole), hole.z * hole.z);
       vec2 lens = sky - sun;
       float bend = charge * exp(-dot(lens, lens) / .32) * (1. - still);
       sky = sun + rotate(-bend * .46) * lens / (1. - bend * .20);
       vec2 skyUV = vec2(sky.x / (resolution.x / resolution.y), 1. - sky.y);
       vec3 color = recolor(texture2D(cosmos, skyUV).rgb, backgroundColor) * galaxyBrightness * space * (1. + charge * .45 + bloom * .5);
+      vec4 farHole = distantHole(p, pixel);
+      color = color * farHole.a + farHole.rgb * space;
 
       // Scattering stays on the sky side of the occluding planet.
       vec3 halo = vec3(.105, .026, .065) * gauss(along, .23) * gauss(across, .11);
@@ -359,6 +403,7 @@ const starVertex = `
     uniform vec2 resolution;
     uniform vec2 center;
     uniform vec2 drift;
+    uniform vec3 hole;
     uniform float radius;
     uniform float angle;
     uniform float charge;
@@ -379,6 +424,13 @@ const starVertex = `
       vec2 s = fract(star.xy + vec2(-1., .25) * clock * (.0005 + star.w * .0028) * (1. - still));
       vec2 p = s * vec2(resolution.x / resolution.y, 1.);
       p += drift * (.0015 + star.w * .0045) * (1. - still);
+      // Starlight passing the far black hole bends round it: each star is
+      // seen where its brighter image falls, outside the ring, never across
+      // the shadow, and brighter the nearer it passes.
+      vec2 fromHole = p - hole.xy;
+      float passing = length(fromHole);
+      float einstein = hole.z * 1.7;
+      p = hole.xy + fromHole / max(passing, 1e-5) * (passing + sqrt(passing * passing + 4. * einstein * einstein)) * .5;
       vec2 sun = center + vec2(cos(angle), sin(angle)) * (radius - .007);
       vec2 delta = p - sun;
       float attraction = exp(-dot(delta, delta) / .40);
@@ -396,6 +448,7 @@ const starVertex = `
       alpha = (.24 + star.w * .58 + sharp * .55) * twinkle;
       alpha *= tail < .5 ? 1. : charge * (1. - tail / 7.) * .19 * (1. - still);
       alpha *= 1. + impulse * .8;
+      alpha *= 1. + .6 * exp(-passing * passing / (4. * einstein * einstein));
       alpha *= smoothstep(0., .03, s.x) * (1. - smoothstep(.97, 1., s.x)) * smoothstep(0., .03, s.y) * (1. - smoothstep(.97, 1., s.y));
       tint = mix(vec3(.49, .70, 1.), vec3(1., .69, .49), smoothstep(.32, .90, fract(star.w * 13.7)));
       tint = mix(tint, vec3(.93, .77, 1.), step(.87, fract(star.w * 7.)));
@@ -500,6 +553,26 @@ function visibleArc(
   }
   // Kept just inside the ends, so the light never sits on an edge.
   return { low: low + 0.035, high: high - 0.035 };
+}
+
+/**
+ * Where the distant black hole hangs: high on the right, past the end of the
+ * headline's column, a little under halfway down the sky above the rim, so
+ * it clears the nav above it and the planet below it on every screen. Smaller
+ * on a portrait screen, where the hero's height is a long way across.
+ */
+function holePlace(
+  center: [number, number],
+  radius: number,
+  aspect: number,
+): [number, number, number] {
+  const x = aspect * 0.86;
+  const across = x - center[0];
+  const rim =
+    Math.abs(across) < radius
+      ? center[1] - Math.sqrt(radius * radius - across * across)
+      : 1;
+  return [x, clamp(rim * 0.45, 0.16, 0.32), 0.0095 * clamp(aspect, 0.75, 1)];
 }
 
 function createRenderer(
@@ -660,6 +733,7 @@ function createRenderer(
       "pulseAngle",
       "still",
       "drift",
+      "hole",
       "galaxyBrightness",
       "surfaceBrightness",
       "auroraColor",
@@ -726,6 +800,7 @@ function createRenderer(
       "pulseAngle",
       "still",
       "drift",
+      "hole",
     ]);
     starBuffer = makeBuffer();
     updateStars();
@@ -846,7 +921,8 @@ function createRenderer(
       state.angle += rest - geometry.rest;
       state.target += rest - geometry.rest;
     } else state.angle = state.target = rest;
-    geometry = { center, radius, low, high, rest };
+    const hole = holePlace(center, radius, aspect);
+    geometry = { center, radius, low, high, rest, hole };
     state.angle = clamp(state.angle, low, high);
     state.target = clamp(state.target, low, high);
     requestFrame();
@@ -879,6 +955,7 @@ function createRenderer(
     gl.uniform1f(u.pulse!, still() ? -1 : state.pulse);
     gl.uniform1f(u.still!, still() ? 1 : 0);
     gl.uniform1f(u.pulseAngle!, state.pulseAngle);
+    gl.uniform3f(u.hole!, ...g.hole);
     gl.uniform2f(
       u.drift!,
       still() ? 0 : state.drift[0]!,
