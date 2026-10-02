@@ -34,7 +34,6 @@ import {
 } from "@finance/core/category-styles";
 import type {
   Category,
-  CategoryType,
   RecurringTemplateWithCategory,
   TransactionWithCategory,
 } from "@finance/core/types/database";
@@ -99,17 +98,15 @@ import { ICON } from "@/theme/tokens";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
+import {
+  filterLedger,
+  filterPlanned,
+  ledgerDays,
+  ledgerTotals,
+  type LedgerTypeFilter,
+} from "@finance/core/ledger-view";
 
-type FilterType = "all" | CategoryType;
-
-/** Same shape the web transactions view computes for its hero figure. */
-function computeTypeTotals(transactions: TransactionWithCategory[]) {
-  const totals = { income: 0, expense: 0, savings: 0, investment: 0 };
-  for (const tx of transactions) {
-    totals[tx.categories.type] += Number(tx.amount);
-  }
-  return totals;
-}
+type FilterType = LedgerTypeFilter;
 
 const FILTERS: FilterType[] = [
   "all",
@@ -349,55 +346,25 @@ export default function TransactionsScreen() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [transactions, planned]);
 
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return transactions.filter((tx) => {
-      if (filter !== "all" && tx.categories.type !== filter) {
-        return false;
-      }
-      if (categoryFilter !== "all" && tx.category_id !== categoryFilter) {
-        return false;
-      }
-      if (!query) {
-        return true;
-      }
-      // Same fields the web view searches: category name and note.
-      return (
-        tx.categories.name.toLowerCase().includes(query) ||
-        (tx.note ?? "").toLowerCase().includes(query)
-      );
-    });
-  }, [transactions, filter, categoryFilter, search]);
-
+  const ledgerFilter = useMemo(
+    () => ({ type: filter, categoryId: categoryFilter, query: search }),
+    [filter, categoryFilter, search],
+  );
+  // Category name and note, each on its own, as on the web.
+  const filtered = useMemo(
+    () => filterLedger(transactions, ledgerFilter),
+    [transactions, ledgerFilter],
+  );
   // The same filters over the planned rows, so choosing "Expense" or a
   // category narrows what is to come as well as what has happened.
-  const filteredPlanned = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return planned.filter((occurrence) => {
-      if (filter !== "all" && occurrence.categoryType !== filter) {
-        return false;
-      }
-      if (
-        categoryFilter !== "all" &&
-        occurrence.categoryId !== categoryFilter
-      ) {
-        return false;
-      }
-      if (!query) {
-        return true;
-      }
-      return (
-        occurrence.categoryName.toLowerCase().includes(query) ||
-        occurrence.name.toLowerCase().includes(query) ||
-        (occurrence.note ?? "").toLowerCase().includes(query)
-      );
-    });
-  }, [planned, filter, categoryFilter, search]);
+  const filteredPlanned = useMemo(
+    () => filterPlanned(planned, ledgerFilter),
+    [planned, ledgerFilter],
+  );
   // The figures describe what is on screen, which is the whole reason they
   // are here: the month's own totals are Month's job, and repeating them
   // under a filter would state something the list below contradicts.
-  const shown = useMemo(() => computeTypeTotals(filtered), [filtered]);
+  const shown = useMemo(() => ledgerTotals(filtered), [filtered]);
   const shownOut = shown.expense + shown.savings + shown.investment;
 
   // What the month ends at, which is a fact about the whole month and does
@@ -439,49 +406,21 @@ export default function TransactionsScreen() {
   // net counts only what has happened, and a day with nothing but planned
   // rows has no net at all — a figure there would be a forecast set in the
   // same type as the record.
-  const days = useMemo(() => {
-    const items: { date: string; item: LedgerItem }[] = [
-      ...filtered.map((tx) => ({
-        date: tx.occurred_on,
-        item: { kind: "tx" as const, tx },
+  const days = useMemo(
+    () =>
+      ledgerDays(filtered, filteredPlanned).map((day) => ({
+        date: day.date,
+        net: day.net,
+        recorded: day.rows.length,
+        data: [
+          ...day.rows.map((tx): LedgerItem => ({ kind: "tx", tx })),
+          ...day.planned.map(
+            (occurrence): LedgerItem => ({ kind: "planned", occurrence }),
+          ),
+        ],
       })),
-      ...filteredPlanned.map((occurrence) => ({
-        date: occurrence.occurredOn,
-        item: { kind: "planned" as const, occurrence },
-      })),
-    ].sort((a, b) => b.date.localeCompare(a.date));
-
-    const out: {
-      date: string;
-      net: number;
-      recorded: number;
-      data: LedgerItem[];
-    }[] = [];
-
-    for (const { date, item } of items) {
-      let signed = 0;
-      if (item.kind === "tx") {
-        const amount = Number(item.tx.amount);
-        signed = item.tx.categories.type === "income" ? amount : -amount;
-      }
-      const last = out[out.length - 1];
-
-      if (last && last.date === date) {
-        last.data.push(item);
-        last.net += signed;
-        last.recorded += item.kind === "tx" ? 1 : 0;
-      } else {
-        out.push({
-          date,
-          net: signed,
-          recorded: item.kind === "tx" ? 1 : 0,
-          data: [item],
-        });
-      }
-    }
-
-    return out;
-  }, [filtered, filteredPlanned]);
+    [filtered, filteredPlanned],
+  );
 
   const visibleIds = useMemo(() => filtered.map((tx) => tx.id), [filtered]);
   // A filter can hide rows still held in the stored set; pruning here rather
