@@ -131,9 +131,16 @@ export function defaultCategoryNames(
  * Names the card networks' codes can point at that are not defaults, in both
  * languages, so a user who made them in either is found.
  */
+/**
+ * Where a let property's rent is filed: made the first time a rent is
+ * added, rather than given to every new account.
+ */
+export const RENT_CATEGORY_NAMES = { fr: "Loyers perçus", en: "Rent received" };
+
 const SUGGESTED_CATEGORY_NAMES = [
   { fr: "Restaurants", en: "Restaurants" },
   { fr: "Bars", en: "Bars" },
+  RENT_CATEGORY_NAMES,
 ];
 
 /**
@@ -388,6 +395,16 @@ export function formatShortDate(isoDate: string, locale: Locale): string {
       new Date(year!, month! - 1, day).getDay()
     ];
   return `${weekday} ${day} ${monthShort(month!, locale)}`;
+}
+
+/**
+ * "1 January 2025", « 1er janvier 2025 »: a date said in full, as a law
+ * gives it.
+ */
+export function formatFullDate(isoDate: string, locale: Locale): string {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const dayLabel = locale === "fr" && day === 1 ? "1er" : String(day);
+  return `${dayLabel} ${monthLong(month!, locale)} ${year}`;
 }
 
 /** Compact day + month for toggles (e.g. "12 Aug"). */

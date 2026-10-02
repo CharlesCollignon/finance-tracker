@@ -5,7 +5,7 @@ import {
   searchAddresses,
   type AddressMatch,
 } from "@finance/core/address-search";
-import { formatEuro } from "@finance/core/constants";
+import { formatEuro, RENT_CATEGORY_NAMES } from "@finance/core/constants";
 import { loanPaymentCategoryName } from "@finance/core/property";
 import * as properties from "@finance/data/properties";
 import { asUser } from "@/lib/actions/as-user";
@@ -147,6 +147,27 @@ export async function addPaymentForLoan(
     });
     return result.success
       ? { success: true, message: t("property.paymentAdded") }
+      : { error: result.error };
+  });
+}
+
+/** Give a let property its rent among the recurring entries. */
+export async function addRentForProperty(
+  propertyId: string,
+  amount: number,
+  propertyName: string,
+): Promise<ActionResult> {
+  const t = await getT();
+  const locale = await getLocale();
+  return asUser(async (db, userId): Promise<ActionResult> => {
+    const result = await properties.addRent(db, userId, {
+      propertyId,
+      amount,
+      categoryName: RENT_CATEGORY_NAMES[locale],
+      description: t("property.rentDescription", { name: propertyName }),
+    });
+    return result.success
+      ? { success: true, message: t("property.rentAdded") }
       : { error: result.error };
   });
 }
