@@ -21,6 +21,21 @@ export type PropertyKind = "apartment" | "house" | "other";
 export type PropertyUsage =
   "main_home" | "second_home" | "rental_bare" | "rental_furnished";
 
+/** The class on a property's DPE — see migration 051. */
+export type EnergyClass = "A" | "B" | "C" | "D" | "E" | "F" | "G";
+
+/**
+ * Which of the ANIL's asking-rent tables a property is read from:
+ * apartments, of one or two rooms, of three or more, or houses.
+ */
+export type RentSeries = "app" | "app12" | "app3" | "mai";
+
+/**
+ * Where the ANIL fitted a commune's asking rents: the commune itself, its
+ * intercommunality, or a group of neighbouring communes.
+ */
+export type RentScope = "commune" | "epci" | "maille";
+
 /** Paid down month by month, or interest only and the principal at the end. */
 export type LoanKind = "amortising" | "in_fine";
 
@@ -83,8 +98,13 @@ interface Narrowed {
   month_closes: { balance_source: "manual" | "bank" };
   month_reads: { source: "pressed" | "auto"; locale: Locale };
   savings_accounts: { kind: SavingsAccountKind };
-  properties: { kind: PropertyKind; usage: PropertyUsage };
+  properties: {
+    kind: PropertyKind;
+    usage: PropertyUsage;
+    energy_class: EnergyClass | null;
+  };
   property_market_readings: { scope: "radius" | "commune" };
+  property_rent_references: { series: RentSeries; scope: RentScope };
   property_loans: {
     kind: LoanKind;
     deferral_kind: DeferralKind;
@@ -226,6 +246,8 @@ export type PropertyLoan =
   Database["public"]["Tables"]["property_loans"]["Row"];
 export type PropertyMarketReading =
   Database["public"]["Tables"]["property_market_readings"]["Row"];
+export type PropertyRentReference =
+  Database["public"]["Tables"]["property_rent_references"]["Row"];
 export type PushSubscriptionRow =
   Database["public"]["Tables"]["push_subscriptions"]["Row"];
 export type ExpoPushTokenRow =

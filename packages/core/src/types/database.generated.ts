@@ -823,6 +823,7 @@ export type Database = {
           agency_fees: number;
           citycode: string | null;
           created_at: string;
+          energy_class: string | null;
           id: string;
           kind: string;
           latitude: number | null;
@@ -848,6 +849,7 @@ export type Database = {
           agency_fees?: number;
           citycode?: string | null;
           created_at?: string;
+          energy_class?: string | null;
           id?: string;
           kind: string;
           latitude?: number | null;
@@ -873,6 +875,7 @@ export type Database = {
           agency_fees?: number;
           citycode?: string | null;
           created_at?: string;
+          energy_class?: string | null;
           id?: string;
           kind?: string;
           latitude?: number | null;
@@ -1025,6 +1028,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "property_market_readings_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: true;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      property_rent_references: {
+        Row: {
+          edition: number;
+          high_m2: number;
+          low_m2: number;
+          observations: number;
+          property_id: string;
+          read_at: string;
+          rent_m2: number;
+          scope: string;
+          series: string;
+          user_id: string;
+        };
+        Insert: {
+          edition: number;
+          high_m2: number;
+          low_m2: number;
+          observations: number;
+          property_id: string;
+          read_at?: string;
+          rent_m2: number;
+          scope: string;
+          series: string;
+          user_id: string;
+        };
+        Update: {
+          edition?: number;
+          high_m2?: number;
+          low_m2?: number;
+          observations?: number;
+          property_id?: string;
+          read_at?: string;
+          rent_m2?: number;
+          scope?: string;
+          series?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "property_rent_references_property_id_fkey";
             columns: ["property_id"];
             isOneToOne: true;
             referencedRelation: "properties";
