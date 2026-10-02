@@ -239,6 +239,13 @@ export const en = {
    * "supprimées"). Both forms have to be written out.
    */
   ledger: {
+    csv: {
+      date: "Date",
+      category: "Category",
+      type: "Type",
+      amount: "Amount (EUR)",
+      note: "Note",
+    },
     emptyTitle: "Nothing recorded this month",
     emptyBody:
       "Add what happened. The charges you set up fill each month in on their own.",

@@ -29,6 +29,7 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { PlannedOccurrenceSheet } from "@/components/finance/PlannedOccurrenceSheet";
 import type { PlannedOccurrence } from "@finance/core/apply-recurring";
+import { buildLedgerCsv } from "@finance/core/ledger-csv";
 import {
   filterLedger,
   filterPlanned,
@@ -107,30 +108,12 @@ interface TransactionsViewProps {
   bankSlot?: ReactNode;
 }
 
-function toCsvValue(value: string): string {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-function buildTransactionsCsv(transactions: TransactionWithCategory[]): string {
-  const header = ["date", "category", "type", "amount_eur", "note"];
-  const rows = transactions.map((tx) =>
-    [
-      tx.occurred_on,
-      toCsvValue(tx.categories.name),
-      tx.categories.type,
-      String(Number(tx.amount)),
-      toCsvValue(tx.note ?? ""),
-    ].join(","),
-  );
-
-  return [header.join(","), ...rows].join("\n");
-}
-
+/**
+ * Hand the file to the browser. A byte-order mark first, so Excel reads the
+ * accents as UTF-8 rather than turning « é » into two odd characters.
+ */
 function downloadCsv(filename: string, csv: string): void {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -373,7 +356,10 @@ export function TransactionsView({
     }
 
     const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-    downloadCsv(`transactions-${monthKey}.csv`, buildTransactionsCsv(filtered));
+    downloadCsv(
+      `transactions-${monthKey}.csv`,
+      buildLedgerCsv(filtered, locale),
+    );
     toast(t("ledger.exported", { count: filtered.length }), "success");
   }
 

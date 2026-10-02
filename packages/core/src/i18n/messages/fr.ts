@@ -158,6 +158,13 @@ export const fr: Messages = {
   },
 
   ledger: {
+    csv: {
+      date: "Date",
+      category: "Catégorie",
+      type: "Type",
+      amount: "Montant (€)",
+      note: "Note",
+    },
     emptyTitle: "Aucune opération ce mois-ci",
     emptyBody:
       "Ajoutez ce qui s'est passé. Vos opérations récurrentes remplissent chaque mois d'elles-mêmes.",
