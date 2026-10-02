@@ -20,6 +20,7 @@ import {
   shiftMonth,
 } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
+import { balanceExplanation } from "@finance/core/month-balance";
 import type { BankAttention } from "@finance/core/bank-attention";
 import type { BearingMonth } from "@/lib/bearing/month";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
@@ -356,6 +357,16 @@ function BalanceCard({
             )}
           />
           <p className="mt-2 text-xs text-muted-foreground">{caption}</p>
+          {/* Native disclosure: keyboard, screen reader and the open state
+              are the browser's. */}
+          <details className="mt-1.5 text-xs text-muted-foreground">
+            <summary className="cursor-pointer list-none underline decoration-dotted underline-offset-4 transition-colors duration-hover hover:text-foreground [&::-webkit-details-marker]:hidden">
+              {t("bearingMonth.how.title")}
+            </summary>
+            <p className="mt-2 max-w-prose leading-relaxed">
+              {t(`bearingMonth.how.${balanceExplanation(balance, source)}`)}
+            </p>
+          </details>
         </div>
 
         {figures.right ? (

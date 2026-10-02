@@ -180,6 +180,27 @@ export interface MonthBalance {
   lowest: { date: string; value: number } | null;
 }
 
+/**
+ * Which explanation answers « Comment c'est calculé ? » under a month's
+ * balance, the same on both apps: a net counted from zero, a month ahead
+ * that only charges can speak for, or a balance carried from the bank or
+ * from a close.
+ */
+export type BalanceExplanation = "net" | "planned" | "bank" | "close";
+
+export function balanceExplanation(
+  balance: Pick<MonthBalance, "basis" | "period">,
+  source: "bank" | "close" | "none",
+): BalanceExplanation {
+  if (balance.basis === "net" || source === "none") {
+    return "net";
+  }
+  if (balance.period === "future") {
+    return "planned";
+  }
+  return source;
+}
+
 /** Every day of a month, as ISO dates. */
 function daysOf(year: number, month: number): string[] {
   const { start, end } = getMonthBounds(year, month);

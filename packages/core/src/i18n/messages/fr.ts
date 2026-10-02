@@ -2134,6 +2134,15 @@ export const fr: Messages = {
     netSoFar: "Ce mois-ci à ce jour",
     netByEnd: "D'ici la fin du mois",
     netMonth: "Ce mois-ci",
+    how: {
+      title: "Comment c'est calculé\u00A0?",
+      net: "Sans solde de départ, le mois est compté à partir de zéro\u00A0: ce qui est entré moins ce qui est sorti. Faites le bilan d'un mois pour voir un vrai solde.",
+      planned:
+        "Un mois à venir ne compte que vos opérations récurrentes, à partir du solde prévu au début du mois. Les dépenses du quotidien n'y sont pas.",
+      bank: "Le solde vient de votre banque. Pour le reste du mois, l'application y ajoute ce que vos opérations récurrentes doivent encore faire entrer ou sortir. Les dépenses du quotidien pas encore faites n'y sont pas.",
+      close:
+        "Le départ est le solde que vous avez noté au dernier bilan de mois. L'application y ajoute les opérations enregistrées depuis, puis ce que vos opérations récurrentes doivent encore faire entrer ou sortir.",
+    },
     netCaption: "Ce qui est entré, moins ce qui est sorti.",
     fromBank: "Aujourd'hui, d'après votre banque",
     fromClose: "D'après votre dernier bilan, plus ce que vous avez noté depuis",

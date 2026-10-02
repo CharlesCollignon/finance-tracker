@@ -2962,6 +2962,15 @@ export const en = {
     netSoFar: "This month so far",
     netByEnd: "By month end",
     netMonth: "This month",
+    how: {
+      title: "How is this worked out?",
+      net: "With no starting balance, the month counts from zero: what came in minus what went out. Close a month to see a real balance.",
+      planned:
+        "A month ahead counts your recurring entries only, from the balance expected at its start. Everyday spending is not in it.",
+      bank: "The balance comes from your bank. For the rest of the month, the app adds what your recurring entries still have to bring in or take out. Everyday spending not done yet is not in it.",
+      close:
+        "It starts from the balance you noted at your last month review. The app adds the transactions recorded since, then what your recurring entries still have to bring in or take out.",
+    },
     netCaption: "What came in, minus what went out.",
     fromBank: "Today, from your bank",
     fromClose: "From your last close, plus what you have recorded since",
