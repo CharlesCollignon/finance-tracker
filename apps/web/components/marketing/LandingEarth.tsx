@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
  *
  * Adapted from "Earth Blaze" by Legacy on 21st.dev. The renderer below — the
  * shaders for the planet, its atmosphere, the nebula and the stars, and the
- * light that follows the pointer along the rim — is theirs, kept as written.
- * What changed is around it:
+ * light that follows the pointer along the rim — is theirs, kept as written
+ * but for what is listed here:
  *
  * - The texture is served from this site (`/marketing/`, resized to the
  *   4096px the renderer uses at most) rather than from 21st's CDN, so a
@@ -28,6 +28,8 @@ import { cn } from "@/lib/utils";
  * - The stars drift: slowly, each on its own, nearer ones faster, so the sky
  *   sets behind the rim over minutes. The original's held still unless the
  *   pointer moved them.
+ * - The light follows the pointer partway and slowly (`LIGHT_FOLLOW`), and
+ *   the pointer pulls the sky half as far.
  *
  * Imagery: NASA Blue Marble Next Generation, by Reto Stöckli (NASA Earth
  * Observatory), used without endorsement; credited in the landing footer.
@@ -255,7 +257,7 @@ const fragment = `
       float event = max(pulse, 0.);
       float bloom = smoothstep(0., .32, event) * (1. - smoothstep(1.4, 4.8, event)) * step(0., pulse);
       bloom = max(max(bloom, charge * still * .65), auroraPreview * .75);
-      vec2 sky = p - drift * .007;
+      vec2 sky = p - drift * .0035;
       vec2 lens = sky - sun;
       float bend = charge * exp(-dot(lens, lens) / .32) * (1. - still);
       sky = sun + rotate(-bend * .46) * lens / (1. - bend * .20);
@@ -376,7 +378,7 @@ const starVertex = `
       // Wrapped, so the field never empties, and faded across the seam.
       vec2 s = fract(star.xy + vec2(-1., .25) * clock * (.0005 + star.w * .0028) * (1. - still));
       vec2 p = s * vec2(resolution.x / resolution.y, 1.);
-      p += drift * (.003 + star.w * .009) * (1. - still);
+      p += drift * (.0015 + star.w * .0045) * (1. - still);
       vec2 sun = center + vec2(cos(angle), sin(angle)) * (radius - .007);
       vec2 delta = p - sun;
       float attraction = exp(-dot(delta, delta) / .40);
@@ -421,6 +423,16 @@ const starFragment = `
 
 /** Where the sun rests, as a fraction of the hero's height. */
 const REST_HEIGHT = 0.72;
+
+/**
+ * How the light answers the pointer, gentler than the original's: it goes a
+ * third of the way from where it rests toward the pointer, takes about a
+ * second to get there rather than a quarter of one, and lights Europe a
+ * little over half as much when the pointer comes near.
+ */
+const LIGHT_FOLLOW = 0.35;
+const LIGHT_EASE = 1.1;
+const LIGHT_REVEAL = 0.55;
 
 /**
  * The circle the old orb horizon drew, in the renderer's units (the hero's
@@ -895,10 +907,10 @@ function createRenderer(
     const dt = Math.min((now - (state.last || now - 16)) / 1000, 0.05);
     state.last = now;
     state.clock += dt;
-    const movement = still() ? 1 : 1 - Math.exp(-dt / 0.24);
+    const movement = still() ? 1 : 1 - Math.exp(-dt / LIGHT_EASE);
     const exposure = still()
       ? 1
-      : 1 - Math.exp(-dt / (state.targetReveal > state.reveal ? 0.8 : 0.48));
+      : 1 - Math.exp(-dt / (state.targetReveal > state.reveal ? 1.6 : 1.1));
     state.angle += (state.target - state.angle) * movement;
     state.reveal += (state.targetReveal - state.reveal) * exposure;
     state.charge +=
@@ -956,9 +968,14 @@ function createRenderer(
     const y = (event.clientY - box.top) / box.height - geometry.center[1];
     let angle = Math.atan2(y, x);
     if (angle > 0) angle -= Math.PI * 2;
-    state.target = clamp(angle, geometry.low, geometry.high);
+    state.target = clamp(
+      geometry.rest + (angle - geometry.rest) * LIGHT_FOLLOW,
+      geometry.low,
+      geometry.high,
+    );
     const distance = Math.hypot(x, y) - geometry.radius;
     state.targetReveal =
+      LIGHT_REVEAL *
       Math.exp(-Math.pow((angle - geometry.rest) / 0.15, 2)) *
       Math.exp(-Math.pow((distance + 0.015) / 0.12, 2));
     state.targetDrift = [
