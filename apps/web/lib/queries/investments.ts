@@ -1,10 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import {
-  fetchInstrumentQuoteInEur,
-  fetchMonthlyClosesInEur,
-  fetchPriceSeriesInEur,
-} from "@finance/core/market/fx";
+import { fetchPriceSeriesInEur } from "@finance/core/market/fx";
 import {
   emptyPriceSeries,
   type InstrumentPriceSeries,
@@ -130,45 +126,6 @@ export async function deleteInvestmentPosition(
   if (error) {
     throw error;
   }
-}
-
-export async function fetchLiveQuotes(
-  symbols: string[],
-): Promise<Record<string, number>> {
-  const unique = Array.from(new Set(symbols.filter(Boolean)));
-  const quotes: Record<string, number> = {};
-
-  await Promise.all(
-    unique.map(async (symbol) => {
-      try {
-        const quote = await fetchInstrumentQuoteInEur(symbol);
-        quotes[symbol] = quote.priceEur;
-      } catch {
-        // Ignore failed quotes — fall back to invested value.
-      }
-    }),
-  );
-
-  return quotes;
-}
-
-export async function fetchHistoricalQuotes(
-  symbols: string[],
-): Promise<Record<string, Record<string, number>>> {
-  const unique = Array.from(new Set(symbols.filter(Boolean)));
-  const history: Record<string, Record<string, number>> = {};
-
-  await Promise.all(
-    unique.map(async (symbol) => {
-      try {
-        history[symbol] = await fetchMonthlyClosesInEur(symbol);
-      } catch {
-        // History is optional — charts fall back to invested-only.
-      }
-    }),
-  );
-
-  return history;
 }
 
 /**

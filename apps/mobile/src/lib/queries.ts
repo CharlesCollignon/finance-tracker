@@ -28,8 +28,8 @@ import {
 import { buildInvestmentPortfolio } from "@finance/core/investment-positions";
 import { todayIsoLocal } from "@finance/core/constants";
 import {
-  fetchInstrumentQuoteInEur,
-  fetchMonthlyClosesInEur,
+  fetchMonthlyClosesBySymbolInEur,
+  fetchQuotesInEur,
 } from "@finance/core/market/fx";
 import {
   buildMerchantIndex,
@@ -234,45 +234,6 @@ export async function getInvestmentPositions(
   }));
 }
 
-async function fetchLiveQuotes(
-  symbols: string[],
-): Promise<Record<string, number>> {
-  const unique = Array.from(new Set(symbols.filter(Boolean)));
-  const quotes: Record<string, number> = {};
-
-  await Promise.all(
-    unique.map(async (symbol) => {
-      try {
-        const quote = await fetchInstrumentQuoteInEur(symbol);
-        quotes[symbol] = quote.priceEur;
-      } catch {
-        // Fall back to invested value when a quote fails.
-      }
-    }),
-  );
-
-  return quotes;
-}
-
-async function fetchHistoricalQuotes(
-  symbols: string[],
-): Promise<Record<string, Record<string, number>>> {
-  const unique = Array.from(new Set(symbols.filter(Boolean)));
-  const history: Record<string, Record<string, number>> = {};
-
-  await Promise.all(
-    unique.map(async (symbol) => {
-      try {
-        history[symbol] = await fetchMonthlyClosesInEur(symbol);
-      } catch {
-        // History is optional.
-      }
-    }),
-  );
-
-  return history;
-}
-
 export async function getWalletPortfolio(
   userId: string,
   locale: Locale,
@@ -302,9 +263,9 @@ export async function getWalletPortfolio(
 
   const symbolList = Array.from(symbols);
   const [liveQuotes, historicalQuotes] = await Promise.all([
-    fetchLiveQuotes(symbolList),
+    fetchQuotesInEur(symbolList),
     includeHistory
-      ? fetchHistoricalQuotes(symbolList)
+      ? fetchMonthlyClosesBySymbolInEur(symbolList)
       : Promise.resolve({} as Record<string, Record<string, number>>),
   ]);
 
