@@ -27,7 +27,8 @@ import {
   valueSourceLine,
 } from "@finance/core/property";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
-import { loanMoment, type LoanMoment } from "@finance/core/property-moments";
+import { equityMoment, loanMoment } from "@finance/core/property-moments";
+import { loanProgress, ownership } from "@finance/core/property-progress";
 import { isLet } from "@finance/core/rental";
 import { formatRate } from "@finance/core/savings-accounts";
 import type { PropertyLoan } from "@finance/core/types/database";
@@ -40,6 +41,7 @@ import {
   TextField,
 } from "@/components/property/fields";
 import { AnimatedAmount } from "@/components/AnimatedAmount";
+import { LoanTrack, OwnershipBar, PaymentBar } from "@/components/property/ProgressBars";
 import { EditPropertySheet, LoanSheet } from "@/components/property/PropertySheets";
 import { RentalSection } from "@/components/property/RentalSection";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -165,6 +167,7 @@ export default function PropertyDetailScreen() {
 
   const { property, loans, templates } = detail;
   const position = propertyPosition(property, loans, today, detail.market);
+  const halfYours = equityMoment(property, loans, detail.market, today);
   const reading = detail.market.reading;
   const source = position.estimate.source;
   const partOwned = property.ownership_share < 1;
@@ -203,7 +206,17 @@ export default function PropertyDetailScreen() {
                 })}
               </Text>
             ) : null}
+            {halfYours ? (
+              <View className="mt-1">
+                <MomentPill
+                  seenKey={`equity-half:${property.id}`}
+                  label={t("property.momentEquityHalf")}
+                />
+              </View>
+            ) : null}
           </View>
+
+          <OwnershipBar ownership={ownership(position)} detailed />
 
           <View className="flex-row flex-wrap gap-y-4">
             <Fact label={t("property.estimatedValue")}>
@@ -433,7 +446,14 @@ function LoanCard({
       <View className="gap-0.5">
         <View className="flex-row flex-wrap items-center gap-2">
           <Text className="font-semibold">{loan.label}</Text>
-          {moment ? <LoanMomentPill loanId={loan.id} moment={moment} /> : null}
+          {moment ? (
+            <MomentPill
+              seenKey={`${moment.kind}:${loan.id}`}
+              label={
+                moment.kind === "half" ? t("property.momentHalf") : t("property.momentLast")
+              }
+            />
+          ) : null}
         </View>
         <PrivateAmount className="text-xs text-muted-foreground">
           {[
@@ -452,6 +472,8 @@ function LoanCard({
             .join(" · ")}
         </PrivateAmount>
       </View>
+
+      <LoanTrack progress={loanProgress(loan, today)} inFine={loan.kind === "in_fine"} />
 
       <View className="flex-row flex-wrap gap-y-4">
         <Fact label={t("property.owed")}>
@@ -474,16 +496,10 @@ function LoanCard({
         >
           {split ? (
             <>
-              <PrivateAmount className="text-sm font-medium">
+              <PrivateAmount className="mb-1.5 text-sm font-medium">
                 {format(split.total)}
               </PrivateAmount>
-              <PrivateAmount className="text-xs text-muted-foreground">
-                {t("property.paymentSplit", {
-                  principal: format(split.principal),
-                  interest: format(split.interest),
-                  insurance: format(split.insurance),
-                })}
-              </PrivateAmount>
+              <PaymentBar split={split} />
             </>
           ) : null}
         </Fact>
@@ -637,14 +653,13 @@ function ScheduleByYear({ schedule }: { schedule: readonly LoanPayment[] }) {
 
 /** « Mettre à jour le capital restant dû », and the way back from it. */
 /**
- * Half the loan repaid, or its last payment made, in the month after: a
- * moment, in gold, popping in with the success haptic the first time this
- * phone sees it.
+ * A property's moment — half a loan repaid, its last payment, half the home
+ * the user's — in gold, popping in with the success haptic the first time
+ * this phone sees it.
  */
-function LoanMomentPill({ loanId, moment }: { loanId: string; moment: LoanMoment }) {
-  const t = useT();
+function MomentPill({ seenKey, label }: { seenKey: string; label: string }) {
   const reduce = useReducedMotion();
-  const seen = useMomentSeen(`${moment.kind}:${loanId}`);
+  const seen = useMomentSeen(seenKey);
   if (seen === null) {
     return null;
   }
@@ -655,9 +670,7 @@ function LoanMomentPill({ loanId, moment }: { loanId: string; moment: LoanMoment
       entering={seen || reduce ? undefined : ZoomIn.springify().damping(11).stiffness(160)}
     >
       <View className="rounded-full bg-primary px-2.5 py-1">
-        <Text className="text-xs font-semibold text-primary-foreground">
-          {moment.kind === "half" ? t("property.momentHalf") : t("property.momentLast")}
-        </Text>
+        <Text className="text-xs font-semibold text-primary-foreground">{label}</Text>
       </View>
     </Animated.View>
   );

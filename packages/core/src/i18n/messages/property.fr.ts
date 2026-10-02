@@ -113,8 +113,6 @@ export const propertyFr: typeof propertyEn = {
   loanTerms: "{principal} à {rate} sur {years}",
   yearsCount: { one: "{count} an", other: "{count} ans" },
   nextPayment: "Prochaine échéance, le {date}",
-  paymentSplit:
-    "{principal} de capital · {interest} d'intérêts · {insurance} d'assurance",
   loanEnds: "Dernière échéance en {date}",
   loanRepaid: "Remboursé",
   loanCost: "Le crédit coûte {cost} en tout",

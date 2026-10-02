@@ -114,8 +114,6 @@ export const propertyEn = {
   loanTerms: "{principal} at {rate} over {years}",
   yearsCount: { one: "{count} year", other: "{count} years" },
   nextPayment: "Next payment, {date}",
-  paymentSplit:
-    "{principal} principal · {interest} interest · {insurance} insurance",
   loanEnds: "Last payment in {date}",
   loanRepaid: "Repaid",
   loanCost: "The credit costs {cost} in all",
