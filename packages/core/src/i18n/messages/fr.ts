@@ -1613,6 +1613,9 @@ export const fr: Messages = {
       lastTitle: "Dernière échéance\u00A0: {loan}",
       lastBody:
         "{loan} est remboursé depuis le {date}\u00A0: {amount} de moins à payer chaque mois.",
+      equityTitle: "{property}\u00A0: la moitié est à vous",
+      equityBody:
+        "Avec vos remboursements, ce qui reste dû est passé sous la moitié de sa valeur estimée ({value}).",
       marketTitle: "Nouvelle estimation\u00A0: {property}",
       marketBody:
         "D'après les dernières ventes publiées, il vaut environ {after}, contre {before} à la lecture précédente.",

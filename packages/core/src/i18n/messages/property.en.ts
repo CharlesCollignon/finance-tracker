@@ -257,4 +257,21 @@ export const propertyEn = {
   momentLast: "Loan repaid",
   readingNow: "Reading the sales around it…",
   netWorthOpen: "See your property",
+
+  ownershipYours: "Yours {share}",
+  ownershipBank: "The bank's {share}",
+  ownershipAll: "All yours",
+  ownershipUnder: "The loan is more than its estimated value",
+  ownershipAmounts: "{yours} yours · {owed} still owed",
+  loanRepaidShare: "{share} repaid",
+  loanLeft: {
+    one: "{count} payment left, ends {date}",
+    other: "{count} payments left, ends {date}",
+  },
+  loanInFineTrack:
+    "An in fine loan repays its principal at the last payment, in {date}.",
+  paymentYours: "{amount} more is yours",
+  paymentInterest: "{amount} interest",
+  paymentInsurance: "{amount} insurance",
+  momentEquityHalf: "Half is yours",
 };

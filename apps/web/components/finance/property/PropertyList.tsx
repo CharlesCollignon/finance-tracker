@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus } from "@phosphor-icons/react";
 import { formatPercentLabel } from "@finance/core/constants";
 import { valueSourceLine } from "@finance/core/property";
+import { ownership } from "@finance/core/property-progress";
 import { StatHero } from "@/components/finance/StatHero";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -14,6 +15,7 @@ import { useLocale, useT } from "@/lib/locale-context";
 import type { PropertiesView, PropertySummary } from "@/lib/queries/properties";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { AddPropertySheet } from "./AddPropertySheet";
+import { OwnershipBar } from "./ProgressBars";
 import { PROPERTY_KIND_KEYS, PROPERTY_USAGE_KEYS } from "./property-labels";
 
 /**
@@ -109,6 +111,8 @@ function PropertyCard({ property }: { property: PropertySummary }) {
           })}
         </p>
       </div>
+
+      <OwnershipBar ownership={ownership(position)} />
 
       <p className="text-xs text-muted-foreground">
         {[

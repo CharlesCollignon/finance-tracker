@@ -2251,6 +2251,9 @@ export const en = {
       halfBodyOpen: "{owed} left to repay on {property}.",
       lastTitle: "Last payment: {loan}",
       lastBody: "{loan} was repaid on {date}: {amount} less to pay each month.",
+      equityTitle: "{property}: half is yours",
+      equityBody:
+        "With your payments, what is still owed has fallen below half its estimated value ({value}).",
       marketTitle: "New estimate: {property}",
       marketBody:
         "From the latest sales published, it is worth about {after}, against {before} at the last reading.",

@@ -37,13 +37,14 @@ import {
   monthlyOutlay,
   outstandingOn,
 } from "@finance/core/loan-schedule";
-import { loanTermsFromRow } from "@finance/core/property";
-import { loanMoment } from "@finance/core/property-moments";
-import { getLoansWithProperty } from "@finance/data/properties";
+import { loanTermsFromRow, propertyPosition } from "@finance/core/property";
+import { equityMoment, loanMoment } from "@finance/core/property-moments";
+import { getProperties } from "@finance/data/properties";
 import {
   bigChargeHeadsUp,
   bigCharges,
   closeReminder,
+  equityMomentNotification,
   loanMomentNotification,
   milestoneNotification,
   overdraftWarning,
@@ -364,9 +365,10 @@ async function milestoneFor(
 }
 
 /**
- * A loan's moments — half of it repaid, its last payment — in the month after
- * the day, each said once by its key. Asked only of someone who wants to
- * hear them; nobody without a loan has a row to read.
+ * A property's moments — a loan half repaid, its last payment, half the home
+ * the user's — in the month after the day, each said once by its key. Asked
+ * only of someone who wants to hear them; nobody without a property has a
+ * row to read.
  */
 async function propertyMomentsFor(
   supabase: AdminClient,
@@ -378,27 +380,42 @@ async function propertyMomentsFor(
     return [];
   }
   try {
-    const loans = await getLoansWithProperty(supabase, userId);
-    return loans.flatMap(({ loan, property }) => {
-      const moment = loanMoment(loan, today);
-      if (!moment) {
-        return [];
-      }
-      const terms = loanTermsFromRow(loan);
-      const schedule = loanSchedule(terms);
-      const share = Number(loan.borrower_share);
-      return [
-        loanMomentNotification({
-          moment,
-          loan: { id: loan.id, label: loan.label },
-          property,
-          owed: cents(outstandingOn(terms, schedule, today) * share),
-          monthly: cents(monthlyOutlay(terms, schedule) * share),
-          endsOn: schedule.at(-1)?.on ?? null,
-          t: translator(locale),
-          locale,
-        }),
-      ];
+    const { properties } = await getProperties(supabase, userId);
+    const t = translator(locale);
+    return properties.flatMap(({ property, loans, market }) => {
+      const named = { id: property.id, name: property.name };
+      const forLoans = loans.flatMap((loan) => {
+        const moment = loanMoment(loan, today);
+        if (!moment) {
+          return [];
+        }
+        const terms = loanTermsFromRow(loan);
+        const schedule = loanSchedule(terms);
+        const share = Number(loan.borrower_share);
+        return [
+          loanMomentNotification({
+            moment,
+            loan: { id: loan.id, label: loan.label },
+            property: named,
+            owed: cents(outstandingOn(terms, schedule, today) * share),
+            monthly: cents(monthlyOutlay(terms, schedule) * share),
+            endsOn: schedule.at(-1)?.on ?? null,
+            t,
+            locale,
+          }),
+        ];
+      });
+      const half = equityMoment(property, loans, market, today)
+        ? [
+            equityMomentNotification({
+              property: named,
+              value: propertyPosition(property, loans, today, market).value,
+              t,
+              locale,
+            }),
+          ]
+        : [];
+      return [...forLoans, ...half];
     });
   } catch {
     return [];

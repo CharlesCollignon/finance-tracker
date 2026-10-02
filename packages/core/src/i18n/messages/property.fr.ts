@@ -260,4 +260,21 @@ export const propertyFr: typeof propertyEn = {
   momentLast: "Prêt remboursé",
   readingNow: "Lecture des ventes alentour…",
   netWorthOpen: "Voir l'immobilier",
+
+  ownershipYours: "À vous {share}",
+  ownershipBank: "À la banque {share}",
+  ownershipAll: "Entièrement à vous",
+  ownershipUnder: "Le prêt dépasse sa valeur estimée",
+  ownershipAmounts: "{yours} à vous · {owed} encore dus",
+  loanRepaidShare: "{share} remboursé",
+  loanLeft: {
+    one: "Encore {count} échéance, fin en {date}",
+    other: "Encore {count} échéances, fin en {date}",
+  },
+  loanInFineTrack:
+    "Un prêt in fine rembourse son capital à la dernière échéance, en {date}.",
+  paymentYours: "{amount} de plus sont à vous",
+  paymentInterest: "{amount} d'intérêts",
+  paymentInsurance: "{amount} d'assurance",
+  momentEquityHalf: "La moitié est à vous",
 };
