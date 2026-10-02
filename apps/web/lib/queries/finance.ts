@@ -10,7 +10,6 @@ import {
   buildMonthComparison,
   type MonthComparison,
 } from "@finance/core/month-comparison";
-import { buildMonthlySummary } from "@finance/core/monthly-summary";
 import type {
   CategoryType,
   MonthlySummary,
@@ -19,6 +18,7 @@ import type {
 } from "@finance/core/types/database";
 import { getLocale } from "@/lib/locale";
 import * as history from "@finance/data/history";
+import * as monthLedger from "@finance/data/month-ledger";
 import * as templates from "@finance/data/templates";
 
 export async function getTransactions(
@@ -26,22 +26,12 @@ export async function getTransactions(
   year: number,
   month: number,
 ): Promise<TransactionWithCategory[]> {
-  const supabase = await createClient();
-  const { start, end } = getMonthBounds(year, month);
-
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*, categories(name, type, icon, counts_toward_summary)")
-    .eq("user_id", userId)
-    .gte("occurred_on", start)
-    .lte("occurred_on", end)
-    .order("occurred_on", { ascending: false });
-
-  if (error) {
-    throw error;
-  }
-
-  return (data ?? []) as TransactionWithCategory[];
+  return monthLedger.getMonthTransactions(
+    await createClient(),
+    userId,
+    year,
+    month,
+  );
 }
 
 export const getInvestmentTransactions = cache(
@@ -102,19 +92,12 @@ export async function getMonthlySummary(
   month: number,
   view: BudgetViewMode = "current",
 ): Promise<MonthlySummary> {
-  const [transactions, recurringTemplates, skippedKeys] = await Promise.all([
-    getTransactions(userId, year, month),
-    getRecurringTemplates(userId),
-    getRecurringSkipKeys(userId, year, month),
-  ]);
-
-  return buildMonthlySummary(
-    transactions,
-    recurringTemplates,
+  return monthLedger.getMonthlySummary(
+    await createClient(),
+    userId,
     year,
     month,
     view,
-    skippedKeys,
   );
 }
 

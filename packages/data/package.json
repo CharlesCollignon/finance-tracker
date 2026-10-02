@@ -21,6 +21,7 @@
     "./ledger-duplicates": "./src/ledger-duplicates.ts",
     "./month-balance": "./src/month-balance.ts",
     "./month-close": "./src/month-close.ts",
+    "./month-ledger": "./src/month-ledger.ts",
     "./moved-rows": "./src/moved-rows.ts",
     "./occurrences": "./src/occurrences.ts",
     "./preferences": "./src/preferences.ts",

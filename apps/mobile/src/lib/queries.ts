@@ -4,6 +4,7 @@ import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
 import * as categories from "@finance/data/categories";
 import * as history from "@finance/data/history";
+import * as monthLedger from "@finance/data/month-ledger";
 import * as templates from "@finance/data/templates";
 import * as inbox from "@finance/data/bank-inbox";
 import type { PendingFeedRow } from "@finance/data/bank-inbox";
@@ -20,7 +21,6 @@ import type { Locale } from "@finance/core/i18n/locale";
 import type { BankMerchantIndex } from "@finance/core/bank-merchant";
 import type { RecurringProposal } from "@finance/core/recurring-detection";
 import { type FulfilmentProposal } from "@finance/core/recurring-fulfilment";
-import { buildMonthlySummary } from "@finance/core/monthly-summary";
 import {
   type MonthCloseResult,
   type RecordedCashFlows,
@@ -63,24 +63,12 @@ export function getCategories(
   return categories.getCategories(supabase, userId, options);
 }
 
-export async function getTransactions(
+export function getTransactions(
   userId: string,
   year: number,
   month: number,
 ): Promise<TransactionWithCategory[]> {
-  const { start, end } = getMonthBounds(year, month);
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*, categories(name, type, icon, counts_toward_summary)")
-    .eq("user_id", userId)
-    .gte("occurred_on", start)
-    .lte("occurred_on", end)
-    .order("occurred_on", { ascending: false });
-
-  if (error) {
-    throw error;
-  }
-  return (data ?? []) as TransactionWithCategory[];
+  return monthLedger.getMonthTransactions(supabase, userId, year, month);
 }
 
 export async function getRecurringTemplates(
@@ -166,34 +154,13 @@ export async function getSkippedOccurrences(
   }));
 }
 
-function getRecurringSkipKeys(
-  userId: string,
-  year: number,
-  month: number,
-): Promise<Set<string>> {
-  return templates.getRecurringSkipKeys(supabase, userId, year, month);
-}
-
-export async function getMonthlySummary(
+export function getMonthlySummary(
   userId: string,
   year: number,
   month: number,
   view: BudgetViewMode = "current",
 ): Promise<MonthlySummary> {
-  const [transactions, recurringTemplates, skippedKeys] = await Promise.all([
-    getTransactions(userId, year, month),
-    getRecurringTemplates(userId),
-    getRecurringSkipKeys(userId, year, month),
-  ]);
-
-  return buildMonthlySummary(
-    transactions,
-    recurringTemplates,
-    year,
-    month,
-    view,
-    skippedKeys,
-  );
+  return monthLedger.getMonthlySummary(supabase, userId, year, month, view);
 }
 
 /** Every investment row ever, oldest first — paged past the row cap. */
