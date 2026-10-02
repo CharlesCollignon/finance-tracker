@@ -16,7 +16,7 @@ Last updated: real estate plan Phase 2, the web (2026-10-02;
 | `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token.                                                                                                                                                                                                                                                                                                                                 |
 | `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `packages/data` | The Supabase reads and writes both apps make, written once and handed the caller's client (`Db`): recurring templates and occurrences, transactions (`ledger`, `month-ledger`, `history`), deletes and their undo (`deletions`), categories and their seeding, fulfilment, the month close, the month's balance, the bank's balance, the review inbox (`bank-inbox`), positions and wallet plans, instrument readings, savings accounts, properties and their loans (`properties`), preferences, the weekly recap, delete-all. `pnpm --filter @finance/data test`. |
-| `supabase/`     | Migrations `001`–`050`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `supabase/`     | Migrations `001`–`051`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -139,23 +139,25 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 
 ## Where each figure is computed
 
-| Figure                                                                                                | Core module                                                                                             |
-| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Monthly summary and its `current` / `month_end` views                                                 | `monthly-summary.ts`, `budget.ts`                                                                       |
-| Month close, Kept, Unrecorded spending                                                                | `month-close.ts` (closes in `month_closes`; reading day in `month_close_settings.close_day`, default 5) |
-| Forward projection, runway                                                                            | `projection.ts`                                                                                         |
-| Plan: what if, milestones, cushion, long view (2026 French tax)                                       | `future-plan.ts` (rates in `FRENCH_TAX_2026`; revisit each January and August)                          |
-| Savings accounts: balance, rate, interest, ceilings (2026)                                            | `savings-accounts.ts` (rates in `FRENCH_SAVINGS_2026`; revisit each February and August)                |
-| Bearing cards and tiles                                                                               | `bearing-cards.ts`, `bearing-tiles.ts`, `bearing-facts.ts`                                              |
-| Category findings                                                                                     | `category-findings.ts`                                                                                  |
-| PEA ceiling and five-year date                                                                        | `pea.ts`                                                                                                |
-| A loan's schedule, outstanding principal, cost                                                        | `loan-schedule.ts`                                                                                      |
-| A property's estimated value, net value, gain, principal repaid                                       | `property.ts` (and `valueSourceLine`, the sentence that says where a value comes from)                  |
-| Net worth; a property at the long view's horizon (2026 tax on a sale's gain); the loans still running | `property-future.ts` (rates in `FRENCH_PROPERTY_GAINS_2026`; revisit each January)                      |
-| A property's market reading (DVF sales, 500 m or the commune)                                         | `market-reading.ts` (rules in `MARKET_RULES`)                                                           |
-| The Notaires–INSEE index, and which series carries a place                                            | `price-index.ts` (series in `seriesFor`)                                                                |
-| Fund costs, look-through, target trades                                                               | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                            |
-| Money-weighted return                                                                                 | `xirr.ts`, `investment-returns.ts`                                                                      |
+| Figure                                                                                                      | Core module                                                                                             |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Monthly summary and its `current` / `month_end` views                                                       | `monthly-summary.ts`, `budget.ts`                                                                       |
+| Month close, Kept, Unrecorded spending                                                                      | `month-close.ts` (closes in `month_closes`; reading day in `month_close_settings.close_day`, default 5) |
+| Forward projection, runway                                                                                  | `projection.ts`                                                                                         |
+| Plan: what if, milestones, cushion, long view (2026 French tax)                                             | `future-plan.ts` (rates in `FRENCH_TAX_2026`; revisit each January and August)                          |
+| Savings accounts: balance, rate, interest, ceilings (2026)                                                  | `savings-accounts.ts` (rates in `FRENCH_SAVINGS_2026`; revisit each February and August)                |
+| Bearing cards and tiles                                                                                     | `bearing-cards.ts`, `bearing-tiles.ts`, `bearing-facts.ts`                                              |
+| Category findings                                                                                           | `category-findings.ts`                                                                                  |
+| PEA ceiling and five-year date                                                                              | `pea.ts`                                                                                                |
+| A loan's schedule, outstanding principal, cost                                                              | `loan-schedule.ts`                                                                                      |
+| A property's estimated value, net value, gain, principal repaid                                             | `property.ts` (and `valueSourceLine`, the sentence that says where a value comes from)                  |
+| Net worth; a property at the long view's horizon (2026 tax on a sale's gain); the loans still running       | `property-future.ts` (rates in `FRENCH_PROPERTY_GAINS_2026`; revisit each January)                      |
+| A property's market reading (DVF sales, 500 m or the commune)                                               | `market-reading.ts` (rules in `MARKET_RULES`)                                                           |
+| A let property's month: rent, charges, loans, what it leaves, gross and net yield; the DPE letting calendar | `rental.ts` (dates in `FRENCH_LETTING_2026`; revisit each January)                                      |
+| A let property's asking rents (ANIL « Carte des loyers »)                                                   | `rent-reference.ts` (cautions in `ANIL_RULES`)                                                          |
+| The Notaires–INSEE index, and which series carries a place                                                  | `price-index.ts` (series in `seriesFor`)                                                                |
+| Fund costs, look-through, target trades                                                                     | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                            |
+| Money-weighted return                                                                                       | `xirr.ts`, `investment-returns.ts`                                                                      |
 
 ## AI features
 
@@ -196,6 +198,17 @@ read), when the phone asks `POST /api/property/market`, and weekly by
 the service role) and re-reads readings a month old. Addresses are found
 through the IGN geocoder from the server (`/api/property/addresses` for the
 phone), so IGN never sees a user's IP.
+
+A let property (usage let unfurnished or furnished) has a « Location »
+section. Its rent is the income templates attached to it — « Ajouter le
+loyer » writes one, monthly, under « Loyers perçus » — its charges the
+expense ones, and its loans their schedule, so a loan's payment counts once
+(`rentalFigures`). Its asking rents are read with its sales, from the ANIL's
+« Carte des loyers » on data.gouv.fr (the latest edition's national table,
+kept a day in the server's memory), and kept on its own row
+(`property_rent_references`, migration 051) only where the ANIL's cautions
+allow: 30 listings in the commune and an adjusted R² of 0.5. Its DPE class
+(`properties.energy_class`) gives the letting calendar (`lettingRule`).
 
 On the Plan, with `property.track`, two cards sit beside the savings and
 investments and never in them: net worth today (the long view's accounts,

@@ -442,7 +442,7 @@ What homes of one kind sold for per square metre around a property, or
 across its commune, over a dated period: a median, a spread and the number of
 sales behind it, each sale first carried to today by the price index. Read
 from the public record of sales and never guessed; too few sales means there
-is no reading, not a reading of zero. Shared by everyone with a home there.
+is no reading, not a reading of zero.
 _Avoid_: valuation, estimate, price
 
 **Estimated value**:
@@ -466,6 +466,41 @@ what the loans still owe, today. Distinct from what a milestone counts —
 savings and investments only — so buying a home, or a new market reading,
 never passes one.
 _Avoid_: wealth, net assets, fortune
+
+**Rent**:
+_En français_ : loyer
+What a tenant pays for a let property, as it reaches the user's account:
+the recurring income attached to the property. Set against the property's
+own charges and its loan payments.
+_Avoid_: income, revenue
+
+**Asking rents**:
+_En français_ : loyers d'annonce
+What homes like a let property are advertised for per square metre in its
+commune, unfurnished and charges included, from a public map published once
+a year: a figure, its range and the number of listings behind it. Where too
+few listings stand behind it there is none, not a rent of zero.
+_Avoid_: reference rent (« loyer de référence » is the legal cap of the towns
+that cap rents), market rent
+
+**Cash flow**:
+_En français_ : ce qu'il vous laisse (ou coûte) chaque mois
+A let property's rent less its own charges and its loan payments, a month:
+what it leaves the user, or what it costs them when the rent falls short.
+_Avoid_: profit, return
+
+**Yield**:
+_En français_ : rendement (brut, net)
+A year's rent over what the property cost the user — price, fees and works.
+Gross before its charges, net after them; both before tax and borrowing, as
+French listings quote them.
+_Avoid_: return, profitability
+
+**Energy class**:
+_En français_ : classe énergie (DPE)
+The letter, A to G, a property's energy assessment gives it: what decides
+whether and until when it may still be let, and whether its rent may rise.
+_Avoid_: energy label, rating
 
 ### Words about a month
 
