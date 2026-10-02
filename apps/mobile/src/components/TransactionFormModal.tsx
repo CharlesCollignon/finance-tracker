@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 
+import { parseTypedAmount } from "@finance/core/amount-input";
 import { INTL_LOCALES } from "@finance/core/i18n/locale";
 import type {
   Category,
@@ -13,6 +14,7 @@ import { DateField } from "@/components/ui/DateField";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
+import { toTypedAmount } from "@/lib/typed-amount";
 import {
   deleteTransaction,
   moveBackEarlyIncome,
@@ -27,8 +29,6 @@ import { monthLong } from "@finance/core/i18n/calendar-names";
 interface TransactionFormModalProps {
   open: boolean;
   onClose: () => void;
-  onSaved: () => void;
-  onDeleted?: () => void;
   categories: Category[];
   /** The transaction being edited. */
   transaction: TransactionWithCategory;
@@ -48,8 +48,6 @@ interface TransactionFormModalProps {
 export function TransactionFormModal({
   open,
   onClose,
-  onSaved,
-  onDeleted,
   categories,
   transaction,
   recentCategoryIds = [],
@@ -57,7 +55,11 @@ export function TransactionFormModal({
   const locale = useLocale();
   const t = useT();
   const [categoryId, setCategoryId] = useState(transaction.category_id);
-  const [amount, setAmount] = useState(String(Number(transaction.amount)));
+  // In the reader's own shape — "12,5" in French — so the field reads back
+  // exactly what it was given.
+  const [amount, setAmount] = useState(() =>
+    toTypedAmount(Number(transaction.amount), locale),
+  );
   const [occurredOn, setOccurredOn] = useState(transaction.occurred_on);
   const [note, setNote] = useState(transaction.note ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -78,8 +80,9 @@ export function TransactionFormModal({
     const result = await updateTransaction({
       id: transaction.id,
       categoryId,
-      // A French keypad types a comma; the schema reads a point.
-      amount: amount.replace(",", ".").trim(),
+      // Whichever shape it was typed in, « 1 234,56 » included. Unreadable
+      // is sent as nothing, which the schema answers with its own message.
+      amount: parseTypedAmount(amount) ?? 0,
       occurredOn,
       note: note || undefined,
     });
@@ -88,7 +91,6 @@ export function TransactionFormModal({
       setError(result.error);
       return;
     }
-    onSaved();
     onClose();
   }
 
@@ -99,13 +101,12 @@ export function TransactionFormModal({
   async function handleMoveBack() {
     setPending(true);
     setError(null);
-    const result = await moveBackEarlyIncome(transaction.id);
+    const result = await moveBackEarlyIncome(transaction.id, locale);
     setPending(false);
     if (result.error) {
       setError(result.error);
       return;
     }
-    onSaved();
     onClose();
   }
 
@@ -118,7 +119,6 @@ export function TransactionFormModal({
       setError(result.error);
       return;
     }
-    (onDeleted ?? onSaved)();
     onClose();
   }
 

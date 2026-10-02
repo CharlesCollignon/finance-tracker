@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { todayIsoLocal } from "@finance/core/constants";
+import { translator } from "@finance/core/i18n/t";
 import { configureWebPush, fanOut, readDevicesFor } from "@/lib/push/send";
+import { readLocale } from "@/lib/push/locale";
 import { getBankConnection, syncableUserIds } from "@/lib/bank/client";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { recordFailure, recordHealthy } from "@/lib/bank/health";
@@ -261,16 +263,14 @@ async function notifyPendingReview(
       { onConflict: "user_id,key", ignoreDuplicates: true },
     );
 
+  const t = translator(await readLocale(supabase, userId));
   const { sent } = await fanOut(
     supabase,
     devices,
     {
       key,
-      title: "From your bank",
-      body:
-        pending === 1
-          ? "One entry needs a category."
-          : `${pending} entries need a category.`,
+      title: t("push.review.title"),
+      body: t("push.review.body", { count: pending }),
       // Straight into the review, not onto the Ledger with it shut. A push
       // tapped at breakfast should put the decision in front of the person
       // who tapped it.

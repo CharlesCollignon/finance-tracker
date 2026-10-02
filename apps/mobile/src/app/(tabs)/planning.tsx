@@ -32,7 +32,6 @@ import { ScreenSkeleton, Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { hapticSuccess } from "@/lib/haptics";
 import {
   DEFAULT_PLAN_SETTINGS,
@@ -88,17 +87,16 @@ export default function PlanningScreen() {
   const tabBarClearance = useTabBarClearance();
   const { user } = useAuth();
   const { bank } = useBankState();
-  const dataVersion = useDataVersion();
 
   const base = useRefreshable(
     async () => (user ? await gatherPlanBase(user.id, locale) : null),
-    [user?.id, locale, dataVersion],
+    [user?.id, locale],
   );
   // Apart, because it asks the market for prices; the rest of the screen
   // does not wait on it.
   const wealth = useRefreshable(
     async () => (user ? await gatherPlanWealth(user.id, locale) : null),
-    [user?.id, locale, dataVersion],
+    [user?.id, locale],
   );
   // A failed price fetch leaves the long view on the savings it can see.
   const wealthSettled = !wealth.loading || wealth.data !== null;
@@ -228,11 +226,6 @@ export default function PlanningScreen() {
       : null;
   const sheet = closing ?? prompt;
 
-  function changed() {
-    notifyDataChanged();
-    void base.onRefresh();
-  }
-
   return (
     <Screen title={t("nav.plan")} className="pb-0">
       {base.loading && !data ? (
@@ -343,7 +336,6 @@ export default function PlanningScreen() {
               summary={closes.summary}
               unrecordedCap={closes.settings.unrecordedCap}
               closeDay={closes.settings.closeDay}
-              onChanged={changed}
             />
           ) : null}
 
@@ -369,7 +361,6 @@ export default function PlanningScreen() {
           monthlyCommitted={sheet.monthlyCommitted}
           unrecordedCap={sheet.unrecordedCap}
           baseline={sheet.baseline}
-          onClosed={changed}
         />
       ) : null}
     </Screen>

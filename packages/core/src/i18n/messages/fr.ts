@@ -1532,6 +1532,13 @@ export const fr: Messages = {
       title: "Votre banque ne se synchronise plus",
       body: "Pluclair ne peut plus lire votre compte open-banking.io. Déposez un nouveau fichier d'identifiants pour remettre vos chiffres à jour.",
     },
+    review: {
+      title: "À vérifier",
+      body: {
+        one: "Une opération de votre banque attend sa catégorie.",
+        other: "{count} opérations de votre banque attendent leur catégorie.",
+      },
+    },
     bankPaused: {
       title: "Synchronisation en pause",
       body: "open-banking.io a mis la synchronisation en pause, souvent faute de crédit. Rechargez le portefeuille pour reprendre.",
@@ -2108,6 +2115,10 @@ export const fr: Messages = {
   },
 
   outbox: {
+    waiting: {
+      one: "{count} opération pas encore envoyée",
+      other: "{count} opérations pas encore envoyées",
+    },
     retry: "Réessayer",
   },
 

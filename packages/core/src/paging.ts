@@ -14,17 +14,28 @@ export async function allRows<T>(
     from: number,
     to: number,
   ) => PromiseLike<{ data: T[] | null; error: unknown }>,
+  options: {
+    /**
+     * Stop after this many rows. For a read that wants the most recent few
+     * thousand on purpose — a `.limit(2000)` is silently 1,000 under the
+     * cap, which is how such a read used to lose half of what it asked for.
+     */
+    max?: number;
+  } = {},
 ): Promise<T[]> {
+  const max = options.max ?? Infinity;
   const rows: T[] = [];
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await page(from, from + PAGE_SIZE - 1);
+  for (let from = 0; from < max; from += PAGE_SIZE) {
+    const to = Math.min(from + PAGE_SIZE, max) - 1;
+    const { data, error } = await page(from, to);
     if (error) {
       throw error;
     }
     const batch = data ?? [];
     rows.push(...batch);
-    if (batch.length < PAGE_SIZE) {
+    if (batch.length < to - from + 1) {
       return rows;
     }
   }
+  return rows;
 }

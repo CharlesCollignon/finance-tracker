@@ -22,7 +22,6 @@ interface PeaCardProps {
   /** What has been paid into the PEA, which its ceiling is counted on. */
   invested: number;
   plan: WalletPlan | undefined;
-  onSaved: () => void;
 }
 
 /**
@@ -31,7 +30,7 @@ interface PeaCardProps {
  * accounts view, as on the web, since both are about that one account rather
  * than the split.
  */
-export function PeaCard({ invested, plan, onSaved }: PeaCardProps) {
+export function PeaCard({ invested, plan }: PeaCardProps) {
   const t = useT();
   const locale = useLocale();
   const formatEuro = useFormatCurrency();
@@ -93,7 +92,6 @@ export function PeaCard({ invested, plan, onSaved }: PeaCardProps) {
       <PeaOpenedField
         openedOn={plan?.opened_on ?? null}
         hint={peaMaturityHint(peaStatus, locale)}
-        onSaved={onSaved}
       />
     </Card>
   );
@@ -103,11 +101,9 @@ export function PeaCard({ invested, plan, onSaved }: PeaCardProps) {
 function PeaOpenedField({
   openedOn,
   hint,
-  onSaved,
 }: {
   openedOn: string | null;
   hint: string | null;
-  onSaved: () => void;
 }) {
   const t = useT();
   const { toast } = useToast();
@@ -126,7 +122,6 @@ function PeaOpenedField({
     }
     toast(t("position.saved"), "success");
     setEditing(false);
-    onSaved();
   }
 
   return (
@@ -157,7 +152,12 @@ function PeaOpenedField({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t("position.peaOpenedLabel")}
-          onPress={() => setEditing(true)}
+          onPress={() => {
+            // From the date saved now, which may have changed on another
+            // device since this field was last opened.
+            setValue(openedOn ?? todayIsoLocal());
+            setEditing(true);
+          }}
         >
           <Text variant="muted" className="text-sm">
             {hint ?? t("position.peaOpenedHint")}

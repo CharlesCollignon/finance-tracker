@@ -18,7 +18,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { QuickAddSheet, type AddKind } from "@/components/QuickAddSheet";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { hapticMedium } from "@/lib/haptics";
-import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { getQuickEntryContext, type QuickEntryContext } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
 import { TAB_BAR_INSET, useTabBarHeight } from "@/theme/chrome";
@@ -61,19 +60,25 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  */
 export function QuickAddProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const dataVersion = useDataVersion();
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState<string | undefined>(undefined);
   const [kind, setKind] = useState<AddKind>("transaction");
   // Bumped on every open so the sheet's fields remount with clean state.
   const [openToken, setOpenToken] = useState(0);
 
-  const { data, reload } = useRefreshable(async () => {
-    if (!user) {
-      return EMPTY;
-    }
-    return getQuickEntryContext(user.id);
-  }, [user?.id, dataVersion]);
+  // The categories to pick from, and the recent rows the suggestions are
+  // learned from: a category created in Profile is in the picker the next
+  // time the sheet opens.
+  const { data } = useRefreshable(
+    async () => {
+      if (!user) {
+        return EMPTY;
+      }
+      return getQuickEntryContext(user.id);
+    },
+    [user?.id],
+    { reads: ["categories", "transactions"] },
+  );
 
   const open = useCallback((options?: OpenOptions) => {
     setDate(options?.date);
@@ -95,11 +100,6 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
       <QuickAddSheet
         open={isOpen}
         onClose={() => setIsOpen(false)}
-        onSaved={() => {
-          // Refresh every screen's figures, and the sheet's own recents.
-          notifyDataChanged();
-          void reload();
-        }}
         categories={context.categories}
         recentCategoryIds={context.recentCategoryIds}
         merchants={context.merchants}

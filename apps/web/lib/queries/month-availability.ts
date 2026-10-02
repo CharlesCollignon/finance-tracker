@@ -1,3 +1,4 @@
+import { allRows } from "@finance/core/paging";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -25,35 +26,37 @@ export async function getMonthAvailability(
   const start = `${year}-01-01`;
   const end = `${year}-12-31`;
 
-  const [
-    { data: transactions, error: txError },
-    { data: closes, error: closeError },
-  ] = await Promise.all([
-    // Only the date column. A year of a busy ledger is a couple of thousand
-    // dates, which is a small payload and cheaper than twelve counts.
-    supabase
-      .from("transactions")
-      .select("occurred_on")
-      .eq("user_id", userId)
-      .gte("occurred_on", start)
-      .lte("occurred_on", end),
-    supabase
-      .from("month_closes")
-      .select("month")
-      .eq("user_id", userId)
-      .gte("month", start)
-      .lte("month", end),
-  ]);
+  const [transactions, { data: closes, error: closeError }] = await Promise.all(
+    [
+      // Only the date column. A year of a busy ledger is a couple of thousand
+      // dates, which is a small payload and cheaper than twelve counts — and
+      // past the server's 1,000-row cap, so it is paged: unpaged, the autumn
+      // of a busy year read as months with nothing in them.
+      allRows((from, to) =>
+        supabase
+          .from("transactions")
+          .select("occurred_on")
+          .eq("user_id", userId)
+          .gte("occurred_on", start)
+          .lte("occurred_on", end)
+          .order("id")
+          .range(from, to),
+      ),
+      supabase
+        .from("month_closes")
+        .select("month")
+        .eq("user_id", userId)
+        .gte("month", start)
+        .lte("month", end),
+    ],
+  );
 
-  if (txError) {
-    throw txError;
-  }
   if (closeError) {
     throw closeError;
   }
 
   const withData = new Set<number>();
-  for (const row of transactions ?? []) {
+  for (const row of transactions) {
     withData.add(Number((row.occurred_on as string).slice(5, 7)));
   }
 

@@ -40,7 +40,6 @@ interface WalletPlanPanelProps {
   plans: WalletPlan[];
   /** Typical monthly contribution, so the split is in real money. */
   monthlyContribution: number;
-  onSaved: () => void;
 }
 
 /**
@@ -58,7 +57,6 @@ export function WalletPlanPanel({
   returns,
   plans,
   monthlyContribution,
-  onSaved,
 }: WalletPlanPanelProps) {
   const t = useT();
   const locale = useLocale();
@@ -160,10 +158,7 @@ export function WalletPlanPanel({
       {editing ? (
         <TargetEditor
           initial={targets}
-          onSaved={() => {
-            setEditing(false);
-            onSaved();
-          }}
+          onSaved={() => setEditing(false)}
         />
       ) : (
         <View className="gap-3">

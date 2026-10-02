@@ -2,7 +2,13 @@
 
 import type { ReactNode } from "react";
 import { FIGURE } from "@/lib/type-scale";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useEffect,
+  useMemo,
+  useOptimistic,
+  useState,
+  useTransition,
+} from "react";
 import { Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/retroui/Button";
 import { Badge } from "@/components/retroui/Badge";
@@ -376,7 +382,7 @@ function WhereItGoes({ rollup }: { rollup: RecurringRollup }) {
 }
 
 export function RecurringView({
-  templates,
+  templates: savedTemplates,
   categories,
   proposals = [],
   recordedThisMonth = {},
@@ -386,6 +392,20 @@ export function RecurringView({
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
   const quickAdd = useQuickAdd();
+  // A switch turns at once and the totals with it, before the server
+  // answers; the saved list takes over again when the redrawn page arrives,
+  // and puts the switch back on its own if the write failed. Waiting for the
+  // round trip left the badge unchanged under the finger, and a second press
+  // in that wait sent the same "off" twice.
+  const [templates, showToggled] = useOptimistic(
+    savedTemplates,
+    (current, change: { id: string; active: boolean }) =>
+      current.map((template) =>
+        template.id === change.id
+          ? { ...template, active: change.active }
+          : template,
+      ),
+  );
   // Read once, as the initial state: a save revalidates this page with the
   // same address, and consulting the param on every render would reopen the
   // editor the user had just closed.
@@ -454,6 +474,7 @@ export function RecurringView({
 
   function handleToggle(id: string, active: boolean) {
     startTransition(async () => {
+      showToggled({ id, active: !active });
       const result = await toggleRecurringActive(id, !active);
       if (result.error) {
         toast(result.error, "error");

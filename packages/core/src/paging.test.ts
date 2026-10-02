@@ -36,6 +36,22 @@ describe("allRows", () => {
     expect(calls).toHaveLength(2);
   });
 
+  it("stops at max, asking only for what is left of it", async () => {
+    const { page, calls } = endpoint(PAGE_SIZE * 3);
+    const rows = await allRows(page, { max: PAGE_SIZE + 500 });
+    expect(rows).toHaveLength(PAGE_SIZE + 500);
+    expect(calls).toEqual([
+      [0, PAGE_SIZE - 1],
+      [PAGE_SIZE, PAGE_SIZE + 499],
+    ]);
+  });
+
+  it("stops short of max when the rows run out", async () => {
+    const { page, calls } = endpoint(1200);
+    expect(await allRows(page, { max: 3000 })).toHaveLength(1200);
+    expect(calls).toHaveLength(2);
+  });
+
   it("throws the endpoint's error", async () => {
     const failure = new Error("boom");
     await expect(

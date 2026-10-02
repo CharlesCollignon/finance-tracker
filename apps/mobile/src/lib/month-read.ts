@@ -21,6 +21,7 @@ import {
   parseLocale,
   type Locale,
 } from "@finance/core/i18n/locale";
+import { announcingFetch } from "@/lib/data-version";
 
 /**
  * The month read on the phone.
@@ -222,7 +223,7 @@ export async function writeMonthRead(
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${WEB_APP_URL}/api/month-read`, {
+    const response = await announcingFetch(`${WEB_APP_URL}/api/month-read`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

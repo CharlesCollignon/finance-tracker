@@ -98,7 +98,6 @@ export function ConnectBankSheet({
         return;
       }
       router.push("/bank");
-      router.refresh();
     });
   }
 

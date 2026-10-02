@@ -73,10 +73,13 @@ export function RefreshProvider({
 }) {
   const { toast } = useToast();
   const [running, startTransition] = useTransition();
-  const [lastPulledAt, setLastPulledAt] = useState<string | null>(
-    initial?.lastPulledAt ?? null,
-  );
-  const [known, setKnown] = useState(initial?.known ?? false);
+  // Read from the layout's props every render rather than copied into state.
+  // The layout renders again after every write, and a bank sync can come from
+  // the inbox, a first import, the cron or the phone — a copy taken on mount
+  // and updated only by this provider's own button drifted back to "3 h ago"
+  // or "never" on the next tick after any of those.
+  const lastPulledAt = initial?.lastPulledAt ?? null;
+  const known = initial?.known ?? false;
   // Held in state rather than read from `Date.now()` at render time, so the
   // server and the first client render agree on it. A label computed from the
   // live clock during hydration is a mismatch by construction.
@@ -96,10 +99,8 @@ export function RefreshProvider({
   const refresh = useCallback(() => {
     startTransition(async () => {
       const result = await refreshEverythingAction();
-      if (result.freshness) {
-        setLastPulledAt(result.freshness.lastPulledAt);
-        setKnown(result.freshness.known);
-      }
+      // The action redraws the layout, so the new freshness arrives as props;
+      // the clock moves here so the label is worked out from it at once.
       setNow(new Date().toISOString());
       // "Refreshed" rather than "Up to date": every branch of the action
       // returns a message, so this only stands in for one that somehow did

@@ -33,8 +33,6 @@ interface ArrivedChargesProps {
    * at all. This is the only place that absence is visible.
    */
   misses?: FulfilmentMiss[];
-  /** Called after a decision sticks, so the screen can reload its figures. */
-  onDecided: () => void;
 }
 
 /**
@@ -55,7 +53,6 @@ interface ArrivedChargesProps {
 export function ArrivedCharges({
   proposals,
   misses = [],
-  onDecided,
 }: ArrivedChargesProps) {
   const t = useT();
   const locale = useLocale();
@@ -65,6 +62,21 @@ export function ArrivedCharges({
   const [pending, setPending] = useState(false);
   const [answered, setAnswered] = useState<Set<string>>(new Set());
   const [showMisses, setShowMisses] = useState(false);
+
+  // An answer only hides its proposal until the screen's next read says it
+  // is gone. Kept for good, a proposal reopened somewhere else — undone on
+  // the web, a moved income put back — would stay invisible here until the
+  // screen remounted. Adjusted while rendering, the pattern React documents
+  // for "reset state when an input changes".
+  const [offered, setOffered] = useState(proposals);
+  if (offered !== proposals) {
+    setOffered(proposals);
+    const present = new Set(proposals.map((proposal) => proposal.key));
+    setAnswered((current) => {
+      const kept = [...current].filter((key) => present.has(key));
+      return kept.length === current.size ? current : new Set(kept);
+    });
+  }
 
   const waiting = proposals.filter((proposal) => !answered.has(proposal.key));
 
@@ -109,7 +121,6 @@ export function ArrivedCharges({
         void hapticSuccess();
       }
       toast(result.message ?? t("fulfilment.done"), "success");
-      onDecided();
     })();
   }
 
@@ -140,6 +151,7 @@ export function ArrivedCharges({
           proposal.templateId,
           proposal.occurredOn,
           proposal.transactionId,
+          locale,
         );
         if (result.error) {
           failed.push(proposal.key);
@@ -160,7 +172,6 @@ export function ArrivedCharges({
       if (confirmed > 0) {
         void hapticSuccess();
         toast(t("fulfilment.allConfirmed", { count: confirmed }), "success");
-        onDecided();
       }
     })();
   }
@@ -251,6 +262,7 @@ export function ArrivedCharges({
                         proposal.templateId,
                         proposal.occurredOn,
                         proposal.transactionId,
+                        locale,
                       ),
                     true,
                   );

@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   MAX_ATTEMPTS,
   MAX_QUEUE,
-  describeOutbox,
   enqueue,
   isRetryableError,
   outboxStatus,
@@ -115,24 +114,6 @@ describe("outboxStatus", () => {
       oldestQueuedAt: null,
       failing: 0,
     });
-  });
-});
-
-describe("describeOutbox", () => {
-  it("says nothing when the queue is empty", () => {
-    expect(describeOutbox(outboxStatus([]))).toBeNull();
-  });
-
-  it("uses the singular for one entry", () => {
-    expect(describeOutbox(outboxStatus([entry("a")]))).toBe(
-      "1 entry waiting to sync",
-    );
-  });
-
-  it("uses the plural for several", () => {
-    expect(describeOutbox(outboxStatus([entry("a"), entry("b")]))).toBe(
-      "2 entries waiting to sync",
-    );
   });
 });
 

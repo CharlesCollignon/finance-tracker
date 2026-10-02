@@ -31,8 +31,6 @@ interface PlannedOccurrenceSheetProps {
   /** The planned row that was tapped, or null while the sheet is shut. */
   occurrence: PlannedOccurrence | null;
   onClose: () => void;
-  /** After a record, a skip or an undo, so the screens read the month again. */
-  onChanged: () => void;
 }
 
 /** What was just done, kept so it can be taken back from the sheet. */
@@ -58,7 +56,6 @@ type Done = { kind: "recorded"; transactionId: string } | { kind: "skipped" };
 export function PlannedOccurrenceSheet({
   occurrence,
   onClose,
-  onChanged,
 }: PlannedOccurrenceSheetProps) {
   const t = useT();
   const locale = useLocale();
@@ -102,7 +99,6 @@ export function PlannedOccurrenceSheet({
       key: current.key,
       done: { kind: "recorded", transactionId: result.transactionId },
     });
-    onChanged();
   }
 
   async function skip() {
@@ -118,7 +114,6 @@ export function PlannedOccurrenceSheet({
     }
     void hapticSuccess();
     setDone({ key: current.key, done: { kind: "skipped" } });
-    onChanged();
   }
 
   async function undo() {
@@ -144,7 +139,6 @@ export function PlannedOccurrenceSheet({
     }
     void hapticLight();
     toast(t("reviewScreens.plannedAgain"), "success");
-    onChanged();
     close();
   }
 

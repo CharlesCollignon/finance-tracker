@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { allRows } from "@finance/core/paging";
 import {
   describeReviewReason,
   type ReviewReason,
@@ -84,12 +85,20 @@ export async function getBankMerchantIndex(
   userId: string,
 ): Promise<BankMerchantIndex> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("transactions")
-    .select("note, category_id, occurred_on, categories(name, type)")
-    .eq("user_id", userId)
-    .order("occurred_on", { ascending: false })
-    .limit(2000);
+  // Paged, because `.limit(2000)` alone is 1,000 under the server's cap. A
+  // failed read leaves the groups without a suggestion rather than the page
+  // without a review.
+  const data = await allRows(
+    (from, to) =>
+      supabase
+        .from("transactions")
+        .select("note, category_id, occurred_on, categories(name, type)")
+        .eq("user_id", userId)
+        .order("occurred_on", { ascending: false })
+        .order("id")
+        .range(from, to),
+    { max: 2000 },
+  ).catch(() => []);
 
   type Row = {
     note: string | null;
@@ -99,7 +108,7 @@ export async function getBankMerchantIndex(
   };
 
   return buildBankMerchantIndex(
-    ((data ?? []) as unknown as Row[]).flatMap((row) =>
+    (data as unknown as Row[]).flatMap((row) =>
       row.categories ? [{ ...row, categories: row.categories }] : [],
     ),
   );
@@ -234,16 +243,23 @@ export async function getRecurringProposals(
 ): Promise<RecurringProposal[]> {
   const supabase = await createClient();
 
-  const [{ data: transactions }, { data: templates }, { data: refused }] =
+  const [transactions, { data: templates }, { data: refused }] =
     await Promise.all([
-      supabase
-        .from("transactions")
-        .select(
-          "occurred_on, amount, note, category_id, categories!inner(name, type)",
-        )
-        .eq("user_id", userId)
-        .order("occurred_on", { ascending: false })
-        .limit(3000),
+      // Paged: `.limit(3000)` alone stops at the server's 1,000. A failed
+      // read proposes nothing, as it always has.
+      allRows(
+        (from, to) =>
+          supabase
+            .from("transactions")
+            .select(
+              "occurred_on, amount, note, category_id, categories!inner(name, type)",
+            )
+            .eq("user_id", userId)
+            .order("occurred_on", { ascending: false })
+            .order("id")
+            .range(from, to),
+        { max: 3000 },
+      ).catch(() => []),
       supabase
         .from("recurring_templates")
         .select("description, instrument_name")
@@ -267,7 +283,7 @@ export async function getRecurringProposals(
   ]);
 
   const proposals = detectRecurring(
-    (transactions ?? []).map((row) => {
+    transactions.map((row) => {
       const category = row.categories as unknown as {
         name: string;
         type: CategoryType;

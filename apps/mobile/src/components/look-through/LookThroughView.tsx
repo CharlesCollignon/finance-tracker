@@ -85,14 +85,7 @@ function share(weight: number, locale: Locale): string {
  * in, where it doubles up, the charges, what sits in the wrong wrapper, and a
  * target to aim at.
  */
-export function LookThroughView({
-  data,
-  onChanged,
-}: {
-  data: LookThroughData;
-  /** After a read lands: the figures have moved. */
-  onChanged: () => void;
-}) {
+export function LookThroughView({ data }: { data: LookThroughData }) {
   const t = useT();
   const locale = useLocale();
   const formatEuro = useFormatCurrency();
@@ -170,7 +163,6 @@ export function LookThroughView({
     setReviewing(false);
     if (outcome.read) {
       void hapticSuccess();
-      onChanged();
     }
     if (outcome.message) {
       toast(outcome.message, outcome.read ? "success" : "error");
@@ -255,10 +247,9 @@ export function LookThroughView({
         );
       }
     } finally {
+      // Each reading announced itself as it landed, so the figures have been
+      // following the walk down; nothing is left to reload here.
       setReading(false);
-      if (readCount > 0) {
-        onChanged();
-      }
     }
   }
 

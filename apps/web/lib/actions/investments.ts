@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidateRecurringDependents } from "@/lib/revalidate-paths";
+import { revalidateApp } from "@/lib/revalidate-paths";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -120,7 +120,7 @@ export async function saveInvestmentPosition(
     };
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { success: true };
 }
 
@@ -143,7 +143,7 @@ export async function removeInvestmentPosition(
     };
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { success: true };
 }
 
@@ -210,7 +210,7 @@ export async function saveWalletPlan(input: {
     return { error: error.message };
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { success: true };
 }
 
@@ -299,7 +299,7 @@ export async function saveAccountTargets(
     }
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { success: true };
 }
 
@@ -333,6 +333,6 @@ export async function clearAccountTargets(): Promise<ActionResult> {
     return { error: savingsError.message };
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { success: true };
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateApp } from "@/lib/revalidate-paths";
 import { monthReadRequestSchema } from "@finance/core/validations/month-read";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { writeMonthRead } from "@/lib/month-read/write";
@@ -37,7 +37,7 @@ export async function writeMonthReadAction(
   );
 
   if (outcome.written) {
-    revalidatePath("/bearing");
+    revalidateApp();
   }
 
   return outcome;

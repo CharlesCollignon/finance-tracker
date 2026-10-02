@@ -58,6 +58,8 @@ export default async function TransactionsPage({
     skippedKeys,
     confirmedTransactionIds,
     fulfilledKeys,
+    bankFed,
+    locale,
   ] = await Promise.all([
     getTransactions(user.id, year, month),
     getCategories(user.id),
@@ -67,18 +69,46 @@ export default async function TransactionsPage({
     // fetches, so it rides along rather than costing a second round trip.
     getConfirmedTransactionIds(user.id),
     getFulfilledKeys(user.id),
+    // Per user rather than per deployment now that anyone can connect — and
+    // still true after a disconnect that kept the rows, whose decisions can
+    // still be taken back.
+    hasBankFeed(user.id),
+    getLocale(),
   ]);
 
-  // Asked after the batch, because it needs the templates and categories the
-  // batch fetched. Only the ids are handed on: a proposal carries twelve
-  // fields explaining why it was offered, and a row needs none of them.
-  const proposals = await getFulfilmentProposals(
-    user.id,
-    recurringTemplates,
-    categories,
-    year,
-    month,
-  );
+  // The second and last stage: what needs the first. The proposals need the
+  // templates and categories; the bank's rows are only queried for someone
+  // whose ledger a bank has fed, so the page costs nothing extra for anyone
+  // else; and without a feed, the slot the inbox would fill invites one
+  // instead — this page is where typing every line in is felt most.
+  const [proposals, bank, bankInvite] = await Promise.all([
+    // Only the ids are handed on: a proposal carries twelve fields explaining
+    // why it was offered, and a row needs none of them.
+    getFulfilmentProposals(
+      user.id,
+      recurringTemplates,
+      categories,
+      year,
+      month,
+    ),
+    bankFed
+      ? Promise.all([
+          getPendingFeedItems(user.id, locale),
+          countSwallowedFeedItems(user.id),
+          countFeedItems(user.id),
+          getDecidedFeedItems(user.id),
+          getBankMerchantIndex(user.id),
+        ])
+      : null,
+    bankFed ? false : shouldInviteToConnect(user.id, "ledger"),
+  ]);
+  const [feedItems, swallowed, feedSize, decided, bankMerchants] = bank ?? [
+    null,
+    0,
+    0,
+    [],
+    null,
+  ];
 
   const defaultDate = `${year}-${String(month).padStart(2, "0")}-01`;
 
@@ -99,26 +129,6 @@ export default async function TransactionsPage({
     new Set([...skippedKeys, ...fulfilledKeys]),
     todayIsoLocal(),
   );
-
-  // Only queried for someone whose ledger a bank has fed, so the page costs
-  // nothing extra for everyone else. Per user rather than per deployment now
-  // that anyone can connect — and still true after a disconnect that kept
-  // the rows, whose decisions can still be taken back.
-  const bankFed = await hasBankFeed(user.id);
-  const [feedItems, swallowed, feedSize, decided, bankMerchants] = bankFed
-    ? await Promise.all([
-        getPendingFeedItems(user.id, await getLocale()),
-        countSwallowedFeedItems(user.id),
-        countFeedItems(user.id),
-        getDecidedFeedItems(user.id),
-        getBankMerchantIndex(user.id),
-      ])
-    : [null, 0, 0, [], null];
-
-  // Without a feed, the slot the inbox would fill invites one instead: this
-  // page is where typing every line in is felt most.
-  const bankInvite =
-    !bankFed && (await shouldInviteToConnect(user.id, "ledger"));
 
   // One answer per shop rather than per row: the review is grouped by the
   // key the matcher files on, with the user's own history suggesting the

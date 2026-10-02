@@ -134,7 +134,7 @@ self.addEventListener("push", (event) => {
     badge: "/icon-192.png",
     // Collapses repeats of the same subject rather than stacking them.
     tag: data.key || "pluclair",
-    data: { url: data.url || "/dashboard" },
+    data: { url: data.url || "/bearing" },
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -143,7 +143,7 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const target = new URL(
-    (event.notification.data && event.notification.data.url) || "/dashboard",
+    (event.notification.data && event.notification.data.url) || "/bearing",
     self.location.origin,
   ).href;
 

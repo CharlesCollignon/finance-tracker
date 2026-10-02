@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateApp } from "@/lib/revalidate-paths";
 import { z } from "zod";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
@@ -24,13 +24,6 @@ type ActionResult = { error?: string; success?: boolean; message?: string };
 
 const uuid = z.string().uuid();
 
-function revalidateFeedDependents(): void {
-  revalidatePath("/transactions");
-  revalidatePath("/bearing");
-  revalidatePath("/calendar");
-  revalidatePath("/plan");
-}
-
 export async function syncBankFeedAction(
   backfill = false,
 ): Promise<ActionResult & { outcome?: SyncOutcome }> {
@@ -53,7 +46,7 @@ export async function syncBankFeedAction(
     // would leave the month sitting there asking to be closed by hand.
     const closes = await autoCloseMonths(supabase, user.id);
 
-    revalidateFeedDependents();
+    revalidateApp();
 
     // Led with, because it is the thing the press was for. "0 added" after a
     // refused pull reads as "nothing happened"; "asked moments ago" says why.
@@ -165,7 +158,7 @@ export async function importFeedItem(
         .eq("id", itemId)
         .eq("user_id", user.id);
 
-      revalidateFeedDependents();
+      revalidateApp();
       return {
         success: true,
         duplicateOf: already.transactionId,
@@ -196,7 +189,7 @@ export async function importFeedItem(
     .eq("id", itemId)
     .eq("user_id", user.id);
 
-  revalidateFeedDependents();
+  revalidateApp();
   return { success: true, message: "recurringProposals.added" };
 }
 
@@ -229,7 +222,7 @@ export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
     return { error: error.message };
   }
 
-  revalidateFeedDependents();
+  revalidateApp();
   return { success: true, message: "actions.leftOut" };
 }
 
@@ -253,7 +246,7 @@ export async function importFeedItems(
     categoryId,
   );
   if (!result.error) {
-    revalidateFeedDependents();
+    revalidateApp();
   }
   return result;
 }
@@ -272,7 +265,7 @@ export async function ignoreFeedItems(
     itemIds,
   );
   if (!result.error) {
-    revalidateFeedDependents();
+    revalidateApp();
   }
   return result;
 }
@@ -290,7 +283,7 @@ export async function undoFeedDecisions(
   }
   const result = await reopenFeedItems(await createClient(), user.id, itemIds);
   if (!result.error) {
-    revalidateFeedDependents();
+    revalidateApp();
   }
   return result;
 }
@@ -336,7 +329,7 @@ export async function recategoriseFeedItem(
     return { error: error.message };
   }
 
-  revalidateFeedDependents();
+  revalidateApp();
   return { success: true, message: "actions.moved" };
 }
 
@@ -406,7 +399,7 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
     }
   }
 
-  revalidateFeedDependents();
+  revalidateApp();
   return { success: true, message: "actions.backInInbox" };
 }
 
@@ -507,7 +500,7 @@ export async function reopenSwallowedFeedItems(): Promise<
     return { error: error.message };
   }
 
-  revalidateFeedDependents();
+  revalidateApp();
   const reopened = data?.length ?? 0;
   return {
     success: true,
@@ -560,8 +553,7 @@ export async function acceptRecurringProposal(
     return { error: error.message };
   }
 
-  revalidateFeedDependents();
-  revalidatePath("/recurring");
+  revalidateApp();
   const t = await getT();
   return {
     success: true,
@@ -593,7 +585,7 @@ export async function dismissRecurringProposal(
     return { error: error.message };
   }
 
-  revalidatePath("/recurring");
+  revalidateApp();
   return { success: true, message: "actions.suggestionDismissed" };
 }
 
@@ -632,7 +624,6 @@ export async function setAccountCountsAsCash(
     // A close that cannot be worked out is not a reason to reject the tick.
   }
 
-  revalidatePath("/plan");
-  revalidatePath("/bearing");
+  revalidateApp();
   return { success: true };
 }

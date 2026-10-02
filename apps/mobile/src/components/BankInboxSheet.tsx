@@ -59,8 +59,6 @@ interface BankInboxSheetProps {
   categories: Category[];
   /** Most-recently-used category ids, newest first. */
   recentCategoryIds?: string[];
-  /** After each decision and each undo, so the screen reads its figures again. */
-  onDecided: () => void;
 }
 
 type Group = FeedGroup<PendingFeedRow>;
@@ -124,7 +122,6 @@ export function BankInboxSheet({
   items,
   categories,
   recentCategoryIds = [],
-  onDecided,
 }: BankInboxSheetProps) {
   const t = useT();
   const colors = useThemeColors();
@@ -141,6 +138,19 @@ export function BankInboxSheet({
   // Rows answered here, hidden at once rather than when the screen's reload
   // arrives. By row, so an undo puts back exactly what it took.
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
+  // Only until the screen's next read says the row is gone. Kept for good, a
+  // row put back somewhere else — undone on the web — would stay invisible
+  // here for as long as the Journal stayed open. Adjusted while rendering,
+  // the pattern React documents for "reset state when an input changes".
+  const [readItems, setReadItems] = useState(items);
+  if (readItems !== items) {
+    setReadItems(items);
+    const present = new Set(items.map((item) => item.id));
+    setHidden((current) => {
+      const kept = [...current].filter((id) => present.has(id));
+      return kept.length === current.size ? current : new Set(kept);
+    });
+  }
   // Opened or shut by hand; otherwise a mixed group is open and the rest shut.
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
   const [choosing, setChoosing] = useState<Choosing | null>(null);
@@ -217,11 +227,14 @@ export function BankInboxSheet({
     });
   }
 
-  /** Every surface moves with a decision: totals, the statement, the tab dot. */
+  /**
+   * Every surface moves with a decision — totals, the statement, the tab dot
+   * — because the write announces itself; this sheet only has its own list
+   * of what was decided to read again.
+   */
   function settled() {
     setAnswered(true);
     void readDecided();
-    onDecided();
   }
 
   function decide(
@@ -339,7 +352,6 @@ export function BankInboxSheet({
       if (userId) {
         setBackfill(await wholeStatementWorthFetching(userId));
       }
-      onDecided();
     })();
   }
 

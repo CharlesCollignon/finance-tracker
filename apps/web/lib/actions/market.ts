@@ -8,7 +8,7 @@ import {
   type InstrumentSearchResult,
 } from "@finance/core/market/yahoo";
 import { fetchInstrumentQuoteInEur } from "@finance/core/market/fx";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
 import { getAuthUser } from "@/lib/auth/get-user";
 
@@ -93,11 +93,12 @@ export async function estimateSharesAmountAction(
  * the only thing that did. This is the first use of that tag, which is also
  * why there is no local precedent to copy here.
  *
- * The second argument is not optional. Next 16 deprecated the one-argument
- * form and it is a type error in this version; `"max"` is the documented
- * stale-while-revalidate profile, which is what a refresh button wants — the
- * page re-renders immediately and the new prices land as they arrive rather
- * than the reader waiting on Yahoo.
+ * `updateTag`, not `revalidateTag(tag, "max")`. The "max" profile is
+ * stale-while-revalidate: the next read is served the old entry while a fresh
+ * one is fetched behind it, and Next does not even mark the page as changed —
+ * so the button re-rendered yesterday's prices and said they were fresh.
+ * `updateTag` expires the entry at once and re-renders the page in view with
+ * what replaces it, which is the read-your-own-write a refresh button is.
  *
  * Auth-gated despite touching no rows: a cache invalidation is a lever on
  * work the server pays for, and an unauthenticated caller has no business
@@ -111,7 +112,7 @@ export async function refreshQuotesAction(): Promise<
     return { error: "errors.notAuthenticated" };
   }
 
-  revalidateTag("market-quotes", "max");
+  updateTag("market-quotes");
 
   return { data: { refreshedAt: new Date().toISOString() } };
 }

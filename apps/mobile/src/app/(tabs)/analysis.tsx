@@ -20,7 +20,6 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
-import { useDataVersion } from "@/lib/data-version";
 import { getPlacementsData, keptAccounts } from "@/lib/placements-data";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -40,13 +39,12 @@ export default function AnalysisScreen() {
   const locale = useLocale();
   const router = useRouter();
   const { user } = useAuth();
-  const dataVersion = useDataVersion();
   const tabBarClearance = useTabBarClearance();
 
-  const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
+  const { data, loading, refreshing, onRefreshAll, error } =
     useRefreshable(
       async () => (user ? getPlacementsData(user.id, locale) : null),
-      [user?.id, locale, dataVersion],
+      [user?.id, locale],
     );
 
   const kept = data ? keptAccounts(data) : null;
@@ -195,7 +193,6 @@ export default function AnalysisScreen() {
               returns={returns}
               plans={data.plans}
               monthlyContribution={monthlyContribution}
-              onSaved={onRefresh}
             />
           ) : null}
 

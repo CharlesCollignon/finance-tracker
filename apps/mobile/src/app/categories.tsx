@@ -72,7 +72,7 @@ export default function CategoriesScreen() {
   const [editing, setEditing] = useState<Category | null>(null);
   const [confirming, setConfirming] = useState<Category | null>(null);
 
-  const { data, loading, refreshing, onRefresh, onRefreshAll, error } =
+  const { data, loading, refreshing, onRefreshAll, error } =
     useRefreshable(async () => {
       if (!user) {
         return { categories: [] as Category[] };
@@ -81,7 +81,7 @@ export default function CategoriesScreen() {
         includeArchived: true,
       });
       return { categories };
-    }, [user?.id]);
+    }, [user?.id], { reads: ["categories"] });
 
   const categories = data?.categories ?? [];
   const groups = groupCategoriesByType(categories, { locale });
@@ -97,7 +97,6 @@ export default function CategoriesScreen() {
         ? t("categories.restoredToast")
         : t("categories.archivedToast"),
     );
-    await onRefresh();
   }
 
   async function handleDelete() {
@@ -111,7 +110,6 @@ export default function CategoriesScreen() {
       return;
     }
     toast(t("categories.deleted"));
-    await onRefresh();
   }
 
   return (
@@ -295,7 +293,6 @@ export default function CategoriesScreen() {
             setFormOpen(false);
             setEditing(null);
           }}
-          onSaved={onRefresh}
         />
       ) : null}
 

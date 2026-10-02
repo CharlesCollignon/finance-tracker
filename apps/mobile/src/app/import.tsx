@@ -26,7 +26,6 @@ import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { cn } from "@/lib/cn";
-import { notifyDataChanged } from "@/lib/data-version";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { importTransactions } from "@/lib/mutations";
 import { getExistingKeysForRange, getQuickEntryContext } from "@/lib/queries";
@@ -82,7 +81,9 @@ export default function ImportScreen() {
     }
     const context = await getQuickEntryContext(user.id);
     return { categories: context.categories, merchants: context.merchants };
-  }, [user?.id]);
+    // Read once for the wizard: a list that moved under a mapping in progress
+    // would be a stranger thing than one a minute out of date.
+  }, [user?.id], { reads: [] });
 
   const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
   const merchantIndex = useMemo(
@@ -240,8 +241,7 @@ export default function ImportScreen() {
     }
 
     void hapticSuccess();
-    notifyDataChanged();
-    toast(`Imported ${result.imported} transactions`, "success");
+    toast(t("importer.imported", { count: result.imported ?? 0 }), "success");
     router.back();
   }
 

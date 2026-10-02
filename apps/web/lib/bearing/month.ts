@@ -20,6 +20,7 @@ import {
 } from "@/lib/queries/bank";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { getLocale } from "@/lib/locale";
+import { allRows } from "@finance/core/paging";
 import { buildAttention, type AttentionItem } from "@finance/core/attention";
 import {
   formatMonthLabel,
@@ -97,7 +98,10 @@ function monthKeyOf(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, "0")}`;
 }
 
-/** Every transaction dated in a range, however many months it spans. */
+/**
+ * Every transaction dated in a range, however many months it spans, paged
+ * past the server's row cap — six months of a busy account is past it.
+ */
 async function getTransactionsBetween(
   userId: string,
   from: string,
@@ -107,18 +111,18 @@ async function getTransactionsBetween(
     return [];
   }
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*, categories(name, type, icon, counts_toward_summary)")
-    .eq("user_id", userId)
-    .gte("occurred_on", from)
-    .lte("occurred_on", to)
-    .order("occurred_on", { ascending: true });
-
-  if (error) {
-    throw error;
-  }
-  return (data ?? []) as TransactionWithCategory[];
+  const rows = await allRows((start, end) =>
+    supabase
+      .from("transactions")
+      .select("*, categories(name, type, icon, counts_toward_summary)")
+      .eq("user_id", userId)
+      .gte("occurred_on", from)
+      .lte("occurred_on", to)
+      .order("occurred_on", { ascending: true })
+      .order("id")
+      .range(start, end),
+  );
+  return rows as TransactionWithCategory[];
 }
 
 /**

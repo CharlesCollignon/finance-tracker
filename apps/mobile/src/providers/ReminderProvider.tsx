@@ -1,7 +1,8 @@
-import { useEffect, useRef, type ReactNode } from "react";
-import { AppState, type AppStateStatus } from "react-native";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { useAppForeground } from "@/hooks/useAppForeground";
+import { useDataVersion } from "@/lib/data-version";
 import { remindersEnabled, syncRecurringReminders } from "@/lib/notifications";
 import { getRecurringTemplates } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
@@ -40,67 +41,72 @@ async function markSynced(): Promise<void> {
  * tab — so a user who enabled reminders and never went back there eventually
  * ran out of scheduled notifications and the app went silent. Syncing whenever
  * the app comes to the foreground means the schedule tracks the templates
- * wherever the user actually spends their time.
+ * wherever the user actually spends their time — and rebuilding it whenever a
+ * template changes, here or on the web, means a charge moved to the 12th is
+ * not still announced for the 5th.
  */
 export function ReminderProvider({ children }: { children: ReactNode }) {
   const locale = useLocale();
   const { user } = useAuth();
   const formatAmount = useFormatCurrency();
+  const templatesVersion = useDataVersion(["templates"]);
 
-  // Kept in refs so the AppState listener is registered once.
+  // Kept in refs so a sync started by any of the triggers below reads the
+  // latest values.
   const userId = useRef<string | null>(null);
   const format = useRef(formatAmount);
   const language = useRef(locale);
   const running = useRef(false);
 
-  // Written in an effect rather than during render: the AppState listener
-  // below is registered once and reads whatever the latest values are.
+  // Written in an effect rather than during render, before the effects that
+  // read them.
   useEffect(() => {
     userId.current = user?.id ?? null;
     format.current = formatAmount;
     language.current = locale;
   });
 
+  const run = useCallback(async (force: boolean) => {
+    const id = userId.current;
+    if (!id || running.current) {
+      return;
+    }
+    if (!(await remindersEnabled())) {
+      return;
+    }
+
+    running.current = true;
+    try {
+      if (force || (await dueForSync())) {
+        const templates = await getRecurringTemplates(id);
+        await syncRecurringReminders(templates, format.current, language.current);
+        await markSynced();
+      }
+    } catch {
+      // Reminders are a convenience; a failure here must never surface as
+      // an error in the user's way.
+    } finally {
+      running.current = false;
+    }
+  }, []);
+
+  // On sign-in, at the usual interval.
   useEffect(() => {
-    async function run(force: boolean) {
-      const id = userId.current;
-      if (!id || running.current) {
-        return;
-      }
-      if (!(await remindersEnabled())) {
-        return;
-      }
-
-      running.current = true;
-      try {
-        if (force || (await dueForSync())) {
-          const templates = await getRecurringTemplates(id);
-          await syncRecurringReminders(
-            templates,
-            format.current,
-            language.current,
-          );
-          await markSynced();
-        }
-      } catch {
-        // Reminders are a convenience; a failure here must never surface as
-        // an error in the user's way.
-      } finally {
-        running.current = false;
-      }
-    }
-
     void run(false);
+  }, [user?.id, run]);
 
-    function handleChange(state: AppStateStatus) {
-      if (state === "active") {
-        void run(false);
-      }
+  // A template changed: the schedule is stale now, whatever the interval says.
+  const syncedVersion = useRef(templatesVersion);
+  useEffect(() => {
+    if (templatesVersion !== syncedVersion.current) {
+      syncedVersion.current = templatesVersion;
+      void run(true);
     }
+  }, [templatesVersion, run]);
 
-    const subscription = AppState.addEventListener("change", handleChange);
-    return () => subscription.remove();
-  }, [user?.id]);
+  useAppForeground(() => {
+    void run(false);
+  });
 
   return <>{children}</>;
 }

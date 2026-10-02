@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
-import { revalidateEverySurface } from "@/lib/revalidate-paths";
+import { revalidateApp } from "@/lib/revalidate-paths";
 import { getLocale, getT } from "@/lib/locale";
 import { cashDateOf } from "@finance/core/cash-date";
 import { formatShortDate } from "@finance/core/constants";
@@ -146,7 +146,7 @@ export async function fulfilOccurrence(
       .eq("id", parsed.data.transactionId)
       .eq("user_id", user.id);
     if (moveError) {
-      revalidateEverySurface();
+      revalidateApp();
       return {
         error: schemaMissing(moveError)
           ? "actions.cashDateSetup"
@@ -154,7 +154,7 @@ export async function fulfilOccurrence(
       };
     }
     const t = await getT();
-    revalidateEverySurface();
+    revalidateApp();
     return {
       success: true,
       message: t("actions.countedForMonth", {
@@ -163,7 +163,7 @@ export async function fulfilOccurrence(
     };
   }
 
-  revalidateEverySurface();
+  revalidateApp();
   return { success: true, message: "actions.counted" };
 }
 
@@ -215,7 +215,7 @@ export async function moveBackEarlyIncome(
   }
 
   const t = await getT();
-  revalidateEverySurface();
+  revalidateApp();
   return {
     success: true,
     message: t("actions.movedBack", {
@@ -261,7 +261,7 @@ export async function refuseFulfilment(
     return { error: error.message };
   }
 
-  revalidateEverySurface();
+  revalidateApp();
   // Deliberately says what it will and will not do. The refusal names the
   // pair, so a better candidate for the same occurrence is still offered.
   return { success: true, message: "actions.pairingDismissed" };
@@ -326,6 +326,6 @@ export async function undoFulfilment(
     }
   }
 
-  revalidateEverySurface();
+  revalidateApp();
   return { success: true, message: "actions.backInForecast" };
 }

@@ -1,3 +1,4 @@
+import { announcingFetch } from "@/lib/data-version";
 import { WEB_APP_URL } from "@/lib/env";
 import { supabase } from "@/lib/supabase";
 
@@ -58,7 +59,8 @@ export async function callWebApi<T extends object>(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(`${WEB_APP_URL}${path}`, {
+    // Announcing: what a route wrote reaches every screen that reads it.
+    const response = await announcingFetch(`${WEB_APP_URL}${path}`, {
       method,
       headers: {
         Authorization: `Bearer ${token}`,

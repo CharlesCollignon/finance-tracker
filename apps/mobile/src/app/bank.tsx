@@ -37,10 +37,9 @@ import {
   readBankServerFacts,
 } from "@/lib/bank-connect";
 import { cn } from "@/lib/cn";
-import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
+import { setAccountCountsAsCash } from "@/lib/mutations";
 import { getBankAccounts } from "@/lib/queries";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -62,7 +61,6 @@ export default function BankScreen() {
   const router = useRouter();
   const colors = useThemeColors();
   const { user } = useAuth();
-  const dataVersion = useDataVersion();
 
   const { bank, reload } = useBankState();
   const {
@@ -70,10 +68,10 @@ export default function BankScreen() {
     loading,
     refreshing,
     onRefresh,
-    reload: reloadAccounts,
   } = useRefreshable(
     async () => (user ? await getBankAccounts(user.id) : []),
-    [user?.id, dataVersion],
+    [user?.id],
+    { reads: ["bank"] },
   );
 
   const [connectOpen, setConnectOpen] = useState(false);
@@ -87,12 +85,6 @@ export default function BankScreen() {
     }
     onRefresh();
   }, [user, reload, onRefresh]);
-
-  // Stable, because the import walk depends on it and must run once.
-  const importFinished = useCallback(() => {
-    void reload();
-    void reloadAccounts();
-  }, [reload, reloadAccounts]);
 
   const connection = bank?.connection ?? null;
   const live = connection !== null && connection.status !== "revoked";
@@ -143,7 +135,7 @@ export default function BankScreen() {
           ) : null}
 
           {live && !consentIsCurrent(connection.consent_version) ? (
-            <ConsentCard onConfirmed={() => void reload()} />
+            <ConsentCard />
           ) : null}
 
           {live && connection.status !== "active" ? (
@@ -164,11 +156,11 @@ export default function BankScreen() {
           {live &&
           connection.status === "active" &&
           connection.backfilled_at === null ? (
-            <BankImport onFinished={importFinished} />
+            <BankImport />
           ) : null}
 
           {accounts && accounts.length > 0 ? (
-            <AccountsCard accounts={accounts} onChanged={reloadAccounts} />
+            <AccountsCard accounts={accounts} />
           ) : null}
 
           {live ? (
@@ -183,14 +175,7 @@ export default function BankScreen() {
       )}
 
       <ConnectBankSheet open={connectOpen} onOpenChange={setConnectOpen} />
-      <DisconnectSheet
-        open={disconnectOpen}
-        onOpenChange={setDisconnectOpen}
-        onDisconnected={() => {
-          notifyDataChanged();
-          void reload();
-        }}
-      />
+      <DisconnectSheet open={disconnectOpen} onOpenChange={setDisconnectOpen} />
     </Screen>
   );
 }
@@ -261,7 +246,7 @@ function Invitation({
  * Today's consent, for a connection with none on record — the web's card,
  * the same words and the same stored version.
  */
-function ConsentCard({ onConfirmed }: { onConfirmed: () => void }) {
+function ConsentCard() {
   const t = useT();
   const { toast } = useToast();
   const [pending, setPending] = useState(false);
@@ -277,8 +262,9 @@ function ConsentCard({ onConfirmed }: { onConfirmed: () => void }) {
       toast(resolveMessage(t, result.error), "error");
       return;
     }
+    // The consent announces itself, so this card goes on every screen
+    // that drew one, not only here.
     void hapticSuccess();
-    onConfirmed();
   }
 
   return (
@@ -448,13 +434,7 @@ function StatusCard({
  * spend from, or the Bearing's balance has nothing to read. The same column
  * the web's card writes, through the user's own row policy.
  */
-function AccountsCard({
-  accounts,
-  onChanged,
-}: {
-  accounts: BankAccount[];
-  onChanged: () => Promise<void>;
-}) {
+function AccountsCard({ accounts }: { accounts: BankAccount[] }) {
   const t = useT();
   const colors = useThemeColors();
   const formatMoney = useFormatCurrency();
@@ -469,18 +449,14 @@ function AccountsCard({
     }
     void hapticLight();
     setPending(true);
-    const { error } = await supabase
-      .from("bank_accounts")
-      .update({ counts_as_cash: next })
-      .eq("user_id", user.id)
-      .eq("provider_account_id", account.provider_account_id);
+    const result = await setAccountCountsAsCash(
+      account.provider_account_id,
+      next,
+    );
     setPending(false);
-    if (error) {
-      toast(error.message, "error");
-      return;
+    if (result.error) {
+      toast(result.error, "error");
     }
-    notifyDataChanged();
-    await onChanged();
   }
 
   return (
@@ -539,11 +515,9 @@ function AccountsCard({
 function DisconnectSheet({
   open,
   onOpenChange,
-  onDisconnected,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onDisconnected: () => void;
 }) {
   const t = useT();
   const colors = useThemeColors();
@@ -571,7 +545,6 @@ function DisconnectSheet({
     setDeleteImported(false);
     onOpenChange(false);
     toast(t("bankConnect.disconnected"), "success");
-    onDisconnected();
   }
 
   const options = [

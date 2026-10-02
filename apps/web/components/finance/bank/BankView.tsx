@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowSquareOut,
   ArrowsClockwise,
@@ -206,7 +205,6 @@ function Invitation({
  */
 function ConsentCard() {
   const t = useT();
-  const router = useRouter();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
 
@@ -215,9 +213,8 @@ function ConsentCard() {
       const result = await confirmBankConsent(BANK_CONSENT_VERSION);
       if (result.error !== undefined) {
         toast(resolveMessage(t, result.error), "error");
-        return;
       }
-      router.refresh();
+      // Nothing to do on success: the action redraws this page itself.
     });
   }
 
@@ -415,7 +412,6 @@ function DisconnectSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useT();
-  const router = useRouter();
   const { toast } = useToast();
   const [deleteImported, setDeleteImported] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -429,7 +425,6 @@ function DisconnectSheet({
       }
       onOpenChange(false);
       toast(t("bankConnect.disconnected"), "success");
-      router.refresh();
     });
   }
 

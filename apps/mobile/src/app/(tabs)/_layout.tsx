@@ -1,16 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import type { ComponentProps } from "react";
+import { useRef, type ComponentProps } from "react";
 import { StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TAB_BAR_INSET, TAB_BAR_SIDE, useTabBarHeight } from "@/theme/chrome";
 
 import { Blur } from "@/components/ui/Blur";
+import { notifyDataChanged } from "@/lib/data-version";
 import { MonthProvider } from "@/providers/MonthProvider";
 import { QuickAddProvider } from "@/providers/QuickAddProvider";
 import { ReminderProvider } from "@/providers/ReminderProvider";
 
 import { useThemeColors } from "@/theme/useThemeColors";
+import { useAppForeground } from "@/hooks/useAppForeground";
 import { useLedgerBadge } from "@/hooks/useLedgerBadge";
 import { useMonthFill } from "@/hooks/useMonthFill";
 import { useT } from "@/providers/LocaleProvider";
@@ -18,6 +20,13 @@ import type { Key } from "@finance/core/i18n/t";
 import { RADIUS } from "@/theme/tokens";
 
 type IoniconName = ComponentProps<typeof Ionicons>["name"];
+
+/**
+ * How soon a second return counts as one. Long enough that flicking out to
+ * copy an IBAN and back does not reload the screen twice; short enough that
+ * someone who filed a row on the web and came straight back sees it.
+ */
+const RETURN_GAP_MS = 15_000;
 
 type TabConfig = {
   name: string;
@@ -93,6 +102,18 @@ export default function TabsLayout() {
   // The month's charges, written in when the app opens — there is no Apply
   // button any more.
   useMonthFill();
+  // Coming back to the app is coming back to figures that may have moved
+  // while it was away: the bank's overnight sync, a row filed on the web,
+  // a day gone by. Nothing here can know which, so the screen in view reads
+  // everything again, and the others when they are next shown.
+  const lastReturn = useRef(0);
+  useAppForeground(() => {
+    const now = Date.now();
+    if (now - lastReturn.current >= RETURN_GAP_MS) {
+      lastReturn.current = now;
+      notifyDataChanged();
+    }
+  });
 
   return (
     <ReminderProvider>

@@ -6,7 +6,6 @@ import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { notifyDataChanged, useDataVersion } from "@/lib/data-version";
 import { getLookThroughData } from "@/lib/look-through-data";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -25,14 +24,14 @@ export default function LookThroughScreen() {
   const t = useT();
   const locale = useLocale();
   const { user } = useAuth();
-  const dataVersion = useDataVersion();
   // Above the tabs, so no tab bar to clear: the home indicator only.
   const tabBarClearance = useTabBarClearance();
 
-  const { data, loading, refreshing, onRefreshAll, reload, error } =
+  const { data, loading, refreshing, onRefreshAll, error } =
     useRefreshable(
       async () => (user ? getLookThroughData(user.id, locale) : null),
-      [user?.id, locale, dataVersion],
+      [user?.id, locale],
+      { reads: ["positions", "accounts", "templates", "transactions"] },
     );
 
   return (
@@ -51,14 +50,7 @@ export default function LookThroughScreen() {
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
           showsVerticalScrollIndicator={false}
         >
-          <LookThroughView
-            data={data}
-            onChanged={() => {
-              // A reading changes what Placements shows too.
-              notifyDataChanged();
-              void reload();
-            }}
-          />
+          <LookThroughView data={data} />
         </ScrollView>
       ) : null}
     </Screen>

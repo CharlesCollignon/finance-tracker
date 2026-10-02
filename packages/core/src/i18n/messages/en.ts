@@ -2172,6 +2172,14 @@ export const en = {
       title: "Your bank stopped syncing",
       body: "Pluclair can no longer read your open-banking.io account. Upload a new credentials file to bring your figures up to date.",
     },
+    /** Rows the sync could not file on its own, waiting in the review inbox. */
+    review: {
+      title: "To review",
+      body: {
+        one: "One transaction from your bank needs a category.",
+        other: "{count} transactions from your bank need a category.",
+      },
+    },
     bankPaused: {
       title: "Bank syncing is paused",
       body: "open-banking.io paused syncing, usually because the wallet is empty. Top it up to resume.",
@@ -3009,6 +3017,10 @@ export const en = {
 
   /** Sending again what is still only on this device. */
   outbox: {
+    waiting: {
+      one: "{count} entry waiting to sync",
+      other: "{count} entries waiting to sync",
+    },
     retry: "Retry",
   },
 

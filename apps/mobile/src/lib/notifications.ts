@@ -8,6 +8,7 @@ import {
   getRecurringOccurrenceDates,
   occurrenceWithinSchedule,
 } from "@finance/core/recurrence";
+import { todayIsoLocal } from "@finance/core/constants";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
@@ -383,9 +384,12 @@ function isOpenEnded(template: RecurringTemplateWithCategory): boolean {
   if (!template.ends_on) {
     return true;
   }
-  const oneYearOut = new Date();
-  oneYearOut.setFullYear(oneYearOut.getFullYear() + 1);
-  return template.ends_on > oneYearOut.toISOString().slice(0, 10);
+  // From today in Paris, not in UTC: between midnight and two in the morning
+  // the UTC date is still yesterday's. Compared as text, so the 29th of
+  // February a year on needs no calendar to exist.
+  const today = todayIsoLocal();
+  const oneYearOut = `${Number(today.slice(0, 4)) + 1}${today.slice(4)}`;
+  return template.ends_on > oneYearOut;
 }
 
 /**
@@ -411,14 +415,14 @@ export async function syncRecurringReminders(
   await Notifications.cancelAllScheduledNotificationsAsync();
 
   const now = new Date();
+  const today = todayIsoLocal();
   const active = templates.filter((template) => {
     if (!template.active) {
       return false;
     }
-    // A template that has already finished should never remind.
-    return (
-      !template.ends_on || template.ends_on >= now.toISOString().slice(0, 10)
-    );
+    // A template that has already finished should never remind — finished
+    // by the calendar here, which the UTC date lags by an hour or two.
+    return !template.ends_on || template.ends_on >= today;
   });
 
   let scheduled = 0;
@@ -467,15 +471,21 @@ export async function syncRecurringReminders(
     }
   }
 
-  await scheduleMonthOpenReminder(locale);
+  // Only for a phone the server cannot reach. The server says the same thing
+  // on the 1st to every device it can (`push.monthOpen`, from the web app's
+  // daily run), so a phone with a token heard it twice: here at nine, and
+  // from the server an hour later. Registering again is also what keeps the
+  // token's `last_seen_at` honest for a phone that is still in use.
+  if (!(await registerPushToken())) {
+    await scheduleMonthOpenReminder(locale);
+  }
 }
 
 /**
- * The monthly "your month is ready" nudge.
+ * The monthly "your month is ready" nudge, for a phone no server can reach.
  *
  * Deliberately not tied to any template: it is the one reminder that still
- * arrives for a user whose templates all changed, and it lands on the day the
- * Apply step is most worth doing.
+ * arrives for a user whose templates all changed.
  */
 async function scheduleMonthOpenReminder(locale: Locale): Promise<void> {
   const t = translator(locale);

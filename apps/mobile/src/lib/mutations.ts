@@ -74,7 +74,7 @@ import type {
 
 import { quoteSource } from "@/lib/quote-source";
 import { supabase } from "@/lib/supabase";
-import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
+import { DEFAULT_LOCALE, type Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
 
 type ActionResult = {
@@ -1871,6 +1871,8 @@ export async function recordMonthClose(
   year: number,
   month: number,
   closingBalance: number,
+  /** The reader's, for the one refusal that carries a date. */
+  locale: Locale,
 ): Promise<ActionResult & { result?: MonthCloseResult }> {
   const userId = await requireUserId();
   if (!userId) {
@@ -1896,10 +1898,10 @@ export async function recordMonthClose(
   // window that has not finished.
   if (todayIsoLocal() < observeOn) {
     return {
-      // The phone's mutations have no reader's language to hand, so a
-      // message with a date in it is composed in the default one.
-      error: translator(DEFAULT_LOCALE)("actions.closeTooEarly", {
-        date: formatLongDate(observeOn, DEFAULT_LOCALE),
+      // Composed here, in the reader's language, because it carries a date
+      // and a toast can only translate a bare key.
+      error: translator(locale)("actions.closeTooEarly", {
+        date: formatLongDate(observeOn, locale),
       }),
     };
   }
@@ -2061,6 +2063,8 @@ export async function fulfilOccurrence(
   templateId: string,
   occurredOn: string,
   transactionId: string,
+  /** The reader's, for the message that names the month it now counts for. */
+  locale: Locale,
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
@@ -2143,12 +2147,12 @@ export async function fulfilOccurrence(
           : moveError.message,
       };
     }
-    // The phone's mutations have no reader's locale; the default language,
-    // as the other worded messages here.
+    // Composed here, in the reader's language, because it names a month
+    // and a toast can only translate a bare key.
     return {
       success: true,
-      message: translator(DEFAULT_LOCALE)("actions.countedForMonth", {
-        month: monthLong(Number(countsFor.slice(5, 7)), DEFAULT_LOCALE),
+      message: translator(locale)("actions.countedForMonth", {
+        month: monthLong(Number(countsFor.slice(5, 7)), locale),
       }),
     };
   }
@@ -2162,6 +2166,8 @@ export async function fulfilOccurrence(
  */
 export async function moveBackEarlyIncome(
   transactionId: string,
+  /** The reader's, for the message that names the day it went back to. */
+  locale: Locale,
 ): Promise<ActionResult> {
   const userId = await requireUserId();
   if (!userId) {
@@ -2198,8 +2204,8 @@ export async function moveBackEarlyIncome(
 
   return {
     success: true,
-    message: translator(DEFAULT_LOCALE)("actions.movedBack", {
-      date: formatShortDate(transaction.cash_on, DEFAULT_LOCALE),
+    message: translator(locale)("actions.movedBack", {
+      date: formatShortDate(transaction.cash_on, locale),
     }),
   };
 }
@@ -2359,7 +2365,7 @@ export async function importFeedItem(
     );
 
     if (already) {
-      await supabase
+      const { error: matchError } = await supabase
         .from("bank_feed_items")
         .update({
           status: "imported",
@@ -2372,6 +2378,9 @@ export async function importFeedItem(
         })
         .eq("id", itemId)
         .eq("user_id", userId);
+      if (matchError) {
+        return { error: matchError.message };
+      }
 
       return {
         success: true,
@@ -2397,11 +2406,21 @@ export async function importFeedItem(
     return { error: error?.message ?? "actions.couldNotAddEntry" };
   }
 
-  await supabase
+  const { error: fileError } = await supabase
     .from("bank_feed_items")
     .update({ status: "imported", transaction_id: transaction.id })
     .eq("id", itemId)
     .eq("user_id", userId);
+  if (fileError) {
+    // Taken back, so the row and the ledger agree: a transaction whose bank
+    // row still waits would be filed a second time by the next answer.
+    await supabase
+      .from("transactions")
+      .delete()
+      .eq("id", transaction.id)
+      .eq("user_id", userId);
+    return { error: fileError.message };
+  }
 
   return { success: true, message: "recurringProposals.added" };
 }
@@ -2518,4 +2537,34 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
   }
 
   return { success: true, message: "actions.backInInbox" };
+}
+
+/* ------------------------------------------------- the bank's accounts */
+
+/**
+ * Whether one of the bank's accounts is spending money — counted in the
+ * balance Le point carries and the month close reads — or kept apart, as a
+ * savings account the bank happens to hold. The web's
+ * `setAccountCountsAsCash`; the phone writes it through Supabase like every
+ * other mutation here, rather than from the screen that shows the switch.
+ */
+export async function setAccountCountsAsCash(
+  providerAccountId: string,
+  counts: boolean,
+): Promise<ActionResult> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { error: "errors.notAuthenticated" };
+  }
+
+  const { error } = await supabase
+    .from("bank_accounts")
+    .update({ counts_as_cash: counts })
+    .eq("user_id", userId)
+    .eq("provider_account_id", providerAccountId);
+
+  if (error) {
+    return { error: error.message };
+  }
+  return { success: true };
 }

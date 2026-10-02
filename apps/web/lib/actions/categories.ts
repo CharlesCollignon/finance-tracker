@@ -1,20 +1,14 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
-import { revalidateRecurringDependents } from "@/lib/revalidate-paths";
+import { revalidateApp } from "@/lib/revalidate-paths";
 import { categorySchema, parseUuid } from "@finance/core/validations/finance";
 
 type ActionResult = { error?: string; success?: boolean };
 
 async function getUser() {
   return getAuthUser();
-}
-
-function revalidateCategoryDependents(): void {
-  revalidatePath("/categories");
-  revalidateRecurringDependents();
 }
 
 export async function upsertCategory(
@@ -67,7 +61,7 @@ export async function upsertCategory(
     }
   }
 
-  revalidateCategoryDependents();
+  revalidateApp();
   return { success: true };
 }
 
@@ -91,7 +85,7 @@ export async function setCategoryArchived(
     return { error: error.message };
   }
 
-  revalidateCategoryDependents();
+  revalidateApp();
   return { success: true };
 }
 
@@ -116,7 +110,7 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
     return { error: friendlyCategoryError(error.message) };
   }
 
-  revalidateCategoryDependents();
+  revalidateApp();
   return { success: true };
 }
 

@@ -1,10 +1,9 @@
-import { useEffect, useRef } from "react";
-import { AppState } from "react-native";
+import { useCallback, useEffect, useRef } from "react";
 
 import { getCurrentMonth } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 
-import { notifyDataChanged } from "@/lib/data-version";
+import { useAppForeground } from "@/hooks/useAppForeground";
 import { fillThisMonth } from "@/lib/mutations";
 import { useAuth } from "@/providers/AuthProvider";
 import { useT } from "@/providers/LocaleProvider";
@@ -31,8 +30,8 @@ export function useMonthFill(): void {
   // Which user and month were last asked about, so a re-render, a second
   // foregrounding or a remount does not ask again.
   const askedFor = useRef<string | null>(null);
-  // Kept in refs so the AppState listener is registered once per user and
-  // still speaks the current language.
+  // Kept in refs so a fill started before a language change still speaks
+  // the current one when it reports.
   const translate = useRef(t);
   const notify = useRef(toast);
 
@@ -43,48 +42,40 @@ export function useMonthFill(): void {
 
   const userId = user?.id ?? null;
 
-  useEffect(() => {
+  const fill = useCallback(async () => {
     if (!userId) {
       return;
     }
-
-    async function fill() {
-      const { year, month } = getCurrentMonth();
-      const key = `${userId}:${year}-${month}`;
-      if (askedFor.current === key) {
-        return;
-      }
-      askedFor.current = key;
-
-      try {
-        const result = await fillThisMonth();
-        if (result.error) {
-          notify.current(
-            resolveMessage(translate.current, result.error),
-            "error",
-          );
-        } else if (result.created > 0) {
-          // Every screen, not just the one on top: the new rows move the
-          // Bearing, the Ledger and the Calendar alike.
-          notifyDataChanged();
-          notify.current(
-            translate.current("monthFill.added", { count: result.created }),
-            "success",
-          );
-        }
-      } catch {
-        // Offline, most likely. The next foregrounding asks again.
-        askedFor.current = null;
-      }
+    const { year, month } = getCurrentMonth();
+    const key = `${userId}:${year}-${month}`;
+    if (askedFor.current === key) {
+      return;
     }
+    askedFor.current = key;
 
-    void fill();
-
-    const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") {
-        void fill();
+    try {
+      const result = await fillThisMonth();
+      if (result.error) {
+        notify.current(resolveMessage(translate.current, result.error), "error");
+      } else if (result.created > 0) {
+        // The rows announced themselves on the way in, so every screen —
+        // the Bearing, the Ledger, the Calendar — has them already.
+        notify.current(
+          translate.current("monthFill.added", { count: result.created }),
+          "success",
+        );
       }
-    });
-    return () => subscription.remove();
+    } catch {
+      // Offline, most likely. The next foregrounding asks again.
+      askedFor.current = null;
+    }
   }, [userId]);
+
+  useEffect(() => {
+    void fill();
+  }, [fill]);
+
+  useAppForeground(() => {
+    void fill();
+  });
 }

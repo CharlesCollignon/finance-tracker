@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { ArrowsClockwise } from "@phosphor-icons/react";
 
@@ -21,12 +20,11 @@ import { cn } from "@/lib/utils";
  * answers the other without putting a polling loop on a surface that is
  * otherwise rendered entirely on the server.
  *
- * `router.refresh()` after the action, because invalidating the tag tells the
- * cache to forget; it does not re-render what is already on screen.
+ * No `router.refresh()` after it: the action's `updateTag` already sends
+ * back the page in view, rendered with the new prices.
  */
 export function RefreshQuotesButton({ className }: { className?: string }) {
   const t = useT();
-  const router = useRouter();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
 
@@ -43,7 +41,6 @@ export function RefreshQuotesButton({ className }: { className?: string }) {
             toast(resolveMessage(t, result.error), "error");
             return;
           }
-          router.refresh();
           toast(t("wallets.quotesRefreshed"), "success");
         })
       }

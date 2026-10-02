@@ -3,12 +3,15 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 
 import { getCurrentMonth } from "@finance/core/constants";
 import type { RememberedMonth } from "@finance/core/month-memory";
+
+import { useAppForeground } from "@/hooks/useAppForeground";
 
 interface MonthContextValue extends RememberedMonth {
   setMonth: (year: number, month: number) => void;
@@ -24,9 +27,29 @@ const MonthContext = createContext<MonthContextValue | null>(null);
  *
  * Held for the life of the app rather than stored: a session is what the web
  * keeps it for, and an app reopened tomorrow should open on tomorrow's month.
+ *
+ * Which a phone rarely does: the app is left in the background for days and
+ * brought back, not reopened. So coming back counts too. Someone who left it
+ * on the month in progress is shown the month in progress, which on the
+ * first of October is October; someone who left it on March, on purpose, is
+ * still on March.
  */
 export function MonthProvider({ children }: { children: ReactNode }) {
   const [shown, setShown] = useState<RememberedMonth>(getCurrentMonth);
+  // The month that was in progress the last time anyone looked.
+  const inProgress = useRef(getCurrentMonth());
+
+  useAppForeground(() => {
+    const was = inProgress.current;
+    const now = getCurrentMonth();
+    inProgress.current = now;
+    if (was.year === now.year && was.month === now.month) {
+      return;
+    }
+    setShown((current) =>
+      current.year === was.year && current.month === was.month ? now : current,
+    );
+  });
 
   const setMonth = useCallback((year: number, month: number) => {
     setShown((current) =>

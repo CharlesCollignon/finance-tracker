@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
+import { allRows } from "@finance/core/paging";
 import {
   buildCategoryHistory,
   categoryBucketing,
@@ -86,21 +87,26 @@ export default async function HistoryPage() {
   // read's state nor the band's stored order depends on anything the
   // transactions query produces, so they are fetched alongside it rather
   // than after it.
-  const [{ data }, { byCategory: storedReads }, tally, selectionState] =
+  const [data, { byCategory: storedReads }, tally, selectionState] =
     await Promise.all([
-      supabase
-        .from("transactions")
-        .select("*, categories(name, type, icon, counts_toward_summary)")
-        .eq("user_id", user.id)
-        .gte("occurred_on", from)
-        .order("occurred_on", { ascending: false }),
+      // Months of every category at once, so paged past the row cap.
+      allRows((start, end) =>
+        supabase
+          .from("transactions")
+          .select("*, categories(name, type, icon, counts_toward_summary)")
+          .eq("user_id", user.id)
+          .gte("occurred_on", from)
+          .order("occurred_on", { ascending: false })
+          .order("id")
+          .range(start, end),
+      ),
       listStoredCategoryReads(user.id, supabase),
       readCategoryReadTally(user.id, supabase),
       readCategorySelectionState(user.id, supabase),
     ]);
 
   // Bound once: Task 9 reads the same rows to find what is behind a month.
-  const rows = (data ?? []) as TransactionWithCategory[];
+  const rows = data as TransactionWithCategory[];
 
   const locale = await getLocale();
 

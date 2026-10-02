@@ -12,7 +12,6 @@ import {
   OPEN_BANKING_APP,
   OPEN_BANKING_DEVELOPERS,
 } from "@/lib/bank-connect";
-import { notifyDataChanged } from "@/lib/data-version";
 import { hapticSuccess, hapticWarning } from "@/lib/haptics";
 import { BANK_CONSENT_VERSION } from "@finance/core/bank-consent";
 import { resolveMessage } from "@finance/core/i18n/t";
@@ -81,7 +80,6 @@ export function ConnectBankSheet({
     }
     void hapticSuccess();
     onOpenChange(false);
-    notifyDataChanged();
     toast(
       result.outcome === "paused"
         ? t("bankConnect.connectedPaused")

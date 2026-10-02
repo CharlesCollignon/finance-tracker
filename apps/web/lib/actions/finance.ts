@@ -3,10 +3,7 @@
 import { z } from "zod";
 import { getLocale } from "@/lib/locale";
 
-import {
-  revalidateEverySurface,
-  revalidateRecurringDependents,
-} from "@/lib/revalidate-paths";
+import { revalidateApp } from "@/lib/revalidate-paths";
 import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
 import { getAuthUser } from "@/lib/auth/get-user";
@@ -253,7 +250,7 @@ export async function saveQuickTransaction(
     return { error: error.message };
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return {};
 }
 
@@ -319,7 +316,7 @@ export async function importTransactions(
     return { error: error.message };
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { imported: parsed.data.rows.length };
 }
 
@@ -421,7 +418,7 @@ export async function deleteTransactions(
     return { error: error.message };
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { deleted: count ?? parsed.data.ids.length };
 }
 
@@ -482,7 +479,7 @@ export async function moveTransactions(
     return { error: error.message };
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { moved: count ?? parsed.data.ids.length };
 }
 
@@ -549,7 +546,7 @@ export async function updateTransaction(
     return { error: error.message };
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { success: true };
 }
 
@@ -579,7 +576,7 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
     return { error: error.message };
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { success: true };
 }
 
@@ -841,7 +838,7 @@ export async function upsertRecurringTemplate(
     }
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { success: true };
 }
 
@@ -884,7 +881,7 @@ export async function deleteRecurringTemplate(
     return { error: error.message };
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { success: true };
 }
 
@@ -924,7 +921,7 @@ export async function toggleRecurringActive(
     }
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { success: true };
 }
 
@@ -965,7 +962,7 @@ export async function fillThisMonth(): Promise<{
     );
 
     if (created > 0) {
-      revalidateEverySurface();
+      revalidateApp();
     }
 
     return failures.length > 0 ? { created, error: failures[0] } : { created };
@@ -1043,7 +1040,7 @@ export async function recordPlannedNow(
     return { error: error?.message ?? "actions.couldNotRecord" };
   }
 
-  revalidateEverySurface();
+  revalidateApp();
   return { success: true, transactionId: inserted.id };
 }
 
@@ -1075,14 +1072,21 @@ export async function undoRecordPlanned(
     return { error: error.message };
   }
 
-  await supabase
+  // Recording it now skipped its planned day, so that day would not be
+  // written a second time; without taking the skip away the occurrence would
+  // not come back as planned. A failure here used to be ignored and the undo
+  // reported as done, with the occurrence gone from the month.
+  const { error: skipError } = await supabase
     .from("recurring_skips")
     .delete()
     .eq("user_id", user.id)
     .eq("template_id", parsed.data.templateId)
     .eq("occurred_on", parsed.data.occurredOn);
 
-  revalidateEverySurface();
+  revalidateApp();
+  if (skipError) {
+    return { error: skipError.message };
+  }
   return { success: true };
 }
 
@@ -1124,7 +1128,7 @@ export async function skipPlannedOccurrence(
     return { error: skipError };
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { success: true };
 }
 
@@ -1170,6 +1174,6 @@ export async function unskipRecurringOccurrence(
     );
   }
 
-  revalidateRecurringDependents();
+  revalidateApp();
   return { success: true, message: "actions.skipRemoved" };
 }

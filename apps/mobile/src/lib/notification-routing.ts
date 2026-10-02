@@ -4,6 +4,9 @@ import { useRouter, type Href } from "expo-router";
 
 import { mobileRouteForPushUrl } from "@finance/core/push-routes";
 
+import { notifyDataChanged } from "@/lib/data-version";
+import { stampReviewAsk } from "@/lib/review-ask";
+
 /**
  * Takes the user where a tapped notification pointed.
  *
@@ -22,10 +25,24 @@ import { mobileRouteForPushUrl } from "@finance/core/push-routes";
  * cold as well as one that arrived while it was running, which is the case
  * that matters: the notification is read on a lock screen, and by the time
  * the app is up the reason for opening it has to still be there.
+ *
+ * A push is also news that the figures moved — the server sends one only when
+ * something happened — so arriving or tapped, every screen reads again:
+ * landing on the Journal for "6 entries need a category" onto an inbox read
+ * an hour before the sync filled it would be landing nowhere. A charge
+ * reminder arriving costs the same one reload, which is cheaper than telling
+ * the two apart.
  */
 export function useNotificationRouting(ready: boolean): void {
   const response = Notifications.useLastNotificationResponse();
   const router = useRouter();
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationReceivedListener(() =>
+      notifyDataChanged(),
+    );
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     if (!ready || !response) {
@@ -34,16 +51,19 @@ export function useNotificationRouting(ready: boolean): void {
 
     const { url } = response.notification.request.content.data ?? {};
     const route = mobileRouteForPushUrl(url);
+    notifyDataChanged();
 
     // The Bearing when the path cannot be placed — a web-only surface such
     // as /history, or a payload from a build older than the route it names.
     // Opening the app somewhere plausible is a small failure; pushing a route
-    // the navigator has never heard of is a crash.
+    // the navigator has never heard of is a crash. A review asked for is
+    // stamped, so it opens even on a Journal where it was closed earlier
+    // (`lib/review-ask.ts`).
     router.push(
       (route === null
         ? "/"
         : Object.keys(route.params).length > 0
-          ? { pathname: route.pathname, params: route.params }
+          ? { pathname: route.pathname, params: stampReviewAsk(route.params) }
           : route.pathname) as Href,
     );
 

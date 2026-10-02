@@ -44,6 +44,7 @@ import type {
 import { WEB_APP_URL } from "@/lib/env";
 import { getWalletPlans, getWalletPortfolio } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
+import { announcingFetch } from "@/lib/data-version";
 
 /**
  * The look-through, assembled on the phone.
@@ -300,7 +301,7 @@ async function postToWeb<T>(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const response = await fetch(`${WEB_APP_URL}${path}`, {
+    const response = await announcingFetch(`${WEB_APP_URL}${path}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

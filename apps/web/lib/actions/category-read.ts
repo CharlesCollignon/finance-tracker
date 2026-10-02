@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateApp } from "@/lib/revalidate-paths";
 import { parseUuid } from "@finance/core/validations/finance";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { writeCategoryRead } from "@/lib/category-read/write";
@@ -37,7 +37,7 @@ export async function writeCategoryReadAction(
   const outcome = await writeCategoryRead(user.id, parsed);
 
   if (outcome.written) {
-    revalidatePath("/history");
+    revalidateApp();
   }
 
   return outcome;
@@ -69,7 +69,7 @@ export async function rerankFindingsAction(): Promise<{
   const outcome = await rerankFindings(user.id);
 
   if (outcome.written) {
-    revalidatePath("/history");
+    revalidateApp();
   }
 
   return outcome;

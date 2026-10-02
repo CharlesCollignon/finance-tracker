@@ -61,7 +61,6 @@ export type AddKind = "transaction" | "charge";
 interface QuickAddSheetProps {
   open: boolean;
   onClose: () => void;
-  onSaved: () => void;
   categories: Category[];
   recentCategoryIds: string[];
   merchants: MerchantRule[];
@@ -107,7 +106,6 @@ export function QuickAddSheet(props: QuickAddSheetProps) {
         <AddPanel
           key={props.openToken}
           onClose={props.onClose}
-          onSaved={props.onSaved}
           categories={props.categories}
           recentCategoryIds={props.recentCategoryIds}
           merchants={props.merchants}
@@ -179,7 +177,6 @@ function AddPanel({
           <View className="mt-4">
             <RecurringFormBody
               categories={fields.categories}
-              onSaved={fields.onSaved}
               onDone={onClose}
             />
           </View>
@@ -190,7 +187,6 @@ function AddPanel({
 }
 
 interface QuickAddFieldsProps {
-  onSaved: () => void;
   onDone: () => void;
   categories: Category[];
   recentCategoryIds: string[];
@@ -209,7 +205,6 @@ interface QuickAddFieldsProps {
  */
 function QuickAddFields({
   onDone,
-  onSaved,
   categories,
   recentCategoryIds,
   merchants,
@@ -319,7 +314,6 @@ function QuickAddFields({
 
     setPending(false);
     void hapticSuccess();
-    onSaved();
 
     if (!andAnother) {
       onDone();
