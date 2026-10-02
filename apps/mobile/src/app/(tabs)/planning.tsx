@@ -10,6 +10,7 @@ import {
   projectEnvelopes,
   wealthToday,
 } from "@finance/core/future-plan";
+import { todayIsoLocal } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { CloseableMonth } from "@finance/core/month-close";
 import { buildRunway } from "@finance/core/projection";
@@ -22,6 +23,10 @@ import { CushionCard } from "@/components/plan/CushionCard";
 import { LongViewCard, MAX_YEARS } from "@/components/plan/LongViewCard";
 import { MilestonesCard } from "@/components/plan/MilestonesCard";
 import { MonthsCard } from "@/components/plan/MonthsCard";
+import {
+  NetWorthCard,
+  PropertyLongViewCard,
+} from "@/components/plan/PropertyPlanCards";
 import { RunCard } from "@/components/plan/RunCard";
 import {
   YearAheadCard,
@@ -31,6 +36,7 @@ import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton, Skeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useBankState } from "@/hooks/useBankState";
+import { useFlag } from "@/hooks/useFlag";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { hapticSuccess } from "@/lib/haptics";
 import {
@@ -44,6 +50,7 @@ import {
   saveSeenMilestone,
   type PlanSettings,
 } from "@/lib/plan-future-data";
+import { getProperties } from "@/lib/properties";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useTabBarClearance } from "@/theme/chrome";
@@ -70,7 +77,9 @@ interface ClosePrompt {
  * "what if" to slide; then the milestones on the way and the cushion the
  * savings make; then the long view after French tax, prefilled from the
  * user's own figures; and last the run of month-ends, with the close that
- * keeps it going and the months it is made of.
+ * keeps it going and the months it is made of. With a property, net worth
+ * follows the cushion and the homes' own long view follows the long view —
+ * beside the savings and investments, never counted in them.
  *
  * Every figure comes from `@finance/core/future-plan` and the projection,
  * the same arithmetic as the web's Plan, so both clients show one future.
@@ -96,6 +105,15 @@ export default function PlanningScreen() {
   );
   // A failed price fetch leaves the long view on the savings it can see.
   const wealthSettled = !wealth.loading || wealth.data !== null;
+  const tracksProperty = useFlag("property.track");
+  const owned = useRefreshable(
+    async () =>
+      user && tracksProperty ? (await getProperties(user.id)).properties : null,
+    [user?.id, tracksProperty],
+    { reads: ["properties"] },
+  );
+  const properties =
+    owned.data && owned.data.length > 0 ? owned.data : null;
 
   const [settings, setSettings] = useState<PlanSettings>(DEFAULT_PLAN_SETTINGS);
   const [settingsUser, setSettingsUser] = useState<string | null>(null);
@@ -134,6 +152,17 @@ export default function PlanningScreen() {
     [data, wealth.data],
   );
   const envelopes = settings.envelopes ?? dataEnvelopes;
+  // The long view's net at the horizon, for the homes' card to add to.
+  const liquidNet = useMemo(
+    () =>
+      projectEnvelopes({
+        envelopes,
+        years: settings.years,
+        inflation: settings.inflation,
+        withdrawalRate: settings.withdrawalRate,
+      }).netValue,
+    [envelopes, settings.years, settings.inflation, settings.withdrawalRate],
+  );
 
   // The milestones look as far ahead as the long view can, whatever its
   // horizon is set to, so moving the horizon does not move them; and they
@@ -238,6 +267,7 @@ export default function PlanningScreen() {
               onRefresh={() => {
                 base.onRefreshAll();
                 wealth.onRefresh();
+                owned.onRefresh();
               }}
             />
           }
@@ -281,6 +311,16 @@ export default function PlanningScreen() {
             <CushionCard cushion={cushion} />
           </StaggerItem>
 
+          {properties && wealthSettled ? (
+            <StaggerItem index={3}>
+              <NetWorthCard
+                liquid={current}
+                properties={properties}
+                today={todayIsoLocal()}
+              />
+            </StaggerItem>
+          ) : null}
+
           {wealthSettled && settingsReady ? (
             <StaggerItem index={3}>
               <LongViewCard
@@ -300,6 +340,20 @@ export default function PlanningScreen() {
           ) : (
             <Skeleton className="h-96 rounded-card" />
           )}
+
+          {/* The homes follow the long view's horizon and inflation, so a
+              step there moves both cards. */}
+          {properties && wealthSettled && settingsReady ? (
+            <StaggerItem index={4}>
+              <PropertyLongViewCard
+                properties={properties}
+                today={todayIsoLocal()}
+                years={settings.years}
+                inflation={settings.inflation}
+                liquidNet={liquidNet}
+              />
+            </StaggerItem>
+          ) : null}
 
           {closes ? (
             <StaggerItem index={4}>
