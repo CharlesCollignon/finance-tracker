@@ -153,3 +153,31 @@ typechecks and builds crashed the terminal twice. Work sequentially.
       list from the audit, "Ledger" and "migration 0xx" removed from screens,
       a next step in the empty states the audit named, « Comment c'est
       calculé ? » under Le point's balance.
+
+## Phase 5 — Robustness and one codebase, continued (branch `phase-5/robustness`)
+
+Taken from Phase 2's deferred list and what Phases 3–4 left open.
+
+- [x] Phone: one `ScreenError` with a retry on the eight screens that printed
+      a failed load as red text, and a screen error boundary in the root
+      layout that every screen inherits, so the tab bar stays up.
+- [x] Phone: its own reminders (for a phone the server cannot reach) follow
+      the notification switches.
+- [x] Bank sync: feed rows, automatic transactions and their links in a few
+      batched writes instead of two or three round trips per row, with a
+      row-at-a-time retry when a batch is refused. Reprices ten at a time.
+- [x] One codebase: the Journal's filters, totals and days (`ledger-view` in
+      core); the review inbox reads, the investment and savings history, the
+      month's rows and summary, category seeding, positions and wallet plans,
+      instrument readings (`@finance/data`); quote fetching and four small
+      helpers (core).
+- [x] Bugs found on the way, all on the phone: its merchant suggestions and
+      recurring detection only saw the latest 1 000 transactions, its
+      investment and savings history stopped at 1 000 rows, it valued a
+      pinned position at its quote, a taken category name failed sign-in
+      seeding, and a review read error reached a toast in Supabase's English.
+- Not done: the display currency in a cookie — EUR is what the server
+  already renders, so only a USD reader would gain, and the product is
+  French first.
+- Still deferred: splitting the big screen components beyond the logic
+  moved out of them; the Plan's and Placements' loaders.
