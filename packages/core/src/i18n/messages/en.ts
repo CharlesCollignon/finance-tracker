@@ -2199,6 +2199,7 @@ export const en = {
       one: "{count} transaction from your bank needs a category.",
       other: "{count} transactions from your bank need a category.",
     },
+    optIn: "Send it to me every Monday",
     dismiss: "Got it",
   },
   push: {

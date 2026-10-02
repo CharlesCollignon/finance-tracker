@@ -1559,6 +1559,7 @@ export const fr: Messages = {
       one: "{count} opération de votre banque attend sa catégorie.",
       other: "{count} opérations de votre banque attendent leur catégorie.",
     },
+    optIn: "Me l'envoyer chaque lundi",
     dismiss: "Vu",
   },
   push: {

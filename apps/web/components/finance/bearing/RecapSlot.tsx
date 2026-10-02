@@ -18,5 +18,10 @@ export async function RecapSlot({ userId }: { userId: string }) {
     todayIsoLocal(),
     await getLocale(),
   ).catch(() => null);
-  return recap ? <WeeklyRecapCard recap={recap} /> : null;
+  return recap ? (
+    <WeeklyRecapCard
+      recap={recap}
+      pushPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""}
+    />
+  ) : null;
 }
