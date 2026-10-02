@@ -34,6 +34,7 @@ import type { PropertyLoan } from "@finance/core/types/database";
 import type { AttachedTemplate, PropertyRead } from "@finance/data/properties";
 import { RemoveAccount } from "@/components/finance/accounts/RemoveAccount";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
+import { Stagger } from "@/components/motion/Stagger";
 import { useToast } from "@/components/layout/ToastProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -104,240 +105,248 @@ export function PropertyDetail({
   const partOwned = property.ownership_share < 1;
 
   return (
-    <div className="flex flex-col gap-8">
-      <Link
-        href="/property"
-        className="inline-flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={ICON.sm} aria-hidden />
-        {t("property.backToList")}
-      </Link>
+    <>
+      <Stagger className="flex flex-col gap-8">
+        <Link
+          href="/property"
+          className="inline-flex items-center gap-1.5 self-start text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft size={ICON.sm} aria-hidden />
+          {t("property.backToList")}
+        </Link>
 
-      <Card.Bezel
-        className="w-full"
-        innerClassName="flex w-full min-w-0 flex-col gap-6 p-5 md:p-6"
-      >
-        <div className="flex min-w-0 flex-col items-center gap-1 text-center">
-          <h2 className="font-head text-xl">{property.name}</h2>
-          <p className="text-xs text-muted-foreground">
-            {[
-              t(PROPERTY_KIND_KEYS[property.kind]),
-              t(PROPERTY_USAGE_KEYS[property.usage]),
-              property.living_area ? `${property.living_area} m²` : null,
-              property.postcode,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
-          <p className="mt-3 text-xs font-medium text-muted-foreground">
-            {t("property.netValue")}
-          </p>
-          <p>
-            <AnimatedAmount
-              value={position.netValue}
-              format={format}
-              className="font-serif text-4xl font-semibold"
-            />
-          </p>
-          {partOwned ? (
+        <Card.Bezel
+          className="w-full"
+          innerClassName="flex w-full min-w-0 flex-col gap-6 p-5 md:p-6"
+        >
+          <div className="flex min-w-0 flex-col items-center gap-1 text-center">
+            <h2 className="font-head text-xl">{property.name}</h2>
             <p className="text-xs text-muted-foreground">
-              {t("property.forYourShare", {
-                share: formatPercentLabel(
-                  property.ownership_share * 100,
-                  locale,
-                ),
-              })}
+              {[
+                t(PROPERTY_KIND_KEYS[property.kind]),
+                t(PROPERTY_USAGE_KEYS[property.usage]),
+                property.living_area ? `${property.living_area} m²` : null,
+                property.postcode,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
-          ) : null}
-          {halfYours ? (
-            <MomentPill
-              seenKey={`equity-half:${property.id}`}
-              label={t("property.momentEquityHalf")}
-            />
-          ) : null}
-        </div>
-
-        <OwnershipBar ownership={ownership(position)} detailed />
-
-        <dl className="grid min-w-0 gap-4 sm:grid-cols-2">
-          <Fact label={t("property.estimatedValue")}>
-            <p className="text-sm font-medium">
-              <AnimatedAmount value={position.estimate.value} format={format} />
+            <p className="mt-3 text-xs font-medium text-muted-foreground">
+              {t("property.netValue")}
             </p>
-            {position.estimate.low !== null &&
-            position.estimate.high !== null ? (
-              <p className="privacy-sensitive text-xs tabular-nums">
-                {t("property.valueRange", {
-                  low: format(position.estimate.low),
-                  high: format(position.estimate.high),
+            <p>
+              <AnimatedAmount
+                value={position.netValue}
+                format={format}
+                className="font-serif text-4xl font-semibold"
+              />
+            </p>
+            {partOwned ? (
+              <p className="text-xs text-muted-foreground">
+                {t("property.forYourShare", {
+                  share: formatPercentLabel(
+                    property.ownership_share * 100,
+                    locale,
+                  ),
                 })}
               </p>
             ) : null}
-            {waiting ? (
-              <p
-                role="status"
-                className="flex items-center gap-1.5 text-xs text-muted-foreground"
-              >
-                <span
-                  aria-hidden
-                  className="size-1.5 animate-pulse rounded-full bg-primary motion-reduce:animate-none"
-                />
-                {t("property.readingNow")}
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                {valueSourceLine(source, locale)}
-              </p>
-            )}
-          </Fact>
-          {reading ? (
-            <Fact label={t("property.pricePerM2")}>
-              <p className="privacy-sensitive text-sm font-medium tabular-nums">
-                {t("property.pricePerM2Line", {
-                  median: format(reading.medianM2),
-                  low: format(reading.q1M2),
-                  high: format(reading.q3M2),
-                })}
-              </p>
-            </Fact>
-          ) : null}
-          {partOwned ? (
-            <Fact label={t("property.yourValue")}>
-              <p className="privacy-sensitive text-sm font-medium tabular-nums">
-                {format(position.value)}
-              </p>
-            </Fact>
-          ) : null}
-          <Fact label={t("property.owed")}>
-            <p className="privacy-sensitive text-sm font-medium tabular-nums">
-              {format(position.owed)}
-            </p>
-          </Fact>
-          <Fact label={t("property.cost")}>
-            <p className="privacy-sensitive text-sm font-medium tabular-nums">
-              {format(position.cost)}
-            </p>
-          </Fact>
-          <Fact label={t("property.gain")}>
-            <p className="privacy-sensitive text-sm font-medium tabular-nums">
-              {format(position.unrealisedGain)}
-            </p>
-          </Fact>
-          {loans.length > 0 ? (
-            <Fact label={t("property.principalRepaid")}>
-              <p className="privacy-sensitive text-sm font-medium tabular-nums">
-                {format(position.principalRepaid)}
-              </p>
-            </Fact>
-          ) : null}
-        </dl>
+            {halfYours ? (
+              <MomentPill
+                seenKey={`equity-half:${property.id}`}
+                label={t("property.momentEquityHalf")}
+              />
+            ) : null}
+          </div>
 
-        <div className="flex flex-col gap-2 border-t border-border pt-4">
+          <OwnershipBar ownership={ownership(position)} detailed />
+
+          <dl className="grid min-w-0 gap-4 sm:grid-cols-2">
+            <Fact label={t("property.estimatedValue")}>
+              <p className="text-sm font-medium">
+                <AnimatedAmount
+                  value={position.estimate.value}
+                  format={format}
+                />
+              </p>
+              {position.estimate.low !== null &&
+              position.estimate.high !== null ? (
+                <p className="privacy-sensitive text-xs tabular-nums">
+                  {t("property.valueRange", {
+                    low: format(position.estimate.low),
+                    high: format(position.estimate.high),
+                  })}
+                </p>
+              ) : null}
+              {waiting ? (
+                <p
+                  role="status"
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                >
+                  <span
+                    aria-hidden
+                    className="size-1.5 animate-pulse rounded-full bg-primary motion-reduce:animate-none"
+                  />
+                  {t("property.readingNow")}
+                </p>
+              ) : (
+                <p
+                  key={valueSourceLine(source, locale)}
+                  className="swap-in text-xs text-muted-foreground"
+                >
+                  {valueSourceLine(source, locale)}
+                </p>
+              )}
+            </Fact>
+            {reading ? (
+              <Fact label={t("property.pricePerM2")}>
+                <p className="privacy-sensitive text-sm font-medium tabular-nums">
+                  {t("property.pricePerM2Line", {
+                    median: format(reading.medianM2),
+                    low: format(reading.q1M2),
+                    high: format(reading.q3M2),
+                  })}
+                </p>
+              </Fact>
+            ) : null}
+            {partOwned ? (
+              <Fact label={t("property.yourValue")}>
+                <p className="privacy-sensitive text-sm font-medium tabular-nums">
+                  {format(position.value)}
+                </p>
+              </Fact>
+            ) : null}
+            <Fact label={t("property.owed")}>
+              <p className="privacy-sensitive text-sm font-medium tabular-nums">
+                {format(position.owed)}
+              </p>
+            </Fact>
+            <Fact label={t("property.cost")}>
+              <p className="privacy-sensitive text-sm font-medium tabular-nums">
+                {format(position.cost)}
+              </p>
+            </Fact>
+            <Fact label={t("property.gain")}>
+              <p className="privacy-sensitive text-sm font-medium tabular-nums">
+                {format(position.unrealisedGain)}
+              </p>
+            </Fact>
+            {loans.length > 0 ? (
+              <Fact label={t("property.principalRepaid")}>
+                <p className="privacy-sensitive text-sm font-medium tabular-nums">
+                  {format(position.principalRepaid)}
+                </p>
+              </Fact>
+            ) : null}
+          </dl>
+
+          <div className="flex flex-col gap-2 border-t border-border pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={() => setEditing(true)}
+            >
+              <PencilSimple size={ICON.sm} aria-hidden className="mr-1.5" />
+              {t("property.edit")}
+            </Button>
+            <AmountEditor
+              label={
+                source.kind === "own"
+                  ? t("property.ownValueChange")
+                  : t("property.ownValueSet")
+              }
+              hint={t("property.ownValueHint")}
+              initial={
+                property.value_pinned === null
+                  ? ""
+                  : String(property.value_pinned)
+              }
+              save={(value) => setOwnValue(property.id, value)}
+            />
+            {source.kind === "own" ? (
+              <ActionButton
+                label={t("property.ownValueClear")}
+                run={() => setOwnValue(property.id, null)}
+              />
+            ) : null}
+          </div>
+        </Card.Bezel>
+
+        {isLet(property.usage) ? (
+          <RentalSection detail={detail} position={position} today={today} />
+        ) : null}
+
+        <section className="flex flex-col gap-4">
+          <h3 className="font-head text-lg">{t("property.loansTitle")}</h3>
+          {loans.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t("property.noLoans")}
+            </p>
+          ) : (
+            loans.map((loan) => (
+              <LoanCard
+                key={loan.id}
+                loan={loan}
+                propertyName={property.name}
+                template={templates.find(
+                  (template) => template.id === loan.recurring_template_id,
+                )}
+                today={today}
+                onEdit={() => setLoanSheet({ loan })}
+              />
+            ))
+          )}
           <Button
             type="button"
             variant="outline"
             size="sm"
             className="self-start"
-            onClick={() => setEditing(true)}
+            onClick={() => setLoanSheet({ loan: null })}
           >
-            <PencilSimple size={ICON.sm} aria-hidden className="mr-1.5" />
-            {t("property.edit")}
+            <Plus size={ICON.sm} aria-hidden className="mr-1.5" />
+            {t("property.addLoan")}
           </Button>
-          <AmountEditor
-            label={
-              source.kind === "own"
-                ? t("property.ownValueChange")
-                : t("property.ownValueSet")
-            }
-            hint={t("property.ownValueHint")}
-            initial={
-              property.value_pinned === null
-                ? ""
-                : String(property.value_pinned)
-            }
-            save={(value) => setOwnValue(property.id, value)}
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <h3 className="font-head text-lg">{t("property.templatesTitle")}</h3>
+          {attached.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t("property.templatesNone")}
+            </p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-border rounded-card border border-border bg-card">
+              {attached.map((template) => (
+                <TemplateRow key={template.id} template={template} />
+              ))}
+            </ul>
+          )}
+          <Link
+            href="/recurring"
+            className="self-start text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            {t("property.templatesManage")}
+          </Link>
+        </section>
+
+        <div>
+          <RemoveAccount
+            label={t("property.removeProperty")}
+            confirmText={t("property.removePropertyConfirm", {
+              name: property.name,
+            })}
+            onRemove={async () => {
+              const result = await removeProperty(property.id, property.name);
+              if (result.success) {
+                router.push("/property");
+              }
+              return result;
+            }}
           />
-          {source.kind === "own" ? (
-            <ActionButton
-              label={t("property.ownValueClear")}
-              run={() => setOwnValue(property.id, null)}
-            />
-          ) : null}
         </div>
-      </Card.Bezel>
-
-      {isLet(property.usage) ? (
-        <RentalSection detail={detail} position={position} today={today} />
-      ) : null}
-
-      <section className="flex flex-col gap-4">
-        <h3 className="font-head text-lg">{t("property.loansTitle")}</h3>
-        {loans.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("property.noLoans")}
-          </p>
-        ) : (
-          loans.map((loan) => (
-            <LoanCard
-              key={loan.id}
-              loan={loan}
-              propertyName={property.name}
-              template={templates.find(
-                (template) => template.id === loan.recurring_template_id,
-              )}
-              today={today}
-              onEdit={() => setLoanSheet({ loan })}
-            />
-          ))
-        )}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="self-start"
-          onClick={() => setLoanSheet({ loan: null })}
-        >
-          <Plus size={ICON.sm} aria-hidden className="mr-1.5" />
-          {t("property.addLoan")}
-        </Button>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h3 className="font-head text-lg">{t("property.templatesTitle")}</h3>
-        {attached.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("property.templatesNone")}
-          </p>
-        ) : (
-          <ul className="flex flex-col divide-y divide-border rounded-card border border-border bg-card">
-            {attached.map((template) => (
-              <TemplateRow key={template.id} template={template} />
-            ))}
-          </ul>
-        )}
-        <Link
-          href="/recurring"
-          className="self-start text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-        >
-          {t("property.templatesManage")}
-        </Link>
-      </section>
-
-      <div>
-        <RemoveAccount
-          label={t("property.removeProperty")}
-          confirmText={t("property.removePropertyConfirm", {
-            name: property.name,
-          })}
-          onRemove={async () => {
-            const result = await removeProperty(property.id, property.name);
-            if (result.success) {
-              router.push("/property");
-            }
-            return result;
-          }}
-        />
-      </div>
+      </Stagger>
 
       <EditPropertySheet
         property={property}
@@ -357,7 +366,7 @@ export function PropertyDetail({
           }
         }}
       />
-    </div>
+    </>
   );
 }
 

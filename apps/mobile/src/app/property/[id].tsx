@@ -41,6 +41,8 @@ import {
   TextField,
 } from "@/components/property/fields";
 import { AnimatedAmount } from "@/components/AnimatedAmount";
+import { FadeIn } from "@/components/motion/FadeIn";
+import { StaggerItem } from "@/components/motion/Stagger";
 import { LoanTrack, OwnershipBar, PaymentBar } from "@/components/property/ProgressBars";
 import { EditPropertySheet, LoanSheet } from "@/components/property/PropertySheets";
 import { RentalSection } from "@/components/property/RentalSection";
@@ -179,6 +181,7 @@ export default function PropertyDetailScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />}
         contentContainerClassName="gap-5 pt-2 pb-12"
       >
+        <StaggerItem index={0}>
         <Card bezel innerClassName="gap-5">
           <View className="items-center gap-1">
             <Text variant="muted" className="text-center text-xs">
@@ -241,9 +244,11 @@ export default function PropertyDetailScreen() {
                   </Text>
                 </View>
               ) : (
-                <Text variant="muted" className="text-xs">
-                  {valueSourceLine(source, locale)}
-                </Text>
+                <FadeIn key={valueSourceLine(source, locale)}>
+                  <Text variant="muted" className="text-xs">
+                    {valueSourceLine(source, locale)}
+                  </Text>
+                </FadeIn>
               )}
             </Fact>
             {reading ? (
@@ -304,11 +309,15 @@ export default function PropertyDetailScreen() {
             />
           </View>
         </Card>
+        </StaggerItem>
 
         {isLet(property.usage) ? (
-          <RentalSection detail={detail} position={position} today={today} />
+          <StaggerItem index={1}>
+            <RentalSection detail={detail} position={position} today={today} />
+          </StaggerItem>
         ) : null}
 
+        <StaggerItem index={2}>
         <View className="gap-3">
           <Text className="font-semibold" style={{ fontSize: 17 }}>
             {t("property.loansTitle")}
@@ -335,7 +344,9 @@ export default function PropertyDetailScreen() {
             onPress={() => setLoanSheet({ loan: null })}
           />
         </View>
+        </StaggerItem>
 
+        <StaggerItem index={3}>
         <View className="gap-3">
           <Text className="font-semibold" style={{ fontSize: 17 }}>
             {t("property.templatesTitle")}
@@ -357,6 +368,7 @@ export default function PropertyDetailScreen() {
             <Text variant="muted">{t("property.templatesManage")}</Text>
           </Pressable>
         </View>
+        </StaggerItem>
 
         <Button
           label={t("property.removeProperty")}

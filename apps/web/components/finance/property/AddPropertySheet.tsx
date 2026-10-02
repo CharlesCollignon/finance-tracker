@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import {
   aMonthAfter,
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { MobileSheet } from "@/components/ui/MobileSheet";
 import { addProperty } from "@/lib/actions/property";
 import { useT } from "@/lib/locale-context";
+import { cn } from "@/lib/utils";
 import {
   Chips,
   HomeFields,
@@ -67,6 +68,8 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [step, setStep] = useState<Step>(1);
+  // Which way the last move went, so the next step arrives from that side.
+  const [direction, setDirection] = useState<1 | -1>(1);
   const formRef = useRef<HTMLFormElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const property = usePropertyDraft(null);
@@ -75,6 +78,7 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
 
   /** A new step starts at the top of the sheet, under its title. */
   function moveTo(next: Step) {
+    setDirection(next > step ? 1 : -1);
     setStep(next);
     formRef.current?.closest('[role="dialog"]')?.scrollTo({ top: 0 });
   }
@@ -143,28 +147,47 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
         }
       }}
     >
-      <p className="text-xs font-medium text-muted-foreground">
-        {t("property.stepLabel", { step, name: t(STEP_KEYS[step]) })}
-      </p>
+      <div className="flex flex-col gap-2">
+        <div aria-hidden className="flex gap-1.5">
+          {([1, 2, 3] as const).map((at) => (
+            <span
+              key={at}
+              className={cn(
+                "h-1 flex-1 rounded-full transition-colors duration-300",
+                at <= step ? "bg-foreground/70" : "bg-foreground/10",
+              )}
+            />
+          ))}
+        </div>
+        <p className="text-xs font-medium text-muted-foreground">
+          {t("property.stepLabel", { step, name: t(STEP_KEYS[step]) })}
+        </p>
+      </div>
 
-      {step === 1 ? <HomeFields draft={property} error={error} /> : null}
-      {step === 2 ? <PurchaseFields draft={property} error={error} /> : null}
-      {step === 3 ? (
-        <>
-          <Chips
-            label={t("property.hasLoan")}
-            value={hasLoan ? "yes" : "no"}
-            onChange={(value) => setHasLoan(value === "yes")}
-            options={[
-              { value: "yes", label: t("property.withLoan") },
-              { value: "no", label: t("property.noLoan") },
-            ]}
-          />
-          {hasLoan ? (
-            <LoanFields draft={loan} error={error} offerPayment />
-          ) : null}
-        </>
-      ) : null}
+      <div
+        key={step}
+        className="step-in flex flex-col gap-5"
+        style={{ "--step-from": `${direction * 8}px` } as CSSProperties}
+      >
+        {step === 1 ? <HomeFields draft={property} error={error} /> : null}
+        {step === 2 ? <PurchaseFields draft={property} error={error} /> : null}
+        {step === 3 ? (
+          <>
+            <Chips
+              label={t("property.hasLoan")}
+              value={hasLoan ? "yes" : "no"}
+              onChange={(value) => setHasLoan(value === "yes")}
+              options={[
+                { value: "yes", label: t("property.withLoan") },
+                { value: "no", label: t("property.noLoan") },
+              ]}
+            />
+            {hasLoan ? (
+              <LoanFields draft={loan} error={error} offerPayment />
+            ) : null}
+          </>
+        ) : null}
+      </div>
 
       <div className="flex justify-between gap-2 border-t border-border pt-4">
         {step > 1 ? (

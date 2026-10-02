@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 import { formatPercentLabel, todayIsoLocal } from "@finance/core/constants";
 import {
@@ -9,11 +10,13 @@ import {
   type PropertyPosition,
 } from "@finance/core/property";
 import { ownership } from "@finance/core/property-progress";
+import type { Key } from "@finance/core/i18n/t";
 import type { Property } from "@finance/core/types/database";
 
 import { PROPERTY_KIND_KEYS, PROPERTY_USAGE_KEYS } from "@/components/property/fields";
 import { OwnershipBar } from "@/components/property/ProgressBars";
 import { AddPropertySheet } from "@/components/property/PropertySheets";
+import { StaggerItem } from "@/components/motion/Stagger";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ScreenError } from "@/components/ScreenError";
 import { StatHero } from "@/components/StatHero";
@@ -24,11 +27,24 @@ import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { hapticLight } from "@/lib/haptics";
 import { getProperties } from "@/lib/properties";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useTabBarClearance } from "@/theme/chrome";
+import { ICON } from "@/theme/tokens";
+import { useThemeColors } from "@/theme/useThemeColors";
+
+/** What an empty tab says it will show, in three lines. */
+const EMPTY_PROMISES: readonly {
+  icon: ComponentProps<typeof Ionicons>["name"];
+  key: Key;
+}[] = [
+  { icon: "trending-up", key: "property.emptyValue" },
+  { icon: "pie-chart", key: "property.emptyYours" },
+  { icon: "layers", key: "property.emptyLoans" },
+];
 
 /**
  * Immobilier: what the user's properties are worth to them once the loans
@@ -40,6 +56,7 @@ export default function PropertyScreen() {
   const router = useRouter();
   const format = useFormatCurrency();
   const tabBarClearance = useTabBarClearance();
+  const colors = useThemeColors();
   const { user } = useAuth();
   const [adding, setAdding] = useState(false);
   const { data, loading, refreshing, onRefreshAll, onRefresh, error } = useRefreshable(
@@ -77,6 +94,19 @@ export default function PropertyScreen() {
               title={t("property.emptyTitle")}
               description={t("property.emptyBody")}
             >
+              <View className="mb-4 gap-2.5">
+                {EMPTY_PROMISES.map(({ icon, key }) => (
+                  <View key={key} className="flex-row items-center gap-2.5">
+                    <View
+                      className="h-7 w-7 items-center justify-center rounded-full"
+                      style={{ backgroundColor: colors.muted }}
+                    >
+                      <Ionicons name={icon} size={ICON.sm} color={colors.foreground} />
+                    </View>
+                    <Text className="min-w-0 flex-1 text-sm">{t(key)}</Text>
+                  </View>
+                ))}
+              </View>
               <Button label={t("property.add")} onPress={() => setAdding(true)} />
             </EmptyState>
           ) : (
@@ -95,14 +125,18 @@ export default function PropertyScreen() {
                   </PrivateAmount>
                 }
               />
-              {items.map((item) => (
-                <PropertyCard
-                  key={item.property.id}
-                  property={item.property}
-                  position={item.position}
-                  loanCount={item.loanCount}
-                  onPress={() => router.push(`/property/${item.property.id}`)}
-                />
+              {items.map((item, index) => (
+                <StaggerItem key={item.property.id} index={index + 1}>
+                  <PropertyCard
+                    property={item.property}
+                    position={item.position}
+                    loanCount={item.loanCount}
+                    onPress={() => {
+                      void hapticLight();
+                      router.push(`/property/${item.property.id}`);
+                    }}
+                  />
+                </StaggerItem>
               ))}
               <Button
                 label={t("property.add")}
@@ -139,7 +173,8 @@ function PropertyCard({
       accessibilityRole="button"
       accessibilityLabel={property.name}
       onPress={onPress}
-      className="active:opacity-80"
+      // A press answers by giving a little, and comes back.
+      style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.985 : 1 }] })}
     >
       <Card bezel innerClassName="gap-3">
         <View className="gap-0.5">

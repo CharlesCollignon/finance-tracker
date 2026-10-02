@@ -332,7 +332,9 @@ radial wash of the orb's body colour breathing on its period — light, not a
 shadow). In the close sheet, a closed month's Kept counts up in gold and, when
 the close extended the run, a pill with the flame says so; and an emptied
 review inbox says so with a gold tick and how many shops it just taught; and a loan half
-repaid or repaid carries a gold pill on its card, popping once per phone (`lib/moments.ts`). Moments are real
+repaid or repaid, or half a home the user's, carries a gold pill, popping once per phone
+(`lib/moments.ts`). A property's progress bars (`components/property/ProgressBars.tsx`)
+are neutral, as a milestone ahead is: only a mark already passed is gold. Moments are real
 and measured, come once, arrive and then rest, and end on a success haptic —
 the web's DESIGN.md ("Moments") has the full rule, which holds here as it
 stands. Nothing that is merely selected or pressed takes the accent, on Plan

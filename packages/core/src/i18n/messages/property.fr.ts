@@ -275,4 +275,7 @@ export const propertyFr: typeof propertyEn = {
   paymentInterest: "{amount} d'intérêts",
   paymentInsurance: "{amount} d'assurance",
   momentEquityHalf: "La moitié est à vous",
+  emptyValue: "Sa valeur, d'après les ventes alentour",
+  emptyYours: "Ce qui est à vous, et ce qui reste à la banque",
+  emptyLoans: "Chaque prêt, échéance par échéance",
 };
