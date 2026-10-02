@@ -12,7 +12,7 @@ import {
   formatCategoryOptionLabel,
   groupCategoriesByType,
 } from "@finance/core/categories";
-import { todayIsoLocal } from "@finance/core/constants";
+import { todayIsoLocal, shiftIsoDate } from "@finance/core/constants";
 import {
   lookupMerchant,
   suggestMerchants,
@@ -35,14 +35,6 @@ const CURRENCY_SYMBOL: Record<string, string> = { EUR: "€", USD: "$" };
 
 /** Once the list is longer than this, searching beats scrolling. */
 const SEARCH_THRESHOLD = 8;
-
-function shiftDays(isoDate: string, days: number): string {
-  const [year, month, day] = isoDate.split("-").map(Number);
-  const date = new Date(year!, month! - 1, day! + days);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
-    date.getDate(),
-  ).padStart(2, "0")}`;
-}
 
 /** The two things the Add sheet can add. */
 export type AddKind = "transaction" | "charge";
@@ -367,7 +359,7 @@ function QuickAddFields({
       <div className="flex flex-wrap items-center gap-2">
         {[
           { label: t("calendar.today"), value: today },
-          { label: t("calendar.yesterday"), value: shiftDays(today, -1) },
+          { label: t("calendar.yesterday"), value: shiftIsoDate(today, -1) },
         ].map((option) => (
           <button
             key={option.value}

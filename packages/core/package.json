@@ -49,6 +49,8 @@
     "./investment-positions": "./src/investment-positions.ts",
     "./investment-returns": "./src/investment-returns.ts",
     "./investments": "./src/investments.ts",
+    "./ledger-csv": "./src/ledger-csv.ts",
+    "./ledger-view": "./src/ledger-view.ts",
     "./investment-upcoming": "./src/investment-upcoming.ts",
     "./look-through": "./src/look-through.ts",
     "./look-through-facts": "./src/look-through-facts.ts",

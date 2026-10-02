@@ -1,7 +1,6 @@
 import { RefreshControl, ScrollView, View } from "react-native";
 
 import { getMonthBounds, todayIsoLocal } from "@finance/core/constants";
-import { resolveMessage } from "@finance/core/i18n/t";
 
 import { ArrivedCharges } from "@/components/ArrivedCharges";
 import { MonthPicker } from "@/components/MonthPicker";
@@ -20,7 +19,7 @@ import { WeeklyRecapCard } from "@/components/bearing/WeeklyRecapCard";
 import { StaggerItem } from "@/components/motion/Stagger";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
-import { Text } from "@/components/ui/Text";
+import { ScreenError } from "@/components/ScreenError";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import {
@@ -62,7 +61,7 @@ export default function HomeScreen() {
   // Shared with the Journal and its calendar, so changing tab keeps the month.
   const { year, month, setMonth } = useScreenMonth();
 
-  const { data, error, refreshing, onRefreshAll } = useRefreshable(
+  const { data, error, refreshing, onRefresh, onRefreshAll } = useRefreshable(
     async () =>
       user ? await gatherHomeMonth(user.id, year, month, locale) : null,
     [user?.id, year, month, locale],
@@ -209,7 +208,7 @@ export default function HomeScreen() {
             ) : null}
           </View>
         ) : error ? (
-          <Text className="text-destructive">{resolveMessage(t, error)}</Text>
+          <ScreenError message={error} onRetry={onRefresh} />
         ) : (
           <ScreenSkeleton />
         )}

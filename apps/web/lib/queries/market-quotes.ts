@@ -1,9 +1,9 @@
 import { unstable_cache } from "next/cache";
 import {
-  fetchHistoricalQuotes,
-  fetchLiveQuotes,
-  fetchPriceSeries,
-} from "@/lib/queries/investments";
+  fetchMonthlyClosesBySymbolInEur,
+  fetchQuotesInEur,
+} from "@finance/core/market/fx";
+import { fetchPriceSeries } from "@/lib/queries/investments";
 import type { InstrumentPriceSeries } from "@finance/core/instrument-price-series";
 
 function symbolsCacheKey(symbols: string[]): string {
@@ -20,7 +20,7 @@ export async function getCachedLiveQuotes(
   }
 
   return unstable_cache(
-    async () => fetchLiveQuotes(key.split(",")),
+    async () => fetchQuotesInEur(key.split(",")),
     ["market-live-quotes", key],
     { revalidate: 300, tags: ["market-quotes"] },
   )();
@@ -36,7 +36,7 @@ export async function getCachedHistoricalQuotes(
   }
 
   return unstable_cache(
-    async () => fetchHistoricalQuotes(key.split(",")),
+    async () => fetchMonthlyClosesBySymbolInEur(key.split(",")),
     ["market-historical-quotes", key],
     { revalidate: 3600, tags: ["market-quotes"] },
   )();

@@ -139,6 +139,9 @@ export async function loadApplyRecurringData(
  * a purchase that has not happened yet — so the whole row is brought back in
  * line, category included. There is nothing here the user typed to preserve.
  */
+/** Updates in flight at once when repricing. */
+const REPRICE_CHUNK = 10;
+
 export async function writeReprices(
   db: Db,
   userId: string,
@@ -147,23 +150,29 @@ export async function writeReprices(
   let repriced = 0;
   const failures: string[] = [];
 
-  for (const item of reprices) {
-    const { error } = await db
-      .from("transactions")
-      .update({
-        amount: item.amount,
-        note: item.note,
-        category_id: item.categoryId,
-      })
-      .eq("id", item.transactionId)
-      .eq("user_id", userId);
-
-    if (error) {
-      failures.push(dbError(error));
-      continue;
+  // A few at a time rather than one after another: a month of quote-priced
+  // charges is a row each, and every one is its own update.
+  for (let start = 0; start < reprices.length; start += REPRICE_CHUNK) {
+    const results = await Promise.all(
+      reprices.slice(start, start + REPRICE_CHUNK).map((item) =>
+        db
+          .from("transactions")
+          .update({
+            amount: item.amount,
+            note: item.note,
+            category_id: item.categoryId,
+          })
+          .eq("id", item.transactionId)
+          .eq("user_id", userId),
+      ),
+    );
+    for (const { error } of results) {
+      if (error) {
+        failures.push(dbError(error));
+      } else {
+        repriced += 1;
+      }
     }
-
-    repriced += 1;
   }
 
   return { repriced, failures };

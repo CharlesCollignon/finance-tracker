@@ -39,6 +39,9 @@ import {
   type FundCostSummary,
   type WrapperFees,
 } from "./fund-costs";
+import { formatPercentLabel } from "./constants";
+import { INTL_LOCALES, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 import type { InvestmentWalletId } from "./investments";
 import { isCryptoWallet } from "./crypto-holdings";
 import {
@@ -844,4 +847,20 @@ export function lookThroughIsThin(lookThrough: LookThrough): boolean {
     lookThrough.classifiedValue <= 0 ||
     lookThrough.countries.length + lookThrough.sectors.length === 0
   );
+}
+
+/**
+ * A weight as a share, at one decimal place at most, and "<0,1 %" rather
+ * than "0,0 %" for a sliver, which would say the holding is not there.
+ */
+export function formatWeightShare(weight: number, locale: Locale): string {
+  const percent = weight * 100;
+  if (percent > 0 && percent < 0.1) {
+    return `<${formatPercentLabel(0.1, locale)}`;
+  }
+  return translator(locale)("units.percent", {
+    value: new Intl.NumberFormat(INTL_LOCALES[locale], {
+      maximumFractionDigits: percent < 10 ? 1 : 0,
+    }).format(percent),
+  });
 }

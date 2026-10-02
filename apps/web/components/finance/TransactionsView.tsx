@@ -29,6 +29,14 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { PlannedOccurrenceSheet } from "@/components/finance/PlannedOccurrenceSheet";
 import type { PlannedOccurrence } from "@finance/core/apply-recurring";
+import { buildLedgerCsv } from "@finance/core/ledger-csv";
+import {
+  filterLedger,
+  filterPlanned,
+  ledgerDays,
+  ledgerTotals,
+  type LedgerTypeFilter,
+} from "@finance/core/ledger-view";
 import { useQuickAdd } from "@/components/layout/QuickAddProvider";
 import { amountSign } from "@finance/core/amount-sign";
 import {
@@ -62,7 +70,6 @@ import {
 } from "@finance/core/selection";
 import type {
   Category,
-  CategoryType,
   RecurringTemplateWithCategory,
   TransactionWithCategory,
 } from "@finance/core/types/database";
@@ -70,7 +77,7 @@ import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { bringsMoneyIn, isMovedRow } from "@finance/core/cash-date";
 
-type FilterType = "all" | CategoryType;
+type FilterType = LedgerTypeFilter;
 
 interface TransactionsViewProps {
   transactions: TransactionWithCategory[];
@@ -101,30 +108,12 @@ interface TransactionsViewProps {
   bankSlot?: ReactNode;
 }
 
-function toCsvValue(value: string): string {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-function buildTransactionsCsv(transactions: TransactionWithCategory[]): string {
-  const header = ["date", "category", "type", "amount_eur", "note"];
-  const rows = transactions.map((tx) =>
-    [
-      tx.occurred_on,
-      toCsvValue(tx.categories.name),
-      tx.categories.type,
-      String(Number(tx.amount)),
-      toCsvValue(tx.note ?? ""),
-    ].join(","),
-  );
-
-  return [header.join(","), ...rows].join("\n");
-}
-
+/**
+ * Hand the file to the browser. A byte-order mark first, so Excel reads the
+ * accents as UTF-8 rather than turning « é » into two odd characters.
+ */
 function downloadCsv(filename: string, csv: string): void {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -152,21 +141,6 @@ function downloadCsv(filename: string, csv: string): void {
  */
 const LEDGER_COLUMNS =
   "xl:grid xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)_7rem] xl:items-center xl:gap-4";
-
-function computeTypeTotals(transactions: TransactionWithCategory[]) {
-  const totals = {
-    income: 0,
-    expense: 0,
-    savings: 0,
-    investment: 0,
-  };
-
-  for (const tx of transactions) {
-    totals[tx.categories.type] += Number(tx.amount);
-  }
-
-  return totals;
-}
 
 /** Nothing deleted yet: the optimistic set's resting state. */
 const NONE_DELETED: ReadonlySet<string> = new Set();
@@ -293,53 +267,19 @@ export function TransactionsView({
   // sits in the toolbar, so the flag only means anything below `md`.
   const [optionsOpen, setOptionsOpen] = useState(false);
 
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return transactions.filter((tx) => {
-      if (filter !== "all" && tx.categories.type !== filter) {
-        return false;
-      }
-
-      if (categoryFilter !== "all" && tx.category_id !== categoryFilter) {
-        return false;
-      }
-
-      if (query.length > 0) {
-        const haystack = `${tx.categories.name} ${tx.note ?? ""}`.toLowerCase();
-        if (!haystack.includes(query)) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [transactions, filter, categoryFilter, search]);
-
+  const ledgerFilter = useMemo(
+    () => ({ type: filter, categoryId: categoryFilter, query: search }),
+    [filter, categoryFilter, search],
+  );
+  const filtered = useMemo(
+    () => filterLedger(transactions, ledgerFilter),
+    [transactions, ledgerFilter],
+  );
   // The same filters, so a planned rent does not survive an "Income" chip.
-  const filteredPlanned = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return planned.filter((occurrence) => {
-      if (filter !== "all" && occurrence.categoryType !== filter) {
-        return false;
-      }
-      if (
-        categoryFilter !== "all" &&
-        occurrence.categoryId !== categoryFilter
-      ) {
-        return false;
-      }
-      if (query.length > 0) {
-        const haystack =
-          `${occurrence.categoryName} ${occurrence.name} ${occurrence.note ?? ""}`.toLowerCase();
-        if (!haystack.includes(query)) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [planned, filter, categoryFilter, search]);
+  const filteredPlanned = useMemo(
+    () => filterPlanned(planned, ledgerFilter),
+    [planned, ledgerFilter],
+  );
 
   const sortedRows = useMemo(
     () =>
@@ -416,7 +356,10 @@ export function TransactionsView({
     }
 
     const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-    downloadCsv(`transactions-${monthKey}.csv`, buildTransactionsCsv(filtered));
+    downloadCsv(
+      `transactions-${monthKey}.csv`,
+      buildLedgerCsv(filtered, locale),
+    );
     toast(t("ledger.exported", { count: filtered.length }), "success");
   }
 
@@ -424,45 +367,17 @@ export function TransactionsView({
   // hundred rows. Grouping here rather than in the markup keeps a heading and
   // its rows in the same object, so the list can never draw a date with
   // nothing under it.
-  const days = useMemo(() => {
-    const byDate = new Map<
-      string,
-      {
-        date: string;
-        rows: TransactionWithCategory[];
-        planned: PlannedOccurrence[];
-        net: number;
-      }
-    >();
-    const day = (date: string) => {
-      let entry = byDate.get(date);
-      if (!entry) {
-        entry = { date, rows: [], planned: [], net: 0 };
-        byDate.set(date, entry);
-      }
-      return entry;
-    };
-
-    for (const tx of sortedRows) {
-      const amount = Number(tx.amount);
-      const entry = day(tx.occurred_on);
-      entry.rows.push(tx);
-      entry.net += tx.categories.type === "income" ? amount : -amount;
-    }
-
-    // Planned rows join their day but not its net: the net says what the day
-    // did, and a planned row has not done anything yet.
-    for (const occurrence of filteredPlanned) {
-      day(occurrence.occurredOn).planned.push(occurrence);
-    }
-
-    return [...byDate.values()].sort((a, b) => b.date.localeCompare(a.date));
-  }, [sortedRows, filteredPlanned]);
+  // Planned rows join their day but not its net: the net says what the day
+  // did, and a planned row has not done anything yet.
+  const days = useMemo(
+    () => ledgerDays(sortedRows, filteredPlanned),
+    [sortedRows, filteredPlanned],
+  );
 
   // The figures describe what is on screen, which is the whole reason they
   // are here: the month's own totals are Month's job, and repeating them
   // under a filter would state something the list below contradicts.
-  const shown = useMemo(() => computeTypeTotals(filtered), [filtered]);
+  const shown = useMemo(() => ledgerTotals(filtered), [filtered]);
   const shownOut = shown.expense + shown.savings + shown.investment;
 
   // What the month ends at, which is a fact about the whole month and does

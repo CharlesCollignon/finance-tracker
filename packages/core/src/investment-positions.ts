@@ -674,3 +674,44 @@ export function sortPositions<T extends SortablePosition>(
     return byInvested !== 0 ? byInvested : byName(left, right);
   });
 }
+
+/**
+ * The symbols a portfolio needs priced: every position's and every
+ * recurring purchase's, once each.
+ */
+export function portfolioQuoteSymbols(
+  positions: readonly Pick<InvestmentPositionRow, "instrument_symbol">[],
+  templates: readonly { instrument_symbol: string | null }[],
+): string[] {
+  const symbols = new Set<string>();
+  for (const row of [...positions, ...templates]) {
+    if (row.instrument_symbol) {
+      symbols.add(row.instrument_symbol);
+    }
+  }
+  return Array.from(symbols);
+}
+
+/**
+ * A portfolio as the Plan reads it: what each wallet is worth today, and the
+ * wallet each position-linked recurring purchase goes into.
+ */
+export function planWealthFromPortfolio(
+  portfolio: InvestmentPortfolioSummary,
+): {
+  wallets: Partial<Record<InvestmentWalletId, number>>;
+  templateWallets: Record<string, InvestmentWalletId>;
+} {
+  const wallets: Partial<Record<InvestmentWalletId, number>> = {};
+  const templateWallets: Record<string, InvestmentWalletId> = {};
+  for (const column of portfolio.columns) {
+    wallets[column.walletId] =
+      (wallets[column.walletId] ?? 0) + column.totalMarketValue;
+    for (const item of column.items) {
+      if (item.recurringTemplateId) {
+        templateWallets[item.recurringTemplateId] = column.walletId;
+      }
+    }
+  }
+  return { wallets, templateWallets };
+}

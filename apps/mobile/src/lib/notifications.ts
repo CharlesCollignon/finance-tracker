@@ -12,6 +12,11 @@ import { todayIsoLocal } from "@finance/core/constants";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
 import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
+import {
+  wantsNotification,
+  type NotificationPrefs,
+} from "@finance/core/notification-kinds";
+import { getNotificationSettings } from "@finance/data/preferences";
 
 import { supabase } from "@/lib/supabase";
 
@@ -419,10 +424,18 @@ export async function syncRecurringReminders(
   // recap — the same messages as the user's other devices, under the same
   // switches and quiet hours. The schedule below is for a phone it cannot
   // reach (Expo Go on Android, a build without an FCM key), which would
-  // otherwise hear nothing at all. It reminds of every charge, because it
-  // has no way to know the reader's switches. Registering again is also
-  // what keeps the token's `last_seen_at` honest for a phone still in use.
+  // otherwise hear nothing at all. It reminds of every charge rather than
+  // only the large ones, having no history to judge "large" by, and follows
+  // the same switches: « Grosse dépense demain » governs these reminders and
+  // « Nouveau mois » the month opening. Registering again is also what keeps
+  // the token's `last_seen_at` honest for a phone still in use.
   if (await registerPushToken()) {
+    return;
+  }
+
+  const prefs = await readOwnPrefs();
+  if (!wantsNotification(prefs, "bigCharge")) {
+    await scheduleMonthOpenIfWanted(prefs, locale);
     return;
   }
 
@@ -485,7 +498,35 @@ export async function syncRecurringReminders(
 
   // The server says this on the 1st to every device it can reach
   // (`push.monthOpen`); this phone is one it cannot.
-  await scheduleMonthOpenReminder(locale);
+  await scheduleMonthOpenIfWanted(prefs, locale);
+}
+
+/**
+ * The account's notification switches, read here so that every caller
+ * schedules by them. Everything on when they cannot be read, which is what
+ * a missing preferences row means anyway.
+ */
+async function readOwnPrefs(): Promise<NotificationPrefs> {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      return {};
+    }
+    return (await getNotificationSettings(supabase, session.user.id)).prefs;
+  } catch {
+    return {};
+  }
+}
+
+async function scheduleMonthOpenIfWanted(
+  prefs: NotificationPrefs,
+  locale: Locale,
+): Promise<void> {
+  if (wantsNotification(prefs, "monthOpen")) {
+    await scheduleMonthOpenReminder(locale);
+  }
 }
 
 /**

@@ -10,6 +10,7 @@ import {
 } from "@finance/core/future-plan";
 import type { Locale } from "@finance/core/i18n/locale";
 import type { InvestmentWalletId } from "@finance/core/investments";
+import { planWealthFromPortfolio } from "@finance/core/investment-positions";
 import { defaultSavingsKind } from "@finance/core/savings-accounts";
 import {
   buildForwardProjection,
@@ -105,21 +106,7 @@ export async function gatherPlanWealth(
   userId: string,
   locale: Locale,
 ): Promise<PlanWealth> {
-  const portfolio = await getWalletPortfolio(userId, locale);
-  const wallets: PlanWealth["wallets"] = {};
-  const templateWallets: PlanWealth["templateWallets"] = {};
-
-  for (const column of portfolio.columns) {
-    wallets[column.walletId] =
-      (wallets[column.walletId] ?? 0) + column.totalMarketValue;
-    for (const item of column.items) {
-      if (item.recurringTemplateId) {
-        templateWallets[item.recurringTemplateId] = column.walletId;
-      }
-    }
-  }
-
-  return { wallets, templateWallets };
+  return planWealthFromPortfolio(await getWalletPortfolio(userId, locale));
 }
 
 /** The accounts as the user's own figures describe them. */

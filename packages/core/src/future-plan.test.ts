@@ -8,10 +8,13 @@ import {
   buildMilestones,
   cushionSavings,
   envelopesFromData,
+  milestoneToAnnounce,
   monthlyContributions,
   monthsUntil,
   projectEnvelopes,
+  wealthToday,
   withExtraSaving,
+  type Envelope,
 } from "./future-plan";
 import type { ProjectionPoint } from "./projection";
 import type {
@@ -405,5 +408,25 @@ describe("the breakdown by account", () => {
       { id: "crypto", netValue: 500, slot: 3 },
       { id: "others", netValue: 800, slot: null },
     ]);
+  });
+});
+
+describe("milestoneToAnnounce", () => {
+  it("announces nothing before the first celebration", () => {
+    expect(milestoneToAnnounce(12_000, null)).toBeNull();
+  });
+
+  it("announces the highest tier passed since the last one seen", () => {
+    expect(milestoneToAnnounce(26_000, 10_000)).toBe(25_000);
+    expect(milestoneToAnnounce(14_000, 10_000)).toBeNull();
+    expect(milestoneToAnnounce(9_000, 10_000)).toBeNull();
+  });
+});
+
+describe("wealthToday", () => {
+  it("adds every account's opening amount", () => {
+    expect(
+      wealthToday([{ initial: 1_000 }, { initial: 2_500 }] as Envelope[]),
+    ).toBe(3_500);
   });
 });

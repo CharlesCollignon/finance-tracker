@@ -10,6 +10,7 @@ import {
   monthsUntil,
   projectEnvelopes,
   type EnvelopeId,
+  wealthToday,
 } from "@finance/core/future-plan";
 import { SAVINGS_KINDS } from "@finance/core/savings-accounts";
 import type { SavingsAccountKind } from "@finance/core/types/database";
@@ -189,7 +190,7 @@ function useFromData(base: PlanBase, wealth: Promise<PlanWealth | null>) {
     const envelopes = planEnvelopes(base, resolved);
     return {
       envelopes,
-      current: envelopes.reduce((sum, envelope) => sum + envelope.initial, 0),
+      current: wealthToday(envelopes),
       series: projectEnvelopes({
         envelopes,
         years: HORIZON_MAX,

@@ -1,85 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { isMissingSchema } from "@finance/data/schema";
-import {
-  ASSET_KINDS,
-  type AssetKind,
-  type InstrumentReading,
-  type SectorId,
-} from "@finance/core/instrument-reading";
-import type {
-  Database,
-  InstrumentReadingRow,
-} from "@finance/core/types/database";
+import type { Database } from "@finance/core/types/database";
 import { createClient } from "@/lib/supabase/server";
+import * as readings from "@finance/data/instrument-readings";
 
 type Client = SupabaseClient<Database>;
-
-function isAssetKind(value: string | null): value is AssetKind {
-  return value !== null && (ASSET_KINDS as readonly string[]).includes(value);
-}
-
-function toReading(row: InstrumentReadingRow): InstrumentReading {
-  return {
-    isin: row.isin,
-    // Narrowed rather than cast: the column is plain text with a permissive
-    // check, because the vocabulary lives in core and a kind added to it
-    // should not need a migration. A value this build does not know reads as
-    // "not asked", which is the safe answer — it means the instrument keeps
-    // whatever composition it reported.
-    assetKind: isAssetKind(row.asset_kind) ? row.asset_kind : null,
-    ongoingCharge:
-      row.ongoing_charge === null ? null : Number(row.ongoing_charge),
-    currency: row.currency,
-    countryWeights: (row.country_weights ?? {}) as Record<string, number>,
-    sectorWeights: (row.sector_weights ?? {}) as Partial<
-      Record<SectorId, number>
-    >,
-    topConstituents: (row.top_constituents ?? []) as {
-      name: string;
-      weight: number;
-    }[],
-    constituentsCoverage:
-      row.constituents_coverage === null
-        ? 0
-        : Number(row.constituents_coverage),
-    sources: (row.sources ?? []) as string[],
-    sourcedAt: row.sourced_at,
-    model: row.model,
-    version: row.version,
-  };
-}
-
-export interface InstrumentReadings {
-  byIsin: Map<string, InstrumentReading>;
-  /** False when migration 032 has not run. */
-  tracked: boolean;
-}
 
 export async function getInstrumentReadings(
   userId: string,
   client?: Client,
-): Promise<InstrumentReadings> {
-  const supabase = client ?? (await createClient());
-  const { data, error } = await supabase
-    .from("instrument_readings")
-    .select("*")
-    .eq("user_id", userId);
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return { byIsin: new Map(), tracked: false };
-    }
-    throw error;
-  }
-
-  const byIsin = new Map<string, InstrumentReading>();
-  for (const row of data ?? []) {
-    const reading = toReading(row as InstrumentReadingRow);
-    byIsin.set(reading.isin, reading);
-  }
-
-  return { byIsin, tracked: true };
+): Promise<readings.InstrumentReadings> {
+  return readings.getInstrumentReadings(
+    client ?? (await createClient()),
+    userId,
+  );
 }
 
 /** What is left of this month's reading allowance, and whether it is counted. */

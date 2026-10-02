@@ -222,3 +222,46 @@ export async function fetchPriceSeriesInEur(
   priceSeriesCache.set(key, { series, fetchedAt: Date.now() });
   return series;
 }
+
+/**
+ * Today's price in euros of each symbol, keyed by symbol. A quote that
+ * fails is left out, and the caller falls back to the amount invested.
+ */
+export async function fetchQuotesInEur(
+  symbols: readonly string[],
+): Promise<Record<string, number>> {
+  const unique = Array.from(new Set(symbols.filter(Boolean)));
+  const quotes: Record<string, number> = {};
+  await Promise.all(
+    unique.map(async (symbol) => {
+      try {
+        quotes[symbol] = (await fetchInstrumentQuoteInEur(symbol)).priceEur;
+      } catch {
+        // Falls back to the invested value.
+      }
+    }),
+  );
+  return quotes;
+}
+
+/**
+ * Each symbol's monthly closes in euros, keyed by symbol. History is
+ * optional: a symbol that fails is left out, and its chart shows what was
+ * invested only.
+ */
+export async function fetchMonthlyClosesBySymbolInEur(
+  symbols: readonly string[],
+): Promise<Record<string, Record<string, number>>> {
+  const unique = Array.from(new Set(symbols.filter(Boolean)));
+  const history: Record<string, Record<string, number>> = {};
+  await Promise.all(
+    unique.map(async (symbol) => {
+      try {
+        history[symbol] = await fetchMonthlyClosesInEur(symbol);
+      } catch {
+        // Optional.
+      }
+    }),
+  );
+  return history;
+}

@@ -22,7 +22,7 @@ import {
   type SectorId,
 } from "@finance/core/instrument-reading";
 import { countryFlag, countryName } from "@finance/core/country-names";
-import { describeModel } from "@finance/core/model-name";
+import { exactModelLabel } from "@finance/core/model-name";
 import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
 import { formatCharge } from "@finance/core/fund-costs";
 import { AXIS_COVERAGE_FLOOR } from "@finance/core/look-through";
@@ -496,7 +496,7 @@ export function LookThroughView({
                       {readModel === null
                         ? t("walletRead.writtenByUnknown")
                         : t("walletRead.writtenBy", {
-                            model: exactModel(readModel),
+                            model: exactModelLabel(readModel),
                           })}
                     </span>
                     {stale ? (
@@ -942,20 +942,6 @@ function sectorLabel(
   return (SECTOR_IDS as readonly string[]).includes(id)
     ? t(`lookThrough.sectorLabels.${id as SectorId}`)
     : fallback;
-}
-
-/**
- * "Mistral Large (mistral-large-latest)" — the maker, the model and the
- * build, for the one line that exists to be checkable.
- *
- * The id is repeated in brackets rather than shown alone because the id is
- * what someone would compare against a configuration, and the name is what
- * they would recognise. An id this app cannot attribute to a maker is shown
- * as it stands: an unfamiliar string is better than naming the wrong writer.
- */
-function exactModel(modelId: string): string {
-  const named = describeModel(modelId);
-  return named.full === named.id ? named.id : `${named.full} (${named.id})`;
 }
 
 /**

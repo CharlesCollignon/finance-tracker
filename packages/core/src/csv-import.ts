@@ -309,6 +309,8 @@ const HEADER_HINTS: Record<keyof ColumnMapping, string[]> = {
     "merchant",
     "payee",
     "nature",
+    // The app's own export, so a Journal written out reads back in.
+    "note",
   ],
   amount: [
     "amount",

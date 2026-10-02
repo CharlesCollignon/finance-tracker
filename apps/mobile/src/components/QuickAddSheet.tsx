@@ -9,7 +9,10 @@ import {
   pressAmountKey,
   type AmountKey,
 } from "@finance/core/amount-input";
-import { todayIsoLocal } from "@finance/core/constants";
+import {
+  todayIsoLocal,
+  shiftIsoDate,
+} from "@finance/core/constants";
 import {
   lookupMerchant,
   suggestMerchants,
@@ -46,14 +49,6 @@ const KEYPAD_ROWS: AmountKey[][] = [
   ["7", "8", "9"],
   [".", "0", "backspace"],
 ];
-
-function shiftDays(isoDate: string, days: number): string {
-  const [year, month, day] = isoDate.split("-").map(Number);
-  const date = new Date(year!, month! - 1, day! + days);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
-    date.getDate(),
-  ).padStart(2, "0")}`;
-}
 
 /** The two things the Add sheet can add. */
 export type AddKind = "transaction" | "charge";
@@ -225,7 +220,7 @@ function QuickAddFields({
   const [showDatePicker, setShowDatePicker] = useState(
     defaultDate !== undefined &&
       defaultDate !== today &&
-      defaultDate !== shiftDays(today, -1),
+      defaultDate !== shiftIsoDate(today, -1),
   );
   const [pending, setPending] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
@@ -259,7 +254,7 @@ function QuickAddFields({
   const t = useT();
   const display = formatAmountInput(amount, locale);
   const canSave = isAmountInputComplete(amount) && categoryId !== "";
-  const yesterday = shiftDays(today, -1);
+  const yesterday = shiftIsoDate(today, -1);
   const dateChoice: "today" | "yesterday" | "other" = showDatePicker
     ? "other"
     : occurredOn === today

@@ -134,8 +134,7 @@ typechecks and builds crashed the terminal twice. Work sequentially.
 - [x] Big upcoming charge, server-sent; the phone's per-charge local reminders
       retire (kept only for a phone with no push token).
 - [x] Milestone reached, with "seen" stored per user so every device agrees.
-      Celebrated on the Plan, not pushed: the server would have to price
-      every wallet. The `milestone` switch was dropped until it is sent.
+      Pushed since Phase 5, once the reads it needed were shared.
 - [x] Spending above normal, inside the recap.
 
 ## Phase 4 — Feel (branch `phase-4/feel`)
@@ -153,3 +152,41 @@ typechecks and builds crashed the terminal twice. Work sequentially.
       list from the audit, "Ledger" and "migration 0xx" removed from screens,
       a next step in the empty states the audit named, « Comment c'est
       calculé ? » under Le point's balance.
+
+## Phase 5 — Robustness and one codebase, continued (branch `phase-5/robustness`)
+
+Taken from Phase 2's deferred list and what Phases 3–4 left open.
+
+- [x] Phone: one `ScreenError` with a retry on the eight screens that printed
+      a failed load as red text, and a screen error boundary in the root
+      layout that every screen inherits, so the tab bar stays up.
+- [x] Phone: its own reminders (for a phone the server cannot reach) follow
+      the notification switches.
+- [x] Bank sync: feed rows, automatic transactions and their links in a few
+      batched writes instead of two or three round trips per row, with a
+      row-at-a-time retry when a batch is refused. Reprices ten at a time.
+- [x] One codebase: the Journal's filters, totals and days (`ledger-view` in
+      core); the review inbox reads, the investment and savings history, the
+      month's rows and summary, category seeding, positions and wallet plans,
+      instrument readings (`@finance/data`); quote fetching and four small
+      helpers (core).
+- [x] The milestone push, with its switch back in Profile: the daily run
+      works out the Plan's own figure at today's prices
+      (`@finance/data/plan-wealth`) for someone who wants it and has had a
+      milestone celebrated, and announces a new one without marking it
+      seen, so the Plan still celebrates it.
+- [x] Bugs found on the way, all on the phone: its merchant suggestions and
+      recurring detection only saw the latest 1 000 transactions, its
+      investment and savings history stopped at 1 000 rows, it valued a
+      pinned position at its quote, a taken category name failed sign-in
+      seeding, and a review read error reached a toast in Supabase's English.
+- [x] Also: the Journal's CSV export defuses formulas a bank note could
+      carry and writes French readers the shape French Excel opens; a bank
+      balance is dated on the Paris calendar, not UTC's; the web's
+      allowance field reads « 1 200 », as the phone's already did; four
+      double casts and one hand-synced ref (`useEffectEvent`) are gone.
+- Not done: the display currency in a cookie — EUR is what the server
+  already renders, so only a USD reader would gain, and the product is
+  French first.
+- Still deferred: splitting the big screen components beyond the logic
+  moved out of them; the Plan's and Placements' loaders.

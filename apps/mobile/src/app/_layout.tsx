@@ -16,6 +16,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LocaleSuggestion } from "@/components/LocaleSuggestion";
+import { ScreenErrorBoundary } from "@/components/ScreenError";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { BiometricLockProvider } from "@/providers/BiometricLockProvider";
 import { CurrencyProvider } from "@/providers/CurrencyProvider";
@@ -132,6 +133,16 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
     </>
   );
 }
+
+/**
+ * A screen that throws while rendering shows a card with a retry, inside the
+ * app's providers and with the tab bar or header still there. Declared once
+ * here, every screen below inherits it, the tabs' included; `ErrorBoundary`
+ * below stays for what fails before the providers are up.
+ */
+export const unstable_settings = {
+  screenErrorBoundary: ScreenErrorBoundary,
+};
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({

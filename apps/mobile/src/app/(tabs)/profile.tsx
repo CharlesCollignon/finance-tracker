@@ -52,6 +52,7 @@ const KIND_ICONS: Record<
   bigCharge: "receipt-outline",
   arrived: "cash-outline",
   review: "file-tray-outline",
+  milestone: "flag-outline",
   monthOpen: "calendar-clear-outline",
   bank: "business-outline",
 };

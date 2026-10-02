@@ -8,7 +8,7 @@ import {
   MILESTONE_TIERS,
   monthsUntil,
   projectEnvelopes,
-  type Envelope,
+  wealthToday,
 } from "@finance/core/future-plan";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { CloseableMonth } from "@finance/core/month-close";
@@ -61,10 +61,6 @@ interface ClosePrompt {
   monthlyCommitted: number;
   unrecordedCap: number | null;
   baseline: number | null;
-}
-
-function sumInitial(envelopes: readonly Envelope[]): number {
-  return envelopes.reduce((sum, envelope) => sum + envelope.initial, 0);
 }
 
 /**
@@ -153,7 +149,7 @@ export default function PlanningScreen() {
       }).monthly,
     [dataEnvelopes],
   );
-  const current = sumInitial(dataEnvelopes);
+  const current = wealthToday(dataEnvelopes);
   const milestones = useMemo(
     () => buildMilestones(current, milestoneSeries),
     [current, milestoneSeries],
@@ -172,7 +168,7 @@ export default function PlanningScreen() {
   // user's own figures, not on an edit in the long view — typing a bigger
   // number is not progress.
   const reachedOnData =
-    MILESTONE_TIERS.filter((tier) => tier <= sumInitial(dataEnvelopes)).at(
+    MILESTONE_TIERS.filter((tier) => tier <= wealthToday(dataEnvelopes)).at(
       -1,
     ) ?? 0;
   const hasData = data !== null;

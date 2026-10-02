@@ -19,7 +19,11 @@ import { AXIS_COVERAGE_FLOOR } from "@finance/core/look-through";
 import { buildArbitrage } from "@finance/core/look-through-target";
 import { factsDigest } from "@finance/core/month-facts";
 import type { ReadSegment } from "@finance/core/month-read";
-import { DEFAULT_WRITER_MODEL, describeModel } from "@finance/core/model-name";
+import {
+  DEFAULT_WRITER_MODEL,
+  describeModel,
+  exactModelLabel,
+} from "@finance/core/model-name";
 import {
   renderWalletRead,
   targetFromWalletRead,
@@ -416,7 +420,7 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
                 <Text variant="micro">
                   {stored?.model
                     ? t("walletRead.writtenBy", {
-                        model: exactModel(stored.model),
+                        model: exactModelLabel(stored.model),
                       })
                     : t("walletRead.writtenByUnknown")}
                 </Text>
@@ -912,8 +916,3 @@ function sectorLabel(t: Translate, id: string, fallback: string): string {
     : fallback;
 }
 
-/** "Mistral Large (mistral-large-latest)", for the line that must be exact. */
-function exactModel(modelId: string): string {
-  const named = describeModel(modelId);
-  return named.full === named.id ? named.id : `${named.full} (${named.id})`;
-}

@@ -239,6 +239,13 @@ export const en = {
    * "supprimées"). Both forms have to be written out.
    */
   ledger: {
+    csv: {
+      date: "Date",
+      category: "Category",
+      type: "Type",
+      amount: "Amount (EUR)",
+      note: "Note",
+    },
     emptyTitle: "Nothing recorded this month",
     emptyBody:
       "Add what happened. The charges you set up fill each month in on their own.",
@@ -2188,6 +2195,10 @@ export const en = {
       label: "Transactions to sort",
       hint: "When your bank brought in transactions without a category.",
     },
+    milestone: {
+      label: "New milestone",
+      hint: "When what you have saved and invested passes a milestone.",
+    },
     monthOpen: {
       label: "New month",
       hint: "On the 1st, when the month begins.",
@@ -2227,6 +2238,10 @@ export const en = {
         one: "Tomorrow: {count} large payment",
         other: "Tomorrow: {count} large payments",
       },
+    },
+    milestone: {
+      title: "New milestone: {amount}",
+      body: "What you have saved and invested has just passed {amount}. The Plan says when the next one comes.",
     },
     overdraft: {
       title: "Possible overdraft on {date}",

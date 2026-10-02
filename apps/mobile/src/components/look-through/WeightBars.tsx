@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
+import { formatWeightShare } from "@finance/core/look-through";
 import { Ionicons } from "@expo/vector-icons";
 
-import { formatPercentLabel } from "@finance/core/constants";
-import { INTL_LOCALES, type Locale } from "@finance/core/i18n/locale";
-import { translator } from "@finance/core/i18n/t";
+import { type Locale } from "@finance/core/i18n/locale";
 
 import { Text } from "@/components/ui/Text";
 import { hapticLight } from "@/lib/haptics";
@@ -96,7 +95,7 @@ export function WeightBars({
                 </Text>
               </View>
               <Text className="font-sans tabular-nums text-sm font-semibold">
-                {formatShare(restWeight, locale)}
+                {formatWeightShare(restWeight, locale)}
               </Text>
             </View>
             <Bar weight={restWeight} largest={largest} />
@@ -127,7 +126,7 @@ function Row({
   return (
     <View
       accessible
-      accessibilityLabel={`${row.label}, ${formatShare(row.weight, locale)}`}
+      accessibilityLabel={`${row.label}, ${formatWeightShare(row.weight, locale)}`}
       className="gap-1"
     >
       <View className="flex-row items-baseline justify-between gap-3">
@@ -138,7 +137,7 @@ function Row({
           </Text>
         </View>
         <Text className="font-sans tabular-nums text-sm font-semibold">
-          {formatShare(row.weight, locale)}
+          {formatWeightShare(row.weight, locale)}
         </Text>
       </View>
       <Bar weight={row.weight} largest={largest} />
@@ -165,18 +164,3 @@ function Bar({ weight, largest }: { weight: number; largest: number }) {
   );
 }
 
-/**
- * A share, at one decimal place at most; "<0,1 %" rather than "0,0 %" for a
- * sliver, which would say the holding is not there. The web's rule.
- */
-function formatShare(weight: number, locale: Locale): string {
-  const percent = weight * 100;
-  if (percent > 0 && percent < 0.1) {
-    return `<${formatPercentLabel(0.1, locale)}`;
-  }
-  return translator(locale)("units.percent", {
-    value: new Intl.NumberFormat(INTL_LOCALES[locale], {
-      maximumFractionDigits: percent < 10 ? 1 : 0,
-    }).format(percent),
-  });
-}

@@ -85,3 +85,14 @@ export function describeModel(modelId: string): ModelName {
 
   return { brand, full: [brand, ...parts].join(" "), id };
 }
+
+/**
+ * "Mistral Large (mistral-large-latest)", for the line that must be exact:
+ * the id is what a reader would check against a configuration, the name what
+ * they would recognise. An id this app cannot attribute is shown as it
+ * stands — an unfamiliar string beats naming the wrong writer.
+ */
+export function exactModelLabel(modelId: string): string {
+  const named = describeModel(modelId);
+  return named.full === named.id ? named.id : `${named.full} (${named.id})`;
+}

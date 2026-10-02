@@ -1,77 +1,32 @@
-import type { BankFeedItem, CategoryType } from "@finance/core/types/database";
-
 import { supabase } from "@/lib/supabase";
 import { callWebApi, webApiAvailable } from "@/lib/web-api";
+import {
+  getDecidedFeedItems,
+  type DecidedFeedRow,
+} from "@finance/data/bank-inbox";
 import { dbError } from "@finance/data/errors";
 
 /**
  * What the review inbox needs beyond the pending rows themselves: what was
  * decided recently, so a decision can be taken back, and the whole-statement
- * fetch. The web's twins are `getDecidedFeedItems`, `countFeedItems` and
- * `recategoriseFeedItem` (`apps/web/lib/queries/bank.ts`,
- * `apps/web/lib/actions/bank.ts`); errors come back as message keys.
+ * fetch. The decided rows are the shared read; the web's twin of the rest is
+ * `recategoriseFeedItem` (`apps/web/lib/actions/bank.ts`). Errors come back
+ * as message keys.
  */
 
-export interface DecidedFeedRow {
-  id: string;
-  occurredOn: string;
-  amount: number;
-  direction: "in" | "out";
-  counterparty: string | null;
-  note: string;
-  /** Where it landed, or null when it was left out. */
-  categoryId: string | null;
-  categoryName: string | null;
-  categoryType: CategoryType | null;
-  /** The ledger row it became, if it became one. */
-  transactionId: string | null;
-  status: "imported" | "ignored";
-}
+export type { DecidedFeedRow } from "@finance/data/bank-inbox";
 
 /**
- * The last decisions, newest first.
- *
- * Read from the database rather than kept in the sheet, so a decision can be
- * taken back after the sheet has been closed and opened again — or after the
- * app has been. Bounded, as on the web: a means of correcting what you just
- * did, not an archive; the ledger is the archive.
+ * The last decisions, newest first — `@finance/data/bank-inbox`, the read the
+ * web makes too. From the database rather than kept in the sheet, so a
+ * decision can be taken back after the sheet, or the app, has been closed.
  */
 export async function getDecidedFeedRows(
   userId: string,
   limit = 40,
 ): Promise<DecidedFeedRow[]> {
-  const { data, error } = await supabase
-    .from("bank_feed_items")
-    .select("*, transactions(category_id, categories(name, type))")
-    .eq("user_id", userId)
-    .in("status", ["imported", "ignored"])
-    .order("occurred_on", { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    return [];
-  }
-
-  type Joined = BankFeedItem & {
-    transactions: {
-      category_id: string;
-      categories: { name: string; type: CategoryType } | null;
-    } | null;
-  };
-
-  return ((data ?? []) as unknown as Joined[]).map((row) => ({
-    id: row.id,
-    occurredOn: row.occurred_on,
-    amount: Number(row.amount),
-    direction: row.direction,
-    counterparty: row.counterparty,
-    note: row.note,
-    categoryId: row.transactions?.category_id ?? null,
-    categoryName: row.transactions?.categories?.name ?? null,
-    categoryType: row.transactions?.categories?.type ?? null,
-    transactionId: row.transaction_id,
-    status: row.status === "ignored" ? "ignored" : "imported",
-  }));
+  // A list to correct from, not something to fail the sheet over.
+  return getDecidedFeedItems(supabase, userId, limit).catch(() => []);
 }
 
 /**
@@ -125,7 +80,7 @@ export async function recategoriseDecidedRows(
     .select("transaction_id")
     .in("id", itemIds);
   if (readError) {
-    return { error: readError.message };
+    return { error: dbError(readError) };
   }
 
   const transactionIds = ((data ?? []) as { transaction_id: string | null }[])

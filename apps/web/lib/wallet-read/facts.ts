@@ -4,8 +4,8 @@ import {
   INVESTMENT_WALLET_IDS,
   type InvestmentWalletId,
 } from "@finance/core/investments";
+import { wrapperFeesFromPlans } from "@finance/core/fund-costs";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
-import type { WrapperFees } from "@finance/core/fund-costs";
 import {
   buildLookThrough,
   type LookThrough,
@@ -22,7 +22,7 @@ import {
 } from "@finance/core/look-through-target";
 import { readingQueue } from "@finance/core/instrument-reading";
 import type { InstrumentReading } from "@finance/core/instrument-reading";
-import type { Database, WalletPlan } from "@finance/core/types/database";
+import type { Database } from "@finance/core/types/database";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { getWalletPlans } from "@/lib/queries/investments";
 import { getInstrumentReadings } from "@/lib/queries/instrument-readings";
@@ -57,16 +57,6 @@ export interface LookThroughBundle {
   readingsTracked: boolean;
 }
 
-function envelopeFees(plans: WalletPlan[]): WrapperFees {
-  const fees: WrapperFees = {};
-  for (const plan of plans) {
-    if (plan.wrapper_fee !== null && plan.wrapper_fee !== undefined) {
-      fees[plan.wallet] = Number(plan.wrapper_fee);
-    }
-  }
-  return fees;
-}
-
 export async function gatherLookThrough(
   userId: string,
   client?: Client,
@@ -96,7 +86,7 @@ export async function gatherLookThrough(
   const lookThrough = buildLookThrough({
     positions,
     readings: readings.byIsin,
-    envelopeFees: envelopeFees(plans),
+    envelopeFees: wrapperFeesFromPlans(plans),
     now,
   });
 
