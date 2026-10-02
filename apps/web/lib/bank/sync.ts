@@ -425,6 +425,23 @@ async function refreshBalances(
   }
 }
 
+/** Rows per batched write: well inside a request PostgREST will take. */
+const WRITE_CHUNK = 200;
+
+/**
+ * Write what the plan decided, in a few requests rather than two or three
+ * per row — a first import of a few hundred rows used to be as many
+ * round trips, one after another.
+ *
+ * Every feed row goes in through one upsert that leaves a row already there
+ * as it is, so only new rows come back. A match goes in already filed
+ * against its transaction. The automatic rows' transactions are created in
+ * one insert, with ids made here so that each is known to belong to its
+ * row without trusting the order rows come back in, and their feed rows
+ * are pointed at them in one more write. A batch the database refuses is
+ * retried a row at a time, so one bad row costs itself — it stays in the
+ * review inbox — rather than its whole batch.
+ */
 async function writePlan(
   supabase: Client,
   userId: string,
@@ -432,109 +449,68 @@ async function writePlan(
   plan: FeedPlan,
   positions: Map<string, number>,
 ): Promise<{ imported: number; pending: number; matched: number }> {
+  const feedRow = (row: PlannedFeedRow) =>
+    feedItemRow(userId, providerAccountId, row, positions);
+
+  const inserted = await insertFeedItems(supabase, [
+    ...plan.matched.map(feedRow),
+    ...plan.review.map(feedRow),
+    ...plan.automatic.map(feedRow),
+  ]);
+  const isNew = (row: PlannedFeedRow) => inserted.has(row.candidate.providerId);
+
+  const matched = plan.matched.filter(
+    (row) => row.decision.kind === "match" && isNew(row),
+  ).length;
+  const pending = plan.review.filter(isNew).length;
+
+  const automatic = plan.automatic.filter(
+    (row) => row.decision.kind === "auto" && isNew(row),
+  );
   let imported = 0;
-  let pending = 0;
-  let matched = 0;
-
-  // Recorded, but nothing new is written: the transaction is already there.
-  for (const row of plan.matched) {
-    if (row.decision.kind !== "match") {
+  for (let start = 0; start < automatic.length; start += WRITE_CHUNK) {
+    const chunk = automatic.slice(start, start + WRITE_CHUNK);
+    const created = await insertTransactions(supabase, userId, chunk);
+    if (created.length === 0) {
       continue;
     }
-    const item = await insertFeedItem(
-      supabase,
-      userId,
-      providerAccountId,
-      row,
-      "pending",
-      positions,
-    );
-    if (!item) {
-      continue;
-    }
-    await supabase
+    // The amount went in as the bank's own decimal string; Postgres rounds
+    // it into numeric(12,2) exactly, where parsing it here first would not.
+    const links = created.map(({ row, transactionId }) => ({
+      ...feedRow(row),
+      id: inserted.get(row.candidate.providerId)!,
+      status: "imported" as const,
+      transaction_id: transactionId,
+    }));
+    const { error } = await supabase
       .from("bank_feed_items")
-      .update({
-        status: "imported",
-        transaction_id: row.decision.transactionId,
-      })
-      .eq("id", item)
-      .eq("user_id", userId);
-    matched += 1;
-  }
-
-  for (const row of plan.review) {
-    const inserted = await insertFeedItem(
-      supabase,
-      userId,
-      providerAccountId,
-      row,
-      "pending",
-      positions,
-    );
-    if (inserted) {
-      pending += 1;
-    }
-  }
-
-  for (const row of plan.automatic) {
-    const item = await insertFeedItem(
-      supabase,
-      userId,
-      providerAccountId,
-      row,
-      "pending",
-      positions,
-    );
-    if (!item) {
+      .upsert(links, { onConflict: "id" });
+    if (error) {
+      for (const link of links) {
+        const { error: one } = await supabase
+          .from("bank_feed_items")
+          .update({ status: "imported", transaction_id: link.transaction_id })
+          .eq("id", link.id)
+          .eq("user_id", userId);
+        if (!one) {
+          imported += 1;
+        }
+      }
       continue;
     }
-
-    if (row.decision.kind !== "auto") {
-      continue;
-    }
-
-    // The amount goes in as the bank's own decimal string. Postgres rounds it
-    // into numeric(12,2) exactly; parsing it here first would not.
-    const { data: transaction, error } = await supabase
-      .from("transactions")
-      .insert({
-        user_id: userId,
-        category_id: row.decision.suggestion.categoryId,
-        occurred_on: row.candidate.occurredOn,
-        amount: row.candidate.amount,
-        note: row.candidate.note,
-      })
-      .select("id")
-      .single();
-
-    if (error || !transaction) {
-      // The item stays pending, so the row shows up in the inbox instead of
-      // being lost between the two writes.
-      continue;
-    }
-
-    await supabase
-      .from("bank_feed_items")
-      .update({ status: "imported", transaction_id: transaction.id })
-      .eq("id", item)
-      .eq("user_id", userId);
-
-    imported += 1;
+    imported += links.length;
   }
 
   return { imported, pending, matched };
 }
 
-/** Returns the new item's id, or null when the row was already there. */
-async function insertFeedItem(
-  supabase: Client,
+/** A feed row as the table takes it, filed already when it is a match. */
+function feedItemRow(
   userId: string,
   providerAccountId: string,
   row: PlannedFeedRow,
-  status: "pending",
   positions: Map<string, number>,
-): Promise<string | null> {
+) {
   const { candidate, decision } = row;
   const decidedBy =
     decision.kind === "auto"
@@ -543,29 +519,122 @@ async function insertFeedItem(
         ? "match:recurring"
         : `review:${decision.why}`;
 
-  const { data, error } = await supabase
-    .from("bank_feed_items")
-    .upsert(
-      {
-        user_id: userId,
-        provider_id: candidate.providerId,
-        provider_account_id: providerAccountId,
-        occurred_on: candidate.occurredOn,
-        amount: candidate.amount,
-        currency: candidate.currency,
-        direction: candidate.direction,
-        counterparty: candidate.counterparty,
-        note: candidate.note,
-        merchant_category_code: candidate.merchantCategoryCode,
-        balance_after: candidate.balanceAfter,
-        intraday_index: positions.get(candidate.providerId) ?? 0,
-        status,
-        decided_by: decidedBy,
-      },
-      { onConflict: "user_id,provider_id", ignoreDuplicates: true },
-    )
-    .select("id")
-    .maybeSingle();
+  return {
+    user_id: userId,
+    provider_id: candidate.providerId,
+    provider_account_id: providerAccountId,
+    occurred_on: candidate.occurredOn,
+    amount: candidate.amount,
+    currency: candidate.currency,
+    direction: candidate.direction,
+    counterparty: candidate.counterparty,
+    note: candidate.note,
+    merchant_category_code: candidate.merchantCategoryCode,
+    balance_after: candidate.balanceAfter,
+    intraday_index: positions.get(candidate.providerId) ?? 0,
+    // Recorded, but nothing new is written: the transaction is already there.
+    status:
+      decision.kind === "match" ? ("imported" as const) : ("pending" as const),
+    transaction_id: decision.kind === "match" ? decision.transactionId : null,
+    decided_by: decidedBy,
+  };
+}
 
-  return error ? null : (data?.id ?? null);
+type FeedItemInsert = ReturnType<typeof feedItemRow>;
+
+/**
+ * Insert the rows not already there, by provider id. Returns the new rows'
+ * ids; a row the bank sent before is left as it is and not returned.
+ */
+async function insertFeedItems(
+  supabase: Client,
+  rows: readonly FeedItemInsert[],
+): Promise<Map<string, string>> {
+  const inserted = new Map<string, string>();
+  for (let start = 0; start < rows.length; start += WRITE_CHUNK) {
+    const chunk = rows.slice(start, start + WRITE_CHUNK);
+    const { data, error } = await supabase
+      .from("bank_feed_items")
+      .upsert(chunk, {
+        onConflict: "user_id,provider_id",
+        ignoreDuplicates: true,
+      })
+      .select("id, provider_id");
+
+    if (!error) {
+      for (const item of data ?? []) {
+        inserted.set(item.provider_id, item.id);
+      }
+      continue;
+    }
+    // One refused row refuses the batch; the rest should still land.
+    for (const row of chunk) {
+      const { data: one } = await supabase
+        .from("bank_feed_items")
+        .upsert(row, {
+          onConflict: "user_id,provider_id",
+          ignoreDuplicates: true,
+        })
+        .select("id, provider_id")
+        .maybeSingle();
+      if (one) {
+        inserted.set(one.provider_id, one.id);
+      }
+    }
+  }
+  return inserted;
+}
+
+/**
+ * Create the automatic rows' transactions, with ids made here so each is
+ * known to be its row's. A refused batch is retried a row at a time; a row
+ * that still fails is left out, and its feed row stays pending in the inbox
+ * instead of being lost between the two writes.
+ */
+async function insertTransactions(
+  supabase: Client,
+  userId: string,
+  rows: readonly PlannedFeedRow[],
+): Promise<{ row: PlannedFeedRow; transactionId: string }[]> {
+  const planned = rows.flatMap((row) =>
+    row.decision.kind === "auto"
+      ? [
+          {
+            row,
+            transaction: {
+              id: crypto.randomUUID(),
+              user_id: userId,
+              category_id: row.decision.suggestion.categoryId,
+              occurred_on: row.candidate.occurredOn,
+              amount: row.candidate.amount,
+              note: row.candidate.note,
+            },
+          },
+        ]
+      : [],
+  );
+  if (planned.length === 0) {
+    return [];
+  }
+
+  const { error } = await supabase
+    .from("transactions")
+    .insert(planned.map((entry) => entry.transaction));
+  if (!error) {
+    return planned.map(({ row, transaction }) => ({
+      row,
+      transactionId: transaction.id,
+    }));
+  }
+
+  const created: { row: PlannedFeedRow; transactionId: string }[] = [];
+  for (const { row, transaction } of planned) {
+    const { error: one } = await supabase
+      .from("transactions")
+      .insert(transaction);
+    if (!one) {
+      created.push({ row, transactionId: transaction.id });
+    }
+  }
+  return created;
 }
