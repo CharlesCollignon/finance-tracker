@@ -312,6 +312,29 @@ export async function getProperties(
 }
 
 /**
+ * Every loan with the property it paid for: what the daily notification
+ * run reads to tell a loan's moments. Empty before migration 049.
+ */
+export async function getLoansWithProperty(
+  db: Db,
+  userId: string,
+): Promise<{ loan: PropertyLoan; property: { id: string; name: string } }[]> {
+  const { data, error } = await db
+    .from("property_loans")
+    .select("*, properties(id, name)")
+    .eq("user_id", userId);
+  if (error) {
+    if (isMissingSchema(error)) {
+      return [];
+    }
+    throw error;
+  }
+  return (data ?? []).flatMap(({ properties: property, ...row }) =>
+    property ? [{ loan: loanFromRow(row), property }] : [],
+  );
+}
+
+/**
  * Each property's name, for a picker: what a recurring template can be
  * attached to. Empty before migration 049.
  */

@@ -2201,6 +2201,10 @@ export const en = {
       label: "New milestone",
       hint: "When what you have saved and invested passes a milestone.",
     },
+    property: {
+      label: "Property",
+      hint: "Half a loan repaid, its last payment, a new estimate from the sales.",
+    },
     monthOpen: {
       label: "New month",
       hint: "On the 1st, when the month begins.",
@@ -2240,6 +2244,18 @@ export const en = {
         one: "Tomorrow: {count} large payment",
         other: "Tomorrow: {count} large payments",
       },
+    },
+    property: {
+      halfTitle: "{loan}: half repaid",
+      halfBody: "{owed} left to repay on {property}, until {end}.",
+      halfBodyOpen: "{owed} left to repay on {property}.",
+      lastTitle: "Last payment: {loan}",
+      lastBody: "{loan} was repaid on {date}: {amount} less to pay each month.",
+      marketTitle: "New estimate: {property}",
+      marketBody:
+        "From the latest sales published, it is worth about {after}, against {before} at the last reading.",
+      marketBodySame:
+        "From the latest sales published, it is still worth about {after}.",
     },
     milestone: {
       title: "New milestone: {amount}",

@@ -25,6 +25,11 @@ export const NOTIFICATION_KINDS = [
   "review",
   /** A new round amount of savings and investments reached. */
   "milestone",
+  /**
+   * A property's moments: half a loan repaid, its last payment, a new
+   * estimate when the public record of sales adds a half-year.
+   */
+  "property",
   /** A new month has opened. */
   "monthOpen",
   /** The bank connection needs a renewal or has stopped. */
@@ -34,6 +39,20 @@ export const NOTIFICATION_KINDS = [
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
 export type NotificationPrefs = Partial<Record<NotificationKind, boolean>>;
+
+/**
+ * The switches an account is shown: every kind, but the property's only to
+ * an account that has the Immobilier tab — the others would never hear it.
+ */
+export function shownNotificationKinds({
+  property,
+}: {
+  property: boolean;
+}): readonly NotificationKind[] {
+  return property
+    ? NOTIFICATION_KINDS
+    : NOTIFICATION_KINDS.filter((kind) => kind !== "property");
+}
 
 /**
  * The stored map, read defensively: a row written by an older client, or by

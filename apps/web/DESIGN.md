@@ -796,7 +796,8 @@ all; changing one alone breaks the frame.
 
 A moment is something the user did, said back to them where it happened: a
 milestone reached, a cushion rung lit and the run kept alive on Plan, a month
-closed in the close sheet, and the review inbox emptied. It replaced, in October 2026, the rule that
+closed in the close sheet, the review inbox emptied, and a loan half repaid
+or repaid on its card. It replaced, in October 2026, the rule that
 only Plan celebrates. The allowance is specific:
 
 - **Real and measured.** Every moment is a fact about the user's own money or
@@ -820,6 +821,13 @@ the count has landed: « Série prolongée : 4 mois d'affilée », or « Nouveau
 record » when it beat the best run before it (`runMoment`,
 `packages/core/src/month-close.ts`). A month that cost more than it brought,
 and a baseline, are told as before, without a moment.
+
+**A loan's moment.** Half a loan repaid, or its last payment made, puts a gold
+pill beside its name on the property's page — « La moitié est remboursée »,
+« Prêt remboursé » — for the month after the day (`loanMoment`,
+`packages/core/src/property-moments.ts`). It happens while nobody is looking,
+so the device remembers that it popped (`components/motion/use-moment-seen.ts`)
+and the pill rests from then on; a push said it on the day.
 
 **The inbox emptied.** When the last group is filed, « Tout est classé. »
 pops in with a gold tick, and under it how many shops were just filed under a

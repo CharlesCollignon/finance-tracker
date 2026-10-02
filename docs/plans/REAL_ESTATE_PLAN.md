@@ -508,11 +508,34 @@ cautions — the towns, where homes are let.
 
 ## Phase 7 — Moments and notifications (branch `property-7/moments`)
 
-- [ ] Half the loan repaid; the last payment this month — celebrated where
-      they show, with a push.
-- [ ] A new market reading after a DVF release, at most twice a year.
-- [ ] New kind in `notification-kinds.ts`, its switch in Profile, the table
-      in `how-pluclair-works.md`.
+- [x] Half the loan repaid; the last payment — celebrated where they show,
+      with a push (`core/property-moments.ts`). A change, not a state: each
+      counts for a month after the day, so a loan that passed half before
+      the app knew it is never news. An in fine loan has no half. A gold
+      pill on the loan's card pops once per device, with the haptic on the
+      phone.
+- [x] A new market reading after a DVF release, at most twice a year: told
+      by the weekly market cron when a reading's last sale reaches a later
+      half-year than the reading before, keyed by that half-year, and not
+      for a home the user values themselves. **Changed:** the cron moved
+      from 05:00 to 09:00 UTC on Mondays, after the quiet hours — a push
+      held there would be lost, as the next reading is no longer new.
+- [x] New kind `property` in `notification-kinds.ts`, its switch in
+      Profile on both apps for an account with `property.track`
+      (`shownNotificationKinds`), the table in `how-pluclair-works.md`; a
+      tapped push opens the property on the phone too (`push-routes.ts`).
+
+Checked against the local stack: the daily run logged
+`property:half:` for a loan an early repayment brought to half on 20
+September and `property:last:` for one whose last payment was on 5
+September, nothing for a loan with no moment, and held both the second
+time. The market run re-read a Lyon home last read on sales to June 2025,
+found sales to December 2025 and logged `property:market:…:2025-H2`; a
+home read for the first time told nothing. Found on the way: a NativeWind
+class on Reanimated's `Animated.View` was not applied in the phone's web
+build — the pill's gold is on a plain view inside it. The Plan's reached
+milestone tiles style an `Animated.View` the same way: worth a look on a
+device.
 
 ## Later, if wanted
 

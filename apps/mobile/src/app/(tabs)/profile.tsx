@@ -5,7 +5,7 @@ import type { Ionicons } from "@expo/vector-icons";
 
 import { resolveMessage } from "@finance/core/i18n/t";
 import {
-  NOTIFICATION_KINDS,
+  shownNotificationKinds,
   wantsNotification,
   type NotificationKind,
   type NotificationPrefs,
@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { ListRow, ListSection } from "@/components/ui/ListRow";
 import { useBankState } from "@/hooks/useBankState";
+import { useFlag } from "@/hooks/useFlag";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { disconnectBank } from "@/lib/bank-connect";
 import { Screen } from "@/components/ui/Screen";
@@ -53,6 +54,7 @@ const KIND_ICONS: Record<
   arrived: "cash-outline",
   review: "file-tray-outline",
   milestone: "flag-outline",
+  property: "home-outline",
   monthOpen: "calendar-clear-outline",
   bank: "business-outline",
 };
@@ -67,6 +69,8 @@ export default function ProfileScreen() {
   // The Bank row only where it leads somewhere: setup is open to this
   // account, or a bank already syncs for it.
   const { bank } = useBankState();
+  // The property's switch only for an account with the Immobilier tab.
+  const tracksProperty = useFlag("property.track");
   const showBank =
     bank !== null &&
     (bank.available ||
@@ -375,7 +379,7 @@ export default function ProfileScreen() {
               />
             }
           />
-          {NOTIFICATION_KINDS.map((kind) => (
+          {shownNotificationKinds({ property: tracksProperty }).map((kind) => (
             <ListRow
               key={kind}
               icon={KIND_ICONS[kind]}

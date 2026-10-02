@@ -6,6 +6,8 @@ import { bankSetupOffered } from "@/lib/bank/offer";
 import { type PasskeyItem } from "@/components/profile/PasskeysPanel";
 import { createClient } from "@/lib/supabase/server";
 import { getNotificationSettings } from "@finance/data/preferences";
+import { isFlagOn } from "@finance/core/flags";
+import { getFlags } from "@/lib/flags";
 
 function getProviderLabel(provider: string | undefined): string {
   if (!provider) {
@@ -37,11 +39,12 @@ export default async function ProfilePage() {
 
   // The Bank row only where it leads somewhere: setup is open to this
   // account, or a bank already syncs for it.
-  const [offered, bankStatus, notifications] = await Promise.all([
+  const [offered, bankStatus, notifications, flags] = await Promise.all([
     bankSetupOffered(),
     bankFeedStatus(user.id),
     // Every kind on is what a missing row means, and what a failed read shows.
     getNotificationSettings(await createClient(), user.id).catch(() => null),
+    getFlags(),
   ]);
 
   let initialPasskeys: PasskeyItem[] = [];
@@ -63,6 +66,7 @@ export default async function ProfilePage() {
       pushPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""}
       notificationPrefs={notifications?.prefs ?? {}}
       showBank={offered || bankStatus !== "unconfigured"}
+      showProperty={isFlagOn(flags, "property.track")}
     />
   );
 }

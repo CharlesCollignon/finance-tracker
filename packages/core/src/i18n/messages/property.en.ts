@@ -253,4 +253,6 @@ export const propertyEn = {
   dpeElectricity:
     "Since 1 January 2026 the DPE counts electricity at 1.9 instead of 2.3: an earlier DPE can be updated free on Ademe's DPE observatory, with no new visit.",
   lettingSource: "Loi Climat et Résilience, the calendar in force in 2026.",
+  momentHalf: "Half repaid",
+  momentLast: "Loan repaid",
 };

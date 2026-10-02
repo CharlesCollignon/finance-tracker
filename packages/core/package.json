@@ -104,6 +104,7 @@
     "./loan-schedule": "./src/loan-schedule.ts",
     "./property": "./src/property.ts",
     "./property-future": "./src/property-future.ts",
+    "./property-moments": "./src/property-moments.ts",
     "./validations/property": "./src/validations/property.ts",
     "./address-search": "./src/address-search.ts",
     "./property-form": "./src/property-form.ts",

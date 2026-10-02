@@ -31,7 +31,11 @@ const MOBILE_ROUTES = [
   "/planning",
   "/investments",
   "/bank",
+  "/property",
 ] as const;
+
+/** A property's own screen, the same address on both apps. */
+const PROPERTY_SCREEN = /^\/property\/[0-9a-f-]{36}$/;
 
 /** Web path → the phone's name for the same surface. */
 const RENAMED: Record<string, string> = {
@@ -61,7 +65,10 @@ export function mobileRouteForPushUrl(url: unknown): MobileRoute | null {
   const [path = "/", query] = url.split("?");
   const pathname = RENAMED[path] ?? path;
 
-  if (!(MOBILE_ROUTES as readonly string[]).includes(pathname)) {
+  if (
+    !(MOBILE_ROUTES as readonly string[]).includes(pathname) &&
+    !PROPERTY_SCREEN.test(pathname)
+  ) {
     return null;
   }
 

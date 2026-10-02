@@ -7,6 +7,7 @@ import {
   CalendarPlus,
   Flag,
   HandCoins,
+  House,
   Receipt,
   SealCheck,
   Tray,
@@ -15,7 +16,6 @@ import {
 } from "@phosphor-icons/react";
 import { resolveMessage } from "@finance/core/i18n/t";
 import {
-  NOTIFICATION_KINDS,
   wantsNotification,
   type NotificationKind,
   type NotificationPrefs,
@@ -35,6 +35,7 @@ const ICONS: Record<NotificationKind, Icon> = {
   arrived: HandCoins,
   review: Tray,
   milestone: Flag,
+  property: House,
   monthOpen: CalendarPlus,
   bank: Bank,
 };
@@ -47,7 +48,14 @@ const ICONS: Record<NotificationKind, Icon> = {
  * the account's, and someone who only reads them on the phone still makes
  * them here.
  */
-export function NotificationKindRows({ prefs }: { prefs: NotificationPrefs }) {
+export function NotificationKindRows({
+  prefs,
+  kinds,
+}: {
+  prefs: NotificationPrefs;
+  /** The switches this account is shown (`shownNotificationKinds`). */
+  kinds: readonly NotificationKind[];
+}) {
   const t = useT();
   const { toast } = useToast();
   const [shown, setShown] = useOptimistic(
@@ -69,7 +77,7 @@ export function NotificationKindRows({ prefs }: { prefs: NotificationPrefs }) {
     });
   }
 
-  return NOTIFICATION_KINDS.map((kind) => (
+  return kinds.map((kind) => (
     <ListRow
       key={kind}
       icon={ICONS[kind]}

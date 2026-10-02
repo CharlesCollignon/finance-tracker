@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   isQuietHour,
   readNotificationPrefs,
+  shownNotificationKinds,
   wantsNotification,
 } from "./notification-kinds";
 
@@ -22,6 +23,16 @@ describe("readNotificationPrefs", () => {
     expect(readNotificationPrefs(null)).toEqual({});
     expect(readNotificationPrefs([])).toEqual({});
     expect(readNotificationPrefs("recap")).toEqual({});
+  });
+});
+
+describe("shownNotificationKinds", () => {
+  it("shows the property's switch only to an account with the Immobilier tab", () => {
+    expect(shownNotificationKinds({ property: true })).toContain("property");
+    expect(shownNotificationKinds({ property: false })).not.toContain(
+      "property",
+    );
+    expect(shownNotificationKinds({ property: false })).toContain("recap");
   });
 });
 
