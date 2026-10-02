@@ -64,6 +64,7 @@ export function PropertyDetail({
   const format = useFormatCurrency();
   const router = useRouter();
   const { property, loans, templates } = detail;
+  const attached = templates.filter((template) => template.attached);
   const position = propertyPosition(property, loans, today);
   const source = position.estimate.source;
   const partOwned = property.ownership_share < 1;
@@ -205,13 +206,13 @@ export function PropertyDetail({
 
       <section className="flex flex-col gap-3">
         <h3 className="font-head text-lg">{t("property.templatesTitle")}</h3>
-        {templates.length === 0 ? (
+        {attached.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             {t("property.templatesNone")}
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-border rounded-card border border-border bg-card">
-            {templates.map((template) => (
+            {attached.map((template) => (
               <TemplateRow key={template.id} template={template} />
             ))}
           </ul>

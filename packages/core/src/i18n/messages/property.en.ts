@@ -159,4 +159,7 @@ export const propertyEn = {
   removePropertyConfirm:
     "{name} and its loans go; its recurring entries stay, attached to nothing.",
   removed: "Property deleted: {name}",
+  attachLabel: "Property",
+  attachNone: "None",
+  attachHint: "It shows on the property's page.",
 };

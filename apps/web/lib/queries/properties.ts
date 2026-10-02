@@ -82,3 +82,9 @@ export const getPropertyDetail = cache(
     );
   },
 );
+
+/** Each property's name, for attaching a recurring template to one. */
+export const getPropertyNames = cache(
+  async (userId: string): Promise<{ id: string; name: string }[]> =>
+    properties.getPropertyNames(await createClient(), userId),
+);

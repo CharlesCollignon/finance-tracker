@@ -159,4 +159,7 @@ export const propertyFr: typeof propertyEn = {
   removePropertyConfirm:
     "{name} et ses prêts sont supprimés\u00A0; ses opérations récurrentes restent, sans bien.",
   removed: "Bien supprimé\u00A0: {name}",
+  attachLabel: "Bien",
+  attachNone: "Aucun",
+  attachHint: "Elle apparaît sur la page du bien.",
 };

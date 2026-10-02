@@ -50,6 +50,11 @@ export interface AttachedTemplate {
   startsOn: string | null;
   endsOn: string | null;
   active: boolean;
+  /**
+   * Attached to the property, rather than only paying one of its loans:
+   * what its page lists among its recurring entries.
+   */
+  attached: boolean;
   categoryName: string;
   categoryType: CategoryType;
 }
@@ -124,54 +129,95 @@ export async function getProperties(
   }
 
   const ids = properties.map((property) => property.id);
-  const [loans, templates] = await Promise.all([
-    db
-      .from("property_loans")
-      .select("*")
-      .eq("user_id", userId)
-      .in("property_id", ids)
-      .order("created_at"),
-    db
-      .from("recurring_templates")
-      .select(
-        "id, property_id, description, amount, recurrence, day_of_month, day_of_week, month_of_year, starts_on, ends_on, active, categories(name, type)",
-      )
-      .eq("user_id", userId)
-      .in("property_id", ids)
-      .order("created_at"),
-  ]);
-  if (loans.error) {
-    throw loans.error;
+  const { data: loanRows, error: loansError } = await db
+    .from("property_loans")
+    .select("*")
+    .eq("user_id", userId)
+    .in("property_id", ids)
+    .order("created_at");
+  if (loansError) {
+    throw loansError;
   }
-  if (templates.error) {
-    throw templates.error;
+  const loans = (loanRows ?? []).map(loanFromRow);
+
+  // The templates attached to a property, and those its loans pay through,
+  // which the user may since have detached from it.
+  const linked = loans.flatMap((loan) =>
+    loan.recurring_template_id ? [loan.recurring_template_id] : [],
+  );
+  const query = db
+    .from("recurring_templates")
+    .select(
+      "id, property_id, description, amount, recurrence, day_of_month, day_of_week, month_of_year, starts_on, ends_on, active, categories(name, type)",
+    )
+    .eq("user_id", userId);
+  const { data: templateRows, error: templatesError } = await (
+    linked.length > 0
+      ? query.or(
+          `property_id.in.(${ids.join(",")}),id.in.(${linked.join(",")})`,
+        )
+      : query.in("property_id", ids)
+  ).order("created_at");
+  if (templatesError) {
+    throw templatesError;
   }
 
   return {
     available: true,
-    properties: properties.map((property) => ({
-      property,
-      loans: (loans.data ?? [])
-        .filter((loan) => loan.property_id === property.id)
-        .map(loanFromRow),
-      templates: (templates.data ?? [])
-        .filter((template) => template.property_id === property.id)
-        .map((template): AttachedTemplate => ({
-          id: template.id,
-          description: template.description,
-          amount: Number(template.amount),
-          recurrence: template.recurrence,
-          dayOfMonth: template.day_of_month,
-          dayOfWeek: template.day_of_week,
-          monthOfYear: template.month_of_year,
-          startsOn: template.starts_on,
-          endsOn: template.ends_on,
-          active: template.active,
-          categoryName: template.categories?.name ?? "",
-          categoryType: template.categories?.type ?? "expense",
-        })),
-    })),
+    properties: properties.map((property) => {
+      const own = loans.filter((loan) => loan.property_id === property.id);
+      const paidThrough = new Set(
+        own.map((loan) => loan.recurring_template_id),
+      );
+      return {
+        property,
+        loans: own,
+        templates: (templateRows ?? [])
+          .filter(
+            (template) =>
+              template.property_id === property.id ||
+              paidThrough.has(template.id),
+          )
+          .map((template): AttachedTemplate => ({
+            id: template.id,
+            description: template.description,
+            amount: Number(template.amount),
+            recurrence: template.recurrence,
+            dayOfMonth: template.day_of_month,
+            dayOfWeek: template.day_of_week,
+            monthOfYear: template.month_of_year,
+            startsOn: template.starts_on,
+            endsOn: template.ends_on,
+            active: template.active,
+            attached: template.property_id === property.id,
+            categoryName: template.categories?.name ?? "",
+            categoryType: template.categories?.type ?? "expense",
+          })),
+      };
+    }),
   };
+}
+
+/**
+ * Each property's name, for a picker: what a recurring template can be
+ * attached to. Empty before migration 049.
+ */
+export async function getPropertyNames(
+  db: Db,
+  userId: string,
+): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await db
+    .from("properties")
+    .select("id, name")
+    .eq("user_id", userId)
+    .order("purchased_on");
+  if (error) {
+    if (isMissingSchema(error)) {
+      return [];
+    }
+    throw error;
+  }
+  return data ?? [];
 }
 
 /* ------------------------------------------------------------------ writing */
@@ -445,6 +491,7 @@ async function writeLoanPayment(
     dayOfMonth: Number(first.on.slice(8, 10)),
     startsOn: first.on,
     endsOn: last.on,
+    propertyId: loan.property_id,
   });
   if ("error" in template) {
     return { error: template.error };
@@ -476,7 +523,15 @@ export async function addLoanPayment(
   }
   const loan = loanFromRow(row);
   if (loan.recurring_template_id) {
-    return { success: true, templateId: loan.recurring_template_id };
+    const linked = await linkTemplate(
+      db,
+      userId,
+      loan,
+      loan.recurring_template_id,
+    );
+    return linked.success
+      ? { success: true, templateId: loan.recurring_template_id }
+      : { error: linked.error };
   }
   return writeLoanPayment(db, userId, loan, payment);
 }

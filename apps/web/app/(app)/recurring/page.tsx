@@ -7,6 +7,9 @@ import {
 } from "@/lib/queries/finance";
 import { getRecurringProposals, hasBankFeed } from "@/lib/queries/bank";
 import { todayIsoLocal } from "@finance/core/constants";
+import { isFlagOn } from "@finance/core/flags";
+import { getFlags } from "@/lib/flags";
+import { getPropertyNames } from "@/lib/queries/properties";
 import { RecurringView } from "@/components/finance/RecurringView";
 
 interface RecurringPageProps {
@@ -22,7 +25,7 @@ export default async function RecurringPage({
     redirect("/login");
   }
 
-  const [templates, categories, bankFed, recordedThisMonth, params] =
+  const [templates, categories, bankFed, recordedThisMonth, params, flags] =
     await Promise.all([
       getRecurringTemplates(user.id),
       getCategories(user.id),
@@ -31,7 +34,12 @@ export default async function RecurringPage({
       // this month.
       getRecordedThisMonth(user.id),
       searchParams,
+      getFlags(),
     ]);
+  // What a charge can belong to, for an account that keeps properties.
+  const properties = isFlagOn(flags, "property.track")
+    ? await getPropertyNames(user.id)
+    : [];
 
   // Only worth asking where there is a statement to read it out of. Without
   // one the transactions are the user's own typing, and they already know
@@ -48,6 +56,7 @@ export default async function RecurringPage({
       recordedThisMonth={recordedThisMonth}
       // A planned row's "Edit the charge" lands here with the editor open.
       initialEditId={params.edit}
+      properties={properties}
     />
   );
 }
