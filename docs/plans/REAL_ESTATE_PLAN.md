@@ -397,10 +397,13 @@ every page with the error screen. Fixed in this phase.
       screens read it with `templates`.
 - [x] Charges: the same field (edit sheet) and chip.
 - [x] Bar comment and `apps/mobile/DESIGN.md` updated for six.
-- [ ] Run on a device or in the browser build. Typechecked and linted only:
-      the owner's own web dev server held 3.2 GB of a 7.8 GB machine with
-      swap full, and Metro with a browser on top risked the crash recorded
-      in the memory notes.
+- [x] Run in the Expo web build against the local stack: adding a property
+      with its loan wrote the property, the loan and a 1 204,92 € template;
+      the list, the property's screen and the chip in Récurrents draw with
+      the right figures.
+- [ ] On a device: the tab labels shrinking (`adjustsFontSizeToFit` is
+      native-only), button fills and screen margins, which the web build
+      does not draw on any screen.
 
 Before the phone could share it, the web's « add a property with its loan »
 moved into `@finance/data` (`addPropertyWithLoan`), and the form's readings

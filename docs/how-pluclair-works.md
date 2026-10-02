@@ -251,9 +251,14 @@ assertion script:
 - Dead schema: `user_preferences.bearing_pins` and the `bearing_arrangements` table have no readers.
 - The `delete-account` edge function deletes a fixed list of older tables and relies on `on delete cascade` for the rest.
 - The phone has no By category view, no look-through and no wallet read.
-- The phone's Immobilier screens have only been typechecked and linted,
-  not run on a device: the machine they were built on had no memory to
-  spare for Metro and a browser at the time.
+- The phone's Immobilier screens were run in the Expo web build (adding a
+  property with its loan, the list, a property's screen, the chip in
+  Récurrents), not on a device. That build needs three local changes to
+  start — `"output": "single"`, and a guard each on
+  `Appearance.setColorScheme` and `useLastNotificationResponse`, both
+  native-only — and draws no button fill, no screen margin and no
+  shrinking tab label, on every screen alike; those three are the device's
+  to confirm.
 - A page with a `loading.tsx` streams, so `notFound()` from it — the
   property pages for an account without `property.track` — draws the app's
   « Page introuvable » under a 200 rather than a 404.
