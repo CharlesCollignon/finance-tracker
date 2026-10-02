@@ -129,17 +129,10 @@ export async function getBankMerchantIndex(
         .order("id")
         .range(from, to),
     { max: 2000 },
-  ).catch(() => []);
-
-  type Row = {
-    note: string | null;
-    category_id: string;
-    occurred_on: string;
-    categories: { name: string; type: string } | null;
-  };
+  ).catch(() => null);
 
   return buildBankMerchantIndex(
-    (data as unknown as Row[]).flatMap((row) =>
+    (data ?? []).flatMap((row) =>
       row.categories ? [{ ...row, categories: row.categories }] : [],
     ),
   );
@@ -292,10 +285,7 @@ export async function getRecurringProposals(
 
   const proposals = detectRecurring(
     transactions.map((row) => {
-      const category = row.categories as unknown as {
-        name: string;
-        type: CategoryType;
-      };
+      const category = row.categories;
       return {
         occurredOn: row.occurred_on,
         amount: Number(row.amount),

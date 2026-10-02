@@ -144,13 +144,7 @@ export async function getSkippedOccurrences(
     throw error;
   }
 
-  type Row = {
-    template_id: string;
-    occurred_on: string;
-    recurring_templates: { categories: { name: string } | null } | null;
-  };
-
-  return ((data ?? []) as unknown as Row[]).map((row) => ({
+  return (data ?? []).map((row) => ({
     templateId: row.template_id,
     occurredOn: row.occurred_on,
     // Empty rather than an English word; the screen names it.

@@ -53,9 +53,7 @@ export async function getSavingsReserve(
   );
 
   return rows.reduce((sum, row) => {
-    const withdrawal =
-      (row.categories as unknown as { counts_toward_summary: boolean })
-        .counts_toward_summary === false;
+    const withdrawal = row.categories.counts_toward_summary === false;
     return sum + (withdrawal ? -Number(row.amount) : Number(row.amount));
   }, 0);
 }
