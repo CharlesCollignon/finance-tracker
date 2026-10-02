@@ -106,18 +106,18 @@ off (`user_preferences.notification_prefs`, every kind on unless set to
 logging it so the next run sends it, and logs each key in `notification_log`
 before sending, so nothing is said twice.
 
-| Kind        | What                                                                              | Sent by                   | Key                                                                                      |
-| ----------- | --------------------------------------------------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------- |
-| `recap`     | Monday: last week, the month so far, still to come                                | notify cron, Mondays      | `recap:<monday>`                                                                         |
-| `overdraft` | The balance dips below zero on a day ahead                                        | notify cron               | `overdraft:<month>`                                                                      |
-| `close`     | The reading day; a month a bank closed                                            | notify cron; refresh cron | `close:` / `closed:`                                                                     |
-| `bigCharge` | Tomorrow, a charge over twice the usual, or yearly                                | notify cron               | `big-charge:<tomorrow>`                                                                  |
-| `arrived`   | Movements that look like a planned charge arrived                                 | notify cron               | `arrived:<day>`                                                                          |
-| `review`    | New bank rows waiting for a category                                              | refresh cron              | `bank-review:<day>`                                                                      |
-| `milestone` | A new milestone passed since the last one celebrated                              | notify cron               | `milestone:<amount>`                                                                     |
-| `property`  | Half a loan repaid, its last payment; a home's new estimate after a DVF half-year | notify cron; market cron  | `property:half:<loan>`, `property:last:<loan>`, `property:market:<property>:<half-year>` |
-| `monthOpen` | A new month has opened                                                            | notify cron               | `month-open:<month>`                                                                     |
-| `bank`      | The connection needs renewing or has stopped                                      | notify cron               | `bank-consent:`, `bank-expired:`, `bank-paused:`                                         |
+| Kind        | What                                                                                                      | Sent by                   | Key                                                                                                                         |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `recap`     | Monday: last week, the month so far, still to come                                                        | notify cron, Mondays      | `recap:<monday>`                                                                                                            |
+| `overdraft` | The balance dips below zero on a day ahead                                                                | notify cron               | `overdraft:<month>`                                                                                                         |
+| `close`     | The reading day; a month a bank closed                                                                    | notify cron; refresh cron | `close:` / `closed:`                                                                                                        |
+| `bigCharge` | Tomorrow, a charge over twice the usual, or yearly                                                        | notify cron               | `big-charge:<tomorrow>`                                                                                                     |
+| `arrived`   | Movements that look like a planned charge arrived                                                         | notify cron               | `arrived:<day>`                                                                                                             |
+| `review`    | New bank rows waiting for a category                                                                      | refresh cron              | `bank-review:<day>`                                                                                                         |
+| `milestone` | A new milestone passed since the last one celebrated                                                      | notify cron               | `milestone:<amount>`                                                                                                        |
+| `property`  | Half a loan repaid, its last payment, half a home the user's; a home's new estimate after a DVF half-year | notify cron; market cron  | `property:half:<loan>`, `property:last:<loan>`, `property:equity-half:<property>`, `property:market:<property>:<half-year>` |
+| `monthOpen` | A new month has opened                                                                                    | notify cron               | `month-open:<month>`                                                                                                        |
+| `bank`      | The connection needs renewing or has stopped                                                              | notify cron               | `bank-consent:`, `bank-expired:`, `bank-paused:`                                                                            |
 
 The messages are built in `packages/core/src/push-messages.ts`,
 `push-digest.ts` and `weekly-recap.ts`; the figures behind them come from the
@@ -131,7 +131,9 @@ reminders for its charges and the month opening, under the same switches
 (`bigCharge` and `monthOpen`).
 
 A property's moments (`property-moments.ts`) are a change, not a state: a
-loan's half and its last payment count for a month after the day, so a loan
+loan's half, its last payment and half a home the user's (its loans owing
+half its value or less, through the payments, at today's estimate) count
+for a month after the day, so a loan
 that passed half before the app knew it is not news, and a new estimate only
 when a reading's last sale reaches a half-year the reading before did not —
 twice a year at most, since DVF grows twice a year. The market cron runs on

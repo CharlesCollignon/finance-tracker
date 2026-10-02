@@ -796,8 +796,8 @@ all; changing one alone breaks the frame.
 
 A moment is something the user did, said back to them where it happened: a
 milestone reached, a cushion rung lit and the run kept alive on Plan, a month
-closed in the close sheet, the review inbox emptied, and a loan half repaid
-or repaid on its card. It replaced, in October 2026, the rule that
+closed in the close sheet, the review inbox emptied, a loan half repaid or
+repaid on its card, and half a home the user's. It replaced, in October 2026, the rule that
 only Plan celebrates. The allowance is specific:
 
 - **Real and measured.** Every moment is a fact about the user's own money or
@@ -827,7 +827,19 @@ pill beside its name on the property's page — « La moitié est remboursée »
 « Prêt remboursé » — for the month after the day (`loanMoment`,
 `packages/core/src/property-moments.ts`). It happens while nobody is looking,
 so the device remembers that it popped (`components/motion/use-moment-seen.ts`)
-and the pill rests from then on; a push said it on the day.
+and the pill rests from then on; a push said it on the day. « La moitié est à
+vous » is the same, under a property's net value, on the day its loans owe
+half its value or less through the payments (`equityMoment`) — a market
+reading that moves the value is not the user's doing, and is not one.
+
+**A property's progress.** What the user watches grow between moments, in
+`components/finance/property/ProgressBars.tsx`: « À vous / à la banque »,
+their part of a home that is theirs; each loan's track, what is repaid with
+marks at 25, 50 and 75 % and what is left; the next payment as one bar, the
+principal first (« 656 € de plus sont à vous »). The bars are neutral, as a
+milestone ahead is; only a mark already passed is gold, because gold means
+done. Each grows from nothing as it arrives (`grow-in`), and the facts
+behind them are `packages/core/src/property-progress.ts`.
 
 **The inbox emptied.** When the last group is filed, « Tout est classé. »
 pops in with a gold tick, and under it how many shops were just filed under a

@@ -56,22 +56,31 @@ its page.
 
 ## Phase 2 — Progress you can see (branch `property-polish-2/progress`)
 
-- [ ] `core`: the user's part that is theirs, a loan's progress and what is
+- [x] `core`: the user's part that is theirs, a loan's progress and what is
       left, this month's payment split, and the day half the home became
       the user's (`property-progress.ts`, tested).
-- [ ] « À vous / à la banque » on each card of the list and on the
+- [x] « À vous / à la banque » on each card of the list and on the
       property's page; the loan's track on each loan; « Ce mois-ci » on each
       running loan. Each bar fills from nothing on arrival.
-- [ ] The new moment: pill on the property's page, push under the
+- [x] The new moment: pill on the property's page, push under the
       `property` switch (`property:equity-half:<property>`).
 
 ## Phase 3 — Interactions and motion (branch `property-polish-3/motion`)
 
-- [ ] The list and a property's sections arrive staggered; cards answer a
+- [x] The list and a property's sections arrive staggered; cards answer a
       press; saves answer with a haptic on the phone.
-- [ ] The add sheet shows where it is (1 · 2 · 3) and moves between steps
+- [x] The add sheet shows where it is (1 · 2 · 3) and moves between steps
       with a short cross-fade.
-- [ ] The estimate's arrival: a quiet shimmer while reading, then the figure
+- [x] The estimate's arrival: a quiet shimmer while reading, then the figure
       counts and its source fades in.
-- [ ] An empty Immobilier tab says in three lines what it will show.
-- [ ] Both DESIGN.md files, the guide.
+- [x] An empty Immobilier tab says in three lines what it will show.
+- [x] Both DESIGN.md files, the guide.
+
+Checked against the local stack on both apps (the phone through its web
+build): a Lyon 3e apartment worth 238 000 €, its loan brought to 118 000 €
+by an early repayment on 25 September, shows « La moitié est à vous » under
+its net value, « À vous 50,4 % · À la banque 49,6 % », its loan « 41 %
+remboursé » with the 25 % mark in gold and « Encore 146 échéances, fin en
+nov. 2038 », and its next payment « 656,22 € de plus sont à vous ». A home
+with no loan reads « Entièrement à vous ». The add sheet shows « Étape 2 sur
+3 » over its three bars, and an empty tab its three lines.
