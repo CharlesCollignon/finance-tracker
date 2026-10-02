@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
+import Animated, { useReducedMotion, ZoomIn } from "react-native-reanimated";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -26,6 +27,7 @@ import {
   valueSourceLine,
 } from "@finance/core/property";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
+import { loanMoment, type LoanMoment } from "@finance/core/property-moments";
 import { isLet } from "@finance/core/rental";
 import { formatRate } from "@finance/core/savings-accounts";
 import type { PropertyLoan } from "@finance/core/types/database";
@@ -52,6 +54,7 @@ import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
 import { hapticSuccess, hapticWarning } from "@/lib/haptics";
+import { useMomentSeen } from "@/lib/moments";
 import {
   addLoanPayment,
   getProperties,
@@ -383,6 +386,7 @@ function LoanCard({
     template !== undefined && split !== null && Math.abs(template.amount - split.total) >= 1;
   const endDrifted =
     template !== undefined && totals.endsOn !== null && template.endsOn !== totals.endsOn;
+  const moment = loanMoment(loan, today);
   const length =
     loan.months % 12 === 0
       ? t("property.yearsCount", { count: loan.months / 12 })
@@ -404,7 +408,10 @@ function LoanCard({
   return (
     <Card bezel innerClassName="gap-4">
       <View className="gap-0.5">
-        <Text className="font-semibold">{loan.label}</Text>
+        <View className="flex-row flex-wrap items-center gap-2">
+          <Text className="font-semibold">{loan.label}</Text>
+          {moment ? <LoanMomentPill loanId={loan.id} moment={moment} /> : null}
+        </View>
         <PrivateAmount className="text-xs text-muted-foreground">
           {[
             t("property.loanTerms", {
@@ -599,6 +606,33 @@ function ScheduleByYear({ schedule }: { schedule: readonly LoanPayment[] }) {
 }
 
 /** « Mettre à jour le capital restant dû », and the way back from it. */
+/**
+ * Half the loan repaid, or its last payment made, in the month after: a
+ * moment, in gold, popping in with the success haptic the first time this
+ * phone sees it.
+ */
+function LoanMomentPill({ loanId, moment }: { loanId: string; moment: LoanMoment }) {
+  const t = useT();
+  const reduce = useReducedMotion();
+  const seen = useMomentSeen(`${moment.kind}:${loanId}`);
+  if (seen === null) {
+    return null;
+  }
+  return (
+    // The animated view only arrives; the pill inside it is a plain view, so
+    // its gold is drawn like any other fill.
+    <Animated.View
+      entering={seen || reduce ? undefined : ZoomIn.springify().damping(11).stiffness(160)}
+    >
+      <View className="rounded-full bg-primary px-2.5 py-1">
+        <Text className="text-xs font-semibold text-primary-foreground">
+          {moment.kind === "half" ? t("property.momentHalf") : t("property.momentLast")}
+        </Text>
+      </View>
+    </Animated.View>
+  );
+}
+
 function KnownOutstandingEditor({ loan, today }: { loan: PropertyLoan; today: string }) {
   const t = useT();
   const { toast } = useToast();
