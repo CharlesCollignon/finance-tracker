@@ -1,15 +1,13 @@
 "use client";
 
 import { useLocale } from "@/lib/locale-context";
+import { formatWeightShare } from "@finance/core/look-through";
 import { useId, useState } from "react";
 import { CaretDown } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
 import { MICRO } from "@/lib/type-scale";
 import { ICON } from "@/lib/icon-scale";
-import { formatPercentLabel } from "@finance/core/constants";
-import { INTL_LOCALES, type Locale } from "@finance/core/i18n/locale";
-import { translator } from "@finance/core/i18n/t";
 
 export interface WeightBarRow {
   id: string;
@@ -142,7 +140,7 @@ export function WeightBars({
                 </span>
               </span>
               <span className="shrink-0 text-sm font-semibold tabular-nums">
-                {formatShare(restWeight, locale)}
+                {formatWeightShare(restWeight, locale)}
               </span>
             </div>
             <Bar weight={restWeight} largest={largest} />
@@ -183,7 +181,7 @@ function Row({ row, largest }: { row: WeightBarRow; largest: number }) {
           <span className="min-w-0 truncate text-sm">{row.label}</span>
         </span>
         <span className="shrink-0 text-sm font-semibold tabular-nums">
-          {formatShare(row.weight, locale)}
+          {formatWeightShare(row.weight, locale)}
           {row.detail ? (
             <span
               className={cn(MICRO, "ml-2 font-normal text-muted-foreground")}
@@ -216,22 +214,4 @@ function Bar({ weight, largest }: { weight: number; largest: number }) {
       />
     </div>
   );
-}
-
-/**
- * A share, at one decimal place at most.
- *
- * Below a tenth of a percent it reads as "<0.1%" rather than "0.0%", which
- * would say the holding is not there.
- */
-function formatShare(weight: number, locale: Locale): string {
-  const percent = weight * 100;
-  if (percent > 0 && percent < 0.1) {
-    return `<${formatPercentLabel(0.1, locale)}`;
-  }
-  return translator(locale)("units.percent", {
-    value: new Intl.NumberFormat(INTL_LOCALES[locale], {
-      maximumFractionDigits: percent < 10 ? 1 : 0,
-    }).format(percent),
-  });
 }

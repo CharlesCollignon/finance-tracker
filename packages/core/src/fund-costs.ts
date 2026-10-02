@@ -282,3 +282,19 @@ export function chargeLookupUrl(
   }
   return `https://www.justetf.com/en/search.html?query=${encodeURIComponent(query)}`;
 }
+
+/** Each wallet's own yearly fee, from its plan, where one was given. */
+export function wrapperFeesFromPlans(
+  plans: readonly {
+    wallet: InvestmentWalletId;
+    wrapper_fee?: number | string | null;
+  }[],
+): WrapperFees {
+  const fees: WrapperFees = {};
+  for (const plan of plans) {
+    if (plan.wrapper_fee !== null && plan.wrapper_fee !== undefined) {
+      fees[plan.wallet] = Number(plan.wrapper_fee);
+    }
+  }
+  return fees;
+}

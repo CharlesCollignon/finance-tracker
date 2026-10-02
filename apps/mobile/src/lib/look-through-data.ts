@@ -3,8 +3,8 @@ import {
   INVESTMENT_WALLET_IDS,
   type InvestmentWalletId,
 } from "@finance/core/investments";
+import { wrapperFeesFromPlans } from "@finance/core/fund-costs";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
-import type { WrapperFees } from "@finance/core/fund-costs";
 import {
   buildLookThrough,
   type LookThrough,
@@ -32,7 +32,7 @@ import {
   parseLocale,
   type Locale,
 } from "@finance/core/i18n/locale";
-import type { WalletPlan, WalletReadRow } from "@finance/core/types/database";
+import type { WalletReadRow } from "@finance/core/types/database";
 
 import { WEB_APP_URL } from "@/lib/env";
 import { getWalletPlans, getWalletPortfolio } from "@/lib/queries";
@@ -112,16 +112,6 @@ async function getStoredWalletRead(
   };
 }
 
-function envelopeFees(plans: WalletPlan[]): WrapperFees {
-  const fees: WrapperFees = {};
-  for (const plan of plans) {
-    if (plan.wrapper_fee !== null && plan.wrapper_fee !== undefined) {
-      fees[plan.wallet] = Number(plan.wrapper_fee);
-    }
-  }
-  return fees;
-}
-
 export interface LookThroughData {
   portfolio: InvestmentPortfolioSummary;
   lookThrough: LookThrough;
@@ -167,7 +157,7 @@ export async function getLookThroughData(
   const lookThrough = buildLookThrough({
     positions,
     readings: readings.byIsin,
-    envelopeFees: envelopeFees(plans),
+    envelopeFees: wrapperFeesFromPlans(plans),
     now,
   });
 

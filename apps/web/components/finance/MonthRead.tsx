@@ -19,7 +19,7 @@ import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
 import type { Locale } from "@finance/core/i18n/locale";
 import { LOCALE_LABELS } from "@finance/core/i18n/locale";
-import { describeModel } from "@finance/core/model-name";
+import { exactModelLabel } from "@finance/core/model-name";
 import { useLocale, useT } from "@/lib/locale-context";
 
 interface MonthReadProps {
@@ -215,7 +215,9 @@ export function MonthRead({
               {" "}
               {readModel === null
                 ? t("monthRead.writtenByUnknown")
-                : t("monthRead.writtenBy", { model: exactModel(readModel) })}
+                : t("monthRead.writtenBy", {
+                    model: exactModelLabel(readModel),
+                  })}
             </>
           ) : null}
         </p>
@@ -247,19 +249,6 @@ export function MonthRead({
       </div>
     </section>
   );
-}
-
-/**
- * "Mistral Large (mistral-large-latest)": the maker, the model and the build.
- *
- * The id is repeated in brackets because it is what someone would compare
- * against a configuration, while the name is what they would recognise. An id
- * this app cannot attribute is shown as it stands — an unfamiliar string
- * beats naming the wrong writer.
- */
-function exactModel(modelId: string): string {
-  const named = describeModel(modelId);
-  return named.full === named.id ? named.id : `${named.full} (${named.id})`;
 }
 
 /**
