@@ -81,10 +81,10 @@ export const fr: Messages = {
     passkeys: "Clés d'accès",
     notificationsSection: "Notifications",
     notificationsFooterWeb:
-      "Ce navigateur uniquement — votre téléphone a ses propres rappels.",
+      "Le premier interrupteur ne concerne que ce navigateur. Les autres valent pour tous vos appareils.",
     notificationsFooterMobile:
-      "Des rappels pour ce qui revient, et une alerte quand la banque laisse quelque chose sans catégorie.",
-    remindersAndNudges: "Rappels et alertes",
+      "Le premier interrupteur ne concerne que ce téléphone. Les autres valent pour tous vos appareils.",
+    onThisPhone: "Sur ce téléphone",
     dataSection: "Données",
     deleteAllData: "Supprimer toutes les données",
     deleteConfirmLabel: "Tapez DELETE pour confirmer",
@@ -1505,6 +1505,40 @@ export const fr: Messages = {
       "Inclut toutes les échéances dues ce mois-ci, achats de placements compris.",
   },
 
+  notificationKinds: {
+    recap: {
+      label: "Le récap du lundi",
+      hint: "Votre semaine en quelques chiffres, le lundi matin.",
+    },
+    overdraft: {
+      label: "Risque de découvert",
+      hint: "Quand le solde prévu passe sous zéro avant la fin du mois.",
+    },
+    close: {
+      label: "Bilan du mois",
+      hint: "Le jour où noter votre solde, et quand votre banque l'a fait pour vous.",
+    },
+    bigCharge: {
+      label: "Grosse dépense demain",
+      hint: "La veille d'une opération plus forte que d'habitude, ou annuelle.",
+    },
+    arrived: {
+      label: "Opération arrivée",
+      hint: "Quand un salaire ou une opération prévue semble être passé.",
+    },
+    review: {
+      label: "Opérations à classer",
+      hint: "Quand votre banque a apporté des opérations sans catégorie.",
+    },
+    monthOpen: {
+      label: "Nouveau mois",
+      hint: "Le 1er, quand le mois commence.",
+    },
+    bank: {
+      label: "Connexion bancaire",
+      hint: "Quand il faut la renouveler, ou si elle s'est arrêtée.",
+    },
+  },
   recap: {
     title: "Votre semaine",
     lastWeek: "{amount} dépensés la semaine dernière.",

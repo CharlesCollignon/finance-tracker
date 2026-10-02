@@ -19,6 +19,8 @@ import * as ledger from "@finance/data/ledger";
 import * as plans from "@finance/data/wallet-plans";
 import * as occurrences from "@finance/data/occurrences";
 import * as recap from "@finance/data/weekly-recap";
+import * as preferences from "@finance/data/preferences";
+import type { NotificationKind } from "@finance/core/notification-kinds";
 import type { ActionResult } from "@finance/core/action-result";
 import { supabase } from "@/lib/supabase";
 import type { Locale } from "@finance/core/i18n/locale";
@@ -515,5 +517,18 @@ export function dismissWeeklyRecap(
 ): Promise<ActionResult> {
   return asUser((userId) =>
     recap.dismissWeeklyRecap(supabase, userId, weekOf, locale),
+  );
+}
+
+/* --------------------------------------------------- what to be told */
+
+/** Turn one kind of notification on or off, for the account. */
+export function setNotificationPref(
+  kind: NotificationKind,
+  wanted: boolean,
+  locale: Locale,
+): Promise<ActionResult> {
+  return asUser((userId) =>
+    preferences.setNotificationPref(supabase, userId, kind, wanted, locale),
   );
 }

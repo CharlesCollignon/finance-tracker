@@ -5,7 +5,9 @@ import {
   type Locale,
 } from "@finance/core/i18n/locale";
 import {
+  NOTIFICATION_KINDS,
   readNotificationPrefs,
+  type NotificationKind,
   type NotificationPrefs,
 } from "@finance/core/notification-kinds";
 
@@ -117,7 +119,11 @@ async function writePreferences(
   db: Db,
   userId: string,
   locale: Locale,
-  change: { dismissed_prompts?: string[]; milestone_seen?: number },
+  change: {
+    dismissed_prompts?: string[];
+    milestone_seen?: number;
+    notification_prefs?: NotificationPrefs;
+  },
 ): Promise<ActionResult> {
   const { data: existing, error: readError } = await db
     .from("user_preferences")
@@ -194,4 +200,21 @@ export async function markMilestoneSeen(
     return { success: true };
   }
   return writePreferences(db, userId, locale, { milestone_seen: amount });
+}
+
+/** Turn one kind of notification on or off, on every device. */
+export async function setNotificationPref(
+  db: Db,
+  userId: string,
+  kind: NotificationKind,
+  wanted: boolean,
+  locale: Locale,
+): Promise<ActionResult> {
+  if (!NOTIFICATION_KINDS.includes(kind)) {
+    return { error: "errors.invalidInput" };
+  }
+  const { prefs } = await getNotificationSettings(db, userId);
+  return writePreferences(db, userId, locale, {
+    notification_prefs: { ...prefs, [kind]: wanted },
+  });
 }

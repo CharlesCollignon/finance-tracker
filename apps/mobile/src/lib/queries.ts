@@ -4,6 +4,7 @@ import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
 import * as templates from "@finance/data/templates";
 import * as bankBalance from "@finance/data/bank-balance";
+import * as preferences from "@finance/data/preferences";
 import {
   getCurrentMonth,
   getMonthBounds,
@@ -960,4 +961,11 @@ export async function getRecurringProposals(
   );
 
   return filterLiveProposals(proposals, today, covered);
+}
+
+/** Which kinds of notification the account has turned off. */
+export function getNotificationSettings(
+  userId: string,
+): Promise<preferences.NotificationSettings> {
+  return preferences.getNotificationSettings(supabase, userId);
 }

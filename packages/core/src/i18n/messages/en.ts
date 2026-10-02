@@ -141,10 +141,10 @@ export const en = {
     passkeys: "Passkeys",
     notificationsSection: "Notifications",
     notificationsFooterWeb:
-      "This browser only — your phone has its own reminders.",
+      "The first switch is for this browser only. The others apply on all your devices.",
     notificationsFooterMobile:
-      "Reminders for what repeats, plus a nudge when the bank leaves something needing a category.",
-    remindersAndNudges: "Reminders and nudges",
+      "The first switch is for this phone only. The others apply on all your devices.",
+    onThisPhone: "On this phone",
     dataSection: "Data",
     deleteAllData: "Delete all data",
     deleteConfirmLabel: "Type DELETE to confirm",
@@ -2147,6 +2147,40 @@ export const en = {
    * locale has to be stored per user and not only in a cookie.
    */
   /** The Monday recap: the push and the card on Le point say the same lines. */
+  notificationKinds: {
+    recap: {
+      label: "The Monday recap",
+      hint: "Your week in a few figures, on Monday morning.",
+    },
+    overdraft: {
+      label: "Overdraft risk",
+      hint: "When the expected balance goes below zero before the month ends.",
+    },
+    close: {
+      label: "Month review",
+      hint: "The day to note your balance, and when your bank did it for you.",
+    },
+    bigCharge: {
+      label: "Big charge tomorrow",
+      hint: "The day before a charge larger than usual, or a yearly one.",
+    },
+    arrived: {
+      label: "Payment arrived",
+      hint: "When a salary or a planned charge looks like it has gone through.",
+    },
+    review: {
+      label: "Transactions to sort",
+      hint: "When your bank brought in transactions without a category.",
+    },
+    monthOpen: {
+      label: "New month",
+      hint: "On the 1st, when the month begins.",
+    },
+    bank: {
+      label: "Bank connection",
+      hint: "When it needs renewing, or has stopped.",
+    },
+  },
   recap: {
     title: "Your week",
     lastWeek: "{amount} spent last week.",

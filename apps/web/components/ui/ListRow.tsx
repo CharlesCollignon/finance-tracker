@@ -11,6 +11,8 @@ import { MICRO } from "@/lib/type-scale";
 export interface ListRowProps {
   icon?: Icon;
   label: string;
+  /** A line under the label, for a setting whose name alone is not enough. */
+  hint?: string;
   /** Right-aligned current setting — "Euro (€)", "3 passkeys", an email. */
   value?: ReactNode;
   /** A switch, a badge, anything replacing the chevron. */
@@ -49,6 +51,7 @@ export interface ListRowProps {
 export function ListRow({
   icon: IconGlyph,
   label,
+  hint,
   value,
   trailing,
   href,
@@ -76,12 +79,22 @@ export function ListRow({
       ) : null}
       <span
         className={cn(
-          "min-w-0 flex-1 truncate text-left",
+          "min-w-0 flex-1 text-left",
+          !hint && "truncate",
           destructive && "text-destructive",
           disabled && "text-muted-foreground",
         )}
       >
-        {label}
+        {hint ? (
+          <>
+            <span className="block truncate">{label}</span>
+            <span className={cn("block text-muted-foreground", MICRO)}>
+              {hint}
+            </span>
+          </>
+        ) : (
+          label
+        )}
       </span>
       {value ? (
         <span className="min-w-0 truncate text-sm text-muted-foreground">
