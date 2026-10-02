@@ -180,6 +180,11 @@ Taken from Phase 2's deferred list and what Phases 3–4 left open.
       investment and savings history stopped at 1 000 rows, it valued a
       pinned position at its quote, a taken category name failed sign-in
       seeding, and a review read error reached a toast in Supabase's English.
+- [x] Also: the Journal's CSV export defuses formulas a bank note could
+      carry and writes French readers the shape French Excel opens; a bank
+      balance is dated on the Paris calendar, not UTC's; the web's
+      allowance field reads « 1 200 », as the phone's already did; four
+      double casts and one hand-synced ref (`useEffectEvent`) are gone.
 - Not done: the display currency in a cookie — EUR is what the server
   already renders, so only a USD reader would gain, and the product is
   French first.

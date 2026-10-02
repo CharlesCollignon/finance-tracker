@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { parseTypedAmount } from "@finance/core/amount-input";
 import { Flame } from "@phosphor-icons/react";
 import {
   MIN_CLOSES_FOR_CAP,
@@ -75,8 +76,11 @@ export function MonthCloseHistory({
     });
   }
 
-  const parsedCap = Number(capDraft.replace(",", "."));
-  const capIsUsable = capDraft.trim() !== "" && Number.isFinite(parsedCap);
+  // « 1 200 » and « 1 200,50 » as well as "1200": the shapes the app's own
+  // figures are printed in, as on the phone. `Number` on the raw text read
+  // anything over a thousand as not a number, and Save never enabled.
+  const parsedCap = parseTypedAmount(capDraft);
+  const capIsUsable = parsedCap !== null;
 
   return (
     <Card className="block w-full">
