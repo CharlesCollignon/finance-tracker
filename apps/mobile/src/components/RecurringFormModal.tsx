@@ -41,6 +41,8 @@ interface RecurringFormModalProps {
   template?: RecurringTemplateWithCategory | null;
   /** The days this charge has been recorded on this month, today included. */
   recordedThisMonth?: string[];
+  /** The user's properties, which a charge can belong to. */
+  properties?: { id: string; name: string }[];
 }
 
 /**
@@ -55,6 +57,7 @@ export function RecurringFormModal({
   categories,
   template = null,
   recordedThisMonth = [],
+  properties = [],
 }: RecurringFormModalProps) {
   const t = useT();
 
@@ -99,6 +102,7 @@ export function RecurringFormModal({
               categories={categories}
               template={template}
               recordedThisMonth={recordedThisMonth}
+              properties={properties}
               onDone={onClose}
             />
           </ScrollView>
@@ -116,6 +120,12 @@ interface RecurringFormBodyProps {
    * When there are any, saving an edit asks whether they change too.
    */
   recordedThisMonth?: string[];
+  /**
+   * The user's properties. With none — no property, or the Add sheet, which
+   * does not offer it — the field is not drawn and not sent, so saving leaves
+   * the charge's property as it was.
+   */
+  properties?: { id: string; name: string }[];
   /** Called once the sheet around these fields should close. */
   onDone: () => void;
 }
@@ -129,6 +139,7 @@ export function RecurringFormBody({
   categories,
   template = null,
   recordedThisMonth = [],
+  properties = [],
   onDone,
 }: RecurringFormBodyProps) {
   const locale = useLocale();
@@ -151,6 +162,7 @@ export function RecurringFormBody({
     template?.share_count ? String(template.share_count) : "",
   );
   const [description, setDescription] = useState(template?.description ?? "");
+  const [propertyId, setPropertyId] = useState(template?.property_id ?? "");
   const [recurrence, setRecurrence] = useState<Recurrence>(
     template?.recurrence ?? "monthly",
   );
@@ -285,6 +297,10 @@ export function RecurringFormBody({
     if (endsOn.trim()) {
       payload.endsOn = endsOn.trim();
     }
+    // Only when the field was drawn: empty detaches, absent leaves it be.
+    if (properties.length > 0) {
+      payload.propertyId = propertyId;
+    }
     // Only sent when the question was on screen, so an answer given to a
     // question that then disappeared is not acted on.
     if (askApplyTo) {
@@ -373,6 +389,27 @@ export function RecurringFormBody({
           />
         </>
       )}
+
+      {properties.length > 0 ? (
+        <>
+          <Text className="mb-2 text-sm font-medium">
+            {t("property.attachLabel")}
+          </Text>
+          <ChoiceChips
+            label={t("property.attachLabel")}
+            className="mb-1"
+            options={[
+              { value: "", label: t("property.attachNone") },
+              ...properties.map(({ id, name }) => ({ value: id, label: name })),
+            ]}
+            value={propertyId}
+            onChange={setPropertyId}
+          />
+          <Text variant="muted" className="mb-4 text-xs">
+            {t("property.attachHint")}
+          </Text>
+        </>
+      ) : null}
 
       <Text className="mb-2 text-sm font-medium">
         {t("recurring.description")}

@@ -384,12 +384,16 @@ same component disagreed. Change the three together or not at all.
 
 The web's phone chrome: a header band with the orb and the screen title on the
 left and the refresh, privacy and account controls on the right, and the five
-tabs in a glass pill floating 12 above the bottom edge and 16 in from each side
+tabs — six with Immobilier, for an account with `property.track` — in a glass
+pill floating 12 above the bottom edge and 16 in from each side
 (`TAB_BAR_INSET`, `TAB_BAR_SIDE` in `theme/chrome.ts`). The active tab is the
-foreground with its filled icon, never gold. Screens pad their scroll content
+foreground with its filled icon, never gold. A label shrinks on one line, to
+80% at most, rather than lose its end: six tabs leave « Placements » less than
+it needs at 10pt on a 360pt phone. Screens pad their scroll content
 with `useTabBarClearance()`, which already counts the bar, its inset and the
 "+" above it. A view of a surface (the calendar, the look-through) is a hidden
-tab, so the bar stays on it.
+tab, so the bar stays on it; a property's own screen is pushed over the tabs,
+as Catégories is.
 
 ### The Orb
 

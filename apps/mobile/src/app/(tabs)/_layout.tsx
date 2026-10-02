@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { useRef, type ComponentProps } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TAB_BAR_INSET, TAB_BAR_SIDE, useTabBarHeight } from "@/theme/chrome";
 
@@ -13,6 +13,7 @@ import { ReminderProvider } from "@/providers/ReminderProvider";
 
 import { useThemeColors } from "@/theme/useThemeColors";
 import { useAppForeground } from "@/hooks/useAppForeground";
+import { useFlag } from "@/hooks/useFlag";
 import { useLedgerBadge } from "@/hooks/useLedgerBadge";
 import { useMonthFill } from "@/hooks/useMonthFill";
 import { useT } from "@/providers/LocaleProvider";
@@ -37,7 +38,8 @@ type TabConfig = {
 };
 
 /**
- * Five surfaces, mirroring APP_NAV_ITEMS on web.
+ * Five surfaces, mirroring APP_NAV_ITEMS on web, and a sixth — Immobilier —
+ * for an account with `property.track` (see the `property` screen below).
  *
  * There were six, and one of them was not a destination: Calendar is the
  * Ledger seen by date, and it is now a view inside it — see SurfaceTabs.
@@ -87,6 +89,14 @@ const TABS: TabConfig[] = [
   },
 ];
 
+/** The sixth surface, drawn only for an account that has the flag. */
+const PROPERTY_TAB: TabConfig = {
+  name: "property",
+  titleKey: "nav.property",
+  icon: "home",
+  iconInactive: "home-outline",
+};
+
 /*
  * A glass pill floating above the bottom edge, as the web's bar is at phone
  * width — it was a full-width bar docked to the edge, with square corners.
@@ -99,6 +109,7 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const barHeight = useTabBarHeight();
   const waiting = useLedgerBadge();
+  const showProperty = useFlag("property.track");
   // The month's charges, written in when the app opens — there is no Apply
   // button any more.
   useMonthFill();
@@ -126,7 +137,20 @@ export default function TabsLayout() {
               // web's bar; gold stays for the add button.
               tabBarActiveTintColor: colors.foreground,
               tabBarInactiveTintColor: colors.mutedForeground,
-              tabBarLabelStyle: { fontSize: 10, fontWeight: "500" },
+              // Six surfaces leave a label about 50pt on a 360pt phone, less
+              // than « Placements » needs at 10pt: it shrinks on one line, to
+              // 80% at most, rather than lose its end. Measured in
+              // docs/plans/REAL_ESTATE_PLAN.md, Phase 0.
+              tabBarLabel: ({ color, children }) => (
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                  style={{ color, fontSize: 10, fontWeight: "500" }}
+                >
+                  {children}
+                </Text>
+              ),
               tabBarItemStyle: { paddingVertical: 4, paddingHorizontal: 2 },
               // Blur only means something if content passes beneath the bar, so it
               // overlays rather than docks. Screens pad their scroll content to
@@ -192,6 +216,21 @@ export default function TabsLayout() {
                 }}
               />
             ))}
+            <Tabs.Screen
+              name={PROPERTY_TAB.name}
+              options={{
+                // Not a tab at all without the flag, so the bar keeps five.
+                href: showProperty ? undefined : null,
+                title: t(PROPERTY_TAB.titleKey),
+                tabBarIcon: ({ focused, color, size }) => (
+                  <Ionicons
+                    name={focused ? PROPERTY_TAB.icon : PROPERTY_TAB.iconInactive}
+                    size={size ?? 20}
+                    color={color}
+                  />
+                ),
+              }}
+            />
             {/* A view of the Ledger, not a destination of its own. */}
             <Tabs.Screen name="calendar" options={{ href: null }} />
             {/* And two of Placements: what the accounts earn, how the money

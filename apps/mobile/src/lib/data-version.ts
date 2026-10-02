@@ -26,6 +26,8 @@ export type DataArea =
   | "positions"
   /** Savings accounts. */
   | "accounts"
+  /** Properties and their loans. */
+  | "properties"
   /** The bank connection, its accounts, balances and review inbox. */
   | "bank"
   /** Month closes and their settings. */
@@ -41,6 +43,7 @@ export const ALL_AREAS: readonly DataArea[] = [
   "categories",
   "positions",
   "accounts",
+  "properties",
   "bank",
   "closes",
   "preferences",
@@ -63,6 +66,8 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
   instrument_readings: ["positions"],
   wallet_reads: ["positions"],
   savings_accounts: ["accounts"],
+  properties: ["properties"],
+  property_loans: ["properties"],
   bank_connections: ["bank"],
   bank_accounts: ["bank", "accounts"],
   bank_balances: ["bank"],
@@ -75,6 +80,13 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
   // This device's push address. Nothing on screen draws it.
   expo_push_tokens: [],
 };
+
+/**
+ * Database functions that only read. An RPC goes as a POST whatever it does,
+ * so without this list asking which flags are on would read as a write to
+ * everything and reload every screen.
+ */
+const READ_RPCS: ReadonlySet<string> = new Set(["evaluated_feature_flags"]);
 
 /** The web routes the phone writes through, by path. */
 const ROUTE_AREAS: Record<string, readonly DataArea[]> = {
@@ -109,9 +121,12 @@ function areasWrittenTo(
   } catch {
     return null;
   }
-  const rest = path.match(/\/rest\/v1\/([^/?]+)/);
+  const rest = path.match(/\/rest\/v1\/([^/?]+)(?:\/([^/?]+))?/);
   if (rest) {
-    return rest[1] === "rpc" ? ALL_AREAS : (TABLE_AREAS[rest[1]] ?? ALL_AREAS);
+    if (rest[1] === "rpc") {
+      return rest[2] && READ_RPCS.has(rest[2]) ? null : ALL_AREAS;
+    }
+    return TABLE_AREAS[rest[1]] ?? ALL_AREAS;
   }
   if (path.includes("/auth/v1/")) {
     return null;
