@@ -108,7 +108,9 @@
     "./address-search": "./src/address-search.ts",
     "./property-form": "./src/property-form.ts",
     "./price-index": "./src/price-index.ts",
-    "./market-reading": "./src/market-reading.ts"
+    "./market-reading": "./src/market-reading.ts",
+    "./rent-reference": "./src/rent-reference.ts",
+    "./rental": "./src/rental.ts"
   },
   "dependencies": {
     "zod": "^4.4.3"

@@ -17,8 +17,10 @@ import {
   NOTARY_FEE_ESTIMATE,
   notaryFeesEstimate,
 } from "@finance/core/property";
+import { isLet } from "@finance/core/rental";
 import type {
   DeferralKind,
+  EnergyClass,
   LoanKind,
   Property,
   PropertyKind,
@@ -27,6 +29,7 @@ import type {
 } from "@finance/core/types/database";
 import {
   defaultPropertyName,
+  ENERGY_CLASSES,
   fieldText as toInput,
   monthsFromYears,
 } from "@finance/core/property-form";
@@ -99,6 +102,12 @@ export function usePropertyDraft(initial: Property | null) {
   const [usage, setUsage] = useState<PropertyUsage>(
     initial?.usage ?? "main_home",
   );
+  const [rooms, setRooms] = useState(
+    initial?.rooms ? String(initial.rooms) : "",
+  );
+  const [energyClass, setEnergyClass] = useState<EnergyClass | null>(
+    initial?.energy_class ?? null,
+  );
   const [share, setShare] = useState(
     toInput((initial?.ownership_share ?? 1) * 100, locale),
   );
@@ -135,6 +144,8 @@ export function usePropertyDraft(initial: Property | null) {
     name,
     kind,
     usage,
+    rooms,
+    energyClass,
     livingArea: area,
     ownershipShare: share,
     citycode: address?.citycode ?? null,
@@ -162,6 +173,10 @@ export function usePropertyDraft(initial: Property | null) {
     setArea,
     usage,
     setUsage,
+    rooms,
+    setRooms,
+    energyClass,
+    setEnergyClass,
     share,
     setShare,
     purchasedOn,
@@ -246,6 +261,32 @@ export function HomeFields({
           ] as const
         ).map((value) => ({ value, label: t(PROPERTY_USAGE_KEYS[value]) }))}
       />
+      {/* What letting it asks: the rooms, to compare with apartments of its
+          size, and the DPE, which says until when it may be let. */}
+      {isLet(draft.usage) && draft.kind === "apartment" ? (
+        <TextField
+          label={t("property.rooms")}
+          hint={t("property.roomsHint")}
+          value={draft.rooms}
+          onChange={draft.setRooms}
+          inputMode="numeric"
+          placeholder={t("property.optional")}
+          error={error("rooms")}
+        />
+      ) : null}
+      {isLet(draft.usage) ? (
+        <Chips
+          label={t("property.energyClass")}
+          value={draft.energyClass ?? "unknown"}
+          onChange={(value) =>
+            draft.setEnergyClass(value === "unknown" ? null : value)
+          }
+          options={[
+            ...ENERGY_CLASSES.map((value) => ({ value, label: value })),
+            { value: "unknown" as const, label: t("property.energyUnknown") },
+          ]}
+        />
+      ) : null}
       <TextField
         label={t("property.share")}
         hint={t("property.shareHint")}

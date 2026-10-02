@@ -11,6 +11,8 @@ export const HOME_FIELDS = [
   "name",
   "kind",
   "usage",
+  "rooms",
+  "energyClass",
   "livingArea",
   "ownershipShare",
   "citycode",
@@ -18,6 +20,9 @@ export const HOME_FIELDS = [
   "latitude",
   "longitude",
 ] as const;
+
+/** The classes a DPE gives, best first. */
+export const ENERGY_CLASSES = ["A", "B", "C", "D", "E", "F", "G"] as const;
 
 export const PURCHASE_FIELDS = [
   "purchasedOn",

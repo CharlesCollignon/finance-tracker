@@ -473,11 +473,38 @@ the other.
 
 ## Phase 6 — Renting (branch `property-6/rental`)
 
-- [ ] Rent received as an income template attached to the property.
-- [ ] Gross and net yield, monthly cash flow after the loan and charges.
-- [ ] ANIL reference rent beside the actual one.
-- [ ] Energy class (DPE) and the legal calendar for letting: G barred since
-      2025, F from 2028, E from 2034.
+- [x] Rent received as an income template attached to the property:
+      « Ajouter le loyer » on a let property, one amount, monthly on the 1st,
+      under « Loyers perçus » (made the first time, not given to every
+      account).
+- [x] Gross and net yield, monthly cash flow after the loan and charges
+      (`core/rental.ts`): the loans from their schedule, not their
+      template, so a payment the user keeps among their recurring entries is
+      counted once.
+- [x] ANIL asking rents beside the actual one (`core/rent-reference.ts`,
+      migration 051): the 2025 map's four tables, by kind and rooms (a let
+      apartment's form now asks its rooms). **Changed from the plan:** the
+      figure is kept only where the ANIL's own cautions allow (30 listings
+      in the commune, adjusted R² ≥ 0.5) — no figure rather than a fragile
+      one — and is called « loyers d'annonce », never « loyer de référence »,
+      which is the legal cap of the towns that cap rents.
+- [x] Energy class (DPE) and the legal calendar for letting: G barred since
+      2025, F from 2028, E from 2034 on the mainland; G from 2028 and F from
+      2031 overseas; the rent freeze on F and G since August 2022; the 2026
+      electricity coefficient, which lets an older DPE be updated free.
+      Migration 051 adds `properties.energy_class`. The « Relance du
+      logement » bill (Senate, 8 July 2026; Assembly since September) would
+      let F and G homes be let again against a works contract: revisit
+      `FRENCH_LETTING_2026` when it is law.
+
+Checked against the local stack on both apps (the phone through its web
+build): a furnished studio in Grenoble, 24 m², with its loan and its taxe
+foncière, given a rent of 650 € through « Ajouter le loyer », leaves 81,41 €
+a month (650 − 60 − 508,59) at 7,3 % gross and 6,6 % net; given one room and
+class F, it reads 15,67 €/m² (12,64 – 19,43) for one- or two-room apartments
+in the commune, and « ne pourra plus être loué à partir du 1er janvier
+2028 ». Of the 34 900 communes in each ANIL table, 5 600 to 10 500 pass the
+cautions — the towns, where homes are let.
 
 ## Phase 7 — Moments and notifications (branch `property-7/moments`)
 

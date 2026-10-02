@@ -2332,6 +2332,7 @@ export const fr: Messages = {
     nameTooLong: "Le nom est trop long",
     areaRequired: "Indiquez la surface en m²",
     shareRange: "La part doit être comprise entre 0 et 100\u00A0%",
+    roomsRange: "Le nombre de pièces va de 1 à 100",
     growthRange: "La hausse doit être comprise entre −20 et 20\u00A0% par an",
     rateRange: "Le taux doit être compris entre 0 et 20\u00A0%",
     insuranceRateRange:

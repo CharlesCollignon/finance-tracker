@@ -17,6 +17,7 @@ import {
   type PriceIndex,
 } from "@finance/core/price-index";
 import { loanTermsFromRow, type MarketContext } from "@finance/core/property";
+import type { RentReference } from "@finance/core/rent-reference";
 import type {
   CategoryType,
   Property,
@@ -75,6 +76,8 @@ export interface PropertyRead {
   templates: AttachedTemplate[];
   /** Its market reading and how the index moves its price (migration 050). */
   market: MarketContext;
+  /** What homes like it are advertised for around it, when let (051). */
+  rent: RentReference | null;
 }
 
 export interface PropertiesState {
@@ -216,6 +219,15 @@ export async function getProperties(
   if (readingsError && !isMissingSchema(readingsError)) {
     throw readingsError;
   }
+  const { data: rentRows, error: rentsError } = await db
+    .from("property_rent_references")
+    .select("*")
+    .eq("user_id", userId)
+    .in("property_id", ids);
+  if (rentsError && !isMissingSchema(rentsError)) {
+    throw rentsError;
+  }
+
   const candidates = new Map(
     properties.map((property) => [
       property.id,
@@ -255,10 +267,24 @@ export async function getProperties(
       const paidThrough = new Set(
         own.map((loan) => loan.recurring_template_id),
       );
+      const rent = (rentRows ?? []).find(
+        (row) => row.property_id === property.id,
+      );
       return {
         property,
         loans: own,
         market,
+        rent: rent
+          ? {
+              series: rent.series,
+              rentM2: Number(rent.rent_m2),
+              lowM2: Number(rent.low_m2),
+              highM2: Number(rent.high_m2),
+              scope: rent.scope,
+              observations: rent.observations,
+              edition: rent.edition,
+            }
+          : null,
         templates: (templateRows ?? [])
           .filter(
             (template) =>
@@ -330,7 +356,10 @@ export async function saveProperty(
     longitude: data.longitude,
     address_label: data.addressLabel,
     living_area: data.livingArea,
-    rooms: data.rooms,
+    ...(data.rooms === undefined ? {} : { rooms: data.rooms }),
+    ...(data.energyClass === undefined
+      ? {}
+      : { energy_class: data.energyClass }),
     ownership_share: data.ownershipShare,
     purchased_on: data.purchasedOn,
     purchase_price: data.purchasePrice,
@@ -435,19 +464,21 @@ export async function deleteProperty(
 }
 
 /**
- * The user's expense category of this name, in either language, or a new
- * one under it. Where a loan's payment is filed.
+ * The user's category of this name and type, in either language, or a new
+ * one under it. Where a loan's payment, and a property's rent, are filed.
  */
-async function paymentCategory(
+async function categoryNamed(
   db: Db,
   userId: string,
   name: string,
+  type: "expense" | "income" = "expense",
+  icon = "bank",
 ): Promise<{ id: string } | { error: string }> {
   const { data: found, error } = await db
     .from("categories")
     .select("id, name")
     .eq("user_id", userId)
-    .eq("type", "expense")
+    .eq("type", type)
     .in("name", categoryNameVariants(name))
     .order("created_at")
     .limit(1);
@@ -459,7 +490,7 @@ async function paymentCategory(
   }
   const { data: created, error: createError } = await db
     .from("categories")
-    .insert({ user_id: userId, name, type: "expense", icon: "bank" })
+    .insert({ user_id: userId, name, type, icon })
     .select("id")
     .single();
   if (createError || !created) {
@@ -647,7 +678,7 @@ async function writeLoanPayment(
   if (!first || !last) {
     return { success: true, templateId: null };
   }
-  const category = await paymentCategory(db, userId, payment.categoryName);
+  const category = await categoryNamed(db, userId, payment.categoryName);
   if ("error" in category) {
     return { error: category.error };
   }
@@ -836,6 +867,88 @@ export async function saveMarketReading(
         .eq("property_id", propertyId)
         .eq("user_id", userId);
   return error ? { error: dbError(error) } : { success: true };
+}
+
+/**
+ * Keep a let property's asking rents, or forget them when it is no longer
+ * let or the ANIL no longer gives a reliable figure there. The user's
+ * client under RLS, or the service role from the market cron.
+ */
+export async function saveRentReference(
+  db: Db,
+  userId: string,
+  propertyId: string,
+  reference: RentReference | null,
+): Promise<ActionResult> {
+  const { error } = reference
+    ? await db.from("property_rent_references").upsert({
+        property_id: propertyId,
+        user_id: userId,
+        series: reference.series,
+        rent_m2: reference.rentM2,
+        low_m2: reference.lowM2,
+        high_m2: reference.highM2,
+        scope: reference.scope,
+        observations: reference.observations,
+        edition: reference.edition,
+        read_at: new Date().toISOString(),
+      })
+    : await db
+        .from("property_rent_references")
+        .delete()
+        .eq("property_id", propertyId)
+        .eq("user_id", userId);
+  return error && !isMissingSchema(error)
+    ? { error: dbError(error) }
+    : { success: true };
+}
+
+/**
+ * Give a let property its rent: a monthly income template attached to it,
+ * on the first of the month from today, filed under this category name
+ * (found in either language, or created). Changed afterwards on Récurrents,
+ * like any other.
+ */
+export async function addRent(
+  db: Db,
+  userId: string,
+  input: {
+    propertyId: string;
+    amount: number;
+    categoryName: string;
+    description: string;
+  },
+): Promise<ActionResult<{ templateId: string }>> {
+  if (!uuid.safeParse(input.propertyId).success) {
+    return { error: "errors.invalidInput" };
+  }
+  if (!(Number.isFinite(input.amount) && input.amount > 0)) {
+    return { error: "errors.amountPositive" };
+  }
+  const category = await categoryNamed(
+    db,
+    userId,
+    input.categoryName,
+    "income",
+    "house",
+  );
+  if ("error" in category) {
+    return { error: category.error };
+  }
+  const template = await saveRecurringTemplate(db, userId, {
+    categoryId: category.id,
+    description: input.description,
+    pricingType: "fixed",
+    amount: cents(input.amount),
+    recurrence: "monthly",
+    dayOfMonth: 1,
+    startsOn: todayIsoLocal(),
+    endsOn: undefined,
+    propertyId: input.propertyId,
+  });
+  return "error" in template
+    ? { error: template.error }
+    : { success: true, templateId: template.templateId };
 }
 
 /** Write the price index INSEE answered. The service role only. */

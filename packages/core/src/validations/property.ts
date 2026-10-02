@@ -119,13 +119,27 @@ export const propertySchema = z
     livingArea: typedAmount("errors.positiveNumber").pipe(
       z.number().gt(0, "errors.areaRequired").max(100_000).nullable(),
     ),
-    rooms: z.coerce
-      .number()
-      .int()
-      .min(1)
-      .max(100)
-      .nullish()
-      .transform((value) => value ?? null),
+    // Absent is unchanged, so a form that does not ask leaves them be; empty
+    // is none.
+    rooms: z
+      .union([z.number(), z.string(), z.null()])
+      .optional()
+      .transform((value, ctx) => {
+        if (value === undefined || value === null) {
+          return value;
+        }
+        const text = String(value).trim();
+        if (text === "") {
+          return null;
+        }
+        const parsed = Number(text);
+        if (!Number.isInteger(parsed) || parsed < 1 || parsed > 100) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "errors.roomsRange" });
+          return z.NEVER;
+        }
+        return parsed;
+      }),
+    energyClass: z.enum(["A", "B", "C", "D", "E", "F", "G"]).nullable().optional(),
     ownershipShare: share,
     purchasedOn: isoDate,
     purchasePrice: positiveAmount,

@@ -26,6 +26,7 @@ import {
   valueSourceLine,
 } from "@finance/core/property";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
+import { isLet } from "@finance/core/rental";
 import { formatRate } from "@finance/core/savings-accounts";
 import type { PropertyLoan } from "@finance/core/types/database";
 
@@ -37,6 +38,7 @@ import {
   TextField,
 } from "@/components/property/fields";
 import { EditPropertySheet, LoanSheet } from "@/components/property/PropertySheets";
+import { RentalSection } from "@/components/property/RentalSection";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ScreenError } from "@/components/ScreenError";
 import { Button } from "@/components/ui/Button";
@@ -265,6 +267,10 @@ export default function PropertyDetailScreen() {
             />
           </View>
         </Card>
+
+        {isLet(property.usage) ? (
+          <RentalSection detail={detail} position={position} today={today} />
+        ) : null}
 
         <View className="gap-3">
           <Text className="font-semibold" style={{ fontSize: 17 }}>

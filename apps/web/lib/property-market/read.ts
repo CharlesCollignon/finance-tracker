@@ -23,6 +23,7 @@ import {
 import type { Db } from "@finance/data/client";
 import * as properties from "@finance/data/properties";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { readPropertyRent } from "./rent";
 
 /**
  * What the market says about a property, read on the web server: Etalab's
@@ -30,6 +31,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * latest quarter, and core's reading of the two. Kept on the property's own
  * row (migration 050) — through the user's client when the user asked, or
  * the service role from the weekly market cron.
+ *
+ * A let property's asking rents are read alongside (`./rent.ts`).
  *
  * Only public files are fetched, and nothing about the user is sent: a
  * commune's file is the same file for anyone who asks for it.
@@ -127,7 +130,9 @@ export type MarketOutcome =
 /**
  * Read what the market says about one property, and keep it — or forget an
  * old reading the sales no longer bear out. A thin commune is widened from
- * three years of sales to five before it is given up on.
+ * three years of sales to five before it is given up on. Its asking rents
+ * are read at the same time; a failure there is logged and leaves what was
+ * kept, and never stands in the way of the sales.
  */
 export async function readPropertyMarket(
   db: Db,
@@ -136,7 +141,7 @@ export async function readPropertyMarket(
 ): Promise<MarketOutcome> {
   const { data: property, error } = await db
     .from("properties")
-    .select("id, kind, citycode, latitude, longitude")
+    .select("id, kind, usage, citycode, rooms, latitude, longitude")
     .eq("id", propertyId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -146,6 +151,28 @@ export async function readPropertyMarket(
   if (!property) {
     return "skipped";
   }
+  const rent = readPropertyRent(db, userId, property).catch((rentError) =>
+    console.error("Asking rents could not be read", rentError),
+  );
+  try {
+    return await readSales(db, userId, property);
+  } finally {
+    await rent;
+  }
+}
+
+async function readSales(
+  db: Db,
+  userId: string,
+  property: {
+    id: string;
+    kind: "apartment" | "house" | "other";
+    citycode: string | null;
+    latitude: number | null;
+    longitude: number | null;
+  },
+): Promise<MarketOutcome> {
+  const propertyId = property.id;
   if (property.kind === "other" || !property.citycode) {
     await properties.saveMarketReading(db, userId, propertyId, null);
     return "skipped";

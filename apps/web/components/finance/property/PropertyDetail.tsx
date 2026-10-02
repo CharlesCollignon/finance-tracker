@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useTransition, type ReactNode } from "react";
+import { useId, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, PencilSimple, Plus } from "@phosphor-icons/react";
@@ -21,6 +21,7 @@ import {
   valueSourceLine,
 } from "@finance/core/property";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
+import { isLet } from "@finance/core/rental";
 import { formatRate } from "@finance/core/savings-accounts";
 import type { PropertyLoan } from "@finance/core/types/database";
 import type { AttachedTemplate, PropertyRead } from "@finance/data/properties";
@@ -42,6 +43,8 @@ import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { EditPropertySheet } from "./EditPropertySheet";
+import { AmountEditor, Fact } from "./property-controls";
+import { RentalSection } from "./RentalSection";
 import { LoanSheet } from "./LoanSheet";
 import {
   monthAndYear,
@@ -215,6 +218,10 @@ export function PropertyDetail({
           ) : null}
         </div>
       </Card.Bezel>
+
+      {isLet(property.usage) ? (
+        <RentalSection detail={detail} position={position} today={today} />
+      ) : null}
 
       <section className="flex flex-col gap-4">
         <h3 className="font-head text-lg">{t("property.loansTitle")}</h3>
@@ -727,15 +734,6 @@ function TemplateRow({ template }: { template: AttachedTemplate }) {
   );
 }
 
-function Fact({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
-      <dd className="mt-1">{children}</dd>
-    </div>
-  );
-}
-
 /** A press that runs one write and says how it went. */
 function ActionButton({
   label,
@@ -766,102 +764,5 @@ function ActionButton({
     >
       {label}
     </Button>
-  );
-}
-
-/** A button that opens into one amount and a save. */
-function AmountEditor({
-  label,
-  hint,
-  initial,
-  save,
-}: {
-  label: string;
-  hint: string;
-  initial: string;
-  save: (value: number) => Promise<{ error?: string; message?: string }>;
-}) {
-  const t = useT();
-  const id = useId();
-  const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(initial);
-  const [pending, startTransition] = useTransition();
-  const typed = parseTypedAmount(value);
-  const valid = typed !== null && typed > 0;
-
-  if (!open) {
-    return (
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="self-start"
-        onClick={() => {
-          setValue(initial);
-          setOpen(true);
-        }}
-      >
-        <PencilSimple size={ICON.sm} aria-hidden className="mr-1.5" />
-        {label}
-      </Button>
-    );
-  }
-
-  return (
-    <form
-      className="flex flex-col gap-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (!valid) {
-          return;
-        }
-        startTransition(async () => {
-          const result = await save(typed);
-          if (result.error) {
-            toast(result.error, "error");
-            return;
-          }
-          toast(result.message ?? t("property.saved"), "success");
-          setOpen(false);
-        });
-      }}
-    >
-      <label htmlFor={id} className="text-xs text-muted-foreground">
-        {label}
-      </label>
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative w-48">
-          <Input
-            id={id}
-            autoFocus
-            inputMode="decimal"
-            autoComplete="off"
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-            aria-invalid={valid || value === "" ? undefined : true}
-            className="privacy-sensitive pr-8 text-base tabular-nums"
-          />
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground"
-          >
-            €
-          </span>
-        </div>
-        <Button type="submit" size="sm" disabled={!valid || pending}>
-          {t("property.saveValue")}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setOpen(false)}
-        >
-          {t("common.cancel")}
-        </Button>
-      </div>
-      <p className="text-xs text-muted-foreground">{hint}</p>
-    </form>
   );
 }

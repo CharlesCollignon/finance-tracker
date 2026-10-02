@@ -202,4 +202,58 @@ export const propertyFr: typeof propertyEn = {
   longViewTotal: "Avec vos placements\u00A0: {amount} net",
   longViewNote:
     "La valeur suit la hausse choisie, et un bien peut aussi perdre de la valeur. L'impôt est celui d'une vente cette année-là, aux règles de 2026, sans la surtaxe au-delà de 50\u00A0000\u00A0€ de plus-value. Le revenu mensuel et les paliers ne comptent pas l'immobilier.",
+
+  rooms: "Pièces",
+  roomsHint: "Pour le comparer aux loyers des appartements de même taille.",
+  energyClass: "Classe énergie (DPE)",
+  energyUnknown: "Je ne sais pas",
+  rentalTitle: "Location",
+  rentNone: "Aucun loyer pour l'instant.",
+  rentAdd: "Ajouter le loyer",
+  rentAddHint:
+    "Ce que vous percevez chaque mois. Il rejoint vos opérations récurrentes, le 1er du mois\u00A0; modifiable dans Récurrents.",
+  rentDescription: "Loyer · {name}",
+  rentAdded: "Loyer ajouté à vos opérations récurrentes",
+  cashFlowLeaves: "Ce qu'il vous laisse chaque mois",
+  cashFlowCosts: "Ce qu'il vous coûte chaque mois",
+  rentMonthly: "Loyer",
+  chargesMonthly: "Charges du bien",
+  loansMonthly: "Prêts",
+  perMonth: "{amount} par mois",
+  cashFlowNote:
+    "Le loyer, moins les charges et les prêts du bien, d'après les opérations récurrentes qui lui sont rattachées.",
+  yieldLabel: "Rendement",
+  yieldLine: "Brut {gross} · net {net}",
+  yieldNote:
+    "Un an de loyers, divisé par ce que le bien vous a coûté (prix, frais et travaux)\u00A0; le net retire d'abord ses charges. Avant impôts et crédit.",
+  rentPerM2: "Votre loyer\u00A0: {amount} par m²",
+  askingTitle: "Loyers d'annonce alentour",
+  askingLine: "{median} par m² · de {low} à {high}",
+  askingFor: "Soit environ {amount} par mois pour {area}\u00A0m²",
+  askingSeriesApp: "d'appartements",
+  askingSeriesApp12: "d'appartements d'1 ou 2 pièces",
+  askingSeriesApp3: "d'appartements de 3 pièces ou plus",
+  askingSeriesMai: "de maisons",
+  askingScopeCommune: "dans la commune",
+  askingScopeEpci: "dans l'intercommunalité",
+  askingScopeMaille: "dans la commune et ses voisines",
+  askingSource:
+    "Annonces {series} en location vide, charges comprises, {scope} (carte des loyers {year}). Estimations ANIL, à partir des données du Groupe SeLoger et de leboncoin.",
+  askingFurnished:
+    "Le vôtre est loué meublé\u00A0: ces loyers sont ceux de logements vides.",
+  askingNone: "Pas de loyers d'annonce fiables ici pour l'instant.",
+  askingNoAddress:
+    "Indiquez son adresse pour voir les loyers d'annonce alentour.",
+  lettingTitle: "DPE et location",
+  lettingClosed:
+    "Classé {energy}\u00A0: ne peut plus être loué depuis le {date} — ni nouveau bail, ni renouvellement, ni reconduction.",
+  lettingClosing: "Classé {energy}\u00A0: ne pourra plus être loué à partir du {date}.",
+  lettingOpen: "Classé {energy}\u00A0: aucune date limite pour le louer.",
+  lettingUnknown:
+    "Indiquez sa classe énergie (DPE) dans «\u00A0Modifier\u00A0» pour voir jusqu'à quand il peut être loué.",
+  rentFrozen:
+    "Son loyer ne peut plus augmenter depuis le 24 août 2022\u00A0: ni à la révision annuelle, ni au renouvellement, ni à la relocation.",
+  dpeElectricity:
+    "Depuis le 1er janvier 2026, le DPE compte l'électricité à 1,9 au lieu de 2,3\u00A0: un DPE fait avant peut être mis à jour gratuitement sur l'Observatoire DPE de l'Ademe, sans nouvelle visite.",
+  lettingSource: "Loi Climat et Résilience, calendrier en vigueur en 2026.",
 };

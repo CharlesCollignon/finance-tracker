@@ -104,7 +104,7 @@ export const legalCopy: LegalCopy = {
           "What you enter or import: transactions, categories, charges, caps, goals, wallets and their positions, month closes and the balances you record, tags and notes. When you import a bank export, the file is read to propose entries and only the entries you keep are stored; the file itself is not.",
           "Your preferences: language, and which invitations you have dismissed.",
           "Notifications, if you turn them on: the delivery address your browser or phone gives us (a push subscription, or a push token for the phone app), the browser's user agent, and a log of which reminders we have sent, so none is sent twice.",
-          "Your properties, if you add any: what each cost and how it is used, its area, your share of it, the loans behind it and their terms, and what it is worth to you. Of its address we keep the town and the point it stands on, to compare it with the sales around it; the full address only if you ask us to.",
+          "Your properties, if you add any: what each cost and how it is used, its area and energy class, your share of it, the loans behind it and their terms, and what it is worth to you. Of its address we keep the town and the point it stands on, to compare it with the sales around it; the full address only if you ask us to.",
           "Your bank, if you connect one: see the next section.",
         ],
       },
@@ -154,7 +154,7 @@ export const legalCopy: LegalCopy = {
           "Google: only if you sign in with Google.",
           "Notification delivery: web notifications are encrypted so that your browser's push service (Apple, Google, Microsoft or Mozilla, depending on the browser) cannot read them. Phone notifications go through Expo's push service and then Apple or Google.",
           "Market prices: to value your funds, we look up their prices from Yahoo Finance and from fund publishers' pages (justETF, iShares). We send only the fund's identifier, never anything about you.",
-          "Address search: when you type a property's address, our server asks the French State's geocoding service (IGN Géoplateforme) to find it. IGN receives the address you typed, never your IP address or anything else about you. To estimate what a property is worth we read the public record of property sales (DVF) and the Notaires–INSEE price index, sending only a town code or the index's identifier.",
+          "Address search: when you type a property's address, our server asks the French State's geocoding service (IGN Géoplateforme) to find it. IGN receives the address you typed, never your IP address or anything else about you. To estimate what a property is worth we read the public record of property sales (DVF) and the Notaires–INSEE price index, sending only a town code or the index's identifier. For a let property we download the ANIL's rent map whole, sending nothing about you.",
         ],
         after: [
           "Vercel Inc. is a US company certified under the EU–US Data Privacy Framework, on which any transfer to it relies. Supabase and Mistral AI keep the data in the European Union, and Supabase relies on the European Commission's standard contractual clauses for any access from outside it. [[Confirm each provider's current data processing agreement.]]",

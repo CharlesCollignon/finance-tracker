@@ -201,4 +201,56 @@ export const propertyEn = {
   longViewTotal: "With your savings and investments: {amount} net",
   longViewNote:
     "The value follows the growth you choose, and a home can lose value too. The tax is a sale's that year, on 2026 rules, without the surtax on gains above €50,000. The monthly income and the milestones leave property out.",
+
+  rooms: "Rooms",
+  roomsHint: "To compare it with the rents of apartments of the same size.",
+  energyClass: "Energy class (DPE)",
+  energyUnknown: "Don't know",
+  rentalTitle: "Letting",
+  rentNone: "No rent yet.",
+  rentAdd: "Add the rent",
+  rentAddHint:
+    "What you receive each month. It joins your recurring entries on the 1st; change it in Recurring.",
+  rentDescription: "Rent · {name}",
+  rentAdded: "Rent added to your recurring entries",
+  cashFlowLeaves: "What it leaves you each month",
+  cashFlowCosts: "What it costs you each month",
+  rentMonthly: "Rent",
+  chargesMonthly: "Its charges",
+  loansMonthly: "Loans",
+  perMonth: "{amount} a month",
+  cashFlowNote:
+    "The rent, less the property's charges and loans, from the recurring entries attached to it.",
+  yieldLabel: "Yield",
+  yieldLine: "Gross {gross} · net {net}",
+  yieldNote:
+    "A year's rent over what the property cost you (price, fees and works); net takes its charges off first. Before tax and borrowing.",
+  rentPerM2: "Your rent: {amount} per m²",
+  askingTitle: "Asking rents around it",
+  askingLine: "{median} per m² · {low} to {high}",
+  askingFor: "About {amount} a month for {area} m²",
+  askingSeriesApp: "of apartments",
+  askingSeriesApp12: "of one- or two-room apartments",
+  askingSeriesApp3: "of apartments of three rooms or more",
+  askingSeriesMai: "of houses",
+  askingScopeCommune: "in the commune",
+  askingScopeEpci: "in the intercommunality",
+  askingScopeMaille: "in the commune and its neighbours",
+  askingSource:
+    "Listings {series} let unfurnished, charges included, {scope} (rent map {year}). Estimations ANIL, à partir des données du Groupe SeLoger et de leboncoin.",
+  askingFurnished: "Yours is let furnished: these are rents for unfurnished homes.",
+  askingNone: "No reliable asking rents here for now.",
+  askingNoAddress: "Add its address to see the asking rents around it.",
+  lettingTitle: "DPE and letting",
+  lettingClosed:
+    "Class {energy}: may no longer be let since {date} — no new lease, renewal or tacit renewal.",
+  lettingClosing: "Class {energy}: may no longer be let from {date}.",
+  lettingOpen: "Class {energy}: no date by which it must stop being let.",
+  lettingUnknown:
+    "Add its energy class (DPE) under Edit to see until when it may be let.",
+  rentFrozen:
+    "Its rent may not rise since 24 August 2022: not at the yearly review, a renewal or a new let.",
+  dpeElectricity:
+    "Since 1 January 2026 the DPE counts electricity at 1.9 instead of 2.3: an earlier DPE can be updated free on Ademe's DPE observatory, with no new visit.",
+  lettingSource: "Loi Climat et Résilience, the calendar in force in 2026.",
 };
