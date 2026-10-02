@@ -107,6 +107,7 @@ properties
 
 property_loans
   id, user_id, property_id → properties (cascade), label,
+  kind ('amortising' | 'in_fine'),
   principal, annual_rate, months, first_payment_on,
   insurance_monthly, insurance_basis ('initial' | 'outstanding'),
   deferral_months, deferral_kind ('none' | 'partial' | 'total'),
@@ -132,23 +133,29 @@ readable by any signed-in user and writable by the service role alone.
 
 ## Linking a loan to a charge
 
+The French screens never say « charge » for a recurring template: it is an
+« opération récurrente », on the « Récurrents » tab (`CONTEXT.md`). The copy
+below follows that; "Charges" in this plan is the section's English name.
+
 1. Saving a loan computes its monthly payment and offers « Ajouter la
-   mensualité à vos Charges », **checked by default**. It writes a monthly
-   template: category « Remboursement de prêt », amount the user's share of
-   payment + insurance, day of the first payment, `starts_on` the first
-   payment and `ends_on` the last. Linked by `recurring_template_id`.
+   mensualité aux opérations récurrentes », **checked by default**. It
+   writes a monthly template: category « Remboursement de prêt », amount
+   what leaves the user's account (their share of payment + insurance by
+   default, editable — see the edge cases), day of the first payment,
+   `starts_on` the first payment and `ends_on` the last. Linked by
+   `recurring_template_id`.
 2. If a template in that category already has a close amount, the sheet
    offers it first (« C'est celle-ci ? Prêt — 1 050 € le 5 »). Proposed,
    never linked without the user's yes — the lesson of _Fulfil_.
 3. `ends_on` is the last payment, so the charge stops by itself and the
    projection shows the loan ending with no new mechanism.
 4. When charge and schedule disagree (insurance changed, early repayment),
-   the property says so — « La charge dit 1 050 €, le tableau 1 042 € » —
-   with « Mettre la charge à jour ».
-5. Any template can be attached to a property: a « Bien » field in the charge
-   form, shown only to someone with a property. Taxe foncière (yearly),
-   copropriété, PNO or home insurance, and later rent received (income).
-   Attached charges carry a chip in Charges.
+   the property says so — « L'opération récurrente dit 1 050 €, le tableau
+   1 042 € » — with « La mettre à jour ».
+5. Any template can be attached to a property: a « Bien » field in the
+   recurring form, shown only to someone with a property. Taxe foncière
+   (yearly), copropriété, PNO or home insurance, and later rent received
+   (income). Attached templates carry a chip on « Récurrents ».
 6. Each month's payment is split on the property: « 1 050 € = 612 € de
    capital · 378 € d'intérêts · 60 € d'assurance ».
 
@@ -175,45 +182,139 @@ Method, on the web server, no model involved:
 
 1. The address is geocoded to a commune and a point.
 2. Three years of DVF for the commune are read. Kept: sales (« Vente ») of a
-   single apartment or house per mutation, over 9 m². Median €/m² and Q1–Q3.
-   With at least ~20 such sales within 500 m, those; else the commune; with
-   too few in the commune, no reading.
-3. Carried to the latest quarter by the index.
-4. Shown as « ≈ 312 000 € (285 000 – 340 000 €) — d'après 214 ventes
-   d'appartements à Lyon 3e, 2023–2025 (DVF), actualisé T1 2026 ». A press
+   single apartment or house per mutation, with or without dependencies,
+   one disposition, 9 m² or more (the Phase 0 findings say why).
+3. Each sale is carried to the latest quarter by the most local index, then
+   trimmed to a third to three times the median. Median €/m² and Q1–Q3.
+4. With at least 30 such sales within 500 m, those; else the commune with
+   at least 20; else five years of the commune; else no reading.
+5. Shown as « ≈ 312 000 € (285 000 – 340 000 €) — d'après 214 ventes
+   d'appartements à Lyon 3e, 2023–2025 (DVF), ramenées au T2 2026 ». A press
    opens « Votre estimation », which then wins and stays dated.
-5. Readings are cached per commune and kind (and per point for radius ones,
+6. Readings are cached per commune and kind (and per point for radius ones,
    rounded); the nightly cron refreshes those older than the latest DVF
    release. The phone reads the cache and asks the web for a new reading on
    save (bearer token, as for the month read).
 
 ## Where it shows
 
-| Surface                                       | Change                                                                                                                                                                                                                                                        |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Nav (web `/property`, phone `(tabs)/property`) | Sixth entry « Immobilier ». The list: one card per property — estimated value, outstanding principal, net value — and « Ajouter un bien ». Empty, it explains in one line and offers the add.                                                               |
-| Property (web `/property/[id]`, phone stacked) | Value and unrealised gain · Loans: outstanding, next payment split, end date, total cost, schedule (folded), « Mettre à jour le capital restant dû » · Attached charges, « Ajouter une charge du bien » · Market: reading, spread, sales nearby · Yield (Phase 6) |
-| Charges                                       | « Bien » field, chip on attached templates, the payment template written by the loan                                                                                                                                                                          |
-| Plan — projection                             | Mechanics unchanged. A loan ending is a dated ingredient: « fin du prêt en mars 2041 : +1 050 €/mois »                                                                                                                                                         |
-| Plan — long view                              | A property row: value × chosen yearly growth, less year N's outstanding principal, after the tax on the gain (main home exempt; otherwise 19 % plus social contributions, allowances by years held — rates checked when coded, beside `FRENCH_TAX_2026`)       |
-| Plan — new card                               | « Patrimoine net »: savings + investments + property − loans, today                                                                                                                                                                                           |
-| Plan — milestones, cushion                    | Unchanged                                                                                                                                                                                                                                                     |
-| Placements — Analyse                          | Unchanged: the split and the contribution suggestions stay the liquid accounts'                                                                                                                                                                              |
-| Le point                                      | A tile « valeur nette du bien », leading to the property                                                                                                                                                                                                       |
-| Notifications                                 | Moments (Phase 7): half the loan repaid, the last payment this month, a new DVF estimate (twice a year), under a new switch in Profile                                                                                                                         |
+| Surface                                        | Change                                                                                                                                                                                                                                                                            |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nav (web `/property`, phone `(tabs)/property`) | Sixth entry « Immobilier ». The list: one card per property — estimated value, outstanding principal, net value — and « Ajouter un bien ». Empty, it explains in one line and offers the add.                                                                                     |
+| Property (web `/property/[id]`, phone stacked) | Value and unrealised gain · Loans: outstanding, next payment split, end date, total cost, schedule (folded), « Mettre à jour le capital restant dû » · Attached templates, « Ajouter une opération récurrente au bien » · Market: reading, spread, sales nearby · Yield (Phase 6) |
+| Charges                                        | « Bien » field, chip on attached templates, the payment template written by the loan                                                                                                                                                                                              |
+| Plan — projection                              | Mechanics unchanged. A loan ending is a dated ingredient: « fin du prêt en mars 2041 : +1 050 €/mois »                                                                                                                                                                            |
+| Plan — long view                               | A property row: value × chosen yearly growth, less year N's outstanding principal, after the tax on the gain (main home exempt; otherwise 19 % plus social contributions, allowances by years held — rates checked when coded, beside `FRENCH_TAX_2026`)                          |
+| Plan — new card                                | « Patrimoine net »: savings + investments + property − loans, today                                                                                                                                                                                                               |
+| Plan — milestones, cushion                     | Unchanged                                                                                                                                                                                                                                                                         |
+| Placements — Analyse                           | Unchanged: the split and the contribution suggestions stay the liquid accounts'                                                                                                                                                                                                   |
+| Le point                                       | A tile « valeur nette du bien », leading to the property                                                                                                                                                                                                                          |
+| Notifications                                  | Moments (Phase 7): half the loan repaid, the last payment this month, a new DVF estimate (twice a year), under a new switch in Profile                                                                                                                                            |
 
 ## Phase 0 — Framing (branch `property-0/framing`)
 
 Nothing user-facing.
 
-- [ ] Spike the DVF reader on three places: a Paris arrondissement, Lyon 3e,
+- [x] Spike the DVF reader on three places: a Paris arrondissement, Lyon 3e,
       a village with few sales. Check multi-lot mutations, dependencies,
       outliers, and how many radius readings reach 20 sales.
-- [ ] Find the INSEE BDM series for the index and how to read them without a
+- [x] Find the INSEE BDM series for the index and how to read them without a
       key; decide cron-fed table versus a constant revisited each quarter.
-- [ ] Vocabulary above into `CONTEXT.md`.
-- [ ] Six tabs on the phone: mock the bar at 360 pt with « Immobilier » and
-      decide label and icon (`home` / Phosphor `House`).
+- [x] Vocabulary above into `CONTEXT.md`.
+- [x] Six tabs on the phone: measure the bar at 360 pt with « Immobilier »
+      and propose label and icon. The proposal waits for the owner.
+
+### Findings (2026-10-02)
+
+**DVF.** Paris 11e (75111), Lyon 3e (69383) and Gordes (84050), 2023–2025,
+read from the Etalab per-commune files. The files ran to 31 December 2025:
+the April release, three to nine months behind.
+
+- Within a mutation the price is the same on every row (no exception in
+  ~15,000 mutations), and a mutation with more than one disposition is rare
+  (22 in Paris 11e, 2 in Lyon 3e); those are left out.
+- A home repeats once per parcel it sits on (388 mutations in Paris 11e, 634
+  in Lyon 3e, 96 in Gordes): deduplicate by kind, area, rooms and lot.
+- Most homes sell with a cellar or a parking space (Lyon 3e: 3,853 sales
+  with or without, 603 without), and keeping them moves the median by 2 % at
+  most (Paris 10,000 against 9,815 €/m²; Lyon 4,615 against 4,700). Kept.
+- New builds (VEFA), exchanges, auctions and building land are left out.
+- About 2 % of Paris sales fall outside 1,000–30,000 €/m² (family sales,
+  life annuities): trimmed at a third and three times the median.
+- Carrying each sale to today **before** taking the median lines the years
+  up: Paris 9,735 / 9,856 / 9,901 €/m² carried, against 10,231 / 9,750 /
+  9,896 raw. The most local series fits best: Lyon 3e carried by the Lyon
+  agglomeration's series gives 4,322 / 4,369 / 4,386, by the region's 4,650
+  / 4,500 / 4,455.
+- Readings at 2026-Q2: Paris 11e apartments ≈ 9,890 €/m² (8,740–11,010,
+  6,614 sales); Lyon 3e apartments ≈ 4,370 (3,770–4,970, 3,807); Gordes
+  houses ≈ 6,730 (4,840–8,160, 110). Gordes apartments (5 sales over three
+  years, 1,770 to 6,680 €/m²) get no reading.
+- Within 500 m: 996 apartment sales in Paris 11e, 404 in Lyon 3e, but a
+  single house in Lyon 3e and none in Gordes. Hence 30 within 500 m, else
+  20 in the commune, else five years, else nothing. The 300 m circle is
+  already noisy (Lyon 3e: 5,394 against 4,733 at 500 m).
+- The circle only sees the commune's own file, so a point near an
+  arrondissement boundary sees one side. Accepted for now: the Paris 11e
+  point, a few hundred metres from the 3e, still had 996 sales.
+- Size: about 1 MB a year for Paris 11e, so 3.5 MB for a reading. Fine for a
+  server function with a cache in front of it.
+
+**Index.** `bdm.insee.fr/series/sdmx` answers without a key: dataflow
+`IPLA-IPLNA-2015`, or series by idbank
+(`/data/SERIES_BDM/010567013+010567063?startPeriod=2023-Q1`). Latest point
+2026-Q2, updated 2026-09-08. Use the seasonally adjusted (CVS) series; the
+most specific available wins:
+
+1. The agglomeration's, for its central city: Lyon apartments `010567011`,
+   Marseille apartments `010567007`, Lille houses `010567009`.
+2. Île-de-France by département: Paris apartments `010567013` (no Paris
+   house series: use Île-de-France houses `010567091`), and apartments,
+   houses or all homes for each of 77, 78, 91, 92, 93, 94, 95.
+3. Region: Île-de-France, Hauts-de-France, Auvergne-Rhône-Alpes, Provence-
+   Alpes-Côte d'Azur (by kind).
+4. Province apartments `010567063`, Province houses `010567075`.
+5. France métropolitaine.
+
+This needs a département → region map in core. **Decided: a table fed by
+the cron** (one request for every series, weekly), not a constant — 69
+series, a release date that moves, and nobody remembering each quarter.
+
+**Six tabs.** Measured with Instrument Sans Medium at 10 pt: at six, a label
+gets 50.7 pt on a 360 pt screen, 53.2 at 375 and 55.7 at 390. « Immobilier »
+(50.2) fits; « Placements » (55.5) and « Récurrents » (51.8) do not at 360,
+and « Placements » not at 375 either. English is worse: « Investments »
+(58.1) already overflows at 320 with five. The web's phone-width bar
+already has six targets (five surfaces and the account menu), about 47 px a
+label at 360, so « Placements » is already truncated there today; a seventh
+would leave 39 px.
+
+Proposed, for the owner to confirm:
+
+- Phone: six tabs; labels shrink to fit on one line (down to ~85 %) rather
+  than truncate. Icon `home` / `home-outline`.
+- Web at phone width: the account menu moves to the header, as on the phone,
+  so the bar stays at six targets; same shrink-to-fit labels. Icon Phosphor
+  `House`.
+
+**Edge cases Phase 1 must cover.**
+
+- What leaves the account is not always the share owed: a couple owning
+  half each, where the user pays the whole payment. The template's amount is
+  what leaves the user's account (their share by default, editable); net
+  value uses the share owed.
+- Interest-only loans (_in fine_), common for a rental: a kind of loan, not
+  a deferral.
+- Stepped payments (_prêt lissé_ with a PTZ): the main loan's payment
+  changes on given dates, and a template has one amount. One template per
+  step, or the PDF import later.
+- Selling: deletion with undo first; a « vendu » state with the realised
+  gain only if wanted.
+- Bought long before the app: the schedule from the first payment gives
+  today's outstanding principal with no history.
+
+The spike's scripts are not kept in the repository; Phase 4 rewrites the
+reader in `core/market-reading.ts` with fixtures cut from these files.
 
 ## Phase 1 — Foundations (branch `property-1/foundations`)
 
@@ -221,10 +322,10 @@ Nothing user-facing.
       `pnpm gen:types`, narrowed types in `core/types/database.ts`.
 - [ ] Flag `property.track`, off by default, on for the owner; the phone's
       first flag reader.
-- [ ] `core/loan-schedule.ts`: constant payment, partial and total deferral,
-      0 % (PTZ), insurance on initial or outstanding capital, cents rounding,
-      re-anchoring on a known outstanding. Tested against a real bank
-      schedule as a fixture.
+- [ ] `core/loan-schedule.ts`: constant payment and interest-only (_in
+      fine_), partial and total deferral, 0 % (PTZ), insurance on initial
+      or outstanding capital, cents rounding, re-anchoring on a known
+      outstanding. Tested against a real bank schedule as a fixture.
 - [ ] `core/property.ts`: acquisition cost, estimated value and its source,
       net value, unrealised gain, total cost of credit, payment split.
 - [ ] Zod schemas in `core/validations`.
@@ -239,8 +340,8 @@ Nothing user-facing.
 - [ ] Add sheet in three steps: the property (address with autocompletion,
       kind, area, usage, share) → the purchase (price, date, notary fees
       prefilled at ~7–8 % for existing and ~2–3 % for new, editable; agency;
-      works) → the loan (optional, payment computed live, « Ajouter aux
-      Charges » checked).
+      works) → the loan (optional, payment computed live, « Ajouter la
+      mensualité aux opérations récurrentes » checked).
 - [ ] `/property/[id]`: value (purchase price or the user's own until Phase
       4), loans and schedule, attached charges, edit and delete with undo.
 - [ ] Charges: « Bien » field in `RecurringForm`, chip in `RecurringView`.
