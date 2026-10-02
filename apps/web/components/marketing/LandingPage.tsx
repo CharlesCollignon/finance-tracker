@@ -14,6 +14,7 @@ import {
   LandingHorizon,
 } from "@/components/marketing/LandingOrb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
+import { LandingStars } from "@/components/marketing/LandingStars";
 import { LandingDeviceStack } from "@/components/marketing/LandingDeviceStack";
 import { Reveal, Rise } from "@/components/marketing/LandingReveal";
 import { GlassLink, GlassStat } from "@/components/marketing/LandingGlass";
@@ -115,15 +116,15 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
       {/* ------------------------------------------------------------ hero */}
       <section className="relative isolate flex min-h-dvh flex-col justify-center overflow-hidden px-6 pb-20 pt-28">
         <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-          {/* The sparks, then the horizon in front of them. There used to be
+          {/* The stars, then the horizon in front of them. There used to be
               a cool wash from the top edge here, put in so the warm sphere
               had something to be warm against; `.marketing-ambient` is that
               wash since it took the app's violet, and two of them stacked
-              only greyed the violet out. The horizon is opaque, so the sparks
+              only greyed the violet out. The horizon is opaque, so the stars
               behind it show only in the sky beyond the rim — a planet in
               front of the stars hides them, and that is half of what makes it
               read as one. */}
-          <div className="marketing-sparks absolute inset-x-0 top-0 h-[70%] opacity-80" />
+          <LandingStars className="absolute inset-x-0 top-0 h-[70%]" />
           <LandingHorizon />
         </div>
 

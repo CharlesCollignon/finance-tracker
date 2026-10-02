@@ -1425,6 +1425,40 @@ html:has(.marketing-shell) {
     );
 }
 
+/* The hero's stars (`LandingStars`), behind the horizon: a pinprick each,
+   placed and sized by the component, white or a little warm. Half of them
+   twinkle — slowly, each on its own period and out of step with the rest —
+   between their own brightness and a quarter of it, so the sky shimmers
+   without anything moving across it. Reduced motion holds every star at its
+   brightness rather than merely speeding the twinkle up. */
+.marketing-star {
+  position: absolute;
+  border-radius: 9999px;
+  background: rgb(var(--star-color));
+  opacity: var(--star-opacity);
+}
+
+.marketing-star-twinkle {
+  animation: marketing-star-twinkle var(--star-duration) ease-in-out
+    var(--star-delay) infinite;
+}
+
+@keyframes marketing-star-twinkle {
+  0%,
+  100% {
+    opacity: var(--star-opacity);
+  }
+  50% {
+    opacity: calc(var(--star-opacity) * 0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-star-twinkle {
+    animation: none;
+  }
+}
+
 /* Film grain. The single cheapest thing that stops a large flat dark field
    from banding, and the reason the ground reads as a photograph. */
 .marketing-grain {
