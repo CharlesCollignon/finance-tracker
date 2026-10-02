@@ -324,12 +324,17 @@ that wants a decision — the review inbox bar, a primary button. A selected
 chip, an active tab, a success toast and a list icon are the foreground, not
 gold; the phone had 89 gold references against the web's 12.
 
-One exception, and only one: **Plan celebrates.** A milestone reached, the
-flame of a run still alive, the best month among the bars and the rungs of a
-cushion passed may take the accent, and the orb's warm light behind them
-(`components/plan/Glow.tsx`: a radial wash of the orb's body colour breathing
-on its period — light, not a shadow). Nowhere else does, and nothing on Plan
-that is merely selected or pressed does either.
+One exception: **a moment**, something the user did said back to them where
+it happened. On Plan, a milestone reached, the flame of a run still alive, the
+best month among the bars and the rungs of a cushion passed may take the
+accent, with the orb's warm light behind them (`components/plan/Glow.tsx`: a
+radial wash of the orb's body colour breathing on its period — light, not a
+shadow). In the close sheet, a closed month's Kept counts up in gold and, when
+the close extended the run, a pill with the flame says so. Moments are real
+and measured, come once, arrive and then rest, and end on a success haptic —
+the web's DESIGN.md ("Moments") has the full rule, which holds here as it
+stands. Nothing that is merely selected or pressed takes the accent, on Plan
+or anywhere else. Until October 2026 the rule was that only Plan celebrates.
 
 ## Shapes
 

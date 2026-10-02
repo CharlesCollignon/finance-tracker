@@ -1,14 +1,25 @@
 "use client";
 
-import { useEffect, useId, useState, useTransition } from "react";
-import type { MonthCloseResult } from "@finance/core/month-close";
+import {
+  useEffect,
+  useId,
+  useState,
+  useTransition,
+  type CSSProperties,
+} from "react";
+import { Fire } from "@phosphor-icons/react";
+import type { MonthCloseResult, RunMoment } from "@finance/core/month-close";
 import { runwayDaysAdded } from "@finance/core/month-close";
 import { formatShortDate } from "@finance/core/constants";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 import { MobileSheet } from "@/components/ui/MobileSheet";
+import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
+import moments from "@/components/motion/moments.module.css";
+import { ICON } from "@/lib/icon-scale";
+import { FIGURE } from "@/lib/type-scale";
 import { useToast } from "@/components/layout/ToastProvider";
 import { useFormatCurrency } from "@/lib/use-currency";
 import {
@@ -108,6 +119,8 @@ export function MonthCloseSheet({
   const [balance, setBalance] = useState("");
   const [stage, setStage] = useState<Stage>("entering");
   const [result, setResult] = useState<MonthCloseResult | null>(null);
+  // What the close did to the run, once recorded; null when it is not news.
+  const [run, setRun] = useState<RunMoment | null>(null);
   const [pending, startTransition] = useTransition();
   const [fromBank, setFromBank] = useState<string | null>(null);
 
@@ -137,6 +150,7 @@ export function MonthCloseSheet({
     setBalance("");
     setStage("entering");
     setResult(null);
+    setRun(null);
     setFromBank(null);
   }
 
@@ -191,6 +205,7 @@ export function MonthCloseSheet({
         return;
       }
       setResult(response.result);
+      setRun(response.run);
       setStage("closed");
     });
   }
@@ -320,6 +335,56 @@ export function MonthCloseSheet({
                     amount: formatMoney(result.unexplainedCredit ?? 0),
                   })}
                 </Text>
+              </div>
+            ) : stage === "closed" &&
+              result.kept !== null &&
+              result.kept > 0 ? (
+              // The moment: what the month kept, counting up in the gold a
+              // moment is allowed, and the run if the close extended it.
+              <div className="flex flex-col items-start gap-1">
+                <Text className="text-sm text-muted-foreground">
+                  {t("monthClose.keptIn", { month: monthLabel })}
+                </Text>
+                <AnimatedAmount
+                  value={result.kept}
+                  startFrom={0}
+                  format={formatMoney}
+                  className={cn(FIGURE, "text-primary", moments.pop)}
+                />
+                <Text className="text-sm text-muted-foreground">
+                  {result.keptRate !== null
+                    ? t("monthClose.keptRate", {
+                        rate: formatPercentLabel(result.keptRate, locale),
+                      })
+                    : t("monthClose.keptRateUnknown")}
+                </Text>
+                {run ? (
+                  <p
+                    className={cn(
+                      moments.pop,
+                      "mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/40 px-3 py-1.5 text-sm font-medium text-primary",
+                    )}
+                    // After the count has landed.
+                    style={{ "--delay": "650ms" } as CSSProperties}
+                  >
+                    <Fire
+                      size={ICON.sm}
+                      weight="fill"
+                      className={moments.flame}
+                    />
+                    {t(
+                      run.record
+                        ? "monthClose.runRecord"
+                        : "monthClose.runExtended",
+                      { count: run.streak },
+                    )}
+                  </p>
+                ) : null}
+                {days !== null && (
+                  <Text className="mt-1 text-sm text-muted-foreground">
+                    {t("monthClose.runwayBought", { count: days })}
+                  </Text>
+                )}
               </div>
             ) : (
               <div>

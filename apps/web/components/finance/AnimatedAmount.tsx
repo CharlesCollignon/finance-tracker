@@ -14,6 +14,12 @@ interface AnimatedAmountProps {
   className?: string;
   /** What this figure is, on hover. Forwarded to PrivateAmount. */
   title?: string;
+  /**
+   * Where the first count starts, as on the phone. Left out, a figure
+   * appears at its value and only counts when it changes; a moment that
+   * should arrive counting — a closed month's Kept — starts from 0.
+   */
+  startFrom?: number;
 }
 
 /**
@@ -39,11 +45,12 @@ export function AnimatedAmount({
   format,
   className,
   title,
+  startFrom,
 }: AnimatedAmountProps) {
   const hidden = usePrivacyOn();
   const reduce = usePrefersReducedMotion();
-  const [display, setDisplay] = useState(value);
-  const fromRef = useRef(value);
+  const [display, setDisplay] = useState(startFrom ?? value);
+  const fromRef = useRef(startFrom ?? value);
 
   useEffect(() => {
     const from = fromRef.current;

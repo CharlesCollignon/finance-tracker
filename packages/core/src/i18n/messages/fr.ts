@@ -736,6 +736,15 @@ export const fr: Messages = {
   },
 
   monthClose: {
+    keptIn: "Économisé en {month}",
+    runExtended: {
+      one: "Série prolongée\u00A0: {count} mois d'affilée",
+      other: "Série prolongée\u00A0: {count} mois d'affilée",
+    },
+    runRecord: {
+      one: "Nouveau record\u00A0: {count} mois d'affilée",
+      other: "Nouveau record\u00A0: {count} mois d'affilée",
+    },
     closeMonth: "Faire le bilan de {month}",
     balance: "Solde",
     balancePrompt:

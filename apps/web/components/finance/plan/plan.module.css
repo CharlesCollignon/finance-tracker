@@ -1,7 +1,8 @@
 /*
- * The Plan page's motion: the one surface in the app where reaching a
- * milestone, keeping a run alive or a good month is allowed to feel like
- * something (see "The Rare Accent Rule" in DESIGN.md).
+ * The Plan page's motion. Its moments — a milestone reached, a rung lit,
+ * the run's flame — pop and burn on the shared motion in
+ * `components/motion/moments.module.css`, as a closed month does (see
+ * "Moments" in DESIGN.md).
  *
  * Every animation here is on the system's one curve, and none is a loop that
  * moves anything across the screen — the two that repeat, the flame and the
@@ -12,25 +13,9 @@
 
 /* ------------------------------------------------------------ arriving */
 
-/* A reached milestone or a lit rung arriving: up past its size and back,
-   which reads as a pop without a second, springier curve. */
-@keyframes pop {
-  0% {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  60% {
-    opacity: 1;
-    transform: scale(1.06);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
+/* A reached milestone or a lit rung arriving, on the moments' own pop. */
 .pop {
-  animation: pop 600ms cubic-bezier(0.32, 0.72, 0, 1) var(--delay, 0ms) both;
+  composes: pop from "../../motion/moments.module.css";
 }
 
 /* The long view's stack rising from its baseline, and a month's bar
@@ -95,24 +80,9 @@
   pointer-events: none;
 }
 
-/* The run's flame, alive while the run is. A small sway and lift from its
-   base, slower than a real flame so it reads as warmth, not alarm. */
-@keyframes flicker {
-  0%,
-  100% {
-    transform: rotate(-2deg) scale(1, 0.97);
-  }
-  35% {
-    transform: rotate(2deg) scale(0.98, 1.04);
-  }
-  70% {
-    transform: rotate(-1deg) scale(1.02, 1);
-  }
-}
-
+/* The run's flame, alive while the run is: the moments' own flame. */
 .flame {
-  transform-origin: 50% 90%;
-  animation: flicker 2.4s ease-in-out infinite;
+  composes: flame from "../../motion/moments.module.css";
 }
 
 /* ------------------------------------------------------------ the slider */
@@ -202,12 +172,10 @@
 /* ------------------------------------------------------------ reduced */
 
 @media (prefers-reduced-motion: reduce) {
-  .pop,
   .rise,
   .bar,
   .barDown,
-  .glow::before,
-  .flame {
+  .glow::before {
     animation: none;
   }
 }

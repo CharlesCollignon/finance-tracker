@@ -1043,6 +1043,15 @@ export const en = {
 
   /** Closing a month: reading the balance, and what follows from it. */
   monthClose: {
+    keptIn: "Kept in {month}",
+    runExtended: {
+      one: "Run extended: {count} month in a row",
+      other: "Run extended: {count} months in a row",
+    },
+    runRecord: {
+      one: "New record: {count} month in a row",
+      other: "New record: {count} months in a row",
+    },
     closeMonth: "Close {month}",
     balance: "Balance",
     balancePrompt:

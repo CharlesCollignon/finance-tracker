@@ -340,9 +340,9 @@ Do not introduce a light theme, a light-mode token pair, or a `light:` variant.
 
 **The Rare Accent Rule.** Lamplit Gold earns attention by being scarce. Its
 places are the primary action, the focus ring, a figure that genuinely leads a
-screen, a savings amount (systematically), and celebration on Plan: a
-milestone reached, a cushion rung lit, a run of month-ends still alive. Outside
-those, a surface that reaches for it in three unrelated places has spent it. The semantic use is not
+screen, a savings amount (systematically), and a moment (see Moments): a
+milestone reached, a cushion rung lit, a run of month-ends still alive, a month
+closed. Outside those, a surface that reaches for it in three unrelated places has spent it. The semantic use is not
 an exception to this rule so much as the proof of it: gold means something
 specific, which is why scattering it elsewhere costs so much.
 
@@ -357,11 +357,14 @@ went to foreground for the same reason. Read the homes as a description of
 the code, not a wish about it, and add another only by changing this paragraph
 first.
 
-The fifth, celebration, was added in October 2026 with the Plan page, and it is
-held to one surface on purpose. There, gold means _done_: a milestone passed is
-the orb in its warm light, a milestone ahead is a neutral bar; a lit rung is
-gold, an unlit one a hairline ring; the flame is gold while the run lasts and
-grey when it ends. A celebration anywhere else in the app is the accent spent.
+The fifth, celebration, came with the Plan page in October 2026 and was at
+first held to that one surface. Later that month the owner widened it from a
+surface to _moments_: something the user did, said back to them where they did
+it. Gold there still means _done_: a milestone passed is the orb in its warm
+light, a milestone ahead is a neutral bar; a lit rung is gold, an unlit one a
+hairline ring; the flame is gold while the run lasts and grey when it ends; a
+closed month's Kept counts up in gold. Gold on anything that is not a moment is
+still the accent spent.
 
 **The Semantic Amount Rule.** An amount's colour says what kind of money it is —
 income, expense, savings or investment — never whether it is positive or
@@ -791,12 +794,41 @@ all; changing one alone breaks the frame.
   safe area. There, active state is carried by foreground colour and the
   icon's fill, not by a pill or an underline.
 
-### Plan: The Celebration Surface
+### Moments
+
+A moment is something the user did, said back to them where it happened: a
+milestone reached, a cushion rung lit and the run kept alive on Plan, and a
+month closed in the close sheet. It replaced, in October 2026, the rule that
+only Plan celebrates. The allowance is specific:
+
+- **Real and measured.** Every moment is a fact about the user's own money or
+  habit, worked out in `@finance/core` — never points, a level, a score or a
+  badge for opening the app. The landing page's « Aucun conseil. Aucun score. »
+  stays true.
+- **Once.** A milestone is celebrated once per account
+  (`user_preferences.milestone_seen`), on whichever device sees it first; a
+  close's moment belongs to the close that earned it.
+- **It arrives, then rests.** The pop and the flame live in
+  `components/motion/moments.module.css`, and a figure counts up through
+  `AnimatedAmount` with `startFrom`. Nothing moves across the screen, there is
+  no confetti, and reduced motion lands on the final state.
+- **Gold on the moment only** — the figure or the pill that is the news, never
+  the card around it.
+- The phone adds a success haptic; the web has none to add.
+
+**A month closed.** What the month kept counts up from zero in gold and, when
+the close extended the run past one month, a pill with the flame pops in once
+the count has landed: « Série prolongée : 4 mois d'affilée », or « Nouveau
+record » when it beat the best run before it (`runMoment`,
+`packages/core/src/month-close.ts`). A month that cost more than it brought,
+and a baseline, are told as before, without a moment.
+
+### Plan: Where Moments Gather
 
 Plan (`components/finance/plan/`) is where the money is heading: a year from
 now with an "Et si…" slider, the milestones and the cushion, the long view
-after French tax, and the run of month-ends with what each one saved. It is the
-one surface allowed to feel like a reward, and the allowance is specific:
+after French tax, and the run of month-ends with what each one saved. Most of
+the app's moments live here, and the allowance is specific:
 
 - **Gold means done.** Reached milestones (the orb, `tone="mark"`, in a glow of
   `--primary` drawn as a radial light, never a shadow), lit cushion rungs, the
@@ -805,7 +837,7 @@ one surface allowed to feel like a reward, and the allowance is specific:
 - **Motion arrives, then rests.** Curves draw in once (`balance-curve-draw`),
   the long view's stack rises from its baseline once, bars grow in one after
   another, badges pop past their size and settle — all on the one curve, in
-  `plan.module.css`. The only loops are the flame's sway and the glow's
+  `plan.module.css`, whose pop and flame are the shared moments'. The only loops are the flame's sway and the glow's
   breath, both in place, and both switched off under reduced motion.
 - **Play answers at once.** The slider, the horizon and every field of the
   long view redraw immediately; a calculator that animates between answers is

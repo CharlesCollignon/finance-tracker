@@ -7,7 +7,10 @@ import {
   deleteConfirmSchema,
 } from "@finance/core/validations/profile";
 import { type AccountId } from "@finance/core/allocation";
-import { type MonthCloseResult } from "@finance/core/month-close";
+import {
+  type MonthCloseResult,
+  type RunMoment,
+} from "@finance/core/month-close";
 
 import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import * as categories from "@finance/data/categories";
@@ -378,7 +381,7 @@ export async function recordMonthClose(
   month: number,
   closingBalance: number,
   locale: Locale,
-): Promise<ActionResult<{ result: MonthCloseResult }>> {
+): Promise<ActionResult<{ result: MonthCloseResult; run: RunMoment | null }>> {
   return asUser((userId) =>
     closing.recordMonthClose(
       supabase,

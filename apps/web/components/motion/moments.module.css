@@ -1,0 +1,57 @@
+/*
+ * The motion of a moment: something the user did, arriving — a milestone
+ * reached, a rung lit, a month closed, the run kept alive (see "Moments" in
+ * DESIGN.md). Shared by the Plan and wherever else a moment happens, so they
+ * all arrive on the same curve.
+ *
+ * Neither moves anything across the screen. The pop happens once; the flame
+ * only breathes in place, and reduced motion switches it off.
+ */
+
+/* Arriving: up past its size and back, which reads as a pop without a
+   second, springier curve. */
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.pop {
+  animation: pop 600ms cubic-bezier(0.32, 0.72, 0, 1) var(--delay, 0ms) both;
+}
+
+/* The run's flame, alive while the run is. A small sway and lift from its
+   base, slower than a real flame so it reads as warmth, not alarm. */
+@keyframes flicker {
+  0%,
+  100% {
+    transform: rotate(-2deg) scale(1, 0.97);
+  }
+  35% {
+    transform: rotate(2deg) scale(0.98, 1.04);
+  }
+  70% {
+    transform: rotate(-1deg) scale(1.02, 1);
+  }
+}
+
+.flame {
+  transform-origin: 50% 90%;
+  animation: flicker 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pop,
+  .flame {
+    animation: none;
+  }
+}
