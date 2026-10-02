@@ -15,6 +15,7 @@ import {
 import type { Property, PropertyLoan } from "@finance/core/types/database";
 import { propertySchema } from "@finance/core/validations/property";
 
+import { FadeIn } from "@/components/motion/FadeIn";
 import { Button } from "@/components/ui/Button";
 import { ChipRow } from "@/components/ui/ChipRow";
 import { SheetGrabber } from "@/components/ui/SheetGrabber";
@@ -156,6 +157,7 @@ export function AddPropertySheet({
 function AddPropertyFlow({ onClose }: { onClose: () => void }) {
   const t = useT();
   const router = useRouter();
+  const colors = useThemeColors();
   const locale = useLocale();
   const { toast } = useToast();
   const [step, setStep] = useState<Step>(1);
@@ -241,9 +243,26 @@ function AddPropertyFlow({ onClose }: { onClose: () => void }) {
       }
       scrollKey={String(step)}
     >
-      <Text variant="muted" className="text-xs">
-        {t("property.stepLabel", { step, name: t(STEP_KEYS[step]) })}
-      </Text>
+      <View className="gap-2">
+        <View className="flex-row gap-1.5">
+          {([1, 2, 3] as const).map((at) => (
+            <View
+              key={at}
+              className="h-1 flex-1 rounded-full"
+              style={{
+                backgroundColor: colors.foreground,
+                opacity: at <= step ? 0.7 : 0.12,
+              }}
+            />
+          ))}
+        </View>
+        <Text variant="muted" className="text-xs">
+          {t("property.stepLabel", { step, name: t(STEP_KEYS[step]) })}
+        </Text>
+      </View>
+      {/* Each step arrives rather than appears. */}
+      <FadeIn key={step}>
+      <View className="gap-5">
       {step === 1 ? <HomeFields draft={property} error={error} /> : null}
       {step === 2 ? <PurchaseFields draft={property} error={error} /> : null}
       {step === 3 ? (
@@ -262,6 +281,8 @@ function AddPropertyFlow({ onClose }: { onClose: () => void }) {
           {hasLoan ? <LoanFields draft={loan} error={error} offerPayment /> : null}
         </>
       ) : null}
+      </View>
+      </FadeIn>
       <FormError error={errors.form} />
       <Button
         label={
