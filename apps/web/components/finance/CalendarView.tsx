@@ -15,6 +15,7 @@ import type { PlannedOccurrence } from "@finance/core/apply-recurring";
 import { useQuickAdd } from "@/components/layout/QuickAddProvider";
 import { RowCheckbox, SelectionBar } from "@/components/finance/SelectionBar";
 import { useToast } from "@/components/layout/ToastProvider";
+import { useDeletedToast } from "@/lib/use-deleted-toast";
 import { FulfilmentDot } from "@/components/finance/FulfilmentDot";
 import { deleteTransactions, moveTransactions } from "@/lib/actions/finance";
 import {
@@ -98,6 +99,7 @@ export function CalendarView({
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
   const { toast } = useToast();
+  const toastDeleted = useDeletedToast();
 
   /** What each row can say about itself, by transaction id. */
   const fulfilmentStates = useMemo(
@@ -173,11 +175,11 @@ export function CalendarView({
   function handleBulkDelete() {
     startDelete(async () => {
       const result = await deleteTransactions([...selected]);
-      if (result.error) {
+      if (!result.success) {
         toast(result.error, "error");
         return;
       }
-      toast(t("ledger.deleted", { count: result.deleted ?? 0 }), "success");
+      toastDeleted(t("ledger.deleted", { count: result.deleted }), result.undo);
       leaveSelectMode();
     });
   }

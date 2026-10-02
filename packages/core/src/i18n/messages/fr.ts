@@ -1189,6 +1189,8 @@ export const fr: Messages = {
   },
 
   common: {
+    undo: "Annuler",
+    putBack: "Remis en place",
     previousMonth: "Mois précédent",
     nextMonth: "Mois suivant",
     pickAMonth: "Choisir un mois",
@@ -2284,6 +2286,7 @@ export const fr: Messages = {
     notACap: "Cela ne ressemble pas à un budget",
     nothingToImport: "Rien à importer",
     tooManyRows: "Importez au plus 2000 lignes à la fois",
+    undoGone: "Cette suppression ne peut plus être annulée.",
     invalidInput: "Saisie invalide",
     notAuthenticated: "Non authentifié",
     nameRequired: "Le nom est obligatoire",

@@ -20,10 +20,15 @@ export function isMissingSchema(error: { code?: string } | null): boolean {
 /**
  * The same, or a database function that is not there yet — the
  * migration-not-run case for an RPC, which Postgres reports as "no such
- * function" (42883) rather than as a missing table.
+ * function" (42883) and PostgREST as a function missing from its schema
+ * cache (PGRST202), rather than as a missing table.
  */
 export function isMissingSchemaOrFunction(
   error: { code?: string } | null,
 ): boolean {
-  return isMissingSchema(error) || error?.code === "42883";
+  return (
+    isMissingSchema(error) ||
+    error?.code === "42883" ||
+    error?.code === "PGRST202"
+  );
 }

@@ -1626,6 +1626,8 @@ export const en = {
    * reader in French cannot skip hearing "Previous month" in English.
    */
   common: {
+    undo: "Undo",
+    putBack: "Put back",
     previousMonth: "Previous month",
     nextMonth: "Next month",
     pickAMonth: "Pick a month",
@@ -3192,6 +3194,7 @@ export const en = {
     notACap: "That does not look like a budget",
     nothingToImport: "Nothing to import",
     tooManyRows: "Import at most 2000 rows at a time",
+    undoGone: "This deletion can no longer be undone.",
     invalidInput: "Invalid input",
     notAuthenticated: "Not authenticated",
     nameRequired: "Name is required",

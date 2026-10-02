@@ -10,6 +10,7 @@
     "./categories": "./src/categories.ts",
     "./client": "./src/client.ts",
     "./closing": "./src/closing.ts",
+    "./deletions": "./src/deletions.ts",
     "./errors": "./src/errors.ts",
     "./feed-decisions": "./src/feed-decisions.ts",
     "./fulfilment": "./src/fulfilment.ts",

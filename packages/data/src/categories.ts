@@ -4,6 +4,7 @@ import { categorySchema, parseUuid } from "@finance/core/validations/finance";
 import type { z } from "zod";
 
 import type { Db } from "./client";
+import { markCategoryDeleted, type UndoToken } from "./deletions";
 import { dbError } from "./errors";
 
 /** A category to create or rename, as either app's form hands it over. */
@@ -80,16 +81,24 @@ export async function deleteCategory(
   db: Db,
   userId: string,
   id: string,
-): Promise<ActionResult> {
+): Promise<ActionResult<{ undo: UndoToken }>> {
   if (!parseUuid(id)) {
     return { error: "errors.invalidInput" };
   }
 
+  const marked = await markCategoryDeleted(db, userId, id);
+  if (marked !== "unsupported") {
+    return "error" in marked ? marked : { success: true, undo: marked.undo };
+  }
+
+  // Before migration 036: for good, with nothing to take back.
   const { error } = await db
     .from("categories")
     .delete()
     .eq("id", id)
     .eq("user_id", userId);
 
-  return error ? { error: friendlyCategoryError(error) } : { success: true };
+  return error
+    ? { error: friendlyCategoryError(error) }
+    : { success: true, undo: null };
 }

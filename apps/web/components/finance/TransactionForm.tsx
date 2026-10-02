@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { FormLabel } from "@/components/ui/FormLabel";
 import { Text } from "@/components/ui/Text";
 import { useToast } from "@/components/layout/ToastProvider";
+import { useDeletedToast } from "@/lib/use-deleted-toast";
 import { MobileSheet } from "@/components/ui/MobileSheet";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import {
@@ -34,6 +35,11 @@ interface TransactionFormProps {
   onOpenChange: (open: boolean) => void;
   /** The transaction being edited. */
   transaction: Transaction | null;
+  /**
+   * Called inside the delete's transition, before the server answers, so a
+   * list can take the row away at once.
+   */
+  onDeleting?: (id: string) => void;
   onDeleted?: () => void;
 }
 
@@ -49,6 +55,7 @@ export function TransactionForm({
   open,
   onOpenChange,
   transaction,
+  onDeleting,
   onDeleted,
 }: TransactionFormProps) {
   if (!open || !transaction) {
@@ -62,6 +69,7 @@ export function TransactionForm({
       open={open}
       onOpenChange={onOpenChange}
       transaction={transaction}
+      onDeleting={onDeleting}
       onDeleted={onDeleted}
     />
   );
@@ -72,6 +80,7 @@ interface TransactionFormFieldsProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   transaction: Transaction;
+  onDeleting?: (id: string) => void;
   onDeleted?: () => void;
 }
 
@@ -80,9 +89,11 @@ function TransactionFormFields({
   open,
   onOpenChange,
   transaction,
+  onDeleting,
   onDeleted,
 }: TransactionFormFieldsProps) {
   const { toast } = useToast();
+  const toastDeleted = useDeletedToast();
   const t = useT();
   const locale = useLocale();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -157,12 +168,13 @@ function TransactionFormFields({
 
   function handleDelete() {
     startDelete(async () => {
+      onDeleting?.(transaction.id);
       const result = await deleteTransaction(transaction.id);
-      if (result.error) {
+      if (!result.success) {
         toast(result.error, "error");
         return;
       }
-      toast(t("transaction.deleted"), "success");
+      toastDeleted(t("transaction.deleted"), result.undo);
       onOpenChange(false);
       onDeleted?.();
     });

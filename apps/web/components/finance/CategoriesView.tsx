@@ -19,6 +19,7 @@ import { MobileSheet } from "@/components/ui/MobileSheet";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useToast } from "@/components/layout/ToastProvider";
+import { useDeletedToast } from "@/lib/use-deleted-toast";
 import {
   CategoryIcon,
   CATEGORY_ICONS,
@@ -80,6 +81,7 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
   const t = useT();
   const locale = useLocale();
   const { toast } = useToast();
+  const toastDeleted = useDeletedToast();
   const [formOpen, setFormOpen] = useState(false);
   const [editCategory, setEditCategory] = useState<Category | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -111,10 +113,10 @@ export function CategoriesView({ categories }: CategoriesViewProps) {
     startTransition(async () => {
       const result = await deleteCategory(id);
       setConfirmDeleteId(null);
-      if (result.error) {
+      if (!result.success) {
         toast(result.error, "error");
       } else {
-        toast(t("categories.deleted"), "success");
+        toastDeleted(t("categories.deleted"), result.undo);
       }
     });
   }
