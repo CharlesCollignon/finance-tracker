@@ -331,7 +331,8 @@ accent, with the orb's warm light behind them (`components/plan/Glow.tsx`: a
 radial wash of the orb's body colour breathing on its period — light, not a
 shadow). In the close sheet, a closed month's Kept counts up in gold and, when
 the close extended the run, a pill with the flame says so; and an emptied
-review inbox says so with a gold tick and how many shops it just taught. Moments are real
+review inbox says so with a gold tick and how many shops it just taught; and a loan half
+repaid or repaid carries a gold pill on its card, popping once per phone (`lib/moments.ts`). Moments are real
 and measured, come once, arrive and then rest, and end on a success haptic —
 the web's DESIGN.md ("Moments") has the full rule, which holds here as it
 stands. Nothing that is merely selected or pressed takes the accent, on Plan

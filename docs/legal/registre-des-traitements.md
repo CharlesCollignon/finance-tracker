@@ -95,7 +95,9 @@ auprès desquels l'utilisateur a lui-même ouvert un compte.
 ## 4. Notifications
 
 - **Finalité** : envoyer les rappels (nouveau mois, plafond dépassé, charges
-  arrivées, consentement bancaire à renouveler).
+  arrivées, consentement bancaire à renouveler) et les moments d'un bien
+  immobilier (moitié d'un prêt remboursée, dernière échéance, nouvelle
+  estimation), qui citent le nom du prêt, du bien et des montants.
 - **Base légale** : consentement donné par l'autorisation de notification de
   l'appareil ou du navigateur (art. 6.1.a) — [[à confirmer : ou exécution du contrat]].
 - **Données** : abonnement push ou jeton Expo, agent utilisateur du

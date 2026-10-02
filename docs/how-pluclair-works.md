@@ -106,17 +106,18 @@ off (`user_preferences.notification_prefs`, every kind on unless set to
 logging it so the next run sends it, and logs each key in `notification_log`
 before sending, so nothing is said twice.
 
-| Kind        | What                                                 | Sent by                   | Key                                              |
-| ----------- | ---------------------------------------------------- | ------------------------- | ------------------------------------------------ |
-| `recap`     | Monday: last week, the month so far, still to come   | notify cron, Mondays      | `recap:<monday>`                                 |
-| `overdraft` | The balance dips below zero on a day ahead           | notify cron               | `overdraft:<month>`                              |
-| `close`     | The reading day; a month a bank closed               | notify cron; refresh cron | `close:` / `closed:`                             |
-| `bigCharge` | Tomorrow, a charge over twice the usual, or yearly   | notify cron               | `big-charge:<tomorrow>`                          |
-| `arrived`   | Movements that look like a planned charge arrived    | notify cron               | `arrived:<day>`                                  |
-| `review`    | New bank rows waiting for a category                 | refresh cron              | `bank-review:<day>`                              |
-| `milestone` | A new milestone passed since the last one celebrated | notify cron               | `milestone:<amount>`                             |
-| `monthOpen` | A new month has opened                               | notify cron               | `month-open:<month>`                             |
-| `bank`      | The connection needs renewing or has stopped         | notify cron               | `bank-consent:`, `bank-expired:`, `bank-paused:` |
+| Kind        | What                                                                              | Sent by                   | Key                                                                                      |
+| ----------- | --------------------------------------------------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------- |
+| `recap`     | Monday: last week, the month so far, still to come                                | notify cron, Mondays      | `recap:<monday>`                                                                         |
+| `overdraft` | The balance dips below zero on a day ahead                                        | notify cron               | `overdraft:<month>`                                                                      |
+| `close`     | The reading day; a month a bank closed                                            | notify cron; refresh cron | `close:` / `closed:`                                                                     |
+| `bigCharge` | Tomorrow, a charge over twice the usual, or yearly                                | notify cron               | `big-charge:<tomorrow>`                                                                  |
+| `arrived`   | Movements that look like a planned charge arrived                                 | notify cron               | `arrived:<day>`                                                                          |
+| `review`    | New bank rows waiting for a category                                              | refresh cron              | `bank-review:<day>`                                                                      |
+| `milestone` | A new milestone passed since the last one celebrated                              | notify cron               | `milestone:<amount>`                                                                     |
+| `property`  | Half a loan repaid, its last payment; a home's new estimate after a DVF half-year | notify cron; market cron  | `property:half:<loan>`, `property:last:<loan>`, `property:market:<property>:<half-year>` |
+| `monthOpen` | A new month has opened                                                            | notify cron               | `month-open:<month>`                                                                     |
+| `bank`      | The connection needs renewing or has stopped                                      | notify cron               | `bank-consent:`, `bank-expired:`, `bank-paused:`                                         |
 
 The messages are built in `packages/core/src/push-messages.ts`,
 `push-digest.ts` and `weekly-recap.ts`; the figures behind them come from the
@@ -128,6 +129,18 @@ A phone with a push token gets everything from the server and schedules
 nothing itself; one without (Expo Go, no project id) falls back to local
 reminders for its charges and the month opening, under the same switches
 (`bigCharge` and `monthOpen`).
+
+A property's moments (`property-moments.ts`) are a change, not a state: a
+loan's half and its last payment count for a month after the day, so a loan
+that passed half before the app knew it is not news, and a new estimate only
+when a reading's last sale reaches a half-year the reading before did not —
+twice a year at most, since DVF grows twice a year. The market cron runs on
+Mondays at 09:00 UTC, after the quiet hours: a held estimate would be lost,
+since the next reading is no longer new. The `property` switch is shown only
+to an account with `property.track` (`shownNotificationKinds`), and a tapped
+one opens the property on the phone too (`push-routes.ts`). On the loan's
+card, the moment is a gold pill that pops the first time a device sees it
+(`use-moment-seen.ts` on the web, `lib/moments.ts` on the phone).
 
 The recap is also a card on Le point, Monday to Wednesday, until « Vu »
 (`dismissed_prompts`, `recap:<monday>`); the `recap` switch hides both. On
@@ -193,7 +206,7 @@ migration 050; per property rather than shared by place, so no session can
 learn where others own homes). It is read when a property is added or
 changed on the web (with an 8-second wait, after which the cron's to
 read), when the phone asks `POST /api/property/market`, and weekly by
-`/api/cron/market` (Mondays 05:00), which also refreshes the index
+`/api/cron/market` (Mondays 09:00 UTC), which also refreshes the index
 (`housing_price_index`, readable by every signed-in session, written only by
 the service role) and re-reads readings a month old. Addresses are found
 through the IGN geocoder from the server (`/api/property/addresses` for the
