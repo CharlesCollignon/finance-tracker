@@ -4,21 +4,15 @@ import {
   formatMonthLabel,
   getCurrentMonth,
   getMonthBounds,
-  shiftIsoDate,
   shiftMonth,
   todayIsoLocal,
 } from "@finance/core/constants";
 import type { Locale } from "@finance/core/i18n/locale";
 import { DEFAULT_WRITER_MODEL, describeModel } from "@finance/core/model-name";
 import {
-  buildMonthBalance,
-  recordedDeltas,
   spendingByMonth,
   topSpending,
-  upcomingDelta,
-  type BalanceAnchor,
   type CategorySpend,
-  type DatedDelta,
   type MonthBalance,
 } from "@finance/core/month-balance";
 import { previousMonthKey } from "@finance/core/month-close";
@@ -26,13 +20,15 @@ import { buildMonthComparison } from "@finance/core/month-comparison";
 import type { MonthFacts } from "@finance/core/month-facts";
 import { buildMonthPulse } from "@finance/core/month-pulse";
 import type { ReadFreshness } from "@finance/core/month-read-budget";
-import { allRows } from "@finance/core/paging";
 import {
   buildStillToCome,
   type UpcomingCharge,
 } from "@finance/core/still-to-come";
-import type { TransactionWithCategory } from "@finance/core/types/database";
 import type { WeeklyRecap } from "@finance/core/weekly-recap";
+import {
+  readMonthBalance,
+  type BalanceSource,
+} from "@finance/data/month-balance";
 import { getWeeklyRecapCard } from "@finance/data/weekly-recap";
 
 import {
@@ -61,7 +57,6 @@ import {
   type FulfilmentReport,
 } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
-import { getMovedBetween } from "@/lib/moved-rows";
 
 /**
  * Le point on the phone: one month, as the web's Bearing tells it.
@@ -70,9 +65,9 @@ import { getMovedBetween } from "@/lib/moved-rows";
  * asked of the web app for the reason the rest of the phone's reads give:
  * every table this touches is select-own under row level security, so the
  * rows come straight out of Supabase and no server of ours is in the path.
- * The arithmetic is the web's, from the same engines in `packages/core` —
- * `buildMonthBalance`, `topSpending`, `buildStillToCome` — so the two clients
- * draw the same curve over the same month.
+ * The balance is read by `@finance/data/month-balance`, as the web's is, and
+ * the rest comes from the same engines in `packages/core`, so the two
+ * clients draw the same curve over the same month.
  */
 
 /** How many months the spending bars look back over, the month shown included. */
@@ -84,7 +79,7 @@ export interface HomeMonth {
   today: string;
   balance: MonthBalance;
   /** What the balance is pinned to: the bank's statement, a close, or nothing. */
-  source: "bank" | "close" | "none";
+  source: BalanceSource;
   spent: {
     total: number;
     /**
@@ -124,35 +119,6 @@ function monthKeyOf(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, "0")}`;
 }
 
-/**
- * Every transaction dated in a range, however many months it spans, paged
- * past the server's row cap — six months of a busy account is past it.
- */
-async function getTransactionsBetween(
-  userId: string,
-  from: string,
-  to: string,
-): Promise<TransactionWithCategory[]> {
-  if (from > to) {
-    return [];
-  }
-  const rows = await allRows<TransactionWithCategory>((start, end) =>
-    supabase
-      .from("transactions")
-      .select("*, categories(name, type, icon, counts_toward_summary)")
-      .eq("user_id", userId)
-      .gte("occurred_on", from)
-      .lte("occurred_on", to)
-      .order("id")
-      .range(start, end)
-      .then(({ data, error }) => ({
-        data: data as TransactionWithCategory[] | null,
-        error,
-      })),
-  );
-  return rows.sort((a, b) => a.occurred_on.localeCompare(b.occurred_on));
-}
-
 /** The skipped occurrences of one month, as the keys `buildStillToCome` takes. */
 async function skipKeysFor(
   userId: string,
@@ -175,10 +141,8 @@ async function skipKeysFor(
  * on. A past month answers it with what happened, a future one with what the
  * charges call for, and the month in progress with both, joined at today.
  *
- * The balance is only ever carried from something read — the bank's
- * statement, or the close of the month before — and never from further
- * back: a balance measured against movements from a different window says
- * nothing about either.
+ * The balance is `@finance/data/month-balance`'s, shared with the web's
+ * Bearing and the overdraft warning, so all three draw the same curve.
  */
 export async function gatherHomeMonth(
   userId: string,
@@ -187,7 +151,6 @@ export async function gatherHomeMonth(
   locale: Locale,
 ): Promise<HomeMonth> {
   const today = todayIsoLocal();
-  const current = getCurrentMonth();
   const { start: first, end: last } = getMonthBounds(year, month);
   const period = last < today ? "past" : first > today ? "future" : "current";
   const isCurrent = period === "current";
@@ -200,114 +163,25 @@ export async function gatherHomeMonth(
     hasBankFeed(userId),
   ]);
 
-  /* ------------------------------------------------------------ the anchor */
+  /* ----------------------------------------------- the balance and rows */
 
-  let anchor: BalanceAnchor | null = null;
-  let source: HomeMonth["source"] = "none";
-
-  if (bankFed) {
-    const onDate = period === "past" ? last : today;
-    const cash = await readCashBalance(userId, onDate);
-    // A reading short of an account is short by whatever it holds: not a
-    // balance, and not something to carry.
-    if (cash?.ok) {
-      anchor = { onDate, balance: cash.total };
-      source = "bank";
-    }
-  }
-
-  if (!anchor) {
-    const closeOf = (key: string) =>
-      closes.history.find((row) => row.monthKey === key);
-    // Carried forward from the close of the month before the one the
-    // balance starts in — the month shown, or this one for a month ahead.
-    const opensFrom =
-      period === "future"
-        ? shiftMonth(current.year, current.month, -1)
-        : previousMonth;
-    const before = closeOf(monthKeyOf(opensFrom.year, opensFrom.month));
-    const own = period === "past" ? closeOf(monthKeyOf(year, month)) : null;
-    if (before) {
-      anchor = {
-        onDate: getMonthBounds(opensFrom.year, opensFrom.month).end,
-        balance: before.closingBalance,
-      };
-      source = "close";
-    } else if (own) {
-      anchor = { onDate: last, balance: own.closingBalance };
-      source = "close";
-    }
-  }
-
-  /* ------------------------------------------------------- the movements */
-
-  // Every day between the anchor and the month shown has to be accounted
-  // for, recorded or planned, or the balance drifts by what was missed.
-  const rangeStart =
-    anchor && shiftIsoDate(anchor.onDate, 1) < first
-      ? shiftIsoDate(anchor.onDate, 1)
-      : first;
-  const rangeEnd = anchor && anchor.onDate > last ? anchor.onDate : last;
+  // The months the spending bars look back over, read with the balance's
+  // own range in one pass.
   const trendFrom = shiftMonth(year, month, -(TREND_MONTHS - 1));
-  const trendStart = getMonthBounds(trendFrom.year, trendFrom.month).start;
-
-  const [rows, moved] = await Promise.all([
-    getTransactionsBetween(
-      userId,
-      rangeStart < trendStart ? rangeStart : trendStart,
-      rangeEnd,
-    ),
-    anchor ? getMovedBetween(userId, rangeStart, rangeEnd) : [],
-  ]);
-
-  const recorded: DatedDelta[] = recordedDeltas(rows, {
-    from: rangeStart,
-    today,
-    anchored: anchor !== null,
-    moved,
-  });
-
-  // What the charges still call for, month by month from this one to the
-  // end of the range — never a month that has ended.
-  const planned: DatedDelta[] = [];
-  let shownUpcoming: HomeMonth["upcoming"] = null;
-  if (rangeEnd > today) {
-    let cursor = { year: current.year, month: current.month };
-    while (monthKeyOf(cursor.year, cursor.month) <= rangeEnd.slice(0, 7)) {
-      const key = monthKeyOf(cursor.year, cursor.month);
-      const skipped = await skipKeysFor(userId, cursor.year, cursor.month);
-      const upcoming = buildStillToCome(
-        rows.filter((tx) => tx.occurred_on.startsWith(key)),
-        templates,
-        cursor.year,
-        cursor.month,
-        today,
-        skipped,
-        fulfilledKeys,
-      );
-      for (const charge of [...upcoming.outgoing, ...upcoming.incoming]) {
-        planned.push({ date: charge.occurredOn, delta: upcomingDelta(charge) });
-      }
-      if (cursor.year === year && cursor.month === month) {
-        shownUpcoming = {
-          charges: [...upcoming.outgoing, ...upcoming.incoming].sort((a, b) =>
-            a.occurredOn.localeCompare(b.occurredOn),
-          ),
-          leaving: upcoming.leaving,
-          arriving: upcoming.arriving,
-        };
-      }
-      cursor = shiftMonth(cursor.year, cursor.month, 1);
-    }
-  }
-
-  const balance = buildMonthBalance({
+  const {
+    balance,
+    source,
+    rows,
+    upcoming: shownUpcoming,
+  } = await readMonthBalance(supabase, userId, {
     year,
     month,
     today,
-    anchor,
-    recorded,
-    planned,
+    templates,
+    fulfilledKeys,
+    closes,
+    bankFed,
+    readFrom: getMonthBounds(trendFrom.year, trendFrom.month).start,
   });
 
   /* ------------------------------------------------------- the spending */
@@ -407,7 +281,7 @@ export async function gatherHomeMonth(
         ? arrived
         : null,
     empty:
-      anchor === null &&
+      source === "none" &&
       rows.length === 0 &&
       templates.every((template) => !template.active),
   };

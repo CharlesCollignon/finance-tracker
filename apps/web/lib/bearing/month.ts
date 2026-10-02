@@ -1,9 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getMovedBetween } from "@/lib/queries/moved-rows";
-import {
-  getRecurringSkipKeys,
-  getRecurringTemplates,
-} from "@/lib/queries/finance";
+import { getRecurringTemplates } from "@/lib/queries/finance";
 import {
   getFulfilledKeys,
   getFulfilmentReport,
@@ -11,7 +7,6 @@ import {
 } from "@/lib/queries/fulfilment";
 import { getCategories } from "@/lib/queries/categories";
 import { getMonthCloseOverview } from "@/lib/queries/month-close";
-import { readCashBalance } from "@/lib/queries/bank-balance";
 import {
   countSwallowedFeedItems,
   getPendingFeedItems,
@@ -20,32 +15,24 @@ import {
 } from "@/lib/queries/bank";
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { getLocale } from "@/lib/locale";
-import { allRows } from "@finance/core/paging";
 import { buildAttention, type AttentionItem } from "@finance/core/attention";
 import {
   formatMonthLabel,
-  getCurrentMonth,
   getMonthBounds,
-  shiftIsoDate,
   shiftMonth,
   todayIsoLocal,
 } from "@finance/core/constants";
 import {
-  buildMonthBalance,
-  recordedDeltas,
   spendingByMonth,
   topSpending,
-  upcomingDelta,
-  type BalanceAnchor,
   type CategorySpend,
-  type DatedDelta,
   type MonthBalance,
 } from "@finance/core/month-balance";
+import type { UpcomingCharge } from "@finance/core/still-to-come";
 import {
-  buildStillToCome,
-  type UpcomingCharge,
-} from "@finance/core/still-to-come";
-import type { TransactionWithCategory } from "@finance/core/types/database";
+  readMonthBalance,
+  type BalanceSource,
+} from "@finance/data/month-balance";
 
 /** How many months the spending bars look back over, the month shown included. */
 const TREND_MONTHS = 6;
@@ -56,7 +43,7 @@ export interface BearingMonth {
   today: string;
   balance: MonthBalance;
   /** What the balance is pinned to: the bank's statement, a close, or nothing. */
-  source: "bank" | "close" | "none";
+  source: BalanceSource;
   /** Recorded this month. */
   income: number;
   spent: {
@@ -99,33 +86,6 @@ function monthKeyOf(year: number, month: number): string {
 }
 
 /**
- * Every transaction dated in a range, however many months it spans, paged
- * past the server's row cap — six months of a busy account is past it.
- */
-async function getTransactionsBetween(
-  userId: string,
-  from: string,
-  to: string,
-): Promise<TransactionWithCategory[]> {
-  if (from > to) {
-    return [];
-  }
-  const supabase = await createClient();
-  const rows = await allRows((start, end) =>
-    supabase
-      .from("transactions")
-      .select("*, categories(name, type, icon, counts_toward_summary)")
-      .eq("user_id", userId)
-      .gte("occurred_on", from)
-      .lte("occurred_on", to)
-      .order("occurred_on", { ascending: true })
-      .order("id")
-      .range(start, end),
-  );
-  return rows as TransactionWithCategory[];
-}
-
-/**
  * Everything the Bearing shows for one month.
  *
  * One month and not "today", because the question the screen answers is the
@@ -133,10 +93,8 @@ async function getTransactionsBetween(
  * on. A past month answers it with what happened, a future one with what the
  * charges call for, and the month in progress with both, joined at today.
  *
- * The balance is only ever carried from something read — the bank's
- * statement, or the close of the month before — and never from further back,
- * for the reason the Month pulse gives: a balance measured against movements
- * from a different window says nothing about either.
+ * The balance is `@finance/data/month-balance`'s, shared with the phone's
+ * Le point and the overdraft warning, so all three draw the same curve.
  */
 export async function gatherBearingMonth(
   userId: string,
@@ -144,7 +102,6 @@ export async function gatherBearingMonth(
   month: number,
 ): Promise<BearingMonth> {
   const today = todayIsoLocal();
-  const current = getCurrentMonth();
   const { start: first, end: last } = getMonthBounds(year, month);
   const period = last < today ? "past" : first > today ? "future" : "current";
   const isCurrent = period === "current";
@@ -158,118 +115,25 @@ export async function gatherBearingMonth(
     hasBankFeed(userId),
   ]);
 
-  /* ------------------------------------------------------------ the anchor */
+  /* ----------------------------------------------- the balance and rows */
 
-  let anchor: BalanceAnchor | null = null;
-  let source: BearingMonth["source"] = "none";
-
-  if (bankFed) {
-    const onDate = period === "past" ? last : today;
-    const cash = await readCashBalance(userId, onDate);
-    // A reading short of an account is short by whatever it holds: not a
-    // balance, and not something to carry.
-    if (cash?.ok) {
-      anchor = { onDate, balance: cash.total };
-      source = "bank";
-    }
-  }
-
-  if (!anchor) {
-    const closeOf = (key: string) =>
-      closes.history.find((row) => row.monthKey === key);
-    // Carried forward from the close of the month before the one the
-    // balance starts in — the month shown, or this one for a month ahead.
-    const opensFrom =
-      period === "future"
-        ? shiftMonth(current.year, current.month, -1)
-        : previousMonth;
-    const before = closeOf(monthKeyOf(opensFrom.year, opensFrom.month));
-    const own = period === "past" ? closeOf(monthKeyOf(year, month)) : null;
-    if (before) {
-      anchor = {
-        onDate: getMonthBounds(opensFrom.year, opensFrom.month).end,
-        balance: before.closingBalance,
-      };
-      source = "close";
-    } else if (own) {
-      anchor = { onDate: last, balance: own.closingBalance };
-      source = "close";
-    }
-  }
-
-  /* ------------------------------------------------------- the movements */
-
-  // Every day between the anchor and the month shown has to be accounted
-  // for, recorded or planned, or the balance drifts by what was missed.
-  const rangeStart =
-    anchor && shiftIsoDate(anchor.onDate, 1) < first
-      ? shiftIsoDate(anchor.onDate, 1)
-      : first;
-  const rangeEnd = anchor && anchor.onDate > last ? anchor.onDate : last;
+  // The months the spending bars look back over, read with the balance's
+  // own range in one pass.
   const trendFrom = shiftMonth(year, month, -(TREND_MONTHS - 1));
-  const trendStart = getMonthBounds(trendFrom.year, trendFrom.month).start;
-
-  const [rows, moved] = await Promise.all([
-    getTransactionsBetween(
-      userId,
-      rangeStart < trendStart ? rangeStart : trendStart,
-      rangeEnd,
-    ),
-    anchor ? getMovedBetween(userId, rangeStart, rangeEnd) : [],
-  ]);
-
-  const recorded: DatedDelta[] = recordedDeltas(rows, {
-    from: rangeStart,
-    today,
-    anchored: anchor !== null,
-    moved,
-  });
-
-  // What the charges still call for, month by month from this one to the
-  // end of the range — never a month that has ended.
-  const planned: DatedDelta[] = [];
-  let shownUpcoming: BearingMonth["upcoming"] = null;
-  if (rangeEnd > today) {
-    let cursor = { year: current.year, month: current.month };
-    while (monthKeyOf(cursor.year, cursor.month) <= rangeEnd.slice(0, 7)) {
-      const key = monthKeyOf(cursor.year, cursor.month);
-      const skipped = await getRecurringSkipKeys(
-        userId,
-        cursor.year,
-        cursor.month,
-      );
-      const upcoming = buildStillToCome(
-        rows.filter((tx) => tx.occurred_on.startsWith(key)),
-        templates,
-        cursor.year,
-        cursor.month,
-        today,
-        skipped,
-        fulfilledKeys,
-      );
-      for (const charge of [...upcoming.outgoing, ...upcoming.incoming]) {
-        planned.push({ date: charge.occurredOn, delta: upcomingDelta(charge) });
-      }
-      if (cursor.year === year && cursor.month === month) {
-        shownUpcoming = {
-          charges: [...upcoming.outgoing, ...upcoming.incoming].sort((a, b) =>
-            a.occurredOn.localeCompare(b.occurredOn),
-          ),
-          leaving: upcoming.leaving,
-          arriving: upcoming.arriving,
-        };
-      }
-      cursor = shiftMonth(cursor.year, cursor.month, 1);
-    }
-  }
-
-  const balance = buildMonthBalance({
+  const {
+    balance,
+    source,
+    rows,
+    upcoming: shownUpcoming,
+  } = await readMonthBalance(await createClient(), userId, {
     year,
     month,
     today,
-    anchor,
-    recorded,
-    planned,
+    templates,
+    fulfilledKeys,
+    closes,
+    bankFed,
+    readFrom: getMonthBounds(trendFrom.year, trendFrom.month).start,
   });
 
   /* ------------------------------------------------------- the spending */
@@ -376,7 +240,7 @@ export async function gatherBearingMonth(
         ? arrived
         : null,
     empty:
-      anchor === null &&
+      source === "none" &&
       rows.length === 0 &&
       templates.every((template) => !template.active),
   };

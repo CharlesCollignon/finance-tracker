@@ -16,6 +16,7 @@
     "./fulfilment-decisions": "./src/fulfilment-decisions.ts",
     "./ledger": "./src/ledger.ts",
     "./ledger-duplicates": "./src/ledger-duplicates.ts",
+    "./month-balance": "./src/month-balance.ts",
     "./month-close": "./src/month-close.ts",
     "./moved-rows": "./src/moved-rows.ts",
     "./occurrences": "./src/occurrences.ts",
