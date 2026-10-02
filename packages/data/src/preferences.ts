@@ -36,6 +36,30 @@ export interface Recipient extends NotificationSettings {
 
 const NO_SETTINGS: NotificationSettings = { prefs: {}, milestoneSeen: null };
 
+export async function getNotificationSettings(
+  db: Db,
+  userId: string,
+): Promise<NotificationSettings> {
+  const { data, error } = await db
+    .from("user_preferences")
+    .select("notification_prefs, milestone_seen")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  // Before migration 048 there is nothing to read, which is everything on.
+  if (error || !data) {
+    if (error && !isMissingSchema(error)) {
+      throw error;
+    }
+    return NO_SETTINGS;
+  }
+  return {
+    prefs: readNotificationPrefs(data.notification_prefs),
+    milestoneSeen:
+      data.milestone_seen === null ? null : Number(data.milestone_seen),
+  };
+}
+
 /**
  * Everyone's language and choices in one read, for a cron that has no
  * browser and no session to ask. A user with no row is absent from the map

@@ -1,12 +1,26 @@
+import type { ActionResult } from "@finance/core/action-result";
 import { getMonthBounds } from "@finance/core/constants";
 import type { Locale } from "@finance/core/i18n/locale";
 import { allRows } from "@finance/core/paging";
 import { buildStillToCome } from "@finance/core/still-to-come";
 import type { TransactionWithCategory } from "@finance/core/types/database";
-import { buildWeeklyRecap, type WeeklyRecap } from "@finance/core/weekly-recap";
+import { wantsNotification } from "@finance/core/notification-kinds";
+import {
+  buildWeeklyRecap,
+  mondayOf,
+  RECAP_PROMPT,
+  recapPrompt,
+  showsRecapCard,
+  type WeeklyRecap,
+} from "@finance/core/weekly-recap";
 
 import type { Db } from "./client";
 import { getFulfilledKeys } from "./fulfilment";
+import {
+  dismissPrompt,
+  getNotificationSettings,
+  readDismissedPrompts,
+} from "./preferences";
 import { getRecurringSkipKeys, getRecurringTemplates } from "./templates";
 
 /**
@@ -73,5 +87,44 @@ export async function getWeeklyRecap(
     stillToCome,
     waiting,
     locale,
+  });
+}
+
+/**
+ * The recap as Le point's card: early in the week, until it is put away.
+ * The switch that stops the Monday push stops the card too — one choice,
+ * "no recap", rather than two places to make it.
+ */
+export async function getWeeklyRecapCard(
+  db: Db,
+  userId: string,
+  today: string,
+  locale: Locale,
+): Promise<WeeklyRecap | null> {
+  if (!showsRecapCard(today)) {
+    return null;
+  }
+  const [{ prefs }, dismissed] = await Promise.all([
+    getNotificationSettings(db, userId),
+    readDismissedPrompts(db, userId),
+  ]);
+  if (
+    !wantsNotification(prefs, "recap") ||
+    dismissed.includes(recapPrompt(mondayOf(today)))
+  ) {
+    return null;
+  }
+  return getWeeklyRecap(db, userId, today, locale);
+}
+
+/** Put this week's card away, on every device. */
+export function dismissWeeklyRecap(
+  db: Db,
+  userId: string,
+  weekOf: string,
+  locale: Locale,
+): Promise<ActionResult> {
+  return dismissPrompt(db, userId, recapPrompt(weekOf), locale, {
+    replacing: RECAP_PROMPT,
   });
 }

@@ -32,6 +32,8 @@ import {
   type UpcomingCharge,
 } from "@finance/core/still-to-come";
 import type { TransactionWithCategory } from "@finance/core/types/database";
+import type { WeeklyRecap } from "@finance/core/weekly-recap";
+import { getWeeklyRecapCard } from "@finance/data/weekly-recap";
 
 import {
   getMonthRead,
@@ -579,4 +581,16 @@ export async function gatherHomeRead(
     writerBrand: describeModel(DEFAULT_WRITER_MODEL).brand,
     readModel: stored.view?.model ?? null,
   };
+}
+
+/**
+ * The week's recap card, early in the week, until it is put away; null on
+ * the other days. Loaded on its own, like the read: it reads a year of rows
+ * for each category's normal month, and the balance should not wait on it.
+ */
+export function gatherHomeRecap(
+  userId: string,
+  locale: Locale,
+): Promise<WeeklyRecap | null> {
+  return getWeeklyRecapCard(supabase, userId, todayIsoLocal(), locale);
 }

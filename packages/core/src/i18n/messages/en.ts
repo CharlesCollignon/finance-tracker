@@ -2154,6 +2154,7 @@ export const en = {
       one: "{count} transaction from your bank needs a category.",
       other: "{count} transactions from your bank need a category.",
     },
+    dismiss: "Got it",
   },
   push: {
     bigCharge: {

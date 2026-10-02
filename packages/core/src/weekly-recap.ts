@@ -53,6 +53,24 @@ export interface WeeklyRecap {
   aboveNormal: { categoryName: string; spent: number; normal: number }[];
 }
 
+/** Days, counted from Monday, that the recap card stays on Le point. */
+const RECAP_CARD_DAYS = 3;
+
+/** What putting the card away is remembered as: one per week. */
+export const RECAP_PROMPT = "recap:";
+
+export function recapPrompt(weekOf: string): string {
+  return `${RECAP_PROMPT}${weekOf}`;
+}
+
+/**
+ * Whether Le point shows the week's recap today. Early in the week only: by
+ * Thursday "last week" is a long way back, and the card would be furniture.
+ */
+export function showsRecapCard(today: string): boolean {
+  return today <= shiftIsoDate(mondayOf(today), RECAP_CARD_DAYS - 1);
+}
+
 /** The Monday on or before a day. */
 export function mondayOf(isoDate: string): string {
   const [year, month, day] = isoDate.split("-").map(Number);

@@ -18,6 +18,7 @@ import * as decisions from "@finance/data/fulfilment-decisions";
 import * as ledger from "@finance/data/ledger";
 import * as plans from "@finance/data/wallet-plans";
 import * as occurrences from "@finance/data/occurrences";
+import * as recap from "@finance/data/weekly-recap";
 import type { ActionResult } from "@finance/core/action-result";
 import { supabase } from "@/lib/supabase";
 import type { Locale } from "@finance/core/i18n/locale";
@@ -503,4 +504,16 @@ export async function setAccountCountsAsCash(
     return { error: dbError(error) };
   }
   return { success: true };
+}
+
+/* ------------------------------------------------------ the week's recap */
+
+/** Put this week's recap card away, on every device. */
+export function dismissWeeklyRecap(
+  weekOf: string,
+  locale: Locale,
+): Promise<ActionResult> {
+  return asUser((userId) =>
+    recap.dismissWeeklyRecap(supabase, userId, weekOf, locale),
+  );
 }

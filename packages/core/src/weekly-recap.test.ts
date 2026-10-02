@@ -3,7 +3,13 @@ import { describe, expect, it } from "vitest";
 import { translator } from "./i18n/t";
 import { weeklyRecapNotification } from "./push-messages";
 import type { TransactionWithCategory } from "./types/database";
-import { buildWeeklyRecap, mondayOf, weeklyRecapLines } from "./weekly-recap";
+import {
+  buildWeeklyRecap,
+  mondayOf,
+  recapPrompt,
+  showsRecapCard,
+  weeklyRecapLines,
+} from "./weekly-recap";
 
 function tx(
   occurredOn: string,
@@ -144,5 +150,19 @@ describe("the recap's words", () => {
       previousMonthName: "septembre",
     });
     expect(lines[0]).toBe("120 € dépensés la semaine dernière.");
+  });
+});
+
+describe("showsRecapCard", () => {
+  it("shows from Monday to Wednesday", () => {
+    // 2026-10-05 is a Monday.
+    expect(showsRecapCard("2026-10-05")).toBe(true);
+    expect(showsRecapCard("2026-10-07")).toBe(true);
+    expect(showsRecapCard("2026-10-08")).toBe(false);
+    expect(showsRecapCard("2026-10-11")).toBe(false);
+  });
+
+  it("keys the card by its week", () => {
+    expect(recapPrompt("2026-10-05")).toBe("recap:2026-10-05");
   });
 });

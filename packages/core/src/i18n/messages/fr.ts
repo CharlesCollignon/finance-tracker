@@ -1514,6 +1514,7 @@ export const fr: Messages = {
       one: "{count} opération de votre banque attend sa catégorie.",
       other: "{count} opérations de votre banque attendent leur catégorie.",
     },
+    dismiss: "Vu",
   },
   push: {
     bigCharge: {
