@@ -1,5 +1,8 @@
 import { todayIsoLocal } from "@finance/core/constants";
-import { buildInvestmentPortfolio } from "@finance/core/investment-positions";
+import {
+  buildInvestmentPortfolio,
+  portfolioQuoteSymbols,
+} from "@finance/core/investment-positions";
 import type { InvestmentPortfolioSummary } from "@finance/core/investment-positions";
 import { getCategories } from "@/lib/queries/categories";
 import {
@@ -12,27 +15,6 @@ import {
   getCachedLiveQuotes,
 } from "@/lib/queries/market-quotes";
 import { getLocale } from "@/lib/locale";
-
-function collectQuoteSymbols(
-  positionRows: Awaited<ReturnType<typeof getInvestmentPositions>>,
-  recurringTemplates: Awaited<ReturnType<typeof getRecurringTemplates>>,
-): string[] {
-  const symbols = new Set<string>();
-
-  for (const row of positionRows) {
-    if (row.instrument_symbol) {
-      symbols.add(row.instrument_symbol);
-    }
-  }
-
-  for (const template of recurringTemplates) {
-    if (template.instrument_symbol) {
-      symbols.add(template.instrument_symbol);
-    }
-  }
-
-  return Array.from(symbols);
-}
 
 export interface GetWalletPortfolioOptions {
   /** When false, skip historical quotes (faster dashboards). Default true. */
@@ -57,7 +39,7 @@ export async function getWalletPortfolio(
       getRecurringTemplates(userId),
     ]);
 
-  const symbols = collectQuoteSymbols(positionRows, recurringTemplates);
+  const symbols = portfolioQuoteSymbols(positionRows, recurringTemplates);
   const [liveQuotes, historicalQuotes] = await Promise.all([
     getCachedLiveQuotes(symbols),
     includeHistory ? getCachedHistoricalQuotes(symbols) : Promise.resolve({}),

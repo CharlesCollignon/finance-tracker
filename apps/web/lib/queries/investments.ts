@@ -1,57 +1,18 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import * as positions from "@finance/data/positions";
 import { fetchPriceSeriesInEur } from "@finance/core/market/fx";
 import {
   emptyPriceSeries,
   type InstrumentPriceSeries,
 } from "@finance/core/instrument-price-series";
-import type {
-  InvestmentPosition,
-  WalletPlan,
-} from "@finance/core/types/database";
+import type { WalletPlan } from "@finance/core/types/database";
 import type { InvestmentPositionRow } from "@finance/core/investment-positions";
 import type { InvestmentWalletId } from "@finance/core/investments";
 
-function mapRow(row: InvestmentPosition): InvestmentPositionRow {
-  return {
-    id: row.id,
-    wallet: row.wallet,
-    recurring_template_id: row.recurring_template_id,
-    name: row.name,
-    category_id: row.category_id,
-    initial_balance: Number(row.initial_balance),
-    current_value:
-      row.current_value === null ? null : Number(row.current_value),
-    share_count: row.share_count,
-    instrument_symbol: row.instrument_symbol,
-    instrument_name: row.instrument_name,
-    // Dropping this was not only a blank on the look-through: the position
-    // sheet seeds its field from the mapped row and posts it back, so every
-    // save wrote an empty ISIN over a good one.
-    isin: row.isin ?? null,
-    value_pinned: row.value_pinned ?? false,
-    ongoing_charge:
-      row.ongoing_charge === null ? null : Number(row.ongoing_charge),
-  };
-}
-
 export const getInvestmentPositions = cache(
-  async (userId: string): Promise<InvestmentPositionRow[]> => {
-    const supabase = await createClient();
-
-    const { data, error } = await supabase
-      .from("investment_positions")
-      .select("*")
-      .eq("user_id", userId)
-      .order("wallet")
-      .order("name");
-
-    if (error) {
-      throw error;
-    }
-
-    return ((data ?? []) as InvestmentPosition[]).map(mapRow);
-  },
+  async (userId: string): Promise<InvestmentPositionRow[]> =>
+    positions.getInvestmentPositions(await createClient(), userId),
 );
 
 export async function upsertInvestmentPosition(
@@ -163,15 +124,5 @@ export async function fetchPriceSeries(
  * not a thing worth showing.
  */
 export async function getWalletPlans(userId: string): Promise<WalletPlan[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("wallet_plans")
-    .select("*")
-    .eq("user_id", userId);
-
-  if (error) {
-    throw error;
-  }
-
-  return (data ?? []) as WalletPlan[];
+  return positions.getWalletPlans(await createClient(), userId);
 }

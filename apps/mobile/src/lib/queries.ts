@@ -4,6 +4,7 @@ import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
 import * as categories from "@finance/data/categories";
 import * as history from "@finance/data/history";
+import * as positions from "@finance/data/positions";
 import * as monthLedger from "@finance/data/month-ledger";
 import * as templates from "@finance/data/templates";
 import * as inbox from "@finance/data/bank-inbox";
@@ -25,7 +26,10 @@ import {
   type MonthCloseResult,
   type RecordedCashFlows,
 } from "@finance/core/month-close";
-import { buildInvestmentPortfolio } from "@finance/core/investment-positions";
+import {
+  buildInvestmentPortfolio,
+  portfolioQuoteSymbols,
+} from "@finance/core/investment-positions";
 import { todayIsoLocal } from "@finance/core/constants";
 import {
   fetchMonthlyClosesBySymbolInEur,
@@ -170,35 +174,10 @@ export function getInvestmentTransactions(
   return history.getInvestmentTransactions(supabase, userId);
 }
 
-export async function getInvestmentPositions(
+export function getInvestmentPositions(
   userId: string,
 ): Promise<InvestmentPositionRow[]> {
-  const { data, error } = await supabase
-    .from("investment_positions")
-    .select("*")
-    .eq("user_id", userId)
-    .order("wallet")
-    .order("name");
-
-  if (error) {
-    throw error;
-  }
-
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    wallet: row.wallet,
-    recurring_template_id: row.recurring_template_id,
-    name: row.name,
-    category_id: row.category_id,
-    initial_balance: Number(row.initial_balance),
-    current_value:
-      row.current_value === null ? null : Number(row.current_value),
-    share_count: row.share_count,
-    instrument_symbol: row.instrument_symbol,
-    instrument_name: row.instrument_name,
-    ongoing_charge:
-      row.ongoing_charge === null ? null : Number(row.ongoing_charge),
-  }));
+  return positions.getInvestmentPositions(supabase, userId);
 }
 
 export async function getWalletPortfolio(
@@ -216,19 +195,7 @@ export async function getWalletPortfolio(
       getRecurringTemplates(userId),
     ]);
 
-  const symbols = new Set<string>();
-  for (const row of positionRows) {
-    if (row.instrument_symbol) {
-      symbols.add(row.instrument_symbol);
-    }
-  }
-  for (const template of recurringTemplates) {
-    if (template.instrument_symbol) {
-      symbols.add(template.instrument_symbol);
-    }
-  }
-
-  const symbolList = Array.from(symbols);
+  const symbolList = portfolioQuoteSymbols(positionRows, recurringTemplates);
   const [liveQuotes, historicalQuotes] = await Promise.all([
     fetchQuotesInEur(symbolList),
     includeHistory
@@ -310,16 +277,8 @@ export async function getQuickEntryContext(
  * none — the right default, since drift against an unstated target is not
  * worth showing.
  */
-export async function getWalletPlans(userId: string): Promise<WalletPlan[]> {
-  const { data, error } = await supabase
-    .from("wallet_plans")
-    .select("*")
-    .eq("user_id", userId);
-
-  if (error) {
-    throw error;
-  }
-  return (data ?? []) as WalletPlan[];
+export function getWalletPlans(userId: string): Promise<WalletPlan[]> {
+  return positions.getWalletPlans(supabase, userId);
 }
 
 /**

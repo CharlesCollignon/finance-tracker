@@ -24,6 +24,7 @@
     "./month-ledger": "./src/month-ledger.ts",
     "./moved-rows": "./src/moved-rows.ts",
     "./occurrences": "./src/occurrences.ts",
+    "./positions": "./src/positions.ts",
     "./preferences": "./src/preferences.ts",
     "./quote-source": "./src/quote-source.ts",
     "./recurring-apply": "./src/recurring-apply.ts",
