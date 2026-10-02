@@ -25,10 +25,13 @@ to four questions. One branch per phase, one concern per commit, every gate in
   loans, its charges and its value. The schema carries the usage from the
   start, so a rental needs no migration of its own.
 
-Still open, with a recommendation: whether principal repaid counts as
-_Kept_. Recommended no — Kept is measured from the account's balance, and
-mixing a computed figure into it would break that. Principal repaid is shown
-on the property and inside net worth instead.
+- **Principal repaid is not Kept.** Kept is measured from the account's
+  balance, and adding a computed figure to it would break that. Principal
+  repaid is shown on the property and inside net worth instead.
+- **Six tabs, with labels that shrink rather than truncate** (Phase 0's
+  measurements). On the phone, each label shrinks on one line down to about
+  85 %. On the web at phone width, the account menu moves to the header, as
+  on the phone, so the bar stays at six targets.
 
 ## Constraints this plan keeps
 
@@ -222,7 +225,7 @@ Nothing user-facing.
       key; decide cron-fed table versus a constant revisited each quarter.
 - [x] Vocabulary above into `CONTEXT.md`.
 - [x] Six tabs on the phone: measure the bar at 360 pt with « Immobilier »
-      and propose label and icon. The proposal waits for the owner.
+      and propose label and icon. Confirmed by the owner.
 
 ### Findings (2026-10-02)
 
@@ -289,7 +292,7 @@ already has six targets (five surfaces and the account menu), about 47 px a
 label at 360, so « Placements » is already truncated there today; a seventh
 would leave 39 px.
 
-Proposed, for the owner to confirm:
+Proposed, and confirmed by the owner:
 
 - Phone: six tabs; labels shrink to fit on one line (down to ~85 %) rather
   than truncate. Icon `home` / `home-outline`.
@@ -337,6 +340,8 @@ reader in `core/market-reading.ts` with fixtures cut from these files.
 ## Phase 2 — Web (branch `property-2/web`)
 
 - [ ] `/property` in `APP_NAV_ITEMS`, list page, empty state.
+- [ ] The phone-width bar: the account menu to the header, labels that
+      shrink to fit; the comments in `BottomNav` and `apps/web/DESIGN.md`.
 - [ ] Add sheet in three steps: the property (address with autocompletion,
       kind, area, usage, share) → the purchase (price, date, notary fees
       prefilled at ~7–8 % for existing and ~2–3 % for new, editable; agency;
@@ -349,7 +354,8 @@ reader in `core/market-reading.ts` with fixtures cut from these files.
 
 ## Phase 3 — Phone (branch `property-3/mobile`)
 
-- [ ] Sixth tab, list screen, stacked property screen, add sheet.
+- [ ] Sixth tab with labels that shrink to fit, list screen, stacked
+      property screen, add sheet.
 - [ ] New tables mapped to a data area in `announcingFetch`; screens read
       with `useRefreshable`.
 - [ ] Charges: the same field and chip.
