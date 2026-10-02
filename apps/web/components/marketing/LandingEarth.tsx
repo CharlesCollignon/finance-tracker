@@ -21,6 +21,13 @@ import { cn } from "@/lib/utils";
  *   aurora.
  * - The wrapper follows this codebase's React rules: no ref written while
  *   rendering, and an effect that depends on what it reads.
+ * - The planet sits where the landing's orb horizon sat — the same circle,
+ *   stepping with the screen the same way (`horizonCircle`) — rather than on
+ *   the original's diagonal, and the sun rests low on the right of the rim,
+ *   clear of the headline.
+ * - The stars drift: slowly, each on its own, nearer ones faster, so the sky
+ *   sets behind the rim over minutes. The original's held still unless the
+ *   pointer moved them.
  *
  * Imagery: NASA Blue Marble Next Generation, by Reto Stöckli (NASA Earth
  * Observatory), used without endorsement; credited in the landing footer.
@@ -363,7 +370,12 @@ const starVertex = `
     varying vec2 location;
     mat2 rotate(float a) { return mat2(cos(a), -sin(a), sin(a), cos(a)); }
     void main() {
-      vec2 p = star.xy * vec2(resolution.x / resolution.y, 1.);
+      // Each star drifts left and a little down on its own, the brighter
+      // (nearer) ones faster: the parallax of depth, slow enough that the
+      // nearest take minutes to cross the sky and the farthest half an hour.
+      // Wrapped, so the field never empties, and faded across the seam.
+      vec2 s = fract(star.xy + vec2(-1., .25) * clock * (.0005 + star.w * .0028) * (1. - still));
+      vec2 p = s * vec2(resolution.x / resolution.y, 1.);
       p += drift * (.003 + star.w * .009) * (1. - still);
       vec2 sun = center + vec2(cos(angle), sin(angle)) * (radius - .007);
       vec2 delta = p - sun;
@@ -382,6 +394,7 @@ const starVertex = `
       alpha = (.24 + star.w * .58 + sharp * .55) * twinkle;
       alpha *= tail < .5 ? 1. : charge * (1. - tail / 7.) * .19 * (1. - still);
       alpha *= 1. + impulse * .8;
+      alpha *= smoothstep(0., .03, s.x) * (1. - smoothstep(.97, 1., s.x)) * smoothstep(0., .03, s.y) * (1. - smoothstep(.97, 1., s.y));
       tint = mix(vec3(.49, .70, 1.), vec3(1., .69, .49), smoothstep(.32, .90, fract(star.w * 13.7)));
       tint = mix(tint, vec3(.93, .77, 1.), step(.87, fract(star.w * 7.)));
     }
@@ -405,6 +418,77 @@ const starFragment = `
       gl_FragColor = vec4(tint * mix(ordinary, jewel, sharp), alpha * sky);
     }
   `;
+
+/** Where the sun rests, as a fraction of the hero's height. */
+const REST_HEIGHT = 0.72;
+
+/**
+ * The circle the old orb horizon drew, in the renderer's units (the hero's
+ * height is 1): its top 4.5rem down, under the header, its centre off the
+ * left edge, and its size stepping with the screen's width and shape, as
+ * `.marketing-horizon-planet` did. The steps are what keep the rim clear of
+ * the tagline — on a wide screen against its height a circle has to be
+ * flatter to pass the type column at the tagline's depth — and on a portrait
+ * screen, where no circle clears it, the centre moves further off-screen so
+ * the sweep still reaches down the right side.
+ */
+function horizonCircle(
+  width: number,
+  height: number,
+): { center: [number, number]; radius: number } {
+  const query = (media: string) => matchMedia(media).matches;
+  let left = -0.5;
+  let size = 3.2;
+  if (query("(min-width: 40rem)")) {
+    left = -0.25;
+    size = 2.8;
+  }
+  if (query("(min-width: 64rem)")) {
+    left = -0.04;
+    size = query("(min-aspect-ratio: 2/1)")
+      ? 3.4
+      : query("(min-aspect-ratio: 8/5)")
+        ? 2.9
+        : 2.4;
+  }
+  const rem =
+    parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const aspect = width / height;
+  const radius = (size / 2) * aspect;
+  return {
+    center: [left * aspect, (4.5 * rem) / height + radius],
+    radius,
+  };
+}
+
+/**
+ * The part of the rim inside the hero, as the range of angles the light may
+ * travel along — found by walking the circle rather than solving for each
+ * edge, since which edges the rim crosses depends on the screen's shape.
+ * Angles run as the pointer handler reads them, in (-2π, 0].
+ */
+function visibleArc(
+  center: [number, number],
+  radius: number,
+  aspect: number,
+): { low: number; high: number } {
+  let low = Infinity;
+  let high = -Infinity;
+  for (let step = 0; step < 1440; step++) {
+    const angle = -2 * Math.PI + (step / 1440) * 2 * Math.PI;
+    const x = center[0] + Math.cos(angle) * radius;
+    const y = center[1] + Math.sin(angle) * radius;
+    if (x >= 0 && x <= aspect && y >= 0 && y <= 1) {
+      low = Math.min(low, angle);
+      high = Math.max(high, angle);
+    }
+  }
+  if (!Number.isFinite(low)) {
+    return { low: -Math.PI, high: 0 };
+  }
+  // Kept just inside the ends, so the light never sits on an edge.
+  return { low: low + 0.035, high: high - 0.035 };
+}
 
 function createRenderer(
   canvas: HTMLCanvasElement,
@@ -731,23 +815,20 @@ function createRenderer(
     );
     canvas.width = Math.max(1, Math.round(box.width * dpr));
     canvas.height = Math.max(1, Math.round(box.height * dpr));
-    const p = [0.15 * aspect, 0.91],
-      q = [0.88 * aspect, 0.015];
-    const vx = q[0]! - p[0]!,
-      vy = q[1]! - p[1]!,
-      length = Math.hypot(vx, vy);
-    const radius = Math.max(1.4, aspect),
-      offset = Math.sqrt(radius * radius - (length * length) / 4);
-    const center: [number, number] = [
-      (p[0]! + q[0]!) / 2 - (vy / length) * offset,
-      (p[1]! + q[1]!) / 2 + (vx / length) * offset,
-    ];
-    const low = Math.atan2(p[1]! - center[1], p[0]! - center[0]) + 0.035;
-    const high = Math.atan2(q[1]! - center[1], q[0]! - center[0]) - 0.035;
-    const restingY = 0.4 - center[1];
-    const rest = Math.atan2(
-      restingY,
-      -Math.sqrt(radius * radius - restingY * restingY),
+    const { center, radius } = horizonCircle(box.width, box.height);
+    const { low, high } = visibleArc(center, radius, aspect);
+    // The sun rests on the right of the rim, low, where the old horizon's
+    // rim burned brightest: beside the buttons rather than behind the
+    // headline. On a phone that point is past the right edge, and the light
+    // waits at the edge instead.
+    const restingY = REST_HEIGHT - center[1];
+    const rest = clamp(
+      Math.atan2(
+        restingY,
+        Math.sqrt(Math.max(0, radius * radius - restingY * restingY)),
+      ),
+      low,
+      high,
     );
     if (geometry) {
       state.angle += rest - geometry.rest;
