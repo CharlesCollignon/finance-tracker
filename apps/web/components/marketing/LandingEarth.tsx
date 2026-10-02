@@ -36,6 +36,8 @@ import { cn } from "@/lib/utils";
  *   of its shadow and one end of its disk, which turns slowly, the nebula
  *   and the starlight bending round it (`distantHole`). It is ours, not the
  *   original's, and does not follow the pointer.
+ * - A distant sun is setting on the rim to the right of the headline, warm
+ *   and glowing softly (`distantSun`); ours too, and fixed in the sky.
  *
  * Imagery: NASA Blue Marble Next Generation, by Reto Stöckli (NASA Earth
  * Observatory), used without endorsement; credited in the landing footer.
@@ -95,6 +97,8 @@ type Geometry = {
   rest: number;
   /** The black hole: its centre, its shadow's radius, its disk's tilt. */
   hole: [number, number, number, number];
+  /** The distant sun: its centre, and its disk's radius. */
+  sun: [number, number, number];
 };
 const clamp = (n: number, min: number, max: number) =>
   Math.max(min, Math.min(max, n));
@@ -233,6 +237,7 @@ const fragment = `
     uniform float still;
     uniform vec2 drift;
     uniform vec4 hole;
+    uniform vec3 farSun;
     uniform sampler2D earth;
     uniform sampler2D cosmos;
     const float PI = 3.141592653589793;
@@ -288,6 +293,21 @@ const fragment = `
       return vec4(light, shadow);
     }
 
+    // A distant sun, in units of its disk's radius: a small warm disk, oranger
+    // toward its edge, in a soft glow that breathes slowly. Not bright: the
+    // centre of the disk is under four fifths of full white. Fixed in the
+    // sky; the planet hides its lower part.
+    vec3 distantSun(vec2 p, float pixel) {
+      float q = length(p - farSun.xy) / farSun.z;
+      if (q > 50.) return vec3(0.);
+      float edge = pixel / farSun.z;
+      float disk = 1. - smoothstep(1. - edge, 1. + edge, q);
+      vec3 face = mix(vec3(1., .56, .20), vec3(1., .86, .58), sqrt(sqrt(max(0., 1. - q * q))));
+      float breath = 1. + .06 * sin(clock * .5);
+      vec3 glow = vec3(1., .56, .22) * (.32 * exp(-max(q - 1., 0.) / 1.1) + .15 * exp(-q / 6.) + .05 * exp(-q / 18.)) * breath;
+      return face * disk * .8 + glow * (1. - disk);
+    }
+
     void main() {
       vec2 p = vec2(gl_FragCoord.x, resolution.y - gl_FragCoord.y) / resolution.y;
       vec2 q = p - center;
@@ -321,6 +341,7 @@ const fragment = `
       vec3 color = recolor(texture2D(cosmos, skyUV).rgb, backgroundColor) * galaxyBrightness * space * (1. + charge * .45 + bloom * .5);
       vec4 farHole = distantHole(p, pixel);
       color = color * farHole.a + farHole.rgb * space;
+      color += distantSun(p, pixel) * space;
 
       // Scattering stays on the sky side of the occluding planet.
       vec3 halo = vec3(.105, .026, .065) * gauss(along, .23) * gauss(across, .11);
@@ -335,6 +356,10 @@ const fragment = `
       color += rim * illumination * line * verticalFade;
       color += vec3(.20, .078, .06) * illumination * gauss(d, .003) * rimLocal * verticalFade;
       color += vec3(.034, .057, .092) * illumination * exp(-max(d, 0.) / .007) * space * verticalFade * (.2 + .8 * rimLocal);
+      // The atmosphere catches the distant sun where it sets.
+      float bySun = gauss(length(p - farSun.xy), farSun.z * 9.);
+      color += vec3(1., .62, .32) * line * bySun * .7 * verticalFade;
+      color += vec3(.45, .20, .07) * gauss(d, .004) * bySun * .35 * verticalFade;
 
       // A released solar pulse travels along the limb and awakens auroral curtains.
       vec2 eventRadial = vec2(cos(pulseAngle), sin(pulseAngle));
@@ -513,6 +538,10 @@ const LIGHT_REVEAL = 0.55;
  * screen, where no circle clears it, the centre moves further off-screen so
  * the sweep still reaches down the right side.
  */
+function rootRem() {
+  return parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+}
+
 function horizonCircle(
   width: number,
   height: number,
@@ -532,12 +561,10 @@ function horizonCircle(
         ? 2.9
         : 2.4;
   }
-  const rem =
-    parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
   const aspect = width / height;
   const radius = (size / 2) * aspect;
   return {
-    center: [left * aspect, (4.5 * rem) / height + radius],
+    center: [left * aspect, (4.5 * rootRem()) / height + radius],
     radius,
   };
 }
@@ -573,12 +600,13 @@ function visibleArc(
 
 /**
  * Where the black hole sits: on the rim, a little over a third of the way
- * from its upper end toward the sun, so above the headline and below the nav
- * on every screen, and further from the sun than the light can come. Its centre is
- * a little over half its shadow's radius above the rim, so the planet cuts
- * off the foot of the shadow; its disk is tilted a little off the rim, so one
- * end clears the horizon and the other goes behind it. Smaller on a portrait
- * screen, where the hero's height is a long way across.
+ * from its upper end toward the light's resting place, so above the headline
+ * and below the nav on every screen, and further along than the light can
+ * come. Its centre is a little over half its shadow's radius above the rim,
+ * so the planet cuts off the foot of the shadow; its disk is tilted a little
+ * off the rim, so one end clears the horizon and the other goes behind it.
+ * Smaller on a portrait screen, where the hero's height is a long way
+ * across.
  */
 function holePlace(
   center: [number, number],
@@ -596,6 +624,41 @@ function holePlace(
     size,
     // The rim's own slope there, less 0.3 radians.
     angle + Math.PI / 2 - 0.3,
+  ];
+}
+
+/**
+ * Where the distant sun sets: on the rim halfway between the right edge of
+ * the hero's text column (`max-w-3xl` inside `px-6`) and where the light
+ * rests, so clear of the words and out of the light's bright core; its centre
+ * a fifth of its radius above the rim, so the planet hides the lower part of
+ * it. On a phone, where the column is the screen's width, that is the right
+ * edge, in the light's glow.
+ */
+function sunPlace(
+  center: [number, number],
+  radius: number,
+  low: number,
+  high: number,
+  rest: number,
+  width: number,
+  height: number,
+): [number, number, number] {
+  const rem = rootRem();
+  const column = Math.min(48 * rem, width - 3 * rem);
+  const columnEnd = (width + column) / 2 / height;
+  const x = (columnEnd + center[0] + Math.cos(rest) * radius) / 2;
+  const angle = clamp(
+    -Math.acos(clamp((x - center[0]) / radius, -1, 1)),
+    low,
+    high,
+  );
+  const size = 0.011 * clamp(width / height, 0.75, 1);
+  const lift = radius + size * 0.2;
+  return [
+    center[0] + Math.cos(angle) * lift,
+    center[1] + Math.sin(angle) * lift,
+    size,
   ];
 }
 
@@ -763,6 +826,7 @@ function createRenderer(
       "auroraColor",
       "backgroundColor",
       "illumination",
+      "farSun",
       "auroraPreview",
       "standingAurora",
     ]);
@@ -947,7 +1011,16 @@ function createRenderer(
       state.target += rest - geometry.rest;
     } else state.angle = state.target = rest;
     const hole = holePlace(center, radius, low, rest, aspect);
-    geometry = { center, radius, low, high, rest, hole };
+    const sun = sunPlace(
+      center,
+      radius,
+      low,
+      high,
+      rest,
+      box.width,
+      box.height,
+    );
+    geometry = { center, radius, low, high, rest, hole, sun };
     state.angle = clamp(state.angle, low, high);
     state.target = clamp(state.target, low, high);
     requestFrame();
@@ -1037,6 +1110,7 @@ function createRenderer(
     gl.uniform4f(uniforms.auroraColor!, ...options.auroraColor);
     gl.uniform4f(uniforms.backgroundColor!, ...options.backgroundColor);
     gl.uniform1f(uniforms.illumination!, options.illumination);
+    gl.uniform3f(uniforms.farSun!, ...geometry.sun);
     gl.uniform1f(
       uniforms.auroraPreview!,
       options.auroraPreview && options.auroraEnabled ? 1 : 0,
