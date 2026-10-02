@@ -65,3 +65,20 @@ export const getPropertiesView = cache(
     };
   },
 );
+
+/**
+ * One property with everything its page shows — its loans and the templates
+ * attached to it — or null when it is not the user's or no longer exists.
+ */
+export const getPropertyDetail = cache(
+  async (
+    userId: string,
+    propertyId: string,
+  ): Promise<properties.PropertyRead | null> => {
+    const state = await properties.getProperties(await createClient(), userId);
+    return (
+      state.properties.find(({ property }) => property.id === propertyId) ??
+      null
+    );
+  },
+);

@@ -91,4 +91,72 @@ export const propertyFr: typeof propertyEn = {
   added: "Bien ajouté : {name}",
   addedWithPayment:
     "Bien ajouté : {name}. Sa mensualité de {amount} rejoint vos opérations récurrentes.",
+
+  backToList: "Tous les biens",
+  estimatedValue: "Valeur estimée",
+  yourValue: "Votre part de cette valeur",
+  owed: "Restant dû",
+  cost: "Ce qu'il vous a coûté",
+  gain: "Plus-value latente",
+  principalRepaid: "Capital remboursé",
+  forYourShare: "Pour votre part, {share}",
+  ownValueSet: "Donner votre estimation",
+  ownValueChange: "Changer votre estimation",
+  ownValueHint:
+    "D'une agence ou d'un notaire\u00A0: elle passe avant le prix d'achat, datée d'aujourd'hui.",
+  ownValueClear: "Revenir au prix d'achat",
+  saved: "Enregistré",
+  saveValue: "Enregistrer",
+
+  loansTitle: "Prêts",
+  noLoans: "Aucun prêt derrière ce bien.",
+  loanTerms: "{principal} à {rate} sur {years}",
+  yearsCount: { one: "{count} an", other: "{count} ans" },
+  nextPayment: "Prochaine échéance, le {date}",
+  paymentSplit:
+    "{principal} de capital · {interest} d'intérêts · {insurance} d'assurance",
+  loanEnds: "Dernière échéance en {date}",
+  loanRepaid: "Remboursé",
+  loanCost: "Le crédit coûte {cost} en tout",
+  yourShareOfLoan: "Votre part de ce prêt\u00A0: {share}",
+  paymentLinked: "Dans vos opérations récurrentes\u00A0: {amount} par mois",
+  paymentNotLinked: "Sa mensualité n'est pas dans vos opérations récurrentes.",
+  paymentAdd: "L'ajouter",
+  paymentAdded: "La mensualité rejoint vos opérations récurrentes",
+  paymentMismatch:
+    "L'opération récurrente dit {template}\u00A0; le tableau dit {schedule}.",
+  paymentEndMismatch:
+    "L'opération récurrente court jusqu'en {template}\u00A0; le prêt finit en {schedule}.",
+  paymentNoEnd:
+    "L'opération récurrente n'a pas de fin\u00A0; le prêt finit en {schedule}.",
+  paymentSync: "La mettre à jour",
+  paymentSynced: "Opération récurrente mise à jour",
+  knownLine: "Recalé sur {amount} restant dû le {date}, d'après votre banque",
+  knownUpdate: "Mettre à jour le capital restant dû",
+  knownAmount: "Restant dû selon votre banque (€)",
+  knownOn: "Au",
+  knownKeeps: "Après le remboursement anticipé, la banque a gardé",
+  knownKeepsPayment: "La mensualité",
+  knownKeepsTerm: "La durée",
+  knownClear: "Revenir au tableau d'origine",
+  schedule: "Tableau d'amortissement",
+  scheduleNote: "Pour tout le prêt, année par année.",
+  scheduleYear: "Année",
+  schedulePaid: "Payé",
+  schedulePrincipal: "Capital",
+  scheduleInterest: "Intérêts",
+  scheduleInsurance: "Assurance",
+  scheduleOutstanding: "Restant dû",
+  removeLoan: "Supprimer ce prêt",
+  removeLoanConfirm:
+    "Le prêt est supprimé\u00A0; sa mensualité reste dans vos opérations récurrentes.",
+
+  templatesTitle: "Ses opérations récurrentes",
+  templatesNone:
+    "Aucune pour l'instant. Rattachez-y la taxe foncière ou les charges de copropriété depuis Récurrents.",
+  templatesManage: "Gérer dans Récurrents",
+  removeProperty: "Supprimer ce bien",
+  removePropertyConfirm:
+    "{name} et ses prêts sont supprimés\u00A0; ses opérations récurrentes restent, sans bien.",
+  removed: "Bien supprimé\u00A0: {name}",
 };

@@ -100,3 +100,87 @@ export async function addProperty(input: {
     };
   });
 }
+
+/** The user's own estimate of what a property is worth, or none. */
+export async function setOwnValue(
+  propertyId: string,
+  value: number | null,
+): Promise<ActionResult> {
+  const t = await getT();
+  return asUser(async (db, userId): Promise<ActionResult> => {
+    const result = await properties.setPropertyValue(
+      db,
+      userId,
+      propertyId,
+      value,
+    );
+    return result.success
+      ? { success: true, message: t("property.saved") }
+      : { error: result.error };
+  });
+}
+
+export async function removeProperty(
+  propertyId: string,
+  name: string,
+): Promise<ActionResult> {
+  const t = await getT();
+  return asUser(async (db, userId): Promise<ActionResult> => {
+    const result = await properties.deleteProperty(db, userId, propertyId);
+    return result.success
+      ? { success: true, message: t("property.removed", { name }) }
+      : { error: result.error };
+  });
+}
+
+/** What the bank says is still owed on a loan, or back to the schedule. */
+export async function updateKnownOutstanding(
+  loanId: string,
+  known: { outstanding: number; on: string; keeps: "payment" | "term" } | null,
+): Promise<ActionResult> {
+  const t = await getT();
+  return asUser(async (db, userId): Promise<ActionResult> => {
+    const result = await properties.setLoanKnownOutstanding(
+      db,
+      userId,
+      loanId,
+      known,
+    );
+    return result.success
+      ? { success: true, message: t("property.saved") }
+      : { error: result.error };
+  });
+}
+
+/** Bring a loan's payment template in line with its schedule. */
+export async function syncPayment(loanId: string): Promise<ActionResult> {
+  const t = await getT();
+  return asUser(async (db, userId): Promise<ActionResult> => {
+    const result = await properties.syncLoanPayment(db, userId, loanId);
+    return result.success
+      ? { success: true, message: t("property.paymentSynced") }
+      : { error: result.error };
+  });
+}
+
+/** Give a loan saved without one its payment among the recurring entries. */
+export async function addPaymentForLoan(
+  loanId: string,
+  description: string,
+): Promise<ActionResult> {
+  const t = await getT();
+  const categoryName = loanPaymentCategoryName(await getLocale());
+  return asUser(async (db, userId): Promise<ActionResult> => {
+    const result = await properties.addLoanPayment(db, userId, loanId, {
+      categoryName,
+      description,
+    });
+    return result.success
+      ? { success: true, message: t("property.paymentAdded") }
+      : { error: result.error };
+  });
+}
+
+export async function removeLoan(loanId: string): Promise<ActionResult> {
+  return asUser((db, userId) => properties.deleteLoan(db, userId, loanId));
+}

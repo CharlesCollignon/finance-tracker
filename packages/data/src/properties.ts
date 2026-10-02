@@ -1,5 +1,5 @@
 import { firstIssue, type ActionResult } from "@finance/core/action-result";
-import { categoryNameVariants } from "@finance/core/constants";
+import { categoryNameVariants, todayIsoLocal } from "@finance/core/constants";
 import {
   cents,
   loanSchedule,
@@ -45,7 +45,9 @@ export interface AttachedTemplate {
   amount: number;
   recurrence: Recurrence;
   dayOfMonth: number | null;
+  dayOfWeek: number | null;
   monthOfYear: number | null;
+  startsOn: string | null;
   endsOn: string | null;
   active: boolean;
   categoryName: string;
@@ -132,7 +134,7 @@ export async function getProperties(
     db
       .from("recurring_templates")
       .select(
-        "id, property_id, description, amount, recurrence, day_of_month, month_of_year, ends_on, active, categories(name, type)",
+        "id, property_id, description, amount, recurrence, day_of_month, day_of_week, month_of_year, starts_on, ends_on, active, categories(name, type)",
       )
       .eq("user_id", userId)
       .in("property_id", ids)
@@ -160,7 +162,9 @@ export async function getProperties(
           amount: Number(template.amount),
           recurrence: template.recurrence,
           dayOfMonth: template.day_of_month,
+          dayOfWeek: template.day_of_week,
           monthOfYear: template.month_of_year,
+          startsOn: template.starts_on,
           endsOn: template.ends_on,
           active: template.active,
           categoryName: template.categories?.name ?? "",
@@ -222,6 +226,34 @@ export async function saveProperty(
     return { error: error ? dbError(error) : "errors.couldNotSave" };
   }
   return { success: true, propertyId: inserted.id };
+}
+
+/**
+ * The user's own figure for what a property is worth, dated today — or
+ * none, which leaves the app's estimate.
+ */
+export async function setPropertyValue(
+  db: Db,
+  userId: string,
+  propertyId: string,
+  value: number | null,
+): Promise<ActionResult> {
+  if (!uuid.safeParse(propertyId).success) {
+    return { error: "errors.invalidInput" };
+  }
+  if (value !== null && !(Number.isFinite(value) && value > 0)) {
+    return { error: "errors.amountPositive" };
+  }
+  const { error } = await db
+    .from("properties")
+    .update({
+      value_pinned: value === null ? null : cents(value),
+      value_pinned_on: value === null ? null : todayIsoLocal(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", propertyId)
+    .eq("user_id", userId);
+  return error ? { error: dbError(error) } : { success: true };
 }
 
 /**
@@ -381,25 +413,32 @@ export async function saveLoan(
     };
   }
 
+  const added = await writeLoanPayment(db, userId, loan, options.addPayment);
+  return added.success
+    ? { success: true, loanId: loan.id, templateId: added.templateId }
+    : { error: added.error };
+}
+
+async function writeLoanPayment(
+  db: Db,
+  userId: string,
+  loan: PropertyLoan,
+  payment: { categoryName: string; description: string },
+): Promise<ActionResult<{ templateId: string | null }>> {
   const terms = loanTermsFromRow(loan);
   const schedule = loanSchedule(terms);
   const first = regularPayment(terms, schedule);
   const last = schedule.at(-1);
   if (!first || !last) {
-    return { success: true, loanId: loan.id, templateId: null };
+    return { success: true, templateId: null };
   }
-
-  const category = await paymentCategory(
-    db,
-    userId,
-    options.addPayment.categoryName,
-  );
+  const category = await paymentCategory(db, userId, payment.categoryName);
   if ("error" in category) {
     return { error: category.error };
   }
   const template = await saveRecurringTemplate(db, userId, {
     categoryId: category.id,
-    description: options.addPayment.description,
+    description: payment.description,
     pricingType: "fixed",
     amount: cents(monthlyOutlay(terms, schedule) * loan.borrower_share),
     recurrence: "monthly",
@@ -413,5 +452,127 @@ export async function saveLoan(
   const linked = await linkTemplate(db, userId, loan, template.templateId);
   return linked.error
     ? { error: linked.error }
-    : { success: true, loanId: loan.id, templateId: template.templateId };
+    : { success: true, templateId: template.templateId };
+}
+
+/**
+ * Give a loan that has none its payment among the recurring entries: what
+ * `saveLoan` writes when asked, for a loan saved without it.
+ */
+export async function addLoanPayment(
+  db: Db,
+  userId: string,
+  loanId: string,
+  payment: { categoryName: string; description: string },
+): Promise<ActionResult<{ templateId: string | null }>> {
+  const { data: row, error } = await db
+    .from("property_loans")
+    .select("*")
+    .eq("id", loanId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error || !row) {
+    return { error: error ? dbError(error) : "errors.notFound" };
+  }
+  const loan = loanFromRow(row);
+  if (loan.recurring_template_id) {
+    return { success: true, templateId: loan.recurring_template_id };
+  }
+  return writeLoanPayment(db, userId, loan, payment);
+}
+
+/**
+ * What the bank says is still owed on a loan, and what it kept after an
+ * early repayment — or none, back to the schedule as first set out.
+ */
+export async function setLoanKnownOutstanding(
+  db: Db,
+  userId: string,
+  loanId: string,
+  known: {
+    outstanding: number;
+    on: string;
+    keeps: "payment" | "term";
+  } | null,
+): Promise<ActionResult> {
+  if (!uuid.safeParse(loanId).success) {
+    return { error: "errors.invalidInput" };
+  }
+  if (
+    known !== null &&
+    (!(Number.isFinite(known.outstanding) && known.outstanding >= 0) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(known.on))
+  ) {
+    return { error: "errors.invalidInput" };
+  }
+  const { error } = await db
+    .from("property_loans")
+    .update({
+      known_outstanding: known === null ? null : cents(known.outstanding),
+      known_outstanding_on: known?.on ?? null,
+      known_keeps: known?.keeps ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", loanId)
+    .eq("user_id", userId);
+  return error ? { error: dbError(error) } : { success: true };
+}
+
+/**
+ * Bring a loan's payment template in line with its schedule: the amount of
+ * the next payment, and the day of the last. Rows already written keep
+ * what they say; the months ahead follow.
+ */
+export async function syncLoanPayment(
+  db: Db,
+  userId: string,
+  loanId: string,
+): Promise<ActionResult> {
+  const { data: row, error } = await db
+    .from("property_loans")
+    .select("*")
+    .eq("id", loanId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error || !row) {
+    return { error: error ? dbError(error) : "errors.notFound" };
+  }
+  const loan = loanFromRow(row);
+  if (!loan.recurring_template_id) {
+    return { error: "errors.notFound" };
+  }
+  const terms = loanTermsFromRow(loan);
+  const schedule = loanSchedule(terms);
+  const today = todayIsoLocal();
+  const next = schedule.find((payment) => payment.on >= today);
+  const last = schedule.at(-1);
+  if (!next || !last) {
+    return { error: "errors.notFound" };
+  }
+  const { error: updateError } = await db
+    .from("recurring_templates")
+    .update({
+      amount: cents((next.payment + next.insurance) * loan.borrower_share),
+      ends_on: last.on,
+    })
+    .eq("id", loan.recurring_template_id)
+    .eq("user_id", userId);
+  return updateError ? { error: dbError(updateError) } : { success: true };
+}
+
+/** Delete a loan. Its payment template stays, as the property's does. */
+export async function deleteLoan(
+  db: Db,
+  userId: string,
+  loanId: string,
+): Promise<ActionResult> {
+  if (!uuid.safeParse(loanId).success) {
+    return { error: "errors.invalidInput" };
+  }
+  const { error } = await db
+    .from("property_loans")
+    .delete()
+    .eq("id", loanId)
+    .eq("user_id", userId);
+  return error ? { error: dbError(error) } : { success: true };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Plus } from "@phosphor-icons/react";
 import { formatPercentLabel } from "@finance/core/constants";
 import { StatHero } from "@/components/finance/StatHero";
@@ -55,7 +56,12 @@ export function PropertyList({ view }: { view: PropertiesView }) {
           <ul className="grid gap-4 md:grid-cols-2">
             {view.properties.map((property) => (
               <li key={property.id}>
-                <PropertyCard property={property} />
+                <Link
+                  href={`/property/${property.id}`}
+                  className="block rounded-shell transition-transform duration-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99]"
+                >
+                  <PropertyCard property={property} />
+                </Link>
               </li>
             ))}
           </ul>
