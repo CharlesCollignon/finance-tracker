@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -71,8 +71,11 @@ interface CalendarViewProps {
   month: number;
 }
 
+/** Nothing deleted yet: the optimistic set's resting state. */
+const NONE_DELETED: ReadonlySet<string> = new Set();
+
 export function CalendarView({
-  transactions,
+  transactions: loaded,
   planned = [],
   categories,
   recurringTemplates,
@@ -100,6 +103,18 @@ export function CalendarView({
   const locale = useLocale();
   const { toast } = useToast();
   const toastDeleted = useDeletedToast();
+  // Rows deleted leave the day at once; a failed delete brings them back.
+  const [deletedIds, markDeleted] = useOptimistic(
+    NONE_DELETED,
+    (current, ids: readonly string[]) => new Set([...current, ...ids]),
+  );
+  const transactions = useMemo(
+    () =>
+      deletedIds.size === 0
+        ? loaded
+        : loaded.filter((tx) => !deletedIds.has(tx.id)),
+    [loaded, deletedIds],
+  );
 
   /** What each row can say about itself, by transaction id. */
   const fulfilmentStates = useMemo(
@@ -174,13 +189,15 @@ export function CalendarView({
 
   function handleBulkDelete() {
     startDelete(async () => {
-      const result = await deleteTransactions([...selected]);
+      const ids = [...selected];
+      markDeleted(ids);
+      leaveSelectMode();
+      const result = await deleteTransactions(ids);
       if (!result.success) {
         toast(result.error, "error");
         return;
       }
       toastDeleted(t("ledger.deleted", { count: result.deleted }), result.undo);
-      leaveSelectMode();
     });
   }
 
@@ -618,6 +635,7 @@ export function CalendarView({
           }
         }}
         transaction={editTransaction}
+        onDeleting={(id) => markDeleted([id])}
       />
     </>
   );
