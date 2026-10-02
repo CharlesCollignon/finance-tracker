@@ -23,8 +23,8 @@ import { cn } from "@/lib/utils";
  *   rendering, and an effect that depends on what it reads.
  * - The planet sits where the landing's orb horizon sat — the same circle,
  *   stepping with the screen the same way (`horizonCircle`) — rather than on
- *   the original's diagonal, and the sun rests low on the right of the rim,
- *   clear of the headline.
+ *   the original's diagonal, and the light rests low on the right of the
+ *   rim, in the distant sun, clear of the headline.
  * - The stars drift: slowly, each on its own, nearer ones faster, so the sky
  *   sets behind the rim over minutes. The original's held still unless the
  *   pointer moved them.
@@ -37,7 +37,8 @@ import { cn } from "@/lib/utils";
  *   and the starlight bending round it (`distantHole`). It is ours, not the
  *   original's, and does not follow the pointer.
  * - A distant sun is setting on the rim to the right of the headline, warm,
- *   a third of it above the horizon (`distantSun`); ours too, and fixed.
+ *   a third of it above the horizon and the light resting in it
+ *   (`distantSun`); ours too, and fixed.
  *
  * Imagery: NASA Blue Marble Next Generation, by Reto Stöckli (NASA Earth
  * Observatory), used without endorsement; credited in the landing footer.
@@ -518,8 +519,14 @@ const starFragment = `
     }
   `;
 
-/** Where the sun rests, as a fraction of the hero's height. */
-const REST_HEIGHT = 0.72;
+/**
+ * A point low on the right of the rim, as a fraction of the hero's height,
+ * where the old horizon's rim burned brightest: beside the buttons rather
+ * than behind the headline. The black hole and the distant sun are placed
+ * from it. On a phone it is past the right edge, and the rim's end at the
+ * edge stands in.
+ */
+const ANCHOR_HEIGHT = 0.72;
 
 /**
  * How the light answers the pointer, gentler than the original's: it goes a
@@ -603,9 +610,9 @@ function visibleArc(
 
 /**
  * Where the black hole sits: on the rim, a little over a third of the way
- * from its upper end toward the light's resting place, so above the headline
- * and below the nav on every screen, and further along than the light can
- * come. Its centre is a little over half its shadow's radius above the rim,
+ * from its upper end toward the anchor (`ANCHOR_HEIGHT`), so above the
+ * headline and below the nav on every screen, and far from the light. Its
+ * centre is a little over half its shadow's radius above the rim,
  * so the planet cuts off the foot of the shadow; its disk is tilted a little
  * off the rim, so one end clears the horizon and the other goes behind it.
  * Smaller on a portrait screen, where the hero's height is a long way
@@ -615,11 +622,11 @@ function holePlace(
   center: [number, number],
   radius: number,
   low: number,
-  rest: number,
+  anchor: number,
   aspect: number,
 ): [number, number, number, number] {
   const size = 0.036 * clamp(aspect, 0.75, 1);
-  const angle = low + (rest - low) * 0.36;
+  const angle = low + (anchor - low) * 0.36;
   const lift = radius + size * 0.6;
   return [
     center[0] + Math.cos(angle) * lift,
@@ -631,26 +638,26 @@ function holePlace(
 }
 
 /**
- * Where the distant sun sets: on the rim halfway between the right edge of
- * the hero's text column (`max-w-3xl` inside `px-6`) and where the light
- * rests, so clear of the words and out of the light's bright core; its centre
- * a third of its radius below the rim, so a third of it shows above the
- * horizon. On a phone, where the column is the screen's width, that is the
- * right edge, in the light's glow.
+ * Where the distant sun sets, and the light rests in it: on the rim halfway
+ * between the right edge of the hero's text column (`max-w-3xl` inside
+ * `px-6`) and the anchor, so clear of the words; the sun's centre a third of
+ * its radius below the rim, so a third of it shows above the horizon. On a
+ * phone, where the column is the screen's width, that is the right edge.
+ * Returns the angle on the rim, and the sun's centre and radius.
  */
 function sunPlace(
   center: [number, number],
   radius: number,
   low: number,
   high: number,
-  rest: number,
+  anchor: number,
   width: number,
   height: number,
-): [number, number, number] {
+): { angle: number; sun: [number, number, number] } {
   const rem = rootRem();
   const column = Math.min(48 * rem, width - 3 * rem);
   const columnEnd = (width + column) / 2 / height;
-  const x = (columnEnd + center[0] + Math.cos(rest) * radius) / 2;
+  const x = (columnEnd + center[0] + Math.cos(anchor) * radius) / 2;
   const angle = clamp(
     -Math.acos(clamp((x - center[0]) / radius, -1, 1)),
     low,
@@ -658,11 +665,14 @@ function sunPlace(
   );
   const size = 0.06 * clamp(width / height, 0.75, 1);
   const lift = radius - size / 3;
-  return [
-    center[0] + Math.cos(angle) * lift,
-    center[1] + Math.sin(angle) * lift,
-    size,
-  ];
+  return {
+    angle,
+    sun: [
+      center[0] + Math.cos(angle) * lift,
+      center[1] + Math.sin(angle) * lift,
+      size,
+    ],
+  };
 }
 
 function createRenderer(
@@ -996,33 +1006,30 @@ function createRenderer(
     canvas.height = Math.max(1, Math.round(box.height * dpr));
     const { center, radius } = horizonCircle(box.width, box.height);
     const { low, high } = visibleArc(center, radius, aspect);
-    // The sun rests on the right of the rim, low, where the old horizon's
-    // rim burned brightest: beside the buttons rather than behind the
-    // headline. On a phone that point is past the right edge, and the light
-    // waits at the edge instead.
-    const restingY = REST_HEIGHT - center[1];
-    const rest = clamp(
+    const anchorY = ANCHOR_HEIGHT - center[1];
+    const anchor = clamp(
       Math.atan2(
-        restingY,
-        Math.sqrt(Math.max(0, radius * radius - restingY * restingY)),
+        anchorY,
+        Math.sqrt(Math.max(0, radius * radius - anchorY * anchorY)),
       ),
       low,
       high,
+    );
+    const hole = holePlace(center, radius, low, anchor, aspect);
+    // The light rests in the distant sun.
+    const { angle: rest, sun } = sunPlace(
+      center,
+      radius,
+      low,
+      high,
+      anchor,
+      box.width,
+      box.height,
     );
     if (geometry) {
       state.angle += rest - geometry.rest;
       state.target += rest - geometry.rest;
     } else state.angle = state.target = rest;
-    const hole = holePlace(center, radius, low, rest, aspect);
-    const sun = sunPlace(
-      center,
-      radius,
-      low,
-      high,
-      rest,
-      box.width,
-      box.height,
-    );
     geometry = { center, radius, low, high, rest, hole, sun };
     state.angle = clamp(state.angle, low, high);
     state.target = clamp(state.target, low, high);

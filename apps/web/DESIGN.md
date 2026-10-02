@@ -898,9 +898,10 @@ duration is pointed at the hover token, so a transition written without a
 duration is still on the scale. A global `prefers-reduced-motion` block reduces
 all animation and transition to 0.01ms, and the landing logo's float is
 switched off entirely. The hero's Earth (`components/marketing/LandingEarth.tsx`,
-WebGL) follows the same setting on its own: under reduced motion its light
-holds still, nothing twinkles, the stars stop drifting, the black hole's disk
-stops turning and the distant sun's glow stops breathing.
+WebGL) follows the same setting on its own: under reduced motion nothing
+twinkles, the stars stop drifting, and the aurora's curtains, the black hole's
+disk and the distant sun's glow hold still. Its light never follows the pointer
+on the landing; it rests in the distant sun.
 
 ## Do's and Don'ts
 

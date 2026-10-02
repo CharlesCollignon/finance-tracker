@@ -113,16 +113,22 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
       {/* ------------------------------------------------------------ hero */}
       <section className="relative isolate flex min-h-dvh flex-col justify-center overflow-hidden px-6 pb-20 pt-28">
         {/* The Earth from orbit, its rim arcing across the hero with Europe
-            lit at dusk below it, under its own nebula and stars. Not
-            `pointer-events-none` like the backgrounds elsewhere: the light
-            follows the pointer along the rim, and holding then releasing
-            wakes an aurora. The bottom fades into the page's ground, so the
-            black of space does not end on a line. The surface is lit at three
-            and a half times the renderer's default, so the land under the
-            rim shows while the light rests, and an aurora stands along the
-            rim rather than waiting for a hold and release. */}
-        <div className="absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
-          <LandingEarth surfaceBrightness={3.5} aurora={0.6} />
+            lit at dusk below it, under its own nebula and stars, a distant
+            sun setting on the rim with the light in it. Still: the light
+            does not follow the pointer here, so the scene is out of the
+            pointer's way like the backgrounds elsewhere. The bottom fades
+            into the page's ground, so the black of space does not end on a
+            line. The surface is lit at three and a half times the renderer's
+            default and the light at one and a half, so the land under the
+            rim shows, and an aurora stands along the rim, since without the
+            pointer nothing would wake one. */}
+        <div className="pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
+          <LandingEarth
+            surfaceBrightness={3.5}
+            illumination={1.5}
+            aurora={0.6}
+            interactive={false}
+          />
         </div>
 
         {/* Centred in the window, with nothing under it but the sky. The two
@@ -133,11 +139,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             fixed nav pill's clearance, a little more than the bottom's, so
             the block sits at the middle of the part of the window the nav
             leaves rather than of the whole window. */}
-        {/* `pointer-events-none`, so the pointer reaches the sky behind the
-            words and the light follows it across the whole hero rather than
-            snapping back each time it crosses the headline; the buttons take
-            their clicks back with `pointer-events-auto`. */}
-        <div className="page-enter pointer-events-none relative z-20 mx-auto flex w-full max-w-3xl flex-col items-center text-center">
+        <div className="page-enter relative z-20 mx-auto flex w-full max-w-3xl flex-col items-center text-center">
           <h1 className="marketing-display text-display-hero">
             {hero.titleLines.map((line) => (
               <span key={line} className="block">
@@ -151,7 +153,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
           <LandingCtas
             isLoggedIn={isLoggedIn}
             size="lg"
-            className="pointer-events-auto mt-9 justify-center"
+            className="mt-9 justify-center"
           />
         </div>
       </section>
