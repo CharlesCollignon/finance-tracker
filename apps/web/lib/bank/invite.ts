@@ -1,5 +1,6 @@
 import { bankSetupOffered } from "@/lib/bank/offer";
 import { createClient } from "@/lib/supabase/server";
+import { readDismissedPrompts } from "@finance/data/preferences";
 
 /** Where an invitation to connect a bank can appear. */
 export type BankInviteSurface = "bearing" | "welcome" | "ledger" | "plan";
@@ -20,22 +21,16 @@ export async function shouldInviteToConnect(
     return false;
   }
   const supabase = await createClient();
-  const [{ data: connection }, { data: preferences }] = await Promise.all([
+  const [{ data: connection }, dismissed] = await Promise.all([
     supabase
       .from("bank_connections")
       .select("status")
       .eq("user_id", userId)
       .maybeSingle(),
-    supabase
-      .from("user_preferences")
-      .select("dismissed_prompts")
-      .eq("user_id", userId)
-      .maybeSingle(),
+    readDismissedPrompts(supabase, userId),
   ]);
   if (connection && connection.status !== "revoked") {
     return false;
   }
-  return !(preferences?.dismissed_prompts ?? []).includes(
-    `bank-invite:${surface}`,
-  );
+  return !dismissed.includes(`bank-invite:${surface}`);
 }

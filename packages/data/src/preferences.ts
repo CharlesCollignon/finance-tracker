@@ -1,3 +1,4 @@
+import type { ActionResult } from "@finance/core/action-result";
 import {
   DEFAULT_LOCALE,
   parseLocale,
@@ -9,11 +10,13 @@ import {
 } from "@finance/core/notification-kinds";
 
 import type { Db } from "./client";
+import { dbError } from "./errors";
 import { isMissingSchema } from "./schema";
 
 /**
- * What a user wants to be told, and the milestone they have already seen —
- * `user_preferences` (migrations 027 and 048), for both apps and the crons.
+ * What a user wants to be told, the milestone they have already seen and the
+ * prompts they have put away — `user_preferences` (migrations 027, 041 and
+ * 048), for both apps and the crons.
  *
  * The row is created lazily, so every write here creates it when it is not
  * there yet — with the reader's current language, because a new row's own
@@ -83,4 +86,68 @@ export async function readRecipients(
 /** The recipient a user with no preferences row is. */
 export function defaultRecipient(): Recipient {
   return { locale: DEFAULT_LOCALE, ...NO_SETTINGS };
+}
+
+/** Change the row, creating it with the reader's language if it is missing. */
+async function writePreferences(
+  db: Db,
+  userId: string,
+  locale: Locale,
+  change: { dismissed_prompts?: string[] },
+): Promise<ActionResult> {
+  const { data: existing, error: readError } = await db
+    .from("user_preferences")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (readError) {
+    return { error: dbError(readError) };
+  }
+
+  const { error } = existing
+    ? await db
+        .from("user_preferences")
+        .update({ ...change, updated_at: new Date().toISOString() })
+        .eq("user_id", userId)
+    : await db
+        .from("user_preferences")
+        .insert({ user_id: userId, locale, ...change });
+
+  return error ? { error: dbError(error) } : { success: true };
+}
+
+/** The prompts this user has put away, on any device. */
+export async function readDismissedPrompts(
+  db: Db,
+  userId: string,
+): Promise<string[]> {
+  const { data, error } = await db
+    .from("user_preferences")
+    .select("dismissed_prompts")
+    .eq("user_id", userId)
+    .maybeSingle();
+  // An invitation shown once too often is better than a screen that fails.
+  return error ? [] : (data?.dismissed_prompts ?? []);
+}
+
+/**
+ * Put a prompt away, for good and on every device.
+ *
+ * `replacing` names a family of prompts of which only the latest matters —
+ * the recap of last week stops mattering once this week's is dismissed — so
+ * the list does not grow by one every Monday.
+ */
+export async function dismissPrompt(
+  db: Db,
+  userId: string,
+  prompt: string,
+  locale: Locale,
+  { replacing }: { replacing?: string } = {},
+): Promise<ActionResult> {
+  const dismissed = (await readDismissedPrompts(db, userId)).filter(
+    (kept) => kept !== prompt && !(replacing && kept.startsWith(replacing)),
+  );
+  return writePreferences(db, userId, locale, {
+    dismissed_prompts: [...dismissed, prompt],
+  });
 }

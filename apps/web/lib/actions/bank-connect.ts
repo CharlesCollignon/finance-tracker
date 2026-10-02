@@ -16,7 +16,7 @@ import type { BankInviteSurface } from "@/lib/bank/invite";
 import { getLocale } from "@/lib/locale";
 import { revalidateApp } from "@/lib/revalidate-paths";
 import { createClient } from "@/lib/supabase/server";
-import { dbError } from "@finance/data/errors";
+import { dismissPrompt } from "@finance/data/preferences";
 
 type Result<T = object> = ({ error?: undefined } & T) | { error: string };
 
@@ -133,33 +133,14 @@ export async function dismissBankInvite(
   if (!["bearing", "welcome", "ledger", "plan"].includes(surface)) {
     return { error: "errors.invalidInput" };
   }
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("user_preferences")
-    .select("dismissed_prompts")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  const prompt = `bank-invite:${surface}`;
-  const dismissed = new Set(data?.dismissed_prompts ?? []);
-  dismissed.add(prompt);
-  // Updated when the row exists; created with the language already in use
-  // when it does not, because a new row's default of English would quietly
-  // switch a French reader's app to English the next time it was read.
-  const { error } = data
-    ? await supabase
-        .from("user_preferences")
-        .update({
-          dismissed_prompts: [...dismissed],
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id)
-    : await supabase.from("user_preferences").insert({
-        user_id: user.id,
-        locale: await getLocale(),
-        dismissed_prompts: [...dismissed],
-      });
-  if (error) {
-    return { error: dbError(error) };
+  const result = await dismissPrompt(
+    await createClient(),
+    user.id,
+    `bank-invite:${surface}`,
+    await getLocale(),
+  );
+  if (!result.success) {
+    return { error: result.error };
   }
   // So going back to a page that showed the invitation does not show it
   // again from the browser's copy.
