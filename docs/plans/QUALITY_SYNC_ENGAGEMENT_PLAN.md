@@ -140,12 +140,16 @@ typechecks and builds crashed the terminal twice. Work sequentially.
 
 ## Phase 4 — Feel (branch `phase-4/feel`)
 
-- [ ] Celebration moments: month closed (Kept counts up, run extended or
-      record), inbox emptied ("l'app a appris N commerces"), new milestone.
-      DESIGN.md updated on both apps.
-- [ ] Feedback on every committed action: haptics on edit/delete (warning on
-      delete), Undo on phone toasts and web deletes, optimistic rows on the
-      web.
-- [ ] Copy pass, plain French: one name for the run, the jargon list from the
-      audit, "Ledger" and "migration 0xx" removed from screens, a next step in
-      every empty state, « Comment c'est calculé ? » where a figure needs it.
+- [x] Celebration moments: month closed (Kept counts up, run extended or
+      record), inbox emptied ("l'app a appris N commerces"), new milestone
+      (the Plan's, now once per account). DESIGN.md updated on both apps:
+      moments, not only Plan, with the pop and the flame shared in
+      `components/motion/moments.module.css`.
+- [x] Feedback on every committed action: haptics on edit/delete (warning on
+      delete), Undo on phone toasts and web deletes (migration 036's soft
+      delete, finally wired, with a nightly sweep), optimistic rows on the
+      web's Journal and calendar.
+- [x] Copy pass, plain French: one name for the run (« série »), the jargon
+      list from the audit, "Ledger" and "migration 0xx" removed from screens,
+      a next step in the empty states the audit named, « Comment c'est
+      calculé ? » under Le point's balance.
