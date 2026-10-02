@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils";
  *   pointer moved them.
  * - The light follows the pointer partway and slowly (`LIGHT_FOLLOW`), and
  *   the pointer pulls the sky half as far.
+ * - An aurora can stand along the rim (`aurora`), its curtains drifting,
+ *   rather than only after a hold and release.
  * - A black hole sits just behind the horizon, the rim cutting off the foot
  *   of its shadow and one end of its disk, which turns slowly, the nebula
  *   and the starlight bending round it (`distantHole`). It is ours, not the
@@ -51,11 +53,17 @@ interface LandingEarthProps {
   starCount?: number;
   /** Nebula exposure, 0–3. */
   galaxyBrightness?: number;
-  /** Earth exposure, 0–3. */
+  /** Earth exposure, 0–4. */
   surfaceBrightness?: number;
   /** Sun glow, atmospheric rim and Earth illumination, 0–3. */
   illumination?: number;
   auroraEnabled?: boolean;
+  /**
+   * A standing aurora along the rim, 0–1: at 1, as bright as the curtains of
+   * the original's aurora preview, without the preview's bloom over the sun,
+   * the nebula and the land. 0 leaves the aurora to holding and releasing.
+   */
+  aurora?: number;
   /** Whether the pointer moves the light along the rim. */
   interactive?: boolean;
   textureUrl?: string;
@@ -71,6 +79,7 @@ type Options = {
   illumination: number;
   auroraPreview: boolean;
   auroraEnabled: boolean;
+  aurora: number;
   interactive: boolean;
   textureUrl: string;
   reducedMotion?: boolean;
@@ -101,6 +110,7 @@ export function LandingEarth({
   surfaceBrightness = 1,
   illumination = 1,
   auroraEnabled = true,
+  aurora = 0,
   interactive = true,
   textureUrl = EARTH_TEXTURE,
   reducedMotion,
@@ -113,12 +123,13 @@ export function LandingEarth({
     () => ({
       starCount: Math.round(finite(starCount, 1800, 5400)),
       galaxyBrightness: finite(galaxyBrightness, 1, 3),
-      surfaceBrightness: finite(surfaceBrightness, 1, 3),
+      surfaceBrightness: finite(surfaceBrightness, 1, 4),
       illumination: finite(illumination, 1, 3),
       auroraColor: UNTINTED,
       backgroundColor: UNTINTED,
       auroraPreview: false,
       auroraEnabled,
+      aurora: finite(aurora, 0, 1),
       interactive,
       textureUrl,
       reducedMotion,
@@ -129,6 +140,7 @@ export function LandingEarth({
       surfaceBrightness,
       illumination,
       auroraEnabled,
+      aurora,
       interactive,
       textureUrl,
       reducedMotion,
@@ -212,6 +224,7 @@ const fragment = `
     uniform vec4 backgroundColor;
     uniform float illumination;
     uniform float auroraPreview;
+    uniform float standingAurora;
     uniform float viewAngle;
     uniform float clock;
     uniform float charge;
@@ -334,8 +347,10 @@ const fragment = `
       float ceiling = .021 + .020 * sin(curtainPhase * 23. + clock * .11);
       float curtain = exp(-abs(d - ceiling) / .025) * (.25 + .75 * pleats);
       vec3 aurora = mix(vec3(.065, .54, .40), vec3(.36, .13, .59), .5 + .5 * sin(curtainPhase * 12.));
-      color += recolor(aurora, auroraColor) * curtain * bloom * (.20 + sweep * .70) * verticalFade;
-      color += recolor(vec3(.22, .55, .63), auroraColor) * gauss(d, .0025) * sweep * bloom * verticalFade;
+      // The standing aurora is a floor under both, as bright at 1 as the
+      // preview's curtains, with none of the preview's bloom.
+      color += recolor(aurora, auroraColor) * curtain * max(bloom * (.20 + sweep * .70), standingAurora * .57) * verticalFade;
+      color += recolor(vec3(.22, .55, .63), auroraColor) * gauss(d, .0025) * max(sweep * bloom, standingAurora * .6) * verticalFade;
 
       float waveRadius = .025 + event * .32;
       float wave = gauss(length(p - eventSun) - waveRadius, .010 + event * .004);
@@ -749,6 +764,7 @@ function createRenderer(
       "backgroundColor",
       "illumination",
       "auroraPreview",
+      "standingAurora",
     ]);
     buffer = makeBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -1024,6 +1040,10 @@ function createRenderer(
     gl.uniform1f(
       uniforms.auroraPreview!,
       options.auroraPreview && options.auroraEnabled ? 1 : 0,
+    );
+    gl.uniform1f(
+      uniforms.standingAurora!,
+      options.auroraEnabled ? options.aurora : 0,
     );
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);

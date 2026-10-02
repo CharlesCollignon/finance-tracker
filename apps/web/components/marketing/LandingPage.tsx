@@ -118,10 +118,11 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             follows the pointer along the rim, and holding then releasing
             wakes an aurora. The bottom fades into the page's ground, so the
             black of space does not end on a line. The surface is lit at three
-            times the renderer's default, the most it takes, so the land
-            under the rim shows while the light rests. */}
+            and a half times the renderer's default, so the land under the
+            rim shows while the light rests, and an aurora stands along the
+            rim rather than waiting for a hold and release. */}
         <div className="absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
-          <LandingEarth surfaceBrightness={3} />
+          <LandingEarth surfaceBrightness={3.5} aurora={0.6} />
         </div>
 
         {/* Centred in the window, with nothing under it but the sky. The two
