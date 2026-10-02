@@ -8,9 +8,11 @@ import {
   valueSourceLine,
   type PropertyPosition,
 } from "@finance/core/property";
+import { ownership } from "@finance/core/property-progress";
 import type { Property } from "@finance/core/types/database";
 
 import { PROPERTY_KIND_KEYS, PROPERTY_USAGE_KEYS } from "@/components/property/fields";
+import { OwnershipBar } from "@/components/property/ProgressBars";
 import { AddPropertySheet } from "@/components/property/PropertySheets";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ScreenError } from "@/components/ScreenError";
@@ -168,6 +170,7 @@ function PropertyCard({
             })}
           </PrivateAmount>
         </View>
+        <OwnershipBar ownership={ownership(position)} />
         <Text variant="muted" className="text-xs">
           {[
             valueSourceLine(source, locale, "short"),

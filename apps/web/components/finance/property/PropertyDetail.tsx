@@ -26,7 +26,8 @@ import {
   valueSourceLine,
 } from "@finance/core/property";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
-import { loanMoment, type LoanMoment } from "@finance/core/property-moments";
+import { equityMoment, loanMoment } from "@finance/core/property-moments";
+import { loanProgress, ownership } from "@finance/core/property-progress";
 import { isLet } from "@finance/core/rental";
 import { formatRate } from "@finance/core/savings-accounts";
 import type { PropertyLoan } from "@finance/core/types/database";
@@ -54,6 +55,7 @@ import moments from "@/components/motion/moments.module.css";
 import { useMomentSeen } from "@/components/motion/use-moment-seen";
 import { cn } from "@/lib/utils";
 import { AmountEditor, Fact } from "./property-controls";
+import { LoanTrack, OwnershipBar, PaymentBar } from "./ProgressBars";
 import { RentalSection } from "./RentalSection";
 import { useReadingWait } from "./use-reading-wait";
 import { LoanSheet } from "./LoanSheet";
@@ -91,6 +93,7 @@ export function PropertyDetail({
     loan: PropertyLoan | null;
   } | null>(null);
   const position = propertyPosition(property, loans, today, detail.market);
+  const halfYours = equityMoment(property, loans, detail.market, today);
   const reading = detail.market.reading;
   // Any change in what the page shows of the market ends the wait.
   const { waiting, start: waitForReading } = useReadingWait(
@@ -146,7 +149,15 @@ export function PropertyDetail({
               })}
             </p>
           ) : null}
+          {halfYours ? (
+            <MomentPill
+              seenKey={`equity-half:${property.id}`}
+              label={t("property.momentEquityHalf")}
+            />
+          ) : null}
         </div>
+
+        <OwnershipBar ownership={ownership(position)} detailed />
 
         <dl className="grid min-w-0 gap-4 sm:grid-cols-2">
           <Fact label={t("property.estimatedValue")}>
@@ -400,7 +411,16 @@ function LoanCard({
       <div className="flex flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           <h4 className="font-head text-base">{loan.label}</h4>
-          {moment ? <LoanMomentPill loanId={loan.id} moment={moment} /> : null}
+          {moment ? (
+            <MomentPill
+              seenKey={`${moment.kind}:${loan.id}`}
+              label={
+                moment.kind === "half"
+                  ? t("property.momentHalf")
+                  : t("property.momentLast")
+              }
+            />
+          ) : null}
         </div>
         <p className="privacy-sensitive text-xs text-muted-foreground tabular-nums">
           {t("property.loanTerms", {
@@ -415,6 +435,11 @@ function LoanCard({
             : null}
         </p>
       </div>
+
+      <LoanTrack
+        progress={loanProgress(loan, today)}
+        inFine={loan.kind === "in_fine"}
+      />
 
       <dl className="grid min-w-0 gap-4 sm:grid-cols-2">
         <Fact label={t("property.owed")}>
@@ -441,16 +466,10 @@ function LoanCard({
         >
           {split ? (
             <>
-              <p className="privacy-sensitive text-sm font-medium tabular-nums">
+              <p className="privacy-sensitive mb-1.5 text-sm font-medium tabular-nums">
                 {format(split.total)}
               </p>
-              <p className="privacy-sensitive text-xs text-muted-foreground tabular-nums">
-                {t("property.paymentSplit", {
-                  principal: format(split.principal),
-                  interest: format(split.interest),
-                  insurance: format(split.insurance),
-                })}
-              </p>
+              <PaymentBar split={split} />
             </>
           ) : null}
         </Fact>
@@ -543,18 +562,11 @@ function LoanCard({
 
 /** « Mettre à jour le capital restant dû », and the way back from it. */
 /**
- * Half the loan repaid, or its last payment made, in the month after: a
- * moment, in gold, popping in the first time this browser sees it.
+ * A property's moment — half a loan repaid, its last payment, half the home
+ * the user's — in gold, popping in the first time this browser sees it.
  */
-function LoanMomentPill({
-  loanId,
-  moment,
-}: {
-  loanId: string;
-  moment: LoanMoment;
-}) {
-  const t = useT();
-  const { seen, markSeen } = useMomentSeen(`${moment.kind}:${loanId}`);
+function MomentPill({ seenKey, label }: { seenKey: string; label: string }) {
+  const { seen, markSeen } = useMomentSeen(seenKey);
   if (seen === null) {
     return null;
   }
@@ -566,9 +578,7 @@ function LoanMomentPill({
       )}
       onAnimationEnd={seen ? undefined : markSeen}
     >
-      {moment.kind === "half"
-        ? t("property.momentHalf")
-        : t("property.momentLast")}
+      {label}
     </span>
   );
 }

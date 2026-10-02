@@ -443,3 +443,26 @@ export function marketMomentNotification({
     url: `/property/${property.id}`,
   };
 }
+
+/**
+ * Half the home the user's, through their payments. Keyed by the property:
+ * it happens once.
+ */
+export function equityMomentNotification({
+  property,
+  value,
+  t,
+  locale,
+}: Voice & {
+  property: { id: string; name: string };
+  /** Its estimated value today, the user's part. */
+  value: number;
+}): PendingNotification {
+  return {
+    kind: "property",
+    key: `property:equity-half:${property.id}`,
+    title: t("push.property.equityTitle", { property: property.name }),
+    body: t("push.property.equityBody", { value: formatEuro(value, locale) }),
+    url: `/property/${property.id}`,
+  };
+}
