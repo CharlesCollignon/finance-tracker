@@ -105,7 +105,9 @@
     "./property": "./src/property.ts",
     "./validations/property": "./src/validations/property.ts",
     "./address-search": "./src/address-search.ts",
-    "./property-form": "./src/property-form.ts"
+    "./property-form": "./src/property-form.ts",
+    "./price-index": "./src/price-index.ts",
+    "./market-reading": "./src/market-reading.ts"
   },
   "dependencies": {
     "zod": "^4.4.3"

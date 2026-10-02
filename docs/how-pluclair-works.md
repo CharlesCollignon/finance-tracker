@@ -16,7 +16,7 @@ Last updated: real estate plan Phase 2, the web (2026-10-02;
 | `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token.                                                                                                                                                                                                                                                                                                                                 |
 | `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `packages/data` | The Supabase reads and writes both apps make, written once and handed the caller's client (`Db`): recurring templates and occurrences, transactions (`ledger`, `month-ledger`, `history`), deletes and their undo (`deletions`), categories and their seeding, fulfilment, the month close, the month's balance, the bank's balance, the review inbox (`bank-inbox`), positions and wallet plans, instrument readings, savings accounts, properties and their loans (`properties`), preferences, the weekly recap, delete-all. `pnpm --filter @finance/data test`. |
-| `supabase/`     | Migrations `001`–`049`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `supabase/`     | Migrations `001`–`050`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -150,7 +150,9 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 | Category findings                                               | `category-findings.ts`                                                                                  |
 | PEA ceiling and five-year date                                  | `pea.ts`                                                                                                |
 | A loan's schedule, outstanding principal, cost                  | `loan-schedule.ts`                                                                                      |
-| A property's estimated value, net value, gain, principal repaid | `property.ts`                                                                                           |
+| A property's estimated value, net value, gain, principal repaid | `property.ts` (and `valueSourceLine`, the sentence that says where a value comes from)                  |
+| A property's market reading (DVF sales, 500 m or the commune)   | `market-reading.ts` (rules in `MARKET_RULES`)                                                           |
+| The Notaires–INSEE index, and which series carries a place      | `price-index.ts` (series in `seriesFor`)                                                                |
 | Fund costs, look-through, target trades                         | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                            |
 | Money-weighted return                                           | `xirr.ts`, `investment-returns.ts`                                                                      |
 
@@ -175,6 +177,24 @@ holding names), the month's category totals, and for the
 month in progress the total the day-to-day accounts hold. Never merchants or
 individual payments. Instrument reading sends the name, symbol and ISIN of a
 held instrument.
+
+## Property value
+
+A property's estimated value is the user's own figure when they gave one;
+else its market reading times its area; else its purchase price carried by
+the Notaires–INSEE index; else its purchase price (`estimatedValue`). The
+reading is made on the web server (`lib/property-market/read.ts`) from
+Etalab's DVF files for the commune — three years, widened to five for a thin
+one — and kept on the property's own row (`property_market_readings`,
+migration 050; per property rather than shared by place, so no session can
+learn where others own homes). It is read when a property is added or
+changed on the web (with an 8-second wait, after which the cron's to
+read), when the phone asks `POST /api/property/market`, and weekly by
+`/api/cron/market` (Mondays 05:00), which also refreshes the index
+(`housing_price_index`, readable by every signed-in session, written only by
+the service role) and re-reads readings a month old. Addresses are found
+through the IGN geocoder from the server (`/api/property/addresses` for the
+phone), so IGN never sees a user's IP.
 
 ## Bank feed
 

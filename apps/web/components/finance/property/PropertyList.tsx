@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Plus } from "@phosphor-icons/react";
 import { formatPercentLabel } from "@finance/core/constants";
+import { valueSourceLine } from "@finance/core/property";
 import { StatHero } from "@/components/finance/StatHero";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -13,11 +14,7 @@ import { useLocale, useT } from "@/lib/locale-context";
 import type { PropertiesView, PropertySummary } from "@/lib/queries/properties";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { AddPropertySheet } from "./AddPropertySheet";
-import {
-  monthAndYear,
-  PROPERTY_KIND_KEYS,
-  PROPERTY_USAGE_KEYS,
-} from "./property-labels";
+import { PROPERTY_KIND_KEYS, PROPERTY_USAGE_KEYS } from "./property-labels";
 
 /**
  * The Immobilier tab: what the user's properties are worth to them once
@@ -115,11 +112,7 @@ function PropertyCard({ property }: { property: PropertySummary }) {
 
       <p className="text-xs text-muted-foreground">
         {[
-          source.kind === "own"
-            ? t("property.sourceOwn", { date: monthAndYear(source.on, locale) })
-            : t("property.sourcePurchase", {
-                date: monthAndYear(source.on, locale),
-              }),
+          valueSourceLine(source, locale, "short"),
           property.ownershipShare < 1
             ? t("property.shareLine", {
                 share: formatPercentLabel(

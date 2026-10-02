@@ -3,14 +3,14 @@ import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { formatPercentLabel, todayIsoLocal } from "@finance/core/constants";
-import { propertyPosition, type PropertyPosition } from "@finance/core/property";
+import {
+  propertyPosition,
+  valueSourceLine,
+  type PropertyPosition,
+} from "@finance/core/property";
 import type { Property } from "@finance/core/types/database";
 
-import {
-  monthAndYear,
-  PROPERTY_KIND_KEYS,
-  PROPERTY_USAGE_KEYS,
-} from "@/components/property/fields";
+import { PROPERTY_KIND_KEYS, PROPERTY_USAGE_KEYS } from "@/components/property/fields";
 import { AddPropertySheet } from "@/components/property/PropertySheets";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { ScreenError } from "@/components/ScreenError";
@@ -47,10 +47,10 @@ export default function PropertyScreen() {
   );
 
   const today = todayIsoLocal();
-  const items = (data?.properties ?? []).map(({ property, loans }) => ({
+  const items = (data?.properties ?? []).map(({ property, loans, market }) => ({
     property,
     loanCount: loans.length,
-    position: propertyPosition(property, loans, today),
+    position: propertyPosition(property, loans, today, market),
   }));
   const sum = (pick: (position: PropertyPosition) => number) =>
     Math.round(items.reduce((total, item) => total + pick(item.position), 0) * 100) /
@@ -170,9 +170,7 @@ function PropertyCard({
         </View>
         <Text variant="muted" className="text-xs">
           {[
-            source.kind === "own"
-              ? t("property.sourceOwn", { date: monthAndYear(source.on, locale) })
-              : t("property.sourcePurchase", { date: monthAndYear(source.on, locale) }),
+            valueSourceLine(source, locale, "short"),
             property.ownership_share < 1
               ? t("property.shareLine", {
                   share: formatPercentLabel(property.ownership_share * 100, locale),

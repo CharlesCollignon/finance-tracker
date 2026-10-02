@@ -8,6 +8,8 @@ import {
   notaryFeesEstimate,
   paymentShare,
   propertyPosition,
+  quarterLabel,
+  valueSourceLine,
 } from "./property";
 import type { Property, PropertyLoan } from "./types/database";
 
@@ -126,6 +128,8 @@ describe("estimatedValue", () => {
       ),
     ).toEqual({
       value: 265_000,
+      low: null,
+      high: null,
       source: { kind: "own", on: "2026-09-01" },
     });
   });
@@ -133,8 +137,84 @@ describe("estimatedValue", () => {
   it("is the purchase price otherwise, dated by the purchase", () => {
     expect(estimatedValue(property())).toEqual({
       value: 250_000,
+      low: null,
+      high: null,
       source: { kind: "purchase", on: "2025-01-01" },
     });
+  });
+
+  const READING = {
+    scope: "radius" as const,
+    medianM2: 4_524,
+    q1M2: 3_809,
+    q3M2: 5_324,
+    sales: 394,
+    periodFrom: "2023-01-04",
+    periodTo: "2025-12-30",
+    quarter: "2026-Q2",
+  };
+  const CARRY = {
+    series: "010567011",
+    from: "2025-Q1",
+    to: "2026-Q2",
+    factor: 0.98,
+  };
+
+  it("is the market's reading times the area, to the thousand, with its spread", () => {
+    expect(
+      estimatedValue(property(), { reading: READING, purchaseCarry: CARRY }),
+    ).toEqual({
+      value: 235_000,
+      low: 198_000,
+      high: 277_000,
+      source: {
+        kind: "market",
+        scope: "radius",
+        sales: 394,
+        periodFrom: "2023-01-04",
+        periodTo: "2025-12-30",
+        quarter: "2026-Q2",
+      },
+    });
+  });
+
+  it("still yields to the user's own figure", () => {
+    expect(
+      estimatedValue(
+        property({ value_pinned: 265_000, value_pinned_on: "2026-09-01" }),
+        { reading: READING, purchaseCarry: CARRY },
+      ).source.kind,
+    ).toBe("own");
+  });
+
+  it("is the purchase price carried by the index without a reading", () => {
+    expect(
+      estimatedValue(property(), { reading: null, purchaseCarry: CARRY }),
+    ).toEqual({
+      value: 245_000,
+      low: null,
+      high: null,
+      source: { kind: "indexed", from: "2025-Q1", to: "2026-Q2" },
+    });
+  });
+
+  it("has no market for premises, or a home without its area", () => {
+    const market = { reading: READING, purchaseCarry: null };
+    expect(
+      estimatedValue(property({ kind: "other" }), market).source.kind,
+    ).toBe("purchase");
+    expect(
+      estimatedValue(property({ living_area: null }), market).source.kind,
+    ).toBe("purchase");
+  });
+
+  it("is the purchase price when the index has not moved since", () => {
+    expect(
+      estimatedValue(property(), {
+        reading: null,
+        purchaseCarry: { ...CARRY, from: "2026-Q2", factor: 1 },
+      }).source.kind,
+    ).toBe("purchase");
   });
 });
 
@@ -230,5 +310,48 @@ describe("paymentShare", () => {
     )[0]!;
 
     expect(paymentShare(first, 1).total).toBe(45);
+  });
+});
+
+describe("valueSourceLine", () => {
+  it("says where each kind of estimate comes from", () => {
+    expect(
+      valueSourceLine(
+        {
+          kind: "market",
+          scope: "commune",
+          sales: 6615,
+          periodFrom: "2023-01-03",
+          periodTo: "2025-12-31",
+          quarter: "2026-Q2",
+        },
+        "fr",
+      ),
+    ).toBe(
+      "D'après 6\u202F615 ventes dans la commune, 2023–2025 (DVF), ramenées au T2 2026",
+    );
+    expect(
+      valueSourceLine(
+        { kind: "indexed", from: "2019-Q2", to: "2026-Q2" },
+        "en",
+      ),
+    ).toBe(
+      "Purchase price carried by the Notaires–INSEE index, Q2 2019 → Q2 2026",
+    );
+    expect(
+      valueSourceLine(
+        { kind: "indexed", from: "2019-Q2", to: "2026-Q2" },
+        "fr",
+        "short",
+      ),
+    ).toBe("Prix d'achat actualisé au T2 2026");
+    expect(valueSourceLine({ kind: "purchase", on: "2019-06-14" }, "fr")).toBe(
+      "Prix d'achat, juin 2019",
+    );
+  });
+
+  it("writes a quarter the way the reader says it", () => {
+    expect(quarterLabel("2026-Q2", "fr")).toBe("T2 2026");
+    expect(quarterLabel("2026-Q2", "en")).toBe("Q2 2026");
   });
 });

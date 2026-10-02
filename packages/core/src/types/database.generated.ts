@@ -532,6 +532,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      housing_price_index: {
+        Row: {
+          quarter: string;
+          series: string;
+          updated_at: string;
+          value: number;
+        };
+        Insert: {
+          quarter: string;
+          series: string;
+          updated_at?: string;
+          value: number;
+        };
+        Update: {
+          quarter?: string;
+          series?: string;
+          updated_at?: string;
+          value?: number;
+        };
+        Relationships: [];
+      };
       instrument_reading_tallies: {
         Row: {
           last_read_at: string | null;
@@ -957,6 +978,56 @@ export type Database = {
             columns: ["recurring_template_id"];
             isOneToOne: false;
             referencedRelation: "recurring_templates";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      property_market_readings: {
+        Row: {
+          median_m2: number;
+          period_from: string;
+          period_to: string;
+          property_id: string;
+          q1_m2: number;
+          q3_m2: number;
+          quarter: string;
+          read_at: string;
+          sales: number;
+          scope: string;
+          user_id: string;
+        };
+        Insert: {
+          median_m2: number;
+          period_from: string;
+          period_to: string;
+          property_id: string;
+          q1_m2: number;
+          q3_m2: number;
+          quarter: string;
+          read_at?: string;
+          sales: number;
+          scope: string;
+          user_id: string;
+        };
+        Update: {
+          median_m2?: number;
+          period_from?: string;
+          period_to?: string;
+          property_id?: string;
+          q1_m2?: number;
+          q3_m2?: number;
+          quarter?: string;
+          read_at?: string;
+          sales?: number;
+          scope?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "property_market_readings_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: true;
+            referencedRelation: "properties";
             referencedColumns: ["id"];
           },
         ];

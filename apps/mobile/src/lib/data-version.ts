@@ -95,6 +95,7 @@ const ROUTE_AREAS: Record<string, readonly DataArea[]> = {
   "/api/month-read": ["reads"],
   "/api/instrument-reading": ["positions"],
   "/api/wallet-read": ["positions"],
+  "/api/property/market": ["properties"],
 };
 
 /**

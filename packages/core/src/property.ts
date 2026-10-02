@@ -10,8 +10,9 @@
  * their part of what the loans still owe.
  */
 
-import { DEFAULT_CATEGORIES } from "./constants";
-import type { Locale } from "./i18n/locale";
+import { DEFAULT_CATEGORIES, formatMonthShortYear } from "./constants";
+import { INTL_LOCALES, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 import {
   cents,
   loanSchedule,
@@ -19,6 +20,7 @@ import {
   type LoanPayment,
   type LoanTerms,
 } from "./loan-schedule";
+import type { Carry } from "./price-index";
 import type { Property, PropertyLoan } from "./types/database";
 
 /** A loan row's terms, as the schedule reads them. */
@@ -88,36 +90,166 @@ export function acquisitionCost(property: PurchaseFigures): number {
   );
 }
 
+/** What a property's market is known to say, read by the caller. */
+export interface MarketContext {
+  /** The property's market reading (migration 050), when it has one. */
+  reading: {
+    scope: "radius" | "commune";
+    medianM2: number;
+    q1M2: number;
+    q3M2: number;
+    sales: number;
+    periodFrom: string;
+    periodTo: string;
+    quarter: string;
+  } | null;
+  /** How the purchase price moves to the latest quarter, when the index can say. */
+  purchaseCarry: Carry | null;
+}
+
 /**
- * Where an estimated value comes from: the user's own figure, or what was
- * paid. The market reading and the price index come before the purchase
- * price once there are any (docs/plans/REAL_ESTATE_PLAN.md, Phase 4).
+ * Where an estimated value comes from, in the order `CONTEXT.md` gives:
+ * the user's own figure, else the market reading times the area, else the
+ * purchase price carried by the price index, else the purchase price.
  */
 export type ValueSource =
-  { kind: "own"; on: string } | { kind: "purchase"; on: string };
+  | { kind: "own"; on: string }
+  | {
+      kind: "market";
+      scope: "radius" | "commune";
+      sales: number;
+      periodFrom: string;
+      periodTo: string;
+      quarter: string;
+    }
+  | { kind: "indexed"; from: string; to: string }
+  | { kind: "purchase"; on: string };
 
 export interface EstimatedValue {
   /** The whole property's. */
   value: number;
+  /** The market's spread, when the value is the market's: Q1 and Q3. */
+  low: number | null;
+  high: number | null;
   source: ValueSource;
+}
+
+/** An estimate said to the thousand: nobody knows a home to the euro. */
+function toThousand(value: number): number {
+  return Math.round(value / 1000) * 1000;
 }
 
 export function estimatedValue(
   property: Pick<
     Property,
-    "purchase_price" | "purchased_on" | "value_pinned" | "value_pinned_on"
+    | "kind"
+    | "living_area"
+    | "purchase_price"
+    | "purchased_on"
+    | "value_pinned"
+    | "value_pinned_on"
   >,
+  market: MarketContext | null = null,
 ): EstimatedValue {
   if (property.value_pinned !== null && property.value_pinned_on !== null) {
     return {
       value: Number(property.value_pinned),
+      low: null,
+      high: null,
       source: { kind: "own", on: property.value_pinned_on },
+    };
+  }
+  const area = property.living_area === null ? 0 : Number(property.living_area);
+  const reading = market?.reading;
+  if (reading && property.kind !== "other" && area > 0) {
+    return {
+      value: toThousand(reading.medianM2 * area),
+      low: toThousand(reading.q1M2 * area),
+      high: toThousand(reading.q3M2 * area),
+      source: {
+        kind: "market",
+        scope: reading.scope,
+        sales: reading.sales,
+        periodFrom: reading.periodFrom,
+        periodTo: reading.periodTo,
+        quarter: reading.quarter,
+      },
+    };
+  }
+  const carry = market?.purchaseCarry;
+  if (carry && carry.from !== carry.to) {
+    return {
+      value: toThousand(Number(property.purchase_price) * carry.factor),
+      low: null,
+      high: null,
+      source: { kind: "indexed", from: carry.from, to: carry.to },
     };
   }
   return {
     value: Number(property.purchase_price),
+    low: null,
+    high: null,
     source: { kind: "purchase", on: property.purchased_on },
   };
+}
+
+/** « T2 2026 », « Q2 2026 »: a quarter as the reader says it. */
+export function quarterLabel(quarter: string, locale: Locale): string {
+  return translator(locale)("property.quarter", {
+    quarter: quarter.slice(6),
+    year: quarter.slice(0, 4),
+  });
+}
+
+/**
+ * Where an estimate comes from, in a sentence: the long form under the
+ * value on a property's page, the short one on its card in the list.
+ */
+export function valueSourceLine(
+  source: ValueSource,
+  locale: Locale,
+  form: "long" | "short" = "long",
+): string {
+  const t = translator(locale);
+  const month = (iso: string) =>
+    formatMonthShortYear(
+      Number(iso.slice(0, 4)),
+      Number(iso.slice(5, 7)),
+      locale,
+    );
+  switch (source.kind) {
+    case "own":
+      return t("property.sourceOwn", { date: month(source.on) });
+    case "purchase":
+      return t("property.sourcePurchase", { date: month(source.on) });
+    case "indexed":
+      return form === "short"
+        ? t("property.sourceIndexedShort", {
+            quarter: quarterLabel(source.to, locale),
+          })
+        : t("property.sourceIndexed", {
+            from: quarterLabel(source.from, locale),
+            to: quarterLabel(source.to, locale),
+          });
+    case "market":
+      return form === "short"
+        ? t("property.sourceMarketShort", {
+            quarter: quarterLabel(source.quarter, locale),
+          })
+        : t(
+            source.scope === "radius"
+              ? "property.sourceMarketRadius"
+              : "property.sourceMarketCommune",
+            {
+              count: new Intl.NumberFormat(INTL_LOCALES[locale]).format(
+                source.sales,
+              ),
+              from: source.periodFrom.slice(0, 4),
+              to: source.periodTo.slice(0, 4),
+              quarter: quarterLabel(source.quarter, locale),
+            },
+          );
+  }
 }
 
 export interface PropertyPosition {
@@ -145,9 +277,10 @@ export function propertyPosition(
   property: Property,
   loans: readonly PropertyLoan[],
   day: string,
+  market: MarketContext | null = null,
 ): PropertyPosition {
   const share = Number(property.ownership_share);
-  const estimate = estimatedValue(property);
+  const estimate = estimatedValue(property, market);
   const value = cents(estimate.value * share);
 
   // Each loan's part rounded on its own, so what is owed and what was repaid

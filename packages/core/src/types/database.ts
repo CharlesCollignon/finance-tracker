@@ -84,6 +84,7 @@ interface Narrowed {
   month_reads: { source: "pressed" | "auto"; locale: Locale };
   savings_accounts: { kind: SavingsAccountKind };
   properties: { kind: PropertyKind; usage: PropertyUsage };
+  property_market_readings: { scope: "radius" | "commune" };
   property_loans: {
     kind: LoanKind;
     deferral_kind: DeferralKind;
@@ -223,6 +224,8 @@ export type SavingsAccount =
 export type Property = Database["public"]["Tables"]["properties"]["Row"];
 export type PropertyLoan =
   Database["public"]["Tables"]["property_loans"]["Row"];
+export type PropertyMarketReading =
+  Database["public"]["Tables"]["property_market_readings"]["Row"];
 export type PushSubscriptionRow =
   Database["public"]["Tables"]["push_subscriptions"]["Row"];
 export type ExpoPushTokenRow =

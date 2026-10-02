@@ -411,15 +411,34 @@ into core (`property-form.ts`).
 
 ## Phase 4 — Market value (branch `property-4/market`)
 
-- [ ] `core/market-reading.ts`: DVF rows to a reading (filters, median, IQR,
-      radius selection), pure and tested on fixtures from the spike.
-- [ ] Migration 050: `property_market_readings` and `housing_price_index`.
-- [ ] Web: geocoding, DVF fetch, cache tables, nightly refresh in the
-      existing cron, index table; `POST /api/property/market` for the phone.
-- [ ] Estimated value with its spread and source on both apps; « Votre
-      estimation » pinned and dated.
-- [ ] `docs/legal/registre-des-traitements.md` and `AIPD.md`: a home address
-      sent to the IGN geocoder; the privacy policy draft.
+- [x] `core/market-reading.ts`: DVF rows to a reading (filters, median, IQR,
+      radius selection), pure and tested; on the Phase 0 files it gives the
+      spike's figures (Paris 11e 9 891 €/m², Lyon 3e 4 370, Gordes 6 728).
+- [x] `core/price-index.ts`: the 46 Notaires–INSEE series, the most local
+      one for a place, and carrying a price from a quarter to the latest.
+- [x] Migration 050: `property_market_readings` and `housing_price_index`.
+      **Changed from the plan:** the reading is per property, the owner's
+      alone, not a cache shared by place — a table any session could read,
+      keyed by a 500 m cell, would have told anyone signed in which
+      neighbourhoods some user owns a home in. The index is shared.
+- [x] Web: DVF and INSEE fetched on the server, the reading kept when a
+      property is added or changed (8-second wait, then the cron's);
+      `POST /api/property/market` for the phone; `/api/cron/market` weekly,
+      not folded into an existing cron, because DVF and INSEE move by
+      quarters and halves, not days.
+- [x] Estimated value with its spread and source on both apps, and the
+      price per m² around it; « Votre estimation » still wins.
+- [x] `docs/legal/registre-des-traitements.md` (section 7) and `AIPD.md`:
+      the home's location, reduced to commune and point, and the address
+      sent to the IGN geocoder from the server; the privacy policy draft in
+      both languages.
+
+Checked end to end against the local stack: a Lyon 3e apartment of 52 m²
+added at its address read in 3.7 s as 235 000 € (198 000 – 277 000 €), « D'après
+394 ventes à moins de 500 m, 2023–2025 (DVF), ramenées au T2 2026 »; a house
+without an address bought 300 000 € in 2019 carries to 348 000 € by the
+France houses series. The phone's screens were typechecked, not run, this
+phase.
 
 ## Phase 5 — Plan and net worth (branch `property-5/plan`)
 
