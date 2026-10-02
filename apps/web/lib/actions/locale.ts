@@ -6,8 +6,8 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { writeLocaleAsked, writeLocaleCookie } from "@/lib/locale-cookies";
 import { renameDefaultCategories } from "@/lib/queries/categories";
-
-type ActionResult = { error?: string; success?: boolean };
+import { dbError } from "@finance/data/errors";
+import type { ActionResult } from "@finance/core/action-result";
 
 /**
  * Record the language somebody has chosen.
@@ -43,7 +43,7 @@ export async function setLocalePreference(
       );
 
     if (error) {
-      return { error: error.message };
+      return { error: dbError(error) };
     }
 
     // The default categories follow the language: "Courses" on a French

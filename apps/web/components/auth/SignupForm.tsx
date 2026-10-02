@@ -4,17 +4,18 @@ import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react";
-import { Button, ButtonNub } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
-import { Input } from "@/components/retroui/Input";
-import { FormLabel } from "@/components/layout/FormLabel";
-import { Text } from "@/components/retroui/Text";
+import { Button, ButtonNub } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { FormLabel } from "@/components/ui/FormLabel";
+import { Text } from "@/components/ui/Text";
 import { signUp } from "@/lib/actions/finance";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
+import type { FormState } from "@finance/core/action-result";
 
 /**
  * The acceptance line, with its two document names as links.
@@ -63,7 +64,10 @@ export function SignupForm({
 }) {
   const t = useT();
   const router = useRouter();
-  const [state, action, pending] = useActionState(signUp, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    signUp,
+    {},
+  );
 
   useEffect(() => {
     if (state.success && !state.message) {

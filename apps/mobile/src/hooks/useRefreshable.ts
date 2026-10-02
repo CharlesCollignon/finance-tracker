@@ -1,12 +1,8 @@
 import { useIsFocused } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  ALL_AREAS,
-  useDataVersion,
-  type DataArea,
-} from "@/lib/data-version";
-import { useRefreshAll } from "@/providers/RefreshProvider";
+import { ALL_AREAS, useDataVersion, type DataArea } from "@/lib/data-version";
+import { useRefreshAction } from "@/providers/RefreshProvider";
 
 /**
  * Load async data, with the two kinds of reload a screen actually needs.
@@ -60,7 +56,7 @@ export function useRefreshable<T>(
   // Null on the auth and onboarding screens, which render outside the
   // provider. There the gesture is a re-read and nothing more, which is all
   // it can be before anyone is signed in.
-  const refreshAll = useRefreshAll();
+  const refreshAll = useRefreshAction();
 
   // The latest loader and inputs, read at call time. Declared before the
   // load effects so they have already been updated when those run.

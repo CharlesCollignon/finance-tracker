@@ -4,53 +4,24 @@ import { z } from "zod";
 import { getLocale } from "@/lib/locale";
 
 import { revalidateApp } from "@/lib/revalidate-paths";
+import * as ledger from "@finance/data/ledger";
+import * as occurrences from "@finance/data/occurrences";
+import type { ActionResult, FormState } from "@finance/core/action-result";
+import { signInErrorKey, signUpErrorKey } from "@finance/core/auth-errors";
+import { asUser } from "@/lib/actions/as-user";
 import { redirect } from "next/navigation";
 import { getSiteUrl } from "@/lib/supabase/env";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { seedDefaultCategories } from "@/lib/queries/categories";
-import {
-  getCurrentMonth,
-  getMonthBounds,
-  shiftIsoDate,
-  todayIsoLocal,
-} from "@finance/core/constants";
-import { resolveRecurringAmount } from "@finance/core/recurring-shares";
-import { quoteSource } from "@/lib/quote-source";
-import {
-  recurringOccurrenceKey,
-  scheduleDatesBefore,
-} from "@finance/core/apply-recurring";
-import {
-  fillDue,
-  fillMonth,
-  followTemplate,
-  removeTemplateForecasts,
-  skipOccurrences,
-} from "@/lib/recurring-apply";
-import { hasBankFeed } from "@/lib/queries/bank";
-import {
-  removeInvestmentPositionForRecurring,
-  syncInvestmentPositionFromRecurring,
-} from "@/lib/investment-recurring-sync";
-import {
-  BITCOIN_INSTRUMENT,
-  isCryptoCategoryName,
-} from "@finance/core/crypto-holdings";
-import type { Database } from "@finance/core/types/database";
+import { shiftIsoDate } from "@finance/core/constants";
+import { saveRecurringTemplate } from "@finance/data/recurring-templates";
 import {
   authSchema,
-  deleteTransactionsSchema,
-  moveTransactionsSchema,
-  importTransactionsSchema,
-  parseUuid,
   recurringTemplateSchema,
-  transactionSchema,
-  updateTransactionSchema,
 } from "@finance/core/validations/finance";
 import { cashDateOf, movedBetween } from "@finance/core/cash-date";
-
-type ActionResult = { error?: string; success?: boolean; message?: string };
+import { dbError } from "@finance/data/errors";
 
 async function getUser() {
   const user = await getAuthUser();
@@ -62,59 +33,8 @@ async function getUser() {
   return user;
 }
 
-/**
- * Record a skip for every row in `ids` that a template wrote, before those
- * rows are deleted.
- *
- * The month fills itself from its templates, so deleting a charge's row
- * without this would only last until the app next opened. Deleting it is the
- * user saying that occurrence should not exist, which is what a skip is.
- */
-async function skipWhatTemplatesWrote(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  ids: string[],
-): Promise<string | null> {
-  const { data: rows, error } = await supabase
-    .from("transactions")
-    .select("recurring_template_id, occurred_on")
-    .eq("user_id", userId)
-    .in("id", ids)
-    .not("recurring_template_id", "is", null);
-
-  if (error) {
-    return error.message;
-  }
-
-  return skipOccurrences(
-    supabase,
-    userId,
-    (rows ?? []).flatMap((row) =>
-      row.recurring_template_id
-        ? [
-            {
-              templateId: row.recurring_template_id,
-              occurredOn: row.occurred_on,
-            },
-          ]
-        : [],
-    ),
-  );
-}
-
-/** The first day of the month in progress. */
-function firstOfCurrentMonth(): string {
-  const { year, month } = getCurrentMonth();
-  return getMonthBounds(year, month).start;
-}
-
-type RecurringTemplateInsert =
-  Database["public"]["Tables"]["recurring_templates"]["Insert"];
-type RecurringTemplateUpdate =
-  Database["public"]["Tables"]["recurring_templates"]["Update"];
-
 export async function signUp(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const parsed = authSchema.safeParse({
@@ -136,7 +56,7 @@ export async function signUp(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: signUpErrorKey(error.code) };
   }
 
   if (data.user && !data.session) {
@@ -164,7 +84,7 @@ async function seedCategoriesSafely(userId: string): Promise<void> {
 }
 
 export async function signIn(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const parsed = authSchema.safeParse({
@@ -180,7 +100,7 @@ export async function signIn(
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
-    return { error: error.message };
+    return { error: signInErrorKey(error.code) };
   }
 
   if (data.user) {
@@ -220,38 +140,8 @@ export interface QuickTransactionInput {
  */
 export async function saveQuickTransaction(
   input: QuickTransactionInput,
-): Promise<{ error?: string }> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = transactionSchema.safeParse({
-    categoryId: input.categoryId,
-    amount: input.amount,
-    occurredOn: input.occurredOn,
-    note: input.note?.trim() || undefined,
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.from("transactions").insert({
-    user_id: user.id,
-    category_id: parsed.data.categoryId,
-    amount: parsed.data.amount,
-    occurred_on: parsed.data.occurredOn,
-    note: parsed.data.note ?? null,
-  });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return {};
+): Promise<ActionResult> {
+  return asUser((db, userId) => ledger.createTransaction(db, userId, input));
 }
 
 /**
@@ -268,56 +158,8 @@ export async function importTransactions(
     occurredOn: string;
     note?: string;
   }[],
-): Promise<{ error?: string; imported?: number }> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = importTransactionsSchema.safeParse({ rows });
-  if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
-    };
-  }
-
-  const supabase = await createClient();
-
-  // Every row must belong to one of the user's own categories; RLS covers the
-  // insert, but checking here turns a database error into a clear message.
-  const categoryIds = [
-    ...new Set(parsed.data.rows.map((row) => row.categoryId)),
-  ];
-  const { data: owned, error: categoryError } = await supabase
-    .from("categories")
-    .select("id")
-    .eq("user_id", user.id)
-    .in("id", categoryIds);
-
-  if (categoryError) {
-    return { error: categoryError.message };
-  }
-
-  if ((owned?.length ?? 0) !== categoryIds.length) {
-    return { error: "actions.oneCategoryMissing" };
-  }
-
-  const { error } = await supabase.from("transactions").insert(
-    parsed.data.rows.map((row) => ({
-      user_id: user.id,
-      category_id: row.categoryId,
-      amount: row.amount,
-      occurred_on: row.occurredOn,
-      note: row.note?.trim() || null,
-    })),
-  );
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { imported: parsed.data.rows.length };
+): Promise<ActionResult<{ imported: number }>> {
+  return asUser((db, userId) => ledger.importTransactions(db, userId, rows));
 }
 
 /**
@@ -365,7 +207,7 @@ export async function getExistingKeysForRange(
     .map((row) => ({ ...row, occurred_on: cashDateOf(row) }));
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   return {
@@ -385,41 +227,8 @@ export async function getExistingKeysForRange(
  */
 export async function deleteTransactions(
   ids: string[],
-): Promise<{ error?: string; deleted?: number }> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = deleteTransactionsSchema.safeParse({ ids });
-  if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
-    };
-  }
-
-  const supabase = await createClient();
-  const skipError = await skipWhatTemplatesWrote(
-    supabase,
-    user.id,
-    parsed.data.ids,
-  );
-  if (skipError) {
-    return { error: skipError };
-  }
-
-  const { error, count } = await supabase
-    .from("transactions")
-    .delete({ count: "exact" })
-    .eq("user_id", user.id)
-    .in("id", parsed.data.ids);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { deleted: count ?? parsed.data.ids.length };
+): Promise<ActionResult<{ deleted: number }>> {
+  return asUser((db, userId) => ledger.deleteTransactions(db, userId, ids));
 }
 
 /**
@@ -440,148 +249,33 @@ export async function deleteTransactions(
 export async function moveTransactions(
   ids: string[],
   categoryId: string,
-): Promise<{ error?: string; moved?: number }> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = moveTransactionsSchema.safeParse({ ids, categoryId });
-  if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "errors.invalidInput",
-    };
-  }
-
-  const supabase = await createClient();
-
-  const { data: category, error: categoryError } = await supabase
-    .from("categories")
-    .select("id")
-    .eq("id", parsed.data.categoryId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (categoryError) {
-    return { error: categoryError.message };
-  }
-  if (!category) {
-    return { error: "actions.categoryMissing" };
-  }
-
-  const { error, count } = await supabase
-    .from("transactions")
-    .update({ category_id: parsed.data.categoryId }, { count: "exact" })
-    .eq("user_id", user.id)
-    .in("id", parsed.data.ids);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { moved: count ?? parsed.data.ids.length };
+): Promise<ActionResult<{ moved: number }>> {
+  return asUser((db, userId) =>
+    ledger.moveTransactions(db, userId, ids, categoryId),
+  );
 }
 
 export async function updateTransaction(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = updateTransactionSchema.safeParse({
-    id: formData.get("id"),
-    categoryId: formData.get("categoryId"),
-    amount: formData.get("amount"),
-    occurredOn: formData.get("occurredOn"),
-    note: formData.get("note") || undefined,
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-
-  // A row a template wrote, moved to another day, leaves the day it came
-  // from unwritten — and the month fills itself, so that day would be written
-  // again. Skipping it is what makes the move stick.
-  const { data: before } = await supabase
-    .from("transactions")
-    .select("recurring_template_id, occurred_on")
-    .eq("id", parsed.data.id)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (
-    before?.recurring_template_id &&
-    before.occurred_on !== parsed.data.occurredOn
-  ) {
-    const skipError = await skipOccurrences(supabase, user.id, [
-      {
-        templateId: before.recurring_template_id,
-        occurredOn: before.occurred_on,
-      },
-    ]);
-    if (skipError) {
-      return { error: skipError };
-    }
-  }
-
-  const { error } = await supabase
-    .from("transactions")
-    .update({
-      category_id: parsed.data.categoryId,
-      amount: parsed.data.amount,
-      occurred_on: parsed.data.occurredOn,
-      note: parsed.data.note ?? null,
-    })
-    .eq("id", parsed.data.id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) =>
+    ledger.updateTransaction(db, userId, {
+      id: String(formData.get("id") ?? ""),
+      categoryId: String(formData.get("categoryId") ?? ""),
+      amount: String(formData.get("amount") ?? ""),
+      occurredOn: String(formData.get("occurredOn") ?? ""),
+      note: (formData.get("note") as string | null) || undefined,
+    }),
+  );
 }
 
 export async function deleteTransaction(id: string): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  if (!parseUuid(id)) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const skipError = await skipWhatTemplatesWrote(supabase, user.id, [id]);
-  if (skipError) {
-    return { error: skipError };
-  }
-
-  const { error } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) => ledger.deleteTransaction(db, userId, id));
 }
 
 export async function upsertRecurringTemplate(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const user = await getUser();
@@ -611,231 +305,17 @@ export async function upsertRecurringTemplate(
     return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
   }
 
-  const data = parsed.data;
-  let amount = data.amount ?? 0;
-  let pricingPayload: Pick<
-    RecurringTemplateInsert,
-    | "pricing_type"
-    | "share_count"
-    | "instrument_symbol"
-    | "instrument_name"
-    | "last_quote_price"
-    | "last_quote_at"
-  >;
-
-  if (data.pricingType === "shares") {
-    try {
-      const resolved = await resolveRecurringAmount(
-        {
-          pricing_type: "shares",
-          amount: 0,
-          share_count: data.shareCount ?? null,
-          instrument_symbol: data.instrumentSymbol ?? null,
-          instrument_name: data.instrumentName ?? null,
-          description: data.description ?? null,
-          last_quote_price: null,
-        },
-        quoteSource,
-      );
-      amount = resolved.amount;
-      pricingPayload = {
-        pricing_type: "shares",
-        share_count: data.shareCount ?? null,
-        instrument_symbol: data.instrumentSymbol ?? null,
-        instrument_name: data.instrumentName ?? null,
-        last_quote_price: resolved.quoteUpdate?.last_quote_price ?? null,
-        last_quote_at: resolved.quoteUpdate?.last_quote_at ?? null,
-      };
-    } catch (error) {
-      return {
-        error: error instanceof Error ? error.message : "actions.couldNotPrice",
-      };
-    }
-  } else {
-    pricingPayload = {
-      pricing_type: "fixed",
-      share_count: null,
-      instrument_symbol: data.instrumentSymbol?.trim() || null,
-      instrument_name: data.instrumentName?.trim() || null,
-      last_quote_price: null,
-      last_quote_at: null,
-    };
-  }
-
-  const supabase = await createClient();
-  const { data: categoryRow } = await supabase
-    .from("categories")
-    .select("name")
-    .eq("id", data.categoryId)
-    .single();
-
-  if (
-    categoryRow &&
-    isCryptoCategoryName(categoryRow.name) &&
-    data.pricingType === "fixed"
-  ) {
-    pricingPayload.instrument_symbol = BITCOIN_INSTRUMENT.symbol;
-    pricingPayload.instrument_name = BITCOIN_INSTRUMENT.name;
-  }
-
-  const base = {
-    category_id: data.categoryId,
-    amount,
-    active: data.active ?? true,
-    description: data.description?.trim() || null,
-    starts_on: data.startsOn ?? null,
-    ends_on: data.endsOn ?? null,
-    ...pricingPayload,
-  };
-
-  function buildSchedulePayload():
-    | Pick<
-        RecurringTemplateInsert,
-        "recurrence" | "day_of_month" | "day_of_week" | "month_of_year"
-      >
-    | Pick<
-        RecurringTemplateUpdate,
-        "recurrence" | "day_of_month" | "day_of_week" | "month_of_year"
-      > {
-    if (data.recurrence === "monthly") {
-      return {
-        recurrence: "monthly",
-        day_of_month: data.dayOfMonth,
-        day_of_week: null,
-        month_of_year: null,
-      };
-    }
-
-    if (data.recurrence === "weekly") {
-      return {
-        recurrence: "weekly",
-        day_of_month: null,
-        day_of_week: data.dayOfWeek,
-        month_of_year: null,
-      };
-    }
-
-    return {
-      recurrence: "yearly",
-      month_of_year: data.monthOfYear,
-      day_of_month: data.dayOfMonth,
-      day_of_week: null,
-    };
-  }
-
-  let templateId = data.id;
-  const schedule = buildSchedulePayload();
-
-  // What the template said before this save, so the rows it already wrote
-  // can tell whether they have been moved to another day or stopped.
-  const { data: previous } = data.id
-    ? await supabase
-        .from("recurring_templates")
-        .select(
-          "recurrence, day_of_month, day_of_week, month_of_year, starts_on, ends_on, active",
-        )
-        .eq("id", data.id)
-        .eq("user_id", user.id)
-        .maybeSingle()
-    : { data: null };
-
-  if (data.id) {
-    const updatePayload: RecurringTemplateUpdate = {
-      ...base,
-      ...schedule,
-    };
-
-    const { error } = await supabase
-      .from("recurring_templates")
-      .update(updatePayload)
-      .eq("id", data.id)
-      .eq("user_id", user.id);
-
-    if (error) {
-      return { error: error.message };
-    }
-  } else {
-    const insertPayload: RecurringTemplateInsert = {
-      user_id: user.id,
-      ...base,
-      ...schedule,
-    };
-
-    const { data: inserted, error } = await supabase
-      .from("recurring_templates")
-      .insert(insertPayload)
-      .select("id")
-      .single();
-
-    if (error || !inserted) {
-      return { error: error?.message ?? "actions.couldNotSaveRecurring" };
-    }
-
-    templateId = inserted.id;
-  }
-
-  if (templateId) {
-    await syncInvestmentPositionFromRecurring(supabase, user.id, templateId);
-  }
-
-  // The ledger follows the template straight away rather than on the next
-  // visit. A failure here does not undo a save that worked: the month fills
-  // itself again the next time the app opens.
-  if (templateId && !(await hasBankFeed(user.id))) {
-    const today = todayIsoLocal();
-    try {
-      if (previous === null) {
-        // New. It starts from the next date to come — `isDue` sees to that —
-        // unless the user said this month's had already happened.
-        if (formData.get("startThisMonth") === "true") {
-          const { year, month } = getCurrentMonth();
-          await fillMonth(
-            supabase,
-            user.id,
-            year,
-            month,
-            today,
-            new Set(
-              scheduleDatesBefore(
-                {
-                  recurrence: data.recurrence,
-                  day_of_month: schedule.day_of_month ?? null,
-                  day_of_week: schedule.day_of_week ?? null,
-                  month_of_year: schedule.month_of_year ?? null,
-                  starts_on: base.starts_on,
-                  ends_on: base.ends_on,
-                },
-                year,
-                month,
-                today,
-              ).map((date) => recurringOccurrenceKey(templateId!, date)),
-            ),
-          );
-        }
-      } else {
-        const reschedule =
-          previous.recurrence !== schedule.recurrence ||
-          previous.day_of_month !== (schedule.day_of_month ?? null) ||
-          previous.day_of_week !== (schedule.day_of_week ?? null) ||
-          previous.month_of_year !== (schedule.month_of_year ?? null) ||
-          previous.starts_on !== base.starts_on ||
-          previous.ends_on !== base.ends_on ||
-          previous.active !== base.active;
-
-        // "Apply this change to": this month too reaches back to its first
-        // day, upcoming only starts tomorrow. Nothing reaches a past month.
-        await followTemplate(supabase, user.id, templateId, {
-          today,
-          from:
-            formData.get("applyToThisMonth") === "true"
-              ? firstOfCurrentMonth()
-              : shiftIsoDate(today, 1),
-          reschedule,
-        });
-      }
-    } catch {
-      // See above.
-    }
+  const saved = await saveRecurringTemplate(
+    await createClient(),
+    user.id,
+    parsed.data,
+    {
+      startThisMonth: formData.get("startThisMonth") === "true",
+      applyToThisMonth: formData.get("applyToThisMonth") === "true",
+    },
+  );
+  if ("error" in saved) {
+    return { error: saved.error };
   }
 
   revalidateApp();
@@ -845,98 +325,24 @@ export async function upsertRecurringTemplate(
 export async function deleteRecurringTemplate(
   id: string,
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  if (!parseUuid(id)) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-
-  // Before the template goes, while its rows still say where they came from.
-  if (!(await hasBankFeed(user.id))) {
-    const removeError = await removeTemplateForecasts(
-      supabase,
-      user.id,
-      id,
-      todayIsoLocal(),
-    );
-    if (removeError) {
-      return { error: removeError };
-    }
-  }
-
-  await removeInvestmentPositionForRecurring(supabase, user.id, id);
-
-  const { error } = await supabase
-    .from("recurring_templates")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) =>
+    occurrences.deleteRecurringTemplate(db, userId, id),
+  );
 }
 
 export async function toggleRecurringActive(
   id: string,
   active: boolean,
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("recurring_templates")
-    .update({ active })
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  // Either way it starts again, or stops, from tomorrow: switched on, the
-  // days it missed while off are not written after the fact; switched off,
-  // its rows written ahead go with it. What it recorded before stays.
-  if (!(await hasBankFeed(user.id))) {
-    const today = todayIsoLocal();
-    try {
-      await followTemplate(supabase, user.id, id, {
-        today,
-        from: shiftIsoDate(today, 1),
-        reschedule: true,
-      });
-    } catch {
-      // The switch itself worked, and the next visit fills the month.
-    }
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) =>
+    occurrences.toggleRecurringActive(db, userId, id, active),
+  );
 }
 
 /**
- * Write the charges whose day has come.
- *
- * There is no button for this any more. The app calls it once when it opens,
- * and again when a tab left open comes back into view on another day, so the
- * charges the user set up are simply there on their day — and the days ahead
- * show them as planned until then. Most calls find nothing to write and cost
- * a few small reads.
- *
- * When something was written, every surface is revalidated: the new rows
- * move figures on all of them, and the page on screen redraws with them in
- * the same response.
+ * Write the charges whose day has come — see `fillThisMonth` in
+ * `@finance/data/occurrences`. Every surface is revalidated only when
+ * something was written: the new rows move figures on all of them.
  */
 export async function fillThisMonth(): Promise<{
   created: number;
@@ -947,104 +353,26 @@ export async function fillThisMonth(): Promise<{
     return { created: 0 };
   }
 
-  // With a bank feeding the ledger, templates do not write: the account is
-  // the record of what happened and a template only says what is coming.
-  if (await hasBankFeed(user.id)) {
-    return { created: 0 };
+  const result = await occurrences.fillThisMonth(await createClient(), user.id);
+  if (result.created > 0) {
+    revalidateApp();
   }
-
-  try {
-    const supabase = await createClient();
-    const { created, failures } = await fillDue(
-      supabase,
-      user.id,
-      todayIsoLocal(),
-    );
-
-    if (created > 0) {
-      revalidateApp();
-    }
-
-    return failures.length > 0 ? { created, error: failures[0] } : { created };
-  } catch (error) {
-    return {
-      created: 0,
-      error:
-        error instanceof Error ? error.message : "actions.couldNotFillMonth",
-    };
-  }
+  return result;
 }
 
-const occurrenceInput = z.object({
-  templateId: z.string().uuid(),
-  occurredOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-});
-
-/**
- * A planned occurrence that has already happened, recorded today.
- *
- * The salary due on the 28th that arrived on the 27th: written now, dated
- * today, at the charge's amount — the row can be corrected like any other —
- * and the planned day is skipped, so the day it was due does not write it a
- * second time.
- */
 export async function recordPlannedNow(
   templateId: string,
   occurredOn: string,
-): Promise<ActionResult & { transactionId?: string }> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = occurrenceInput.safeParse({ templateId, occurredOn });
-  const today = todayIsoLocal();
-  if (!parsed.success || parsed.data.occurredOn <= today) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { data: template } = await supabase
-    .from("recurring_templates")
-    .select("id, category_id, amount, description")
-    .eq("id", parsed.data.templateId)
-    .eq("user_id", user.id)
-    .eq("active", true)
-    .maybeSingle();
-
-  if (!template) {
-    return { error: "actions.recurringNotFound" };
-  }
-
-  const skipError = await skipOccurrences(supabase, user.id, [
-    { templateId: template.id, occurredOn: parsed.data.occurredOn },
-  ]);
-  if (skipError) {
-    return { error: skipError };
-  }
-
-  const { data: inserted, error } = await supabase
-    .from("transactions")
-    .insert({
-      user_id: user.id,
-      category_id: template.category_id,
-      recurring_template_id: template.id,
-      occurred_on: today,
-      amount: Number(template.amount),
-      note: template.description?.trim() || null,
-    })
-    .select("id")
-    .single();
-
-  if (error || !inserted) {
-    return { error: error?.message ?? "actions.couldNotRecord" };
-  }
-
-  revalidateApp();
-  return { success: true, transactionId: inserted.id };
+): Promise<ActionResult<{ transactionId: string }>> {
+  return asUser((db, userId) =>
+    occurrences.recordPlannedNow(db, userId, templateId, occurredOn),
+  );
 }
 
-/** Take back "record it now": the row goes and the planned day returns. */
+/**
+ * Take back "record it now". Redrawn whatever came of it: if only the skip
+ * failed to go, the row is gone all the same and the page should say so.
+ */
 export async function undoRecordPlanned(
   transactionId: string,
   templateId: string,
@@ -1055,125 +383,31 @@ export async function undoRecordPlanned(
     return { error: "errors.notAuthenticated" };
   }
 
-  const parsed = occurrenceInput.safeParse({ templateId, occurredOn });
-  if (!parsed.success || !parseUuid(transactionId)) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("id", transactionId)
-    .eq("user_id", user.id)
-    .eq("recurring_template_id", parsed.data.templateId);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  // Recording it now skipped its planned day, so that day would not be
-  // written a second time; without taking the skip away the occurrence would
-  // not come back as planned. A failure here used to be ignored and the undo
-  // reported as done, with the occurrence gone from the month.
-  const { error: skipError } = await supabase
-    .from("recurring_skips")
-    .delete()
-    .eq("user_id", user.id)
-    .eq("template_id", parsed.data.templateId)
-    .eq("occurred_on", parsed.data.occurredOn);
-
+  const result = await occurrences.undoRecordPlanned(
+    await createClient(),
+    user.id,
+    transactionId,
+    templateId,
+    occurredOn,
+  );
   revalidateApp();
-  if (skipError) {
-    return { error: skipError.message };
-  }
-  return { success: true };
+  return result;
 }
 
-/**
- * Take one planned occurrence out of its month. Nothing is stored for a
- * planned row, so this is only the skip; `unskipRecurringOccurrence` puts it
- * back.
- */
 export async function skipPlannedOccurrence(
   templateId: string,
   occurredOn: string,
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = occurrenceInput.safeParse({ templateId, occurredOn });
-  if (!parsed.success) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { data: template } = await supabase
-    .from("recurring_templates")
-    .select("id")
-    .eq("id", parsed.data.templateId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!template) {
-    return { error: "actions.recurringNotFound" };
-  }
-
-  const skipError = await skipOccurrences(supabase, user.id, [
-    { templateId: template.id, occurredOn: parsed.data.occurredOn },
-  ]);
-  if (skipError) {
-    return { error: skipError };
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) =>
+    occurrences.skipPlannedOccurrence(db, userId, templateId, occurredOn),
+  );
 }
 
 export async function unskipRecurringOccurrence(
   templateId: string,
   occurredOn: string,
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  if (
-    !/^[0-9a-f-]{36}$/i.test(templateId) ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(occurredOn)
-  ) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("recurring_skips")
-    .delete()
-    .eq("user_id", user.id)
-    .eq("template_id", templateId)
-    .eq("occurred_on", occurredOn);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  // Written straight back, and only this one: restoring an occurrence in a
-  // past month is not a reason to fill the rest of that month.
-  if (!(await hasBankFeed(user.id))) {
-    const [year, month] = occurredOn.split("-").map(Number);
-    await fillMonth(
-      supabase,
-      user.id,
-      year!,
-      month!,
-      todayIsoLocal(),
-      new Set([recurringOccurrenceKey(templateId, occurredOn)]),
-    );
-  }
-
-  revalidateApp();
-  return { success: true, message: "actions.skipRemoved" };
+  return asUser((db, userId) =>
+    occurrences.unskipRecurringOccurrence(db, userId, templateId, occurredOn),
+  );
 }

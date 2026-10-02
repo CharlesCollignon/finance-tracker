@@ -7,12 +7,12 @@ import {
   useState,
   useTransition,
 } from "react";
-import { Button } from "@/components/retroui/Button";
-import { Input } from "@/components/retroui/Input";
-import { FormLabel } from "@/components/layout/FormLabel";
-import { Text } from "@/components/retroui/Text";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { FormLabel } from "@/components/ui/FormLabel";
+import { Text } from "@/components/ui/Text";
 import { useToast } from "@/components/layout/ToastProvider";
-import { MobileSheet } from "@/components/layout/MobileSheet";
+import { MobileSheet } from "@/components/ui/MobileSheet";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import {
   deleteTransaction,
@@ -26,6 +26,7 @@ import { moveBackEarlyIncome } from "@/lib/actions/fulfilment";
 import type { Category, Transaction } from "@finance/core/types/database";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
+import type { FormState } from "@finance/core/action-result";
 
 interface TransactionFormProps {
   categories: Category[];
@@ -87,7 +88,10 @@ function TransactionFormFields({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletePending, startDelete] = useTransition();
   const [duplicatePending, startDuplicate] = useTransition();
-  const [state, action, pending] = useActionState(updateTransaction, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    updateTransaction,
+    {},
+  );
   // A charge's row. Deleting it takes that occurrence out of its month —
   // which is what skipping used to be a separate button for — so the month
   // filling itself does not write it straight back.

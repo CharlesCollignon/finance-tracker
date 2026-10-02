@@ -5,17 +5,18 @@ figure is computed, and what is known to be wrong. Written for whoever works
 on the repository next, human or agent. Every phase of
 `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` updates it before it closes.
 
-Last updated: quality plan Phase 1, correct and in sync (2026-10-01;
+Last updated: quality plan Phase 2, one codebase (2026-10-02;
 `docs/plans/QUALITY_SYNC_ENGAGEMENT_PLAN.md`).
 
 ## Shape
 
-| Part            | What it is                                                                                                                                                                                                                         |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/web`      | Next.js 16.2 App Router. Server components read Supabase with the user's cookie session; server actions write.                                                                                                                     |
-| `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token. |
-| `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                         |
-| `supabase/`     | Migrations `001`–`040`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                       |
+| Part            | What it is                                                                                                                                                                                                                                                                                                 |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web`      | Next.js 16.2 App Router. Server components read Supabase with the user's cookie session; server actions write.                                                                                                                                                                                             |
+| `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token.                                                                         |
+| `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                                                                                                 |
+| `packages/data` | The Supabase reads and writes both apps make, written once and handed the caller's client (`Db`): recurring templates and occurrences, transactions (`ledger`), categories, fulfilment, the month close, the review inbox, savings accounts, wallet plans, delete-all. `pnpm --filter @finance/data test`. |
+| `supabase/`     | Migrations `001`–`047`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                               |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -39,6 +40,26 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 | Profile                | `/profile`                              | `(tabs)/profile`                                                         |
 | Sign in, sign up       | `/login`, `/signup`                     | `(auth)/login`, `(auth)/signup`                                          |
 | Password reset         | `/reset`, `/auth/confirm`, `/reset/new` | `(auth)/reset` (the new password is set on the web page the email opens) |
+
+## Conventions for a write
+
+- **Where it lives.** A read or write both apps make goes in `packages/data`,
+  taking `db` (the caller's Supabase client) and `userId`, validating its own
+  input with core's zod schemas. Each app keeps a thin wrapper under its old
+  name: `asUser` in `apps/web/lib/actions/as-user.ts` (who is asking, the
+  write, then `revalidateApp()` on success) and its twin in the phone's
+  `lib/mutations.ts` (no redraw to ask for: the client's fetch announces the
+  write).
+- **What it returns.** `ActionResult<T>` from `@finance/core/action-result`:
+  `success` with an optional `message` and whatever the write reports, or an
+  `error` — always a catalogue key or a sentence already in the reader's
+  words. Database refusals go through `dbError` (`@finance/data/errors`) and
+  auth failures through `signInErrorKey`/`signUpErrorKey`
+  (`@finance/core/auth-errors`); Postgres' and Supabase's own English never
+  reaches a toast.
+- **Types.** The schema's types are generated (`pnpm gen:types` after a
+  migration is applied locally) and narrowed in
+  `packages/core/src/types/database.ts`.
 
 ## How every surface stays current
 
@@ -168,7 +189,6 @@ assertion script:
   session there, so a read asked for from the phone is likely written from
   empty figures. Only `readCashBalance` and `getFulfilledKeys` take the
   bearer client.
-- Sign-in and sign-up still show Supabase's own error text, which is English; the reset-request and new-password screens map error codes to catalogue keys (`packages/core/src/auth-errors.ts`, `apps/web/lib/auth/new-password-error.ts`).
 - `writesAFigure` (`packages/core/src/month-read.ts`) knows English number words only; a French spelled-out quantity would pass. Digits are always caught.
 - The Wallets page's fund-cost card and the look-through page can show different annual costs: only the look-through falls back to the shortlist's charge hints.
 - `packages/core/src/types/database.ts` is maintained by hand and does not list `deleted_at` (migration `036`).
@@ -188,5 +208,10 @@ assertion script:
 - The web's offline outbox sends one tab at a time, but the server has no
   idempotency key: a tab closed between a save succeeding and the entry
   leaving the queue would send it again on the next drain.
+- "Delete all data" deletes transactions, templates, categories, positions,
+  savings accounts, skips, tags, budgets, goals and wallet transfers. It
+  leaves month closes and their settings, the review inbox's bank rows,
+  confirmed and refused fulfilments, wallet plans, AI reads and proposal
+  dismissals. Whether a wipe should take those too is the owner's call.
 - The SQL assertion scripts in `supabase/tests/` are run by hand against a
   local stack; CI does not run them.

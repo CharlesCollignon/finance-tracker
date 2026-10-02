@@ -87,11 +87,6 @@
         ".agents/skills/**",
       ],
       "ignoreDependencies": [
-        // The formatter. Invoked from editors and `pnpm exec prettier`, and
-        // the repo carries no `.prettierrc` for knip's prettier plugin to find,
-        // so there is nothing for it to hang a reference on.
-        "prettier",
-
         // `scripts/build-brand-icons.mjs` imports sharp and the root manifest
         // does not declare it — the script is run with `pnpm dlx`. DEBT: either
         // declare sharp as a root devDependency or make the script's `pnpm dlx`
@@ -174,10 +169,6 @@
         // Each line is either a deletion or a restoration waiting for an
         // owner's decision. None of them is a permanent exemption.
         // ---------------------------------------------------------------
-        "components/finance/CategoryTypeBadge.tsx",
-        "components/retroui/Dialog.tsx",
-        "components/retroui/Label.tsx",
-        "components/retroui/Select.tsx",
         "lib/css-var.ts",
       ],
     },
@@ -216,17 +207,11 @@
         // EAS Update and does not install the package. A knip heuristic, not
         // a finding.
         "expo-updates",
-
-        // DEBT: nothing imports `expo-blur` — the blur in use comes from
-        // `@sbaiahmed1/react-native-blur`. Delete the dependency and this line
-        // together.
-        "expo-blur",
       ],
       "ignoreIssues": {
         // DEBT — see the note on apps/web's list. Same shape, same intent,
         // same instruction: shrink it.
         "src/components/ui/Skeleton.tsx": ["exports"],
-        "src/components/charts/index.ts": ["types"],
         "src/lib/haptics.ts": ["exports"],
         "src/lib/mutations.ts": ["exports"],
         "src/lib/queries.ts": ["exports"],
@@ -259,6 +244,11 @@
     // is also why `rules.exports` is an error and not a warning: for this
     // workspace it is the signal that catches dead exports hiding behind a
     // reachable file.
+    // The reads and writes both apps share. Same rule as core: its only
+    // consumers are the two apps here, so an export neither calls is dead.
+    "packages/data": {
+      "includeEntryExports": true,
+    },
     "packages/core": {
       "includeEntryExports": true,
       "ignore": [
@@ -292,6 +282,10 @@
         // line here. A file listed here reports no unused exports at all, so
         // every line left standing is a hole in the gate.
         // ---------------------------------------------------------------
+        // Not debt: what `supabase gen types` writes, helpers included.
+        // Editing the generated file to drop them would be undone by the
+        // next `pnpm gen:types`.
+        "src/types/database.generated.ts": ["exports", "types"],
         "src/bank-feed.ts": ["exports"],
         "src/budget.ts": ["exports"],
         "src/category-styles.ts": ["exports"],

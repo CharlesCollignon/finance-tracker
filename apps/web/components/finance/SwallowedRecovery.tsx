@@ -2,8 +2,8 @@
 
 import { useTransition } from "react";
 import { ArrowCounterClockwise } from "@phosphor-icons/react";
-import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/layout/ToastProvider";
 import { reopenSwallowedFeedItems } from "@/lib/actions/bank";
 import { ICON } from "@/lib/icon-scale";

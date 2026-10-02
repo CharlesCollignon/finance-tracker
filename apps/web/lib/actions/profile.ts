@@ -6,20 +6,20 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { disconnectUserBank } from "@/lib/bank/service";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { deleteAllUserData } from "@/lib/queries/account";
+import { deleteAllUserData } from "@finance/data/account";
 import {
   deleteConfirmSchema,
   profileSchema,
 } from "@finance/core/validations/profile";
-
-type ActionResult = { error?: string; success?: boolean; message?: string };
+import { dbError } from "@finance/data/errors";
+import type { ActionResult, FormState } from "@finance/core/action-result";
 
 async function getUser() {
   return getAuthUser();
 }
 
 export async function updateProfile(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const user = await getUser();
@@ -41,7 +41,7 @@ export async function updateProfile(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   revalidateApp();
@@ -49,7 +49,7 @@ export async function updateProfile(
 }
 
 export async function deleteAllData(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const user = await getUser();
@@ -68,7 +68,7 @@ export async function deleteAllData(
   const supabase = await createClient();
 
   try {
-    await deleteAllUserData(user.id, supabase);
+    await deleteAllUserData(supabase, user.id);
   } catch (err) {
     const message = err instanceof Error ? err.message : "actions.deleteFailed";
     return { error: message };
@@ -82,7 +82,7 @@ export async function deleteAllData(
 }
 
 export async function deleteAccount(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const user = await getUser();
@@ -112,7 +112,7 @@ export async function deleteAccount(
     // First, while the key still opens: revoked at open-banking.io so the
     // delegated access dies with the account rather than outliving it there.
     await disconnectUserBank(user.id, { deleteImported: false });
-    await deleteAllUserData(user.id, supabase);
+    await deleteAllUserData(supabase, user.id);
   } catch (err) {
     const message = err instanceof Error ? err.message : "actions.deleteFailed";
     return { error: message };
@@ -121,7 +121,7 @@ export async function deleteAccount(
   const { error } = await admin.auth.admin.deleteUser(user.id);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   await supabase.auth.signOut();

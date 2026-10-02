@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isMissingSchemaOrFunction } from "@finance/data/schema";
 import {
   WALLET_READS_PER_MONTH,
   WALLET_READ_COOLDOWN_SECONDS,
@@ -32,16 +33,6 @@ type Client = SupabaseClient<Database>;
  * arithmetic works perfectly well without it. Somebody who has not applied
  * 033 still gets the whole look-through, with no Review button.
  */
-
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703" ||
-    // No such function: the migration-not-run case for an RPC.
-    error?.code === "42883"
-  );
-}
 
 /** The month the allowance is counted in. */
 function thisMonthColumn(): string {
@@ -111,7 +102,7 @@ export async function readWalletReadState(
     .maybeSingle();
 
   if (error) {
-    if (isMissingSchema(error)) {
+    if (isMissingSchemaOrFunction(error)) {
       return { stored: null, tracked: false };
     }
     throw error;
@@ -145,7 +136,7 @@ export async function reserveWalletRead(
   });
 
   if (error) {
-    if (isMissingSchema(error)) {
+    if (isMissingSchemaOrFunction(error)) {
       return null;
     }
     throw error;
@@ -182,7 +173,7 @@ export async function storeWalletRead(
     refused_delta: payload.refusedDelta,
   });
 
-  if (error && !isMissingSchema(error)) {
+  if (error && !isMissingSchemaOrFunction(error)) {
     throw error;
   }
 }

@@ -33,7 +33,7 @@ import { BalanceCurve } from "@/components/finance/bearing/BalanceCurve";
 import { MonthPicker } from "@/components/layout/MonthPicker";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
-import { buttonVariants } from "@/components/retroui/Button";
+import { buttonVariants } from "@/components/ui/Button";
 import { GLASS_CARD, GLASS_HERO } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { FIGURE, FIGURE_HERO } from "@/lib/type-scale";

@@ -16,6 +16,7 @@ import type { BankInviteSurface } from "@/lib/bank/invite";
 import { getLocale } from "@/lib/locale";
 import { revalidateApp } from "@/lib/revalidate-paths";
 import { createClient } from "@/lib/supabase/server";
+import { dbError } from "@finance/data/errors";
 
 type Result<T = object> = ({ error?: undefined } & T) | { error: string };
 
@@ -158,7 +159,7 @@ export async function dismissBankInvite(
         dismissed_prompts: [...dismissed],
       });
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
   // So going back to a page that showed the invitation does not show it
   // again from the browser's copy.

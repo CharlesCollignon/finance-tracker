@@ -9,7 +9,7 @@ import {
 } from "@phosphor-icons/react";
 import type { BankAttention } from "@finance/core/bank-attention";
 import { formatShortDate } from "@finance/core/constants";
-import { Button, buttonVariants } from "@/components/retroui/Button";
+import { Button, buttonVariants } from "@/components/ui/Button";
 import { ConnectBankSheet } from "@/components/finance/bank/ConnectBankSheet";
 import { ICON } from "@/lib/icon-scale";
 import { cn } from "@/lib/utils";

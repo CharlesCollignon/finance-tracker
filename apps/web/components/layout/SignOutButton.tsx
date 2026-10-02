@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { signOut } from "@/lib/actions/finance";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/locale-context";

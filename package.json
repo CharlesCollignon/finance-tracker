@@ -6,8 +6,9 @@
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:mobile": "pnpm --filter mobile start",
-    "test": "pnpm --filter @finance/core test && pnpm --filter web test",
-    "check:reachability": "pnpm --filter @finance/core exec vitest run src/i18n/unused-keys.test.ts && knip"
+    "test": "pnpm --filter @finance/core test && pnpm --filter @finance/data test && pnpm --filter web test",
+    "check:reachability": "pnpm --filter @finance/core exec vitest run src/i18n/unused-keys.test.ts && knip",
+    "gen:types": "node scripts/gen-db-types.mjs"
   },
   "devDependencies": {
     "knip": "^6.37.0",

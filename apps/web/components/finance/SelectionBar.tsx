@@ -9,7 +9,7 @@ import {
   type SelectionSummary,
 } from "@finance/core/selection";
 import type { Category } from "@finance/core/types/database";
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";

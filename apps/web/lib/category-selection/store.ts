@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isMissingSchemaOrFunction } from "@finance/data/schema";
 import {
   CATEGORY_SELECTION_COOLDOWN_SECONDS,
   CATEGORY_SELECTION_RESERVATION_SECONDS,
@@ -49,16 +50,6 @@ type Client = SupabaseClient<Database>;
  * is: `tracked: false` stops the model being asked at all, because a call that
  * cannot be counted is a call that is not capped.
  */
-
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703" ||
-    // No such function: the migration-not-run case for an RPC.
-    error?.code === "42883"
-  );
-}
 
 /**
  * What is stored beside the order.
@@ -176,7 +167,7 @@ export async function readCategorySelectionState(
     .maybeSingle();
 
   if (error) {
-    if (isMissingSchema(error)) {
+    if (isMissingSchemaOrFunction(error)) {
       return { stored: null, tally: EMPTY_TALLY, tracked: false };
     }
     throw error;
@@ -221,7 +212,7 @@ export async function reserveSelection(
   });
 
   if (error) {
-    if (isMissingSchema(error)) {
+    if (isMissingSchemaOrFunction(error)) {
       return null;
     }
     throw error;
@@ -263,7 +254,7 @@ export async function storeSelection(
     refused_delta: payload.refusedDelta,
   });
 
-  if (error && !isMissingSchema(error)) {
+  if (error && !isMissingSchemaOrFunction(error)) {
     throw error;
   }
 }

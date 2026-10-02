@@ -8,14 +8,14 @@ import {
   Plus,
   Trash,
 } from "@phosphor-icons/react";
-import { Badge } from "@/components/retroui/Badge";
-import { Button, ButtonNub } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
-import { Input } from "@/components/retroui/Input";
-import { Text } from "@/components/retroui/Text";
-import { FormLabel } from "@/components/layout/FormLabel";
-import { ChoiceChips } from "@/components/layout/Picker";
-import { MobileSheet } from "@/components/layout/MobileSheet";
+import { Badge } from "@/components/ui/Badge";
+import { Button, ButtonNub } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Text } from "@/components/ui/Text";
+import { FormLabel } from "@/components/ui/FormLabel";
+import { ChoiceChips } from "@/components/ui/Picker";
+import { MobileSheet } from "@/components/ui/MobileSheet";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useToast } from "@/components/layout/ToastProvider";
@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage, type Key } from "@finance/core/i18n/t";
+import type { FormState } from "@finance/core/action-result";
 
 const ICON_KEYS = Object.keys(CATEGORY_ICONS);
 
@@ -302,7 +303,10 @@ function CategoryFormSheet({
   const locale = useLocale();
   const { toast } = useToast();
   const isEditing = category !== null;
-  const [state, action, pending] = useActionState(upsertCategory, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    upsertCategory,
+    {},
+  );
   const [type, setType] = useState<CategoryType>(category?.type ?? "expense");
   const [icon, setIcon] = useState<string>(category?.icon ?? "dots-three");
   const [countsTowardSummary, setCountsTowardSummary] = useState(

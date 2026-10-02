@@ -8,10 +8,10 @@ import {
   suggestUnrecordedCap,
   type CloseHistorySummary,
 } from "@finance/core/month-close";
-import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
-import { Input } from "@/components/retroui/Input";
-import { Text } from "@/components/retroui/Text";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Text } from "@/components/ui/Text";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 import { useToast } from "@/components/layout/ToastProvider";
 import { useFormatCurrency } from "@/lib/use-currency";

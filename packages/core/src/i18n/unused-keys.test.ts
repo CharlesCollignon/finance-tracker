@@ -64,11 +64,17 @@ const REPO_ROOT = resolve(HERE, "..", "..", "..", "..");
 /**
  * Where a key can be referenced from.
  *
- * Both clients and the library itself. The library is in the list because
+ * Both clients and the two libraries. Core is in the list because
  * `attention.ts`, `month-facts.ts` and the `validations/` schemas all carry
- * keys as data.
+ * keys as data; `packages/data` because the writes the apps share report
+ * their errors as keys.
  */
-const SCAN_ROOTS = ["apps/web", "apps/mobile/src", "packages/core/src"];
+const SCAN_ROOTS = [
+  "apps/web",
+  "apps/mobile/src",
+  "packages/core/src",
+  "packages/data/src",
+];
 
 const SCAN_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs"];
 

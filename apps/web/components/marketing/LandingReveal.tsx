@@ -1,8 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
-import AnimatedContent from "@/components/react-bits/AnimatedContent";
-import FadeContent from "@/components/react-bits/FadeContent";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { EASE_STANDARD } from "@finance/core/motion";
 import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
 
 /**
@@ -10,9 +9,42 @@ import { usePrefersReducedMotion } from "@/lib/use-reduced-motion";
  * this is client-side. Kept in one file so a server-rendered section can wrap
  * a block without becoming a client component itself.
  *
+ * An IntersectionObserver and a CSS transition. These used to be two
+ * vendored react-bits components on gsap and its ScrollTrigger plugin, which
+ * were the only thing in the app that used gsap: a whole animation library
+ * shipped to every visitor for a fade and a rise.
+ *
  * Both collapse to a plain wrapper under prefers-reduced-motion rather than
  * running at 0.01ms, so nothing depends on an animation having finished.
  */
+
+const EASE = `cubic-bezier(${EASE_STANDARD.join(", ")})`;
+
+/** The block has come into view: once, and it stays shown. */
+function useShownOnce(threshold: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(false);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || shown) {
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setShown(true);
+          observer.disconnect();
+        }
+      },
+      { threshold },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [threshold, shown]);
+
+  return { ref, shown };
+}
 
 export function Reveal({
   children,
@@ -21,21 +53,25 @@ export function Reveal({
 }: {
   children: ReactNode;
   className?: string;
+  /** Seconds, so a list can stagger its items. */
   delay?: number;
 }) {
   const reduced = usePrefersReducedMotion();
+  const { ref, shown } = useShownOnce(0.15);
   if (reduced) {
     return <div className={className}>{children}</div>;
   }
   return (
-    <FadeContent
+    <div
+      ref={ref}
       className={className}
-      duration={0.6}
-      delay={delay}
-      threshold={0.15}
+      style={{
+        opacity: shown ? 1 : 0,
+        transition: `opacity 600ms ${EASE} ${delay}s`,
+      }}
     >
       {children}
-    </FadeContent>
+    </div>
   );
 }
 
@@ -46,15 +82,24 @@ export function Rise({
 }: {
   children: ReactNode;
   className?: string;
+  /** Pixels it rises through. */
   distance?: number;
 }) {
   const reduced = usePrefersReducedMotion();
+  const { ref, shown } = useShownOnce(0.15);
   if (reduced) {
     return <div className={className}>{children}</div>;
   }
   return (
-    <AnimatedContent distance={distance} duration={0.7} threshold={0.15}>
+    <div
+      ref={ref}
+      style={{
+        opacity: shown ? 1 : 0,
+        transform: shown ? "none" : `translateY(${distance}px)`,
+        transition: `opacity 700ms ${EASE}, transform 700ms ${EASE}`,
+      }}
+    >
       <div className={className}>{children}</div>
-    </AnimatedContent>
+    </div>
   );
 }

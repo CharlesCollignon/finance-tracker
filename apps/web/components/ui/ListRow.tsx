@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CaretRight } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 
-import { Card } from "@/components/retroui/Card";
+import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
 import { MICRO } from "@/lib/type-scale";

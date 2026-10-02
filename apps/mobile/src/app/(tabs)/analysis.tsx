@@ -4,11 +4,13 @@ import { useRouter } from "expo-router";
 import type { AccountId } from "@finance/core/allocation";
 import { ENVELOPE_SHORT_KEYS } from "@finance/core/future-plan";
 import { returnUnavailableLabel } from "@finance/core/investment-returns";
-import { FRENCH_SAVINGS_2026 } from "@finance/core/savings-accounts";
+import {
+  FRENCH_SAVINGS_2026,
+  formatRate,
+} from "@finance/core/savings-accounts";
 import { formatAnnualRate } from "@finance/core/xirr";
 import { resolveMessage } from "@finance/core/i18n/t";
 
-import { formatRate } from "@/components/accounts/format";
 import { FundCostCard } from "@/components/FundCostCard";
 import { SurfaceTabs, WALLET_TABS } from "@/components/layout/SurfaceTabs";
 import { WalletPlanPanel } from "@/components/WalletPlanPanel";
@@ -41,11 +43,10 @@ export default function AnalysisScreen() {
   const { user } = useAuth();
   const tabBarClearance = useTabBarClearance();
 
-  const { data, loading, refreshing, onRefreshAll, error } =
-    useRefreshable(
-      async () => (user ? getPlacementsData(user.id, locale) : null),
-      [user?.id, locale],
-    );
+  const { data, loading, refreshing, onRefreshAll, error } = useRefreshable(
+    async () => (user ? getPlacementsData(user.id, locale) : null),
+    [user?.id, locale],
+  );
 
   const kept = data ? keptAccounts(data) : null;
   const savings = data?.savings.accounts ?? [];

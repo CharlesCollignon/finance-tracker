@@ -13,7 +13,7 @@ import { formatShortDate, relativeDayLabel } from "@finance/core/constants";
 import { fulfilOccurrence, refuseFulfilment } from "@/lib/actions/fulfilment";
 import { useToast } from "@/components/layout/ToastProvider";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";

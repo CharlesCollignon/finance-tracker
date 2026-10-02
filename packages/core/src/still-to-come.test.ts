@@ -28,6 +28,8 @@ function tx(
     amount,
     note: null,
     created_at: "2026-09-01T00:00:00Z",
+    cash_on: null,
+    deleted_at: null,
     categories: {
       name: options.name ?? type,
       type,

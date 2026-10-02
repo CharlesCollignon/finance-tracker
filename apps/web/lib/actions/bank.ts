@@ -4,23 +4,23 @@ import { revalidateApp } from "@/lib/revalidate-paths";
 import { z } from "zod";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
-import { findLedgerMatch } from "@finance/core/bank-feed";
 import { getBankConnection } from "@/lib/bank/client";
-import { ledgerRowsAround } from "@/lib/bank/duplicates";
 import {
   fileFeedItems,
   leaveOutFeedItems,
-  matchedExisting,
   reopenFeedItems,
   type BatchFeedResult,
-} from "@/lib/bank/feed-decisions";
+} from "@finance/data/feed-decisions";
+import * as feed from "@finance/data/feed-decisions";
+import { asUser } from "@/lib/actions/as-user";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
 import { getRecurringProposals } from "@/lib/queries/bank";
 import { todayIsoLocal } from "@finance/core/constants";
 import { getT } from "@/lib/locale";
 
-type ActionResult = { error?: string; success?: boolean; message?: string };
+import type { ActionResult } from "@finance/core/action-result";
+import { dbError } from "@finance/data/errors";
 
 const uuid = z.string().uuid();
 
@@ -98,99 +98,10 @@ export async function importFeedItem(
   itemId: string,
   categoryId: string,
   force = false,
-): Promise<ActionResult & { duplicateOf?: string }> {
-  const user = await getAuthUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-  if (!uuid.safeParse(itemId).success || !uuid.safeParse(categoryId).success) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { data: item } = await supabase
-    .from("bank_feed_items")
-    .select("id, occurred_on, amount, note, status, direction")
-    .eq("id", itemId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!item) {
-    return { error: "actions.entryNoLongerWaiting" };
-  }
-  if (item.status !== "pending") {
-    return { error: "actions.entryAlreadyDealtWith" };
-  }
-
-  if (!force) {
-    const existing = await ledgerRowsAround(
-      supabase,
-      user.id,
-      item.occurred_on,
-    );
-    const already = findLedgerMatch(
-      {
-        providerId: "",
-        occurredOn: item.occurred_on,
-        amount: String(item.amount),
-        currency: "EUR",
-        direction: item.direction,
-        counterparty: null,
-        merchantCategoryCode: null,
-        balanceAfter: null,
-        note: item.note,
-      },
-      existing,
-    );
-
-    if (already) {
-      await supabase
-        .from("bank_feed_items")
-        .update({
-          status: "imported",
-          transaction_id: already.transactionId,
-          // Recorded as a match, because that is what it is: this row was
-          // filed against a transaction that was already there rather than
-          // one it wrote. Undo reads this to decide whether the transaction
-          // is its to delete — see `undoFeedDecision`.
-          decided_by: "match:ledger",
-        })
-        .eq("id", itemId)
-        .eq("user_id", user.id);
-
-      revalidateApp();
-      return {
-        success: true,
-        duplicateOf: already.transactionId,
-        message: "actions.alreadyInLedger",
-      };
-    }
-  }
-
-  const { data: transaction, error } = await supabase
-    .from("transactions")
-    .insert({
-      user_id: user.id,
-      category_id: categoryId,
-      occurred_on: item.occurred_on,
-      amount: item.amount,
-      note: item.note,
-    })
-    .select("id")
-    .single();
-
-  if (error || !transaction) {
-    return { error: error?.message ?? "actions.couldNotAddEntry" };
-  }
-
-  await supabase
-    .from("bank_feed_items")
-    .update({ status: "imported", transaction_id: transaction.id })
-    .eq("id", itemId)
-    .eq("user_id", user.id);
-
-  revalidateApp();
-  return { success: true, message: "recurringProposals.added" };
+): Promise<ActionResult<{ duplicateOf?: string }>> {
+  return asUser((db, userId) =>
+    feed.importFeedItem(db, userId, itemId, categoryId, force),
+  );
 }
 
 /**
@@ -201,29 +112,7 @@ export async function importFeedItem(
  * window.
  */
 export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
-  const user = await getAuthUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-  if (!uuid.safeParse(itemId).success) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const { error } = await (
-    await createClient()
-  )
-    .from("bank_feed_items")
-    .update({ status: "ignored" })
-    .eq("id", itemId)
-    .eq("user_id", user.id)
-    .eq("status", "pending");
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { success: true, message: "actions.leftOut" };
+  return asUser((db, userId) => feed.ignoreFeedItem(db, userId, itemId));
 }
 
 /**
@@ -276,16 +165,8 @@ export async function ignoreFeedItems(
  */
 export async function undoFeedDecisions(
   itemIds: string[],
-): Promise<ActionResult & { reopened?: number }> {
-  const user = await getAuthUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-  const result = await reopenFeedItems(await createClient(), user.id, itemIds);
-  if (!result.error) {
-    revalidateApp();
-  }
-  return result;
+): Promise<ActionResult<{ reopened: number }>> {
+  return asUser((db, userId) => reopenFeedItems(db, userId, itemIds));
 }
 
 /**
@@ -326,7 +207,7 @@ export async function recategoriseFeedItem(
     .eq("user_id", user.id);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   revalidateApp();
@@ -352,55 +233,7 @@ export async function recategoriseFeedItem(
  * about the sync's matches and nulled them out; undo did not.
  */
 export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
-  const user = await getAuthUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-  if (!uuid.safeParse(itemId).success) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { data: item } = await supabase
-    .from("bank_feed_items")
-    .select("transaction_id, status, decided_by")
-    .eq("id", itemId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!item) {
-    return { error: "actions.entryNoLongerHere" };
-  }
-  if (item.status === "pending") {
-    return { error: "actions.entryAlreadyWaiting" };
-  }
-
-  // The feed row first: if deleting the transaction succeeded and this then
-  // failed, the row would point at a transaction that no longer exists.
-  const { error } = await supabase
-    .from("bank_feed_items")
-    .update({ status: "pending", transaction_id: null, decided_by: null })
-    .eq("id", itemId)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  if (item.transaction_id && !matchedExisting(item.decided_by)) {
-    const { error: deleteError } = await supabase
-      .from("transactions")
-      .delete()
-      .eq("id", item.transaction_id)
-      .eq("user_id", user.id);
-
-    if (deleteError) {
-      return { error: deleteError.message };
-    }
-  }
-
-  revalidateApp();
-  return { success: true, message: "actions.backInInbox" };
+  return asUser((db, userId) => feed.undoFeedDecision(db, userId, itemId));
 }
 
 /**
@@ -497,7 +330,7 @@ export async function reopenSwallowedFeedItems(): Promise<
     .select("id");
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   revalidateApp();
@@ -550,7 +383,7 @@ export async function acceptRecurringProposal(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   revalidateApp();
@@ -582,7 +415,7 @@ export async function dismissRecurringProposal(
     );
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   revalidateApp();
@@ -614,7 +447,7 @@ export async function setAccountCountsAsCash(
     .eq("provider_account_id", providerAccountId);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
 
   // Ticking an account can make a month closable that was not before.

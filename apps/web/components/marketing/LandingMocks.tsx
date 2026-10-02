@@ -12,8 +12,8 @@ import { formatEuro, formatPercent } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { Orb } from "@/components/brand/Orb";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
-import { Card } from "@/components/retroui/Card";
-import { Badge } from "@/components/retroui/Badge";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { APP_NAV_ITEMS, PROFILE_NAV_ITEM } from "@/lib/navigation";
 import {
   NOTCH_CENTRE_CLASS,

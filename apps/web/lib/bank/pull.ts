@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isMissingSchema } from "@finance/data/schema";
 import {
   decideBankPull,
   describePullAge,
@@ -40,20 +41,6 @@ type Client = SupabaseClient<Database>;
  * inferred — a run that guessed wrong would either waste the day's allowance
  * or exceed it.
  */
-
-/**
- * Whether an error means "this feature's schema is not here yet".
- *
- * Same three codes as `queries/bank-balance`: PostgREST's missing table,
- * Postgres', and a missing column. Every other error still throws.
- */
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703"
-  );
-}
 
 /**
  * How many days of tally to read.

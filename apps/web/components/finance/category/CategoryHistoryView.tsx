@@ -6,7 +6,7 @@ import type { CategoryRead as CategoryReadValue } from "@finance/core/category-r
 import type { CategoryFinding } from "@finance/core/category-findings";
 import type { Locale } from "@finance/core/i18n/locale";
 import type { CategoryBreakdown } from "@finance/core/types/database";
-import { Card } from "@/components/retroui/Card";
+import { Card } from "@/components/ui/Card";
 import { useT } from "@/lib/locale-context";
 import { CategoryGrid } from "./CategoryGrid";
 import { FindingBand } from "./FindingBand";

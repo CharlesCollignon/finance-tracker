@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 import { MICRO } from "@/lib/type-scale";
 import { cn } from "@/lib/utils";

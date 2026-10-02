@@ -1,0 +1,44 @@
+{
+  "name": "@finance/data",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./account": "./src/account.ts",
+    "./bank-feed": "./src/bank-feed.ts",
+    "./categories": "./src/categories.ts",
+    "./client": "./src/client.ts",
+    "./closing": "./src/closing.ts",
+    "./errors": "./src/errors.ts",
+    "./feed-decisions": "./src/feed-decisions.ts",
+    "./fulfilment": "./src/fulfilment.ts",
+    "./fulfilment-decisions": "./src/fulfilment-decisions.ts",
+    "./ledger": "./src/ledger.ts",
+    "./ledger-duplicates": "./src/ledger-duplicates.ts",
+    "./month-close": "./src/month-close.ts",
+    "./moved-rows": "./src/moved-rows.ts",
+    "./occurrences": "./src/occurrences.ts",
+    "./quote-source": "./src/quote-source.ts",
+    "./recurring-apply": "./src/recurring-apply.ts",
+    "./recurring-positions": "./src/recurring-positions.ts",
+    "./recurring-templates": "./src/recurring-templates.ts",
+    "./savings-accounts": "./src/savings-accounts.ts",
+    "./schema": "./src/schema.ts",
+    "./wallet-plans": "./src/wallet-plans.ts"
+  },
+  "dependencies": {
+    "@finance/core": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.108.2"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.108.2",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
+  },
+  "scripts": {
+    "test": "vitest run"
+  }
+}

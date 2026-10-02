@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { isMissingSchemaOrFunction } from "@finance/data/schema";
 import {
   READING_VERSION,
   readingIsStale,
@@ -125,15 +126,6 @@ function thisMonthColumn(): string {
   return monthColumnValue(year, month);
 }
 
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703" ||
-    error?.code === "42883"
-  );
-}
-
 export async function readInstrument(
   userId: string,
   isin: string,
@@ -186,7 +178,7 @@ export async function readInstrument(
   );
 
   if (reserveError) {
-    if (isMissingSchema(reserveError)) {
+    if (isMissingSchemaOrFunction(reserveError)) {
       return { status: "not-set-up" };
     }
     // The function raises rather than returns for an ISIN the caller does not
@@ -297,7 +289,7 @@ export async function readInstrument(
     ));
   }
 
-  if (storeError && !isMissingSchema(storeError)) {
+  if (storeError && !isMissingSchemaOrFunction(storeError)) {
     throw storeError;
   }
 

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isMissingSchemaOrFunction } from "@finance/data/schema";
 import {
   CATEGORY_READ_COOLDOWN_SECONDS,
   CATEGORY_READ_RESERVATION_SECONDS,
@@ -55,16 +56,6 @@ type Client = SupabaseClient<Database>;
  * raise there simply has nothing to propagate.
  */
 
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703" ||
-    // No such function: the migration-not-run case for an RPC.
-    error?.code === "42883"
-  );
-}
-
 /** The ownership check in 035's functions raising: not yours, or not any more. */
 function isGoneCategory(error: { message?: string } | null): boolean {
   return Boolean(
@@ -101,7 +92,9 @@ function toleratedRpcFailure(
   error: { code?: string; message?: string } | null,
 ): boolean {
   return (
-    isMissingSchema(error) || isGoneCategory(error) || isLockContention(error)
+    isMissingSchemaOrFunction(error) ||
+    isGoneCategory(error) ||
+    isLockContention(error)
   );
 }
 
@@ -176,7 +169,7 @@ async function readTallyWrites(
     .maybeSingle();
 
   if (error) {
-    if (isMissingSchema(error)) {
+    if (isMissingSchemaOrFunction(error)) {
       return null;
     }
     throw error;
@@ -222,7 +215,7 @@ export async function listStoredCategoryReads(
     .eq("user_id", userId);
 
   if (error) {
-    if (isMissingSchema(error)) {
+    if (isMissingSchemaOrFunction(error)) {
       return { byCategory: new Map(), tracked: false };
     }
     throw error;
@@ -252,7 +245,7 @@ export async function readCategoryReadState(
     readTallyWrites(userId, supabase),
   ]);
 
-  if (error && !isMissingSchema(error)) {
+  if (error && !isMissingSchemaOrFunction(error)) {
     throw error;
   }
 

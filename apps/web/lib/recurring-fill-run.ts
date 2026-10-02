@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { fillDue, isBankFed } from "@/lib/recurring-apply";
+import { hasBankFeed } from "@finance/data/bank-feed";
+import { fillDue } from "@finance/data/recurring-apply";
 import type { Database } from "@finance/core/types/database";
 
 type Client = SupabaseClient<Database>;
@@ -45,7 +46,7 @@ export async function fillEveryUser(
 
   for (const userId of userIds) {
     try {
-      if (await isBankFed(supabase, userId)) {
+      if (await hasBankFeed(supabase, userId)) {
         continue;
       }
 

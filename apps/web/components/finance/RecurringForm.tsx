@@ -7,18 +7,18 @@ import {
   useState,
   useTransition,
 } from "react";
-import { Button } from "@/components/retroui/Button";
-import { Input } from "@/components/retroui/Input";
-import { FormLabel } from "@/components/layout/FormLabel";
-import { Text } from "@/components/retroui/Text";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { FormLabel } from "@/components/ui/FormLabel";
+import { Text } from "@/components/ui/Text";
 import { useToast } from "@/components/layout/ToastProvider";
-import { MobileSheet } from "@/components/layout/MobileSheet";
+import { MobileSheet } from "@/components/ui/MobileSheet";
 import {
   deleteRecurringTemplate,
   upsertRecurringTemplate,
 } from "@/lib/actions/finance";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
-import { OptionPicker } from "@/components/layout/Picker";
+import { OptionPicker } from "@/components/ui/Picker";
 import { InstrumentSearch } from "@/components/finance/InstrumentSearch";
 import { estimateSharesAmountAction } from "@/lib/actions/market";
 import { formatMoney } from "@finance/core/market/fx";
@@ -43,6 +43,7 @@ import type {
 import type { InstrumentSearchResult } from "@finance/core/market/yahoo";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
+import type { FormState } from "@finance/core/action-result";
 
 interface RecurringFormProps {
   categories: Category[];
@@ -115,7 +116,10 @@ export function RecurringFormBody({
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
   const t = useT();
-  const [state, action, pending] = useActionState(upsertRecurringTemplate, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    upsertRecurringTemplate,
+    {},
+  );
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletePending, startDeleteTransition] = useTransition();
   const [recurrence, setRecurrence] = useState<Recurrence>(

@@ -2,7 +2,7 @@ import {
   fileFeedItems,
   leaveOutFeedItems,
   reopenFeedItems,
-} from "@/lib/bank/feed-decisions";
+} from "@finance/data/feed-decisions";
 import { sessionFromBearer } from "@/lib/supabase/bearer";
 
 /**

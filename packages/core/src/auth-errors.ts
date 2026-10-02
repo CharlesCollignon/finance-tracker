@@ -27,3 +27,44 @@ export function resetRequestErrorKey(code: string | undefined): Key {
   }
   return "errors.resetNotSent";
 }
+
+/**
+ * A sign-in that failed, in the reader's language — by code, as above.
+ *
+ * "Wrong address or password" covers both on purpose: saying which of the
+ * two was wrong would tell a stranger which addresses have accounts.
+ */
+export function signInErrorKey(code: string | undefined): Key {
+  switch (code) {
+    case "email_not_confirmed":
+      return "errors.emailNotConfirmed";
+    case "over_request_rate_limit":
+    case "over_email_send_rate_limit":
+      return "errors.tooManyAttempts";
+    case "invalid_credentials":
+      return "auth.invalidCredentials";
+    default:
+      return "errors.signInFailed";
+  }
+}
+
+/** A sign-up that failed, in the reader's language — by code, as above. */
+export function signUpErrorKey(code: string | undefined): Key {
+  switch (code) {
+    case "user_already_exists":
+    case "email_exists":
+      return "errors.accountExists";
+    case "weak_password":
+      return "errors.passwordTooWeak";
+    case "email_address_invalid":
+    case "validation_failed":
+      return "errors.invalidEmail";
+    case "over_request_rate_limit":
+    case "over_email_send_rate_limit":
+      return "errors.tooManyAttempts";
+    case "signup_disabled":
+      return "errors.signUpClosed";
+    default:
+      return "errors.signUpFailed";
+  }
+}

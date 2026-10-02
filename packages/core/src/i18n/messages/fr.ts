@@ -1217,7 +1217,6 @@ export const fr: Messages = {
     nearbyPages: "Pages voisines",
     needsYou: "À votre attention",
     arrivedCharges: "Opérations récurrentes qui semblent arrivées",
-    closePopUp: "Fermer la fenêtre",
     clearInstrument: "Retirer l'instrument sélectionné",
     searchInstrument: "Chercher par nom ou ISIN…",
     clearDate: "Effacer la date",
@@ -2132,6 +2131,19 @@ export const fr: Messages = {
   },
 
   errors: {
+    emailNotConfirmed:
+      "Confirmez d'abord votre adresse\u00A0: ouvrez le lien reçu par e-mail.",
+    tooManyAttempts: "Trop d'essais. Attendez quelques minutes et réessayez.",
+    signInFailed: "La connexion n'a pas fonctionné. Réessayez.",
+    accountExists: "Un compte existe déjà avec cette adresse. Connectez-vous.",
+    signUpClosed: "Les inscriptions sont fermées pour l'instant.",
+    signUpFailed: "L'inscription n'a pas fonctionné. Réessayez.",
+    alreadyThere: "C'est déjà enregistré.",
+    stillInUse: "C'est encore utilisé ailleurs, donc rien n'a été supprimé.",
+    notAllowed: "Vous n'avez pas accès à cet élément.",
+    notFound: "Introuvable — il a peut-être déjà été supprimé.",
+    offline: "Pas de connexion pour l'instant. Réessayez dans un moment.",
+    couldNotSave: "L'enregistrement n'a pas fonctionné. Réessayez.",
     amountPositive: "Le montant doit être positif",
     invalidDate: "Date invalide",
     nothingSelected: "Rien de sélectionné",

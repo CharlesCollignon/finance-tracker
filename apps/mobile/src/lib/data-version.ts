@@ -200,9 +200,7 @@ export function notifyDataChanged(...areas: DataArea[]): void {
  * have to list it, and missing an area is the bug this module exists to
  * remove.
  */
-export function useDataVersion(
-  areas: readonly DataArea[] = ALL_AREAS,
-): number {
+export function useDataVersion(areas: readonly DataArea[] = ALL_AREAS): number {
   // A sum, because each area's count only ever goes up: any change to any
   // of them moves it, and a number is a snapshot React can compare.
   const snapshot = () =>

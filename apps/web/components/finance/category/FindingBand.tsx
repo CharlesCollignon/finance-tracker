@@ -5,12 +5,12 @@ import { PencilSimple } from "@phosphor-icons/react";
 import type { CategoryFinding } from "@finance/core/category-findings";
 import type { CategoryBreakdown } from "@finance/core/types/database";
 import { SpendStrip } from "@/components/finance/charts";
-import { Card } from "@/components/retroui/Card";
+import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/layout/ToastProvider";
 import { rerankFindingsAction } from "@/lib/actions/category-read";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { FindingRow } from "./FindingRow";
 

@@ -35,10 +35,10 @@ import type { RenderedWalletRead } from "@finance/core/wallet-read";
 import type { ReadSegment } from "@finance/core/month-read";
 import type { Key } from "@finance/core/i18n/t";
 
-import { Badge } from "@/components/retroui/Badge";
-import { Button, buttonVariants } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
-import { EmptyState } from "@/components/layout/EmptyState";
+import { Badge } from "@/components/ui/Badge";
+import { Button, buttonVariants } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";

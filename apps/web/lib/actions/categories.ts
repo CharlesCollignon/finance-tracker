@@ -1,125 +1,33 @@
 "use server";
 
-import { getAuthUser } from "@/lib/auth/get-user";
-import { createClient } from "@/lib/supabase/server";
-import { revalidateApp } from "@/lib/revalidate-paths";
-import { categorySchema, parseUuid } from "@finance/core/validations/finance";
-
-type ActionResult = { error?: string; success?: boolean };
-
-async function getUser() {
-  return getAuthUser();
-}
+import type { ActionResult, FormState } from "@finance/core/action-result";
+import * as categories from "@finance/data/categories";
+import { asUser } from "@/lib/actions/as-user";
 
 export async function upsertCategory(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = categorySchema.safeParse({
-    id: formData.get("id") || undefined,
-    name: formData.get("name"),
-    type: formData.get("type"),
-    icon: formData.get("icon") || undefined,
-    countsTowardSummary: formData.get("countsTowardSummary") !== "false",
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const payload = {
-    name: parsed.data.name,
-    type: parsed.data.type,
-    icon: parsed.data.icon ?? null,
-    counts_toward_summary: parsed.data.countsTowardSummary ?? true,
-  };
-
-  if (parsed.data.id) {
-    const { error } = await supabase
-      .from("categories")
-      .update(payload)
-      .eq("id", parsed.data.id)
-      .eq("user_id", user.id);
-
-    if (error) {
-      return { error: friendlyCategoryError(error.message) };
-    }
-  } else {
-    const { error } = await supabase.from("categories").insert({
-      user_id: user.id,
-      ...payload,
-    });
-
-    if (error) {
-      return { error: friendlyCategoryError(error.message) };
-    }
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) =>
+    categories.upsertCategory(db, userId, {
+      id: (formData.get("id") as string | null) || undefined,
+      name: String(formData.get("name") ?? ""),
+      type: formData.get("type") as categories.CategoryChange["type"],
+      icon: (formData.get("icon") as string | null) || undefined,
+      countsTowardSummary: formData.get("countsTowardSummary") !== "false",
+    }),
+  );
 }
 
 export async function setCategoryArchived(
   id: string,
   archived: boolean,
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("categories")
-    .update({ archived })
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) =>
+    categories.setCategoryArchived(db, userId, id, archived),
+  );
 }
 
 export async function deleteCategory(id: string): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  if (!parseUuid(id)) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("categories")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return { error: friendlyCategoryError(error.message) };
-  }
-
-  revalidateApp();
-  return { success: true };
-}
-
-function friendlyCategoryError(message: string): string {
-  if (message.includes("foreign key")) {
-    return "actions.categoryInUse";
-  }
-  if (message.includes("duplicate key")) {
-    return "actions.categoryExists";
-  }
-  return message;
+  return asUser((db, userId) => categories.deleteCategory(db, userId, id));
 }

@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Fingerprint } from "@phosphor-icons/react";
-import { Button } from "@/components/retroui/Button";
-import { Text } from "@/components/retroui/Text";
+import { Button } from "@/components/ui/Button";
+import { Text } from "@/components/ui/Text";
 import { seedCategoriesForCurrentUser } from "@/lib/actions/finance";
 import { createClient } from "@/lib/supabase/client";
 import { ICON } from "@/lib/icon-scale";

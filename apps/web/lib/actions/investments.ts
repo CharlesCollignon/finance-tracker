@@ -8,31 +8,22 @@ import {
   upsertInvestmentPosition,
 } from "@/lib/queries/investments";
 import { displayNameForRecurringTemplate } from "@finance/core/investment-positions";
-import { z } from "zod";
-import {
-  ACCOUNT_IDS,
-  isSavingsAccountId,
-  type AccountId,
-} from "@finance/core/allocation";
-import type { InvestmentWalletId } from "@finance/core/investments";
-import type { SavingsAccountKind } from "@finance/core/types/database";
-import {
-  investmentPositionSchema,
-  walletPlanSchema,
-} from "@finance/core/validations/investments";
+import { investmentPositionSchema } from "@finance/core/validations/investments";
 import {
   BITCOIN_INSTRUMENT,
   isCryptoWallet,
 } from "@finance/core/crypto-holdings";
 
-type ActionResult = { error?: string; success?: boolean };
+import type { ActionResult, FormState } from "@finance/core/action-result";
+import * as plans from "@finance/data/wallet-plans";
+import { asUser } from "@/lib/actions/as-user";
 
 async function getUser() {
   return getAuthUser();
 }
 
 export async function saveInvestmentPosition(
-  _prev: ActionResult,
+  _prev: FormState,
   formData: FormData,
 ): Promise<ActionResult> {
   const user = await getUser();
@@ -147,192 +138,21 @@ export async function removeInvestmentPosition(
   return { success: true };
 }
 
-/**
- * Saves one wallet's plan — its target share of the portfolio, when the
- * wrapper was opened, and any non-standard contribution ceiling.
- *
- * Upserted per wallet rather than as a set, so setting a PEA's opening date
- * does not require the user to have decided on target weights first.
- */
-/**
- * One wallet's intent, changed a field at a time.
- *
- * Only the fields the caller actually sent are written. That is not a
- * micro-optimisation: `walletPlanSchema` turns an absent field into `null`,
- * and the upsert used to write every column — so saving a PEA's opening date
- * silently cleared its target weight, and the drift figure with it. Three
- * editors share this row and each of them touches one field.
- *
- * `wallet` is read from the raw input rather than the parsed output because
- * the parsed output cannot say whether a null was sent or merely absent.
- */
-export async function saveWalletPlan(input: {
-  wallet: string;
-  targetWeight?: string | number;
-  openedOn?: string;
-  contributionCeiling?: string | number;
-  wrapperFee?: string | number;
-}): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = walletPlanSchema.safeParse(input);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "errors.invalidInput" };
-  }
-
-  const row: Record<string, unknown> = {
-    user_id: user.id,
-    wallet: parsed.data.wallet,
-    updated_at: new Date().toISOString(),
-  };
-  if ("targetWeight" in input) {
-    row.target_weight = parsed.data.targetWeight;
-  }
-  if ("openedOn" in input) {
-    row.opened_on = parsed.data.openedOn;
-  }
-  if ("contributionCeiling" in input) {
-    row.contribution_ceiling = parsed.data.contributionCeiling;
-  }
-  if ("wrapperFee" in input) {
-    row.wrapper_fee = parsed.data.wrapperFee;
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("wallet_plans")
-    .upsert(row as never, { onConflict: "user_id,wallet" });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidateApp();
-  return { success: true };
+/** One wallet's intent, a field at a time — `@finance/data/wallet-plans`. */
+export async function saveWalletPlan(
+  input: plans.WalletPlanChange,
+): Promise<ActionResult> {
+  return asUser((db, userId) => plans.saveWalletPlan(db, userId, input));
 }
 
-const accountTargetsInput = z.object({
-  targets: z
-    .array(
-      z.object({
-        accountId: z.enum(ACCOUNT_IDS as [AccountId, ...AccountId[]]),
-        targetWeight: z.coerce.number().min(0).max(1),
-      }),
-    )
-    .max(ACCOUNT_IDS.length),
-});
-
-/** Whether an error means migration 047 (savings targets) has not run. */
-function savingsTargetsMissing(error: { code?: string } | null): boolean {
-  return error?.code === "42703" || error?.code === "PGRST204";
-}
-
-/**
- * Saves every target at once, across the savings accounts and the wallets.
- *
- * Drift is only reported when the targets cover everything kept, so the UI
- * edits them as a set and this writes them as one: a wallet's on its plan
- * row, a savings account's on the account itself.
- */
+/** Every target at once, across the savings accounts and the wallets. */
 export async function saveAccountTargets(
   targets: { accountId: string; targetWeight: number }[],
 ): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const parsed = accountTargetsInput.safeParse({ targets });
-  if (!parsed.success) {
-    return { error: "errors.invalidInput" };
-  }
-
-  const total = parsed.data.targets.reduce(
-    (sum, row) => sum + row.targetWeight,
-    0,
-  );
-
-  // Anything else would make every account look permanently off-target.
-  if (parsed.data.targets.length > 0 && Math.abs(total - 1) > 0.005) {
-    return { error: "errors.targetsMustTotal100" };
-  }
-
-  const supabase = await createClient();
-  const now = new Date().toISOString();
-  const wallets = parsed.data.targets.filter(
-    (row) => !isSavingsAccountId(row.accountId),
-  );
-  const savings = parsed.data.targets.filter((row) =>
-    isSavingsAccountId(row.accountId),
-  );
-
-  for (const row of savings) {
-    const { error } = await supabase
-      .from("savings_accounts")
-      .update({ target_weight: row.targetWeight, updated_at: now })
-      .eq("user_id", user.id)
-      .eq("kind", row.accountId as SavingsAccountKind);
-    if (error) {
-      return {
-        error: savingsTargetsMissing(error)
-          ? "placementsWeb.targetsSetup"
-          : error.message,
-      };
-    }
-  }
-
-  if (wallets.length > 0) {
-    const { error } = await supabase.from("wallet_plans").upsert(
-      wallets.map((row) => ({
-        user_id: user.id,
-        wallet: row.accountId as InvestmentWalletId,
-        target_weight: row.targetWeight,
-        updated_at: now,
-      })),
-      { onConflict: "user_id,wallet" },
-    );
-    if (error) {
-      return { error: error.message };
-    }
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) => plans.saveAccountTargets(db, userId, targets));
 }
 
-/**
- * Takes every target off, so the split goes back to showing what is alone.
- * The rest of each wallet's plan (the PEA's opening date, a ceiling, an
- * envelope fee) lives on the same rows and is left as it was.
- */
+/** Every target off; the rest of each wallet's plan stays. */
 export async function clearAccountTargets(): Promise<ActionResult> {
-  const user = await getUser();
-  if (!user) {
-    return { error: "errors.notAuthenticated" };
-  }
-
-  const supabase = await createClient();
-  const now = new Date().toISOString();
-  const { error } = await supabase
-    .from("wallet_plans")
-    .update({ target_weight: null, updated_at: now })
-    .eq("user_id", user.id);
-  if (error) {
-    return { error: error.message };
-  }
-
-  // Before 047 no savings account can hold a target, so there is none to take off.
-  const { error: savingsError } = await supabase
-    .from("savings_accounts")
-    .update({ target_weight: null, updated_at: now })
-    .eq("user_id", user.id);
-  if (savingsError && !savingsTargetsMissing(savingsError)) {
-    return { error: savingsError.message };
-  }
-
-  revalidateApp();
-  return { success: true };
+  return asUser((db, userId) => plans.clearAccountTargets(db, userId));
 }

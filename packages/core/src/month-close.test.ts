@@ -37,6 +37,8 @@ function tx(
     amount,
     note: null,
     created_at: "2026-10-12T00:00:00.000Z",
+    cash_on: null,
+    deleted_at: null,
     categories: {
       name: type,
       type,

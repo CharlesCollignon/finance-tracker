@@ -20,6 +20,8 @@ function tx(
     amount,
     note: null,
     created_at: `${occurredOn}T00:00:00.000Z`,
+    cash_on: null,
+    deleted_at: null,
     categories: { name, type, icon: null, counts_toward_summary: counts },
   };
 }
@@ -127,6 +129,8 @@ describe("buildCategoryHistory, when payments straddle a month boundary", () => 
       amount: 4500,
       note: null,
       created_at: "2026-01-01T00:00:00Z",
+      cash_on: null,
+      deleted_at: null,
       categories: {
         name: "Salary",
         type: "income",

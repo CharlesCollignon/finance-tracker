@@ -1,5 +1,8 @@
+import { hasBankFeed as bankFeeds } from "@finance/data/bank-feed";
+import * as fulfilment from "@finance/data/fulfilment";
+import * as closes from "@finance/data/month-close";
+import { isMissingSchema } from "@finance/data/schema";
 import {
-  formatMonthLabel,
   getCurrentMonth,
   getMonthBounds,
   shiftIsoDate,
@@ -19,28 +22,9 @@ import {
   type RecurringProposal,
 } from "@finance/core/recurring-detection";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
-import {
-  explainFulfilmentMisses,
-  proposeFulfilments,
-  fulfilmentOccurrences,
-  fulfilmentScope,
-  proposalsForMonth,
-  refusalKey,
-  type FulfilmentMiss,
-  type FulfilmentMovement,
-  type FulfilmentProposal,
-  type ProposeOptions,
-} from "@finance/core/recurring-fulfilment";
+import { type FulfilmentProposal } from "@finance/core/recurring-fulfilment";
 import { buildMonthlySummary } from "@finance/core/monthly-summary";
 import {
-  buildMonthClose,
-  buildRecordedCashFlows,
-  closableMonth,
-  monthKeyOfClose,
-  summarizeCloseHistory,
-  type CloseableMonth,
-  type CloseHistorySummary,
-  type ClosedMonthOutcome,
   type MonthCloseResult,
   type RecordedCashFlows,
 } from "@finance/core/month-close";
@@ -61,8 +45,6 @@ import {
 } from "@finance/core/bank-balance";
 import {
   describeReviewReason,
-  MATCH_WINDOW_DAYS,
-  type ExistingLedgerRow,
   type ReviewReason,
 } from "@finance/core/bank-feed";
 import type {
@@ -83,7 +65,6 @@ import type {
 
 import { supabase } from "@/lib/supabase";
 import { cashDateOf, movedBetween } from "@finance/core/cash-date";
-import { getMovedBetween, rowsByCashDate } from "@/lib/moved-rows";
 
 export async function getCategories(
   userId: string,
@@ -536,310 +517,60 @@ export async function getSavingsReserve(userId: string): Promise<number> {
 
 /* ------------------------------------------------------------ closing a month */
 
-/** What the app assumes until the user says otherwise. */
-export const DEFAULT_CLOSE_DAY = 5;
-
-export interface CloseSettings {
-  closeDay: number;
-  unrecordedCap: number | null;
-}
-
-export async function getMonthCloseSettings(
-  userId: string,
-): Promise<CloseSettings> {
-  const { data, error } = await supabase
-    .from("month_close_settings")
-    .select("close_day, unrecorded_cap")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  return {
-    closeDay: data?.close_day ?? DEFAULT_CLOSE_DAY,
-    unrecordedCap:
-      data?.unrecorded_cap === null || data?.unrecorded_cap === undefined
-        ? null
-        : Number(data.unrecorded_cap),
-  };
-}
-
-/** Every close, oldest first, which is the order the chain reads in. */
-export async function getMonthCloses(userId: string): Promise<MonthClose[]> {
-  const { data, error } = await supabase
-    .from("month_closes")
-    .select("*")
-    .eq("user_id", userId)
-    .order("month", { ascending: true });
-
-  if (error) {
-    throw error;
-  }
-  return data ?? [];
-}
-
-function monthKeyOfDate(isoDate: string): string {
-  return isoDate.slice(0, 7);
-}
-
 /**
- * Every closed month's cash flows, in two queries rather than two per month.
- * Both halves are needed: cash leaves for a broker either as a transaction in
- * a category that counts toward the summary, or as a wallet transfer in its
- * own table, and missing the second would report every transfer as unrecorded
- * spending.
+ * The month close's reads — `@finance/data/month-close`, the same as the
+ * web's, with the phone's client. Paged past the server's row cap now, as
+ * the web's already were: a year of closes is a year of rows.
  */
-async function cashFlowsByMonth(
+
+export {
+  DEFAULT_CLOSE_DAY,
+  type ClosedMonthRow,
+  type MonthCloseOverview,
+} from "@finance/data/month-close";
+
+export function getMonthCloseSettings(
   userId: string,
-  monthKeys: readonly string[],
-): Promise<Map<string, RecordedCashFlows>> {
-  const byMonth = new Map<string, RecordedCashFlows>();
-  if (monthKeys.length === 0) {
-    return byMonth;
-  }
-
-  const sorted = [...monthKeys].sort();
-  const [firstYear, firstMonth] = sorted[0]!.split("-").map(Number);
-  const [lastYear, lastMonth] =
-    sorted[sorted.length - 1]!.split("-").map(Number);
-  const { start } = getMonthBounds(firstYear!, firstMonth!);
-  const { end } = getMonthBounds(lastYear!, lastMonth!);
-
-  const [
-    { data: transactions, error: txError },
-    { data: transfers, error: trError },
-    moved,
-  ] = await Promise.all([
-    supabase
-      .from("transactions")
-      .select("*, categories(name, type, icon, counts_toward_summary)")
-      .eq("user_id", userId)
-      .gte("occurred_on", start)
-      .lte("occurred_on", end),
-    supabase
-      .from("wallet_transfers")
-      .select("amount, occurred_on")
-      .eq("user_id", userId)
-      .gte("occurred_on", start)
-      .lte("occurred_on", end),
-    // An income paid early for next month left its mark on the balance of
-    // the month its money arrived in, whichever month it counts for.
-    getMovedBetween(userId, start, end),
-  ]);
-
-  if (txError) {
-    throw txError;
-  }
-  if (trError) {
-    throw trError;
-  }
-
-  // Each month by the day its money moved: the close compares the ledger
-  // with what the account held.
-  const txByMonth = new Map<string, TransactionWithCategory[]>();
-  for (const row of rowsByCashDate(
-    (transactions ?? []) as TransactionWithCategory[],
-    moved,
-    start,
-    end,
-  )) {
-    const key = monthKeyOfDate(cashDateOf(row));
-    txByMonth.set(key, [...(txByMonth.get(key) ?? []), row]);
-  }
-
-  const transferByMonth = new Map<string, { amount: number }[]>();
-  for (const row of transfers ?? []) {
-    const key = monthKeyOfDate(row.occurred_on as string);
-    transferByMonth.set(key, [
-      ...(transferByMonth.get(key) ?? []),
-      { amount: Number(row.amount) },
-    ]);
-  }
-
-  for (const key of sorted) {
-    byMonth.set(
-      key,
-      buildRecordedCashFlows(
-        txByMonth.get(key) ?? [],
-        transferByMonth.get(key) ?? [],
-      ),
-    );
-  }
-
-  return byMonth;
+): Promise<closes.CloseSettings> {
+  return closes.getMonthCloseSettings(supabase, userId);
 }
 
-export interface ClosedMonthRow extends ClosedMonthOutcome {
-  label: string;
-  closingBalance: number;
-  observedOn: string;
-  status: MonthCloseResult["status"];
-  keptRate: number | null;
-  /**
-   * What the account actually moved over the month. Null on a baseline, which
-   * has nothing before it to have moved from.
-   */
-  cashChange: number | null;
-  /** Whether the figure was typed in or read off the statement. */
-  source: "manual" | "bank";
+export function getMonthCloses(userId: string): Promise<MonthClose[]> {
+  return closes.getMonthCloses(supabase, userId);
 }
 
-export interface MonthCloseOverview {
-  settings: CloseSettings;
-  /** Every closed month, newest first, with its reconciliation replayed. */
-  history: ClosedMonthRow[];
-  summary: CloseHistorySummary;
-  /** The month the user should be asked about, if any. */
-  next: CloseableMonth | null;
-}
-
-/**
- * Replays every close in order so the history and the streak come out of the
- * same arithmetic as the reveal, rather than from figures frozen when each
- * close was recorded. A transaction entered late for a month already closed
- * should move that month's unrecorded figure: the balance did not change, so
- * what the app failed to account for genuinely shrank.
- */
-export async function getMonthCloseOverview(
+export function getMonthCloseOverview(
   userId: string,
   today: string,
   locale: Locale,
-): Promise<MonthCloseOverview> {
-  const [settings, closes] = await Promise.all([
-    getMonthCloseSettings(userId),
-    getMonthCloses(userId),
-  ]);
-
-  const monthKeys = closes.map((close) => monthKeyOfClose(close.month));
-  const flowsByMonth = await cashFlowsByMonth(userId, monthKeys);
-
-  const emptyFlows: RecordedCashFlows = {
-    income: 0,
-    expenses: 0,
-    savings: 0,
-    transfers: 0,
-  };
-
-  const history: ClosedMonthRow[] = [];
-  let openingBalance: number | null = null;
-
-  for (const close of closes) {
-    const monthKey = monthKeyOfClose(close.month);
-    const [year, month] = monthKey.split("-").map(Number);
-    const closingBalance = Number(close.closing_balance);
-
-    const result = buildMonthClose({
-      openingBalance,
-      closingBalance,
-      flows: flowsByMonth.get(monthKey) ?? emptyFlows,
-    });
-
-    history.push({
-      monthKey,
-      label: formatMonthLabel(year!, month!, locale),
-      closingBalance,
-      observedOn: close.observed_on,
-      status: result.status,
-      unrecorded: result.unrecorded,
-      kept: result.kept,
-      keptRate: result.keptRate,
-      cashChange:
-        openingBalance === null ? null : closingBalance - openingBalance,
-      source: close.balance_source ?? "manual",
-    });
-
-    openingBalance = closingBalance;
-  }
-
-  return {
-    settings,
-    history: [...history].reverse(),
-    summary: summarizeCloseHistory(history, settings.unrecordedCap),
-    next: closableMonth(
-      today,
-      settings.closeDay,
-      monthKeys.length > 0 ? monthKeys[monthKeys.length - 1]! : null,
-      locale,
-    ),
-  };
+): Promise<closes.MonthCloseOverview> {
+  return closes.getMonthCloseOverview(supabase, userId, today, locale);
 }
 
-/**
- * A dry run of one month's close, so the sheet can show what it is about to
- * reconcile before the user commits a figure.
- */
-export async function previewMonthClose(
+export function previewMonthClose(
   userId: string,
   year: number,
   month: number,
   closingBalance: number,
 ): Promise<MonthCloseResult> {
-  const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-  const [closes, flowsByMonth] = await Promise.all([
-    getMonthCloses(userId),
-    cashFlowsByMonth(userId, [monthKey]),
-  ]);
-
-  const previous = closes.filter(
-    (close) => monthKeyOfClose(close.month) < monthKey,
-  );
-  const openingBalance =
-    previous.length > 0
-      ? Number(previous[previous.length - 1]!.closing_balance)
-      : null;
-
-  return buildMonthClose({
-    openingBalance,
+  return closes.previewMonthClose(
+    supabase,
+    userId,
+    year,
+    month,
     closingBalance,
-    flows: flowsByMonth.get(monthKey) ?? {
-      income: 0,
-      expenses: 0,
-      savings: 0,
-      transfers: 0,
-    },
-  });
+  );
 }
 
-/**
- * One month's recorded flows, for the live reconciliation the Month screen
- * shows. The same two queries the close history uses, asked for one month.
- */
-export async function getRecordedCashFlows(
+export function getRecordedCashFlows(
   userId: string,
   year: number,
   month: number,
 ): Promise<RecordedCashFlows> {
-  const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-  const byMonth = await cashFlowsByMonth(userId, [monthKey]);
-  return (
-    byMonth.get(monthKey) ?? {
-      income: 0,
-      expenses: 0,
-      savings: 0,
-      transfers: 0,
-    }
-  );
+  return closes.getRecordedCashFlows(supabase, userId, year, month);
 }
 
 /* --------------------------------------------------------- the bank feed */
-
-/**
- * Whether an error means "this feature's schema is not here yet".
- *
- * PGRST205 is PostgREST's missing table, 42P01 is Postgres', and 42703 a
- * missing column. Every other error still throws: swallowing them all would
- * turn a permissions mistake into a screen that quietly shows nothing, which
- * is how a wrong balance gets believed.
- */
-function isMissingSchema(error: { code?: string } | null): boolean {
-  return (
-    error?.code === "PGRST205" ||
-    error?.code === "42P01" ||
-    error?.code === "42703"
-  );
-}
 
 /** Every account the connection has ever shown, ticked or not. */
 export async function getBankAccounts(userId: string): Promise<BankAccount[]> {
@@ -984,266 +715,58 @@ export async function getRecentBankMovements(
 /* ------------------------------------------ charges the bank already paid */
 
 /**
- * Which recurring charges the bank looks to have already delivered.
- *
- * The rules live in `@finance/core/recurring-fulfilment` and are tested
- * there; this is the plumbing. See the web twin for the whole story — in
- * short, a bank-imported transaction carries no template link, so every
- * recurring charge the bank delivers was counted twice, once as money that
- * moved and once as money still forecast to move.
+ * Which recurring charges the bank looks to have already delivered — the
+ * reads are `@finance/data/fulfilment`, the same as the web's, with the
+ * phone's client.
  */
 
-/** Occurrences already fulfilled, as occurrence keys. */
-export async function getFulfilledKeys(userId: string): Promise<Set<string>> {
-  const { data, error } = await supabase
-    .from("recurring_fulfilments")
-    .select("template_id, occurred_on")
-    .eq("user_id", userId);
+export type { FulfilmentReport } from "@finance/data/fulfilment";
 
-  if (error) {
-    if (isMissingSchema(error)) {
-      return new Set();
-    }
-    throw error;
-  }
-
-  return new Set(
-    (data ?? []).map((row) =>
-      recurringOccurrenceKey(row.template_id, row.occurred_on),
-    ),
-  );
+export function getFulfilledKeys(userId: string): Promise<Set<string>> {
+  return fulfilment.getFulfilledKeys(supabase, userId);
 }
 
-/**
- * Which ledger rows stand in for an occurrence, by transaction id.
- *
- * The same table as `getFulfilledKeys` read down its other axis: that one
- * answers "is this occurrence settled?" for the forecast, this one answers
- * "does this row settle something?" for a row on screen. Cheap either way —
- * `recurring_fulfilments` holds one row per confirmed occurrence, so a decade
- * of a dozen charges is a few thousand rows of three columns.
- *
- * Deliberately not month-scoped, and it must stay that way.
- * `recurring_fulfilments.occurred_on` is the date of the *occurrence*, not of
- * the movement — that separation is the whole point of the table — so a
- * payment on the 31st can settle an occurrence dated the 1st. Filtering this
- * by the month on screen would take the mark off the very row that earned it.
- *
- * Separate from the fulfilment report rather than folded into it because the
- * report gives up early when a month generates no occurrences, which happens
- * whenever a template is inactive or outside its date range. Sourced from
- * there, a confirmation would disappear the moment its template was switched
- * off — retroactively, across every month.
- */
-export async function getConfirmedTransactionIds(
+export function getConfirmedTransactionIds(
   userId: string,
 ): Promise<Set<string>> {
-  const { data, error } = await supabase
-    .from("recurring_fulfilments")
-    .select("transaction_id")
-    .eq("user_id", userId);
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return new Set();
-    }
-    throw error;
-  }
-
-  // `transaction_id` is `not null` in migration 023, so nothing can slip in.
-  return new Set((data ?? []).map((row) => row.transaction_id as string));
+  return fulfilment.getConfirmedTransactionIds(supabase, userId);
 }
 
-function shiftDays(iso: string, days: number): string {
-  const [year, month, day] = iso.split("-").map(Number);
-  return new Date(Date.UTC(year!, month! - 1, day! + days))
-    .toISOString()
-    .slice(0, 10);
-}
-
-/**
- * The proposals, and why every other charge was not one.
- *
- * Mirrors the web twin. The two halves account for every occurrence the month
- * called for exactly once, which is what makes the pair worth reading: a
- * matcher that offers two of five charges and says nothing about the other
- * three looks broken rather than narrow.
- */
-export interface FulfilmentReport {
-  proposals: FulfilmentProposal[];
-  misses: FulfilmentMiss[];
-}
-
-/**
- * The movements that could fulfil something this month, and what the user has
- * already decided about them.
- *
- * Split out so the report and the bare proposals share one round trip without
- * either paying for the other's work — the tab bar's count asks for proposals
- * on every data-version bump and has no use for the misses.
- */
-async function readCandidates(
-  userId: string,
-  from: string,
-  to: string,
-): Promise<{ movements: FulfilmentMovement[]; options: ProposeOptions }> {
-  const [
-    { data: transactions, error: txError },
-    { data: fulfilments, error: fulfilError },
-    { data: refusals, error: refusalError },
-  ] = await Promise.all([
-    // Only rows no template wrote. A row a template wrote is already the
-    // occurrence; asking whether it fulfils one would be asking whether it is
-    // itself.
-    supabase
-      .from("transactions")
-      .select("id, occurred_on, amount, category_id, note")
-      .eq("user_id", userId)
-      .is("recurring_template_id", null)
-      .gte("occurred_on", from)
-      .lte("occurred_on", to),
-    supabase
-      .from("recurring_fulfilments")
-      .select("template_id, occurred_on, transaction_id")
-      .eq("user_id", userId),
-    supabase
-      .from("recurring_fulfilment_refusals")
-      .select("template_id, occurred_on, transaction_id")
-      .eq("user_id", userId),
-  ]);
-
-  if (txError) {
-    throw txError;
-  }
-  // The two decision tables are the optional half. Without them every
-  // proposal simply looks undecided, which is the right failure: the user is
-  // asked again rather than having a confirmation silently forgotten.
-  if (fulfilError && !isMissingSchema(fulfilError)) {
-    throw fulfilError;
-  }
-  if (refusalError && !isMissingSchema(refusalError)) {
-    throw refusalError;
-  }
-
-  const movements: FulfilmentMovement[] = (transactions ?? []).map((row) => ({
-    transactionId: row.id as string,
-    occurredOn: row.occurred_on as string,
-    amount: Number(row.amount),
-    categoryId: row.category_id as string,
-    note: (row.note as string | null) ?? null,
-  }));
-
-  return {
-    movements,
-    options: {
-      // A movement dated after today has not arrived, whatever else matches.
-      today: todayIsoLocal(),
-      fulfilledKeys: new Set(
-        (fulfilments ?? []).map((row) =>
-          recurringOccurrenceKey(row.template_id, row.occurred_on),
-        ),
-      ),
-      claimedTransactionIds: new Set(
-        (fulfilments ?? []).map((row) => row.transaction_id as string),
-      ),
-      refusedPairs: new Set(
-        (refusals ?? []).map((row) =>
-          refusalKey(row.template_id, row.occurred_on, row.transaction_id),
-        ),
-      ),
-    },
-  };
-}
-
-/**
- * A month's questions: the pairings planned in it, and the ones whose money
- * moved in it — the October salary paid on 22 September is asked about in
- * September as well as October (`fulfilmentScope`). The web twin's
- * `monthQuestions`; matched across three months at once so one payment is
- * never offered for two of them.
- */
-async function monthQuestions(
+export function getFulfilmentReport(
   userId: string,
   templates: readonly RecurringTemplateWithCategory[],
   categories: readonly Category[],
   year: number,
   month: number,
-) {
-  const scope = fulfilmentScope(year, month);
-  const occurrences = fulfilmentOccurrences(
-    templates,
-    categories,
-    scope.months,
-  );
-  if (occurrences.length === 0) {
-    return null;
-  }
-  const { movements, options } = await readCandidates(
-    userId,
-    scope.from,
-    scope.to,
-  );
-  const all = proposeFulfilments(occurrences, movements, options);
-  return { occurrences, movements, options, all };
-}
-
-export async function getFulfilmentReport(
-  userId: string,
-  templates: readonly RecurringTemplateWithCategory[],
-  categories: readonly Category[],
-  year: number,
-  month: number,
-): Promise<FulfilmentReport> {
-  const asked = await monthQuestions(
+): Promise<fulfilment.FulfilmentReport> {
+  return fulfilment.getFulfilmentReport(
+    supabase,
     userId,
     templates,
     categories,
     year,
     month,
   );
-  if (!asked) {
-    return { proposals: [], misses: [] };
-  }
-  const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-  return {
-    proposals: proposalsForMonth(asked.all, year, month),
-    // Only this month's occurrences can be missing from it.
-    misses: explainFulfilmentMisses(
-      asked.occurrences.filter((occurrence) =>
-        occurrence.occurredOn.startsWith(monthKey),
-      ),
-      asked.movements,
-      asked.all,
-      asked.options,
-    ),
-  };
 }
 
-/**
- * The proposals alone, for a caller with no use for an absence.
- *
- * The tab bar's count asks this on every data-version bump; running
- * `explainFulfilmentMisses` there and discarding it would be work done for
- * nobody.
- */
-export async function getFulfilmentProposals(
+export function getFulfilmentProposals(
   userId: string,
   templates: readonly RecurringTemplateWithCategory[],
   categories: readonly Category[],
   year: number,
   month: number,
 ): Promise<FulfilmentProposal[]> {
-  const asked = await monthQuestions(
+  return fulfilment.getFulfilmentProposals(
+    supabase,
     userId,
     templates,
     categories,
     year,
     month,
   );
-  return asked ? proposalsForMonth(asked.all, year, month) : [];
 }
 
-/** How many are waiting, for the tab bar's badge. */
+/** How many are waiting, for the Journal's badge. */
 export async function countFulfilmentProposals(
   userId: string,
   year: number,
@@ -1253,14 +776,14 @@ export async function countFulfilmentProposals(
     getRecurringTemplates(userId),
     getCategories(userId),
   ]);
-  const proposals = await getFulfilmentProposals(
+  return fulfilment.countFulfilmentProposals(
+    supabase,
     userId,
     templates,
     categories,
     year,
     month,
   );
-  return proposals.length;
 }
 
 /* ------------------------------------------------------ the review inbox */
@@ -1423,52 +946,6 @@ export async function getDecidedFeedItems(
   }));
 }
 
-/**
- * Ledger rows close enough in time that one could be a copy of the other.
- *
- * The web twin is `lib/bank/duplicates.ts`. Duplicated rather than shared
- * because core carries no Supabase dependency — but the rule that decides
- * what counts as a copy is `findLedgerMatch` in `@finance/core/bank-feed`,
- * which both call, so the two apps cannot drift on the judgement itself.
- */
-export async function ledgerRowsAround(
-  userId: string,
-  isoDate: string,
-): Promise<ExistingLedgerRow[]> {
-  const [{ data: rows }, { data: claimed }] = await Promise.all([
-    supabase
-      .from("transactions")
-      .select(
-        "id, occurred_on, amount, recurring_template_id, categories!inner(type)",
-      )
-      .eq("user_id", userId)
-      .gte("occurred_on", shiftDays(isoDate, -MATCH_WINDOW_DAYS))
-      .lte("occurred_on", shiftDays(isoDate, MATCH_WINDOW_DAYS)),
-    supabase
-      .from("bank_feed_items")
-      .select("transaction_id")
-      .eq("user_id", userId)
-      .not("transaction_id", "is", null),
-  ]);
-
-  const claimedIds = new Set(
-    (claimed ?? [])
-      .map((row) => row.transaction_id as string | null)
-      .filter((id): id is string => Boolean(id)),
-  );
-
-  return (rows ?? []).map((row) => ({
-    transactionId: row.id as string,
-    occurredOn: row.occurred_on as string,
-    amount: Number(row.amount),
-    isIncome: (row.categories as unknown as { type: string }).type === "income",
-    fromRecurringTemplate: row.recurring_template_id !== null,
-    // A row the feed already answers for cannot also be the thing a second
-    // bank row duplicates.
-    alreadyClaimed: claimedIds.has(row.id as string),
-  }));
-}
-
 /** How many bank rows are still waiting for a category. */
 export async function countPendingFeedItems(userId: string): Promise<number> {
   const { count, error } = await supabase
@@ -1488,16 +965,11 @@ export async function countPendingFeedItems(userId: string): Promise<number> {
 }
 
 /**
- * Whether this user's ledger is fed by a bank. See the web twin for why this
- * is a fact about the data rather than about configuration.
+ * Whether this user's ledger is fed by a bank — `@finance/data/bank-feed`,
+ * with the phone's client.
  */
-export async function hasBankFeed(userId: string): Promise<boolean> {
-  const { count } = await supabase
-    .from("bank_feed_items")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
-
-  return (count ?? 0) > 0;
+export function hasBankFeed(userId: string): Promise<boolean> {
+  return bankFeeds(supabase, userId);
 }
 
 /** How many bank rows an earlier sync merged away without asking. */

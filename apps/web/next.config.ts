@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
    * reassigned on reboot; `hostname -I` is how you find today's.
    */
   allowedDevOrigins: ["127.0.0.1", "172.*.*.*", "192.168.*.*", "10.*.*.*"],
-  transpilePackages: ["@finance/core"],
+  transpilePackages: ["@finance/core", "@finance/data"],
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react"],
   },

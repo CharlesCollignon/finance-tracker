@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -34,7 +35,13 @@ interface RefreshContextValue {
   known: boolean;
 }
 
-const RefreshContext = createContext<RefreshContextValue | null>(null);
+/** What a screen needs: the one action, which never changes. */
+interface RefreshAction {
+  refresh: () => void;
+}
+
+const RefreshActionContext = createContext<RefreshAction | null>(null);
+const RefreshStatusContext = createContext<RefreshContextValue | null>(null);
 
 /** How often the age label is recomputed. It counts minutes, so twice a minute. */
 const TICK_MS = 30_000;
@@ -58,6 +65,12 @@ const TICK_MS = 30_000;
  * answered: screens reload from Supabase either way, and a gesture that
  * appears to do nothing because a bank was unreachable is worse than one that
  * quietly re-reads.
+ *
+ * Two contexts, because the screens and the button want different things.
+ * Every screen's `useRefreshable` needs only the action, and the action never
+ * changes; only the button reads the age, which ticks every thirty seconds.
+ * One context for both re-rendered every mounted screen on every tick —
+ * tabs nobody was looking at included.
  */
 export function RefreshProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
@@ -75,10 +88,15 @@ export function RefreshProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(timer);
   }, []);
 
+  // Read at call time, so the action can stay the same function while a
+  // refresh is in flight and still refuse to start a second.
+  const runningRef = useRef(false);
+
   const refresh = useCallback(() => {
-    if (running) {
+    if (runningRef.current) {
       return;
     }
+    runningRef.current = true;
     setRunning(true);
     void (async () => {
       const outcome = await refreshFromBank();
@@ -87,6 +105,7 @@ export function RefreshProvider({ children }: { children: ReactNode }) {
         setKnown(outcome.freshness.known);
       }
       setNow(new Date().toISOString());
+      runningRef.current = false;
       setRunning(false);
       // Always: the reload is what makes the gesture feel like it worked.
       notifyDataChanged();
@@ -101,7 +120,9 @@ export function RefreshProvider({ children }: { children: ReactNode }) {
         );
       }
     })();
-  }, [running, toast]);
+  }, [toast]);
+
+  const action = useMemo<RefreshAction>(() => ({ refresh }), [refresh]);
 
   const value = useMemo<RefreshContextValue>(
     () => ({
@@ -118,11 +139,24 @@ export function RefreshProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <RefreshContext.Provider value={value}>{children}</RefreshContext.Provider>
+    <RefreshActionContext.Provider value={action}>
+      <RefreshStatusContext.Provider value={value}>
+        {children}
+      </RefreshStatusContext.Provider>
+    </RefreshActionContext.Provider>
   );
 }
 
-/** Null outside the provider, so a screen rendered without one still works. */
+/**
+ * The refresh action alone, for screens. Stable, so a screen holding it does
+ * not re-render as the age label ticks. Null outside the provider, so a
+ * screen rendered without one still works.
+ */
+export function useRefreshAction(): RefreshAction | null {
+  return useContext(RefreshActionContext);
+}
+
+/** The action and how old the figures are: the refresh button's view. */
 export function useRefreshAll(): RefreshContextValue | null {
-  return useContext(RefreshContext);
+  return useContext(RefreshStatusContext);
 }

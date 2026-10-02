@@ -60,3 +60,23 @@ export function bringsMoneyIn(category: {
     (category.type === "savings" && category.counts_toward_summary === false)
   );
 }
+
+/**
+ * The rows whose money moved between `from` and `to`, out of rows fetched by
+ * the day they count for plus the moved ones (`cash_on` in range): each
+ * once, kept by the day its money moved. What the month close and the
+ * balance curve read, since they pair the ledger with a balance the bank
+ * reported on its own day.
+ */
+export function rowsByCashDate<Row extends DatedRow & { id: string }>(
+  fetched: readonly Row[],
+  moved: readonly Row[],
+  from: string,
+  to: string,
+): Row[] {
+  const byId = new Map(fetched.map((row) => [row.id, row] as const));
+  for (const row of moved) {
+    byId.set(row.id, row);
+  }
+  return [...byId.values()].filter((row) => movedBetween(row, from, to));
+}

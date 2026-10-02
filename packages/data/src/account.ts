@@ -1,0 +1,59 @@
+import type { Db } from "./client";
+import { isMissingSchema } from "./schema";
+
+/**
+ * Wipe the user's ledger and keep their account: what "Delete all data"
+ * does on both apps, which used to carry a copy each.
+ *
+ * Rows that point at others go first — a transaction's tags before the
+ * transaction, the transactions before the templates and categories they
+ * belong to. A table only some deployments have yet (`savings_accounts`,
+ * migration 046) is skipped where it is missing rather than stopping the
+ * rest. Throws on the first refusal, leaving what came before it deleted.
+ */
+export async function deleteAllUserData(db: Db, userId: string): Promise<void> {
+  const { data: txs } = await db
+    .from("transactions")
+    .select("id")
+    .eq("user_id", userId);
+  const txIds = (txs ?? []).map((tx) => tx.id);
+  if (txIds.length > 0) {
+    const { error } = await db
+      .from("transaction_tags")
+      .delete()
+      .in("transaction_id", txIds);
+    if (error) {
+      throw error;
+    }
+  }
+
+  for (const table of [
+    "tags",
+    "budgets",
+    "wallet_transfers",
+    "savings_goals",
+    "recurring_skips",
+    "transactions",
+    "investment_positions",
+  ] as const) {
+    const { error } = await db.from(table).delete().eq("user_id", userId);
+    if (error) {
+      throw error;
+    }
+  }
+
+  const { error: savingsError } = await db
+    .from("savings_accounts")
+    .delete()
+    .eq("user_id", userId);
+  if (savingsError && !isMissingSchema(savingsError)) {
+    throw savingsError;
+  }
+
+  for (const table of ["recurring_templates", "categories"] as const) {
+    const { error } = await db.from(table).delete().eq("user_id", userId);
+    if (error) {
+      throw error;
+    }
+  }
+}

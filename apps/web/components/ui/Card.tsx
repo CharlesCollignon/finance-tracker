@@ -1,0 +1,83 @@
+import { cn } from "@/lib/utils";
+import { type HTMLAttributes } from "react";
+import { Text } from "@/components/ui/Text";
+
+interface ICardProps extends HTMLAttributes<HTMLDivElement> {
+  className?: string;
+}
+
+const Card = ({ className, ...props }: ICardProps) => {
+  return (
+    <div
+      className={cn(
+        // The card radius, as every other surface holding content: it was
+        // the control radius, 10px against the system's 20.
+        "inline-block rounded-card border border-border bg-card",
+        className,
+      )}
+      {...props}
+    />
+  );
+};
+
+interface ICardBezelProps extends ICardProps {
+  innerClassName?: string;
+}
+
+/** Double-bezel nested card: tinted outer shell around the real surface. */
+const CardBezel = ({
+  className,
+  innerClassName,
+  children,
+  ...props
+}: ICardBezelProps) => {
+  return (
+    <div
+      className={cn(
+        "rounded-shell border border-border bg-foreground/[0.04] p-1.5",
+        className,
+      )}
+      {...props}
+    >
+      <div
+        className={cn(
+          "h-full rounded-card bg-card shadow-bezel-inset",
+          innerClassName,
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
+const CardHeader = ({ className, ...props }: ICardProps) => {
+  return (
+    <div
+      className={cn("flex flex-col justify-start p-4", className)}
+      {...props}
+    />
+  );
+};
+
+const CardTitle = ({ className, ...props }: ICardProps) => {
+  return <Text as="h3" className={cn("mb-1", className)} {...props} />;
+};
+
+const CardDescription = ({ className, ...props }: ICardProps) => (
+  <p className={cn("text-sm text-muted-foreground", className)} {...props} />
+);
+
+const CardContent = ({ className, ...props }: ICardProps) => {
+  return <div className={cn("p-4 pt-0", className)} {...props} />;
+};
+
+const CardComponent = Object.assign(Card, {
+  Header: CardHeader,
+  Title: CardTitle,
+  Description: CardDescription,
+  Content: CardContent,
+  Bezel: CardBezel,
+});
+
+export { CardComponent as Card };

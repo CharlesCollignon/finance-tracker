@@ -12,6 +12,8 @@
 
 import type { Key } from "./i18n/t";
 import type { SavingsAccount, SavingsAccountKind } from "./types/database";
+import { INTL_LOCALES, type Locale } from "./i18n/locale";
+import { translator } from "./i18n/t";
 
 /** In the order they are offered and listed: the regulated ones first. */
 export const SAVINGS_KINDS: readonly SavingsAccountKind[] = [
@@ -219,4 +221,21 @@ export function liquidSavings(balances: readonly SavingsBalance[]): number {
       .filter((balance) => FRENCH_SAVINGS_2026[balance.kind].liquid)
       .reduce((sum, balance) => sum + balance.balance, 0),
   );
+}
+
+/** Whether an account id names a savings account rather than a wallet. */
+export function isSavingsKind(id: string): id is SavingsAccountKind {
+  return SAVINGS_KINDS.includes(id as SavingsAccountKind);
+}
+
+/**
+ * A yearly rate, to two decimals: 0.0125 → "1,25 %". Regulated rates move by
+ * quarter points, so the one decimal the app's other percentages keep would
+ * show a CEL at 1,3 %.
+ */
+export function formatRate(rate: number, locale: Locale): string {
+  const value = new Intl.NumberFormat(INTL_LOCALES[locale], {
+    maximumFractionDigits: 2,
+  }).format(rate * 100);
+  return translator(locale)("units.percent", { value });
 }

@@ -10,10 +10,10 @@ import {
   SAVINGS_KIND_RATE_KEYS,
 } from "@finance/core/savings-accounts";
 import type { SavingsAccountKind } from "@finance/core/types/database";
-import { MobileSheet } from "@/components/layout/MobileSheet";
+import { MobileSheet } from "@/components/ui/MobileSheet";
 import { useToast } from "@/components/layout/ToastProvider";
-import { Button } from "@/components/retroui/Button";
-import { Input } from "@/components/retroui/Input";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { addSavingsAccount, addWallet } from "@/lib/actions/accounts";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";

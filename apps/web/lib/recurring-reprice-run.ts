@@ -1,12 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildApplyRecurringPlan } from "@finance/core/apply-recurring";
 import { getCurrentMonth } from "@finance/core/constants";
-import { quoteSource } from "@/lib/quote-source";
+import { quoteSource } from "@finance/data/quote-source";
 import {
   loadApplyRecurringData,
   refreshTemplateQuotes,
   writeReprices,
-} from "@/lib/recurring-apply";
+} from "@finance/data/recurring-apply";
 import type { Database } from "@finance/core/types/database";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 

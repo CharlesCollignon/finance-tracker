@@ -15,7 +15,7 @@ import {
   PickerField,
   PickerSearch,
   PickerShell,
-} from "@/components/layout/Picker";
+} from "@/components/ui/Picker";
 import { cn } from "@/lib/utils";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";

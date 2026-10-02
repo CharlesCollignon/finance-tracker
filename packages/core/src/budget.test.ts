@@ -44,6 +44,8 @@ function tx({
     amount,
     note: null,
     created_at: `${on}T10:00:00.000Z`,
+    cash_on: null,
+    deleted_at: null,
     categories: { name, type, icon: null, counts_toward_summary: counts },
   };
 }

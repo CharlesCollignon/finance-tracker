@@ -3,8 +3,8 @@
 import { z } from "zod";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
-
-type ActionResult = { error?: string; success?: boolean };
+import { dbError } from "@finance/data/errors";
+import type { ActionResult } from "@finance/core/action-result";
 
 const subscriptionSchema = z.object({
   endpoint: z.string().url().max(2000),
@@ -50,7 +50,7 @@ export async function savePushSubscription(input: {
   );
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
   return { success: true };
 }
@@ -72,7 +72,7 @@ export async function deletePushSubscription(
     .eq("endpoint", endpoint);
 
   if (error) {
-    return { error: error.message };
+    return { error: dbError(error) };
   }
   return { success: true };
 }

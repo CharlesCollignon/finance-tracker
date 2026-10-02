@@ -11,6 +11,7 @@ import {
 } from "@/lib/mutations";
 import { supabase } from "@/lib/supabase";
 import { callWebApi, webApiAvailable } from "@/lib/web-api";
+import { dbError } from "@finance/data/errors";
 
 /**
  * Connecting a bank from the phone, and looking after it afterwards.
@@ -179,7 +180,7 @@ export async function dismissBankInvite(
         locale,
         dismissed_prompts: [...dismissed],
       });
-  return error ? { error: error.message } : {};
+  return error ? { error: dbError(error) } : {};
 }
 
 export type FileConnectResult =

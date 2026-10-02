@@ -19,11 +19,11 @@ import {
 } from "@finance/core/merchant-memory";
 import { groupCategoriesByType } from "@finance/core/categories";
 import type { Category } from "@finance/core/types/database";
-import { Button } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { ChoiceChips, OptionPicker } from "@/components/layout/Picker";
+import { ChoiceChips, OptionPicker } from "@/components/ui/Picker";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
 import { useToast } from "@/components/layout/ToastProvider";
 import {

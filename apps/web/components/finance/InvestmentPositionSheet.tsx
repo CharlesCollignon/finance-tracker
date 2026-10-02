@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Trash } from "@phosphor-icons/react";
-import { OptionPicker } from "@/components/layout/Picker";
-import { Button } from "@/components/retroui/Button";
-import { Input } from "@/components/retroui/Input";
-import { FormLabel } from "@/components/layout/FormLabel";
-import { Text } from "@/components/retroui/Text";
-import { MobileSheet } from "@/components/layout/MobileSheet";
+import { OptionPicker } from "@/components/ui/Picker";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { FormLabel } from "@/components/ui/FormLabel";
+import { Text } from "@/components/ui/Text";
+import { MobileSheet } from "@/components/ui/MobileSheet";
 import { useToast } from "@/components/layout/ToastProvider";
 import { InstrumentSearch } from "@/components/finance/InstrumentSearch";
 import { InstrumentLogo } from "@/components/finance/InstrumentLogo";
@@ -35,6 +35,7 @@ import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { Key } from "@finance/core/i18n/t";
+import type { FormState } from "@finance/core/action-result";
 
 interface InvestmentPositionSheetProps {
   item: InvestmentPositionItem | null;
@@ -87,7 +88,10 @@ function InvestmentPositionForm({
   const { toast } = useToast();
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
-  const [state, action, pending] = useActionState(saveInvestmentPosition, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    saveInvestmentPosition,
+    {},
+  );
   const [deletePending, startDelete] = useTransition();
   const [sourceType, setSourceType] = useState<"recurring" | "custom">(
     item?.recurringTemplateId ? "recurring" : "custom",

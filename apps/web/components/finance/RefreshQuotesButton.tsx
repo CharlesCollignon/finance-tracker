@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { ArrowsClockwise } from "@phosphor-icons/react";
 
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/layout/ToastProvider";
 import { refreshQuotesAction } from "@/lib/actions/market";
 import { resolveMessage } from "@finance/core/i18n/t";

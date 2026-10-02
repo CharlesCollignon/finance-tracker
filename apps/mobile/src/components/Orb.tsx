@@ -1,6 +1,8 @@
 import { useEffect, useId } from "react";
 import { View, type ViewProps } from "react-native";
+import { useIsFocused } from "expo-router";
 import Animated, {
+  cancelAnimation,
   Easing,
   useAnimatedStyle,
   useReducedMotion,
@@ -241,7 +243,12 @@ export function Orb({
      React puts in a `useId` are not valid in a `url(#…)` reference. */
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const reduce = useReducedMotion();
-  const rolling = spin !== "none" && !reduce;
+  /* Out of view, an orb has nobody to drift for. Every tab's header carries
+     one and visited tabs stay mounted, so without this six endless
+     animations ran per tab behind the one being looked at. */
+  const focused = useIsFocused();
+  const still = reduce || !focused;
+  const rolling = spin !== "none" && !still;
 
   const drift = useSharedValue(0);
   const counterDrift = useSharedValue(0);
@@ -258,7 +265,20 @@ export function Orb({
   const pulse = useSharedValue(0.5);
 
   useEffect(() => {
-    if (reduce) {
+    if (still) {
+      const values = [
+        drift,
+        counterDrift,
+        wander,
+        counterWander,
+        breathe,
+        pulse,
+      ];
+      values.forEach((value) => cancelAnimation(value));
+      if (!reduce) {
+        // Paused where it was: it starts again when the screen is back.
+        return;
+      }
       drift.value = 0;
       counterDrift.value = 0;
       wander.value = 0;
@@ -300,10 +320,25 @@ export function Orb({
       -1,
       true,
     );
-  }, [reduce, drift, counterDrift, wander, counterWander, breathe, pulse]);
+    return () => {
+      [drift, counterDrift, wander, counterWander, breathe, pulse].forEach(
+        (value) => cancelAnimation(value),
+      );
+    };
+  }, [
+    still,
+    reduce,
+    drift,
+    counterDrift,
+    wander,
+    counterWander,
+    breathe,
+    pulse,
+  ]);
 
   useEffect(() => {
     if (!rolling) {
+      cancelAnimation(roll);
       roll.value = 0;
       return;
     }
@@ -313,6 +348,7 @@ export function Orb({
       -1,
       false,
     );
+    return () => cancelAnimation(roll);
   }, [rolling, roll]);
 
   /* Translate before rotate, so a layer sits at its offset and then turns

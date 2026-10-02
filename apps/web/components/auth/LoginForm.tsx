@@ -5,24 +5,29 @@ import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react";
-import { Button, ButtonNub } from "@/components/retroui/Button";
-import { Card } from "@/components/retroui/Card";
-import { Input } from "@/components/retroui/Input";
-import { FormLabel } from "@/components/layout/FormLabel";
-import { Text } from "@/components/retroui/Text";
+import { Button, ButtonNub } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { FormLabel } from "@/components/ui/FormLabel";
+import { Text } from "@/components/ui/Text";
 import { signIn } from "@/lib/actions/finance";
+import { resolveMessage } from "@finance/core/i18n/t";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasskeySignInButton } from "@/components/auth/PasskeySignInButton";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
+import type { FormState } from "@finance/core/action-result";
 
 export function LoginForm() {
   const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const authError = searchParams.get("error");
-  const [state, action, pending] = useActionState(signIn, {});
+  const [state, action, pending] = useActionState<FormState, FormData>(
+    signIn,
+    {},
+  );
 
   useEffect(() => {
     if (state.success) {
@@ -83,7 +88,9 @@ export function LoginForm() {
         </div>
         {(state.error || authError) && (
           <Text className="text-center text-sm text-destructive">
-            {state.error ?? t("auth.linkExpired")}
+            {state.error
+              ? resolveMessage(t, state.error)
+              : t("auth.linkExpired")}
           </Text>
         )}
         <Button

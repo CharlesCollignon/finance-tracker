@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Button } from "@/components/retroui/Button";
+import { Button } from "@/components/ui/Button";
 import { useT } from "@/lib/locale-context";
 
 export default function AppError({

@@ -1656,7 +1656,6 @@ export const en = {
     nearbyPages: "Nearby pages",
     needsYou: "Needs you",
     arrivedCharges: "Charges that look like they arrived",
-    closePopUp: "Close pop-up",
     clearInstrument: "Clear selected instrument",
     searchInstrument: "Search by name or ISIN…",
     clearDate: "Clear date",
@@ -3024,7 +3023,7 @@ export const en = {
     retry: "Retry",
   },
 
-  /** The panel that replaces every dropdown: `components/layout/Picker`. */
+  /** The panel that replaces every dropdown: `components/ui/Picker`. */
   picker: {
     choose: "Choose",
     search: "Search",
@@ -3035,6 +3034,19 @@ export const en = {
   },
 
   errors: {
+    emailNotConfirmed:
+      "Confirm your address first: open the link we sent you by email.",
+    tooManyAttempts: "Too many tries. Wait a few minutes and try again.",
+    signInFailed: "Signing in did not work. Try again.",
+    accountExists: "There is already an account with this address. Sign in.",
+    signUpClosed: "Sign-ups are closed for now.",
+    signUpFailed: "Signing up did not work. Try again.",
+    alreadyThere: "That is already saved.",
+    stillInUse: "It is still used elsewhere, so nothing was deleted.",
+    notAllowed: "You do not have access to that.",
+    notFound: "Not found — it may already have been deleted.",
+    offline: "No connection right now. Try again in a moment.",
+    couldNotSave: "That did not save. Try again.",
     /**
      * Validation messages, carried by the Zod schemas as keys.
      *
