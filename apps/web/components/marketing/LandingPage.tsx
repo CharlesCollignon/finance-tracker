@@ -9,13 +9,9 @@ import {
   Sparkle,
   Target,
 } from "@phosphor-icons/react/dist/ssr";
-import {
-  LandingBloom,
-  LandingHorizon,
-} from "@/components/marketing/LandingOrb";
+import { LandingBloom } from "@/components/marketing/LandingOrb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
-import { LandingAurora } from "@/components/marketing/LandingAurora";
-import { LandingStars } from "@/components/marketing/LandingStars";
+import { LandingEarth } from "@/components/marketing/LandingEarth";
 import { LandingDeviceStack } from "@/components/marketing/LandingDeviceStack";
 import { Reveal, Rise } from "@/components/marketing/LandingReveal";
 import { GlassLink, GlassStat } from "@/components/marketing/LandingGlass";
@@ -116,19 +112,14 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
     <>
       {/* ------------------------------------------------------------ hero */}
       <section className="relative isolate flex min-h-dvh flex-col justify-center overflow-hidden px-6 pb-20 pt-28">
-        <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-          {/* The stars, then the horizon in front of them. There used to be
-              a cool wash from the top edge here, put in so the warm sphere
-              had something to be warm against; `.marketing-ambient` is that
-              wash since it took the app's violet, and two of them stacked
-              only greyed the violet out. The horizon is opaque, so the stars
-              behind it show only in the sky beyond the rim — a planet in
-              front of the stars hides them, and that is half of what makes it
-              read as one. The aurora sits between the two, faint, for the
-              same reason. */}
-          <LandingStars className="absolute inset-x-0 top-0 h-[70%]" />
-          <LandingAurora className="h-[60%]" />
-          <LandingHorizon />
+        {/* The Earth from orbit, its rim arcing across the hero with Europe
+            lit at dusk below it, under its own nebula and stars. Not
+            `pointer-events-none` like the backgrounds elsewhere: the light
+            follows the pointer along the rim, and holding then releasing
+            wakes an aurora. The bottom fades into the page's ground, so the
+            black of space does not end on a line. */}
+        <div className="absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
+          <LandingEarth />
         </div>
 
         {/* Centred in the window, with nothing under it but the sky. The two
@@ -139,7 +130,11 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             fixed nav pill's clearance, a little more than the bottom's, so
             the block sits at the middle of the part of the window the nav
             leaves rather than of the whole window. */}
-        <div className="page-enter relative z-20 mx-auto flex w-full max-w-3xl flex-col items-center text-center">
+        {/* `pointer-events-none`, so the pointer reaches the sky behind the
+            words and the light follows it across the whole hero rather than
+            snapping back each time it crosses the headline; the buttons take
+            their clicks back with `pointer-events-auto`. */}
+        <div className="page-enter pointer-events-none relative z-20 mx-auto flex w-full max-w-3xl flex-col items-center text-center">
           <h1 className="marketing-display text-display-hero">
             {hero.titleLines.map((line) => (
               <span key={line} className="block">
@@ -153,7 +148,7 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
           <LandingCtas
             isLoggedIn={isLoggedIn}
             size="lg"
-            className="mt-9 justify-center"
+            className="pointer-events-auto mt-9 justify-center"
           />
         </div>
       </section>

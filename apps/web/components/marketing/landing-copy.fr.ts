@@ -307,6 +307,8 @@ export const landingCopyFr: LandingCopySections & {
     tagline:
       "L’argent d’une personne : ce qui est entré, ce qui est sorti, ce qui est mis de côté et ce qui est investi — rapproché mois après mois.",
     copyright: "© 2026 Pluclair",
+    imageCredit:
+      "Image de la Terre\u00A0: NASA, Blue Marble Next Generation (Reto Stöckli).",
     disclaimer:
       "Aucun conseil. Aucun score. Il ne déplace jamais votre argent.",
   },
