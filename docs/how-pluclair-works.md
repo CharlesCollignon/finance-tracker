@@ -139,22 +139,23 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 
 ## Where each figure is computed
 
-| Figure                                                          | Core module                                                                                             |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Monthly summary and its `current` / `month_end` views           | `monthly-summary.ts`, `budget.ts`                                                                       |
-| Month close, Kept, Unrecorded spending                          | `month-close.ts` (closes in `month_closes`; reading day in `month_close_settings.close_day`, default 5) |
-| Forward projection, runway                                      | `projection.ts`                                                                                         |
-| Plan: what if, milestones, cushion, long view (2026 French tax) | `future-plan.ts` (rates in `FRENCH_TAX_2026`; revisit each January and August)                          |
-| Savings accounts: balance, rate, interest, ceilings (2026)      | `savings-accounts.ts` (rates in `FRENCH_SAVINGS_2026`; revisit each February and August)                |
-| Bearing cards and tiles                                         | `bearing-cards.ts`, `bearing-tiles.ts`, `bearing-facts.ts`                                              |
-| Category findings                                               | `category-findings.ts`                                                                                  |
-| PEA ceiling and five-year date                                  | `pea.ts`                                                                                                |
-| A loan's schedule, outstanding principal, cost                  | `loan-schedule.ts`                                                                                      |
-| A property's estimated value, net value, gain, principal repaid | `property.ts` (and `valueSourceLine`, the sentence that says where a value comes from)                  |
-| A property's market reading (DVF sales, 500 m or the commune)   | `market-reading.ts` (rules in `MARKET_RULES`)                                                           |
-| The Notaires–INSEE index, and which series carries a place      | `price-index.ts` (series in `seriesFor`)                                                                |
-| Fund costs, look-through, target trades                         | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                            |
-| Money-weighted return                                           | `xirr.ts`, `investment-returns.ts`                                                                      |
+| Figure                                                                                                | Core module                                                                                             |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Monthly summary and its `current` / `month_end` views                                                 | `monthly-summary.ts`, `budget.ts`                                                                       |
+| Month close, Kept, Unrecorded spending                                                                | `month-close.ts` (closes in `month_closes`; reading day in `month_close_settings.close_day`, default 5) |
+| Forward projection, runway                                                                            | `projection.ts`                                                                                         |
+| Plan: what if, milestones, cushion, long view (2026 French tax)                                       | `future-plan.ts` (rates in `FRENCH_TAX_2026`; revisit each January and August)                          |
+| Savings accounts: balance, rate, interest, ceilings (2026)                                            | `savings-accounts.ts` (rates in `FRENCH_SAVINGS_2026`; revisit each February and August)                |
+| Bearing cards and tiles                                                                               | `bearing-cards.ts`, `bearing-tiles.ts`, `bearing-facts.ts`                                              |
+| Category findings                                                                                     | `category-findings.ts`                                                                                  |
+| PEA ceiling and five-year date                                                                        | `pea.ts`                                                                                                |
+| A loan's schedule, outstanding principal, cost                                                        | `loan-schedule.ts`                                                                                      |
+| A property's estimated value, net value, gain, principal repaid                                       | `property.ts` (and `valueSourceLine`, the sentence that says where a value comes from)                  |
+| Net worth; a property at the long view's horizon (2026 tax on a sale's gain); the loans still running | `property-future.ts` (rates in `FRENCH_PROPERTY_GAINS_2026`; revisit each January)                      |
+| A property's market reading (DVF sales, 500 m or the commune)                                         | `market-reading.ts` (rules in `MARKET_RULES`)                                                           |
+| The Notaires–INSEE index, and which series carries a place                                            | `price-index.ts` (series in `seriesFor`)                                                                |
+| Fund costs, look-through, target trades                                                               | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                            |
+| Money-weighted return                                                                                 | `xirr.ts`, `investment-returns.ts`                                                                      |
 
 ## AI features
 
@@ -196,6 +197,14 @@ the service role) and re-reads readings a month old. Addresses are found
 through the IGN geocoder from the server (`/api/property/addresses` for the
 phone), so IGN never sees a user's IP.
 
+On the Plan, with `property.track`, two cards sit beside the savings and
+investments and never in them: net worth today (the long view's accounts,
+plus the properties' estimated value, less what their loans owe, and when
+each loan ends), and the homes at the long view's horizon (each grown at its
+`properties.yearly_growth`, 2 % when unset, less what is still owed and the
+tax a sale would pay; `propertyGainTax`). The milestones and the long view's
+monthly income leave property out.
+
 ## Bank feed
 
 Built and reachable by one account per deployment: the one whose id is
@@ -217,10 +226,10 @@ when the account changes and each time it comes back to the foreground
 database does not return, or a key this build
 does not list (`packages/core/src/flags.ts`), is off.
 
-| Flag             | Gates                                                       | Default |
-| ---------------- | ----------------------------------------------------------- | ------- |
-| `bank.connect`   | Connecting a bank with an open-banking.io credentials file  | off     |
-| `property.track` | The Immobilier tab: properties, their loans and their value | off     |
+| Flag             | Gates                                                                                                        | Default |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ | ------- |
+| `bank.connect`   | Connecting a bank with an open-banking.io credentials file                                                   | off     |
+| `property.track` | The Immobilier tab: properties, their loans and their value; on the Plan, net worth and the homes' long view | off     |
 
 Switched with SQL (the dashboard's SQL editor, or the service role):
 

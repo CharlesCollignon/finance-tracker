@@ -103,6 +103,7 @@
     "./xirr": "./src/xirr.ts",
     "./loan-schedule": "./src/loan-schedule.ts",
     "./property": "./src/property.ts",
+    "./property-future": "./src/property-future.ts",
     "./validations/property": "./src/validations/property.ts",
     "./address-search": "./src/address-search.ts",
     "./property-form": "./src/property-form.ts",

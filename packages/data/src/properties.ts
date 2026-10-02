@@ -390,6 +390,30 @@ export async function setPropertyValue(
 }
 
 /**
+ * How much a year the user expects a property to gain, for the long view —
+ * or none, back to the app's default. As a fraction, between −20 % and 20 %.
+ */
+export async function setPropertyGrowth(
+  db: Db,
+  userId: string,
+  propertyId: string,
+  growth: number | null,
+): Promise<ActionResult> {
+  if (!uuid.safeParse(propertyId).success) {
+    return { error: "errors.invalidInput" };
+  }
+  if (growth !== null && !(Number.isFinite(growth) && Math.abs(growth) <= 0.2)) {
+    return { error: "errors.growthRange" };
+  }
+  const { error } = await db
+    .from("properties")
+    .update({ yearly_growth: growth, updated_at: new Date().toISOString() })
+    .eq("id", propertyId)
+    .eq("user_id", userId);
+  return error ? { error: dbError(error) } : { success: true };
+}
+
+/**
  * Delete a property and its loans. The templates attached to it stay, on
  * the Récurrents tab, attached to nothing: a taxe foncière still falls due
  * whatever the app knows about the home.

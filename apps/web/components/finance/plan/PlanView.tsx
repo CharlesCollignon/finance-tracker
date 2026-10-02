@@ -29,6 +29,7 @@ import { HORIZON_MAX, LongViewCard } from "./LongViewCard";
 import { CushionCard, MilestonesCard } from "./MilestonesCard";
 import { monthLabelAhead } from "./plan-controls";
 import { planEnvelopes } from "./plan-envelopes";
+import { NetWorthCard, PropertyLongViewCard } from "./PropertyPlanCards";
 import {
   clearLongViewDraft,
   saveLongViewDraft,
@@ -57,7 +58,9 @@ interface PlanViewProps {
  * Four things, in the order a returning reader wants them: a year from now
  * with a slider to play with; the milestones on the way and the cushion the
  * savings make; the long view, after French tax; and the run of month-ends
- * with what each one saved. Budgets, goals and tags used to live here and are
+ * with what each one saved. With a property, net worth sits under the
+ * cushion and the homes' own long view under the long view's — beside the
+ * savings and investments, never counted in them. Budgets, goals and tags used to live here and are
  * gone; the month-close settings stay, folded away under the months.
  *
  * Drawn in two loads, as the phone draws it. The year ahead, the cushion and
@@ -123,6 +126,18 @@ export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
         <StaggerItem>
           <CushionCard cushion={buildCushion(runway.months)} />
         </StaggerItem>
+
+        {base.properties && base.properties.length > 0 ? (
+          <StaggerItem className="md:col-span-2">
+            <Suspense fallback={<CardPlaceholder rows={3} />}>
+              <NetWorth
+                base={base}
+                wealth={wealth}
+                properties={base.properties}
+              />
+            </Suspense>
+          </StaggerItem>
+        ) : null}
 
         <StaggerItem className="md:col-span-2">
           <Suspense fallback={<CardPlaceholder rows={5} />}>
@@ -244,6 +259,22 @@ function Milestones({
   );
 }
 
+/** Net worth today, the homes beside what the milestones count. */
+function NetWorth({
+  base,
+  wealth,
+  properties,
+}: {
+  base: PlanBase;
+  wealth: Promise<PlanWealth | null>;
+  properties: NonNullable<PlanBase["properties"]>;
+}) {
+  const { current } = useFromData(base, wealth);
+  return (
+    <NetWorthCard liquid={current} properties={properties} today={base.today} />
+  );
+}
+
 /** What the "Et si…" extra does to the next milestone it moves, if any. */
 function WhatIfMilestone({
   base,
@@ -320,7 +351,7 @@ function LongView({
   );
   const projection = useMemo(() => projectEnvelopes(view), [view]);
 
-  return (
+  const card = (
     <LongViewCard
       view={view}
       projection={projection}
@@ -329,6 +360,23 @@ function LongView({
       onChange={(next) => saveLongViewDraft(base.userId, next)}
       onReset={() => clearLongViewDraft(base.userId)}
     />
+  );
+  if (!base.properties || base.properties.length === 0) {
+    return card;
+  }
+  // The homes follow the long view's horizon and inflation, so moving the
+  // slider moves both cards.
+  return (
+    <div className="flex flex-col gap-4 md:gap-5">
+      {card}
+      <PropertyLongViewCard
+        properties={base.properties}
+        today={base.today}
+        years={view.years}
+        inflation={view.inflation}
+        liquidNet={projection.netValue}
+      />
+    </div>
   );
 }
 

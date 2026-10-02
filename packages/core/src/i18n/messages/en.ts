@@ -3242,6 +3242,7 @@ export const en = {
     nameTooLong: "Name is too long",
     areaRequired: "Enter the area in m²",
     shareRange: "The share must be between 0 and 100%",
+    growthRange: "Growth must be between −20 and 20% a year",
     rateRange: "The rate must be between 0 and 20%",
     insuranceRateRange: "The insurance rate must be between 0 and 5%",
     monthsRange: "The length must be between 1 and 600 months",

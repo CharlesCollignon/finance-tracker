@@ -21,6 +21,9 @@ import { getSavingsAccounts } from "@/lib/queries/savings-accounts";
 import type { SavingsAccountKind } from "@finance/core/types/database";
 import { getNotificationSettings } from "@finance/data/preferences";
 import { createClient } from "@/lib/supabase/server";
+import { isFlagOn } from "@finance/core/flags";
+import { getProperties, type PropertyRead } from "@finance/data/properties";
+import { getFlags } from "@/lib/flags";
 
 /**
  * What the Plan page reads, in two loads — the phone's split
@@ -60,6 +63,11 @@ export interface PlanBase {
   closes: MonthCloseOverview;
   /** The next twelve months, from the recurring templates. */
   projection: ForwardProjection;
+  /**
+   * The user's properties, for net worth and the long view — null for an
+   * account without `property.track`, which sees neither.
+   */
+  properties: PropertyRead[] | null;
 }
 
 export interface PlanSavingsAccount {
@@ -75,7 +83,7 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
   const today = todayIsoLocal();
   const locale = await getLocale();
 
-  const [templates, savingsReserve, closes, cash, savings, settings] =
+  const [templates, savingsReserve, closes, cash, savings, settings, flags] =
     await Promise.all([
       getRecurringTemplates(userId),
       getSavingsReserve(userId),
@@ -86,7 +94,11 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
       getSavingsAccounts(userId),
       // A celebration missed is better than a Plan that fails to open.
       getNotificationSettings(await createClient(), userId).catch(() => null),
+      getFlags(),
     ]);
+  const properties = isFlagOn(flags, "property.track")
+    ? (await getProperties(await createClient(), userId)).properties
+    : null;
 
   return {
     userId,
@@ -107,6 +119,7 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
       categoryId: account.categoryId,
     })),
     closes,
+    properties,
     projection: buildForwardProjection({
       templates,
       year,

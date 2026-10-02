@@ -39,6 +39,7 @@ export function NumberField({
   value,
   kind,
   onChange,
+  onDone,
   min = 0,
   max = Number.POSITIVE_INFINITY,
 }: {
@@ -47,6 +48,8 @@ export function NumberField({
   value: number;
   kind: "money" | "percent";
   onChange: (value: number) => void;
+  /** When the field is left: for a figure kept once typed, not per key. */
+  onDone?: () => void;
   min?: number;
   max?: number;
 }) {
@@ -80,7 +83,10 @@ export function NumberField({
             setText(formatted);
             setFocused(true);
           }}
-          onBlur={() => setFocused(false)}
+          onBlur={() => {
+            setFocused(false);
+            onDone?.();
+          }}
           onChangeText={(next) => {
             setText(next);
             const parsed = parseTypedAmount(next);

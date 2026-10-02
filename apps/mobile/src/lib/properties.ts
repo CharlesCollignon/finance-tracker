@@ -86,6 +86,13 @@ export function setOwnValue(propertyId: string, value: number | null) {
   );
 }
 
+/** How much a year a property is expected to gain, for the long view. */
+export function setGrowth(propertyId: string, growth: number | null) {
+  return asUser((userId) =>
+    properties.setPropertyGrowth(supabase, userId, propertyId, growth),
+  );
+}
+
 export function removeProperty(propertyId: string) {
   return asUser((userId) =>
     properties.deleteProperty(supabase, userId, propertyId),
