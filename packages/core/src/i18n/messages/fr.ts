@@ -858,6 +858,10 @@ export const fr: Messages = {
       one: "{count} ligne est de nouveau à vérifier",
       other: "{count} lignes sont de nouveau à vérifier",
     },
+    taught: {
+      one: "{count} commerce appris pour la prochaine fois.",
+      other: "{count} commerces appris pour la prochaine fois.",
+    },
     allFiled: "Tout est classé.",
     /* The phone's review, one group at a time. */
     whichCategory: "Quelle catégorie\u00A0?",

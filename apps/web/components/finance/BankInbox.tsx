@@ -34,6 +34,7 @@ import {
 } from "@/lib/actions/bank";
 import type { Category } from "@finance/core/types/database";
 import type { DecidedFeedRow, PendingFeedRow } from "@/lib/queries/bank";
+import moments from "@/components/motion/moments.module.css";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 
@@ -179,6 +180,11 @@ export function BankInbox({
   // Not `hidden.size`: a row leaves `hidden` once the server agrees it is
   // gone, below.
   const [answered, setAnswered] = useState(false);
+  // The shops filed under a category here, by group, for what emptying the
+  // inbox taught the app: filing is what the next sync learns from.
+  const [taught, setTaught] = useState<ReadonlyMap<string, readonly string[]>>(
+    new Map(),
+  );
   // A row stays hidden only while the server still lists it as pending. Once
   // the redrawn page leaves it out, the decision has landed and the hiding
   // has done its job; keeping it would hide the row again when an undo — from
@@ -278,7 +284,16 @@ export function BankInbox({
       toast(t("inbox.pickCategoryFirst"), "error");
       return;
     }
-    decideRow(row.id, () => importFeedItem(row.id, categoryId));
+    const key =
+      groups.find((group) => group.rows.some((one) => one.id === row.id))
+        ?.key ?? row.id;
+    decideRow(row.id, async () => {
+      const result = await importFeedItem(row.id, categoryId);
+      if (!result.error) {
+        learn(key, [row.id]);
+      }
+      return result;
+    });
   }
 
   /**
@@ -315,8 +330,21 @@ export function BankInbox({
     );
   }
 
+  function learn(key: string, ids: readonly string[]) {
+    setTaught((current) => new Map(current).set(key, ids));
+  }
+
+  function unlearn(key: string) {
+    setTaught((current) => {
+      const rest = new Map(current);
+      rest.delete(key);
+      return rest;
+    });
+  }
+
   /** Put a dismissed group back, whether it is still leaving or gone. */
   function restore(key: string, ids: readonly string[]) {
+    unlearn(key);
     const timer = leaveTimers.current.get(key);
     if (timer !== undefined) {
       window.clearTimeout(timer);
@@ -380,6 +408,7 @@ export function BankInbox({
         toast(result.error, "error");
         return;
       }
+      learn(group.key, ids);
       const parts: string[] = [];
       if (result.imported) {
         parts.push(
@@ -555,10 +584,23 @@ export function BankInbox({
                 </p>
               </>
             ) : done ? (
-              <p className="flex items-center gap-2 text-sm text-success">
-                <CheckCircle size={ICON.md} weight="fill" aria-hidden />
-                {t("inboxGroups.allFiled")}
-              </p>
+              // The moment: the pile is gone, and what that taught the app.
+              <div className={cn(moments.pop, "flex flex-col gap-1")}>
+                <p className="flex items-center gap-2 text-sm font-medium">
+                  <CheckCircle
+                    size={ICON.md}
+                    weight="fill"
+                    className="text-primary"
+                    aria-hidden
+                  />
+                  {t("inboxGroups.allFiled")}
+                </p>
+                {taught.size > 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t("inboxGroups.taught", { count: taught.size })}
+                  </p>
+                ) : null}
+              </div>
             ) : null}
 
             <ul

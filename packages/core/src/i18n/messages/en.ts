@@ -1193,6 +1193,10 @@ export const en = {
       one: "{count} entry is back in the review",
       other: "{count} entries are back in the review",
     },
+    taught: {
+      one: "{count} shop learned for next time.",
+      other: "{count} shops learned for next time.",
+    },
     allFiled: "Everything is filed.",
     /* The phone's review, one group at a time. */
     whichCategory: "Which category?",

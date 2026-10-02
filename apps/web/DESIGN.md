@@ -342,7 +342,7 @@ Do not introduce a light theme, a light-mode token pair, or a `light:` variant.
 places are the primary action, the focus ring, a figure that genuinely leads a
 screen, a savings amount (systematically), and a moment (see Moments): a
 milestone reached, a cushion rung lit, a run of month-ends still alive, a month
-closed. Outside those, a surface that reaches for it in three unrelated places has spent it. The semantic use is not
+closed, the inbox emptied. Outside those, a surface that reaches for it in three unrelated places has spent it. The semantic use is not
 an exception to this rule so much as the proof of it: gold means something
 specific, which is why scattering it elsewhere costs so much.
 
@@ -797,8 +797,8 @@ all; changing one alone breaks the frame.
 ### Moments
 
 A moment is something the user did, said back to them where it happened: a
-milestone reached, a cushion rung lit and the run kept alive on Plan, and a
-month closed in the close sheet. It replaced, in October 2026, the rule that
+milestone reached, a cushion rung lit and the run kept alive on Plan, a month
+closed in the close sheet, and the review inbox emptied. It replaced, in October 2026, the rule that
 only Plan celebrates. The allowance is specific:
 
 - **Real and measured.** Every moment is a fact about the user's own money or
@@ -822,6 +822,11 @@ the count has landed: « Série prolongée : 4 mois d'affilée », or « Nouveau
 record » when it beat the best run before it (`runMoment`,
 `packages/core/src/month-close.ts`). A month that cost more than it brought,
 and a baseline, are told as before, without a moment.
+
+**The inbox emptied.** When the last group is filed, « Tout est classé. »
+pops in with a gold tick, and under it how many shops were just filed under a
+category — « 3 commerces appris pour la prochaine fois. » — which is what the
+next sync learns from. Counted, not guessed: the groups filed in that sitting.
 
 ### Plan: Where Moments Gather
 
