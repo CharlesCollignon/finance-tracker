@@ -68,8 +68,15 @@ export interface LoanPayment {
 /** Far beyond any loan, so a schedule that cannot end still does. */
 const MAX_PAYMENTS = 1200;
 
-function cents(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+/**
+ * Rounded to the cent, half away from zero as a bank rounds: 291.665 is
+ * 291.67, though as a float it is a hair under.
+ */
+export function cents(value: number): number {
+  const scaled = Number((Math.abs(value) * 100).toPrecision(15));
+  const rounded = (Math.sign(value) * Math.round(scaled)) / 100;
+  // Never -0, which a formatter writes « -0,00 € ».
+  return rounded === 0 ? 0 : rounded;
 }
 
 function pad(value: number): string {
@@ -139,7 +146,7 @@ function defer(terms: LoanTerms, from: number, to: number, owed: number): Run {
   for (let index = from; index <= to; index++) {
     const interest = cents(owed * rate);
     // In a total deferral nothing is paid: the interest is owed instead.
-    const principal = terms.deferralKind === "total" ? -interest : 0;
+    const principal = terms.deferralKind === "total" ? 0 - interest : 0;
     const row = payment(terms, index, owed, principal, interest);
     rows.push(row);
     owed = row.outstanding;

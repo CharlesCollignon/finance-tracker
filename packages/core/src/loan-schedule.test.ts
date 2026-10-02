@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  cents,
   loanSchedule,
   loanTotals,
   monthlyOutlay,
@@ -27,6 +28,16 @@ function sum(values: number[]): number {
     Math.round(values.reduce((total, value) => total + value, 0) * 100) / 100
   );
 }
+
+describe("cents", () => {
+  it("rounds half away from zero, whatever the float says", () => {
+    expect(cents(291.665)).toBe(291.67);
+    expect(cents(1.005)).toBe(1.01);
+    expect(cents(-583.335)).toBe(-583.34);
+    expect(cents(0.004)).toBe(0);
+    expect(Object.is(cents(-0.004), 0)).toBe(true);
+  });
+});
 
 describe("loanSchedule", () => {
   it("repays a constant-payment loan in as many payments as months", () => {
@@ -60,6 +71,20 @@ describe("loanSchedule", () => {
     expect(rows[0]!.payment).toBe(166.67);
     expect(rows.at(-1)!.payment).toBe(165.87);
     expect(sum(rows.map((row) => row.interest))).toBe(0);
+  });
+
+  it("writes no negative zero through a total deferral at 0 %", () => {
+    const rows = loanSchedule({
+      ...BASE,
+      principal: 40_000,
+      annualRate: 0,
+      months: 246,
+      deferralMonths: 6,
+      deferralKind: "total",
+    });
+
+    expect(Object.is(rows[0]!.principal, 0)).toBe(true);
+    expect(rows[6]!.payment).toBe(166.67);
   });
 
   it("pays only interest on an in fine loan, and the principal with the last", () => {
