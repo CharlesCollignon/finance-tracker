@@ -187,7 +187,7 @@ export default function PlanningScreen() {
         return;
       }
       if (seen === null || reachedOnData > seen) {
-        void saveSeenMilestone(user.id, reachedOnData);
+        void saveSeenMilestone(user.id, reachedOnData, locale);
       }
       // A first visit records where things stand rather than celebrating
       // everything already behind the user.
@@ -199,7 +199,7 @@ export default function PlanningScreen() {
     return () => {
       cancelled = true;
     };
-  }, [user, hasData, wealthSettled, reachedOnData]);
+  }, [user, hasData, wealthSettled, reachedOnData, locale]);
 
   // The cushion is the savings at hand — every savings account but a PEL,
   // the user's corrections in the long view included — against the fixed

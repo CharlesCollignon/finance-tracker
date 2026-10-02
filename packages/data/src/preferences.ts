@@ -117,7 +117,7 @@ async function writePreferences(
   db: Db,
   userId: string,
   locale: Locale,
-  change: { dismissed_prompts?: string[] },
+  change: { dismissed_prompts?: string[]; milestone_seen?: number },
 ): Promise<ActionResult> {
   const { data: existing, error: readError } = await db
     .from("user_preferences")
@@ -174,4 +174,24 @@ export async function dismissPrompt(
   return writePreferences(db, userId, locale, {
     dismissed_prompts: [...dismissed, prompt],
   });
+}
+
+/**
+ * Remember that a milestone has been celebrated, on every device. Only ever
+ * raised: a device a step behind must not lower what another already showed.
+ */
+export async function markMilestoneSeen(
+  db: Db,
+  userId: string,
+  amount: number,
+  locale: Locale,
+): Promise<ActionResult> {
+  if (!Number.isFinite(amount) || amount < 0) {
+    return { error: "errors.invalidInput" };
+  }
+  const { milestoneSeen } = await getNotificationSettings(db, userId);
+  if (milestoneSeen !== null && milestoneSeen >= amount) {
+    return { success: true };
+  }
+  return writePreferences(db, userId, locale, { milestone_seen: amount });
 }
