@@ -10,6 +10,8 @@
  * their part of what the loans still owe.
  */
 
+import { DEFAULT_CATEGORIES } from "./constants";
+import type { Locale } from "./i18n/locale";
 import {
   cents,
   loanSchedule,
@@ -43,6 +45,32 @@ export function loanTermsFromRow(row: PropertyLoan): LoanTerms {
             keeps: row.known_keeps,
           },
   };
+}
+
+/**
+ * The default category a loan's payment is filed under, in the reader's
+ * language: « Remboursement de prêt », found under either name when the
+ * user already has it.
+ */
+export function loanPaymentCategoryName(locale: Locale): string {
+  const category = DEFAULT_CATEGORIES.find(
+    (candidate) => candidate.names.fr === "Remboursement de prêt",
+  );
+  return category ? category.names[locale] : "Remboursement de prêt";
+}
+
+/**
+ * Notary fees as a share of the price: about 7–8 % for an existing home,
+ * transfer duties included, and 2–3 % for a new one. A place to start in
+ * the form, which the user replaces with the real figure from the deed.
+ */
+export const NOTARY_FEE_ESTIMATE = { existing: 0.075, new: 0.025 } as const;
+
+export function notaryFeesEstimate(
+  price: number,
+  build: keyof typeof NOTARY_FEE_ESTIMATE,
+): number {
+  return Math.round(price * NOTARY_FEE_ESTIMATE[build]);
 }
 
 type PurchaseFigures = Pick<

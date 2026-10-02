@@ -100,7 +100,11 @@
     "./wallet-read-budget": "./src/wallet-read-budget.ts",
     "./wallet-read-prompt": "./src/wallet-read-prompt.ts",
     "./weekly-recap": "./src/weekly-recap.ts",
-    "./xirr": "./src/xirr.ts"
+    "./xirr": "./src/xirr.ts",
+    "./loan-schedule": "./src/loan-schedule.ts",
+    "./property": "./src/property.ts",
+    "./validations/property": "./src/validations/property.ts",
+    "./address-search": "./src/address-search.ts"
   },
   "dependencies": {
     "zod": "^4.4.3"

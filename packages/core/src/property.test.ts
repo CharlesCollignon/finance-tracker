@@ -3,7 +3,9 @@ import { loanSchedule } from "./loan-schedule";
 import {
   acquisitionCost,
   estimatedValue,
+  loanPaymentCategoryName,
   loanTermsFromRow,
+  notaryFeesEstimate,
   paymentShare,
   propertyPosition,
 } from "./property";
@@ -99,6 +101,20 @@ describe("loanTermsFromRow", () => {
 describe("acquisitionCost", () => {
   it("is the price and everything paid to have it", () => {
     expect(acquisitionCost(property({ agency_fees: 7_500 }))).toBe(277_500);
+  });
+});
+
+describe("loanPaymentCategoryName", () => {
+  it("is the default loan category, in the reader's language", () => {
+    expect(loanPaymentCategoryName("fr")).toBe("Remboursement de prêt");
+    expect(loanPaymentCategoryName("en")).toBe("Loan repayment");
+  });
+});
+
+describe("notaryFeesEstimate", () => {
+  it("starts from 7.5 % of the price for an existing home, 2.5 % for a new one", () => {
+    expect(notaryFeesEstimate(250_000, "existing")).toBe(18_750);
+    expect(notaryFeesEstimate(250_000, "new")).toBe(6_250);
   });
 });
 
