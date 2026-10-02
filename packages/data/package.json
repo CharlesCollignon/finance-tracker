@@ -16,6 +16,7 @@
     "./feed-decisions": "./src/feed-decisions.ts",
     "./fulfilment": "./src/fulfilment.ts",
     "./fulfilment-decisions": "./src/fulfilment-decisions.ts",
+    "./history": "./src/history.ts",
     "./ledger": "./src/ledger.ts",
     "./ledger-duplicates": "./src/ledger-duplicates.ts",
     "./month-balance": "./src/month-balance.ts",

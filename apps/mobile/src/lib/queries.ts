@@ -2,6 +2,7 @@ import { hasBankFeed as bankFeeds } from "@finance/data/bank-feed";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
+import * as history from "@finance/data/history";
 import * as templates from "@finance/data/templates";
 import * as inbox from "@finance/data/bank-inbox";
 import type { PendingFeedRow } from "@finance/data/bank-inbox";
@@ -209,20 +210,11 @@ export async function getMonthlySummary(
   );
 }
 
-export async function getInvestmentTransactions(
+/** Every investment row ever, oldest first — paged past the row cap. */
+export function getInvestmentTransactions(
   userId: string,
 ): Promise<TransactionWithCategory[]> {
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*, categories!inner(name, type, icon, counts_toward_summary)")
-    .eq("user_id", userId)
-    .eq("categories.type", "investment")
-    .order("occurred_on", { ascending: true });
-
-  if (error) {
-    throw error;
-  }
-  return (data ?? []) as TransactionWithCategory[];
+  return history.getInvestmentTransactions(supabase, userId);
 }
 
 export async function getInvestmentPositions(
@@ -448,34 +440,9 @@ export async function getExistingKeysForRange(
     }));
 }
 
-/**
- * Everything the user has ever recorded as savings.
- *
- * The app tracks flows, not balances, so this is a sum of savings
- * transactions rather than an account balance — which is why the UI that uses
- * it says "everything you have logged as savings". Withdrawals are not
- * modelled, so this is an upper bound; it is the honest best the ledger offers.
- */
-export async function getSavingsReserve(userId: string): Promise<number> {
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("amount, categories!inner(type, counts_toward_summary)")
-    .eq("user_id", userId)
-    .eq("categories.type", "savings");
-
-  if (error) {
-    throw error;
-  }
-
-  // A savings category marked as not counting is a withdrawal, so it comes
-  // off the reserve rather than being skipped. Skipping it was what made the
-  // reserve only ever grow, and the runway it feeds only ever flatter.
-  return (data ?? []).reduce((sum, row) => {
-    const withdrawal =
-      (row.categories as unknown as { counts_toward_summary: boolean })
-        .counts_toward_summary === false;
-    return sum + (withdrawal ? -Number(row.amount) : Number(row.amount));
-  }, 0);
+/** Everything logged as savings, net of withdrawals — paged past the row cap. */
+export function getSavingsReserve(userId: string): Promise<number> {
+  return history.getSavingsReserve(supabase, userId);
 }
 
 /* ------------------------------------------------------------ closing a month */
