@@ -380,6 +380,93 @@ catalogue and writes no figure of its own — it chooses a role and a size for
 each suggestion, and the app turns those into percentages.
 _Avoid_: portfolio review, analysis, advice, recommendation
 
+### Property
+
+**Property**:
+_En français_ : bien (l'onglet : Immobilier)
+A home or premises the user owns, wholly or in part: what it cost, where it
+is, how it is used — main home, second home, let bare or furnished — and the
+share of it that is theirs. Not a wallet: nothing is bought inside it, and
+what it costs month to month are recurring templates attached to it.
+_Avoid_: asset, real estate investment, home, flat
+
+**Loan**:
+_En français_ : prêt
+Money borrowed to buy or improve one property, repaid on a schedule of its
+own, and owed at the user's share when it was borrowed with someone else. A
+property may have several — a main loan, a PTZ, an Action Logement loan. A
+loan with no property behind it, for a car say, is only a recurring
+template.
+_Avoid_: mortgage, credit, debt
+
+**Amortisation schedule**:
+_En français_ : tableau d'amortissement
+Every payment a loan calls for, each split into principal, interest and
+insurance. Worked out from the loan's terms, and checked against the one the
+bank gave.
+_Avoid_: repayment plan, payment table
+
+**Loan payment**:
+_En français_ : mensualité
+What leaves the account for a loan each month: the payment its schedule
+calls for and the insurance, at the user's share. A recurring template linked
+to the loan, which ends with the last payment, so each one is an occurrence
+like any other.
+_Avoid_: instalment, repayment
+
+**Outstanding principal**:
+_En français_ : capital restant dû
+What is still owed on a loan on a given day. Worked out from the schedule,
+never typed — except when an early repayment or a renegotiation has moved
+it: the user gives the figure their bank shows, and the schedule carries on
+from there.
+_Avoid_: balance, remaining debt, CRD
+
+**Principal repaid**:
+_En français_ : capital remboursé
+The part of the loan payments that paid a loan down rather than the bank:
+what they added to the user's net value. Never counted as kept, which is
+measured from the account's balance and what was set aside.
+_Avoid_: forced saving, equity built
+
+**Price index**:
+_En français_ : indice des prix des logements
+How the price of existing homes has moved, quarter by quarter, in one area —
+Paris, a département, an agglomeration, a region. What carries a sale or a
+purchase price from its quarter to today.
+_Avoid_: inflation, market trend
+
+**Market reading**:
+_En français_ : relevé du marché
+What homes of one kind sold for per square metre around a property, or
+across its commune, over a dated period: a median, a spread and the number of
+sales behind it, each sale first carried to today by the price index. Read
+from the public record of sales and never guessed; too few sales means there
+is no reading, not a reading of zero. Shared by everyone with a home there.
+_Avoid_: valuation, estimate, price
+
+**Estimated value**:
+_En français_ : valeur estimée
+What a property is worth today, always said with where it comes from: the
+user's own figure, dated, when they gave one; else the market reading times
+its area; else its purchase price carried by the price index; else its
+purchase price.
+_Avoid_: market value, valuation, price
+
+**Net value**:
+_En français_ : valeur nette
+The estimated value of the user's share of a property, less their share of
+what its loans still owe.
+_Avoid_: equity, net equity
+
+**Net worth**:
+_En français_ : patrimoine net
+Everything the savings accounts, the wallets and the properties hold, less
+what the loans still owe, today. Distinct from what a milestone counts —
+savings and investments only — so buying a home, or a new market reading,
+never passes one.
+_Avoid_: wealth, net assets, fortune
+
 ### Words about a month
 
 **Month read**:
