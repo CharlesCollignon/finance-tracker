@@ -36,8 +36,8 @@ import { cn } from "@/lib/utils";
  *   of its shadow and one end of its disk, which turns slowly, the nebula
  *   and the starlight bending round it (`distantHole`). It is ours, not the
  *   original's, and does not follow the pointer.
- * - A distant sun is setting on the rim to the right of the headline, warm
- *   and glowing softly (`distantSun`); ours too, and fixed in the sky.
+ * - A distant sun is setting on the rim to the right of the headline, warm,
+ *   a third of it above the horizon (`distantSun`); ours too, and fixed.
  *
  * Imagery: NASA Blue Marble Next Generation, by Reto Stöckli (NASA Earth
  * Observatory), used without endorsement; credited in the landing footer.
@@ -293,19 +293,22 @@ const fragment = `
       return vec4(light, shadow);
     }
 
-    // A distant sun, in units of its disk's radius: a small warm disk, oranger
-    // toward its edge, in a soft glow that breathes slowly. Not bright: the
-    // centre of the disk is under four fifths of full white. Fixed in the
-    // sky; the planet hides its lower part.
+    // A distant sun: a warm disk, oranger toward its edge, in a soft glow
+    // that breathes slowly. Not bright: the centre of the disk is three
+    // quarters of full white. The glow is measured from the disk's edge in
+    // the hero's height rather than in the disk's radius, so a large sun does
+    // not flood the sky. Fixed in the sky; the planet hides most of it.
     vec3 distantSun(vec2 p, float pixel) {
-      float q = length(p - farSun.xy) / farSun.z;
-      if (q > 50.) return vec3(0.);
+      float dist = length(p - farSun.xy);
+      float beyond = max(dist - farSun.z, 0.);
+      if (beyond > .9) return vec3(0.);
+      float q = dist / farSun.z;
       float edge = pixel / farSun.z;
       float disk = 1. - smoothstep(1. - edge, 1. + edge, q);
-      vec3 face = mix(vec3(1., .56, .20), vec3(1., .86, .58), sqrt(sqrt(max(0., 1. - q * q))));
+      vec3 face = mix(vec3(1., .50, .16), vec3(1., .80, .47), pow(max(0., 1. - q * q), .4));
       float breath = 1. + .06 * sin(clock * .5);
-      vec3 glow = vec3(1., .56, .22) * (.32 * exp(-max(q - 1., 0.) / 1.1) + .15 * exp(-q / 6.) + .05 * exp(-q / 18.)) * breath;
-      return face * disk * .8 + glow * (1. - disk);
+      vec3 glow = vec3(1., .56, .22) * (.30 * exp(-beyond / (.012 + farSun.z * .15)) + .14 * exp(-beyond / (.05 + farSun.z * .4)) + .045 * exp(-beyond / (.18 + farSun.z))) * breath;
+      return face * disk * .75 + glow * (1. - disk);
     }
 
     void main() {
@@ -357,7 +360,7 @@ const fragment = `
       color += vec3(.20, .078, .06) * illumination * gauss(d, .003) * rimLocal * verticalFade;
       color += vec3(.034, .057, .092) * illumination * exp(-max(d, 0.) / .007) * space * verticalFade * (.2 + .8 * rimLocal);
       // The atmosphere catches the distant sun where it sets.
-      float bySun = gauss(length(p - farSun.xy), farSun.z * 9.);
+      float bySun = gauss(length(p - farSun.xy), farSun.z * 2.5 + .05);
       color += vec3(1., .62, .32) * line * bySun * .7 * verticalFade;
       color += vec3(.45, .20, .07) * gauss(d, .004) * bySun * .35 * verticalFade;
 
@@ -631,9 +634,9 @@ function holePlace(
  * Where the distant sun sets: on the rim halfway between the right edge of
  * the hero's text column (`max-w-3xl` inside `px-6`) and where the light
  * rests, so clear of the words and out of the light's bright core; its centre
- * a fifth of its radius above the rim, so the planet hides the lower part of
- * it. On a phone, where the column is the screen's width, that is the right
- * edge, in the light's glow.
+ * a third of its radius below the rim, so a third of it shows above the
+ * horizon. On a phone, where the column is the screen's width, that is the
+ * right edge, in the light's glow.
  */
 function sunPlace(
   center: [number, number],
@@ -653,8 +656,8 @@ function sunPlace(
     low,
     high,
   );
-  const size = 0.011 * clamp(width / height, 0.75, 1);
-  const lift = radius + size * 0.2;
+  const size = 0.06 * clamp(width / height, 0.75, 1);
+  const lift = radius - size / 3;
   return [
     center[0] + Math.cos(angle) * lift,
     center[1] + Math.sin(angle) * lift,
