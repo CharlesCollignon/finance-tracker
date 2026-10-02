@@ -181,4 +181,24 @@ export const propertyEn = {
   valueRange: "Between {low} and {high}",
   pricePerM2: "Price per m² around it",
   pricePerM2Line: "{median} · {low} to {high}",
+
+  netWorthTitle: "Net worth",
+  netWorthLabel: "Savings, investments and property, less what you owe",
+  netWorthLiquid: "Savings and investments",
+  netWorthProperty: "Property, estimated value",
+  netWorthOwed: "Still owed on loans",
+  netWorthNote:
+    "Milestones count savings and investments only: a home is not money you spend day to day.",
+  loanEndFrees: "{label} ends in {date}, freeing {amount} a month.",
+  longViewTitle: {
+    one: "Your property in {count} year",
+    other: "Your property in {count} years",
+  },
+  longViewNet: "Net, once sold and the loan repaid",
+  longViewTax: "Tax on the gain: {amount}",
+  longViewTaxNone: "Main home: no tax on the gain",
+  longViewGrowth: "Growth a year",
+  longViewTotal: "With your savings and investments: {amount} net",
+  longViewNote:
+    "The value follows the growth you choose, and a home can lose value too. The tax is a sale's that year, on 2026 rules, without the surtax on gains above €50,000. The monthly income and the milestones leave property out.",
 };

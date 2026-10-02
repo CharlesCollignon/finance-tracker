@@ -182,4 +182,24 @@ export const propertyFr: typeof propertyEn = {
   valueRange: "Entre {low} et {high}",
   pricePerM2: "Prix au m² alentour",
   pricePerM2Line: "{median} · de {low} à {high}",
+
+  netWorthTitle: "Patrimoine net",
+  netWorthLabel: "Épargne, placements et immobilier, moins ce que vous devez",
+  netWorthLiquid: "Épargne et placements",
+  netWorthProperty: "Immobilier, valeur estimée",
+  netWorthOwed: "Restant dû sur les prêts",
+  netWorthNote:
+    "Les paliers ne comptent que l'épargne et les placements\u00A0: un bien ne se dépense pas au quotidien.",
+  loanEndFrees: "{label} se termine en {date} et libère {amount} par mois.",
+  longViewTitle: {
+    one: "Votre immobilier dans {count} an",
+    other: "Votre immobilier dans {count} ans",
+  },
+  longViewNet: "Net, une fois vendu et le prêt soldé",
+  longViewTax: "Impôt sur la plus-value\u00A0: {amount}",
+  longViewTaxNone: "Résidence principale\u00A0: pas d'impôt sur la plus-value",
+  longViewGrowth: "Hausse par an",
+  longViewTotal: "Avec vos placements\u00A0: {amount} net",
+  longViewNote:
+    "La valeur suit la hausse choisie, et un bien peut aussi perdre de la valeur. L'impôt est celui d'une vente cette année-là, aux règles de 2026, sans la surtaxe au-delà de 50\u00A0000\u00A0€ de plus-value. Le revenu mensuel et les paliers ne comptent pas l'immobilier.",
 };

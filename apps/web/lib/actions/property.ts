@@ -202,3 +202,19 @@ export async function saveLoanForProperty(
     };
   });
 }
+
+/**
+ * How much a year a property is expected to gain, for the long view. Kept
+ * quietly, as the long view's own figures are: the card already shows it,
+ * and a redraw would put the long view back behind its placeholder.
+ */
+export async function setGrowth(
+  propertyId: string,
+  growth: number | null,
+): Promise<ActionResult> {
+  return asUser(
+    (db, userId) =>
+      properties.setPropertyGrowth(db, userId, propertyId, growth),
+    { redraw: "never" },
+  );
+}
