@@ -2,6 +2,7 @@ import { hasBankFeed as bankFeeds } from "@finance/data/bank-feed";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
+import * as categories from "@finance/data/categories";
 import * as history from "@finance/data/history";
 import * as templates from "@finance/data/templates";
 import * as inbox from "@finance/data/bank-inbox";
@@ -55,26 +56,11 @@ import { cashDateOf, movedBetween } from "@finance/core/cash-date";
 
 export type { PendingFeedRow } from "@finance/data/bank-inbox";
 
-export async function getCategories(
+export function getCategories(
   userId: string,
   options: { includeArchived?: boolean } = {},
 ): Promise<Category[]> {
-  let query = supabase
-    .from("categories")
-    .select("*")
-    .eq("user_id", userId)
-    .order("type")
-    .order("name");
-
-  if (!options.includeArchived) {
-    query = query.eq("archived", false);
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    throw error;
-  }
-  return data ?? [];
+  return categories.getCategories(supabase, userId, options);
 }
 
 export async function getTransactions(

@@ -1,5 +1,11 @@
 import type { ActionResult } from "@finance/core/action-result";
 import { firstIssue } from "@finance/core/action-result";
+import type { Locale } from "@finance/core/i18n/locale";
+import {
+  buildCategoryRenames,
+  buildMissingCategorySeeds,
+} from "@finance/core/seed-categories";
+import type { Category } from "@finance/core/types/database";
 import { categorySchema, parseUuid } from "@finance/core/validations/finance";
 import type { z } from "zod";
 
@@ -101,4 +107,103 @@ export async function deleteCategory(
   return error
     ? { error: friendlyCategoryError(error) }
     : { success: true, undo: null };
+}
+
+/** The user's categories, by type then name; archived ones only on request. */
+export async function getCategories(
+  db: Db,
+  userId: string,
+  { includeArchived = false }: { includeArchived?: boolean } = {},
+): Promise<Category[]> {
+  let query = db
+    .from("categories")
+    .select("*")
+    .eq("user_id", userId)
+    .order("type")
+    .order("name");
+  if (!includeArchived) {
+    query = query.eq("archived", false);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw error;
+  }
+  return data ?? [];
+}
+
+/**
+ * Put the defaults a user has under their language's names — an account
+ * seeded in English on a French app, or under a name a default no longer
+ * has — at sign-in and when they change language. A name the user chose is
+ * never touched. Returns how many were renamed.
+ *
+ * One rename failing (the name taken in between) leaves the rest done and
+ * that category under the name it already had: not a reason to fail a
+ * sign-in, which the phone's copy of this used to do.
+ */
+export async function renameDefaultCategories(
+  db: Db,
+  userId: string,
+  locale: Locale,
+): Promise<number> {
+  const { data: existing, error } = await db
+    .from("categories")
+    .select("id, name, type")
+    .eq("user_id", userId);
+  if (error) {
+    throw error;
+  }
+  return applyCategoryRenames(db, userId, existing ?? [], locale);
+}
+
+async function applyCategoryRenames(
+  db: Db,
+  userId: string,
+  existing: { id: string; name: string; type: string }[],
+  locale: Locale,
+): Promise<number> {
+  const renames = buildCategoryRenames(existing, locale);
+  const results = await Promise.all(
+    renames.map((rename) =>
+      db
+        .from("categories")
+        .update({ name: rename.name })
+        .eq("id", rename.id)
+        .eq("user_id", userId),
+    ),
+  );
+  const failed = results.filter((result) => result.error);
+  if (failed.length > 0) {
+    console.error("Category rename failed", failed[0]!.error!.code);
+  }
+  return renames.length - failed.length;
+}
+
+/**
+ * Give a user every default they are missing, in their language, and name
+ * the ones they have in it. Idempotent; run at each sign-in.
+ */
+export async function seedDefaultCategories(
+  db: Db,
+  userId: string,
+  locale: Locale,
+): Promise<void> {
+  const { data: existing, error: existingError } = await db
+    .from("categories")
+    .select("id, name, type")
+    .eq("user_id", userId);
+  if (existingError) {
+    throw existingError;
+  }
+
+  const missing = buildMissingCategorySeeds(userId, existing ?? [], locale);
+  if (missing.length > 0) {
+    const { error } = await db.from("categories").insert(missing);
+    if (error) {
+      throw error;
+    }
+  }
+
+  await applyCategoryRenames(db, userId, existing ?? [], locale);
 }
