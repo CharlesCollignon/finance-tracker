@@ -117,11 +117,11 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             `pointer-events-none` like the backgrounds elsewhere: the light
             follows the pointer along the rim, and holding then releasing
             wakes an aurora. The bottom fades into the page's ground, so the
-            black of space does not end on a line. The surface is lit a
-            little above the renderer's default, so the land under the rim
-            shows while the light rests. */}
+            black of space does not end on a line. The surface is lit at three
+            times the renderer's default, the most it takes, so the land
+            under the rim shows while the light rests. */}
         <div className="absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
-          <LandingEarth surfaceBrightness={1.4} />
+          <LandingEarth surfaceBrightness={3} />
         </div>
 
         {/* Centred in the window, with nothing under it but the sky. The two
