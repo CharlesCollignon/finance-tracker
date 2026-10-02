@@ -20,6 +20,7 @@ import { getBankConnection } from "@/lib/bank/client";
 import { pullFromBank } from "@/lib/bank/pull";
 import { DEFAULT_LOCALE } from "@finance/core/i18n/locale";
 import { cashDateOf } from "@finance/core/cash-date";
+import { shiftIsoDate, todayIsoLocal } from "@finance/core/constants";
 
 type Client = SupabaseClient<Database>;
 
@@ -72,10 +73,9 @@ const PAGE_LIMIT = 200;
 /** A stop, so a pathological account cannot run the sync out of memory. */
 const MAX_TRANSACTIONS = 5000;
 
+/** A day this many days before today, on the app's own calendar (Paris). */
 function isoDaysAgo(days: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() - days);
-  return date.toISOString().slice(0, 10);
+  return shiftIsoDate(todayIsoLocal(), -days);
 }
 
 /**
@@ -360,7 +360,9 @@ async function rememberAccount(
       label,
       currency: account.currency,
       reported_balance: booked?.amount ?? null,
-      reported_on: booked ? new Date().toISOString().slice(0, 10) : null,
+      // Today in Paris: a sync just after midnight there is still
+      // yesterday in UTC, and the balance was read today.
+      reported_on: booked ? todayIsoLocal() : null,
       needs_reconnect: account.needsReconnect,
       last_seen_at: new Date().toISOString(),
     },
