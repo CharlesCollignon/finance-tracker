@@ -155,6 +155,18 @@ export const en = {
     deleteMyAccount: "Delete my account",
     /** What a server action that reported nothing in particular means. */
     saved: "Saved",
+    notificationsOff: "Notifications off",
+    onThisBrowser: "On this browser",
+    pushChecking: "Checking…",
+    pushNotConfigured: "Not available here yet",
+    pushUnavailable: "Not available here",
+    pushUnsupported: "This browser can't receive notifications.",
+    pushInstallFirst:
+      "On iPhone and iPad, add Pluclair to your home screen first — Safari only allows notifications for installed apps.",
+    pushBlocked:
+      "Notifications are blocked for this site in your browser settings.",
+    pushNotAllowed: "Notifications were not allowed.",
+    pushRefused: "This browser refused the notification subscription.",
     notificationsOn: "Notifications on",
     remindersOnly:
       "Reminders on. This build can't receive nudges from your bank.",
@@ -1663,7 +1675,6 @@ export const en = {
     pickADate: "Pick a date",
     setUp: "Set up",
     usePassword: "Use password",
-    capsAndNewMonths: "Budgets and new months",
     browserNotifications: "Browser notifications",
     theRun: "The run",
     kept: "Kept",

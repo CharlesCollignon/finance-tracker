@@ -94,6 +94,18 @@ export const fr: Messages = {
     deleteAccount: "Supprimer le compte",
     deleteMyAccount: "Supprimer mon compte",
     saved: "Enregistré",
+    notificationsOff: "Notifications désactivées",
+    onThisBrowser: "Sur ce navigateur",
+    pushChecking: "Vérification…",
+    pushNotConfigured: "Pas encore disponible ici",
+    pushUnavailable: "Indisponible ici",
+    pushUnsupported: "Ce navigateur ne peut pas recevoir de notifications.",
+    pushInstallFirst:
+      "Sur iPhone et iPad, ajoutez d'abord Pluclair à l'écran d'accueil\u00A0: Safari n'autorise les notifications que pour les apps installées.",
+    pushBlocked:
+      "Les notifications sont bloquées pour ce site dans les réglages du navigateur.",
+    pushNotAllowed: "Les notifications n'ont pas été autorisées.",
+    pushRefused: "Ce navigateur a refusé l'abonnement aux notifications.",
     notificationsOn: "Notifications activées",
     remindersOnly:
       "Rappels activés. Cette version ne peut pas recevoir les alertes de votre banque.",
@@ -223,7 +235,7 @@ export const fr: Messages = {
       one: "{count} opération attend une catégorie. Vérifier",
       other: "{count} opérations attendent une catégorie. Vérifier",
     },
-    repeatTitle: "Répéter aujourd'hui ?",
+    repeatTitle: "Répéter aujourd'hui\u00A0?",
     repeatBody: "Ajoute un autre {category} de {amount} daté d'aujourd'hui.",
     repeatConfirm: "Ajouter pour aujourd'hui",
     planned: "À venir",
@@ -1063,7 +1075,7 @@ export const fr: Messages = {
     peaOfCeiling: "sur {ceiling}",
     peaRoomLeft: "de marge restante",
     peaCashOnly:
-      "Seuls les versements comptent dans le plafond ; la performance, non.",
+      "Seuls les versements comptent dans le plafond\u00A0; la performance, non.",
     addItem: "Ajouter une ligne",
     addCryptoItem: "Ajouter une ligne crypto",
     itemAdded: "Ligne ajoutée",
@@ -1224,7 +1236,6 @@ export const fr: Messages = {
     pickADate: "Choisir une date",
     setUp: "Configuration",
     usePassword: "Utiliser le mot de passe",
-    capsAndNewMonths: "Budgets et nouveaux mois",
     browserNotifications: "Notifications du navigateur",
     theRun: "La série",
     kept: "Économisé",
@@ -1948,7 +1959,7 @@ export const fr: Messages = {
     step4Title: "Déposez-le ici",
     step4Body:
       "Pluclair le vérifie, puis importe votre historique. Ce qu'il ne sait pas classer seul vous attend dans une courte revue.",
-    factReadOnly: "Lecture seule : rien ici ne peut déplacer d'argent.",
+    factReadOnly: "Lecture seule\u00A0: rien ici ne peut déplacer d'argent.",
     factKey:
       "Pluclair conserve votre fichier d'identifiants chiffré, hors de portée de toute application, et le supprime dès que vous vous déconnectez.",
     factConsent:
@@ -1995,7 +2006,7 @@ export const fr: Messages = {
     unreachable:
       "Impossible de joindre Pluclair pour l'instant. Réessayez dans un moment.",
     notConnected: "Aucune banque n'est connectée.",
-    priceNote: "Environ 3 € par mois, payés à open-banking.io.",
+    priceNote: "Environ 3\u00A0€ par mois, payés à open-banking.io.",
     connected: "Votre banque est connectée.",
     importTitle: "Import de votre historique",
     importBody:
@@ -2032,7 +2043,7 @@ export const fr: Messages = {
     accountsBody:
       "Choisissez les comptes qui contiennent votre argent courant. Leur solde est celui affiché dans Le point.",
     disconnect: "Déconnecter",
-    disconnectTitle: "Déconnecter votre banque ?",
+    disconnectTitle: "Déconnecter votre banque\u00A0?",
     disconnectBody:
       "La synchronisation s'arrête et votre fichier d'identifiants est supprimé de Pluclair.",
     disconnectApiKey:
@@ -2057,7 +2068,7 @@ export const fr: Messages = {
       "Voyez votre vrai solde, lu depuis votre banque à chaque actualisation.",
     inviteWelcome: "Laissez votre banque remplir tout cela pour vous.",
     inviteLedger:
-      "Arrêtez de tout saisir : connectez votre banque et les lignes arrivent toutes seules.",
+      "Arrêtez de tout saisir\u00A0: connectez votre banque et les lignes arrivent toutes seules.",
     invitePlan:
       "Votre solde est lu pour vous, et le bilan des mois se fait de lui-même.",
     dismissInvite: "Ne plus afficher",

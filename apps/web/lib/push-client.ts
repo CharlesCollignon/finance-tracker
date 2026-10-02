@@ -1,5 +1,6 @@
 "use client";
 
+import type { Key } from "@finance/core/i18n/t";
 import {
   deletePushSubscription,
   savePushSubscription,
@@ -11,30 +12,26 @@ import {
  * Every step is a place this can legitimately not work — no service worker, no
  * Push API, permission denied, or an iOS browser that only supports push once
  * the app is installed to the home screen. Each returns a reason rather than
- * throwing, because the UI has to explain the situation, not just fail.
+ * throwing, because the UI has to explain the situation, not just fail —
+ * as a message key, so it says so in the reader's language.
  */
 
 export type PushSupport =
-  { supported: true } | { supported: false; reason: string };
+  { supported: true } | { supported: false; reason: Key };
 
 export function checkPushSupport(): PushSupport {
   if (typeof window === "undefined") {
-    return { supported: false, reason: "Not available here." };
+    return { supported: false, reason: "profile.pushUnavailable" };
   }
   if (!("serviceWorker" in navigator)) {
-    return {
-      supported: false,
-      reason: "This browser cannot run background workers.",
-    };
+    return { supported: false, reason: "profile.pushUnsupported" };
   }
   if (!("PushManager" in window)) {
     // Safari on iOS reports this until the app is added to the home screen.
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     return {
       supported: false,
-      reason: iOS
-        ? "On iPhone and iPad, add Pluclair to your home screen first — Safari only allows notifications for installed apps."
-        : "This browser does not support notifications.",
+      reason: iOS ? "profile.pushInstallFirst" : "profile.pushUnsupported",
     };
   }
   return { supported: true };
@@ -90,7 +87,7 @@ export async function enablePush(
     return { error: support.reason };
   }
   if (!publicKey) {
-    return { error: "Notifications are not configured on this server." };
+    return { error: "profile.pushNotConfigured" };
   }
 
   const permission = await Notification.requestPermission();
@@ -98,8 +95,8 @@ export async function enablePush(
     return {
       error:
         permission === "denied"
-          ? "Notifications are blocked for this site in your browser settings."
-          : "Notifications were not allowed.",
+          ? "profile.pushBlocked"
+          : "profile.pushNotAllowed",
     };
   }
 
@@ -116,7 +113,7 @@ export async function enablePush(
         applicationServerKey: urlBase64ToBytes(publicKey),
       });
     } catch {
-      return { error: "This browser refused the notification subscription." };
+      return { error: "profile.pushRefused" };
     }
   }
 
