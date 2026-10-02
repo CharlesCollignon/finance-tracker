@@ -18,6 +18,11 @@ const FLAG_KEYS = [
    * Bank page's setup, and every invitation to it (migration 042).
    */
   "bank.connect",
+  /**
+   * Properties, their loans and their value: the Immobilier tab
+   * (migration 049, docs/plans/REAL_ESTATE_PLAN.md).
+   */
+  "property.track",
 ] as const;
 
 export type FlagKey = (typeof FLAG_KEYS)[number];

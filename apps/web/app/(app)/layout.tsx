@@ -18,6 +18,8 @@ import type { PullFreshness } from "@finance/core/bank-pull";
 import { readPullFreshness } from "@/lib/bank/pull";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/locale";
+import { getFlags } from "@/lib/flags";
+import { isFlagOn } from "@finance/core/flags";
 
 const NO_QUICK_ENTRY = {
   categories: [],
@@ -32,7 +34,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // Two stages rather than six reads in a row. This layout renders again
   // after every write, before the page's own reads start, so each read here
   // that waited on the one before was a delay every save paid.
-  const [connected, quickEntry, templates] = user
+  const [connected, quickEntry, templates, flags] = user
     ? await Promise.all([
         // Per user, not per deployment. This flag decides what the refresh
         // control promises, and the action behind it gates on whether *this*
@@ -45,8 +47,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         getQuickEntryContext(user.id),
         // Only for the badge below, which is not worth the whole shell.
         getRecurringTemplates(user.id).catch(() => null),
+        // Which surfaces the bars draw.
+        getFlags(),
       ])
-    : [false, NO_QUICK_ENTRY, null];
+    : [false, NO_QUICK_ENTRY, null, null];
 
   const [freshness, arrivedCount] = await Promise.all([
     // One small read for a control on every surface, and only where there is
@@ -97,6 +101,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             displayName={name}
             initial={initial}
             ledgerBadge={arrivedCount}
+            showProperty={flags ? isFlagOn(flags, "property.track") : false}
           >
             {children}
           </AppShell>

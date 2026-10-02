@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Plus } from "@phosphor-icons/react";
 import { LazyMotion, m, MotionConfig } from "motion/react";
 import { cn } from "@/lib/utils";
-import { activeNavHref, APP_NAV_ITEMS } from "@/lib/navigation";
+import { activeNavHref, navItems } from "@/lib/navigation";
 import {
   NOTCH_CENTRE_CLASS,
   NOTCH_ITEM_ACTIVE_CLASS,
@@ -197,14 +197,18 @@ export function TopNav({
   displayName,
   initial,
   ledgerBadge = 0,
+  showProperty = false,
 }: {
   displayName: string;
   initial: string;
   ledgerBadge?: number;
+  /** The Immobilier surface, for an account with `property.track`. */
+  showProperty?: boolean;
 }) {
   const t = useT();
   const pathname = usePathname();
   const here = activeNavHref(pathname);
+  const items = navItems({ property: showProperty });
   const { sentinelRef, scrolled } = useScrolledPastTop();
 
   return (
@@ -234,7 +238,7 @@ export function TopNav({
           <NotchWing side="end" />
           <LazyMotion features={loadMotionFeatures} strict>
             <MotionConfig reducedMotion="user">
-              {APP_NAV_ITEMS.map((item) => {
+              {items.map((item) => {
                 const Icon = item.icon;
                 const active = here === item.href;
                 const label = t(item.labelKey);
@@ -267,7 +271,12 @@ export function TopNav({
                       <span
                         className={cn(
                           "whitespace-nowrap",
-                          !active && "sr-only lg:not-sr-only",
+                          // Six labelled surfaces need the room `xl` gives,
+                          // or the notch reaches the wordmark.
+                          !active &&
+                            (items.length > 5
+                              ? "sr-only xl:not-sr-only"
+                              : "sr-only lg:not-sr-only"),
                         )}
                       >
                         {label}

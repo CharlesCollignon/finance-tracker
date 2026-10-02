@@ -789,7 +789,7 @@ all; changing one alone breaks the frame.
 - On small screens a bottom bar at `3.5rem` with a `0.75rem` inset, inside the
   safe area, holding the surfaces and nothing else. There, active state is
   carried by foreground colour and the icon's fill, not by a pill or an
-  underline, and a label shrinks with its slot, from 10px down to 8.5px,
+  underline, and a label shrinks with its slot, from 10px down to 8px,
   rather than lose its end.
 
 ### Moments

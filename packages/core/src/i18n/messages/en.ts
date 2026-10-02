@@ -12,6 +12,7 @@ import { reviewScreensEn } from "./review-screens.en";
 import { planScreenEn } from "./plan-screen.en";
 import { homeScreenEn } from "./home-screen.en";
 import { actionsEn } from "./actions.en";
+import { propertyEn } from "./property.en";
 
 /**
  * What the app says, in English.
@@ -81,6 +82,7 @@ export const en = {
     charges: "Recurring",
     plan: "Plan",
     wallets: "Investments",
+    property: "Property",
     profile: "Profile",
     ledgerList: "List",
     ledgerCalendar: "Calendar",
@@ -3263,6 +3265,7 @@ export const en = {
   reviewScreens: reviewScreensEn,
   planScreen: planScreenEn,
   homeScreen: homeScreenEn,
+  property: propertyEn,
 } satisfies MessageTree;
 
 export type Messages = typeof en;

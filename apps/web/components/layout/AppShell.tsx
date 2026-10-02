@@ -13,6 +13,8 @@ interface AppShellProps {
   initial: string;
   /** How many charges are waiting to be confirmed, for the Ledger's badge. */
   ledgerBadge?: number;
+  /** The Immobilier surface, for an account with `property.track`. */
+  showProperty?: boolean;
 }
 
 export function AppShell({
@@ -20,6 +22,7 @@ export function AppShell({
   displayName,
   initial,
   ledgerBadge = 0,
+  showProperty = false,
 }: AppShellProps) {
   return (
     <AccountLabelProvider displayName={displayName} initial={initial}>
@@ -31,6 +34,7 @@ export function AppShell({
           displayName={displayName}
           initial={initial}
           ledgerBadge={ledgerBadge}
+          showProperty={showProperty}
         />
         {/* From `md` the notch and the bar either side of it are fixed over the
           page, not in its flow, so the page starts a bezel and a notch down
@@ -58,7 +62,7 @@ export function AppShell({
             <PageEnter>{children}</PageEnter>
           </main>
         </div>
-        <BottomNav ledgerBadge={ledgerBadge} />
+        <BottomNav ledgerBadge={ledgerBadge} showProperty={showProperty} />
       </div>
     </AccountLabelProvider>
   );
