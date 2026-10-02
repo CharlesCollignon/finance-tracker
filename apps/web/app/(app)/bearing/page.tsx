@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { BearingMonthView } from "@/components/finance/bearing/BearingMonthView";
 import { MonthReadSlot } from "@/components/finance/bearing/MonthReadSlot";
+import { RecapSlot } from "@/components/finance/bearing/RecapSlot";
 
 interface BearingPageProps {
   searchParams: Promise<{ y?: string; m?: string }>;
@@ -51,6 +52,14 @@ export default async function BearingPage({ searchParams }: BearingPageProps) {
           data={data}
           bankInvite={bankInvite}
           bankAttention={bankAttention}
+          // The week is this month's to recap, not a month browsed to.
+          recapSlot={
+            data.balance.period === "current" ? (
+              <Suspense fallback={null}>
+                <RecapSlot userId={user.id} />
+              </Suspense>
+            ) : null
+          }
           // A month ahead has nothing to read yet: nothing has happened in it.
           readSlot={
             data.balance.period === "future" ? null : (

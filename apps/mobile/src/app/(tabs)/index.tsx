@@ -16,13 +16,18 @@ import {
   UpcomingCard,
   WhereItWentCard,
 } from "@/components/bearing/MonthCards";
+import { WeeklyRecapCard } from "@/components/bearing/WeeklyRecapCard";
 import { StaggerItem } from "@/components/motion/Stagger";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { Text } from "@/components/ui/Text";
 import { useBankState } from "@/hooks/useBankState";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { gatherHomeMonth, gatherHomeRead } from "@/lib/home-data";
+import {
+  gatherHomeMonth,
+  gatherHomeRead,
+  gatherHomeRecap,
+} from "@/lib/home-data";
 import { useAuth } from "@/providers/AuthProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useTabBarClearance } from "@/theme/chrome";
@@ -73,6 +78,13 @@ export default function HomeScreen() {
         ? await gatherHomeRead(user.id, year, month, locale)
         : null,
     [user?.id, year, month, locale, readable],
+  );
+
+  // The week's recap: its own load too, and nothing on most days.
+  const { data: recap } = useRefreshable(
+    async () => (user ? await gatherHomeRecap(user.id, locale) : null),
+    [user?.id, locale],
+    { reads: ["transactions", "templates", "bank", "preferences"] },
   );
 
   // Whether a bank can be connected here at all is the deployment's to say.
@@ -136,6 +148,11 @@ export default function HomeScreen() {
             <StaggerItem index={next()}>
               <BalanceCard data={data} bank={bank} />
             </StaggerItem>
+
+            {/* The week is this month's to recap, not a month browsed to. */}
+            {current && recap ? (
+              <WeeklyRecapCard key={recap.weekOf} recap={recap} />
+            ) : null}
 
             {data.empty ? (
               <StaggerItem index={next()}>

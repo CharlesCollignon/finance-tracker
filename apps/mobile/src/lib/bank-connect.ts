@@ -11,7 +11,7 @@ import {
 } from "@/lib/mutations";
 import { supabase } from "@/lib/supabase";
 import { callWebApi, webApiAvailable } from "@/lib/web-api";
-import { dbError } from "@finance/data/errors";
+import * as preferences from "@finance/data/preferences";
 
 /**
  * Connecting a bank from the phone, and looking after it afterwards.
@@ -113,13 +113,8 @@ export async function readBankServerFacts(
 }
 
 /** Which invitations this user has dismissed, on any device. */
-export async function readDismissedPrompts(userId: string): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("user_preferences")
-    .select("dismissed_prompts")
-    .eq("user_id", userId)
-    .maybeSingle();
-  return error ? [] : (data?.dismissed_prompts ?? []);
+export function readDismissedPrompts(userId: string): Promise<string[]> {
+  return preferences.readDismissedPrompts(supabase, userId);
 }
 
 /**
@@ -148,39 +143,19 @@ export function shouldInvite(
   return !dismissed.includes(`bank-invite:${surface}`);
 }
 
-/**
- * Stop inviting on one surface, for good and on every device.
- *
- * Updated when the preferences row exists, and created with the language in
- * use when it does not: a new row's default of English would switch a French
- * reader's app to English the next time it was read.
- */
+/** Stop inviting on one surface, for good and on every device. */
 export async function dismissBankInvite(
   userId: string,
   surface: BankInviteSurface,
   locale: Locale,
 ): Promise<{ error?: string }> {
-  const { data } = await supabase
-    .from("user_preferences")
-    .select("dismissed_prompts")
-    .eq("user_id", userId)
-    .maybeSingle();
-  const dismissed = new Set(data?.dismissed_prompts ?? []);
-  dismissed.add(`bank-invite:${surface}`);
-  const { error } = data
-    ? await supabase
-        .from("user_preferences")
-        .update({
-          dismissed_prompts: [...dismissed],
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", userId)
-    : await supabase.from("user_preferences").insert({
-        user_id: userId,
-        locale,
-        dismissed_prompts: [...dismissed],
-      });
-  return error ? { error: dbError(error) } : {};
+  const result = await preferences.dismissPrompt(
+    supabase,
+    userId,
+    `bank-invite:${surface}`,
+    locale,
+  );
+  return result.success ? {} : { error: result.error };
 }
 
 export type FileConnectResult =

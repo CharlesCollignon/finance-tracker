@@ -4,15 +4,23 @@
  * A daily job asks this once per user. The rule throughout is that the
  * interesting event is a change, not a state: a new month is only news once,
  * and repeating it every morning is how a notification permission gets
- * revoked.
+ * revoked. The Monday recap (`weekly-recap.ts`) is the one exception, made
+ * on purpose in October 2026: a state, once a week, under its own switch.
+ *
+ * What is sent at all is filtered after this, by the kinds the user turned
+ * off and the quiet hours (`notification-kinds.ts`), in the web's
+ * `lib/push/deliver.ts`.
  *
  * Kept free of database and network concerns so the decisions are testable
  * without either.
  */
 
 import type { Translate } from "./i18n/t";
+import type { NotificationKind } from "./notification-kinds";
 
 export interface PendingNotification {
+  /** Which switch in the settings governs it. */
+  kind: NotificationKind;
   /** Dedupe key, checked against what has already been sent. */
   key: string;
   title: string;
@@ -73,6 +81,7 @@ export function buildDueNotifications({
     const key = `month-open:${monthKey}`;
     if (!alreadySent.has(key)) {
       due.push({
+        kind: "monthOpen",
         key,
         title: t("push.monthOpen.title"),
         body:
@@ -92,6 +101,7 @@ export function buildDueNotifications({
     const key = `arrived:${today}`;
     if (!alreadySent.has(key)) {
       due.push({
+        kind: "arrived",
         key,
         title: t("push.arrived.title", { count: arrivedCharges }),
         body: t("push.arrived.body", { count: arrivedCharges }),

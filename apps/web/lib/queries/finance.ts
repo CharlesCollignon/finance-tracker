@@ -1,6 +1,5 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import {
   getCurrentMonth,
   getMonthBounds,
@@ -20,6 +19,7 @@ import type {
   TransactionWithCategory,
 } from "@finance/core/types/database";
 import { getLocale } from "@/lib/locale";
+import * as templates from "@finance/data/templates";
 
 export async function getTransactions(
   userId: string,
@@ -72,23 +72,11 @@ export async function getRecurringSkipKeys(
   year: number,
   month: number,
 ): Promise<Set<string>> {
-  const supabase = await createClient();
-  const { start, end } = getMonthBounds(year, month);
-  const { data, error } = await supabase
-    .from("recurring_skips")
-    .select("template_id, occurred_on")
-    .eq("user_id", userId)
-    .gte("occurred_on", start)
-    .lte("occurred_on", end);
-
-  if (error) {
-    throw error;
-  }
-
-  return new Set(
-    (data ?? []).map((row) =>
-      recurringOccurrenceKey(row.template_id, row.occurred_on),
-    ),
+  return templates.getRecurringSkipKeys(
+    await createClient(),
+    userId,
+    year,
+    month,
   );
 }
 
@@ -149,21 +137,8 @@ export async function getMonthlySummary(
 }
 
 export const getRecurringTemplates = cache(
-  async (userId: string): Promise<RecurringTemplateWithCategory[]> => {
-    const supabase = await createClient();
-
-    const { data, error } = await supabase
-      .from("recurring_templates")
-      .select("*, categories(name, type, icon, counts_toward_summary)")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      throw error;
-    }
-
-    return (data ?? []) as RecurringTemplateWithCategory[];
-  },
+  async (userId: string): Promise<RecurringTemplateWithCategory[]> =>
+    templates.getRecurringTemplates(await createClient(), userId),
 );
 
 /**

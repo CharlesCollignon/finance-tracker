@@ -81,10 +81,10 @@ export const fr: Messages = {
     passkeys: "Clés d'accès",
     notificationsSection: "Notifications",
     notificationsFooterWeb:
-      "Ce navigateur uniquement — votre téléphone a ses propres rappels.",
+      "Le premier interrupteur ne concerne que ce navigateur. Les autres valent pour tous vos appareils.",
     notificationsFooterMobile:
-      "Des rappels pour ce qui revient, et une alerte quand la banque laisse quelque chose sans catégorie.",
-    remindersAndNudges: "Rappels et alertes",
+      "Le premier interrupteur ne concerne que ce téléphone. Les autres valent pour tous vos appareils.",
+    onThisPhone: "Sur ce téléphone",
     dataSection: "Données",
     deleteAllData: "Supprimer toutes les données",
     deleteConfirmLabel: "Tapez DELETE pour confirmer",
@@ -94,6 +94,18 @@ export const fr: Messages = {
     deleteAccount: "Supprimer le compte",
     deleteMyAccount: "Supprimer mon compte",
     saved: "Enregistré",
+    notificationsOff: "Notifications désactivées",
+    onThisBrowser: "Sur ce navigateur",
+    pushChecking: "Vérification…",
+    pushNotConfigured: "Pas encore disponible ici",
+    pushUnavailable: "Indisponible ici",
+    pushUnsupported: "Ce navigateur ne peut pas recevoir de notifications.",
+    pushInstallFirst:
+      "Sur iPhone et iPad, ajoutez d'abord Pluclair à l'écran d'accueil\u00A0: Safari n'autorise les notifications que pour les apps installées.",
+    pushBlocked:
+      "Les notifications sont bloquées pour ce site dans les réglages du navigateur.",
+    pushNotAllowed: "Les notifications n'ont pas été autorisées.",
+    pushRefused: "Ce navigateur a refusé l'abonnement aux notifications.",
     notificationsOn: "Notifications activées",
     remindersOnly:
       "Rappels activés. Cette version ne peut pas recevoir les alertes de votre banque.",
@@ -223,7 +235,7 @@ export const fr: Messages = {
       one: "{count} opération attend une catégorie. Vérifier",
       other: "{count} opérations attendent une catégorie. Vérifier",
     },
-    repeatTitle: "Répéter aujourd'hui ?",
+    repeatTitle: "Répéter aujourd'hui\u00A0?",
     repeatBody: "Ajoute un autre {category} de {amount} daté d'aujourd'hui.",
     repeatConfirm: "Ajouter pour aujourd'hui",
     planned: "À venir",
@@ -453,13 +465,13 @@ export const fr: Messages = {
       "Loyer, abonnements, un virement mensuel vers l'épargne — tout ce que vous savez déjà à venir.",
     emptyTitleMobile: "Qu'est-ce qui revient chaque mois\u00A0?",
     emptyBodyMobile: "Loyer, salaire, abonnements, un achat d'ETF mensuel.",
-    remindTitle: "Un rappel avant qu'elles ne passent\u00A0?",
+    remindTitle: "Être prévenu avant les grosses dépenses\u00A0?",
     remindBody:
-      "Un rappel la veille de chaque échéance, pour que rien ne passe inaperçu. Entièrement sur votre appareil.",
+      "La veille d'une grosse opération ou d'une annuelle, le jour du bilan, et un récap le lundi. Rien la nuit, et chaque type se coupe dans le profil.",
     remindYes: "Me rappeler",
     remindNo: "Non merci",
     remindNeedsPermission: "Les rappels demandent l'autorisation de notifier",
-    remindOn: "Rappels activés — vous serez prévenu la veille",
+    remindOn: "Notifications activées",
   },
 
   add: {
@@ -1063,7 +1075,7 @@ export const fr: Messages = {
     peaOfCeiling: "sur {ceiling}",
     peaRoomLeft: "de marge restante",
     peaCashOnly:
-      "Seuls les versements comptent dans le plafond ; la performance, non.",
+      "Seuls les versements comptent dans le plafond\u00A0; la performance, non.",
     addItem: "Ajouter une ligne",
     addCryptoItem: "Ajouter une ligne crypto",
     itemAdded: "Ligne ajoutée",
@@ -1224,7 +1236,6 @@ export const fr: Messages = {
     pickADate: "Choisir une date",
     setUp: "Configuration",
     usePassword: "Utiliser le mot de passe",
-    capsAndNewMonths: "Budgets et nouveaux mois",
     browserNotifications: "Notifications du navigateur",
     theRun: "La série",
     kept: "Économisé",
@@ -1494,7 +1505,99 @@ export const fr: Messages = {
       "Inclut toutes les échéances dues ce mois-ci, achats de placements compris.",
   },
 
+  notificationKinds: {
+    recap: {
+      label: "Le récap du lundi",
+      hint: "Votre semaine en quelques chiffres, le lundi matin.",
+    },
+    overdraft: {
+      label: "Risque de découvert",
+      hint: "Quand le solde prévu passe sous zéro avant la fin du mois.",
+    },
+    close: {
+      label: "Bilan du mois",
+      hint: "Le jour où noter votre solde, et quand votre banque l'a fait pour vous.",
+    },
+    bigCharge: {
+      label: "Grosse dépense demain",
+      hint: "La veille d'une opération plus forte que d'habitude, ou annuelle.",
+    },
+    arrived: {
+      label: "Opération arrivée",
+      hint: "Quand un salaire ou une opération prévue semble être passé.",
+    },
+    review: {
+      label: "Opérations à classer",
+      hint: "Quand votre banque a apporté des opérations sans catégorie.",
+    },
+    monthOpen: {
+      label: "Nouveau mois",
+      hint: "Le 1er, quand le mois commence.",
+    },
+    bank: {
+      label: "Connexion bancaire",
+      hint: "Quand il faut la renouveler, ou si elle s'est arrêtée.",
+    },
+  },
+  recap: {
+    title: "Votre semaine",
+    lastWeek: "{amount} dépensés la semaine dernière.",
+    noSpending: "Aucune dépense notée la semaine dernière.",
+    monthSame:
+      "Depuis le 1er\u00A0: {amount}, comme à la même date en {month}.",
+    monthLess:
+      "Depuis le 1er\u00A0: {amount}, {delta} de moins qu'à la même date en {month}.",
+    monthMore:
+      "Depuis le 1er\u00A0: {amount}, {delta} de plus qu'à la même date en {month}.",
+    stillToCome: {
+      one: "Encore à venir ce mois-ci\u00A0: {amount}, en {count} opération.",
+      other:
+        "Encore à venir ce mois-ci\u00A0: {amount}, en {count} opérations.",
+    },
+    aboveNormal: "{name} dépasse déjà un mois normal (autour de {normal}).",
+    waiting: {
+      one: "{count} opération de votre banque attend sa catégorie.",
+      other: "{count} opérations de votre banque attendent leur catégorie.",
+    },
+    optIn: "Me l'envoyer chaque lundi",
+    dismiss: "Vu",
+  },
   push: {
+    bigCharge: {
+      title: "Demain\u00A0: {name}",
+      body: "{amount} à prévoir, plus que vos opérations récurrentes habituelles.",
+      yearly: "{amount} à prévoir — elle ne revient qu'une fois par an.",
+      titleSeveral: {
+        one: "Demain\u00A0: {count} grosse opération",
+        other: "Demain\u00A0: {count} grosses opérations",
+      },
+    },
+    overdraft: {
+      title: "Découvert possible le {date}",
+      body: "Avec ce qui est prévu, le compte descendrait à {amount} le {date}, puis remonterait à {end} en fin de mois.",
+      bodyStays:
+        "Avec ce qui est prévu, le compte descendrait à {amount} le {date} et finirait le mois à {end}.",
+    },
+    close: {
+      title: "Faites le bilan de {month}",
+      body: "C'est le jour de lecture\u00A0: notez le solde de votre compte pour voir ce que {month} vous a laissé.",
+      bodyRun: {
+        one: "C'est le jour de lecture\u00A0: notez le solde de votre compte. Votre série en est à {count} mois.",
+        other:
+          "C'est le jour de lecture\u00A0: notez le solde de votre compte. Votre série en est à {count} mois.",
+      },
+    },
+    closed: {
+      title: "Le bilan de {month} est fait",
+      baseline:
+        "Votre banque a donné le solde\u00A0: c'est le point de départ des prochains bilans.",
+      overRecorded:
+        "Votre banque a donné le solde. Il y a plus sur le compte que ce qui est noté pour {month}\u00A0: ouvrez le bilan pour voir l'écart.",
+      kept: "Votre banque a donné le solde\u00A0: {month} vous a laissé {amount}.",
+      spentMore:
+        "Votre banque a donné le solde\u00A0: {month} a coûté {amount} de plus qu'il n'a rapporté.",
+      unrecorded: "Dépenses non notées\u00A0: {amount}.",
+    },
     monthOpen: {
       title: "Un nouveau mois",
       idle: "Prévoyez ce qui revient, et voyez ce que le mois vous laisse.",
@@ -1891,7 +1994,7 @@ export const fr: Messages = {
     step4Title: "Déposez-le ici",
     step4Body:
       "Pluclair le vérifie, puis importe votre historique. Ce qu'il ne sait pas classer seul vous attend dans une courte revue.",
-    factReadOnly: "Lecture seule : rien ici ne peut déplacer d'argent.",
+    factReadOnly: "Lecture seule\u00A0: rien ici ne peut déplacer d'argent.",
     factKey:
       "Pluclair conserve votre fichier d'identifiants chiffré, hors de portée de toute application, et le supprime dès que vous vous déconnectez.",
     factConsent:
@@ -1938,7 +2041,7 @@ export const fr: Messages = {
     unreachable:
       "Impossible de joindre Pluclair pour l'instant. Réessayez dans un moment.",
     notConnected: "Aucune banque n'est connectée.",
-    priceNote: "Environ 3 € par mois, payés à open-banking.io.",
+    priceNote: "Environ 3\u00A0€ par mois, payés à open-banking.io.",
     connected: "Votre banque est connectée.",
     importTitle: "Import de votre historique",
     importBody:
@@ -1975,7 +2078,7 @@ export const fr: Messages = {
     accountsBody:
       "Choisissez les comptes qui contiennent votre argent courant. Leur solde est celui affiché dans Le point.",
     disconnect: "Déconnecter",
-    disconnectTitle: "Déconnecter votre banque ?",
+    disconnectTitle: "Déconnecter votre banque\u00A0?",
     disconnectBody:
       "La synchronisation s'arrête et votre fichier d'identifiants est supprimé de Pluclair.",
     disconnectApiKey:
@@ -2000,7 +2103,7 @@ export const fr: Messages = {
       "Voyez votre vrai solde, lu depuis votre banque à chaque actualisation.",
     inviteWelcome: "Laissez votre banque remplir tout cela pour vous.",
     inviteLedger:
-      "Arrêtez de tout saisir : connectez votre banque et les lignes arrivent toutes seules.",
+      "Arrêtez de tout saisir\u00A0: connectez votre banque et les lignes arrivent toutes seules.",
     invitePlan:
       "Votre solde est lu pour vous, et le bilan des mois se fait de lui-même.",
     dismissInvite: "Ne plus afficher",

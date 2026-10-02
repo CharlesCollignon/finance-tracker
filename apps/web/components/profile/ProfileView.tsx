@@ -27,6 +27,8 @@ import {
   PasskeysPanel,
   type PasskeyItem,
 } from "@/components/profile/PasskeysPanel";
+import type { NotificationPrefs } from "@finance/core/notification-kinds";
+import { NotificationKindRows } from "@/components/profile/NotificationKindRows";
 import { NotificationsRow } from "@/components/profile/NotificationsRow";
 import { setCurrencyPreference, useCurrency } from "@/lib/use-currency";
 import { CURRENCY_LABELS } from "@finance/core/constants";
@@ -50,6 +52,8 @@ interface ProfileViewProps {
   initialPasskeys: PasskeyItem[];
   /** Empty when the deployment has no VAPID key configured. */
   pushPublicKey: string;
+  /** Which kinds of notification the account has turned off. */
+  notificationPrefs: NotificationPrefs;
   /** Whether the Bank row leads anywhere for this account. */
   showBank: boolean;
 }
@@ -69,6 +73,7 @@ type OpenRow = "name" | "passkeys" | "wipe" | "close" | null;
  */
 export function ProfileView({
   pushPublicKey,
+  notificationPrefs,
   email,
   fullName,
   provider,
@@ -276,6 +281,7 @@ export function ProfileView({
           footer={t("profile.notificationsFooterWeb")}
         >
           <NotificationsRow publicKey={pushPublicKey} />
+          <NotificationKindRows prefs={notificationPrefs} />
         </ListSection>
 
         <ListSection title={t("profile.dataSection")}>

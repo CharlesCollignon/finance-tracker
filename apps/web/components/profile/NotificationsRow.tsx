@@ -6,6 +6,7 @@ import { BellSimple } from "@phosphor-icons/react";
 import { ListRow } from "@/components/ui/ListRow";
 import { Switch } from "@/components/ui/Switch";
 import { useToast } from "@/components/layout/ToastProvider";
+import { resolveMessage, type Key } from "@finance/core/i18n/t";
 import { useT } from "@/lib/locale-context";
 import {
   checkPushSupport,
@@ -21,7 +22,7 @@ interface NotificationsRowProps {
 
 type State =
   | { kind: "loading" }
-  | { kind: "unsupported"; reason: string }
+  | { kind: "unsupported"; reason: Key }
   | { kind: "off" }
   | { kind: "on" };
 
@@ -70,28 +71,31 @@ export function NotificationsRow({ publicKey }: NotificationsRowProps) {
     startTransition(async () => {
       const result = next ? await enablePush(publicKey) : await disablePush();
       if (result.error) {
-        toast(result.error, "error");
+        toast(resolveMessage(t, result.error), "error");
         return;
       }
       setState({ kind: next ? "on" : "off" });
-      toast(next ? "Notifications on" : "Notifications off", "success");
+      toast(
+        t(next ? "profile.notificationsOn" : "profile.notificationsOff"),
+        "success",
+      );
     });
   }
 
   const unavailable = state.kind === "unsupported" || !publicKey;
   const value =
     state.kind === "loading"
-      ? "Checking…"
+      ? t("profile.pushChecking")
       : state.kind === "unsupported"
-        ? state.reason
+        ? t(state.reason)
         : !publicKey
-          ? "Not configured here"
+          ? t("profile.pushNotConfigured")
           : undefined;
 
   return (
     <ListRow
       icon={BellSimple}
-      label={t("common.capsAndNewMonths")}
+      label={t("profile.onThisBrowser")}
       value={value}
       disabled={unavailable || state.kind === "loading"}
       trailing={

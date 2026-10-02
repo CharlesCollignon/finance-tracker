@@ -2,6 +2,9 @@ import { hasBankFeed as bankFeeds } from "@finance/data/bank-feed";
 import * as fulfilment from "@finance/data/fulfilment";
 import * as closes from "@finance/data/month-close";
 import { isMissingSchema } from "@finance/data/schema";
+import * as templates from "@finance/data/templates";
+import * as bankBalance from "@finance/data/bank-balance";
+import * as preferences from "@finance/data/preferences";
 import {
   getCurrentMonth,
   getMonthBounds,
@@ -21,7 +24,6 @@ import {
   filterLiveProposals,
   type RecurringProposal,
 } from "@finance/core/recurring-detection";
-import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { type FulfilmentProposal } from "@finance/core/recurring-fulfilment";
 import { buildMonthlySummary } from "@finance/core/monthly-summary";
 import {
@@ -38,11 +40,7 @@ import {
   buildMerchantIndex,
   type MerchantRule,
 } from "@finance/core/merchant-memory";
-import {
-  cashBalanceAsOf,
-  type AccountRows,
-  type CashBalance,
-} from "@finance/core/bank-balance";
+import type { CashBalance } from "@finance/core/bank-balance";
 import {
   describeReviewReason,
   type ReviewReason,
@@ -111,16 +109,7 @@ export async function getTransactions(
 export async function getRecurringTemplates(
   userId: string,
 ): Promise<RecurringTemplateWithCategory[]> {
-  const { data, error } = await supabase
-    .from("recurring_templates")
-    .select("*, categories(name, type, icon, counts_toward_summary)")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    throw error;
-  }
-  return (data ?? []) as RecurringTemplateWithCategory[];
+  return templates.getRecurringTemplates(supabase, userId);
 }
 
 /**
@@ -200,28 +189,12 @@ export async function getSkippedOccurrences(
   }));
 }
 
-async function getRecurringSkipKeys(
+function getRecurringSkipKeys(
   userId: string,
   year: number,
   month: number,
 ): Promise<Set<string>> {
-  const { start, end } = getMonthBounds(year, month);
-  const { data, error } = await supabase
-    .from("recurring_skips")
-    .select("template_id, occurred_on")
-    .eq("user_id", userId)
-    .gte("occurred_on", start)
-    .lte("occurred_on", end);
-
-  if (error) {
-    throw error;
-  }
-
-  return new Set(
-    (data ?? []).map((row) =>
-      recurringOccurrenceKey(row.template_id, row.occurred_on),
-    ),
-  );
+  return templates.getRecurringSkipKeys(supabase, userId, year, month);
 }
 
 export async function getMonthlySummary(
@@ -573,89 +546,16 @@ export function getRecordedCashFlows(
 /* --------------------------------------------------------- the bank feed */
 
 /** Every account the connection has ever shown, ticked or not. */
-export async function getBankAccounts(userId: string): Promise<BankAccount[]> {
-  const { data, error } = await supabase
-    .from("bank_accounts")
-    .select("*")
-    .eq("user_id", userId)
-    .order("label");
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return [];
-    }
-    throw error;
-  }
-
-  return (data ?? []) as BankAccount[];
+export function getBankAccounts(userId: string): Promise<BankAccount[]> {
+  return bankBalance.getBankAccounts(supabase, userId);
 }
 
-/**
- * What the counted accounts held at the end of a given day.
- *
- * Reads the stored statement rather than the bank, which is what lets the
- * phone answer at all: it holds no credentials and cannot reach the provider.
- * Null when the feature is not set up — no connection, or nobody has said
- * which accounts hold spendable money. That is different from a reading that
- * failed, which comes back with `ok: false` and the accounts it could not
- * read.
- */
-export async function readCashBalance(
+/** What the counted accounts held at the end of a given day. */
+export function readCashBalance(
   userId: string,
   date: string,
 ): Promise<CashBalance | null> {
-  const accounts = await getBankAccounts(userId);
-  const counted = accounts.filter((account) => account.counts_as_cash);
-
-  if (counted.length === 0) {
-    return null;
-  }
-
-  const { data, error } = await supabase
-    .from("bank_feed_items")
-    .select("provider_account_id, occurred_on, balance_after, intraday_index")
-    .eq("user_id", userId)
-    .in(
-      "provider_account_id",
-      counted.map((account) => account.provider_account_id),
-    )
-    .lte("occurred_on", date)
-    // Newest first and capped: only the last row of the last day is needed,
-    // and one page of it is far more than enough to find that row for every
-    // account. Ordering by intraday_index second keeps the day's last
-    // movement ahead of the ones before it.
-    .order("occurred_on", { ascending: false })
-    .order("intraday_index", { ascending: true })
-    .limit(400);
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return null;
-    }
-    throw error;
-  }
-
-  const byAccount = new Map<string, AccountRows>();
-  for (const account of counted) {
-    byAccount.set(account.provider_account_id, {
-      accountId: account.provider_account_id,
-      label: account.label,
-      rows: [],
-    });
-  }
-
-  for (const row of data ?? []) {
-    byAccount.get(row.provider_account_id as string)?.rows.push({
-      occurredOn: row.occurred_on as string,
-      balanceAfter:
-        row.balance_after === null ? null : Number(row.balance_after),
-      intradayIndex: row.intraday_index as number,
-    });
-  }
-
-  // A lapsed consent stores no rows, so it arrives here with an empty list
-  // and is reported as unreadable rather than as an empty account.
-  return cashBalanceAsOf([...byAccount.values()], date);
+  return bankBalance.readCashBalance(supabase, userId, date);
 }
 
 export interface BankMovement {
@@ -1061,4 +961,11 @@ export async function getRecurringProposals(
   );
 
   return filterLiveProposals(proposals, today, covered);
+}
+
+/** Which kinds of notification the account has turned off. */
+export function getNotificationSettings(
+  userId: string,
+): Promise<preferences.NotificationSettings> {
+  return preferences.getNotificationSettings(supabase, userId);
 }

@@ -9,7 +9,8 @@ import {
 
 /**
  * What the Plan page remembers in this browser: the reader's own version of
- * the long view, and the highest milestone they have already been shown.
+ * the long view. The milestone already celebrated is the account's, not the
+ * browser's (`user_preferences.milestone_seen`), so every device agrees.
  *
  * This browser's only, and a convenience rather than a record. The long view
  * is a calculator — nothing the app reports elsewhere rests on what someone
@@ -23,7 +24,6 @@ import {
 // "savings", and each declared savings account has its own), so an older
 // draft would put the reader's savings under the wrong account.
 const DRAFT_KEY = "pluclair.plan.long-view:v2:";
-const SEEN_KEY = "pluclair.plan.milestone-seen:v1:";
 const CHANGE_EVENT = "pluclair-plan-storage";
 
 function read(key: string): string | null {
@@ -125,42 +125,4 @@ export function saveLongViewDraft(userId: string, draft: LongViewDraft): void {
 
 export function clearLongViewDraft(userId: string): void {
   write(DRAFT_KEY + userId, null);
-}
-
-/* ------------------------------------------------------------ milestones */
-
-/**
- * The highest milestone celebrated before this page load, read once per
- * account.
- *
- * Read once rather than live, because the page writes the new one as soon as
- * it has shown it: a live read would take the "new" badge away on the next
- * render, a second after it appeared.
- */
-const seenAtLoad = new Map<string, number | null>();
-
-function seenSnapshot(userId: string): number | null {
-  if (!seenAtLoad.has(userId)) {
-    const raw = read(SEEN_KEY + userId);
-    const value = raw === null ? NaN : Number(raw);
-    seenAtLoad.set(userId, Number.isFinite(value) ? value : null);
-  }
-  return seenAtLoad.get(userId) ?? null;
-}
-
-/** The milestone last celebrated, or null on a first visit. Undefined on the server. */
-export function useSeenMilestone(userId: string): number | null | undefined {
-  return useSyncExternalStore(
-    subscribe,
-    () => seenSnapshot(userId),
-    () => undefined,
-  );
-}
-
-export function rememberMilestone(userId: string, amount: number): void {
-  try {
-    window.localStorage.setItem(SEEN_KEY + userId, String(amount));
-  } catch {
-    // Celebrated twice is the worst that can happen.
-  }
 }

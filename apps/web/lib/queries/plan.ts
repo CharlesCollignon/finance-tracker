@@ -18,6 +18,8 @@ import {
 import { getWalletPortfolio } from "@/lib/queries/wallet-portfolio";
 import { getSavingsAccounts } from "@/lib/queries/savings-accounts";
 import type { SavingsAccountKind } from "@finance/core/types/database";
+import { getNotificationSettings } from "@finance/data/preferences";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * What the Plan page reads, in two loads — the phone's split
@@ -40,6 +42,12 @@ export interface PlanBase {
   templates: RecurringTemplateWithCategory[];
   /** Whether any recurring entry is running: without one there is no year ahead to draw. */
   hasTemplates: boolean;
+  /**
+   * The highest milestone already celebrated, on any device, or null before
+   * the first. Read with the page and held by it: the page writes the new one
+   * as soon as it has shown it.
+   */
+  milestoneSeen: number | null;
   /** Everything logged as savings, net of withdrawals. */
   savingsReserve: number;
   /**
@@ -66,15 +74,18 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
   const today = todayIsoLocal();
   const locale = await getLocale();
 
-  const [templates, savingsReserve, closes, cash, savings] = await Promise.all([
-    getRecurringTemplates(userId),
-    getSavingsReserve(userId),
-    getMonthCloseOverview(userId, today),
-    // Null for anyone with no spending accounts picked, which is everyone
-    // who has not connected a bank.
-    readCashBalance(userId, today),
-    getSavingsAccounts(userId),
-  ]);
+  const [templates, savingsReserve, closes, cash, savings, settings] =
+    await Promise.all([
+      getRecurringTemplates(userId),
+      getSavingsReserve(userId),
+      getMonthCloseOverview(userId, today),
+      // Null for anyone with no spending accounts picked, which is everyone
+      // who has not connected a bank.
+      readCashBalance(userId, today),
+      getSavingsAccounts(userId),
+      // A celebration missed is better than a Plan that fails to open.
+      getNotificationSettings(await createClient(), userId).catch(() => null),
+    ]);
 
   return {
     userId,
@@ -86,6 +97,7 @@ export async function gatherPlanBase(userId: string): Promise<PlanBase> {
       (template) =>
         template.active && (!template.ends_on || template.ends_on >= today),
     ),
+    milestoneSeen: settings?.milestoneSeen ?? null,
     savingsReserve,
     savingsAccounts: savings.accounts.map((account) => ({
       kind: account.kind,

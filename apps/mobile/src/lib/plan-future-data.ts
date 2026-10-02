@@ -16,6 +16,7 @@ import {
   type ForwardProjection,
 } from "@finance/core/projection";
 import type { RecurringTemplateWithCategory } from "@finance/core/types/database";
+import * as preferences from "@finance/data/preferences";
 
 import {
   getMonthCloseOverview,
@@ -25,6 +26,7 @@ import {
   readCashBalance,
   type MonthCloseOverview,
 } from "@/lib/queries";
+import { supabase } from "@/lib/supabase";
 import {
   getSavingsState,
   savingsCategoryKinds,
@@ -172,7 +174,6 @@ export const DEFAULT_PLAN_SETTINGS: PlanSettings = {
 // v2: the accounts gained the savings kinds, and the all-savings account
 // was renamed from "livret" (now "Autre livret") to "savings".
 const SETTINGS_KEY = "plan-future:v2:";
-const SEEN_KEY = "plan-milestone-seen:v1:";
 
 function finite(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
@@ -240,14 +241,18 @@ export async function savePlanSettings(
   }
 }
 
-/** The highest milestone already celebrated, or null on a first visit. */
+/**
+ * The highest milestone already celebrated, on any device, or null on a
+ * first visit. The account's rather than the phone's
+ * (`user_preferences.milestone_seen`), so the laptop and the phone do not
+ * each celebrate the same one.
+ */
 export async function loadSeenMilestone(
   userId: string,
 ): Promise<number | null> {
   try {
-    const raw = await AsyncStorage.getItem(SEEN_KEY + userId);
-    const value = raw === null ? NaN : Number(raw);
-    return Number.isFinite(value) ? value : null;
+    return (await preferences.getNotificationSettings(supabase, userId))
+      .milestoneSeen;
   } catch {
     return null;
   }
@@ -256,9 +261,10 @@ export async function loadSeenMilestone(
 export async function saveSeenMilestone(
   userId: string,
   amount: number,
+  locale: Locale,
 ): Promise<void> {
   try {
-    await AsyncStorage.setItem(SEEN_KEY + userId, String(amount));
+    await preferences.markMilestoneSeen(supabase, userId, amount, locale);
   } catch {
     // Celebrated twice is the worst that can happen.
   }

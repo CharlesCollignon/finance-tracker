@@ -26,6 +26,8 @@ import { ICON } from "@/theme/tokens";
 export interface ListRowProps {
   icon?: keyof typeof Ionicons.glyphMap;
   label: string;
+  /** A line under the label, for a setting whose name alone is not enough. */
+  hint?: string;
   /** Right-aligned current setting — "EUR", "3 passkeys", an account name. */
   value?: string;
   /** A switch, a badge, anything replacing the chevron. */
@@ -43,6 +45,7 @@ export interface ListRowProps {
 export function ListRow({
   icon,
   label,
+  hint,
   value,
   trailing,
   onPress,
@@ -65,15 +68,17 @@ export function ListRow({
           color={disabled ? colors.mutedForeground : tint}
         />
       ) : null}
-      <Text
-        className={cn(
-          "flex-1",
-          destructive && "text-destructive",
-          disabled && "text-muted-foreground",
-        )}
-      >
-        {label}
-      </Text>
+      <View className="flex-1 gap-0.5">
+        <Text
+          className={cn(
+            destructive && "text-destructive",
+            disabled && "text-muted-foreground",
+          )}
+        >
+          {label}
+        </Text>
+        {hint ? <Text variant="micro">{hint}</Text> : null}
+      </View>
       {value ? (
         <Text variant="muted" numberOfLines={1}>
           {value}
@@ -95,7 +100,7 @@ export function ListRow({
       {onPress ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={value ? `${label}, ${value}` : label}
+          accessibilityLabel={[label, hint, value].filter(Boolean).join(", ")}
           disabled={disabled}
           onPress={() => {
             void hapticSelection();

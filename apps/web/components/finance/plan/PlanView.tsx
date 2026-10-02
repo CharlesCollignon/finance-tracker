@@ -17,6 +17,7 @@ import { buildRunway } from "@finance/core/projection";
 import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+import { markMilestoneSeen } from "@/lib/actions/plan";
 import { GLASS_CARD } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
@@ -29,10 +30,8 @@ import { monthLabelAhead } from "./plan-controls";
 import { planEnvelopes } from "./plan-envelopes";
 import {
   clearLongViewDraft,
-  rememberMilestone,
   saveLongViewDraft,
   useLongViewDraft,
-  useSeenMilestone,
   type LongViewDraft,
 } from "./plan-storage";
 import { MonthsCard, RunCard } from "./RunCard";
@@ -219,23 +218,18 @@ function Milestones({
     null,
   );
 
-  // Celebrated once: when a tier was crossed since the last visit, on the
-  // user's real figures. A first visit only records where they stand.
-  const seen = useSeenMilestone(base.userId);
-  const isNew =
-    seen !== undefined &&
-    seen !== null &&
-    topReached !== null &&
-    topReached > seen;
+  // Celebrated once, on whichever device sees it first: when a tier was
+  // crossed since the last visit, on the user's real figures. A first visit
+  // only records where they stand. The figure the page loaded with is held,
+  // so writing the new one does not take the badge away again.
+  const [seen] = useState(base.milestoneSeen);
+  const isNew = seen !== null && topReached !== null && topReached > seen;
 
   useEffect(() => {
-    if (seen === undefined || topReached === null) {
-      return;
+    if (topReached !== null && (seen === null || topReached > seen)) {
+      void markMilestoneSeen(topReached);
     }
-    if (seen === null || topReached > seen) {
-      rememberMilestone(base.userId, topReached);
-    }
-  }, [base.userId, seen, topReached]);
+  }, [seen, topReached]);
 
   return (
     <MilestonesCard

@@ -141,10 +141,10 @@ export const en = {
     passkeys: "Passkeys",
     notificationsSection: "Notifications",
     notificationsFooterWeb:
-      "This browser only — your phone has its own reminders.",
+      "The first switch is for this browser only. The others apply on all your devices.",
     notificationsFooterMobile:
-      "Reminders for what repeats, plus a nudge when the bank leaves something needing a category.",
-    remindersAndNudges: "Reminders and nudges",
+      "The first switch is for this phone only. The others apply on all your devices.",
+    onThisPhone: "On this phone",
     dataSection: "Data",
     deleteAllData: "Delete all data",
     deleteConfirmLabel: "Type DELETE to confirm",
@@ -155,6 +155,18 @@ export const en = {
     deleteMyAccount: "Delete my account",
     /** What a server action that reported nothing in particular means. */
     saved: "Saved",
+    notificationsOff: "Notifications off",
+    onThisBrowser: "On this browser",
+    pushChecking: "Checking…",
+    pushNotConfigured: "Not available here yet",
+    pushUnavailable: "Not available here",
+    pushUnsupported: "This browser can't receive notifications.",
+    pushInstallFirst:
+      "On iPhone and iPad, add Pluclair to your home screen first — Safari only allows notifications for installed apps.",
+    pushBlocked:
+      "Notifications are blocked for this site in your browser settings.",
+    pushNotAllowed: "Notifications were not allowed.",
+    pushRefused: "This browser refused the notification subscription.",
     notificationsOn: "Notifications on",
     remindersOnly:
       "Reminders on. This build can't receive nudges from your bank.",
@@ -653,13 +665,13 @@ export const en = {
       "Rent, subscriptions, a monthly transfer into savings — anything you already know is coming.",
     emptyTitleMobile: "What repeats each month?",
     emptyBodyMobile: "Rent, salary, subscriptions, a monthly ETF buy.",
-    remindTitle: "Want a nudge before these post?",
+    remindTitle: "Hear about large payments before they go?",
     remindBody:
-      "One reminder the evening before each item is due, so nothing lands unnoticed. Entirely on your device.",
+      "The day before a large or yearly payment, on your reading day, and a recap on Mondays. Nothing at night, and each kind can be turned off in your profile.",
     remindYes: "Remind me",
     remindNo: "No thanks",
     remindNeedsPermission: "Reminders need notification permission",
-    remindOn: "Reminders on — you'll hear the evening before",
+    remindOn: "Notifications on",
   },
 
   /**
@@ -1663,7 +1675,6 @@ export const en = {
     pickADate: "Pick a date",
     setUp: "Set up",
     usePassword: "Use password",
-    capsAndNewMonths: "Budgets and new months",
     browserNotifications: "Browser notifications",
     theRun: "The run",
     kept: "Kept",
@@ -2135,7 +2146,98 @@ export const en = {
    * The one place a browser preference is no use at all, which is why the
    * locale has to be stored per user and not only in a cookie.
    */
+  /** The Monday recap: the push and the card on Le point say the same lines. */
+  notificationKinds: {
+    recap: {
+      label: "The Monday recap",
+      hint: "Your week in a few figures, on Monday morning.",
+    },
+    overdraft: {
+      label: "Overdraft risk",
+      hint: "When the expected balance goes below zero before the month ends.",
+    },
+    close: {
+      label: "Month review",
+      hint: "The day to note your balance, and when your bank did it for you.",
+    },
+    bigCharge: {
+      label: "Big charge tomorrow",
+      hint: "The day before a charge larger than usual, or a yearly one.",
+    },
+    arrived: {
+      label: "Payment arrived",
+      hint: "When a salary or a planned charge looks like it has gone through.",
+    },
+    review: {
+      label: "Transactions to sort",
+      hint: "When your bank brought in transactions without a category.",
+    },
+    monthOpen: {
+      label: "New month",
+      hint: "On the 1st, when the month begins.",
+    },
+    bank: {
+      label: "Bank connection",
+      hint: "When it needs renewing, or has stopped.",
+    },
+  },
+  recap: {
+    title: "Your week",
+    lastWeek: "{amount} spent last week.",
+    noSpending: "No spending recorded last week.",
+    monthSame: "Since the 1st: {amount}, the same as by this date in {month}.",
+    monthLess:
+      "Since the 1st: {amount}, {delta} less than by this date in {month}.",
+    monthMore:
+      "Since the 1st: {amount}, {delta} more than by this date in {month}.",
+    stillToCome: {
+      one: "Still to come this month: {amount}, in {count} payment.",
+      other: "Still to come this month: {amount}, in {count} payments.",
+    },
+    aboveNormal: "{name} is already above a normal month (around {normal}).",
+    waiting: {
+      one: "{count} transaction from your bank needs a category.",
+      other: "{count} transactions from your bank need a category.",
+    },
+    optIn: "Send it to me every Monday",
+    dismiss: "Got it",
+  },
   push: {
+    bigCharge: {
+      title: "Tomorrow: {name}",
+      body: "{amount} to have ready, more than your usual recurring payments.",
+      yearly: "{amount} to have ready — it only comes once a year.",
+      titleSeveral: {
+        one: "Tomorrow: {count} large payment",
+        other: "Tomorrow: {count} large payments",
+      },
+    },
+    overdraft: {
+      title: "Possible overdraft on {date}",
+      body: "With what's planned, the account would dip to {amount} on {date}, then climb back to {end} by the month's end.",
+      bodyStays:
+        "With what's planned, the account would dip to {amount} on {date} and end the month at {end}.",
+    },
+    close: {
+      title: "Close {month}",
+      body: "It is your reading day: note your account balance to see what {month} left you.",
+      bodyRun: {
+        one: "It is your reading day: note your account balance. Your run is at {count} month.",
+        other:
+          "It is your reading day: note your account balance. Your run is at {count} months.",
+      },
+    },
+    closed: {
+      title: "{month} is closed",
+      baseline:
+        "Your bank gave the balance: this is where the next closes will start from.",
+      overRecorded:
+        "Your bank gave the balance. There is more in the account than {month} recorded: open the close to see the gap.",
+      kept: "Your bank gave the balance: {month} left you {amount}.",
+      spentMore:
+        "Your bank gave the balance: {month} cost {amount} more than it brought in.",
+      unrecorded: "Unrecorded spending: {amount}.",
+    },
     monthOpen: {
       title: "A new month",
       idle: "Set up what repeats, and see what the month leaves you.",

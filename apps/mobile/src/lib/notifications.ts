@@ -414,6 +414,18 @@ export async function syncRecurringReminders(
   await ensureChannel(locale);
   await Notifications.cancelAllScheduledNotificationsAsync();
 
+  // A phone the server can reach hears from the server: the evening-before
+  // word for the large and the yearly charges, the reading day, the Monday
+  // recap — the same messages as the user's other devices, under the same
+  // switches and quiet hours. The schedule below is for a phone it cannot
+  // reach (Expo Go on Android, a build without an FCM key), which would
+  // otherwise hear nothing at all. It reminds of every charge, because it
+  // has no way to know the reader's switches. Registering again is also
+  // what keeps the token's `last_seen_at` honest for a phone still in use.
+  if (await registerPushToken()) {
+    return;
+  }
+
   const now = new Date();
   const today = todayIsoLocal();
   const active = templates.filter((template) => {
@@ -471,14 +483,9 @@ export async function syncRecurringReminders(
     }
   }
 
-  // Only for a phone the server cannot reach. The server says the same thing
-  // on the 1st to every device it can (`push.monthOpen`, from the web app's
-  // daily run), so a phone with a token heard it twice: here at nine, and
-  // from the server an hour later. Registering again is also what keeps the
-  // token's `last_seen_at` honest for a phone that is still in use.
-  if (!(await registerPushToken())) {
-    await scheduleMonthOpenReminder(locale);
-  }
+  // The server says this on the 1st to every device it can reach
+  // (`push.monthOpen`); this phone is one it cannot.
+  await scheduleMonthOpenReminder(locale);
 }
 
 /**

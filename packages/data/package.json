@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./account": "./src/account.ts",
+    "./bank-balance": "./src/bank-balance.ts",
     "./bank-feed": "./src/bank-feed.ts",
     "./categories": "./src/categories.ts",
     "./client": "./src/client.ts",
@@ -15,16 +16,20 @@
     "./fulfilment-decisions": "./src/fulfilment-decisions.ts",
     "./ledger": "./src/ledger.ts",
     "./ledger-duplicates": "./src/ledger-duplicates.ts",
+    "./month-balance": "./src/month-balance.ts",
     "./month-close": "./src/month-close.ts",
     "./moved-rows": "./src/moved-rows.ts",
     "./occurrences": "./src/occurrences.ts",
+    "./preferences": "./src/preferences.ts",
     "./quote-source": "./src/quote-source.ts",
     "./recurring-apply": "./src/recurring-apply.ts",
     "./recurring-positions": "./src/recurring-positions.ts",
     "./recurring-templates": "./src/recurring-templates.ts",
     "./savings-accounts": "./src/savings-accounts.ts",
     "./schema": "./src/schema.ts",
-    "./wallet-plans": "./src/wallet-plans.ts"
+    "./templates": "./src/templates.ts",
+    "./wallet-plans": "./src/wallet-plans.ts",
+    "./weekly-recap": "./src/weekly-recap.ts"
   },
   "dependencies": {
     "@finance/core": "workspace:*",

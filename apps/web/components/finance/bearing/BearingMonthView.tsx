@@ -60,6 +60,7 @@ const UPCOMING_SHOWN = 4;
  */
 export function BearingMonthView({
   data,
+  recapSlot,
   readSlot,
   bankInvite = false,
   bankAttention = null,
@@ -69,6 +70,11 @@ export function BearingMonthView({
   bankInvite?: boolean;
   /** A connected bank about to stop, or stopped: shown above everything. */
   bankAttention?: BankAttention | null;
+  /**
+   * The week's recap, early in the week: streamed in like the read, and
+   * nothing at all on the days it has nothing to show.
+   */
+  recapSlot?: ReactNode;
   /**
    * The month read, streamed in behind its own boundary: its facts are the
    * slowest thing on the page to gather, and the figures above it should not
@@ -113,6 +119,13 @@ export function BearingMonthView({
         <StaggerItem className="md:col-span-2 xl:col-span-3">
           <BalanceCard data={data} bankInvite={bankInvite} />
         </StaggerItem>
+
+        {recapSlot ? (
+          // Hidden while empty, so a week with no card leaves no gap.
+          <StaggerItem className="empty:hidden md:col-span-2 xl:col-span-3">
+            {recapSlot}
+          </StaggerItem>
+        ) : null}
 
         {data.empty ? (
           <StaggerItem className="md:col-span-2 xl:col-span-3">

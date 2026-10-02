@@ -23,9 +23,10 @@ export async function asUser<T extends object>(
      * Redraw even when the write reports an error: for the few that can
      * fail halfway, after something has already changed — a confirmation
      * recorded whose row could not then be moved, an undo whose row went
-     * but whose skip stayed.
+     * but whose skip stayed. Or never, for a write no page shows — a
+     * redraw there would only take back what the page is showing.
      */
-    redraw?: "on-success" | "always";
+    redraw?: "on-success" | "always" | "never";
   } = {},
 ): Promise<ActionResult<T>> {
   const user = await getAuthUser();
@@ -33,7 +34,10 @@ export async function asUser<T extends object>(
     return { error: "errors.notAuthenticated" } as ActionResult<T>;
   }
   const result = await work(await createClient(), user.id);
-  if (result.success || options.redraw === "always") {
+  if (
+    options.redraw !== "never" &&
+    (result.success || options.redraw === "always")
+  ) {
     revalidateApp();
   }
   return result;

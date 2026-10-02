@@ -1,12 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import { ScrollView, Switch, View } from "react-native";
 import { type Href, useRouter } from "expo-router";
+import type { Ionicons } from "@expo/vector-icons";
+
+import { resolveMessage } from "@finance/core/i18n/t";
+import {
+  NOTIFICATION_KINDS,
+  wantsNotification,
+  type NotificationKind,
+  type NotificationPrefs,
+} from "@finance/core/notification-kinds";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { ListRow, ListSection } from "@/components/ui/ListRow";
 import { useBankState } from "@/hooks/useBankState";
+import { useRefreshable } from "@/hooks/useRefreshable";
 import { disconnectBank } from "@/lib/bank-connect";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
@@ -23,9 +33,28 @@ import { useCurrency } from "@/providers/CurrencyProvider";
 import { CURRENCY_LABELS } from "@finance/core/constants";
 import { useLocaleContext } from "@/providers/LocaleProvider";
 import { LOCALE_LABELS, LOCALES } from "@finance/core/i18n/locale";
-import { deleteAllUserData, updateProfile } from "@/lib/mutations";
+import {
+  deleteAllUserData,
+  setNotificationPref,
+  updateProfile,
+} from "@/lib/mutations";
+import { getNotificationSettings } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
 import { useTabBarClearance } from "@/theme/chrome";
+
+const KIND_ICONS: Record<
+  NotificationKind,
+  ComponentProps<typeof Ionicons>["name"]
+> = {
+  recap: "calendar-outline",
+  overdraft: "alert-circle-outline",
+  close: "checkmark-done-outline",
+  bigCharge: "receipt-outline",
+  arrived: "cash-outline",
+  review: "file-tray-outline",
+  monthOpen: "calendar-clear-outline",
+  bank: "business-outline",
+};
 
 /** Which row has opened its editor. One at a time, so the list stays a list. */
 type OpenRow = "name" | "passkeys" | "wipe" | "close" | null;
@@ -49,6 +78,15 @@ export default function ProfileScreen() {
 
   const [open, setOpen] = useState<OpenRow>(null);
   const [reminders, setReminders] = useState(false);
+  // The account's choices, with the ones just flipped shown at once: the
+  // read catches up when the write announces itself.
+  const { data: notifications } = useRefreshable(
+    async () => (user ? await getNotificationSettings(user.id) : null),
+    [user?.id],
+    { reads: ["preferences"] },
+  );
+  const [flipped, setFlipped] = useState<NotificationPrefs>({});
+  const kindPrefs = { ...(notifications?.prefs ?? {}), ...flipped };
   const [fullName, setFullName] = useState(
     (user?.user_metadata?.full_name as string | undefined) ??
       (user?.user_metadata?.name as string | undefined) ??
@@ -89,6 +127,15 @@ export default function ProfileScreen() {
       remoteReady ? t("profile.notificationsOn") : t("profile.remindersOnly"),
       remoteReady ? "success" : undefined,
     );
+  }
+
+  async function handleKindChange(kind: NotificationKind, next: boolean) {
+    setFlipped((current) => ({ ...current, [kind]: next }));
+    const result = await setNotificationPref(kind, next, locale);
+    if (!result.success) {
+      setFlipped((current) => ({ ...current, [kind]: !next }));
+      toast(resolveMessage(t, result.error), "error");
+    }
   }
 
   async function handleBiometricsChange(next: boolean) {
@@ -319,7 +366,7 @@ export default function ProfileScreen() {
         >
           <ListRow
             icon="notifications-outline"
-            label={t("profile.remindersAndNudges")}
+            label={t("profile.onThisPhone")}
             trailing={
               <Switch
                 value={reminders}
@@ -327,6 +374,21 @@ export default function ProfileScreen() {
               />
             }
           />
+          {NOTIFICATION_KINDS.map((kind) => (
+            <ListRow
+              key={kind}
+              icon={KIND_ICONS[kind]}
+              label={t(`notificationKinds.${kind}.label`)}
+              hint={t(`notificationKinds.${kind}.hint`)}
+              trailing={
+                <Switch
+                  accessibilityLabel={t(`notificationKinds.${kind}.label`)}
+                  value={wantsNotification(kindPrefs, kind)}
+                  onValueChange={(next) => void handleKindChange(kind, next)}
+                />
+              }
+            />
+          ))}
         </ListSection>
 
         <ListSection title={t("profile.dataSection")}>

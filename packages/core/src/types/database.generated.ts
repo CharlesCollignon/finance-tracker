@@ -1261,6 +1261,8 @@ export type Database = {
           bearing_pins: Json | null;
           dismissed_prompts: string[];
           locale: string;
+          milestone_seen: number | null;
+          notification_prefs: NonNullable<Json>;
           updated_at: string;
           user_id: string;
         };
@@ -1268,6 +1270,8 @@ export type Database = {
           bearing_pins?: Json | null;
           dismissed_prompts?: string[];
           locale?: string;
+          milestone_seen?: number | null;
+          notification_prefs?: NonNullable<Json>;
           updated_at?: string;
           user_id: string;
         };
@@ -1275,6 +1279,8 @@ export type Database = {
           bearing_pins?: Json | null;
           dismissed_prompts?: string[];
           locale?: string;
+          milestone_seen?: number | null;
+          notification_prefs?: NonNullable<Json>;
           updated_at?: string;
           user_id?: string;
         };

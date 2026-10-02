@@ -5,6 +5,10 @@ import { getAuthUser } from "@/lib/auth/get-user";
 import { createClient } from "@/lib/supabase/server";
 import { dbError } from "@finance/data/errors";
 import type { ActionResult } from "@finance/core/action-result";
+import type { NotificationKind } from "@finance/core/notification-kinds";
+import * as preferences from "@finance/data/preferences";
+import { asUser } from "@/lib/actions/as-user";
+import { getLocale } from "@/lib/locale";
 
 const subscriptionSchema = z.object({
   endpoint: z.string().url().max(2000),
@@ -93,4 +97,18 @@ export async function isPushSubscribed(endpoint: string): Promise<boolean> {
     .maybeSingle();
 
   return data !== null;
+}
+
+/** Turn one kind of notification on or off, for the account. */
+export async function setNotificationPref(
+  kind: NotificationKind,
+  wanted: boolean,
+): Promise<ActionResult> {
+  if (typeof wanted !== "boolean") {
+    return { error: "errors.invalidInput" };
+  }
+  const locale = await getLocale();
+  return asUser((db, userId) =>
+    preferences.setNotificationPref(db, userId, kind, wanted, locale),
+  );
 }
