@@ -98,6 +98,7 @@ function template({
     last_quote_at: null,
     starts_on: startsOn,
     ends_on: endsOn,
+    property_id: null,
     created_at: "2024-01-01T00:00:00.000Z",
     categories: { name, type, icon: null, counts_toward_summary: counts },
   };

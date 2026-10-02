@@ -14,6 +14,26 @@ export type WalletId = "pea" | "cto" | "av" | "per" | "crypto";
 export type SavingsAccountKind =
   "livret_a" | "ldds" | "lep" | "pel" | "cel" | "livret";
 
+/** What a property is — see migration 049. Only a home has a market. */
+export type PropertyKind = "apartment" | "house" | "other";
+
+/** How a property is used — see migration 049. */
+export type PropertyUsage =
+  "main_home" | "second_home" | "rental_bare" | "rental_furnished";
+
+/** Paid down month by month, or interest only and the principal at the end. */
+export type LoanKind = "amortising" | "in_fine";
+
+/**
+ * The first months of a loan, when the principal is not repaid yet: with a
+ * partial deferral the interest is paid, with a total one nothing is, and
+ * the interest is added to what is owed.
+ */
+export type DeferralKind = "none" | "partial" | "total";
+
+/** What the bank kept after an early repayment: the payment or the end. */
+export type KnownOutstandingKeeps = "payment" | "term";
+
 /** Where a user's bank connection stands — see migration 041. */
 export type BankConnectionStatus =
   "active" | "expired" | "paused" | "revoked" | "error";
@@ -63,6 +83,12 @@ interface Narrowed {
   month_closes: { balance_source: "manual" | "bank" };
   month_reads: { source: "pressed" | "auto"; locale: Locale };
   savings_accounts: { kind: SavingsAccountKind };
+  properties: { kind: PropertyKind; usage: PropertyUsage };
+  property_loans: {
+    kind: LoanKind;
+    deferral_kind: DeferralKind;
+    known_keeps: KnownOutstandingKeeps;
+  };
   user_preferences: { locale: Locale };
   wallet_reads: { locale: Locale };
   category_reads: { locale: Locale };
@@ -194,6 +220,9 @@ export type WalletTransfer =
 export type WalletPlan = Database["public"]["Tables"]["wallet_plans"]["Row"];
 export type SavingsAccount =
   Database["public"]["Tables"]["savings_accounts"]["Row"];
+export type Property = Database["public"]["Tables"]["properties"]["Row"];
+export type PropertyLoan =
+  Database["public"]["Tables"]["property_loans"]["Row"];
 export type PushSubscriptionRow =
   Database["public"]["Tables"]["push_subscriptions"]["Row"];
 export type ExpoPushTokenRow =

@@ -15,18 +15,11 @@
  * paying less.
  */
 
-/** Paid down month by month, or interest only and the principal at the end. */
-export type LoanKind = "amortising" | "in_fine";
-
-/**
- * The first months of a loan, when the principal is not repaid yet: with a
- * partial deferral the interest is paid, with a total one nothing is, and
- * the interest is added to what is owed.
- */
-export type DeferralKind = "none" | "partial" | "total";
-
-/** What the bank kept after an early repayment: the payment or the end. */
-export type KnownOutstandingKeeps = "payment" | "term";
+import type {
+  DeferralKind,
+  KnownOutstandingKeeps,
+  LoanKind,
+} from "./types/database";
 
 export interface KnownOutstanding {
   /** Still owed once every payment dated on or before `on` was made. */
