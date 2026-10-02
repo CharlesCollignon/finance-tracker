@@ -2328,6 +2328,17 @@ export const fr: Messages = {
     notAuthenticated: "Non authentifié",
     nameRequired: "Le nom est obligatoire",
     nameTooLong: "Le nom est trop long",
+    areaRequired: "Indiquez la surface en m²",
+    shareRange: "La part doit être comprise entre 0 et 100\u00A0%",
+    rateRange: "Le taux doit être compris entre 0 et 20\u00A0%",
+    insuranceRateRange:
+      "Le taux d'assurance doit être compris entre 0 et 5\u00A0%",
+    monthsRange: "La durée doit être comprise entre 1 et 600 mois",
+    insuranceOneWay:
+      "L'assurance est un montant par mois ou un taux, pas les deux",
+    inFineNoDeferral: "Un prêt in fine n'a pas de différé",
+    deferralMonthsRequired: "Indiquez combien de mois dure le différé",
+    deferralTooLong: "Le différé doit laisser au moins une échéance à payer",
     // DELETE stays in English: it is a word the user has to type back
     // exactly, checked by `z.literal("DELETE")` in `../../validations/profile`,
     // so translating the prompt without translating the literal would lock
