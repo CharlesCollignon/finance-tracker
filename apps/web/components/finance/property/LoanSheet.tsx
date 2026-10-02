@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { errorsByField } from "@finance/core/property-form";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { PropertyLoan } from "@finance/core/types/database";
 import { useToast } from "@/components/layout/ToastProvider";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { MobileSheet } from "@/components/ui/MobileSheet";
 import { saveLoanForProperty } from "@/lib/actions/property";
 import { useT } from "@/lib/locale-context";
-import { errorsFrom, LoanFields, useLoanDraft } from "./property-fields";
+import { LoanFields, useLoanDraft } from "./property-fields";
 
 /**
  * A loan added to a property that already exists — a PTZ, an Action Logement
@@ -76,7 +77,7 @@ function LoanForm({
       onSubmit={(event) => {
         event.preventDefault();
         if (!draft.parsed.success) {
-          setErrors(errorsFrom(draft.parsed.error.issues));
+          setErrors(errorsByField(draft.parsed.error.issues));
           return;
         }
         setErrors({});

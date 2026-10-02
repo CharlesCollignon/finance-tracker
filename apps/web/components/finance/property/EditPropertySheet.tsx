@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { errorsByField } from "@finance/core/property-form";
 import { resolveMessage } from "@finance/core/i18n/t";
 import type { Property } from "@finance/core/types/database";
 import { propertySchema } from "@finance/core/validations/property";
@@ -10,7 +11,6 @@ import { MobileSheet } from "@/components/ui/MobileSheet";
 import { updateProperty } from "@/lib/actions/property";
 import { useT } from "@/lib/locale-context";
 import {
-  errorsFrom,
   HomeFields,
   PurchaseFields,
   usePropertyDraft,
@@ -70,7 +70,7 @@ function EditPropertyForm({
         event.preventDefault();
         const parsed = propertySchema.safeParse(draft.payload);
         if (!parsed.success) {
-          setErrors(errorsFrom(parsed.error.issues));
+          setErrors(errorsByField(parsed.error.issues));
           return;
         }
         setErrors({});

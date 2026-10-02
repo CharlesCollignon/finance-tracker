@@ -1,6 +1,12 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import {
+  aMonthAfter,
+  errorsByField,
+  HOME_FIELDS,
+  PURCHASE_FIELDS,
+} from "@finance/core/property-form";
 import { resolveMessage, type Key } from "@finance/core/i18n/t";
 import { propertySchema } from "@finance/core/validations/property";
 import { useToast } from "@/components/layout/ToastProvider";
@@ -9,13 +15,9 @@ import { MobileSheet } from "@/components/ui/MobileSheet";
 import { addProperty } from "@/lib/actions/property";
 import { useT } from "@/lib/locale-context";
 import {
-  aMonthAfter,
   Chips,
-  errorsFrom,
-  HOME_FIELDS,
   HomeFields,
   LoanFields,
-  PURCHASE_FIELDS,
   PurchaseFields,
   useLoanDraft,
   usePropertyDraft,
@@ -83,7 +85,7 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
     const fields = STEP_FIELDS[step];
     const stepErrors = parsed.success
       ? {}
-      : errorsFrom(
+      : errorsByField(
           parsed.error.issues.filter((issue) =>
             fields.includes(String(issue.path[0])),
           ),
@@ -100,7 +102,7 @@ function AddPropertyForm({ onDone }: { onDone: () => void }) {
 
   function save() {
     if (hasLoan && !loan.parsed.success) {
-      setErrors(errorsFrom(loan.parsed.error.issues));
+      setErrors(errorsByField(loan.parsed.error.issues));
       return;
     }
     setErrors({});

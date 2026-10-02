@@ -104,7 +104,8 @@
     "./loan-schedule": "./src/loan-schedule.ts",
     "./property": "./src/property.ts",
     "./validations/property": "./src/validations/property.ts",
-    "./address-search": "./src/address-search.ts"
+    "./address-search": "./src/address-search.ts",
+    "./property-form": "./src/property-form.ts"
   },
   "dependencies": {
     "zod": "^4.4.3"
