@@ -34,8 +34,8 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 | Plan                   | `/plan`                                  | `(tabs)/planning`                                                        |
 | Wallets — positions    | `/investments`                           | `(tabs)/investments`                                                     |
 | Wallets — look-through | `/investments/look-through`              | none                                                                     |
-| Property — list        | `/property` (flag `property.track`)      | none yet (Phase 3)                                                       |
-| Property — one         | `/property/[id]` (flag `property.track`) | none yet (Phase 3)                                                       |
+| Property — list        | `/property` (flag `property.track`)      | `(tabs)/property` (same flag)                                            |
+| Property — one         | `/property/[id]` (flag `property.track`) | `property/[id]`, pushed over the tabs                                    |
 | Categories             | `/categories`                            | `categories`                                                             |
 | Import (CSV)           | `/import`                                | `import`                                                                 |
 | Welcome                | `/welcome`                               | `onboarding`                                                             |
@@ -189,9 +189,11 @@ Evaluated in Postgres by `evaluated_feature_flags()` (migration `039`), so
 both clients get the same answer: an account's override wins; otherwise a
 flag is on when `enabled_by_default` is true or the account was created at or
 after `enabled_from`. No session can read the flag tables. The web asks once
-per request (`apps/web/lib/flags.ts`); the phone reads no flag of its own
-today (its bank invitation asks the web, which checks `bank.connect`), so it
-has no flag reader — add one beside the first flag it needs. A flag the
+per request (`apps/web/lib/flags.ts`); the phone asks the same function
+when the account changes and each time it comes back to the foreground
+(`hooks/useFlag.ts`; its bank invitation still asks the web, which checks
+`bank.connect`). The phone's write announcer treats that RPC as a read
+(`READ_RPCS` in `lib/data-version.ts`), or every screen would reload. A flag the
 database does not return, or a key this build
 does not list (`packages/core/src/flags.ts`), is off.
 
@@ -249,9 +251,9 @@ assertion script:
 - Dead schema: `user_preferences.bearing_pins` and the `bearing_arrangements` table have no readers.
 - The `delete-account` edge function deletes a fixed list of older tables and relies on `on delete cascade` for the rest.
 - The phone has no By category view, no look-through and no wallet read.
-- The phone has no Immobilier tab yet (`docs/plans/REAL_ESTATE_PLAN.md`,
-  Phase 3); a property's templates still fill its months there like any
-  other.
+- The phone's Immobilier screens have only been typechecked and linted,
+  not run on a device: the machine they were built on had no memory to
+  spare for Metro and a browser at the time.
 - A page with a `loading.tsx` streams, so `notFound()` from it — the
   property pages for an account without `property.track` — draws the app's
   « Page introuvable » under a 200 rather than a 404.
