@@ -93,6 +93,16 @@ export function setGrowth(propertyId: string, growth: number | null) {
   );
 }
 
+/** Give a let property its rent among the recurring entries. */
+export function addRent(input: {
+  propertyId: string;
+  amount: number;
+  categoryName: string;
+  description: string;
+}) {
+  return asUser((userId) => properties.addRent(supabase, userId, input));
+}
+
 export function removeProperty(propertyId: string) {
   return asUser((userId) =>
     properties.deleteProperty(supabase, userId, propertyId),
