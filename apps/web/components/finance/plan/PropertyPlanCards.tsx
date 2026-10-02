@@ -98,7 +98,7 @@ export function NetWorthCard({
               {t("property.loanEndFrees", {
                 label: ending.label,
                 date: monthAndYear(ending.endsOn, locale),
-                amount: format(ending.monthly),
+                amount: money(ending.monthly),
               })}
             </p>
           ))}

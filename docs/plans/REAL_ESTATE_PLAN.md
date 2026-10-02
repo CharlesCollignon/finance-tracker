@@ -442,11 +442,34 @@ phase.
 
 ## Phase 5 — Plan and net worth (branch `property-5/plan`)
 
-- [ ] « Patrimoine net » card on both apps.
-- [ ] Long view: a property row with its growth, outstanding principal by
-      year, and the 2026 tax on property gains.
-- [ ] Projection: a loan's end as a dated ingredient.
-- [ ] Le point: the net-value tile.
+- [x] `core/property-future.ts`: a property year by year to the horizon
+      (value grown at its own rate, what its loans still owe, the 2026 tax
+      on a sale's gain with its allowances for years held), net worth, and
+      the loans still running. Pure and tested.
+- [x] « Patrimoine net » card on both apps, under the cushion: savings and
+      investments as the milestones count them, the properties' estimated
+      value, what the loans still owe. The milestones are unchanged.
+- [x] Long view: a card of its own under the long view's, one row per
+      property with its growth (kept on `properties.yearly_growth`, 2 % by
+      default), what is still owed at the horizon, the tax, the net and the
+      net in today's euros, and the total with the long view's net. It
+      follows the long view's horizon and inflation; it is never in the
+      monthly income.
+- [x] A loan's end: **changed from the plan**, it is a line in the net
+      worth card — « Prêt principal se termine en mars 2048 et libère
+      1 031 € par mois » — not an ingredient of the projection, which looks
+      twelve months ahead and would only show it in its last year.
+- [x] Le point's net-value tile: **dropped.** The web's Le point is about
+      the month, and the phone's has no tile to match; net worth lives on
+      the Plan on both apps.
+
+Checked against the local stack on both apps (the phone through its web
+build): a Lyon 3e main home and a Grenoble studio let furnished, with their
+loans and a Livret A, read 119 303 € of net worth; at 20 years and 2 % the
+studio's sale owes 2 238 € (held 27 years: no income tax, 73 % off the
+contributions), at 10 years and 3.5 % it owes 7 613 €, both as worked by
+hand. A growth typed on one app is kept when the field is left and read by
+the other.
 
 ## Phase 6 — Renting (branch `property-6/rental`)
 
