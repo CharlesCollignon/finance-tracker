@@ -123,7 +123,8 @@ warning only speaks on a balance read from the bank or carried from a close.
 
 A phone with a push token gets everything from the server and schedules
 nothing itself; one without (Expo Go, no project id) falls back to local
-reminders for its charges and the month opening.
+reminders for its charges and the month opening, under the same switches
+(`bigCharge` and `monthOpen`).
 
 The recap is also a card on Le point, Monday to Wednesday, until « Vu »
 (`dismissed_prompts`, `recap:<monday>`); the `recap` switch hides both. On
@@ -263,5 +264,3 @@ assertion script:
   local stack; CI does not run them.
 - A new milestone is celebrated on the Plan but not pushed: saying it from
   the server would mean pricing every wallet there.
-- A phone without a push token schedules its own reminders, and those do not
-  follow the kind switches in Profile.

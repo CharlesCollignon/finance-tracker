@@ -49,7 +49,9 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
   const locale = useLocale();
   const { user } = useAuth();
   const formatAmount = useFormatCurrency();
-  const templatesVersion = useDataVersion(["templates"]);
+  // A template, or a notification switch in Profile: either makes the
+  // schedule stale, since the switches decide what it reminds of.
+  const templatesVersion = useDataVersion(["templates", "preferences"]);
 
   // Kept in refs so a sync started by any of the triggers below reads the
   // latest values.
@@ -95,7 +97,8 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
     void run(false);
   }, [user?.id, run]);
 
-  // A template changed: the schedule is stale now, whatever the interval says.
+  // A template or a switch changed: the schedule is stale now, whatever the
+  // interval says.
   const syncedVersion = useRef(templatesVersion);
   useEffect(() => {
     if (templatesVersion !== syncedVersion.current) {
