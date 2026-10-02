@@ -9,7 +9,10 @@ import { formatEuro, RENT_CATEGORY_NAMES } from "@finance/core/constants";
 import { loanPaymentCategoryName } from "@finance/core/property";
 import * as properties from "@finance/data/properties";
 import { asUser } from "@/lib/actions/as-user";
-import { readPropertyMarketSoon } from "@/lib/property-market/read";
+import {
+  readPropertyMarketSoon,
+  type MarketOutcome,
+} from "@/lib/property-market/read";
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getLocale, getT } from "@/lib/locale";
 
@@ -30,6 +33,12 @@ export async function findAddresses(query: string): Promise<AddressMatch[]> {
   return searchAddresses(query);
 }
 
+interface AddedProperty {
+  propertyId: string;
+  /** "later" when the market is still being read, after the response. */
+  reading: MarketOutcome | "later";
+}
+
 /**
  * Add a property, and the loan that paid for it when there was one, with
  * its payment among the recurring entries when asked.
@@ -38,11 +47,11 @@ export async function addProperty(input: {
   property: properties.PropertyChange;
   loan: Omit<properties.LoanChange, "propertyId"> | null;
   addPayment: boolean;
-}): Promise<ActionResult<{ propertyId: string }>> {
+}): Promise<ActionResult<AddedProperty>> {
   const t = await getT();
   const locale = await getLocale();
 
-  return asUser<{ propertyId: string }>(async (db, userId) => {
+  return asUser<AddedProperty>(async (db, userId) => {
     const result = await properties.addPropertyWithLoan(db, userId, {
       property: input.property,
       loan: input.loan,
@@ -54,12 +63,14 @@ export async function addProperty(input: {
     if (!result.success) {
       return { error: result.error };
     }
-    // What the market says, while the sheet waits — or the cron's to read.
-    await readPropertyMarketSoon(db, userId, result.propertyId);
+    // What the market says, while the sheet waits — or after the response,
+    // for the property's page to pick up.
+    const reading = await readPropertyMarketSoon(db, userId, result.propertyId);
     const name = String(input.property.name).trim();
     return {
       success: true,
       propertyId: result.propertyId,
+      reading,
       message:
         result.paymentAmount === null
           ? t("property.added", { name })
@@ -179,16 +190,16 @@ export async function removeLoan(loanId: string): Promise<ActionResult> {
 /** Change what was said about a property. */
 export async function updateProperty(
   input: properties.PropertyChange,
-): Promise<ActionResult> {
+): Promise<ActionResult<{ reading: MarketOutcome | "later" }>> {
   const t = await getT();
-  return asUser(async (db, userId): Promise<ActionResult> => {
+  return asUser<{ reading: MarketOutcome | "later" }>(async (db, userId) => {
     const result = await properties.saveProperty(db, userId, input);
     if (!result.success) {
       return { error: result.error };
     }
     // A new place, kind or area is a new reading.
-    await readPropertyMarketSoon(db, userId, result.propertyId);
-    return { success: true, message: t("property.saved") };
+    const reading = await readPropertyMarketSoon(db, userId, result.propertyId);
+    return { success: true, reading, message: t("property.saved") };
   });
 }
 

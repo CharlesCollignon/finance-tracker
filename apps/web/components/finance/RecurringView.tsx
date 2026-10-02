@@ -9,6 +9,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import Link from "next/link";
 import { House, Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -116,48 +117,56 @@ function RecurringItemRow({
         !template.active && "opacity-60",
       )}
     >
-      <button
-        type="button"
-        onClick={() => onEdit(template)}
-        className="min-w-0 flex-1 text-left"
-        aria-label={t("charges.editNamed", { name: template.categories.name })}
-      >
-        <p className="text-sm font-medium leading-snug break-words">
-          {template.categories.name}
-        </p>
-        {template.pricing_type === "shares" && sharesLabel ? (
-          <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
-            {sharesLabel}
-            {template.instrument_symbol
-              ? ` · ${template.instrument_symbol}`
-              : ""}
+      <div className="min-w-0 flex-1">
+        <button
+          type="button"
+          onClick={() => onEdit(template)}
+          className="w-full text-left"
+          aria-label={t("charges.editNamed", {
+            name: template.categories.name,
+          })}
+        >
+          <p className="text-sm font-medium leading-snug break-words">
+            {template.categories.name}
           </p>
-        ) : null}
-        {isCryptoCategoryName(template.categories.name) ? (
-          <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
-            {t("charges.fixedToBitcoin")}
+          {template.pricing_type === "shares" && sharesLabel ? (
+            <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
+              {sharesLabel}
+              {template.instrument_symbol
+                ? ` · ${template.instrument_symbol}`
+                : ""}
+            </p>
+          ) : null}
+          {isCryptoCategoryName(template.categories.name) ? (
+            <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
+              {t("charges.fixedToBitcoin")}
+            </p>
+          ) : null}
+          {template.description ? (
+            // The user's own note about the charge, and the only prose on the
+            // row. It was `text-muted-foreground/70`, about 3.9:1 at 12px —
+            // under the 4.5:1 body floor — and dimmer than the two lines above
+            // it for no reason anyone chose. Full-strength muted foreground is
+            // the token that already means secondary text.
+            <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
+              {template.description}
+            </p>
+          ) : null}
+          <p className="mt-1 text-xs text-muted-foreground">
+            {formatRecurrenceSchedule(template, locale)}
           </p>
-        ) : null}
-        {template.description ? (
-          // The user's own note about the charge, and the only prose on the
-          // row. It was `text-muted-foreground/70`, about 3.9:1 at 12px —
-          // under the 4.5:1 body floor — and dimmer than the two lines above
-          // it for no reason anyone chose. Full-strength muted foreground is
-          // the token that already means secondary text.
-          <p className="mt-0.5 text-xs leading-snug text-muted-foreground break-words">
-            {template.description}
-          </p>
-        ) : null}
-        <p className="mt-1 text-xs text-muted-foreground">
-          {formatRecurrenceSchedule(template, locale)}
-        </p>
-        {propertyName ? (
-          <p className="mt-1 inline-flex max-w-full items-center gap-1 text-xs text-muted-foreground">
+        </button>
+        {/* Its own link, outside the row's button: the property it belongs to. */}
+        {propertyName && template.property_id ? (
+          <Link
+            href={`/property/${template.property_id}`}
+            className="mt-1 inline-flex max-w-full items-center gap-1 rounded-control text-xs text-muted-foreground underline-offset-4 transition-colors duration-hover hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <House size={ICON.xs} aria-hidden className="shrink-0" />
             <span className="truncate">{propertyName}</span>
-          </p>
+          </Link>
         ) : null}
-      </button>
+      </div>
 
       <div className="flex shrink-0 flex-col items-end justify-between gap-2">
         {/* Coloured by kind of money, as the ledger's amounts are: the

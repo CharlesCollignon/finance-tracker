@@ -1,5 +1,7 @@
 import "server-only";
 
+import { after } from "next/server";
+
 import { todayIsoLocal } from "@finance/core/constants";
 import {
   dvfFileUrl,
@@ -302,8 +304,11 @@ async function previousReading(
 }
 
 /**
- * The same, for a user's action that should not wait on it forever: what
- * could not be read in time is the cron's to read.
+ * The same, for a user's action that should not wait on it forever. What is
+ * not read in time goes on after the response (`after`), so the page that
+ * opens next — which says it is reading, and asks again — has it within the
+ * minute rather than from the weekly cron. Only from a server action or a
+ * route, where `after` is allowed.
  */
 export async function readPropertyMarketSoon(
   db: Db,
@@ -311,15 +316,22 @@ export async function readPropertyMarketSoon(
   propertyId: string,
   timeoutMs = 8_000,
 ): Promise<MarketOutcome | "later"> {
-  try {
-    return await Promise.race([
-      readPropertyMarket(db, userId, propertyId),
-      new Promise<"later">((resolve) =>
-        setTimeout(() => resolve("later"), timeoutMs),
-      ),
-    ]);
-  } catch (error) {
-    console.error("Market reading failed", error);
-    return "later";
+  const reading = readPropertyMarket(db, userId, propertyId).catch(
+    (error: unknown) => {
+      console.error("Market reading failed", error);
+      return "failed" as const;
+    },
+  );
+  const outcome = await Promise.race([
+    reading,
+    new Promise<"later">((resolve) =>
+      setTimeout(() => resolve("later"), timeoutMs),
+    ),
+  ]);
+  if (outcome === "later") {
+    after(() => reading);
   }
+  // A failed reading is the cron's to try again; to the page it is the same
+  // as one still on its way.
+  return outcome === "failed" ? "later" : outcome;
 }
