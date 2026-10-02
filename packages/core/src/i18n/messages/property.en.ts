@@ -272,4 +272,7 @@ export const propertyEn = {
   paymentInterest: "{amount} interest",
   paymentInsurance: "{amount} insurance",
   momentEquityHalf: "Half is yours",
+  emptyValue: "Its value, from the sales around it",
+  emptyYours: "What is yours, and what the bank still holds",
+  emptyLoans: "Each loan, payment by payment",
 };

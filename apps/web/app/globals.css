@@ -439,6 +439,37 @@
     balance-curve-breathe 2.4s ease-in-out 1.2s infinite;
 }
 
+/* A sheet's next step arriving: a short fade and a few pixels in from the
+   side it moves toward. */
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--step-from, 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.step-in {
+  animation: step-in 260ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* A line whose words change — where a value now comes from — settling in. */
+@keyframes swap-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.swap-in {
+  animation: swap-in 450ms ease-out both;
+}
+
 /* A bar or meter on the Bearing growing from its start to its value. */
 @keyframes grow-in {
   from {
@@ -459,6 +490,8 @@
   .balance-curve-fade,
   .balance-curve-wash,
   .balance-curve-today,
+  .step-in,
+  .swap-in,
   .grow-in {
     animation: none;
   }

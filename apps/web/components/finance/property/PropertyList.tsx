@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus } from "@phosphor-icons/react";
+import { ChartLineUp, Plus, Scales, Stack } from "@phosphor-icons/react";
+import type { Key } from "@finance/core/i18n/t";
+import { STAGGER_STEP_MS } from "@finance/core/motion";
 import { formatPercentLabel } from "@finance/core/constants";
 import { valueSourceLine } from "@finance/core/property";
 import { ownership } from "@finance/core/property-progress";
@@ -17,6 +19,13 @@ import { useFormatCurrency } from "@/lib/use-currency";
 import { AddPropertySheet } from "./AddPropertySheet";
 import { OwnershipBar } from "./ProgressBars";
 import { PROPERTY_KIND_KEYS, PROPERTY_USAGE_KEYS } from "./property-labels";
+
+/** What an empty tab says it will show, in three lines. */
+const EMPTY_PROMISES = [
+  { icon: ChartLineUp, key: "property.emptyValue" },
+  { icon: Scales, key: "property.emptyYours" },
+  { icon: Stack, key: "property.emptyLoans" },
+] as const satisfies readonly { icon: unknown; key: Key }[];
 
 /**
  * The Immobilier tab: what the user's properties are worth to them once
@@ -40,6 +49,19 @@ export function PropertyList({ view }: { view: PropertiesView }) {
           title={t("property.emptyTitle")}
           description={t("property.emptyBody")}
         >
+          <ul className="mb-5 flex flex-col gap-2.5 text-sm">
+            {EMPTY_PROMISES.map(({ icon: Icon, key }) => (
+              <li key={key} className="flex items-center gap-2.5">
+                <span
+                  aria-hidden
+                  className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
+                >
+                  <Icon size={ICON.sm} weight="fill" />
+                </span>
+                {t(key)}
+              </li>
+            ))}
+          </ul>
           {addButton}
         </EmptyState>
       ) : (
@@ -53,8 +75,12 @@ export function PropertyList({ view }: { view: PropertiesView }) {
             })}
           />
           <ul className="grid gap-4 md:grid-cols-2">
-            {view.properties.map((property) => (
-              <li key={property.id}>
+            {view.properties.map((property, index) => (
+              <li
+                key={property.id}
+                className="stagger-item"
+                style={{ animationDelay: `${index * STAGGER_STEP_MS}ms` }}
+              >
                 <Link
                   href={`/property/${property.id}`}
                   className="block rounded-shell transition-transform duration-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99]"
