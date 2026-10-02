@@ -1,7 +1,6 @@
 /** Words only the web’s Placements uses; `en.ts` mounts it as `placementsWeb`. */
 export const placementsWebEn = {
-  setupNeeded:
-    "Adding a savings account needs migration 046 — run it and this will work.",
+  setupNeeded: "Savings accounts are not available here yet.",
   alreadyAdded: "You already have this account.",
   back: "Back",
   bankPick: "Which of your bank's accounts?",
@@ -15,8 +14,7 @@ export const placementsWebEn = {
   shareOfMoney: "{share} of your money",
   targetEditorIntro:
     "Choose the share of your money each account should hold. The total has to make 100%.",
-  targetsSetup:
-    "A target for a savings account needs migration 047 — run it and this will work.",
+  targetsSetup: "Targets for savings accounts are not available here yet.",
   returnsSavings: "Savings accounts",
   feesTitle: "Fees",
   analysisEmpty:

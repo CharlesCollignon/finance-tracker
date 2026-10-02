@@ -215,7 +215,7 @@ describe("the wording", () => {
     const withoutBank = buildMonthPulse(input({ onHand: null }));
 
     expect(pulseHeadline(withoutBank, "en")).toBe("Left this month");
-    expect(pulseExplanation(withoutBank, "en")).toContain("Connect a bank");
+    expect(pulseExplanation(withoutBank, "en")).toContain("Close a month");
   });
 
   it("names a shortfall as one", () => {

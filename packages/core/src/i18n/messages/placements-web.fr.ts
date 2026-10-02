@@ -2,8 +2,7 @@ import type { placementsWebEn } from "./placements-web.en";
 
 /** The French half of `placements-web.en.ts`, mounted by `fr.ts` as `placementsWeb`. */
 export const placementsWebFr: typeof placementsWebEn = {
-  setupNeeded:
-    "Ajouter un compte d'épargne demande la migration 046 — lancez-la et cela fonctionnera.",
+  setupNeeded: "Les comptes d'épargne ne sont pas encore disponibles ici.",
   alreadyAdded: "Vous avez déjà ce compte.",
   back: "Retour",
   bankPick: "Quel compte de votre banque ?",
@@ -18,7 +17,7 @@ export const placementsWebFr: typeof placementsWebEn = {
   targetEditorIntro:
     "Choisissez la part de votre argent que chaque compte doit détenir. Le total doit faire 100\u00A0%.",
   targetsSetup:
-    "Une cible pour un compte d'épargne demande la migration 047 — lancez-la et cela fonctionnera.",
+    "Les cibles des comptes d'épargne ne sont pas encore disponibles ici.",
   returnsSavings: "Comptes d'épargne",
   feesTitle: "Frais",
   analysisEmpty:

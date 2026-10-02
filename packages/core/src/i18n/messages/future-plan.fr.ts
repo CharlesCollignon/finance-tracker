@@ -66,7 +66,7 @@ export const futurePlanFr: typeof futurePlanEn = {
     "La vitesse à laquelle les prix montent chaque année. 2 % est l'objectif européen.",
   withdrawalRate: "Taux de retrait",
   withdrawalHint:
-    "La part de votre patrimoine que vous retireriez chaque année pour en vivre. 4 % est l'usage.",
+    "La part de votre patrimoine que vous retireriez chaque année pour en vivre. Le repère le plus répandu est 4\u00A0%.",
   accountsTitle: "Vos comptes",
   accountsFromData:
     "Pré-rempli avec vos placements et vos versements récurrents.",
@@ -81,12 +81,13 @@ export const futurePlanFr: typeof futurePlanEn = {
   taxPea:
     "18,6 % de prélèvements sociaux sur les gains après 5 ans (31,4 % avant).",
   taxCto:
-    "Flat tax de 31,4 % : 12,8 % d'impôt et 18,6 % de prélèvements sociaux.",
+    "Impôt forfaitaire (« flat tax ») de 31,4\u00A0%\u00A0: 12,8\u00A0% d'impôt sur le revenu et 18,6\u00A0% de prélèvements sociaux.",
   taxAv:
     "24,7 % après 8 ans, sur les gains au-delà de 4 600 € par an (9 200 € en couple).",
   taxPer:
     "31,4 % sur les gains ; les versements déduits sont imposés comme un revenu à la sortie.",
-  taxCrypto: "Flat tax de 31,4 %, sur les ventes au-delà de 305 € par an.",
+  taxCrypto:
+    "Impôt forfaitaire de 31,4\u00A0%, sur les ventes au-delà de 305\u00A0€ par an.",
   taxLivret: "Aucun : le Livret A, le LDDS et le LEP sont défiscalisés.",
   taxSource: "Taux 2026, simplifiés à un taux par compte.",
 

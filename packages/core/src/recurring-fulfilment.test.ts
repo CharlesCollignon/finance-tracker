@@ -424,7 +424,7 @@ describe("explainFulfilmentMisses", () => {
 
     expect(miss!.reason).toBe("date");
     expect(describeMiss(miss!, money, "en")).toBe(
-      "nearest was 10 days away, beyond the 4-day window",
+      "nearest was 10 days from the planned date, more than the 4 days it looks within",
     );
   });
 
@@ -458,7 +458,7 @@ describe("explainFulfilmentMisses", () => {
     expect(justOutside).toMatchObject({ reason: "date" });
     expect(justOutside!.nearest!.daysApart).toBe(5);
     expect(describeMiss(justOutside!, money, "en")).toBe(
-      "nearest was 5 days away, beyond the 4-day window",
+      "nearest was 5 days from the planned date, more than the 4 days it looks within",
     );
 
     // One day closer and it is a proposal, not a miss.
