@@ -162,4 +162,11 @@ export const propertyEn = {
   attachLabel: "Property",
   attachNone: "None",
   attachHint: "It shows on the property's page.",
+  edit: "Edit",
+  editProperty: "Edit the property",
+  addLoan: "Add a loan",
+  editLoan: "Edit the loan",
+  loanAdded: "Loan added",
+  loanAddedWithPayment: "Loan added; its payment joins your recurring entries",
+  loanSaved: "Loan saved",
 };

@@ -184,3 +184,48 @@ export async function addPaymentForLoan(
 export async function removeLoan(loanId: string): Promise<ActionResult> {
   return asUser((db, userId) => properties.deleteLoan(db, userId, loanId));
 }
+
+/** Change what was said about a property. */
+export async function updateProperty(
+  input: properties.PropertyChange,
+): Promise<ActionResult> {
+  const t = await getT();
+  return asUser(async (db, userId): Promise<ActionResult> => {
+    const result = await properties.saveProperty(db, userId, input);
+    return result.success
+      ? { success: true, message: t("property.saved") }
+      : { error: result.error };
+  });
+}
+
+/**
+ * Add a loan to a property, with its payment among the recurring entries
+ * when asked, or change one's terms.
+ */
+export async function saveLoanForProperty(
+  input: properties.LoanChange,
+  addPayment: boolean,
+  description: string,
+): Promise<ActionResult> {
+  const t = await getT();
+  const categoryName = loanPaymentCategoryName(await getLocale());
+  return asUser(async (db, userId): Promise<ActionResult> => {
+    const result = await properties.saveLoan(
+      db,
+      userId,
+      input,
+      addPayment ? { addPayment: { categoryName, description } } : {},
+    );
+    if (!result.success) {
+      return { error: result.error };
+    }
+    return {
+      success: true,
+      message: input.id
+        ? t("property.loanSaved")
+        : result.templateId && addPayment
+          ? t("property.loanAddedWithPayment")
+          : t("property.loanAdded"),
+    };
+  });
+}

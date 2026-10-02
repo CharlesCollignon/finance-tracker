@@ -162,4 +162,12 @@ export const propertyFr: typeof propertyEn = {
   attachLabel: "Bien",
   attachNone: "Aucun",
   attachHint: "Elle apparaît sur la page du bien.",
+  edit: "Modifier",
+  editProperty: "Modifier le bien",
+  addLoan: "Ajouter un prêt",
+  editLoan: "Modifier le prêt",
+  loanAdded: "Prêt ajouté",
+  loanAddedWithPayment:
+    "Prêt ajouté\u00A0; sa mensualité rejoint vos opérations récurrentes",
+  loanSaved: "Prêt enregistré",
 };

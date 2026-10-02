@@ -3,7 +3,7 @@
 import { useId, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, PencilSimple } from "@phosphor-icons/react";
+import { ArrowLeft, PencilSimple, Plus } from "@phosphor-icons/react";
 import { parseTypedAmount } from "@finance/core/amount-input";
 import { formatPercentLabel, formatShortDate } from "@finance/core/constants";
 import {
@@ -40,6 +40,8 @@ import {
 import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { useFormatCurrency } from "@/lib/use-currency";
+import { EditPropertySheet } from "./EditPropertySheet";
+import { LoanSheet } from "./LoanSheet";
 import {
   monthAndYear,
   PROPERTY_KIND_KEYS,
@@ -65,6 +67,11 @@ export function PropertyDetail({
   const router = useRouter();
   const { property, loans, templates } = detail;
   const attached = templates.filter((template) => template.attached);
+  const [editing, setEditing] = useState(false);
+  // The loan sheet: closed, a new loan (null), or the loan being changed.
+  const [loanSheet, setLoanSheet] = useState<{
+    loan: PropertyLoan | null;
+  } | null>(null);
   const position = propertyPosition(property, loans, today);
   const source = position.estimate.source;
   const partOwned = property.ownership_share < 1;
@@ -160,6 +167,16 @@ export function PropertyDetail({
         </dl>
 
         <div className="flex flex-col gap-2 border-t border-border pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onClick={() => setEditing(true)}
+          >
+            <PencilSimple size={ICON.sm} aria-hidden className="mr-1.5" />
+            {t("property.edit")}
+          </Button>
           <AmountEditor
             label={
               source.kind === "own"
@@ -199,9 +216,20 @@ export function PropertyDetail({
                 (template) => template.id === loan.recurring_template_id,
               )}
               today={today}
+              onEdit={() => setLoanSheet({ loan })}
             />
           ))
         )}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="self-start"
+          onClick={() => setLoanSheet({ loan: null })}
+        >
+          <Plus size={ICON.sm} aria-hidden className="mr-1.5" />
+          {t("property.addLoan")}
+        </Button>
       </section>
 
       <section className="flex flex-col gap-3">
@@ -240,6 +268,24 @@ export function PropertyDetail({
           }}
         />
       </div>
+
+      <EditPropertySheet
+        property={property}
+        open={editing}
+        onOpenChange={setEditing}
+      />
+      <LoanSheet
+        key={loanSheet?.loan?.id ?? "new"}
+        propertyId={property.id}
+        propertyName={property.name}
+        loan={loanSheet?.loan ?? null}
+        open={loanSheet !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLoanSheet(null);
+          }
+        }}
+      />
     </div>
   );
 }
@@ -249,11 +295,13 @@ function LoanCard({
   propertyName,
   template,
   today,
+  onEdit,
 }: {
   loan: PropertyLoan;
   propertyName: string;
   template: AttachedTemplate | undefined;
   today: string;
+  onEdit: () => void;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -401,6 +449,13 @@ function LoanCard({
             />
           ) : null}
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={onEdit}>
+          <PencilSimple size={ICON.sm} aria-hidden className="mr-1.5" />
+          {t("property.editLoan")}
+        </Button>
       </div>
 
       <KnownOutstanding loan={loan} today={today} />
