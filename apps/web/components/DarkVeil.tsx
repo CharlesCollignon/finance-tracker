@@ -135,20 +135,30 @@ export default function DarkVeil({
     const gl = renderer.gl;
     const geometry = new Triangle(gl);
 
-    const program = new Program(gl, {
-      vertex,
-      fragment,
-      uniforms: {
-        uTime: { value: 0 },
-        uResolution: { value: new Vec2() },
-        uHueShift: { value: hueShift },
-        uNoise: { value: noiseIntensity },
-        uScan: { value: scanlineIntensity },
-        uScanFreq: { value: scanlineFrequency },
-        uWarp: { value: warpAmount },
-        uLightMode: { value: lightMode ? 1 : 0 },
-      },
-    });
+    // A context that hands out no program at all — no GPU, a blocklisted
+    // driver, a context already lost — makes OGL call `attachShader` on null,
+    // which throws out of this effect and takes the whole page down with it.
+    let program: Program;
+    try {
+      program = new Program(gl, {
+        vertex,
+        fragment,
+        uniforms: {
+          uTime: { value: 0 },
+          uResolution: { value: new Vec2() },
+          uHueShift: { value: hueShift },
+          uNoise: { value: noiseIntensity },
+          uScan: { value: scanlineIntensity },
+          uScanFreq: { value: scanlineFrequency },
+          uWarp: { value: warpAmount },
+          uLightMode: { value: lightMode ? 1 : 0 },
+        },
+      });
+    } catch {
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      onUnavailable?.();
+      return;
+    }
 
     // OGL's `setShaders` returns early when the program fails to link, which
     // leaves these two maps undefined rather than throwing — so the failure
