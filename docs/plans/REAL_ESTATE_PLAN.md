@@ -350,22 +350,37 @@ caller.
 
 ## Phase 2 — Web (branch `property-2/web`)
 
-- [ ] `data/properties.ts`: property, loans, and the linked template written
+- [x] `data/properties.ts`: property, loans, and the linked template written
       together; attach and detach a template; delete with its loans.
-- [ ] `property.track` in `core/flags.ts`; the tab and pages only for an
-      account that has it.
-- [ ] `/property` in `APP_NAV_ITEMS`, list page, empty state.
-- [ ] The phone-width bar: the account menu to the header, labels that
-      shrink to fit; the comments in `BottomNav` and `apps/web/DESIGN.md`.
-- [ ] Add sheet in three steps: the property (address with autocompletion,
-      kind, area, usage, share) → the purchase (price, date, notary fees
-      prefilled at ~7–8 % for existing and ~2–3 % for new, editable; agency;
-      works) → the loan (optional, payment computed live, « Ajouter la
-      mensualité aux opérations récurrentes » checked).
-- [ ] `/property/[id]`: value (purchase price or the user's own until Phase
-      4), loans and schedule, attached charges, edit and delete with undo.
-- [ ] Charges: « Bien » field in `RecurringForm`, chip in `RecurringView`.
-- [ ] `docs/how-pluclair-works.md` and `PRODUCT.md` surfaces updated.
+- [x] `property.track` in `core/flags.ts`; the tab and pages only for an
+      account that has it (anyone else gets « Page introuvable »).
+- [x] `/property` in the nav, list page, empty state.
+- [x] The phone-width bar: the account menu to the header, labels that
+      shrink to fit (measured from 320 to 414 px); the comments in
+      `BottomNav` and `apps/web/DESIGN.md`. With six surfaces the desktop
+      notch shows idle labels from `xl`.
+- [x] Add sheet in three steps: the property (address with autocompletion,
+      asked of the IGN geocoder by the server; kind, area, usage, share) →
+      the purchase (price, date, notary fees prefilled at 7.5 % for existing
+      and 2.5 % for new, editable; agency; works) → the loan (optional,
+      payment computed live, « Ajouter la mensualité aux opérations
+      récurrentes » checked).
+- [x] `/property/[id]`: value (purchase price or the user's own until Phase
+      4), loans with the next payment split and the schedule by year, the
+      bank's figure, the payment template checked against the schedule
+      (amount and end) and brought in line, attached templates, editing the
+      property, adding and editing loans, deleting both.
+- [ ] Delete with undo. Not done: deleting asks on the spot, as removing a
+      savings account does; the property's templates stay, so the money
+      side is never lost. Undo, if wanted, needs the property and its loans
+      kept aside as `deletion_undo` does for transactions.
+- [x] Charges: « Bien » field in `RecurringForm` (the edit sheet; the Add
+      sheet does not offer it), chip in `RecurringView`.
+- [x] `docs/how-pluclair-works.md` and `PRODUCT.md` surfaces updated.
+
+Found on the way: the app veil's WebGL threw out of its effect when a
+context hands out no program (a browser without a working GPU), replacing
+every page with the error screen. Fixed in this phase.
 
 ## Phase 3 — Phone (branch `property-3/mobile`)
 
