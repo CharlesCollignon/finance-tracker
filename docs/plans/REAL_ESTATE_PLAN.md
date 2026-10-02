@@ -96,7 +96,7 @@ property net values together. Distinct from what milestones count.
   feeds the ledger.
 - Feature flags (migration 039): the work ships behind one.
 
-## Schema (migration 049)
+## Schema (migrations 049 and 050)
 
 ```
 properties
@@ -112,15 +112,17 @@ property_loans
   id, user_id, property_id → properties (cascade), label,
   kind ('amortising' | 'in_fine'),
   principal, annual_rate, months, first_payment_on,
-  insurance_monthly, insurance_basis ('initial' | 'outstanding'),
+  insurance_monthly, insurance_rate (null; not both),
   deferral_months, deferral_kind ('none' | 'partial' | 'total'),
   fees, borrower_share,
   known_outstanding (null), known_outstanding_on (null),
+  known_keeps ('payment' | 'term', null),
   recurring_template_id → recurring_templates (set null)
 
 recurring_templates
   + property_id → properties (set null)
 
+-- 050, with Phase 4:
 property_market_readings        -- shared, written by the server only
   citycode, kind, scope ('commune' | 'radius'), center (null),
   period_from, period_to, median_m2, q1_m2, q3_m2, sales, read_at
@@ -129,10 +131,11 @@ housing_price_index             -- shared, written by the server only
   quarter, zone ('idf' | 'province'), kind, value
 ```
 
-RLS on the user tables as `savings_accounts` does; the shared tables are
-readable by any signed-in user and writable by the service role alone.
-« Supprimer toutes mes données » and the `delete-account` edge function
-(which deletes a fixed list) take the two user tables.
+RLS on the user tables as `savings_accounts` does, with every reference
+checked against the caller's own rows; the shared tables are readable by
+any signed-in user and writable by the service role alone. « Supprimer
+toutes mes données » takes the two user tables; deleting the account needs
+nothing, since both cascade from `auth.users`.
 
 ## Linking a loan to a charge
 
@@ -321,24 +324,36 @@ reader in `core/market-reading.ts` with fixtures cut from these files.
 
 ## Phase 1 — Foundations (branch `property-1/foundations`)
 
-- [ ] Migration 049, RLS, assertion script in `supabase/tests/`,
-      `pnpm gen:types`, narrowed types in `core/types/database.ts`.
-- [ ] Flag `property.track`, off by default, on for the owner; the phone's
-      first flag reader.
-- [ ] `core/loan-schedule.ts`: constant payment and interest-only (_in
-      fine_), partial and total deferral, 0 % (PTZ), insurance on initial
-      or outstanding capital, cents rounding, re-anchoring on a known
-      outstanding. Tested against a real bank schedule as a fixture.
-- [ ] `core/property.ts`: acquisition cost, estimated value and its source,
-      net value, unrealised gain, total cost of credit, payment split.
-- [ ] Zod schemas in `core/validations`.
-- [ ] `data/properties.ts`: property, loans, and the linked charge written
-      together; attach and detach a template; delete with its loans.
-- [ ] Delete-all and `delete-account` take the new tables.
-- [ ] fr and en strings, added as they are used (the unused-keys test).
+- [x] Migration 049, RLS, assertion script in `supabase/tests/` (18
+      checks), `pnpm gen:types`, narrowed types in `core/types/database.ts`.
+- [x] The `property.track` flag row, off. Its key in `core/flags.ts` and the
+      phone's first flag reader come with Phase 2 and 3: `flags.ts` takes a
+      key in the change that reads it.
+- [x] `core/loan-schedule.ts`: constant payment and interest-only (_in
+      fine_), partial and total deferral, 0 % (PTZ), insurance fixed or on
+      what is owed, rounding half away from zero, re-anchoring on a known
+      outstanding keeping the payment or the end.
+- [ ] Tested against a real bank schedule as a fixture — waiting for one
+      from the owner; until then against figures worked out independently
+      (200 000 € at 3.5 % over 20 years: 1 159,92 €).
+- [x] `core/property.ts`: acquisition cost, estimated value and its source
+      (own or purchase; market and index in Phase 4), net value, unrealised
+      gain, principal repaid, payment split. Total cost of credit is
+      `loanTotals` in the schedule.
+- [x] Zod schemas in `core/validations/property.ts`, with their messages.
+- [x] Delete-all takes the new tables.
+- [x] fr and en strings, added as they are used.
+
+Moved to Phase 2: `data/properties.ts`. The reachability gate fails on a
+`packages/data` export that neither app calls, and the web is its first
+caller.
 
 ## Phase 2 — Web (branch `property-2/web`)
 
+- [ ] `data/properties.ts`: property, loans, and the linked template written
+      together; attach and detach a template; delete with its loans.
+- [ ] `property.track` in `core/flags.ts`; the tab and pages only for an
+      account that has it.
 - [ ] `/property` in `APP_NAV_ITEMS`, list page, empty state.
 - [ ] The phone-width bar: the account menu to the header, labels that
       shrink to fit; the comments in `BottomNav` and `apps/web/DESIGN.md`.
@@ -354,6 +369,8 @@ reader in `core/market-reading.ts` with fixtures cut from these files.
 
 ## Phase 3 — Phone (branch `property-3/mobile`)
 
+- [ ] The phone's first flag reader, beside the first flag it needs
+      (`property.track`).
 - [ ] Sixth tab with labels that shrink to fit, list screen, stacked
       property screen, add sheet.
 - [ ] New tables mapped to a data area in `announcingFetch`; screens read
@@ -365,6 +382,7 @@ reader in `core/market-reading.ts` with fixtures cut from these files.
 
 - [ ] `core/market-reading.ts`: DVF rows to a reading (filters, median, IQR,
       radius selection), pure and tested on fixtures from the spike.
+- [ ] Migration 050: `property_market_readings` and `housing_price_index`.
 - [ ] Web: geocoding, DVF fetch, cache tables, nightly refresh in the
       existing cron, index table; `POST /api/property/market` for the phone.
 - [ ] Estimated value with its spread and source on both apps; « Votre
