@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { formatEuro } from "@finance/core/constants";
@@ -154,6 +155,7 @@ export function AddPropertySheet({
 
 function AddPropertyFlow({ onClose }: { onClose: () => void }) {
   const t = useT();
+  const router = useRouter();
   const locale = useLocale();
   const { toast } = useToast();
   const [step, setStep] = useState<Step>(1);
@@ -220,6 +222,8 @@ function AddPropertyFlow({ onClose }: { onClose: () => void }) {
           }),
     );
     onClose();
+    // Its screen, where the estimate arrives while the market is read.
+    router.push(`/property/${result.propertyId}`);
   }
 
   return (

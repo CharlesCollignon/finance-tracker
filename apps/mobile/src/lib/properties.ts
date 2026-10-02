@@ -151,18 +151,47 @@ export function removeLoan(loanId: string) {
   return asUser((userId) => properties.deleteLoan(supabase, userId, loanId));
 }
 
+/** The properties whose market is being read right now, from this phone. */
+const reading = new Set<string>();
+const readingListeners = new Set<() => void>();
+
+function readingChanged() {
+  for (const listener of readingListeners) {
+    listener();
+  }
+}
+
+/** For `useSyncExternalStore`: told when a reading starts or ends. */
+export function subscribeToReadings(listener: () => void): () => void {
+  readingListeners.add(listener);
+  return () => readingListeners.delete(listener);
+}
+
+/** Whether this phone is waiting on the property's market reading. */
+export function isReadingMarket(propertyId: string): boolean {
+  return reading.has(propertyId);
+}
+
 /**
  * Ask the web server what the market says about a property — the DVF files
  * are megabytes the phone has no business downloading. Not awaited by the
- * sheets: the answer, when it comes, reloads the screens that read
- * properties, through the route's data area.
+ * sheets: the property's screen says it is reading while this runs, and the
+ * answer, when it comes, reloads the screens that read properties, through
+ * the route's data area.
  */
 export async function requestMarketReading(propertyId: string): Promise<void> {
   if (!webApiAvailable()) {
     return;
   }
-  await callWebApi<{ status: string }>("/api/property/market", {
-    body: { propertyId },
-    timeoutMs: 65_000,
-  });
+  reading.add(propertyId);
+  readingChanged();
+  try {
+    await callWebApi<{ status: string }>("/api/property/market", {
+      body: { propertyId },
+      timeoutMs: 65_000,
+    });
+  } finally {
+    reading.delete(propertyId);
+    readingChanged();
+  }
 }

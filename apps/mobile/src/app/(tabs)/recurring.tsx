@@ -385,6 +385,7 @@ function GroupCard({
   const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const colors = useThemeColors();
+  const router = useRouter();
 
   return (
     <View className="rounded-card border border-border bg-card px-4 pb-1 pt-4">
@@ -418,13 +419,15 @@ function GroupCard({
                 index > 0 && "border-t border-border",
               )}
             >
+              <View
+                className="min-w-0 flex-1"
+                style={item.active ? undefined : { opacity: 0.6 }}
+              >
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("charges.editNamed", {
                   name: item.categories.name,
                 })}
-                className="min-w-0 flex-1"
-                style={item.active ? undefined : { opacity: 0.6 }}
                 onPress={() => onEdit(item)}
               >
                 <Text className="text-sm font-medium">
@@ -450,19 +453,26 @@ function GroupCard({
                 <Text variant="muted" className="mt-1 text-xs">
                   {formatRecurrenceSchedule(item, locale)}
                 </Text>
-                {item.property_id && propertyNames.has(item.property_id) ? (
-                  <View className="mt-1 flex-row items-center gap-1">
-                    <Ionicons
-                      name="home-outline"
-                      size={ICON.xs}
-                      color={colors.mutedForeground}
-                    />
-                    <Text variant="muted" numberOfLines={1} className="text-xs">
-                      {propertyNames.get(item.property_id)}
-                    </Text>
-                  </View>
-                ) : null}
               </Pressable>
+              {/* Its own press, beside the row's: the property it belongs to. */}
+              {item.property_id && propertyNames.has(item.property_id) ? (
+                <Pressable
+                  accessibilityRole="link"
+                  onPress={() => router.push(`/property/${item.property_id}`)}
+                  hitSlop={8}
+                  className="mt-1 flex-row items-center gap-1 self-start"
+                >
+                  <Ionicons
+                    name="home-outline"
+                    size={ICON.xs}
+                    color={colors.mutedForeground}
+                  />
+                  <Text variant="muted" numberOfLines={1} className="text-xs underline">
+                    {propertyNames.get(item.property_id)}
+                  </Text>
+                </Pressable>
+              ) : null}
+              </View>
 
               <View className="shrink-0 items-end gap-1.5">
                 {/* Coloured by kind of money, as the ledger's amounts are. */}

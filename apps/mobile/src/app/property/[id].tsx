@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import Animated, { useReducedMotion, ZoomIn } from "react-native-reanimated";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -39,6 +39,7 @@ import {
   PROPERTY_USAGE_KEYS,
   TextField,
 } from "@/components/property/fields";
+import { AnimatedAmount } from "@/components/AnimatedAmount";
 import { EditPropertySheet, LoanSheet } from "@/components/property/PropertySheets";
 import { RentalSection } from "@/components/property/RentalSection";
 import { PrivateAmount } from "@/components/PrivateAmount";
@@ -58,10 +59,12 @@ import { useMomentSeen } from "@/lib/moments";
 import {
   addLoanPayment,
   getProperties,
+  isReadingMarket,
   removeLoan,
   removeProperty,
   setKnownOutstanding,
   setOwnValue,
+  subscribeToReadings,
   syncLoanPayment,
   type AttachedTemplate,
 } from "@/lib/properties";
@@ -97,7 +100,12 @@ export default function PropertyDetailScreen() {
   const { data, loading, refreshing, onRefreshAll, onRefresh, error } = useRefreshable(
     async () => (user ? getProperties(user.id) : null),
     [user?.id],
-    { reads: ["properties", "templates"] },
+    // Categories too: an entry attached to it is named by its category.
+    { reads: ["properties", "templates", "categories"] },
+  );
+  // This phone is asking the web server for its market reading right now.
+  const readingNow = useSyncExternalStore(subscribeToReadings, () =>
+    isReadingMarket(id),
   );
 
   const detail = data?.properties.find(({ property }) => property.id === id) ?? null;
@@ -183,9 +191,11 @@ export default function PropertyDetailScreen() {
             <Text variant="muted" className="mt-2 text-xs">
               {t("property.netValue")}
             </Text>
-            <PrivateAmount className="text-3xl font-semibold">
-              {format(position.netValue)}
-            </PrivateAmount>
+            <AnimatedAmount
+              value={position.netValue}
+              format={format}
+              className="text-3xl font-semibold"
+            />
             {partOwned ? (
               <Text variant="muted" className="text-xs">
                 {t("property.forYourShare", {
@@ -197,9 +207,11 @@ export default function PropertyDetailScreen() {
 
           <View className="flex-row flex-wrap gap-y-4">
             <Fact label={t("property.estimatedValue")}>
-              <PrivateAmount className="text-sm font-medium">
-                {format(position.estimate.value)}
-              </PrivateAmount>
+              <AnimatedAmount
+                value={position.estimate.value}
+                format={format}
+                className="text-sm font-medium"
+              />
               {position.estimate.low !== null && position.estimate.high !== null ? (
                 <PrivateAmount className="text-xs">
                   {t("property.valueRange", {
@@ -208,9 +220,18 @@ export default function PropertyDetailScreen() {
                   })}
                 </PrivateAmount>
               ) : null}
-              <Text variant="muted" className="text-xs">
-                {valueSourceLine(source, locale)}
-              </Text>
+              {readingNow ? (
+                <View accessibilityRole="text" className="flex-row items-center gap-1.5">
+                  <View className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  <Text variant="muted" className="text-xs">
+                    {t("property.readingNow")}
+                  </Text>
+                </View>
+              ) : (
+                <Text variant="muted" className="text-xs">
+                  {valueSourceLine(source, locale)}
+                </Text>
+              )}
             </Fact>
             {reading ? (
               <Fact label={t("property.pricePerM2")}>
@@ -369,6 +390,8 @@ function LoanCard({
   const t = useT();
   const locale = useLocale();
   const format = useFormatCurrency();
+  const router = useRouter();
+  const colors = useThemeColors();
   const { toast } = useToast();
   const [showSchedule, setShowSchedule] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -475,9 +498,16 @@ function LoanCard({
 
       <View className="gap-2 rounded-control border border-border p-3">
         {template ? (
-          <PrivateAmount className="text-sm">
-            {t("property.paymentLinked", { amount: format(template.amount) })}
-          </PrivateAmount>
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => router.push(`/recurring?edit=${template.id}`)}
+            className="min-h-11 flex-row items-center gap-1 self-start"
+          >
+            <PrivateAmount className="text-sm">
+              {t("property.paymentLinked", { amount: format(template.amount) })}
+            </PrivateAmount>
+            <Ionicons name="chevron-forward" size={ICON.xs} color={colors.mutedForeground} />
+          </Pressable>
         ) : (
           <Text variant="muted">{t("property.paymentNotLinked")}</Text>
         )}
@@ -807,15 +837,20 @@ function OwnValueEditor({
   );
 }
 
+/** An entry attached to the property, opening it in Récurrents. */
 function TemplateRow({ template, first }: { template: AttachedTemplate; first: boolean }) {
   const locale = useLocale();
   const format = useFormatCurrency();
+  const router = useRouter();
+  const colors = useThemeColors();
   return (
-    <View
+    <Pressable
+      accessibilityRole="link"
+      onPress={() => router.push(`/recurring?edit=${template.id}`)}
       className={
         first
-          ? "flex-row items-center gap-3 px-4 py-3"
-          : "flex-row items-center gap-3 border-t border-border px-4 py-3"
+          ? "flex-row items-center gap-3 px-4 py-3 active:bg-muted/30"
+          : "flex-row items-center gap-3 border-t border-border px-4 py-3 active:bg-muted/30"
       }
     >
       <View className="min-w-0 flex-1">
@@ -837,7 +872,8 @@ function TemplateRow({ template, first }: { template: AttachedTemplate; first: b
         </Text>
       </View>
       <PrivateAmount className="text-sm">{format(template.amount)}</PrivateAmount>
-    </View>
+      <Ionicons name="chevron-forward" size={ICON.xs} color={colors.mutedForeground} />
+    </Pressable>
   );
 }
 
