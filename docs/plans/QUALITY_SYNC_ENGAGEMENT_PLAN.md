@@ -125,15 +125,18 @@ typechecks and builds crashed the terminal twice. Work sequentially.
 
 ## Phase 3 — Notifications that are worth opening (branch `phase-3/notifications`)
 
-- [ ] Per-type switches (stored per user, both apps), quiet hours 21:00–08:00
-      Paris, a contextual opt-in on the web.
-- [ ] Weekly recap: Monday push + card on Le point, both apps.
-- [ ] Overdraft risk before the next income.
-- [ ] Close reminder on the reading day; push when a bank closed the month.
-- [ ] Big upcoming charge, server-sent; the phone's per-charge local reminders
-      retire.
-- [ ] Milestone reached, with "seen" stored per user so every device agrees.
-- [ ] Spending above normal, inside the recap.
+- [x] Per-type switches (stored per user, both apps), quiet hours 21:00–08:00
+      Paris, a contextual opt-in on the web (on the recap card).
+- [x] Weekly recap: Monday push + card on Le point, both apps.
+- [x] Overdraft risk before the next income (a dip below zero on a day still
+      ahead this month, on a bank or close balance only).
+- [x] Close reminder on the reading day; push when a bank closed the month.
+- [x] Big upcoming charge, server-sent; the phone's per-charge local reminders
+      retire (kept only for a phone with no push token).
+- [x] Milestone reached, with "seen" stored per user so every device agrees.
+      Celebrated on the Plan, not pushed: the server would have to price
+      every wallet. The `milestone` switch was dropped until it is sent.
+- [x] Spending above normal, inside the recap.
 
 ## Phase 4 — Feel (branch `phase-4/feel`)
 

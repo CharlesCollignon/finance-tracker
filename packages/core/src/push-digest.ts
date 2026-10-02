@@ -4,7 +4,12 @@
  * A daily job asks this once per user. The rule throughout is that the
  * interesting event is a change, not a state: a new month is only news once,
  * and repeating it every morning is how a notification permission gets
- * revoked.
+ * revoked. The Monday recap (`weekly-recap.ts`) is the one exception, made
+ * on purpose in October 2026: a state, once a week, under its own switch.
+ *
+ * What is sent at all is filtered after this, by the kinds the user turned
+ * off and the quiet hours (`notification-kinds.ts`), in the web's
+ * `lib/push/deliver.ts`.
  *
  * Kept free of database and network concerns so the decisions are testable
  * without either.
