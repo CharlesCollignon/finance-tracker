@@ -321,6 +321,17 @@ export function nextPayment(
 }
 
 /**
+ * The first payment once any deferral is over — the one a recurring
+ * template for the loan starts on — or null for a loan with none.
+ */
+export function regularPayment(
+  terms: LoanTerms,
+  schedule: readonly LoanPayment[],
+): LoanPayment | null {
+  return regularRow(schedule, terms) ?? null;
+}
+
+/**
  * What leaves the account each month once the loan is under way: the
  * regular payment and its insurance. Insurance that follows what is owed
  * down makes the first such month the largest.

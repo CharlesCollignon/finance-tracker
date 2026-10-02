@@ -5,18 +5,18 @@ figure is computed, and what is known to be wrong. Written for whoever works
 on the repository next, human or agent. Every phase of
 `docs/plans/PLUCLAIR_UPGRADE_PLAN.md` updates it before it closes.
 
-Last updated: quality plan Phase 2, one codebase (2026-10-02;
-`docs/plans/QUALITY_SYNC_ENGAGEMENT_PLAN.md`).
+Last updated: real estate plan Phase 2, the web (2026-10-02;
+`docs/plans/REAL_ESTATE_PLAN.md`).
 
 ## Shape
 
-| Part            | What it is                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/web`      | Next.js 16.2 App Router. Server components read Supabase with the user's cookie session; server actions write.                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token.                                                                                                                                                                                                                                                                                      |
-| `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                                                                                                                                                                                                                                                                                                              |
-| `packages/data` | The Supabase reads and writes both apps make, written once and handed the caller's client (`Db`): recurring templates and occurrences, transactions (`ledger`, `month-ledger`, `history`), deletes and their undo (`deletions`), categories and their seeding, fulfilment, the month close, the month's balance, the bank's balance, the review inbox (`bank-inbox`), positions and wallet plans, instrument readings, savings accounts, preferences, the weekly recap, delete-all. `pnpm --filter @finance/data test`. |
-| `supabase/`     | Migrations `001`–`049`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Part            | What it is                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `apps/web`      | Next.js 16.2 App Router. Server components read Supabase with the user's cookie session; server actions write.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `apps/mobile`   | Expo 57 with expo-router and NativeWind, dark only. Reads and writes Supabase directly under RLS; calls the web app for the month read (`POST /api/month-read`) and a bank refresh (`POST /api/bank/refresh`) with a bearer token.                                                                                                                                                                                                                                                                                                                                 |
+| `packages/core` | Pure TypeScript shared by both apps and shipped to them as source: every calculation, every zod schema, every string (`src/i18n/messages/en.ts`, `fr.ts`).                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `packages/data` | The Supabase reads and writes both apps make, written once and handed the caller's client (`Db`): recurring templates and occurrences, transactions (`ledger`, `month-ledger`, `history`), deletes and their undo (`deletions`), categories and their seeding, fulfilment, the month close, the month's balance, the bank's balance, the review inbox (`bank-inbox`), positions and wallet plans, instrument readings, savings accounts, properties and their loans (`properties`), preferences, the weekly recap, delete-all. `pnpm --filter @finance/data test`. |
+| `supabase/`     | Migrations `001`–`049`, assertion scripts in `tests/`, one edge function (`delete-account`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 Vocabulary is fixed by `CONTEXT.md`; product commitments by
 `apps/web/PRODUCT.md`; visual rules by `apps/web/DESIGN.md` and
@@ -24,22 +24,24 @@ Vocabulary is fixed by `CONTEXT.md`; product commitments by
 
 ## Sections
 
-| Section                | Web route                               | Phone screen                                                             |
-| ---------------------- | --------------------------------------- | ------------------------------------------------------------------------ |
-| Bearing                | `/bearing`                              | `(tabs)/index`                                                           |
-| Ledger — list          | `/transactions`                         | `(tabs)/transactions`                                                    |
-| Ledger — calendar      | `/calendar`                             | `(tabs)/calendar`                                                        |
-| Ledger — by category   | `/history`                              | none                                                                     |
-| Charges                | `/recurring`                            | `(tabs)/recurring`                                                       |
-| Plan                   | `/plan`                                 | `(tabs)/planning`                                                        |
-| Wallets — positions    | `/investments`                          | `(tabs)/investments`                                                     |
-| Wallets — look-through | `/investments/look-through`             | none                                                                     |
-| Categories             | `/categories`                           | `categories`                                                             |
-| Import (CSV)           | `/import`                               | `import`                                                                 |
-| Welcome                | `/welcome`                              | `onboarding`                                                             |
-| Profile                | `/profile`                              | `(tabs)/profile`                                                         |
-| Sign in, sign up       | `/login`, `/signup`                     | `(auth)/login`, `(auth)/signup`                                          |
-| Password reset         | `/reset`, `/auth/confirm`, `/reset/new` | `(auth)/reset` (the new password is set on the web page the email opens) |
+| Section                | Web route                                | Phone screen                                                             |
+| ---------------------- | ---------------------------------------- | ------------------------------------------------------------------------ |
+| Bearing                | `/bearing`                               | `(tabs)/index`                                                           |
+| Ledger — list          | `/transactions`                          | `(tabs)/transactions`                                                    |
+| Ledger — calendar      | `/calendar`                              | `(tabs)/calendar`                                                        |
+| Ledger — by category   | `/history`                               | none                                                                     |
+| Charges                | `/recurring`                             | `(tabs)/recurring`                                                       |
+| Plan                   | `/plan`                                  | `(tabs)/planning`                                                        |
+| Wallets — positions    | `/investments`                           | `(tabs)/investments`                                                     |
+| Wallets — look-through | `/investments/look-through`              | none                                                                     |
+| Property — list        | `/property` (flag `property.track`)      | none yet (Phase 3)                                                       |
+| Property — one         | `/property/[id]` (flag `property.track`) | none yet (Phase 3)                                                       |
+| Categories             | `/categories`                            | `categories`                                                             |
+| Import (CSV)           | `/import`                                | `import`                                                                 |
+| Welcome                | `/welcome`                               | `onboarding`                                                             |
+| Profile                | `/profile`                               | `(tabs)/profile`                                                         |
+| Sign in, sign up       | `/login`, `/signup`                      | `(auth)/login`, `(auth)/signup`                                          |
+| Password reset         | `/reset`, `/auth/confirm`, `/reset/new`  | `(auth)/reset` (the new password is set on the web page the email opens) |
 
 ## Conventions for a write
 
@@ -147,6 +149,8 @@ today's prices) leaves it unmarked, so the Plan still shows it as new.
 | Bearing cards and tiles                                         | `bearing-cards.ts`, `bearing-tiles.ts`, `bearing-facts.ts`                                              |
 | Category findings                                               | `category-findings.ts`                                                                                  |
 | PEA ceiling and five-year date                                  | `pea.ts`                                                                                                |
+| A loan's schedule, outstanding principal, cost                  | `loan-schedule.ts`                                                                                      |
+| A property's estimated value, net value, gain, principal repaid | `property.ts`                                                                                           |
 | Fund costs, look-through, target trades                         | `fund-costs.ts`, `look-through.ts`, `look-through-target.ts`                                            |
 | Money-weighted return                                           | `xirr.ts`, `investment-returns.ts`                                                                      |
 
@@ -191,9 +195,10 @@ has no flag reader — add one beside the first flag it needs. A flag the
 database does not return, or a key this build
 does not list (`packages/core/src/flags.ts`), is off.
 
-| Flag           | Gates                                                      | Default |
-| -------------- | ---------------------------------------------------------- | ------- |
-| `bank.connect` | Connecting a bank with an open-banking.io credentials file | off     |
+| Flag             | Gates                                                       | Default |
+| ---------------- | ----------------------------------------------------------- | ------- |
+| `bank.connect`   | Connecting a bank with an open-banking.io credentials file  | off     |
+| `property.track` | The Immobilier tab: properties, their loans and their value | off     |
 
 Switched with SQL (the dashboard's SQL editor, or the service role):
 
@@ -244,6 +249,12 @@ assertion script:
 - Dead schema: `user_preferences.bearing_pins` and the `bearing_arrangements` table have no readers.
 - The `delete-account` edge function deletes a fixed list of older tables and relies on `on delete cascade` for the rest.
 - The phone has no By category view, no look-through and no wallet read.
+- The phone has no Immobilier tab yet (`docs/plans/REAL_ESTATE_PLAN.md`,
+  Phase 3); a property's templates still fill its months there like any
+  other.
+- A page with a `loading.tsx` streams, so `notFound()` from it — the
+  property pages for an account without `property.track` — draws the app's
+  « Page introuvable » under a 200 rather than a 404.
 - Budgets, savings goals and tags were removed from both apps in October
   2026; the `budgets`, `savings_goals`, `tags` and `transaction_tags` tables
   and the `tags.manage` flag row stay, unread. Stored month and category

@@ -18,7 +18,7 @@ import {
   upsertRecurringTemplate,
 } from "@/lib/actions/finance";
 import { CategoryPicker } from "@/components/finance/CategoryPicker";
-import { OptionPicker } from "@/components/ui/Picker";
+import { ChoiceChips, OptionPicker } from "@/components/ui/Picker";
 import { InstrumentSearch } from "@/components/finance/InstrumentSearch";
 import { estimateSharesAmountAction } from "@/lib/actions/market";
 import { formatMoney } from "@finance/core/market/fx";
@@ -47,6 +47,8 @@ import type { FormState } from "@finance/core/action-result";
 
 interface RecurringFormProps {
   categories: Category[];
+  /** The user's properties, which a charge can belong to. */
+  properties?: { id: string; name: string }[];
   template?: RecurringTemplateWithCategory | null;
   /** The days this charge is already recorded on this month, up to today. */
   recordedDates?: string[];
@@ -70,6 +72,7 @@ export function RecurringForm(props: RecurringFormProps) {
 
 function RecurringFormSheet({
   categories,
+  properties,
   template,
   recordedDates,
   open,
@@ -85,6 +88,7 @@ function RecurringFormSheet({
     >
       <RecurringFormBody
         categories={categories}
+        properties={properties}
         template={template}
         recordedDates={recordedDates}
         onDone={() => onOpenChange(false)}
@@ -95,6 +99,12 @@ function RecurringFormSheet({
 
 interface RecurringFormBodyProps {
   categories: Category[];
+  /**
+   * The user's properties. With none — no property, or a caller that does
+   * not offer it — the field is not drawn and the form does not send it, so
+   * saving leaves the charge's property as it was.
+   */
+  properties?: { id: string; name: string }[];
   template?: RecurringTemplateWithCategory | null;
   /**
    * The days this charge is already recorded on this month, up to today.
@@ -108,6 +118,7 @@ interface RecurringFormBodyProps {
 /** The charge's fields, without a sheet around them. */
 export function RecurringFormBody({
   categories,
+  properties = [],
   template,
   recordedDates = [],
   onDone,
@@ -143,6 +154,7 @@ export function RecurringFormBody({
   const [applyToThisMonth, setApplyToThisMonth] = useState("false");
   const [startThisMonth, setStartThisMonth] = useState("false");
   const [categoryId, setCategoryId] = useState(template?.category_id ?? "");
+  const [propertyId, setPropertyId] = useState(template?.property_id ?? "");
   const [pricingType, setPricingType] = useState<PricingType>(
     template?.pricing_type ?? "fixed",
   );
@@ -495,6 +507,26 @@ export function RecurringFormBody({
           )}
         </>
       )}
+      {properties.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <span id="recurring-property" className="text-sm font-medium">
+            {t("property.attachLabel")}
+          </span>
+          <input type="hidden" name="propertyId" value={propertyId} />
+          <ChoiceChips
+            options={[
+              { value: "", label: t("property.attachNone") },
+              ...properties.map(({ id, name }) => ({ value: id, label: name })),
+            ]}
+            value={propertyId}
+            onValueChange={setPropertyId}
+            labelledBy="recurring-property"
+          />
+          <Text className="text-xs text-muted-foreground">
+            {t("property.attachHint")}
+          </Text>
+        </div>
+      ) : null}
       <div className="flex flex-col gap-2">
         <FormLabel htmlFor="recurring-description">
           {t("recurring.descriptionOptional")}

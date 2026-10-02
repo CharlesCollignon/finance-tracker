@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { FIGURE } from "@/lib/type-scale";
 import {
   useEffect,
@@ -9,7 +9,7 @@ import {
   useState,
   useTransition,
 } from "react";
-import { Plus } from "@phosphor-icons/react";
+import { House, Plus } from "@phosphor-icons/react";
 import { Button, ButtonNub } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { RecurringProposals } from "@/components/finance/RecurringProposals";
@@ -81,7 +81,12 @@ interface RecurringViewProps {
   recordedThisMonth?: Record<string, string[]>;
   /** A charge to arrive with open for editing. */
   initialEditId?: string;
+  /** The user's properties, which a charge can belong to (migration 049). */
+  properties?: { id: string; name: string }[];
 }
+
+/** Each property's name by id, for the row of a charge that belongs to one. */
+const PropertyNames = createContext<ReadonlyMap<string, string>>(new Map());
 
 interface RecurringItemRowProps {
   template: RecurringTemplateWithCategory;
@@ -98,6 +103,10 @@ function RecurringItemRow({
   const locale = useLocale();
   const t = useT();
   const sharesLabel = formatSharesLabel(template);
+  const propertyNames = useContext(PropertyNames);
+  const propertyName = template.property_id
+    ? propertyNames.get(template.property_id)
+    : undefined;
 
   return (
     <li
@@ -142,6 +151,12 @@ function RecurringItemRow({
         <p className="mt-1 text-xs text-muted-foreground">
           {formatRecurrenceSchedule(template, locale)}
         </p>
+        {propertyName ? (
+          <p className="mt-1 inline-flex max-w-full items-center gap-1 text-xs text-muted-foreground">
+            <House size={ICON.xs} aria-hidden className="shrink-0" />
+            <span className="truncate">{propertyName}</span>
+          </p>
+        ) : null}
       </button>
 
       <div className="flex shrink-0 flex-col items-end justify-between gap-2">
@@ -387,6 +402,7 @@ export function RecurringView({
   proposals = [],
   recordedThisMonth = {},
   initialEditId,
+  properties = [],
 }: RecurringViewProps) {
   const t = useT();
   const { toast } = useToast();
@@ -485,7 +501,9 @@ export function RecurringView({
   }
 
   return (
-    <>
+    <PropertyNames.Provider
+      value={new Map(properties.map(({ id, name }) => [id, name]))}
+    >
       <PageHeader titleKey="nav.charges" />
 
       <PageContainer className="flex flex-col gap-4">
@@ -605,6 +623,7 @@ export function RecurringView({
 
       <RecurringForm
         categories={categories}
+        properties={properties}
         template={editing}
         recordedDates={editing ? recordedThisMonth[editing.id] : undefined}
         open={editing !== null}
@@ -614,6 +633,6 @@ export function RecurringView({
           }
         }}
       />
-    </>
+    </PropertyNames.Provider>
   );
 }

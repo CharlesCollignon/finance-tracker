@@ -3,6 +3,7 @@ import {
   ArrowsLeftRight,
   ChartLine,
   Compass,
+  House,
   Repeat,
   Target,
   User,
@@ -99,6 +100,25 @@ export const APP_NAV_ITEMS = [
   },
 ] as const;
 
+/**
+ * The sixth surface, what is owned: a home and the loan behind it. Shown only
+ * to an account with `property.track` on while it is built, which is why it
+ * stands apart from the five rather than among them.
+ */
+export const PROPERTY_NAV_ITEM = {
+  href: "/property",
+  labelKey: "nav.property" satisfies Key,
+  icon: House,
+  children: [] as NavChild[],
+} as const;
+
+/** The surfaces this account is shown, in the order the bars draw them. */
+export function navItems(options: { property: boolean }) {
+  return options.property
+    ? [...APP_NAV_ITEMS, PROPERTY_NAV_ITEM]
+    : [...APP_NAV_ITEMS];
+}
+
 export const PROFILE_NAV_ITEM = {
   href: "/profile",
   labelKey: "nav.profile" satisfies Key,
@@ -113,7 +133,7 @@ export const PROFILE_NAV_ITEM = {
  * Ledger dark on /calendar, which is one of its views.
  */
 export function activeNavHref(pathname: string): string | null {
-  for (const item of APP_NAV_ITEMS) {
+  for (const item of navItems({ property: true })) {
     if (
       pathname === item.href ||
       pathname.startsWith(`${item.href}/`) ||
@@ -127,9 +147,3 @@ export function activeNavHref(pathname: string): string | null {
   }
   return null;
 }
-
-/**
- * The phone's bottom bar. Five destinations and the account trigger, which is
- * the most the bar holds before the labels start truncating.
- */
-export const BOTTOM_NAV_ITEMS = APP_NAV_ITEMS;

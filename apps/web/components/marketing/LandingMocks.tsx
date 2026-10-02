@@ -14,7 +14,7 @@ import { Orb } from "@/components/brand/Orb";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { APP_NAV_ITEMS, PROFILE_NAV_ITEM } from "@/lib/navigation";
+import { APP_NAV_ITEMS } from "@/lib/navigation";
 import {
   NOTCH_CENTRE_CLASS,
   NOTCH_ITEM_ACTIVE_CLASS,
@@ -367,11 +367,11 @@ function WebShell({
   );
 }
 
-/** The phone's bottom bar carries Profile alongside the six screens, for
- * thumb reach — the same BOTTOM_NAV_ITEMS split the app uses. */
+/** The phone's bottom bar: the surfaces alone, as the app draws them — the
+ * account is in the page header. */
 function MobileTabBar({ active }: { active: Key }) {
   const t = useT();
-  const items = [...APP_NAV_ITEMS, PROFILE_NAV_ITEM];
+  const items = APP_NAV_ITEMS;
   return (
     <nav className="flex h-14 shrink-0 items-stretch border-t border-border bg-background/95">
       {items.map(({ labelKey, icon: Icon }) => {

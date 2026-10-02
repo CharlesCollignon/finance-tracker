@@ -6,6 +6,7 @@ import {
   monthlyOutlay,
   nextPayment,
   outstandingOn,
+  regularPayment,
   type LoanTerms,
 } from "./loan-schedule";
 
@@ -115,6 +116,12 @@ describe("loanSchedule", () => {
     expect(rows[11]!.outstanding).toBe(200_000);
     expect(rows[12]!.payment).toBe(1159.92);
     expect(rows.at(-1)!.outstanding).toBe(0);
+    expect(
+      regularPayment(
+        { ...BASE, months: 252, deferralMonths: 12, deferralKind: "partial" },
+        rows,
+      ),
+    ).toMatchObject({ index: 13, on: "2026-01-05" });
   });
 
   it("adds the interest to what is owed through a total deferral", () => {

@@ -309,6 +309,9 @@ export async function upsertRecurringTemplate(
     startsOn: formData.get("startsOn") || undefined,
     endsOn: formData.get("endsOn") || undefined,
     active: formData.get("active") === "true",
+    propertyId: formData.has("propertyId")
+      ? String(formData.get("propertyId"))
+      : undefined,
   });
 
   if (!parsed.success) {

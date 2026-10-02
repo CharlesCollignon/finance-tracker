@@ -174,6 +174,8 @@ export async function saveRecurringTemplate(
     description: data.description?.trim() || null,
     starts_on: data.startsOn ?? null,
     ends_on: data.endsOn ?? null,
+    // Only when the form asked: a save that did not is not a detach.
+    ...(data.propertyId !== undefined ? { property_id: data.propertyId } : {}),
     ...pricing,
     ...schedule,
   };

@@ -12,6 +12,7 @@ import { reviewScreensFr } from "./review-screens.fr";
 import { planScreenFr } from "./plan-screen.fr";
 import { homeScreenFr } from "./home-screen.fr";
 import { actionsFr } from "./actions.fr";
+import { propertyFr } from "./property.fr";
 
 /**
  * What the app says, in French.
@@ -41,6 +42,7 @@ export const fr: Messages = {
     charges: "Récurrents",
     plan: "Plan",
     wallets: "Placements",
+    property: "Immobilier",
     profile: "Profil",
     ledgerList: "Liste",
     ledgerCalendar: "Calendrier",
@@ -2359,4 +2361,5 @@ export const fr: Messages = {
   reviewScreens: reviewScreensFr,
   planScreen: planScreenFr,
   homeScreen: homeScreenFr,
+  property: propertyFr,
 };

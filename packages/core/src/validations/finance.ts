@@ -98,6 +98,14 @@ const recurringCommonSchema = z.object({
   startsOn: optionalIsoDate,
   /** Optional échéancier end (inclusive). Empty = open-ended. */
   endsOn: optionalIsoDate,
+  /**
+   * The property it belongs to (migration 049). Absent leaves it as it is —
+   * the phone and the Add sheet do not ask — and empty detaches it.
+   */
+  propertyId: z
+    .union([z.literal(""), z.string().uuid()])
+    .optional()
+    .transform((value) => (value === "" ? null : value)),
 });
 
 function applyPricingRules(

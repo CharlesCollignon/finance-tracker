@@ -28,6 +28,7 @@
     "./plan-wealth": "./src/plan-wealth.ts",
     "./positions": "./src/positions.ts",
     "./preferences": "./src/preferences.ts",
+    "./properties": "./src/properties.ts",
     "./quote-source": "./src/quote-source.ts",
     "./recurring-apply": "./src/recurring-apply.ts",
     "./recurring-positions": "./src/recurring-positions.ts",

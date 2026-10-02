@@ -15,9 +15,12 @@ import { useT } from "@/lib/locale-context";
 export function RemoveAccount({
   confirmText,
   onRemove,
+  label,
 }: {
   confirmText: string;
   onRemove: () => Promise<{ error?: string; message?: string }>;
+  /** What the first press says, when it is not an account being removed. */
+  label?: string;
 }) {
   const t = useT();
   const { toast } = useToast();
@@ -34,7 +37,7 @@ export function RemoveAccount({
         className="text-muted-foreground"
       >
         <Trash size={ICON.sm} aria-hidden className="mr-1.5" />
-        {t("accounts.remove")}
+        {label ?? t("accounts.remove")}
       </Button>
     );
   }
@@ -42,7 +45,7 @@ export function RemoveAccount({
   return (
     <div
       role="group"
-      aria-label={t("accounts.remove")}
+      aria-label={label ?? t("accounts.remove")}
       className="flex flex-col gap-2 rounded-control border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <p className="text-sm">{confirmText}</p>

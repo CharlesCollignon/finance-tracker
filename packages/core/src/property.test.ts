@@ -3,7 +3,9 @@ import { loanSchedule } from "./loan-schedule";
 import {
   acquisitionCost,
   estimatedValue,
+  loanPaymentCategoryName,
   loanTermsFromRow,
+  notaryFeesEstimate,
   paymentShare,
   propertyPosition,
 } from "./property";
@@ -102,6 +104,20 @@ describe("acquisitionCost", () => {
   });
 });
 
+describe("loanPaymentCategoryName", () => {
+  it("is the default loan category, in the reader's language", () => {
+    expect(loanPaymentCategoryName("fr")).toBe("Remboursement de prêt");
+    expect(loanPaymentCategoryName("en")).toBe("Loan repayment");
+  });
+});
+
+describe("notaryFeesEstimate", () => {
+  it("starts from 7.5 % of the price for an existing home, 2.5 % for a new one", () => {
+    expect(notaryFeesEstimate(250_000, "existing")).toBe(18_750);
+    expect(notaryFeesEstimate(250_000, "new")).toBe(6_250);
+  });
+});
+
 describe("estimatedValue", () => {
   it("is the user's own figure when they gave one", () => {
     expect(
@@ -136,13 +152,14 @@ describe("propertyPosition", () => {
 
     expect(position.value).toBe(125_000);
     expect(position.owed).toBe(Math.round(owedAfterThree * 50) / 100);
+    expect(position.owed + position.principalRepaid).toBe(100_000);
     expect(position.netValue).toBe(
       Math.round((125_000 - position.owed) * 100) / 100,
     );
     expect(position.cost).toBe(135_000);
     expect(position.unrealisedGain).toBe(-10_000);
     expect(position.principalRepaid).toBe(
-      Math.round((200_000 - owedAfterThree) * 50) / 100,
+      Math.round((100_000 - position.owed) * 100) / 100,
     );
   });
 

@@ -20,9 +20,12 @@ import { GLASS_PANEL } from "@/lib/glass";
 import { ICON } from "@/lib/icon-scale";
 import { useT } from "@/lib/locale-context";
 
+/**
+ * The avatar that opens the account's menu: in the desktop's top bar, and in
+ * the page header on a phone (`HeaderAccountMenu`). It used to sit at the end
+ * of the phone's bottom bar, as a sixth target among five surfaces.
+ */
 interface AccountMenuProps {
-  /** The phone's bottom bar, or the desktop's top bar. */
-  variant: "bottom" | "top";
   displayName: string;
   initial: string;
 }
@@ -32,11 +35,7 @@ function subscribeToNothing() {
   return () => {};
 }
 
-export function AccountMenu({
-  variant,
-  displayName,
-  initial,
-}: AccountMenuProps) {
+export function AccountMenu({ displayName, initial }: AccountMenuProps) {
   const t = useT();
   const pathname = usePathname();
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -70,9 +69,7 @@ export function AccountMenu({
       setOpenAt(null);
       return;
     }
-    setPanelStyle(
-      variant === "top" ? topPanelStyle(triggerRef.current) : undefined,
-    );
+    setPanelStyle(topPanelStyle(triggerRef.current));
     setOpenAt(pathname);
   }
   const titleId = useId();
@@ -124,15 +121,7 @@ export function AccountMenu({
               className="fixed inset-0 z-[60] bg-black/25 md:bg-black/15"
               onClick={() => setOpenAt(null)}
             />
-            <div
-              className={cn(
-                "fixed z-[70] flex",
-                variant === "bottom"
-                  ? "inset-x-0 justify-center px-4 bottom-[calc(var(--shell-bottom-nav-height)+var(--shell-bottom-nav-inset)+0.5rem+env(safe-area-inset-bottom,0px))]"
-                  : "justify-end",
-              )}
-              style={panelStyle}
-            >
+            <div className="fixed z-[70] flex justify-end" style={panelStyle}>
               <div
                 ref={panelRef}
                 role="dialog"
@@ -189,36 +178,6 @@ export function AccountMenu({
           document.body,
         )
       : null;
-
-  if (variant === "bottom") {
-    return (
-      <>
-        <button
-          ref={triggerRef}
-          type="button"
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          aria-label={displayName}
-          onClick={toggle}
-          className={cn(
-            "relative flex min-w-[44px] flex-1 flex-col items-center",
-            "justify-center gap-0.5 rounded-full mx-0.5 my-1 px-1 py-1",
-            "text-[10px] font-medium sm:text-xs",
-            "transition-colors duration-hover",
-            // Same rule as the rest of the bar: the open menu is said in
-            // foreground colour, not with a pill behind it.
-            active
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          <UserInitial initial={initial} name={displayName} />
-          <span className="truncate">{initial}</span>
-        </button>
-        {panel}
-      </>
-    );
-  }
 
   // The avatar alone. The rail had the width to print the name beside it;
   // the bar keeps the name for the button's label and the initial's tooltip.

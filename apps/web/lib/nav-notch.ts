@@ -28,7 +28,10 @@
  * 4px above its row, so the pill clears the bezel's edge by the same step
  * the wordmark and the actions beside it do, and 8px under it. */
 export const NOTCH_CENTRE_CLASS =
-  "pointer-events-auto absolute left-1/2 top-0 flex -translate-x-1/2 items-start gap-1 " +
+  // `w-max`: absolutely placed from the middle, the notch would otherwise
+  // shrink to the half of the bar right of centre, and squeeze its labels
+  // onto two lines once there are six surfaces.
+  "pointer-events-auto absolute left-1/2 top-0 flex w-max -translate-x-1/2 items-start gap-1 " +
   "rounded-b-[1.875rem] bg-frame px-2 pb-2 pt-1";
 
 /** The wordmark, on the page to the left of the notch, level with its row. */
