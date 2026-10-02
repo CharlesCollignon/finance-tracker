@@ -1,13 +1,12 @@
+import { toInstrumentReading } from "@finance/data/instrument-readings";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
   readingQueue,
   type InstrumentReading,
-  type SectorId,
 } from "@finance/core/instrument-reading";
 import type { Database } from "@finance/core/types/database";
 import { readInstrument } from "@/lib/instrument-reading/read";
-import { ASSET_KINDS, type AssetKind } from "@finance/core/instrument-reading";
 
 type Client = SupabaseClient<Database>;
 
@@ -50,50 +49,6 @@ interface Candidate {
   isin: string;
   name: string;
   symbol: string | null;
-}
-
-function toReading(row: {
-  isin: string;
-  ongoing_charge: number | null;
-  currency: string | null;
-  country_weights: unknown;
-  sector_weights: unknown;
-  top_constituents: unknown;
-  constituents_coverage: number | null;
-  sources: unknown;
-  sourced_at: string;
-  model: string | null;
-  version: number;
-  asset_kind?: string | null;
-}): InstrumentReading {
-  return {
-    isin: row.isin,
-    // The daily job only ever asks "is this stale", which does not depend on
-    // the kind, so an unrecognised one costs nothing here. Narrowed rather
-    // than cast all the same: a lie in this field would reach the surface.
-    assetKind: (ASSET_KINDS as readonly string[]).includes(row.asset_kind ?? "")
-      ? (row.asset_kind as AssetKind)
-      : null,
-    ongoingCharge:
-      row.ongoing_charge === null ? null : Number(row.ongoing_charge),
-    currency: row.currency,
-    countryWeights: (row.country_weights ?? {}) as Record<string, number>,
-    sectorWeights: (row.sector_weights ?? {}) as Partial<
-      Record<SectorId, number>
-    >,
-    topConstituents: (row.top_constituents ?? []) as {
-      name: string;
-      weight: number;
-    }[],
-    constituentsCoverage:
-      row.constituents_coverage === null
-        ? 0
-        : Number(row.constituents_coverage),
-    sources: (row.sources ?? []) as string[],
-    sourcedAt: row.sourced_at,
-    model: row.model,
-    version: row.version,
-  };
 }
 
 /**
@@ -147,7 +102,7 @@ async function findCandidates(supabase: Client): Promise<Candidate[]> {
   const readingsByUser = new Map<string, Map<string, InstrumentReading>>();
   for (const row of readings ?? []) {
     const forUser = readingsByUser.get(row.user_id) ?? new Map();
-    const reading = toReading(row);
+    const reading = toInstrumentReading(row);
     forUser.set(reading.isin, reading);
     readingsByUser.set(row.user_id, forUser);
   }

@@ -20,12 +20,8 @@ import {
   type TargetAllocation,
 } from "@finance/core/look-through-target";
 import {
-  ASSET_KINDS,
   readingQueue,
-  type AssetKind,
   type InstrumentReadStatus,
-  type InstrumentReading,
-  type SectorId,
 } from "@finance/core/instrument-reading";
 import type { WalletRead } from "@finance/core/wallet-read";
 import type { MonthReadTally } from "@finance/core/month-read-budget";
@@ -36,15 +32,12 @@ import {
   parseLocale,
   type Locale,
 } from "@finance/core/i18n/locale";
-import type {
-  InstrumentReadingRow,
-  WalletPlan,
-  WalletReadRow,
-} from "@finance/core/types/database";
+import type { WalletPlan, WalletReadRow } from "@finance/core/types/database";
 
 import { WEB_APP_URL } from "@/lib/env";
 import { getWalletPlans, getWalletPortfolio } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
+import * as readings from "@finance/data/instrument-readings";
 import { announcingFetch } from "@/lib/data-version";
 
 /**
@@ -61,60 +54,10 @@ import { announcingFetch } from "@/lib/data-version";
  * table is a portfolio nothing is known about, and the surface says so.
  */
 
-function isAssetKind(value: string | null): value is AssetKind {
-  return value !== null && (ASSET_KINDS as readonly string[]).includes(value);
-}
-
-/** One row of `instrument_readings`, as the web's query maps it. */
-function toReading(row: InstrumentReadingRow): InstrumentReading {
-  return {
-    isin: row.isin,
-    // A kind this build does not know reads as "not asked", which keeps
-    // whatever composition the instrument reported — the web's rule.
-    assetKind: isAssetKind(row.asset_kind) ? row.asset_kind : null,
-    ongoingCharge:
-      row.ongoing_charge === null ? null : Number(row.ongoing_charge),
-    currency: row.currency,
-    countryWeights: (row.country_weights ?? {}) as Record<string, number>,
-    sectorWeights: (row.sector_weights ?? {}) as Partial<
-      Record<SectorId, number>
-    >,
-    topConstituents: (row.top_constituents ?? []) as {
-      name: string;
-      weight: number;
-    }[],
-    constituentsCoverage:
-      row.constituents_coverage === null
-        ? 0
-        : Number(row.constituents_coverage),
-    sources: (row.sources ?? []) as string[],
-    sourcedAt: row.sourced_at,
-    model: row.model,
-    version: row.version,
-  };
-}
-
-async function getInstrumentReadings(
+function getInstrumentReadings(
   userId: string,
-): Promise<{ byIsin: Map<string, InstrumentReading>; tracked: boolean }> {
-  const { data, error } = await supabase
-    .from("instrument_readings")
-    .select("*")
-    .eq("user_id", userId);
-
-  if (error) {
-    if (isMissingSchema(error)) {
-      return { byIsin: new Map(), tracked: false };
-    }
-    throw error;
-  }
-
-  const byIsin = new Map<string, InstrumentReading>();
-  for (const row of data ?? []) {
-    const reading = toReading(row as InstrumentReadingRow);
-    byIsin.set(reading.isin, reading);
-  }
-  return { byIsin, tracked: true };
+): Promise<readings.InstrumentReadings> {
+  return readings.getInstrumentReadings(supabase, userId);
 }
 
 export interface StoredWalletRead {
