@@ -5,6 +5,7 @@ import {
   Bank,
   CalendarCheck,
   CalendarPlus,
+  Flag,
   HandCoins,
   Receipt,
   SealCheck,
@@ -33,6 +34,7 @@ const ICONS: Record<NotificationKind, Icon> = {
   bigCharge: Receipt,
   arrived: HandCoins,
   review: Tray,
+  milestone: Flag,
   monthOpen: CalendarPlus,
   bank: Bank,
 };

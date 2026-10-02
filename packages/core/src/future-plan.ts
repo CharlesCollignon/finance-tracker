@@ -724,3 +724,26 @@ export function monthsUntil(
   );
   return index === -1 ? null : index + 1;
 }
+
+/** What the Plan stands on today: every account's opening amount, added up. */
+export function wealthToday(envelopes: readonly Envelope[]): number {
+  return envelopes.reduce((sum, envelope) => sum + envelope.initial, 0);
+}
+
+/**
+ * The milestone worth announcing, if one is: the highest tier now passed,
+ * when it is above the one already celebrated. Nothing before the first
+ * celebration — a first visit records where things stand rather than
+ * announcing everything already behind the user, as the Plan itself does.
+ */
+export function milestoneToAnnounce(
+  current: number,
+  seen: number | null,
+  tiers: readonly number[] = MILESTONE_TIERS,
+): number | null {
+  if (seen === null) {
+    return null;
+  }
+  const reached = tiers.filter((tier) => tier <= current).at(-1);
+  return reached !== undefined && reached > seen ? reached : null;
+}

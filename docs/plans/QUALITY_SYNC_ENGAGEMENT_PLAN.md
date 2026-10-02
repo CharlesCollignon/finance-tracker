@@ -134,8 +134,7 @@ typechecks and builds crashed the terminal twice. Work sequentially.
 - [x] Big upcoming charge, server-sent; the phone's per-charge local reminders
       retire (kept only for a phone with no push token).
 - [x] Milestone reached, with "seen" stored per user so every device agrees.
-      Celebrated on the Plan, not pushed: the server would have to price
-      every wallet. The `milestone` switch was dropped until it is sent.
+      Pushed since Phase 5, once the reads it needed were shared.
 - [x] Spending above normal, inside the recap.
 
 ## Phase 4 — Feel (branch `phase-4/feel`)
@@ -171,6 +170,11 @@ Taken from Phase 2's deferred list and what Phases 3–4 left open.
       month's rows and summary, category seeding, positions and wallet plans,
       instrument readings (`@finance/data`); quote fetching and four small
       helpers (core).
+- [x] The milestone push, with its switch back in Profile: the daily run
+      works out the Plan's own figure at today's prices
+      (`@finance/data/plan-wealth`) for someone who wants it and has had a
+      milestone celebrated, and announces a new one without marking it
+      seen, so the Plan still celebrates it.
 - [x] Bugs found on the way, all on the phone: its merchant suggestions and
       recurring detection only saw the latest 1 000 transactions, its
       investment and savings history stopped at 1 000 rows, it valued a

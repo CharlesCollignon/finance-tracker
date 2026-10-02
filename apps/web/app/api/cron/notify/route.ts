@@ -21,13 +21,21 @@ import type {
   RecurringTemplateWithCategory,
 } from "@finance/core/types/database";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { defaultRecipient, readRecipients } from "@finance/data/preferences";
+import {
+  defaultRecipient,
+  readRecipients,
+  type Recipient,
+} from "@finance/data/preferences";
+import { milestoneToAnnounce } from "@finance/core/future-plan";
+import { wantsNotification } from "@finance/core/notification-kinds";
+import { getWealthToday } from "@finance/data/plan-wealth";
 import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
 import {
   bigChargeHeadsUp,
   bigCharges,
   closeReminder,
+  milestoneNotification,
   overdraftWarning,
   plannedChargesOn,
   usualChargeAmount,
@@ -111,7 +119,7 @@ export async function GET(request: NextRequest) {
       userId,
       today,
       monthKey,
-      recipient.locale,
+      recipient,
     );
     const delivery = await deliver(supabase, userId, recipient, due, {
       devices,
@@ -139,8 +147,9 @@ async function notificationsFor(
   userId: string,
   today: string,
   monthKey: string,
-  locale: Locale,
+  recipient: Recipient,
 ): Promise<PendingNotification[]> {
+  const { locale } = recipient;
   const [year, month] = monthKey.split("-").map(Number);
 
   const [categories, templates] = await Promise.all([
@@ -160,13 +169,14 @@ async function notificationsFor(
   // to stop are the things here that get worse by waiting, and neither needs
   // a template. Nor does the reading day, which belongs to anyone who closes
   // their months, or the Monday recap, which belongs to anyone with a ledger.
-  const [overdraft, bank, close, recap] = await Promise.all([
+  const [overdraft, bank, close, recap, milestone] = await Promise.all([
     overdraftFor(supabase, userId, today, locale),
     bankNotificationFor(supabase, userId, today, locale),
     closeReminderFor(supabase, userId, today, locale),
     recapFor(supabase, userId, today, locale),
+    milestoneFor(supabase, userId, today, recipient),
   ]);
-  const lead = [overdraft, bank, close, recap].filter(
+  const lead = [overdraft, bank, close, recap, milestone].filter(
     (notification): notification is PendingNotification =>
       notification !== null,
   );
@@ -309,6 +319,33 @@ async function overdraftFor(
       t: translator(locale),
       locale,
     });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A milestone passed since the last one the Plan celebrated. Asked only of
+ * someone who wants to hear it and has had one celebrated already, because
+ * the answer prices every wallet they hold.
+ */
+async function milestoneFor(
+  supabase: AdminClient,
+  userId: string,
+  today: string,
+  { locale, prefs, milestoneSeen }: Recipient,
+): Promise<PendingNotification | null> {
+  if (milestoneSeen === null || !wantsNotification(prefs, "milestone")) {
+    return null;
+  }
+  try {
+    const amount = milestoneToAnnounce(
+      await getWealthToday(supabase, userId, today, locale),
+      milestoneSeen,
+    );
+    return amount === null
+      ? null
+      : milestoneNotification({ amount, t: translator(locale), locale });
   } catch {
     return null;
   }

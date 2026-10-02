@@ -104,16 +104,17 @@ off (`user_preferences.notification_prefs`, every kind on unless set to
 logging it so the next run sends it, and logs each key in `notification_log`
 before sending, so nothing is said twice.
 
-| Kind        | What                                               | Sent by                   | Key                                              |
-| ----------- | -------------------------------------------------- | ------------------------- | ------------------------------------------------ |
-| `recap`     | Monday: last week, the month so far, still to come | notify cron, Mondays      | `recap:<monday>`                                 |
-| `overdraft` | The balance dips below zero on a day ahead         | notify cron               | `overdraft:<month>`                              |
-| `close`     | The reading day; a month a bank closed             | notify cron; refresh cron | `close:` / `closed:`                             |
-| `bigCharge` | Tomorrow, a charge over twice the usual, or yearly | notify cron               | `big-charge:<tomorrow>`                          |
-| `arrived`   | Movements that look like a planned charge arrived  | notify cron               | `arrived:<day>`                                  |
-| `review`    | New bank rows waiting for a category               | refresh cron              | `bank-review:<day>`                              |
-| `monthOpen` | A new month has opened                             | notify cron               | `month-open:<month>`                             |
-| `bank`      | The connection needs renewing or has stopped       | notify cron               | `bank-consent:`, `bank-expired:`, `bank-paused:` |
+| Kind        | What                                                 | Sent by                   | Key                                              |
+| ----------- | ---------------------------------------------------- | ------------------------- | ------------------------------------------------ |
+| `recap`     | Monday: last week, the month so far, still to come   | notify cron, Mondays      | `recap:<monday>`                                 |
+| `overdraft` | The balance dips below zero on a day ahead           | notify cron               | `overdraft:<month>`                              |
+| `close`     | The reading day; a month a bank closed               | notify cron; refresh cron | `close:` / `closed:`                             |
+| `bigCharge` | Tomorrow, a charge over twice the usual, or yearly   | notify cron               | `big-charge:<tomorrow>`                          |
+| `arrived`   | Movements that look like a planned charge arrived    | notify cron               | `arrived:<day>`                                  |
+| `review`    | New bank rows waiting for a category                 | refresh cron              | `bank-review:<day>`                              |
+| `milestone` | A new milestone passed since the last one celebrated | notify cron               | `milestone:<amount>`                             |
+| `monthOpen` | A new month has opened                               | notify cron               | `month-open:<month>`                             |
+| `bank`      | The connection needs renewing or has stopped         | notify cron               | `bank-consent:`, `bank-expired:`, `bank-paused:` |
 
 The messages are built in `packages/core/src/push-messages.ts`,
 `push-digest.ts` and `weekly-recap.ts`; the figures behind them come from the
@@ -130,7 +131,9 @@ The recap is also a card on Le point, Monday to Wednesday, until « Vu »
 (`dismissed_prompts`, `recap:<monday>`); the `recap` switch hides both. On
 the web the card offers the Monday push to a browser that has not taken
 notifications yet. The milestone already celebrated on the Plan is the
-account's (`user_preferences.milestone_seen`), so every device agrees.
+account's (`user_preferences.milestone_seen`), so every device agrees; the
+push for a new one (`@finance/data/plan-wealth`, the Plan's own figure at
+today's prices) leaves it unmarked, so the Plan still shows it as new.
 
 ## Where each figure is computed
 
@@ -262,5 +265,3 @@ assertion script:
   dismissals. Whether a wipe should take those too is the owner's call.
 - The SQL assertion scripts in `supabase/tests/` are run by hand against a
   local stack; CI does not run them.
-- A new milestone is celebrated on the Plan but not pushed: saying it from
-  the server would mean pricing every wallet there.

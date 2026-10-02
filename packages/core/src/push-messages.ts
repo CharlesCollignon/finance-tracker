@@ -322,3 +322,23 @@ export function overdraftWarning({
     url: "/bearing",
   };
 }
+
+/**
+ * A new milestone passed. Said once per milestone (keyed by its amount),
+ * and only after the Plan has celebrated one — the Plan still shows it as
+ * new when it is next opened, since this does not mark it seen.
+ */
+export function milestoneNotification({
+  amount,
+  t,
+  locale,
+}: Voice & { amount: number }): PendingNotification {
+  const formatted = formatEuro(amount, locale);
+  return {
+    kind: "milestone",
+    key: `milestone:${amount}`,
+    title: t("push.milestone.title", { amount: formatted }),
+    body: t("push.milestone.body", { amount: formatted }),
+    url: "/plan",
+  };
+}

@@ -7,7 +7,7 @@ import { APP_TIME_ZONE } from "./constants";
  * preferences row (`user_preferences.notification_prefs`, migration 048)
  * says which they have turned off. One switch for everything was enough
  * while there were two kinds; with the recap and the warnings there are
- * eight, and someone who wants to hear about an overdraft may not want a
+ * nine, and someone who wants to hear about an overdraft may not want a
  * Monday summary.
  */
 export const NOTIFICATION_KINDS = [
@@ -23,6 +23,8 @@ export const NOTIFICATION_KINDS = [
   "arrived",
   /** Bank rows waiting for a category. */
   "review",
+  /** A new round amount of savings and investments reached. */
+  "milestone",
   /** A new month has opened. */
   "monthOpen",
   /** The bank connection needs a renewal or has stopped. */

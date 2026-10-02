@@ -1,5 +1,6 @@
 import { getCurrentMonth, todayIsoLocal } from "@finance/core/constants";
 import type { InvestmentWalletId } from "@finance/core/investments";
+import { planWealthFromPortfolio } from "@finance/core/investment-positions";
 import {
   buildForwardProjection,
   type ForwardProjection,
@@ -141,23 +142,9 @@ export async function gatherPlanWealth(
   userId: string,
 ): Promise<PlanWealth | null> {
   try {
-    const portfolio = await getWalletPortfolio(userId, {
-      includeHistory: false,
-    });
-    const wallets: PlanWealth["wallets"] = {};
-    const templateWallets: PlanWealth["templateWallets"] = {};
-
-    for (const column of portfolio.columns) {
-      wallets[column.walletId] =
-        (wallets[column.walletId] ?? 0) + column.totalMarketValue;
-      for (const item of column.items) {
-        if (item.recurringTemplateId) {
-          templateWallets[item.recurringTemplateId] = column.walletId;
-        }
-      }
-    }
-
-    return { wallets, templateWallets };
+    return planWealthFromPortfolio(
+      await getWalletPortfolio(userId, { includeHistory: false }),
+    );
   } catch {
     return null;
   }

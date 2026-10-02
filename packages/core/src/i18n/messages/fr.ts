@@ -1547,6 +1547,10 @@ export const fr: Messages = {
       label: "Opérations à classer",
       hint: "Quand votre banque a apporté des opérations sans catégorie.",
     },
+    milestone: {
+      label: "Nouveau palier",
+      hint: "Quand ce que vous avez mis de côté et placé passe un palier.",
+    },
     monthOpen: {
       label: "Nouveau mois",
       hint: "Le 1er, quand le mois commence.",
@@ -1588,6 +1592,10 @@ export const fr: Messages = {
         one: "Demain\u00A0: {count} grosse opération",
         other: "Demain\u00A0: {count} grosses opérations",
       },
+    },
+    milestone: {
+      title: "Nouveau palier\u00A0: {amount}",
+      body: "Ce que vous avez mis de côté et placé vient de passer {amount}. Le Plan dit quand viendra le suivant.",
     },
     overdraft: {
       title: "Découvert possible le {date}",

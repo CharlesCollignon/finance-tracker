@@ -691,3 +691,27 @@ export function portfolioQuoteSymbols(
   }
   return Array.from(symbols);
 }
+
+/**
+ * A portfolio as the Plan reads it: what each wallet is worth today, and the
+ * wallet each position-linked recurring purchase goes into.
+ */
+export function planWealthFromPortfolio(
+  portfolio: InvestmentPortfolioSummary,
+): {
+  wallets: Partial<Record<InvestmentWalletId, number>>;
+  templateWallets: Record<string, InvestmentWalletId>;
+} {
+  const wallets: Partial<Record<InvestmentWalletId, number>> = {};
+  const templateWallets: Record<string, InvestmentWalletId> = {};
+  for (const column of portfolio.columns) {
+    wallets[column.walletId] =
+      (wallets[column.walletId] ?? 0) + column.totalMarketValue;
+    for (const item of column.items) {
+      if (item.recurringTemplateId) {
+        templateWallets[item.recurringTemplateId] = column.walletId;
+      }
+    }
+  }
+  return { wallets, templateWallets };
+}

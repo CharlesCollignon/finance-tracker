@@ -25,6 +25,7 @@
     "./month-ledger": "./src/month-ledger.ts",
     "./moved-rows": "./src/moved-rows.ts",
     "./occurrences": "./src/occurrences.ts",
+    "./plan-wealth": "./src/plan-wealth.ts",
     "./positions": "./src/positions.ts",
     "./preferences": "./src/preferences.ts",
     "./quote-source": "./src/quote-source.ts",
