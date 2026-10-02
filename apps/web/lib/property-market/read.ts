@@ -20,6 +20,8 @@ import {
   seriesFor,
   type PriceIndex,
 } from "@finance/core/price-index";
+import { estimatedValue, type MarketContext } from "@finance/core/property";
+import { halfYearOf, isNewRelease } from "@finance/core/property-moments";
 import type { Db } from "@finance/data/client";
 import * as properties from "@finance/data/properties";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -119,6 +121,15 @@ async function loadPriceIndex(
   return priceIndexFromRows(fresh.filter((row) => series.includes(row.series)));
 }
 
+/** A home's estimate after the record of sales grew by a half-year. */
+export interface NewEstimate {
+  property: { id: string; name: string };
+  /** The half-year its sales now reach: « 2026-H1 ». */
+  halfYear: string;
+  before: number;
+  after: number;
+}
+
 export type MarketOutcome =
   /** A reading was kept. */
   | "read"
@@ -138,10 +149,19 @@ export async function readPropertyMarket(
   db: Db,
   userId: string,
   propertyId: string,
+  options: {
+    /**
+     * Told when the reading's sales reach a half-year the one before did
+     * not, for a home valued by its sales — the weekly cron's, to say so.
+     */
+    onNewEstimate?: (estimate: NewEstimate) => Promise<void>;
+  } = {},
 ): Promise<MarketOutcome> {
   const { data: property, error } = await db
     .from("properties")
-    .select("id, kind, usage, citycode, rooms, latitude, longitude")
+    .select(
+      "id, name, kind, usage, citycode, rooms, latitude, longitude, living_area, purchase_price, purchased_on, value_pinned, value_pinned_on",
+    )
     .eq("id", propertyId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -155,22 +175,31 @@ export async function readPropertyMarket(
     console.error("Asking rents could not be read", rentError),
   );
   try {
-    return await readSales(db, userId, property);
+    return await readSales(db, userId, property, options.onNewEstimate);
   } finally {
     await rent;
   }
 }
+
+type MarketReadingRow = NonNullable<MarketContext["reading"]>;
 
 async function readSales(
   db: Db,
   userId: string,
   property: {
     id: string;
+    name: string;
     kind: "apartment" | "house" | "other";
     citycode: string | null;
     latitude: number | null;
     longitude: number | null;
+    living_area: number | null;
+    purchase_price: number;
+    purchased_on: string;
+    value_pinned: number | null;
+    value_pinned_on: string | null;
   },
+  onNewEstimate?: (estimate: NewEstimate) => Promise<void>,
 ): Promise<MarketOutcome> {
   const propertyId = property.id;
   if (property.kind === "other" || !property.citycode) {
@@ -213,16 +242,63 @@ async function readSales(
   const quarter =
     carryToLatest(index, candidates, INDEX_START)?.to ??
     quarterOf(todayIsoLocal());
+  const previous = onNewEstimate
+    ? await previousReading(db, userId, propertyId)
+    : null;
+  const next = reading ? { ...reading, quarter } : null;
   const saved = await properties.saveMarketReading(
     db,
     userId,
     propertyId,
-    reading ? { ...reading, quarter } : null,
+    next,
   );
   if (saved.error) {
     throw new Error(saved.error);
   }
+  // A home the user values themselves is not told the sales' view of it.
+  if (
+    onNewEstimate &&
+    next &&
+    previous &&
+    property.value_pinned === null &&
+    isNewRelease(previous.periodTo, next.periodTo)
+  ) {
+    const valueBy = (by: MarketReadingRow) =>
+      estimatedValue(property, { reading: by, purchaseCarry: null }).value;
+    await onNewEstimate({
+      property: { id: property.id, name: property.name },
+      halfYear: halfYearOf(next.periodTo),
+      before: valueBy(previous),
+      after: valueBy(next),
+    });
+  }
   return reading ? "read" : "none";
+}
+
+/** The reading a property had before this one, if any. */
+async function previousReading(
+  db: Db,
+  userId: string,
+  propertyId: string,
+): Promise<MarketReadingRow | null> {
+  const { data } = await db
+    .from("property_market_readings")
+    .select("*")
+    .eq("property_id", propertyId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data
+    ? {
+        scope: data.scope,
+        medianM2: Number(data.median_m2),
+        q1M2: Number(data.q1_m2),
+        q3M2: Number(data.q3_m2),
+        sales: data.sales,
+        periodFrom: data.period_from,
+        periodTo: data.period_to,
+        quarter: data.quarter,
+      }
+    : null;
 }
 
 /**

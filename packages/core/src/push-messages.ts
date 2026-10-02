@@ -14,12 +14,18 @@
  */
 
 import { recurringOccurrenceKey } from "./apply-recurring";
-import { formatDayMonth, formatEuro } from "./constants";
+import {
+  formatDayMonth,
+  formatEuro,
+  formatFullDate,
+  formatMonthShortYear,
+} from "./constants";
 import { monthLong } from "./i18n/calendar-names";
 import type { Locale } from "./i18n/locale";
 import type { Translate } from "./i18n/t";
 import type { MonthBalance } from "./month-balance";
 import type { CloseableMonth, MonthCloseResult } from "./month-close";
+import type { LoanMoment } from "./property-moments";
 import type { PendingNotification } from "./push-digest";
 import {
   getRecurringOccurrenceDates,
@@ -340,5 +346,100 @@ export function milestoneNotification({
     title: t("push.milestone.title", { amount: formatted }),
     body: t("push.milestone.body", { amount: formatted }),
     url: "/plan",
+  };
+}
+
+/**
+ * A loan's moment: half of it repaid, or its last payment made. Keyed by the
+ * loan and the moment, so each is said once whichever day it is noticed.
+ */
+export function loanMomentNotification({
+  moment,
+  loan,
+  property,
+  owed,
+  monthly,
+  endsOn,
+  t,
+  locale,
+}: Voice & {
+  moment: LoanMoment;
+  loan: { id: string; label: string };
+  property: { id: string; name: string };
+  /** The user's part still owed today. */
+  owed: number;
+  /** What it took each month, the user's part. */
+  monthly: number;
+  /** Its last payment. */
+  endsOn: string | null;
+}): PendingNotification {
+  const url = `/property/${property.id}`;
+  if (moment.kind === "last") {
+    return {
+      kind: "property",
+      key: `property:last:${loan.id}`,
+      title: t("push.property.lastTitle", { loan: loan.label }),
+      body: t("push.property.lastBody", {
+        loan: loan.label,
+        date: formatFullDate(moment.on, locale),
+        amount: formatEuro(monthly, locale),
+      }),
+      url,
+    };
+  }
+  return {
+    kind: "property",
+    key: `property:half:${loan.id}`,
+    title: t("push.property.halfTitle", { loan: loan.label }),
+    body: endsOn
+      ? t("push.property.halfBody", {
+          owed: formatEuro(owed, locale),
+          property: property.name,
+          end: formatMonthShortYear(
+            Number(endsOn.slice(0, 4)),
+            Number(endsOn.slice(5, 7)),
+            locale,
+          ),
+        })
+      : t("push.property.halfBodyOpen", {
+          owed: formatEuro(owed, locale),
+          property: property.name,
+        }),
+    url,
+  };
+}
+
+/**
+ * A new estimate for a home, when the public record of sales has added a
+ * half-year to what its last reading stood on. Keyed by that half-year, so
+ * a home hears it at most twice a year.
+ */
+export function marketMomentNotification({
+  property,
+  halfYear,
+  before,
+  after,
+  t,
+  locale,
+}: Voice & {
+  property: { id: string; name: string };
+  halfYear: string;
+  before: number;
+  after: number;
+}): PendingNotification {
+  return {
+    kind: "property",
+    key: `property:market:${property.id}:${halfYear}`,
+    title: t("push.property.marketTitle", { property: property.name }),
+    body:
+      before === after
+        ? t("push.property.marketBodySame", {
+            after: formatEuro(after, locale),
+          })
+        : t("push.property.marketBody", {
+            after: formatEuro(after, locale),
+            before: formatEuro(before, locale),
+          }),
+    url: `/property/${property.id}`,
   };
 }

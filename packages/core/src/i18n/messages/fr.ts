@@ -1560,6 +1560,10 @@ export const fr: Messages = {
       label: "Nouveau palier",
       hint: "Quand ce que vous avez mis de côté et placé passe un palier.",
     },
+    property: {
+      label: "Immobilier",
+      hint: "La moitié d'un prêt remboursée, sa dernière échéance, une nouvelle estimation d'après les ventes.",
+    },
     monthOpen: {
       label: "Nouveau mois",
       hint: "Le 1er, quand le mois commence.",
@@ -1601,6 +1605,19 @@ export const fr: Messages = {
         one: "Demain\u00A0: {count} grosse opération",
         other: "Demain\u00A0: {count} grosses opérations",
       },
+    },
+    property: {
+      halfTitle: "{loan}\u00A0: la moitié est remboursée",
+      halfBody: "Il reste {owed} à rembourser sur {property}, jusqu'en {end}.",
+      halfBodyOpen: "Il reste {owed} à rembourser sur {property}.",
+      lastTitle: "Dernière échéance\u00A0: {loan}",
+      lastBody:
+        "{loan} est remboursé depuis le {date}\u00A0: {amount} de moins à payer chaque mois.",
+      marketTitle: "Nouvelle estimation\u00A0: {property}",
+      marketBody:
+        "D'après les dernières ventes publiées, il vaut environ {after}, contre {before} à la lecture précédente.",
+      marketBodySame:
+        "D'après les dernières ventes publiées, il vaut toujours environ {after}.",
     },
     milestone: {
       title: "Nouveau palier\u00A0: {amount}",

@@ -27,7 +27,10 @@ import {
   PasskeysPanel,
   type PasskeyItem,
 } from "@/components/profile/PasskeysPanel";
-import type { NotificationPrefs } from "@finance/core/notification-kinds";
+import {
+  shownNotificationKinds,
+  type NotificationPrefs,
+} from "@finance/core/notification-kinds";
 import { NotificationKindRows } from "@/components/profile/NotificationKindRows";
 import { NotificationsRow } from "@/components/profile/NotificationsRow";
 import { setCurrencyPreference, useCurrency } from "@/lib/use-currency";
@@ -56,6 +59,8 @@ interface ProfileViewProps {
   notificationPrefs: NotificationPrefs;
   /** Whether the Bank row leads anywhere for this account. */
   showBank: boolean;
+  /** Whether the account has the Immobilier tab, and so its notifications. */
+  showProperty: boolean;
 }
 
 /** Which row is showing its editor. One at a time, as on the phone. */
@@ -80,6 +85,7 @@ export function ProfileView({
   canDeleteAccount,
   initialPasskeys,
   showBank,
+  showProperty,
 }: ProfileViewProps) {
   const { toast } = useToast();
   const currency = useCurrency();
@@ -281,7 +287,10 @@ export function ProfileView({
           footer={t("profile.notificationsFooterWeb")}
         >
           <NotificationsRow publicKey={pushPublicKey} />
-          <NotificationKindRows prefs={notificationPrefs} />
+          <NotificationKindRows
+            prefs={notificationPrefs}
+            kinds={shownNotificationKinds({ property: showProperty })}
+          />
         </ListSection>
 
         <ListSection title={t("profile.dataSection")}>

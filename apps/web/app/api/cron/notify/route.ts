@@ -32,9 +32,19 @@ import { getWealthToday } from "@finance/data/plan-wealth";
 import type { Locale } from "@finance/core/i18n/locale";
 import { translator } from "@finance/core/i18n/t";
 import {
+  cents,
+  loanSchedule,
+  monthlyOutlay,
+  outstandingOn,
+} from "@finance/core/loan-schedule";
+import { loanTermsFromRow } from "@finance/core/property";
+import { loanMoment } from "@finance/core/property-moments";
+import { getLoansWithProperty } from "@finance/data/properties";
+import {
   bigChargeHeadsUp,
   bigCharges,
   closeReminder,
+  loanMomentNotification,
   milestoneNotification,
   overdraftWarning,
   plannedChargesOn,
@@ -176,10 +186,12 @@ async function notificationsFor(
     recapFor(supabase, userId, today, locale),
     milestoneFor(supabase, userId, today, recipient),
   ]);
-  const lead = [overdraft, bank, close, recap, milestone].filter(
-    (notification): notification is PendingNotification =>
-      notification !== null,
-  );
+  const lead = [overdraft, bank, close, recap, milestone]
+    .filter(
+      (notification): notification is PendingNotification =>
+        notification !== null,
+    )
+    .concat(await propertyMomentsFor(supabase, userId, today, recipient));
 
   // Nothing else to say to someone with no templates.
   if (templateRows.length === 0) {
@@ -348,6 +360,48 @@ async function milestoneFor(
       : milestoneNotification({ amount, t: translator(locale), locale });
   } catch {
     return null;
+  }
+}
+
+/**
+ * A loan's moments — half of it repaid, its last payment — in the month after
+ * the day, each said once by its key. Asked only of someone who wants to
+ * hear them; nobody without a loan has a row to read.
+ */
+async function propertyMomentsFor(
+  supabase: AdminClient,
+  userId: string,
+  today: string,
+  { locale, prefs }: Recipient,
+): Promise<PendingNotification[]> {
+  if (!wantsNotification(prefs, "property")) {
+    return [];
+  }
+  try {
+    const loans = await getLoansWithProperty(supabase, userId);
+    return loans.flatMap(({ loan, property }) => {
+      const moment = loanMoment(loan, today);
+      if (!moment) {
+        return [];
+      }
+      const terms = loanTermsFromRow(loan);
+      const schedule = loanSchedule(terms);
+      const share = Number(loan.borrower_share);
+      return [
+        loanMomentNotification({
+          moment,
+          loan: { id: loan.id, label: loan.label },
+          property,
+          owed: cents(outstandingOn(terms, schedule, today) * share),
+          monthly: cents(monthlyOutlay(terms, schedule) * share),
+          endsOn: schedule.at(-1)?.on ?? null,
+          t: translator(locale),
+          locale,
+        }),
+      ];
+    });
+  } catch {
+    return [];
   }
 }
 

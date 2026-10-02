@@ -21,6 +21,7 @@ import {
   valueSourceLine,
 } from "@finance/core/property";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
+import { loanMoment, type LoanMoment } from "@finance/core/property-moments";
 import { isLet } from "@finance/core/rental";
 import { formatRate } from "@finance/core/savings-accounts";
 import type { PropertyLoan } from "@finance/core/types/database";
@@ -43,6 +44,9 @@ import { ICON } from "@/lib/icon-scale";
 import { useLocale, useT } from "@/lib/locale-context";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { EditPropertySheet } from "./EditPropertySheet";
+import moments from "@/components/motion/moments.module.css";
+import { useMomentSeen } from "@/components/motion/use-moment-seen";
+import { cn } from "@/lib/utils";
 import { AmountEditor, Fact } from "./property-controls";
 import { RentalSection } from "./RentalSection";
 import { LoanSheet } from "./LoanSheet";
@@ -349,6 +353,7 @@ function LoanCard({
     totals.endsOn !== null &&
     template.endsOn !== totals.endsOn;
   const mismatch = amountDrifted || endDrifted;
+  const moment = loanMoment(loan, today);
   const length =
     loan.months % 12 === 0
       ? t("property.yearsCount", { count: loan.months / 12 })
@@ -360,7 +365,10 @@ function LoanCard({
       innerClassName="flex w-full min-w-0 flex-col gap-5 p-5 md:p-6"
     >
       <div className="flex flex-col gap-1">
-        <h4 className="font-head text-base">{loan.label}</h4>
+        <div className="flex flex-wrap items-center gap-2">
+          <h4 className="font-head text-base">{loan.label}</h4>
+          {moment ? <LoanMomentPill loanId={loan.id} moment={moment} /> : null}
+        </div>
         <p className="privacy-sensitive text-xs text-muted-foreground tabular-nums">
           {t("property.loanTerms", {
             principal: format(loan.principal),
@@ -497,6 +505,37 @@ function LoanCard({
 }
 
 /** « Mettre à jour le capital restant dû », and the way back from it. */
+/**
+ * Half the loan repaid, or its last payment made, in the month after: a
+ * moment, in gold, popping in the first time this browser sees it.
+ */
+function LoanMomentPill({
+  loanId,
+  moment,
+}: {
+  loanId: string;
+  moment: LoanMoment;
+}) {
+  const t = useT();
+  const { seen, markSeen } = useMomentSeen(`${moment.kind}:${loanId}`);
+  if (seen === null) {
+    return null;
+  }
+  return (
+    <span
+      className={cn(
+        "rounded-full bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground",
+        !seen && moments.pop,
+      )}
+      onAnimationEnd={seen ? undefined : markSeen}
+    >
+      {moment.kind === "half"
+        ? t("property.momentHalf")
+        : t("property.momentLast")}
+    </span>
+  );
+}
+
 function KnownOutstanding({
   loan,
   today,

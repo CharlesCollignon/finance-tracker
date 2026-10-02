@@ -1,10 +1,19 @@
 import type { NextRequest } from "next/server";
+import { translator } from "@finance/core/i18n/t";
+import type { PendingNotification } from "@finance/core/push-digest";
+import { marketMomentNotification } from "@finance/core/push-messages";
+import {
+  defaultRecipient,
+  readRecipients,
+} from "@finance/data/preferences";
 import * as properties from "@finance/data/properties";
 import { isMissingSchema } from "@finance/data/schema";
 import {
   fetchPriceIndex,
   readPropertyMarket,
 } from "@/lib/property-market/read";
+import { deliver } from "@/lib/push/deliver";
+import { configureWebPush } from "@/lib/push/send";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -12,6 +21,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * market readings that have aged — a month old, or missing — read again,
  * stalest first, within one budget. DVF gains a half-year twice a year and
  * INSEE a quarter four times, so a week is soon enough for both.
+ *
+ * A home whose reading now reaches a half-year of sales the last one did not
+ * is told its new estimate (`property` notifications): at most twice a year,
+ * since the record of sales grows twice a year. Run after 08:00 in Paris, so
+ * the push is not held by the quiet hours and then lost — the next reading
+ * would no longer be new.
  *
  * Reachable only with the cron secret; runs under the service role, the only
  * role allowed to write the index.
@@ -67,17 +82,50 @@ export async function GET(request: NextRequest) {
     .filter((home) => home.readAt < stale)
     .sort((a, b) => a.readAt - b.readAt);
 
+  const recipients = await readRecipients(admin, [
+    ...new Set(due.map((home) => home.user_id)),
+  ]);
+  const news = new Map<string, PendingNotification[]>();
+
   const outcomes: Record<string, number> = {};
   for (const home of due) {
     if (Date.now() - started > BUDGET_MS) {
       break;
     }
-    const outcome = await readPropertyMarket(
-      admin,
-      home.user_id,
-      home.id,
-    ).catch(() => "failed" as const);
+    const { locale } = recipients.get(home.user_id) ?? defaultRecipient();
+    const outcome = await readPropertyMarket(admin, home.user_id, home.id, {
+      onNewEstimate: async (estimate) => {
+        news.set(home.user_id, [
+          ...(news.get(home.user_id) ?? []),
+          marketMomentNotification({
+            ...estimate,
+            t: translator(locale),
+            locale,
+          }),
+        ]);
+      },
+    }).catch(() => "failed" as const);
     outcomes[outcome] = (outcomes[outcome] ?? 0) + 1;
   }
-  return Response.json({ index: index.length, due: due.length, ...outcomes });
+
+  const webPushReady = configureWebPush();
+  let told = 0;
+  for (const [userId, notifications] of news) {
+    const delivery = await deliver(
+      admin,
+      userId,
+      recipients.get(userId) ?? defaultRecipient(),
+      notifications,
+      { webPushReady },
+    );
+    told += delivery.sent;
+  }
+
+  return Response.json({
+    index: index.length,
+    due: due.length,
+    ...outcomes,
+    estimates: [...news.values()].flat().length,
+    told,
+  });
 }

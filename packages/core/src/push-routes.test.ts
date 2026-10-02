@@ -51,6 +51,20 @@ describe("mobileRouteForPushUrl", () => {
     });
   });
 
+  it("opens the property tab, and a property's own screen", () => {
+    expect(mobileRouteForPushUrl("/property")).toEqual({
+      pathname: "/property",
+      params: {},
+    });
+    expect(
+      mobileRouteForPushUrl("/property/673043a6-bbb7-404f-8899-6095f50ad2f4"),
+    ).toEqual({
+      pathname: "/property/673043a6-bbb7-404f-8899-6095f50ad2f4",
+      params: {},
+    });
+    expect(mobileRouteForPushUrl("/property/not-an-id")).toBeNull();
+  });
+
   it("declines a route this app has not got, rather than guessing", () => {
     // /history is a real web surface with no phone equivalent — the Ledger's
     // by-category view is not a route here.

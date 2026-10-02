@@ -256,4 +256,6 @@ export const propertyFr: typeof propertyEn = {
   dpeElectricity:
     "Depuis le 1er janvier 2026, le DPE compte l'électricité à 1,9 au lieu de 2,3\u00A0: un DPE fait avant peut être mis à jour gratuitement sur l'Observatoire DPE de l'Ademe, sans nouvelle visite.",
   lettingSource: "Loi Climat et Résilience, calendrier en vigueur en 2026.",
+  momentHalf: "La moitié est remboursée",
+  momentLast: "Prêt remboursé",
 };
