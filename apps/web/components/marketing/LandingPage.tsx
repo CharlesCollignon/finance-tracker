@@ -9,11 +9,9 @@ import {
   Sparkle,
   Target,
 } from "@phosphor-icons/react/dist/ssr";
-import {
-  LandingBloom,
-  LandingHorizon,
-} from "@/components/marketing/LandingOrb";
+import { LandingBloom } from "@/components/marketing/LandingOrb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
+import { LandingEarth } from "@/components/marketing/LandingEarth";
 import { LandingDeviceStack } from "@/components/marketing/LandingDeviceStack";
 import { Reveal, Rise } from "@/components/marketing/LandingReveal";
 import { GlassLink, GlassStat } from "@/components/marketing/LandingGlass";
@@ -114,17 +112,23 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
     <>
       {/* ------------------------------------------------------------ hero */}
       <section className="relative isolate flex min-h-dvh flex-col justify-center overflow-hidden px-6 pb-20 pt-28">
-        <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-          {/* The sparks, then the horizon in front of them. There used to be
-              a cool wash from the top edge here, put in so the warm sphere
-              had something to be warm against; `.marketing-ambient` is that
-              wash since it took the app's violet, and two of them stacked
-              only greyed the violet out. The horizon is opaque, so the sparks
-              behind it show only in the sky beyond the rim — a planet in
-              front of the stars hides them, and that is half of what makes it
-              read as one. */}
-          <div className="marketing-sparks absolute inset-x-0 top-0 h-[70%] opacity-80" />
-          <LandingHorizon />
+        {/* The Earth from orbit, its rim arcing across the hero with Europe
+            lit at dusk below it, under its own nebula and stars, a distant
+            sun setting on the rim with the light in it. Still: the light
+            does not follow the pointer here, so the scene is out of the
+            pointer's way like the backgrounds elsewhere. The bottom fades
+            into the page's ground, so the black of space does not end on a
+            line. The surface is lit at three and a half times the renderer's
+            default and the light at one and a half, so the land under the
+            rim shows, and an aurora stands along the rim, since without the
+            pointer nothing would wake one. */}
+        <div className="pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
+          <LandingEarth
+            surfaceBrightness={3.5}
+            illumination={1.5}
+            aurora={0.6}
+            interactive={false}
+          />
         </div>
 
         {/* Centred in the window, with nothing under it but the sky. The two

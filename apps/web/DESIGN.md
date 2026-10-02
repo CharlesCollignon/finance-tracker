@@ -602,18 +602,12 @@ the inset highlights that are neither — including the orb's, the one
   from its `size`: on a query container's own box a `cqw` measures the
   container above it, not the orb. The phone draws the same breath with a
   halo view and an inner light layer in `Orb.tsx`.
-- **Orb Horizon Rim** (five insets on `.pc-orb-horizon::after`, each offset
-  along `--orb-away-x/y`): the landing hero's horizon, the orb several
-  viewports across and lit from behind. The filament, two bands and a thread,
-  all drawn inside the disc and all in `cqw`; the light beyond the rim is two
-  gradient discs behind the orb, not a shadow. Modelling, like the bounce.
-
-Seven entries, and exactly two of them carry anything cast: the drop inside
-Marketing Panel Glass and the drop inside Marketing Menu Glass. The Orb Glow
-is outward too, but it is light, not shadow — the mark's own colour around the
-mark, never a surface sitting above another. Everything else here is an inset
-— light drawn on a surface, which is how a system that refuses elevation can
-hold this many and stay flat.
+  Six entries, and exactly two of them carry anything cast: the drop inside
+  Marketing Panel Glass and the drop inside Marketing Menu Glass. The Orb Glow
+  is outward too, but it is light, not shadow — the mark's own colour around the
+  mark, never a surface sitting above another. Everything else here is an inset
+  — light drawn on a surface, which is how a system that refuses elevation can
+  hold this many and stay flat.
 
 ### Named Rules
 
@@ -637,13 +631,15 @@ the phone mock — because neither was glass, and the exception is the
 vocabulary, not the surface.
 
 Two is the count of what is cast, not of what is written. `box-shadow` appears
-at six places in `app/globals.css`, and the four this rule does not name cast
+at five places in `app/globals.css`, and the three this rule does not name cast
 nothing: `.glass-flat` and `.glass-grid` each take
-`inset 0 1px 0 rgba(255, 255, 255, 0.09)`, `.pc-orb::after` takes
-`inset 0 -7cqw 11cqw -5cqw rgb(255 237 194 / calc(0.24 * var(--orb-glass)))`,
-and `.pc-orb-horizon::after` replaces that with the rim's five insets. The two
-cast declarations open with an inset of their own as well, so the file holds
-six inset declarations against two drops. An inset puts nothing in front
+`inset 0 1px 0 rgba(255, 255, 255, 0.09)`, and `.pc-orb::after` takes
+`inset 0 -7cqw 11cqw -5cqw rgb(255 237 194 / calc(0.24 * var(--orb-glass)))`.
+The two cast declarations open with an inset of their own as well, so the file
+holds five inset declarations against two drops. (The landing hero's Earth
+draws its light in WebGL; its fallback, for a browser without it, rims a dark
+ellipse with a glow — light, like the orb's, and never seen beside the
+canvas.) An inset puts nothing in front
 of the element and moves nothing away from the page — it is light drawn on a
 surface, which is precisely what the bezel inset is and why the flatness rule
 can call a recess its one exception. So this rule is scoped to what is thrown,
@@ -900,8 +896,12 @@ three-step duration scale: **press** 140ms, **hover** 200ms, **enter** 500ms
 (550ms for the page and stagger entrances). Tailwind's default transition
 duration is pointed at the hover token, so a transition written without a
 duration is still on the scale. A global `prefers-reduced-motion` block reduces
-all animation and transition to 0.01ms, and the landing logo's float and the
-hero horizon's breathing are switched off entirely.
+all animation and transition to 0.01ms, and the landing logo's float is
+switched off entirely. The hero's Earth (`components/marketing/LandingEarth.tsx`,
+WebGL) follows the same setting on its own: under reduced motion nothing
+twinkles, the stars stop drifting, and the aurora's curtains, the black hole's
+disk and the distant sun's glow hold still. Its light never follows the pointer
+on the landing; it rests in the distant sun.
 
 ## Do's and Don'ts
 

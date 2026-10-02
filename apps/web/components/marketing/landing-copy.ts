@@ -318,6 +318,8 @@ export const landingCopy = {
     tagline:
       "One person’s money: what came in, what went out, what is set aside, and what is invested — reconciled month by month.",
     copyright: "© 2026 Pluclair",
+    imageCredit:
+      "Earth imagery: NASA Blue Marble Next Generation (Reto Stöckli).",
     /* The last line of every marketing page, and for a while the last stale
        one: "No bank connection. No aggregator. No advice." outlived the
        positioning it came from, and sat 200px under a call to action on a
