@@ -152,13 +152,14 @@ describe("propertyPosition", () => {
 
     expect(position.value).toBe(125_000);
     expect(position.owed).toBe(Math.round(owedAfterThree * 50) / 100);
+    expect(position.owed + position.principalRepaid).toBe(100_000);
     expect(position.netValue).toBe(
       Math.round((125_000 - position.owed) * 100) / 100,
     );
     expect(position.cost).toBe(135_000);
     expect(position.unrealisedGain).toBe(-10_000);
     expect(position.principalRepaid).toBe(
-      Math.round((200_000 - owedAfterThree) * 50) / 100,
+      Math.round((100_000 - position.owed) * 100) / 100,
     );
   });
 

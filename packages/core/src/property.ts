@@ -150,16 +150,21 @@ export function propertyPosition(
   const estimate = estimatedValue(property);
   const value = cents(estimate.value * share);
 
+  // Each loan's part rounded on its own, so what is owed and what was repaid
+  // add up to the user's share of the principal to the cent.
   let owed = 0;
   let principalRepaid = 0;
   for (const loan of loans) {
     const terms = loanTermsFromRow(loan);
-    const outstanding = outstandingOn(terms, loanSchedule(terms), day);
     const part = Number(loan.borrower_share);
-    owed += outstanding * part;
-    principalRepaid += Math.max(0, terms.principal - outstanding) * part;
+    const owedPart = cents(
+      outstandingOn(terms, loanSchedule(terms), day) * part,
+    );
+    owed = cents(owed + owedPart);
+    principalRepaid = cents(
+      principalRepaid + Math.max(0, cents(terms.principal * part) - owedPart),
+    );
   }
-  owed = cents(owed);
 
   const cost = cents(acquisitionCost(property) * share);
   return {
@@ -169,7 +174,7 @@ export function propertyPosition(
     netValue: cents(value - owed),
     cost,
     unrealisedGain: cents(value - cost),
-    principalRepaid: cents(principalRepaid),
+    principalRepaid,
   };
 }
 
