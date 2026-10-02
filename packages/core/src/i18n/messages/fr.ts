@@ -1526,6 +1526,12 @@ export const fr: Messages = {
         other: "Demain\u00A0: {count} grosses opérations",
       },
     },
+    overdraft: {
+      title: "Découvert possible le {date}",
+      body: "Avec ce qui est prévu, le compte descendrait à {amount} le {date}, puis remonterait à {end} en fin de mois.",
+      bodyStays:
+        "Avec ce qui est prévu, le compte descendrait à {amount} le {date} et finirait le mois à {end}.",
+    },
     close: {
       title: "Faites le bilan de {month}",
       body: "C'est le jour de lecture\u00A0: notez le solde de votre compte pour voir ce que {month} vous a laissé.",

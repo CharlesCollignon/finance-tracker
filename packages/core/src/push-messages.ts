@@ -14,10 +14,11 @@
  */
 
 import { recurringOccurrenceKey } from "./apply-recurring";
-import { formatEuro } from "./constants";
+import { formatDayMonth, formatEuro } from "./constants";
 import { monthLong } from "./i18n/calendar-names";
 import type { Locale } from "./i18n/locale";
 import type { Translate } from "./i18n/t";
+import type { MonthBalance } from "./month-balance";
 import type { CloseableMonth, MonthCloseResult } from "./month-close";
 import type { PendingNotification } from "./push-digest";
 import {
@@ -270,6 +271,54 @@ export function weeklyRecapNotification({
       formatMoney: (amount) => formatEuro(amount, locale),
       previousMonthName: monthLong(recap.monthSoFar.previousMonth, locale),
     }).join(" "),
+    url: "/bearing",
+  };
+}
+
+/**
+ * The account is set to go below zero before the month ends.
+ *
+ * Only on a balance someone read — the bank's statement or a close — and
+ * never on the net a month counts from zero, which dips below it before
+ * every payday. Only for a day still ahead: an account already overdrawn
+ * today is something the bank says, and this is the warning that comes in
+ * time to move a charge or some money. Once a month, keyed by it.
+ */
+export function overdraftWarning({
+  balance,
+  source,
+  today,
+  t,
+  locale,
+}: Voice & {
+  balance: MonthBalance;
+  source: "bank" | "close" | "none";
+  today: string;
+}): PendingNotification | null {
+  if (
+    source === "none" ||
+    balance.basis !== "balance" ||
+    balance.period !== "current"
+  ) {
+    return null;
+  }
+  const { lowest } = balance;
+  if (!lowest || lowest.value >= 0 || lowest.date <= today) {
+    return null;
+  }
+  const date = formatDayMonth(lowest.date, locale);
+  return {
+    kind: "overdraft",
+    key: `overdraft:${today.slice(0, 7)}`,
+    title: t("push.overdraft.title", { date }),
+    body: t(
+      balance.end < 0 ? "push.overdraft.bodyStays" : "push.overdraft.body",
+      {
+        amount: formatEuro(lowest.value, locale),
+        date,
+        end: formatEuro(balance.end, locale),
+      },
+    ),
     url: "/bearing",
   };
 }

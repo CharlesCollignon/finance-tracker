@@ -28,11 +28,13 @@ import {
   bigChargeHeadsUp,
   bigCharges,
   closeReminder,
+  overdraftWarning,
   plannedChargesOn,
   usualChargeAmount,
   weeklyRecapNotification,
 } from "@finance/core/push-messages";
 import { mondayOf } from "@finance/core/weekly-recap";
+import { readCurrentMonthBalance } from "@finance/data/month-balance";
 import { getWeeklyRecap } from "@finance/data/weekly-recap";
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { getFulfilledKeys } from "@finance/data/fulfilment";
@@ -154,16 +156,17 @@ async function notificationsFor(
   const templateRows = (templates.data ??
     []) as RecurringTemplateWithCategory[];
 
-  // Ahead of the digest: a feed about to stop is the one thing here that
-  // gets worse by waiting, and it applies to people with no templates at all.
-  // So does the reading day, which belongs to anyone who closes their months,
-  // and the Monday recap, which belongs to anyone with a ledger.
-  const [bank, close, recap] = await Promise.all([
+  // Ahead of the digest: an account about to go below zero and a feed about
+  // to stop are the things here that get worse by waiting, and neither needs
+  // a template. Nor does the reading day, which belongs to anyone who closes
+  // their months, or the Monday recap, which belongs to anyone with a ledger.
+  const [overdraft, bank, close, recap] = await Promise.all([
+    overdraftFor(supabase, userId, today, locale),
     bankNotificationFor(supabase, userId, today, locale),
     closeReminderFor(supabase, userId, today, locale),
     recapFor(supabase, userId, today, locale),
   ]);
-  const lead = [bank, close, recap].filter(
+  const lead = [overdraft, bank, close, recap].filter(
     (notification): notification is PendingNotification =>
       notification !== null,
   );
@@ -280,6 +283,35 @@ async function bankNotificationFor(
     },
   );
   return notification;
+}
+
+/**
+ * The day this month the account would go below zero, if one is ahead.
+ * Only on a balance read from the bank or a close; see `overdraftWarning`.
+ */
+async function overdraftFor(
+  supabase: AdminClient,
+  userId: string,
+  today: string,
+  locale: Locale,
+): Promise<PendingNotification | null> {
+  try {
+    const { balance, source } = await readCurrentMonthBalance(
+      supabase,
+      userId,
+      today,
+      locale,
+    );
+    return overdraftWarning({
+      balance,
+      source,
+      today,
+      t: translator(locale),
+      locale,
+    });
+  } catch {
+    return null;
+  }
 }
 
 /**

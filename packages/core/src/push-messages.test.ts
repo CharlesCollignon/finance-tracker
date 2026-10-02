@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { translator } from "./i18n/t";
+import type { MonthBalance } from "./month-balance";
 import type { CloseableMonth, MonthCloseResult } from "./month-close";
 import type { RecurringTemplateWithCategory } from "./types/database";
 import {
@@ -8,6 +9,7 @@ import {
   bigCharges,
   closeReminder,
   monthClosedByBank,
+  overdraftWarning,
   plannedChargesOn,
   usualChargeAmount,
 } from "./push-messages";
@@ -288,5 +290,68 @@ describe("plannedChargesOn", () => {
     expect(plannedChargesOn([template({})], "2026-10-07", new Set())).toEqual(
       [],
     );
+  });
+});
+
+describe("overdraftWarning", () => {
+  const october: MonthBalance = {
+    period: "current",
+    basis: "balance",
+    start: 400,
+    today: 250,
+    end: 320,
+    points: [],
+    lowest: { date: "2026-10-24", value: -120 },
+  };
+
+  it("warns ahead of the day the account goes below zero", () => {
+    const push = overdraftWarning({
+      ...fr,
+      balance: october,
+      source: "bank",
+      today: "2026-10-12",
+    });
+    expect(push?.kind).toBe("overdraft");
+    expect(push?.key).toBe("overdraft:2026-10");
+    expect(push?.title).toBe("Découvert possible le 24 oct.");
+    expect(push?.body).toContain("remonterait");
+  });
+
+  it("says when the month ends below zero too", () => {
+    const push = overdraftWarning({
+      ...fr,
+      balance: { ...october, end: -40 },
+      source: "close",
+      today: "2026-10-12",
+    });
+    expect(push?.body).toContain("finirait le mois");
+  });
+
+  it("stays quiet on a net, on no balance, and on a dip already here", () => {
+    const base = { ...fr, today: "2026-10-12" };
+    expect(
+      overdraftWarning({
+        ...base,
+        balance: { ...october, basis: "net" },
+        source: "none",
+      }),
+    ).toBeNull();
+    expect(
+      overdraftWarning({ ...base, balance: october, source: "none" }),
+    ).toBeNull();
+    expect(
+      overdraftWarning({
+        ...base,
+        balance: { ...october, lowest: { date: "2026-10-12", value: -5 } },
+        source: "bank",
+      }),
+    ).toBeNull();
+    expect(
+      overdraftWarning({
+        ...base,
+        balance: { ...october, lowest: { date: "2026-10-24", value: 10 } },
+        source: "bank",
+      }),
+    ).toBeNull();
   });
 });

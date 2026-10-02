@@ -2166,6 +2166,12 @@ export const en = {
         other: "Tomorrow: {count} large payments",
       },
     },
+    overdraft: {
+      title: "Possible overdraft on {date}",
+      body: "With what's planned, the account would dip to {amount} on {date}, then climb back to {end} by the month's end.",
+      bodyStays:
+        "With what's planned, the account would dip to {amount} on {date} and end the month at {end}.",
+    },
     close: {
       title: "Close {month}",
       body: "It is your reading day: note your account balance to see what {month} left you.",

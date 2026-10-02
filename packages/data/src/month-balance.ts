@@ -3,6 +3,7 @@ import {
   shiftIsoDate,
   shiftMonth,
 } from "@finance/core/constants";
+import type { Locale } from "@finance/core/i18n/locale";
 import {
   buildMonthBalance,
   recordedDeltas,
@@ -22,10 +23,12 @@ import type {
 } from "@finance/core/types/database";
 
 import { readCashBalance } from "./bank-balance";
+import { hasBankFeed } from "./bank-feed";
 import type { Db } from "./client";
-import type { MonthCloseOverview } from "./month-close";
+import { getFulfilledKeys } from "./fulfilment";
+import { getMonthCloseOverview, type MonthCloseOverview } from "./month-close";
 import { getMovedBetween } from "./moved-rows";
-import { getRecurringSkipKeys } from "./templates";
+import { getRecurringSkipKeys, getRecurringTemplates } from "./templates";
 
 /**
  * One month's balance, as Le point draws it on both apps and as the
@@ -241,4 +244,32 @@ export async function readMonthBalance(
   });
 
   return { balance, source, rows, upcoming };
+}
+
+/**
+ * This month's balance with nothing read beforehand: what the overdraft
+ * warning asks, from a cron that has no screen's reads to share.
+ */
+export async function readCurrentMonthBalance(
+  db: Db,
+  userId: string,
+  today: string,
+  locale: Locale,
+): Promise<Pick<MonthBalanceRead, "balance" | "source">> {
+  const [templates, fulfilledKeys, closes, bankFed] = await Promise.all([
+    getRecurringTemplates(db, userId),
+    getFulfilledKeys(db, userId),
+    getMonthCloseOverview(db, userId, today, locale),
+    hasBankFeed(db, userId),
+  ]);
+  const { balance, source } = await readMonthBalance(db, userId, {
+    year: Number(today.slice(0, 4)),
+    month: Number(today.slice(5, 7)),
+    today,
+    templates,
+    fulfilledKeys,
+    closes,
+    bankFed,
+  });
+  return { balance, source };
 }
