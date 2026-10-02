@@ -5,7 +5,7 @@ import { Plus } from "@phosphor-icons/react";
 import type { AddressMatch } from "@finance/core/address-search";
 import { parseTypedAmount } from "@finance/core/amount-input";
 import { formatPercentLabel, todayIsoLocal } from "@finance/core/constants";
-import { INTL_LOCALES, type Locale } from "@finance/core/i18n/locale";
+import { INTL_LOCALES } from "@finance/core/i18n/locale";
 import {
   cents,
   loanSchedule,
@@ -25,6 +25,11 @@ import type {
   PropertyLoan,
   PropertyUsage,
 } from "@finance/core/types/database";
+import {
+  defaultPropertyName,
+  fieldText as toInput,
+  monthsFromYears,
+} from "@finance/core/property-form";
 import { loanSchema } from "@finance/core/validations/property";
 import type { LoanChange, PropertyChange } from "@finance/data/properties";
 import { Button } from "@/components/ui/Button";
@@ -47,64 +52,6 @@ import {
  * property, changing one, and adding or changing a loan — so the three can
  * never ask for different things, or read the same answer two ways.
  */
-
-/** A form's errors by field, as message keys: the first issue for each. */
-export function errorsFrom(
-  issues: readonly { path: PropertyKey[]; message: string }[],
-): Record<string, string> {
-  const errors: Record<string, string> = {};
-  for (const issue of issues) {
-    const field = String(issue.path[0] ?? "");
-    errors[field] ??= issue.message;
-  }
-  return errors;
-}
-
-/** The fields the home and the purchase answer for, by step. */
-export const HOME_FIELDS = [
-  "name",
-  "kind",
-  "usage",
-  "livingArea",
-  "ownershipShare",
-  "citycode",
-  "postcode",
-  "latitude",
-  "longitude",
-] as const;
-
-export const PURCHASE_FIELDS = [
-  "purchasedOn",
-  "purchasePrice",
-  "notaryFees",
-  "agencyFees",
-  "works",
-] as const;
-
-/** A stored figure as a field shows it: « 52,5 », no grouping. */
-function toInput(value: number, locale: Locale, digits = 2): string {
-  return new Intl.NumberFormat(INTL_LOCALES[locale], {
-    maximumFractionDigits: digits,
-    useGrouping: false,
-  }).format(value);
-}
-
-/** The same day a month later, or the month's last day when it is shorter. */
-export function aMonthAfter(iso: string): string {
-  const [year, month, day] = iso.split("-").map(Number);
-  const target = new Date(Date.UTC(year!, month!, 1));
-  const last = new Date(
-    Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
-  ).getUTCDate();
-  target.setUTCDate(Math.min(day!, last));
-  return target.toISOString().slice(0, 10);
-}
-
-/** Whole months from years as typed, « 20 » or « 12,5 »; "" when unreadable. */
-function monthsFromYears(years: string): number | "" {
-  const parsed = Number(years.replace(",", ".").trim());
-  return years.trim() && Number.isFinite(parsed) ? Math.round(parsed * 12) : "";
-}
 
 /* ----------------------------------------------------------------- property */
 
@@ -172,11 +119,8 @@ export function usePropertyDraft(initial: Property | null) {
   );
   const [works, setWorks] = useState(initial ? amount(initial.works) : "");
 
-  const place = address?.city
-    ? (address.district ?? address.city).replace(/ Arrondissement$/, "")
-    : "";
   const name =
-    nameDraft ?? [t(PROPERTY_KIND_KEYS[kind]), place].filter(Boolean).join(" ");
+    nameDraft ?? defaultPropertyName(t(PROPERTY_KIND_KEYS[kind]), address);
   const typedPrice = parseTypedAmount(price);
   const notary =
     notaryDraft ??

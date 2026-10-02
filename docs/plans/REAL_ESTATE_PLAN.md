@@ -384,14 +384,30 @@ every page with the error screen. Fixed in this phase.
 
 ## Phase 3 — Phone (branch `property-3/mobile`)
 
-- [ ] The phone's first flag reader, beside the first flag it needs
-      (`property.track`).
-- [ ] Sixth tab with labels that shrink to fit, list screen, stacked
-      property screen, add sheet.
-- [ ] New tables mapped to a data area in `announcingFetch`; screens read
-      with `useRefreshable`.
-- [ ] Charges: the same field and chip.
-- [ ] Bar comment and `apps/mobile/DESIGN.md` updated for six.
+- [x] The phone's first flag reader, beside the first flag it needs
+      (`property.track`, `hooks/useFlag.ts`), and the write announcer told
+      that this RPC is a read.
+- [x] Sixth tab with labels that shrink to fit (to 80 %), list screen,
+      property screen pushed over the tabs, the add sheet in three steps,
+      editing a property, adding and editing loans — the web's, drawn
+      natively over the same `@finance/data` writes.
+- [x] Addresses asked through `GET /api/property/addresses` on the web, so
+      the geocoder never sees the phone's address either.
+- [x] `properties` and `property_loans` are their own data area; the
+      screens read it with `templates`.
+- [x] Charges: the same field (edit sheet) and chip.
+- [x] Bar comment and `apps/mobile/DESIGN.md` updated for six.
+- [x] Run in the Expo web build against the local stack: adding a property
+      with its loan wrote the property, the loan and a 1 204,92 € template;
+      the list, the property's screen and the chip in Récurrents draw with
+      the right figures.
+- [ ] On a device: the tab labels shrinking (`adjustsFontSizeToFit` is
+      native-only), button fills and screen margins, which the web build
+      does not draw on any screen.
+
+Before the phone could share it, the web's « add a property with its loan »
+moved into `@finance/data` (`addPropertyWithLoan`), and the form's readings
+into core (`property-form.ts`).
 
 ## Phase 4 — Market value (branch `property-4/market`)
 

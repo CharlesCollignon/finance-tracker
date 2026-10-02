@@ -465,6 +465,64 @@ export async function saveLoan(
     : { error: added.error };
 }
 
+/**
+ * Add a property, and the loan that paid for it when there was one, with
+ * its payment among the recurring entries when asked — what both apps' add
+ * sheets save. A loan that cannot be saved takes the property back with it,
+ * so trying again does not leave the same home twice.
+ */
+export async function addPropertyWithLoan(
+  db: Db,
+  userId: string,
+  input: {
+    property: PropertyChange;
+    loan: Omit<LoanChange, "propertyId"> | null;
+    /** The category the payment is filed under, in the reader's words. */
+    payment: { categoryName: string } | null;
+  },
+): Promise<ActionResult<{ propertyId: string; paymentAmount: number | null }>> {
+  const saved = await saveProperty(db, userId, input.property);
+  if (!saved.success) {
+    return { error: saved.error };
+  }
+  const { propertyId } = saved;
+  if (!input.loan) {
+    return { success: true, propertyId, paymentAmount: null };
+  }
+
+  const description = `${String(input.loan.label).trim()} · ${String(
+    input.property.name,
+  ).trim()}`;
+  const loan = await saveLoan(
+    db,
+    userId,
+    { ...input.loan, propertyId },
+    input.payment
+      ? {
+          addPayment: { categoryName: input.payment.categoryName, description },
+        }
+      : {},
+  );
+  if (!loan.success) {
+    await deleteProperty(db, userId, propertyId);
+    return { error: loan.error };
+  }
+  if (!loan.templateId) {
+    return { success: true, propertyId, paymentAmount: null };
+  }
+  const { data: template } = await db
+    .from("recurring_templates")
+    .select("amount")
+    .eq("id", loan.templateId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  return {
+    success: true,
+    propertyId,
+    paymentAmount: template ? Number(template.amount) : null,
+  };
+}
+
 async function writeLoanPayment(
   db: Db,
   userId: string,

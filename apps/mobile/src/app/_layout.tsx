@@ -99,6 +99,7 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
         <Stack.Screen name="auth/callback" />
         <Stack.Screen name="categories" />
         <Stack.Screen name="bank" />
+        <Stack.Screen name="property/[id]" />
         <Stack.Screen name="import" />
         <Stack.Screen name="onboarding" />
       </Stack>

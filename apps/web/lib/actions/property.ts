@@ -31,9 +31,7 @@ export async function findAddresses(query: string): Promise<AddressMatch[]> {
 
 /**
  * Add a property, and the loan that paid for it when there was one, with
- * its payment among the recurring entries when asked. A loan that cannot be
- * saved takes the property back with it, so trying again does not leave the
- * same home twice.
+ * its payment among the recurring entries when asked.
  */
 export async function addProperty(input: {
   property: properties.PropertyChange;
@@ -42,61 +40,30 @@ export async function addProperty(input: {
 }): Promise<ActionResult<{ propertyId: string }>> {
   const t = await getT();
   const locale = await getLocale();
-  const categoryName = loanPaymentCategoryName(locale);
 
   return asUser<{ propertyId: string }>(async (db, userId) => {
-    const saved = await properties.saveProperty(db, userId, input.property);
-    if (!saved.success) {
-      return { error: saved.error };
+    const result = await properties.addPropertyWithLoan(db, userId, {
+      property: input.property,
+      loan: input.loan,
+      payment:
+        input.loan && input.addPayment
+          ? { categoryName: loanPaymentCategoryName(locale) }
+          : null,
+    });
+    if (!result.success) {
+      return { error: result.error };
     }
-    const { propertyId } = saved;
     const name = String(input.property.name).trim();
-
-    if (!input.loan) {
-      return {
-        success: true,
-        propertyId,
-        message: t("property.added", { name }),
-      };
-    }
-
-    const loan = await properties.saveLoan(
-      db,
-      userId,
-      { ...input.loan, propertyId },
-      input.addPayment
-        ? {
-            addPayment: {
-              categoryName,
-              description: `${String(input.loan.label).trim()} · ${name}`,
-            },
-          }
-        : {},
-    );
-    if (!loan.success) {
-      await properties.deleteProperty(db, userId, propertyId);
-      return { error: loan.error };
-    }
-
-    if (!loan.templateId) {
-      return {
-        success: true,
-        propertyId,
-        message: t("property.added", { name }),
-      };
-    }
-    const { data: template } = await db
-      .from("recurring_templates")
-      .select("amount")
-      .eq("id", loan.templateId)
-      .maybeSingle();
     return {
       success: true,
-      propertyId,
-      message: t("property.addedWithPayment", {
-        name,
-        amount: formatEuro(Number(template?.amount ?? 0), locale),
-      }),
+      propertyId: result.propertyId,
+      message:
+        result.paymentAmount === null
+          ? t("property.added", { name })
+          : t("property.addedWithPayment", {
+              name,
+              amount: formatEuro(result.paymentAmount, locale),
+            }),
     };
   });
 }

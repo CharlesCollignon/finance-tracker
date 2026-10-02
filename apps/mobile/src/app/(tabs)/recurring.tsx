@@ -36,7 +36,9 @@ import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
 import { ScreenError } from "@/components/ScreenError";
 import { Text } from "@/components/ui/Text";
+import { useFlag } from "@/hooks/useFlag";
 import { useRefreshable } from "@/hooks/useRefreshable";
+import { getPropertyNames } from "@/lib/properties";
 import { useAuth } from "@/providers/AuthProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useFormatCurrency } from "@/providers/CurrencyProvider";
@@ -94,6 +96,7 @@ export default function RecurringScreen() {
     null,
   );
 
+  const showProperty = useFlag("property.track");
   const { data, loading, refreshing, onRefreshAll, onRefresh, error } =
     useRefreshable(async () => {
       if (!user) {
@@ -101,17 +104,26 @@ export default function RecurringScreen() {
           templates: [] as RecurringTemplateWithCategory[],
           categories: [] as Category[],
           recorded: new Map<string, string[]>(),
+          properties: [] as { id: string; name: string }[],
         };
       }
-      const [templates, categories, recorded] = await Promise.all([
+      const [templates, categories, recorded, properties] = await Promise.all([
         getRecurringTemplates(user.id),
         getCategories(user.id),
         // Which charges have already been recorded this month, so saving an
         // edit can ask whether those rows change too.
         getRecordedChargeDates(user.id),
+        // What a charge can belong to, for an account that keeps properties.
+        showProperty ? getPropertyNames(user.id) : Promise.resolve([]),
       ]);
-      return { templates, categories, recorded };
-    }, [user?.id], { reads: ["templates", "categories", "transactions"] });
+      return { templates, categories, recorded, properties };
+    }, [user?.id, showProperty], {
+      reads: ["templates", "categories", "transactions", "properties"],
+    });
+  const propertyNames = useMemo(
+    () => new Map((data?.properties ?? []).map(({ id, name }) => [id, name])),
+    [data?.properties],
+  );
 
   // Memoised so a render without new data keeps the same arrays, and the
   // memos and effects below do not re-run for nothing.
@@ -306,6 +318,7 @@ export default function RecurringScreen() {
                     label={activeGroup.label}
                     monthly={rollup.byType[activeGroup.type]}
                     items={activeGroup.items}
+                    propertyNames={propertyNames}
                     onEdit={(item) => {
                       void hapticLight();
                       setChosen(item);
@@ -338,6 +351,7 @@ export default function RecurringScreen() {
           categories={categories}
           template={editing}
           recordedThisMonth={data?.recorded.get(editing.id) ?? []}
+          properties={data?.properties ?? []}
         />
       ) : null}
     </Screen>
@@ -354,6 +368,7 @@ function GroupCard({
   label,
   monthly,
   items,
+  propertyNames,
   onEdit,
   onToggle,
 }: {
@@ -361,6 +376,8 @@ function GroupCard({
   label: string;
   monthly: number;
   items: RecurringTemplateWithCategory[];
+  /** Each property's name by id, for a charge that belongs to one. */
+  propertyNames: ReadonlyMap<string, string>;
   onEdit: (item: RecurringTemplateWithCategory) => void;
   onToggle: (item: RecurringTemplateWithCategory) => void;
 }) {
@@ -433,6 +450,18 @@ function GroupCard({
                 <Text variant="muted" className="mt-1 text-xs">
                   {formatRecurrenceSchedule(item, locale)}
                 </Text>
+                {item.property_id && propertyNames.has(item.property_id) ? (
+                  <View className="mt-1 flex-row items-center gap-1">
+                    <Ionicons
+                      name="home-outline"
+                      size={ICON.xs}
+                      color={colors.mutedForeground}
+                    />
+                    <Text variant="muted" numberOfLines={1} className="text-xs">
+                      {propertyNames.get(item.property_id)}
+                    </Text>
+                  </View>
+                ) : null}
               </Pressable>
 
               <View className="shrink-0 items-end gap-1.5">
