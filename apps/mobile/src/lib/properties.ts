@@ -69,7 +69,7 @@ export async function findAddresses(query: string): Promise<AddressMatch[]> {
 export function addPropertyWithLoan(input: {
   property: PropertyChange;
   loan: Omit<LoanChange, "propertyId"> | null;
-  payment: { categoryName: string } | null;
+  payment: { categoryName: string; insuranceLabel?: string } | null;
 }) {
   return asUser((userId) =>
     properties.addPropertyWithLoan(supabase, userId, input),
@@ -109,10 +109,14 @@ export function removeProperty(propertyId: string) {
   );
 }
 
-export function saveLoan(
-  input: LoanChange,
-  payment: { categoryName: string; description: string } | null,
-) {
+type LoanPayment = {
+  categoryName: string;
+  description: string;
+  /** The word the insurance's own entry is described by, debited apart. */
+  insuranceLabel?: string;
+};
+
+export function saveLoan(input: LoanChange, payment: LoanPayment | null) {
   return asUser((userId) =>
     properties.saveLoan(
       supabase,
@@ -123,12 +127,20 @@ export function saveLoan(
   );
 }
 
-export function addLoanPayment(
-  loanId: string,
-  payment: { categoryName: string; description: string },
-) {
+export function addLoanPayment(loanId: string, payment: LoanPayment) {
   return asUser((userId) =>
     properties.addLoanPayment(supabase, userId, loanId, payment),
+  );
+}
+
+/** Link one of the user's entries to a loan's payment, or its insurance. */
+export function linkLoanTemplate(
+  loanId: string,
+  templateId: string,
+  debit: properties.LoanDebit,
+) {
+  return asUser((userId) =>
+    properties.linkLoanTemplate(supabase, userId, { loanId, templateId, debit }),
   );
 }
 

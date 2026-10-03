@@ -203,7 +203,10 @@ function AddPropertyFlow({ onClose }: { onClose: () => void }) {
       loan: hasLoan ? loan.fields : null,
       payment:
         hasLoan && loan.addPayment
-          ? { categoryName: loanPaymentCategoryName(locale) }
+          ? {
+              categoryName: loanPaymentCategoryName(locale),
+              insuranceLabel: t("property.insuranceWord"),
+            }
           : null,
     });
     setPending(false);
@@ -425,6 +428,7 @@ function LoanForm({
         ? {
             categoryName: loanPaymentCategoryName(locale),
             description: `${draft.label.trim()} · ${propertyName}`,
+            insuranceLabel: t("property.insuranceWord"),
           }
         : null,
     );
