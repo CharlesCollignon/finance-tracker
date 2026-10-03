@@ -495,6 +495,13 @@ export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
   return asUser((userId) => feed.undoFeedDecision(supabase, userId, itemId));
 }
 
+/** Every row an earlier sync merged away on its own, back in the inbox. */
+export async function reopenSwallowedFeedItems(): Promise<
+  ActionResult<{ reopened: number }>
+> {
+  return asUser((userId) => feed.reopenSwallowedFeedItems(supabase, userId));
+}
+
 /* ------------------------------- what the statement implies, as entries */
 
 /**
