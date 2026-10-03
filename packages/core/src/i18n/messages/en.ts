@@ -3025,6 +3025,12 @@ export const en = {
     toGoOut: "{amount} still to go out",
     chartLabel: "Balance through {month}",
     netChartLabel: "Net through {month}",
+    asPlanned: "Month's plan",
+    planAt: "Planned {amount}",
+    gapAbove: "{amount} more than planned",
+    gapBelow: "{amount} less than planned",
+    gapSoFar: "So far: {gap}",
+    gapOverMonth: "Over the month: {gap}",
     recorded: "Recorded",
     setBalance: "Enter your balance",
     setBalanceBody:

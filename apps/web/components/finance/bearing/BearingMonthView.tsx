@@ -20,7 +20,7 @@ import {
   shiftMonth,
 } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
-import { balanceExplanation } from "@finance/core/month-balance";
+import { balanceExplanation, gapToPlan } from "@finance/core/month-balance";
 import type { BankAttention } from "@finance/core/bank-attention";
 import type { BearingMonth } from "@/lib/bearing/month";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
@@ -270,6 +270,15 @@ function BalanceCard({
   const { balance, source, upcoming } = data;
   const net = balance.basis === "net";
   const monthLabel = formatMonthLabel(data.year, data.month, locale);
+  // How far the account stands from the month as planned: today in the
+  // month in progress, at its last day for one that has ended. A euro or
+  // less is the cents of rounding, not a finding.
+  const gapOn =
+    balance.period === "current"
+      ? data.today
+      : (balance.points.at(-1)?.date ?? null);
+  const rawGap = gapOn ? gapToPlan(balance, gapOn) : null;
+  const gap = rawGap !== null && Math.abs(rawGap) >= 1 ? rawGap : null;
 
   // The two figures, named by what they can claim.
   const figures = (() => {
@@ -398,6 +407,7 @@ function BalanceCard({
       <BalanceCurve
         key={`${data.year}-${data.month}`}
         points={balance.points}
+        plan={balance.plan}
         today={balance.period === "current" ? data.today : null}
         format={format}
         label={t(
@@ -409,8 +419,35 @@ function BalanceCard({
       />
 
       {showLowest ||
+      gap !== null ||
       (upcoming && (upcoming.arriving > 0 || upcoming.leaving > 0)) ? (
         <div className="flex flex-wrap gap-2 text-xs">
+          {gap !== null ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-muted-foreground">
+              <span
+                aria-hidden
+                className={cn(
+                  "size-1.5 rounded-full",
+                  gap >= 0 ? "bg-success" : "bg-destructive",
+                )}
+              />
+              <PrivateAmount>
+                {t(
+                  balance.period === "current"
+                    ? "bearingMonth.gapSoFar"
+                    : "bearingMonth.gapOverMonth",
+                  {
+                    gap:
+                      gap >= 0
+                        ? t("bearingMonth.gapAbove", { amount: format(gap) })
+                        : t("bearingMonth.gapBelow", {
+                            amount: format(-gap),
+                          }),
+                  },
+                )}
+              </PrivateAmount>
+            </span>
+          ) : null}
           {showLowest && lowest ? (
             <span
               className={cn(

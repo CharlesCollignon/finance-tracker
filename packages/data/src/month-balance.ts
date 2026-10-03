@@ -234,6 +234,25 @@ export async function readMonthBalance(
     }
   }
 
+  // The month as planned from its first day: every occurrence the entries
+  // call for in it, met or not, but none the user skipped — what the plan
+  // knows today. Not for a month ahead, which is nothing but the plan.
+  const scheduled: DatedDelta[] = [];
+  if (period !== "future") {
+    const skipped = await getRecurringSkipKeys(db, userId, year, month);
+    const asPlanned = buildStillToCome(
+      [],
+      templates,
+      year,
+      month,
+      shiftIsoDate(first, -1),
+      skipped,
+    );
+    for (const charge of [...asPlanned.outgoing, ...asPlanned.incoming]) {
+      scheduled.push({ date: charge.occurredOn, delta: upcomingDelta(charge) });
+    }
+  }
+
   const balance = buildMonthBalance({
     year,
     month,
@@ -241,6 +260,7 @@ export async function readMonthBalance(
     anchor,
     recorded,
     planned,
+    scheduled,
   });
 
   return { balance, source, rows, upcoming };
