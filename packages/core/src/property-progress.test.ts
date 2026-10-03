@@ -56,6 +56,8 @@ function loan(overrides: Partial<PropertyLoan> = {}): PropertyLoan {
     known_outstanding: null,
     known_outstanding_on: null,
     known_keeps: null,
+    insurance_separate: false,
+    insurance_template_id: null,
     recurring_template_id: null,
     created_at: "2025-01-01T00:00:00.000Z",
     updated_at: "2025-01-01T00:00:00.000Z",
