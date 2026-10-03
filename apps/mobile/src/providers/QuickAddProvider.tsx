@@ -25,6 +25,7 @@ import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON, RADIUS } from "@/theme/tokens";
 import { useT } from "@/providers/LocaleProvider";
 import { DURATION } from "@finance/core/motion";
+import type { CategoryType } from "@finance/core/types/database";
 
 const EMPTY: QuickEntryContext = {
   categories: [],
@@ -37,6 +38,11 @@ interface OpenOptions {
   date?: string;
   /** Which kind to start on. A transaction unless the caller says otherwise. */
   kind?: AddKind;
+  /**
+   * For a charge, the kind of money its category picker opens on — a kind's
+   * « + » on Récurrents opens on that kind's.
+   */
+  categoryType?: CategoryType;
 }
 
 interface QuickAddValue {
@@ -63,6 +69,9 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState<string | undefined>(undefined);
   const [kind, setKind] = useState<AddKind>("transaction");
+  const [categoryType, setCategoryType] = useState<CategoryType | undefined>(
+    undefined,
+  );
   // Bumped on every open so the sheet's fields remount with clean state.
   const [openToken, setOpenToken] = useState(0);
 
@@ -83,6 +92,7 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
   const open = useCallback((options?: OpenOptions) => {
     setDate(options?.date);
     setKind(options?.kind ?? "transaction");
+    setCategoryType(options?.categoryType);
     setOpenToken((token) => token + 1);
     setIsOpen(true);
   }, []);
@@ -105,6 +115,7 @@ export function QuickAddProvider({ children }: { children: ReactNode }) {
         merchants={context.merchants}
         defaultDate={date}
         kind={kind}
+        categoryType={categoryType}
         openToken={openToken}
       />
     </QuickAddContext.Provider>

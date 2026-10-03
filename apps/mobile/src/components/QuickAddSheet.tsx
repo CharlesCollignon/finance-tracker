@@ -18,7 +18,7 @@ import {
   suggestMerchants,
   type MerchantRule,
 } from "@finance/core/merchant-memory";
-import type { Category } from "@finance/core/types/database";
+import type { Category, CategoryType } from "@finance/core/types/database";
 
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { RecurringFormBody } from "@/components/RecurringFormModal";
@@ -62,6 +62,11 @@ interface QuickAddSheetProps {
   defaultDate?: string;
   /** Which kind the sheet opens on: the Charges screen opens it on a charge. */
   kind: AddKind;
+  /**
+   * For a charge, the kind of money its category picker opens on — a kind's
+   * « + » on Récurrents opens on that kind's.
+   */
+  categoryType?: CategoryType;
   /** Increments on each open, so the fields remount with clean state. */
   openToken: number;
 }
@@ -106,6 +111,7 @@ export function QuickAddSheet(props: QuickAddSheetProps) {
           merchants={props.merchants}
           defaultDate={props.defaultDate}
           kind={props.kind}
+          categoryType={props.categoryType}
         />
       </View>
     </Modal>
@@ -115,6 +121,7 @@ export function QuickAddSheet(props: QuickAddSheetProps) {
 function AddPanel({
   onClose,
   kind: initialKind,
+  categoryType,
   ...fields
 }: Omit<QuickAddSheetProps, "open" | "openToken">) {
   const t = useT();
@@ -172,6 +179,7 @@ function AddPanel({
           <View className="mt-4">
             <RecurringFormBody
               categories={fields.categories}
+              initialType={categoryType}
               onDone={onClose}
             />
           </View>

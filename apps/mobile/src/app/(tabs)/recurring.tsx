@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
@@ -8,6 +14,7 @@ import { formatRecurrenceSchedule } from "@finance/core/recurrence";
 import { rollUpRecurring } from "@finance/core/recurring-rollup";
 import { formatSharesLabel } from "@finance/core/recurring-shares";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
+import { DURATION } from "@finance/core/motion";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import type {
@@ -203,9 +210,10 @@ export default function RecurringScreen() {
   }, [templates, formatEuro, locale]);
 
   // The same sheet as every other Add, opened on a charge because this is
-  // the screen of them. Editing one still happens in a sheet of its own.
-  function openCreate() {
-    quickAdd?.open({ kind: "charge" });
+  // the screen of them — on a kind's categories when its « + » asked.
+  // Editing one still happens in a sheet of its own.
+  function openCreate(categoryType?: CategoryType) {
+    quickAdd?.open({ kind: "charge", categoryType });
   }
 
   async function handleEnableReminders() {
@@ -302,8 +310,7 @@ export default function RecurringScreen() {
 
               {/* One kind at a time, as on the web's phone layout: four lists
                   stacked would be a screen and a half of scrolling to reach
-                  the investments, and the four are rarely read together. No
-                  Add button here: the "+" in the tab bar opens the same sheet. */}
+                  the investments, and the four are rarely read together. */}
               <ChipRow
                 label={t("charges.kindOfCharge")}
                 options={kindOptions}
@@ -313,18 +320,25 @@ export default function RecurringScreen() {
 
               {activeGroup ? (
                 <StaggerItem index={1}>
-                  <GroupCard
-                    type={activeGroup.type}
-                    label={activeGroup.label}
-                    monthly={rollup.byType[activeGroup.type]}
-                    items={activeGroup.items}
-                    propertyNames={propertyNames}
-                    onEdit={(item) => {
-                      void hapticLight();
-                      setChosen(item);
-                    }}
-                    onToggle={(item) => void handleToggle(item)}
-                  />
+                  <View className="gap-2">
+                    <ColumnAdd
+                      type={activeGroup.type}
+                      label={activeGroup.label}
+                      onAdd={openCreate}
+                    />
+                    <GroupCard
+                      type={activeGroup.type}
+                      label={activeGroup.label}
+                      monthly={rollup.byType[activeGroup.type]}
+                      items={activeGroup.items}
+                      propertyNames={propertyNames}
+                      onEdit={(item) => {
+                        void hapticLight();
+                        setChosen(item);
+                      }}
+                      onToggle={(item) => void handleToggle(item)}
+                    />
+                  </View>
                 </StaggerItem>
               ) : null}
             </>
@@ -337,7 +351,7 @@ export default function RecurringScreen() {
                 label={t("charges.addCharge")}
                 variant="pill"
                 icon="add"
-                onPress={openCreate}
+                onPress={() => openCreate()}
               />
             </EmptyState>
           )}
@@ -355,6 +369,72 @@ export default function RecurringScreen() {
         />
       ) : null}
     </Screen>
+  );
+}
+
+/**
+ * A kind's way in, above its card, as on the web: a thin card in outline
+ * only, that takes shape under the finger — its border drawn, its ground
+ * filled, its cross a quarter turned — and opens the Add sheet on a charge
+ * of that kind.
+ */
+function ColumnAdd({
+  type,
+  label,
+  onAdd,
+}: {
+  type: CategoryType;
+  label: string;
+  onAdd: (type: CategoryType) => void;
+}) {
+  const t = useT();
+  const colors = useThemeColors();
+  const reduceMotion = useReducedMotion();
+  const turn = useSharedValue(0);
+  const crossStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${turn.get() * 90}deg` }],
+  }));
+
+  function turnTo(value: number) {
+    if (!reduceMotion) {
+      turn.set(withTiming(value, { duration: DURATION.hover }));
+    }
+  }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t("charges.addTo", { group: label })}
+      onPressIn={() => turnTo(1)}
+      onPressOut={() => turnTo(0)}
+      onPress={() => {
+        void hapticLight();
+        onAdd(type);
+      }}
+      style={({ pressed }) => ({
+        transform: [{ scale: pressed ? 0.99 : 1 }],
+      })}
+    >
+      {({ pressed }) => (
+        <View
+          className={cn(
+            "h-11 items-center justify-center rounded-card border",
+            pressed ? "bg-card" : "border-dashed",
+          )}
+          style={{
+            borderColor: pressed ? colors.hairlineStrong : colors.border,
+          }}
+        >
+          <Animated.View style={crossStyle}>
+            <Ionicons
+              name="add"
+              size={ICON.md}
+              color={pressed ? colors.foreground : colors.mutedForeground}
+            />
+          </Animated.View>
+        </View>
+      )}
+    </Pressable>
   );
 }
 
