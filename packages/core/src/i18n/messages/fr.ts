@@ -911,6 +911,12 @@ export const fr: Messages = {
   calendarView: {
     monthlyCalendar: "Calendrier du mois",
     dayLabel: "{day} — {entries}",
+    pulseStillToCome: "{amount} encore à venir",
+    pulseOut: "{amount} sortis",
+    pulseIn: "{amount} entrés",
+    pulsePlannedOut: "{amount} prévus en sortie",
+    pulsePlannedIn: "{amount} prévus en entrée",
+    pulseNothing: "rien ce jour-là",
     inAndOut: "{income} en entrée · {outflow} en sortie",
     selectedDay: "Détail du jour sélectionné",
     noTransactions: "Aucune opération",
