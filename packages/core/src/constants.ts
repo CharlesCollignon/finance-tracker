@@ -261,6 +261,12 @@ export const CURRENCY_LABELS: Record<CurrencyCode, string> = {
   USD: "US Dollar ($)",
 };
 
+/** The symbol alone, where a short amount is written without `formatCurrency`. */
+export const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
+  EUR: "€",
+  USD: "$",
+};
+
 /** Same formatting convention as `formatEuro`, generalized to the user's
  * chosen display currency. This is a display preference only — it does not
  * convert amounts, it just relabels them. */

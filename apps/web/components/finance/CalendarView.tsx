@@ -30,7 +30,11 @@ import {
   type PulseDay,
 } from "@/components/finance/CalendarPulse";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
-import { formatMonthLabel, todayIsoLocal } from "@finance/core/constants";
+import {
+  CURRENCY_SYMBOLS,
+  formatMonthLabel,
+  todayIsoLocal,
+} from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { amountSign } from "@finance/core/amount-sign";
 import {
@@ -48,7 +52,7 @@ import {
   weekdayLabels,
 } from "@finance/core/calendar";
 import { cn } from "@/lib/utils";
-import { useFormatCurrency } from "@/lib/use-currency";
+import { useCurrency, useFormatCurrency } from "@/lib/use-currency";
 import type {
   Category,
   RecurringTemplateWithCategory,
@@ -104,6 +108,7 @@ export function CalendarView({
   }, [planned]);
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
+  const symbol = CURRENCY_SYMBOLS[useCurrency()];
   const { toast } = useToast();
   const toastDeleted = useDeletedToast();
   // Rows deleted leave the day at once; a failed delete brings them back.
@@ -393,7 +398,7 @@ export function CalendarView({
                                 "md:text-xs",
                               )}
                             >
-                              +{formatShortAmount(totals.income, locale)} €
+                              +{formatShortAmount(totals.income, locale)} {symbol}
                             </span>
                           ) : null}
                           {totals.outflow > 0 ? (
@@ -404,12 +409,12 @@ export function CalendarView({
                                 totals.income > 0 && "-mt-0.5",
                               )}
                             >
-                              −{formatShortAmount(totals.outflow, locale)} €
+                              −{formatShortAmount(totals.outflow, locale)} {symbol}
                             </span>
                           ) : null}
                           {dayPlanned && dayPlanned.income > 0 ? (
                             <span className="privacy-amount mt-auto truncate font-mono text-[10px] font-medium leading-tight text-muted-foreground md:text-xs">
-                              +{formatShortAmount(dayPlanned.income, locale)} €
+                              +{formatShortAmount(dayPlanned.income, locale)} {symbol}
                             </span>
                           ) : null}
                           {dayPlanned && dayPlanned.outflow > 0 ? (
@@ -419,7 +424,7 @@ export function CalendarView({
                                 dayPlanned.income > 0 ? "-mt-0.5" : "mt-auto",
                               )}
                             >
-                              −{formatShortAmount(dayPlanned.outflow, locale)} €
+                              −{formatShortAmount(dayPlanned.outflow, locale)} {symbol}
                             </span>
                           ) : null}
                         </button>
