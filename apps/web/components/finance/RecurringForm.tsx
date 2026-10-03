@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import type {
   Category,
+  CategoryType,
   PricingType,
   Recurrence,
   RecurringTemplateWithCategory,
@@ -106,6 +107,8 @@ interface RecurringFormBodyProps {
    */
   properties?: { id: string; name: string }[];
   template?: RecurringTemplateWithCategory | null;
+  /** For a new charge, the kind of money its category picker opens on. */
+  initialType?: CategoryType;
   /**
    * The days this charge is already recorded on this month, up to today.
    * When there are any, saving an edit asks whether they change too.
@@ -120,6 +123,7 @@ export function RecurringFormBody({
   categories,
   properties = [],
   template,
+  initialType,
   recordedDates = [],
   onDone,
 }: RecurringFormBodyProps) {
@@ -330,6 +334,7 @@ export function RecurringFormBody({
           label={t("recurring.category")}
           value={categoryId}
           onValueChange={setCategoryId}
+          initialType={initialType}
           required
         />
         {isDeploymentCategory && !isCryptoCategory && (

@@ -293,6 +293,45 @@ function GroupCard({
   );
 }
 
+/**
+ * A column's way in, above its card: a thin card in outline only, that takes
+ * shape under the pointer — its border drawn, its ground filled, its cross a
+ * quarter turned — and opens the add sheet on a charge of the column's kind.
+ */
+function ColumnAdd({
+  type,
+  label,
+  onAdd,
+}: {
+  type: CategoryType;
+  label: string;
+  onAdd: (type: CategoryType) => void;
+}) {
+  const t = useT();
+  const addLabel = t("charges.addTo", { group: label });
+  return (
+    <button
+      type="button"
+      onClick={() => onAdd(type)}
+      aria-label={addLabel}
+      title={addLabel}
+      className={cn(
+        "group/add flex h-9 w-full items-center justify-center rounded-card border border-dashed border-border text-muted-foreground",
+        "transition-[background-color,border-color,color,transform] duration-hover ease-out",
+        "hover:border-solid hover:border-foreground/30 hover:bg-card hover:text-foreground active:scale-[0.99]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+      )}
+    >
+      <Plus
+        size={ICON.sm}
+        weight="bold"
+        aria-hidden
+        className="transition-transform duration-300 ease-out group-hover/add:rotate-90 motion-reduce:transition-none motion-reduce:group-hover/add:rotate-0"
+      />
+    </button>
+  );
+}
+
 /** A figure at the documented card-level step, behind the privacy blur. */
 function PrivateFigure({ children }: { children: ReactNode }) {
   return <span className={cn("privacy-amount", FIGURE)}>{children}</span>;
@@ -488,9 +527,10 @@ export function RecurringView({
   const activeGroup = groups.find((group) => group.type === activeTab);
 
   // The same sheet as every other Add, opened on a charge because this is
-  // the page of them. Editing one still happens in a sheet of its own.
-  function openCreate() {
-    quickAdd?.open({ kind: "charge" });
+  // the page of them — on a column's kind, from that column's « + ».
+  // Editing one still happens in a sheet of its own.
+  function openCreate(categoryType?: CategoryType) {
+    quickAdd?.open({ kind: "charge", categoryType });
   }
 
   function openEdit(template: RecurringTemplateWithCategory) {
@@ -516,20 +556,7 @@ export function RecurringView({
       <PageHeader titleKey="nav.charges" />
 
       <PageContainer className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">{t("charges.blurb")}</p>
-          <Button
-            variant="pill"
-            size="sm"
-            className="ml-auto"
-            onClick={openCreate}
-          >
-            {t("charges.addCharge")}
-            <ButtonNub>
-              <Plus size={ICON.md} weight="bold" />
-            </ButtonNub>
-          </Button>
-        </div>
+        <p className="text-sm text-muted-foreground">{t("charges.blurb")}</p>
 
         {hasTemplates ? (
           <>
@@ -585,15 +612,22 @@ export function RecurringView({
                 ))}
               </div>
               {activeGroup ? (
-                <GroupCard
-                  type={activeGroup.type}
-                  label={activeGroup.label}
-                  monthly={rollup.byType[activeGroup.type]}
-                  items={activeGroup.items}
-                  proposals={proposals}
-                  onEdit={openEdit}
-                  onToggle={handleToggle}
-                />
+                <div className="flex flex-col gap-2">
+                  <ColumnAdd
+                    type={activeGroup.type}
+                    label={activeGroup.label}
+                    onAdd={openCreate}
+                  />
+                  <GroupCard
+                    type={activeGroup.type}
+                    label={activeGroup.label}
+                    monthly={rollup.byType[activeGroup.type]}
+                    items={activeGroup.items}
+                    proposals={proposals}
+                    onEdit={openEdit}
+                    onToggle={handleToggle}
+                  />
+                </div>
               ) : null}
             </div>
 
@@ -602,16 +636,18 @@ export function RecurringView({
                 narrow for a name, an amount and its on/off pill. */}
             <div className="hidden items-start gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
               {groups.map(({ type, label, items }) => (
-                <GroupCard
-                  key={type}
-                  type={type}
-                  label={label}
-                  monthly={rollup.byType[type]}
-                  items={items}
-                  proposals={proposals}
-                  onEdit={openEdit}
-                  onToggle={handleToggle}
-                />
+                <div key={type} className="flex min-w-0 flex-col gap-2">
+                  <ColumnAdd type={type} label={label} onAdd={openCreate} />
+                  <GroupCard
+                    type={type}
+                    label={label}
+                    monthly={rollup.byType[type]}
+                    items={items}
+                    proposals={proposals}
+                    onEdit={openEdit}
+                    onToggle={handleToggle}
+                  />
+                </div>
               ))}
             </div>
           </>
@@ -620,7 +656,7 @@ export function RecurringView({
             title={t("charges.emptyTitle")}
             description={t("charges.emptyBody")}
           >
-            <Button variant="pill" size="md" onClick={openCreate}>
+            <Button variant="pill" size="md" onClick={() => openCreate()}>
               {t("charges.addCharge")}
               <ButtonNub>
                 <Plus size={ICON.md} weight="bold" />

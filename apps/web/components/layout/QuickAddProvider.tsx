@@ -11,7 +11,7 @@ import {
 } from "react";
 import { Plus } from "@phosphor-icons/react";
 import type { MerchantRule } from "@finance/core/merchant-memory";
-import type { Category } from "@finance/core/types/database";
+import type { Category, CategoryType } from "@finance/core/types/database";
 import {
   QuickAddSheet,
   type AddKind,
@@ -25,6 +25,11 @@ interface OpenOptions {
   date?: string;
   /** Which kind to start on. A transaction unless the caller says otherwise. */
   kind?: AddKind;
+  /**
+   * For a charge, the kind of money its category picker opens on — a
+   * column's « + » on Récurrents opens on that column's.
+   */
+  categoryType?: CategoryType;
 }
 
 interface QuickAddValue {
@@ -58,10 +63,14 @@ export function QuickAddProvider({
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState<string | undefined>(undefined);
   const [kind, setKind] = useState<AddKind>("transaction");
+  const [categoryType, setCategoryType] = useState<CategoryType | undefined>(
+    undefined,
+  );
 
   const open = useCallback((options?: OpenOptions) => {
     setDate(options?.date);
     setKind(options?.kind ?? "transaction");
+    setCategoryType(options?.categoryType);
     setIsOpen(true);
   }, []);
 
@@ -138,6 +147,7 @@ export function QuickAddProvider({
         merchants={merchants}
         defaultDate={date}
         kind={kind}
+        categoryType={categoryType}
       />
     </QuickAddContext.Provider>
   );

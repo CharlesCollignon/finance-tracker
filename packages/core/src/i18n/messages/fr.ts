@@ -464,6 +464,7 @@ export const fr: Messages = {
     nothingHereYet:
       "Rien ici pour l'instant\u00A0: « Ajouter une opération récurrente » en crée une.",
     editNamed: "Modifier {name}",
+    addTo: "Ajouter dans {group}",
     addCharge: "Ajouter une opération récurrente",
     kindOfCharge: "Type d'opération récurrente",
     activate: "Activer",
