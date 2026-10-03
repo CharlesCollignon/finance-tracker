@@ -7,6 +7,7 @@ import { withExtraSaving } from "@finance/core/future-plan";
 import type { ForwardProjection } from "@finance/core/projection";
 
 import { AnimatedAmount } from "@/components/AnimatedAmount";
+import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticSelection } from "@/lib/haptics";
@@ -40,6 +41,7 @@ export interface MilestoneSooner {
  */
 export function YearAheadCard({
   projection,
+  hasTemplates,
   year,
   month,
   extra,
@@ -47,6 +49,8 @@ export function YearAheadCard({
   sooner,
 }: {
   projection: ForwardProjection;
+  /** Whether any recurring entry is running: without one there is no year ahead. */
+  hasTemplates: boolean;
   year: number;
   month: number;
   extra: number;
@@ -81,13 +85,31 @@ export function YearAheadCard({
     lastGained.current = gained;
   }, [gained]);
 
-  if (!summary) {
-    return null;
+  if (!hasTemplates || !summary || points.length < 2) {
+    return (
+      <PlanCard bezel>
+        <Text accessibilityRole="header" className="text-sm font-medium">
+          {t("futurePlan.yearTitle")}
+        </Text>
+        <Text variant="muted" className="text-sm">
+          {t("planWeb.yearEmpty")}
+        </Text>
+        <Button
+          label={t("planWeb.yearEmptyCta")}
+          variant="pill"
+          icon="arrow-forward"
+          className="self-start"
+          onPress={() => router.push("/(tabs)/recurring" as never)}
+        />
+      </PlanCard>
+    );
   }
 
-  const figure = summary.grounded
-    ? summary.endingKept
-    : summary.addedAltogether;
+  // The year as things stand, plus what the extra puts aside every month
+  // until then — the end of the dashed line. The web reads it the same way.
+  const figure =
+    (summary.grounded ? summary.endingKept : summary.addedAltogether) +
+    extra * points.length;
 
   let soonerLine: string | null = null;
   if (extra > 0 && sooner && sooner.with !== null) {
