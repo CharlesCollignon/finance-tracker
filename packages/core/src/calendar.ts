@@ -2,6 +2,7 @@ import { weekdayShortMondayFirst } from "./i18n/calendar-names";
 import { INTL_LOCALES, type Locale } from "./i18n/locale";
 import { translator } from "./i18n/t";
 import { formatLongDate, relativeDayLabel } from "./constants";
+import type { PlannedOccurrence } from "./apply-recurring";
 import type { TransactionWithCategory } from "./types/database";
 
 export interface CalendarDay {
@@ -144,6 +145,60 @@ export function computeDayTotals(
     net: income - outflow,
     count: transactions.length,
   };
+}
+
+/** What a day's planned occurrences come to, in and out; null without any. */
+export function plannedTotals(
+  occurrences: readonly PlannedOccurrence[],
+): { income: number; outflow: number } | null {
+  if (occurrences.length === 0) {
+    return null;
+  }
+  let income = 0;
+  let outflow = 0;
+  for (const occurrence of occurrences) {
+    if (occurrence.categoryType === "income") {
+      income += occurrence.amount;
+    } else {
+      outflow += occurrence.amount;
+    }
+  }
+  return { income, outflow };
+}
+
+/** One day of the month, as the strip above the calendar draws it. */
+export interface PulseDay {
+  date: string;
+  /** What came in and went out, recorded. */
+  income: number;
+  outflow: number;
+  /** What the recurring entries still call for that day. */
+  plannedIncome: number;
+  plannedOutflow: number;
+  isToday: boolean;
+}
+
+/** The month's own days, each with what it held and what is still planned. */
+export function buildPulseDays(
+  weeks: readonly CalendarDay[][],
+  byDate: ReadonlyMap<string, TransactionWithCategory[]>,
+  plannedByDate: ReadonlyMap<string, readonly PlannedOccurrence[]>,
+): PulseDay[] {
+  return weeks
+    .flat()
+    .filter((day) => day.isCurrentMonth)
+    .map((day) => {
+      const recorded = computeDayTotals(byDate.get(day.date) ?? []);
+      const planned = plannedTotals(plannedByDate.get(day.date) ?? []);
+      return {
+        date: day.date,
+        income: recorded.income,
+        outflow: recorded.outflow,
+        plannedIncome: planned?.income ?? 0,
+        plannedOutflow: planned?.outflow ?? 0,
+        isToday: day.isToday,
+      };
+    });
 }
 
 export function formatCalendarDate(isoDate: string, locale: Locale): string {
