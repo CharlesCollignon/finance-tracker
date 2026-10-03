@@ -13,6 +13,7 @@ import {
   spendingByMonth,
   topSpending,
   type CategorySpend,
+  type DayOutflows,
   type MonthBalance,
 } from "@finance/core/month-balance";
 import { previousMonthKey } from "@finance/core/month-close";
@@ -101,6 +102,8 @@ export interface HomeMonth {
     leaving: number;
     arriving: number;
   } | null;
+  /** What left the account, or is set to, day by day: the curve's markers. */
+  outflows: DayOutflows[];
   /** The month in progress only — the run and wallets are about now. */
   run: { streak: number; best: number } | null;
   invested: number | null;
@@ -173,6 +176,7 @@ export async function gatherHomeMonth(
     source,
     rows,
     upcoming: shownUpcoming,
+    outflows,
   } = await readMonthBalance(supabase, userId, {
     year,
     month,
@@ -273,6 +277,7 @@ export async function gatherHomeMonth(
       total: spending.total,
     },
     upcoming: shownUpcoming,
+    outflows,
     run,
     invested,
     attention,

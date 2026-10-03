@@ -22,7 +22,7 @@ import Svg, {
 
 import { formatShortDate } from "@finance/core/constants";
 import { EASE_STANDARD } from "@finance/core/motion";
-import type { MonthBalancePoint } from "@finance/core/month-balance";
+import type { DayOutflows, MonthBalancePoint } from "@finance/core/month-balance";
 
 import { Text } from "@/components/ui/Text";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -57,6 +57,12 @@ const BREATHE_HALF_MS = 1200;
 
 interface BalanceCurveProps {
   points: MonthBalancePoint[];
+  /**
+   * What left the account, or is set to, each day: a small marker on the
+   * line — full where it happened, hollow where it is planned — and the
+   * day's outflows, named, in the reading under the finger.
+   */
+  outflows?: readonly DayOutflows[];
   /** Today, when it falls in the month: where the line stops being recorded. */
   today: string | null;
   format: (value: number) => string;
@@ -77,6 +83,7 @@ interface BalanceCurveProps {
  */
 export function BalanceCurve({
   points,
+  outflows = [],
   today,
   format,
   label,
@@ -217,6 +224,8 @@ export function BalanceCurve({
   const endPoint = points[lastIndex];
   const firstPoint = points[0];
   const shown = active !== null ? points[active] : null;
+  const outflowsOn = new Map(outflows.map((day) => [day.date, day]));
+  const shownOutflows = shown ? outflowsOn.get(shown.date) : undefined;
 
   const summary =
     !hidden && firstPoint && endPoint
@@ -284,6 +293,21 @@ export function BalanceCurve({
             ) : null}
 
             <AnimatedG animatedProps={fadeProps}>
+              {/* A marker on each day money left, or is set to: full where
+                  it happened, hollow where it is planned. */}
+              {points.map((point, index) =>
+                outflowsOn.has(point.date) ? (
+                  <Circle
+                    key={point.date}
+                    cx={geometry.x(index)}
+                    cy={geometry.y(point.value)}
+                    r={3}
+                    fill={point.planned ? colors.card : colors.primary}
+                    stroke={point.planned ? colors.primary : colors.card}
+                    strokeWidth={point.planned ? 1 : 1.5}
+                  />
+                ) : null,
+              )}
               {geometry.dashed ? (
                 <Path
                   d={geometry.dashed}
@@ -351,6 +375,18 @@ export function BalanceCurve({
             date={`${formatShortDate(shown.date, locale)}${
               shown.planned ? ` · ${t("ledger.planned")}` : ""
             }`}
+            lines={
+              shownOutflows && !hidden
+                ? [
+                    ...shownOutflows.items.map(
+                      (item) => `${item.name} · −${format(item.amount)}`,
+                    ),
+                    ...(shownOutflows.more > 0
+                      ? [t("bearingMonth.moreOutflows", { count: shownOutflows.more })]
+                      : []),
+                  ]
+                : []
+            }
           />
         ) : null}
       </View>
@@ -403,13 +439,16 @@ function Readout({
   width,
   value,
   date,
+  lines,
 }: {
   left: number;
   width: number;
   value: string;
   date: string;
+  /** The day's outflows, named — small, under the date. */
+  lines: string[];
 }) {
-  const BOX = 132;
+  const BOX = lines.length > 0 ? 176 : 132;
   const x = Math.min(Math.max(0, left - BOX / 2), Math.max(0, width - BOX));
   return (
     <View
@@ -423,6 +462,15 @@ function Readout({
       <Text variant="muted" numberOfLines={1} className="text-xs">
         {date}
       </Text>
+      {lines.length > 0 ? (
+        <View className="mt-1 gap-0.5 border-t border-border pt-1">
+          {lines.map((line, index) => (
+            <Text key={index} variant="muted" numberOfLines={1} style={{ fontSize: 11 }}>
+              {line}
+            </Text>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
