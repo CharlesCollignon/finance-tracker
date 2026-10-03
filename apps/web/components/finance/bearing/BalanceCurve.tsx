@@ -8,13 +8,22 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
-import type { MonthBalancePoint } from "@finance/core/month-balance";
+import type {
+  DayOutflows,
+  MonthBalancePoint,
+} from "@finance/core/month-balance";
 import { formatShortDate } from "@finance/core/constants";
 import { cn } from "@/lib/utils";
 import { useLocale, useT } from "@/lib/locale-context";
 
 interface BalanceCurveProps {
   points: MonthBalancePoint[];
+  /**
+   * What left the account, or is set to, each day: a small marker on the
+   * line — full where it happened, hollow where it is planned — and the
+   * day's outflows, named, under the crosshair's reading.
+   */
+  outflows?: readonly DayOutflows[];
   /** Today, when it falls in the month: where the line stops being recorded. */
   today: string | null;
   format: (value: number) => string;
@@ -48,6 +57,7 @@ const SPAN = 1000;
  */
 export function BalanceCurve({
   points,
+  outflows = [],
   today,
   format,
   label,
@@ -140,6 +150,8 @@ export function BalanceCurve({
   const lastIndex = points.length - 1;
   const endPoint = points[lastIndex];
   const shown = active !== null ? points[active] : null;
+  const outflowsOn = new Map(outflows.map((day) => [day.date, day]));
+  const shownOutflows = shown ? outflowsOn.get(shown.date) : undefined;
   const percent = (fraction: number) => `${(fraction * 100).toFixed(3)}%`;
 
   return (
@@ -238,6 +250,25 @@ export function BalanceCurve({
               ) : null}
             </svg>
 
+            {/* A marker on each day money left, or is set to: small, full
+                where it happened and hollow where it is planned, under the
+                day dots so they keep the top. */}
+            {points.map((point, index) =>
+              outflowsOn.has(point.date) ? (
+                <Dot
+                  key={point.date}
+                  left={percent(geometry.x(index))}
+                  top={geometry.y(point.value)}
+                  className={cn(
+                    "balance-curve-fade size-1.5",
+                    point.planned
+                      ? "border border-primary/80 bg-card"
+                      : "bg-primary",
+                  )}
+                />
+              ) : null,
+            )}
+
             {/* Today, and where the month ends: the two places a reader
                 looks, each a dot with a ring of the card behind it. In HTML
                 rather than the stretched SVG, so they stay round. */}
@@ -292,6 +323,25 @@ export function BalanceCurve({
                     {formatShortDate(shown.date, locale)}
                     {shown.planned ? ` · ${t("ledger.planned")}` : ""}
                   </p>
+                  {shownOutflows ? (
+                    <ul className="privacy-sensitive mt-1.5 flex flex-col gap-0.5 border-t border-foreground/10 pt-1.5 text-[11px] leading-tight text-muted-foreground">
+                      {shownOutflows.items.map((item, index) => (
+                        <li key={index} className="flex justify-between gap-3">
+                          <span className="max-w-36 truncate">{item.name}</span>
+                          <span className="tabular-nums">
+                            −{format(item.amount)}
+                          </span>
+                        </li>
+                      ))}
+                      {shownOutflows.more > 0 ? (
+                        <li>
+                          {t("bearingMonth.moreOutflows", {
+                            count: shownOutflows.more,
+                          })}
+                        </li>
+                      ) : null}
+                    </ul>
+                  ) : null}
                 </div>
               </>
             ) : null}
@@ -302,7 +352,13 @@ export function BalanceCurve({
       {/* The readings the crosshair gives, for anyone not seeing it. */}
       <p className="sr-only" aria-live="polite">
         {shown
-          ? `${formatShortDate(shown.date, locale)}: ${format(shown.value)}`
+          ? `${formatShortDate(shown.date, locale)}: ${format(shown.value)}${
+              shownOutflows
+                ? `. ${shownOutflows.items
+                    .map((item) => `${item.name} ${format(item.amount)}`)
+                    .join(", ")}`
+                : ""
+            }`
           : ""}
       </p>
 

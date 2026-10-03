@@ -371,6 +371,7 @@ export function BalanceCard({
 
       <BalanceCurve
         points={balance.points}
+        outflows={data.outflows}
         today={balance.period === "current" ? data.today : null}
         format={format}
         label={t(

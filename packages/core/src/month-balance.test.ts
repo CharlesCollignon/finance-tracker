@@ -4,6 +4,7 @@ import {
   balanceExplanation,
   buildMonthBalance,
   leftAtMonthEnd,
+  outflowsByDay,
   recordedDeltas,
   spendingByMonth,
   topSpending,
@@ -339,5 +340,58 @@ describe("balanceExplanation", () => {
     expect(balanceExplanation({ ...current, period: "past" }, "close")).toBe(
       "close",
     );
+  });
+});
+
+describe("outflowsByDay", () => {
+  const rows = [
+    tx({ id: "rent", occurred_on: "2026-01-02", amount: 900, name: "Loyer" }),
+    tx({ id: "market", occurred_on: "2026-01-02", amount: 64, note: "Marché" }),
+    tx({ id: "a", occurred_on: "2026-01-09", amount: 5 }),
+    tx({ id: "b", occurred_on: "2026-01-09", amount: 7 }),
+    tx({ id: "c", occurred_on: "2026-01-09", amount: 9 }),
+    tx({ id: "d", occurred_on: "2026-01-09", amount: 11 }),
+    tx({ id: "salary", occurred_on: "2026-01-01", amount: 2800, type: "income", name: "Salaire" }),
+    // A purchase inside a wallet: no money left the account.
+    tx({ id: "etf", occurred_on: "2026-01-12", amount: 200, type: "investment", counts: false, name: "PEA" }),
+  ];
+  const days = outflowsByDay({
+    rows,
+    upcoming: [
+      { key: "k", name: "Électricité", description: null, occurredOn: "2026-01-25", amount: 85, type: "expense", recorded: false },
+      { key: "j", name: "Salaire", description: null, occurredOn: "2026-01-28", amount: 2800, type: "income", recorded: false },
+    ],
+    year: 2026,
+    month: 1,
+    today: TODAY,
+    anchored: false,
+  });
+
+  it("names what left each day, largest first, and nothing that came in", () => {
+    expect(days.map((day) => day.date)).toEqual([
+      "2026-01-02",
+      "2026-01-09",
+      "2026-01-25",
+    ]);
+    expect(days[0]).toEqual({
+      date: "2026-01-02",
+      total: 964,
+      items: [
+        { name: "Loyer", amount: 900 },
+        { name: "Marché", amount: 64 },
+      ],
+      more: 0,
+      planned: false,
+    });
+  });
+
+  it("names three and counts the rest", () => {
+    expect(days[1]!.items.map((item) => item.amount)).toEqual([11, 9, 7]);
+    expect(days[1]!.more).toBe(1);
+    expect(days[1]!.total).toBe(32);
+  });
+
+  it("marks what the charges still call for as planned", () => {
+    expect(days[2]).toMatchObject({ planned: true, total: 85 });
   });
 });

@@ -398,6 +398,7 @@ function BalanceCard({
       <BalanceCurve
         key={`${data.year}-${data.month}`}
         points={balance.points}
+        outflows={data.outflows}
         today={balance.period === "current" ? data.today : null}
         format={format}
         label={t(
