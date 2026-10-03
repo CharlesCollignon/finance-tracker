@@ -5,13 +5,13 @@ import {
   type CategoryFinding,
 } from "@finance/core/category-findings";
 import { buildCategoryHistory } from "@finance/core/category-history";
+import { CATEGORY_MONTHS_READ } from "@finance/core/category-screen";
 import { getCurrentMonth, shiftMonth } from "@finance/core/constants";
 import type { Locale } from "@finance/core/i18n/locale";
 import type {
   Database,
   TransactionWithCategory,
 } from "@finance/core/types/database";
-import { CATEGORY_MONTHS_READ } from "@/lib/category-read/facts";
 import { createClient } from "@/lib/supabase/server";
 import { getLocale } from "@/lib/locale";
 
@@ -25,10 +25,10 @@ type Client = SupabaseClient<Database>;
  * catalogue the client supplied is a catalogue the client chose, and the
  * closed-catalogue rule this call rests on would mean nothing.
  *
- * It must produce the same list `app/(app)/history/page.tsx` produces, down
- * to the weights, because the digest stored beside the model's order is taken
- * over exactly these values and compared against the page's own. The window
- * is therefore the page's own constant rather than a second 36 written here.
+ * It must produce the same list the screen produces, down to the weights,
+ * because the digest stored beside the model's order is taken over exactly
+ * these values and compared against the screen's own. The window is
+ * therefore the screen's own constant rather than a second 36 written here.
  */
 export async function gatherCategoryFindings(
   userId: string,

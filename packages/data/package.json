@@ -9,6 +9,7 @@
     "./bank-feed": "./src/bank-feed.ts",
     "./bank-inbox": "./src/bank-inbox.ts",
     "./categories": "./src/categories.ts",
+    "./category-screen": "./src/category-screen.ts",
     "./client": "./src/client.ts",
     "./closing": "./src/closing.ts",
     "./deletions": "./src/deletions.ts",

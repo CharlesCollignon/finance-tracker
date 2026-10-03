@@ -5,150 +5,29 @@ import {
   getCurrentMonth,
   shiftMonth,
 } from "@finance/core/constants";
+import type { CategoryFacts } from "@finance/core/category-facts";
+import { buildCategoryFindings } from "@finance/core/category-findings";
+import { buildCategoryHistory } from "@finance/core/category-history";
 import {
-  buildCategoryFacts,
-  MIN_MONTHS_FOR_CATEGORY_READ,
-  type CategoryFacts,
-} from "@finance/core/category-facts";
-import {
-  buildCategoryFindings,
-  categoryNormal,
-  NORMAL_WINDOW,
-  type CategoryFinding,
-  type FindingKind,
-} from "@finance/core/category-findings";
-import {
-  buildCategoryHistory,
-  type CategoryHistory,
-} from "@finance/core/category-history";
+  CATEGORY_MONTHS_READ,
+  currentCategoryFacts,
+} from "@finance/core/category-screen";
 import type { Locale } from "@finance/core/i18n/locale";
 import type {
-  CategoryType,
   Database,
   TransactionWithCategory,
 } from "@finance/core/types/database";
-import { getCategories } from "@/lib/queries/categories";
-import { getMonthlySummary } from "@/lib/queries/finance";
+import { getCategories } from "@finance/data/categories";
+import { getMonthlySummary } from "@finance/data/month-ledger";
 import { getLocale } from "@/lib/locale";
 import { createClient } from "@/lib/supabase/server";
 
 type Client = SupabaseClient<Database>;
 
 /**
- * Everything a category read may refer to, gathered from what the by-category
- * screen already computes.
- *
- * Same discipline as `month-read/facts.ts`, narrowed to one category: no
- * figure here is one the panel does not already draw, which is the property
- * that makes the read checkable at all — a reader can look at the bars above
- * it and see the same number.
- *
- * How far back the read looks matches `app/(app)/history/page.tsx` exactly,
- * for the same reason `buildCategoryFacts`'s doc gives for `normal` and
- * `latest`: a model handed a shorter run than the panel drew would answer a
- * question about a chart the reader cannot see.
- *
- * Exported and imported by that page rather than restated there, because a
- * third reader has since arrived: `category-selection/findings.ts` rebuilds
- * the findings server-side and fingerprints them, and the page fingerprints
- * its own. Two windows that disagreed by a month would produce two digests
- * that never match, and the band would report every stored order as stale
- * forever — a failure that looks like nothing at all going wrong.
- */
-export const CATEGORY_MONTHS_READ = 36;
-
-/**
- * The month-independent half of the pack: everything that does not need a
- * database, split out so it can be built once from data the by-category
- * screen already holds — every card on that page needs its own `normal` and
- * `findings` regardless of whether a read exists to render — and again, on
- * demand, for the one category a write is about.
- */
-export interface CurrentCategoryFactsInput {
-  categoryId: string;
-  categoryName: string;
-  type: CategoryType;
-  /** Undefined when nothing at all has been recorded in the window. */
-  history: CategoryHistory | undefined;
-  /** This category's own findings, already picked out of the page's list. */
-  findings: readonly CategoryFinding[];
-  /** The month on screen's total expenses, for `share-of-month`. */
-  monthExpenses: number;
-  monthLabel: string;
-  locale: Locale;
-}
-
-function signedSeverity(
-  findings: readonly CategoryFinding[],
-  kind: FindingKind,
-): number | null {
-  const finding = findings.find((row) => row.kind === kind);
-  if (!finding) {
-    return null;
-  }
-  return finding.direction === "up" ? finding.severity : -finding.severity;
-}
-
-/** Non-empty months inside the window `normal` is taken over. */
-function monthsActiveCount(history: CategoryHistory | undefined): number {
-  const points = history?.points ?? [];
-  return points.slice(-NORMAL_WINDOW).filter((point) => !point.empty).length;
-}
-
-/**
- * Whether a category has too little history to be worth a read — the one
- * thing every card on the by-category screen needs, whether or not it has a
- * stored read to render. Split out from `currentCategoryFacts` because it
- * does not need `monthExpenses`: that feeds `share-of-month`, a datum a
- * reader only ever sees inside a rendered read, so a screen with nothing yet
- * written for any category has no reason to have fetched it.
- */
-export function categoryReadIsThin(
-  history: CategoryHistory | undefined,
-): boolean {
-  return monthsActiveCount(history) < MIN_MONTHS_FOR_CATEGORY_READ;
-}
-
-/**
- * Build the pack from figures already in hand — no query of its own.
- *
- * The by-category screen calls this once per category that has a stored
- * read, over data it fetched for the page anyway; `gatherCategoryFacts`
- * below calls it once, after fetching that same shape of data for a single
- * category. One place turns those figures into a `CategoryFacts`, so a
- * change to what "normal" or "share of month" means cannot drift between the
- * two callers.
- */
-export function currentCategoryFacts(
-  input: CurrentCategoryFactsInput,
-): CategoryFacts {
-  const points = input.history?.points ?? [];
-  const { normal } = categoryNormal(points);
-  const last = points[points.length - 1];
-  const latest = last && !last.empty ? last.total : null;
-
-  const shareOfMonth =
-    input.type === "expense" && latest !== null && input.monthExpenses > 0
-      ? latest / input.monthExpenses
-      : null;
-
-  return buildCategoryFacts({
-    categoryId: input.categoryId,
-    categoryName: input.categoryName,
-    type: input.type,
-    normal,
-    latest,
-    monthsActive: monthsActiveCount(input.history),
-    monthLabel: input.monthLabel,
-    drift: signedSeverity(input.findings, "drift"),
-    oddMonth: signedSeverity(input.findings, "odd-month"),
-    shareOfMonth,
-    locale: input.locale,
-  });
-}
-
-/**
- * Gather one category's figures from the database, for the write path.
+ * Gather one category's figures from the database, for the write path. The
+ * screen's half — the window, `currentCategoryFacts` — is in
+ * `@finance/core/category-screen`, shared with the phone.
  *
  * Recomputed server-side on every write and deliberately not accepted from
  * the client, for the reason `month-read/facts.ts` gives at length: every
@@ -171,7 +50,11 @@ export async function gatherCategoryFacts(
   const locale = localeOverride ?? (await getLocale());
   const current = getCurrentMonth();
 
-  const categories = await getCategories(userId, { includeArchived: true });
+  // Through the caller's client, not the request's cookie: the phone's
+  // bearer arrives without one.
+  const categories = await getCategories(supabase, userId, {
+    includeArchived: true,
+  });
   const category = categories.find((row) => row.id === categoryId);
   if (!category) {
     return null;
@@ -196,7 +79,7 @@ export async function gatherCategoryFacts(
         .order("id")
         .range(start, end),
     ),
-    getMonthlySummary(userId, current.year, current.month, "current"),
+    getMonthlySummary(supabase, userId, current.year, current.month, "current"),
   ]);
 
   const rows = data as TransactionWithCategory[];

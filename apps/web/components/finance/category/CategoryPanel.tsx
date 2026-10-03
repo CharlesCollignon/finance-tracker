@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { X } from "@phosphor-icons/react";
 import type { CategoryFacts } from "@finance/core/category-facts";
+import type { PanelTransaction } from "@finance/core/category-screen";
 import type { CategoryRead as CategoryReadValue } from "@finance/core/category-read";
 import type { Locale } from "@finance/core/i18n/locale";
 import { BarSeries } from "@/components/finance/charts";
@@ -15,12 +16,7 @@ import { cn } from "@/lib/utils";
 import { TONE, type CategoryCard } from "./CategoryTile";
 import { CategoryRead } from "./CategoryRead";
 
-export interface PanelTransaction {
-  id: string;
-  occurredOn: string;
-  note: string | null;
-  amount: number;
-}
+export type { PanelTransaction };
 
 interface CategoryPanelProps {
   card: CategoryCard;

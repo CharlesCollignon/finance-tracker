@@ -6,19 +6,18 @@ import {
   CATEGORY_SELECTION_WRITES_PER_MONTH,
   type CategorySelection,
 } from "@finance/core/category-selection";
-import { getCurrentMonth } from "@finance/core/constants";
-import {
-  FALLBACK_LOCALE,
-  parseLocale,
-  type Locale,
-} from "@finance/core/i18n/locale";
+import type { Locale } from "@finance/core/i18n/locale";
 import type { MonthReadTally } from "@finance/core/month-read-budget";
-import { monthColumnValue } from "@finance/core/month-close";
 import type {
   CategorySelectionRow,
   Database,
 } from "@finance/core/types/database";
 import { createClient } from "@/lib/supabase/server";
+import * as selections from "@finance/data/category-screen";
+import type {
+  CategorySelectionState,
+  StoredSelectionPayload,
+} from "@finance/data/category-screen";
 
 type Client = SupabaseClient<Database>;
 
@@ -39,8 +38,9 @@ type Client = SupabaseClient<Database>;
  * `reserve_category_selection` resets it inside the reservation statement
  * when that month is not the current one, so nothing has to remember to.
  *
- * That reset is why `effectiveWrites` below exists rather than reading
- * `writes` directly: between the turn of the month and the first press of the
+ * That reset is why `categorySelectionWrites` (in
+ * `@finance/data/category-screen`) exists rather than reading `writes`
+ * directly: between the turn of the month and the first press of the
  * new one, the row still carries last month's count. Handing that straight to
  * `decideMonthReadWrite` would refuse a press for an allowance spent in a
  * month that is over — and worse, it would make a granted reservation look
@@ -51,135 +51,15 @@ type Client = SupabaseClient<Database>;
  * cannot be counted is a call that is not capped.
  */
 
-/**
- * What is stored beside the order.
- *
- * The locale is kept *inside* the `selection` jsonb rather than in a column
- * of its own, because migration 035 gives this table none — the read's table
- * has one, the selection's does not. A remark is the model's own prose with
- * no app label spliced into it, so it is not the two-halves nonsense a
- * mixed-language read would be; but it is still written in one language, and
- * the band says so by showing remarks only to a reader in that language. The
- * order itself has no language and is applied either way.
- */
-interface StoredSelectionPayload extends CategorySelection {
-  locale: Locale;
-}
-
-export interface StoredCategorySelection {
-  selection: CategorySelection;
-  /** The findings it was chosen from. Null means it cannot be trusted at all. */
-  digest: string | null;
-  /** The language the remarks are in. */
-  locale: Locale;
-}
-
-export interface CategorySelectionState {
-  /** Null when no order has ever been stored for this user. */
-  stored: StoredCategorySelection | null;
-  /** The tally `decideMonthReadWrite` is checked against, month-corrected. */
-  tally: MonthReadTally;
-  /** False when migration 035 has not run. */
-  tracked: boolean;
-}
-
-const EMPTY_TALLY: MonthReadTally = {
-  writes: 0,
-  refused: 0,
-  lastWrittenAt: null,
-  pendingSince: null,
-};
-
-function thisMonthColumn(): string {
-  const { year, month } = getCurrentMonth();
-  return monthColumnValue(year, month);
-}
-
-/** The count, ignoring one left over from a month that has since turned. */
-function effectiveWrites(row: CategorySelectionRow | null): number {
-  if (!row || row.tally_month !== thisMonthColumn()) {
-    return 0;
-  }
-  return row.writes;
-}
-
-function toTally(row: CategorySelectionRow | null): MonthReadTally {
-  if (!row) {
-    return EMPTY_TALLY;
-  }
-  return {
-    writes: effectiveWrites(row),
-    refused: row.refused,
-    lastWrittenAt: row.last_written_at,
-    pendingSince: row.pending_since,
-  };
-}
-
-/**
- * The order as stored, or null.
- *
- * Defensive about the jsonb's shape rather than trusting it: a row written by
- * an older version of this app, or by hand, must not take the screen down.
- * An unreadable payload is treated as no order at all, which falls back to
- * the app's own — the same direction every other failure here falls.
- */
-function toStored(row: CategorySelectionRow): StoredCategorySelection | null {
-  const payload = row.selection as Partial<StoredSelectionPayload> | null;
-  if (!payload || !Array.isArray(payload.picks) || payload.picks.length === 0) {
-    return null;
-  }
-
-  const picks = payload.picks
-    .filter((pick): pick is { id: string; remark?: string } =>
-      Boolean(pick && typeof pick.id === "string"),
-    )
-    .map((pick) => ({
-      id: pick.id,
-      ...(typeof pick.remark === "string" && pick.remark
-        ? { remark: pick.remark }
-        : {}),
-    }));
-
-  // An order with nothing in it is not an order. Returning one would light
-  // the band's "chosen by a model" note over a list still in the app's own
-  // sequence, which is a claim about the screen that is not true of it.
-  if (picks.length === 0) {
-    return null;
-  }
-
-  return {
-    selection: { picks },
-    digest: row.findings_digest,
-    locale: parseLocale(payload.locale) ?? FALLBACK_LOCALE,
-  };
-}
-
+/** The band's stored order and its tally — `@finance/data/category-screen`'s. */
 export async function readCategorySelectionState(
   userId: string,
   client?: Client,
 ): Promise<CategorySelectionState> {
-  const supabase = client ?? (await createClient());
-
-  const { data, error } = await supabase
-    .from("category_selections")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error) {
-    if (isMissingSchemaOrFunction(error)) {
-      return { stored: null, tally: EMPTY_TALLY, tracked: false };
-    }
-    throw error;
-  }
-
-  const row = (data as CategorySelectionRow | null) ?? null;
-
-  return {
-    stored: row ? toStored(row) : null,
-    tally: toTally(row),
-    tracked: true,
-  };
+  return selections.readCategorySelectionState(
+    client ?? (await createClient()),
+    userId,
+  );
 }
 
 export interface ReservedCategorySelection {
@@ -223,7 +103,10 @@ export async function reserveSelection(
   }
 
   const row = data as CategorySelectionRow;
-  return { writes: effectiveWrites(row), tally: toTally(row) };
+  return {
+    writes: selections.categorySelectionWrites(row),
+    tally: selections.categorySelectionTally(row),
+  };
 }
 
 /** Land a finished attempt. `selection` null means nothing survived. */

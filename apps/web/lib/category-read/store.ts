@@ -8,15 +8,11 @@ import {
 } from "@finance/core/category-read";
 import type { CategoryFacts } from "@finance/core/category-facts";
 import type { MonthReadTally } from "@finance/core/month-read-budget";
-import { getCurrentMonth } from "@finance/core/constants";
-import { monthColumnValue } from "@finance/core/month-close";
 import type { CategoryReadRow, Database } from "@finance/core/types/database";
 import { createClient } from "@/lib/supabase/server";
-import {
-  FALLBACK_LOCALE,
-  parseLocale,
-  type Locale,
-} from "@finance/core/i18n/locale";
+import type { Locale } from "@finance/core/i18n/locale";
+import * as categoryReads from "@finance/data/category-screen";
+import type { StoredCategoryRead } from "@finance/data/category-screen";
 
 type Client = SupabaseClient<Database>;
 
@@ -98,17 +94,6 @@ function toleratedRpcFailure(
   );
 }
 
-export interface StoredCategoryRead {
-  read: CategoryRead | null;
-  facts: CategoryFacts | null;
-  writtenAt: string | null;
-  model: string | null;
-  promptVersion: number | null;
-  trimmed: number;
-  /** The language the prose was written in. Null means English; see `month-read/store.ts`. */
-  locale: Locale;
-}
-
 export interface CategoryReadState {
   /** Null when nothing has ever been written for this category. */
   stored: StoredCategoryRead | null;
@@ -134,100 +119,6 @@ const EMPTY_TALLY: MonthReadTally = {
   pendingSince: null,
 };
 
-function thisMonthColumn(): string {
-  const { year, month } = getCurrentMonth();
-  return monthColumnValue(year, month);
-}
-
-function toStored(row: CategoryReadRow): StoredCategoryRead {
-  return {
-    read: (row.read as CategoryRead | null) ?? null,
-    facts: (row.facts as CategoryFacts | null) ?? null,
-    writtenAt: row.written_at,
-    model: row.model,
-    promptVersion: row.prompt_version,
-    trimmed: row.trimmed,
-    locale: parseLocale(row.locale) ?? FALLBACK_LOCALE,
-  };
-}
-
-/**
- * The cross-category ceiling for the month in progress, or null when the
- * schema is absent. Read on its own — never folded into `toStored` — because
- * every caller below needs it whether or not this category has ever been
- * read.
- */
-async function readTallyWrites(
-  userId: string,
-  supabase: Client,
-): Promise<number | null> {
-  const { data, error } = await supabase
-    .from("category_read_tallies")
-    .select("writes")
-    .eq("user_id", userId)
-    .eq("month", thisMonthColumn())
-    .maybeSingle();
-
-  if (error) {
-    if (isMissingSchemaOrFunction(error)) {
-      return null;
-    }
-    throw error;
-  }
-
-  return data?.writes ?? 0;
-}
-
-/**
- * The cross-category ceiling on its own, for a screen that needs to show
- * "N left" without asking about any one category. `tracked` is false when
- * migration 035 has not run.
- */
-export async function readCategoryReadTally(
-  userId: string,
-  client?: Client,
-): Promise<{ writes: number; tracked: boolean }> {
-  const supabase = client ?? (await createClient());
-  const writes = await readTallyWrites(userId, supabase);
-  return writes === null
-    ? { writes: 0, tracked: false }
-    : { writes, tracked: true };
-}
-
-/**
- * Every stored read this user has, across every category, keyed by category
- * id. For the by-category screen: every card on that page is drawn up front,
- * findings and all, and the reads sit beside them rather than behind a
- * second round trip per panel opened.
- *
- * Rows with nothing successfully written yet (`read` still null) are
- * included rather than filtered out, so a caller can tell "never asked"
- * apart from "asked and nothing survived" if it ever needs to.
- */
-export async function listStoredCategoryReads(
-  userId: string,
-  client?: Client,
-): Promise<{ byCategory: Map<string, StoredCategoryRead>; tracked: boolean }> {
-  const supabase = client ?? (await createClient());
-  const { data, error } = await supabase
-    .from("category_reads")
-    .select("*")
-    .eq("user_id", userId);
-
-  if (error) {
-    if (isMissingSchemaOrFunction(error)) {
-      return { byCategory: new Map(), tracked: false };
-    }
-    throw error;
-  }
-
-  const byCategory = new Map<string, StoredCategoryRead>();
-  for (const row of (data ?? []) as CategoryReadRow[]) {
-    byCategory.set(row.category_id, toStored(row));
-  }
-  return { byCategory, tracked: true };
-}
-
 export async function readCategoryReadState(
   userId: string,
   categoryId: string,
@@ -242,7 +133,7 @@ export async function readCategoryReadState(
       .eq("user_id", userId)
       .eq("category_id", categoryId)
       .maybeSingle(),
-    readTallyWrites(userId, supabase),
+    categoryReads.categoryReadTallyWrites(supabase, userId),
   ]);
 
   if (error && !isMissingSchemaOrFunction(error)) {
@@ -256,7 +147,7 @@ export async function readCategoryReadState(
   const row = data as CategoryReadRow | null;
 
   return {
-    stored: row ? toStored(row) : null,
+    stored: row ? categoryReads.storedCategoryRead(row) : null,
     writes: row?.writes ?? 0,
     tally: {
       writes: tallyWrites,
@@ -310,7 +201,10 @@ export async function reserveWrite(
   }
 
   const row = data as CategoryReadRow;
-  const tallyWrites = await readTallyWrites(userId, supabase);
+  const tallyWrites = await categoryReads.categoryReadTallyWrites(
+    supabase,
+    userId,
+  );
   if (tallyWrites === null) {
     return null;
   }
