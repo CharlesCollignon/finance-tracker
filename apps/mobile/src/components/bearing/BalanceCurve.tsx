@@ -22,7 +22,7 @@ import Svg, {
 
 import { formatShortDate } from "@finance/core/constants";
 import { EASE_STANDARD } from "@finance/core/motion";
-import { gapShapes, type MonthBalancePoint } from "@finance/core/month-balance";
+import type { MonthBalancePoint } from "@finance/core/month-balance";
 
 import { Text } from "@/components/ui/Text";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -57,11 +57,6 @@ const BREATHE_HALF_MS = 1200;
 
 interface BalanceCurveProps {
   points: MonthBalancePoint[];
-  /**
-   * The month as planned from its first day, one value per point — a thin
-   * line, with the gap to the balance washed in: green above, red below.
-   */
-  plan?: number[] | null;
   /** Today, when it falls in the month: where the line stops being recorded. */
   today: string | null;
   format: (value: number) => string;
@@ -82,7 +77,6 @@ interface BalanceCurveProps {
  */
 export function BalanceCurve({
   points,
-  plan = null,
   today,
   format,
   label,
@@ -100,9 +94,8 @@ export function BalanceCurve({
       return null;
     }
     const values = points.map((point) => point.value);
-    const planned = plan && plan.length === points.length ? plan : null;
-    let min = Math.min(...values, ...(planned ?? []), 0);
-    let max = Math.max(...values, ...(planned ?? []), 0);
+    let min = Math.min(...values, 0);
+    let max = Math.max(...values, 0);
     // A flat month still needs a height to draw in.
     if (max - min < 1) {
       max += 1;
@@ -145,34 +138,9 @@ export function BalanceCurve({
       return total;
     };
 
-    // The gap to the plan, washed in: one path above it, one below,
-    // split where the lines cross (`gapShapes`).
-    const gap = { above: "", below: "" };
-    let planLine = "";
-    if (planned) {
-      planLine = planned
-        .map(
-          (value, index) =>
-            `${index === 0 ? "M" : "L"}${x(index).toFixed(1)},${y(value).toFixed(1)}`,
-        )
-        .join(" ");
-      for (const shape of gapShapes(values, planned)) {
-        const d = `M${shape.corners
-          .map(([day, value]) => `${x(day).toFixed(1)},${y(value).toFixed(1)}`)
-          .join(" L")} Z `;
-        if (shape.above) {
-          gap.above += d;
-        } else {
-          gap.below += d;
-        }
-      }
-    }
-
     return {
       x,
       y,
-      gap,
-      planLine,
       solid: lastRecorded >= 0 ? path(0, lastRecorded) : "",
       solidLength: lastRecorded > 0 ? lengthOf(0, lastRecorded) : 0,
       dashed:
@@ -183,7 +151,7 @@ export function BalanceCurve({
       zeroY: min < 0 && max > 0 ? y(0) : null,
       todayIndex,
     };
-  }, [points, plan, today, width]);
+  }, [points, today, width]);
 
   /* ------------------------------------------------------------ motion */
 
@@ -249,10 +217,6 @@ export function BalanceCurve({
   const endPoint = points[lastIndex];
   const firstPoint = points[0];
   const shown = active !== null ? points[active] : null;
-  const shownPlan =
-    active !== null && plan && plan.length === points.length ? plan[active]! : null;
-  const shownGap =
-    shown && shownPlan !== null ? Math.round((shown.value - shownPlan) * 100) / 100 : null;
 
   const summary =
     !hidden && firstPoint && endPoint
@@ -301,22 +265,6 @@ export function BalanceCurve({
             <AnimatedG animatedProps={washProps}>
               <Path d={geometry.area} fill="url(#balance-wash)" />
             </AnimatedG>
-
-            {geometry.planLine ? (
-              <AnimatedG animatedProps={fadeProps}>
-                <Path d={geometry.gap.above} fill={colors.success} fillOpacity={0.16} />
-                <Path d={geometry.gap.below} fill={colors.destructive} fillOpacity={0.16} />
-                <Path
-                  d={geometry.planLine}
-                  fill="none"
-                  stroke={colors.mutedForeground}
-                  strokeOpacity={0.7}
-                  strokeWidth={1.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </AnimatedG>
-            ) : null}
 
             {geometry.solid ? (
               <AnimatedPath
@@ -403,17 +351,6 @@ export function BalanceCurve({
             date={`${formatShortDate(shown.date, locale)}${
               shown.planned ? ` · ${t("ledger.planned")}` : ""
             }`}
-            gap={
-              shownGap !== null && !hidden
-                ? {
-                    text:
-                      shownGap >= 0
-                        ? t("bearingMonth.gapAbove", { amount: format(shownGap) })
-                        : t("bearingMonth.gapBelow", { amount: format(-shownGap) }),
-                    color: shownGap >= 0 ? colors.success : colors.destructive,
-                  }
-                : null
-            }
           />
         ) : null}
       </View>
@@ -451,17 +388,6 @@ export function BalanceCurve({
               </Text>
             </View>
           ) : null}
-          {plan && plan.length === points.length ? (
-            <View className="flex-row items-center gap-1.5">
-              <View
-                className="h-px w-4 rounded-full"
-                style={{ backgroundColor: colors.mutedForeground, opacity: 0.7 }}
-              />
-              <Text variant="muted" className="text-xs">
-                {t("bearingMonth.asPlanned")}
-              </Text>
-            </View>
-          ) : null}
         </View>
         <Text variant="muted" className="text-xs">
           {endPoint ? formatShortDate(endPoint.date, locale) : ""}
@@ -477,16 +403,13 @@ function Readout({
   width,
   value,
   date,
-  gap,
 }: {
   left: number;
   width: number;
   value: string;
   date: string;
-  /** How far that day stands from the plan, when there is one. */
-  gap: { text: string; color: string } | null;
 }) {
-  const BOX = gap ? 172 : 132;
+  const BOX = 132;
   const x = Math.min(Math.max(0, left - BOX / 2), Math.max(0, width - BOX));
   return (
     <View
@@ -500,11 +423,6 @@ function Readout({
       <Text variant="muted" numberOfLines={1} className="text-xs">
         {date}
       </Text>
-      {gap ? (
-        <Text numberOfLines={1} className="text-xs" style={{ color: gap.color }}>
-          {gap.text}
-        </Text>
-      ) : null}
     </View>
   );
 }
