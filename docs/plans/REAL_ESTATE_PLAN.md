@@ -139,6 +139,11 @@ nothing, since both cascade from `auth.users`.
 
 ## Linking a loan to a charge
 
+(October 2026, after Phase 7: a loan whose insurance the bank debits on
+its own — another day, often another insurer — says so, and has two
+templates, one per debit. The « C'est celle-ci ? » of point 2 below was
+only built then, on the loan's card, for both debits. Migration 052.)
+
 The French screens never say « charge » for a recurring template: it is an
 « opération récurrente », on the « Récurrents » tab (`CONTEXT.md`). The copy
 below follows that; "Charges" in this plan is the section's English name.
