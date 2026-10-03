@@ -24,7 +24,7 @@ import {
   shiftMonth,
 } from "@finance/core/constants";
 import { monthShort } from "@finance/core/i18n/calendar-names";
-import { balanceExplanation, gapToPlan } from "@finance/core/month-balance";
+import { balanceExplanation } from "@finance/core/month-balance";
 import { EASE_STANDARD } from "@finance/core/motion";
 
 import { AnimatedAmount } from "@/components/AnimatedAmount";
@@ -229,13 +229,6 @@ export function BalanceCard({
   const colors = useThemeColors();
   const router = useRouter();
   const { balance, source, upcoming } = data;
-  // How far the account stands from the month as planned: today in the
-  // month in progress, at its last day for one that has ended. A euro or
-  // less is the cents of rounding, not a finding.
-  const gapOn =
-    balance.period === "current" ? data.today : (balance.points.at(-1)?.date ?? null);
-  const rawGap = gapOn ? gapToPlan(balance, gapOn) : null;
-  const gap = rawGap !== null && Math.abs(rawGap) >= 1 ? rawGap : null;
   const net = balance.basis === "net";
   const monthLabel = formatMonthLabel(data.year, data.month, locale);
   const [howOpen, setHowOpen] = useState(false);
@@ -378,7 +371,6 @@ export function BalanceCard({
 
       <BalanceCurve
         points={balance.points}
-        plan={balance.plan}
         today={balance.period === "current" ? data.today : null}
         format={format}
         label={t(
@@ -388,24 +380,8 @@ export function BalanceCard({
       />
 
       {showLowest ||
-      gap !== null ||
       (upcoming && (upcoming.arriving > 0 || upcoming.leaving > 0)) ? (
         <View className="flex-row flex-wrap gap-2">
-          {gap !== null ? (
-            <Pill dot={gap >= 0 ? colors.success : colors.destructive}>
-              {t(
-                balance.period === "current"
-                  ? "bearingMonth.gapSoFar"
-                  : "bearingMonth.gapOverMonth",
-                {
-                  gap:
-                    gap >= 0
-                      ? t("bearingMonth.gapAbove", { amount: format(gap) })
-                      : t("bearingMonth.gapBelow", { amount: format(-gap) }),
-                },
-              )}
-            </Pill>
-          ) : null}
           {showLowest && lowest ? (
             <Pill tone={lowest.value < 0 ? "danger" : "default"}>
               {t(

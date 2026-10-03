@@ -150,12 +150,6 @@ export interface MonthBalanceInput {
   recorded: readonly DatedDelta[];
   /** What the charges still call for, dated after today. */
   planned: readonly DatedDelta[];
-  /**
-   * Every occurrence the recurring entries call for in the month, on its
-   * day, whether it has come yet or not — the month as planned from its
-   * first day. Left out, or for a month ahead, there is no plan to compare.
-   */
-  scheduled?: readonly DatedDelta[];
 }
 
 export interface MonthBalancePoint {
@@ -177,14 +171,6 @@ export interface MonthBalance {
   end: number;
   /** One per day of the month. */
   points: MonthBalancePoint[];
-  /**
-   * The month as planned from its first day, one value per point: where it
-   * began, moved only by what the recurring entries call for, on their
-   * days. What the account would hold had nothing else happened — so the
-   * gap to `points` is everything the plan did not have, day by day. Null
-   * for a month ahead, which is nothing but the plan.
-   */
-  plan: number[] | null;
   /**
    * The lowest the month goes from here on — from today in the month in
    * progress, across the whole month otherwise. The day money is tightest is
@@ -275,99 +261,15 @@ export function buildMonthBalance(input: MonthBalanceInput): MonthBalance {
     }
   }
 
-  const start = at(shiftIsoDate(first, -1));
-  const scheduled = input.scheduled;
-  const plan =
-    scheduled && period !== "future"
-      ? days.map((date) =>
-          roundMoney(
-            scheduled.reduce(
-              (value, move) => (move.date <= date ? value + move.delta : value),
-              start,
-            ),
-          ),
-        )
-      : null;
-
   return {
     period,
     basis: anchor ? "balance" : "net",
-    start,
+    start: at(shiftIsoDate(first, -1)),
     today: period === "current" ? at(today) : null,
     end: at(last),
     points,
     lowest,
-    plan,
   };
-}
-
-/** One piece of the gap between the balance and the plan. */
-export interface GapShape {
-  /** The balance is above the plan here. */
-  above: boolean;
-  /** The polygon's corners, as [day index, amount]. */
-  corners: [number, number][];
-}
-
-/**
- * The gap between the balance and the plan, day after day, as polygons a
- * chart can fill: one per stretch between two days, split where the two
- * lines cross, so each is wholly above the plan or wholly below it. In day
- * indices and amounts — each app turns them into its own pixels.
- */
-export function gapShapes(
-  values: readonly number[],
-  plan: readonly number[],
-): GapShape[] {
-  const shapes: GapShape[] = [];
-  for (let index = 0; index < Math.min(values.length, plan.length) - 1; index += 1) {
-    const v0 = values[index]!;
-    const v1 = values[index + 1]!;
-    const p0 = plan[index]!;
-    const p1 = plan[index + 1]!;
-    const d0 = v0 - p0;
-    const d1 = v1 - p1;
-    if (d0 * d1 >= 0) {
-      if (d0 !== 0 || d1 !== 0) {
-        shapes.push({
-          above: d0 + d1 > 0,
-          corners: [
-            [index, v0],
-            [index + 1, v1],
-            [index + 1, p1],
-            [index, p0],
-          ],
-        });
-      }
-      continue;
-    }
-    // They cross between the two days: where, along the plan.
-    const t = d0 / (d0 - d1);
-    const cross: [number, number] = [index + t, p0 + t * (p1 - p0)];
-    shapes.push(
-      { above: d0 > 0, corners: [[index, v0], cross, [index, p0]] },
-      { above: d1 > 0, corners: [cross, [index + 1, v1], [index + 1, p1]] },
-    );
-  }
-  return shapes;
-}
-
-/**
- * How far the account stands from the month as planned, on a day: above
- * the plan when positive, below when negative. Null without a plan, or for
- * a day the month does not have.
- */
-export function gapToPlan(
-  balance: Pick<MonthBalance, "points" | "plan">,
-  date: string,
-): number | null {
-  if (!balance.plan) {
-    return null;
-  }
-  const index = balance.points.findIndex((point) => point.date === date);
-  return index < 0
-    ? null
-    : roundMoney(balance.points[index]!.value - balance.plan[index]!);
 }
 
 /** Sums of a month's recorded expenses, by `YYYY-MM`, for months asked about. */
