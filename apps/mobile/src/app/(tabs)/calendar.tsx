@@ -90,7 +90,6 @@ export default function CalendarScreen() {
   const formatEuro = useFormatCurrency();
   // Shared with the list and Le point, so switching view keeps the month.
   const { year, month, setMonth } = useScreenMonth();
-  const [selectedDate, setSelectedDate] = useState(() => todayIsoLocal());
   const quickAdd = useQuickAdd();
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
   // Row selection is keyed by day, so changing day empties it by
@@ -221,11 +220,17 @@ export default function CalendarScreen() {
     [transactions, templates],
   );
 
+  // Selection is keyed by month, so a month other than the one picked in
+  // — on opening too, the month being shared with the list and Le point —
+  // starts on its default day. The web reads it the same way.
   const monthKey = `${year}-${month}`;
-  const [selectionKey, setSelectionKey] = useState(monthKey);
+  const [selection, setSelection] = useState<{
+    monthKey: string;
+    date: string;
+  } | null>(null);
   const effectiveSelected =
-    selectionKey === monthKey
-      ? selectedDate
+    selection && selection.monthKey === monthKey
+      ? selection.date
       : defaultSelectedDate(year, month, byDate);
 
   const dayTxs = byDate.get(effectiveSelected) ?? [];
@@ -348,8 +353,7 @@ export default function CalendarScreen() {
             plannedByDate={plannedByDate}
             selectedDate={effectiveSelected}
             onSelect={(date) => {
-              setSelectedDate(date);
-              setSelectionKey(monthKey);
+              setSelection({ monthKey, date });
             }}
           />
 
