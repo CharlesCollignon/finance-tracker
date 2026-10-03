@@ -201,6 +201,95 @@ export function balanceExplanation(
   return source;
 }
 
+/** What left the account on one day, or is set to: the chart's marker. */
+export interface DayOutflows {
+  date: string;
+  /** Everything that left, or is set to leave, that day. */
+  total: number;
+  /** The largest of them, three at most. */
+  items: { name: string; amount: number }[];
+  /** How many more there were. */
+  more: number;
+  /** After today: what the charges call for, not what happened. */
+  planned: boolean;
+}
+
+/** How many movements a day's marker names before « +N ». */
+const OUTFLOWS_NAMED = 3;
+
+/**
+ * What left the account, or is set to, day by day across a month — the
+ * markers along its balance curve. Recorded rows go on the day the curve
+ * puts them (their cash day against a bank's balance, the day they count
+ * for otherwise; see `recordedDeltas`), what the charges still call for on
+ * its day. Only what leaves, by the curve's own rule (`transactionDelta`,
+ * `upcomingDelta`): a purchase inside a wallet moves nothing and is not a
+ * marker.
+ */
+export function outflowsByDay({
+  rows,
+  moved = [],
+  upcoming,
+  year,
+  month,
+  today,
+  anchored,
+}: {
+  rows: readonly TransactionWithCategory[];
+  moved?: readonly TransactionWithCategory[];
+  upcoming: readonly UpcomingCharge[];
+  year: number;
+  month: number;
+  today: string;
+  anchored: boolean;
+}): DayOutflows[] {
+  const { start, end } = getMonthBounds(year, month);
+  const byDay = new Map<string, { name: string; amount: number }[]>();
+  const add = (date: string, name: string, amount: number) => {
+    if (date < start || date > end || !(amount > 0)) {
+      return;
+    }
+    byDay.set(date, [...(byDay.get(date) ?? []), { name, amount }]);
+  };
+
+  const byId = new Map(rows.map((row) => [row.id, row] as const));
+  if (anchored) {
+    for (const row of moved) {
+      byId.set(row.id, row);
+    }
+  }
+  for (const row of byId.values()) {
+    const date = anchored ? cashDateOf(row) : row.occurred_on;
+    if (date <= today) {
+      add(date, row.note?.trim() || row.categories.name, -transactionDelta(row));
+    }
+  }
+  for (const charge of upcoming) {
+    if (charge.occurredOn > today) {
+      add(
+        charge.occurredOn,
+        charge.description?.trim() || charge.name,
+        -upcomingDelta(charge),
+      );
+    }
+  }
+
+  return [...byDay.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, items]) => {
+      const sorted = [...items].sort((a, b) => b.amount - a.amount);
+      return {
+        date,
+        total: roundMoney(sorted.reduce((sum, item) => sum + item.amount, 0)),
+        items: sorted
+          .slice(0, OUTFLOWS_NAMED)
+          .map((item) => ({ name: item.name, amount: roundMoney(item.amount) })),
+        more: Math.max(0, sorted.length - OUTFLOWS_NAMED),
+        planned: date > today,
+      };
+    });
+}
+
 /** Every day of a month, as ISO dates. */
 function daysOf(year: number, month: number): string[] {
   const { start, end } = getMonthBounds(year, month);

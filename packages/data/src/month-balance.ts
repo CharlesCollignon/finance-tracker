@@ -6,6 +6,8 @@ import {
 import type { Locale } from "@finance/core/i18n/locale";
 import {
   buildMonthBalance,
+  outflowsByDay,
+  type DayOutflows,
   recordedDeltas,
   upcomingDelta,
   type BalanceAnchor,
@@ -59,6 +61,8 @@ export interface MonthBalanceRead {
     leaving: number;
     arriving: number;
   } | null;
+  /** What left the account, or is set to, day by day: the curve's markers. */
+  outflows: DayOutflows[];
 }
 
 function monthKeyOf(year: number, month: number): string {
@@ -243,7 +247,17 @@ export async function readMonthBalance(
     planned,
   });
 
-  return { balance, source, rows, upcoming };
+  const outflows = outflowsByDay({
+    rows,
+    moved,
+    upcoming: upcoming?.charges ?? [],
+    year,
+    month,
+    today,
+    anchored: anchor !== null,
+  });
+
+  return { balance, source, rows, upcoming, outflows };
 }
 
 /**

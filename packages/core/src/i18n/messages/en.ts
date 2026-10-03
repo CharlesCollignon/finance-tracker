@@ -3025,6 +3025,10 @@ export const en = {
     toGoOut: "{amount} still to go out",
     chartLabel: "Balance through {month}",
     netChartLabel: "Net through {month}",
+    moreOutflows: {
+      one: "+{count} more",
+      other: "+{count} more",
+    },
     recorded: "Recorded",
     setBalance: "Enter your balance",
     setBalanceBody:

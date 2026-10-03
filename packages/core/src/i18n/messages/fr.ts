@@ -2199,6 +2199,10 @@ export const fr: Messages = {
     toGoOut: "{amount} encore à sortir",
     chartLabel: "Solde au fil de {month}",
     netChartLabel: "Net au fil de {month}",
+    moreOutflows: {
+      one: "+{count} autre",
+      other: "+{count} autres",
+    },
     recorded: "Enregistré",
     setBalance: "Saisir votre solde",
     setBalanceBody:

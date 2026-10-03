@@ -26,6 +26,7 @@ import {
   spendingByMonth,
   topSpending,
   type CategorySpend,
+  type DayOutflows,
   type MonthBalance,
 } from "@finance/core/month-balance";
 import type { UpcomingCharge } from "@finance/core/still-to-come";
@@ -61,6 +62,8 @@ export interface BearingMonth {
     rest: number;
     total: number;
   };
+  /** What left the account, or is set to, day by day: the curve's markers. */
+  outflows: DayOutflows[];
   /** Still to come in this month; null for a month that has ended. */
   upcoming: {
     charges: UpcomingCharge[];
@@ -125,6 +128,7 @@ export async function gatherBearingMonth(
     source,
     rows,
     upcoming: shownUpcoming,
+    outflows,
   } = await readMonthBalance(await createClient(), userId, {
     year,
     month,
@@ -232,6 +236,7 @@ export async function gatherBearingMonth(
       total: spending.total,
     },
     upcoming: shownUpcoming,
+    outflows,
     run,
     invested,
     attention,
