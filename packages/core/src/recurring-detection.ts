@@ -13,6 +13,7 @@
  */
 
 import { bankMerchantKey } from "./bank-merchant";
+import type { Key } from "./i18n/t";
 import type { Recurrence } from "./recurrence";
 import type { CategoryType } from "./types/database";
 
@@ -46,6 +47,30 @@ export interface RecurringProposal {
   /** How much the amounts move, as a fraction of the typical one. */
   variability: number;
 }
+
+/**
+ * A name to show for a suggestion.
+ *
+ * The raw statement line is unreadable in a column this narrow — "PRELEVEMENT
+ * Navigo Annuel - COMUTITRES SAS" truncates to "PRELEVEMENT Navi…", which
+ * says nothing about what is being accepted. The merchant key is what the
+ * detector grouped on and is already stripped of the bank's noise, so it
+ * makes the better label; the full line can be edited once the template
+ * exists.
+ */
+export function proposalDisplayName(key: string): string {
+  return key
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+/** Which message names each cadence, keyed by the recurrence it describes. */
+export const PROPOSAL_CADENCE_KEYS: Record<Recurrence, Key> = {
+  weekly: "recurringProposals.everyWeek",
+  monthly: "recurringProposals.everyMonth",
+  yearly: "recurringProposals.everyYear",
+};
 
 /** Below this many sightings it is a coincidence, not a habit. */
 const MIN_OCCURRENCES = 3;

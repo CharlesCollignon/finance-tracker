@@ -63,6 +63,10 @@ export const actionsFr: typeof actionsEn = {
   entryNoLongerHere: "Cette opération n'est plus là",
   entryAlreadyWaiting: "Cette opération attend déjà",
   backInInbox: "De retour parmi les opérations à vérifier",
+  entriesBackInInbox: {
+    one: "{count} ligne est de retour parmi les opérations à vérifier",
+    other: "{count} lignes sont de retour parmi les opérations à vérifier",
+  },
   suggestionGone: "Cette suggestion n'est plus proposée",
   suggestionDismissed: "Ce ne sera plus proposé",
   proposalAdded: "Opération récurrente ajoutée\u00A0: {name}",

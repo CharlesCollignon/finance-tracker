@@ -32,6 +32,7 @@
     "./quote-source": "./src/quote-source.ts",
     "./recurring-apply": "./src/recurring-apply.ts",
     "./recurring-positions": "./src/recurring-positions.ts",
+    "./recurring-proposals": "./src/recurring-proposals.ts",
     "./recurring-templates": "./src/recurring-templates.ts",
     "./savings-accounts": "./src/savings-accounts.ts",
     "./schema": "./src/schema.ts",
