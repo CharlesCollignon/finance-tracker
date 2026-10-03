@@ -59,6 +59,8 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
   recurring_skips: ["transactions"],
   recurring_fulfilments: ["transactions"],
   proposal_dismissals: ["transactions"],
+  // A standing charge refused: Récurrents and Le point stop offering it.
+  recurring_proposal_dismissals: ["templates", "bank"],
   recurring_templates: ["templates"],
   categories: ["categories"],
   investment_positions: ["positions"],

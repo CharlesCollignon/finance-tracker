@@ -14,7 +14,9 @@ import { formatRecurrenceSchedule } from "@finance/core/recurrence";
 import { rollUpRecurring } from "@finance/core/recurring-rollup";
 import { formatSharesLabel } from "@finance/core/recurring-shares";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
+import { todayIsoLocal } from "@finance/core/constants";
 import { DURATION } from "@finance/core/motion";
+import type { RecurringProposal } from "@finance/core/recurring-detection";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import type {
@@ -33,6 +35,7 @@ import {
 } from "@/lib/notifications";
 import { hapticLight } from "@/lib/haptics";
 import { RecurringFormModal } from "@/components/RecurringFormModal";
+import { RecurringProposals } from "@/components/RecurringProposals";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { WhereItGoes } from "@/components/WhereItGoes";
 import { Badge } from "@/components/ui/Badge";
@@ -54,7 +57,9 @@ import { toggleRecurringActive } from "@/lib/mutations";
 import {
   getCategories,
   getRecordedChargeDates,
+  getRecurringProposals,
   getRecurringTemplates,
+  hasBankFeed,
 } from "@/lib/queries";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -112,20 +117,30 @@ export default function RecurringScreen() {
           categories: [] as Category[],
           recorded: new Map<string, string[]>(),
           properties: [] as { id: string; name: string }[],
+          proposals: [] as RecurringProposal[],
         };
       }
-      const [templates, categories, recorded, properties] = await Promise.all([
-        getRecurringTemplates(user.id),
-        getCategories(user.id),
-        // Which charges have already been recorded this month, so saving an
-        // edit can ask whether those rows change too.
-        getRecordedChargeDates(user.id),
-        // What a charge can belong to, for an account that keeps properties.
-        showProperty ? getPropertyNames(user.id) : Promise.resolve([]),
-      ]);
-      return { templates, categories, recorded, properties };
+      const [templates, categories, recorded, properties, bankFed] =
+        await Promise.all([
+          getRecurringTemplates(user.id),
+          getCategories(user.id),
+          // Which charges have already been recorded this month, so saving
+          // an edit can ask whether those rows change too.
+          getRecordedChargeDates(user.id),
+          // What a charge can belong to, for an account that keeps
+          // properties.
+          showProperty ? getPropertyNames(user.id) : Promise.resolve([]),
+          hasBankFeed(user.id),
+        ]);
+      // Only worth asking where there is a statement to read it out of, as
+      // on the web. Without one the transactions are the user's own typing,
+      // and they already know what repeats.
+      const proposals = bankFed
+        ? await getRecurringProposals(user.id, todayIsoLocal())
+        : [];
+      return { templates, categories, recorded, properties, proposals };
     }, [user?.id, showProperty], {
-      reads: ["templates", "categories", "transactions", "properties"],
+      reads: ["templates", "categories", "transactions", "properties", "bank"],
     });
   const propertyNames = useMemo(
     () => new Map((data?.properties ?? []).map(({ id, name }) => [id, name])),
@@ -331,6 +346,10 @@ export default function RecurringScreen() {
                       label={activeGroup.label}
                       monthly={rollup.byType[activeGroup.type]}
                       items={activeGroup.items}
+                      proposals={(data?.proposals ?? []).filter(
+                        (proposal) =>
+                          proposal.categoryType === activeGroup.type,
+                      )}
                       propertyNames={propertyNames}
                       onEdit={(item) => {
                         void hapticLight();
@@ -448,6 +467,7 @@ function GroupCard({
   label,
   monthly,
   items,
+  proposals,
   propertyNames,
   onEdit,
   onToggle,
@@ -456,6 +476,8 @@ function GroupCard({
   label: string;
   monthly: number;
   items: RecurringTemplateWithCategory[];
+  /** What the statement implies of this kind, offered above the list. */
+  proposals: readonly RecurringProposal[];
   /** Each property's name by id, for a charge that belongs to one. */
   propertyNames: ReadonlyMap<string, string>;
   onEdit: (item: RecurringTemplateWithCategory) => void;
@@ -482,6 +504,8 @@ function GroupCard({
           </Text>
         ) : null}
       </View>
+
+      <RecurringProposals proposals={proposals} />
 
       {items.length === 0 ? (
         <Text variant="muted" className="pb-3 text-sm">

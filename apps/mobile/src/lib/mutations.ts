@@ -7,6 +7,7 @@ import {
   deleteConfirmSchema,
 } from "@finance/core/validations/profile";
 import { type AccountId } from "@finance/core/allocation";
+import { todayIsoLocal } from "@finance/core/constants";
 import {
   type MonthCloseResult,
   type RunMoment,
@@ -17,6 +18,7 @@ import * as categories from "@finance/data/categories";
 import * as account from "@finance/data/account";
 import * as closing from "@finance/data/closing";
 import * as feed from "@finance/data/feed-decisions";
+import * as proposals from "@finance/data/recurring-proposals";
 import * as decisions from "@finance/data/fulfilment-decisions";
 import * as deletions from "@finance/data/deletions";
 import * as ledger from "@finance/data/ledger";
@@ -491,6 +493,29 @@ export async function ignoreFeedItem(itemId: string): Promise<ActionResult> {
 
 export async function undoFeedDecision(itemId: string): Promise<ActionResult> {
   return asUser((userId) => feed.undoFeedDecision(supabase, userId, itemId));
+}
+
+/* ------------------------------- what the statement implies, as entries */
+
+/**
+ * Taking on or refusing a standing charge the statement implies —
+ * `@finance/data/recurring-proposals`, the web's own bodies.
+ */
+
+export async function acceptRecurringProposal(
+  key: string,
+): Promise<ActionResult<{ name?: string }>> {
+  return asUser((userId) =>
+    proposals.acceptRecurringProposal(supabase, userId, key, todayIsoLocal()),
+  );
+}
+
+export async function dismissRecurringProposal(
+  key: string,
+): Promise<ActionResult> {
+  return asUser((userId) =>
+    proposals.dismissRecurringProposal(supabase, userId, key),
+  );
 }
 
 /* ------------------------------------------------- the bank's accounts */
