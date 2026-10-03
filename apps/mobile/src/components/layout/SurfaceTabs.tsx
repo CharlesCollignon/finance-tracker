@@ -75,10 +75,12 @@ export function SurfaceTabs({ tabs, className }: SurfaceTabsProps) {
   );
 }
 
-/** The Ledger's views: the same record, looked at two ways. */
+/** The Ledger's views: the same record, looked at three ways, as on the web. */
 export const LEDGER_TABS: SurfaceTab[] = [
   { href: "/transactions", labelKey: "nav.ledgerList" },
   { href: "/calendar", labelKey: "nav.ledgerCalendar" },
+  // Cast until the typed-routes list next regenerates with the new file.
+  { href: "/history" as Href, labelKey: "nav.ledgerByCategory" },
 ];
 
 /**

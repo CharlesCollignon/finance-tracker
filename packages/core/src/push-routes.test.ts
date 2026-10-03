@@ -66,10 +66,14 @@ describe("mobileRouteForPushUrl", () => {
   });
 
   it("declines a route this app has not got, rather than guessing", () => {
-    // /history is a real web surface with no phone equivalent — the Ledger's
-    // by-category view is not a route here.
-    expect(mobileRouteForPushUrl("/history")).toBeNull();
     expect(mobileRouteForPushUrl("/nonsense")).toBeNull();
+  });
+
+  it("opens the Ledger's by-category view where the web's is", () => {
+    expect(mobileRouteForPushUrl("/history")).toEqual({
+      pathname: "/history",
+      params: {},
+    });
   });
 
   it("declines a notification with no usable url", () => {
@@ -82,7 +86,7 @@ describe("mobileRouteForPushUrl", () => {
     // The whole reason this returns null. Both used to be `{pathname: "/"}`,
     // which made the contract test below unwritable.
     expect(mobileRouteForPushUrl("/bearing")).not.toBeNull();
-    expect(mobileRouteForPushUrl("/history")).toBeNull();
+    expect(mobileRouteForPushUrl("/nonsense")).toBeNull();
   });
 
   /*

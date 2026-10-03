@@ -27,6 +27,7 @@ const MOBILE_ROUTES = [
   "/",
   "/transactions",
   "/calendar",
+  "/history",
   "/recurring",
   "/planning",
   "/investments",
