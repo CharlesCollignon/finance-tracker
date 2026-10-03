@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { isCryptoCategoryName } from "@finance/core/crypto-holdings";
@@ -8,6 +14,9 @@ import { formatRecurrenceSchedule } from "@finance/core/recurrence";
 import { rollUpRecurring } from "@finance/core/recurring-rollup";
 import { formatSharesLabel } from "@finance/core/recurring-shares";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
+import { todayIsoLocal } from "@finance/core/constants";
+import { DURATION } from "@finance/core/motion";
+import type { RecurringProposal } from "@finance/core/recurring-detection";
 import { ICON } from "@/theme/tokens";
 import { useThemeColors } from "@/theme/useThemeColors";
 import type {
@@ -26,6 +35,7 @@ import {
 } from "@/lib/notifications";
 import { hapticLight } from "@/lib/haptics";
 import { RecurringFormModal } from "@/components/RecurringFormModal";
+import { RecurringProposals } from "@/components/RecurringProposals";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { WhereItGoes } from "@/components/WhereItGoes";
 import { Badge } from "@/components/ui/Badge";
@@ -47,7 +57,9 @@ import { toggleRecurringActive } from "@/lib/mutations";
 import {
   getCategories,
   getRecordedChargeDates,
+  getRecurringProposals,
   getRecurringTemplates,
+  hasBankFeed,
 } from "@/lib/queries";
 import { useTabBarClearance } from "@/theme/chrome";
 import { useLocale, useT } from "@/providers/LocaleProvider";
@@ -105,20 +117,30 @@ export default function RecurringScreen() {
           categories: [] as Category[],
           recorded: new Map<string, string[]>(),
           properties: [] as { id: string; name: string }[],
+          proposals: [] as RecurringProposal[],
         };
       }
-      const [templates, categories, recorded, properties] = await Promise.all([
-        getRecurringTemplates(user.id),
-        getCategories(user.id),
-        // Which charges have already been recorded this month, so saving an
-        // edit can ask whether those rows change too.
-        getRecordedChargeDates(user.id),
-        // What a charge can belong to, for an account that keeps properties.
-        showProperty ? getPropertyNames(user.id) : Promise.resolve([]),
-      ]);
-      return { templates, categories, recorded, properties };
+      const [templates, categories, recorded, properties, bankFed] =
+        await Promise.all([
+          getRecurringTemplates(user.id),
+          getCategories(user.id),
+          // Which charges have already been recorded this month, so saving
+          // an edit can ask whether those rows change too.
+          getRecordedChargeDates(user.id),
+          // What a charge can belong to, for an account that keeps
+          // properties.
+          showProperty ? getPropertyNames(user.id) : Promise.resolve([]),
+          hasBankFeed(user.id),
+        ]);
+      // Only worth asking where there is a statement to read it out of, as
+      // on the web. Without one the transactions are the user's own typing,
+      // and they already know what repeats.
+      const proposals = bankFed
+        ? await getRecurringProposals(user.id, todayIsoLocal())
+        : [];
+      return { templates, categories, recorded, properties, proposals };
     }, [user?.id, showProperty], {
-      reads: ["templates", "categories", "transactions", "properties"],
+      reads: ["templates", "categories", "transactions", "properties", "bank"],
     });
   const propertyNames = useMemo(
     () => new Map((data?.properties ?? []).map(({ id, name }) => [id, name])),
@@ -203,9 +225,10 @@ export default function RecurringScreen() {
   }, [templates, formatEuro, locale]);
 
   // The same sheet as every other Add, opened on a charge because this is
-  // the screen of them. Editing one still happens in a sheet of its own.
-  function openCreate() {
-    quickAdd?.open({ kind: "charge" });
+  // the screen of them — on a kind's categories when its « + » asked.
+  // Editing one still happens in a sheet of its own.
+  function openCreate(categoryType?: CategoryType) {
+    quickAdd?.open({ kind: "charge", categoryType });
   }
 
   async function handleEnableReminders() {
@@ -302,8 +325,7 @@ export default function RecurringScreen() {
 
               {/* One kind at a time, as on the web's phone layout: four lists
                   stacked would be a screen and a half of scrolling to reach
-                  the investments, and the four are rarely read together. No
-                  Add button here: the "+" in the tab bar opens the same sheet. */}
+                  the investments, and the four are rarely read together. */}
               <ChipRow
                 label={t("charges.kindOfCharge")}
                 options={kindOptions}
@@ -313,18 +335,29 @@ export default function RecurringScreen() {
 
               {activeGroup ? (
                 <StaggerItem index={1}>
-                  <GroupCard
-                    type={activeGroup.type}
-                    label={activeGroup.label}
-                    monthly={rollup.byType[activeGroup.type]}
-                    items={activeGroup.items}
-                    propertyNames={propertyNames}
-                    onEdit={(item) => {
-                      void hapticLight();
-                      setChosen(item);
-                    }}
-                    onToggle={(item) => void handleToggle(item)}
-                  />
+                  <View className="gap-2">
+                    <ColumnAdd
+                      type={activeGroup.type}
+                      label={activeGroup.label}
+                      onAdd={openCreate}
+                    />
+                    <GroupCard
+                      type={activeGroup.type}
+                      label={activeGroup.label}
+                      monthly={rollup.byType[activeGroup.type]}
+                      items={activeGroup.items}
+                      proposals={(data?.proposals ?? []).filter(
+                        (proposal) =>
+                          proposal.categoryType === activeGroup.type,
+                      )}
+                      propertyNames={propertyNames}
+                      onEdit={(item) => {
+                        void hapticLight();
+                        setChosen(item);
+                      }}
+                      onToggle={(item) => void handleToggle(item)}
+                    />
+                  </View>
                 </StaggerItem>
               ) : null}
             </>
@@ -337,7 +370,7 @@ export default function RecurringScreen() {
                 label={t("charges.addCharge")}
                 variant="pill"
                 icon="add"
-                onPress={openCreate}
+                onPress={() => openCreate()}
               />
             </EmptyState>
           )}
@@ -359,6 +392,72 @@ export default function RecurringScreen() {
 }
 
 /**
+ * A kind's way in, above its card, as on the web: a thin card in outline
+ * only, that takes shape under the finger — its border drawn, its ground
+ * filled, its cross a quarter turned — and opens the Add sheet on a charge
+ * of that kind.
+ */
+function ColumnAdd({
+  type,
+  label,
+  onAdd,
+}: {
+  type: CategoryType;
+  label: string;
+  onAdd: (type: CategoryType) => void;
+}) {
+  const t = useT();
+  const colors = useThemeColors();
+  const reduceMotion = useReducedMotion();
+  const turn = useSharedValue(0);
+  const crossStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${turn.get() * 90}deg` }],
+  }));
+
+  function turnTo(value: number) {
+    if (!reduceMotion) {
+      turn.set(withTiming(value, { duration: DURATION.hover }));
+    }
+  }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t("charges.addTo", { group: label })}
+      onPressIn={() => turnTo(1)}
+      onPressOut={() => turnTo(0)}
+      onPress={() => {
+        void hapticLight();
+        onAdd(type);
+      }}
+      style={({ pressed }) => ({
+        transform: [{ scale: pressed ? 0.99 : 1 }],
+      })}
+    >
+      {({ pressed }) => (
+        <View
+          className={cn(
+            "h-11 items-center justify-center rounded-card border",
+            pressed ? "bg-card" : "border-dashed",
+          )}
+          style={{
+            borderColor: pressed ? colors.hairlineStrong : colors.border,
+          }}
+        >
+          <Animated.View style={crossStyle}>
+            <Ionicons
+              name="add"
+              size={ICON.md}
+              color={pressed ? colors.foreground : colors.mutedForeground}
+            />
+          </Animated.View>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+/**
  * One kind of recurring entry, with what it adds up to a month. The monthly
  * figure is the rollup's `byType`, the same number the bar above draws, so
  * the two cannot disagree.
@@ -368,6 +467,7 @@ function GroupCard({
   label,
   monthly,
   items,
+  proposals,
   propertyNames,
   onEdit,
   onToggle,
@@ -376,6 +476,8 @@ function GroupCard({
   label: string;
   monthly: number;
   items: RecurringTemplateWithCategory[];
+  /** What the statement implies of this kind, offered above the list. */
+  proposals: readonly RecurringProposal[];
   /** Each property's name by id, for a charge that belongs to one. */
   propertyNames: ReadonlyMap<string, string>;
   onEdit: (item: RecurringTemplateWithCategory) => void;
@@ -402,6 +504,8 @@ function GroupCard({
           </Text>
         ) : null}
       </View>
+
+      <RecurringProposals proposals={proposals} />
 
       {items.length === 0 ? (
         <Text variant="muted" className="pb-3 text-sm">

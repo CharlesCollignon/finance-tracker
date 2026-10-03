@@ -4,6 +4,7 @@ import { RefreshControl, ScrollView } from "react-native";
 import {
   buildCushion,
   buildMilestones,
+  cushionEnvelopes,
   cushionSavings,
   MILESTONE_TIERS,
   monthsUntil,
@@ -183,15 +184,9 @@ export default function PlanningScreen() {
     () => buildMilestones(current, milestoneSeries),
     [current, milestoneSeries],
   );
-  const nextMilestone = milestones.find((milestone) => !milestone.reached);
-  const sooner: MilestoneSooner | null =
-    nextMilestone && wealthSettled
-      ? {
-          amount: nextMilestone.amount,
-          without: monthsUntil(nextMilestone.amount, milestoneSeries),
-          with: monthsUntil(nextMilestone.amount, milestoneSeries, extra),
-        }
-      : null;
+  const sooner = wealthSettled
+    ? milestoneSooner(milestones, milestoneSeries, extra)
+    : null;
 
   // A milestone passed since the last visit, celebrated once. Judged on the
   // user's own figures, not on an edit in the long view — typing a bigger
@@ -228,10 +223,11 @@ export default function PlanningScreen() {
 
   // The cushion is the savings at hand — every savings account but a PEL,
   // the user's corrections in the long view included — against the fixed
-  // costs. The web reads it the same way.
+  // costs; or the user's own figures, when the long view has had its
+  // savings taken out. The web reads it the same way.
   const runway = data
     ? buildRunway(
-        cushionSavings(envelopes),
+        cushionSavings(cushionEnvelopes(settings.envelopes, dataEnvelopes)),
         data.templates,
         data.year,
         data.month,
@@ -284,6 +280,7 @@ export default function PlanningScreen() {
           <StaggerItem index={0}>
             <YearAheadCard
               projection={data.projection}
+              hasTemplates={data.hasTemplates}
               year={data.year}
               month={data.month}
               extra={extra}
@@ -415,4 +412,27 @@ export default function PlanningScreen() {
       ) : null}
     </Screen>
   );
+}
+
+/**
+ * The first milestone ahead that the extra brings closer — not only the
+ * next one, which the extra may leave where it was. The web reads it the
+ * same way.
+ */
+function milestoneSooner(
+  milestones: readonly { amount: number; reached: boolean }[],
+  series: readonly number[],
+  extra: number,
+): MilestoneSooner | null {
+  for (const milestone of milestones) {
+    if (milestone.reached) {
+      continue;
+    }
+    const without = monthsUntil(milestone.amount, series);
+    const withExtra = monthsUntil(milestone.amount, series, extra);
+    if (withExtra !== null && (without === null || withExtra < without)) {
+      return { amount: milestone.amount, without, with: withExtra };
+    }
+  }
+  return null;
 }

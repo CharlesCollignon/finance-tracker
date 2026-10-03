@@ -1,23 +1,11 @@
 "use client";
 
-import { formatCalendarDate } from "@finance/core/calendar";
+import { formatCalendarDate, type PulseDay } from "@finance/core/calendar";
 import { AnimatedAmount } from "@/components/finance/AnimatedAmount";
 import { useLocale, useT } from "@/lib/locale-context";
 import { FIGURE } from "@/lib/type-scale";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { cn } from "@/lib/utils";
-
-/** One day of the month, as the strip draws it. */
-export interface PulseDay {
-  date: string;
-  /** What came in and went out, recorded. */
-  income: number;
-  outflow: number;
-  /** What the recurring entries still call for that day. */
-  plannedIncome: number;
-  plannedOutflow: number;
-  isToday: boolean;
-}
 
 /**
  * The month above its calendar, flat: its net and what came in and went

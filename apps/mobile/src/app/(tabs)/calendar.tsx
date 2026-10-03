@@ -8,6 +8,7 @@ import {
 } from "@finance/core/constants";
 import {
   buildCalendarWeeks,
+  buildPulseDays,
   computeDayTotals,
   defaultSelectedDate,
   groupTransactionsByDate,
@@ -32,6 +33,7 @@ import type {
 } from "@finance/core/types/database";
 
 import { CalendarGrid } from "@/components/calendar/CalendarGrid";
+import { CalendarPulse } from "@/components/calendar/CalendarPulse";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { FulfilmentDot } from "@/components/FulfilmentDot";
 import { MonthPicker } from "@/components/MonthPicker";
@@ -53,7 +55,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { LEDGER_TABS, SurfaceTabs } from "@/components/layout/SurfaceTabs";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
-import { StatHero } from "@/components/StatHero";
 import { ScreenError } from "@/components/ScreenError";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
@@ -90,7 +91,6 @@ export default function CalendarScreen() {
   const formatEuro = useFormatCurrency();
   // Shared with the list and Le point, so switching view keeps the month.
   const { year, month, setMonth } = useScreenMonth();
-  const [selectedDate, setSelectedDate] = useState(() => todayIsoLocal());
   const quickAdd = useQuickAdd();
   const [editing, setEditing] = useState<TransactionWithCategory | null>(null);
   // Row selection is keyed by day, so changing day empties it by
@@ -221,12 +221,25 @@ export default function CalendarScreen() {
     [transactions, templates],
   );
 
+  // Selection is keyed by month, so a month other than the one picked in
+  // — on opening too, the month being shared with the list and Le point —
+  // starts on its default day. The web reads it the same way.
   const monthKey = `${year}-${month}`;
-  const [selectionKey, setSelectionKey] = useState(monthKey);
+  const [selection, setSelection] = useState<{
+    monthKey: string;
+    date: string;
+  } | null>(null);
   const effectiveSelected =
-    selectionKey === monthKey
-      ? selectedDate
+    selection && selection.monthKey === monthKey
+      ? selection.date
       : defaultSelectedDate(year, month, byDate);
+
+  // The day a finger is on in the strip, lit in the grid as well.
+  const [focusDate, setFocusDate] = useState<string | null>(null);
+  const pulseDays = useMemo(
+    () => buildPulseDays(weeks, byDate, plannedByDate),
+    [weeks, byDate, plannedByDate],
+  );
 
   const dayTxs = byDate.get(effectiveSelected) ?? [];
   const dayPlanned = plannedByDate.get(effectiveSelected) ?? [];
@@ -308,28 +321,8 @@ export default function CalendarScreen() {
       {/* Under the tabs, as on the list: the By category view has no month,
           and a bar above the tabs would make them jump between views. */}
       <MonthPicker prominent year={year} month={month} onChange={setMonth} />
+      <View className="h-5" />
 
-      <Card bezel className="my-5" innerClassName="p-5">
-        <StatHero
-          label={formatMonthLabel(year, month, locale)}
-          amount={`${monthTotals.net >= 0 ? "+" : "−"}${formatEuro(Math.abs(monthTotals.net))}`}
-          amountClassName={
-            monthTotals.net < 0 ? "text-destructive" : "text-success"
-          }
-          subtitle={
-            <>
-              {`${t("ledger.in")} `}
-              <PrivateAmount className="text-sm text-success">
-                {formatEuro(monthTotals.income)}
-              </PrivateAmount>
-              {` · ${t("ledger.out")} `}
-              <PrivateAmount className="text-sm text-destructive">
-                {formatEuro(monthTotals.outflow)}
-              </PrivateAmount>
-            </>
-          }
-        />
-      </Card>
 
       {loading && !data ? (
         <ScreenSkeleton rows={4} />
@@ -342,14 +335,27 @@ export default function CalendarScreen() {
           }
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
+          <View className="mb-5">
+            <CalendarPulse
+              key={monthKey}
+              label={formatMonthLabel(year, month, locale)}
+              days={pulseDays}
+              totals={monthTotals}
+              selectedDate={effectiveSelected}
+              focusDate={focusDate}
+              onFocus={setFocusDate}
+              onSelect={(date) => setSelection({ monthKey, date })}
+            />
+          </View>
+
           <CalendarGrid
             weeks={weeks}
             byDate={byDate}
             plannedByDate={plannedByDate}
             selectedDate={effectiveSelected}
+            litDate={focusDate}
             onSelect={(date) => {
-              setSelectedDate(date);
-              setSelectionKey(monthKey);
+              setSelection({ monthKey, date });
             }}
           />
 

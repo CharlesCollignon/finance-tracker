@@ -27,6 +27,7 @@
     "./category-history": "./src/category-history.ts",
     "./category-read": "./src/category-read.ts",
     "./category-read-prompt": "./src/category-read-prompt.ts",
+    "./category-screen": "./src/category-screen.ts",
     "./category-selection": "./src/category-selection.ts",
     "./category-selection-prompt": "./src/category-selection-prompt.ts",
     "./cash-date": "./src/cash-date.ts",

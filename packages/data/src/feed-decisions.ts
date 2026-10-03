@@ -262,6 +262,31 @@ export async function reopenFeedItems(
 }
 
 /**
+ * Put back every bank row an earlier sync merged away on its own.
+ *
+ * Those rows were filed against a recurring transaction because the amounts
+ * matched within five days, which turned out to prove nothing on a statement
+ * full of small round figures. They never became transactions, so what is
+ * missing is spending rather than duplicated. Reopening returns the decision
+ * to the user; the sync no longer makes it.
+ */
+export async function reopenSwallowedFeedItems(
+  db: Db,
+  userId: string,
+): Promise<ActionResult<{ reopened: number }>> {
+  const { data, error } = await db
+    .from("bank_feed_items")
+    .update({ status: "pending", transaction_id: null, decided_by: null })
+    .eq("user_id", userId)
+    .eq("decided_by", "match:recurring")
+    .select("id");
+  if (error) {
+    return { error: dbError(error) };
+  }
+  return { success: true, reopened: data?.length ?? 0 };
+}
+
+/**
  * File one waiting row under a category, unless the ledger already has it.
  *
  * The duplicate check is skipped only when the user has said, having been

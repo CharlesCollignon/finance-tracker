@@ -44,6 +44,7 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { FulfilmentDot } from "@/components/FulfilmentDot";
 import { BankInboxSheet } from "@/components/BankInboxSheet";
+import { SwallowedRecovery } from "@/components/bank/SwallowedRecovery";
 import { ConnectBankInvite } from "@/components/bank/ConnectBankInvite";
 import { useBankState } from "@/hooks/useBankState";
 import { PlannedOccurrenceSheet } from "@/components/PlannedOccurrenceSheet";
@@ -80,6 +81,7 @@ import {
   unskipRecurringOccurrence,
 } from "@/lib/mutations";
 import {
+  countSwallowedFeedItems,
   getCategories,
   getConfirmedTransactionIds,
   getFulfilledKeys,
@@ -200,6 +202,7 @@ export default function TransactionsScreen() {
           confirmed: new Set<string>(),
           fulfilled: new Set<string>(),
           proposals: [] as FulfilmentProposal[],
+          swallowed: 0,
         };
       }
       const [
@@ -210,6 +213,7 @@ export default function TransactionsScreen() {
         inbox,
         confirmed,
         fulfilled,
+        swallowed,
       ] = await Promise.all([
         getTransactions(user.id, year, month),
         getCategories(user.id),
@@ -226,6 +230,9 @@ export default function TransactionsScreen() {
         // Occurrences another row already stands for, which are therefore
         // not planned: the salary the bank delivered is not still to come.
         getFulfilledKeys(user.id),
+        // Rows an old sync merged away without asking, offered back above
+        // the review as on the web. A count; nothing without a bank.
+        countSwallowedFeedItems(user.id),
       ]);
       // Asked after the batch, because it needs the templates and categories
       // the batch fetched. Only the proposals: an absence is a question for
@@ -246,6 +253,7 @@ export default function TransactionsScreen() {
         confirmed,
         fulfilled,
         proposals,
+        swallowed,
       };
     }, [user?.id, year, month], {
       reads: ["transactions", "templates", "categories", "bank"],
@@ -589,6 +597,8 @@ export default function TransactionsScreen() {
           other end — and without it the only way to the review was a link
           from another screen. Above the search, where the web puts its bank
           strip: it is about the month, not about the filters. */}
+      <SwallowedRecovery count={data?.swallowed ?? 0} className="mt-3" />
+
       {inbox.length > 0 ? (
         <Pressable
           accessibilityRole="button"

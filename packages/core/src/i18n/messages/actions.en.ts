@@ -76,6 +76,10 @@ export const actionsEn = {
   entryNoLongerHere: "That entry is no longer here",
   entryAlreadyWaiting: "That entry is already waiting",
   backInInbox: "Back in the inbox",
+  entriesBackInInbox: {
+    one: "{count} entry is back in the inbox",
+    other: "{count} entries are back in the inbox",
+  },
   suggestionGone: "That one is no longer being suggested",
   suggestionDismissed: "Won't suggest that again",
   proposalAdded: "{name} added",

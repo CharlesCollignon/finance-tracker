@@ -1,26 +1,15 @@
 "use client";
 
 import { ALLOCATION_COLORS } from "@finance/core/category-styles";
-import {
-  findingIsGoodNews,
-  type CategoryFinding,
-} from "@finance/core/category-findings";
+import { findingIsGoodNews } from "@finance/core/category-findings";
 import type { CategoryType } from "@finance/core/types/database";
-import type {
-  CategoryHistory,
-  CategoryMonthPoint,
-} from "@finance/core/category-history";
+import type { CategoryCard } from "@finance/core/category-screen";
 import { cn } from "@/lib/utils";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { useT } from "@/lib/locale-context";
 import { PrivateAmount } from "@/components/layout/PrivateAmount";
 
-export interface CategoryCard {
-  history: CategoryHistory;
-  normal: number;
-  drawn: CategoryMonthPoint[];
-  findings: CategoryFinding[];
-}
+export type { CategoryCard };
 
 /**
  * Which colour a category type is drawn in.

@@ -47,6 +47,8 @@ export interface PlanBase {
   year: number;
   month: number;
   templates: RecurringTemplateWithCategory[];
+  /** Whether any recurring entry is running: without one there is no year ahead to draw. */
+  hasTemplates: boolean;
   /** Everything logged as savings, net of withdrawals. */
   savingsReserve: number;
   /** The savings accounts the user declared, with today's balances. */
@@ -77,6 +79,10 @@ export async function gatherPlanBase(
     year,
     month,
     templates,
+    hasTemplates: templates.some(
+      (template) =>
+        template.active && (!template.ends_on || template.ends_on >= today),
+    ),
     savingsReserve,
     savings: savings.accounts,
     closes,

@@ -616,7 +616,9 @@ export function WhereItWentCard({ data }: { data: HomeMonth }) {
     <HomeCard
       icon="pie-chart-outline"
       title={t("bearingMonth.whereItWent")}
-      href="/transactions"
+      // The Ledger's by-category view, as on the web: where each of these
+      // categories has been going, not this month's rows.
+      href="/history"
       hrefLabel={t("bearingMonth.seeInLedger")}
     >
       <View className="gap-4">

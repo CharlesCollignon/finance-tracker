@@ -15,7 +15,7 @@ import * as feed from "@finance/data/feed-decisions";
 import { asUser } from "@/lib/actions/as-user";
 import { autoCloseMonths } from "@/lib/bank/auto-close";
 import { syncBankFeed, type SyncOutcome } from "@/lib/bank/sync";
-import { getRecurringProposals } from "@/lib/queries/bank";
+import * as proposals from "@finance/data/recurring-proposals";
 import { todayIsoLocal } from "@finance/core/constants";
 import { getT } from "@/lib/locale";
 
@@ -304,15 +304,7 @@ export async function getBankBalanceSuggestion(): Promise<
   }
 }
 
-/**
- * Put back every bank row an earlier sync merged away on its own.
- *
- * Those rows were filed against a recurring transaction because the amounts
- * matched within five days, which turned out to prove nothing on a statement
- * full of small round figures. They never became transactions, so what is
- * missing is spending rather than duplicated. Reopening returns the decision
- * to the user; the sync no longer makes it.
- */
+/** Put back every bank row an earlier sync merged away on its own. */
 export async function reopenSwallowedFeedItems(): Promise<
   ActionResult & { reopened?: number }
 > {
@@ -321,27 +313,20 @@ export async function reopenSwallowedFeedItems(): Promise<
     return { error: "errors.notAuthenticated" };
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("bank_feed_items")
-    .update({ status: "pending", transaction_id: null, decided_by: null })
-    .eq("user_id", user.id)
-    .eq("decided_by", "match:recurring")
-    .select("id");
-
-  if (error) {
-    return { error: dbError(error) };
+  const result = await feed.reopenSwallowedFeedItems(
+    await createClient(),
+    user.id,
+  );
+  if (!result.success) {
+    return { error: result.error };
   }
 
   revalidateApp();
-  const reopened = data?.length ?? 0;
+  const t = await getT();
   return {
     success: true,
-    reopened,
-    message:
-      reopened === 1
-        ? "1 entry is back in the inbox"
-        : `${reopened} entries are back in the inbox`,
+    reopened: result.reopened,
+    message: t("actions.entriesBackInInbox", { count: result.reopened }),
   };
 }
 
@@ -360,37 +345,21 @@ export async function acceptRecurringProposal(
     return { error: "errors.notAuthenticated" };
   }
 
-  const proposals = await getRecurringProposals(user.id, todayIsoLocal());
-  const proposal = proposals.find((candidate) => candidate.key === key);
-  if (!proposal) {
-    return { error: "actions.suggestionGone" };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.from("recurring_templates").insert({
-    user_id: user.id,
-    category_id: proposal.categoryId,
-    amount: proposal.amount,
-    recurrence: proposal.recurrence,
-    day_of_month: proposal.dayOfMonth,
-    day_of_week: proposal.dayOfWeek,
-    month_of_year:
-      proposal.recurrence === "yearly"
-        ? Number(proposal.lastSeenOn.slice(5, 7))
-        : null,
-    description: proposal.label,
-    active: true,
-  });
-
-  if (error) {
-    return { error: dbError(error) };
+  const result = await proposals.acceptRecurringProposal(
+    await createClient(),
+    user.id,
+    key,
+    todayIsoLocal(),
+  );
+  if (result.error) {
+    return { error: result.error };
   }
 
   revalidateApp();
   const t = await getT();
   return {
     success: true,
-    message: t("actions.proposalAdded", { name: proposal.label }),
+    message: t("actions.proposalAdded", { name: result.name ?? "" }),
   };
 }
 
@@ -402,24 +371,16 @@ export async function dismissRecurringProposal(
   if (!user) {
     return { error: "errors.notAuthenticated" };
   }
-  if (!key.trim()) {
-    return { error: "errors.invalidInput" };
+
+  const result = await proposals.dismissRecurringProposal(
+    await createClient(),
+    user.id,
+    key,
+  );
+  if (result.success) {
+    revalidateApp();
   }
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("recurring_proposal_dismissals")
-    .upsert(
-      { user_id: user.id, merchant_key: key.trim() },
-      { onConflict: "user_id,merchant_key", ignoreDuplicates: true },
-    );
-
-  if (error) {
-    return { error: dbError(error) };
-  }
-
-  revalidateApp();
-  return { success: true, message: "actions.suggestionDismissed" };
+  return result;
 }
 
 /**

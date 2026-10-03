@@ -25,12 +25,13 @@ import {
   toggleSelectAll,
   toggleSelected,
 } from "@finance/core/selection";
-import {
-  CalendarPulse,
-  type PulseDay,
-} from "@/components/finance/CalendarPulse";
+import { CalendarPulse } from "@/components/finance/CalendarPulse";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
-import { formatMonthLabel, todayIsoLocal } from "@finance/core/constants";
+import {
+  CURRENCY_SYMBOLS,
+  formatMonthLabel,
+  todayIsoLocal,
+} from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
 import { amountSign } from "@finance/core/amount-sign";
 import {
@@ -40,15 +41,17 @@ import {
 import { computeMonthlyBudget } from "@finance/core/budget";
 import {
   buildCalendarWeeks,
+  buildPulseDays,
   computeDayTotals,
   defaultSelectedDate,
   formatCalendarDate,
   formatShortAmount,
   groupTransactionsByDate,
+  plannedTotals,
   weekdayLabels,
 } from "@finance/core/calendar";
 import { cn } from "@/lib/utils";
-import { useFormatCurrency } from "@/lib/use-currency";
+import { useCurrency, useFormatCurrency } from "@/lib/use-currency";
 import type {
   Category,
   RecurringTemplateWithCategory,
@@ -104,6 +107,7 @@ export function CalendarView({
   }, [planned]);
   const formatEuro = useFormatCurrency();
   const locale = useLocale();
+  const symbol = CURRENCY_SYMBOLS[useCurrency()];
   const { toast } = useToast();
   const toastDeleted = useDeletedToast();
   // Rows deleted leave the day at once; a failed delete brings them back.
@@ -233,23 +237,8 @@ export function CalendarView({
   // The day the pointer is on, in the strip or in the grid: each lights it
   // in the other.
   const [hoverDate, setHoverDate] = useState<string | null>(null);
-  const pulseDays = useMemo<PulseDay[]>(
-    () =>
-      weeks
-        .flat()
-        .filter((day) => day.isCurrentMonth)
-        .map((day) => {
-          const recorded = computeDayTotals(byDate.get(day.date) ?? []);
-          const planned = plannedTotals(plannedByDate.get(day.date) ?? []);
-          return {
-            date: day.date,
-            income: recorded.income,
-            outflow: recorded.outflow,
-            plannedIncome: planned?.income ?? 0,
-            plannedOutflow: planned?.outflow ?? 0,
-            isToday: day.isToday,
-          };
-        }),
+  const pulseDays = useMemo(
+    () => buildPulseDays(weeks, byDate, plannedByDate),
     [weeks, byDate, plannedByDate],
   );
 
@@ -393,7 +382,8 @@ export function CalendarView({
                                 "md:text-xs",
                               )}
                             >
-                              +{formatShortAmount(totals.income, locale)} €
+                              +{formatShortAmount(totals.income, locale)} 
+                              {symbol}
                             </span>
                           ) : null}
                           {totals.outflow > 0 ? (
@@ -404,12 +394,14 @@ export function CalendarView({
                                 totals.income > 0 && "-mt-0.5",
                               )}
                             >
-                              −{formatShortAmount(totals.outflow, locale)} €
+                              −{formatShortAmount(totals.outflow, locale)} 
+                              {symbol}
                             </span>
                           ) : null}
                           {dayPlanned && dayPlanned.income > 0 ? (
                             <span className="privacy-amount mt-auto truncate font-mono text-[10px] font-medium leading-tight text-muted-foreground md:text-xs">
-                              +{formatShortAmount(dayPlanned.income, locale)} €
+                              +{formatShortAmount(dayPlanned.income, locale)} 
+                              {symbol}
                             </span>
                           ) : null}
                           {dayPlanned && dayPlanned.outflow > 0 ? (
@@ -419,7 +411,8 @@ export function CalendarView({
                                 dayPlanned.income > 0 ? "-mt-0.5" : "mt-auto",
                               )}
                             >
-                              −{formatShortAmount(dayPlanned.outflow, locale)} €
+                              −{formatShortAmount(dayPlanned.outflow, locale)} 
+                              {symbol}
                             </span>
                           ) : null}
                         </button>
@@ -665,23 +658,4 @@ export function CalendarView({
       />
     </>
   );
-}
-
-/** What a day's planned occurrences come to, in and out. */
-function plannedTotals(
-  occurrences: readonly PlannedOccurrence[],
-): { income: number; outflow: number } | null {
-  if (occurrences.length === 0) {
-    return null;
-  }
-  let income = 0;
-  let outflow = 0;
-  for (const occurrence of occurrences) {
-    if (occurrence.categoryType === "income") {
-      income += occurrence.amount;
-    } else {
-      outflow += occurrence.amount;
-    }
-  }
-  return { income, outflow };
 }

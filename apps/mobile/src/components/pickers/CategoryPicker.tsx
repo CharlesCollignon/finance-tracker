@@ -36,6 +36,8 @@ interface CategoryPickerProps {
   recentIds?: readonly string[];
   disabled?: boolean;
   className?: string;
+  /** The kind it opens on while nothing is chosen, rather than expenses. */
+  initialType?: CategoryType;
 }
 
 /** How many recent categories the sheet offers before the kinds. */
@@ -62,6 +64,7 @@ export function CategoryPicker({
   recentIds = [],
   disabled,
   className,
+  initialType,
 }: CategoryPickerProps) {
   const t = useT();
   const locale = useLocale();
@@ -87,12 +90,15 @@ export function CategoryPicker({
     [recentIds, categories, excludeTypes],
   );
 
-  // The chosen category's kind, else expenses, else whichever kind exists.
+  // The chosen category's kind, else the one asked for, else expenses, else
+  // whichever kind exists.
+  const opensOn = initialType ?? "expense";
   const activeType =
     tab ??
     (chosen && groups.some((group) => group.type === chosen.type)
       ? chosen.type
-      : (groups.find((group) => group.type === "expense")?.type ??
+      : (groups.find((group) => group.type === opensOn)?.type ??
+        groups.find((group) => group.type === "expense")?.type ??
         groups[0]?.type ??
         null));
 

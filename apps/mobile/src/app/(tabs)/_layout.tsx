@@ -231,8 +231,9 @@ export default function TabsLayout() {
                 ),
               }}
             />
-            {/* A view of the Ledger, not a destination of its own. */}
+            {/* Views of the Ledger, not destinations of their own. */}
             <Tabs.Screen name="calendar" options={{ href: null }} />
+            <Tabs.Screen name="history" options={{ href: null }} />
             {/* And two of Placements: what the accounts earn, how the money
                 is spread and what it costs; and what the funds are made of. */}
             <Tabs.Screen name="analysis" options={{ href: null }} />

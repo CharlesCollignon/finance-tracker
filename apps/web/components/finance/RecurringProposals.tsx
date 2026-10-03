@@ -9,36 +9,15 @@ import {
   acceptRecurringProposal,
   dismissRecurringProposal,
 } from "@/lib/actions/bank";
-import type { RecurringProposal } from "@finance/core/recurring-detection";
-import type { Key } from "@finance/core/i18n/t";
+import {
+  PROPOSAL_CADENCE_KEYS,
+  proposalDisplayName,
+  type RecurringProposal,
+} from "@finance/core/recurring-detection";
 
 interface RecurringProposalsProps {
   proposals: RecurringProposal[];
 }
-
-/**
- * A name to show for a suggestion.
- *
- * The raw statement line is unreadable in a column this narrow — "PRELEVEMENT
- * Navigo Annuel - COMUTITRES SAS" truncates to "PRELEVEMENT Navi…", which
- * says nothing about what is being accepted. The merchant key is what the
- * detector grouped on and is already stripped of the bank's noise, so it
- * makes the better label; the full line stays available on hover and can be
- * edited once the template exists.
- */
-function displayName(key: string): string {
-  return key
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-/** Which message names each cadence, keyed by the recurrence it describes. */
-const CADENCE: Record<string, Key> = {
-  weekly: "recurringProposals.everyWeek",
-  monthly: "recurringProposals.everyMonth",
-  yearly: "recurringProposals.everyYear",
-};
 
 /**
  * Standing charges the statement implies, offered where they belong.
@@ -111,14 +90,14 @@ export function RecurringProposals({ proposals }: RecurringProposalsProps) {
                 className="min-w-0 truncate text-sm font-medium"
                 title={proposal.label}
               >
-                {displayName(proposal.key)}
+                {proposalDisplayName(proposal.key)}
               </p>
               <span className="privacy-amount shrink-0 tabular-nums text-sm font-semibold">
                 {formatMoney(proposal.amount)}
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
-              {t(CADENCE[proposal.recurrence])}
+              {t(PROPOSAL_CADENCE_KEYS[proposal.recurrence])}
               {" · "}
               {t("recurringProposals.seenTimes", { count: proposal.count })}
             </p>

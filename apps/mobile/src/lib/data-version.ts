@@ -59,6 +59,8 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
   recurring_skips: ["transactions"],
   recurring_fulfilments: ["transactions"],
   proposal_dismissals: ["transactions"],
+  // A standing charge refused: Récurrents and Le point stop offering it.
+  recurring_proposal_dismissals: ["templates", "bank"],
   recurring_templates: ["templates"],
   categories: ["categories"],
   investment_positions: ["positions"],
@@ -77,6 +79,9 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
   user_preferences: ["preferences"],
   profiles: ["preferences"],
   month_reads: ["reads"],
+  category_reads: ["reads"],
+  category_read_tallies: ["reads"],
+  category_selections: ["reads"],
   // This device's push address. Nothing on screen draws it.
   expo_push_tokens: [],
 };
@@ -93,6 +98,8 @@ const ROUTE_AREAS: Record<string, readonly DataArea[]> = {
   "/api/bank/feed": ["bank", "transactions"],
   "/api/bank/consent": ["bank"],
   "/api/month-read": ["reads"],
+  "/api/category-read": ["reads"],
+  "/api/category-rerank": ["reads"],
   "/api/instrument-reading": ["positions"],
   "/api/wallet-read": ["positions"],
   "/api/property/market": ["properties"],
