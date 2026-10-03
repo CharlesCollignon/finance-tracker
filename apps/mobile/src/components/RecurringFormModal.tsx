@@ -175,6 +175,12 @@ export function RecurringFormBody({
   const [monthOfYear, setMonthOfYear] = useState(
     String(template?.month_of_year ?? 10),
   );
+  // A yearly charge counts a twelfth each month in what the month leaves:
+  // said under the schedule, as the web does.
+  const isYearlyExpense =
+    recurrence === "yearly" &&
+    categories.find((category) => category.id === categoryId)?.type ===
+      "expense";
   const [startsOn, setStartsOn] = useState(template?.starts_on ?? "");
   const [endsOn, setEndsOn] = useState(template?.ends_on ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -379,7 +385,9 @@ export function RecurringFormBody({
       ) : (
         <>
           <Text className="mb-2 text-sm font-medium">
-            {t("recurring.amount")}
+            {recurrence === "yearly"
+              ? t("recurring.annualAmount")
+              : t("recurring.amount")}
           </Text>
           <Input
             value={amount}
@@ -426,14 +434,19 @@ export function RecurringFormBody({
       <ChoiceChips
         label={t("recurring.schedule")}
         fill
-        className="mb-4"
         options={(["monthly", "weekly", "yearly"] as const).map((value) => ({
           value,
           label: t(`recurring.${value}`),
         }))}
         value={recurrence}
         onChange={setRecurrence}
+        className={isYearlyExpense ? "mb-2" : "mb-4"}
       />
+      {isYearlyExpense ? (
+        <Text variant="muted" className="mb-4 text-xs">
+          {t("recurring.yearlyNote")}
+        </Text>
+      ) : null}
 
       {recurrence === "weekly" ? (
         <>
