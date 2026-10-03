@@ -31,6 +31,8 @@ function loan(overrides: Partial<PropertyLoan> = {}): PropertyLoan {
     known_outstanding: null,
     known_outstanding_on: null,
     known_keeps: null,
+    insurance_separate: false,
+    insurance_template_id: null,
     recurring_template_id: "tpl-loan",
     created_at: "2019-06-01T00:00:00.000Z",
     updated_at: "2019-06-01T00:00:00.000Z",
@@ -115,6 +117,20 @@ describe("rentalFigures", () => {
     expect(
       rentalFigures([loan({ months: 60 })], [], 114_500, TODAY).loans,
     ).toBe(0);
+  });
+
+  it("counts an insurance debited apart once, with its loan", () => {
+    const withInsurance = [
+      template({ id: "rent", amount: 750, categoryType: "income" }),
+      template({ id: "tpl-insurance", amount: 12 }),
+    ];
+    const figures = rentalFigures(
+      [loan({ insurance_separate: true, insurance_template_id: "tpl-insurance" })],
+      withInsurance,
+      114_500,
+      TODAY,
+    );
+    expect(figures.charges).toBe(0);
   });
 
   it("gives no yield without a rent", () => {

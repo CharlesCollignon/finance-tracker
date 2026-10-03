@@ -20,9 +20,11 @@ import {
   type LoanPayment,
 } from "@finance/core/loan-schedule";
 import {
+  loanDebits,
   loanTermsFromRow,
   paymentShare,
   propertyPosition,
+  templatesLike,
   valueSourceLine,
 } from "@finance/core/property";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
@@ -42,6 +44,7 @@ import { Input } from "@/components/ui/Input";
 import { ChoiceChips } from "@/components/ui/Picker";
 import {
   addPaymentForLoan,
+  linkLoanEntry,
   removeLoan,
   removeProperty,
   setOwnValue,
@@ -74,10 +77,13 @@ import {
  */
 export function PropertyDetail({
   detail,
+  looseTemplates = [],
   today,
   readingPending = false,
 }: {
   detail: PropertyRead;
+  /** The user's monthly expense entries no loan stands on yet. */
+  looseTemplates?: readonly AttachedTemplate[];
   today: string;
   /** Just added, its market still being read after the response. */
   readingPending?: boolean;
@@ -293,6 +299,10 @@ export function PropertyDetail({
                 template={templates.find(
                   (template) => template.id === loan.recurring_template_id,
                 )}
+                insuranceTemplate={templates.find(
+                  (template) => template.id === loan.insurance_template_id,
+                )}
+                looseTemplates={looseTemplates}
                 today={today}
                 onEdit={() => setLoanSheet({ loan })}
               />
@@ -374,12 +384,18 @@ function LoanCard({
   loan,
   propertyName,
   template,
+  insuranceTemplate,
+  looseTemplates,
   today,
   onEdit,
 }: {
   loan: PropertyLoan;
   propertyName: string;
   template: AttachedTemplate | undefined;
+  /** Its insurance's own entry, when the insurance is debited apart. */
+  insuranceTemplate: AttachedTemplate | undefined;
+  /** Monthly expense entries no loan stands on, to offer for linking. */
+  looseTemplates: readonly AttachedTemplate[];
   today: string;
   onEdit: () => void;
 }) {
@@ -393,19 +409,28 @@ function LoanCard({
   const totals = loanTotals(schedule, loan.fees);
   const owed = cents(outstandingOn(terms, schedule, today) * share);
   const split = next ? paymentShare(next, share) : null;
-  // A cent or two either way is insurance on what is owed moving month by
-  // month, not a template that has fallen behind.
-  const amountDrifted =
-    template !== undefined &&
-    split !== null &&
-    Math.abs(template.amount - split.total) >= 1;
-  // After an early repayment that kept the payment, the loan ends sooner
-  // and the template, left alone, would go on charging it.
-  const endDrifted =
-    template !== undefined &&
-    totals.endsOn !== null &&
-    template.endsOn !== totals.endsOn;
-  const mismatch = amountDrifted || endDrifted;
+  // What each debit should say: one amount, or — the insurance debited
+  // apart — the payment and the insurance on their own.
+  const separate = loan.insurance_separate && (split?.insurance ?? 0) > 0;
+  const expected = split
+    ? loanDebits(
+        {
+          payment: split.total - split.insurance,
+          insurance: split.insurance,
+        },
+        1,
+        separate,
+      )
+    : null;
+  const mismatch =
+    debitDrifts(template, expected?.payment ?? null, totals.endsOn) ||
+    (separate &&
+      debitDrifts(
+        insuranceTemplate,
+        expected?.insurance ?? null,
+        totals.endsOn,
+      ));
+  const missing = !template || (separate && !insuranceTemplate);
   const moment = loanMoment(loan, today);
   const length =
     loan.months % 12 === 0
@@ -495,42 +520,39 @@ function LoanCard({
         ) : null}
       </dl>
 
-      <div className="flex flex-col gap-2 rounded-control border border-border p-3">
-        {template ? (
-          <Link
-            href={`/recurring?edit=${template.id}`}
-            className="privacy-sensitive inline-flex items-center gap-1 self-start text-sm tabular-nums underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {t("property.paymentLinked", { amount: format(template.amount) })}
-            <CaretRight size={ICON.xs} aria-hidden />
-          </Link>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            {t("property.paymentNotLinked")}
-          </p>
-        )}
-        {amountDrifted && split ? (
-          <p className="privacy-sensitive text-xs text-warning tabular-nums">
-            {t("property.paymentMismatch", {
-              template: format(template.amount),
-              schedule: format(split.total),
-            })}
-          </p>
-        ) : null}
-        {endDrifted && totals.endsOn ? (
-          <p className="text-xs text-warning">
-            {template.endsOn
-              ? t("property.paymentEndMismatch", {
-                  template: monthAndYear(template.endsOn, locale),
-                  schedule: monthAndYear(totals.endsOn, locale),
-                })
-              : t("property.paymentNoEnd", {
-                  schedule: monthAndYear(totals.endsOn, locale),
-                })}
-          </p>
+      <div className="flex flex-col gap-3 rounded-control border border-border p-3">
+        <DebitLine
+          loanId={loan.id}
+          debit="payment"
+          template={template}
+          expected={expected?.payment ?? null}
+          endsOn={totals.endsOn}
+          linkedText={(amount) =>
+            separate
+              ? t("property.paymentLinkedSeparate", { amount })
+              : t("property.paymentLinked", { amount })
+          }
+          notLinkedText={
+            separate
+              ? t("property.paymentNotLinkedSeparate")
+              : t("property.paymentNotLinked")
+          }
+          candidates={looseTemplates}
+        />
+        {separate ? (
+          <DebitLine
+            loanId={loan.id}
+            debit="insurance"
+            template={insuranceTemplate}
+            expected={expected?.insurance ?? null}
+            endsOn={totals.endsOn}
+            linkedText={(amount) => t("property.insuranceLinked", { amount })}
+            notLinkedText={t("property.insuranceNotLinked")}
+            candidates={looseTemplates}
+          />
         ) : null}
         <div className="flex flex-wrap gap-2">
-          {!template ? (
+          {missing ? (
             <ActionButton
               label={t("property.paymentAdd")}
               run={() =>
@@ -566,6 +588,117 @@ function LoanCard({
         />
       </div>
     </Card.Bezel>
+  );
+}
+
+/**
+ * Whether a debit's entry has fallen behind its schedule: its amount off by
+ * a euro or more — a cent or two is insurance on what is owed moving month
+ * by month — or its end not the loan's, as after an early repayment that
+ * kept the payment, when the entry left alone would go on charging it.
+ */
+function debitDrifts(
+  template: AttachedTemplate | undefined,
+  expected: number | null,
+  endsOn: string | null,
+): boolean {
+  return (
+    template !== undefined &&
+    ((expected !== null && Math.abs(template.amount - expected) >= 1) ||
+      (endsOn !== null && template.endsOn !== endsOn))
+  );
+}
+
+/**
+ * One of a loan's debits and its recurring entry: linked, opening it, with
+ * any way it and the schedule disagree; or not yet, with the user's entries
+ * that look like it to link — « C'est celle-ci ? ».
+ */
+function DebitLine({
+  loanId,
+  debit,
+  template,
+  expected,
+  endsOn,
+  linkedText,
+  notLinkedText,
+  candidates,
+}: {
+  loanId: string;
+  debit: "payment" | "insurance";
+  template: AttachedTemplate | undefined;
+  expected: number | null;
+  endsOn: string | null;
+  linkedText: (amount: string) => string;
+  notLinkedText: string;
+  candidates: readonly AttachedTemplate[];
+}) {
+  const t = useT();
+  const locale = useLocale();
+  const format = useFormatCurrency();
+
+  if (!template) {
+    const like = expected !== null ? templatesLike(candidates, expected) : [];
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="text-sm text-muted-foreground">{notLinkedText}</p>
+        {like.slice(0, 2).map((candidate) => (
+          <div
+            key={candidate.id}
+            className="flex flex-wrap items-center justify-between gap-2"
+          >
+            <p className="privacy-sensitive text-sm tabular-nums">
+              {t("property.candidate", {
+                name: candidate.description || candidate.categoryName,
+                amount: format(candidate.amount),
+                day: candidate.dayOfMonth ?? 1,
+              })}
+            </p>
+            <ActionButton
+              label={t("property.candidateLink")}
+              run={() => linkLoanEntry(loanId, candidate.id, debit)}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const amountOff =
+    expected !== null && Math.abs(template.amount - expected) >= 1;
+  const endOff = endsOn !== null && template.endsOn !== endsOn;
+  return (
+    <div className="flex flex-col gap-1">
+      <Link
+        href={`/recurring?edit=${template.id}`}
+        className="privacy-sensitive inline-flex items-center gap-1 self-start text-sm tabular-nums underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {linkedText(format(template.amount))}
+        <CaretRight size={ICON.xs} aria-hidden />
+      </Link>
+      {amountOff && expected !== null ? (
+        <p className="privacy-sensitive text-xs text-warning tabular-nums">
+          {t(
+            debit === "payment"
+              ? "property.paymentMismatch"
+              : "property.insuranceMismatch",
+            { template: format(template.amount), schedule: format(expected) },
+          )}
+        </p>
+      ) : null}
+      {endOff && endsOn ? (
+        <p className="text-xs text-warning">
+          {template.endsOn
+            ? t("property.paymentEndMismatch", {
+                template: monthAndYear(template.endsOn, locale),
+                schedule: monthAndYear(endsOn, locale),
+              })
+            : t("property.paymentNoEnd", {
+                schedule: monthAndYear(endsOn, locale),
+              })}
+        </p>
+      ) : null}
+    </div>
   );
 }
 

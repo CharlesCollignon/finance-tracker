@@ -278,4 +278,21 @@ export const propertyFr: typeof propertyEn = {
   emptyValue: "Sa valeur, d'après les ventes alentour",
   emptyYours: "Ce qui est à vous, et ce qui reste à la banque",
   emptyLoans: "Chaque prêt, échéance par échéance",
+
+  insuranceSeparate: "L'assurance est prélevée à part",
+  insuranceSeparateHint:
+    "Deux prélèvements à la banque, l'échéance puis l'assurance\u00A0: chacun a son opération récurrente.",
+  insuranceWord: "Assurance",
+  paymentLinkedSeparate:
+    "Son échéance, dans vos opérations récurrentes\u00A0: {amount} par mois",
+  paymentNotLinkedSeparate:
+    "Son échéance n'est pas dans vos opérations récurrentes.",
+  insuranceLinked:
+    "Son assurance, dans vos opérations récurrentes\u00A0: {amount} par mois",
+  insuranceNotLinked: "Son assurance n'est pas dans vos opérations récurrentes.",
+  insuranceMismatch:
+    "L'opération de l'assurance dit {template}\u00A0; le tableau dit {schedule}.",
+  candidate: "C'est celle-ci\u00A0? {name}, {amount} le {day}",
+  candidateLink: "Oui, la relier",
+  entryLinked: "Opération reliée au prêt",
 };

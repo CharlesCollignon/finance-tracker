@@ -79,7 +79,14 @@ export function rentalFigures(
   cost: number,
   today: string,
 ): RentalFigures {
-  const paidThrough = new Set(loans.map((loan) => loan.recurring_template_id));
+  // A loan's own templates — its payment, and its insurance debited apart —
+  // are the loan, counted below from its schedule.
+  const paidThrough = new Set(
+    loans.flatMap((loan) => [
+      loan.recurring_template_id,
+      loan.insurance_template_id,
+    ]),
+  );
   const running = templates.filter(
     (template) =>
       template.attached &&
