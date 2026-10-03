@@ -25,7 +25,10 @@ import {
   toggleSelectAll,
   toggleSelected,
 } from "@finance/core/selection";
-import { StatHero } from "@/components/finance/StatHero";
+import {
+  CalendarPulse,
+  type PulseDay,
+} from "@/components/finance/CalendarPulse";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { formatMonthLabel, todayIsoLocal } from "@finance/core/constants";
 import { TYPE_AMOUNT_CLASS } from "@finance/core/category-styles";
@@ -227,6 +230,28 @@ export function CalendarView({
   }
   const selectedTotals = computeDayTotals(selectedTransactions);
   const monthLabel = formatMonthLabel(year, month, locale);
+  // The day the pointer is on, in the strip or in the grid: each lights it
+  // in the other.
+  const [hoverDate, setHoverDate] = useState<string | null>(null);
+  const pulseDays = useMemo<PulseDay[]>(
+    () =>
+      weeks
+        .flat()
+        .filter((day) => day.isCurrentMonth)
+        .map((day) => {
+          const recorded = computeDayTotals(byDate.get(day.date) ?? []);
+          const planned = plannedTotals(plannedByDate.get(day.date) ?? []);
+          return {
+            date: day.date,
+            income: recorded.income,
+            outflow: recorded.outflow,
+            plannedIncome: planned?.income ?? 0,
+            plannedOutflow: planned?.outflow ?? 0,
+            isToday: day.isToday,
+          };
+        }),
+    [weeks, byDate, plannedByDate],
+  );
 
   return (
     <>
@@ -247,27 +272,20 @@ export function CalendarView({
           stagger={0.05}
         >
           <StaggerItem className="w-full min-w-0">
-            <Card.Bezel className="w-full" innerClassName="p-6 md:p-8">
-              <StatHero
-                label={monthLabel}
-                amount={`${monthTotals.net >= 0 ? "+" : "−"}${formatEuro(Math.abs(monthTotals.net))}`}
-                amountClassName={
-                  monthTotals.net < 0 ? "text-destructive" : "text-success"
-                }
-                subtitle={
-                  // One message rather than two figures with English glue
-                  // between them: where "in" and "out" fall in the sentence
-                  // is the language's decision, not the layout's. The whole
-                  // line is money, so the whole line carries the marker.
-                  <p className="privacy-sensitive font-mono tabular-nums">
-                    {t("calendarView.inAndOut", {
-                      income: formatEuro(monthTotals.income),
-                      outflow: formatEuro(monthTotals.outflow),
-                    })}
-                  </p>
-                }
-              />
-            </Card.Bezel>
+            <CalendarPulse
+              key={monthKey}
+              label={monthLabel}
+              days={pulseDays}
+              totals={monthTotals}
+              stillToCome={pulseDays.reduce(
+                (sum, day) => sum + day.plannedOutflow,
+                0,
+              )}
+              selectedDate={selectedDate}
+              hoverDate={hoverDate}
+              onHover={setHoverDate}
+              onSelect={setSelectedDate}
+            />
           </StaggerItem>
 
           <StaggerItem className="w-full min-w-0">
@@ -275,6 +293,7 @@ export function CalendarView({
             <section
               className="-mx-4 w-[calc(100%+2rem)] min-w-0 sm:mx-0 sm:w-full"
               aria-label={t("calendarView.monthlyCalendar")}
+              onMouseLeave={() => setHoverDate(null)}
             >
               <div className="grid w-full grid-cols-7 border-b border-border/40">
                 {weekdayLabels(locale).map((label) => (
@@ -314,6 +333,9 @@ export function CalendarView({
                           key={day.date}
                           type="button"
                           onClick={() => setSelectedDate(day.date)}
+                          onMouseEnter={() =>
+                            setHoverDate(day.isCurrentMonth ? day.date : null)
+                          }
                           className={cn(
                             "flex min-h-[4.25rem] min-w-0 flex-col items-stretch",
                             "border-r border-border/40 p-1.5 text-left",
@@ -337,6 +359,10 @@ export function CalendarView({
                             day.isCurrentMonth &&
                               !isSelected &&
                               "hover:bg-muted/30",
+                            // Lit from the strip above, as the pointer would.
+                            hoverDate === day.date &&
+                              !isSelected &&
+                              "bg-muted/30",
                           )}
                           aria-label={t("calendarView.dayLabel", {
                             day: day.day,

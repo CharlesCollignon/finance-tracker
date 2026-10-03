@@ -1254,6 +1254,12 @@ export const en = {
      * sentence is the language's decision.
      */
     dayLabel: "{day} — {entries}",
+    pulseStillToCome: "{amount} still to come",
+    pulseOut: "{amount} out",
+    pulseIn: "{amount} in",
+    pulsePlannedOut: "{amount} planned out",
+    pulsePlannedIn: "{amount} planned in",
+    pulseNothing: "nothing that day",
     inAndOut: "{income} in · {outflow} out",
     selectedDay: "Selected day details",
     noTransactions: "No transactions",
