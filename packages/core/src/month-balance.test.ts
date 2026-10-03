@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   balanceExplanation,
   buildMonthBalance,
+  gapShapes,
+  gapToPlan,
   leftAtMonthEnd,
   recordedDeltas,
   spendingByMonth,
@@ -114,6 +116,75 @@ describe("leftAtMonthEnd", () => {
         { arriving: 0, budgetedOutflow: 250 },
       ),
     ).toBe(1_550);
+  });
+});
+
+describe("the month as planned", () => {
+  // Began at 700; the rent left on the 5th as planned, but groceries and a
+  // dinner the plan never had went too, and the salary is still to come.
+  const balance = buildMonthBalance({
+    year: 2026,
+    month: 1,
+    today: TODAY,
+    anchor: { onDate: TODAY, balance: 380 },
+    recorded: [
+      { date: "2026-01-05", delta: -200 },
+      { date: "2026-01-09", delta: -80 },
+      { date: "2026-01-12", delta: -40 },
+    ],
+    planned: [{ date: "2026-01-28", delta: 2000 }],
+    scheduled: [
+      { date: "2026-01-05", delta: -200 },
+      { date: "2026-01-28", delta: 2000 },
+    ],
+  });
+
+  it("starts where the month began and moves only by what the entries call for", () => {
+    expect(balance.start).toBe(700);
+    expect(balance.plan).toHaveLength(31);
+    expect(balance.plan![3]).toBe(700);
+    expect(balance.plan![4]).toBe(500);
+    expect(balance.plan![30]).toBe(2500);
+  });
+
+  it("says how far the account stands from it, day by day", () => {
+    expect(gapToPlan(balance, "2026-01-05")).toBe(0);
+    expect(gapToPlan(balance, "2026-01-12")).toBe(-120);
+    // Carried to the month's end: what happened apart from the plan stays.
+    expect(gapToPlan(balance, "2026-01-31")).toBe(-120);
+    expect(gapToPlan(balance, "2026-02-01")).toBeNull();
+  });
+
+  it("cuts the gap where the balance crosses the plan", () => {
+    const shapes = gapShapes([100, 60], [80, 80]);
+    expect(shapes).toEqual([
+      { above: true, corners: [[0, 100], [0.5, 80], [0, 80]] },
+      { above: false, corners: [[0.5, 80], [1, 60], [1, 80]] },
+    ]);
+    expect(gapShapes([80, 80], [80, 80])).toEqual([]);
+  });
+
+  it("has no plan for a month ahead, or without the schedule", () => {
+    const ahead = buildMonthBalance({
+      year: 2026,
+      month: 3,
+      today: TODAY,
+      anchor: null,
+      recorded: [],
+      planned: [],
+      scheduled: [],
+    });
+    expect(ahead.plan).toBeNull();
+    expect(
+      buildMonthBalance({
+        year: 2026,
+        month: 1,
+        today: TODAY,
+        anchor: null,
+        recorded: [],
+        planned: [],
+      }).plan,
+    ).toBeNull();
   });
 });
 

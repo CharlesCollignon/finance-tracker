@@ -2199,6 +2199,12 @@ export const fr: Messages = {
     toGoOut: "{amount} encore à sortir",
     chartLabel: "Solde au fil de {month}",
     netChartLabel: "Net au fil de {month}",
+    asPlanned: "Plan du mois",
+    planAt: "Prévu {amount}",
+    gapAbove: "{amount} de plus que prévu",
+    gapBelow: "{amount} de moins que prévu",
+    gapSoFar: "À ce jour\u00A0: {gap}",
+    gapOverMonth: "Sur le mois\u00A0: {gap}",
     recorded: "Enregistré",
     setBalance: "Saisir votre solde",
     setBalanceBody:

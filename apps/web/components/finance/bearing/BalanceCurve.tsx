@@ -8,13 +8,22 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
-import type { MonthBalancePoint } from "@finance/core/month-balance";
+import {
+  gapShapes,
+  type MonthBalancePoint,
+} from "@finance/core/month-balance";
 import { formatShortDate } from "@finance/core/constants";
 import { cn } from "@/lib/utils";
 import { useLocale, useT } from "@/lib/locale-context";
 
 interface BalanceCurveProps {
   points: MonthBalancePoint[];
+  /**
+   * The month as planned from its first day, one value per point — drawn as
+   * a thin line, with the gap between it and the balance washed in: green
+   * where the account is above the plan, red where it is below.
+   */
+  plan?: number[] | null;
   /** Today, when it falls in the month: where the line stops being recorded. */
   today: string | null;
   format: (value: number) => string;
@@ -48,6 +57,7 @@ const SPAN = 1000;
  */
 export function BalanceCurve({
   points,
+  plan = null,
   today,
   format,
   label,
@@ -64,8 +74,9 @@ export function BalanceCurve({
       return null;
     }
     const values = points.map((point) => point.value);
-    let min = Math.min(...values, 0);
-    let max = Math.max(...values, 0);
+    const planned = plan && plan.length === points.length ? plan : null;
+    let min = Math.min(...values, ...(planned ?? []), 0);
+    let max = Math.max(...values, ...(planned ?? []), 0);
     // A flat month still needs a height to draw in.
     if (max - min < 1) {
       max += 1;
@@ -96,9 +107,35 @@ export function BalanceCurve({
         )
         .join(" ");
 
+    // The gap to the plan, washed in: one path for where the balance is
+    // above it, one for below (`gapShapes`, split where the lines cross).
+    const gap = { above: "", below: "" };
+    let planLine = "";
+    if (planned) {
+      const px = (index: number) => (x(index) * SPAN).toFixed(1);
+      planLine = planned
+        .map(
+          (value, index) =>
+            `${index === 0 ? "M" : "L"}${px(index)},${y(value).toFixed(1)}`,
+        )
+        .join(" ");
+      for (const shape of gapShapes(values, planned)) {
+        const d = `M${shape.corners
+          .map(([day, value]) => `${px(day)},${y(value).toFixed(1)}`)
+          .join(" L")} Z `;
+        if (shape.above) {
+          gap.above += d;
+        } else {
+          gap.below += d;
+        }
+      }
+    }
+
     return {
       x,
       y,
+      gap,
+      planLine,
       solid: lastRecorded >= 0 ? path(0, lastRecorded) : "",
       dashed:
         lastRecorded < points.length - 1
@@ -108,7 +145,7 @@ export function BalanceCurve({
       zeroY: min < 0 && max > 0 ? y(0) : null,
       todayIndex,
     };
-  }, [points, today]);
+  }, [points, plan, today]);
 
   function nearest(clientX: number): number {
     const frame = frameRef.current;
@@ -140,6 +177,18 @@ export function BalanceCurve({
   const lastIndex = points.length - 1;
   const endPoint = points[lastIndex];
   const shown = active !== null ? points[active] : null;
+  const shownPlan =
+    active !== null && plan && plan.length === points.length
+      ? plan[active]!
+      : null;
+  const shownGap =
+    shown && shownPlan !== null
+      ? Math.round((shown.value - shownPlan) * 100) / 100
+      : null;
+  const gapText = (gap: number) =>
+    gap >= 0
+      ? t("bearingMonth.gapAbove", { amount: format(gap) })
+      : t("bearingMonth.gapBelow", { amount: format(-gap) });
   const percent = (fraction: number) => `${(fraction * 100).toFixed(3)}%`;
 
   return (
@@ -211,6 +260,33 @@ export function BalanceCurve({
                 fill={`url(#${titleId}-wash)`}
                 className="balance-curve-wash"
               />
+              {geometry.planLine ? (
+                <>
+                  <path
+                    d={geometry.gap.above}
+                    fill="var(--success)"
+                    fillOpacity={0.16}
+                    className="balance-curve-fade"
+                  />
+                  <path
+                    d={geometry.gap.below}
+                    fill="var(--destructive)"
+                    fillOpacity={0.16}
+                    className="balance-curve-fade"
+                  />
+                  <path
+                    d={geometry.planLine}
+                    fill="none"
+                    stroke="var(--muted-foreground)"
+                    strokeOpacity={0.7}
+                    strokeWidth={1.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                    className="balance-curve-fade"
+                  />
+                </>
+              ) : null}
               {geometry.solid ? (
                 <path
                   d={geometry.solid}
@@ -292,6 +368,19 @@ export function BalanceCurve({
                     {formatShortDate(shown.date, locale)}
                     {shown.planned ? ` · ${t("ledger.planned")}` : ""}
                   </p>
+                  {shownPlan !== null && shownGap !== null ? (
+                    <p className="privacy-sensitive mt-1 text-xs tabular-nums text-muted-foreground">
+                      {t("bearingMonth.planAt", { amount: format(shownPlan) })}
+                      {" · "}
+                      <span
+                        className={
+                          shownGap >= 0 ? "text-success" : "text-destructive"
+                        }
+                      >
+                        {gapText(shownGap)}
+                      </span>
+                    </p>
+                  ) : null}
                 </div>
               </>
             ) : null}
@@ -302,26 +391,37 @@ export function BalanceCurve({
       {/* The readings the crosshair gives, for anyone not seeing it. */}
       <p className="sr-only" aria-live="polite">
         {shown
-          ? `${formatShortDate(shown.date, locale)}: ${format(shown.value)}`
+          ? `${formatShortDate(shown.date, locale)}: ${format(shown.value)}${
+              shownGap !== null ? `, ${gapText(shownGap)}` : ""
+            }`
           : ""}
       </p>
 
       <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
         <span>{points[0] ? formatShortDate(points[0].date, locale) : ""}</span>
-        <span className="flex items-center gap-3">
+        <span className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
           {points.some((point) => !point.planned) ? (
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
               <span aria-hidden className="h-0.5 w-4 rounded-full bg-primary" />
               {t("bearingMonth.recorded")}
             </span>
           ) : null}
           {points.some((point) => point.planned) ? (
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
               <span
                 aria-hidden
                 className="h-0 w-4 border-t-2 border-dashed border-primary/70"
               />
               {t("ledger.planned")}
+            </span>
+          ) : null}
+          {plan && plan.length === points.length ? (
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
+              <span
+                aria-hidden
+                className="h-px w-4 rounded-full bg-muted-foreground/70"
+              />
+              {t("bearingMonth.asPlanned")}
             </span>
           ) : null}
         </span>

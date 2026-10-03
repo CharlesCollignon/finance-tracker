@@ -302,6 +302,7 @@ describe("overdraftWarning", () => {
     end: 320,
     points: [],
     lowest: { date: "2026-10-24", value: -120 },
+    plan: null,
   };
 
   it("warns ahead of the day the account goes below zero", () => {
