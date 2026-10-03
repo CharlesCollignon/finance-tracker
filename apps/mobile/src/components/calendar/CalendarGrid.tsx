@@ -4,6 +4,7 @@ import type { PlannedOccurrence } from "@finance/core/apply-recurring";
 import {
   computeDayTotals,
   formatShortAmount,
+  plannedTotals,
   type CalendarDay,
 } from "@finance/core/calendar";
 import { formatLongDate } from "@finance/core/constants";
@@ -22,26 +23,9 @@ interface CalendarGridProps {
   byDate: Map<string, TransactionWithCategory[]>;
   plannedByDate: Map<string, PlannedOccurrence[]>;
   selectedDate: string;
+  /** The day a finger is on in the strip above, lit as it would be here. */
+  litDate?: string | null;
   onSelect: (date: string) => void;
-}
-
-/** What a day's planned occurrences come to, in and out. */
-function plannedTotals(
-  occurrences: readonly PlannedOccurrence[],
-): { income: number; outflow: number } | null {
-  if (occurrences.length === 0) {
-    return null;
-  }
-  let income = 0;
-  let outflow = 0;
-  for (const occurrence of occurrences) {
-    if (occurrence.categoryType === "income") {
-      income += occurrence.amount;
-    } else {
-      outflow += occurrence.amount;
-    }
-  }
-  return { income, outflow };
 }
 
 /** Small enough for seven to a row; shrinks rather than wraps or clips. */
@@ -91,6 +75,7 @@ export function CalendarGrid({
   byDate,
   plannedByDate,
   selectedDate,
+  litDate = null,
   onSelect,
 }: CalendarGridProps) {
   const t = useT();
@@ -149,6 +134,8 @@ export function CalendarGrid({
                   "min-h-16 flex-1 p-1",
                   dayIndex < week.length - 1 && "border-r border-border",
                   selected && "bg-secondary",
+                  // Lit from the strip above, as the finger would.
+                  !selected && day.date === litDate && "bg-secondary/50",
                 )}
               >
                 {day.isToday ? (
