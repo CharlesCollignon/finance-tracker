@@ -5,6 +5,7 @@ import { CaretDown, GearSix, Sparkle } from "@phosphor-icons/react";
 import {
   buildCushion,
   buildMilestones,
+  cushionEnvelopes,
   cushionSavings,
   ENVELOPE_ORDER,
   monthsUntil,
@@ -12,8 +13,6 @@ import {
   type EnvelopeId,
   wealthToday,
 } from "@finance/core/future-plan";
-import { SAVINGS_KINDS } from "@finance/core/savings-accounts";
-import type { SavingsAccountKind } from "@finance/core/types/database";
 import { buildRunway } from "@finance/core/projection";
 import { MonthCloseHistory } from "@/components/finance/MonthCloseHistory";
 import { ConnectBankInvite } from "@/components/finance/bank/ConnectBankInvite";
@@ -76,12 +75,10 @@ export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
   // or everything saved in one — the reader's corrections in the long view
   // included, against the fixed costs; or the user's own figures, when the
   // long view has had its savings taken out. The phone reads it the same way.
-  const fromData = planEnvelopes(base, null);
-  const draftSavings = draft?.envelopes.some((envelope) =>
-    isSavingsEnvelope(envelope.id),
-  );
   const runway = buildRunway(
-    cushionSavings(draft && draftSavings ? draft.envelopes : fromData),
+    cushionSavings(
+      cushionEnvelopes(draft?.envelopes ?? null, planEnvelopes(base, null)),
+    ),
     base.templates,
     base.year,
     base.month,
@@ -175,10 +172,6 @@ export function PlanView({ base, wealth, bankInvite }: PlanViewProps) {
       </Stagger>
     </div>
   );
-}
-
-function isSavingsEnvelope(id: EnvelopeId): boolean {
-  return id === "savings" || SAVINGS_KINDS.includes(id as SavingsAccountKind);
 }
 
 function Intro() {

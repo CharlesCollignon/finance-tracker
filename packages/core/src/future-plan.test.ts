@@ -6,6 +6,7 @@ import {
   breakdownParts,
   buildCushion,
   buildMilestones,
+  cushionEnvelopes,
   cushionSavings,
   envelopesFromData,
   milestoneToAnnounce,
@@ -376,6 +377,16 @@ describe("cushionSavings", () => {
     expect(cushionSavings([{ id: "savings", initial: 4_500, ...base }])).toBe(
       4_500,
     );
+  });
+
+  it("reads the long view's edits, unless they took every savings envelope out", () => {
+    const base = { monthly: 0, annualReturn: 0, taxOnGains: 0 };
+    const fromData = [{ id: "livret_a" as const, initial: 3_000, ...base }];
+    const edited = [{ id: "livret_a" as const, initial: 5_000, ...base }];
+    const walletsOnly = [{ id: "pea" as const, initial: 9_000, ...base }];
+    expect(cushionEnvelopes(edited, fromData)).toBe(edited);
+    expect(cushionEnvelopes(walletsOnly, fromData)).toBe(fromData);
+    expect(cushionEnvelopes(null, fromData)).toBe(fromData);
   });
 });
 

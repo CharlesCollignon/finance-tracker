@@ -4,6 +4,7 @@ import { RefreshControl, ScrollView } from "react-native";
 import {
   buildCushion,
   buildMilestones,
+  cushionEnvelopes,
   cushionSavings,
   MILESTONE_TIERS,
   monthsUntil,
@@ -228,10 +229,11 @@ export default function PlanningScreen() {
 
   // The cushion is the savings at hand — every savings account but a PEL,
   // the user's corrections in the long view included — against the fixed
-  // costs. The web reads it the same way.
+  // costs; or the user's own figures, when the long view has had its
+  // savings taken out. The web reads it the same way.
   const runway = data
     ? buildRunway(
-        cushionSavings(envelopes),
+        cushionSavings(cushionEnvelopes(settings.envelopes, dataEnvelopes)),
         data.templates,
         data.year,
         data.month,

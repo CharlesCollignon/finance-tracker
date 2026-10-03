@@ -596,6 +596,24 @@ export function cushionSavings(envelopes: readonly Envelope[]): number {
   );
 }
 
+/**
+ * Which envelopes the cushion reads: the long view's, the reader's
+ * corrections included — or the user's own figures once the long view has
+ * had its savings taken out, where reading the edit would be a cushion of
+ * nothing.
+ */
+export function cushionEnvelopes(
+  edited: readonly Envelope[] | null,
+  fromData: readonly Envelope[],
+): readonly Envelope[] {
+  const hasSavings = edited?.some(
+    (envelope) =>
+      envelope.id === "savings" ||
+      SAVINGS_KINDS.includes(envelope.id as SavingsAccountKind),
+  );
+  return edited && hasSavings ? edited : fromData;
+}
+
 /* ------------------------------------------------------------- milestones */
 
 /** The round amounts worth celebrating, smallest first. */
