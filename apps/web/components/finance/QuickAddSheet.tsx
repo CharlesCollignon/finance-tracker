@@ -18,7 +18,7 @@ import {
   suggestMerchants,
   type MerchantRule,
 } from "@finance/core/merchant-memory";
-import type { Category } from "@finance/core/types/database";
+import type { Category, CategoryType } from "@finance/core/types/database";
 import { Button } from "@/components/ui/Button";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { MobileSheet } from "@/components/ui/MobileSheet";
@@ -49,6 +49,8 @@ interface QuickAddSheetProps {
   defaultDate?: string;
   /** Which kind the sheet opens on: the Charges page opens it on a charge. */
   kind: AddKind;
+  /** For a charge, the kind of money its category picker opens on. */
+  categoryType?: CategoryType;
 }
 
 /**
@@ -73,7 +75,7 @@ export function QuickAddSheet(props: QuickAddSheetProps) {
 
   return (
     <AddSheet
-      key={`${props.kind}:${props.defaultDate ?? "today"}`}
+      key={`${props.kind}:${props.categoryType ?? ""}:${props.defaultDate ?? "today"}`}
       {...props}
     />
   );
@@ -83,6 +85,7 @@ function AddSheet({
   open,
   onOpenChange,
   kind: initialKind,
+  categoryType,
   ...fields
 }: QuickAddSheetProps) {
   const t = useT();
@@ -133,7 +136,11 @@ function AddSheet({
         {kind === "transaction" ? (
           <QuickAddFields {...fields} onDone={close} />
         ) : (
-          <RecurringFormBody categories={fields.categories} onDone={close} />
+          <RecurringFormBody
+            categories={fields.categories}
+            initialType={categoryType}
+            onDone={close}
+          />
         )}
       </div>
     </MobileSheet>

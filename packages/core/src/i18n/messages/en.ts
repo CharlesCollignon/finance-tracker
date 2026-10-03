@@ -663,6 +663,7 @@ export const en = {
     ofWhichMovedAfter: "paid into your investments — tracked, but not spent.",
     nothingHereYet: "Nothing here yet: “Add charge” creates one.",
     editNamed: "Edit {name}",
+    addTo: "Add to {group}",
     addCharge: "Add charge",
     kindOfCharge: "Kind of charge",
     activate: "Activate",

@@ -43,6 +43,8 @@ interface CategoryPickerProps {
   className?: string;
   triggerClassName?: string;
   side?: "bottom" | "top";
+  /** The kind it opens on while nothing is chosen, rather than expenses. */
+  initialType?: CategoryType;
 }
 
 /**
@@ -72,6 +74,7 @@ export function CategoryPicker({
   className,
   triggerClassName,
   side,
+  initialType,
 }: CategoryPickerProps) {
   const t = useT();
   const locale = useLocale();
@@ -84,12 +87,15 @@ export function CategoryPicker({
   const [tab, setTab] = useState<CategoryType | null>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
 
-  // The chosen category's kind, else expenses, else whichever kind exists.
+  // The chosen category's kind, else the one asked for, else expenses, else
+  // whichever kind exists.
+  const opensOn = initialType ?? "expense";
   const activeType =
     tab ??
     (chosen && groups.some((group) => group.type === chosen.type)
       ? chosen.type
-      : (groups.find((group) => group.type === "expense")?.type ??
+      : (groups.find((group) => group.type === opensOn)?.type ??
+        groups.find((group) => group.type === "expense")?.type ??
         groups[0]?.type ??
         null));
 
