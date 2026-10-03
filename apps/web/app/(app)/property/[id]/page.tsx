@@ -32,8 +32,8 @@ export default async function PropertyDetailPage({
   }
 
   const { id } = await params;
-  const detail = await getPropertyDetail(user.id, id);
-  if (!detail) {
+  const read = await getPropertyDetail(user.id, id);
+  if (!read) {
     notFound();
   }
 
@@ -42,7 +42,8 @@ export default async function PropertyDetailPage({
       <PageHeader titleKey="nav.property" />
       <PageContainer>
         <PropertyDetail
-          detail={detail}
+          detail={read.detail}
+          looseTemplates={read.looseTemplates}
           today={todayIsoLocal()}
           readingPending={(await searchParams).lecture === "1"}
         />

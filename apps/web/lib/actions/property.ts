@@ -57,7 +57,10 @@ export async function addProperty(input: {
       loan: input.loan,
       payment:
         input.loan && input.addPayment
-          ? { categoryName: loanPaymentCategoryName(locale) }
+          ? {
+              categoryName: loanPaymentCategoryName(locale),
+              insuranceLabel: t("property.insuranceWord"),
+            }
           : null,
     });
     if (!result.success) {
@@ -155,9 +158,32 @@ export async function addPaymentForLoan(
     const result = await properties.addLoanPayment(db, userId, loanId, {
       categoryName,
       description,
+      insuranceLabel: t("property.insuranceWord"),
     });
     return result.success
       ? { success: true, message: t("property.paymentAdded") }
+      : { error: result.error };
+  });
+}
+
+/**
+ * Link one of the user's recurring entries to a loan's payment, or to its
+ * insurance debited apart — « C'est celle-ci ? ».
+ */
+export async function linkLoanEntry(
+  loanId: string,
+  templateId: string,
+  debit: properties.LoanDebit,
+): Promise<ActionResult> {
+  const t = await getT();
+  return asUser(async (db, userId): Promise<ActionResult> => {
+    const result = await properties.linkLoanTemplate(db, userId, {
+      loanId,
+      templateId,
+      debit,
+    });
+    return result.success
+      ? { success: true, message: t("property.entryLinked") }
       : { error: result.error };
   });
 }
@@ -219,7 +245,15 @@ export async function saveLoanForProperty(
       db,
       userId,
       input,
-      addPayment ? { addPayment: { categoryName, description } } : {},
+      addPayment
+        ? {
+            addPayment: {
+              categoryName,
+              description,
+              insuranceLabel: t("property.insuranceWord"),
+            },
+          }
+        : {},
     );
     if (!result.success) {
       return { error: result.error };

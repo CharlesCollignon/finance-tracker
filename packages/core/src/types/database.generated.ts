@@ -909,6 +909,8 @@ export type Database = {
           first_payment_on: string;
           id: string;
           insurance_monthly: number;
+          insurance_separate: boolean;
+          insurance_template_id: string | null;
           insurance_rate: number | null;
           kind: string;
           known_keeps: string | null;
@@ -932,6 +934,8 @@ export type Database = {
           first_payment_on: string;
           id?: string;
           insurance_monthly?: number;
+          insurance_separate?: boolean;
+          insurance_template_id?: string | null;
           insurance_rate?: number | null;
           kind?: string;
           known_keeps?: string | null;
@@ -955,6 +959,8 @@ export type Database = {
           first_payment_on?: string;
           id?: string;
           insurance_monthly?: number;
+          insurance_separate?: boolean;
+          insurance_template_id?: string | null;
           insurance_rate?: number | null;
           kind?: string;
           known_keeps?: string | null;
@@ -969,6 +975,13 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "property_loans_insurance_template_id_fkey";
+            columns: ["insurance_template_id"];
+            isOneToOne: false;
+            referencedRelation: "recurring_templates";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "property_loans_property_id_fkey";
             columns: ["property_id"];

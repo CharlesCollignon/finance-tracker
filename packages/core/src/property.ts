@@ -21,6 +21,7 @@ import {
   type LoanTerms,
 } from "./loan-schedule";
 import type { Carry } from "./price-index";
+import { MAX_AMOUNT_DRIFT, MIN_AMOUNT_TOLERANCE } from "./recurring-fulfilment";
 import type { Property, PropertyLoan } from "./types/database";
 
 /** A loan row's terms, as the schedule reads them. */
@@ -336,4 +337,41 @@ export function paymentShare(
     insurance,
     total: cents(principal + interest + insurance),
   };
+}
+
+/**
+ * What a loan's month takes as the bank debits it, the user's share: one
+ * amount holding the payment and its insurance — or, the insurance debited
+ * apart, the payment and the insurance each on their own. What each
+ * recurring template for the loan should say.
+ */
+export function loanDebits(
+  row: Pick<LoanPayment, "payment" | "insurance">,
+  share: number,
+  insuranceSeparate: boolean,
+): { payment: number; insurance: number | null } {
+  return insuranceSeparate
+    ? {
+        payment: cents(row.payment * share),
+        insurance: cents(row.insurance * share),
+      }
+    : { payment: cents((row.payment + row.insurance) * share), insurance: null };
+}
+
+/**
+ * The templates whose amount is close to `amount` — five per cent, and a
+ * euro and a half at least, as a bank movement is matched to a template —
+ * closest first. What a loan with no template for a debit offers to link:
+ * « C'est celle-ci ? ».
+ */
+export function templatesLike<T extends { amount: number }>(
+  templates: readonly T[],
+  amount: number,
+): T[] {
+  const tolerance = Math.max(amount * MAX_AMOUNT_DRIFT, MIN_AMOUNT_TOLERANCE);
+  return templates
+    .filter((template) => Math.abs(template.amount - amount) <= tolerance)
+    .sort(
+      (a, b) => Math.abs(a.amount - amount) - Math.abs(b.amount - amount),
+    );
 }

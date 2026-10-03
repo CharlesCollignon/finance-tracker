@@ -427,6 +427,9 @@ export function useLoanDraft(initial: PropertyLoan | null) {
         initial.fees > 0),
   );
   const [addPayment, setAddPayment] = useState(true);
+  const [insuranceSeparate, setInsuranceSeparate] = useState(
+    initial?.insurance_separate ?? false,
+  );
 
   const fields: Omit<LoanChange, "propertyId"> = {
     ...(initial ? { id: initial.id } : {}),
@@ -446,6 +449,7 @@ export function useLoanDraft(initial: PropertyLoan | null) {
     deferralMonths: deferralMonths || 0,
     fees,
     borrowerShare,
+    insuranceSeparate,
   };
   const payload = (propertyId: string): LoanChange => ({
     ...fields,
@@ -480,6 +484,10 @@ export function useLoanDraft(initial: PropertyLoan | null) {
     setMoreOptions,
     addPayment,
     setAddPayment,
+    insuranceSeparate,
+    setInsuranceSeparate,
+    hasInsurance:
+      (parseTypedAmount(insurance) ?? 0) > 0 || initial?.insurance_rate != null,
     fields,
     payload,
     parsed,
@@ -576,6 +584,25 @@ export function LoanFields({
           error={error("borrowerShare")}
         />
       </div>
+      {/* Two debits at the bank, the payment and then the insurance: each
+          gets its own recurring entry. */}
+      {draft.hasInsurance ? (
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium">
+              {t("property.insuranceSeparate")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("property.insuranceSeparateHint")}
+            </p>
+          </div>
+          <Switch
+            checked={draft.insuranceSeparate}
+            onChange={draft.setInsuranceSeparate}
+            label={t("property.insuranceSeparate")}
+          />
+        </div>
+      ) : null}
 
       {draft.moreOptions ? (
         <>

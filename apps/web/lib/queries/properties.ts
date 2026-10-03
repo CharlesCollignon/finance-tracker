@@ -74,12 +74,15 @@ export const getPropertyDetail = cache(
   async (
     userId: string,
     propertyId: string,
-  ): Promise<properties.PropertyRead | null> => {
+  ): Promise<{
+    detail: properties.PropertyRead;
+    looseTemplates: properties.AttachedTemplate[];
+  } | null> => {
     const state = await properties.getProperties(await createClient(), userId);
-    return (
-      state.properties.find(({ property }) => property.id === propertyId) ??
-      null
+    const detail = state.properties.find(
+      ({ property }) => property.id === propertyId,
     );
+    return detail ? { detail, looseTemplates: state.looseTemplates } : null;
   },
 );
 

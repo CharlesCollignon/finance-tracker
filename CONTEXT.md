@@ -411,7 +411,9 @@ _En français_ : mensualité
 What leaves the account for a loan each month: the payment its schedule
 calls for and the insurance, at the user's share. A recurring template linked
 to the loan, which ends with the last payment, so each one is an occurrence
-like any other.
+like any other. When the bank debits the insurance on its own, on another
+day or for another insurer, the loan payment is two templates — the payment,
+and the insurance — one for each debit, and still one loan.
 _Avoid_: instalment, repayment
 
 **Outstanding principal**:

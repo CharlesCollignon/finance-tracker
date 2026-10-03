@@ -20,10 +20,12 @@ import {
   type LoanPayment,
 } from "@finance/core/loan-schedule";
 import {
+  loanDebits,
   loanPaymentCategoryName,
   loanTermsFromRow,
   paymentShare,
   propertyPosition,
+  templatesLike,
   valueSourceLine,
 } from "@finance/core/property";
 import { formatRecurrenceSchedule } from "@finance/core/recurrence";
@@ -64,6 +66,7 @@ import {
   addLoanPayment,
   getProperties,
   isReadingMarket,
+  linkLoanTemplate,
   removeLoan,
   removeProperty,
   setKnownOutstanding,
@@ -333,6 +336,10 @@ export default function PropertyDetailScreen() {
                 template={templates.find(
                   (template) => template.id === loan.recurring_template_id,
                 )}
+                insuranceTemplate={templates.find(
+                  (template) => template.id === loan.insurance_template_id,
+                )}
+                looseTemplates={data?.looseTemplates ?? []}
                 today={today}
                 onEdit={() => setLoanSheet({ loan })}
               />
@@ -403,20 +410,24 @@ function LoanCard({
   loan,
   propertyName,
   template,
+  insuranceTemplate,
+  looseTemplates,
   today,
   onEdit,
 }: {
   loan: PropertyLoan;
   propertyName: string;
   template: AttachedTemplate | undefined;
+  /** Its insurance's own entry, when the insurance is debited apart. */
+  insuranceTemplate: AttachedTemplate | undefined;
+  /** Monthly expense entries no loan stands on, to offer for linking. */
+  looseTemplates: readonly AttachedTemplate[];
   today: string;
   onEdit: () => void;
 }) {
   const t = useT();
   const locale = useLocale();
   const format = useFormatCurrency();
-  const router = useRouter();
-  const colors = useThemeColors();
   const { toast } = useToast();
   const [showSchedule, setShowSchedule] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -428,12 +439,20 @@ function LoanCard({
   const totals = loanTotals(schedule, loan.fees);
   const owed = cents(outstandingOn(terms, schedule, today) * share);
   const split = next ? paymentShare(next, share) : null;
-  // A cent or two either way is insurance on what is owed moving month by
-  // month, not a template that has fallen behind.
-  const amountDrifted =
-    template !== undefined && split !== null && Math.abs(template.amount - split.total) >= 1;
-  const endDrifted =
-    template !== undefined && totals.endsOn !== null && template.endsOn !== totals.endsOn;
+  // What each debit should say: one amount, or — the insurance debited
+  // apart — the payment and the insurance on their own.
+  const separate = loan.insurance_separate && (split?.insurance ?? 0) > 0;
+  const expected = split
+    ? loanDebits(
+        { payment: split.total - split.insurance, insurance: split.insurance },
+        1,
+        separate,
+      )
+    : null;
+  const mismatch =
+    debitDrifts(template, expected?.payment ?? null, totals.endsOn) ||
+    (separate && debitDrifts(insuranceTemplate, expected?.insurance ?? null, totals.endsOn));
+  const missing = !template || (separate && !insuranceTemplate);
   const moment = loanMoment(loan, today);
   const length =
     loan.months % 12 === 0
@@ -524,42 +543,36 @@ function LoanCard({
         ) : null}
       </View>
 
-      <View className="gap-2 rounded-control border border-border p-3">
-        {template ? (
-          <Pressable
-            accessibilityRole="link"
-            onPress={() => router.push(`/recurring?edit=${template.id}`)}
-            className="min-h-11 flex-row items-center gap-1 self-start"
-          >
-            <PrivateAmount className="text-sm">
-              {t("property.paymentLinked", { amount: format(template.amount) })}
-            </PrivateAmount>
-            <Ionicons name="chevron-forward" size={ICON.xs} color={colors.mutedForeground} />
-          </Pressable>
-        ) : (
-          <Text variant="muted">{t("property.paymentNotLinked")}</Text>
-        )}
-        {amountDrifted && split ? (
-          <PrivateAmount className="text-xs text-warning">
-            {t("property.paymentMismatch", {
-              template: format(template.amount),
-              schedule: format(split.total),
-            })}
-          </PrivateAmount>
+      <View className="gap-3 rounded-control border border-border p-3">
+        <DebitLine
+          loanId={loan.id}
+          debit="payment"
+          template={template}
+          expected={expected?.payment ?? null}
+          endsOn={totals.endsOn}
+          linkedText={(amount) =>
+            separate
+              ? t("property.paymentLinkedSeparate", { amount })
+              : t("property.paymentLinked", { amount })
+          }
+          notLinkedText={
+            separate ? t("property.paymentNotLinkedSeparate") : t("property.paymentNotLinked")
+          }
+          candidates={looseTemplates}
+        />
+        {separate ? (
+          <DebitLine
+            loanId={loan.id}
+            debit="insurance"
+            template={insuranceTemplate}
+            expected={expected?.insurance ?? null}
+            endsOn={totals.endsOn}
+            linkedText={(amount) => t("property.insuranceLinked", { amount })}
+            notLinkedText={t("property.insuranceNotLinked")}
+            candidates={looseTemplates}
+          />
         ) : null}
-        {endDrifted && totals.endsOn ? (
-          <Text className="text-xs text-warning">
-            {template.endsOn
-              ? t("property.paymentEndMismatch", {
-                  template: monthAndYear(template.endsOn, locale),
-                  schedule: monthAndYear(totals.endsOn, locale),
-                })
-              : t("property.paymentNoEnd", {
-                  schedule: monthAndYear(totals.endsOn, locale),
-                })}
-          </Text>
-        ) : null}
-        {!template ? (
+        {missing ? (
           <ActionButton
             label={t("property.paymentAdd")}
             done={t("property.paymentAdded")}
@@ -567,11 +580,12 @@ function LoanCard({
               addLoanPayment(loan.id, {
                 categoryName: loanPaymentCategoryName(locale),
                 description: `${loan.label} · ${propertyName}`,
+                insuranceLabel: t("property.insuranceWord"),
               })
             }
           />
         ) : null}
-        {amountDrifted || endDrifted ? (
+        {mismatch ? (
           <ActionButton
             label={t("property.paymentSync")}
             done={t("property.paymentSynced")}
@@ -685,6 +699,112 @@ function MomentPill({ seenKey, label }: { seenKey: string; label: string }) {
         <Text className="text-xs font-semibold text-primary-foreground">{label}</Text>
       </View>
     </Animated.View>
+  );
+}
+
+/**
+ * Whether a debit's entry has fallen behind its schedule: its amount off by
+ * a euro or more — a cent or two is insurance on what is owed moving month
+ * by month — or its end not the loan's.
+ */
+function debitDrifts(
+  template: AttachedTemplate | undefined,
+  expected: number | null,
+  endsOn: string | null,
+): boolean {
+  return (
+    template !== undefined &&
+    ((expected !== null && Math.abs(template.amount - expected) >= 1) ||
+      (endsOn !== null && template.endsOn !== endsOn))
+  );
+}
+
+/**
+ * One of a loan's debits and its recurring entry: linked, opening it, with
+ * any way it and the schedule disagree; or not yet, with the user's entries
+ * that look like it to link — « C'est celle-ci ? ».
+ */
+function DebitLine({
+  loanId,
+  debit,
+  template,
+  expected,
+  endsOn,
+  linkedText,
+  notLinkedText,
+  candidates,
+}: {
+  loanId: string;
+  debit: "payment" | "insurance";
+  template: AttachedTemplate | undefined;
+  expected: number | null;
+  endsOn: string | null;
+  linkedText: (amount: string) => string;
+  notLinkedText: string;
+  candidates: readonly AttachedTemplate[];
+}) {
+  const t = useT();
+  const locale = useLocale();
+  const format = useFormatCurrency();
+  const router = useRouter();
+  const colors = useThemeColors();
+
+  if (!template) {
+    const like = expected !== null ? templatesLike(candidates, expected) : [];
+    return (
+      <View className="gap-2">
+        <Text variant="muted">{notLinkedText}</Text>
+        {like.slice(0, 2).map((candidate) => (
+          <View key={candidate.id} className="gap-2">
+            <PrivateAmount className="text-sm">
+              {t("property.candidate", {
+                name: candidate.description || candidate.categoryName,
+                amount: format(candidate.amount),
+                day: candidate.dayOfMonth ?? 1,
+              })}
+            </PrivateAmount>
+            <ActionButton
+              label={t("property.candidateLink")}
+              done={t("property.entryLinked")}
+              run={() => linkLoanTemplate(loanId, candidate.id, debit)}
+            />
+          </View>
+        ))}
+      </View>
+    );
+  }
+
+  const amountOff = expected !== null && Math.abs(template.amount - expected) >= 1;
+  const endOff = endsOn !== null && template.endsOn !== endsOn;
+  return (
+    <View className="gap-1">
+      <Pressable
+        accessibilityRole="link"
+        onPress={() => router.push(`/recurring?edit=${template.id}`)}
+        className="min-h-11 flex-row items-center gap-1 self-start"
+      >
+        <PrivateAmount className="text-sm">{linkedText(format(template.amount))}</PrivateAmount>
+        <Ionicons name="chevron-forward" size={ICON.xs} color={colors.mutedForeground} />
+      </Pressable>
+      {amountOff && expected !== null ? (
+        <PrivateAmount className="text-xs text-warning">
+          {t(debit === "payment" ? "property.paymentMismatch" : "property.insuranceMismatch", {
+            template: format(template.amount),
+            schedule: format(expected),
+          })}
+        </PrivateAmount>
+      ) : null}
+      {endOff && endsOn ? (
+        <Text className="text-xs text-warning">
+          {template.endsOn
+            ? t("property.paymentEndMismatch", {
+                template: monthAndYear(template.endsOn, locale),
+                schedule: monthAndYear(endsOn, locale),
+              })
+            : t("property.paymentNoEnd", { schedule: monthAndYear(endsOn, locale) })}
+        </Text>
+      ) : null}
+    </View>
   );
 }
 

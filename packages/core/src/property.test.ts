@@ -3,12 +3,14 @@ import { loanSchedule } from "./loan-schedule";
 import {
   acquisitionCost,
   estimatedValue,
+  loanDebits,
   loanPaymentCategoryName,
   loanTermsFromRow,
   notaryFeesEstimate,
   paymentShare,
   propertyPosition,
   quarterLabel,
+  templatesLike,
   valueSourceLine,
 } from "./property";
 import type { Property, PropertyLoan } from "./types/database";
@@ -63,6 +65,8 @@ function loan(overrides: Partial<PropertyLoan> = {}): PropertyLoan {
     known_outstanding: null,
     known_outstanding_on: null,
     known_keeps: null,
+    insurance_separate: false,
+    insurance_template_id: null,
     recurring_template_id: null,
     created_at: "2025-01-01T00:00:00.000Z",
     updated_at: "2025-01-01T00:00:00.000Z",
@@ -354,5 +358,41 @@ describe("valueSourceLine", () => {
   it("writes a quarter the way the reader says it", () => {
     expect(quarterLabel("2026-Q2", "fr")).toBe("T2 2026");
     expect(quarterLabel("2026-Q2", "en")).toBe("Q2 2026");
+  });
+});
+
+describe("loanDebits", () => {
+  const row = { payment: 990.55, insurance: 40 };
+
+  it("is one amount when the bank takes the insurance with the payment", () => {
+    expect(loanDebits(row, 1, false)).toEqual({ payment: 1030.55, insurance: null });
+  });
+
+  it("is two amounts when the insurance is debited apart, each the user's share", () => {
+    expect(loanDebits(row, 1, true)).toEqual({ payment: 990.55, insurance: 40 });
+    expect(loanDebits(row, 0.5, true)).toEqual({ payment: 495.28, insurance: 20 });
+  });
+});
+
+describe("templatesLike", () => {
+  const entries = [
+    { id: "rent", amount: 780 },
+    { id: "loan", amount: 990 },
+    { id: "close", amount: 1000 },
+    { id: "insurance", amount: 40 },
+  ];
+
+  it("offers the entries within five per cent, closest first", () => {
+    expect(templatesLike(entries, 990.55).map((entry) => entry.id)).toEqual([
+      "loan",
+      "close",
+    ]);
+  });
+
+  it("keeps a euro and a half of room under a small amount", () => {
+    expect(templatesLike(entries, 41.2).map((entry) => entry.id)).toEqual([
+      "insurance",
+    ]);
+    expect(templatesLike(entries, 43)).toEqual([]);
   });
 });

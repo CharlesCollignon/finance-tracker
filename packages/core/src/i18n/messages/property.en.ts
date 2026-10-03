@@ -275,4 +275,18 @@ export const propertyEn = {
   emptyValue: "Its value, from the sales around it",
   emptyYours: "What is yours, and what the bank still holds",
   emptyLoans: "Each loan, payment by payment",
+
+  insuranceSeparate: "The insurance is debited separately",
+  insuranceSeparateHint:
+    "Two debits at the bank, the payment then the insurance: each gets its own recurring entry.",
+  insuranceWord: "Insurance",
+  paymentLinkedSeparate: "Its payment, in your recurring entries: {amount} a month",
+  paymentNotLinkedSeparate: "Its payment is not in your recurring entries.",
+  insuranceLinked: "Its insurance, in your recurring entries: {amount} a month",
+  insuranceNotLinked: "Its insurance is not in your recurring entries.",
+  insuranceMismatch:
+    "The insurance's entry says {template}; the schedule says {schedule}.",
+  candidate: "Is it this one? {name}, {amount} on the {day}",
+  candidateLink: "Yes, link it",
+  entryLinked: "Entry linked to the loan",
 };

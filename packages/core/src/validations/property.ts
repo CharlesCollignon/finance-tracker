@@ -197,6 +197,11 @@ export const loanSchema = z
     deferralMonths: z.coerce.number().int().min(0).default(0),
     fees: feeAmount,
     borrowerShare: share,
+    /**
+     * The bank debits the insurance apart from the payment. Absent is
+     * unchanged, so a form that does not ask leaves it be.
+     */
+    insuranceSeparate: z.boolean().optional(),
   })
   .transform((data) =>
     data.deferralKind === "none" ? { ...data, deferralMonths: 0 } : data,

@@ -3,7 +3,6 @@ import { categoryNameVariants, todayIsoLocal } from "@finance/core/constants";
 import {
   cents,
   loanSchedule,
-  monthlyOutlay,
   regularPayment,
 } from "@finance/core/loan-schedule";
 import type { MarketReading } from "@finance/core/market-reading";
@@ -16,7 +15,11 @@ import {
   type IndexKind,
   type PriceIndex,
 } from "@finance/core/price-index";
-import { loanTermsFromRow, type MarketContext } from "@finance/core/property";
+import {
+  loanDebits,
+  loanTermsFromRow,
+  type MarketContext,
+} from "@finance/core/property";
 import type { RentReference } from "@finance/core/rent-reference";
 import type {
   CategoryType,
@@ -83,6 +86,11 @@ export interface PropertyRead {
 export interface PropertiesState {
   /** Oldest purchase first. */
   properties: PropertyRead[];
+  /**
+   * The user's monthly expense templates no loan stands on yet: what a loan
+   * without a template for one of its debits offers to link.
+   */
+  looseTemplates: AttachedTemplate[];
   /** False until migration 049 has run. */
   available: boolean;
 }
@@ -155,6 +163,38 @@ export async function getPriceIndex(
 
 /* ------------------------------------------------------------------ reading */
 
+interface TemplateRow {
+  id: string;
+  description: string | null;
+  amount: number;
+  recurrence: Recurrence;
+  day_of_month: number | null;
+  day_of_week: number | null;
+  month_of_year: number | null;
+  starts_on: string | null;
+  ends_on: string | null;
+  active: boolean;
+  categories: { name: string; type: CategoryType } | null;
+}
+
+function templateFromRow(template: TemplateRow, attached: boolean): AttachedTemplate {
+  return {
+    id: template.id,
+    description: template.description,
+    amount: Number(template.amount),
+    recurrence: template.recurrence,
+    dayOfMonth: template.day_of_month,
+    dayOfWeek: template.day_of_week,
+    monthOfYear: template.month_of_year,
+    startsOn: template.starts_on,
+    endsOn: template.ends_on,
+    active: template.active,
+    attached,
+    categoryName: template.categories?.name ?? "",
+    categoryType: template.categories?.type ?? "expense",
+  };
+}
+
 /** Every property, with its loans and the templates attached to it. */
 export async function getProperties(
   db: Db,
@@ -168,13 +208,13 @@ export async function getProperties(
     .order("created_at");
   if (error) {
     if (isMissingSchema(error)) {
-      return { properties: [], available: false };
+      return { properties: [], looseTemplates: [], available: false };
     }
     throw error;
   }
   const properties = (rows ?? []).map(propertyFromRow);
   if (properties.length === 0) {
-    return { properties: [], available: true };
+    return { properties: [], looseTemplates: [], available: true };
   }
 
   const ids = properties.map((property) => property.id);
@@ -192,7 +232,9 @@ export async function getProperties(
   // The templates attached to a property, and those its loans pay through,
   // which the user may since have detached from it.
   const linked = loans.flatMap((loan) =>
-    loan.recurring_template_id ? [loan.recurring_template_id] : [],
+    [loan.recurring_template_id, loan.insurance_template_id].filter(
+      (id): id is string => id !== null,
+    ),
   );
   const query = db
     .from("recurring_templates")
@@ -219,6 +261,20 @@ export async function getProperties(
   if (readingsError && !isMissingSchema(readingsError)) {
     throw readingsError;
   }
+  const { data: looseRows, error: looseError } = await db
+    .from("recurring_templates")
+    .select(
+      "id, property_id, description, amount, recurrence, day_of_month, day_of_week, month_of_year, starts_on, ends_on, active, categories(name, type)",
+    )
+    .eq("user_id", userId)
+    .eq("active", true)
+    .eq("recurrence", "monthly")
+    .order("created_at");
+  if (looseError) {
+    throw looseError;
+  }
+  const loanTemplates = new Set(linked);
+
   const { data: rentRows, error: rentsError } = await db
     .from("property_rent_references")
     .select("*")
@@ -240,6 +296,13 @@ export async function getProperties(
 
   return {
     available: true,
+    looseTemplates: (looseRows ?? [])
+      .filter(
+        (template) =>
+          template.categories?.type === "expense" &&
+          !loanTemplates.has(template.id),
+      )
+      .map((template) => templateFromRow(template, false)),
     properties: properties.map((property) => {
       const own = loans.filter((loan) => loan.property_id === property.id);
       const reading = (readingRows ?? []).find(
@@ -265,7 +328,10 @@ export async function getProperties(
         ),
       };
       const paidThrough = new Set(
-        own.map((loan) => loan.recurring_template_id),
+        own.flatMap((loan) => [
+          loan.recurring_template_id,
+          loan.insurance_template_id,
+        ]),
       );
       const rent = (rentRows ?? []).find(
         (row) => row.property_id === property.id,
@@ -291,21 +357,9 @@ export async function getProperties(
               template.property_id === property.id ||
               paidThrough.has(template.id),
           )
-          .map((template): AttachedTemplate => ({
-            id: template.id,
-            description: template.description,
-            amount: Number(template.amount),
-            recurrence: template.recurrence,
-            dayOfMonth: template.day_of_month,
-            dayOfWeek: template.day_of_week,
-            monthOfYear: template.month_of_year,
-            startsOn: template.starts_on,
-            endsOn: template.ends_on,
-            active: template.active,
-            attached: template.property_id === property.id,
-            categoryName: template.categories?.name ?? "",
-            categoryType: template.categories?.type ?? "expense",
-          })),
+          .map((template) =>
+            templateFromRow(template, template.property_id === property.id),
+          ),
       };
     }),
   };
@@ -501,11 +555,15 @@ async function categoryNamed(
   return { id: created.id };
 }
 
+/** Which of a loan's debits a template stands for. */
+export type LoanDebit = "payment" | "insurance";
+
 async function linkTemplate(
   db: Db,
   userId: string,
   loan: { id: string; property_id: string },
   templateId: string,
+  debit: LoanDebit = "payment",
 ): Promise<ActionResult> {
   const { error: attachError } = await db
     .from("recurring_templates")
@@ -518,12 +576,55 @@ async function linkTemplate(
   const { error } = await db
     .from("property_loans")
     .update({
-      recurring_template_id: templateId,
+      ...(debit === "payment"
+        ? { recurring_template_id: templateId }
+        : { insurance_template_id: templateId }),
       updated_at: new Date().toISOString(),
     })
     .eq("id", loan.id)
     .eq("user_id", userId);
   return error ? { error: dbError(error) } : { success: true };
+}
+
+/**
+ * Link a template the user already has to one of a loan's debits — its
+ * payment, or its insurance debited apart — and attach it to the property.
+ * Its amount is left as the user wrote it: the property says when it and
+ * the schedule disagree.
+ */
+export async function linkLoanTemplate(
+  db: Db,
+  userId: string,
+  input: { loanId: string; templateId: string; debit: LoanDebit },
+): Promise<ActionResult> {
+  if (
+    !uuid.safeParse(input.loanId).success ||
+    !uuid.safeParse(input.templateId).success
+  ) {
+    return { error: "errors.invalidInput" };
+  }
+  const [{ data: loan, error }, { data: template, error: templateError }] =
+    await Promise.all([
+      db
+        .from("property_loans")
+        .select("id, property_id")
+        .eq("id", input.loanId)
+        .eq("user_id", userId)
+        .maybeSingle(),
+      db
+        .from("recurring_templates")
+        .select("id")
+        .eq("id", input.templateId)
+        .eq("user_id", userId)
+        .maybeSingle(),
+    ]);
+  if (error || templateError) {
+    return { error: dbError((error ?? templateError)!) };
+  }
+  if (!loan || !template) {
+    return { error: "errors.notFound" };
+  }
+  return linkTemplate(db, userId, loan, input.templateId, input.debit);
 }
 
 export interface LoanPaymentOptions {
@@ -533,7 +634,16 @@ export interface LoanPaymentOptions {
    * the last, filed under this category name (found in either language, or
    * created).
    */
-  addPayment?: { categoryName: string; description: string };
+  addPayment?: {
+    categoryName: string;
+    description: string;
+    /**
+     * The word the insurance's own template is described by, in the
+     * reader's language — « Assurance · Prêt principal · … » — when it is
+     * debited apart.
+     */
+    insuranceLabel?: string;
+  };
   /** Or link a template the user already has. */
   templateId?: string;
 }
@@ -571,6 +681,14 @@ export async function saveLoan(
     deferral_months: data.deferralMonths,
     fees: data.fees,
     borrower_share: data.borrowerShare,
+    ...(data.insuranceSeparate === undefined
+      ? {}
+      : {
+          insurance_separate: data.insuranceSeparate,
+          // Back to one debit: the insurance's template is no longer the
+          // loan's. It stays among the recurring entries for the user.
+          ...(data.insuranceSeparate ? {} : { insurance_template_id: null }),
+        }),
   };
 
   const write = data.id
@@ -593,7 +711,7 @@ export async function saveLoan(
       : { success: true, loanId: loan.id, templateId: options.templateId };
   }
 
-  if (!options.addPayment || loan.recurring_template_id) {
+  if (!options.addPayment || !missingDebits(loan)) {
     return {
       success: true,
       loanId: loan.id,
@@ -619,8 +737,11 @@ export async function addPropertyWithLoan(
   input: {
     property: PropertyChange;
     loan: Omit<LoanChange, "propertyId"> | null;
-    /** The category the payment is filed under, in the reader's words. */
-    payment: { categoryName: string } | null;
+    /**
+     * The category the payment is filed under, and the word for its
+     * insurance debited apart, in the reader's words.
+     */
+    payment: { categoryName: string; insuranceLabel?: string } | null;
   },
 ): Promise<ActionResult<{ propertyId: string; paymentAmount: number | null }>> {
   const saved = await saveProperty(db, userId, input.property);
@@ -641,7 +762,11 @@ export async function addPropertyWithLoan(
     { ...input.loan, propertyId },
     input.payment
       ? {
-          addPayment: { categoryName: input.payment.categoryName, description },
+          addPayment: {
+            categoryName: input.payment.categoryName,
+            insuranceLabel: input.payment.insuranceLabel,
+            description,
+          },
         }
       : {},
   );
@@ -665,11 +790,31 @@ export async function addPropertyWithLoan(
   };
 }
 
+/** Whether a loan lacks a template for one of its debits. */
+function missingDebits(loan: PropertyLoan): boolean {
+  return (
+    !loan.recurring_template_id ||
+    (loan.insurance_separate &&
+      !loan.insurance_template_id &&
+      (loan.insurance_monthly > 0 || (loan.insurance_rate ?? 0) > 0))
+  );
+}
+
+/**
+ * Write the templates a loan lacks: its payment — with its insurance, or
+ * without it when the insurance is debited apart — and that insurance's
+ * own. Each from the first regular payment to the last, the user's share,
+ * filed under the category name given (found in either language, or made).
+ */
 async function writeLoanPayment(
   db: Db,
   userId: string,
   loan: PropertyLoan,
-  payment: { categoryName: string; description: string },
+  payment: {
+    categoryName: string;
+    description: string;
+    insuranceLabel?: string;
+  },
 ): Promise<ActionResult<{ templateId: string | null }>> {
   const terms = loanTermsFromRow(loan);
   const schedule = loanSchedule(terms);
@@ -682,35 +827,80 @@ async function writeLoanPayment(
   if ("error" in category) {
     return { error: category.error };
   }
-  const template = await saveRecurringTemplate(db, userId, {
-    categoryId: category.id,
-    description: payment.description,
-    pricingType: "fixed",
-    amount: cents(monthlyOutlay(terms, schedule) * loan.borrower_share),
-    recurrence: "monthly",
-    dayOfMonth: Number(first.on.slice(8, 10)),
-    startsOn: first.on,
-    endsOn: last.on,
-    propertyId: loan.property_id,
-  });
-  if ("error" in template) {
-    return { error: template.error };
+  const debits = loanDebits(
+    first,
+    Number(loan.borrower_share),
+    loan.insurance_separate,
+  );
+  const write = async (
+    amount: number,
+    description: string,
+    debit: LoanDebit,
+  ): Promise<ActionResult<{ templateId: string }>> => {
+    const template = await saveRecurringTemplate(db, userId, {
+      categoryId: category.id,
+      description,
+      pricingType: "fixed",
+      amount,
+      recurrence: "monthly",
+      dayOfMonth: Number(first.on.slice(8, 10)),
+      startsOn: first.on,
+      endsOn: last.on,
+      propertyId: loan.property_id,
+    });
+    if ("error" in template) {
+      return { error: template.error };
+    }
+    const linked = await linkTemplate(
+      db,
+      userId,
+      loan,
+      template.templateId,
+      debit,
+    );
+    return linked.error
+      ? { error: linked.error }
+      : { success: true, templateId: template.templateId };
+  };
+
+  let templateId = loan.recurring_template_id;
+  if (!templateId) {
+    const written = await write(debits.payment, payment.description, "payment");
+    if (!written.success) {
+      return { error: written.error };
+    }
+    templateId = written.templateId;
   }
-  const linked = await linkTemplate(db, userId, loan, template.templateId);
-  return linked.error
-    ? { error: linked.error }
-    : { success: true, templateId: template.templateId };
+  if (debits.insurance && !loan.insurance_template_id) {
+    const written = await write(
+      debits.insurance,
+      payment.insuranceLabel
+        ? `${payment.insuranceLabel} · ${payment.description}`
+        : payment.description,
+      "insurance",
+    );
+    if (!written.success) {
+      return { error: written.error };
+    }
+  }
+  return { success: true, templateId };
 }
 
 /**
- * Give a loan that has none its payment among the recurring entries: what
- * `saveLoan` writes when asked, for a loan saved without it.
+ * Give a loan the templates it lacks among the recurring entries: what
+ * `saveLoan` writes when asked, for a loan saved without them — its payment,
+ * or its insurance once it is debited apart. One it already has is
+ * attached to the property again, in case it was taken off.
  */
 export async function addLoanPayment(
   db: Db,
   userId: string,
   loanId: string,
-  payment: { categoryName: string; description: string },
+  payment: {
+    categoryName: string;
+    description: string;
+    insuranceLabel?: string;
+  },
 ): Promise<ActionResult<{ templateId: string | null }>> {
   const { data: row, error } = await db
     .from("property_loans")
@@ -722,7 +912,7 @@ export async function addLoanPayment(
     return { error: error ? dbError(error) : "errors.notFound" };
   }
   const loan = loanFromRow(row);
-  if (loan.recurring_template_id) {
+  if (!missingDebits(loan) && loan.recurring_template_id) {
     const linked = await linkTemplate(
       db,
       userId,
@@ -774,9 +964,10 @@ export async function setLoanKnownOutstanding(
 }
 
 /**
- * Bring a loan's payment template in line with its schedule: the amount of
- * the next payment, and the day of the last. Rows already written keep
- * what they say; the months ahead follow.
+ * Bring a loan's templates in line with its schedule: the amount of the
+ * next payment — with its insurance, or without it when that is debited
+ * apart — the insurance's own, and the day of the last. Rows already
+ * written keep what they say; the months ahead follow.
  */
 export async function syncLoanPayment(
   db: Db,
@@ -804,15 +995,28 @@ export async function syncLoanPayment(
   if (!next || !last) {
     return { error: "errors.notFound" };
   }
-  const { error: updateError } = await db
-    .from("recurring_templates")
-    .update({
-      amount: cents((next.payment + next.insurance) * loan.borrower_share),
-      ends_on: last.on,
-    })
-    .eq("id", loan.recurring_template_id)
-    .eq("user_id", userId);
-  return updateError ? { error: dbError(updateError) } : { success: true };
+  const debits = loanDebits(
+    next,
+    Number(loan.borrower_share),
+    loan.insurance_separate,
+  );
+  const updates: { id: string; amount: number }[] = [
+    { id: loan.recurring_template_id, amount: debits.payment },
+    ...(debits.insurance !== null && loan.insurance_template_id
+      ? [{ id: loan.insurance_template_id, amount: debits.insurance }]
+      : []),
+  ];
+  for (const update of updates) {
+    const { error: updateError } = await db
+      .from("recurring_templates")
+      .update({ amount: update.amount, ends_on: last.on })
+      .eq("id", update.id)
+      .eq("user_id", userId);
+    if (updateError) {
+      return { error: dbError(updateError) };
+    }
+  }
+  return { success: true };
 }
 
 /** Delete a loan. Its payment template stays, as the property's does. */
