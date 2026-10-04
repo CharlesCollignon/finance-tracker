@@ -124,7 +124,7 @@ const SCHEMA_WORDS: Record<
   }
 > = {
   en: {
-    headline: "One short clause. No figures, not even as {{fact:id}}.",
+    headline: `One short clause, ${MAX_WALLET_HEADLINE_LENGTH} characters at most. No figures, not even as {{fact:id}}.`,
     claim: "Two sentences at most. Write every figure as {{fact:id}}.",
     basis:
       'The ids this rests on, bare: "us-share", not "{{fact:us-share}}". Every id used in the text must appear here.',
@@ -133,8 +133,7 @@ const SCHEMA_WORDS: Record<
       "How big a part this should play. Never a percentage — the app computes those.",
   },
   fr: {
-    headline:
-      "Une seule courte proposition. Aucun chiffre, pas même sous la forme {{fact:id}}.",
+    headline: `Une seule courte proposition, ${MAX_WALLET_HEADLINE_LENGTH} caractères au plus. Aucun chiffre, pas même sous la forme {{fact:id}}.`,
     claim:
       "Deux phrases au plus. Écrivez chaque chiffre sous la forme {{fact:id}}.",
     basis:
@@ -389,15 +388,11 @@ export function verifyWalletRead(
     };
   }
 
-  // The one length that is fatal, because a headline cannot be dropped: it is
-  // the line the whole surface rests on and there is nothing to fall back to.
-  if (visibleLength(answer.headline) > MAX_WALLET_HEADLINE_LENGTH) {
-    return {
-      ok: false,
-      reason: "unreadable",
-      detail: t("walletRead.refusal.headlineTooLong"),
-    };
-  }
+  // A headline cannot be dropped — the surface rests on it — so one that ran
+  // long is shortened rather than taken as a reason to throw the review away,
+  // which is what this used to do: four observations lost over a title a
+  // few words too long.
+  const headline = shortenHeadline(answer.headline, MAX_WALLET_HEADLINE_LENGTH);
 
   const dropped: DroppedClaim[] = [];
 
@@ -498,7 +493,7 @@ export function verifyWalletRead(
 
   return {
     ok: true,
-    read: { headline: answer.headline, observations, suggestions },
+    read: { headline, observations, suggestions },
     dropped,
   };
 }
@@ -519,6 +514,32 @@ const INSTRUMENT_LITERALS: string[] = [
     ]),
   ),
 ].sort((left, right) => right.length - left.length);
+
+/**
+ * A headline brought within `max` characters: cut where a clause ends if one
+ * ends far enough in — after a dash, a colon, a semicolon or a comma — and
+ * otherwise at the last whole word, with an ellipsis. A headline already
+ * short enough comes back as it was.
+ */
+export function shortenHeadline(text: string, max: number): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) {
+    return trimmed;
+  }
+  const head = trimmed.slice(0, max);
+  const clauseEnd = Math.max(
+    head.lastIndexOf(" — "),
+    head.lastIndexOf(" : "),
+    head.lastIndexOf("; "),
+    head.lastIndexOf(", "),
+  );
+  if (clauseEnd >= max * 0.5) {
+    return head.slice(0, clauseEnd).replace(/[\s,;:—-]+$/, "");
+  }
+  const wordEnd = head.slice(0, max - 1).lastIndexOf(" ");
+  const cut = wordEnd > 0 ? head.slice(0, wordEnd) : head.slice(0, max - 1);
+  return `${cut.replace(/[\s,;:—-]+$/, "")}…`;
+}
 
 /**
  * Index names that carry a number, written as the model writes them in

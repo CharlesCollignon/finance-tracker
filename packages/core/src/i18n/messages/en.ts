@@ -2822,7 +2822,6 @@ export const en = {
       unknownInstrument:
         'It proposed "{isin}", which is not an instrument this app knows',
       headlineHadFigure: "The headline contained a figure of its own",
-      headlineTooLong: "The headline was longer than one line",
       everythingDropped: "Every observation had to be dropped",
     },
 

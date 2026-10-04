@@ -2005,7 +2005,6 @@ export const fr: Messages = {
       unknownInstrument:
         "Elle proposait «\u00A0{isin}\u00A0», qui n'est pas un instrument connu de Pluclair",
       headlineHadFigure: "Le titre contenait un chiffre de son cru",
-      headlineTooLong: "Le titre dépassait une ligne",
       everythingDropped: "Toutes les observations ont dû être écartées",
     },
 

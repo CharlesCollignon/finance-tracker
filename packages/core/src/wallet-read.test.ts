@@ -7,6 +7,7 @@ import {
   MAX_WALLET_SUGGESTIONS,
   createFakeWalletReadSource,
   renderWalletRead,
+  shortenHeadline,
   targetFromWalletRead,
   verifyWalletRead,
   walletReadFooting,
@@ -561,15 +562,25 @@ describe("verifyWalletRead", () => {
 
   /* ------------------------------------------------------------- the limits */
 
-  it("refuses a headline longer than a line", () => {
-    const verdict = verifyWalletRead(
-      answer({ headline: "x".repeat(MAX_WALLET_HEADLINE_LENGTH + 1) }),
-      pack().facts,
-      "en",
+  it("shortens a headline longer than a line rather than refusing the read", () => {
+    const headline =
+      "Your portfolio leans heavily on the same large American companies, through two funds that overlap almost entirely";
+    const verdict = verifyWalletRead(answer({ headline }), pack().facts, "en");
+    expect(verdict.ok).toBe(true);
+    if (!verdict.ok) return;
+    expect(verdict.read.headline.length).toBeLessThanOrEqual(
+      MAX_WALLET_HEADLINE_LENGTH,
     );
-    expect(verdict.ok).toBe(false);
-    if (verdict.ok) return;
-    expect(verdict.reason).toBe("unreadable");
+    expect(verdict.read.headline).toBe(
+      "Your portfolio leans heavily on the same large American companies",
+    );
+  });
+
+  it("cuts a headline with no clause to end at at a whole word", () => {
+    expect(shortenHeadline("one two three four five six", 15)).toBe(
+      "one two three…",
+    );
+    expect(shortenHeadline("short enough", 15)).toBe("short enough");
   });
 
   it("drops an over-long claim rather than the read", () => {
