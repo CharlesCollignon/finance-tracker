@@ -69,11 +69,13 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             does not follow the pointer here, so the scene is out of the
             pointer's way like the backgrounds elsewhere. The bottom fades
             into the page's ground, so the black of space does not end on a
-            line. */}
+            line. The surface at the renderer's ceiling (4, it was 3.5) and the
+            light a touch up (1.65, it was 1.5), so the land under the rim
+            reads a little brighter. */}
         <div className="pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
           <LandingEarth
-            surfaceBrightness={3.5}
-            illumination={1.5}
+            surfaceBrightness={4}
+            illumination={1.65}
             aurora={0.6}
             interactive={false}
           />
