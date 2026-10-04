@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { AppScreen } from "@/components/marketing/AppScreen";
 import { LandingBloom } from "@/components/marketing/LandingOrb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
-import { Reveal } from "@/components/marketing/LandingReveal";
+import { FadeUp, Land, RiseWords } from "@/components/marketing/LandingReveal";
 import { getLocale, getT } from "@/lib/locale";
 import {
   adjacentLandingPages,
@@ -57,33 +57,41 @@ export async function FeaturePage({ pageId, isLoggedIn }: FeaturePageProps) {
       <div className="relative mx-auto w-full max-w-6xl px-6 pb-20 pt-32 md:pb-28 md:pt-40">
         <div className="grid items-center gap-12 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-14">
           <div>
-            <h1 className="marketing-display text-display-section">
-              {page.title}
-            </h1>
-            <p className="mt-5 max-w-md text-base leading-relaxed text-marketing-muted md:text-lg">
-              {page.utility}
-            </p>
-            <LandingCtas
-              isLoggedIn={isLoggedIn}
-              size="lg"
-              layout="solo"
-              className="mt-8"
+            <RiseWords
+              as="h1"
+              trigger="mount"
+              delay={0.2}
+              text={page.title}
+              className="marketing-display text-display-section"
             />
+            <FadeUp trigger="mount" delay={0.55}>
+              <p className="mt-5 max-w-md text-base leading-relaxed text-marketing-muted md:text-lg">
+                {page.utility}
+              </p>
+              <LandingCtas
+                isLoggedIn={isLoggedIn}
+                size="lg"
+                layout="solo"
+                className="mt-8"
+              />
+            </FadeUp>
           </div>
-          <Reveal delay={0.1}>
+          <Land>
             <AppScreen pageId={pageId} />
-          </Reveal>
+          </Land>
         </div>
 
         <ol className="mt-20 grid gap-10 md:mt-28 md:grid-cols-3 md:gap-12">
-          {page.steps.map((step) => (
+          {page.steps.map((step, index) => (
             <li key={step.title}>
-              <h2 className="font-head text-lg text-marketing-ink">
-                {step.title}
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
-                {step.body}
-              </p>
+              <FadeUp delay={index * 0.1}>
+                <h2 className="font-head text-lg text-marketing-ink">
+                  {step.title}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
+                  {step.body}
+                </p>
+              </FadeUp>
             </li>
           ))}
         </ol>

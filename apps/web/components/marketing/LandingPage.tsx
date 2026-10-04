@@ -1,13 +1,22 @@
 /* Hallmark · genre: atmospheric · macrostructure: Split Studio · theme: design.md (Pluclair) · enrichment: kept (WebGL Earth hero) · nav: kept · footer: kept */
 
 import Link from "next/link";
-import { ArrowRight, Plus } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { getLocale } from "@/lib/locale";
 import { AppScreen } from "@/components/marketing/AppScreen";
 import { LandingBloom } from "@/components/marketing/LandingOrb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LandingEarth } from "@/components/marketing/LandingEarth";
-import { Reveal } from "@/components/marketing/LandingReveal";
+import {
+  FadeUp,
+  HeroDepth,
+  HeroDrift,
+  Land,
+  Questions,
+  RiseLines,
+  RiseWords,
+  ScrollWords,
+} from "@/components/marketing/LandingReveal";
 import {
   featureHref,
   landingCopyFor,
@@ -51,8 +60,10 @@ const SPLIT_FLIPPED = "md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]";
  * here, each said in two or three plain sentences next to a picture of the
  * screen, with the feature page one press away for anyone who wants the rest.
  *
- * Text is there from the first paint; only the screens fade in, as they come
- * into view. What is not open to everyone yet is said once, under "Coming
+ * It moves on one motif, things rising out of a horizon (`LandingReveal`):
+ * the hero on a single timeline with the Earth's, headings rising word by
+ * word, the promise lit as it is read, the screens landing as they are
+ * scrolled to. What is not open to everyone yet is said once, under "Coming
  * soon", in the future tense.
  */
 export async function LandingPage({ isLoggedIn }: LandingPageProps) {
@@ -76,37 +87,50 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
             line. The surface at the renderer's ceiling (4, it was 3.5) and the
             light a touch up (1.65, it was 1.5), so the land under the rim
             reads a little brighter. */}
-        <div className="pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
+        <HeroDepth className="pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
           <LandingEarth
             surfaceBrightness={4}
             illumination={1.65}
             aurora={0.6}
             interactive={false}
           />
-        </div>
+        </HeroDepth>
 
-        <div className="page-enter relative z-20 mx-auto w-full max-w-6xl">
-          <h1 className="marketing-display text-display-hero">
-            {hero.titleLines.map((line) => (
-              <span key={line} className="block">
-                {line}
-              </span>
-            ))}
-          </h1>
-          <p className="mt-6 max-w-xl text-[0.975rem] leading-relaxed text-marketing-muted sm:text-lg">
-            {hero.tagline}
-          </p>
-          <LandingCtas isLoggedIn={isLoggedIn} size="lg" className="mt-8" />
-        </div>
+        {/* One timeline with the Earth's: the nav slides down, the
+            headline's lines rise while the planet fades in, the tagline and
+            the buttons follow, and as the sun starts up behind the rim a
+            glint crosses the gold button. Scrolling away, the text drifts
+            up and fades while the planet comes slowly closer. */}
+        <HeroDrift className="relative z-20 mx-auto w-full max-w-6xl">
+          <RiseLines
+            lines={hero.titleLines}
+            className="marketing-display text-display-hero"
+            delay={0.35}
+          />
+          <FadeUp trigger="mount" delay={0.95}>
+            <p className="mt-6 max-w-xl text-[0.975rem] leading-relaxed text-marketing-muted sm:text-lg">
+              {hero.tagline}
+            </p>
+          </FadeUp>
+          <FadeUp trigger="mount" delay={1.2}>
+            <LandingCtas
+              isLoggedIn={isLoggedIn}
+              size="lg"
+              shine
+              className="mt-8"
+            />
+          </FadeUp>
+        </HeroDrift>
       </section>
 
       {/* --------------------------------------------------------- promise */}
       {/* The three commitments as one sentence, set large and left: a thing
           the reader is told, not a row of cards to scan. */}
       <section className="relative px-6 py-20 md:py-28">
-        <p className="marketing-display mx-auto max-w-5xl text-balance text-display-sub text-marketing-ink">
-          {promise.text}
-        </p>
+        <ScrollWords
+          text={promise.text}
+          className="marketing-display mx-auto max-w-5xl text-balance text-display-sub text-marketing-ink"
+        />
       </section>
 
       {/* ------------------------------------------------------------- how */}
@@ -115,9 +139,10 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
         className="relative overflow-x-clip px-6 pb-28 md:pb-40"
       >
         <div className="mx-auto max-w-6xl">
-          <h2 className="marketing-display text-display-section">
-            {how.heading}
-          </h2>
+          <RiseWords
+            text={how.heading}
+            className="marketing-display text-display-section"
+          />
           <div className="mt-14 flex flex-col gap-24 md:mt-20 md:gap-36">
             {HOW_ORDER.map((id, index) => {
               const row = how.rows[id];
@@ -133,29 +158,35 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
                   )}
                 >
                   <div className={flipped ? "md:order-2" : undefined}>
-                    <h3 className="marketing-display text-display-sub">
-                      {row.question}
-                    </h3>
-                    <p className="mt-4 max-w-md text-base leading-relaxed text-marketing-muted">
-                      {row.body}
-                    </p>
-                    <Link
-                      href={featureHref(id)}
-                      className={cn(
-                        "mt-7 inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-marketing-ink transition-colors duration-200 hover:border-white/30 hover:bg-white/[0.06] motion-reduce:transition-none",
-                        marketingFocus,
-                      )}
-                    >
-                      {row.link}
-                      <ArrowRight size={14} aria-hidden />
-                    </Link>
+                    <RiseWords
+                      as="h3"
+                      text={row.question}
+                      className="marketing-display text-display-sub"
+                    />
+                    <FadeUp delay={0.2}>
+                      <p className="mt-4 max-w-md text-base leading-relaxed text-marketing-muted">
+                        {row.body}
+                      </p>
+                      <Link
+                        href={featureHref(id)}
+                        className={cn(
+                          "group mt-7 inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-marketing-ink transition-colors duration-200 hover:border-white/30 hover:bg-white/[0.06] motion-reduce:transition-none",
+                          marketingFocus,
+                        )}
+                      >
+                        {row.link}
+                        {/* It leans toward where it leads. */}
+                        <ArrowRight
+                          size={14}
+                          aria-hidden
+                          className="transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none"
+                        />
+                      </Link>
+                    </FadeUp>
                   </div>
-                  <Reveal
-                    delay={0.1}
-                    className={flipped ? "md:order-1" : undefined}
-                  >
+                  <Land className={flipped ? "md:order-1" : undefined}>
                     <AppScreen pageId={id} />
-                  </Reveal>
+                  </Land>
                 </article>
               );
             })}
@@ -166,16 +197,21 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
       {/* ------------------------------------------------------------ soon */}
       <section className="relative px-6 pb-28 md:pb-36">
         <div className={cn("mx-auto grid max-w-6xl gap-10 md:gap-14", SPLIT)}>
-          <h2 className="marketing-display text-display-sub">{soon.heading}</h2>
+          <RiseWords
+            text={soon.heading}
+            className="marketing-display text-display-sub"
+          />
           <ul className="grid gap-x-12 gap-y-10 sm:grid-cols-2">
-            {soon.items.map((item) => (
+            {soon.items.map((item, index) => (
               <li key={item.title}>
-                <h3 className="font-head text-lg text-marketing-ink">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
-                  {item.body}
-                </p>
+                <FadeUp delay={0.1 + index * 0.08}>
+                  <h3 className="font-head text-lg text-marketing-ink">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
+                    {item.body}
+                  </p>
+                </FadeUp>
               </li>
             ))}
           </ul>
@@ -187,29 +223,13 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
           are where what happens to the reader's data is now said. */}
       <section id="privacy" className="relative px-6 pb-28 md:pb-36">
         <div className={cn("mx-auto grid max-w-6xl gap-10 md:gap-14", SPLIT)}>
-          <h2 className="marketing-display text-display-sub">{faq.heading}</h2>
-          <div className="divide-y divide-white/10 border-y border-white/10">
-            {faq.items.map((item) => (
-              <details key={item.question} className="group">
-                <summary
-                  className={cn(
-                    "flex cursor-pointer list-none items-center justify-between gap-6 rounded-control py-5 font-head text-lg text-marketing-ink [&::-webkit-details-marker]:hidden",
-                    marketingFocus,
-                  )}
-                >
-                  {item.question}
-                  <Plus
-                    size={16}
-                    aria-hidden
-                    className="shrink-0 text-marketing-muted transition-transform duration-200 group-open:rotate-45 motion-reduce:transition-none"
-                  />
-                </summary>
-                <p className="max-w-xl pb-6 text-base leading-relaxed text-marketing-muted">
-                  {item.answer}
-                </p>
-              </details>
-            ))}
-          </div>
+          <RiseWords
+            text={faq.heading}
+            className="marketing-display text-display-sub"
+          />
+          <FadeUp delay={0.15}>
+            <Questions items={faq.items} />
+          </FadeUp>
         </div>
       </section>
 
@@ -222,17 +242,20 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
         />
 
         <div className="relative mx-auto flex max-w-2xl flex-col items-center text-center">
-          <h2 className="marketing-display text-display-section">
-            {finalCta.heading}
-          </h2>
-          <p className="mt-5 max-w-md text-base leading-relaxed text-marketing-muted">
-            {finalCta.body}
-          </p>
-          <LandingCtas
-            isLoggedIn={isLoggedIn}
-            size="lg"
-            className="mt-9 justify-center"
+          <RiseWords
+            text={finalCta.heading}
+            className="marketing-display text-display-section"
           />
+          <FadeUp delay={0.3} className="flex flex-col items-center">
+            <p className="mt-5 max-w-md text-base leading-relaxed text-marketing-muted">
+              {finalCta.body}
+            </p>
+            <LandingCtas
+              isLoggedIn={isLoggedIn}
+              size="lg"
+              className="mt-9 justify-center"
+            />
+          </FadeUp>
         </div>
       </section>
     </>
