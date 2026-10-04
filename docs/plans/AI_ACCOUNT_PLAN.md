@@ -139,19 +139,37 @@ given at connection; the DPIA's minimisation line says the same.
 
 ## Phase 1 — The connection (branch `ai-account-1/connection`)
 
-- [ ] Migration 053: `ai_connections` (one per user: provider, sealed key,
-      model, connected at, last used at, last error), the sealed column out
-      of every client role's reach; `ai_connect_states` (one-time state,
-      PKCE verifier, platform, expiry). SQL tests in `supabase/tests`.
-- [ ] `lib/ai/secrets.ts`: seal and open, after `lib/bank/secrets.ts`.
-- [ ] `POST /api/ai/openrouter/start` (cookie or the phone's bearer):
-      stores a state and its verifier, answers OpenRouter's authorisation
-      address.
-- [ ] `GET /api/ai/openrouter/callback`: exchanges the code with the
-      verifier, checks the key (`/api/v1/key`), seals and stores it, then
-      lands on the Profile (web) or `pluclair://` (phone).
-- [ ] Disconnect: deletes the row, and says how to revoke the key on
-      OpenRouter.
+- [x] Migration 053: `ai_connections` (one per user: service, model,
+      connected at, last used at, last error — the user may read it, change
+      its model and delete it), `ai_connection_secrets` (the sealed key, no
+      client role may touch it, gone with its connection) and
+      `ai_connect_flows` (state, sealed PKCE verifier, `redirect` or `app`,
+      ten minutes); the `ai.account` flag, off for everyone. Nine checks in
+      `supabase/tests/053_ai_connections.test.sql`, passing on the local
+      stack.
+- [x] `lib/secrets/sealer.ts`: the bank's AES-256-GCM sealing made one
+      sealer per key; the bank's under `BANK_SECRETS_KEY` as before, the AI
+      account's under its own `AI_SECRETS_KEY`.
+- [x] `lib/ai/openrouter.ts`: PKCE, the authorisation address (key labelled
+      « Pluclair », our state), the code exchange and the key check.
+- [x] `POST /api/ai/openrouter/start` (cookie or the phone's bearer, behind
+      the flag): stores a state and its sealed verifier, answers
+      OpenRouter's authorisation address.
+- [x] `GET /api/ai/openrouter/callback`: spends the state, exchanges the
+      code with the verifier, checks the key, seals and stores it — keeping
+      a reconnecting user's model — then lands on `/profile?ai=…` (web) or
+      `pluclair://profile?ai=…` (phone). Declined at OpenRouter, the state
+      is spent all the same.
+- [x] `DELETE /api/ai/connection`: the row goes as the user, its key with
+      it; the Profile (Phase 3) says how to revoke the key on OpenRouter.
+- [x] Tested without OpenRouter or a server: the client against a fake
+      `fetch`, the whole round trip against an in-memory database (stored
+      sealed, default model, replay refused, expiry, refusals store
+      nothing, a declined round trip spent).
+
+Still to do by hand before Phase 2 is tried for real: apply 053 on the
+hosted project, set `AI_SECRETS_KEY` on Vercel, and turn `ai.account` on
+for the owner's account.
 
 ## Phase 2 — The reads, on the user's account (branch `ai-account-2/reads`)
 

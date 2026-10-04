@@ -1972,6 +1972,13 @@ export const fr: Messages = {
     },
   },
 
+  /** Le compte IA de l'utilisateur, connecté par OpenRouter. */
+  aiAccount: {
+    unavailable:
+      "La connexion d'un compte IA n'est pas disponible pour le moment.",
+    notEnabled: "La connexion d'un compte IA n'est pas encore ouverte.",
+  },
+
   /** La revue des portefeuilles : ce qu'un modèle tire de la transparence. */
   walletRead: {
     review: "Passer en revue avec {model}",
