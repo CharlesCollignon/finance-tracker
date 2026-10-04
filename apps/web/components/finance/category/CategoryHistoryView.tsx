@@ -44,6 +44,8 @@ interface CategoryHistoryViewProps {
   readConfigured: boolean;
   /** The maker, for the control that spends a call — the same everywhere. */
   readWriterBrand: string;
+  /** Written on the user's own AI account: no count, and an invitation without one. */
+  readAccount: boolean;
   /** The model recorded on each stored read, per category id. */
   readModels: Record<string, string | null>;
 }
@@ -76,6 +78,7 @@ export function CategoryHistoryView({
   readWritesLeft,
   readConfigured,
   readWriterBrand,
+  readAccount,
   readModels,
 }: CategoryHistoryViewProps) {
   const t = useT();
@@ -133,6 +136,7 @@ export function CategoryHistoryView({
               readWritesLeft={readWritesLeft}
               readConfigured={readConfigured}
               readWriterBrand={readWriterBrand}
+              readAccount={readAccount}
               readModel={readModels[openCard.history.categoryId] ?? null}
             />
           ) : null

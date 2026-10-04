@@ -82,11 +82,13 @@ export interface ReservedCategorySelection {
 export async function reserveSelection(
   userId: string,
   client?: Client,
+  /** The monthly ceiling: Pluclair's, unless the user's own account pays. */
+  allowance: number = CATEGORY_SELECTION_WRITES_PER_MONTH,
 ): Promise<ReservedCategorySelection | null> {
   const supabase = client ?? (await createClient());
   const { data, error } = await supabase.rpc("reserve_category_selection", {
     target_user: userId,
-    allowance: CATEGORY_SELECTION_WRITES_PER_MONTH,
+    allowance,
     cooldown_seconds: CATEGORY_SELECTION_COOLDOWN_SECONDS,
     reservation_seconds: CATEGORY_SELECTION_RESERVATION_SECONDS,
   });

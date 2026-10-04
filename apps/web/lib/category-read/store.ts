@@ -179,12 +179,14 @@ export async function reserveWrite(
   userId: string,
   categoryId: string,
   client?: Client,
+  /** The monthly ceiling: Pluclair's, unless the user's own account pays. */
+  allowance: number = CATEGORY_READ_WRITES_PER_MONTH,
 ): Promise<ReservedCategoryRead | null> {
   const supabase = client ?? (await createClient());
   const { data, error } = await supabase.rpc("reserve_category_read", {
     target_user: userId,
     target_category: categoryId,
-    allowance: CATEGORY_READ_WRITES_PER_MONTH,
+    allowance,
     cooldown_seconds: CATEGORY_READ_COOLDOWN_SECONDS,
     reservation_seconds: CATEGORY_READ_RESERVATION_SECONDS,
   });

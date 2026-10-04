@@ -10,13 +10,12 @@ import {
 } from "@finance/core/wallet-read";
 import { buildArbitrage } from "@finance/core/look-through-target";
 import { walletReadsRemaining } from "@finance/core/wallet-read-budget";
-import { describeModel } from "@finance/core/model-name";
 
 import { getAuthUser } from "@/lib/auth/get-user";
 import { getLocale } from "@/lib/locale";
 import { LookThroughView } from "@/components/finance/LookThroughView";
-import { walletReadConfigured } from "@/lib/wallet-read/client";
-import { monthReadModel } from "@/lib/month-read/client";
+import { ACCOUNT_ALLOWANCE, writerStateFor } from "@/lib/ai/writer";
+import { createClient } from "@/lib/supabase/server";
 import { gatherLookThrough } from "@/lib/wallet-read/facts";
 import { readWalletReadState } from "@/lib/wallet-read/store";
 
@@ -43,9 +42,10 @@ export default async function LookThroughPage() {
 
   const locale = await getLocale();
 
-  const [bundle, { stored }] = await Promise.all([
+  const [bundle, { stored }, writer] = await Promise.all([
     gatherLookThrough(user.id),
     readWalletReadState(user.id),
+    writerStateFor(user.id, await createClient()),
   ]);
 
   const { lookThrough, facts, defaultTarget } = bundle;
@@ -98,12 +98,16 @@ export default async function LookThroughPage() {
           : null
       }
       stale={stale}
-      readsLeft={walletReadsRemaining(stored?.tally ?? null)}
-      canReview={walletReadConfigured()}
-      // The maker, for the button, from what this deployment is configured
-      // with. The exact model that wrote a stored read is a different
+      readsLeft={walletReadsRemaining(
+        stored?.tally ?? null,
+        writer.account ? ACCOUNT_ALLOWANCE : undefined,
+      )}
+      canReview={writer.writable}
+      reviewAccount={writer.account}
+      // The writer's name, for the button: Pluclair's model or the user's
+      // own. The exact model that wrote a stored read is a different
       // question and comes off the read itself, below.
-      writerBrand={describeModel(monthReadModel()).brand}
+      writerBrand={writer.name}
       readModel={stored?.read ? stored.model : null}
       queueLength={bundle.queue.length}
       arbitrage={arbitrage}

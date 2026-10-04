@@ -34,3 +34,17 @@ export const DEFAULT_AI_MODEL: AiModel = AI_MODELS[0]!;
 export function aiModel(id: string | null | undefined): AiModel {
   return AI_MODELS.find((model) => model.id === id) ?? DEFAULT_AI_MODEL;
 }
+
+/**
+ * What a screen needs to know about who would write a read — never the key.
+ * `account` says which rules apply: the user's own AI account (no monthly
+ * allowance, and nothing until one is connected) or Pluclair's key (its
+ * allowances).
+ */
+export interface WriterState {
+  account: boolean;
+  /** Whether a read can be written at all right now. */
+  writable: boolean;
+  /** The name a reader recognises, for the button that spends a call. */
+  name: string;
+}

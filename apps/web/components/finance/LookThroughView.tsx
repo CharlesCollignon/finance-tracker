@@ -54,6 +54,7 @@ import { useToast } from "@/components/layout/ToastProvider";
 import { ICON } from "@/lib/icon-scale";
 import { MICRO } from "@/lib/type-scale";
 import { cn } from "@/lib/utils";
+import { ConnectAiInvite } from "@/components/finance/ConnectAiInvite";
 import { INTL_LOCALES } from "@finance/core/i18n/locale";
 
 /**
@@ -89,6 +90,8 @@ export interface LookThroughViewProps {
   readsLeft: number;
   /** False when there is no key, or migration 033 has not run. */
   canReview: boolean;
+  /** Reviewed on the user's own AI account: no count, and an invitation without one. */
+  reviewAccount: boolean;
   /**
    * What to call the writer on the controls that spend a call.
    *
@@ -135,6 +138,7 @@ export function LookThroughView({
   stale,
   readsLeft,
   canReview,
+  reviewAccount,
   writerBrand,
   readModel,
   queueLength,
@@ -468,6 +472,8 @@ export function LookThroughView({
                       ? t("walletRead.reviewing")
                       : t("walletRead.review", { model: writerBrand })}
                   </Button>
+                ) : reviewAccount ? (
+                  <ConnectAiInvite />
                 ) : null
               }
             >
@@ -504,7 +510,7 @@ export function LookThroughView({
                         {t("walletRead.stale")}
                       </Badge>
                     ) : null}
-                    {canReview ? (
+                    {canReview && !reviewAccount ? (
                       <span className={cn(MICRO, "text-muted-foreground")}>
                         {t("walletRead.reviewHint", { remaining: readsLeft })}
                       </span>

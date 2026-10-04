@@ -125,12 +125,14 @@ export async function readWalletReadState(
 export async function reserveWalletRead(
   userId: string,
   client?: Client,
+  /** The monthly ceiling: Pluclair's, unless the user's own account pays. */
+  allowance: number = WALLET_READS_PER_MONTH,
 ): Promise<MonthReadTally | null> {
   const supabase = client ?? (await createClient());
   const { data, error } = await supabase.rpc("reserve_wallet_read", {
     target_user: userId,
     this_month: thisMonthColumn(),
-    allowance: WALLET_READS_PER_MONTH,
+    allowance,
     cooldown_seconds: WALLET_READ_COOLDOWN_SECONDS,
     reservation_seconds: WALLET_READ_RESERVATION_SECONDS,
   });

@@ -3,6 +3,7 @@ import { formatCurrency, formatMonthLabel } from "@finance/core/constants";
 import {
   decideMonthReadWrite,
   explainWriteRefusal,
+  MONTH_READ_WRITES_PER_MONTH,
   writesRemaining,
 } from "@finance/core/month-read-budget";
 import { factsDigest } from "@finance/core/month-facts";
@@ -12,9 +13,11 @@ import {
   MONTH_READ_PROMPT_VERSION,
 } from "@finance/core/month-read-prompt";
 import type { Database } from "@finance/core/types/database";
-import { monthReadConfigured } from "@/lib/month-read/client";
+import { readSource } from "@/lib/ai/read-source";
+import { ACCOUNT_ALLOWANCE, writerFor } from "@/lib/ai/writer";
+import { MONTH_READ_SOURCE } from "@/lib/month-read/client";
 import { gatherMonthFacts } from "@/lib/month-read/facts";
-import { monthReadSource } from "@/lib/month-read/source";
+import { createClient } from "@/lib/supabase/server";
 import { getLocale, getT } from "@/lib/locale";
 import {
   readMonthReadState,
@@ -56,13 +59,19 @@ export async function writeMonthRead(
   const t = await getT();
   const monthLabel = formatMonthLabel(year, month, locale);
 
-  if (!monthReadConfigured()) {
+  const { writer, account } = await writerFor(
+    userId,
+    client ?? (await createClient()),
+  );
+  if (!writer) {
     return {
       written: false,
-      message: t("monthRead.noWriter"),
+      message: account ? t("aiAccount.connectFirst") : t("monthRead.noWriter"),
       writesLeft: 0,
     };
   }
+  const allowance = account ? ACCOUNT_ALLOWANCE : MONTH_READ_WRITES_PER_MONTH;
+  const source = readSource(MONTH_READ_SOURCE, writer);
 
   const [{ stored, tracked }, facts] = await Promise.all([
     readMonthReadState(userId, year, month, client),
@@ -74,19 +83,20 @@ export async function writeMonthRead(
     facts,
     now: new Date().toISOString(),
     tracked,
+    allowance,
   });
 
   if (!decision.write) {
     return {
       written: false,
       message: explainWriteRefusal(decision, monthLabel, locale),
-      writesLeft: writesRemaining(stored?.tally ?? null),
+      writesLeft: writesRemaining(stored?.tally ?? null, allowance),
     };
   }
 
   // Reserved before the call, not counted after it. Counting afterwards means
   // any number of concurrent presses all pass the check and all spend.
-  const reserved = await reserveWrite(userId, year, month, client);
+  const reserved = await reserveWrite(userId, year, month, client, allowance);
   const before = stored?.tally.writes ?? 0;
   if (!reserved || reserved.writes <= before) {
     // The database declined where the pure decision had allowed it, which
@@ -95,7 +105,7 @@ export async function writeMonthRead(
     return {
       written: false,
       message: t("monthRead.inFlight"),
-      writesLeft: writesRemaining(reserved ?? stored?.tally ?? null),
+      writesLeft: writesRemaining(reserved ?? stored?.tally ?? null, allowance),
     };
   }
 
@@ -109,7 +119,7 @@ export async function writeMonthRead(
     locale,
   });
 
-  const raw = await monthReadSource.write(prompt);
+  const raw = await source.write(prompt);
 
   if (raw === null) {
     // Never reached the provider, or came back unreadable at the envelope
@@ -118,7 +128,7 @@ export async function writeMonthRead(
     return {
       written: false,
       message: t("monthRead.noAnswer"),
-      writesLeft: writesRemaining(stored?.tally ?? null),
+      writesLeft: writesRemaining(stored?.tally ?? null, allowance),
     };
   }
 
@@ -137,7 +147,7 @@ export async function writeMonthRead(
         facts: null,
         digest: null,
         trimmed: 0,
-        model: monthReadSource.model,
+        model: source.model,
         promptVersion: MONTH_READ_PROMPT_VERSION,
         refusedDelta: 1,
         locale,
@@ -154,7 +164,7 @@ export async function writeMonthRead(
         verdict.reason === "unknown-datum"
           ? t("monthRead.threwAway", { detail: verdict.detail })
           : t("monthRead.unusable"),
-      writesLeft: writesRemaining(reserved),
+      writesLeft: writesRemaining(reserved, allowance),
     };
   }
 
@@ -167,7 +177,7 @@ export async function writeMonthRead(
       facts,
       digest: factsDigest(facts),
       trimmed: verdict.trimmed.length,
-      model: monthReadSource.model,
+      model: source.model,
       promptVersion: MONTH_READ_PROMPT_VERSION,
       refusedDelta: 0,
       locale,
@@ -178,6 +188,6 @@ export async function writeMonthRead(
   return {
     written: true,
     message: null,
-    writesLeft: writesRemaining(reserved),
+    writesLeft: writesRemaining(reserved, allowance),
   };
 }

@@ -23,14 +23,16 @@ import {
 } from "@finance/core/month-read-budget";
 import type { Database } from "@finance/core/types/database";
 import { gatherCategoryFindings } from "@/lib/category-selection/findings";
-import { categorySelectionSource } from "@/lib/category-selection/source";
+import { readSource } from "@/lib/ai/read-source";
+import { ACCOUNT_ALLOWANCE, writerFor } from "@/lib/ai/writer";
+import { CATEGORY_SELECTION_SOURCE } from "@/lib/category-selection/source";
 import {
   readCategorySelectionState,
   refundSelection,
   reserveSelection,
   storeSelection,
 } from "@/lib/category-selection/store";
-import { monthReadConfigured } from "@/lib/month-read/client";
+import { createClient } from "@/lib/supabase/server";
 import { getLocale, getT } from "@/lib/locale";
 
 type Client = SupabaseClient<Database>;
@@ -68,13 +70,23 @@ export async function rerankFindings(
   const locale = await getLocale();
   const t = await getT();
 
-  if (!monthReadConfigured()) {
+  const { writer, account } = await writerFor(
+    userId,
+    client ?? (await createClient()),
+  );
+  if (!writer) {
     return {
       written: false,
-      message: t("categoryRead.noWriter"),
+      message: account
+        ? t("aiAccount.connectFirst")
+        : t("categoryRead.noWriter"),
       writesLeft: 0,
     };
   }
+  const allowance = account
+    ? ACCOUNT_ALLOWANCE
+    : CATEGORY_SELECTION_WRITES_PER_MONTH;
+  const source = readSource(CATEGORY_SELECTION_SOURCE, writer);
 
   const [state, findings] = await Promise.all([
     readCategorySelectionState(userId, client),
@@ -92,7 +104,7 @@ export async function rerankFindings(
     facts: { thin: findings.length < MIN_FINDINGS_TO_RANK },
     now: new Date().toISOString(),
     tracked: state.tracked,
-    allowance: CATEGORY_SELECTION_WRITES_PER_MONTH,
+    allowance,
     cooldownSeconds: CATEGORY_SELECTION_COOLDOWN_SECONDS,
     reservationSeconds: CATEGORY_SELECTION_RESERVATION_SECONDS,
   });
@@ -101,25 +113,19 @@ export async function rerankFindings(
     return {
       written: false,
       message: explainWriteRefusal(decision, monthLabel, locale),
-      writesLeft: writesRemaining(
-        state.tally,
-        CATEGORY_SELECTION_WRITES_PER_MONTH,
-      ),
+      writesLeft: writesRemaining(state.tally, allowance),
     };
   }
 
   // Reserved before the call, not counted after it — see `month-read/write.ts`.
-  const reserved = await reserveSelection(userId, client);
+  const reserved = await reserveSelection(userId, client, allowance);
   if (!reserved || reserved.writes <= state.tally.writes) {
     // The database declined where the pure decision had allowed it: a second
     // press landing first, most often. Its own state is the authority.
     return {
       written: false,
       message: t("monthRead.inFlight"),
-      writesLeft: writesRemaining(
-        reserved?.tally ?? state.tally,
-        CATEGORY_SELECTION_WRITES_PER_MONTH,
-      ),
+      writesLeft: writesRemaining(reserved?.tally ?? state.tally, allowance),
     };
   }
 
@@ -131,7 +137,7 @@ export async function rerankFindings(
     locale,
   });
 
-  const raw = await categorySelectionSource.write(prompt);
+  const raw = await source.write(prompt);
 
   if (raw === null) {
     // Never reached the provider, or came back unreadable at the envelope
@@ -140,10 +146,7 @@ export async function rerankFindings(
     return {
       written: false,
       message: t("monthRead.noAnswer"),
-      writesLeft: writesRemaining(
-        state.tally,
-        CATEGORY_SELECTION_WRITES_PER_MONTH,
-      ),
+      writesLeft: writesRemaining(state.tally, allowance),
     };
   }
 
@@ -158,7 +161,7 @@ export async function rerankFindings(
       {
         selection: null,
         digest: null,
-        model: categorySelectionSource.model,
+        model: source.model,
         promptVersion: CATEGORY_SELECTION_PROMPT_VERSION,
         refusedDelta: 1,
         locale,
@@ -169,10 +172,7 @@ export async function rerankFindings(
     return {
       written: false,
       message: t("monthRead.unusable"),
-      writesLeft: writesRemaining(
-        reserved.tally,
-        CATEGORY_SELECTION_WRITES_PER_MONTH,
-      ),
+      writesLeft: writesRemaining(reserved.tally, allowance),
     };
   }
 
@@ -185,7 +185,7 @@ export async function rerankFindings(
       // matching this one, the stored order describes figures that have
       // moved, and it is not applied.
       digest: findingsDigest(findings),
-      model: categorySelectionSource.model,
+      model: source.model,
       promptVersion: CATEGORY_SELECTION_PROMPT_VERSION,
       refusedDelta: 0,
       locale,
@@ -196,9 +196,6 @@ export async function rerankFindings(
   return {
     written: true,
     message: null,
-    writesLeft: writesRemaining(
-      reserved.tally,
-      CATEGORY_SELECTION_WRITES_PER_MONTH,
-    ),
+    writesLeft: writesRemaining(reserved.tally, allowance),
   };
 }

@@ -11,8 +11,8 @@ import type {
   Database,
   InstrumentReadingTallyColumns,
 } from "@finance/core/types/database";
-import { instrumentReadingConfigured } from "@/lib/instrument-reading/client";
-import { instrumentReadingSource } from "@/lib/instrument-reading/source";
+import { ACCOUNT_ALLOWANCE, writerFor } from "@/lib/ai/writer";
+import { instrumentReadingSourceFor } from "@/lib/instrument-reading/client";
 import {
   getInstrumentReadings,
   getReadingTally,
@@ -119,6 +119,12 @@ export interface ReadInstrumentOptions {
    * so in its own code instead of inheriting a refusal it cannot explain.
    */
   cooldownSeconds?: number;
+  /**
+   * `client` holds the service role — the nightly walk, not the user asking —
+   * so whether the user writes with their own AI account is read from the
+   * tables rather than from a session that is not there.
+   */
+  service?: boolean;
 }
 
 function thisMonthColumn(): string {
@@ -137,13 +143,18 @@ export async function readInstrument(
     client,
     now = new Date(),
     cooldownSeconds = COOLDOWN_SECONDS,
+    service = false,
   } = options;
 
-  if (!instrumentReadingConfigured()) {
+  const supabase = client ?? (await createClient());
+  // Pluclair's key, or the user's own AI account — and on that account, no
+  // monthly allowance and nothing read without a connection.
+  const { writer, account } = await writerFor(userId, supabase, { service });
+  if (!writer) {
     return { status: "no-reader" };
   }
-
-  const supabase = client ?? (await createClient());
+  const allowance = account ? ACCOUNT_ALLOWANCE : READINGS_PER_MONTH;
+  const source = instrumentReadingSourceFor(writer);
   const normalised = isin.trim().toUpperCase();
 
   // Checked before anything is reserved: a fresh reading means there is
@@ -171,7 +182,7 @@ export async function readInstrument(
       target_user: userId,
       target_isin: normalised,
       this_month: thisMonthColumn(),
-      allowance: READINGS_PER_MONTH,
+      allowance,
       cooldown_seconds: cooldownSeconds,
       reservation_seconds: RESERVATION_SECONDS,
     },
@@ -199,10 +210,10 @@ export async function readInstrument(
   }
 
   if (!reserved || reserved.reads <= before.reads) {
-    return { status: whyDeclined(reserved, cooldownSeconds, now) };
+    return { status: whyDeclined(reserved, cooldownSeconds, now, allowance) };
   }
 
-  const answer = await instrumentReadingSource.read({
+  const answer = await source.read({
     isin: normalised,
     name,
     symbol,
@@ -218,9 +229,9 @@ export async function readInstrument(
       // instrument for ever, so it must not read as "this one fund is
       // awkward" — that is the sentence that had this button looking broken.
       status:
-        instrumentReadingSource.lastFailure === "no-search"
+        source.lastFailure === "no-search"
           ? "no-search"
-          : instrumentReadingSource.lastFailure === "nothing-found"
+          : source.lastFailure === "nothing-found"
             ? "nothing-found"
             : "provider-down",
     };
@@ -230,7 +241,7 @@ export async function readInstrument(
     { isin: normalised, name, symbol },
     answer,
     now,
-    instrumentReadingSource.model,
+    source.model,
   );
 
   if (!verdict.ok) {
@@ -319,6 +330,7 @@ function whyDeclined(
   row: InstrumentReadingTallyColumns | null,
   cooldownSeconds: number,
   now: Date,
+  allowance: number,
 ): Extract<
   InstrumentReadStatus,
   "cooling" | "allowance-spent" | "provider-down"
@@ -344,7 +356,7 @@ function whyDeclined(
     return "cooling";
   }
 
-  return row.reads >= READINGS_PER_MONTH ? "allowance-spent" : "provider-down";
+  return row.reads >= allowance ? "allowance-spent" : "provider-down";
 }
 
 /** Hand the attempt back. Never fatal — see `refundWalletRead`. */

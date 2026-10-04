@@ -5,7 +5,7 @@ import {
   type InstrumentReadingSource,
   type ReadingFailure,
 } from "@finance/core/instrument-reading";
-import { monthReadModel } from "@/lib/month-read/client";
+import type { Writer } from "@/lib/ai/writer";
 
 /**
  * Reading one instrument off the market.
@@ -42,7 +42,6 @@ import { monthReadModel } from "@/lib/month-read/client";
  */
 
 const CONVERSATIONS_ENDPOINT = "https://api.mistral.ai/v1/conversations";
-const COMPLETIONS_ENDPOINT = "https://api.mistral.ai/v1/chat/completions";
 
 /** Facts, not prose: as close to deterministic as the parameter allows. */
 const TEMPERATURE = 0;
@@ -63,19 +62,6 @@ const TRANSCRIBE_TIMEOUT_MS = 20_000;
 
 const FAILURE_THRESHOLD = 3;
 const COOLDOWN_MS = 5 * 60 * 1000;
-
-function apiKey(): string | null {
-  return process.env.MISTRAL_API_KEY?.trim() || null;
-}
-
-export function instrumentReadingModel(): string {
-  return monthReadModel();
-}
-
-/** A boolean, so the key never crosses into anything that renders. */
-export function instrumentReadingConfigured(): boolean {
-  return apiKey() !== null;
-}
 
 /**
  * A fund *or* a single company, because a portfolio holds both.
@@ -148,24 +134,23 @@ const TRANSCRIBE_INSTRUCTIONS =
 
 export interface InstrumentReadingSourceOptions {
   /** The two network calls, injected so failure handling is testable. */
-  search?: (request: InstrumentReadingRequest, key: string) => Promise<string>;
+  search?: (
+    request: InstrumentReadingRequest,
+    writer: Writer,
+  ) => Promise<string>;
   transcribe?: (
     request: InstrumentReadingRequest,
     notes: string,
-    key: string,
+    writer: Writer,
   ) => Promise<unknown>;
   now?: () => number;
-  failureThreshold?: number;
-  cooldownMs?: number;
 }
 
 /**
- * A call the provider answered, with a refusal.
- *
- * Carries the status so the caller can tell a plan that does not include
- * something from a provider having a bad minute. Everything else — a timeout,
- * a socket closing, a body that will not parse — arrives as an ordinary Error
- * and is treated as the provider being down.
+ * The provider refusing outright, as against not answering. A 4xx on the
+ * search most likely means the account cannot search the web at all — a
+ * permanent fact rather than a bad moment — so it is carried out as its own
+ * thing and not merged into "the provider did not answer".
  */
 class ProviderRefused extends Error {
   constructor(
@@ -178,9 +163,9 @@ class ProviderRefused extends Error {
 }
 
 async function post(
+  writer: Writer,
   endpoint: string,
   body: unknown,
-  key: string,
   timeoutMs: number,
   label: string,
 ): Promise<unknown> {
@@ -191,7 +176,8 @@ async function post(
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${key}`,
+        ...writer.headers,
+        Authorization: `Bearer ${writer.key}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
@@ -199,13 +185,9 @@ async function post(
     });
 
     if (!response.ok) {
-      // The status, never the body. A 4xx on the conversations endpoint most
-      // likely means the plan does not include the web search connector —
-      // which is a permanent fact about this deployment rather than a bad
-      // moment, so it is carried out as its own thing and not merged into
-      // "the provider did not answer".
+      // The status, never the body.
       throw new ProviderRefused(
-        `Mistral ${label} answered ${response.status}`,
+        `${label} answered ${response.status}`,
         response.status,
       );
     }
@@ -217,13 +199,11 @@ async function post(
 }
 
 /**
- * Everything the assistant said, with its citations appended.
+ * The prose of a Mistral conversation, and the pages its web search read.
  *
- * A `message.output` entry's content is either a plain string or a list of
- * chunks that alternate between text and `tool_reference`. The references are
- * the pages the figures came from, and they are folded into the notes so the
- * transcribing call can put them in `sources` — which is what lets a figure
- * on screen be traced back to where it was read.
+ * Joined into one block, sources listed after: the transcription step is
+ * told to copy only what the notes state, and a page named beside the
+ * figures is what lets a reader of the stored notes check one.
  */
 function notesFromConversation(raw: unknown): string {
   const outputs =
@@ -264,26 +244,82 @@ function notesFromConversation(raw: unknown): string {
     }
   }
 
-  const notes = text.join("").trim();
+  return withSources(text.join(""), sources);
+}
+
+/**
+ * The prose of an OpenRouter answer, and the pages its web plugin read —
+ * given back as `url_citation` annotations on the message.
+ */
+function notesFromCompletion(raw: unknown): string {
+  const message = (
+    raw as {
+      choices?: {
+        message?: {
+          content?: unknown;
+          annotations?: { type?: string; url_citation?: { url?: unknown } }[];
+        };
+      }[];
+    }
+  )?.choices?.[0]?.message;
+  const text = typeof message?.content === "string" ? message.content : "";
+  const sources: string[] = [];
+  for (const note of message?.annotations ?? []) {
+    const url = note?.url_citation?.url;
+    if (note?.type === "url_citation" && typeof url === "string") {
+      if (!sources.includes(url)) {
+        sources.push(url);
+      }
+    }
+  }
+  return withSources(text, sources);
+}
+
+function withSources(text: string, sources: string[]): string {
+  const notes = text.trim();
   if (notes === "" || sources.length === 0) {
     return notes;
   }
-
   return `${notes}\n\nPages read:\n${sources.map((url) => `- ${url}`).join("\n")}`;
 }
 
-async function defaultSearch(
-  request: InstrumentReadingRequest,
-  key: string,
-): Promise<string> {
+/** What the search asks about one instrument. */
+function searchQuestion(request: InstrumentReadingRequest): string {
   const named = request.symbol
     ? `${request.name} (${request.symbol}), ISIN ${request.isin}`
     : `${request.name}, ISIN ${request.isin}`;
+  return (
+    `Find, for ${named}:\n` +
+    "- what it holds: companies, bonds, a commodity such as gold, or " +
+    "crypto — and whether it is a fund or a single listed company\n" +
+    "- the annual ongoing charge (TER or OCF), for a fund\n" +
+    "- its currency\n" +
+    "- its country breakdown by weight — for a single company, its " +
+    "own country at 100%; for a commodity or crypto, none at all\n" +
+    // Asked for in full and by name, because a partial answer is what
+    // actually came back: a first live run returned three of eleven
+    // sectors. The reader downstream reports the shortfall rather than
+    // hiding it, but a complete list is better than a caveat about an
+    // incomplete one.
+    "- its sector breakdown by weight, every sector the factsheet " +
+    "lists, not just the largest few; for a single company, its own " +
+    "GICS sector at 100%; for a commodity or crypto, none at all\n" +
+    "- its largest holdings with weights — for a single company, " +
+    "itself at 100%\n\n" +
+    "Give the figures and say which page each came from."
+  );
+}
 
+/** Mistral's own web search, through its conversations API — Pluclair's key. */
+async function mistralSearch(
+  request: InstrumentReadingRequest,
+  writer: Writer,
+): Promise<string> {
   const raw = await post(
+    writer,
     CONVERSATIONS_ENDPOINT,
     {
-      model: instrumentReadingModel(),
+      model: writer.model,
       // Inline rather than against a stored agent: an agent would be a second
       // thing to create, version and keep in step with this prompt.
       instructions: SEARCH_INSTRUCTIONS,
@@ -296,49 +332,55 @@ async function defaultSearch(
       // conversation would leave this person's holdings sitting on a third
       // party's servers for no purpose.
       store: false,
-      inputs: [
-        {
-          role: "user",
-          content:
-            `Find, for ${named}:\n` +
-            "- what it holds: companies, bonds, a commodity such as gold, or " +
-            "crypto — and whether it is a fund or a single listed company\n" +
-            "- the annual ongoing charge (TER or OCF), for a fund\n" +
-            "- its currency\n" +
-            "- its country breakdown by weight — for a single company, its " +
-            "own country at 100%; for a commodity or crypto, none at all\n" +
-            // Asked for in full and by name, because a partial answer is
-            // what actually came back: a first live run returned three of
-            // eleven sectors. The reader downstream reports the shortfall
-            // rather than hiding it, but a complete list is better than a
-            // caveat about an incomplete one.
-            "- its sector breakdown by weight, every sector the factsheet " +
-            "lists, not just the largest few; for a single company, its own " +
-            "GICS sector at 100%; for a commodity or crypto, none at all\n" +
-            "- its largest holdings with weights — for a single company, " +
-            "itself at 100%\n\n" +
-            "Give the figures and say which page each came from.",
-        },
-      ],
+      inputs: [{ role: "user", content: searchQuestion(request) }],
     },
-    key,
     SEARCH_TIMEOUT_MS,
-    "conversations",
+    "Mistral conversations",
   );
-
   return notesFromConversation(raw);
 }
 
-async function defaultTranscribe(
+/**
+ * OpenRouter's web plugin, on the user's own account: the same question,
+ * the model searching the web through it and citing the pages it read.
+ * Charged per request on top of the model, on the user's credits.
+ */
+async function openRouterSearch(
+  request: InstrumentReadingRequest,
+  writer: Writer,
+): Promise<string> {
+  const raw = await post(
+    writer,
+    writer.endpoint,
+    {
+      model: writer.model,
+      plugins: [{ id: "web", max_results: 5 }],
+      ...(writer.temperature === null ? {} : { temperature: TEMPERATURE }),
+      max_tokens: SEARCH_MAX_TOKENS,
+      messages: [
+        { role: "system", content: SEARCH_INSTRUCTIONS },
+        { role: "user", content: searchQuestion(request) },
+      ],
+    },
+    SEARCH_TIMEOUT_MS,
+    "OpenRouter search",
+  );
+  return notesFromCompletion(raw);
+}
+
+/** The notes turned into the reading's structure, by the same writer. */
+async function transcribeNotes(
   request: InstrumentReadingRequest,
   notes: string,
-  key: string,
+  writer: Writer,
 ): Promise<unknown> {
   const raw = await post(
-    COMPLETIONS_ENDPOINT,
+    writer,
+    writer.endpoint,
     {
-      model: instrumentReadingModel(),
-      temperature: TEMPERATURE,
+      ...writer.extra,
+      model: writer.model,
+      ...(writer.temperature === null ? {} : { temperature: TEMPERATURE }),
       max_tokens: TRANSCRIBE_MAX_TOKENS,
       response_format: instrumentReadingJsonSchema(),
       messages: [
@@ -349,7 +391,6 @@ async function defaultTranscribe(
         },
       ],
     },
-    key,
     TRANSCRIBE_TIMEOUT_MS,
     "completions",
   );
@@ -368,35 +409,34 @@ async function defaultTranscribe(
   }
 }
 
-export function createMistralInstrumentReadingSource(
+/** Failures in a row, per writer: a user's failing account closes only its own door. */
+const breakers = new Map<string, { failures: number; closedUntil: number }>();
+
+/** A reading's source for one writer, Pluclair's key or the user's account. */
+export function instrumentReadingSourceFor(
+  writer: Writer,
   options: InstrumentReadingSourceOptions = {},
 ): InstrumentReadingSource {
-  const search = options.search ?? defaultSearch;
-  const transcribe = options.transcribe ?? defaultTranscribe;
+  const search =
+    options.search ??
+    (writer.kind === "pluclair" ? mistralSearch : openRouterSearch);
+  const transcribe = options.transcribe ?? transcribeNotes;
   const now = options.now ?? Date.now;
-  const failureThreshold = options.failureThreshold ?? FAILURE_THRESHOLD;
-  const cooldownMs = options.cooldownMs ?? COOLDOWN_MS;
-
-  let consecutiveFailures = 0;
-  let cooldownUntil = 0;
   let lastFailure: ReadingFailure | null = null;
 
   return {
-    get model() {
-      return instrumentReadingModel();
-    },
+    model: writer.model,
 
     get lastFailure() {
       return lastFailure;
     },
 
     async read(request: InstrumentReadingRequest) {
-      const key = apiKey();
-      if (!key) {
-        lastFailure = "provider-down";
-        return null;
-      }
-      if (now() < cooldownUntil) {
+      const breaker = breakers.get(writer.label) ?? {
+        failures: 0,
+        closedUntil: 0,
+      };
+      if (now() < breaker.closedUntil) {
         // The breaker is open, so this is the provider's last three failures
         // speaking rather than anything about this instrument.
         lastFailure = "provider-down";
@@ -404,34 +444,34 @@ export function createMistralInstrumentReadingSource(
       }
 
       try {
-        const notes = await search(request, key);
+        const notes = await search(request, writer);
 
         // A search that found nothing is not a failure of the provider, and
         // must not count towards the breaker — otherwise three obscure funds
         // in a row would put the whole feature to sleep. It is also the one
         // outcome a walk down the queue should step over rather than stop on.
         if (notes.trim() === "") {
-          consecutiveFailures = 0;
+          breakers.delete(writer.label);
           lastFailure = "nothing-found";
           return null;
         }
 
-        const answer = await transcribe(request, notes, key);
-        consecutiveFailures = 0;
-        cooldownUntil = 0;
+        const answer = await transcribe(request, notes, writer);
+        breakers.delete(writer.label);
         lastFailure = null;
         return answer;
       } catch (error) {
         console.warn(
-          `[instrument-reading] no answer from ${instrumentReadingModel()}: ${
+          `[instrument-reading] no answer from ${writer.model} (${writer.kind}): ${
             error instanceof Error ? error.message : "unknown failure"
           }`,
         );
-        consecutiveFailures += 1;
-        if (consecutiveFailures >= failureThreshold) {
-          cooldownUntil = now() + cooldownMs;
-        }
-        // A 4xx from the search call is the connector refusing, and no number
+        const failures = breaker.failures + 1;
+        breakers.set(writer.label, {
+          failures,
+          closedUntil: failures >= FAILURE_THRESHOLD ? now() + COOLDOWN_MS : 0,
+        });
+        // A 4xx from the search call is the provider refusing, and no number
         // of retries against any instrument will change it. Anything else is
         // treated as a bad moment, which is the safer of the two mistakes:
         // it invites a retry rather than telling someone their plan is wrong.
