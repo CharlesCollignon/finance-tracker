@@ -136,6 +136,45 @@ describe("verifyWalletRead", () => {
 
   /* ------------------------------------------------------- the figure rule */
 
+  it("drops a blank observation, and keeps the review", () => {
+    const verdict = verifyWalletRead(
+      answer({
+        observations: [
+          ...answer().observations,
+          { text: " ", tone: "neutral", basis: [] },
+        ],
+      }),
+      pack().facts,
+      "en",
+    );
+    expect(verdict.ok).toBe(true);
+    if (!verdict.ok) return;
+    expect(verdict.read.observations).toHaveLength(2);
+  });
+
+  it("drops a suggestion that names no instrument, and keeps the review", () => {
+    const blank = {
+      text: "Something broader would help.",
+      effort: "habit",
+      basis: [],
+      isin: "",
+      role: "core-world",
+      wallet: "pea",
+      weightClass: "lead",
+    };
+    const verdict = verifyWalletRead(
+      answer({ suggestions: [answer().suggestions[0], blank] }),
+      pack().facts,
+      "en",
+    );
+    expect(verdict.ok).toBe(true);
+    if (!verdict.ok) return;
+    expect(verdict.read.suggestions).toHaveLength(1);
+    expect(verdict.dropped).toEqual([
+      expect.objectContaining({ kind: "suggestion", why: "no-instrument" }),
+    ]);
+  });
+
   it("takes a claim resting on many figures, and trims a read that runs long", () => {
     const many = {
       text: "The United States is {{fact:us-share}} of what could be read.",

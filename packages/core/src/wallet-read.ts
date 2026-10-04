@@ -75,7 +75,7 @@ const RUNAWAY_BASIS = 16;
 
 const claimSchema = z
   .object({
-    text: z.string().min(1).max(RUNAWAY_CLAIM_LENGTH),
+    text: z.string().max(RUNAWAY_CLAIM_LENGTH),
     basis: z.array(z.string().min(1).max(80)).max(RUNAWAY_BASIS),
   })
   .strict();
@@ -99,7 +99,7 @@ export const walletReadAnswerSchema = z
           .extend({
             effort: z.enum(["now", "this-month", "habit"]),
             /** From the catalogue handed over in the prompt. Never invented. */
-            isin: z.string().min(1).max(20),
+            isin: z.string().max(20),
             role: z.enum(SUGGESTION_ROLES),
             wallet: z.enum(INVESTMENT_WALLET_IDS as [string, ...string[]]),
             /** How big, said without a number. */
@@ -290,7 +290,11 @@ export interface DroppedClaim {
     | "unknown-datum"
     | "unbacked-placeholder"
     | "too-long"
-    | "wrong-wrapper";
+    | "wrong-wrapper"
+    /** A suggestion that named no instrument at all: nothing to suggest. */
+    | "no-instrument"
+    /** A claim left blank: nothing to show. */
+    | "empty";
 }
 
 export type WalletReadVerdict =
@@ -363,6 +367,11 @@ export function verifyWalletRead(
   // An invented identifier is fatal before anything else is considered. A
   // read that made one up has told us what the rest of it is worth.
   for (const row of answer.suggestions) {
+    // Left blank is not invented: that suggestion is dropped below, and the
+    // rest of the review stands.
+    if (row.isin.trim() === "") {
+      continue;
+    }
     if (shortlistEntry(row.isin) === null) {
       return {
         ok: false,
@@ -396,6 +405,10 @@ export function verifyWalletRead(
     row: { text: string; basis: string[] },
     kind: "observation" | "suggestion",
   ): boolean {
+    if (row.text.trim() === "") {
+      dropped.push({ kind, text: row.text, why: "empty" });
+      return false;
+    }
     if (writesAFigure(withoutInstrumentNames(row.text, named))) {
       dropped.push({ kind, text: row.text, why: "figure" });
       return false;
@@ -429,6 +442,17 @@ export function verifyWalletRead(
   const suggestions: WalletSuggestion[] = [];
   const seen = new Set<string>();
   for (const row of answer.suggestions) {
+    // A suggestion with no instrument has nothing to suggest. Refusing the
+    // whole review over it — what a required, non-empty ISIN in the schema
+    // used to do — threw away every observation beside it.
+    if (row.isin.trim() === "") {
+      dropped.push({
+        kind: "suggestion",
+        text: row.text,
+        why: "no-instrument",
+      });
+      continue;
+    }
     if (!keepProse(row, "suggestion")) {
       continue;
     }
