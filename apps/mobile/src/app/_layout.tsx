@@ -91,6 +91,15 @@ function RootNavigator({ fontsReady }: { fontsReady: boolean }) {
     router,
   ]);
 
+  // Nothing is drawn until the fonts are in: a screen laid out with the
+  // fallback face keeps the widths it measured with it, which cut « Le point »
+  // to « Le poi… » and the month to « octobre 20… » on the first screen of
+  // every launch, until a change of screen measured them again. The splash
+  // screen stays up meanwhile.
+  if (!fontsReady) {
+    return null;
+  }
+
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
