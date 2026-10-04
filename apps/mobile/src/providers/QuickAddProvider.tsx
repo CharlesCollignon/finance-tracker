@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   useAnimatedStyle,
@@ -20,6 +20,7 @@ import { useRefreshable } from "@/hooks/useRefreshable";
 import { hapticMedium } from "@/lib/haptics";
 import { getQuickEntryContext, type QuickEntryContext } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
+import { Blur } from "@/components/ui/Blur";
 import { useTabBarHeight } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON, RADIUS } from "@/theme/tokens";
@@ -127,6 +128,11 @@ export function useQuickAdd(): QuickAddValue | null {
   return useContext(QuickAddContext);
 }
 
+/** The add button's ground: the gold (`COLORS.primary`), at 72 %. */
+const GOLD_GLASS = "rgba(236,178,94,0.72)";
+/** A lighter edge, so the glass reads as a surface over the content. */
+const GLASS_RIM = "rgba(255,240,210,0.35)";
+
 function QuickAddFab() {
   const t = useT();
   const quickAdd = useQuickAdd();
@@ -175,11 +181,17 @@ function QuickAddFab() {
             borderRadius: RADIUS.pill,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: colors.primary,
+            overflow: "hidden",
+            borderWidth: StyleSheet.hairlineWidth,
+            borderColor: GLASS_RIM,
           },
           animatedStyle,
         ]}
       >
+        {/* Gold glass: still the one gold control on the screen, but what
+            scrolls under it shows through, frosted, rather than being cut
+            off by a solid disc. */}
+        <Blur style={StyleSheet.absoluteFill} overlayColor={GOLD_GLASS} />
         <Ionicons
           name="add"
           size={ICON.hero}
