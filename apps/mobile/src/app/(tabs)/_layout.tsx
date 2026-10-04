@@ -5,6 +5,7 @@ import { StyleSheet, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTabBarHeight } from "@/theme/chrome";
 
+import { SharedBackdrop } from "@/components/AppBackdrop";
 import { Blur } from "@/components/ui/Blur";
 import { notifyDataChanged } from "@/lib/data-version";
 import { MonthProvider } from "@/providers/MonthProvider";
@@ -130,109 +131,112 @@ export default function TabsLayout() {
     <ReminderProvider>
       <MonthProvider>
         <QuickAddProvider>
-          <Tabs
-            screenOptions={{
-              headerShown: false,
-              // The active tab in foreground with its filled icon, as on the
-              // web's bar; gold stays for the add button.
-              tabBarActiveTintColor: colors.foreground,
-              tabBarInactiveTintColor: colors.mutedForeground,
-              // Six surfaces leave a label about 50pt on a 360pt phone, less
-              // than « Placements » needs at 10pt: it shrinks on one line, to
-              // 80% at most, rather than lose its end. Measured in
-              // docs/plans/REAL_ESTATE_PLAN.md, Phase 0.
-              tabBarLabel: ({ color, children }) => (
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.8}
-                  style={{ color, fontSize: 10, fontWeight: "500" }}
-                >
-                  {children}
-                </Text>
-              ),
-              tabBarItemStyle: { paddingVertical: 4, paddingHorizontal: 2 },
-              // Docked to the bottom edge, square, over the content: blur only
-              // means something if content passes beneath the bar, so screens
-              // pad their scroll content to clear it rather than the bar
-              // taking room of its own. It runs under the gesture area, its
-              // items held above it.
-              tabBarBackground: () => <Blur style={StyleSheet.absoluteFill} />,
-              tabBarStyle: {
-                position: "absolute",
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: barHeight + insets.bottom,
-                paddingBottom: insets.bottom,
-                backgroundColor: "transparent",
-                borderTopWidth: StyleSheet.hairlineWidth,
-                borderTopColor: colors.hairlineStrong,
-                elevation: 0,
-                shadowOpacity: 0,
-              },
-              sceneStyle: { backgroundColor: colors.background },
-            }}
-          >
-            {TABS.map(({ name, titleKey, icon, iconInactive }) => (
+          <SharedBackdrop>
+            <Tabs
+              screenOptions={{
+                headerShown: false,
+                // The active tab in foreground with its filled icon, as on the
+                // web's bar; gold stays for the add button.
+                tabBarActiveTintColor: colors.foreground,
+                tabBarInactiveTintColor: colors.mutedForeground,
+                // Six surfaces leave a label about 50pt on a 360pt phone, less
+                // than « Placements » needs at 10pt: it shrinks on one line, to
+                // 80% at most, rather than lose its end. Measured in
+                // docs/plans/REAL_ESTATE_PLAN.md, Phase 0.
+                tabBarLabel: ({ color, children }) => (
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                    style={{ color, fontSize: 10, fontWeight: "500" }}
+                  >
+                    {children}
+                  </Text>
+                ),
+                tabBarItemStyle: { paddingVertical: 4, paddingHorizontal: 2 },
+                // Docked to the bottom edge, square, over the content: blur only
+                // means something if content passes beneath the bar, so screens
+                // pad their scroll content to clear it rather than the bar
+                // taking room of its own. It runs under the gesture area, its
+                // items held above it.
+                tabBarBackground: () => <Blur style={StyleSheet.absoluteFill} />,
+                tabBarStyle: {
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: barHeight + insets.bottom,
+                  paddingBottom: insets.bottom,
+                  backgroundColor: "transparent",
+                  borderTopWidth: StyleSheet.hairlineWidth,
+                  borderTopColor: colors.hairlineStrong,
+                  elevation: 0,
+                  shadowOpacity: 0,
+                },
+                // Transparent over the one backdrop: see `SharedBackdrop`.
+                sceneStyle: { backgroundColor: "transparent" },
+              }}
+            >
+              {TABS.map(({ name, titleKey, icon, iconInactive }) => (
+                <Tabs.Screen
+                  key={name}
+                  name={name}
+                  options={{
+                    title: t(titleKey),
+                    tabBarIcon: ({ focused, color, size }) => (
+                      <Ionicons
+                        name={focused ? icon : iconInactive}
+                        size={size ?? 20}
+                        color={color}
+                      />
+                    ),
+                    // Both of the Ledger's open questions: charges the bank
+                    // looks to have already paid, and bank rows still waiting for
+                    // a category. A dot rather than a count: the bar is five
+                    // targets across a phone, and the numbers are on the Bearing,
+                    // one panel each.
+                    ...(name === "transactions" && waiting > 0
+                      ? {
+                          tabBarBadge: "",
+                          tabBarBadgeStyle: {
+                            backgroundColor: colors.foreground,
+                            minWidth: 8,
+                            maxWidth: 8,
+                            height: 8,
+                            borderRadius: RADIUS.pill,
+                            transform: [{ translateX: -2 }, { translateY: 2 }],
+                          },
+                        }
+                      : {}),
+                  }}
+                />
+              ))}
               <Tabs.Screen
-                key={name}
-                name={name}
+                name={PROPERTY_TAB.name}
                 options={{
-                  title: t(titleKey),
+                  // Not a tab at all without the flag, so the bar keeps five.
+                  href: showProperty ? undefined : null,
+                  title: t(PROPERTY_TAB.titleKey),
                   tabBarIcon: ({ focused, color, size }) => (
                     <Ionicons
-                      name={focused ? icon : iconInactive}
+                      name={focused ? PROPERTY_TAB.icon : PROPERTY_TAB.iconInactive}
                       size={size ?? 20}
                       color={color}
                     />
                   ),
-                  // Both of the Ledger's open questions: charges the bank
-                  // looks to have already paid, and bank rows still waiting for
-                  // a category. A dot rather than a count: the bar is five
-                  // targets across a phone, and the numbers are on the Bearing,
-                  // one panel each.
-                  ...(name === "transactions" && waiting > 0
-                    ? {
-                        tabBarBadge: "",
-                        tabBarBadgeStyle: {
-                          backgroundColor: colors.foreground,
-                          minWidth: 8,
-                          maxWidth: 8,
-                          height: 8,
-                          borderRadius: RADIUS.pill,
-                          transform: [{ translateX: -2 }, { translateY: 2 }],
-                        },
-                      }
-                    : {}),
                 }}
               />
-            ))}
-            <Tabs.Screen
-              name={PROPERTY_TAB.name}
-              options={{
-                // Not a tab at all without the flag, so the bar keeps five.
-                href: showProperty ? undefined : null,
-                title: t(PROPERTY_TAB.titleKey),
-                tabBarIcon: ({ focused, color, size }) => (
-                  <Ionicons
-                    name={focused ? PROPERTY_TAB.icon : PROPERTY_TAB.iconInactive}
-                    size={size ?? 20}
-                    color={color}
-                  />
-                ),
-              }}
-            />
-            {/* Views of the Ledger, not destinations of their own. */}
-            <Tabs.Screen name="calendar" options={{ href: null }} />
-            <Tabs.Screen name="history" options={{ href: null }} />
-            {/* And two of Placements: what the accounts earn, how the money
-                is spread and what it costs; and what the funds are made of. */}
-            <Tabs.Screen name="analysis" options={{ href: null }} />
-            <Tabs.Screen name="look-through" options={{ href: null }} />
-            {/* Reachable from the header account menu, not the tab bar. */}
-            <Tabs.Screen name="profile" options={{ href: null }} />
-          </Tabs>
+              {/* Views of the Ledger, not destinations of their own. */}
+              <Tabs.Screen name="calendar" options={{ href: null }} />
+              <Tabs.Screen name="history" options={{ href: null }} />
+              {/* And two of Placements: what the accounts earn, how the money
+                  is spread and what it costs; and what the funds are made of. */}
+              <Tabs.Screen name="analysis" options={{ href: null }} />
+              <Tabs.Screen name="look-through" options={{ href: null }} />
+              {/* Reachable from the header account menu, not the tab bar. */}
+              <Tabs.Screen name="profile" options={{ href: null }} />
+            </Tabs>
+          </SharedBackdrop>
         </QuickAddProvider>
       </MonthProvider>
     </ReminderProvider>

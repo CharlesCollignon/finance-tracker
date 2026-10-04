@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { cn } from "@/lib/cn";
-import { AppBackdrop } from "@/components/AppBackdrop";
+import { AppBackdrop, useSharedBackdrop } from "@/components/AppBackdrop";
 import { FadeIn } from "@/components/motion/FadeIn";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { Orb } from "@/components/Orb";
@@ -75,6 +75,8 @@ export function Screen({
   back,
 }: ScreenProps) {
   const colors = useThemeColors();
+  // Under the tabs, the backdrop is the navigator's, drawn once.
+  const sharedBackdrop = useSharedBackdrop();
   /*
    * The band is a fixed height holding text that the user can scale, so it
    * grows with the setting rather than cropping the title — the same bound the
@@ -95,10 +97,10 @@ export function Screen({
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
-      className="flex-1 bg-background"
+      className={cn("flex-1", !sharedBackdrop && "bg-background")}
     >
       {/* First child, so everything below paints over it. */}
-      <AppBackdrop />
+      {sharedBackdrop ? null : <AppBackdrop />}
       {showHeader ? (
         <View
           className="border-b border-border"

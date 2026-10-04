@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 
+import { OwnBackdrops } from "@/components/AppBackdrop";
 import { COLORS } from "@/theme/tokens";
 
 /**
@@ -12,12 +13,16 @@ import { COLORS } from "@/theme/tokens";
 export const unstable_settings = { initialRouteName: "index" };
 
 export default function PropertyLayout() {
+  // Each screen on its own ground, as before the tabs shared one: a
+  // property slides in over the list, which must not show through it.
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: COLORS.background },
-      }}
-    />
+    <OwnBackdrops>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: COLORS.background },
+        }}
+      />
+    </OwnBackdrops>
   );
 }
