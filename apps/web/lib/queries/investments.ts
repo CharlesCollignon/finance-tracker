@@ -1,11 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import * as positions from "@finance/data/positions";
-import { fetchPriceSeriesInEur } from "@finance/core/market/fx";
-import {
-  emptyPriceSeries,
-  type InstrumentPriceSeries,
-} from "@finance/core/instrument-price-series";
 import type { WalletPlan } from "@finance/core/types/database";
 import type { InvestmentPositionRow } from "@finance/core/investment-positions";
 import type { InvestmentWalletId } from "@finance/core/investments";
@@ -87,33 +82,6 @@ export async function deleteInvestmentPosition(
   if (error) {
     throw error;
   }
-}
-
-/**
- * The price line behind every position row, keyed by symbol.
- *
- * One failed symbol yields an empty series rather than a rejected promise: a
- * delisted ticker costs its own row a line, and the rest of the page is
- * unaffected.
- */
-export async function fetchPriceSeries(
-  symbols: string[],
-  today: string,
-): Promise<Record<string, InstrumentPriceSeries>> {
-  const unique = Array.from(new Set(symbols.filter(Boolean)));
-  const series: Record<string, InstrumentPriceSeries> = {};
-
-  await Promise.all(
-    unique.map(async (symbol) => {
-      try {
-        series[symbol] = await fetchPriceSeriesInEur(symbol, today);
-      } catch {
-        series[symbol] = emptyPriceSeries();
-      }
-    }),
-  );
-
-  return series;
 }
 
 /**

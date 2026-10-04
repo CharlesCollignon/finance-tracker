@@ -224,6 +224,30 @@ export async function fetchPriceSeriesInEur(
 }
 
 /**
+ * The price line behind every position row, keyed by symbol — for both
+ * apps. One failed symbol yields an empty series rather than a rejected
+ * promise: a delisted ticker costs its own row a line, and the rest of the
+ * page is unaffected.
+ */
+export async function fetchPriceSeriesBySymbol(
+  symbols: readonly string[],
+  today: string,
+): Promise<Record<string, InstrumentPriceSeries>> {
+  const unique = Array.from(new Set(symbols.filter(Boolean)));
+  const series: Record<string, InstrumentPriceSeries> = {};
+  await Promise.all(
+    unique.map(async (symbol) => {
+      try {
+        series[symbol] = await fetchPriceSeriesInEur(symbol, today);
+      } catch {
+        series[symbol] = emptyPriceSeries();
+      }
+    }),
+  );
+  return series;
+}
+
+/**
  * Today's price in euros of each symbol, keyed by symbol. A quote that
  * fails is left out, and the caller falls back to the amount invested.
  */
