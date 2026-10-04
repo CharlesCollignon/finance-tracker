@@ -787,19 +787,14 @@ html:has(.marketing-shell) {
   font-weight: 500;
   line-height: 0.98;
   letter-spacing: -0.035em;
-  /* Bright at the cap line, cooling toward the baseline, which is how type
-     behaves under a light source and reads as depth rather than as a
-     gradient. Falls back to flat near-white where clipping is unsupported. */
+  /* Flat warm near-white. It was a gradient clipped to the text, bright at
+     the cap line and cooling to beige at the baseline — meant as light on
+     type, read as the gradient headline every generated page wears, and
+     dropped in the Hallmark redesign (October 2026). */
   color: #f6f3ed;
-}
-
-@supports (background-clip: text) {
-  .marketing-display {
-    background: linear-gradient(177deg, #fffdf7 0%, #ffffff 30%, #bdb5a7 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
+  /* A long word breaks rather than pushing a phone into sideways scroll. */
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 /* --- the orb and its light ----------------------------------------------- */
