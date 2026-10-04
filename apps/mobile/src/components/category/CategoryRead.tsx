@@ -11,6 +11,7 @@ import { LOCALE_LABELS, type Locale } from "@finance/core/i18n/locale";
 import { exactModelLabel } from "@finance/core/model-name";
 import type { ReadSegment } from "@finance/core/month-read";
 
+import { ConnectAiInvite } from "@/components/ConnectAiInvite";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Text } from "@/components/ui/Text";
 import { writeCategoryRead } from "@/lib/category-screen";
@@ -39,6 +40,7 @@ export function CategoryRead({
   thin,
   writesLeft,
   writable,
+  account,
   writerBrand,
   readModel,
 }: {
@@ -55,6 +57,8 @@ export function CategoryRead({
   writesLeft: number;
   /** Whether a read can be asked for from this build at all. */
   writable: boolean;
+  /** Written on the user's own AI account: no count, and an invitation without one. */
+  account: boolean;
   writerBrand: string;
   /** The model recorded on the stored read, when there is one. */
   readModel: string | null;
@@ -73,10 +77,14 @@ export function CategoryRead({
       : null;
   const inAnotherLanguage = Boolean(rendered) && readLocale !== locale;
 
-  // Nothing to show and nothing that could be written, or too little
-  // recorded to be worth offering one: the server refuses it anyway.
-  if (!rendered && (!writable || thin)) {
+  // Too little recorded to be worth offering one: the server refuses it.
+  if (!rendered && thin) {
     return null;
+  }
+  // Nothing to show and nothing that could be written: nothing — or, on
+  // one's own AI account, the line that says how to get one.
+  if (!rendered && !writable) {
+    return account ? <ConnectAiInvite /> : null;
   }
 
   async function write() {
@@ -182,7 +190,9 @@ export function CategoryRead({
           </Text>
         ) : null}
 
-        {writable ? (
+        {!writable && account ? (
+          <ConnectAiInvite />
+        ) : writable ? (
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ disabled: pending || left <= 0 }}
@@ -214,9 +224,13 @@ export function CategoryRead({
                 ? t("categoryRead.writing")
                 : left <= 0
                   ? t("categoryRead.noReadsLeft")
-                  : rendered
-                    ? t("categoryRead.writeAgain", { left, model: writerBrand })
-                    : t("categoryRead.writeOne", { left, model: writerBrand })}
+                  : account
+                    ? rendered
+                      ? t("aiAccount.writeAgain", { model: writerBrand })
+                      : t("aiAccount.writeOne", { model: writerBrand })
+                    : rendered
+                      ? t("categoryRead.writeAgain", { left, model: writerBrand })
+                      : t("categoryRead.writeOne", { left, model: writerBrand })}
             </Text>
           </Pressable>
         ) : null}

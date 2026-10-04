@@ -10,6 +10,7 @@ import {
 } from "@finance/core/month-read";
 import type { ReadFreshness } from "@finance/core/month-read-budget";
 
+import { ConnectAiInvite } from "@/components/ConnectAiInvite";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
@@ -40,12 +41,14 @@ interface MonthReadProps {
   /** Whether a read can be written from this build at all. */
   writable: boolean;
   /**
-   * The maker, for the control that spends a call.
-   *
-   * A constant of this codebase rather than of the environment: the key is
-   * `MISTRAL_API_KEY` and the endpoint is Mistral's, so only the model's size
-   * can be configured, never its maker. Which exact model wrote a stored read
-   * is the separate question `readModel` answers, off the read itself.
+   * Written on the user's own AI account: no count on the button, and a line
+   * inviting a connection where there is none.
+   */
+  account: boolean;
+  /**
+   * The writer's name, for the control that spends a call — Pluclair's
+   * model's maker, or the user's own model. Which exact model wrote a stored
+   * read is the separate question `readModel` answers, off the read itself.
    */
   writerBrand: string;
   /** The model recorded on the stored read, when there is one. */
@@ -77,6 +80,7 @@ export function MonthRead({
   readLocale,
   writesLeft,
   writable,
+  account,
   writerBrand,
   readModel,
   onWritten,
@@ -98,8 +102,13 @@ export function MonthRead({
   const inAnotherLanguage = Boolean(rendered) && readLocale !== locale;
 
   // Nothing to show and no way to write one.
-  if (!rendered && (!writable || facts.thin)) {
+  if (!rendered && facts.thin) {
     return null;
+  }
+  // Nothing to show and no way to write one: nothing — or, on one's own AI
+  // account, the line that says how to get one.
+  if (!rendered && !writable) {
+    return account ? <ConnectAiInvite /> : null;
   }
 
   function write() {
@@ -213,7 +222,9 @@ export function MonthRead({
           </Text>
         ) : null}
 
-        {writable ? (
+        {!writable && account ? (
+          <ConnectAiInvite />
+        ) : writable ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={
@@ -253,8 +264,12 @@ export function MonthRead({
                 : left <= 0
                   ? t("monthRead.noReadsLeftGeneric")
                   : rendered
-                    ? t("monthRead.writeAgain", { left, model: writerBrand })
-                    : t("monthRead.writeOne", { left, model: writerBrand })}
+                    ? account
+                      ? t("aiAccount.writeAgain", { model: writerBrand })
+                      : t("monthRead.writeAgain", { left, model: writerBrand })
+                    : account
+                      ? t("aiAccount.writeOne", { model: writerBrand })
+                      : t("monthRead.writeOne", { left, model: writerBrand })}
             </Text>
           </Pressable>
         ) : null}

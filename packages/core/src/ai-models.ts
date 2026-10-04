@@ -48,3 +48,10 @@ export interface WriterState {
   /** The name a reader recognises, for the button that spends a call. */
   name: string;
 }
+
+/**
+ * No monthly ceiling on one's own AI account — the user pays for every call
+ * — so a number no month reaches. The cooldown and the guard against a
+ * double press stay, in the same reservation.
+ */
+export const ACCOUNT_ALLOWANCE = 10_000;

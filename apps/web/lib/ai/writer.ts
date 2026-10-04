@@ -1,6 +1,8 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { aiModel, type WriterState } from "@finance/core/ai-models";
+
+export { ACCOUNT_ALLOWANCE } from "@finance/core/ai-models";
 import { isFlagOn } from "@finance/core/flags";
 import { describeModel, DEFAULT_WRITER_MODEL } from "@finance/core/model-name";
 import type { Database } from "@finance/core/types/database";
@@ -21,13 +23,6 @@ type Client = SupabaseClient<Database>;
  * own AI account's, through OpenRouter, with no allowance but the cooldown;
  * without a connected account, nothing is written at all.
  */
-
-/**
- * No monthly ceiling on one's own account — the user pays for every call —
- * so a number no month reaches. The cooldown and the guard against a double
- * press stay, in the same reservation.
- */
-export const ACCOUNT_ALLOWANCE = 10_000;
 
 /** One way of reaching a model: everything a request needs but the prompt. */
 export interface Writer {

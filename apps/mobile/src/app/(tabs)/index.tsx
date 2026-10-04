@@ -195,8 +195,9 @@ export default function HomeScreen() {
                     readFacts={read.readFacts}
                     readLocale={read.readLocale}
                     writesLeft={read.writesLeft}
-                    writable={read.configured}
-                    writerBrand={read.writerBrand}
+                    writable={read.writer.writable}
+                    account={read.writer.account}
+                    writerBrand={read.writer.name}
                     readModel={read.readModel}
                     onWritten={() => {
                       void reloadRead();

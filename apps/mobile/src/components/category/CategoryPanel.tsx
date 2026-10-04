@@ -42,6 +42,7 @@ export function CategoryPanel({
   readThin,
   readWritesLeft,
   readWritable,
+  readAccount,
   readWriterBrand,
   readModel,
 }: {
@@ -57,6 +58,7 @@ export function CategoryPanel({
   readThin: boolean;
   readWritesLeft: number;
   readWritable: boolean;
+  readAccount: boolean;
   readWriterBrand: string;
   readModel: string | null;
 }) {
@@ -182,6 +184,7 @@ export function CategoryPanel({
           thin={readThin}
           writesLeft={readWritesLeft}
           writable={readWritable}
+          account={readAccount}
           writerBrand={readWriterBrand}
           readModel={readModel}
         />

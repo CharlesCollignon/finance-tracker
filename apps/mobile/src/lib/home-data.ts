@@ -8,7 +8,7 @@ import {
   todayIsoLocal,
 } from "@finance/core/constants";
 import type { Locale } from "@finance/core/i18n/locale";
-import { DEFAULT_WRITER_MODEL, describeModel } from "@finance/core/model-name";
+import type { WriterState } from "@finance/core/ai-models";
 import {
   spendingByMonth,
   topSpending,
@@ -35,9 +35,9 @@ import { getWeeklyRecapCard } from "@finance/data/weekly-recap";
 import {
   getMonthRead,
   monthFactsFromScreen,
-  monthReadWritable,
   type MonthReadView,
 } from "@/lib/month-read";
+import { getWriterState } from "@/lib/ai-writer";
 import {
   countPendingFeedItems,
   countSwallowedFeedItems,
@@ -308,14 +308,12 @@ export interface HomeRead {
   readFacts: MonthFacts;
   readLocale: Locale;
   writesLeft: number;
-  /** Whether a read can be written from this build at all. */
-  configured: boolean;
   /**
-   * The maker, for the control that spends a call: the phone posts to the
-   * web app's `/api/month-read`, whose key is Mistral's, so only the model's
-   * size can differ. Which model wrote a stored read is on the read itself.
+   * Who would write: Pluclair's key or the user's own AI account, whether a
+   * read can be written now, and the name for the button. Which model wrote
+   * a stored read is on the read itself.
    */
-  writerBrand: string;
+  writer: WriterState;
   readModel: string | null;
 }
 
@@ -432,6 +430,7 @@ export async function gatherHomeRead(
     writesLeft: 0,
     tracked: false,
   };
+  const writerState = getWriterState(userId);
   try {
     stored = await getMonthRead(userId, year, month, facts, locale);
   } catch {
@@ -456,8 +455,11 @@ export async function gatherHomeRead(
     readFacts,
     readLocale,
     writesLeft: stored.writesLeft,
-    configured: monthReadWritable(),
-    writerBrand: describeModel(DEFAULT_WRITER_MODEL).brand,
+    writer: await writerState.catch(() => ({
+      account: false,
+      writable: false,
+      name: "",
+    })),
     readModel: stored.view?.model ?? null,
   };
 }

@@ -19,11 +19,7 @@ import { AXIS_COVERAGE_FLOOR } from "@finance/core/look-through";
 import { buildArbitrage } from "@finance/core/look-through-target";
 import { factsDigest } from "@finance/core/month-facts";
 import type { ReadSegment } from "@finance/core/month-read";
-import {
-  DEFAULT_WRITER_MODEL,
-  describeModel,
-  exactModelLabel,
-} from "@finance/core/model-name";
+import { exactModelLabel } from "@finance/core/model-name";
 import {
   renderWalletRead,
   targetFromWalletRead,
@@ -33,6 +29,7 @@ import { walletReadsRemaining } from "@finance/core/wallet-read-budget";
 import { INTL_LOCALES, type Locale } from "@finance/core/i18n/locale";
 import type { Key, Translate } from "@finance/core/i18n/t";
 
+import { ConnectAiInvite } from "@/components/ConnectAiInvite";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { StaggerItem } from "@/components/motion/Stagger";
 import { StatHero } from "@/components/StatHero";
@@ -44,7 +41,6 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { hapticSuccess } from "@/lib/haptics";
 import {
-  canAskTheWeb,
   readInstrumentThroughWeb,
   reviewWallets,
   type LookThroughData,
@@ -109,8 +105,10 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
       : data.queue.length;
 
   const { lookThrough, stored } = data;
-  const writerBrand = describeModel(DEFAULT_WRITER_MODEL).brand;
-  const canReview = canAskTheWeb() && data.readsTracked;
+  // Pluclair's model or the user's own, and whether anyone can write now.
+  const writerBrand = data.writer.name;
+  const account = data.writer.account;
+  const canReview = data.writer.writable && data.readsTracked;
 
   // The read's own target when it proposed one, the app's otherwise — the
   // web page's rule, so the surface always has a target to show.
@@ -337,7 +335,7 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
               })}
               rows={lookThrough.unreadPositions}
             >
-              {canAskTheWeb() ? (
+              {data.writer.writable ? (
                 <Button
                   label={
                     reading
@@ -396,6 +394,8 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
                 void onReview();
               }}
             />
+          ) : account ? (
+            <ConnectAiInvite />
           ) : null}
 
           {rendered === null ? (
@@ -431,7 +431,7 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
                     variant="outline"
                   />
                 ) : null}
-                {canReview ? (
+                {canReview && !account ? (
                   <Text variant="micro">
                     {t("walletRead.reviewHint", { remaining: readsLeft })}
                   </Text>
