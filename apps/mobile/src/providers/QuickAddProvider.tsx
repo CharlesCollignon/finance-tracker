@@ -20,7 +20,7 @@ import { useRefreshable } from "@/hooks/useRefreshable";
 import { hapticMedium } from "@/lib/haptics";
 import { getQuickEntryContext, type QuickEntryContext } from "@/lib/queries";
 import { useAuth } from "@/providers/AuthProvider";
-import { TAB_BAR_INSET, useTabBarHeight } from "@/theme/chrome";
+import { useTabBarHeight } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON, RADIUS } from "@/theme/tokens";
 import { useT } from "@/providers/LocaleProvider";
@@ -151,8 +151,8 @@ function QuickAddFab() {
       style={{
         position: "absolute",
         right: 16,
-        // Above the floating tab bar, which itself sits TAB_BAR_INSET up.
-        bottom: barHeight + insets.bottom + TAB_BAR_INSET + 16,
+        // Above the tab bar, docked to the bottom edge.
+        bottom: barHeight + insets.bottom + 16,
       }}
     >
       <AnimatedPressable

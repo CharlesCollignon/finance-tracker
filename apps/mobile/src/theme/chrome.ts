@@ -5,16 +5,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const TAB_BAR_BASE = 56;
 
 /**
- * The gap under the floating tab bar, above the bottom safe-area inset — the
- * web's `--shell-bottom-nav-inset`. The bar floats as a pill rather than
- * docking to the edge.
- */
-export const TAB_BAR_INSET = 12;
-
-/** The gap either side of the floating tab bar. */
-export const TAB_BAR_SIDE = 16;
-
-/**
  * How far fixed chrome is allowed to grow with the system text size.
  *
  * Body copy scales without a ceiling — that is the point of Dynamic Type — but
@@ -30,7 +20,11 @@ export function useChromeFontScale() {
   return Math.min(fontScale, CHROME_MAX_FONT_SCALE);
 }
 
-/** Height of the tab bar itself, excluding the bottom safe-area inset. */
+/**
+ * Height of the tab bar itself, excluding the bottom safe-area inset. The bar
+ * is docked to the bottom edge and extends under the inset, so the screen's
+ * last pixels are its blurred ground rather than a gap.
+ */
 export function useTabBarHeight() {
   return Math.round(TAB_BAR_BASE * useChromeFontScale());
 }
@@ -53,5 +47,5 @@ const ADD_BUTTON_CLEARANCE = 88;
 
 export function useTabBarClearance(extra = ADD_BUTTON_CLEARANCE) {
   const insets = useSafeAreaInsets();
-  return useTabBarHeight() + insets.bottom + TAB_BAR_INSET + extra;
+  return useTabBarHeight() + insets.bottom + extra;
 }
