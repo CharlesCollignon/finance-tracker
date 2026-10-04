@@ -136,6 +136,22 @@ describe("verifyWalletRead", () => {
 
   /* ------------------------------------------------------- the figure rule */
 
+  it("takes a claim resting on many figures, and trims a read that runs long", () => {
+    const many = {
+      text: "The United States is {{fact:us-share}} of what could be read.",
+      tone: "watch",
+      basis: ["us-share", "annual-cost", "us-share", "annual-cost", "us-share"],
+    };
+    const verdict = verifyWalletRead(
+      answer({ observations: Array.from({ length: 6 }, () => many) }),
+      pack().facts,
+      "en",
+    );
+    expect(verdict.ok).toBe(true);
+    if (!verdict.ok) return;
+    expect(verdict.read.observations).toHaveLength(MAX_WALLET_OBSERVATIONS);
+  });
+
   it("says a wrong shape in the reader's words, and keeps the schema's for the log", () => {
     const verdict = verifyWalletRead({ nope: true }, pack().facts, "fr");
     expect(verdict.ok).toBe(false);

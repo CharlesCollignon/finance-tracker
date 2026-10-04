@@ -59,16 +59,30 @@ export const MAX_WALLET_SUGGESTIONS = 4;
 
 export const WALLET_READ_VERSION = 1;
 
+/**
+ * Bounds that mean the model ignored the format entirely rather than ran a
+ * little long — the month read's, for the same reason. What the card holds
+ * is set by the caps above, applied after: a claim resting on six figures,
+ * or a sixth observation, is trimmed or dropped on its own; only an answer
+ * past these is not a review at all. These were the card's own caps once,
+ * and a sentence citing five figures threw the whole review away as « Pas
+ * la forme demandée ».
+ */
+const RUNAWAY_HEADLINE_LENGTH = 400;
+const RUNAWAY_CLAIM_LENGTH = 1200;
+const RUNAWAY_CLAIMS = 24;
+const RUNAWAY_BASIS = 16;
+
 const claimSchema = z
   .object({
-    text: z.string().min(1).max(600),
-    basis: z.array(z.string().min(1).max(80)).max(4),
+    text: z.string().min(1).max(RUNAWAY_CLAIM_LENGTH),
+    basis: z.array(z.string().min(1).max(80)).max(RUNAWAY_BASIS),
   })
   .strict();
 
 export const walletReadAnswerSchema = z
   .object({
-    headline: z.string().min(1).max(300),
+    headline: z.string().min(1).max(RUNAWAY_HEADLINE_LENGTH),
     observations: z
       .array(
         claimSchema
@@ -78,7 +92,7 @@ export const walletReadAnswerSchema = z
           .strict(),
       )
       .min(1)
-      .max(8),
+      .max(RUNAWAY_CLAIMS),
     suggestions: z
       .array(
         claimSchema
@@ -93,7 +107,7 @@ export const walletReadAnswerSchema = z
           })
           .strict(),
       )
-      .max(8),
+      .max(RUNAWAY_CLAIMS),
   })
   .strict();
 
