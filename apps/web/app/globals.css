@@ -797,6 +797,57 @@ html:has(.marketing-shell) {
   min-width: 0;
 }
 
+/* --- the gold glass button ----------------------------------------------- */
+
+/* The marketing site's primary button: Lamplit Gold (#ecb25e, its hover
+   #f2c27a) as a gradient, at about nine tenths opacity and blurred, so what
+   is behind it shows through softly, with a thin light along the top edge.
+   Even at its most transparent the text on it stays above 6:1. Hover fades a
+   brighter gradient in on a layer of its own, since a gradient cannot
+   transition. */
+.marketing-cta-gold {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgb(242 194 122 / 0.95) 0%,
+    rgb(236 178 94 / 0.87) 48%,
+    rgb(214 146 58 / 0.89) 100%
+  );
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 240 210 / 0.5),
+    inset 0 0 0 1px rgb(255 226 170 / 0.25);
+}
+
+.marketing-cta-gold::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgb(248 210 150 / 0.95) 0%,
+    rgb(242 194 122 / 0.9) 48%,
+    rgb(224 160 72 / 0.9) 100%
+  );
+  opacity: 0;
+  transition: opacity 200ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.marketing-cta-gold:hover::before {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-cta-gold::before {
+    transition: none;
+  }
+}
+
 /* --- the orb and its light ----------------------------------------------- */
 
 /* The warm bloom the sphere throws. Sized by its box, so callers scale the
