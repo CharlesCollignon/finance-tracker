@@ -10,21 +10,26 @@ export interface AiModel {
   id: string;
   /** The name a reader recognises. */
   name: string;
-  /** Whether the model refuses a `temperature` (the GPT-6 family does). */
-  fixedTemperature: boolean;
+  /**
+   * Whether the model reasons before it answers (the GPT-6 family). Such a
+   * model refuses a `temperature`, counts its reasoning against
+   * `max_tokens` — a read's ceiling, spent thinking, can leave no answer at
+   * all — and takes longer.
+   */
+  reasoning: boolean;
 }
 
 export const AI_MODELS: readonly AiModel[] = [
   {
     id: "mistralai/mistral-medium-3-5",
     name: "Mistral Medium 3.5",
-    fixedTemperature: false,
+    reasoning: false,
   },
-  { id: "openai/gpt-6-sol", name: "GPT-6 Sol", fixedTemperature: true },
+  { id: "openai/gpt-6-sol", name: "GPT-6 Sol", reasoning: true },
   {
     id: "anthropic/claude-sonnet-5.5",
     name: "Claude Sonnet 5.5",
-    fixedTemperature: false,
+    reasoning: false,
   },
 ];
 

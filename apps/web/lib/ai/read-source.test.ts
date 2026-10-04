@@ -21,6 +21,7 @@ function writer(overrides: Partial<Writer> = {}): Writer {
     endpoint: "https://openrouter.ai/api/v1/chat/completions",
     key: "sk-or-1",
     temperature: null,
+    reasoning: false,
     extra: { provider: { require_parameters: true } },
     headers: {},
     label: "account:u1",
@@ -64,6 +65,24 @@ describe("readSource", () => {
       Record<string, unknown>,
     ];
     expect(body.temperature).toBe(0.2);
+  });
+
+  it("gives a reasoning model room to think, briefly, and time to", async () => {
+    const post = answering({});
+    await readSource(CONFIG, writer({ reasoning: true }), { post }).write(
+      REQUEST,
+    );
+    const [, body, timeoutMs] = post.mock.calls[0] as unknown as [
+      Writer,
+      Record<string, unknown>,
+      number,
+    ];
+    expect(body).toMatchObject({
+      max_tokens: 4900,
+      reasoning: { effort: "low", exclude: true },
+    });
+    expect(body).not.toHaveProperty("temperature");
+    expect(timeoutMs).toBe(2500);
   });
 
   it("closes the door after three failures — for that account only", async () => {

@@ -1,5 +1,6 @@
 import "server-only";
 import type { Locale } from "@finance/core/i18n/locale";
+import { patience, sampling } from "./sampling";
 import type { Writer } from "./writer";
 
 /**
@@ -126,17 +127,14 @@ export function readSource(
           {
             ...writer.extra,
             model: writer.model,
-            ...(writer.temperature === null
-              ? {}
-              : { temperature: writer.temperature }),
-            max_tokens: config.maxTokens,
+            ...sampling(writer, config.maxTokens),
             response_format: config.responseFormat(request.locale),
             messages: [
               { role: "system", content: request.system },
               { role: "user", content: request.user },
             ],
           },
-          config.timeoutMs,
+          patience(writer, config.timeoutMs),
         );
         breakers.delete(breakerKey);
         return parseAnswer(raw);

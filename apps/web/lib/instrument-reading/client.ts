@@ -5,6 +5,7 @@ import {
   type InstrumentReadingSource,
   type ReadingFailure,
 } from "@finance/core/instrument-reading";
+import { sampling } from "@/lib/ai/sampling";
 import type { Writer } from "@/lib/ai/writer";
 
 /**
@@ -355,8 +356,7 @@ async function openRouterSearch(
     {
       model: writer.model,
       plugins: [{ id: "web", max_results: 5 }],
-      ...(writer.temperature === null ? {} : { temperature: TEMPERATURE }),
-      max_tokens: SEARCH_MAX_TOKENS,
+      ...sampling(writer, SEARCH_MAX_TOKENS, TEMPERATURE),
       messages: [
         { role: "system", content: SEARCH_INSTRUCTIONS },
         { role: "user", content: searchQuestion(request) },
@@ -380,8 +380,7 @@ async function transcribeNotes(
     {
       ...writer.extra,
       model: writer.model,
-      ...(writer.temperature === null ? {} : { temperature: TEMPERATURE }),
-      max_tokens: TRANSCRIBE_MAX_TOKENS,
+      ...sampling(writer, TRANSCRIBE_MAX_TOKENS, TEMPERATURE),
       response_format: instrumentReadingJsonSchema(),
       messages: [
         { role: "system", content: TRANSCRIBE_INSTRUCTIONS },
