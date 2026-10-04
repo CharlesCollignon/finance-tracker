@@ -1405,16 +1405,11 @@ export const en = {
     /** `{percent}` arrives already carrying its sign, from `units.percent`:
      * English closes it up, French wants a space before it. */
     ofWhatCameIn: "{percent} of what came in",
-    monthsValue: {
-      one: "{count} month",
-      other: "{count} months",
-    },
     monthsInARow: {
       one: "{count} month in a row",
       other: "{count} months in a row",
     },
     inARow: "{count} in a row",
-    inARowInsideAllowance: "in a row inside the allowance",
     readyToClose: "{month} is ready to close",
     keepTheRun:
       "Stay under {amount} of unrecorded spending to keep the run going.",
@@ -1696,7 +1691,6 @@ export const en = {
     setUp: "Set up",
     usePassword: "Use password",
     browserNotifications: "Browser notifications",
-    theRun: "The run",
     kept: "Kept",
     /**
      * The privacy blur's toggle, which is an icon and nothing else — so

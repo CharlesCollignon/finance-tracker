@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { m } from "motion/react";
+import { EASE_STANDARD } from "@finance/core/motion";
 import { usePathname } from "next/navigation";
 import { CaretDown, List, X } from "@phosphor-icons/react";
 import { Orb } from "@/components/brand/Orb";
@@ -130,7 +132,13 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
   const open = openForPath === pathname;
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 md:px-6 md:pt-6">
+    // Slides down as the page opens, the first beat of the hero's entrance.
+    <m.header
+      className="fixed inset-x-0 top-0 z-50 px-4 pt-4 md:px-6 md:pt-6"
+      initial={{ opacity: 0, y: -18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, delay: 0.1, ease: [...EASE_STANDARD] }}
+    >
       <div className="relative mx-auto max-w-6xl">
         {/* The pill's glass is a layer behind the nav, not the box around it.
             `backdrop-filter` makes an element a backdrop root for everything
@@ -250,6 +258,6 @@ export function LandingHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
           <LocaleChoices variant="sheet" className="mt-1" />
         </div>
       </div>
-    </header>
+    </m.header>
   );
 }

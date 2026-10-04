@@ -60,7 +60,8 @@ the first design used, closed in September 2026.
 Who is offered it is the `bank.connect` flag (migration 042), off by default
 and switched on per account, on top of `BANK_SECRETS_KEY` being set. The
 privacy policy and terms are drafts until the owner signs them off, and the
-marketing site says nothing of it until then. The month close therefore still
+marketing site speaks of it only in the future tense, under « Bientôt ».
+The month close therefore still
 stands on a balance the user types, which is also why it is the positioning
 and not a feature of the feed.
 
@@ -116,9 +117,10 @@ see `LEGAL_DRAFT` in `components/marketing/legal-copy.ts`).
   (`bank_connection_secrets`), and they never reach a browser, a phone, a log
   or an error message; the apps read only `bank_connections`, the status. Until
   launch, no public surface may describe connecting a bank in the present
-  tense: the marketing site says so in the future tense in one place only (the
-  month-close section of `landing-copy.ts`), and its privacy points stay true
-  of the app as a visitor can have it. Launching changes both, with the
+  tense: the marketing site lists it under « Bientôt » with the other things
+  built and not open to everyone — property, the AI of your choice, the mobile
+  app (the owner's call, October 2026) — and its answers on data and money
+  stay true of the app as a visitor can have it. Launching changes both, with the
   owner's sign-off on the brand promises.
 - Pluclair asks a bank for new data only when the user presses Refresh. The
   refresh cron never reaches a bank: it reads what open-banking.io already

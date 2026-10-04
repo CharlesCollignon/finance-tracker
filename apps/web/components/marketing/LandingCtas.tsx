@@ -21,7 +21,7 @@ import { useLocale } from "@/lib/locale-context";
 
 const base =
   "inline-flex items-center justify-center rounded-full font-medium " +
-  "transition-all duration-hover [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] " +
+  "transition-[transform,background-color,border-color,color] duration-hover [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] " +
   `${marketingFocus} ` +
   "active:scale-[0.98]";
 
@@ -45,8 +45,12 @@ const sizes = {
    which this file's note above measures at 10:1 on the near-black marketing
    ground; the other button in the pair is a 6%-white pane behind a hairline.
    Which of the two is the primary action was never the halo's work. */
-const solid =
-  "bg-primary text-primary-foreground hover:bg-primary-hover hover:-translate-y-0.5";
+/* Gold glass: Lamplit Gold as a gradient, lighter at the top left and deeper
+   at the bottom right, a little transparent and blurred over what is behind
+   it — the Earth, the stars — with a thin light along its top edge. Hover
+   brightens it rather than lifting it. See `.marketing-cta-gold` in
+   globals.css; the owner's call, October 2026. */
+const solid = "marketing-cta-gold text-primary-foreground";
 
 /* Glass, like every other translucent surface on the site: on the hero it
    sits over the orb's bloom, and the blur is what stops it reading as a hole
@@ -65,6 +69,8 @@ interface LandingCtasProps {
    * the three the menu trigger is the one that must survive.
    */
   layout?: "pair" | "pair-compact" | "solo";
+  /** A glint of light across the gold button, once: the hero's sunrise. */
+  shine?: boolean;
   className?: string;
 }
 
@@ -72,13 +78,15 @@ export function LandingCtas({
   isLoggedIn,
   size = "md",
   layout = "pair",
+  shine = false,
   className,
 }: LandingCtasProps) {
+  const gold = cn(solid, shine && "marketing-cta-shine");
   const copy = landingCopyFor(useLocale());
   if (isLoggedIn) {
     return (
       <div className={cn("flex flex-wrap items-center gap-3", className)}>
-        <Link href="/bearing" className={cn(base, sizes[size], solid)}>
+        <Link href="/bearing" className={cn(base, sizes[size], gold)}>
           {layout === "solo" ? copy.cta.openApp : copy.cta.goToDashboard}
         </Link>
       </div>
@@ -87,7 +95,7 @@ export function LandingCtas({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
-      <Link href="/signup" className={cn(base, sizes[size], solid)}>
+      <Link href="/signup" className={cn(base, sizes[size], gold)}>
         {copy.cta.getStarted}
       </Link>
       {layout === "solo" ? null : (

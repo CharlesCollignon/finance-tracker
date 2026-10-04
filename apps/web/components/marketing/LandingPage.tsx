@@ -1,446 +1,235 @@
-import { formatEuro, formatPercent } from "@finance/core/constants";
-import { getLocale, getT } from "@/lib/locale";
-import {
-  ArrowsLeftRight,
-  ChartLine,
-  Compass,
-  Repeat,
-  ScalesIcon,
-  Sparkle,
-  Target,
-} from "@phosphor-icons/react/dist/ssr";
+/* Hallmark · genre: atmospheric · macrostructure: Split Studio · theme: design.md (Pluclair) · enrichment: kept (WebGL Earth hero) · nav: kept · footer: kept */
+
+import Link from "next/link";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import { getLocale } from "@/lib/locale";
+import { AppScreen } from "@/components/marketing/AppScreen";
 import { LandingBloom } from "@/components/marketing/LandingOrb";
 import { LandingCtas } from "@/components/marketing/LandingCtas";
 import { LandingEarth } from "@/components/marketing/LandingEarth";
-import { LandingDeviceStack } from "@/components/marketing/LandingDeviceStack";
-import { Reveal, Rise } from "@/components/marketing/LandingReveal";
-import { GlassLink, GlassStat } from "@/components/marketing/LandingGlass";
+import {
+  FadeUp,
+  HeroDepth,
+  HeroDrift,
+  Land,
+  Questions,
+  RiseLines,
+  RiseWords,
+  ScrollWords,
+} from "@/components/marketing/LandingReveal";
 import {
   featureHref,
   landingCopyFor,
   type LandingPageId,
 } from "@/components/marketing/landing-copy";
-import { landingSampleFor } from "@/components/marketing/landing-sample";
+import { marketingFocus } from "@/components/marketing/marketing-focus";
+import { cn } from "@/lib/utils";
 
 interface LandingPageProps {
   isLoggedIn: boolean;
 }
 
-/** One icon per feature card. Phosphor's /dist/ssr entry so a grid of static
- * glyphs does not make this whole page a client component.
+/**
+ * The screens "How it works" walks through, in the order a month uses them:
+ * where you stand, what repeats, what slipped through, how long you could
+ * hold out, what the investments are made of, and the read that puts it into
+ * words. The ledger and the feature pages' walk keep all seven; these are the
+ * six a first visit needs.
+ */
+const HOW_ORDER = [
+  "bearing",
+  "charges",
+  "month-close",
+  "plan",
+  "wallets",
+  "month-read",
+] as const satisfies readonly LandingPageId[];
+
+/** Text a little narrower than its screen, on whichever side it falls. */
+const SPLIT = "md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]";
+const SPLIT_FLIPPED = "md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]";
+
+/**
+ * The landing page, as a run of questions a person actually asks, each beside
+ * the screen that answers it.
  *
- * The first five are the glyphs `APP_NAV_ITEMS` gives those same surfaces, so
- * a visitor meets each one's mark here and finds it again in the app's nav. The
- * last two are not surfaces and have no nav entry to borrow from. */
-const FEATURE_ICONS: Record<LandingPageId, React.ReactNode> = {
-  bearing: <Compass size={18} />,
-  ledger: <ArrowsLeftRight size={18} />,
-  charges: <Repeat size={18} />,
-  plan: <Target size={18} />,
-  wallets: <ChartLine size={18} />,
-  "month-close": <ScalesIcon size={18} />,
-  "month-read": <Sparkle size={18} />,
-};
-
-/* The two sparklines that used to live here are gone rather than relocated.
-   Twelve bars falling 0.95 to 0.34 and eight rising 0.30 to 0.66 were not
-   illustrations of a mechanism, they were claims about an outcome — that a
-   year of this drives unrecorded spending down by two thirds and more than
-   doubles what you keep. Nothing has measured either, and `PRODUCT.md` says
-   no benchmark may be invented, implied, or dressed up as placeholder
-   content. Moving them next to the "Example data" note did not help: that
-   note labels the figures, and a slope is not a figure.
-
-   The meters that replaced them are ratios the sample month actually
-   contains — 218 against a 260 allowance, 33.6% of what came in. The Run
-   draws no meter at all, because `close.streak / 6` measured progress toward
-   a six-month target that exists nowhere in the product. */
-
-function SectionHeading({
-  heading,
-  body,
-  align = "center",
-}: {
-  heading: string;
-  body?: string;
-  align?: "center" | "left";
-}) {
-  const centered = align === "center";
-  return (
-    <div
-      className={
-        centered
-          ? "mx-auto flex max-w-2xl flex-col items-center text-center"
-          : "flex max-w-xl flex-col items-start text-left"
-      }
-    >
-      <h2 className="marketing-display text-display-sub">{heading}</h2>
-      {body ? (
-        <p className="mt-4 text-base leading-relaxed text-marketing-muted">
-          {body}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
+ * It had been a pillars row numbered 01–03, a drawn laptop and phone, seven
+ * icon cards in a grid, two long essays with definition lists and four
+ * numbered beats — written for someone already fluent in the product's
+ * mechanics. Everyday readers bounce off that. The mechanisms are all still
+ * here, each said in two or three plain sentences next to a picture of the
+ * screen, with the feature page one press away for anyone who wants the rest.
+ *
+ * It moves on one motif, things rising out of a horizon (`LandingReveal`):
+ * the hero on a single timeline with the Earth's, headings rising word by
+ * word, the promise lit as it is read, the screens landing as they are
+ * scrolled to. What is not open to everyone yet is said once, under "Coming
+ * soon", in the future tense.
+ */
 export async function LandingPage({ isLoggedIn }: LandingPageProps) {
-  const t = await getT();
-  // A server component, so the locale comes off the cookie rather than out of
-  // context. The mocks below are client components and read it themselves.
   const locale = await getLocale();
-  const copy = landingCopyFor(locale);
-  const sample = landingSampleFor(locale);
-  const euro = (amount: number) => formatEuro(amount, locale);
-  const percent = (value: number) =>
-    t("units.percent", { value: formatPercent(value, locale) });
-
-  const {
-    hero,
-    pillars,
-    devices,
-    features,
-    monthClose,
-    monthRead,
-    how,
-    privacy,
-    finalCta,
-  } = copy;
-  const { close } = sample;
+  const { hero, promise, how, soon, faq, finalCta } = landingCopyFor(locale);
 
   return (
     <>
       {/* ------------------------------------------------------------ hero */}
-      <section className="relative isolate flex min-h-dvh flex-col justify-center overflow-hidden px-6 pb-20 pt-28">
+      {/* A film title card: the headline, the tagline and the buttons set low
+          on the left, on the planet's dark body, leaving the sky, the sun and
+          the black hole the top and the right. It was centred, everything
+          stacked on one axis — the hero every generated page has. */}
+      <section className="relative isolate flex min-h-dvh flex-col justify-end overflow-hidden px-6 pb-14 pt-28 md:pb-20">
         {/* The Earth from orbit, its rim arcing across the hero with Europe
             lit at dusk below it, under its own nebula and stars, a distant
             sun setting on the rim with the light in it. Still: the light
             does not follow the pointer here, so the scene is out of the
             pointer's way like the backgrounds elsewhere. The bottom fades
             into the page's ground, so the black of space does not end on a
-            line. The surface is lit at three and a half times the renderer's
-            default and the light at one and a half, so the land under the
-            rim shows, and an aurora stands along the rim, since without the
-            pointer nothing would wake one. */}
-        <div className="pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
+            line. The surface at the renderer's ceiling (4, it was 3.5) and the
+            light a touch up (1.65, it was 1.5), so the land under the rim
+            reads a little brighter. */}
+        <HeroDepth className="pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
           <LandingEarth
-            surfaceBrightness={3.5}
-            illumination={1.5}
+            surfaceBrightness={4}
+            illumination={1.65}
             aurora={0.6}
             interactive={false}
           />
-        </div>
+        </HeroDepth>
 
-        {/* Centred in the window, with nothing under it but the sky. The two
-            sample figures that used to float below it are gone; the one that
-            carried the argument — what February's balance proved was never
-            recorded — is in the month-close section further down, where it
-            is explained rather than merely shown. The top padding is the
-            fixed nav pill's clearance, a little more than the bottom's, so
-            the block sits at the middle of the part of the window the nav
-            leaves rather than of the whole window. */}
-        <div className="page-enter relative z-20 mx-auto flex w-full max-w-3xl flex-col items-center text-center">
-          <h1 className="marketing-display text-display-hero">
-            {hero.titleLines.map((line) => (
-              <span key={line} className="block">
-                {line}
-              </span>
-            ))}
-          </h1>
-          <p className="mt-6 max-w-xl text-[0.975rem] leading-relaxed text-marketing-muted sm:text-lg">
-            {hero.tagline}
-          </p>
-          <LandingCtas
-            isLoggedIn={isLoggedIn}
-            size="lg"
-            className="mt-9 justify-center"
+        {/* One timeline with the Earth's: the nav slides down, the
+            headline's lines rise while the planet fades in, the tagline and
+            the buttons follow, and as the sun starts up behind the rim a
+            glint crosses the gold button. Scrolling away, the text drifts
+            up and fades while the planet comes slowly closer. */}
+        <HeroDrift className="relative z-20 mx-auto w-full max-w-6xl">
+          <RiseLines
+            lines={hero.titleLines}
+            className="marketing-display text-display-hero"
+            delay={0.35}
           />
-        </div>
-      </section>
-
-      {/* --------------------------------------------------------- pillars */}
-      <section className="relative px-6 py-20 md:py-28">
-        <div className="mx-auto max-w-5xl">
-          <Reveal>
-            <div className="marketing-rule" />
-          </Reveal>
-          <Reveal className="mt-10">
-            <h2 className="text-center font-head text-sm font-medium uppercase tracking-[0.18em] text-marketing-faint">
-              {pillars.heading}
-            </h2>
-          </Reveal>
-          <div className="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
-            {pillars.items.map((item, index) => (
-              <Reveal key={item.title} delay={index * 0.08}>
-                {/* The ordinal is the quietest thing in the group, so it takes
-                    the quietest grey. It was `text-primary/70`, which spent
-                    Lamplit Gold on a counter and spent it as a tint — the two
-                    failures DESIGN.md names in the same breath, since a tint
-                    of the accent is a fourth marketing grey nobody declared.
-                    `marketing-faint` reads 5.31:1 on the marketing ground. */}
-                <p className="font-mono text-xs text-marketing-faint">
-                  {String(index + 1).padStart(2, "0")}
-                </p>
-                <h3 className="mt-3 font-head text-lg text-marketing-ink">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
-                  {item.body}
-                </p>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --------------------------------------------------------- devices */}
-      <section className="relative overflow-hidden px-6 pb-24 pt-4 md:pb-32">
-        <div className="mx-auto max-w-6xl">
-          <Reveal>
-            <SectionHeading heading={devices.heading} body={devices.body} />
-          </Reveal>
-          <Rise className="mt-16 md:mt-20">
-            <LandingDeviceStack pageId="bearing" />
-          </Rise>
-        </div>
-      </section>
-
-      {/* -------------------------------------------------------- features */}
-      <section id="features" className="relative px-6 pb-24 md:pb-32">
-        <div className="mx-auto max-w-6xl">
-          <Reveal>
-            <SectionHeading heading={features.heading} body={features.body} />
-          </Reveal>
-          <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {copy.pages.map((page, index) => (
-              <Reveal
-                key={page.id}
-                delay={Math.min(index, 5) * 0.05}
-                // Seven cards over three columns come out as two full rows
-                // and a last one holding a single card, so that last card is
-                // given the whole width rather than left sitting alone in a
-                // third of it. It falls to the month read, which is both the
-                // one the grid leaves over and the strangest thing here: a
-                // model that writes the sentences and is not allowed to write
-                // the numbers in them.
-                className={
-                  page.id === "month-read"
-                    ? "sm:col-span-2 lg:col-span-3"
-                    : undefined
-                }
-              >
-                <GlassLink
-                  href={featureHref(page.id)}
-                  title={page.title}
-                  body={page.body}
-                  icon={FEATURE_ICONS[page.id]}
-                  className="h-full"
-                />
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ----------------------------------------------------- month close */}
-      <section className="relative isolate overflow-hidden px-6 py-24 md:py-32">
-        <LandingBloom className="left-1/2 top-1/2 h-[42rem] w-[42rem] -translate-x-1/2 -translate-y-1/2 opacity-45" />
-
-        <div className="relative mx-auto grid max-w-6xl gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
-          <Reveal>
-            <SectionHeading heading={monthClose.heading} align="left" />
-            <div className="mt-6 flex max-w-xl flex-col gap-4">
-              {monthClose.body.map((paragraph) => (
-                <p
-                  key={paragraph.slice(0, 24)}
-                  className="text-base leading-relaxed text-marketing-muted"
-                >
-                  {paragraph}
-                </p>
-              ))}
-            </div>
-            <dl className="mt-10 flex flex-col gap-6 border-t border-white/10 pt-8">
-              {monthClose.outcomes.map((outcome) => (
-                <div key={outcome.label} className="sm:flex sm:gap-6">
-                  {/* The term of a definition list, brighter than the body
-                      beside it rather than differently coloured from it. It
-                      was `text-primary/80`: an accent the outcome does not
-                      earn, reached for at a tint because a weight was what the
-                      hierarchy actually wanted. Ink over muted is that weight,
-                      and 14.43:1 against the marketing ground. */}
-                  <dt className="w-32 shrink-0 font-mono text-xs uppercase tracking-[0.14em] text-marketing-ink">
-                    {outcome.label}
-                  </dt>
-                  <dd className="mt-1 text-sm leading-relaxed text-marketing-muted sm:mt-0">
-                    {outcome.body}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            <p className="mt-8 max-w-xl text-sm leading-relaxed text-marketing-faint">
-              {monthClose.footnote}
+          <FadeUp trigger="mount" delay={0.95}>
+            <p className="mt-6 max-w-xl text-[0.975rem] leading-relaxed text-marketing-muted sm:text-lg">
+              {hero.tagline}
             </p>
-          </Reveal>
-
-          <Rise className="flex flex-col gap-4 lg:pt-24">
-            <GlassStat
-              href={featureHref("month-close")}
-              label={t("marketingStat.unrecordedIn", {
-                month: close.monthLabel,
-              })}
-              value={euro(close.unrecorded)}
-              caption={t("marketingStat.underAllowance", {
-                amount: euro(close.unrecordedCap),
-              })}
-              meter={close.unrecorded / close.unrecordedCap}
-              className="w-full"
+          </FadeUp>
+          <FadeUp trigger="mount" delay={1.2}>
+            <LandingCtas
+              isLoggedIn={isLoggedIn}
+              size="lg"
+              shine
+              className="mt-8"
             />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <GlassStat
-                label={t("common.kept")}
-                value={euro(close.kept)}
-                caption={t("marketingStat.ofWhatCameIn", {
-                  percent: percent(close.keptRate),
-                })}
-                meter={close.keptRate / 100}
-                className="w-full"
-              />
-              <GlassStat
-                label={t("common.theRun")}
-                value={t("marketingStat.monthsValue", { count: close.streak })}
-                caption={t("marketingStat.inARowInsideAllowance")}
-                className="w-full"
-              />
-            </div>
-            <p className="px-1 text-xs text-marketing-faint">
-              {copy.monthClose.exampleNote}
-            </p>
-          </Rise>
-        </div>
+          </FadeUp>
+        </HeroDrift>
       </section>
 
-      {/* ------------------------------------------------------ month read */}
-      {/* After the close, because it is the close's figures it has the most to
-          say about — and because the order on the page is the order in the
-          app: measure first, then read what the measurement came to. */}
-      {/* overflow-x-clip for the same reason `FeaturePage` gives: the device
-          stack's bloom reaches 48px past each of its edges, and on a phone
-          that is 24px of horizontal scroll across the whole document. The
-          devices section above already contains its copy of the same stack;
-          this one did not, which is why the landing page was the only
-          marketing page that scrolled sideways. */}
-      <section
-        id="read"
-        className="relative overflow-x-clip px-6 pb-24 md:pb-32"
-      >
-        <div className="relative mx-auto grid max-w-6xl gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
-          <Rise className="order-2 flex flex-col gap-4 lg:order-1 lg:pt-24">
-            <LandingDeviceStack pageId="month-read" />
-          </Rise>
-
-          <Reveal className="order-1 lg:order-2">
-            <SectionHeading heading={monthRead.heading} align="left" />
-            <div className="mt-6 flex max-w-xl flex-col gap-4">
-              {monthRead.body.map((paragraph) => (
-                <p
-                  key={paragraph.slice(0, 24)}
-                  className="text-base leading-relaxed text-marketing-muted"
-                >
-                  {paragraph}
-                </p>
-              ))}
-            </div>
-            <dl className="mt-10 flex flex-col gap-6 border-t border-white/10 pt-8">
-              {monthRead.outcomes.map((outcome) => (
-                <div key={outcome.label} className="sm:flex sm:gap-6">
-                  {/* The term of a definition list, brighter than the body
-                      beside it rather than differently coloured from it. It
-                      was `text-primary/80`: an accent the outcome does not
-                      earn, reached for at a tint because a weight was what the
-                      hierarchy actually wanted. Ink over muted is that weight,
-                      and 14.43:1 against the marketing ground. */}
-                  <dt className="w-32 shrink-0 font-mono text-xs uppercase tracking-[0.14em] text-marketing-ink">
-                    {outcome.label}
-                  </dt>
-                  <dd className="mt-1 text-sm leading-relaxed text-marketing-muted sm:mt-0">
-                    {outcome.body}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            <p className="mt-8 max-w-xl text-sm leading-relaxed text-marketing-faint">
-              {monthRead.footnote}
-            </p>
-          </Reveal>
-        </div>
+      {/* --------------------------------------------------------- promise */}
+      {/* The three commitments as one sentence, set large and left: a thing
+          the reader is told, not a row of cards to scan. */}
+      <section className="relative px-6 py-20 md:py-28">
+        <ScrollWords
+          text={promise.text}
+          className="marketing-display mx-auto max-w-5xl text-balance text-display-sub text-marketing-ink"
+        />
       </section>
 
       {/* ------------------------------------------------------------- how */}
-      <section id="how" className="relative px-6 pb-24 md:pb-32">
-        <div className="mx-auto max-w-5xl">
-          <Reveal>
-            <SectionHeading heading={how.heading} />
-          </Reveal>
-          <ol className="glass-grid mt-16 grid gap-px overflow-hidden rounded-card sm:grid-cols-2">
-            {how.beats.map((beat, index) => (
-              <li key={beat.title} className="p-7 md:p-8">
-                <Reveal delay={index * 0.06}>
-                  {/* As in the pillars above: faint, not a tint of the
-                      accent. 5.17:1 inside a `.glass-grid` cell. */}
-                  <span className="font-mono text-xs text-marketing-faint">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="mt-3 font-head text-lg text-marketing-ink">
-                    {beat.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
-                    {beat.body}
-                  </p>
-                </Reveal>
-              </li>
-            ))}
-          </ol>
+      <section
+        id="how"
+        className="relative overflow-x-clip px-6 pb-28 md:pb-40"
+      >
+        <div className="mx-auto max-w-6xl">
+          <RiseWords
+            text={how.heading}
+            className="marketing-display text-display-section"
+          />
+          <div className="mt-14 flex flex-col gap-24 md:mt-20 md:gap-36">
+            {HOW_ORDER.map((id, index) => {
+              const row = how.rows[id];
+              // Alternating sides, so the eye walks down the page rather
+              // than down one column.
+              const flipped = index % 2 === 1;
+              return (
+                <article
+                  key={id}
+                  className={cn(
+                    "grid items-center gap-10 md:gap-14",
+                    flipped ? SPLIT_FLIPPED : SPLIT,
+                  )}
+                >
+                  <div className={flipped ? "md:order-2" : undefined}>
+                    <RiseWords
+                      as="h3"
+                      text={row.question}
+                      className="marketing-display text-display-sub"
+                    />
+                    <FadeUp delay={0.2}>
+                      <p className="mt-4 max-w-md text-base leading-relaxed text-marketing-muted">
+                        {row.body}
+                      </p>
+                      <Link
+                        href={featureHref(id)}
+                        className={cn(
+                          "group mt-7 inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-marketing-ink transition-colors duration-200 hover:border-white/30 hover:bg-white/[0.06] motion-reduce:transition-none",
+                          marketingFocus,
+                        )}
+                      >
+                        {row.link}
+                        {/* It leans toward where it leads. */}
+                        <ArrowRight
+                          size={14}
+                          aria-hidden
+                          className="transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none"
+                        />
+                      </Link>
+                    </FadeUp>
+                  </div>
+                  <Land className={flipped ? "md:order-1" : undefined}>
+                    <AppScreen pageId={id} />
+                  </Land>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </section>
 
-      {/* --------------------------------------------------------- privacy */}
-      <section id="privacy" className="relative px-6 pb-24 md:pb-32">
-        <div className="mx-auto max-w-5xl">
-          <div className="glass-flat overflow-hidden rounded-card p-8 md:p-12">
-            <Reveal>
-              <div className="grid gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:gap-16">
-                <div>
-                  <h2 className="marketing-display text-display-sub">
-                    {privacy.heading}
-                  </h2>
-                </div>
-                <div>
-                  <p className="text-sm leading-relaxed text-marketing-muted">
-                    {privacy.body}
+      {/* ------------------------------------------------------------ soon */}
+      <section className="relative px-6 pb-28 md:pb-36">
+        <div className={cn("mx-auto grid max-w-6xl gap-10 md:gap-14", SPLIT)}>
+          <RiseWords
+            text={soon.heading}
+            className="marketing-display text-display-sub"
+          />
+          <ul className="grid gap-x-12 gap-y-10 sm:grid-cols-2">
+            {soon.items.map((item, index) => (
+              <li key={item.title}>
+                <FadeUp delay={0.1 + index * 0.08}>
+                  <h3 className="font-head text-lg text-marketing-ink">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-marketing-muted">
+                    {item.body}
                   </p>
-                  <ul className="mt-6 flex flex-col gap-3">
-                    {privacy.points.map((point) => (
-                      <li
-                        key={point}
-                        className="flex items-start gap-3 text-sm text-marketing-ink"
-                      >
-                        {/* A bullet, sitting a step under the line it marks —
-                            the same relation the read card's neutral dot has
-                            to its observation. Gold here was three unrelated
-                            golds on one page, which is the spend the Rare
-                            Accent Rule names. 6.06:1 on the panel. */}
-                        <span
-                          className="mt-[0.4rem] h-1.5 w-1.5 shrink-0 rounded-full bg-marketing-muted"
-                          aria-hidden
-                        />
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </Reveal>
-          </div>
+                </FadeUp>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------- questions */}
+      {/* `#privacy`, which the header has always linked to: the questions
+          are where what happens to the reader's data is now said. */}
+      <section id="privacy" className="relative px-6 pb-28 md:pb-36">
+        <div className={cn("mx-auto grid max-w-6xl gap-10 md:gap-14", SPLIT)}>
+          <RiseWords
+            text={faq.heading}
+            className="marketing-display text-display-sub"
+          />
+          <FadeUp delay={0.15}>
+            <Questions items={faq.items} />
+          </FadeUp>
         </div>
       </section>
 
@@ -452,19 +241,22 @@ export async function LandingPage({ isLoggedIn }: LandingPageProps) {
           aria-hidden
         />
 
-        <Reveal className="relative mx-auto flex max-w-2xl flex-col items-center text-center">
-          <h2 className="marketing-display text-display-section">
-            {finalCta.heading}
-          </h2>
-          <p className="mt-5 max-w-md text-base leading-relaxed text-marketing-muted">
-            {finalCta.body}
-          </p>
-          <LandingCtas
-            isLoggedIn={isLoggedIn}
-            size="lg"
-            className="mt-9 justify-center"
+        <div className="relative mx-auto flex max-w-2xl flex-col items-center text-center">
+          <RiseWords
+            text={finalCta.heading}
+            className="marketing-display text-display-section"
           />
-        </Reveal>
+          <FadeUp delay={0.3} className="flex flex-col items-center">
+            <p className="mt-5 max-w-md text-base leading-relaxed text-marketing-muted">
+              {finalCta.body}
+            </p>
+            <LandingCtas
+              isLoggedIn={isLoggedIn}
+              size="lg"
+              className="mt-9 justify-center"
+            />
+          </FadeUp>
+        </div>
       </section>
     </>
   );

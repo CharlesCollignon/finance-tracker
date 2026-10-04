@@ -2,295 +2,279 @@ import type { LandingCopySections, LandingPageCopy } from "./landing-copy";
 import type { LandingPageId } from "./landing-copy";
 
 /**
- * Every word on the marketing site, in French.
+ * Every word on the marketing site, in French — the language everyone
+ * starts in.
  *
  * A file of its own rather than entries in the message catalogue, for the
  * reason the English file gives about itself: the voice only holds if it can
- * be read in one sitting, and a paragraph reviewed next to a button label is
- * a paragraph nobody reviews. The two rules the English header states apply
- * here unchanged, and are worth restating because a translation is where they
- * are easiest to lose:
+ * be read in one sitting. Its three rules apply here unchanged, and are worth
+ * restating because a translation is where they are easiest to lose:
  *
- *   Say the mechanism, not the benefit. "Un solde, une fois par mois" is
- *   checkable; "une clarté sans effort" is not, and it is exactly the
- *   register a translation drifts into when the English is doing something
- *   more specific.
+ *   Écrire pour quelqu'un qui n'est pas du métier. Des phrases courtes, des
+ *   mots de tous les jours, un exemple concret par idée — « les courses, le
+ *   resto » — et les noms des écrans tels que l'application les affiche.
  *
- *   Never promise what the app does not do. Nobody can connect a bank yet —
- *   see the English header for why — so the French says the same thing the
- *   English does: what a visitor will actually meet today, and the connection
- *   in the future tense in exactly one place. "En cours de développement" is
- *   the whole of it; a translation that turns one clause into a paragraph of
- *   roadmap has re-promised what the English just stopped promising.
+ *   Say the mechanism, not the benefit. « Recopiez le solde affiché par
+ *   votre banque » se vérifie ; « une clarté sans effort », non.
  *
- * The nouns come from the app, not from the dictionary: "Journal", "Gardé",
- * "Dépenses non enregistrées", "Clôture du mois". They are the words printed
- * on the screens this page is describing, and a landing page that names a
- * feature differently from the app is a landing page that mis-sold it.
+ *   Never promise what the app does not do. Ce qui n'est pas encore ouvert à
+ *   tous — la banque, l'immobilier, l'IA de votre choix, l'application
+ *   mobile — est dit une fois, sous « Bientôt », au futur.
+ *
+ * The nouns come from the app, not from the dictionary: « Le point »,
+ * « Journal », « Récurrents », « Placements », « Clôture du mois ». A landing
+ * page that names a feature differently from the app is one that mis-sold it.
  */
 export const landingCopyFr: LandingCopySections & {
   pages: Record<LandingPageId, LandingPageCopy>;
 } = {
   hero: {
-    titleLines: ["Tout votre mois,", "sur un seul écran calme"],
+    titleLines: ["Votre argent,", "plus clair chaque mois"],
     tagline:
-      "Revenus, factures, épargne et investissements — saisis par vous, gardés en privé, et rapprochés de votre vrai solde à la fin de chaque mois.",
+      "Vos revenus, vos dépenses, votre épargne et vos placements au même endroit. Ce qui revient chaque mois s’ajoute tout seul, et une fois par mois, Pluclair compare avec votre banque pour retrouver ce qui a filé.",
   },
 
-  pillars: {
-    heading: "Trois choses qu'il ne fera pas",
-    items: [
-      {
-        title: "Déplacer votre argent",
-        body: "Rien ici n'atteint votre compte. Pas de virement, pas de paiement, aucun prélèvement dans l'application — ses lignes décrivent de l'argent déjà parti, et il n'existe aucune version d'elle qui pourrait en déplacer.",
-      },
-      {
-        title: "Agir sur une règle que vous n'avez pas écrite",
-        body: "Une ligne importée ne se classe toute seule que là où vous avez déjà mis ce commerçant deux fois. Tout le reste attend dans une liste, et une charge récurrente écrit dans chaque mois exactement ce que vous lui avez demandé d'écrire, rien de plus.",
-      },
-      {
-        title: "Vous dire quoi faire",
-        body: "Pas de conseil, pas de score, aucune incitation à changer de produit. L'application mesure ; les décisions restent où elles doivent être.",
-      },
-    ],
-  },
-
-  devices: {
-    heading: "Le même mois, quel que soit l'écran le plus proche",
-    body: "Un compte, un journal, trois clients qui s'accordent. Ajoutez une ligne sur le téléphone en rentrant et le Cap l'a avant que vous ne soyez assis.",
-  },
-
-  features: {
-    heading: "Chaque écran est le même journal",
-    body: "Rien ici ne tient un second jeu de chiffres. Vos saisies et un export importé arrivent au même endroit, et chaque écran en est une lecture différente.",
-  },
-
-  monthClose: {
-    heading: "Le chiffre qui vérifie tous les autres",
-    body: [
-      "Chaque total de chaque autre écran est une somme de mouvements — certains que vous avez saisis, d'autres apportés par un export importé. C'est honnête, et c'est incomplet : des espèces retirées au distributeur, un paiement auquel vous n'avez jamais repensé, une semaine que vous n'avez pas pris le temps de saisir. Aucun calcul sur les lignes ne peut trouver ce qui n'y est pas.",
-      "Le solde, si. Si le compte contenait un chiffre à la fin du mois dernier et un autre à la fin de celui-ci, et que les lignes n'expliquent qu'une partie de l'écart, le reste est une dépense que rien n'explique. Aujourd'hui, cela vous coûte un nombre par mois, relevé chez votre banque et saisi le jour que vous avez choisi ; une connexion en lecture seule qui ira chercher ce chiffre pour vous est en cours de développement.",
-    ],
-    outcomes: [
-      {
-        label: "Non enregistré",
-        body: "Ce que le solde prouve être sorti du compte et que rien n'explique. Mesuré, pas retenu de mémoire.",
-      },
-      {
-        label: "Gardé",
-        body: "Ce que le mois a réellement ajouté à votre patrimoine : ce qu'il a laissé sur le compte plus tout ce qui a été mis de côté exprès.",
-      },
-      {
-        label: "La série",
-        body: "Les mois d'affilée sous votre propre marge, fixée d'après votre historique plutôt que d'après un chiffre rond.",
-      },
-    ],
-    footnote:
-      "Un solde plus élevé que les lignes ne le permettent n'est pas une bonne nouvelle — cela veut dire qu'il manque quelque chose, et la clôture le dit au lieu de le compter en silence.",
-    exampleNote:
-      "Données d'exemple. Votre première clôture fixe le point de départ ; les chiffres commencent à la deuxième.",
-  },
-
-  monthRead: {
-    heading: "Les mots sont écrits pour vous. Pas les chiffres.",
-    body: [
-      "Demandez une lecture et un modèle de langage écrit quelques phrases sur le mois que vous regardez. Il ne saisit jamais un nombre. Il désigne un chiffre par son nom — dépenses non enregistrées, ce que vous avez gardé, votre marge — et l'application y substitue sa propre valeur avant que la phrase ne vous parvienne. Une phrase qui repose sur un chiffre que l'application n'a pas calculé est écartée ; si c'est le titre qui a cassé, toute la lecture est jetée et rien n'est enregistré.",
-      "Cela corrige l'arithmétique, pas l'opinion. « Vous dépensez nettement plus en courses » ne contient aucun chiffre, donc rien au-dessus ne peut le vérifier — c'est un jugement, et il est du modèle. C'est un deuxième regard sur le mois, pas un verdict, et c'est le seul endroit de l'application où quoi que ce soit est écrit pour vous.",
-    ],
-    outcomes: [
-      {
-        label: "Sur demande",
-        body: "Rien n'est écrit tant que vous ne le demandez pas. Chaque lecture est enregistrée avec les chiffres dont elle est partie, pour que ce qu'elle regardait reste visible à côté de ce qu'elle a dit.",
-      },
-      {
-        label: "Vos mots",
-        body: "Le modèle est tenu aux termes de l'application. Une lecture qui appellerait une clôture de mois une « réconciliation » contredirait chaque libellé imprimé autour d'elle, et vous n'auriez aucun moyen de savoir lequel des deux a tort.",
-      },
-      {
-        label: "Elle vieillit",
-        body: "Les chiffres à l'écran sont toujours à jour. Le jugement, non : « confortablement dans votre marge » cesse d'être vrai quand cela cesse d'être vrai, alors une lecture est signalée dès que les chiffres qui la portent ont bougé.",
-      },
-    ],
-    footnote:
-      "Les suggestions sont sous un titre à elles, jamais mêlées aux observations — pour que rien de ce qu'elle propose ne puisse être pris pour quelque chose qu'elle a mesuré.",
+  promise: {
+    text: "Trois choses que Pluclair ne fera jamais : toucher à votre argent, décider à votre place, vous vendre quoi que ce soit.",
   },
 
   how: {
-    heading: "Ouvrez-le, remplissez-le, clôturez-le",
-    beats: [
+    heading: "Comment ça marche",
+    rows: {
+      bearing: {
+        question: "Où j’en suis ce mois-ci ?",
+        body: "Le point affiche ce qu’il y a sur votre compte aujourd’hui, et ce qu’il restera à la fin du mois une fois passé tout ce qui est prévu. Touchez une carte pour voir ce qu’il y a derrière un chiffre.",
+        link: "Voir Le point",
+      },
+      charges: {
+        question: "Ce qui revient, noté une seule fois",
+        body: "Loyer, salaire, abonnements, épargne du mois : vous notez chacun une seule fois, et il s’ajoute tout seul chaque mois. Il ne vous reste qu’à noter le reste — les courses, le resto, le cadeau d’anniversaire. Ou importez le relevé CSV de votre banque : Pluclair propose une catégorie pour chaque ligne, et vous validez.",
+        link: "Voir les Récurrents",
+      },
+      "month-close": {
+        question: "Où est passé le reste ?",
+        body: "Une fois par mois, recopiez le solde affiché par votre banque. Pluclair le compare à ce que vous avez noté, et l’écart, c’est l’argent parti sans laisser de trace : un retrait au distributeur, un paiement oublié. Vous le voyez enfin, en euros.",
+        link: "Voir la clôture du mois",
+      },
+      plan: {
+        question: "Combien de temps je tiens si ça coince ?",
+        body: "Le Plan compte votre matelas de sécurité en mois de dépenses fixes, montre les paliers que votre épargne va franchir et quand, et ce que chaque compte pourrait valoir dans dix ou vingt ans, après impôts.",
+        link: "Voir le Plan",
+      },
+      wallets: {
+        question: "Que valent vraiment mes placements ?",
+        body: "PEA, assurance vie, compte-titres, PER, crypto : ce que vous avez versé, ce que ça vaut aujourd’hui, et de quoi vos fonds sont faits — actions, obligations, or, crypto, pays, frais. Les cours se mettent à jour tout seuls, et aucun ordre ne part jamais de l’application.",
+        link: "Voir les Placements",
+      },
+      "month-read": {
+        question: "Et si on vous expliquait votre mois ?",
+        body: "Demandez une lecture : une IA écrit quelques phrases sur votre mois — ce qui a changé, ce qui mérite un œil. Les chiffres, eux, viennent toujours de Pluclair : l’IA n’a pas le droit d’en inventer un seul.",
+        link: "Voir les lectures écrites",
+      },
+    },
+  },
+
+  soon: {
+    heading: "Bientôt dans Pluclair",
+    items: [
       {
-        title: "Définissez ce qui revient, une fois",
-        body: "Salaire, loyer, abonnements, un achat mensuel dans le PEA. Chacun est un modèle avec un montant et un rythme — un modèle en parts prend plutôt son montant du cours du moment.",
+        title: "Votre banque, connectée",
+        body: "En lecture seule : vos opérations arriveront toutes seules, et Pluclair ne pourra jamais faire de paiement.",
       },
       {
-        title: "Les mois se remplissent tout seuls",
-        body: "Chaque mois à venir montre ce que vos charges appellent en lignes prévues, et chacune devient une vraie ligne, que vous pouvez encore modifier, le jour venu. Modifiez une charge et tous les mois à venir changent avec elle ; les lignes de ce mois-ci seulement si vous le dites.",
+        title: "Vos biens immobiliers",
+        body: "Leur valeur estimée, ce qu’il reste à rembourser sur le crédit, et ce que ça change à votre patrimoine.",
       },
       {
-        title: "Ajoutez le reste au fil de l'eau",
-        body: "Tout le reste, vous le saisissez. Ce qu'il reste, le calendrier jour par jour et chaque carte du Cap lisent tous ce même journal.",
+        title: "L’IA de votre choix",
+        body: "Mistral, ChatGPT ou Claude, sur votre propre compte OpenRouter : vous choisissez le modèle et vous payez vos lectures, quelques centimes chacune.",
       },
       {
-        title: "Clôturez-le face à la banque",
-        body: "Le jour de votre relevé, saisissez le seul solde que l'application ne peut pas connaître. Elle en déduit ce qu'elle n'a jamais vu, et ce que vous avez vraiment gardé.",
+        title: "L’application mobile",
+        body: "Pluclair dans votre poche, avec les mêmes chiffres que sur l’ordinateur.",
       },
     ],
   },
 
-  privacy: {
-    heading: "Derrière votre connexion, côté serveur, et effaçable par vous",
-    body: "Vos chiffres vivent dans des lignes derrière votre connexion, et chaque requête est limitée à votre compte — aucun autre compte ne peut les lire, parce qu'aucune requête ne le permettrait. Tout ce que ces lignes contiennent, c'est vous qui l'avez saisi ou importé, rien ne part ailleurs, et il n'y a rien à vendre parce qu'il n'y a personne à qui le vendre.",
-    points: [
-      "Rien n'est lu chez votre banque : chaque ligne vient de vous, saisie ou apportée.",
-      "Un export importé n'écrit rien tant que vous n'avez pas lu la liste qu'il propose.",
-      "Effacez toutes les lignes en gardant le compte, ou supprimez les deux.",
-      "Floutez chaque chiffre à l'écran d'un geste, pour le train.",
+  faq: {
+    heading: "Vos questions",
+    items: [
+      {
+        question: "C’est payant ?",
+        answer:
+          "Non. Créer un compte et tout ce qui est décrit plus haut est gratuit, sans carte bancaire. Seules les nouveautés qui passent par un service extérieur — la connexion bancaire, l’IA de votre choix — se paieront chez ce service.",
+      },
+      {
+        question: "Pluclair peut-il toucher à mon argent ?",
+        answer:
+          "Non, jamais. Il ne fait ni virement ni paiement, et la connexion bancaire qui arrive ne pourra que lire.",
+      },
+      {
+        question: "Où vont mes données ?",
+        answer:
+          "Elles restent sur des serveurs en Europe, derrière votre connexion. Personne d’autre ne peut les lire, rien n’est revendu, et vous pouvez tout effacer quand vous voulez.",
+      },
+      {
+        question: "Faut-il connecter sa banque ?",
+        answer:
+          "Non. Vous notez vos opérations vous-même, ou vous importez un relevé CSV de votre banque. Une connexion en lecture seule arrive bientôt, pour ceux qui la veulent.",
+      },
+      {
+        question: "Que voit l’IA ?",
+        answer:
+          "Seulement les chiffres de la page que vous lui demandez de lire : des totaux, des noms de catégories, les lignes de vos placements. Jamais votre nom, votre e-mail ni vos identifiants bancaires — et rien n’est écrit tant que vous ne le demandez pas.",
+      },
+      {
+        question: "Je peux masquer mes chiffres en public ?",
+        answer:
+          "Oui : un geste floute tous les montants à l’écran. Pratique dans le train.",
+      },
     ],
   },
 
   finalCta: {
     heading: "Commencez par ce mois-ci",
-    body: "Un salaire, un loyer, et ce dont vous vous souvenez. Environ quatre minutes, et sans carte bancaire.",
+    body: "Un salaire, un loyer, et ce dont vous vous souvenez. Quelques minutes, sans carte bancaire.",
   },
 
   pages: {
     bearing: {
-      title: "Cap",
-      body: "Où en est l'ensemble un jour donné, et vers quoi cela va.",
+      title: "Le point",
+      body: "Où vous en êtes aujourd’hui, et comment le mois va finir.",
       utility:
-        "Deux chiffres en haut, et cinq cartes en dessous qui décomposent le reste. Aucun chiffre n'est inventé ici : chacun est déjà montré par une autre surface, ce qui rend l'écran vérifiable au lieu d'en faire une seconde comptabilité.",
+        "Deux chiffres en haut : ce qu’il y a sur votre compte maintenant, et ce qu’il restera à la fin du mois. En dessous, quelques cartes qui s’ouvrent pour montrer le détail — chaque chiffre vient d’un autre écran, vous pouvez toujours le vérifier.",
       steps: [
         {
           title: "Lisez les deux chiffres",
-          body: "Ce qu'il y a actuellement sur votre compte courant, et à combien le mois finit une fois que tout ce qu'il sait déjà sera arrivé. Le second est une arithmétique sur des charges déjà saisies, pas une supposition sur ce que vous pourriez dépenser.",
+          body: "Le solde d’aujourd’hui, et la fin du mois une fois passé tout ce qui est prévu. Le second est un simple calcul sur ce que vous avez prévu, pas une supposition sur ce que vous pourriez dépenser.",
         },
         {
-          title: "Ouvrez une carte là où vous voulez le détail",
-          body: "Ce mois-ci, Les comptes, Votre régularité, L'année à venir, Portefeuilles. Une carte n'est que son nom et un chiffre tant qu'elle est fermée ; ouvrez-la et elle liste les chiffres derrière celui-là et dessine ce qui les compose, sur place, sans quitter l'écran.",
+          title: "Ouvrez une carte pour le détail",
+          body: "Ce mois-ci, vos comptes, votre épargne, vos placements. Chaque carte s’ouvre sur place et montre ce qui compose son chiffre.",
         },
         {
-          title: "Suivez-la jusqu'à la surface qui la porte",
-          body: "Chaque carte se termine par les surfaces qui l'expliquent. Un chiffre qui mène quelque part est un lien ; un chiffre qui n'a nulle part d'honnête où mener n'est pas déguisé en lien.",
+          title: "Remontez jusqu’à la source",
+          body: "Chaque carte se termine par un lien vers l’écran qui porte ses chiffres : rien n’est compté deux fois.",
         },
       ],
     },
     ledger: {
       title: "Journal",
-      body: "Chaque mouvement — en liste, posé sur les jours, ou mois par mois et par catégorie.",
+      body: "Toutes vos opérations — en liste, sur un calendrier, ou par catégorie.",
       utility:
-        "L'enregistrement dont tout le reste découle. Des lignes que vous avez saisies, des lignes que vos charges ont écrites, et des lignes venues d'un export qu'une de vos propres habitudes a classées — un seul corps de données, regardé de trois façons.",
+        "Tout ce qui entre et tout ce qui sort, au même endroit : ce que vous avez saisi, ce que vos opérations récurrentes ont ajouté, et ce que vous avez importé de votre banque.",
       steps: [
         {
-          title: "La liste, le calendrier, ou par catégorie",
-          body: "Les mêmes lignes partout. La liste sert à en retrouver une et à la modifier ; le calendrier les pose sur les jours, ce qui répond à quand le mois se tend plutôt qu'à ce que vous avez dépensé ; par catégorie donne à chacune ses douze mois, ce qu'elle coûte normalement, et ce qui s'en est écarté.",
+          title: "En liste, en calendrier ou par catégorie",
+          body: "Les mêmes lignes, de trois façons. La liste pour en retrouver une et la corriger ; le calendrier pour voir quels jours le mois se tend ; par catégorie pour voir ce que chacune coûte d’habitude.",
         },
         {
-          title: "Elle propose une catégorie ; vous décidez",
-          body: "Mettez un commerçant deux fois au même endroit — le moment où c'est une habitude et non une coïncidence — et l'application propose cet endroit la fois suivante, que vous saisissiez la ligne ou que vous parcouriez un export importé. Elle propose, vous confirmez, et chaque réponse lui apprend : les propositions s'affinent, le classement reste le vôtre.",
+          title: "Il propose, vous décidez",
+          body: "Rangez deux fois un commerçant dans la même catégorie, et Pluclair vous la propose la fois suivante. Vous validez, les propositions s’affinent — le classement reste le vôtre.",
         },
         {
           title: "Ou apportez un CSV",
-          body: "Un export de votre banque, dont les colonnes se règlent une fois. Le même historique propose une catégorie pour celles-ci, et rien n'est écrit avant que vous ayez lu la liste proposée.",
+          body: "Exportez un relevé depuis votre banque et réglez ses colonnes une fois. Rien n’est écrit avant que vous ayez relu la liste.",
         },
       ],
     },
     charges: {
-      title: "Charges",
-      body: "Salaire, loyer, abonnements, un achat mensuel. Écrits dans chaque mois pour vous.",
+      title: "Récurrents",
+      body: "Salaire, loyer, abonnements, épargne du mois — ajoutés à chaque mois pour vous.",
       utility:
-        "Des instructions permanentes pour ce qui se répète, chaque mois, chaque semaine ou chaque année, éventuellement bornées par un début et une fin. Chaque échéance est écrite le jour venu, et seulement si elle manque : une ligne que vous avez corrigée à la main n'est jamais réécrite. D'ici là, les mois à venir la montrent comme prévue.",
+        "Notez une fois ce qui revient chaque mois, chaque semaine ou chaque année. Chaque échéance s’ajoute le jour venu, et seulement si elle manque : une ligne que vous avez corrigée à la main n’est jamais réécrite.",
       steps: [
         {
-          title: "Définissez ce qui se répète",
-          body: "Un montant et un rythme. Un modèle au cours prend son montant d'un nombre de parts multiplié par le cours actuel plutôt que d'un chiffre fixe, pour qu'un achat mensuel vaille ce qu'il a coûté et non ce que vous aviez estimé.",
+          title: "Notez ce qui revient",
+          body: "Un montant et un rythme. Pour un achat mensuel d’actions, le montant suit le cours du jour.",
         },
         {
-          title: "Écrit, retiré, ou déjà là",
-          body: "Les échéances arrivent le jour venu en lignes ordinaires que vous pouvez encore modifier. Passez-en une prévue, ou supprimez-en une déjà écrite, et ce mois s'en passe pendant que le modèle continue. Et là où un import a déjà apporté le mouvement, dites que c'est bien celui que le modèle appelait, et la ligne du modèle lui cède la place.",
+          title: "Ajouté le jour venu",
+          body: "Chaque échéance arrive comme une ligne ordinaire, que vous pouvez encore modifier. Sautez-en une, et seul ce mois-là s’en passe ; les suivantes continuent.",
         },
         {
-          title: "Tenu à jour avec le marché",
-          body: "Une échéance prévue affiche le dernier cours et s'écrit au prix de son jour, discrètement et sans rien demander — que le marché bouge n'est la décision de personne. Une fois écrite, son montant est ce qui a réellement bougé et ne change plus.",
+          title: "Modifiez une fois pour tous les mois à venir",
+          body: "Changez une opération récurrente et tous les mois à venir suivent. Les lignes de ce mois-ci ne changent que si vous le dites.",
         },
       ],
     },
     plan: {
       title: "Plan",
-      body: "Où va votre argent, les paliers sur le chemin, et le solde qui le vérifie.",
+      body: "Votre matelas de sécurité, vos paliers, et la vue longue.",
       utility:
-        "Ce que vos propres chiffres donnent si les choses continuent ainsi : une année à venir d'après les opérations que vous avez déjà prévues, les paliers que votre épargne franchira et quand, un matelas de sécurité compté en mois de charges fixes, et la vue longue de chaque compte après impôts français. Rien ici n'impose quoi que ce soit ni ne déplace quoi que ce soit.",
+        "Ce que vos propres chiffres donnent si les choses continuent ainsi : l’année à venir, les paliers que votre épargne franchira et quand, un matelas de sécurité compté en mois de dépenses fixes, et ce que chaque compte pourrait valoir plus tard, après impôts. Rien ici ne déplace d’argent.",
       steps: [
         {
-          title: "Voyez l'année à venir, et essayez un peu plus",
-          body: "Vos comptes et ce que vous mettez de côté, mois par mois sur les douze prochains, d'après les opérations que vous avez déjà prévues. Faites glisser pour mettre un peu plus de côté chaque mois : l'année finit plus haut, et le prochain palier arrive plus tôt.",
+          title: "Voyez l’année à venir",
+          body: "Vos comptes mois par mois sur les douze prochains, d’après ce que vous avez déjà prévu. Faites glisser pour mettre un peu plus de côté, et l’année finit plus haut.",
         },
         {
-          title: "Des paliers, un matelas de sécurité, et la vue longue",
-          body: "Les sommes rondes que votre épargne et vos placements franchiront, et quand. Combien de mois de charges fixes votre épargne couvrirait. Et ce que chaque compte — Livret A, PEA, assurance vie, CTO, PER, crypto — pourrait valoir dans dix ou vingt ans, après l'impôt que chacun paie en France.",
+          title: "Votre matelas de sécurité",
+          body: "Combien de mois de dépenses fixes votre épargne couvrirait si vos revenus s’arrêtaient.",
         },
         {
-          title: "Clôturez le mois contre la banque",
-          body: "Le jour de votre relevé, le seul solde que l'application ne peut pas déduire elle-même. Il mesure ce qu'aucune arithmétique sur les lignes ne pourrait trouver, et ce qu'il trouve a sa propre page.",
+          title: "La vue longue",
+          body: "Ce qu’un Livret A, un PEA, une assurance vie, un compte-titres, un PER ou de la crypto pourrait valoir dans dix ou vingt ans, après l’impôt que chacun paie en France. Une estimation, présentée comme telle.",
         },
       ],
     },
     wallets: {
-      title: "Portefeuilles",
-      body: "PEA, CTO, AV, PER et crypto — ce que vous détenez, et de quoi c'est vraiment fait.",
+      title: "Placements",
+      body: "PEA, assurance vie, compte-titres, PER, crypto — ce que vous détenez, et de quoi c’est fait.",
       utility:
-        "Là où se trouve la valeur investie, enregistrée par vous. Les cours mettent la valorisation à jour ; il n'y a aucune connexion courtier, et aucun ordre ne sort jamais de cette application.",
+        "Vos placements, notés par vous. Les cours mettent leur valeur à jour tout seuls ; il n’y a aucun lien avec un courtier, et aucun ordre ne part jamais de l’application.",
       steps: [
         {
-          title: "Enregistrez ce que vous détenez",
-          body: "Un portefeuille par enveloppe, et une position par instrument dedans, avec ce qui y est entré et ce que cela vaut maintenant. Les prix arrivent en euros quelle que soit la devise de cotation d'origine, et « pas de prix pour le moment » est une réponse ordinaire que le dernier cours connu couvre.",
+          title: "Notez ce que vous détenez",
+          body: "Un compte par enveloppe, et chaque placement dedans avec ce que vous y avez versé. Les cours arrivent en euros, quelle que soit leur devise.",
         },
         {
-          title: "Voyez à travers, jusqu'à ce que vous détenez vraiment",
-          body: "Deux fonds peuvent détenir la même entreprise, et aucun des deux ne le dit. La transparence résout vos positions à travers ce que chaque instrument a été lu comme contenant — pays, secteurs, plus grandes lignes en dessous — sur la valeur qu'elle a pu résoudre, et signale le reste comme non lu plutôt que de le laisser discrètement de côté.",
+          title: "Voyez ce qu’il y a dedans",
+          body: "Deux fonds peuvent détenir les mêmes entreprises sans le dire. La Composition montre où est vraiment votre argent — actions, obligations, or, crypto — et, pour les fonds, les pays, les secteurs et les frais.",
         },
         {
-          title: "Demandez une lecture de l'ensemble",
-          body: "Un état daté de ce qui est investi : ce qu'il observe, ce qu'il suggère, et l'allocation cible que ces suggestions impliquent. Il ne nomme des instruments que dans un catalogue fermé et n'écrit aucun chiffre de lui-même — il choisit un rôle et une taille, et l'application en fait des pourcentages.",
+          title: "Demandez une revue",
+          body: "Une IA lit la Composition et dit ce qu’elle remarque. Elle ne cite que des fonds d’une liste fermée, et n’écrit aucun chiffre d’elle-même.",
         },
       ],
     },
     "month-close": {
       title: "Clôture du mois",
-      body: "Un solde, une fois par mois, et l'application vous dit ce qu'elle n'a jamais vu.",
+      body: "Un solde par mois, et Pluclair vous montre ce qu’il n’a jamais vu.",
       utility:
-        "Le seul endroit où l'application demande quelque chose qu'elle ne peut pas déduire elle-même. Partout ailleurs elle raisonne sur des mouvements dont on lui a parlé ; ici, un vrai solde mesure les dépenses que personne ne saisit.",
+        "Le seul moment où Pluclair vous demande ce qu’il ne peut pas deviner : votre vrai solde. Comparé à ce que vous avez noté, il fait apparaître les dépenses que personne n’a écrites.",
       steps: [
         {
-          title: "Choisissez un jour de relevé",
-          body: "Le même jour du mois suivant, chaque mois — délibérément pas le dernier du mois, parce qu'avec une carte à débit différé les dépenses par carte du mois ne sont pas encore passées.",
+          title: "Choisissez un jour",
+          body: "Le même jour chaque mois — pas forcément le dernier : avec une carte à débit différé, les paiements par carte du mois ne sont pas encore passés.",
         },
         {
-          title: "Saisissez un solde",
-          body: "Ce que contenait, ce jour-là, le compte d'où partent vraiment vos dépenses — un seul nombre, lu sur l'écran de votre banque et reporté ici. La première clôture est une référence : elle fixe le point à partir duquel tout le reste est mesuré.",
+          title: "Recopiez un solde",
+          body: "Ce que contenait ce jour-là votre compte courant, lu dans l’application de votre banque. La première clôture sert de point de départ ; tout le reste se mesure à partir d’elle.",
         },
         {
-          title: "Lisez ce qu'elle a trouvé",
-          body: "Les dépenses non enregistrées, ce que vous avez gardé, et si le mois est resté dans votre propre marge — fixée d'après votre historique, pas d'après un chiffre rond avec lequel vous ne feriez que discuter.",
+          title: "Voyez ce qu’elle a trouvé",
+          body: "L’argent dépensé sans être noté, ce que vous avez vraiment mis de côté, et si le mois est resté dans votre marge habituelle.",
         },
       ],
     },
     "month-read": {
-      title: "Lecture du mois",
-      body: "Quelques phrases sur le mois, où la prose est celle d'un modèle et chaque chiffre est celui de l'application.",
+      title: "Lectures écrites",
+      body: "Quelques phrases sur votre mois ou vos placements. Les mots sont ceux de l’IA ; chaque chiffre est celui de Pluclair.",
       utility:
-        "Toutes les autres surfaces vous tendent un chiffre ou une liste. Celle-ci les lit ensemble et dit ce qui ressort — sans avoir le droit d'inventer un nombre pour le dire. Utile les mois où les totaux ont l'air ordinaires et où quelque chose en dessous ne l'est pas.",
+        "Les autres écrans vous donnent des chiffres et des listes. Une lecture les rassemble et dit ce qui ressort — sans avoir le droit d’inventer un nombre. Utile les mois où les totaux ont l’air normaux et où quelque chose en dessous ne l’est pas.",
       steps: [
         {
-          title: "Demandez-la",
-          body: "Une lecture est écrite quand vous appuyez, jamais à l'ouverture. Cinq par mois, ce qui est largement assez pour un mois qui bouge et un plafond pour tout ce qui appuierait en boucle.",
+          title: "Demandez-en une",
+          body: "Une lecture s’écrit quand vous appuyez, jamais toute seule : sur votre mois, sur une catégorie, ou sur vos placements.",
         },
         {
-          title: "Lisez ce qu'elle a trouvé",
-          body: "Les observations d'abord, et les éventuelles suggestions sous un titre à elles. Chaque chiffre de la prose est celui de l'application, glissé dans la phrase après que le modèle a dit lequel il voulait.",
+          title: "Lisez ce qu’elle a remarqué",
+          body: "Les observations d’abord, les suggestions à part, sous leur propre titre. Chaque chiffre du texte est celui de Pluclair, glissé après que l’IA a dit lequel elle voulait.",
         },
         {
           title: "Redemandez quand elle vieillit",
-          body: "Les chiffres ne périment jamais, le jugement si. Quand ce qui est dessous a assez bougé pour changer la lecture, elle le dit et vous pouvez en demander une autre.",
+          body: "Les chiffres ne périment jamais, les jugements si. Quand ce qu’il y a dessous a assez bougé, la lecture le dit, et vous pouvez en demander une nouvelle.",
         },
       ],
     },
@@ -298,25 +282,25 @@ export const landingCopyFr: LandingCopySections & {
 
   nav: {
     howItWorks: "Comment ça marche",
-    privacy: "Confidentialité",
+    privacy: "Vos questions",
     previous: "Précédent",
     next: "Suivant",
   },
 
   footer: {
     tagline:
-      "L’argent d’une personne : ce qui est entré, ce qui est sorti, ce qui est mis de côté et ce qui est investi — rapproché mois après mois.",
+      "Vos revenus, vos dépenses, votre épargne et vos placements au même endroit — vérifiés chaque mois avec votre banque.",
     copyright: "© 2026 Pluclair",
     imageCredit:
-      "Image de la Terre\u00A0: NASA, Blue Marble Next Generation (Reto Stöckli).",
+      "Image de la Terre : NASA, Blue Marble Next Generation (Reto Stöckli).",
     disclaimer:
-      "Aucun conseil. Aucun score. Il ne déplace jamais votre argent.",
+      "Aucun conseil. Aucune pub. Pluclair ne touche jamais à votre argent.",
   },
 
   cta: {
     getStarted: "Commencer",
     signIn: "Se connecter",
-    openApp: "Ouvrir l'application",
+    openApp: "Ouvrir l’application",
     goToDashboard: "Voir où vous en êtes",
   },
 };

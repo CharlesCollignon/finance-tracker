@@ -1033,7 +1033,7 @@ export function WalletsMock({ variant = "web" }: { variant?: Variant }) {
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
             <span className="font-mono">{euro(portfolioInvested)}</span>
-            {" invested · "}
+            {` ${t("wallets.investedSuffix")} · `}
             <span className="font-mono text-success">
               +{euro(portfolioGain)}
             </span>
@@ -1060,7 +1060,7 @@ export function WalletsMock({ variant = "web" }: { variant?: Variant }) {
                   <span className="privacy-amount tabular-nums">
                     {euro(portfolioInvested)}
                   </span>
-                  {" invested · "}
+                  {` ${t("wallets.investedSuffix")} · `}
                   <span className="privacy-amount font-mono font-medium tabular-nums text-success">
                     +{euro(portfolioGain)}
                   </span>
