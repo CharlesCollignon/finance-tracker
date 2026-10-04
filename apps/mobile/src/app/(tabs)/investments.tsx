@@ -7,10 +7,10 @@ import {
   INVESTMENT_WALLET_NAME_KEYS,
   type InvestmentWalletId,
 } from "@finance/core/investments";
-import {
-  nextUpcomingByWallet,
-  sumUpcomingAmount,
-} from "@finance/core/investment-upcoming";
+import { todayIsoLocal } from "@finance/core/constants";
+import { nextUpcomingByWallet } from "@finance/core/investment-upcoming";
+import { fetchPriceSeriesBySymbol } from "@finance/core/market/fx";
+import type { InstrumentPriceSeries } from "@finance/core/instrument-price-series";
 import type { InvestmentPositionItem } from "@finance/core/investment-positions";
 import type { SavingsAccountKind } from "@finance/core/types/database";
 
@@ -22,7 +22,6 @@ import { NewPositionSheet } from "@/components/accounts/NewPositionSheet";
 import { PeaCard } from "@/components/PeaCard";
 import { SavingsAccountCard } from "@/components/accounts/SavingsAccountCard";
 import { InvestmentPositionRow } from "@/components/InvestmentPositionRow";
-import { WalletPerformance } from "@/components/WalletPerformance";
 import { InvestmentPositionSheet } from "@/components/InvestmentPositionSheet";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -32,7 +31,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PrivateAmount } from "@/components/PrivateAmount";
 import { Screen } from "@/components/ui/Screen";
 import { ScreenSkeleton } from "@/components/ui/Skeleton";
-import { StatHero } from "@/components/StatHero";
+import { PlacementsSummary } from "@/components/PlacementsSummary";
 import { ScreenError } from "@/components/ScreenError";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
@@ -79,15 +78,31 @@ export default function InvestmentsScreen() {
     useState<InvestmentPositionItem | null>(null);
 
   const { data, loading, refreshing, onRefreshAll, onRefresh, error } = useRefreshable(
-    async () =>
-      user
-        ? // History powers the per-position charts.
-          getPlacementsData(user.id, locale, { includeHistory: true })
-        : null,
+    async () => (user ? getPlacementsData(user.id, locale) : null),
     [user?.id, locale],
   );
 
   const portfolio = data?.portfolio;
+  // Each holding's own price over a year, for the faint line behind its row.
+  // Apart from the rest, as on the web: it asks the market, and the screen
+  // does not wait on it.
+  const heldSymbols = [
+    ...new Set(
+      (portfolio?.columns ?? []).flatMap((column) =>
+        column.items.flatMap((item) =>
+          item.instrumentSymbol ? [item.instrumentSymbol] : [],
+        ),
+      ),
+    ),
+  ].sort();
+  const symbolsKey = heldSymbols.join(",");
+  const { data: priceSeries } = useRefreshable(
+    async (): Promise<Record<string, InstrumentPriceSeries>> =>
+      symbolsKey
+        ? fetchPriceSeriesBySymbol(symbolsKey.split(","), todayIsoLocal())
+        : {},
+    [symbolsKey],
+  );
   const upcoming = data?.upcoming ?? [];
   const nextByWallet = nextUpcomingByWallet(upcoming);
   const fundingNeeds = (data?.fundingNeeds ?? []).filter(
@@ -108,12 +123,16 @@ export default function InvestmentsScreen() {
   const activeSavings = active
     ? savings.accounts.find((view) => view.account.kind === active)
     : undefined;
-  const activeItems = activeWallet
-    ? (portfolio?.columns.find((entry) => entry.walletId === activeWallet)
-        ?.items ?? [])
-    : [];
+  const activeColumn = activeWallet
+    ? portfolio?.columns.find((entry) => entry.walletId === activeWallet)
+    : undefined;
+  const activeItems = activeColumn?.items ?? [];
+  // The soonest contribution across every account, for the summary.
+  const nextContribution =
+    Object.values(nextByWallet).sort((left, right) =>
+      left.date.localeCompare(right.date),
+    )[0] ?? null;
 
-  const keptPortfolio = kept?.keptPortfolio ?? null;
   const savingsTotal = kept?.savingsTotal ?? 0;
   const investedValue = portfolio?.totalMarketValue ?? 0;
   const savingsMonthly = kept?.savingsMonthly ?? {};
@@ -186,89 +205,16 @@ export default function InvestmentsScreen() {
           contentContainerClassName="gap-5 pt-2"
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
-          <StatHero
-            label={t("accounts.total")}
-            amount={formatEuro(savingsTotal + investedValue)}
-            animateValue={savingsTotal + investedValue}
-            format={formatEuro}
-            subtitle={
-              <>
-                {savings.accounts.length > 0 ? (
-                  <>
-                    <PrivateAmount className="text-sm text-muted-foreground">
-                      {t("accounts.split", {
-                        savings: formatEuro(savingsTotal),
-                        investments: formatEuro(investedValue),
-                      })}
-                    </PrivateAmount>
-                    {wallets.length > 0 ? "\n" : null}
-                  </>
-                ) : null}
-                {wallets.length > 0 ? (
-                  <>
-                    <PrivateAmount className="text-sm text-muted-foreground">
-                      {formatEuro(portfolio.totalInvested)}
-                    </PrivateAmount>
-                    {` ${t("wallets.investedSuffix")}`}
-                    {portfolio.hasMarketSnapshot &&
-                    portfolio.totalGainLoss !== 0 ? (
-                      <>
-                        {" · "}
-                        <PrivateAmount
-                          className={cn(
-                            "text-sm font-medium",
-                            portfolio.totalGainLoss > 0
-                              ? "text-success"
-                              : "text-destructive",
-                          )}
-                        >
-                          {formatSigned(portfolio.totalGainLoss, formatEuro)}
-                        </PrivateAmount>
-                      </>
-                    ) : null}
-                  </>
-                ) : null}
-              </>
-            }
+          <PlacementsSummary
+            marketValue={investedValue}
+            invested={portfolio.totalInvested}
+            gainLoss={portfolio.totalGainLoss}
+            hasMarketValue={portfolio.hasMarketSnapshot}
+            savingsTotal={savingsTotal}
+            streak={data?.streak ?? 0}
+            next={nextContribution}
+            monthly={monthlyTags.reduce((sum, tag) => sum + tag.amount, 0)}
           />
-
-          {/* One row of tags rather than one card per account: three cards
-              of "Send to X €Y / month" were three cards of height for three
-              numbers, and the account's name is label enough. */}
-          {monthlyTags.length > 0 || upcoming.length > 0 ? (
-            <View className="items-center gap-2">
-              {monthlyTags.length > 0 ? (
-                <View
-                  accessibilityLabel={t("wallets.fundingLabel")}
-                  className="flex-row flex-wrap justify-center gap-2"
-                >
-                  {monthlyTags.map((tag) => (
-                    <View
-                      key={tag.key}
-                      className="flex-row items-baseline gap-1.5 rounded-full border border-border px-3 py-1"
-                    >
-                      <Text variant="muted" className="text-xs">
-                        {tag.label}
-                      </Text>
-                      <PrivateAmount className="text-xs font-medium">
-                        {formatEuro(tag.amount)}
-                      </PrivateAmount>
-                      <Text variant="muted" className="text-xs">
-                        {t("wallets.perMonth")}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
-              {upcoming.length > 0 ? (
-                <Text variant="muted" className="text-center text-xs">
-                  {t("wallets.upcomingThisMonth", {
-                    amount: formatEuro(sumUpcomingAmount(upcoming)),
-                  })}
-                </Text>
-              ) : null}
-            </View>
-          ) : null}
 
           {accounts.length === 0 ? (
             <View className="gap-3">
@@ -319,11 +265,33 @@ export default function InvestmentsScreen() {
 
           {activeWallet ? (
             <View>
-              <Text className="mb-2 text-base font-medium">
-                {t("wallets.inWallet", {
-                  wallet: t(ENVELOPE_SHORT_KEYS[activeWallet]),
-                })}
-              </Text>
+              <View className="mb-2 flex-row items-baseline justify-between gap-3">
+                <Text className="text-base font-medium">
+                  {t("wallets.inWallet", {
+                    wallet: t(ENVELOPE_SHORT_KEYS[activeWallet]),
+                  })}
+                </Text>
+                {activeColumn ? (
+                  <View className="flex-row items-baseline gap-2">
+                    <PrivateAmount className="text-sm font-semibold">
+                      {formatEuro(activeColumn.totalMarketValue)}
+                    </PrivateAmount>
+                    {activeColumn.hasMarketSnapshot &&
+                    activeColumn.totalGainLoss !== 0 ? (
+                      <PrivateAmount
+                        className={cn(
+                          "text-xs font-medium",
+                          activeColumn.totalGainLoss > 0
+                            ? "text-success"
+                            : "text-destructive",
+                        )}
+                      >
+                        {formatSigned(activeColumn.totalGainLoss, formatEuro)}
+                      </PrivateAmount>
+                    ) : null}
+                  </View>
+                ) : null}
+              </View>
               <Card bezel innerClassName="px-4 py-1">
                 {activeItems.length === 0 ? (
                   <View className="gap-1 py-4">
@@ -342,6 +310,11 @@ export default function InvestmentsScreen() {
                     >
                       <InvestmentPositionRow
                         item={item}
+                        priceLine={
+                          item.instrumentSymbol
+                            ? priceSeries?.[item.instrumentSymbol]?.["1Y"]
+                            : undefined
+                        }
                         onEdit={() => setEditingPosition(item)}
                       />
                     </View>
@@ -377,13 +350,6 @@ export default function InvestmentsScreen() {
             />
           ) : null}
 
-          {activeWallet && keptPortfolio ? (
-            <WalletPerformance
-              portfolio={keptPortfolio}
-              activeWallet={activeWallet}
-              nextByWallet={nextByWallet}
-            />
-          ) : null}
         </ScrollView>
       )}
 

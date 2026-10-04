@@ -981,11 +981,6 @@ export const en = {
     nameCrypto: "Crypto",
     /** The widest range of the price line. The others need no translation. */
     rangeAll: "All",
-    range1D: "1D",
-    range1W: "1W",
-    range1M: "1M",
-    range3M: "3M",
-    range1Y: "1Y",
     positions: "Positions",
     /**
      * How the holdings in a wallet are ordered.
@@ -1002,8 +997,6 @@ export const en = {
     noItems:
       "Nothing in this account yet. Add what you hold in it to follow what you put in and what it is worth.",
     editPosition: "Edit {name}",
-    showChart: "Show chart",
-    hideChart: "Hide chart",
     /**
      * Fragments, not sentences, wherever a figure sits inside one.
      *
@@ -1027,7 +1020,14 @@ export const en = {
     returnTitle: "Return per year",
     returnBody:
       "Worked out over each payment on its own date, so paying in a little every month is compared fairly with one large payment.",
-    upcomingThisMonth: "{amount} still to pay in this month",
+    summaryTitle: "Your investments",
+    summarySavings: "+ {amount} in savings accounts · {total} in all",
+    contributionStreak: {
+      one: "{count} month of contributions",
+      other: "{count} months of contributions in a row",
+    },
+    nextContributionOn: "Next contribution: {date} · {amount}",
+    priceOverYear: "{change} over a year",
     inWallet: "In your {wallet}",
   },
 
@@ -1540,7 +1540,6 @@ export const en = {
     trackedAsset: "Tracked asset",
     trackedEtf: "Tracked ETF",
     bitcoin: "Bitcoin",
-    shares: "Shares",
     totalBtc: "Total BTC",
     totalShares: "Total shares",
     totalBtcHeld: "Total BTC held",
@@ -1591,16 +1590,6 @@ export const en = {
     openedOn: "Opened on",
     peaOpenedLabel: "Set the date the PEA was opened",
     peaOpenedHint: "Add the opening date to track the five-year mark.",
-    chartRange: "Chart range",
-    totalInvested: "Total paid in",
-    averageBuyPrice: "Average buy price",
-    averageSharePrice: "Average share price",
-    averageMonthly: "Average paid in a month",
-    nextContribution: "Next payment",
-    returnAmount: "Gain or loss",
-    returnPercent: "Gain or loss in %",
-    noHistory: "No history for this account yet.",
-    oneMonthOnly: "One month of history so far — a line needs at least two.",
   },
 
   /**

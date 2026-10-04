@@ -105,10 +105,6 @@ export function buildUpcomingInvestments(
   return upcoming.sort((left, right) => left.date.localeCompare(right.date));
 }
 
-export function sumUpcomingAmount(items: UpcomingInvestment[]): number {
-  return items.reduce((sum, item) => sum + item.amount, 0);
-}
-
 export function nextUpcomingByWallet(
   items: UpcomingInvestment[],
 ): Partial<Record<InvestmentWalletId, UpcomingInvestment>> {

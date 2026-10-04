@@ -691,11 +691,6 @@ export const fr: Messages = {
     namePer: "Plan d'épargne retraite",
     nameCrypto: "Cryptomonnaies",
     rangeAll: "Tout",
-    range1D: "1\u00A0j",
-    range1W: "1\u00A0sem.",
-    range1M: "1\u00A0mois",
-    range3M: "3\u00A0mois",
-    range1Y: "1\u00A0an",
     positions: "Positions",
     orderBy: "Trier",
     orderByName: "Nom",
@@ -703,8 +698,6 @@ export const fr: Messages = {
     noItems:
       "Rien dans ce compte pour l'instant. Ajoutez ce que vous y détenez pour suivre ce que vous avez versé et ce que ça vaut.",
     editPosition: "Modifier {name}",
-    showChart: "Voir la courbe",
-    hideChart: "Masquer la courbe",
     investedSuffix: "versés",
     fundingLabel: "Versements mensuels",
     perMonth: "par mois",
@@ -723,7 +716,14 @@ export const fr: Messages = {
     returnTitle: "Rendement par an",
     returnBody:
       "Calculé sur chacun de vos versements, à sa date\u00A0: verser un peu chaque mois est comparé équitablement à un gros versement unique.",
-    upcomingThisMonth: "{amount} encore à verser ce mois-ci",
+    summaryTitle: "Vos placements",
+    summarySavings: "+ {amount} sur vos livrets · {total} en tout",
+    contributionStreak: {
+      one: "{count} mois de versement",
+      other: "{count} mois de versements d'affilée",
+    },
+    nextContributionOn: "Prochain versement\u00A0: {date} · {amount}",
+    priceOverYear: "{change} sur un an",
     inWallet: "Dans votre {wallet}",
   },
 
@@ -1120,7 +1120,6 @@ export const fr: Messages = {
     trackedAsset: "Actif suivi",
     trackedEtf: "ETF suivi",
     bitcoin: "Bitcoin",
-    shares: "Parts",
     totalBtc: "Total BTC",
     totalShares: "Total des parts",
     totalBtcHeld: "Total BTC détenu",
@@ -1172,17 +1171,6 @@ export const fr: Messages = {
     peaOpenedLabel: "Indiquer la date d'ouverture du PEA",
     peaOpenedHint:
       "Ajoutez la date d'ouverture pour suivre le cap des cinq ans.",
-    chartRange: "Période du graphique",
-    totalInvested: "Total versé",
-    averageBuyPrice: "Prix d'achat moyen",
-    averageSharePrice: "Prix moyen par part",
-    averageMonthly: "Versement moyen par mois",
-    nextContribution: "Prochain versement",
-    returnAmount: "Gain ou perte",
-    returnPercent: "Gain ou perte en\u00A0%",
-    noHistory: "Pas encore d'historique pour ce compte.",
-    oneMonthOnly:
-      "Un seul mois d'historique pour l'instant — une courbe en demande deux.",
   },
 
   month: {
