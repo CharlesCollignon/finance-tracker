@@ -34,11 +34,16 @@ import { cn } from "@/lib/utils";
  *   rather than only after a hold and release.
  * - A black hole sits just behind the horizon, the rim cutting off the foot
  *   of its shadow and one end of its disk, which turns slowly, the nebula
- *   and the starlight bending round it (`distantHole`). It is ours, not the
- *   original's, and does not follow the pointer.
+ *   and the starlight bending round it (`distantHole`). It drifts along the
+ *   rim from right to left, a pass every four minutes or so, and round
+ *   again (`holePath`, `holeAt`). It is ours, not the original's, and does
+ *   not follow the pointer.
  * - A distant sun is setting on the rim to the right of the headline, warm,
  *   a third of it above the horizon and the light resting in it
- *   (`distantSun`); ours too, and fixed.
+ *   (`distantSun`); ours too.
+ * - The scene enters in two beats: the planet rises into place, still dim,
+ *   then the sun rises behind its rim and lights it (`stage`). All of it
+ *   at rest from the first frame under reduced motion.
  *
  * Imagery: NASA Blue Marble Next Generation, by Reto Stöckli (NASA Earth
  * Observatory), used without endorsement; credited in the landing footer.
@@ -96,10 +101,20 @@ type Geometry = {
   low: number;
   high: number;
   rest: number;
-  /** The black hole: its centre, its shadow's radius, its disk's tilt. */
-  hole: [number, number, number, number];
-  /** The distant sun: its centre, and its disk's radius. */
+  /** Where the black hole travels along the rim (`holePath`). */
+  holePath: HolePath;
+  /** The distant sun at rest: its centre, and its disk's radius. */
   sun: [number, number, number];
+};
+type HolePath = {
+  size: number;
+  lift: number;
+  /** The angle it enters at, past the rim's lower right end. */
+  from: number;
+  /** The angle it travels before leaving past the upper left end. */
+  span: number;
+  /** Where it is at the start: where it used to sit for good. */
+  start: number;
 };
 const clamp = (n: number, min: number, max: number) =>
   Math.max(min, Math.min(max, n));
@@ -246,6 +261,9 @@ const fragment = `
     uniform vec2 drift;
     uniform vec4 hole;
     uniform vec3 farSun;
+    // The sunrise of the entrance, 0 to 1: the sun's glow, and the light it
+    // throws on the rim and the land.
+    uniform float dawn;
     uniform sampler2D earth;
     uniform sampler2D cosmos;
     const float PI = 3.141592653589793;
@@ -316,7 +334,7 @@ const fragment = `
       vec3 face = mix(vec3(1., .50, .16), vec3(1., .80, .47), pow(max(0., 1. - q * q), .4));
       float breath = 1. + .06 * sin(clock * .5);
       vec3 glow = vec3(1., .56, .22) * (.30 * exp(-beyond / (.012 + farSun.z * .15)) + .14 * exp(-beyond / (.05 + farSun.z * .4)) + .045 * exp(-beyond / (.18 + farSun.z))) * breath;
-      return face * disk * .75 + glow * (1. - disk);
+      return face * disk * .75 + glow * (1. - disk) * dawn;
     }
 
     void main() {
@@ -352,14 +370,15 @@ const fragment = `
       vec3 color = recolor(texture2D(cosmos, skyUV).rgb, backgroundColor) * galaxyBrightness * space * (1. + charge * .45 + bloom * .5);
       vec4 farHole = distantHole(p, pixel);
       color = color * farHole.a + farHole.rgb * space;
-      color += distantSun(p, pixel) * space;
+      // The black hole passes in front of the sun: its shadow covers it.
+      color += distantSun(p, pixel) * space * farHole.a;
 
       // Scattering stays on the sky side of the occluding planet.
       vec3 halo = vec3(.105, .026, .065) * gauss(along, .23) * gauss(across, .11);
       halo += vec3(.21, .066, .072) * gauss(along, .12) * gauss(across, .061);
       halo += vec3(.29, .16, .125) * gauss(along, .057) * gauss(across, .033);
       halo += vec3(.57, .48, .40) * gauss(along, .025) * gauss(across, .020);
-      color += halo * illumination * space * (1. + charge * 1.4 + bloom * .65);
+      color += halo * illumination * space * (1. + charge * 1.4 + bloom * .65) * (.35 + .65 * dawn);
 
       // A thin cool atmosphere transitions to warm white beside the hidden sun.
       float line = gauss(d, max(.00042, pixel * .66));
@@ -369,8 +388,8 @@ const fragment = `
       color += vec3(.034, .057, .092) * illumination * exp(-max(d, 0.) / .007) * space * verticalFade * (.2 + .8 * rimLocal);
       // The atmosphere catches the distant sun where it sets.
       float bySun = gauss(length(p - farSun.xy), farSun.z * 2.5 + .05);
-      color += vec3(1., .62, .32) * line * bySun * .7 * verticalFade;
-      color += vec3(.45, .20, .07) * gauss(d, .004) * bySun * .35 * verticalFade;
+      color += vec3(1., .62, .32) * line * bySun * .7 * verticalFade * dawn;
+      color += vec3(.45, .20, .07) * gauss(d, .004) * bySun * .35 * verticalFade * dawn;
 
       // A released solar pulse travels along the limb and awakens auroral curtains.
       vec2 eventRadial = vec2(cos(pulseAngle), sin(pulseAngle));
@@ -402,8 +421,9 @@ const fragment = `
         float pool = max(gauss(angleDistance, .37), bloom * gauss(eventDistance, .65)) * grazing;
         vec3 surface = mix(tex, vec3(dot(tex, vec3(.2126, .7152, .0722))), .32);
         surface *= vec3(.61, .74, 1.);
-        color += surface * pool * (.045 + reveal * .24 + bloom * .20 + charge * .045) * inside * surfaceBrightness * illumination;
-        color += vec3(.010, .018, .032) * pool * (reveal + bloom) * inside * surfaceBrightness * illumination;
+        float lit = .45 + .55 * dawn;
+        color += surface * pool * (.045 + reveal * .24 + bloom * .20 + charge * .045) * inside * surfaceBrightness * illumination * lit;
+        color += vec3(.010, .018, .032) * pool * (reveal + bloom) * inside * surfaceBrightness * illumination * lit;
       }
 
       // One static sub-byte dither prevents bands without making black space noisy.
@@ -616,33 +636,74 @@ function visibleArc(
 }
 
 /**
- * Where the black hole sits: on the rim, a little over a third of the way
- * from its upper end toward the anchor (`ANCHOR_HEIGHT`), so above the
- * headline and below the nav on every screen, and far from the light. Its
- * centre is a little over half its shadow's radius above the rim,
- * so the planet cuts off the foot of the shadow; its disk is tilted a little
- * off the rim, so one end clears the horizon and the other goes behind it.
- * Smaller on a portrait screen, where the hero's height is a long way
- * across.
+ * Where the black hole travels: along the rim, a little over half its
+ * shadow's radius above it, so the planet cuts off the foot of its shadow,
+ * from just past the rim's lower right end to just past its upper left one
+ * — entering and leaving off the screen — and round again. It starts where
+ * it used to sit for good, a little over a third of the way from the upper
+ * end toward the anchor (`ANCHOR_HEIGHT`), above the headline, so the
+ * opening picture is the same. A tenth smaller than it was; smaller still on
+ * a portrait screen, where the hero's height is a long way across.
  */
-function holePlace(
+function holePath(
   center: [number, number],
   radius: number,
   low: number,
+  high: number,
   anchor: number,
   aspect: number,
-): [number, number, number, number] {
-  const size = 0.036 * clamp(aspect, 0.75, 1);
-  const angle = low + (anchor - low) * 0.36;
+): HolePath {
+  const size = 0.0324 * clamp(aspect, 0.75, 1);
   const lift = radius + size * 0.6;
-  return [
-    center[0] + Math.cos(angle) * lift,
-    center[1] + Math.sin(angle) * lift,
+  // Far enough past each end that its light, nine shadow radii out, is off
+  // the screen when it turns round.
+  const margin = (size * 9) / lift;
+  const from = high + margin;
+  return {
     size,
+    lift,
+    from,
+    span: from - (low - margin),
+    start: low + (anchor - low) * 0.36,
+  };
+}
+
+/** One pass of the black hole along the rim, right to left, in seconds. */
+const HOLE_PASS_S = 260;
+
+/**
+ * The black hole `seconds` into its passes, as the shader reads it: its
+ * centre, its shadow's radius, and its disk's tilt, which follows the rim.
+ */
+function holeAt(
+  path: HolePath,
+  center: [number, number],
+  seconds: number,
+): [number, number, number, number] {
+  const travelled =
+    (path.from - path.start + (seconds * path.span) / HOLE_PASS_S) % path.span;
+  const angle = path.from - travelled;
+  return [
+    center[0] + Math.cos(angle) * path.lift,
+    center[1] + Math.sin(angle) * path.lift,
+    path.size,
     // The rim's own slope there, less 0.3 radians.
     angle + Math.PI / 2 - 0.3,
   ];
 }
+
+/**
+ * The entrance, in two beats: the planet rises into place from below, still
+ * dim, then the sun rises behind its rim and lights the rim and the land.
+ * Seconds, and how far below its rest the planet starts, in hero heights.
+ */
+const PLANET_RISE_S = 2.6;
+const PLANET_RISE_DEPTH = 0.22;
+const SUN_RISE_DELAY_S = 1.7;
+const SUN_RISE_S = 3.2;
+
+const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+const easeInOutSine = (t: number) => (1 - Math.cos(Math.PI * t)) / 2;
 
 /**
  * Where the distant sun sets, and the light rests in it: on the rim halfway
@@ -729,6 +790,13 @@ function createRenderer(
     pulse: -1,
     pulseAngle: 0,
     clock: 0,
+    /**
+     * When the first frame was drawn, and so the entrance began. Real time
+     * rather than the frame clock, whose steps are capped: on a device
+     * drawing a few frames a second the entrance would otherwise crawl.
+     */
+    entranceStart: 0,
+    entrance: 0,
     drift: [0, 0],
     targetDrift: [0, 0],
     ready: false,
@@ -848,6 +916,7 @@ function createRenderer(
       "backgroundColor",
       "illumination",
       "farSun",
+      "dawn",
       "auroraPreview",
       "standingAurora",
     ]);
@@ -1023,7 +1092,7 @@ function createRenderer(
       low,
       high,
     );
-    const hole = holePlace(center, radius, low, anchor, aspect);
+    const path = holePath(center, radius, low, high, anchor, aspect);
     // The light rests in the distant sun.
     const { angle: rest, sun } = sunPlace(
       center,
@@ -1038,7 +1107,7 @@ function createRenderer(
       state.angle += rest - geometry.rest;
       state.target += rest - geometry.rest;
     } else state.angle = state.target = rest;
-    geometry = { center, radius, low, high, rest, hole, sun };
+    geometry = { center, radius, low, high, rest, holePath: path, sun };
     state.angle = clamp(state.angle, low, high);
     state.target = clamp(state.target, low, high);
     requestFrame();
@@ -1060,10 +1129,38 @@ function createRenderer(
     )
       state.frame = requestAnimationFrame(draw);
   }
+  /**
+   * Where everything is this frame: the planet partway up during the
+   * entrance, the sun partway risen behind it, the black hole along its
+   * pass. All of it at rest, and the hole where it starts, under reduced
+   * motion.
+   */
+  function stage(g: Geometry) {
+    const t = still() ? Infinity : state.entrance;
+    const rise = 1 - easeOutCubic(clamp(t / PLANET_RISE_S, 0, 1));
+    const dawn = easeInOutSine(
+      clamp((t - SUN_RISE_DELAY_S) / SUN_RISE_S, 0, 1),
+    );
+    const dy = rise * PLANET_RISE_DEPTH;
+    const center: [number, number] = [g.center[0], g.center[1] + dy];
+    // The sun rises along its own radius, from wholly below the rim.
+    const [sx, sy, size] = g.sun;
+    const out = Math.hypot(sx - g.center[0], sy - g.center[1]) || 1;
+    const sink = (1 - dawn) * size * 1.4;
+    const sun: [number, number, number] = [
+      sx - ((sx - g.center[0]) / out) * sink,
+      sy + dy - ((sy - g.center[1]) / out) * sink,
+      size,
+    ];
+    const hole = holeAt(g.holePath, center, still() ? 0 : state.clock);
+    return { center, sun, hole, dawn };
+  }
+  let scene: ReturnType<typeof stage> | undefined;
   function common(u: Uniforms) {
     const g = geometry!;
+    const now = scene ?? stage(g);
     gl.uniform2f(u.resolution!, canvas.width, canvas.height);
-    gl.uniform2f(u.center!, ...g.center);
+    gl.uniform2f(u.center!, ...now.center);
     gl.uniform1f(u.radius!, g.radius);
     gl.uniform1f(u.angle!, state.angle);
     gl.uniform1f(u.clock!, still() ? 0 : state.clock);
@@ -1071,7 +1168,7 @@ function createRenderer(
     gl.uniform1f(u.pulse!, still() ? -1 : state.pulse);
     gl.uniform1f(u.still!, still() ? 1 : 0);
     gl.uniform1f(u.pulseAngle!, state.pulseAngle);
-    gl.uniform4f(u.hole!, ...g.hole);
+    gl.uniform4f(u.hole!, ...now.hole);
     gl.uniform2f(
       u.drift!,
       still() ? 0 : state.drift[0]!,
@@ -1100,6 +1197,8 @@ function createRenderer(
     const dt = Math.min((now - (state.last || now - 16)) / 1000, 0.05);
     state.last = now;
     state.clock += dt;
+    if (!state.entranceStart) state.entranceStart = now;
+    state.entrance = (now - state.entranceStart) / 1000;
     const movement = still() ? 1 : 1 - Math.exp(-dt / LIGHT_EASE);
     const exposure = still()
       ? 1
@@ -1116,11 +1215,13 @@ function createRenderer(
       state.pulse += dt;
       if (state.pulse > 5) state.pulse = -1;
     }
+    scene = stage(geometry);
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.disable(gl.BLEND);
     gl.disableVertexAttribArray(starTail);
     quad(program, position);
     common(uniforms);
+    gl.uniform1f(uniforms.dawn!, scene.dawn);
     gl.uniform1f(uniforms.reveal!, state.reveal);
     gl.uniform1f(uniforms.viewAngle!, geometry.rest);
     gl.uniform1f(uniforms.galaxyBrightness!, options.galaxyBrightness);
@@ -1128,7 +1229,7 @@ function createRenderer(
     gl.uniform4f(uniforms.auroraColor!, ...options.auroraColor);
     gl.uniform4f(uniforms.backgroundColor!, ...options.backgroundColor);
     gl.uniform1f(uniforms.illumination!, options.illumination);
-    gl.uniform3f(uniforms.farSun!, ...geometry.sun);
+    gl.uniform3f(uniforms.farSun!, ...scene.sun);
     gl.uniform1f(
       uniforms.auroraPreview!,
       options.auroraPreview && options.auroraEnabled ? 1 : 0,
