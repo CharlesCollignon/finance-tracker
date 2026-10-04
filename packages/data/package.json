@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./account": "./src/account.ts",
+    "./ai-connection": "./src/ai-connection.ts",
     "./bank-balance": "./src/bank-balance.ts",
     "./bank-feed": "./src/bank-feed.ts",
     "./bank-inbox": "./src/bank-inbox.ts",
