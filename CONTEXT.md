@@ -268,7 +268,7 @@ Distinct from a savings goal, which was retired: nobody sets a milestone.
 _Avoid_: goal, target, badge, level
 
 **Cushion**:
-_En français_ : coussin de sécurité
+_En français_ : matelas de sécurité
 How many months of fixed costs what is in the savings accounts would cover,
 with rungs at 1, 3 and 6 months.
 _Avoid_: emergency fund, runway, buffer
@@ -522,6 +522,24 @@ One named figure a month read or a bearing may refer to — a label, a value,
 and whether going up is good, bad or neither. Their whole vocabulary of
 numbers, and the reason a claim resting on anything else is thrown away.
 _Avoid_: metric, stat, data point
+
+### Who writes the words
+
+**AI account**:
+_En français_ : compte IA
+The user's own account with an AI service, connected to Pluclair, that every
+written read is asked from and paid by. Connected in one press, through
+OpenRouter; the server holds what it needs to call it, sealed, and never shows
+it. Without one, nothing is written — the figures stand on their own.
+_Avoid_: API key, assistant, integration, plugin, subscription
+
+**Writer**:
+_En français_ : rédacteur
+The model a read's prose comes from, named on every read it wrote. The writer
+is the model and the AI account is what it ran on: one account can reach
+several writers. A writer chooses words and which figures to point at, and
+writes no figure of its own.
+_Avoid_: AI, assistant, bot, author, agent
 
 ### What a category has been doing
 
