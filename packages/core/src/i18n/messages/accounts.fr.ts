@@ -60,7 +60,7 @@ export const accountsFr: typeof accountsEn = {
   monthlyPlanned: "{amount} prévus chaque mois",
   monthlyNone: "Aucun versement prévu chaque mois.",
   notLiquid:
-    "Un retrait clôt le PEL : il ne compte pas dans votre coussin de sécurité.",
+    "Un retrait clôt le PEL : il ne compte pas dans votre matelas de sécurité.",
   categoryLine: "Ce que vous notez dans « {category} » s'ajoute au solde.",
   updateBalance: "Mettre à jour le solde",
   editRate: "Modifier le taux",

@@ -218,14 +218,14 @@ export const landingCopyFr: LandingCopySections & {
       title: "Plan",
       body: "Où va votre argent, les paliers sur le chemin, et le solde qui le vérifie.",
       utility:
-        "Ce que vos propres chiffres donnent si les choses continuent ainsi : une année à venir d'après les opérations que vous avez déjà prévues, les paliers que votre épargne franchira et quand, un coussin compté en mois de charges fixes, et la vue longue de chaque compte après impôts français. Rien ici n'impose quoi que ce soit ni ne déplace quoi que ce soit.",
+        "Ce que vos propres chiffres donnent si les choses continuent ainsi : une année à venir d'après les opérations que vous avez déjà prévues, les paliers que votre épargne franchira et quand, un matelas de sécurité compté en mois de charges fixes, et la vue longue de chaque compte après impôts français. Rien ici n'impose quoi que ce soit ni ne déplace quoi que ce soit.",
       steps: [
         {
           title: "Voyez l'année à venir, et essayez un peu plus",
           body: "Vos comptes et ce que vous mettez de côté, mois par mois sur les douze prochains, d'après les opérations que vous avez déjà prévues. Faites glisser pour mettre un peu plus de côté chaque mois : l'année finit plus haut, et le prochain palier arrive plus tôt.",
         },
         {
-          title: "Des paliers, un coussin, et la vue longue",
+          title: "Des paliers, un matelas de sécurité, et la vue longue",
           body: "Les sommes rondes que votre épargne et vos placements franchiront, et quand. Combien de mois de charges fixes votre épargne couvrirait. Et ce que chaque compte — Livret A, PEA, assurance vie, CTO, PER, crypto — pourrait valoir dans dix ou vingt ans, après l'impôt que chacun paie en France.",
         },
         {

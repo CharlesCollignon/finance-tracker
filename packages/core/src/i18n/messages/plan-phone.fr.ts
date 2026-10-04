@@ -3,7 +3,7 @@ import type { planPhoneEn } from "./plan-phone.en";
 /** The French half of `plan-phone.en.ts`. */
 export const planPhoneFr: typeof planPhoneEn = {
   chipExtra: "+{amount}",
-  cushionWhy: "Pourquoi un coussin ?",
+  cushionWhy: "Pourquoi un matelas de sécurité ?",
   stepDown: "Moins",
   stepUp: "Plus",
   accountPick: "Quel compte ?",

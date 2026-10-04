@@ -31,13 +31,13 @@ export const futurePlanFr: typeof futurePlanEn = {
   milestoneBeyond: "au-delà de {count} ans",
   milestoneNew: "Nouveau palier !",
 
-  cushionTitle: "Votre coussin de sécurité",
+  cushionTitle: "Votre matelas de sécurité",
   cushionBody: "{months} de dépenses fixes couverts par votre épargne",
   cushionMonths: { one: "{count} mois", other: "{count} mois" },
   cushionNext: "Prochaine étape : {months}",
-  cushionFull: "Six mois couverts : votre coussin est complet.",
+  cushionFull: "Six mois couverts : votre matelas est complet.",
   cushionNoFixed:
-    "Ajoutez vos dépenses fixes dans Récurrents et votre coussin sera mesuré ici.",
+    "Ajoutez vos dépenses fixes dans Récurrents et votre matelas sera mesuré ici.",
   cushionWhy:
     "Trois à six mois de dépenses fixes de côté, c'est le filet de sécurité habituel en cas de perte d'emploi ou de grosse réparation.",
 
