@@ -111,12 +111,14 @@ type HolePath = {
   /** The height it travels at, and its disk's tilt, both fixed. */
   y: number;
   tilt: number;
-  /** Where it enters, past the right edge. */
+  /** Where it enters on every pass after the first, past the right edge. */
   from: number;
   /** How far it travels before leaving past the left edge. */
   span: number;
-  /** Where it is at the start: where it used to sit for good. */
+  /** Where the first pass starts: just past the right edge, out of frame. */
   start: number;
+  /** Where it sits under reduced motion: where it used to sit for good. */
+  rest: number;
 };
 const clamp = (n: number, min: number, max: number) =>
   Math.max(min, Math.min(max, n));
@@ -329,13 +331,14 @@ const fragment = `
     vec3 distantSun(vec2 p, float pixel) {
       float dist = length(p - farSun.xy);
       float beyond = max(dist - farSun.z, 0.);
-      if (beyond > .9) return vec3(0.);
+      if (beyond > .99) return vec3(0.);
       float q = dist / farSun.z;
       float edge = pixel / farSun.z;
       float disk = 1. - smoothstep(1. - edge, 1. + edge, q);
       vec3 face = mix(vec3(1., .50, .16), vec3(1., .80, .47), pow(max(0., 1. - q * q), .4));
       float breath = 1. + .06 * sin(clock * .5);
-      vec3 glow = vec3(1., .56, .22) * (.30 * exp(-beyond / (.012 + farSun.z * .15)) + .14 * exp(-beyond / (.05 + farSun.z * .4)) + .045 * exp(-beyond / (.18 + farSun.z))) * breath;
+      // Its reach a tenth wider than it first was, with the disk.
+      vec3 glow = vec3(1., .56, .22) * (.30 * exp(-beyond / (.0132 + farSun.z * .15)) + .14 * exp(-beyond / (.055 + farSun.z * .4)) + .045 * exp(-beyond / (.198 + farSun.z))) * breath;
       return (face * disk * .75 + glow * (1. - disk)) * dawn;
     }
 
@@ -389,7 +392,7 @@ const fragment = `
       color += vec3(.20, .078, .06) * illumination * gauss(d, .003) * rimLocal * verticalFade;
       color += vec3(.034, .057, .092) * illumination * exp(-max(d, 0.) / .007) * space * verticalFade * (.2 + .8 * rimLocal);
       // The atmosphere catches the distant sun where it sets.
-      float bySun = gauss(length(p - farSun.xy), farSun.z * 2.5 + .05);
+      float bySun = gauss(length(p - farSun.xy), farSun.z * 2.5 + .055);
       color += vec3(1., .62, .32) * line * bySun * .7 * verticalFade * dawn;
       color += vec3(.45, .20, .07) * gauss(d, .004) * bySun * .35 * verticalFade * dawn;
 
@@ -643,9 +646,10 @@ function visibleArc(
  * leaving off the screen — and round again. The line is the height it used
  * to sit at for good, a little over half its shadow's radius above the rim,
  * a little over a third of the way from the rim's upper end toward the
- * anchor (`ANCHOR_HEIGHT`): above the headline, below the nav. It starts
- * there, so the opening picture is the same; to the left, where the rim
- * climbs, it passes behind the planet. Its disk keeps the tilt it had there.
+ * anchor (`ANCHOR_HEIGHT`): above the headline, below the nav. The first
+ * pass starts just out of frame on the right, so it comes into view at
+ * once; to the left, where the rim climbs, it passes behind the planet. Its
+ * disk keeps the tilt it had there, and under reduced motion it sits there.
  * About three quarters of its first size (a tenth, then fifteen per cent
  * smaller); smaller still on a portrait screen, where the hero's height is a
  * long way across.
@@ -671,7 +675,9 @@ function holePath(
     tilt: angle + Math.PI / 2 - 0.3,
     from,
     span: from + margin,
-    start: center[0] + Math.cos(angle) * lift,
+    // Its shadow and the bright arc round it just past the edge.
+    start: aspect + size * 2.2,
+    rest: center[0] + Math.cos(angle) * lift,
   };
 }
 
@@ -680,12 +686,15 @@ const HOLE_PASS_S = 260;
 
 /**
  * The black hole `seconds` into its passes, as the shader reads it: its
- * centre, its shadow's radius, and its disk's tilt.
+ * centre, its shadow's radius, and its disk's tilt. Null seconds: at rest.
  */
 function holeAt(
   path: HolePath,
-  seconds: number,
+  seconds: number | null,
 ): [number, number, number, number] {
+  if (seconds === null) {
+    return [path.rest, path.y, path.size, path.tilt];
+  }
   const travelled =
     (path.from - path.start + (seconds * path.span) / HOLE_PASS_S) % path.span;
   return [path.from - travelled, path.y, path.size, path.tilt];
@@ -729,7 +738,8 @@ function sunPlace(
     low,
     high,
   );
-  const size = 0.06 * clamp(width / height, 0.75, 1);
+  // A tenth larger than it first was, its glow with it (`distantSun`).
+  const size = 0.066 * clamp(width / height, 0.75, 1);
   const lift = radius - size / 3;
   return {
     angle,
@@ -1145,7 +1155,7 @@ function createRenderer(
       sy - ((sy - g.center[1]) / out) * sink,
       size,
     ];
-    const hole = holeAt(g.holePath, still() ? 0 : state.clock);
+    const hole = holeAt(g.holePath, still() ? null : state.clock);
     return { sun, hole, dawn };
   }
   let scene: ReturnType<typeof stage> | undefined;
