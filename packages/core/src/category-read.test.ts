@@ -62,23 +62,32 @@ describe("verifyCategoryRead", () => {
     expect(verdict.ok === false && verdict.reason).toBe("invented-figure");
   });
 
-  it("refuses a read resting on a datum it was never sent", () => {
+  it("drops a claim resting on a datum it was never sent, and keeps the rest", () => {
+    const resting = {
+      text: "Steady since {{fact:2026}}.",
+      basis: ["2026"],
+      tone: "neutral" as const,
+    };
     const verdict = verifyCategoryRead(
-      answer({
-        observations: [
-          {
-            text: "Well under {{fact:unrecorded-allowance}}.",
-            basis: ["unrecorded-allowance"],
-            tone: "good",
-          },
-        ],
-      }),
+      answer({ observations: [resting, ...answer().observations] }),
       facts,
       "en",
     );
 
-    expect(verdict.ok).toBe(false);
-    expect(verdict.ok === false && verdict.reason).toBe("unknown-datum");
+    expect(verdict.ok).toBe(true);
+    if (verdict.ok) {
+      expect(verdict.read.observations).toEqual(answer().observations);
+      expect(verdict.trimmed).toContainEqual(
+        expect.objectContaining({ why: "unknown-datum" }),
+      );
+    }
+
+    const alone = verifyCategoryRead(
+      answer({ observations: [resting] }),
+      facts,
+      "en",
+    );
+    expect(alone.ok === false && alone.reason).toBe("nothing-left");
   });
 
   /**

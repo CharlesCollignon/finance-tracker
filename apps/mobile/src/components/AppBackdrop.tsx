@@ -1,3 +1,4 @@
+import { createContext, useContext, type ReactNode } from "react";
 import { View } from "react-native";
 import Svg, { Defs, RadialGradient, Rect, Stop } from "react-native-svg";
 
@@ -107,4 +108,41 @@ export function AppBackdrop() {
       </Svg>
     </View>
   );
+}
+
+const Shared = createContext(false);
+
+/**
+ * One backdrop behind a navigator's screens, which then draw none of their
+ * own (`Screen` asks `useSharedBackdrop`).
+ *
+ * Each screen used to draw its own, and a screen's first frame on showing
+ * came before its gradients: switching tab flashed the bare ground — white
+ * before the scenes were given the app's colour, near-black after. Drawn
+ * once, under scenes left transparent, the ground never changes and only
+ * the content comes and goes.
+ *
+ * Not for a stack: a screen pushed over another slides in, and with no
+ * ground of its own the one beneath would show through it. See
+ * `OwnBackdrops`.
+ */
+export function SharedBackdrop({ children }: { children: ReactNode }) {
+  return (
+    <Shared.Provider value>
+      <View className="flex-1 bg-background">
+        <AppBackdrop />
+        {children}
+      </View>
+    </Shared.Provider>
+  );
+}
+
+/** Screens under it draw their own backdrop again: a stack inside the tabs. */
+export function OwnBackdrops({ children }: { children: ReactNode }) {
+  return <Shared.Provider value={false}>{children}</Shared.Provider>;
+}
+
+/** Whether a navigator above already draws the backdrop. */
+export function useSharedBackdrop(): boolean {
+  return useContext(Shared);
 }

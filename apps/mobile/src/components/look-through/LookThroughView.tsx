@@ -15,11 +15,17 @@ import {
   type SectorId,
 } from "@finance/core/instrument-reading";
 import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
-import { AXIS_COVERAGE_FLOOR } from "@finance/core/look-through";
+import {
+  AXIS_COVERAGE_FLOOR,
+  HOLDING_KIND_LABELS,
+  holdingsWorthShowing,
+  type HoldingKind,
+} from "@finance/core/look-through";
 import { buildArbitrage } from "@finance/core/look-through-target";
 import { factsDigest } from "@finance/core/month-facts";
 import type { ReadSegment } from "@finance/core/month-read";
 import { exactModelLabel } from "@finance/core/model-name";
+import { BylineMark, WriterMark } from "@/components/AiMark";
 import {
   renderWalletRead,
   targetFromWalletRead,
@@ -87,6 +93,7 @@ function share(weight: number, locale: Locale): string {
  */
 export function LookThroughView({ data }: { data: LookThroughData }) {
   const t = useT();
+  const colors = useThemeColors();
   const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const router = useRouter();
@@ -385,7 +392,13 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
                   : t("walletRead.review", { model: writerBrand })
               }
               size="sm"
-              icon="sparkles-outline"
+              leading={
+                <WriterMark
+                  model={writerBrand}
+                  size={ICON.md}
+                  color={colors.primaryForeground}
+                />
+              }
               className="self-start"
               // Nothing classified means the read would be refused; the
               // reason is stated below rather than spent on a press.
@@ -417,13 +430,16 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
                     {t("walletRead.readAt", { when: readAt })}
                   </Text>
                 ) : null}
-                <Text variant="micro">
-                  {stored?.model
-                    ? t("walletRead.writtenBy", {
-                        model: exactModelLabel(stored.model),
-                      })
-                    : t("walletRead.writtenByUnknown")}
-                </Text>
+                <View className="flex-row items-center gap-1">
+                  <BylineMark model={stored?.model ?? null} />
+                  <Text variant="micro">
+                    {stored?.model
+                      ? t("walletRead.writtenBy", {
+                          model: exactModelLabel(stored.model),
+                        })
+                      : t("walletRead.writtenByUnknown")}
+                  </Text>
+                </View>
                 {stale ? (
                   <Badge
                     label={t("walletRead.stale")}
@@ -486,6 +502,27 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
           </View>
         </Section>
       </StaggerItem>
+
+      {/* What the money is in, over everything held: the one place crypto
+          and gold stand beside the funds rather than outside them. */}
+      {holdingsWorthShowing(lookThrough) ? (
+        <StaggerItem index={3}>
+          <Section icon="layers-outline" title={t("lookThrough.holdings")}>
+            <WeightBars
+              rows={lookThrough.holdings.map((row) => ({
+                id: row.id,
+                label: t(HOLDING_KIND_LABELS[row.id as HoldingKind]),
+                weight: row.weight,
+              }))}
+              // Six kinds at most, all on their own line: nothing is pooled.
+              restLabel={() => ""}
+              showRestLabel={t("lookThrough.showRest")}
+              hideRestLabel={t("lookThrough.hideRest")}
+            />
+            <Text variant="micro">{t("lookThrough.holdingsNote")}</Text>
+          </Section>
+        </StaggerItem>
+      ) : null}
 
       {lookThrough.countries.length > 0 ? (
         <StaggerItem index={3}>

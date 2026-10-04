@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_WRITER_MODEL, describeModel } from "./model-name";
+import {
+  DEFAULT_WRITER_MODEL,
+  describeModel,
+  exactModelLabel,
+} from "./model-name";
 
 describe("describeModel", () => {
   it("names the maker and the model the app is configured with", () => {
@@ -42,6 +46,25 @@ describe("describeModel", () => {
 
   it("treats an empty configuration as naming nothing", () => {
     expect(describeModel("  ")).toEqual({ brand: "", full: "", id: "" });
+  });
+});
+
+describe("describeModel, for a user's own AI account", () => {
+  it("names a model offered in the Profile by the name it was offered under", () => {
+    expect(describeModel("openai/gpt-6-sol")).toEqual({
+      brand: "OpenAI",
+      full: "GPT-6 Sol",
+      id: "openai/gpt-6-sol",
+    });
+    expect(exactModelLabel("anthropic/claude-sonnet-5.5")).toBe(
+      "Claude Sonnet 5.5 (anthropic/claude-sonnet-5.5)",
+    );
+  });
+
+  it("names one of a known maker the Profile no longer offers", () => {
+    expect(describeModel("mistralai/mistral-large-3").full).toBe(
+      "Mistral Large 3",
+    );
   });
 });
 

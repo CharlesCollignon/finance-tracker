@@ -12,25 +12,41 @@ import { callWebApi, webApiAvailable } from "@/lib/web-api";
  * The web server holds the key and always will, so the phone only starts the
  * round trip and watches it end. It asks the server for OpenRouter's address
  * with its bearer, opens it in a browser session, and OpenRouter's callback —
- * on the server — sends that browser to `pluclair://profile?ai=<outcome>`,
- * which closes the session with that address. The connection was written by
- * the callback, out of the phone's sight, so a success is announced here.
+ * on the server — sends that browser back to the screen it began on,
+ * `pluclair://profile?ai=<outcome>` or `pluclair://onboarding?ai=…`, which
+ * closes the session with that address. The connection was written by the
+ * callback, out of the phone's sight, so a success is announced here.
  */
 
+/** Where a trip begins: the Profile, or the onboarding's last step. */
+export type AiConnectOrigin = "profile" | "welcome";
+
 /** Where the callback sends the browser back to; the session closes on it. */
-const RETURN_URL = "pluclair://profile";
+const RETURN_URLS: Record<AiConnectOrigin, string> = {
+  profile: "pluclair://profile",
+  welcome: "pluclair://onboarding",
+};
+
+/** Each outcome's sentence, spelled out so the catalogue check can see them. */
+export const OUTCOME_MESSAGES = {
+  connected: "aiAccount.connected",
+  refused: "aiAccount.refused",
+  expired: "aiAccount.expired",
+} as const;
 
 export type AiConnectResult =
   | { outcome: "connected" | "refused" | "expired" | "cancelled" }
   | { error: string };
 
-export async function connectAiAccount(): Promise<AiConnectResult> {
+export async function connectAiAccount(
+  origin: AiConnectOrigin = "profile",
+): Promise<AiConnectResult> {
   if (!webApiAvailable()) {
     return { error: "aiAccount.unavailable" };
   }
   const started = await callWebApi<{ url: string }>(
     "/api/ai/openrouter/start",
-    { body: { mode: "app" }, timeoutMs: 20_000 },
+    { body: { mode: "app", origin }, timeoutMs: 20_000 },
   );
   if (!started.ok) {
     return { error: started.error };
@@ -38,7 +54,7 @@ export async function connectAiAccount(): Promise<AiConnectResult> {
 
   const session = await WebBrowser.openAuthSessionAsync(
     started.url,
-    RETURN_URL,
+    RETURN_URLS[origin],
   );
   if (session.type !== "success" || !session.url) {
     // Closed before OpenRouter answered. The round trip's state lapses on

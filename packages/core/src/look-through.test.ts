@@ -900,3 +900,62 @@ describe("an instrument that holds no companies", () => {
     });
   });
 });
+
+describe("what the money is in", () => {
+  const bitcoin = position({
+    positionId: "pos-btc",
+    name: "Bitcoin",
+    walletId: "crypto",
+    isin: null,
+    marketValue: 2000,
+  });
+  const gold = position({
+    positionId: "pos-gold",
+    name: "Physical Gold EUR Hedged ETC",
+    walletId: "cto",
+    isin: "DE000A1EK0G3",
+    marketValue: 1000,
+  });
+  const unread = position({
+    positionId: "pos-unread",
+    name: "Something not yet read",
+    isin: "LU0000000001",
+    marketValue: 1000,
+  });
+
+  it("puts crypto and gold beside the funds, over everything held", () => {
+    const result = buildLookThrough({
+      positions: [position({ marketValue: 6000 }), bitcoin, gold, unread],
+      readings: readings(
+        reading("FR001400U5Q4"),
+        reading("DE000A1EK0G3", {
+          assetKind: "commodity",
+          countryWeights: {},
+          sectorWeights: {},
+        }),
+      ),
+      now: NOW,
+    });
+
+    expect(
+      result.holdings.map((row) => [row.id, row.weight, row.value]),
+    ).toEqual([
+      ["equity", 0.6, 6000],
+      ["crypto", 0.2, 2000],
+      ["commodity", 0.1, 1000],
+      ["unknown", 0.1, 1000],
+    ]);
+    // Countries stay over the companies the app could see through.
+    expect(result.countries[0]).toMatchObject({ id: "US", weight: 0.7 });
+  });
+
+  it("knows a shortlisted fund's kind before it is read", () => {
+    const result = buildLookThrough({
+      positions: [position({ isin: "IE00BK5BQT80" })],
+      readings: readings(),
+      now: NOW,
+    });
+
+    expect(result.holdings.map((row) => row.id)).toEqual(["equity"]);
+  });
+});

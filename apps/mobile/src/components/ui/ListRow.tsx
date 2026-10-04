@@ -30,6 +30,8 @@ export interface ListRowProps {
   hint?: string;
   /** Right-aligned current setting — "EUR", "3 passkeys", an account name. */
   value?: string;
+  /** A mark just before the value: the AI model's maker, say. */
+  valueMark?: ReactNode;
   /** A switch, a badge, anything replacing the chevron. */
   trailing?: ReactNode;
   onPress?: () => void;
@@ -47,6 +49,7 @@ export function ListRow({
   label,
   hint,
   value,
+  valueMark,
   trailing,
   onPress,
   destructive,
@@ -80,9 +83,12 @@ export function ListRow({
         {hint ? <Text variant="micro">{hint}</Text> : null}
       </View>
       {value ? (
-        <Text variant="muted" numberOfLines={1}>
-          {value}
-        </Text>
+        <View className="shrink flex-row items-center gap-1.5">
+          {valueMark}
+          <Text variant="muted" numberOfLines={1}>
+            {value}
+          </Text>
+        </View>
       ) : null}
       {trailing ??
         (onPress ? (

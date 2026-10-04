@@ -1858,6 +1858,18 @@ export const fr: Messages = {
     showRest: "Les afficher",
     hideRest: "Les masquer",
 
+    holdings: "Par classe d'actifs",
+    holdingsNote:
+      "Sur tout ce qui est investi, crypto et or compris. Les pays et les secteurs portent sur les fonds lus.",
+    holdingKind: {
+      equity: "Actions",
+      bonds: "Obligations",
+      commodity: "Or et matières premières",
+      crypto: "Crypto",
+      mixed: "Fonds mixtes",
+      unknown: "Pas encore identifié",
+    },
+
     costPerYear: "{amount} de frais par an",
     costAllIn: "({rate} tout compris)",
 
@@ -2012,6 +2024,16 @@ export const fr: Messages = {
     connected: "Compte IA connecté.",
     refused: "OpenRouter n'a pas accordé l'accès. Rien n'a été enregistré.",
     expired: "La connexion a pris trop de temps. Recommencez.",
+    /** L'étape de l'onboarding qui présente le compte IA. */
+    welcomeTitle: "Des lectures écrites par l'IA de votre choix",
+    welcomeBody:
+      "Pluclair peut commenter votre mois, vos catégories et vos placements en quelques phrases. Ces lectures sont écrites par un modèle d'IA, sur votre propre compte.",
+    welcomeHow:
+      "Un compte OpenRouter vous donne accès à Mistral, ChatGPT et Claude, en une seule connexion.",
+    welcomeCost:
+      "Chaque lecture est facturée sur vos crédits OpenRouter, quelques centimes au plus.",
+    welcomeConnect: "Connecter avec OpenRouter",
+    welcomeLater: "Vous pourrez aussi le faire plus tard, depuis le Profil.",
   },
 
   /** La revue des portefeuilles : ce qu'un modèle tire de la transparence. */

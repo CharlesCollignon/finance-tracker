@@ -76,8 +76,13 @@ vi.mock("../supabase/env", () => ({
   getSiteUrl: () => "https://pluclair.test",
 }));
 
-const { abandonConnection, accountCredit, finishConnection, startConnection } =
-  await import("./connection");
+const {
+  abandonConnection,
+  accountCredit,
+  connectionOrigin,
+  finishConnection,
+  startConnection,
+} = await import("./connection");
 const { aiSealer } = await import("./secrets");
 
 const USER = "11111111-1111-1111-1111-111111111111";
@@ -206,6 +211,19 @@ describe("finishConnection", () => {
       mode: "redirect",
       outcome: "expired",
     });
+  });
+});
+
+describe("connectionOrigin", () => {
+  it("lands a trip begun in the welcome flow back there, and any other on the Profile", async () => {
+    const welcome = (await startConnection(USER, "app", "welcome")) as {
+      url: string;
+    };
+    const state = new URL(welcome.url).searchParams.get("state")!;
+    expect(connectionOrigin(state)).toBe("welcome");
+    expect(tables.ai_connect_flows!.has(state)).toBe(true);
+
+    expect(connectionOrigin((await started()).get("state")!)).toBe("profile");
   });
 });
 

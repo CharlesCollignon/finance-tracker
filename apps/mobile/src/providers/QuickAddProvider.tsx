@@ -191,7 +191,11 @@ function QuickAddFab() {
         {/* Gold glass: still the one gold control on the screen, but what
             scrolls under it shows through, frosted, rather than being cut
             off by a solid disc. */}
-        <Blur style={StyleSheet.absoluteFill} overlayColor={GOLD_GLASS} />
+        <Blur
+          // Its own corners too: Android's blur clips to its own outline.
+          style={[StyleSheet.absoluteFill, { borderRadius: RADIUS.pill }]}
+          overlayColor={GOLD_GLASS}
+        />
         <Ionicons
           name="add"
           size={ICON.hero}

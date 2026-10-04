@@ -20,6 +20,8 @@
  * naming an unfamiliar one.
  */
 
+import { AI_MODELS } from "./ai-models";
+
 /**
  * The model used when nothing is configured.
  *
@@ -36,6 +38,13 @@ export const DEFAULT_WRITER_MODEL = "mistral-medium-latest";
 /** The makers this app knows how to name, and how they spell themselves. */
 const BRANDS: Record<string, string> = {
   mistral: "Mistral",
+};
+
+/** The same, by the prefix OpenRouter gives their models. */
+const ROUTED_MAKERS: Record<string, string> = {
+  mistralai: "Mistral",
+  openai: "OpenAI",
+  anthropic: "Anthropic",
 };
 
 export interface ModelName {
@@ -67,6 +76,28 @@ export function describeModel(modelId: string): ModelName {
   const id = modelId.trim();
   if (id === "") {
     return { brand: "", full: "", id: "" };
+  }
+
+  // OpenRouter's `maker/model`, as a user's own AI account writes: the
+  // maker from the prefix, and the model by the name the Profile offered it
+  // under. Without this, « Écrit par openai/gpt-6-sol ».
+  const slash = id.indexOf("/");
+  if (slash > 0) {
+    const maker = ROUTED_MAKERS[id.slice(0, slash).toLowerCase()];
+    const offered = AI_MODELS.find((model) => model.id === id);
+    if (maker !== undefined) {
+      const parts = id
+        .slice(slash + 1)
+        .split("-")
+        .map(titleCase);
+      // « mistralai/mistral-large-3 » is Mistral Large 3, not Mistral
+      // Mistral Large 3.
+      const named =
+        parts[0]?.toLowerCase() === maker.toLowerCase()
+          ? parts
+          : [maker, ...parts];
+      return { brand: maker, full: offered?.name ?? named.join(" "), id };
+    }
   }
 
   const [maker, ...rest] = id.split("-");

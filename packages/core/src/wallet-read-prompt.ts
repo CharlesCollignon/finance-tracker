@@ -204,6 +204,11 @@ const EN = {
       "worked out over the part that has. Say so rather than describing the " +
       "portfolio as if it were fully known, and never state an absence — an " +
       "unread instrument is unknown, not empty.",
+    "Crypto and gold have no countries and no sectors, and they are not " +
+      "unread: what they weigh in the whole portfolio is given as " +
+      "`holding:crypto` and `holding:commodity`, beside `holding:equity` and " +
+      "the rest. Speak of them through those figures when they matter — a " +
+      "large share in crypto is a concentration like any other.",
   ],
   lengthRule: [
     `The headline is one line, ${MAX_WALLET_HEADLINE_LENGTH} characters at ` +
@@ -300,6 +305,12 @@ const FR = {
       "calculée sur la partie qui l'a été. Dites-le plutôt que de décrire le " +
       "portefeuille comme s'il était entièrement connu, et n'affirmez jamais " +
       "une absence : un instrument non lu est inconnu, pas vide.",
+    "La crypto et l'or n'ont ni pays ni secteurs, et ne sont pas des " +
+      "instruments non lus : leur poids dans tout le portefeuille est donné " +
+      "par `holding:crypto` et `holding:commodity`, à côté de " +
+      "`holding:equity` et des autres. Parlez-en à travers ces chiffres " +
+      "quand ils comptent — une grosse part en crypto est une concentration " +
+      "comme une autre.",
   ],
   lengthRule: [
     `Le titre fait une ligne, ${MAX_WALLET_HEADLINE_LENGTH} caractères au ` +

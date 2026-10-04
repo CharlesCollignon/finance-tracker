@@ -7,14 +7,20 @@ import {
   type AiCreditState,
   type AiModel,
 } from "@finance/core/ai-models";
+import { aiBrandOf } from "@finance/core/ai-brands";
 import { formatCurrency } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 
+import { AiMark } from "@/components/AiMark";
 import { Button } from "@/components/ui/Button";
 import { ListRow, ListSection } from "@/components/ui/ListRow";
 import { Text } from "@/components/ui/Text";
 import { useRefreshable } from "@/hooks/useRefreshable";
-import { connectAiAccount, getAiCredit } from "@/lib/ai-account";
+import {
+  connectAiAccount,
+  getAiCredit,
+  OUTCOME_MESSAGES,
+} from "@/lib/ai-account";
 import { cn } from "@/lib/cn";
 import { chooseAiModel, disconnectAiAccount } from "@/lib/mutations";
 import { getAiConnection } from "@/lib/queries";
@@ -25,13 +31,6 @@ import { ICON } from "@/theme/tokens";
 
 /** The rows of this section that open an editor under them. */
 export type AiAccountRow = "aiConnect" | "aiModel" | "aiDisconnect";
-
-/** Each outcome's sentence, spelled out so the catalogue check can see them. */
-const OUTCOME_MESSAGES = {
-  connected: "aiAccount.connected",
-  refused: "aiAccount.refused",
-  expired: "aiAccount.expired",
-} as const;
 
 /**
  * The user's own AI account (docs/plans/AI_ACCOUNT_PLAN.md, Phase 3), as on
@@ -173,6 +172,7 @@ export function AiAccountSection({
         icon="sparkles-outline"
         label={t("aiAccount.model")}
         value={open === "aiModel" ? undefined : model.name}
+        valueMark={<ModelMark model={model} />}
         onPress={() => onToggle("aiModel")}
         expanded={
           open === "aiModel" ? (
@@ -188,6 +188,7 @@ export function AiAccountSection({
                     onPress={() => void choose(option)}
                     className="min-h-12 flex-row items-center justify-between gap-3 py-2.5"
                   >
+                    <ModelMark model={option} />
                     <Text className={cn("flex-1", chosen && "font-semibold")}>
                       {option.name}
                     </Text>
@@ -235,6 +236,12 @@ export function AiAccountSection({
       />
     </ListSection>
   );
+}
+
+/** A model's maker, as its mark in its own colour. */
+function ModelMark({ model }: { model: AiModel }) {
+  const brand = aiBrandOf(model.id);
+  return brand ? <AiMark brand={brand} /> : null;
 }
 
 /** The credit row's words: spent this month, and what the limit leaves. */

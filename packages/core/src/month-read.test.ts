@@ -158,46 +158,43 @@ describe("verifyMonthRead", () => {
       expect(verdict).toMatchObject({ ok: false, reason: "unreadable" });
     });
 
-    it("rejects a basis naming a datum that was never sent", () => {
-      // Fatal, not trimmed: a model citing a figure we did not provide is
-      // working from something other than our data, and nothing else it
-      // wrote is any more trustworthy.
+    it("drops a claim naming a datum that was never sent, and keeps the rest", () => {
+      // A year written as an id, as a model did on a live read.
+      const resting = {
+        text: "Calmer than {{fact:2026}}.",
+        basis: ["2026"],
+        tone: "neutral" as const,
+      };
       const verdict = verifyMonthRead(
-        answer({
-          observations: [
-            {
-              text: "Unrecorded spending was high.",
-              basis: ["unrecorded"],
-              tone: "watch",
-            },
-          ],
-        }),
-        pack({ close: null }),
+        answer({ observations: [resting, ...answer().observations] }),
+        pack(),
         "en",
       );
 
-      expect(verdict).toMatchObject({ ok: false, reason: "unknown-datum" });
-      if (!verdict.ok) {
-        expect(verdict.detail).toContain("unrecorded");
+      expect(verdict).toMatchObject({ ok: true });
+      if (verdict.ok) {
+        expect(verdict.read.observations).toEqual(answer().observations);
+        expect(verdict.trimmed).toContainEqual(
+          expect.objectContaining({ why: "unknown-datum" }),
+        );
       }
+      expect(
+        verifyMonthRead(answer({ observations: [resting] }), pack(), "en"),
+      ).toMatchObject({ ok: false, reason: "nothing-left" });
     });
 
-    it("rejects a placeholder for a datum that was never sent", () => {
+    it("rejects a headline citing a datum that was never sent", () => {
+      // The headline cannot be dropped: the card rests on it.
       const verdict = verifyMonthRead(
-        answer({
-          observations: [
-            {
-              text: "It came to {{fact:invented}}.",
-              basis: ["invented"],
-              tone: "neutral",
-            },
-          ],
-        }),
+        answer({ headline: "Around {{fact:invented}}" }),
         pack(),
         "en",
       );
 
       expect(verdict).toMatchObject({ ok: false, reason: "unknown-datum" });
+      if (!verdict.ok) {
+        expect(verdict.detail).toContain("invented");
+      }
     });
 
     it("rejects an answer where every observation had to go", () => {

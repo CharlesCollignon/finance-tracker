@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
 } from "react";
@@ -16,6 +17,11 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { CategoryIcon } from "@/components/finance/CategoryIcon";
 import { ConnectBankSheet } from "@/components/finance/bank/ConnectBankSheet";
+import { AiWelcomeStep } from "@/components/onboarding/AiWelcomeStep";
+import {
+  OUTCOME_MESSAGES,
+  type AiConnectOutcome,
+} from "@/components/profile/AiAccountSection";
 import { FormLabel } from "@/components/ui/FormLabel";
 import { Logo } from "@/components/layout/Logo";
 import { useToast } from "@/components/layout/ToastProvider";
@@ -27,17 +33,23 @@ import { useT } from "@/lib/locale-context";
 
 const CURRENCIES: CurrencyCode[] = ["EUR", "USD"];
 
-type Step = "currency" | "income" | "recurring" | "bank";
+type Step = "currency" | "income" | "recurring" | "bank" | "ai";
 
 /**
- * The bank step sits last and only where connecting one is possible: by then
- * the reader has seen what the app does by hand, which is what makes "let
- * your bank do this" mean something.
+ * The bank step comes after the charges and only where connecting one is
+ * possible: by then the reader has seen what the app does by hand, which is
+ * what makes "let your bank do this" mean something. The AI account comes
+ * last, behind `ai.account`: the reads it writes are about figures the steps
+ * before have just put in.
  */
-function stepsFor(offerBank: boolean): Step[] {
-  return offerBank
-    ? ["currency", "income", "recurring", "bank"]
-    : ["currency", "income", "recurring"];
+function stepsFor(offerBank: boolean, offerAi: boolean): Step[] {
+  return [
+    "currency",
+    "income",
+    "recurring",
+    ...(offerBank ? (["bank"] as const) : []),
+    ...(offerAi ? (["ai"] as const) : []),
+  ];
 }
 
 /** The query key the step is carried in, and what a history entry remembers. */
@@ -54,6 +66,12 @@ interface WelcomeFlowProps {
   categories: Category[];
   /** Whether to offer connecting a bank as a step of its own. */
   offerBank?: boolean;
+  /** Whether to introduce the AI account as the last step (`ai.account`). */
+  offerAi?: boolean;
+  /** OpenRouter's round trip, begun at the AI step, has just landed here. */
+  aiOutcome?: AiConnectOutcome | null;
+  /** A bank connected and still to bring its history in: where setup ends. */
+  bankWaiting?: boolean;
 }
 
 /**
@@ -92,15 +110,30 @@ interface WelcomeFlowProps {
 export function WelcomeFlow({
   categories,
   offerBank = false,
+  offerAi = false,
+  aiOutcome = null,
+  bankWaiting = false,
 }: WelcomeFlowProps) {
   const t = useT();
   const router = useRouter();
   const { toast } = useToast();
   const currency = useCurrency();
 
-  const STEPS = useMemo(() => stepsFor(offerBank), [offerBank]);
-  const [step, setStep] = useState<Step>("currency");
+  const STEPS = useMemo(
+    () => stepsFor(offerBank, offerAi),
+    [offerBank, offerAi],
+  );
+  // Back from OpenRouter without an account: the AI step again, to try once
+  // more or to leave it for later.
+  const firstStep: Step =
+    offerAi && aiOutcome !== null && aiOutcome !== "connected"
+      ? "ai"
+      : "currency";
+  const [step, setStep] = useState<Step>(firstStep);
   const [bankOpen, setBankOpen] = useState(false);
+  // Connected at the bank step: setup then ends on the Bank page, where its
+  // history comes in, after the AI step rather than instead of it.
+  const [bankJustConnected, setBankJustConnected] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const [incomeAmount, setIncomeAmount] = useState("");
@@ -114,11 +147,31 @@ export function WelcomeFlow({
   const expenseCategories = categories.filter((c) => c.type === "expense");
   const stepIndex = STEPS.indexOf(step);
 
+  // Back from OpenRouter: say how it went. Connected, the AI step was the
+  // last, so setup ends where it would have ended.
+  const landed = useRef(false);
   useEffect(() => {
+    if (!aiOutcome || landed.current) {
+      return;
+    }
+    landed.current = true;
+    toast(
+      OUTCOME_MESSAGES[aiOutcome],
+      aiOutcome === "connected" ? "success" : "error",
+    );
+    if (aiOutcome === "connected") {
+      router.replace(bankWaiting ? "/bank" : "/bearing");
+    }
+  }, [aiOutcome, bankWaiting, router, toast]);
+
+  useEffect(() => {
+    if (aiOutcome === "connected") {
+      return;
+    }
     window.history.replaceState(
-      { welcomeStep: STEPS[0] },
+      { welcomeStep: firstStep },
       "",
-      urlForStep(STEPS[0]),
+      urlForStep(firstStep),
     );
 
     function onPopState(event: PopStateEvent) {
@@ -129,7 +182,7 @@ export function WelcomeFlow({
 
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [STEPS]);
+  }, [STEPS, aiOutcome, firstStep]);
 
   /** Forward one step, leaving a history entry behind to come back to. */
   const goTo = useCallback((next: Step) => {
@@ -150,15 +203,26 @@ export function WelcomeFlow({
     window.history.back();
   }
 
-  /** Where the month is read. */
+  /** Where the month is read — or the Bank page, for a bank just connected. */
   function finish() {
-    router.push("/bearing");
+    router.push(bankJustConnected || bankWaiting ? "/bank" : "/bearing");
   }
 
-  /** What follows the charges: the bank step where there is one. */
+  /** What follows the charges: the bank step, the AI step, or the end. */
   function afterCharges() {
     if (offerBank) {
       goTo("bank");
+    } else if (offerAi) {
+      goTo("ai");
+    } else {
+      finish();
+    }
+  }
+
+  /** What follows the bank: the AI step where there is one. */
+  function afterBank() {
+    if (offerAi) {
+      goTo("ai");
     } else {
       finish();
     }
@@ -242,6 +306,11 @@ export function WelcomeFlow({
     });
   }
 
+  // On the way out to where setup ends; the first step would only flash.
+  if (aiOutcome === "connected") {
+    return null;
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-10">
       <div
@@ -267,8 +336,9 @@ export function WelcomeFlow({
 
       {/* One Back control for the whole wizard rather than one per step, and
           absent on the first, where there is nothing behind it but the page
-          the reader came in from. */}
-      {stepIndex > 0 ? (
+          the reader came in from — OpenRouter's, on a second try at the AI
+          step. */}
+      {step !== firstStep ? (
         <div className="-mt-2 flex">
           <Button
             variant="ghost"
@@ -463,7 +533,7 @@ export function WelcomeFlow({
             >
               {pending
                 ? t("onboarding.saving")
-                : offerBank
+                : offerBank || offerAi
                   ? t("onboarding.continue")
                   : t("removal.onboardingFinish")}
             </Button>
@@ -494,18 +564,28 @@ export function WelcomeFlow({
             <Button size="lg" onClick={() => setBankOpen(true)}>
               {t("bankConnect.sheetTitle")}
             </Button>
-            <Button variant="ghost" onClick={finish}>
+            <Button variant="ghost" onClick={afterBank}>
               {t("onboarding.skipForNow")}
             </Button>
           </div>
           <ConnectBankSheet
             open={bankOpen}
             onOpenChange={setBankOpen}
-            // Setup ends on the Bank page, where its history is brought in.
-            onConnected={() => router.push("/bank")}
+            // Setup ends on the Bank page, where its history is brought in —
+            // after the AI step, where there is one.
+            onConnected={() => {
+              if (offerAi) {
+                setBankJustConnected(true);
+                goTo("ai");
+              } else {
+                router.push("/bank");
+              }
+            }}
           />
         </div>
       ) : null}
+
+      {step === "ai" ? <AiWelcomeStep onSkip={finish} /> : null}
     </div>
   );
 }

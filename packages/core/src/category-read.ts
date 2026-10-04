@@ -283,14 +283,13 @@ function normalise(answer: CategoryReadAnswer): CategoryReadAnswer {
 /**
  * Hold the answer to the pack.
  *
- * Three fatal outcomes, and each is a case where nothing the model wrote can
- * be trusted: a shape that is not the schema; a reference to a datum that was
- * never sent, which is a model working from something other than our data;
- * and a figure written in the model's own hand *in an observation*, which is
- * a model doing arithmetic nobody can check in the only lines the panel
- * cannot do without. What is trimmed is a figure in a suggestion, a claim
- * that points at a figure it did not declare, and a claim too long for the
- * panel.
+ * Two fatal outcomes, and each is a case where nothing the model wrote can
+ * be trusted: a shape that is not the schema, and a figure written in the
+ * model's own hand *in an observation*, which is a model doing arithmetic
+ * nobody can check in the only lines the panel cannot do without. What is
+ * trimmed is a claim resting on a datum that was never sent, a figure in a
+ * suggestion, a claim that points at a figure it did not declare, and a
+ * claim too long for the panel.
  */
 export function verifyCategoryRead(
   raw: unknown,
@@ -310,21 +309,6 @@ export function verifyCategoryRead(
 
   const answer = normalise(parsed.data);
   const known = factIds(facts);
-  const claims = [...answer.observations, ...answer.suggestions];
-
-  // Anywhere at all: basis entries and placeholders alike.
-  const everyReference = claims.flatMap((row) => [
-    ...row.basis,
-    ...citedIds(row.text),
-  ]);
-  const unknown = everyReference.find((id) => !known.has(id));
-  if (unknown !== undefined) {
-    return {
-      ok: false,
-      reason: "unknown-datum",
-      detail: t("monthRead.refusal.unknownDatum", { id: unknown }),
-    };
-  }
 
   // Observations only. A suggestion that wrote a figure is dropped below with
   // the rest of the trims — see the split argued at the top of this file.
@@ -342,6 +326,14 @@ export function verifyCategoryRead(
     row: T,
     kind: "observation" | "suggestion",
   ): boolean {
+    // A reference to a datum that was never sent — a year written as an id,
+    // « {{fact:2026}} » — drops that claim and only that one. It used to
+    // refuse the whole read, which threw away every good line beside it over
+    // one the reader would never have seen.
+    if ([...row.basis, ...citedIds(row.text)].some((id) => !known.has(id))) {
+      trimmed.push({ kind, text: row.text, why: "unknown-datum" });
+      return false;
+    }
     // Only ever reached by a suggestion: an observation that wrote a figure
     // refused the whole read above.
     if (writesAFigure(row.text)) {

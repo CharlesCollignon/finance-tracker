@@ -34,6 +34,8 @@ export interface Writer {
   key: string;
   /** Null for a model that refuses one (the GPT-6 family). */
   temperature: number | null;
+  /** A model that reasons before it answers: see `./sampling`. */
+  reasoning: boolean;
   /** Anything else the service wants in the request body. */
   extra: Record<string, unknown>;
   /** Headers beyond the key. */
@@ -75,6 +77,7 @@ export function pluclairWriter(): Writer | null {
     endpoint: MISTRAL_ENDPOINT,
     key,
     temperature: TEMPERATURE,
+    reasoning: false,
     extra: {},
     headers: {},
     label: "pluclair",
@@ -119,7 +122,8 @@ async function accountWriter(userId: string): Promise<Writer | null> {
     model: model.id,
     endpoint: OPENROUTER_ENDPOINT,
     key,
-    temperature: model.fixedTemperature ? null : TEMPERATURE,
+    temperature: model.reasoning ? null : TEMPERATURE,
+    reasoning: model.reasoning,
     // Only to a provider that honours the response schema: a read whose
     // shape was ignored is one the user paid for and cannot use.
     extra: { provider: { require_parameters: true } },

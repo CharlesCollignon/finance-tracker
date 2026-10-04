@@ -2581,6 +2581,18 @@ export const en = {
     showRest: "Show them",
     hideRest: "Hide them",
 
+    holdings: "By asset class",
+    holdingsNote:
+      "Over everything invested, crypto and gold included. Countries and sectors are over the funds that were read.",
+    holdingKind: {
+      equity: "Shares",
+      bonds: "Bonds",
+      commodity: "Gold and commodities",
+      crypto: "Crypto",
+      mixed: "Mixed funds",
+      unknown: "Not yet identified",
+    },
+
     /** The charge, promoted to sit under the total it is charged on. */
     costPerYear: "{amount} a year in charges",
     costAllIn: "({rate} all in)",
@@ -2804,6 +2816,16 @@ export const en = {
     connected: "AI account connected.",
     refused: "OpenRouter did not grant access. Nothing was saved.",
     expired: "Connecting took too long. Try again.",
+    /** The onboarding step that introduces the AI account. */
+    welcomeTitle: "Written reads, by the AI you choose",
+    welcomeBody:
+      "Pluclair can comment on your month, your categories and your investments in a few sentences. Those reads are written by an AI model, on your own account.",
+    welcomeHow:
+      "An OpenRouter account gives you Mistral, ChatGPT and Claude, in one connection.",
+    welcomeCost:
+      "Each read is billed to your OpenRouter credits: a few cents at most.",
+    welcomeConnect: "Connect with OpenRouter",
+    welcomeLater: "You can also do it later, from your Profile.",
   },
 
   /**

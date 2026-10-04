@@ -1,6 +1,6 @@
 import { Pressable, Text, View, type PressableProps } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -26,6 +26,8 @@ export interface ButtonProps extends PressableProps {
   className?: string;
   /** Trailing icon chip; the web pill puts a nub here. */
   icon?: ComponentProps<typeof Ionicons>["name"];
+  /** Before the label: the writer's mark, on a button that spends a call. */
+  leading?: ReactNode;
 }
 
 // The rim on the gold variants matches the fill, and that is correct rather
@@ -81,6 +83,7 @@ export function Button({
   size = "md",
   className,
   icon,
+  leading,
   disabled,
   onPress,
   ...props
@@ -117,6 +120,7 @@ export function Button({
       }}
       {...props}
     >
+      {leading}
       <Text
         className={cn("font-semibold", LABEL[variant], LABEL_SIZE[size])}
         style={sansWeightFace("font-semibold")}

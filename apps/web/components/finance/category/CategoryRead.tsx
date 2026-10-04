@@ -20,6 +20,7 @@ import { GLASS_CARD } from "@/lib/glass";
 import { useFormatCurrency } from "@/lib/use-currency";
 import { ICON } from "@/lib/icon-scale";
 import { describeModel } from "@finance/core/model-name";
+import { BylineMark, WriterMark } from "@/components/finance/AiMark";
 import { useLocale, useT } from "@/lib/locale-context";
 
 interface CategoryReadProps {
@@ -198,9 +199,16 @@ export function CategoryRead({
           {rendered ? (
             <>
               {inAnotherLanguage ? " " : null}
-              {readModel === null
-                ? t("categoryRead.writtenByUnknown")
-                : t("categoryRead.writtenBy", { model: exactModel(readModel) })}
+              {readModel === null ? (
+                t("categoryRead.writtenByUnknown")
+              ) : (
+                <>
+                  <BylineMark model={readModel} />
+                  {t("categoryRead.writtenBy", {
+                    model: exactModel(readModel),
+                  })}
+                </>
+              )}
             </>
           ) : null}
         </p>
@@ -219,9 +227,8 @@ export function CategoryRead({
               left <= 0 && "cursor-not-allowed text-muted-foreground",
             )}
           >
-            {/* The house mark for "a model did this", the same one this
-                card's heading already carries. */}
-            <Sparkle size={ICON.sm} weight="fill" aria-hidden="true" />
+            {/* The writer's own mark, or the house sparkle. */}
+            <WriterMark model={writerBrand} />
             {pending
               ? t("categoryRead.writing")
               : left <= 0
