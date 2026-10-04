@@ -7,9 +7,11 @@ import {
   type AiCreditState,
   type AiModel,
 } from "@finance/core/ai-models";
+import { aiBrandOf } from "@finance/core/ai-brands";
 import { formatCurrency } from "@finance/core/constants";
 import { resolveMessage } from "@finance/core/i18n/t";
 
+import { AiMark } from "@/components/AiMark";
 import { Button } from "@/components/ui/Button";
 import { ListRow, ListSection } from "@/components/ui/ListRow";
 import { Text } from "@/components/ui/Text";
@@ -173,6 +175,7 @@ export function AiAccountSection({
         icon="sparkles-outline"
         label={t("aiAccount.model")}
         value={open === "aiModel" ? undefined : model.name}
+        valueMark={<ModelMark model={model} />}
         onPress={() => onToggle("aiModel")}
         expanded={
           open === "aiModel" ? (
@@ -188,6 +191,7 @@ export function AiAccountSection({
                     onPress={() => void choose(option)}
                     className="min-h-12 flex-row items-center justify-between gap-3 py-2.5"
                   >
+                    <ModelMark model={option} />
                     <Text className={cn("flex-1", chosen && "font-semibold")}>
                       {option.name}
                     </Text>
@@ -235,6 +239,12 @@ export function AiAccountSection({
       />
     </ListSection>
   );
+}
+
+/** A model's maker, as its mark in its own colour. */
+function ModelMark({ model }: { model: AiModel }) {
+  const brand = aiBrandOf(model.id);
+  return brand ? <AiMark brand={brand} /> : null;
 }
 
 /** The credit row's words: spent this month, and what the limit leaves. */

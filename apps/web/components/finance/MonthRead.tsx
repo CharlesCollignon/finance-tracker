@@ -22,6 +22,7 @@ import { ICON } from "@/lib/icon-scale";
 import type { Locale } from "@finance/core/i18n/locale";
 import { LOCALE_LABELS } from "@finance/core/i18n/locale";
 import { exactModelLabel } from "@finance/core/model-name";
+import { BylineMark, WriterMark } from "@/components/finance/AiMark";
 import { useLocale, useT } from "@/lib/locale-context";
 
 interface MonthReadProps {
@@ -216,11 +217,16 @@ export function MonthRead({
           {rendered ? (
             <>
               {" "}
-              {readModel === null
-                ? t("monthRead.writtenByUnknown")
-                : t("monthRead.writtenBy", {
+              {readModel === null ? (
+                t("monthRead.writtenByUnknown")
+              ) : (
+                <>
+                  <BylineMark model={readModel} />
+                  {t("monthRead.writtenBy", {
                     model: exactModelLabel(readModel),
                   })}
+                </>
+              )}
             </>
           ) : null}
         </p>
@@ -239,9 +245,9 @@ export function MonthRead({
               left <= 0 && "cursor-not-allowed text-muted-foreground",
             )}
           >
-            {/* The house mark for "a model did this", the same one on the
-                card's own heading and on the look-through's Review. */}
-            <Sparkle size={ICON.sm} weight="fill" aria-hidden="true" />
+            {/* The writer's own mark — Mistral's, OpenAI's, Claude's — or
+                the house sparkle for "a model does this". */}
+            <WriterMark model={writerBrand} />
             {pending
               ? t("monthRead.writing")
               : left <= 0

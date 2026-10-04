@@ -23,6 +23,7 @@ import { useThemeColors } from "@/theme/useThemeColors";
 import { ICON } from "@/theme/tokens";
 import { LOCALE_LABELS, type Locale } from "@finance/core/i18n/locale";
 import { exactModelLabel } from "@finance/core/model-name";
+import { BylineMark, WriterMark } from "@/components/AiMark";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 
 interface MonthReadProps {
@@ -212,14 +213,20 @@ export function MonthRead({
           </Text>
         ) : null}
         {rendered ? (
-          <Text variant="micro" className="text-muted-foreground">
-            {/* The model recorded on this read, not today's configuration:
-                a read written six weeks ago was written by whatever answered
-                then, and this is the line whose job is to be exact. */}
-            {readModel === null
-              ? t("monthRead.writtenByUnknown")
-              : t("monthRead.writtenBy", { model: exactModelLabel(readModel) })}
-          </Text>
+          <View className="flex-row items-center gap-1">
+            <BylineMark model={readModel} />
+            <Text variant="micro" className="flex-1 text-muted-foreground">
+              {/* The model recorded on this read, not today's configuration:
+                  a read written six weeks ago was written by whatever
+                  answered then, and this is the line whose job is to be
+                  exact. */}
+              {readModel === null
+                ? t("monthRead.writtenByUnknown")
+                : t("monthRead.writtenBy", {
+                    model: exactModelLabel(readModel),
+                  })}
+            </Text>
+          </View>
         ) : null}
 
         {!writable && account ? (
@@ -244,10 +251,10 @@ export function MonthRead({
               (pending || left <= 0) && "opacity-60",
             )}
           >
-            <Ionicons
-              // The same mark the card's own heading carries, and the same
-              // one the web twin puts on this button: "a model did this".
-              name="sparkles"
+            {/* The writer's own mark — Mistral's, OpenAI's, Claude's — or
+                the house sparkle, as on the web twin. */}
+            <WriterMark
+              model={writerBrand}
               size={ICON.md}
               color={
                 left > 0 ? colors.primaryForeground : colors.mutedForeground

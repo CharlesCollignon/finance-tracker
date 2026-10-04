@@ -20,6 +20,7 @@ import { buildArbitrage } from "@finance/core/look-through-target";
 import { factsDigest } from "@finance/core/month-facts";
 import type { ReadSegment } from "@finance/core/month-read";
 import { exactModelLabel } from "@finance/core/model-name";
+import { BylineMark, WriterMark } from "@/components/AiMark";
 import {
   renderWalletRead,
   targetFromWalletRead,
@@ -87,6 +88,7 @@ function share(weight: number, locale: Locale): string {
  */
 export function LookThroughView({ data }: { data: LookThroughData }) {
   const t = useT();
+  const colors = useThemeColors();
   const locale = useLocale();
   const formatEuro = useFormatCurrency();
   const router = useRouter();
@@ -385,7 +387,13 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
                   : t("walletRead.review", { model: writerBrand })
               }
               size="sm"
-              icon="sparkles-outline"
+              leading={
+                <WriterMark
+                  model={writerBrand}
+                  size={ICON.md}
+                  color={colors.primaryForeground}
+                />
+              }
               className="self-start"
               // Nothing classified means the read would be refused; the
               // reason is stated below rather than spent on a press.
@@ -417,13 +425,16 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
                     {t("walletRead.readAt", { when: readAt })}
                   </Text>
                 ) : null}
-                <Text variant="micro">
-                  {stored?.model
-                    ? t("walletRead.writtenBy", {
-                        model: exactModelLabel(stored.model),
-                      })
-                    : t("walletRead.writtenByUnknown")}
-                </Text>
+                <View className="flex-row items-center gap-1">
+                  <BylineMark model={stored?.model ?? null} />
+                  <Text variant="micro">
+                    {stored?.model
+                      ? t("walletRead.writtenBy", {
+                          model: exactModelLabel(stored.model),
+                        })
+                      : t("walletRead.writtenByUnknown")}
+                  </Text>
+                </View>
                 {stale ? (
                   <Badge
                     label={t("walletRead.stale")}

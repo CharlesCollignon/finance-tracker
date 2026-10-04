@@ -11,7 +11,9 @@ import {
   type AiCreditState,
   type AiModel,
 } from "@finance/core/ai-models";
+import { aiBrandOf } from "@finance/core/ai-brands";
 import { formatCurrency } from "@finance/core/constants";
+import { AiMark } from "@/components/finance/AiMark";
 import type { Locale } from "@finance/core/i18n/locale";
 import { chooseAiModel, disconnectAiAccount } from "@/lib/actions/ai-account";
 import { useLocale, useT } from "@/lib/locale-context";
@@ -199,7 +201,7 @@ export function AiAccountSection({
       <ListRow
         icon={Sparkle}
         label={t("aiAccount.model")}
-        value={open === "aiModel" ? undefined : model.name}
+        value={open === "aiModel" ? undefined : <ModelName model={model} />}
         onClick={() => onToggle("aiModel")}
         expanded={
           open === "aiModel" ? (
@@ -220,7 +222,7 @@ export function AiAccountSection({
                       chosen && "font-semibold",
                     )}
                   >
-                    {option.name}
+                    <ModelName model={option} />
                     {chosen ? <Check size={16} weight="bold" /> : null}
                   </button>
                 );
@@ -260,6 +262,17 @@ export function AiAccountSection({
         }
       />
     </ListSection>
+  );
+}
+
+/** A model as the Profile names it: its maker's mark, then its name. */
+function ModelName({ model }: { model: AiModel }) {
+  const brand = aiBrandOf(model.id);
+  return (
+    <span className="inline-flex items-center gap-2">
+      {brand ? <AiMark brand={brand} /> : null}
+      {model.name}
+    </span>
   );
 }
 

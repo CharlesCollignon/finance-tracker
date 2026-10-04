@@ -9,7 +9,6 @@ import {
   Eye,
   Globe,
   Prohibit,
-  Sparkle,
   Target,
   Warning,
 } from "@phosphor-icons/react";
@@ -23,6 +22,7 @@ import {
 } from "@finance/core/instrument-reading";
 import { countryFlag, countryName } from "@finance/core/country-names";
 import { exactModelLabel } from "@finance/core/model-name";
+import { BylineMark, WriterMark } from "@/components/finance/AiMark";
 import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
 import { formatCharge } from "@finance/core/fund-costs";
 import { AXIS_COVERAGE_FLOOR } from "@finance/core/look-through";
@@ -462,12 +462,9 @@ export function LookThroughView({
                     // that comes back as a toast explaining what it needed.
                     disabled={reviewing || !canSayAnything}
                   >
-                    <Sparkle
-                      size={ICON.sm}
-                      weight="fill"
-                      aria-hidden="true"
-                      className="mr-1.5 shrink-0"
-                    />
+                    <span className="mr-1.5 flex shrink-0">
+                      <WriterMark model={writerBrand} />
+                    </span>
                     {reviewing
                       ? t("walletRead.reviewing")
                       : t("walletRead.review", { model: writerBrand })}
@@ -499,11 +496,16 @@ export function LookThroughView({
                         written by whatever answered then, and this is the one
                         sentence on the page whose whole job is to be exact. */}
                     <span className={cn(MICRO, "text-muted-foreground")}>
-                      {readModel === null
-                        ? t("walletRead.writtenByUnknown")
-                        : t("walletRead.writtenBy", {
+                      {readModel === null ? (
+                        t("walletRead.writtenByUnknown")
+                      ) : (
+                        <>
+                          <BylineMark model={readModel} />
+                          {t("walletRead.writtenBy", {
                             model: exactModelLabel(readModel),
                           })}
+                        </>
+                      )}
                     </span>
                     {stale ? (
                       <Badge variant="outline" size="sm">

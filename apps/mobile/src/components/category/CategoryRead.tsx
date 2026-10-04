@@ -9,6 +9,7 @@ import {
 } from "@finance/core/category-read";
 import { LOCALE_LABELS, type Locale } from "@finance/core/i18n/locale";
 import { exactModelLabel } from "@finance/core/model-name";
+import { BylineMark, WriterMark } from "@/components/AiMark";
 import type { ReadSegment } from "@finance/core/month-read";
 
 import { ConnectAiInvite } from "@/components/ConnectAiInvite";
@@ -168,26 +169,29 @@ export function CategoryRead({
 
       <View className="gap-2 border-t border-border pt-2">
         {inAnotherLanguage || rendered ? (
-          <Text variant="micro" className="text-xs">
-            {[
-              inAnotherLanguage
-                ? t("categoryRead.writtenInOtherLanguage", {
-                    language: LOCALE_LABELS[readLocale],
-                  })
-                : null,
-              // Which model, exactly — off this read rather than today's
-              // configuration, because they are not always the same one.
-              rendered
-                ? readModel === null
-                  ? t("categoryRead.writtenByUnknown")
-                  : t("categoryRead.writtenBy", {
-                      model: exactModelLabel(readModel),
+          <View className="flex-row items-center gap-1">
+            {rendered ? <BylineMark model={readModel} /> : null}
+            <Text variant="micro" className="flex-1 text-xs">
+              {[
+                inAnotherLanguage
+                  ? t("categoryRead.writtenInOtherLanguage", {
+                      language: LOCALE_LABELS[readLocale],
                     })
-                : null,
-            ]
-              .filter(Boolean)
-              .join(" ")}
-          </Text>
+                  : null,
+                // Which model, exactly — off this read rather than today's
+                // configuration, because they are not always the same one.
+                rendered
+                  ? readModel === null
+                    ? t("categoryRead.writtenByUnknown")
+                    : t("categoryRead.writtenBy", {
+                        model: exactModelLabel(readModel),
+                      })
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            </Text>
+          </View>
         ) : null}
 
         {!writable && account ? (
@@ -207,8 +211,8 @@ export function CategoryRead({
               (pending || left <= 0) && "opacity-60",
             )}
           >
-            <Ionicons
-              name="sparkles"
+            <WriterMark
+              model={writerBrand}
               size={ICON.md}
               color={
                 left > 0 ? colors.primaryForeground : colors.mutedForeground
