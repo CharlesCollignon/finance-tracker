@@ -34,16 +34,16 @@ import { cn } from "@/lib/utils";
  *   rather than only after a hold and release.
  * - A black hole sits just behind the horizon, the rim cutting off the foot
  *   of its shadow and one end of its disk, which turns slowly, the nebula
- *   and the starlight bending round it (`distantHole`). It drifts along the
- *   rim from right to left, a pass every four minutes or so, and round
+ *   and the starlight bending round it (`distantHole`). It drifts on a level
+ *   line from right to left, a pass every four minutes or so, and round
  *   again (`holePath`, `holeAt`). It is ours, not the original's, and does
  *   not follow the pointer.
  * - A distant sun is setting on the rim to the right of the headline, warm,
  *   a third of it above the horizon and the light resting in it
  *   (`distantSun`); ours too.
- * - The scene enters in two beats: the planet rises into place, still dim,
- *   then the sun rises behind its rim and lights it (`stage`). All of it
- *   at rest from the first frame under reduced motion.
+ * - The scene enters in two beats: it fades in smoothly, then the sun fades
+ *   in, hyper slowly, rising very slowly behind the rim (`stage`). All of
+ *   it at rest from the first frame under reduced motion.
  *
  * Imagery: NASA Blue Marble Next Generation, by Reto Stöckli (NASA Earth
  * Observatory), used without endorsement; credited in the landing footer.
@@ -108,10 +108,12 @@ type Geometry = {
 };
 type HolePath = {
   size: number;
-  lift: number;
-  /** The angle it enters at, past the rim's lower right end. */
+  /** The height it travels at, and its disk's tilt, both fixed. */
+  y: number;
+  tilt: number;
+  /** Where it enters, past the right edge. */
   from: number;
-  /** The angle it travels before leaving past the upper left end. */
+  /** How far it travels before leaving past the left edge. */
   span: number;
   /** Where it is at the start: where it used to sit for good. */
   start: number;
@@ -222,12 +224,12 @@ export function LandingEarth({
           }}
         />
       </div>
-      {/* Faded in on its first frame, over the black of space, rather than
-          swapped in. */}
+      {/* Faded in smoothly on its first frame, over the black of space,
+          rather than swapped in: the first beat of the entrance. */}
       <canvas
         ref={canvas}
         tabIndex={-1}
-        className="absolute inset-0 block h-full w-full opacity-0 transition-opacity duration-700 ease-out motion-reduce:transition-none"
+        className="absolute inset-0 block h-full w-full opacity-0 transition-opacity duration-[2200ms] ease-in-out motion-reduce:transition-none"
         style={{ touchAction: interactive ? "pan-y" : "auto" }}
       />
     </div>
@@ -334,7 +336,7 @@ const fragment = `
       vec3 face = mix(vec3(1., .50, .16), vec3(1., .80, .47), pow(max(0., 1. - q * q), .4));
       float breath = 1. + .06 * sin(clock * .5);
       vec3 glow = vec3(1., .56, .22) * (.30 * exp(-beyond / (.012 + farSun.z * .15)) + .14 * exp(-beyond / (.05 + farSun.z * .4)) + .045 * exp(-beyond / (.18 + farSun.z))) * breath;
-      return face * disk * .75 + glow * (1. - disk) * dawn;
+      return (face * disk * .75 + glow * (1. - disk)) * dawn;
     }
 
     void main() {
@@ -636,73 +638,69 @@ function visibleArc(
 }
 
 /**
- * Where the black hole travels: along the rim, a little over half its
- * shadow's radius above it, so the planet cuts off the foot of its shadow,
- * from just past the rim's lower right end to just past its upper left one
- * — entering and leaving off the screen — and round again. It starts where
- * it used to sit for good, a little over a third of the way from the upper
- * end toward the anchor (`ANCHOR_HEIGHT`), above the headline, so the
- * opening picture is the same. A tenth smaller than it was; smaller still on
- * a portrait screen, where the hero's height is a long way across.
+ * Where the black hole travels: on a straight, level line, right to left,
+ * from just past the right edge to just past the left one — entering and
+ * leaving off the screen — and round again. The line is the height it used
+ * to sit at for good, a little over half its shadow's radius above the rim,
+ * a little over a third of the way from the rim's upper end toward the
+ * anchor (`ANCHOR_HEIGHT`): above the headline, below the nav. It starts
+ * there, so the opening picture is the same; to the left, where the rim
+ * climbs, it passes behind the planet. Its disk keeps the tilt it had there.
+ * About three quarters of its first size (a tenth, then fifteen per cent
+ * smaller); smaller still on a portrait screen, where the hero's height is a
+ * long way across.
  */
 function holePath(
   center: [number, number],
   radius: number,
   low: number,
-  high: number,
   anchor: number,
   aspect: number,
 ): HolePath {
-  const size = 0.0324 * clamp(aspect, 0.75, 1);
+  const size = 0.02754 * clamp(aspect, 0.75, 1);
+  const angle = low + (anchor - low) * 0.36;
   const lift = radius + size * 0.6;
-  // Far enough past each end that its light, nine shadow radii out, is off
+  // Far enough past each edge that its light, nine shadow radii out, is off
   // the screen when it turns round.
-  const margin = (size * 9) / lift;
-  const from = high + margin;
+  const margin = size * 9;
+  const from = aspect + margin;
   return {
     size,
-    lift,
+    y: center[1] + Math.sin(angle) * lift,
+    // The rim's own slope there, less 0.3 radians.
+    tilt: angle + Math.PI / 2 - 0.3,
     from,
-    span: from - (low - margin),
-    start: low + (anchor - low) * 0.36,
+    span: from + margin,
+    start: center[0] + Math.cos(angle) * lift,
   };
 }
 
-/** One pass of the black hole along the rim, right to left, in seconds. */
+/** One pass of the black hole across the hero, right to left, in seconds. */
 const HOLE_PASS_S = 260;
 
 /**
  * The black hole `seconds` into its passes, as the shader reads it: its
- * centre, its shadow's radius, and its disk's tilt, which follows the rim.
+ * centre, its shadow's radius, and its disk's tilt.
  */
 function holeAt(
   path: HolePath,
-  center: [number, number],
   seconds: number,
 ): [number, number, number, number] {
   const travelled =
     (path.from - path.start + (seconds * path.span) / HOLE_PASS_S) % path.span;
-  const angle = path.from - travelled;
-  return [
-    center[0] + Math.cos(angle) * path.lift,
-    center[1] + Math.sin(angle) * path.lift,
-    path.size,
-    // The rim's own slope there, less 0.3 radians.
-    angle + Math.PI / 2 - 0.3,
-  ];
+  return [path.from - travelled, path.y, path.size, path.tilt];
 }
 
 /**
- * The entrance, in two beats: the planet rises into place from below, still
- * dim, then the sun rises behind its rim and lights the rim and the land.
- * Seconds, and how far below its rest the planet starts, in hero heights.
+ * The entrance: the scene fades in smoothly (the canvas's own transition,
+ * below), then the sun fades in, hyper slowly, as it rises very, very slowly
+ * behind the rim from wholly below it — and lights the rim and the land as
+ * it comes. Seconds.
  */
-const PLANET_RISE_S = 2.6;
-const PLANET_RISE_DEPTH = 0.22;
-const SUN_RISE_DELAY_S = 1.7;
-const SUN_RISE_S = 3.2;
+const SUN_DELAY_S = 2.2;
+const SUN_FADE_S = 14;
+const SUN_RISE_S = 36;
 
-const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 const easeInOutSine = (t: number) => (1 - Math.cos(Math.PI * t)) / 2;
 
 /**
@@ -1092,7 +1090,7 @@ function createRenderer(
       low,
       high,
     );
-    const path = holePath(center, radius, low, high, anchor, aspect);
+    const path = holePath(center, radius, low, anchor, aspect);
     // The light rests in the distant sun.
     const { angle: rest, sun } = sunPlace(
       center,
@@ -1130,37 +1128,32 @@ function createRenderer(
       state.frame = requestAnimationFrame(draw);
   }
   /**
-   * Where everything is this frame: the planet partway up during the
-   * entrance, the sun partway risen behind it, the black hole along its
-   * pass. All of it at rest, and the hole where it starts, under reduced
-   * motion.
+   * Where the moving things are this frame: the sun partway risen and faded
+   * in, the black hole along its pass. The sun at rest and the hole where it
+   * starts under reduced motion.
    */
   function stage(g: Geometry) {
     const t = still() ? Infinity : state.entrance;
-    const rise = 1 - easeOutCubic(clamp(t / PLANET_RISE_S, 0, 1));
-    const dawn = easeInOutSine(
-      clamp((t - SUN_RISE_DELAY_S) / SUN_RISE_S, 0, 1),
-    );
-    const dy = rise * PLANET_RISE_DEPTH;
-    const center: [number, number] = [g.center[0], g.center[1] + dy];
+    const dawn = easeInOutSine(clamp((t - SUN_DELAY_S) / SUN_FADE_S, 0, 1));
+    const rise = easeInOutSine(clamp((t - SUN_DELAY_S) / SUN_RISE_S, 0, 1));
     // The sun rises along its own radius, from wholly below the rim.
     const [sx, sy, size] = g.sun;
     const out = Math.hypot(sx - g.center[0], sy - g.center[1]) || 1;
-    const sink = (1 - dawn) * size * 1.4;
+    const sink = (1 - rise) * size * 1.4;
     const sun: [number, number, number] = [
       sx - ((sx - g.center[0]) / out) * sink,
-      sy + dy - ((sy - g.center[1]) / out) * sink,
+      sy - ((sy - g.center[1]) / out) * sink,
       size,
     ];
-    const hole = holeAt(g.holePath, center, still() ? 0 : state.clock);
-    return { center, sun, hole, dawn };
+    const hole = holeAt(g.holePath, still() ? 0 : state.clock);
+    return { sun, hole, dawn };
   }
   let scene: ReturnType<typeof stage> | undefined;
   function common(u: Uniforms) {
     const g = geometry!;
     const now = scene ?? stage(g);
     gl.uniform2f(u.resolution!, canvas.width, canvas.height);
-    gl.uniform2f(u.center!, ...now.center);
+    gl.uniform2f(u.center!, ...g.center);
     gl.uniform1f(u.radius!, g.radius);
     gl.uniform1f(u.angle!, state.angle);
     gl.uniform1f(u.clock!, still() ? 0 : state.clock);
