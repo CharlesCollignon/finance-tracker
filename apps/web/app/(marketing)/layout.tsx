@@ -1,6 +1,7 @@
 import { getAuthUser } from "@/lib/auth/get-user";
 import { LandingFooter } from "@/components/marketing/LandingFooter";
 import { LandingHeader } from "@/components/marketing/LandingHeader";
+import { MarketingMotion } from "@/components/marketing/LandingReveal";
 
 /**
  * The marketing shell.
@@ -42,9 +43,12 @@ export default async function MarketingLayout({
         <div className="marketing-grain absolute inset-0" />
       </div>
 
-      <LandingHeader isLoggedIn={isLoggedIn} />
-      <main className="flex flex-1 flex-col">{children}</main>
-      <LandingFooter isLoggedIn={isLoggedIn} />
+      {/* One motion setup for the whole site: see `LandingReveal`. */}
+      <MarketingMotion>
+        <LandingHeader isLoggedIn={isLoggedIn} />
+        <main className="flex flex-1 flex-col">{children}</main>
+        <LandingFooter isLoggedIn={isLoggedIn} />
+      </MarketingMotion>
     </div>
   );
 }

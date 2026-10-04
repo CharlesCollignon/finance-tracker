@@ -848,6 +848,39 @@ html:has(.marketing-shell) {
   }
 }
 
+/* A glint of light crossing the hero's gold button once, as the sun begins
+   to rise behind the planet (`SUN_DELAY_S` in LandingEarth): the light
+   catches the button. Not under reduced motion. */
+.marketing-cta-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgb(255 248 230 / 0.55) 50%,
+    transparent 70%
+  );
+  transform: translateX(-130%);
+  pointer-events: none;
+  animation: marketing-cta-shine 1.5s cubic-bezier(0.32, 0.72, 0, 1) 2.4s 1
+    forwards;
+}
+
+@keyframes marketing-cta-shine {
+  to {
+    transform: translateX(130%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-cta-shine::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* --- the orb and its light ----------------------------------------------- */
 
 /* The warm bloom the sphere throws. Sized by its box, so callers scale the

@@ -69,6 +69,8 @@ interface LandingCtasProps {
    * the three the menu trigger is the one that must survive.
    */
   layout?: "pair" | "pair-compact" | "solo";
+  /** A glint of light across the gold button, once: the hero's sunrise. */
+  shine?: boolean;
   className?: string;
 }
 
@@ -76,13 +78,15 @@ export function LandingCtas({
   isLoggedIn,
   size = "md",
   layout = "pair",
+  shine = false,
   className,
 }: LandingCtasProps) {
+  const gold = cn(solid, shine && "marketing-cta-shine");
   const copy = landingCopyFor(useLocale());
   if (isLoggedIn) {
     return (
       <div className={cn("flex flex-wrap items-center gap-3", className)}>
-        <Link href="/bearing" className={cn(base, sizes[size], solid)}>
+        <Link href="/bearing" className={cn(base, sizes[size], gold)}>
           {layout === "solo" ? copy.cta.openApp : copy.cta.goToDashboard}
         </Link>
       </div>
@@ -91,7 +95,7 @@ export function LandingCtas({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
-      <Link href="/signup" className={cn(base, sizes[size], solid)}>
+      <Link href="/signup" className={cn(base, sizes[size], gold)}>
         {copy.cta.getStarted}
       </Link>
       {layout === "solo" ? null : (
