@@ -369,10 +369,11 @@ describe("verifyWalletRead", () => {
 
   /* -------------------------------------------------------- the datum rule */
 
-  it("refuses a claim resting on a datum that was never sent", () => {
+  it("drops a claim resting on a datum that was never sent, and keeps the rest", () => {
     const verdict = verifyWalletRead(
       answer({
         observations: [
+          ...answer().observations,
           {
             text: "Japan is {{fact:japan-share}} of it.",
             tone: "neutral",
@@ -380,6 +381,20 @@ describe("verifyWalletRead", () => {
           },
         ],
       }),
+      pack().facts,
+      "en",
+    );
+    expect(verdict.ok).toBe(true);
+    if (!verdict.ok) return;
+    expect(verdict.read.observations).toHaveLength(2);
+    expect(verdict.dropped).toEqual([
+      expect.objectContaining({ why: "unknown-datum" }),
+    ]);
+  });
+
+  it("refuses a headline resting on a datum that was never sent", () => {
+    const verdict = verifyWalletRead(
+      answer({ headline: "Mostly {{fact:japan-share}} Japan." }),
       pack().facts,
       "en",
     );

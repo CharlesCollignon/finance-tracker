@@ -342,19 +342,11 @@ export function verifyWalletRead(
   const answer = parsed.data;
   const known = factIds(facts);
 
-  // Every reference, anywhere: declared bases and inline placeholders alike.
-  const everyReference = [
-    ...answer.observations.flatMap((row) => [
-      ...row.basis.map(bareId),
-      ...citedIds(row.text),
-    ]),
-    ...answer.suggestions.flatMap((row) => [
-      ...row.basis.map(bareId),
-      ...citedIds(row.text),
-    ]),
-    ...citedIds(answer.headline),
-  ];
-  const unknownDatum = everyReference.find((id) => !known.has(id));
+  // A reference to a figure that was never handed over is fatal in the
+  // headline, which the surface rests on; in a claim, that claim is dropped
+  // below and the rest of the review stands — as a claim that writes its own
+  // figure already was.
+  const unknownDatum = citedIds(answer.headline).find((id) => !known.has(id));
   if (unknownDatum !== undefined) {
     return {
       ok: false,
@@ -402,6 +394,11 @@ export function verifyWalletRead(
   ): boolean {
     if (row.text.trim() === "") {
       dropped.push({ kind, text: row.text, why: "empty" });
+      return false;
+    }
+    const references = [...row.basis.map(bareId), ...citedIds(row.text)];
+    if (references.some((id) => !known.has(id))) {
+      dropped.push({ kind, text: row.text, why: "unknown-datum" });
       return false;
     }
     if (writesAFigure(withoutInstrumentNames(row.text, named))) {
