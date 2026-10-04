@@ -205,7 +205,6 @@ export const fr: Messages = {
     },
     in: "Entrées",
     out: "Sorties",
-    leftAtMonthEnd: "Il restera en fin de mois",
     clearFilters: "Effacer les filtres",
     selectRow: "Sélectionner {name}",
     editRow: "Modifier {name}",

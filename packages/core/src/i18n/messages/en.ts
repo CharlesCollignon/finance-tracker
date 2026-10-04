@@ -297,7 +297,6 @@ export const en = {
     /* The Ledger's own totals strip, which describes what is on screen. */
     in: "In",
     out: "Out",
-    leftAtMonthEnd: "Left at month end",
     clearFilters: "Clear filters",
     /* What a row's own control is called, for a reader who cannot see it. */
     selectRow: "Select {name}",
