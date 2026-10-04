@@ -22,6 +22,10 @@ import { disconnectBank } from "@/lib/bank-connect";
 import { Screen } from "@/components/ui/Screen";
 import { Text } from "@/components/ui/Text";
 import { PasskeysPanel } from "@/components/profile/SecurityCards";
+import {
+  AiAccountSection,
+  type AiAccountRow,
+} from "@/components/profile/AiAccountSection";
 import { useAuth } from "@/providers/AuthProvider";
 import { useBiometricLock } from "@/providers/BiometricLockProvider";
 import { useToast } from "@/providers/ToastProvider";
@@ -60,7 +64,7 @@ const KIND_ICONS: Record<
 };
 
 /** Which row has opened its editor. One at a time, so the list stays a list. */
-type OpenRow = "name" | "passkeys" | "wipe" | "close" | null;
+type OpenRow = "name" | "passkeys" | "wipe" | "close" | AiAccountRow | null;
 
 export default function ProfileScreen() {
   const tabBarClearance = useTabBarClearance();
@@ -71,6 +75,8 @@ export default function ProfileScreen() {
   const { bank } = useBankState();
   // The property's switch only for an account with the Immobilier tab.
   const tracksProperty = useFlag("property.track");
+  // The AI account section, until the connection is opened to everyone.
+  const connectsAi = useFlag("ai.account");
   const showBank =
     bank !== null &&
     (bank.available ||
@@ -341,6 +347,17 @@ export default function ProfileScreen() {
             }
           />
         </ListSection>
+
+        {/* Beside the money it reads: the written reads are what an AI
+            account is for. */}
+        {connectsAi && user ? (
+          <AiAccountSection
+            userId={user.id}
+            open={open}
+            onToggle={toggle}
+            onClose={() => setOpen(null)}
+          />
+        ) : null}
 
         <ListSection title={t("profile.securitySection")}>
           <ListRow

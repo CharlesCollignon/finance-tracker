@@ -11,6 +11,7 @@ import * as inbox from "@finance/data/bank-inbox";
 import type { PendingFeedRow } from "@finance/data/bank-inbox";
 import * as bankBalance from "@finance/data/bank-balance";
 import * as preferences from "@finance/data/preferences";
+import * as aiConnection from "@finance/data/ai-connection";
 import {
   getCurrentMonth,
   getMonthBounds,
@@ -554,6 +555,11 @@ export function getRecurringProposals(
   today: string,
 ): Promise<RecurringProposal[]> {
   return inbox.getRecurringProposals(supabase, userId, today);
+}
+
+/** The connected AI account's model, or null with none connected. */
+export function getAiConnection(userId: string) {
+  return aiConnection.getAiConnection(supabase, userId);
 }
 
 /** Which kinds of notification the account has turned off. */

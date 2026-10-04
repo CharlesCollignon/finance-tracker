@@ -55,3 +55,31 @@ export interface WriterState {
  * double press stay, in the same reservation.
  */
 export const ACCOUNT_ALLOWANCE = 10_000;
+
+/**
+ * What a connected account's key has spent and may still spend, as
+ * OpenRouter reports it, in US dollars. The account's own balance is not
+ * among it: reading that takes a management key, which the key an OAuth
+ * connection buys is not.
+ */
+export interface AiCredit {
+  /** Spent through the key since it was made. */
+  usage: number;
+  /** Spent through it this UTC month. */
+  usageMonthly: number;
+  /** The key's spending limit, or null without one. */
+  limit: number | null;
+  /** What that limit still leaves, or null without one. */
+  limitRemaining: number | null;
+}
+
+/**
+ * The account's credit, for the Profile: no account connected; a key
+ * OpenRouter no longer accepts (deleted there, or the account closed);
+ * OpenRouter not answering; or what it said.
+ */
+export type AiCreditState =
+  | { state: "none" }
+  | { state: "refused" }
+  | { state: "unknown" }
+  | { state: "ok"; credit: AiCredit };

@@ -26,6 +26,7 @@ import * as plans from "@finance/data/wallet-plans";
 import * as occurrences from "@finance/data/occurrences";
 import * as recap from "@finance/data/weekly-recap";
 import * as preferences from "@finance/data/preferences";
+import * as aiConnection from "@finance/data/ai-connection";
 import type { NotificationKind } from "@finance/core/notification-kinds";
 import type { ActionResult } from "@finance/core/action-result";
 import { supabase } from "@/lib/supabase";
@@ -565,6 +566,20 @@ export function dismissWeeklyRecap(
   return asUser((userId) =>
     recap.dismissWeeklyRecap(supabase, userId, weekOf, locale),
   );
+}
+
+/* ------------------------------------------------------ the AI account */
+
+/** Write the next reads with another model on the short list. */
+export function chooseAiModel(modelId: string): Promise<ActionResult> {
+  return asUser((userId) =>
+    aiConnection.chooseAiModel(supabase, userId, modelId),
+  );
+}
+
+/** Forget the connected AI account, and its key. */
+export function disconnectAiAccount(): Promise<ActionResult> {
+  return asUser((userId) => aiConnection.disconnectAiAccount(supabase, userId));
 }
 
 /* --------------------------------------------------- what to be told */

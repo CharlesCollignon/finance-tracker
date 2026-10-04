@@ -162,6 +162,7 @@ given at connection; the DPIA's minimisation line says the same.
       is spent all the same.
 - [x] `DELETE /api/ai/connection`: the row goes as the user, its key with
       it; the Profile (Phase 3) says how to revoke the key on OpenRouter.
+      (Phase 3 moved it to `@finance/data`, beside the model choice.)
 - [x] Tested without OpenRouter or a server: the client against a fake
       `fetch`, the whole round trip against an in-memory database (stored
       sealed, default model, replay refused, expiry, refusals store
@@ -204,13 +205,27 @@ changes, Pluclair's key writes within its allowances; on, the rules below.
 
 ## Phase 3 — The Profile, on both apps (branch `ai-account-3/profile`)
 
-- [ ] Web, Profile « Compte IA »: the consent, « Connecter avec OpenRouter
-      », then the connected state — the model, the credit left (read from
-      OpenRouter), « Déconnecter ».
-- [ ] Phone, the same: the authorisation in a browser session
-      (`expo-web-browser`), back through `pluclair://`; the server keeps the
-      secret.
+- [x] Web, Profile « Compte IA », behind the flag: the consent, « Continuer
+      vers OpenRouter », then the connected state — the model (the short
+      list), what the key has spent this month and what its limit leaves,
+      « Déconnecter » with where the key lives on. The round trip's outcome
+      is toasted once and taken off the address. Checked on the local stack
+      at desktop and phone widths, OpenRouter stubbed.
+- [x] Phone, the same: the authorisation in a browser session
+      (`expo-web-browser`), back through `pluclair://profile`; the server
+      keeps the key. Checked by types and lint only: seen on the next APK.
+- [x] Shared: `@finance/data/ai-connection` (the connection's model, a
+      model chosen from the list, the disconnection) for both apps;
+      `GET /api/ai/connection` asks OpenRouter what the key has spent, on
+      the server, for both.
 - [ ] Copy reviewed in French with the owner; English beside it.
+
+**The credit, as OpenRouter allows it.** The account's balance
+(`/api/v1/credits`) takes a management key, which the key an OAuth
+connection buys is not. `/api/v1/key` gives what that key has spent (in
+all, this month) and, when the user set one while approving, its limit and
+what it leaves. The Profile shows those and says the balance is on
+openrouter.ai.
 
 ## Phase 4 — Sign in with ChatGPT (after OpenAI's answer)
 

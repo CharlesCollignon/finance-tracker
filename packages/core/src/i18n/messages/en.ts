@@ -2772,6 +2772,38 @@ export const en = {
     connectFirst: "Connect an AI account for written reads.",
     unavailable: "Connecting an AI account is not available right now.",
     notEnabled: "Connecting an AI account is not open yet.",
+    /** The Profile's "AI account" section. */
+    section: "AI account",
+    footer:
+      "Written reads — your month, a category, your investments — are written on your own AI account, with the model you choose.",
+    footerConnected:
+      "Pluclair keeps the key encrypted and uses it for your reads only. Your account's balance is on openrouter.ai.",
+    connect: "Connect an AI account",
+    connectHint: "With OpenRouter, once",
+    consentWhat:
+      "Written reads — your month, a category, your investments, a fund — will be written by the model you choose, on your OpenRouter account, and billed to your credits.",
+    consentSent:
+      "For each read, Pluclair sends the figures of the page it is about: totals, category names, the lines of your investments. Never your name, your email, your transactions one by one or your bank credentials.",
+    consentWhere:
+      "OpenRouter passes them to the model's provider (Mistral, OpenAI or Anthropic), most often in the United States. You can disconnect this account at any time, here or from OpenRouter.",
+    continue: "Continue to OpenRouter",
+    continuing: "Opening OpenRouter…",
+    model: "Model",
+    modelChosen: "The next reads will be written with {model}.",
+    credit: "Spent this month",
+    creditLeft: "{left} left of this key's {limit} limit",
+    creditNoLimit: "No limit on this key",
+    creditUnknown: "OpenRouter is not answering right now",
+    keyRefused: "Key refused",
+    keyRefusedHint:
+      "OpenRouter no longer accepts this key: connect the account again.",
+    disconnect: "Disconnect",
+    disconnectBlurb:
+      'Pluclair will forget the key, and your reads will no longer be written. The "Pluclair" key stays in your OpenRouter account until you delete it there.',
+    disconnected: "AI account disconnected.",
+    connected: "AI account connected.",
+    refused: "OpenRouter did not grant access. Nothing was saved.",
+    expired: "Connecting took too long. Try again.",
   },
 
   /**

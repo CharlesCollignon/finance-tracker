@@ -1,5 +1,6 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
+import type { AiCredit } from "@finance/core/ai-models";
 
 /**
  * OpenRouter's side of connecting an AI account: OAuth with PKCE, as its
@@ -101,19 +102,14 @@ export async function exchangeCode(
   });
 }
 
-/** What OpenRouter says about a key: that it works, and what it may spend. */
-export interface KeyInfo {
-  /** Credits spent through this key, in US dollars. */
-  usage: number;
-  /** Its spending limit in US dollars, or null without one. */
-  limit: number | null;
-}
-
-/** Whether the key works, and what it may spend; null when it does not. */
+/**
+ * Whether the key works, and what it has spent and may spend; null when
+ * OpenRouter refuses it. Throws when OpenRouter cannot be reached.
+ */
 export async function checkKey(
   key: string,
   fetchImpl: Fetch = fetch,
-): Promise<KeyInfo | null> {
+): Promise<AiCredit | null> {
   return withTimeout(async (signal) => {
     const response = await fetchImpl(KEY_INFO_URL, {
       headers: { Authorization: `Bearer ${key}` },
@@ -123,15 +119,19 @@ export async function checkKey(
       return null;
     }
     const body = (await response.json().catch(() => null)) as {
-      data?: { usage?: unknown; limit?: unknown };
+      data?: Record<string, unknown>;
     } | null;
     const data = body?.data;
     if (!data) {
       return null;
     }
+    const dollars = (value: unknown) =>
+      typeof value === "number" && Number.isFinite(value) ? value : null;
     return {
-      usage: typeof data.usage === "number" ? data.usage : 0,
-      limit: typeof data.limit === "number" ? data.limit : null,
+      usage: dollars(data.usage) ?? 0,
+      usageMonthly: dollars(data.usage_monthly) ?? 0,
+      limit: dollars(data.limit),
+      limitRemaining: dollars(data.limit_remaining),
     };
   });
 }

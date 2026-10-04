@@ -1,5 +1,5 @@
 import "server-only";
-import { DEFAULT_AI_MODEL } from "@finance/core/ai-models";
+import { DEFAULT_AI_MODEL, type AiCreditState } from "@finance/core/ai-models";
 import { createAdminClient } from "../supabase/admin";
 import { getSiteUrl } from "../supabase/env";
 import {
@@ -167,4 +167,43 @@ export async function finishConnection(
   }
 
   return { mode, outcome: "connected" };
+}
+
+/**
+ * What a connected account's key has spent and may still spend, for the
+ * Profile. Asked of OpenRouter with the key itself, so on the server: the
+ * key never leaves it, and the answer carries none of it.
+ */
+export async function accountCredit(userId: string): Promise<AiCreditState> {
+  const admin = createAdminClient();
+  if (!admin || !aiSealer.configured()) {
+    return { state: "unknown" };
+  }
+  const { data: secret } = await admin
+    .from("ai_connection_secrets")
+    .select("ciphertext, key_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!secret) {
+    return { state: "none" };
+  }
+
+  let key: string;
+  try {
+    key = aiSealer.open({
+      ciphertext: secret.ciphertext,
+      keyId: secret.key_id,
+    });
+  } catch {
+    // Sealed under a key this deployment no longer holds: unusable, and
+    // only a new connection seals it again.
+    return { state: "refused" };
+  }
+
+  try {
+    const credit = await checkKey(key);
+    return credit ? { state: "ok", credit } : { state: "refused" };
+  } catch {
+    return { state: "unknown" };
+  }
 }
