@@ -58,16 +58,32 @@ const C3 = "#7c4610";
  * plate behind it, so a clear shell would read as a smudge on the plate
  * rather than as a ball on it.
  *
+ * `glow` puts the live orb's halo behind the ball, faint: the warm light the
+ * apps' orb breathes, held still. Only the phone's launcher icons carry it —
+ * there the ball sits on a plate of its own and the light gives it somewhere
+ * to sit; it reaches half a radius past the rim, inside the part of an
+ * adaptive icon a launcher keeps.
+ *
  * Nothing traces the edge, here or on either live orb. A stroke used to run
  * all the way round and it read as a drawn outline on a ball that is meant
  * to be blown glass; the shell gradient's fall to `C3` at the rim is what
  * keeps it round, and that is shading rather than an edge.
  */
-function orbSvg({ size, diameter = 1, plate = false }) {
+function orbSvg({ size, diameter = 1, plate = false, glow = false }) {
   const d = 100 * diameter;
   const o = (100 - d) / 2;
+  // The halo reaches this far past the rim, as a share of the ball's radius.
+  const reach = 1.5;
+  const rim = 1 / reach;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">
   <defs>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="${C2}" stop-opacity="0.22"/>
+      <stop offset="${rim * 0.92}" stop-color="${C2}" stop-opacity="0.3"/>
+      <stop offset="${rim + 0.08}" stop-color="${C2}" stop-opacity="0.12"/>
+      <stop offset="${rim + 0.22}" stop-color="${C2}" stop-opacity="0.035"/>
+      <stop offset="1" stop-color="${C2}" stop-opacity="0"/>
+    </radialGradient>
     <radialGradient id="shell" cx="62%" cy="27%" r="70%">
       <stop offset="0" stop-color="${C1}" stop-opacity="0.4"/>
       <stop offset="0.4" stop-color="${C2}" stop-opacity="0.52"/>
@@ -85,6 +101,7 @@ function orbSvg({ size, diameter = 1, plate = false }) {
     <filter id="soft"><feGaussianBlur stdDeviation="${7 * diameter}"/></filter>
   </defs>
   ${plate ? `<rect width="100" height="100" fill="${PLATE}"/>` : ""}
+  ${glow ? `<circle cx="50" cy="50" r="${(d / 2) * reach}" fill="url(#halo)"/>` : ""}
   <g clip-path="url(#ball)">
     <!-- The dark inside the glass. Without it the clouds have nothing to be
          suspended in and the ball looks like paint on the plate. -->
@@ -140,6 +157,7 @@ const TARGETS = [
     svg: orbSvg,
     diameter: 0.6,
     plate: true,
+    glow: true,
   },
   {
     path: "apps/mobile/assets/images/favicon.png",
@@ -162,6 +180,7 @@ const TARGETS = [
     size: 1024,
     svg: orbSvg,
     diameter: 0.4,
+    glow: true,
   },
   {
     path: "apps/mobile/assets/images/android-icon-monochrome.png",
@@ -210,8 +229,8 @@ const TARGETS = [
   },
 ];
 
-for (const { path, size, opaque, svg, diameter, plate } of TARGETS) {
-  const markup = svg({ size, diameter, plate });
+for (const { path, size, opaque, svg, diameter, plate, glow } of TARGETS) {
+  const markup = svg({ size, diameter, plate, glow });
   let img = sharp(Buffer.from(markup), { density: 384 }).resize(size, size);
   if (opaque) img = img.flatten({ background: PLATE });
   const out = join(root, path);
