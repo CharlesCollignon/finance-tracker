@@ -438,11 +438,12 @@ function normalise(answer: MonthReadAnswer): MonthReadAnswer {
  * Hold the answer to the pack.
  *
  * Fatal outcomes are the ones where nothing the model wrote can be trusted:
- * a shape that is not the schema, a headline with a figure in it, or a
- * reference to a datum that was never sent. That last one is fatal rather
- * than trimmed on purpose — a model citing a figure we did not provide is a
- * model working from something other than our data, and the rest of what it
- * wrote is no more trustworthy than the part that gave it away.
+ * a shape that is not the schema, or a headline with a figure in it or a
+ * datum that was never sent. A claim resting on such a datum used to refuse
+ * the whole read too, on the view that the rest was no more trustworthy;
+ * in practice the datum was a year written as an id (« 2026 »), the slip
+ * of a model formatting its references, and the refusal cost every good
+ * line beside it. That claim is now dropped, as in the wallet read.
  */
 export function verifyMonthRead(
   raw: unknown,
@@ -463,19 +464,10 @@ export function verifyMonthRead(
   const answer = normalise(parsed.data);
   const known = factIds(facts);
 
-  // Anywhere at all: basis entries and placeholders alike.
-  const everyReference = [
-    ...answer.observations.flatMap((row) => [
-      ...row.basis,
-      ...citedIds(row.text),
-    ]),
-    ...answer.suggestions.flatMap((row) => [
-      ...row.basis,
-      ...citedIds(row.text),
-    ]),
-    ...citedIds(answer.headline),
-  ];
-  const unknown = everyReference.find((id) => !known.has(id));
+  // Fatal in the headline, which the card rests on. In a claim, that claim
+  // is dropped below and the rest of the read stands, as the category read
+  // and the wallet read already did.
+  const unknown = citedIds(answer.headline).find((id) => !known.has(id));
   if (unknown !== undefined) {
     return {
       ok: false,
@@ -508,6 +500,10 @@ export function verifyMonthRead(
     row: T,
     kind: "observation" | "suggestion",
   ): boolean {
+    if ([...row.basis, ...citedIds(row.text)].some((id) => !known.has(id))) {
+      trimmed.push({ kind, text: row.text, why: "unknown-datum" });
+      return false;
+    }
     if (writesAFigure(row.text)) {
       trimmed.push({ kind, text: row.text, why: "figure" });
       return false;
