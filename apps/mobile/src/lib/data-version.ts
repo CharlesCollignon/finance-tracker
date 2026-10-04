@@ -82,6 +82,9 @@ const TABLE_AREAS: Record<string, readonly DataArea[]> = {
   category_reads: ["reads"],
   category_read_tallies: ["reads"],
   category_selections: ["reads"],
+  // Who writes the reads: Le point, the categories and the portfolio's
+  // review all say so, and the Profile draws the connection.
+  ai_connections: ["reads", "positions", "preferences"],
   // This device's push address. Nothing on screen draws it.
   expo_push_tokens: [],
 };
@@ -103,6 +106,9 @@ const ROUTE_AREAS: Record<string, readonly DataArea[]> = {
   "/api/instrument-reading": ["positions"],
   "/api/wallet-read": ["positions"],
   "/api/property/market": ["properties"],
+  // Only the round trip's state, which nothing draws. The connection itself
+  // is written by OpenRouter's callback, out of sight: see `ai-account.ts`.
+  "/api/ai/openrouter/start": [],
 };
 
 /**
