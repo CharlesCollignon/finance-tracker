@@ -9,6 +9,7 @@ import {
   Eye,
   Globe,
   Prohibit,
+  Stack,
   Target,
   Warning,
 } from "@phosphor-icons/react";
@@ -25,8 +26,13 @@ import { exactModelLabel } from "@finance/core/model-name";
 import { BylineMark, WriterMark } from "@/components/finance/AiMark";
 import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
 import { formatCharge } from "@finance/core/fund-costs";
-import { AXIS_COVERAGE_FLOOR } from "@finance/core/look-through";
-import type { LookThrough } from "@finance/core/look-through";
+import {
+  AXIS_COVERAGE_FLOOR,
+  HOLDING_KIND_LABELS,
+  holdingsWorthShowing,
+  type HoldingKind,
+  type LookThrough,
+} from "@finance/core/look-through";
 import type {
   ArbitrageMove,
   TargetAllocation,
@@ -576,6 +582,29 @@ export function LookThroughView({
               </div>
             </Section>
           </StaggerItem>
+
+          {/* What the money is in, over everything held: the one place
+              crypto and gold stand beside the funds rather than outside
+              them. */}
+          {holdingsWorthShowing(lookThrough) ? (
+            <StaggerItem className="w-full min-w-0">
+              <Section
+                icon={<Stack size={ICON.md} weight="light" />}
+                title={t("lookThrough.holdings")}
+              >
+                <WeightBars
+                  rows={lookThrough.holdings.map((row) => ({
+                    id: row.id,
+                    label: t(HOLDING_KIND_LABELS[row.id as HoldingKind]),
+                    weight: row.weight,
+                  }))}
+                />
+                <p className={cn(MICRO, "mt-3 text-muted-foreground")}>
+                  {t("lookThrough.holdingsNote")}
+                </p>
+              </Section>
+            </StaggerItem>
+          ) : null}
 
           {/* Geography. */}
           {lookThrough.countries.length > 0 ? (

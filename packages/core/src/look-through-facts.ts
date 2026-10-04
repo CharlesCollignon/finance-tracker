@@ -23,7 +23,11 @@
 import type { MissingFact, MonthFact } from "./month-facts";
 import { INVESTMENT_WALLET_LABELS } from "./investments";
 import { costOverYears } from "./fund-costs";
-import { WORLD_EQUITY_REFERENCE, type LookThrough } from "./look-through";
+import {
+  WORLD_EQUITY_REFERENCE,
+  type HoldingKind,
+  type LookThrough,
+} from "./look-through";
 import type { TargetAllocation } from "./look-through-target";
 
 /** How many years the cost projection reaches. Matches `FundCostCard`. */
@@ -54,6 +58,16 @@ function percent(value: number): number {
   return value * 100;
 }
 
+/** Each `holding:` fact's label, as the prompt reads it. */
+const HOLDING_LABELS: Record<HoldingKind, string> = {
+  equity: "Share in company shares",
+  bonds: "Share in bonds",
+  commodity: "Share in gold and other commodities",
+  crypto: "Share in crypto",
+  mixed: "Share in mixed funds",
+  unknown: "Share whose kind is not yet known",
+};
+
 export function buildLookThroughFacts(
   lookThrough: LookThrough,
   target: TargetAllocation,
@@ -80,15 +94,21 @@ export function buildLookThroughFacts(
 
   /* ------------------------------------------------- what is and is not seen */
 
-  if (lookThrough.unclassifiedValue > 0) {
+  // Crypto and gold out of it: they have nothing to read, and the
+  // `holding:` facts below say what they weigh. Counted in here, they read
+  // to the model as a gap in what the app knows.
+  const unresolvableValue = lookThrough.unresolvablePositions.reduce(
+    (sum, position) => sum + position.value,
+    0,
+  );
+  const unseenValue = lookThrough.unclassifiedValue - unresolvableValue;
+  if (unseenValue > 0) {
     facts.push({
       id: "unclassified-share",
       label: "Share the app could not see through",
       unit: "percent",
       value: percent(
-        lookThrough.totalValue > 0
-          ? lookThrough.unclassifiedValue / lookThrough.totalValue
-          : 0,
+        lookThrough.totalValue > 0 ? unseenValue / lookThrough.totalValue : 0,
       ),
       sense: "up-is-bad",
       note: "held value whose instrument has not been read",
@@ -97,8 +117,21 @@ export function buildLookThroughFacts(
       id: "unclassified-value",
       label: "Value not yet read",
       unit: "money",
-      value: lookThrough.unclassifiedValue,
+      value: unseenValue,
       sense: "up-is-bad",
+    });
+  }
+
+  /* -------------------------------------------------- what the money is in */
+
+  for (const row of lookThrough.holdings) {
+    facts.push({
+      id: `holding:${row.id}`,
+      label: HOLDING_LABELS[row.id as HoldingKind] ?? row.label,
+      unit: "percent",
+      value: percent(row.weight),
+      sense: "neutral",
+      note: "of everything invested, crypto and gold included",
     });
   }
 

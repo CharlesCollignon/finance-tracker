@@ -1858,6 +1858,18 @@ export const fr: Messages = {
     showRest: "Les afficher",
     hideRest: "Les masquer",
 
+    holdings: "Par classe d'actifs",
+    holdingsNote:
+      "Sur tout ce qui est investi, crypto et or compris. Les pays et les secteurs portent sur les fonds lus.",
+    holdingKind: {
+      equity: "Actions",
+      bonds: "Obligations",
+      commodity: "Or et matières premières",
+      crypto: "Crypto",
+      mixed: "Fonds mixtes",
+      unknown: "Pas encore identifié",
+    },
+
     costPerYear: "{amount} de frais par an",
     costAllIn: "({rate} tout compris)",
 

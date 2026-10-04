@@ -15,7 +15,12 @@ import {
   type SectorId,
 } from "@finance/core/instrument-reading";
 import { INVESTMENT_WALLET_LABELS } from "@finance/core/investments";
-import { AXIS_COVERAGE_FLOOR } from "@finance/core/look-through";
+import {
+  AXIS_COVERAGE_FLOOR,
+  HOLDING_KIND_LABELS,
+  holdingsWorthShowing,
+  type HoldingKind,
+} from "@finance/core/look-through";
 import { buildArbitrage } from "@finance/core/look-through-target";
 import { factsDigest } from "@finance/core/month-facts";
 import type { ReadSegment } from "@finance/core/month-read";
@@ -497,6 +502,27 @@ export function LookThroughView({ data }: { data: LookThroughData }) {
           </View>
         </Section>
       </StaggerItem>
+
+      {/* What the money is in, over everything held: the one place crypto
+          and gold stand beside the funds rather than outside them. */}
+      {holdingsWorthShowing(lookThrough) ? (
+        <StaggerItem index={3}>
+          <Section icon="layers-outline" title={t("lookThrough.holdings")}>
+            <WeightBars
+              rows={lookThrough.holdings.map((row) => ({
+                id: row.id,
+                label: t(HOLDING_KIND_LABELS[row.id as HoldingKind]),
+                weight: row.weight,
+              }))}
+              // Six kinds at most, all on their own line: nothing is pooled.
+              restLabel={() => ""}
+              showRestLabel={t("lookThrough.showRest")}
+              hideRestLabel={t("lookThrough.hideRest")}
+            />
+            <Text variant="micro">{t("lookThrough.holdingsNote")}</Text>
+          </Section>
+        </StaggerItem>
+      ) : null}
 
       {lookThrough.countries.length > 0 ? (
         <StaggerItem index={3}>

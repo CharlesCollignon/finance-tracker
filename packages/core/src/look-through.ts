@@ -41,7 +41,7 @@ import {
 } from "./fund-costs";
 import { formatPercentLabel } from "./constants";
 import { INTL_LOCALES, type Locale } from "./i18n/locale";
-import { translator } from "./i18n/t";
+import { translator, type Key } from "./i18n/t";
 import type { InvestmentWalletId } from "./investments";
 import { isCryptoWallet } from "./crypto-holdings";
 import {
@@ -149,6 +149,38 @@ export interface WeightRow {
   /** Share of classified value, as reported. Rows need not sum to one. */
   weight: number;
   value: number;
+}
+
+/**
+ * What a position's money is in, over everything held.
+ *
+ * The one axis on which crypto and gold are not a gap. Countries and sectors
+ * describe companies, so they are worked out over the classified value and a
+ * coin or an ounce has no place on them; but "a fifth of it is Bitcoin" is
+ * the first thing anyone would say about such a portfolio, and the shares
+ * alone could not say it — gold and crypto were only ever "not covered".
+ */
+export type HoldingKind =
+  "equity" | "bonds" | "commodity" | "crypto" | "mixed" | "unknown";
+
+/** Each kind's name on the Composition, spelled out for the catalogue check. */
+export const HOLDING_KIND_LABELS: Record<HoldingKind, Key> = {
+  equity: "lookThrough.holdingKind.equity",
+  bonds: "lookThrough.holdingKind.bonds",
+  commodity: "lookThrough.holdingKind.commodity",
+  crypto: "lookThrough.holdingKind.crypto",
+  mixed: "lookThrough.holdingKind.mixed",
+  unknown: "lookThrough.holdingKind.unknown",
+};
+
+/**
+ * Whether the asset classes say anything the rest does not: more than one,
+ * or one that is not company shares — a portfolio wholly in equity funds
+ * would only be told it is.
+ */
+export function holdingsWorthShowing(lookThrough: LookThrough): boolean {
+  const [first, second] = lookThrough.holdings;
+  return second !== undefined || (first !== undefined && first.id !== "equity");
 }
 
 /** A position resolved as far as the app can resolve it. */
@@ -295,6 +327,12 @@ export interface LookThrough {
   countries: WeightRow[];
   sectors: WeightRow[];
   assetClasses: WeightRow[];
+  /**
+   * What the money is in (`HoldingKind`), as shares of *everything* held —
+   * the total, not the classified value — so the rows add up to one and
+   * crypto and gold stand beside the funds rather than outside them.
+   */
+  holdings: WeightRow[];
 
   /**
    * How much of the classified value each axis accounts for, 0–1.
@@ -425,6 +463,37 @@ function weightRows(
     .sort((left, right) => right.value - left.value);
 }
 
+/**
+ * What a position is in: what its reading says, else what the crypto wallet
+ * or the shortlist says, else — for a reading taken before kinds were
+ * asked, which resolved — a fund of companies, as every reading meant then.
+ * Unknown until one of those can tell.
+ */
+function holdingKind(
+  position: LookThroughPosition,
+  readings: Map<string, InstrumentReading>,
+): HoldingKind {
+  const reading = position.isin ? readings.get(position.isin) : undefined;
+  switch (reading?.assetKind) {
+    case "companies":
+      return "equity";
+    case "bonds":
+      return "bonds";
+    case "commodity":
+      return "commodity";
+    case "crypto":
+      return "crypto";
+  }
+  if (isCryptoWallet(position.walletId)) {
+    return "crypto";
+  }
+  const entry = position.isin ? shortlistEntry(position.isin) : null;
+  if (entry) {
+    return entry.assetClass === "bond" ? "bonds" : entry.assetClass;
+  }
+  return classifies(reading) ? "equity" : "unknown";
+}
+
 function add(map: Map<string, number>, key: string, value: number): void {
   map.set(key, (map.get(key) ?? 0) + value);
 }
@@ -533,6 +602,12 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
     classifiedValue,
     (id) => id as AssetClass | "unknown",
   );
+
+  const holdingValues = new Map<string, number>();
+  for (const position of held) {
+    add(holdingValues, holdingKind(position, readings), position.marketValue);
+  }
+  const holdingRows = weightRows(holdingValues, totalValue, (id) => id);
 
   const shareOf = (predicate: (code: string) => boolean): number => {
     if (classifiedValue <= 0) {
@@ -814,6 +889,7 @@ export function buildLookThrough(input: LookThroughInput): LookThrough {
     countries: countryRows,
     sectors: sectorRows,
     assetClasses: assetClassRows,
+    holdings: holdingRows,
     countryCoverage:
       classifiedValue > 0 ? countryReported / classifiedValue : 0,
     sectorCoverage: classifiedValue > 0 ? sectorReported / classifiedValue : 0,

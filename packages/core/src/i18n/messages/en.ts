@@ -2581,6 +2581,18 @@ export const en = {
     showRest: "Show them",
     hideRest: "Hide them",
 
+    holdings: "By asset class",
+    holdingsNote:
+      "Over everything invested, crypto and gold included. Countries and sectors are over the funds that were read.",
+    holdingKind: {
+      equity: "Shares",
+      bonds: "Bonds",
+      commodity: "Gold and commodities",
+      crypto: "Crypto",
+      mixed: "Mixed funds",
+      unknown: "Not yet identified",
+    },
+
     /** The charge, promoted to sit under the total it is charged on. */
     costPerYear: "{amount} a year in charges",
     costAllIn: "({rate} all in)",
