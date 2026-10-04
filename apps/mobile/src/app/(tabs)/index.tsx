@@ -139,7 +139,6 @@ export default function HomeScreen() {
               <View className="rounded-card border border-border bg-card/70 p-card">
                 <ArrivedCharges
                   proposals={data.arrived.proposals}
-                  misses={data.arrived.misses}
                 />
               </View>
             ) : null}

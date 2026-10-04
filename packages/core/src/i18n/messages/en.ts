@@ -2387,11 +2387,6 @@ export const en = {
      * because each of these follows a "label · amount · date ·" prefix.
      */
     misses: {
-      hide: "Hide what was not offered",
-      show: {
-        one: "{count} other charge was not offered — why?",
-        other: "{count} other charges were not offered — why?",
-      },
       nothingAlike: "nothing in its category to match",
       refused: "you said the nearest movement was not it",
       notArrived: "the nearest movement has not happened yet",

@@ -5,8 +5,6 @@ import { Check, X } from "@phosphor-icons/react";
 import {
   confirmLabel,
   describeFulfilment,
-  describeMiss,
-  type FulfilmentMiss,
   type FulfilmentProposal,
 } from "@finance/core/recurring-fulfilment";
 import { formatShortDate, relativeDayLabel } from "@finance/core/constants";
@@ -21,16 +19,6 @@ import { useLocale, useT } from "@/lib/locale-context";
 
 interface ArrivedChargesProps {
   proposals: FulfilmentProposal[];
-  /**
-   * Occurrences that were not offered, and why.
-   *
-   * Shown because the first report of this feature in use was "there are two
-   * identical charges in my ledger and neither was proposed" — with no way to
-   * tell whether that was the amount, the date, the category, or a template
-   * with no occurrence this month at all. Narrow thresholds are right; a
-   * narrow matcher that says nothing is indistinguishable from a broken one.
-   */
-  misses?: FulfilmentMiss[];
   /**
    * Called once a decision has actually stuck on the server.
    *
@@ -66,11 +54,7 @@ interface ArrivedChargesProps {
  * removal costs nothing and the list does not sit there looking unresponsive
  * through a round trip.
  */
-export function ArrivedCharges({
-  proposals,
-  misses = [],
-  onDecided,
-}: ArrivedChargesProps) {
+export function ArrivedCharges({ proposals, onDecided }: ArrivedChargesProps) {
   const t = useT();
   const { toast } = useToast();
   const formatMoney = useFormatCurrency();
@@ -90,16 +74,9 @@ export function ArrivedCharges({
     );
   }
 
-  const [showMisses, setShowMisses] = useState(false);
   const waiting = proposals.filter((proposal) => !answered.has(proposal.key));
 
-  // This used to return on `waiting.length === 0` alone, on the reasoning that
-  // "an absence is only a question once something else has been offered". That
-  // was right while the misses were a footnote to a question; it is wrong now
-  // that they are the only place a charge which never arrived is mentioned. A
-  // month where nothing was offered and three charges are missing is the case
-  // this block exists for, and it was the one case it stayed silent for.
-  if (waiting.length === 0 && misses.length === 0) {
+  if (waiting.length === 0) {
     return null;
   }
 
@@ -280,47 +257,6 @@ export function ArrivedCharges({
           );
         })}
       </ul>
-
-      {misses.length > 0 ? (
-        <div
-          className={cn(
-            "px-4 py-2.5",
-            // No rule above it when nothing was offered: the block then starts
-            // here, and a top border would read as a stray line.
-            waiting.length > 0 && "border-t border-foreground/10",
-          )}
-        >
-          <button
-            type="button"
-            onClick={() => setShowMisses((current) => !current)}
-            aria-expanded={showMisses}
-            className="text-xs text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-          >
-            {showMisses
-              ? t("fulfilment.misses.hide")
-              : t("fulfilment.misses.show", { count: misses.length })}
-          </button>
-
-          {showMisses ? (
-            <ul className="mt-2 flex flex-col gap-1">
-              {misses.map((miss) => (
-                <li
-                  key={miss.key}
-                  className="flex flex-wrap items-baseline gap-x-2 text-xs text-muted-foreground"
-                >
-                  <span className="text-foreground">{miss.label}</span>
-                  <PrivateAmount className="tabular-nums">
-                    {formatMoney(miss.expectedAmount)}
-                  </PrivateAmount>
-                  <span>{formatShortDate(miss.occurredOn, locale)}</span>
-                  <span>·</span>
-                  <span>{describeMiss(miss, formatMoney, locale)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      ) : null}
     </section>
   );
 }

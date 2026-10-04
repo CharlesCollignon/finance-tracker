@@ -1734,12 +1734,6 @@ export const fr: Messages = {
       toConfirm: "À confirmer",
     },
     misses: {
-      hide: "Masquer ce qui n'a pas été proposé",
-      show: {
-        one: "{count} autre opération récurrente n'a pas été proposée — pourquoi\u00A0?",
-        other:
-          "{count} autres opérations récurrentes n'ont pas été proposées — pourquoi\u00A0?",
-      },
       nothingAlike: "rien dans sa catégorie à rapprocher",
       refused:
         "vous avez dit que le mouvement le plus proche n'était pas le bon",

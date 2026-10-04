@@ -1,13 +1,11 @@
 import { recurringOccurrenceKey } from "@finance/core/apply-recurring";
 import { todayIsoLocal } from "@finance/core/constants";
 import {
-  explainFulfilmentMisses,
   fulfilmentOccurrences,
   fulfilmentScope,
   proposalsForMonth,
   proposeFulfilments,
   refusalKey,
-  type FulfilmentMiss,
   type FulfilmentMovement,
   type FulfilmentProposal,
   type ProposeOptions,
@@ -94,12 +92,6 @@ export async function getConfirmedTransactionIds(
 
 export interface FulfilmentReport {
   proposals: FulfilmentProposal[];
-  /**
-   * Occurrences with no proposal, and the rule that excluded the nearest
-   * candidate. Shown as one collapsed line, so a narrow matcher is legible
-   * rather than merely silent.
-   */
-  misses: FulfilmentMiss[];
 }
 
 /**
@@ -132,8 +124,7 @@ async function monthQuestions(
     scope.from,
     scope.to,
   );
-  const all = proposeFulfilments(occurrences, movements, options);
-  return { occurrences, movements, options, all };
+  return { all: proposeFulfilments(occurrences, movements, options) };
 }
 
 export async function getFulfilmentReport(
@@ -153,22 +144,10 @@ export async function getFulfilmentReport(
     month,
   );
   if (!asked) {
-    return { proposals: [], misses: [] };
+    return { proposals: [] };
   }
 
-  const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-  return {
-    proposals: proposalsForMonth(asked.all, year, month),
-    // Only this month's occurrences can be missing from it.
-    misses: explainFulfilmentMisses(
-      asked.occurrences.filter((occurrence) =>
-        occurrence.occurredOn.startsWith(monthKey),
-      ),
-      asked.movements,
-      asked.all,
-      asked.options,
-    ),
-  };
+  return { proposals: proposalsForMonth(asked.all, year, month) };
 }
 
 export async function getFulfilmentProposals(
