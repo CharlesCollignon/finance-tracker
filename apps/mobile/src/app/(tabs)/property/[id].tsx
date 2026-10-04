@@ -80,6 +80,7 @@ import { useFormatCurrency } from "@/providers/CurrencyProvider";
 import { useLocale, useT } from "@/providers/LocaleProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { ICON } from "@/theme/tokens";
+import { useTabBarClearance } from "@/theme/chrome";
 import { useThemeColors } from "@/theme/useThemeColors";
 
 type Result = { success?: boolean; error?: string };
@@ -94,6 +95,7 @@ export default function PropertyDetailScreen() {
   const locale = useLocale();
   const router = useRouter();
   const format = useFormatCurrency();
+  const tabBarClearance = useTabBarClearance();
   const { toast } = useToast();
   const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -177,7 +179,9 @@ export default function PropertyDetailScreen() {
     <Screen title={property.name} back={back}>
       <ScrollView
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefreshAll} />}
-        contentContainerClassName="gap-5 pt-2 pb-12"
+        contentContainerClassName="gap-5 pt-2"
+        // Under the tab bar now, as every tab's screen is.
+        contentContainerStyle={{ paddingBottom: tabBarClearance }}
       >
         <StaggerItem index={0}>
         <Card bezel innerClassName="gap-5">
