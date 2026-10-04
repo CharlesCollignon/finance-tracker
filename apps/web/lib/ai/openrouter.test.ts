@@ -73,11 +73,33 @@ describe("exchangeCode", () => {
 describe("checkKey", () => {
   it("reads what the key has spent and may spend", async () => {
     const fetchImpl = vi.fn(async () =>
-      answer(200, { data: { usage: 0.42, limit: 10 } }),
+      answer(200, {
+        data: {
+          usage: 0.42,
+          usage_monthly: 0.12,
+          limit: 10,
+          limit_remaining: 9.58,
+        },
+      }),
     );
     await expect(checkKey("sk-or-1", fetchImpl)).resolves.toEqual({
       usage: 0.42,
+      usageMonthly: 0.12,
       limit: 10,
+      limitRemaining: 9.58,
+    });
+  });
+
+  it("reads a key without a limit as one", async () => {
+    await expect(
+      checkKey("sk-or-1", async () =>
+        answer(200, { data: { usage: 0, limit: null, limit_remaining: null } }),
+      ),
+    ).resolves.toEqual({
+      usage: 0,
+      usageMonthly: 0,
+      limit: null,
+      limitRemaining: null,
     });
   });
 

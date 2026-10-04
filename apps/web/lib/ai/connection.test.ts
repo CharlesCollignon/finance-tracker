@@ -76,7 +76,7 @@ vi.mock("../supabase/env", () => ({
   getSiteUrl: () => "https://pluclair.test",
 }));
 
-const { abandonConnection, finishConnection, startConnection } =
+const { abandonConnection, accountCredit, finishConnection, startConnection } =
   await import("./connection");
 const { aiSealer } = await import("./secrets");
 
@@ -214,5 +214,53 @@ describe("abandonConnection", () => {
     const state = (await started("app")).get("state")!;
     await expect(abandonConnection(state)).resolves.toBe("app");
     expect(tables.ai_connect_flows!.size).toBe(0);
+  });
+});
+
+describe("accountCredit", () => {
+  async function connected() {
+    vi.stubGlobal("fetch", openRouter());
+    await finishConnection((await started()).get("state")!, "code");
+  }
+
+  it("is none without a connection", async () => {
+    await expect(accountCredit(USER)).resolves.toEqual({ state: "none" });
+  });
+
+  it("reads what the key has spent and may spend", async () => {
+    await connected();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        expect(new Headers(init?.headers).get("Authorization")).toBe(
+          "Bearer sk-or-1",
+        );
+        return new Response(
+          JSON.stringify({
+            data: {
+              usage: 1.5,
+              usage_monthly: 0.25,
+              limit: 5,
+              limit_remaining: 3.5,
+            },
+          }),
+        );
+      }),
+    );
+    await expect(accountCredit(USER)).resolves.toEqual({
+      state: "ok",
+      credit: { usage: 1.5, usageMonthly: 0.25, limit: 5, limitRemaining: 3.5 },
+    });
+  });
+
+  it("tells a key OpenRouter refuses from one it could not ask about", async () => {
+    await connected();
+    vi.stubGlobal("fetch", async () => new Response("{}", { status: 401 }));
+    await expect(accountCredit(USER)).resolves.toEqual({ state: "refused" });
+
+    vi.stubGlobal("fetch", async () => {
+      throw new TypeError("fetch failed");
+    });
+    await expect(accountCredit(USER)).resolves.toEqual({ state: "unknown" });
   });
 });
